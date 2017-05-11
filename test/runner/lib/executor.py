@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+import json
 import os
 import re
 import tempfile
@@ -48,6 +49,8 @@ from lib.util import (
     make_dirs,
     is_shippable,
     is_binary_file,
+    find_executable,
+    raw_command,
 )
 
 from lib.test import (
@@ -518,6 +521,10 @@ def command_integration_filtered(args, targets):
 
         cloud_environment = get_cloud_environment(args, target)
 
+        original_environment = EnvironmentDescription()
+
+        display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
+
         try:
             while tries:
                 tries -= 1
@@ -538,11 +545,16 @@ def command_integration_filtered(args, targets):
                     if cloud_environment:
                         cloud_environment.on_failure(target, tries)
 
+                    if not original_environment.validate(target.name, throw=False):
+                        raise
+
                     if not tries:
                         raise
 
                     display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
                     display.verbosity = args.verbosity = 6
+
+            original_environment.validate(target.name, throw=True)
         except:
             display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
 
@@ -1133,6 +1145,82 @@ def get_integration_remote_filter(args, targets):
                         % (skip.rstrip('/'), platform, ', '.join(skipped)))
 
     return exclude
+
+
+class EnvironmentDescription(object):
+    """Description of current running environment."""
+    def __init__(self):
+        """Initialize snapshot of environment configuration."""
+        versions = ['']
+        versions += SUPPORTED_PYTHON_VERSIONS
+        versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
+
+        python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
+        python_versions = dict((v, self.get_version([python_paths[v], '-V'])) for v in sorted(python_paths) if python_paths[v])
+
+        pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
+        pip_versions = dict((v, self.get_version([pip_paths[v], '--version'])) for v in sorted(pip_paths) if pip_paths[v])
+        pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
+
+        self.data = dict(
+            python_paths=python_paths,
+            python_versions=python_versions,
+            pip_paths=pip_paths,
+            pip_versions=pip_versions,
+            pip_interpreters=pip_interpreters,
+        )
+
+    def __str__(self):
+        """
+        :rtype: str
+        """
+        return json.dumps(self.data, sort_keys=True, indent=4)
+
+    def validate(self, target_name, throw):
+        """
+        :type target_name: str
+        :type throw: bool
+        :rtype: bool
+        """
+        current = EnvironmentDescription()
+
+        original_json = str(self)
+        current_json = str(current)
+
+        if original_json == current_json:
+            return True
+
+        message = ('Test target "%s" has changed the test environment!\n'
+                   'If these changes are necessary, they must be reverted before the test finishes.\n'
+                   '>>> Original Environment\n'
+                   '%s\n'
+                   '>>> Current Environment\n'
+                   '%s' % (target_name, original_json, current_json))
+
+        if throw:
+            raise ApplicationError(message)
+
+        display.error(message)
+
+        return False
+
+    @staticmethod
+    def get_version(command):
+        """
+        :type command: list[str]
+        :rtype: str
+        """
+        stdout, stderr = raw_command(command, capture=True)
+        return (stdout or '').strip() + (stderr or '').strip()
+
+    @staticmethod
+    def get_shebang(path):
+        """
+        :type path: str
+        :rtype: str
+        """
+        with open(path) as script_fd:
+            return script_fd.readline()
 
 
 class NoChangesDetected(ApplicationWarning):
