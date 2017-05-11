@@ -96,10 +96,10 @@ options:
   create_changeset:
     description:
       - If stack already exists create a changeset instead of directly applying changes.
-        See the AWS Updating Stacks Using Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
     required: false
     default: true
-    version_added: "2.3"
+    version_added: "2.4"
   template_format:
     description:
     - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format.
