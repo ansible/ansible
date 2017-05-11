@@ -119,7 +119,7 @@ options:
     description:
       - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
         of the Docker Remote API and the --ulimit option to docker run. List of dictionaries with the following
-        form: "{ hardLimit: <int>, name: <string>, softLimit: <int> }".
+        properties: hardLimit(int), name(string), softLimit(int).
 
   user:
     description:
