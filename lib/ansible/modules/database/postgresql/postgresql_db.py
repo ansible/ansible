@@ -236,21 +236,13 @@ def db_dump(module, target,
             host=None,
             port=None,
             **kw):
-    flags = ''
-    if db:
-        flags += ' {0}'.format(pipes.quote(db))
-    if host:
-        flags += ' --host={0}'.format(host)
-    if port:
-        flags += ' --port={0}'.format(port)
-    if user:
-        flags += ' --username={0}'.format(user)
 
+    flags = login_flags(db, host, port, user, db_prefix=False)
     cmd = module.get_bin_path('pg_dump', True)
     comp_prog_path = None
 
     if os.path.splitext(target)[-1] == '.tar':
-        flags += ' --format=t'
+        flags.append(' --format=t')
     if os.path.splitext(target)[-1] == '.gz':
         if module.get_bin_path('pigz'):
             comp_prog_path = module.get_bin_path('pigz', True)
@@ -261,7 +253,7 @@ def db_dump(module, target,
     elif os.path.splitext(target)[-1] == '.xz':
         comp_prog_path = module.get_bin_path('xz', True)
 
-    cmd += flags
+    cmd += "".join(flags)
 
     if comp_prog_path:
         cmd = '{0}|{1} > {2}'.format(cmd, comp_prog_path, pipes.quote(target))
@@ -278,18 +270,7 @@ def db_restore(module, target,
             port=None,
             **kw):
 
-    # set initial flags. These are the same in pg_restore as psql
-
-    flags = []
-    if db:
-        flags.append(' --dbname={0}'.format(pipes.quote(db)))
-    if host:
-        flags.append(' --host={0}'.format(host))
-    if port:
-        flags.append(' --port={0}'.format(port))
-    if user:
-        flags.append(' --username={0}'.format(user))
-
+    flags = login_flags(db, host, port, user)
     comp_prog_path = None
     cmd = module.get_bin_path('psql', True)
 
@@ -297,7 +278,7 @@ def db_restore(module, target,
         flags.append(' --file={0}'.format(target))
 
     elif os.path.splitext(target)[-1] == '.tar':
-        flags.append(' --format=Tar {0}'.format(target))
+        flags.append(' --format=Tar')
         cmd = module.get_bin_path('pg_restore', True)
 
     elif os.path.splitext(target)[-1] == '.gz':
@@ -309,12 +290,14 @@ def db_restore(module, target,
     elif os.path.splitext(target)[-1] == '.xz':
         comp_prog_path = module.get_bin_path('xzcat', True)
 
-    for flag in flags:
-        cmd += flag
+    cmd += "".join(flags)
 
     if comp_prog_path:
+        env = os.environ.copy()
+        if password:
+            env = {"PGPASSWORD": password}
         p1 = subprocess.Popen([comp_prog_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p2 = subprocess.Popen(cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        p2 = subprocess.Popen(cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
         (stdout2, stderr2) = p2.communicate()
         p1.stdout.close()
         p1.wait()
@@ -327,6 +310,29 @@ def db_restore(module, target,
         cmd = '{0} < {1}'.format(cmd, pipes.quote(target))
 
     return do_with_password(module, cmd, password)
+
+def login_flags(db, host, port, user, db_prefix=True):
+    """
+    returns a list of connection argument strings each prefixed
+    with a space and quoted where necessary to later be combined
+    in a single shell string with `"".join(rv)`
+
+    db_prefix determines if "--dbname" is prefixed to the db argument,
+    since the argument was introduced in 9.3.
+    """
+    flags = []
+    if db:
+        if db_prefix:
+            flags.append(' --dbname={0}'.format(pipes.quote(db)))
+        else:
+            flags.append(' {0}'.format(pipes.quote(db)))
+    if host:
+        flags.append(' --host={0}'.format(host))
+    if port:
+        flags.append(' --port={0}'.format(port))
+    if user:
+        flags.append(' --username={0}'.format(user))
+    return flags
 
 def do_with_password(module, cmd, password):
     env = {}

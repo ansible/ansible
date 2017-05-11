@@ -26,6 +26,8 @@
          name: "{{ db_name }}"
          owner: "{{ db_user1 }}"
          login_user: "{{ pg_user }}"
+
+- set_fact:
      user_str: "env PGPASSWORD=password psql -h localhost -U {{ db_user1 }} {{ db_name }}"
      user_map:
          name: "{{ db_name }}"
@@ -34,11 +36,23 @@
          login_host: "localhost"
          login_user: "{{ db_user1 }}"
          login_password: "password"
+  when: test_fixture == "user"
+
+- set_fact:
+     user_str: "psql {{ db_name }}"
+     user_map:
+         name: "{{ db_name }}"
+         target: "{{ db_file_name }}"
+         owner: "{{ db_user1 }}"
+         login_host: "localhost"
+         login_user: "{{ pg_user }}"
+  when: test_fixture == "admin"
 
 - set_fact:
      sql_create: "create table employee(id int, name varchar(100));"
      sql_insert: "insert into employee values (47,'Joe Smith');"
      sql_select: "select * from  employee;"
+     sql_schema: "grant usage on schema public to {{ db_user1 }}; grant create on schema public to {{ db_user1 }};"
 
 - name: state dump/restore - create database
   postgresql_db: "{{ admin_map | combine({'state': 'present'}) }}"
@@ -72,6 +86,9 @@
 
 - name: state dump/restore - re-create database
   postgresql_db: "{{ admin_map | combine({'state': 'present'}) }}"
+
+- name: state dump/restore - grant permissions to user
+  command: '{{ admin_str }} -c "{{ sql_schema }}"'
 
 - name: test state=restore to restore the database (expect changed=true)
   postgresql_db: "{{ user_map | combine({'state': 'restore'}) }}"
