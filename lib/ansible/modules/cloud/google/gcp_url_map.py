@@ -53,18 +53,35 @@ options:
   host_rules:
     description:
        - The list of HostRules to use against the URL. Contains
-         host_rules, which is a list of hosts and an associated path_matcher.
+         a list of hosts and an associated path_matcher.
+       - The 'hosts' parameter is a list of host patterns to match. They
+         must be valid hostnames, except * will match any string of
+         ([a-z0-9-.]*). In that case, * must be the first character
+         and must be followed in the pattern by either - or ..
+       - The 'path_matcher' parameter is name of the PathMatcher to use
+         to match the path portion of the URL if the hostRule matches the URL's
+         host portion.
     required: false
   path_matchers:
     description:
        - The list of named PathMatchers to use against the URL. Contains
          path_rules, which is a list of paths and an associated service. A
          default_service can also be specified for each path_matcher.
+       - The 'name' parameter to which this path_matcher is referred by the
+         host_rule.
+       - The 'default_service' parameter is the name of the
+         BackendService resource. This will be used if none of the path_rules
+         defined by this path_matcher is matched by the URL's path portion.
+       - The 'path_rules' parameter is a list of dictionaries containing a
+         list of paths and a service to direct traffic to. Each path item must
+         start with / and the only place a * is allowed is at the end following
+         a /. The string fed to the path matcher does not include any text after
+         the first ? or #, and those chars are not allowed here.
     required: false
 '''
 
 EXAMPLES = '''
-- name: Create Minimum Url_Map
+- name: Create Minimal Url_Map
   gcp_url_map:
     service_account_email: "{{ service_account_email }}"
     credentials_file: "{{ credentials_file }}"
@@ -478,16 +495,16 @@ def main():
                 (params['url_map_name']))
         else:
             # Create
-            (changed, json_output['url_map']) = create_url_map(client,
+            changed, json_output['url_map'] = create_url_map(client,
                                                                params=params,
                                                                project_id=conn_params['project_id'])
     elif params['state'] == 'absent':
         # Delete
-        (changed, json_output['url_map']) = delete_url_map(client,
+        changed, json_output['url_map'] = delete_url_map(client,
                                                            name=params['url_map_name'],
                                                            project_id=conn_params['project_id'])
     else:
-        (changed, json_output['url_map']) = update_url_map(client,
+        changed, json_output['url_map'] = update_url_map(client,
                                                            url_map=url_map,
                                                            params=params,
                                                            name=params['url_map_name'],
