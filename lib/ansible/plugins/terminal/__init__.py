@@ -30,15 +30,23 @@ from ansible.module_utils.six import with_metaclass
 class TerminalBase(with_metaclass(ABCMeta, object)):
     '''
     A base class for implementing cli connections
+
+    .. note:: Unlike most of Ansible, nearly all strings in
+        :class:`TerminalBase` plugins are byte strings.  This is because of
+        how close to the underlying platform these plugins operate.  Remember
+        to mark literal strings as byte string (``b"string"``) and to use
+        :func:`~ansible.module_utils._text.to_bytes` and
+        :func:`~ansible.module_utils._text.to_text` to avoid unexpected
+        problems.
     '''
 
-    # compiled regular expression as stdout
+    #: compiled bytes regular expressions as stdout
     terminal_stdout_re = []
 
-    # compiled regular expression as stderr
+    #: compiled bytes regular expressions as stderr
     terminal_stderr_re = []
 
-    # copiled regular expression to remove ANSI codes
+    #: compiled bytes regular expressions to remove ANSI codes
     ansi_re = [
         re.compile(br'(\x1b\[\?1h\x1b=)'),
         re.compile(br'\x08.')
@@ -48,14 +56,27 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         self._connection = connection
 
     def _exec_cli_command(self, cmd, check_rc=True):
-        """Executes a CLI command on the device"""
+        """
+        Executes a CLI command on the device
+
+        :arg cmd: Byte string consisting of the command to execute
+        :kwarg check_rc: If True, the default, raise an
+            :exc:`AnsibleConnectionFailure` if the return code from the
+            command is nonzero
+        :returns: A tuple of return code, stdout, and stderr from running the
+            command.  stdout and stderr are both byte strings.
+        """
         rc, out, err = self._connection.exec_command(cmd)
         if check_rc and rc != 0:
             raise AnsibleConnectionFailure(err)
         return rc, out, err
 
     def _get_prompt(self):
-        """ Returns the current prompt from the device"""
+        """
+        Returns the current prompt from the device
+
+        :returns: A byte string of the prompt
+        """
         for cmd in (b'\n', b'prompt()'):
             rc, out, err = self._exec_cli_command(cmd)
         return out
@@ -82,6 +103,8 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
     def on_authorize(self, passwd=None):
         """Called when privilege escalation is requested
 
+        :kwarg passwd: String containing the password
+
         This method is called when the privilege is requested to be elevated
         in the play context by setting become to True.  It is the responsibility
         of the terminal plugin to actually do the privilege escalation such
@@ -94,6 +117,6 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
         This method is called when the privilege changed from escalated
         (become=True) to non escalated (become=False).  It is the responsibility
-        of the this method to actually perform the deauthorization procedure
+        of this method to actually perform the deauthorization procedure
         """
         pass
