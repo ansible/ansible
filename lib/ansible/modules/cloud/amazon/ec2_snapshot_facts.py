@@ -210,7 +210,7 @@ def list_ec2_snapshots(connection, module):
     # Turn the boto3 result in to ansible friendly tag dictionary
     for snapshot in snaked_snapshots:
         if 'tags' in snapshot:
-            snapshot['tags'] = boto3_tag_list_to_ansible_dict(snapshot['tags'])
+            snapshot['tags'] = boto3_tag_list_to_ansible_dict(snapshot['tags'], 'key', 'value')
 
     module.exit_json(snapshots=snaked_snapshots)
 
