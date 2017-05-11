@@ -167,6 +167,31 @@ options:
     default: []
     choices: ['Launch', 'Terminate', 'HealthCheck', 'ReplaceUnhealthy', 'AZRebalance', 'AlarmNotification', 'ScheduledActions', 'AddToLoadBalancer']
     version_added: "2.3"
+  metrics_collection:
+    description:
+      - Enable group metrics collection for the auto scaling group.
+    required: False
+    version_added: "2.4"
+  metrics_granularity:
+    description:
+      - The granularity to associate with the metrics to collect. The only valid value is 1Minute.
+    required: False
+    default: "1Minute"
+    version_added: "2.4"
+  metrics_members:
+    description:
+      - Group metrics to collect when collection is enabled.
+    required: False
+    default:
+      - GroupMinSize
+      - GroupMaxSize
+      - GroupDesiredCapacity
+      - GroupInServiceInstances
+      - GroupPendingInstances
+      - GroupStandbyInstances
+      - GroupTerminatingInstances
+      - GroupTotalInstances
+    version_added: "2.4"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -251,6 +276,7 @@ log.getLogger('boto').setLevel(log.CRITICAL)
 try:
     import boto.ec2.autoscale
     from boto.ec2.autoscale import AutoScaleConnection, AutoScalingGroup, Tag
+    from boto.ec2.autoscale.group import EnabledMetric
     from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
@@ -456,6 +482,9 @@ def create_autoscaling_group(connection, module):
     termination_policies = module.params.get('termination_policies')
     notification_topic = module.params.get('notification_topic')
     notification_types = module.params.get('notification_types')
+    metrics_collection = module.params.get('metrics_collection')
+    metrics_granularity = module.params.get('metrics_granularity')
+    metrics_members = module.params.get('metrics_members')
 
     if not vpc_zone_identifier and not availability_zones:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
@@ -502,6 +531,15 @@ def create_autoscaling_group(connection, module):
         try:
             connection.create_auto_scaling_group(ag)
             suspend_processes(ag, module)
+
+            if metrics_collection:
+                log.debug('Enabling metrics collection')
+                connection.enable_metrics_collection(
+                    group_name,
+                    metrics_granularity,
+                    metrics_members
+                )
+
             if wait_for_instances:
                 wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
                 wait_for_elb(connection, module, group_name)
@@ -542,6 +580,34 @@ def create_autoscaling_group(connection, module):
                 if group_attr != module_attr:
                     changed = True
                     setattr(as_group, attr, module_attr)
+
+        if not metrics_collection:
+            metrics_members = []
+
+        enabled_metrics = getattr(as_group, 'enabled_metrics')
+        enabled_metrics_members = [getattr(m, 'metric') for m in enabled_metrics]
+
+        if set(metrics_members) != set(enabled_metrics_members):
+            if metrics_collection is not None:
+                changed = True
+
+                if metrics_collection:
+                    log.debug('Updating metrics collection')
+                    log.debug('Enabled metrics: %s' % enabled_metrics_members)
+                    log.debug('Desired metrics: %s' % metrics_members)
+                    connection.enable_metrics_collection(
+                        group_name,
+                        metrics_granularity,
+                        metrics_members
+                    )
+
+                else:
+                    log.debug('Disabling metrics collection')
+                    connection.disable_metrics_collection(
+                        group_name,
+                        metrics_members
+                    )
+
 
         if len(set_tags) > 0:
             have_tags = {}
@@ -904,7 +970,19 @@ def main():
                 'autoscaling:EC2_INSTANCE_TERMINATE',
                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
             ]),
-            suspend_processes=dict(type='list', default=[])
+            suspend_processes=dict(type='list', default=[]),
+            metrics_collection=dict(type='bool'),
+            metrics_granularity=dict(type='str', default='1Minute'),
+            metrics_members=dict(type='list', default=[
+                'GroupMinSize',
+                'GroupMaxSize',
+                'GroupDesiredCapacity',
+                'GroupInServiceInstances',
+                'GroupPendingInstances',
+                'GroupStandbyInstances',
+                'GroupTerminatingInstances',
+                'GroupTotalInstances',
+            ]),
         ),
     )
 
