@@ -24,11 +24,11 @@ import re
 import signal
 import socket
 import traceback
+from collections import Sequence
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.basic import json_dict_unicode_to_bytes
-from ansible.module_utils.six import BytesIO
+from ansible.module_utils.six import BytesIO, binary_type, text_type
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import terminal_loader
 from ansible.plugins.connection import ensure_connect
@@ -150,7 +150,7 @@ class Connection(_Connection):
 
             window = self._strip(recv.read())
 
-            if obj and (obj.get(b'prompt') and not handled):
+            if obj and (obj.get('prompt') and not handled):
                 handled = self._handle_prompt(window, obj)
 
             if self._find_prompt(window):
@@ -161,10 +161,10 @@ class Connection(_Connection):
     def send(self, obj):
         """Sends the command to the device in the opened shell"""
         try:
-            command = obj[b'command']
+            command = obj['command']
             self._history.append(command)
             self._shell.sendall(b'%s\r' % command)
-            if obj.get(b'sendonly'):
+            if obj.get('sendonly'):
                 return
             return self.receive(obj)
         except (socket.timeout, AttributeError):
@@ -179,10 +179,10 @@ class Connection(_Connection):
 
     def _handle_prompt(self, resp, obj):
         """Matches the command prompt and responds"""
-        if not isinstance(obj[b'prompt'], list):
-            obj[b'prompt'] = [obj[b'prompt']]
-        prompts = [re.compile(r, re.I) for r in obj[b'prompt']]
-        answer = obj[b'answer']
+        if isinstance(obj, (binary_type, text_type)) or not isinstance(obj['prompt'], Sequence):
+            obj['prompt'] = [obj['prompt']]
+        prompts = [re.compile(r, re.I) for r in obj['prompt']]
+        answer = obj['answer']
         for regex in prompts:
             match = regex.search(resp)
             if match:
@@ -192,7 +192,7 @@ class Connection(_Connection):
     def _sanitize(self, resp, obj=None):
         """Removes elements from the response before returning to the caller"""
         cleaned = []
-        command = obj.get(b'command') if obj else None
+        command = obj.get('command') if obj else None
         for line in resp.splitlines():
             if (command and line.startswith(command.strip())) or self._matched_prompt.strip() in line:
                 continue
@@ -243,15 +243,15 @@ class Connection(_Connection):
         """
         try:
             obj = json.loads(to_text(cmd, errors='surrogate_or_strict'))
-            obj = json_dict_unicode_to_bytes(obj)
+            obj = dict((k, to_bytes(v, errors='surrogate_or_strict', nonstring='passthru')) for k, v in obj)
         except (ValueError, TypeError):
-            obj = {b'command': to_bytes(cmd).strip()}
+            obj = {'command': to_bytes(cmd.strip(), errors='surrogate_or_strict')}
 
-        if obj[b'command'] == b'close_shell()':
+        if obj['command'] == b'close_shell()':
             return self.close_shell()
-        elif obj[b'command'] == b'open_shell()':
+        elif obj['command'] == b'open_shell()':
             return self.open_shell()
-        elif obj[b'command'] == b'prompt()':
+        elif obj['command'] == b'prompt()':
             return (0, self._matched_prompt, b'')
 
         try:
