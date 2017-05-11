@@ -93,6 +93,13 @@ options:
         present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
     required: false
     version_added: "2.0"
+  create_changeset:
+    description:
+      - If stack already exists create a changeset instead of directly applying changes.
+        See the AWS Updating Stacks Using Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+    required: false
+    default: true
+    version_added: "2.3"
   template_format:
     description:
     - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format.
@@ -239,6 +246,7 @@ except ImportError:
 # import a class, otherwise we'll use a fully qualified path
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.basic import AnsibleModule
+from ansible.utils.hashing import secure_hash_s
 import ansible.module_utils.ec2
 
 def boto_exception(err):
@@ -292,6 +300,32 @@ def create_stack(module, stack_params, cfn):
     except Exception as err:
         error_msg = boto_exception(err)
         module.fail_json(msg=error_msg)
+    if not result:
+        module.fail_json(msg="empty result")
+    return result
+
+
+def create_changeset(module, stack_params, cfn):
+    if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
+        module.fail_json(msg="Either 'template' or 'template_url' is required.")
+
+    try:
+        if not 'ChangeSetName' in stack_params:
+            # Determine ChangeSetName using hash of parameters, if anyone has a better idea I'm all ears.
+            changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + secure_hash_s(json.dumps(stack_params, sort_keys=True))
+            stack_params['ChangeSetName'] = changeset_name
+        cs = cfn.create_change_set(**stack_params)
+        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
+        result['warnings'] = [('Created changeset named ' + changeset_name + ' for stack ' + stack_params['StackName']),
+            ('You can execute it using: aws cloudformation execute-change-set --change-set-name ' + cs['Id']),
+            ('NOTE that dependencies on this stack might fail due to pending changes!')]
+    except Exception as err:
+        error_msg = boto_exception(err)
+        if 'No updates are to be performed.' in error_msg:
+            result = dict(changed=False, output='Stack is already up-to-date.')
+        else:
+            module.fail_json(msg=error_msg)
+
     if not result:
         module.fail_json(msg="empty result")
     return result
@@ -400,6 +434,7 @@ def main():
         disable_rollback=dict(default=False, type='bool'),
         template_url=dict(default=None, required=False),
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
+        create_changeset=dict(default=False, type='bool'),
         role_arn=dict(default=None, required=False),
         tags=dict(default=None, type='dict')
     )
@@ -454,6 +489,8 @@ def main():
     if state == 'present':
         if not stack_info:
             result = create_stack(module, stack_params, cfn)
+        elif create_changeset:
+            result = create_changeset(module, stack_params, cfn)
         else:
             result = update_stack(module, stack_params, cfn)
 
