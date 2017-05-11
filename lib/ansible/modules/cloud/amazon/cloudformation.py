@@ -95,10 +95,10 @@ options:
     version_added: "2.0"
   create_changeset:
     description:
-      - If stack already exists create a changeset instead of directly applying changes.
-        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+      - "If stack already exists create a changeset instead of directly applying changes.
+        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
         WARNING: if the stack does not exist, it will be created without changeset. If the state is absent, the stack will be deleted immediately with no
-        changeset.
+        changeset."
     required: false
     default: false
     version_added: "2.4"
@@ -332,8 +332,10 @@ def create_changeset(module, stack_params, cfn):
             changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + secure_hash_s(json.dumps(stack_params, sort_keys=True))
             stack_params['ChangeSetName'] = changeset_name
         # Determine if this changeset already exists
-        if changeset_name in list_changesets(cfn, stack_params['StackName']):
-            result = dict(changed=False, output='ChangeSet ' + changeset_name + ' already exists.')
+        pending_changesets = list_changesets(cfn, stack_params['StackName'])
+        if changeset_name in pending_changesets:
+            warning = 'WARNING: '+str(len(pending_changesets))+' pending changeset(s) exist(s) for this stack!'
+            result = dict(changed=False, output='ChangeSet ' + changeset_name + ' already exists.', warnings=[warning])
         else:
             cs = cfn.create_change_set(**stack_params)
             result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
