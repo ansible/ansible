@@ -97,8 +97,18 @@ options:
     description:
       - If stack already exists create a changeset instead of directly applying changes.
         See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+        WARNING: if the stack does not exist, it will be created without changeset. If the state is absent, the stack will be deleted immediately with no
+        changeset.
     required: false
-    default: true
+    default: false
+    version_added: "2.4"
+  changeset_name:
+    description:
+      - Name given to the changeset when creating a changeset, only used when create_changeset is true. By default a name prefixed with Ansible-STACKNAME
+        is generated based on input parameters.
+        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+    required: false
+    default: null
     version_added: "2.4"
   template_format:
     description:
@@ -305,20 +315,31 @@ def create_stack(module, stack_params, cfn):
     return result
 
 
+def list_changesets(cfn, stack_name):
+    res = cfn.list_change_sets(StackName=stack_name)
+    changesets = []
+    for cs in res['Summaries']:
+        changesets.append(cs['ChangeSetName'])
+    return changesets
+
 def create_changeset(module, stack_params, cfn):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         module.fail_json(msg="Either 'template' or 'template_url' is required.")
 
     try:
         if not 'ChangeSetName' in stack_params:
-            # Determine ChangeSetName using hash of parameters, if anyone has a better idea I'm all ears.
+            # Determine ChangeSetName using hash of parameters.
             changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + secure_hash_s(json.dumps(stack_params, sort_keys=True))
             stack_params['ChangeSetName'] = changeset_name
-        cs = cfn.create_change_set(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
-        result['warnings'] = [('Created changeset named ' + changeset_name + ' for stack ' + stack_params['StackName']),
-            ('You can execute it using: aws cloudformation execute-change-set --change-set-name ' + cs['Id']),
-            ('NOTE that dependencies on this stack might fail due to pending changes!')]
+        # Determine if this changeset already exists
+        if changeset_name in list_changesets(cfn, stack_params['StackName']):
+            result = dict(changed=False, output='ChangeSet ' + changeset_name + ' already exists.')
+        else:
+            cs = cfn.create_change_set(**stack_params)
+            result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
+            result['warnings'] = [('Created changeset named ' + changeset_name + ' for stack ' + stack_params['StackName']),
+                ('You can execute it using: aws cloudformation execute-change-set --change-set-name ' + cs['Id']),
+                ('NOTE that dependencies on this stack might fail due to pending changes!')]
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -435,6 +456,7 @@ def main():
         template_url=dict(default=None, required=False),
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
         create_changeset=dict(default=False, type='bool'),
+        changeset_name=dict(default=None, required=False),
         role_arn=dict(default=None, required=False),
         tags=dict(default=None, type='dict')
     )
@@ -466,6 +488,9 @@ def main():
 
     if module.params['stack_policy'] is not None:
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
+
+    if module.params['changeset_name'] is not None:
+        stack_params['ChangeSetName'] = module.params['changeset_name']
 
     template_parameters = module.params['template_parameters']
     stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':v} for k, v in template_parameters.items()]
