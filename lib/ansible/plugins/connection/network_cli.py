@@ -28,7 +28,7 @@ import traceback
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.basic import json_dict_unicode_to_bytes
-from ansible.module_utils.six.moves import BytesIO
+from ansible.module_utils.six import BytesIO
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import terminal_loader
 from ansible.plugins.connection import ensure_connect
