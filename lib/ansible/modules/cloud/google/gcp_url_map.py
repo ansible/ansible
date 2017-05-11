@@ -496,19 +496,19 @@ def main():
         else:
             # Create
             changed, json_output['url_map'] = create_url_map(client,
-                                                               params=params,
-                                                               project_id=conn_params['project_id'])
+                                                             params=params,
+                                                             project_id=conn_params['project_id'])
     elif params['state'] == 'absent':
         # Delete
         changed, json_output['url_map'] = delete_url_map(client,
-                                                           name=params['url_map_name'],
-                                                           project_id=conn_params['project_id'])
+                                                         name=params['url_map_name'],
+                                                         project_id=conn_params['project_id'])
     else:
         changed, json_output['url_map'] = update_url_map(client,
-                                                           url_map=url_map,
-                                                           params=params,
-                                                           name=params['url_map_name'],
-                                                           project_id=conn_params['project_id'])
+                                                         url_map=url_map,
+                                                         params=params,
+                                                         name=params['url_map_name'],
+                                                         project_id=conn_params['project_id'])
         json_output['updated_url_map'] = changed
 
     json_output['changed'] = changed
