@@ -1628,7 +1628,7 @@ def main():
 
         vpc = connect_vpc(**aws_connect_kwargs)
     except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg="Failed to get connection.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
+        module.fail_json(msg="Failed to get connection: %s" % e.message, exception=traceback.format_exc())
 
     tagged_instances = []
 
