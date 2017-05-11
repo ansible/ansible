@@ -26,7 +26,7 @@ module: apache2_conf
 version_added: "2.4"
 author:
     - Den Ivanov (@urajio)
-short_description: enables/disables a configuration fragment of the Apache2 webserver
+short_description: enables/disables a configuration snippet of the Apache2 webserver
 description:
    - Enables or disables a specified site or configuration snippet of the Apache2 webserver.
      This module support Debian/Ubuntu based systems, and requires a2enconf, a2disconf, a2ensite, a2dissite scripts.
@@ -38,7 +38,7 @@ options:
      choices: ['conf', 'site']
    name:
      description:
-        - name of the configuration fragment to enable/disable
+        - name of the configuration snippet to enable/disable
      required: true
    state:
      description:
@@ -53,16 +53,16 @@ EXAMPLES = '''
 - apache2_conf:
     type: conf
     state: present
-    name: charset
+    name: charset.conf
 # disable config fragment
 - apache2_conf:
     type: conf
     state: absent
-    name: localized-error-pages
+    name: localized-error-pages.conf
 # enable default-ssl site
 - apache2_conf:
     type: site
-    name: default-ssl
+    name: default-ssl.conf
 '''
 
 RETURN = '''
