@@ -73,7 +73,11 @@ options:
   target:
     version_added: "2.4"
     description:
-      - File to back up or restore from.
+      - File to back up or restore from. Used when state is "dump" or "restore"
+  target_opts:
+    version_added: "2.4"
+    description:
+      - Further arguments for pg_dump or pg_restore. Used when state is "dump" or "restore"
 author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
@@ -105,6 +109,13 @@ EXAMPLES = '''
     name: acme
     state: dump
     target: /tmp/acme.sql.gz
+
+# Dump a single schema for an existing database
+- postgresql_db:
+    name: acme
+    state: dump
+    target: /tmp/acme.sql
+    target_opts: "-n public"
 '''
 
 HAS_PSYCOPG2 = False
@@ -229,7 +240,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         else:
             return True
 
-def db_dump(module, target,
+def db_dump(module, target, target_opts="",
             db=None,
             user=None,
             password=None,
@@ -254,6 +265,8 @@ def db_dump(module, target,
         comp_prog_path = module.get_bin_path('xz', True)
 
     cmd += "".join(flags)
+    if target_opts:
+        cmd += " {0} ".format(target_opts)
 
     if comp_prog_path:
         cmd = '{0}|{1} > {2}'.format(cmd, comp_prog_path, pipes.quote(target))
@@ -262,7 +275,7 @@ def db_dump(module, target,
 
     return do_with_password(module, cmd, password)
 
-def db_restore(module, target,
+def db_restore(module, target, target_opts="",
             db=None,
             user=None,
             password=None,
@@ -291,6 +304,8 @@ def db_restore(module, target,
         comp_prog_path = module.get_bin_path('xzcat', True)
 
     cmd += "".join(flags)
+    if target_opts:
+        cmd += " {0} ".format(target_opts)
 
     if comp_prog_path:
         env = os.environ.copy()
@@ -356,6 +371,7 @@ def main():
         lc_ctype=dict(default=""),
         state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
         target=dict(default=""),
+        target_opts=dict(default=""),
     ))
 
 
@@ -375,6 +391,7 @@ def main():
     lc_collate = module.params["lc_collate"]
     lc_ctype = module.params["lc_ctype"]
     target = module.params["target"]
+    target_opts = module.params["target_opts"]
     state = module.params["state"]
     sslrootcert = module.params["ssl_rootcert"]
     changed = False
@@ -455,7 +472,7 @@ def main():
         elif state in ("dump", "restore"):
             method = state == "dump" and db_dump or db_restore
             try:
-                rc, stdout, stderr, cmd = method(module, target, db, **kw)
+                rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
                 if rc != 0:
                     module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
                 else:
