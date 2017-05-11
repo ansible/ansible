@@ -82,9 +82,14 @@ class ActionModule(ActionBase):
 
         directory_prepended = False
         if dest.endswith(os.sep):
+            # Optimization.  trailing slash means we know it's a directory
             directory_prepended = True
-            base = os.path.basename(source)
-            dest = os.path.join(dest, base)
+            dest = self._connection._shell.join_path(dest, os.path.basename(source))
+        else:
+            # Find out if it's a directory
+            dest_stat = self._execute_remote_stat(dest, task_vars, True, tmp=tmp)
+            if dest_stat['exists'] and dest_stat['isdir']:
+                dest = self._connection._shell.join_path(dest, os.path.basename(source))
 
         # template the source data locally & get ready to transfer
         b_source = to_bytes(source)
