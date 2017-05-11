@@ -2,7 +2,9 @@
 
 from __future__ import absolute_import, print_function
 
+import os
 import pipes
+import tempfile
 
 from time import sleep
 
@@ -135,11 +137,15 @@ class ManagePosixCI(object):
 
     def upload_source(self):
         """Upload and extract source."""
-        if not self.core_ci.args.explain:
-            lib.pytar.create_tarfile('/tmp/ansible.tgz', '.', lib.pytar.ignore)
+        with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
+            remote_source_dir = '/tmp'
+            remote_source_path = os.path.join(remote_source_dir, os.path.basename(local_source_fd.name))
 
-        self.upload('/tmp/ansible.tgz', '/tmp')
-        self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf /tmp/ansible.tgz')
+            if not self.core_ci.args.explain:
+                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.ignore)
+
+            self.upload(local_source_fd.name, remote_source_dir)
+            self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf %s' % remote_source_path)
 
     def download(self, remote, local):
         """

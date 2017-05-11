@@ -168,6 +168,10 @@ def parse_args():
                       action='store_true',
                       help='analyze code coverage when running tests')
 
+    test.add_argument('--coverage-label',
+                      default='',
+                      help='label to include in coverage output file names')
+
     test.add_argument('--metadata',
                       help=argparse.SUPPRESS)
 

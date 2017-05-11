@@ -1,9 +1,32 @@
 #!/usr/bin/env python
-"""Code coverage wrapper."""
+"""Interpreter and code coverage injector for use with ansible-test.
+
+The injector serves two main purposes:
+
+1) Control the python interpreter used to run test tools and ansible code.
+2) Provide optional code coverage analysis of ansible code.
+
+The injector is executed one of two ways:
+
+1) On the controller via a symbolic link such as ansible or pytest.
+   This is accomplished by prepending the injector directory to the PATH by ansible-test.
+
+2) As the python interpreter when running ansible modules.
+   This is only supported when connecting to the local host.
+   Otherwise set the ANSIBLE_TEST_REMOTE_INTERPRETER environment variable.
+   It can be empty to auto-detect the python interpreter on the remote host.
+   If not empty it will be used to set ansible_python_interpreter.
+
+NOTE: Running ansible-test with the --tox option or inside a virtual environment
+      may prevent the injector from working for tests which use connection
+      types other than local, or which use become, due to lack of permissions
+      to access the interpreter for the virtual environment.
+"""
 
 from __future__ import absolute_import, print_function
 
 import errno
+import json
 import os
 import sys
 import pipes
@@ -11,10 +34,45 @@ import logging
 import getpass
 
 logger = logging.getLogger('injector')  # pylint: disable=locally-disabled, invalid-name
+# pylint: disable=locally-disabled, invalid-name
+config = None  # type: InjectorConfig
+
+
+class InjectorConfig(object):
+    """Mandatory configuration."""
+    def __init__(self, config_path):
+        """Initialize config."""
+        with open(config_path) as config_fd:
+            _config = json.load(config_fd)
+
+        self.python_interpreter = _config['python_interpreter']
+        self.coverage_file = _config['coverage_file']
+
+        # Read from the environment instead of config since it needs to be changed by integration test scripts.
+        # It also does not need to flow from the controller to the remote. It is only used on the controller.
+        self.remote_interpreter = os.environ.get('ANSIBLE_TEST_REMOTE_INTERPRETER', None)
+
+        self.arguments = [to_text(c) for c in sys.argv]
+
+
+def to_text(value):
+    """
+    :type value: str | None
+    :rtype: str | None
+    """
+    if value is None:
+        return None
+
+    if isinstance(value, bytes):
+        return value.decode('utf-8')
+
+    return u'%s' % value
 
 
 def main():
     """Main entry point."""
+    global config  # pylint: disable=locally-disabled, global-statement
+
     formatter = logging.Formatter('%(asctime)s %(process)d %(levelname)s %(message)s')
     log_name = 'ansible-test-coverage.%s.log' % getpass.getuser()
     self_dir = os.path.dirname(os.path.abspath(__file__))
@@ -31,25 +89,49 @@ def main():
 
     try:
         logger.debug('Self: %s', __file__)
-        logger.debug('Arguments: %s', ' '.join(pipes.quote(c) for c in sys.argv))
 
-        if os.path.basename(__file__).startswith('runner'):
-            args, env = runner()
-        elif os.path.basename(__file__).startswith('cover'):
-            args, env = cover()
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'injector.json')
+
+        try:
+            config = InjectorConfig(config_path)
+        except IOError:
+            logger.exception('Error reading config: %s', config_path)
+            exit('No injector config found. Set ANSIBLE_TEST_REMOTE_INTERPRETER if the test is not connecting to the local host.')
+
+        logger.debug('Arguments: %s', ' '.join(pipes.quote(c) for c in config.arguments))
+        logger.debug('Python interpreter: %s', config.python_interpreter)
+        logger.debug('Remote interpreter: %s', config.remote_interpreter)
+        logger.debug('Coverage file: %s', config.coverage_file)
+
+        require_cwd = False
+
+        if os.path.basename(__file__) == 'injector.py':
+            if config.coverage_file:
+                args, env, require_cwd = cover()
+            else:
+                args, env = runner()
         else:
             args, env = injector()
 
         logger.debug('Run command: %s', ' '.join(pipes.quote(c) for c in args))
 
+        altered_cwd = False
+
         try:
             cwd = os.getcwd()
         except OSError as ex:
+            # some platforms, such as OS X, may not allow querying the working directory when using become to drop privileges
             if ex.errno != errno.EACCES:
                 raise
-            cwd = None
+            if require_cwd:
+                # make sure the program we execute can determine the working directory if it's required
+                cwd = '/'
+                os.chdir(cwd)
+                altered_cwd = True
+            else:
+                cwd = None
 
-        logger.debug('Working directory: %s', cwd or '?')
+        logger.debug('Working directory: %s%s', cwd or '?', ' (altered)' if altered_cwd else '')
 
         for key in sorted(env.keys()):
             logger.debug('%s=%s', key, env[key])
@@ -64,29 +146,28 @@ def injector():
     """
     :rtype: list[str], dict[str, str]
     """
-    self_dir = os.path.dirname(os.path.abspath(__file__))
     command = os.path.basename(__file__)
-    mode = os.environ.get('ANSIBLE_TEST_COVERAGE')
-    version = os.environ.get('ANSIBLE_TEST_PYTHON_VERSION', '')
     executable = find_executable(command)
 
-    if mode in ('coverage', 'version'):
-        if mode == 'coverage':
-            args, env = coverage_command(self_dir, version)
-            args += [executable]
-            tool = 'cover'
-        else:
-            interpreter = find_executable('python' + version)
-            args, env = [interpreter, executable], os.environ.copy()
-            tool = 'runner'
-
-        if command in ('ansible', 'ansible-playbook', 'ansible-pull'):
-            interpreter = find_executable(tool + version)
-            args += ['--extra-vars', 'ansible_python_interpreter=' + interpreter]
+    if config.coverage_file:
+        args, env = coverage_command()
     else:
-        args, env = [executable], os.environ.copy()
+        args, env = [config.python_interpreter], os.environ.copy()
 
-    args += sys.argv[1:]
+    args += [executable]
+
+    if command in ('ansible', 'ansible-playbook', 'ansible-pull'):
+        if config.remote_interpreter is None:
+            interpreter = os.path.join(os.path.dirname(__file__), 'injector.py')
+        elif config.remote_interpreter == '':
+            interpreter = None
+        else:
+            interpreter = config.remote_interpreter
+
+        if interpreter:
+            args += ['--extra-vars', 'ansible_python_interpreter=' + interpreter]
+
+    args += config.arguments[1:]
 
     return args, env
 
@@ -95,61 +176,53 @@ def runner():
     """
     :rtype: list[str], dict[str, str]
     """
-    command = os.path.basename(__file__)
-    version = command.replace('runner', '')
+    args, env = [config.python_interpreter], os.environ.copy()
 
-    interpreter = find_executable('python' + version)
-    args, env = [interpreter], os.environ.copy()
-
-    args += sys.argv[1:]
+    args += config.arguments[1:]
 
     return args, env
 
 
 def cover():
     """
-    :rtype: list[str], dict[str, str]
+    :rtype: list[str], dict[str, str], bool
     """
-    self_dir = os.path.dirname(os.path.abspath(__file__))
-    command = os.path.basename(__file__)
-    version = command.replace('cover', '')
-
-    if len(sys.argv) > 1:
-        executable = sys.argv[1]
+    if len(config.arguments) > 1:
+        executable = config.arguments[1]
     else:
         executable = ''
 
+    require_cwd = False
+
     if os.path.basename(executable).startswith('ansible_module_'):
-        args, env = coverage_command(self_dir, version)
+        args, env = coverage_command()
+        # coverage requires knowing the working directory
+        require_cwd = True
     else:
-        interpreter = find_executable('python' + version)
-        args, env = [interpreter], os.environ.copy()
+        args, env = [config.python_interpreter], os.environ.copy()
 
-    args += sys.argv[1:]
+    args += config.arguments[1:]
 
-    return args, env
+    return args, env, require_cwd
 
 
-def coverage_command(self_dir, version):
+def coverage_command():
     """
-    :type self_dir: str
-    :type version: str
     :rtype: list[str], dict[str, str]
     """
-    executable = 'coverage'
-
-    if version:
-        executable += '-%s' % version
+    self_dir = os.path.dirname(os.path.abspath(__file__))
 
     args = [
-        find_executable(executable),
+        config.python_interpreter,
+        '-m',
+        'coverage.__main__',
         'run',
         '--rcfile',
         os.path.join(self_dir, '.coveragerc'),
     ]
 
     env = os.environ.copy()
-    env['COVERAGE_FILE'] = os.path.abspath(os.path.join(self_dir, '..', 'output', 'coverage'))
+    env['COVERAGE_FILE'] = config.coverage_file
 
     return args, env
 

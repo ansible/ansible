@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import re
 import sys
 import tempfile
 
@@ -124,6 +125,10 @@ def delegate_tox(args, exclude, require):
         if not args.python:
             cmd += ['--python', version]
 
+        if isinstance(args, TestConfig):
+            if args.coverage and not args.coverage_label:
+                cmd += ['--coverage-label', 'tox-%s' % version]
+
         run_command(args, tox + cmd)
 
 
@@ -153,6 +158,12 @@ def delegate_docker(args, exclude, require):
 
     cmd = generate_command(args, '/root/ansible/test/runner/test.py', options, exclude, require)
 
+    if isinstance(args, TestConfig):
+        if args.coverage and not args.coverage_label:
+            image_label = re.sub('^ansible/ansible:', '', args.docker)
+            image_label = re.sub('[^a-zA-Z0-9]+', '-', image_label)
+            cmd += ['--coverage-label', 'docker-%s' % image_label]
+
     if isinstance(args, IntegrationConfig):
         if not args.allow_destructive:
             cmd.append('--allow-destructive')
@@ -162,75 +173,77 @@ def delegate_docker(args, exclude, require):
     if isinstance(args, ShellConfig):
         cmd_options.append('-it')
 
-    if not args.explain:
-        lib.pytar.create_tarfile('/tmp/ansible.tgz', '.', lib.pytar.ignore)
+    with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
+        try:
+            if not args.explain:
+                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.ignore)
 
-    try:
-        if util_image:
-            util_options = [
+            if util_image:
+                util_options = [
+                    '--detach',
+                ]
+
+                util_id, _ = docker_run(args, util_image, options=util_options)
+
+                if args.explain:
+                    util_id = 'util_id'
+                else:
+                    util_id = util_id.strip()
+            else:
+                util_id = None
+
+            test_options = [
                 '--detach',
+                '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
+                '--privileged=%s' % str(privileged).lower(),
             ]
 
-            util_id, _ = docker_run(args, util_image, options=util_options)
+            if util_id:
+                test_options += [
+                    '--link', '%s:ansible.http.tests' % util_id,
+                    '--link', '%s:sni1.ansible.http.tests' % util_id,
+                    '--link', '%s:sni2.ansible.http.tests' % util_id,
+                    '--link', '%s:fail.ansible.http.tests' % util_id,
+                    '--env', 'HTTPTESTER=1',
+                ]
+
+            if isinstance(args, TestConfig):
+                cloud_platforms = get_cloud_providers(args)
+
+                for cloud_platform in cloud_platforms:
+                    test_options += cloud_platform.get_docker_run_options()
+
+            test_id, _ = docker_run(args, test_image, options=test_options)
 
             if args.explain:
-                util_id = 'util_id'
+                test_id = 'test_id'
             else:
-                util_id = util_id.strip()
-        else:
-            util_id = None
+                test_id = test_id.strip()
 
-        test_options = [
-            '--detach',
-            '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
-            '--privileged=%s' % str(privileged).lower(),
-        ]
+            # write temporary files to /root since /tmp isn't ready immediately on container start
+            docker_put(args, test_id, 'test/runner/setup/docker.sh', '/root/docker.sh')
+            docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
+            docker_put(args, test_id, local_source_fd.name, '/root/ansible.tgz')
+            docker_exec(args, test_id, ['mkdir', '/root/ansible'])
+            docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
 
-        if util_id:
-            test_options += [
-                '--link', '%s:ansible.http.tests' % util_id,
-                '--link', '%s:sni1.ansible.http.tests' % util_id,
-                '--link', '%s:sni2.ansible.http.tests' % util_id,
-                '--link', '%s:fail.ansible.http.tests' % util_id,
-                '--env', 'HTTPTESTER=1',
-            ]
+            # docker images are only expected to have a single python version available
+            if isinstance(args, UnitsConfig) and not args.python:
+                cmd += ['--python', 'default']
 
-        if isinstance(args, TestConfig):
-            cloud_platforms = get_cloud_providers(args)
-
-            for cloud_platform in cloud_platforms:
-                test_options += cloud_platform.get_docker_run_options()
-
-        test_id, _ = docker_run(args, test_image, options=test_options)
-
-        if args.explain:
-            test_id = 'test_id'
-        else:
-            test_id = test_id.strip()
-
-        # write temporary files to /root since /tmp isn't ready immediately on container start
-        docker_put(args, test_id, 'test/runner/setup/docker.sh', '/root/docker.sh')
-        docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
-        docker_put(args, test_id, '/tmp/ansible.tgz', '/root/ansible.tgz')
-        docker_exec(args, test_id, ['mkdir', '/root/ansible'])
-        docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
-
-        # docker images are only expected to have a single python version available
-        if isinstance(args, UnitsConfig) and not args.python:
-            cmd += ['--python', 'default']
-
-        try:
-            docker_exec(args, test_id, cmd, options=cmd_options)
+            try:
+                docker_exec(args, test_id, cmd, options=cmd_options)
+            finally:
+                with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
+                    docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', '/root/ansible/test', 'results'])
+                    docker_get(args, test_id, '/root/results.tgz', local_result_fd.name)
+                    run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', 'test'])
         finally:
-            docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', '/root/ansible/test', 'results'])
-            docker_get(args, test_id, '/root/results.tgz', '/tmp/results.tgz')
-            run_command(args, ['tar', 'oxzf', '/tmp/results.tgz', '-C', 'test'])
-    finally:
-        if util_id:
-            docker_rm(args, util_id)
+            if util_id:
+                docker_rm(args, util_id)
 
-        if test_id:
-            docker_rm(args, test_id)
+            if test_id:
+                docker_rm(args, test_id)
 
 
 def delegate_remote(args, exclude, require):
@@ -256,6 +269,10 @@ def delegate_remote(args, exclude, require):
         }
 
         cmd = generate_command(args, 'ansible/test/runner/test.py', options, exclude, require)
+
+        if isinstance(args, TestConfig):
+            if args.coverage and not args.coverage_label:
+                cmd += ['--coverage-label', 'remote-%s-%s' % (platform, version)]
 
         if isinstance(args, IntegrationConfig):
             if not args.allow_destructive:

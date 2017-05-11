@@ -65,6 +65,7 @@ class TestConfig(EnvironmentConfig):
         super(TestConfig, self).__init__(args, command)
 
         self.coverage = args.coverage  # type: bool
+        self.coverage_label = args.coverage_label  # type: str
         self.include = args.include  # type: list [str]
         self.exclude = args.exclude  # type: list [str]
         self.require = args.require  # type: list [str]
