@@ -119,7 +119,7 @@ options:
     description:
       - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
         of the Docker Remote API and the --ulimit option to docker run. List of dictionaries with the following
-        form: { hardLimit: <int>, name: <string>, softLimit: <int> }.
+        form: "{ hardLimit: <int>, name: <string>, softLimit: <int> }".
 
   user:
     description:
@@ -176,13 +176,9 @@ batch_job_definition_action:
     type: string
 '''
 
-try:
-    import boto3
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
+from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
 
 # ---------------------------------------------------------------------------------------------------
 #
@@ -485,9 +481,6 @@ def main():
 
     module.exit_json(**results)
 
-# ansible import module(s) kept at ~eof as recommended
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
