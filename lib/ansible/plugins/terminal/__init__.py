@@ -40,8 +40,8 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
     # copiled regular expression to remove ANSI codes
     ansi_re = [
-        re.compile(r'(\x1b\[\?1h\x1b=)'),
-        re.compile(r'\x08.')
+        re.compile(br'(\x1b\[\?1h\x1b=)'),
+        re.compile(br'\x08.')
     ]
 
     def __init__(self, connection):
@@ -56,7 +56,7 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
     def _get_prompt(self):
         """ Returns the current prompt from the device"""
-        for cmd in ['\n', 'prompt()']:
+        for cmd in (b'\n', b'prompt()'):
             rc, out, err = self._exec_cli_command(cmd)
         return out
 
