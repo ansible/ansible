@@ -220,13 +220,9 @@ class Ec2Inventory(object):
     def read_settings(self):
         ''' Reads the settings from the ec2.ini file '''
 
-        scriptbasename = __file__
-        scriptbasename = os.path.basename(scriptbasename)
-        scriptbasename = scriptbasename.replace('.py', '')
-
         defaults = {
             'ec2': {
-                'ini_path': os.path.join(os.path.dirname(__file__), '%s.ini' % scriptbasename)
+                'ini_path': os.path.join(os.path.dirname(__file__), 'ec2.ini')
             }
         }
 
