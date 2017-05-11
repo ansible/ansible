@@ -77,9 +77,9 @@ options:
     choices: [ "yes", "no" ]
   ssl_version:
     description:
-      - Change the ssl_version used
+      - Change the ssl_version used.
     default: TLSv1
-    choices: ['SSLv3','SSLv23','TLSv1','TLSv1_1','TLSv1_2']
+    choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
     version_added: '2.4'
 requirements:
 - hpilo
@@ -140,7 +140,7 @@ def main():
             image = dict(default=None, type='str'),
             state = dict(default='boot_once', type='str', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot', 'poweroff']),
             force = dict(default=False, type='bool'),
-            ssl_version = dict(default='TLSv1', choices=['SSLv3','SSLv23','TLSv1','TLSv1_1','TLSv1_2']),
+            ssl_version = dict(default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
         )
     )
 
