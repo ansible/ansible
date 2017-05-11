@@ -456,6 +456,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
             remote=None,
             remote_stage=None,
             remote_aws_region=None,
+            remote_terminate=None,
         )
 
         return
@@ -485,6 +486,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         help='remote aws region to use: %(choices)s (default: auto)',
                         choices=sorted(AWS_ENDPOINTS),
                         default=None)
+
+    remote.add_argument('--remote-terminate',
+                        metavar='WHEN',
+                        help='terminate remote instance: %(choices)s (default: %(default)s)',
+                        choices=['never', 'always', 'success'],
+                        default='never')
 
 
 def add_extra_docker_options(parser, integration=True):
