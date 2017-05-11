@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -152,20 +152,20 @@ def update_resources(module, p):
     '''
     params = p.copy()
     identity_map = {
-        'user':'username',
-        'team':'name',
-        'target_team':'name',
-        'inventory':'name',
-        'job_template':'name',
-        'credential':'name',
-        'organization':'name',
-        'project':'name',
+        'user': 'username',
+        'team': 'name',
+        'target_team': 'name',
+        'inventory': 'name',
+        'job_template': 'name',
+        'credential': 'name',
+        'organization': 'name',
+        'project': 'name',
     }
-    for k,v in identity_map.items():
+    for k, v in identity_map.items():
         try:
             if params[k]:
                 key = 'team' if k == 'target_team' else k
-                result = tower_cli.get_resource(key).get(**{v:params[k]})
+                result = tower_cli.get_resource(key).get(**{v: params[k]})
                 params[k] = result['id']
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update role, {0} not found: {1}'.format(k, excinfo), changed=False)
@@ -174,22 +174,22 @@ def update_resources(module, p):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            user = dict(),
-            team = dict(),
-            role = dict(choices=["admin", "read", "member", "execute", "adhoc", "update", "use", "auditor"]),
-            target_team = dict(),
-            inventory = dict(),
-            job_template = dict(),
-            credential = dict(),
-            organization = dict(),
-            project = dict(),
-            tower_host = dict(),
-            tower_username = dict(),
-            tower_password = dict(no_log=True),
-            tower_verify_ssl = dict(type='bool', default=True),
-            tower_config_file = dict(type='path'),
-            state = dict(choices=['present', 'absent'], default='present'),
+        argument_spec=dict(
+            user=dict(),
+            team=dict(),
+            role=dict(choices=["admin", "read", "member", "execute", "adhoc", "update", "use", "auditor"]),
+            target_team=dict(),
+            inventory=dict(),
+            job_template=dict(),
+            credential=dict(),
+            organization=dict(),
+            project=dict(),
+            tower_host=dict(),
+            tower_username=dict(),
+            tower_password=dict(no_log=True),
+            tower_verify_ssl=dict(type='bool', default=True),
+            tower_config_file=dict(type='path'),
+            state=dict(choices=['present', 'absent'], default='present'),
         ),
         supports_check_mode=True
     )
