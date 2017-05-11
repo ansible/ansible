@@ -3,8 +3,10 @@ Ansible Changes By Release
 
 ## 2.3.1 "Ramble On" - TBD
 
+
 ### Bugfixes
 * Fix default value of fetch module's validate_checksum to be True
+* Added fix for "meta: refresh_connection" not working with default 'smart' connection.
 
 ## 2.3 "Ramble On" - 2017-04-12
 
