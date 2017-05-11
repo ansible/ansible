@@ -36,11 +36,12 @@ from lib.cloud import (
 )
 
 from lib.util import (
-    EnvironmentConfig,
-    ApplicationWarning,
     ApplicationError,
-    SubprocessError,
+    ApplicationWarning,
+    CommonConfig,
+    EnvironmentConfig,
     MissingEnvironmentVariable,
+    SubprocessError,
     display,
     run_command,
     common_environment,
@@ -513,36 +514,24 @@ def command_integration_filtered(args, targets):
             if not found:
                 continue
 
-        tries = 2 if args.retry_on_error else 1
-        verbosity = args.verbosity
-
         cloud_environment = get_cloud_environment(args, target)
 
         try:
-            while tries:
-                tries -= 1
+            if not args.explain:
+                # create a fresh test directory for each test target
+                remove_tree(test_dir)
+                make_dirs(test_dir)
 
-                if not args.explain:
-                    # create a fresh test directory for each test target
-                    remove_tree(test_dir)
-                    make_dirs(test_dir)
-
-                try:
-                    if target.script_path:
-                        command_integration_script(args, target)
-                    else:
-                        command_integration_role(args, target, start_at_task)
-                        start_at_task = None
-                    break
-                except SubprocessError:
-                    if cloud_environment:
-                        cloud_environment.on_failure(target, tries)
-
-                    if not tries:
-                        raise
-
-                    display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
-                    display.verbosity = args.verbosity = 6
+            try:
+                if target.script_path:
+                    command_integration_script(args, target)
+                else:
+                    command_integration_role(args, target, start_at_task)
+                    start_at_task = None
+            except SubprocessError:
+                if cloud_environment:
+                    cloud_environment.on_failure(target)
+                raise
         except:
             display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
 
@@ -552,8 +541,6 @@ def command_integration_filtered(args, targets):
                 display.notice('To resume after this test target, use the option: --start-at %s' % next_target.name)
 
             raise
-        finally:
-            display.verbosity = args.verbosity = verbosity
 
 
 def integration_environment(args, target, cmd):

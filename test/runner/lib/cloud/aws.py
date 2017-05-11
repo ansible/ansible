@@ -94,12 +94,11 @@ class AwsCloudEnvironment(CloudEnvironment):
         cmd.append('-e')
         cmd.append('resource_prefix=%s' % self.resource_prefix)
 
-    def on_failure(self, target, tries):
+    def on_failure(self, target):
         """
         :type target: TestTarget
-        :type tries: int
         """
-        if not tries and self.managed:
+        if self.managed:
             display.notice('If %s failed due to permissions, the IAM test policy may need to be updated. '
                            'For help, consult @mattclay or @gundalow on GitHub or #ansible-devel on IRC.' % target.name)
 

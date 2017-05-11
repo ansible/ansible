@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import re
 import sys
 import tempfile
 
@@ -323,6 +324,8 @@ def filter_options(args, argv, options, exclude, require):
     options = options.copy()
 
     options['--requirements'] = 0
+    options['--retry-on-error'] = 0
+    options['--verbose'] = 0
 
     if isinstance(args, TestConfig):
         options.update({
@@ -343,6 +346,8 @@ def filter_options(args, argv, options, exclude, require):
 
     remaining = 0
 
+    # verbose switch can be overridden by args.verbosity
+    verbose_short = re.compile(r'-v+$')
     for arg in argv:
         if not arg.startswith('-') and remaining:
             remaining -= 1
@@ -357,7 +362,13 @@ def filter_options(args, argv, options, exclude, require):
             remaining = options[key] - len(parts) + 1
             continue
 
+        if verbose_short.match(key):
+            continue
+
         yield arg
+
+    if args.verbosity:
+        yield '-{0}'.format('v' * args.verbosity)
 
     for target in exclude:
         yield '--exclude'

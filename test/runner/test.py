@@ -10,6 +10,7 @@ import sys
 
 from lib.util import (
     ApplicationError,
+    SubprocessError,
     display,
     raw_command,
 )
@@ -27,6 +28,7 @@ from lib.executor import (
     command_shell,
     SUPPORTED_PYTHON_VERSIONS,
     COMPILE_PYTHON_VERSIONS,
+    IntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
     NetworkIntegrationConfig,
@@ -81,10 +83,23 @@ def main():
         display.info_stderr = isinstance(config, SanityConfig) and config.lint
         check_startup()
 
-        try:
-            args.func(config)
-        except Delegate as ex:
-            delegate(config, ex.exclude, ex.require)
+        verbosity = config.verbosity
+        # when inside a delegated execution, retry_on_error is always False
+        tries = 2 if isinstance(config, IntegrationConfig) and config.retry_on_error else 1
+        while tries:
+            tries -= 1
+            try:
+                try:
+                    args.func(config)
+                except Delegate as ex:
+                    delegate(config, ex.exclude, ex.require)
+                break
+            except SubprocessError:
+                if not tries:
+                    display.config = config.verbosity = verbosity
+                    raise
+                display.warning('Retrying with maximum verbosity.')
+                display.config = config.verbosity = 6
 
         display.review_warnings()
     except ApplicationWarning as ex:
