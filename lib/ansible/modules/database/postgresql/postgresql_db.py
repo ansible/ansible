@@ -239,12 +239,12 @@ def db_dump(module, target,
     flags = ''
     if db:
         flags += ' {0}'.format(pipes.quote(db))
-    elif host:
-        flags += ' --host={0}'.format(pipes.quote(host))
-        if port:
-            flags += ' --port={0}'.format(pipes.quote(port))
+    if host:
+        flags += ' --host={0}'.format(host)
+    if port:
+        flags += ' --port={0}'.format(port)
     if user:
-        flags += ' --username={0}'.format(pipes.quote(user))
+        flags += ' --username={0}'.format(user)
 
     cmd = module.get_bin_path('pg_dump', True)
     comp_prog_path = None
@@ -309,7 +309,8 @@ def db_restore(module, target,
     elif os.path.splitext(target)[-1] == '.xz':
         comp_prog_path = module.get_bin_path('xzcat', True)
 
-    cmd += flags[0]
+    for flag in flags:
+        cmd += flag
 
     if comp_prog_path:
         p1 = subprocess.Popen([comp_prog_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
