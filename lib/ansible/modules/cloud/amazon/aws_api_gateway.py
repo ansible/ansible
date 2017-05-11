@@ -65,6 +65,10 @@ options:
     description:
       - stage API should be deployed to
     required: false
+  deploy_desc:
+    description:
+      - Description of the deployment - recorded and visible in the AWS console.  
+    required: false
 author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
@@ -113,7 +117,7 @@ output:
 
 import json
 from ansible.module_utils.basic import AnsibleModule, traceback
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict, AWSRetry
 
 from ansible.module_utils.ec2 import HAS_BOTO3
 
@@ -138,18 +142,18 @@ def main():
         )
     )
 
-    mutually_exclusive = [['swagger_file', 'swagger_dict', 'swagger_text' ]]  # noqa: F841
+    mutually_exclusive = [['swagger_file', 'swagger_dict', 'swagger_text']]  # noqa: F841
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,  )   # TODO !!!`
+                           supports_check_mode=False)
 
     api_id = module.params.get('api_id')
     state = module.params.get('state')   # noqa: F841
     swagger_file = module.params.get('swagger_file')
     swagger_dict = module.params.get('swagger_dict')
     swagger_text = module.params.get('swagger_text')
-    stage= module.params.get('stage')
-    deploy_desc= module.params.get('deploy_desc')
+    stage = module.params.get('stage')
+    deploy_desc = module.params.get('deploy_desc')
 
 #    check_mode = module.check_mode
     changed = False
@@ -161,35 +165,27 @@ def main():
         module.fail_json(msg='Python module "botocore" is missing, please install it')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg='region must be specified')
-
     try:
         client = boto3_conn(module, conn_type='client', resource='apigateway',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except (botocore.exceptions.ValidationError) as e:
-        msg="Incorrect AWS configuration"
-        module.fail_json(msg=msg, exception=traceback.format_exc())
-    except (botocore.exceptions.ClientError) as e:
-        msg="Client side failure connecting to AWS API"
-        module.fail_json(msg=msg, exception=traceback.format_exc())
-    except Exception as e:
-        msg="Unexpected exception configuring AWS API connection"
-        module.fail_json(msg=msg, exception=traceback.format_exc())
+    except botocore.exceptions.NoRegionError:
+        module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
+    except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as e:
+        fail_json_aws(module, e, msg="connecting to AWS")
 
     if not api_id:
-        desc="Incomplete API creation by ansible aws_api_gateway module"
-        awsret=client.create_rest_api(name="ansible-temp-api", description=desc)
-        api_id=awsret["id"]
+        desc = "Incomplete API creation by ansible aws_api_gateway module"
+        awsret = create_api(client, name="ansible-temp-api", description=desc)
+        api_id = awsret["id"]
 
-    apidata=None
+    apidata = None
     if swagger_file is not None:
         try:
             with open(swagger_file) as f:
-                apidata=f.read()
+                apidata = f.read()
         except Exception as e:
-            module.fail_json(msg="Failed trying to read swagger file" + str(e),
-                             exception=traceback.format_exc())
+            module.fail_json(msg="Failed trying to read swagger file " + str(swagger_file)
+                             + ":" + str(e), exception=traceback.format_exc())
     if swagger_dict is not None:
         apidata = json.dumps(swagger_dict)
     if swagger_text is not None:
@@ -199,43 +195,72 @@ def main():
         module.fail_json(msg='module error - failed to get API data')
 
     try:
-        create_response=client.put_rest_api(body=apidata, restApiId=api_id, mode="overwrite")
-    except botocore.exceptions.ClientError as e:
-        msg="Client side error configuring api {} - check definitions".format(api_id)
-        module.fail_json(msg=msg, exception=traceback.format_exc())
-    except botocore.exceptions.EndpointConnectionError as e:
-        msg="Connectivity problem configuring api {}. Check network.".format(api_id)
-        module.fail_json(msg=msg, exception=traceback.format_exc())
-    except botocore.exceptions.NoCredentialsError as e:
-        msg="AWS credentials missing configuring api {}. set up credentials.".format(api_id)
-        module.fail_json(msg=msg, exception=traceback.format_exc())
-    except Exception as e:
-        msg="Unexpected exception configuring api {}".format(api_id)
-        module.fail_json(msg=msg, exception=traceback.format_exc())
+        create_response = configure_api(client, apidata=apidata, api_id=api_id)
+    except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
+        fail_json_aws(module, e, msg="configuring api {}".format(api_id))
 
-    changed=True
+    changed = True
 
     if stage:
-        if deploy_desc is None:
-            deploy_desc = "Automatic deployment by Ansible."
         try:
-            deploy_response=client.create_deployment(restApiId=api_id, stageName=stage,
-                                                     description=deploy_desc)
-        except (botocore.exceptions.ClientError) as e:
-            msg="Client side error deploying api {} to stage {}".format(api_id, stage)
-            module.fail_json(msg=msg, exception=traceback.format_exc())
-        except botocore.exceptions.EndpointConnectionError as e:
-            msg="Connectivity problem deploying api {} to stage {}".format(api_id, stage)
-            module.fail_json(msg=msg, exception=traceback.format_exc())
-        except Exception as e:
-            msg="Unexpected exception deploying api {} to stage {}".format(api_id, stage)
-            module.fail_json(msg=msg, exception=traceback.format_exc())
+            deploy_response = create_deployment(client, api_id=api_id, stage=stage,
+                                                description=deploy_desc)
+        except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
+            msg = "deploying api {} to stage {}".format(api_id, stage)
+            fail_json_aws(module, e, msg)
         module.exit_json(changed=changed, api_id=api_id,
-                     create_response=camel_dict_to_snake_dict(create_response),
-                     deploy_response=camel_dict_to_snake_dict(deploy_response))
+                         create_response=camel_dict_to_snake_dict(create_response),
+                         deploy_response=camel_dict_to_snake_dict(deploy_response))
     else:
             module.exit_json(changed=changed, api_id=api_id,
-                     create_response=camel_dict_to_snake_dict(create_response))
+                             create_response=camel_dict_to_snake_dict(create_response))
+
+
+retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
+
+
+# There is a PR open to merge fail_json_aws this into the standard module code;
+# see https://github.com/ansible/ansible/pull/23882
+def fail_json_aws(module, exception, msg=None):
+    """call fail_json with processed exception
+    function for converting exceptions thrown by AWS SDK modules,
+    botocore, boto3 and boto, into nice error messages.
+    """
+    last_traceback = traceback.format_exc()
+    if msg is not None:
+        message = '{}: {}'.format(msg, exception.message)
+    else:
+        message = exception.message
+
+    try:
+        response = exception.response
+    except AttributeError:
+        response = None
+
+    if response is None:
+        module.fail_json(msg=message, traceback=last_traceback)
+    else:
+        module.fail_json(msg=message, traceback=last_traceback,
+                         **camel_dict_to_snake_dict(response))
+
+
+@AWSRetry.backoff(**retry_params)
+def create_api(client, name=None, description=None):
+    return client.create_rest_api(name="ansible-temp-api", description=description)
+
+
+@AWSRetry.backoff(**retry_params)
+def configure_api(client, apidata=None, api_id=None, mode="overwrite"):
+    return client.put_rest_api(body=apidata, restApiId=api_id, mode=mode)
+
+
+@AWSRetry.backoff(**retry_params)
+def create_deployment(client, api_id=None, stage=None, description=None):
+    # we can also get None as an argument so we don't do this as a defult
+    if description is None:
+        description = "Automatic deployment by Ansible."
+    return client.create_deployment(restApiId=api_id, stageName=stage, description=description)
+
 
 if __name__ == '__main__':
     main()
