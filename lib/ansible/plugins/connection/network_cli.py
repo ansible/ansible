@@ -243,7 +243,7 @@ class Connection(_Connection):
         """
         try:
             obj = json.loads(to_text(cmd, errors='surrogate_or_strict'))
-            obj = dict((k, to_bytes(v, errors='surrogate_or_strict', nonstring='passthru')) for k, v in obj)
+            obj = dict((k, to_bytes(v, errors='surrogate_or_strict', nonstring='passthru')) for k, v in obj.items())
         except (ValueError, TypeError):
             obj = {'command': to_bytes(cmd.strip(), errors='surrogate_or_strict')}
 
