@@ -79,7 +79,7 @@ class ManageNetworkCI(object):
         name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '_'))
 
         env = ansible_environment(self.core_ci.args)
-        cmd = ['ansible', '-m', '%s' %self.core_ci.platform + '_command', '-a', 'commands=?', '-u', '%s' % self.core_ci.connection.username, '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
+        cmd = ['ansible', '-m', '%s_command' % self.core_ci.platform, '-a', 'commands=?', '-u', self.core_ci.connection.username, '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
         for _ in range(1, 90):
             try:
