@@ -956,7 +956,7 @@ class DockerManager(object):
             'publish_all_ports': self.module.params.get('publish_all_ports'),
             'privileged': self.module.params.get('privileged'),
             'links': self.links,
-            'network_mode': self.module.params.get('net'),
+            'network_mode': self.module.params.get('net') or 'bridge',
         }
 
         optionals = {}
