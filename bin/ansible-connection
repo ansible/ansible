@@ -91,7 +91,7 @@ def do_fork():
         sys.exit(1)
 
 def send_data(s, data):
-    packed_len = struct.pack('!Q',len(data))
+    packed_len = struct.pack('!Q', len(data))
     return s.sendall(packed_len + data)
 
 def recv_data(s):
@@ -102,7 +102,7 @@ def recv_data(s):
         if not d:
             return None
         data += d
-    data_len = struct.unpack('!Q',data[:header_len])[0]
+    data_len = struct.unpack('!Q', data[:header_len])[0]
     data = data[header_len:]
     while len(data) < data_len:
         d = s.recv(data_len - len(data))
@@ -235,12 +235,12 @@ class Server():
 
                     display.display("socket operation completed with rc %s" % rc, log_only=True)
 
-                    send_data(s, to_bytes(str(rc)))
+                    send_data(s, to_bytes(rc))
                     send_data(s, to_bytes(stdout))
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            display.display(traceback.format_exec(), log_only=True)
+            display.display(traceback.format_exc(), log_only=True)
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
@@ -348,7 +348,7 @@ def main():
 
         # send the play_context back into the connection so the connection
         # can handle any privilege escalation activities
-        pc_data = 'CONTEXT: %s' % src.getvalue()
+        pc_data = b'CONTEXT: %s' % src.getvalue()
         send_data(sf, to_bytes(pc_data))
         src.close()
 
