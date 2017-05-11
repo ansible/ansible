@@ -1620,10 +1620,10 @@ def main():
         module.fail_json(msg='boto required for this module')
 
     try:
+        _, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
         if module.params.get('region') or not module.params.get('ec2_url'):
             ec2 = ec2_connect(module)
         elif module.params.get('ec2_url'):
-            _, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
             ec2 = connect_ec2_endpoint(ec2_url, **aws_connect_kwargs)
 
         vpc = connect_vpc(**aws_connect_kwargs)
