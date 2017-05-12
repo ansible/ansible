@@ -21,21 +21,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: cloudfront_origin_access_identity
-
-short_description: create, update and delete origin access identities for a
-    cloudfront distribution.
-
+short_description: create, update and delete origin access identities for a cloudfront distribution.
 description:
     - Allows for easy creation, updating and deletion of origin access identities.
-
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
-
 version_added: "2.4"
-
 author: Willem van Ketwich (@wilvk)
-
 options:
     state:
       description:
