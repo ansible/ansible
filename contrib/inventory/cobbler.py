@@ -190,7 +190,7 @@ class CobblerInventory(object):
                         if this_dns_name is not None and this_dns_name is not "":
                             dns_name = this_dns_name
 
-            if dns_name == '':
+            if dns_name == '' or dns_name is None:
                 continue
 
             status = host['status']
