@@ -68,70 +68,34 @@ class AnsibleSequence(AnsibleBaseYAMLObject, list):
     pass
 
 
-# Unicode like object that is not evaluated (decrypted) until it needs to be
-# TODO: is there a reason these objects are subclasses for YAMLObject?
-class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleUnicode):
+class AnsibleVaultEncryptedUnicode(AnsibleUnicode):
     __UNSAFE__ = True
     __ENCRYPTED__ = True
-    yaml_tag = u'!vault'
 
     @classmethod
-    def from_plaintext(cls, seq, vault):
+    def from_plaintext_and_vault(cls, seq, vault):
         if not vault:
             raise vault.AnsibleVaultError('Error creating AnsibleVaultEncryptedUnicode, invalid vault (%s) provided' % vault)
 
-        ciphertext = vault.encrypt(seq)
-        avu = cls(ciphertext)
+        b_ciphertext = vault.encrypt(seq)
+        avu = cls(seq)
+        avu.b_ciphertext = b_ciphertext
         avu.vault = vault
         return avu
 
-    def __init__(self, ciphertext):
-        '''A AnsibleUnicode with a Vault attribute that can decrypt it.
+    @classmethod
+    def from_ciphertext_and_vault(cls, b_ciphertext, vault):
+        if not vault:
+            raise vault.AnsibleVaultError('Error creating AnsibleVaultEncryptedUnicode, invalid vault (%s) provided' % vault)
 
-        ciphertext is a byte string (str on PY2, bytestring on PY3).
+        plaintext = vault.decrypt(b_ciphertext)
 
-        The .data atttribute is a property that returns the decrypted plaintext
-        of the ciphertext as a PY2 unicode or PY3 string object.
-        '''
-        super(AnsibleVaultEncryptedUnicode, self).__init__()
+        avu = cls(plaintext)
+        avu.b_ciphertext = b_ciphertext
+        avu.vault = vault
+        return avu
 
-        # after construction, calling code has to set the .vault attribute to a vaultlib object
+    def __init__(self, seq):
+        super(AnsibleVaultEncryptedUnicode, self).__init__(seq)
         self.vault = None
-        self._ciphertext = to_bytes(ciphertext)
-
-    @property
-    def data(self):
-        if not self.vault:
-            # FIXME: raise exception?
-            return self._ciphertext
-        return self.vault.decrypt(self._ciphertext).decode()
-
-    @data.setter
-    def data(self, value):
-        self._ciphertext = value
-
-    def __repr__(self):
-        return repr(self.data)
-
-    # Compare a regular str/text_type with the decrypted hypertext
-    def __eq__(self, other):
-        if self.vault:
-            return other == self.data
-        return False
-
-    def __hash__(self):
-        return id(self)
-
-    def __ne__(self, other):
-        if self.vault:
-            return other != self.data
-        return True
-
-    def __str__(self):
-        return str(self.data)
-
-    def __unicode__(self):
-        return unicode(self.data)
-
-    def encode(self, encoding=None, errors=None):
-        return self.data.encode(encoding, errors)
+        self.b_ciphertext = None

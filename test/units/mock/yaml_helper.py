@@ -43,6 +43,7 @@ class YamlTestUtils(object):
         string_from_object_dump_2 = self._dump_string(obj_2,
                                                       dumper=AnsibleDumper)
 
+        self.maxDiff = None
         # The gen 1 and gen 2 yaml strings
         self.assertEquals(string_from_object_dump, string_from_object_dump_2)
         # the gen 1 (orig) and gen 2 py object
