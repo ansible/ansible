@@ -115,7 +115,6 @@ EXAMPLES = '''
 import os
 import pipes
 import stat
-import subprocess
 
 try:
     import MySQLdb
@@ -222,16 +221,12 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         comp_prog_path = module.get_bin_path('xz', required=True)
 
     if comp_prog_path:
-        p1 = subprocess.Popen([comp_prog_path, '-dc', target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p2 = subprocess.Popen(cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout2, stderr2) = p2.communicate()
-        p1.stdout.close()
-        p1.wait()
-        if p1.returncode != 0:
-            stderr1 = p1.stderr.read()
-            return p1.returncode, '', stderr1
+        rc1, stdout1, stderr1 = module.run_command([comp_prog_path, '-dc', target])
+        if rc1 != 0:
+            return rc1, '', stderr1
         else:
-            return p2.returncode, stdout2, stderr2
+            rc2, stdout2, stderr2 = module.run_command(cmd, data=stdout1, binary_data=True)
+            return rc2, stdout2, stderr2
     else:
         cmd = ' '.join(cmd)
         cmd += " < %s" % pipes.quote(target)
