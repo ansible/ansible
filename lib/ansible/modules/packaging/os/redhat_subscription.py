@@ -119,6 +119,12 @@ options:
         required: False
         default: False
         version_added: "2.2"
+    refresh:
+        description:
+            -  Pull the latest subscription data from the server
+        required: False
+        default: False
+        version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -313,7 +319,7 @@ class Rhsm(RegistrationBase):
             args.extend(['--org', org_id])
         else:
             if autosubscribe:
-                args.append('--autosubscribe')
+                args.append('--auto-attach')
             if username:
                 args.extend(['--username', username])
             if password:
@@ -444,6 +450,10 @@ class Rhsm(RegistrationBase):
             changed = True
         return {'changed': changed, 'subscribed_pool_ids': subscribed_pool_ids,
                 'unsubscribed_serials': serials}
+
+    def refresh(self):
+        args = [SUBMAN_CMD, 'refresh']
+        rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
 
 class RhsmPool(object):
@@ -577,6 +587,8 @@ def main():
                              required=False),
             force_register=dict(default=False,
                                 type='bool'),
+            refresh=dict(default=False,
+                         type='bool'),
         ),
         required_together=[['username', 'password'], ['activationkey', 'org_id']],
         mutually_exclusive=[['username', 'activationkey']],
@@ -599,6 +611,7 @@ def main():
     consumer_name = module.params["consumer_name"]
     consumer_id = module.params["consumer_id"]
     force_register = module.params["force_register"]
+    refresh = module.params["refresh"]
 
     global SUBMAN_CMD
     SUBMAN_CMD = module.get_bin_path('subscription-manager', True)
@@ -626,6 +639,8 @@ def main():
                               consumer_type, consumer_name, consumer_id, force_register,
                               environment, rhsm_baseurl, server_insecure)
                 subscribed_pool_ids = rhsm.subscribe(pool)
+                if refresh:
+                    rhsm.refresh()
             except Exception:
                 e = get_exception()
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, e))
