@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8 -*-
 
-# (c) 2017, Wayne  Witzel III <wayne@riotousliving.com>
+# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
