@@ -37,7 +37,6 @@ version_added: "2.4"
 author: Willem van Ketwich (@wilvk)
 
 options:
-    resource:
     state:
       description:
         - The state of the resource. Valid states are
@@ -82,7 +81,7 @@ EXAMPLES = '''
 RETURN = '''
 
 location:
-    description: describes a url specifying the output of the action just run.
+    description: describes a url specifying the origin access identity.
     returned: always
     type: str
 
