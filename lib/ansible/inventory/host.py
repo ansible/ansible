@@ -93,7 +93,7 @@ class Host:
             self._uuid = get_unique_id()
         self.implicit = False
 
-    def __repr__(self):
+    def __str__(self):
         return "Host(name='{0}')".format(self.get_name())
 
     def get_name(self):
