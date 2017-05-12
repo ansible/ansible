@@ -154,7 +154,6 @@ class CloudFrontInvalidationValidationManager:
             self.module.fail_json(
                 msg="error validating parameters for distribution update and delete - " + str(e))
 
-
     def validate_invalidation_batch(self, invalidation_batch, caller_reference):
         try:
             if caller_reference is not None:
