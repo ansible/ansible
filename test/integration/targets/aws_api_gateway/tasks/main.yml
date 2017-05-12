@@ -94,6 +94,66 @@
           - bad_uri_result|failed
 
 
+    # ============================================================
+
+
+    - name: deploy first API
+      aws_api_gateway:
+        api_file: "{{output_dir}}/minimal-swagger-api.yml"
+        stage: "minimal"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ec2_access_key}}'
+        aws_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: create_result_1
+
+    - name: deploy second API rapidly after first
+      aws_api_gateway:
+        api_file: "{{output_dir}}/minimal-swagger-api.yml"
+        stage: "minimal"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ec2_access_key}}'
+        aws_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: create_result_2
+
+    - name: assert both APIs deployed successfully
+      assert:
+        that:
+           - 'create_result_1.changed == True'
+           - 'create_result_2.changed == True'
+           - '"api_id" in create_result_1'
+           - '"api_id" in create_result_1'
+#           - '"created_response.created_date" in create_result'
+#           - '"deploy_response.created_date" in create_result'
+
+    - name: destroy first API
+      aws_api_gateway:
+        state: absent
+        api_id: '{{create_result_1.api_id}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ec2_access_key}}'
+        aws_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: destroy_result_1
+
+    - name: destroy second API rapidly after first
+      aws_api_gateway:
+        state: absent
+        api_id: '{{create_result_2.api_id}}'
+        aws_access_key: '{{ec2_access_key}}'
+        aws_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: destroy_result_2
+
+    - name: assert both APIs deployed successfully
+      assert:
+        that:
+           - 'destroy_result_1.changed == True'
+           - 'destroy_result_2.changed == True'
+#           - '"created_response.created_date" in create_result'
+#           - '"deploy_response.created_date" in create_result'
+
 
   # always:
 
