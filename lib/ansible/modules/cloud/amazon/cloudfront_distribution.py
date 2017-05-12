@@ -1,329 +1,385 @@
 #!/usr/bin/python
-# Copyright (c) 2017 Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
+module: cloudfront
 
-module: cloudfront_distribution
-
-short_description: create, update and delete aws cloudfront distributions.
+short_description: create, update, delete, duplicate and validate aws cloudfront distributions
 
 description:
-    - Allows for easy creation, updating and deletion of CloudFront distributions.
+    - Allows for easy creation, updating, deletion, duplication and validation
+      of CloudFront distributions.
 
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
 
-version_added: "2.5"
+version_added: "2.4"
 
-author:
-  - Willem van Ketwich (@wilvk)
-  - Will Thames (@willthames)
-
-extends_documentation_fragment:
-  - aws
-  - ec2
+author: Willem van Ketwich (@wilvk)
 
 options:
-
     state:
       description:
-        - The desired state of the distribution
-          present - creates a new distribution or updates an existing distribution.
-          absent - deletes an existing distribution.
-      choices: ['present', 'absent']
-      default: 'present'
-
+        - The desired state of the distribution or streaming distribution.
+          present - creates a new distribution
+          absent - deletes an existing distribution
+          updated - updates an existing distribution
+          duplicated - duplicates an existing distribution
+              (can also make updates at the same time)
+          verified - verifies a configuration parameters
+              (but does no action on the resource)
+      choices: ['present', 'absent', 'updated', 'duplicated', 'verified']
+      required: false
     distribution_id:
       description:
-        - The id of the cloudfront distribution. This parameter can be exchanged with I(alias) or I(caller_reference) and is used in conjunction with I(e_tag).
-
+        - The id of the cloudfront distribution.
+          This parameter can be exchanged with C(alias) and in conjunction with C(e_tag).
+          Used with C(streaming_distribution=no)
+      required: false
+    streaming_distribution_id:
+      description:
+        - The id of the CloudFront streaming distribution.
+          This parameter can be exchanged with C(alias) and in conjunction with C(e_tag).
+          Used with C(streaming_distribution=yes)
+      required: false
     e_tag:
       description:
-        - A unique identifier of a modified or existing distribution. Used in conjunction with I(distribution_id).
+        - A unique identifier of a modified or newly created distribution.
+          Used in conjunction with C(distribution_id) or C(streaming_distribution_id).
           Is determined automatically if not specified.
-
+      required: false
+    generate_presigned_url_from_pem_private_key:
+      description:
+        - Generates a presigned url for a distribution from a private I(.pem) file key.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
     caller_reference:
       description:
-        - A unique identifier for creating and updating cloudfront distributions. Each caller reference must be unique across all distributions. e.g. a caller
-          reference used in a web distribution cannot be reused in a streaming distribution. This parameter can be used instead of I(distribution_id)
-          to reference an existing distribution. If not specified, this defaults to a datetime stamp of the format
-          'YYYY-MM-DDTHH:MM:SS.ffffff'.
-
+        - A unique identifier for creating and duplicating cloudfront distributions.
+      required: false
+    invalidation_batch:
+      description:
+        - An array of path strings to be invalidated for a distribution.
+      required: false
+    presigned_url_pem_private_key_path:
+      description:
+        - The path on the host to the .pem private key file.
+          This key is used to sign the url.
+      required: false
+    presigned_url_pem_private_key_password:
+      description:
+        - The optional password for the pem private key file.
+      required: false
+    presigned_url_pem_url:
+      description:
+        - The cloudfront url to sign with the pem private key.
+      required: false
+    presigned_url_pem_expire_date:
+      description:
+        - The expiry date of the presigned url. Date format is I(YYYY-MM-DD)
+      required: false
+    config:
+      description:
+        - This is the main variable used for creating and updating distributions
+          and streaming distributions. When used, it will be a complex data type as
+          a dictionary that represents the config of the distribution.
+          When used for creating a distribution, it must contain at least one
+          origin in C(origins) or the parameter C(default_domain_name_origin) should be
+          used instead. Components of C(config) can be specified entirely in
+          C(config) or as separate elements outside of the config.
+          This parameter applies to both distributions and streaming distributions.
+          Elements of a distribution are
+            caller_reference
+            aliases
+            default_root_object
+            origins
+            default_cache_behavior
+            cache_behaviors
+            custom_error_responses
+            comment
+            logging
+            price_class
+            enabled
+            viewer_certificate
+            restrictions
+            web_acl_id
+          Elements of a streaming distribution are
+            caller_reference
+            s3_origin
+            aliases
+            comment
+            logging
+            trusted_signers
+          Most of these elements have sub-elements that can be seen in their entirety
+          in the boto3 documentation at
+            U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution)
+          and
+            U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_streaming_distribution).
+          When element variables are specified as well as the C(config) variable, the
+          elements specified will have precendence and overwrite any relevant data
+          for that element in the config variable.
+      required: false
     tags:
       description:
-        - Should be input as a dict() of key-value pairs.
-          Note that numeric keys or values must be wrapped in quotes. e.g. "Priority:" '1'
-
+        - Used for distributions and streaming distributions in conjunction with
+          C(config). Should be input as a list of I(Key) I(Value) pairs.
+          When updating a distribution, it removes existing tags then adds the
+          new tags.
+      required: false
     purge_tags:
       description:
-        - Specifies whether existing tags will be removed before adding new tags. When I(purge_tags=yes), existing tags are removed and I(tags) are added, if
-          specified. If no tags are specified, it removes all existing tags for the distribution. When I(purge_tags=no), existing tags are kept and I(tags)
-          are added, if specified.
+        - Specifies whether existing tags will be removed before adding new tags.
+          Used in conjunction with the C(tags) parameter.
+      required: false
       default: 'no'
-      choices: ['yes', 'no']
-
     alias:
       description:
-        - The name of an alias (CNAME) that is used in a distribution. This is used to effectively reference a distribution by its alias as an alias can only
-          be used by one distribution per AWS account. This variable avoids having to provide the I(distribution_id) as well as
-          the I(e_tag), or I(caller_reference) of an existing distribution.
-
+        - The name of an alias that is used in a distribution. This is used to
+          effectively reference a distribution by its alias as an alias can only
+          be used by one distribution per AWS account. This variable avoids having
+          to provide the C(distribution_id) or C(streaming_distribution_id) as well
+          as the C(e_tag) to reference a distribution. This variable is used for
+          updating and duplicating distributions and streaming distributions.
+      required: false
     aliases:
       description:
-        - A I(list[]) of domain name aliases (CNAMEs) as strings to be used for the distribution. Each alias must be unique across all distribution for the AWS
-          account.
-
-    purge_aliases:
-      description:
-        - Specifies whether existing aliases will be removed before adding new aliases. When I(purge_aliases=yes), existing aliases are removed and I(aliases)
-          are added.
-      default: 'no'
-      choices: ['yes', 'no']
-
+        - A list of domain name aliases as strings to be used for the distribution.
+          Each alias must be unique across all distributions for the account.
+          Applies to both distributions and streaming distributions.
+      required: false
     default_root_object:
       description:
-        - A config element that specifies the path to request when the user requests the origin. e.g. if specified as 'index.html', this maps to
-          www.example.com/index.html when www.example.com is called by the user. This prevents the entire distribution origin from being exposed at the root.
-
+        - A config element that specifies the path to request when
+          the user requests the origin.
+          eg. if specified as 'index.html', this maps to www.example.com/index.html
+          when www.example.com is called by the user. This prevents the entire
+          distribution origin from being exposed at the root.
+      required: false
     default_origin_domain_name:
       description:
-        - The domain name to use for an origin if no I(origins) have been specified. Should only be used on a first run of generating a distribution and not on
-          subsequent runs. Should not be used in conjunction with I(distribution_id), I(caller_reference) or I(alias).
-
+        - The domain name to use for an origin if no C(origins) have been specified.
+          This parameter is used for C(resource=distribution) in conjunction with
+          C(state=present) or C(state=updated) or C(state=duplicated).
+      required: false
     default_origin_path:
       description:
-        - The default origin path to specify for an origin if no I(origins) have been specified. Defaults to empty if not specified.
-
+        - The default origin path to specify for an origin if no C(origins) have
+          specified. Defaults to empty if not specified.
+          This parameter is used for C(resource=distribution) in conjunction with
+          C(state=present) or C(state=updated) or C(state=duplicated).
+      required: false
+    default_s3_origin_access_identity:
+      description:
+        - The origin access identity to use for a distribution that references an
+          s3 bucket if not specified in C(s3_origin_config).
+          If the s3 bucket is public, can be omitted.
+          This parameter is used for C(resource=distribution) in
+          conjunction with C(state=present) or C(state=updated) or
+          C(state=duplicated).
+      required: false
+    default_s3_origin_domain_name:
+      description:
+        - The domain name of an s3 bucket to use for a streaming distribution.
+          Required as a minimum if no other parameters are specified.
+          This parameter is used for C(resource=streaming_distribution) in
+          conjunction with C(state=present) or C(state=updated) or
+          C(state=duplicated).
+      required: false
+    default_s3_origin_origin_access_identity:
+      description:
+        - The default origin access identity to use for an s3 bucket used for
+          a streaming distribution. If the s3 bucket is public, can be omitted.
+          This parameter is used for C(resource=streaming_distribution) in
+          conjunction with C(state=present) or C(state=updated) or
+          C(state=duplicated).
+      required: false
     origins:
       description:
-        - A config element that is a I(list[]) of complex origin objects to be specified for the distribution. Used for creating and updating distributions.
-          Each origin item comprises the attributes
-            I(id)
-            I(domain_name) (defaults to default_origin_domain_name if not specified)
-            I(origin_path) (defaults to default_origin_path if not specified)
-            I(custom_headers[])
-              I(header_name)
-              I(header_value)
-            I(s3_origin_access_identity_enabled)
-            I(custom_origin_config)
-              I(http_port)
-              I(https_port)
-              I(origin_protocol_policy)
-              I(origin_ssl_protocols[])
-              I(origin_read_timeout)
-              I(origin_keepalive_timeout)
-
-    purge_origins:
-      description: Whether to remove any origins that aren't listed in I(origins)
-      default: false
-
+        - A config element that is a list of complex origin objects to be
+          specified for the distribution. Used for creating, updating and duplicating
+          distributions. Only valid for C(streaming_distribution=no). Each origin
+          item comprises the attributes
+            id
+            domain_name (defaults to default_origin_domain_name if not specified)
+            origin_path
+            custom_headers
+              - header_name
+              - header_value
+            s3_origin_config
+              origin_access_identity
+            custom_origin_config
+              http_port
+              https_port
+              origin_protocol_policy
+              origin_ssl_protocols
+              origin_read_timeout
+              origin_keepalive_timeout
+      required: false
     default_cache_behavior:
       description:
-        - A config element that is a complex object specifying the default cache behavior of the distribution. If not specified, the I(target_origin_id) is
-          defined as the I(target_origin_id) of the first valid I(cache_behavior) in I(cache_behaviors) with defaults.
+        - A config element that is a complex object specifying the default cache
+          behavior of the distribution. If not specified, the C(target_origin_id)
+          is defined as the C(target_origin_id) of the first valid C(cache_behavior)
+          in C(cache_behaviors) with defaults.
           The default cache behavior comprises the attributes
-            I(target_origin_id)
-            I(forwarded_values)
-              I(query_string)
-              I(cookies)
-                I(forward)
-                I(whitelisted_names)
-              I(headers[])
-              I(query_string_cache_keys[])
-              I(trusted_signers)
-                I(enabled)
-                I(items[])
-              I(viewer_protocol_policy)
-              I(min_ttl)
-              I(allowed_methods)
-                I(items[])
-                I(cached_methods[])
-              I(smooth_streaming)
-              I(default_ttl)
-              I(max_ttl)
-              I(compress)
-              I(lambda_function_associations[])
-                I(lambda_function_arn)
-                I(event_type)
-
+            target_origin_id
+            forwarded_values
+              query_string
+              cookies
+                forward
+                whitelisted_names
+              headers
+              query_string_cache_keys
+              trusted_signers
+                enabled
+                items
+              viewer_protocol_policy
+              min_ttl
+              allowed_methods
+                items
+                cached_methods
+              smooth_streaming
+              default_ttl
+              max_ttl
+              compress
+              lambda_function_associations
+                - lambda_function_arn
+                - event_type
+          Only valid for C(streaming_distribution=no).
+      required: false
     cache_behaviors:
       description:
-        - A config element that is a I(list[]) of complex cache behavior objects to be specified for the distribution. The order
-          of the list is preserved across runs unless C(purge_cache_behavior) is enabled.
-          Each cache behavior comprises the attributes
-            I(path_pattern)
-            I(target_origin_id)
-            I(forwarded_values)
-              I(query_string)
-              I(cookies)
-              I(forward)
-              I(whitelisted_names)
-              I(headers[])
-              I(query_string_cache_keys[])
-            I(trusted_signers)
-              I(enabled)
-              I(items[])
-            I(viewer_protocol_policy)
-            I(min_ttl)
-            I(allowed_methods)
-              I(items[])
-              I(cached_methods[])
-            I(smooth_streaming)
-            I(default_ttl)
-            I(max_ttl)
-            I(compress)
-            I(lambda_function_associations[])
-
-    purge_cache_behaviors:
-      description: Whether to remove any cache behaviors that aren't listed in I(cache_behaviors). This switch
-        also allows the reordering of cache_behaviors.
-      default: false
-
+        - A config element that is a list of complex cache behavior objects to
+          be specified for thecdistribution.
+          Only valid for C(streaming_distribution=no).
+          Each cache behavior comprises the attributes of
+            path_pattern
+            target_origin_id
+            forwarded_values
+            trusted_signers
+            viewer_protocol_policy
+            min_ttl
+            allowed_methods
+            smooth_streaming
+            default_ttl
+            max_ttl
+            compress
+            lambda_function_associations
+      required: false
     custom_error_responses:
       description:
-        - A config element that is a I(list[]) of complex custom error responses to be specified for the distribution. This attribute configures custom http
+        - A config element that is a list of complex custom error responses to be
+          specified for the distribution. This attribute configures custom http
           error messages returned to the user.
-          Each custom error response object comprises the attributes
-            I(error_code)
-            I(reponse_page_path)
-            I(response_code)
-            I(error_caching_min_ttl)
-
-    purge_custom_error_responses:
-      description: Whether to remove any custom error responses that aren't listed in I(custom_error_responses)
-      default: false
-
+          Only valid for distributions.
+          Each custom error response comprises the attributes
+            error_code
+            reponse_page_path
+            response_code error_caching_min_ttl
+      required: false
     comment:
       description:
-        - A comment that describes the cloudfront distribution. If not specified, it defaults to a
-          generic message that it has been created with Ansible, and a datetime stamp.
-
+        - A unique comment to describe the cloudfront distribution. Applies to both
+          distributions, streaming distributions and origin access identities.
+          If not specified, it defaults to a generic message that it has been
+          created with Ansible, and a datetime stamp.
+      required: false
     logging:
       description:
-        - A config element that is a complex object that defines logging for the distribution.
-          The logging object comprises the attributes
-            I(enabled)
-            I(include_cookies)
-            I(bucket)
-            I(prefix)
-
+        - A config element that is a complex object that defines logging for
+          the distribution. Applies to both distributions and streaming
+          distributions. The logging object comprises the attributes
+            enabled
+            include_cookies
+            bucket
+            prefix
+      required: false
     price_class:
       description:
-        - A string that specifies the pricing class of the distribution. As per
-          U(https://aws.amazon.com/cloudfront/pricing/)
-            I(price_class=PriceClass_100) consists of the areas
-              United States
-              Canada
-              Europe
-            I(price_class=PriceClass_200) consists of the areas
-              United States
-              Canada
-              Europe
-              Hong Kong, Philippines, S. Korea, Singapore & Taiwan
-              Japan
-              India
-            I(price_class=PriceClass_All) consists of the areas
-              United States
-              Canada
-              Europe
-              Hong Kong, Philippines, S. Korea, Singapore & Taiwan
-              Japan
-              India
-              South America
-              Australia
+        - A string that specifies the pricing class of the distribution. Applies to
+          both distributions and streaming distributions.
       choices: ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
-      default: aws defaults this to 'PriceClass_All'
-
+      required: false
     enabled:
       description:
-        - A boolean value that specifies whether the distribution is enabled or disabled.
+        - A boolean value that specifies whether the distribution is enabled or
+          disabled. Applies to both distributions and streaming distributions.
       default: 'yes'
       choices: ['yes', 'no']
-
     viewer_certificate:
       description:
-        - A config element that is a complex object that specifies the encryption details of the distribution.
+        - A config element that is a complex object that specifies the encryption
+          details of the distribution. Only valid for C(streaming_distribution=no).
           Comprises the following attributes
-            I(cloudfront_default_certificate)
-            I(iam_certificate_id)
-            I(acm_certificate_arn)
-            I(ssl_support_method)
-            I(minimum_protocol_version)
-            I(certificate)
-            I(certificate_source)
-
+            cloudfront_default_certificate
+            iam_certificate_id
+            acm_certificate_arn
+            ssl_support_method
+            minimum_protocol_version
+            certificate certificate_source
+      required: false
     restrictions:
       description:
-        - A config element that is a complex object that describes how a distribution should restrict it's content.
+        - A config element that is a complex object that describes how a
+          distribution should restrict it's content. Only valid for distributions.
           The restriction object comprises the following attributes
-            I(geo_restriction)
-              I(restriction_type)
-              I(items[])
-
+            geo_restriction
+      required: false
     web_acl_id:
       description:
-        - The id of a Web Application Firewall (WAF) Access Control List (ACL).
-
+        - The id of a Web App Firewall acl. Only valid for distributions.
+      required: false
     http_version:
       description:
-        - The version of the http protocol to use for the distribution.
+        - The version of http to use for the distribution. Valid for both
+          distributions and streaming distributions.
+          Only valid for distributions.
       choices: [ 'http1.1', 'http2' ]
-      default: aws defaults this to 'http2'
-
-    ipv6_enabled:
+      required: false
+    is_ipv6_enabled:
       description:
-        - Determines whether IPv6 support is enabled or not.
+        - Determines whether IPv6 suppoer is enabled or not.
       choices: ['yes', 'no']
       default: 'no'
-
-    wait:
-      description:
-        - Specifies whether the module waits until the distribution has completed processing the creation or update.
-      choices: ['yes', 'no']
-      default: 'no'
-
-    wait_timeout:
-      description:
-        - Specifies the duration in seconds to wait for a timeout of a cloudfront create or update. Defaults to 1800 seconds (30 minutes).
-      default: 1800
-
 '''
 
 EXAMPLES = '''
-
 # create a basic distribution with defaults and tags
-
 - cloudfront_distribution:
     state: present
     default_origin_domain_name: www.my-cloudfront-origin.com
     tags:
-      Name: example distribution
-      Project: example project
-      Priority: '1'
+      - Name: example distribution
+      - Project: example project
+      - Priority: 1
 
 # update a distribution comment by distribution_id
-
 - cloudfront_distribution:
-    state: present
+    state: updated
     distribution_id: E1RP5A2MJ8073O
     comment: modified by ansible cloudfront.py
 
-# update a distribution comment by caller_reference
-
-- cloudfront_distribution:
-    state: present
-    caller_reference: my cloudfront distribution 001
-    comment: modified by ansible cloudfront.py
-
 # update a distribution's aliases and comment using the distribution_id as a reference
-
 - cloudfront_distribution:
     state: present
     distribution_id: E1RP5A2MJ8073O
@@ -331,32 +387,64 @@ EXAMPLES = '''
     aliases: [ 'www.my-distribution-source.com', 'zzz.aaa.io' ]
 
 # update a distribution's aliases and comment using an alias as a reference
-
 - cloudfront_distribution:
-    state: present
-    caller_reference: my test distribution
+    state: updated
+    distribution_id: E15BU8SDCGSG57
     comment: modified by cloudfront.py again
     aliases:
       - www.my-distribution-source.com
       - zzz.aaa.io
 
 # update a distribution's comment and aliases and tags and remove existing tags
-
 - cloudfront_distribution:
-    state: present
+    state: updated
     distribution_id: E15BU8SDCGSG57
     comment: modified by cloudfront.py again
     aliases:
       - tested.com
     tags:
-      Project: distribution 1.2
+      - Project: distribution 1.2
     purge_tags: yes
 
-# create a distribution with an origin, logging and default cache behavior
+# validate a distribution with an origin, logging and default cache behavior
+- cloudfront_distribution:
+    state: validated
+    origins:
+      - id: 'my test origin-000111'
+        domain_name: www.example.com
+        origin_path: /production
+        custom_headers:
+          - header_name: MyCustomHeaderName
+            header_value: MyCustomHeaderValue
+    default_cache_behavior:
+      target_origin_id: 'my test origin-000111'
+      forwarded_values:
+        query_string: true
+        cookies:
+          forward: all
+        headers:
+          - '*'
+      viewer_protocol_policy: allow-all
+      smooth_streaming: true
+      compress: true
+      allowed_methods:
+        items:
+          - GET
+          - HEAD
+        cached_methods:
+          - GET
+          - HEAD
+    logging:
+      enabled: true
+      include_cookies: false
+      bucket: myawslogbucket.s3.amazonaws.com
+      prefix: myprefix/
+    enabled: false
+    comment: this is a cloudfront distribution with logging
 
+# create a distribution with an origin, logging and default cache behavior
 - cloudfront_distribution:
     state: present
-    caller_reference: unique test distribution id
     origins:
         - id: 'my test origin-000111'
           domain_name: www.example.com
@@ -391,718 +479,91 @@ EXAMPLES = '''
     comment: this is a cloudfront distribution with logging
 
 # delete a distribution
-
 - cloudfront_distribution:
     state: absent
-    caller_reference: replaceable distribution
+    distribution_id: E1ZNUV0U7KWO4P
+
+# duplicate a distribution by distribution_id and modify the comment field
+- cloudfront_distribution:
+    state: duplicated
+    distribution_id: E1RP5A2MJ8073O
+    comment: duplicated distribution
+
+# duplicate a distribution based on distribution_id and set comment and aliases on new distribution
+- cloudfront_distribution:
+    state: duplicated
+    distribution_id: E1RP5A2MJ8073O
+    comment: duplicated distribution with different aliases
+    aliases: [ 'test.one', 'test.two', 'another.domain.not.in.original.com' ]
+
+# create a presigned url for a distribution based on a distribution_id and from a local pem file
+- cloudfront_distribution:
+    generate_presigned_url_from_pem_private_key: yes
+    distribution_id: E1RP5A2MJ8073O
+    presigned_url_pem_private_key_path: /home/user/ansible/pk-APKAJMTT6OPAZSFTNSCZ.pem
+    presigned_url_pem_url: 'http://d3vodljfucvmwf.cloudfront.net/example.txt'
+    presigned_url_pem_expire_date: '2017-04-20'
+
+# create a streaming distribution
+- cloudfront_distribution:
+     streaming_distribution: yes
+     state: present
+     default_s3_origin_domain_name: example-bucket.s3.amazonaws.com
+     comment: example streaming distribution
+
+# create a streaming distribution with tags
+- cloudfront_distribution:
+     streaming_distribution: yes
+     default_s3_origin_domain_name: example-bucket.s3.amazonaws.com
+     comment: example streaming distribution
+     tags:
+       - Name: example distribution
+       - Project: example project
+       - Priority: 1
+
+# duplicate a streaming distribution
+- cloudfront_distribution:
+    resource: streaming_distribution
+    state: duplicated
+    streaming_distribution_id: E2RTIUCAA9RINU
+
+# update a streaming distribution
+- cloudfront_distribution:
+    streaming_distribution: yes
+    state: updated
+    streaming_distribution_id: E2RTIUCAA9RINU
+    comment: modified streaming distribution
 '''
 
 RETURN = '''
-active_trusted_signers:
-  description: Key pair IDs that CloudFront is aware of for each trusted signer
-  returned: always
-  type: complex
-  contains:
-    enabled:
-      description: Whether trusted signers are in use
-      returned: always
-      type: bool
-      sample: false
-    quantity:
-      description: Number of trusted signers
-      returned: always
-      type: int
-      sample: 1
-    items:
-      description: Number of trusted signers
-      returned: when there are trusted signers
-      type: list
-      sample:
-      - key_pair_id
-aliases:
-  description: Aliases that refer to the distribution
-  returned: always
-  type: complex
-  contains:
-    items:
-      description: List of aliases
-      returned: always
-      type: list
-      sample:
-      - test.example.com
-    quantity:
-      description: Number of aliases
-      returned: always
-      type: int
-      sample: 1
-arn:
-  description: Amazon Resource Name of the distribution
-  returned: always
-  type: string
-  sample: arn:aws:cloudfront::123456789012:distribution/E1234ABCDEFGHI
-cache_behaviors:
-  description: Cloudfront cache behaviors
-  returned: always
-  type: complex
-  contains:
-    items:
-      description: List of cache behaviors
-      returned: always
-      type: complex
-      contains:
-        allowed_methods:
-          description: Methods allowed by the cache behavior
-          returned: always
-          type: complex
-          contains:
-            cached_methods:
-              description: Methods cached by the cache behavior
-              returned: always
-              type: complex
-              contains:
-                items:
-                  description: List of cached methods
-                  returned: always
-                  type: list
-                  sample:
-                  - HEAD
-                  - GET
-                quantity:
-                  description: Count of cached methods
-                  returned: always
-                  type: int
-                  sample: 2
-            items:
-              description: List of methods allowed by the cache behavior
-              returned: always
-              type: list
-              sample:
-              - HEAD
-              - GET
-            quantity:
-              description: Count of methods allowed by the cache behavior
-              returned: always
-              type: int
-              sample: 2
-        compress:
-          description: Whether compression is turned on for the cache behavior
-          returned: always
-          type: bool
-          sample: false
-        default_ttl:
-          description: Default Time to Live of the cache behavior
-          returned: always
-          type: int
-          sample: 86400
-        forwarded_values:
-          description: Values forwarded to the origin for this cache behavior
-          returned: always
-          type: complex
-          contains:
-            cookies:
-              description: Cookies to forward to the origin
-              returned: always
-              type: complex
-              contains:
-                forward:
-                  description: Which cookies to forward to the origin for this cache behavior
-                  returned: always
-                  type: string
-                  sample: none
-                whitelisted_names:
-                  description: The names of the cookies to forward to the origin for this cache behavior
-                  returned: when I(forward) is C(whitelist)
-                  type: complex
-                  contains:
-                    quantity:
-                      description: Count of cookies to forward
-                      returned: always
-                      type: int
-                      sample: 1
-                    items:
-                      description: List of cookies to forward
-                      returned: when list is not empty
-                      type: list
-                      sample: my_cookie
-            headers:
-              description: Which headers are used to vary on cache retrievals
-              returned: always
-              type: complex
-              contains:
-                quantity:
-                  description: Count of headers to vary on
-                  returned: always
-                  type: int
-                  sample: 1
-                items:
-                  description: List of headers to vary on
-                  returned: when list is not empty
-                  type: list
-                  sample:
-                  - Host
-            query_string:
-              description: Whether the query string is used in cache lookups
-              returned: always
-              type: bool
-              sample: false
-            query_string_cache_keys:
-              description: Which query string keys to use in cache lookups
-              returned: always
-              type: complex
-              contains:
-                quantity:
-                  description: Count of query string cache keys to use in cache lookups
-                  returned: always
-                  type: int
-                  sample: 1
-                items:
-                  description: List of query string cache keys to use in cache lookups
-                  returned: when list is not empty
-                  type: list
-                  sample:
-        lambda_function_associations:
-          description: Lambda function associations for a cache behavior
-          returned: always
-          type: complex
-          contains:
-            quantity:
-              description: Count of lambda function associations
-              returned: always
-              type: int
-              sample: 1
-            items:
-              description: List of lambda function associations
-              returned: when list is not empty
-              type: list
-              sample:
-              - lambda_function_arn: arn:aws:lambda:123456789012:us-east-1/lambda/lambda-function
-                event_type: viewer-response
-        max_ttl:
-          description: Maximum Time to Live
-          returned: always
-          type: int
-          sample: 31536000
-        min_ttl:
-          description: Minimum Time to Live
-          returned: always
-          type: int
-          sample: 0
-        path_pattern:
-          description: Path pattern that determines this cache behavior
-          returned: always
-          type: string
-          sample: /path/to/files/*
-        smooth_streaming:
-          description: Whether smooth streaming is enabled
-          returned: always
-          type: bool
-          sample: false
-        target_origin_id:
-          description: Id of origin reference by this cache behavior
-          returned: always
-          type: string
-          sample: origin_abcd
-        trusted_signers:
-          description: Trusted signers
-          returned: always
-          type: complex
-          contains:
-            enabled:
-              description: Whether trusted signers are enabled for this cache behavior
-              returned: always
-              type: bool
-              sample: false
-            quantity:
-              description: Count of trusted signers
-              returned: always
-              type: int
-              sample: 1
-        viewer_protocol_policy:
-          description: Policy of how to handle http/https
-          returned: always
-          type: string
-          sample: redirect-to-https
-    quantity:
-      description: Count of cache behaviors
-      returned: always
-      type: int
-      sample: 1
+location:
+    description: describes a url specifying the output of the action just run.
+    returned: applies to C(streaming_distribution=no) with C(state=present) or
+    C(state=updated) or C(state=duplicated) or when specifying
+    C(generate_presigned_url_from_pem_private_key=yes)
+    type: str
 
-caller_reference:
-  description: Idempotency reference given when creating cloudfront distribution
-  returned: always
-  type: string
-  sample: '1484796016700'
-comment:
-  description: Any comments you want to include about the distribution
-  returned: always
-  type: string
-  sample: 'my first cloudfront distribution'
-custom_error_responses:
-  description: Custom error responses to use for error handling
-  returned: always
-  type: complex
-  contains:
-    items:
-      description: List of custom error responses
-      returned: always
-      type: complex
-      contains:
-        error_caching_min_ttl:
-          description: Mininum time to cache this error response
-          returned: always
-          type: int
-          sample: 300
-        error_code:
-          description: Origin response code that triggers this error response
-          returned: always
-          type: int
-          sample: 500
-        response_code:
-          description: Response code to return to the requester
-          returned: always
-          type: string
-          sample: '500'
-        response_page_path:
-          description: Path that contains the error page to display
-          returned: always
-          type: string
-          sample: /errors/5xx.html
-    quantity:
-      description: Count of custom error response items
-      returned: always
-      type: int
-      sample: 1
-default_cache_behavior:
-  description: Default cache behavior
-  returned: always
-  type: complex
-  contains:
-    allowed_methods:
-      description: Methods allowed by the cache behavior
-      returned: always
-      type: complex
-      contains:
-        cached_methods:
-          description: Methods cached by the cache behavior
-          returned: always
-          type: complex
-          contains:
-            items:
-              description: List of cached methods
-              returned: always
-              type: list
-              sample:
-              - HEAD
-              - GET
-            quantity:
-              description: Count of cached methods
-              returned: always
-              type: int
-              sample: 2
-        items:
-          description: List of methods allowed by the cache behavior
-          returned: always
-          type: list
-          sample:
-          - HEAD
-          - GET
-        quantity:
-          description: Count of methods allowed by the cache behavior
-          returned: always
-          type: int
-          sample: 2
-    compress:
-      description: Whether compression is turned on for the cache behavior
-      returned: always
-      type: bool
-      sample: false
-    default_ttl:
-      description: Default Time to Live of the cache behavior
-      returned: always
-      type: int
-      sample: 86400
-    forwarded_values:
-      description: Values forwarded to the origin for this cache behavior
-      returned: always
-      type: complex
-      contains:
-        cookies:
-          description: Cookies to forward to the origin
-          returned: always
-          type: complex
-          contains:
-            forward:
-              description: Which cookies to forward to the origin for this cache behavior
-              returned: always
-              type: string
-              sample: none
-            whitelisted_names:
-              description: The names of the cookies to forward to the origin for this cache behavior
-              returned: when I(forward) is C(whitelist)
-              type: complex
-              contains:
-                quantity:
-                  description: Count of cookies to forward
-                  returned: always
-                  type: int
-                  sample: 1
-                items:
-                  description: List of cookies to forward
-                  returned: when list is not empty
-                  type: list
-                  sample: my_cookie
-        headers:
-          description: Which headers are used to vary on cache retrievals
-          returned: always
-          type: complex
-          contains:
-            quantity:
-              description: Count of headers to vary on
-              returned: always
-              type: int
-              sample: 1
-            items:
-              description: List of headers to vary on
-              returned: when list is not empty
-              type: list
-              sample:
-              - Host
-        query_string:
-          description: Whether the query string is used in cache lookups
-          returned: always
-          type: bool
-          sample: false
-        query_string_cache_keys:
-          description: Which query string keys to use in cache lookups
-          returned: always
-          type: complex
-          contains:
-            quantity:
-              description: Count of query string cache keys to use in cache lookups
-              returned: always
-              type: int
-              sample: 1
-            items:
-              description: List of query string cache keys to use in cache lookups
-              returned: when list is not empty
-              type: list
-              sample:
-    lambda_function_associations:
-      description: Lambda function associations for a cache behavior
-      returned: always
-      type: complex
-      contains:
-        quantity:
-          description: Count of lambda function associations
-          returned: always
-          type: int
-          sample: 1
-        items:
-          description: List of lambda function associations
-          returned: when list is not empty
-          type: list
-          sample:
-          - lambda_function_arn: arn:aws:lambda:123456789012:us-east-1/lambda/lambda-function
-            event_type: viewer-response
-    max_ttl:
-      description: Maximum Time to Live
-      returned: always
-      type: int
-      sample: 31536000
-    min_ttl:
-      description: Minimum Time to Live
-      returned: always
-      type: int
-      sample: 0
-    path_pattern:
-      description: Path pattern that determines this cache behavior
-      returned: always
-      type: string
-      sample: /path/to/files/*
-    smooth_streaming:
-      description: Whether smooth streaming is enabled
-      returned: always
-      type: bool
-      sample: false
-    target_origin_id:
-      description: Id of origin reference by this cache behavior
-      returned: always
-      type: string
-      sample: origin_abcd
-    trusted_signers:
-      description: Trusted signers
-      returned: always
-      type: complex
-      contains:
-        enabled:
-          description: Whether trusted signers are enabled for this cache behavior
-          returned: always
-          type: bool
-          sample: false
-        quantity:
-          description: Count of trusted signers
-          returned: always
-          type: int
-          sample: 1
-    viewer_protocol_policy:
-      description: Policy of how to handle http/https
-      returned: always
-      type: string
-      sample: redirect-to-https
-default_root_object:
-  description: The object that you want CloudFront to request from your origin (for example, index.html)
-    when a viewer requests the root URL for your distribution
-  returned: always
-  type: string
-  sample: ''
-diff:
-  description: Difference between previous configuration and new configuration
-  returned: always
-  type: dict
-  sample: {}
-domain_name:
-  description: Domain name of cloudfront distribution
-  returned: always
-  type: string
-  sample: d1vz8pzgurxosf.cloudfront.net
-enabled:
-  description: Whether the cloudfront distribution is enabled or not
-  returned: always
-  type: bool
-  sample: true
-http_version:
-  description: Version of HTTP supported by the distribution
-  returned: always
-  type: string
-  sample: http2
-id:
-  description: Cloudfront distribution ID
-  returned: always
-  type: string
-  sample: E123456ABCDEFG
-in_progress_invalidation_batches:
-  description: The number of invalidation batches currently in progress
-  returned: always
-  type: int
-  sample: 0
-is_ipv6_enabled:
-  description: Whether IPv6 is enabled
-  returned: always
-  type: bool
-  sample: true
-last_modified_time:
-  description: Date and time distribution was last modified
-  returned: always
-  type: string
-  sample: '2017-10-13T01:51:12.656000+00:00'
-logging:
-  description: Logging information
-  returned: always
-  type: complex
-  contains:
-    bucket:
-      description: S3 bucket logging destination
-      returned: always
-      type: string
-      sample: logs-example-com.s3.amazonaws.com
-    enabled:
-      description: Whether logging is enabled
-      returned: always
-      type: bool
-      sample: true
-    include_cookies:
-      description: Whether to log cookies
-      returned: always
-      type: bool
-      sample: false
-    prefix:
-      description: Prefix added to logging object names
-      returned: always
-      type: string
-      sample: cloudfront/test
-origins:
-  description: Origins in the cloudfront distribution
-  returned: always
-  type: complex
-  contains:
-    items:
-      description: List of origins
-      returned: always
-      type: complex
-      contains:
-        custom_headers:
-          description: Custom headers passed to the origin
-          returned: always
-          type: complex
-          contains:
-            quantity:
-              description: Count of headers
-              returned: always
-              type: int
-              sample: 1
-        custom_origin_config:
-          description: Configuration of the origin
-          returned: always
-          type: complex
-          contains:
-            http_port:
-              description: Port on which HTTP is listening
-              returned: always
-              type: int
-              sample: 80
-            https_port:
-              description: Port on which HTTPS is listening
-              returned: always
-              type: int
-              sample: 443
-            origin_keepalive_timeout:
-              description: Keep-alive timeout
-              returned: always
-              type: int
-              sample: 5
-            origin_protocol_policy:
-              description: Policy of which protocols are supported
-              returned: always
-              type: string
-              sample: https-only
-            origin_read_timeout:
-              description: Timeout for reads to the origin
-              returned: always
-              type: int
-              sample: 30
-            origin_ssl_protocols:
-              description: SSL protocols allowed by the origin
-              returned: always
-              type: complex
-              contains:
-                items:
-                  description: List of SSL protocols
-                  returned: always
-                  type: list
-                  sample:
-                  - TLSv1
-                  - TLSv1.1
-                  - TLSv1.2
-                quantity:
-                  description: Count of SSL protocols
-                  returned: always
-                  type: int
-                  sample: 3
-        domain_name:
-          description: Domain name of the origin
-          returned: always
-          type: string
-          sample: test-origin.example.com
-        id:
-          description: ID of the origin
-          returned: always
-          type: string
-          sample: test-origin.example.com
-        origin_path:
-          description: Subdirectory to prefix the request from the S3 or HTTP origin
-          returned: always
-          type: string
-          sample: ''
-    quantity:
-      description: Count of origins
-      returned: always
-      type: int
-      sample: 1
-price_class:
-  description: Price class of cloudfront distribution
-  returned: always
-  type: string
-  sample: PriceClass_All
-restrictions:
-  description: Restrictions in use by Cloudfront
-  returned: always
-  type: complex
-  contains:
-    geo_restriction:
-      description: Controls the countries in which your content is distributed.
-      returned: always
-      type: complex
-      contains:
-        quantity:
-          description: Count of restrictions
-          returned: always
-          type: int
-          sample: 1
-        items:
-          description: List of country codes allowed or disallowed
-          returned: always
-          type: list
-          sample: xy
-        restriction_type:
-          description: Type of restriction
-          returned: always
-          type: string
-          sample: blacklist
-status:
-  description: Status of the cloudfront distribution
-  returned: always
-  type: string
-  sample: InProgress
-tags:
-  description: Distribution tags
-  returned: always
-  type: dict
-  sample:
-    Hello: World
-viewer_certificate:
-  description: Certificate used by cloudfront distribution
-  returned: always
-  type: complex
-  contains:
-    acm_certificate_arn:
-      description: ARN of ACM certificate
-      returned: when certificate comes from ACM
-      type: string
-      sample: arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-1234-1234-abcd-123456abcdef
-    certificate:
-      description: Reference to certificate
-      returned: always
-      type: string
-      sample: arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-1234-1234-abcd-123456abcdef
-    certificate_source:
-      description: Where certificate comes from
-      returned: always
-      type: string
-      sample: acm
-    minimum_protocol_version:
-      description: Minimum SSL/TLS protocol supported by this distribution
-      returned: always
-      type: string
-      sample: TLSv1
-    ssl_support_method:
-      description: Support for pre-SNI browsers or not
-      returned: always
-      type: string
-      sample: sni-only
-web_acl_id:
-  description: ID of Web Access Control List (from WAF service)
-  returned: always
-  type: string
-  sample: abcd1234-1234-abcd-abcd-abcd12345678
+validation_result:
+    description: either returns 'OK' or fails with a description of why the
+      validation failed.
+    returned:
+      with C(state=validated)
+    type: str
 '''
 
-from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
 from ansible.module_utils.ec2 import get_aws_connection_info
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, compare_aws_tags
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
-from ansible.module_utils.ec2 import snake_dict_to_camel_dict, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
+from botocore.signers import CloudFrontSigner
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 import datetime
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    try:
-        from ordereddict import OrderedDict
-    except ImportError:
-        pass  # caught by AnsibleAWSModule (as python 2.6 + boto3 => ordereddict is installed)
+from functools import partial
+import json
+import traceback
 
 try:
     import botocore
@@ -1110,123 +571,192 @@ except ImportError:
     pass
 
 
-def change_dict_key_name(dictionary, old_key, new_key):
-    if old_key in dictionary:
-        dictionary[new_key] = dictionary.get(old_key)
-        dictionary.pop(old_key, None)
-    return dictionary
+class CloudFrontServiceManager:
+    """
+    Handles CloudFront service calls to AWS
+    """
 
+    def __init__(self, module):
+        self.module = module
+        self.create_client('cloudfront')
 
-def merge_validation_into_config(config, validated_node, node_name):
-    if validated_node is not None:
-        if isinstance(validated_node, dict):
-            config_node = config.get(node_name)
-            if config_node is not None:
-                config_node_items = list(config_node.items())
+    def create_client(self, resource):
+        try:
+            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
+            self.client = boto3_conn(self.module, conn_type='client', resource=resource,
+                                     region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        except botocore.exceptions.NoRegionError:
+            self.module.fail_json(msg=("region must be specified as a parameter in "
+                                       "AWS_DEFAULT_REGION environment variable or in "
+                                       "boto configuration file"))
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="unable to establish connection - " + str(e),
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def generate_presigned_url_from_pem_private_key(self, distribution_id, private_key_path, private_key_password, url, expire_date):
+        try:
+            self.pem_private_key_path = private_key_path
+            self.pem_private_key_password = private_key_password
+            cloudfront_signer = CloudFrontSigner(distribution_id, self.presigned_url_rsa_signer)
+            presigned_url = cloudfront_signer.generate_presigned_url(
+                url, date_less_than=expire_date)
+            return {'presigned_url': presigned_url}
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error generating signed url from pem private key - " + str(e),
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+        finally:
+            self.pem_private_key_path = None
+            self.pem_private_key_password = None
+
+    def presigned_url_rsa_signer(self, message):
+        with open(self.pem_private_key_path, 'rb') as key_file:
+            private_key = serialization.load_pem_private_key(
+                key_file.read(),
+                password=self.pem_private_key_password,
+                backend=default_backend()
+            )
+        signer = private_key.signer(padding.PKCS1v15(), hashes.SHA1())
+        signer.update(message)
+        return signer.finalize()
+
+    def create_distribution(self, config, tags):
+        try:
+            if tags is None:
+                func = partial(self.client.create_distribution, DistributionConfig=config)
             else:
-                config_node_items = []
-            config[node_name] = dict(config_node_items + list(validated_node.items()))
-        if isinstance(validated_node, list):
-            config[node_name] = list(set(config.get(node_name) + validated_node))
-    return config
-
-
-def ansible_list_to_cloudfront_list(list_items=None, include_quantity=True):
-    if list_items is None:
-        list_items = []
-    if not isinstance(list_items, list):
-        raise ValueError('Expected a list, got a {0} with value {1}'.format(type(list_items).__name__, str(list_items)))
-    result = {}
-    if include_quantity:
-        result['quantity'] = len(list_items)
-    if len(list_items) > 0:
-        result['items'] = list_items
-    return result
-
-
-def recursive_diff(dict1, dict2):
-    left = dict((k, v) for (k, v) in dict1.items() if k not in dict2)
-    right = dict((k, v) for (k, v) in dict2.items() if k not in dict1)
-    for k in (set(dict1.keys()) & set(dict2.keys())):
-        if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
-            result = recursive_diff(dict1[k], dict2[k])
-            if result:
-                left[k] = result[0]
-                right[k] = result[1]
-        elif dict1[k] != dict2[k]:
-            left[k] = dict1[k]
-            right[k] = dict2[k]
-    if left or right:
-        return left, right
-    else:
-        return None
-
-
-def create_distribution(client, module, config, tags):
-    try:
-        if not tags:
-            return client.create_distribution(DistributionConfig=config)['Distribution']
-        else:
-            distribution_config_with_tags = {
-                'DistributionConfig': config,
-                'Tags': {
-                    'Items': tags
+                distribution_config_with_tags = {
+                    'DistributionConfig': config,
+                    'Tags': {
+                        'Items': tags
+                    }
                 }
-            }
-            return client.create_distribution_with_tags(DistributionConfigWithTags=distribution_config_with_tags)['Distribution']
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Error creating distribution")
+                func = partial(self.client.create_distribution_with_tags,
+                               DistributionConfigWithTags=distribution_config_with_tags)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error creating distribution - " + str(e),
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def delete_distribution(self, distribution_id, e_tag):
+        try:
+            func = partial(self.client.delete_distribution, Id=distribution_id,
+                           IfMatch=e_tag)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error deleting distribution - " + str(e),
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def update_distribution(self, config, distribution_id, e_tag):
+        try:
+            func = partial(self.client.update_distribution, DistributionConfig=config,
+                           Id=distribution_id, IfMatch=e_tag)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error updating distribution - " + str(e),
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def create_streaming_distribution(self, config, tags):
+        try:
+            if tags is None:
+                func = partial(self.client.create_streaming_distribution,
+                               StreamingDistributionConfig=config)
+            else:
+                streaming_distribution_config_with_tags = {
+                    'StreamingDistributionConfig': config,
+                    'Tags': {
+                        'Items': tags
+                    }
+                }
+                func = partial(self.client.create_streaming_distribution_with_tags,
+                               StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error creating streaming distribution - " + str(e),
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def delete_streaming_distribution(self, streaming_distribution_id, e_tag):
+        try:
+            func = partial(self.client.delete_streaming_distribution, Id=streaming_distribution_id,
+                           IfMatch=e_tag)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error deleting streaming distribution - " + str(e),
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def update_streaming_distribution(self, config, streaming_distribution_id, e_tag):
+        try:
+            func = partial(self.client.update_streaming_distribution, StreamingDistributionConfig=config,
+                           Id=streaming_distribution_id, IfMatch=e_tag)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error updating streaming distribution - " + str(e),
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def tag_resource(self, arn, tags):
+        try:
+            func = partial(self.client.tag_resource, Resource=arn,
+                           Tags=tags)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error tagging resource - " + str(e), exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def untag_resource(self, arn, tag_keys):
+        try:
+            func = partial(self.client.untag_resource, Resource=arn,
+                           TagKeys={'Items': tag_keys})
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error untagging resource - " + str(e), exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def remove_all_tags_from_resource(self, arn):
+        tags = self.list_tags_for_resource(arn)
+        key_list = []
+        for tag in tags:
+            key_list.append(tag.get('Key'))
+        self.untag_resource(arn, key_list)
+
+    def list_tags_for_resource(self, arn):
+        try:
+            func = partial(self.client.list_tags_for_resource, Resource=arn)
+            response = self.paginated_response(func)
+            return response.get('Tags').get('Items')
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error removing all tags from resource - " + str(e), exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+    def paginated_response(self, func, result_key=''):
+        '''
+        Returns expanded response for paginated operations.
+        The 'result_key' is used to define the concatenated results that are combined
+        from each paginated response.
+        '''
+        args = dict()
+        results = dict()
+        loop = True
+        while loop:
+            response = func(**args)
+            if result_key == '':
+                result = response
+                result.pop('ResponseMetadata', None)
+            else:
+                result = response.get(result_key)
+            results.update(result)
+            args['NextToken'] = response.get('NextToken')
+            loop = args['NextToken'] is not None
+        return results
 
 
-def delete_distribution(client, module, distribution):
-    try:
-        return client.delete_distribution(Id=distribution['Distribution']['Id'], IfMatch=distribution['ETag'])
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Error deleting distribution %s" % to_native(distribution['Distribution']))
-
-
-def update_distribution(client, module, config, distribution_id, e_tag):
-    try:
-        return client.update_distribution(DistributionConfig=config, Id=distribution_id, IfMatch=e_tag)['Distribution']
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Error updating distribution to %s" % to_native(config))
-
-
-def tag_resource(client, module, arn, tags):
-    try:
-        return client.tag_resource(Resource=arn, Tags=dict(Items=tags))
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Error tagging resource")
-
-
-def untag_resource(client, module, arn, tag_keys):
-    try:
-        return client.untag_resource(Resource=arn, TagKeys=dict(Items=tag_keys))
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Error untagging resource")
-
-
-def list_tags_for_resource(client, module, arn):
-    try:
-        response = client.list_tags_for_resource(Resource=arn)
-        return boto3_tag_list_to_ansible_dict(response.get('Tags').get('Items'))
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Error listing tags for resource")
-
-
-def update_tags(client, module, existing_tags, valid_tags, purge_tags, arn):
-    changed = False
-    to_add, to_remove = compare_aws_tags(existing_tags, valid_tags, purge_tags)
-    if to_remove:
-        untag_resource(client, module, arn, to_remove)
-        changed = True
-    if to_add:
-        tag_resource(client, module, arn, ansible_dict_to_boto3_tag_list(to_add))
-        changed = True
-    return changed
-
-
-class CloudFrontValidationManager(object):
+class CloudFrontValidationManager:
     """
     Manages Cloudfront validations
     """
@@ -1234,749 +764,850 @@ class CloudFrontValidationManager(object):
     def __init__(self, module):
         self.__cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
         self.module = module
+        self.__helpers = CloudFrontHelpers()
         self.__default_distribution_enabled = True
         self.__default_http_port = 80
         self.__default_https_port = 443
-        self.__default_ipv6_enabled = False
-        self.__default_origin_ssl_protocols = [
-            'TLSv1',
-            'TLSv1.1',
-            'TLSv1.2'
-        ]
+        self.__default_is_ipv6_enabled = False
+        self.__default_origin_ssl_protocols = ['TLSv1', 'TLSv1.1', 'TLSv1.2']
         self.__default_custom_origin_protocol_policy = 'match-viewer'
-        self.__default_custom_origin_read_timeout = 30
-        self.__default_custom_origin_keepalive_timeout = 5
         self.__default_datetime_string = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
         self.__default_cache_behavior_min_ttl = 0
         self.__default_cache_behavior_max_ttl = 31536000
         self.__default_cache_behavior_default_ttl = 86400
+        self.__default_cache_behavior_trusted_signers_enabled = False
         self.__default_cache_behavior_compress = False
         self.__default_cache_behavior_viewer_protocol_policy = 'allow-all'
         self.__default_cache_behavior_smooth_streaming = False
         self.__default_cache_behavior_forwarded_values_forward_cookies = 'none'
         self.__default_cache_behavior_forwarded_values_query_string = True
         self.__default_trusted_signers_enabled = False
-        self.__valid_price_classes = set([
-            'PriceClass_100',
-            'PriceClass_200',
-            'PriceClass_All'
-        ])
-        self.__valid_origin_protocol_policies = set([
-            'http-only',
-            'match-viewer',
-            'https-only'
-        ])
-        self.__valid_origin_ssl_protocols = set([
-            'SSLv3',
-            'TLSv1',
-            'TLSv1.1',
-            'TLSv1.2'
-        ])
-        self.__valid_cookie_forwarding = set([
-            'none',
-            'whitelist',
-            'all'
-        ])
-        self.__valid_viewer_protocol_policies = set([
-            'allow-all',
-            'https-only',
-            'redirect-to-https'
-        ])
-        self.__valid_methods = set([
-            'GET',
-            'HEAD',
-            'POST',
-            'PUT',
-            'PATCH',
-            'OPTIONS',
-            'DELETE'
-        ])
-        self.__valid_methods_cached_methods = [
-            set([
-                'GET',
-                'HEAD'
-            ]),
-            set([
-                'GET',
-                'HEAD',
-                'OPTIONS'
-            ])
-        ]
-        self.__valid_methods_allowed_methods = [
-            self.__valid_methods_cached_methods[0],
-            self.__valid_methods_cached_methods[1],
-            self.__valid_methods
-        ]
-        self.__valid_lambda_function_association_event_types = set([
-            'viewer-request',
-            'viewer-response',
-            'origin-request',
-            'origin-response'
-        ])
-        self.__valid_viewer_certificate_ssl_support_methods = set([
-            'sni-only',
-            'vip'
-        ])
-        self.__valid_viewer_certificate_minimum_protocol_versions = set([
-            'SSLv3',
-            'TLSv1'
-        ])
-        self.__valid_viewer_certificate_certificate_sources = set([
-            'cloudfront',
-            'iam',
-            'acm'
-        ])
-        self.__valid_http_versions = set([
-            'http1.1',
-            'http2'
-        ])
+        self.__default_presigned_url_pem_expire_date_format = '%Y-%m-%d'
+        self.__valid_price_classes = ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
+        self.__valid_custom_origin_protocol_policies = ['http-only', 'match-viewer', 'https-only']
+        self.__valid_origin_ssl_protocols = ['SSLv3', 'TLSv1', 'TLSv1.1', 'TLSv1.2']
+        self.__valid_cookie_forwarding = ['none', 'whitelist', 'all']
+        self.__valid_viewer_protocol_policies = ['allow-all', 'https-only', 'redirect-to-https']
+        self.__valid_methods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE']
+        self.__valid_lambda_function_association_event_types = ['viewer-request', 'viewer-response',
+                                                                'origin-request', 'origin-response']
+        self.__valid_viewer_certificate_ssl_support_methods = ['sni-only', 'vip']
+        self.__valid_viewer_certificate_minimum_protocol_versions = ['SSLv3', 'TLSv1']
+        self.__valid_viewer_certificate_certificate_sources = ['cloudfront', 'iam', 'acm']
+        self.__valid_http_versions = ['http1.1', 'http2']
         self.__s3_bucket_domain_identifier = '.s3.amazonaws.com'
 
-    def add_missing_key(self, dict_object, key_to_set, value_to_set):
-        if key_to_set not in dict_object and value_to_set is not None:
-            dict_object[key_to_set] = value_to_set
-        return dict_object
-
-    def add_key_else_change_dict_key(self, dict_object, old_key, new_key, value_to_set):
-        if old_key not in dict_object and value_to_set is not None:
-            dict_object[new_key] = value_to_set
-        else:
-            dict_object = change_dict_key_name(dict_object, old_key, new_key)
-        return dict_object
-
-    def add_key_else_validate(self, dict_object, key_name, attribute_name, value_to_set, valid_values, to_aws_list=False):
-        if key_name in dict_object:
-            self.validate_attribute_with_allowed_values(value_to_set, attribute_name, valid_values)
-        else:
-            if to_aws_list:
-                dict_object[key_name] = ansible_list_to_cloudfront_list(value_to_set)
-            elif value_to_set is not None:
-                dict_object[key_name] = value_to_set
-        return dict_object
-
-    def validate_logging(self, logging):
+    def validate_logging(self, logging, streaming):
         try:
             if logging is None:
                 return None
             valid_logging = {}
-            if logging and not set(['enabled', 'include_cookies', 'bucket', 'prefix']).issubset(logging):
-                self.module.fail_json(msg="The logging parameters enabled, include_cookies, bucket and prefix must be specified.")
-            valid_logging['include_cookies'] = logging.get('include_cookies')
+            if not streaming:
+                if(logging and ('enabled' not in logging or 'include_cookies' not in logging or
+                                'bucket' not in logging or 'prefix' not in logging)):
+                    self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and " +
+                                          "prefix must be specified")
+                valid_logging['include_cookies'] = logging.get('include_cookies')
+            else:
+                if logging and ('enabled' not in logging or 'bucket' not in logging or 'prefix' not in logging):
+                    self.module.fail_json(
+                        msg="the logging parameters enabled, bucket and prefix must be specified")
             valid_logging['enabled'] = logging.get('enabled')
             valid_logging['bucket'] = logging.get('bucket')
             valid_logging['prefix'] = logging.get('prefix')
             return valid_logging
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating distribution logging")
+            self.module.fail_json(msg="error validating distribution logging - " + str(e))
 
     def validate_is_list(self, list_to_validate, list_name):
         if not isinstance(list_to_validate, list):
-            self.module.fail_json(msg='%s is of type %s. Must be a list.' % (list_name, type(list_to_validate).__name__))
+            self.module.fail_json(msg='{0} must be a list'.format(list_name))
 
-    def validate_required_key(self, key_name, full_key_name, dict_object):
-        if key_name not in dict_object:
-            self.module.fail_json(msg="%s must be specified." % full_key_name)
-
-    def validate_origins(self, client, config, origins, default_origin_domain_name,
-                         default_origin_path, create_distribution, purge_origins=False):
+    def validate_origins(self, origins, default_origin_domain_name, default_s3_origin_access_identity,
+                         default_origin_path, streaming, create_distribution):
         try:
+            valid_origins = {}
             if origins is None:
                 if default_origin_domain_name is None and not create_distribution:
-                    if purge_origins:
-                        return None
-                    else:
-                        return ansible_list_to_cloudfront_list(config)
+                    return None
                 if default_origin_domain_name is not None:
                     origins = [{
                         'domain_name': default_origin_domain_name,
-                        'origin_path': default_origin_path or ''
+                        'origin_path': '' if default_origin_path is None else str(default_origin_path)
                     }]
-                else:
-                    origins = []
             self.validate_is_list(origins, 'origins')
-            if not origins and default_origin_domain_name is None and create_distribution:
-                self.module.fail_json(msg="Both origins[] and default_origin_domain_name have not been specified. Please specify at least one.")
-            all_origins = OrderedDict()
-            new_domains = list()
-            for origin in config:
-                all_origins[origin.get('domain_name')] = origin
+            quantity = len(origins)
+            if quantity == 0 and default_origin_domain_name is None and create_distribution:
+                self.module.fail_json(msg="both origins[] and default_origin_domain_name have not been " +
+                                      "specified. please specify at least one.")
             for origin in origins:
-                origin = self.validate_origin(client, all_origins.get(origin.get('domain_name'), {}), origin, default_origin_path)
-                all_origins[origin['domain_name']] = origin
-                new_domains.append(origin['domain_name'])
-            if purge_origins:
-                for domain in all_origins:
-                    if domain not in new_domains:
-                        del(all_origins[domain])
-            return ansible_list_to_cloudfront_list(all_origins.values())
+                origin = self.validate_origin(
+                    origin, default_origin_path, default_s3_origin_access_identity, streaming)
+            return self.__helpers.python_list_to_aws_list(origins)
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating distribution origins")
+            self.module.fail_json(msg="error validating distribution origins - " + str(e))
 
-    def validate_s3_origin_configuration(self, client, existing_config, origin):
-        if origin['s3_origin_access_identity_enabled'] and existing_config.get('s3_origin_config', {}).get('origin_access_identity'):
-            return existing_config['s3_origin_config']['origin_access_identity']
-        if not origin['s3_origin_access_identity_enabled']:
-            return None
+    def validate_origin(self, origin, default_origin_path, default_s3_origin_access_identity, streaming):
         try:
-            comment = "Origin Access Identity created by Ansible at %s" % self.__default_datetime_string
-            cfoai_config = dict(CloudFrontOriginAccessIdentityConfig=dict(CallerReference=self.__default_datetime_string,
-                                                                          Comment=comment))
-            oai = client.create_cloud_front_origin_access_identity(**cfoai_config)['CloudFrontOriginAccessIdentity']['Id']
-        except Exception as e:
-                self.module.fail_json_aws(e, msg="Couldn't create Origin Access Identity for id %s" % origin['id'])
-        return "origin-access-identity/cloudfront/%s" % oai
-
-    def validate_origin(self, client, existing_config, origin, default_origin_path):
-        try:
-            origin = self.add_missing_key(origin, 'origin_path', existing_config.get('origin_path', default_origin_path or ''))
-            self.validate_required_key('origin_path', 'origins[].origin_path', origin)
-            origin = self.add_missing_key(origin, 'id', existing_config.get('id', self.__default_datetime_string))
+            if 'origin_path' not in origin:
+                if default_origin_path is not None:
+                    origin['origin_path'] = default_origin_path
+                else:
+                    origin['origin_path'] = ''
+            if 'domain_name' not in origin:
+                self.module.fail_json(msg="origins[].domain_name must be specified for an origin")
+            if 'id' not in origin:
+                origin['id'] = self.__default_datetime_string
+            if 'custom_headers' in origin and streaming:
+                self.module.fail_json(msg="custom_headers has been specified for a streaming " +
+                                      "distribution. custom headers are for web distributions only")
             if 'custom_headers' in origin and len(origin.get('custom_headers')) > 0:
                 for custom_header in origin.get('custom_headers'):
                     if 'header_name' not in custom_header or 'header_value' not in custom_header:
-                        self.module.fail_json(msg="Both origins[].custom_headers.header_name and origins[].custom_headers.header_value must be specified.")
-                origin['custom_headers'] = ansible_list_to_cloudfront_list(origin.get('custom_headers'))
+                        self.module.fail_json(msg="both origins[].custom_headers.header_name and " +
+                                              "origins[].custom_headers.header_value must be specified")
+                origin['custom_headers'] = self.__helpers.python_list_to_aws_list(
+                    origin.get('custom_headers'))
             else:
-                origin['custom_headers'] = ansible_list_to_cloudfront_list()
-            if self.__s3_bucket_domain_identifier in origin.get('domain_name').lower():
-                if origin.get("s3_origin_access_identity_enabled") is not None:
-                    s3_origin_config = self.validate_s3_origin_configuration(client, existing_config, origin)
-                    if s3_origin_config:
-                        oai = s3_origin_config
+                origin['custom_headers'] = self.__helpers.python_list_to_aws_list()
+            if self.__s3_bucket_domain_identifier in origin.get('domain_name'):
+                if 's3_origin_config' not in origin or 'origin_access_identity' not in origin.get('s3_origin_config'):
+                    origin["s3_origin_config"] = {}
+                    if default_s3_origin_access_identity is not None:
+                        origin['s3_origin_config']['origin_access_identity'] = default_s3_origin_access_identity
                     else:
-                        oai = ""
-                    origin["s3_origin_config"] = dict(origin_access_identity=oai)
-                    del(origin["s3_origin_access_identity_enabled"])
-                    if 'custom_origin_config' in origin:
-                        self.module.fail_json(msg="s3_origin_access_identity_enabled and custom_origin_config are mutually exclusive")
+                        origin['s3_origin_config']['origin_access_identity'] = ''
             else:
-                origin = self.add_missing_key(origin, 'custom_origin_config', existing_config.get('custom_origin_config', {}))
+                if 'custom_origin_config' not in origin:
+                    origin['custom_origin_config'] = {}
                 custom_origin_config = origin.get('custom_origin_config')
-                custom_origin_config = self.add_key_else_validate(custom_origin_config, 'origin_protocol_policy',
-                                                                  'origins[].custom_origin_config.origin_protocol_policy',
-                                                                  self.__default_custom_origin_protocol_policy, self.__valid_origin_protocol_policies)
-                custom_origin_config = self.add_missing_key(custom_origin_config, 'origin_read_timeout', self.__default_custom_origin_read_timeout)
-                custom_origin_config = self.add_missing_key(custom_origin_config, 'origin_keepalive_timeout', self.__default_custom_origin_keepalive_timeout)
-                custom_origin_config = self.add_key_else_change_dict_key(custom_origin_config, 'http_port', 'h_t_t_p_port', self.__default_http_port)
-                custom_origin_config = self.add_key_else_change_dict_key(custom_origin_config, 'https_port', 'h_t_t_p_s_port', self.__default_https_port)
-                if custom_origin_config.get('origin_ssl_protocols', {}).get('items'):
-                    custom_origin_config['origin_ssl_protocols'] = custom_origin_config['origin_ssl_protocols']['items']
-                if custom_origin_config.get('origin_ssl_protocols'):
-                    self.validate_attribute_list_with_allowed_list(custom_origin_config['origin_ssl_protocols'], 'origins[].origin_ssl_protocols',
-                                                                   self.__valid_origin_ssl_protocols)
+                if 'origin_protocol_policy' not in custom_origin_config:
+                    custom_origin_config['origin_protocol_policy'] = self.__default_custom_origin_protocol_policy
                 else:
-                    custom_origin_config['origin_ssl_protocols'] = self.__default_origin_ssl_protocols
-                custom_origin_config['origin_ssl_protocols'] = ansible_list_to_cloudfront_list(custom_origin_config['origin_ssl_protocols'])
+                    self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_protocol_policy'),
+                                                                'origins[].custom_origin_config.origin_protocol_policy', self.__valid_origin_protocol_policies)
+                if 'http_port' not in custom_origin_config:
+                    custom_origin_config['h_t_t_p_port'] = self.__default_http_port
+                else:
+                    custom_origin_config = self.__helpers.change_dict_key_name(custom_origin_config, 'http_port',
+                                                                               'h_t_t_p_port')
+                if 'https_port' not in custom_origin_config:
+                    custom_origin_config['h_t_t_p_s_port'] = self.__default_https_port
+                else:
+                    custom_origin_config = self.__helpers.change_dict_key_name(custom_origin_config, 'https_port',
+                                                                               'h_t_t_p_s_port')
+                if 'origin_ssl_protocols' not in custom_origin_config:
+                    temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
+                else:
+                    self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_ssl_protocols'),
+                                                                'origins[].origin_ssl_protocols', self.__valid_origin_ssl_protocols)
+                custom_origin_config['origin_ssl_protocols'] = self.__helpers.python_list_to_aws_list(
+                    temp_origin_ssl_protocols)
             return origin
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            self.module.fail_json_aws(e, msg="Error validating distribution origin")
+        except Exception as e:
+            self.module.fail_json(msg="error validating distribution origin - " + str(e))
 
-    def validate_cache_behaviors(self, config, cache_behaviors, valid_origins, purge_cache_behaviors=False):
+    def validate_cache_behaviors(self, cache_behaviors, valid_origins):
         try:
-            if cache_behaviors is None and valid_origins is not None and purge_cache_behaviors is False:
-                return ansible_list_to_cloudfront_list(config)
-            all_cache_behaviors = OrderedDict()
-            # cache behaviors are order dependent so we don't preserve the existing ordering when purge_cache_behaviors
-            # is true (if purge_cache_behaviors is not true, we can't really know the full new order)
-            if not purge_cache_behaviors:
-                for behavior in config:
-                    all_cache_behaviors[behavior['path_pattern']] = behavior
+            if cache_behaviors is None and valid_origins is not None:
+                return None
             for cache_behavior in cache_behaviors:
-                valid_cache_behavior = self.validate_cache_behavior(all_cache_behaviors.get(cache_behavior.get('path_pattern'), {}),
-                                                                    cache_behavior, valid_origins)
-                all_cache_behaviors[cache_behavior['path_pattern']] = valid_cache_behavior
-            if purge_cache_behaviors:
-                for target_origin_id in set(all_cache_behaviors.keys()) - set([cb['path_pattern'] for cb in cache_behaviors]):
-                    del(all_cache_behaviors[target_origin_id])
-            return ansible_list_to_cloudfront_list(all_cache_behaviors.values())
+                self.validate_cache_behavior(cache_behavior, valid_origins)
+            return self.__helpers.python_list_to_aws_list(cache_behaviors)
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating distribution cache behaviors")
+            self.module.fail_json(msg="error validating distribution cache behaviors - " + str(e))
 
-    def validate_cache_behavior(self, config, cache_behavior, valid_origins, is_default_cache=False):
-        if is_default_cache and cache_behavior is None:
-            cache_behavior = {}
-        if cache_behavior is None and valid_origins is not None:
-            return config
-        cache_behavior = self.validate_cache_behavior_first_level_keys(config, cache_behavior, valid_origins, is_default_cache)
-        cache_behavior = self.validate_forwarded_values(config, cache_behavior.get('forwarded_values'), cache_behavior)
-        cache_behavior = self.validate_allowed_methods(config, cache_behavior.get('allowed_methods'), cache_behavior)
-        cache_behavior = self.validate_lambda_function_associations(config, cache_behavior.get('lambda_function_associations'), cache_behavior)
-        cache_behavior = self.validate_trusted_signers(config, cache_behavior.get('trusted_signers'), cache_behavior)
-        return cache_behavior
-
-    def validate_cache_behavior_first_level_keys(self, config, cache_behavior, valid_origins, is_default_cache):
+    def validate_cache_behavior(self, cache_behavior, valid_origins, is_default_cache=False):
         try:
-            cache_behavior = self.add_key_else_change_dict_key(cache_behavior, 'min_ttl', 'min_t_t_l',
-                                                               config.get('min_t_t_l', self.__default_cache_behavior_min_ttl))
-            cache_behavior = self.add_key_else_change_dict_key(cache_behavior, 'max_ttl', 'max_t_t_l',
-                                                               config.get('max_t_t_l', self.__default_cache_behavior_max_ttl))
-            cache_behavior = self.add_key_else_change_dict_key(cache_behavior, 'default_ttl', 'default_t_t_l',
-                                                               config.get('default_t_t_l', self.__default_cache_behavior_default_ttl))
-            cache_behavior = self.add_missing_key(cache_behavior, 'compress', config.get('compress', self.__default_cache_behavior_compress))
-            target_origin_id = cache_behavior.get('target_origin_id', config.get('target_origin_id'))
-            if not target_origin_id:
-                target_origin_id = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
-            if target_origin_id not in [origin['id'] for origin in valid_origins.get('items', [])]:
-                if is_default_cache:
-                    cache_behavior_name = 'Default cache behavior'
-                else:
-                    cache_behavior_name = 'Cache behavior for path %s' % cache_behavior['path_pattern']
-                self.module.fail_json(msg="%s has target_origin_id pointing to an origin that does not exist." %
-                                      cache_behavior_name)
-            cache_behavior['target_origin_id'] = target_origin_id
-            cache_behavior = self.add_key_else_validate(cache_behavior, 'viewer_protocol_policy', 'cache_behavior.viewer_protocol_policy',
-                                                        config.get('viewer_protocol_policy',
-                                                                   self.__default_cache_behavior_viewer_protocol_policy),
-                                                        self.__valid_viewer_protocol_policies)
-            cache_behavior = self.add_missing_key(cache_behavior, 'smooth_streaming',
-                                                  config.get('smooth_streaming', self.__default_cache_behavior_smooth_streaming))
-            return cache_behavior
-        except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating distribution cache behavior first level keys")
-
-    def validate_forwarded_values(self, config, forwarded_values, cache_behavior):
-        try:
-            if not forwarded_values:
-                forwarded_values = dict()
-            existing_config = config.get('forwarded_values', {})
-            headers = forwarded_values.get('headers', existing_config.get('headers', {}).get('items'))
-            forwarded_values['headers'] = ansible_list_to_cloudfront_list(headers)
-            if 'cookies' not in forwarded_values:
-                forward = existing_config.get('cookies', {}).get('forward', self.__default_cache_behavior_forwarded_values_forward_cookies)
-                forwarded_values['cookies'] = {'forward': forward}
+            if is_default_cache and cache_behavior is None:
+                cache_behavior = {}
+            if cache_behavior is None and valid_origins is not None:
+                return None
+            if 'min_ttl' not in cache_behavior:
+                cache_behavior['min_t_t_l'] = self.__default_cache_behavior_min_ttl
             else:
-                existing_whitelist = existing_config.get('cookies', {}).get('whitelisted_names', {}).get('items')
-                whitelist = forwarded_values.get('cookies').get('whitelisted_names', existing_whitelist)
-                if whitelist:
-                    self.validate_is_list(whitelist, 'forwarded_values.whitelisted_names')
-                    forwarded_values['cookies']['whitelisted_names'] = ansible_list_to_cloudfront_list(whitelist)
-                cookie_forwarding = forwarded_values.get('cookies').get('forward', existing_config.get('cookies', {}).get('forward'))
-                self.validate_attribute_with_allowed_values(cookie_forwarding, 'cache_behavior.forwarded_values.cookies.forward',
-                                                            self.__valid_cookie_forwarding)
-                forwarded_values['cookies']['forward'] = cookie_forwarding
-            query_string_cache_keys = forwarded_values.get('query_string_cache_keys', existing_config.get('query_string_cache_keys', {}).get('items', []))
-            self.validate_is_list(query_string_cache_keys, 'forwarded_values.query_string_cache_keys')
-            forwarded_values['query_string_cache_keys'] = ansible_list_to_cloudfront_list(query_string_cache_keys)
-            forwarded_values = self.add_missing_key(forwarded_values, 'query_string',
-                                                    existing_config.get('query_string', self.__default_cache_behavior_forwarded_values_query_string))
-            cache_behavior['forwarded_values'] = forwarded_values
-            return cache_behavior
-        except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating forwarded values")
-
-    def validate_lambda_function_associations(self, config, lambda_function_associations, cache_behavior):
-        try:
+                cache_behavior = self.__helpers.change_dict_key_name(
+                    cache_behavior, 'min_ttl', 'min_t_t_l')
+            if 'max_ttl' not in cache_behavior:
+                cache_behavior['max_t_t_l'] = self.__default_cache_behavior_max_ttl
+            else:
+                cache_behavior = self.__helpers.change_dict_key_name(
+                    cache_behavior, 'max_ttl', 'max_t_t_l')
+            if 'default_ttl' not in cache_behavior:
+                cache_behavior['default_t_t_l'] = self.__default_cache_behavior_default_ttl
+            else:
+                cache_behavior = self.__helpers.change_dict_key_name(
+                    cache_behavior, 'default_ttl', 'default_t_t_l')
+            if 'compress' not in cache_behavior:
+                cache_behavior['compress'] = self.__default_cache_behavior_compress
+            if is_default_cache:
+                if 'target_origin_id' not in cache_behavior:
+                    cache_behavior['target_origin_id'] = self.get_first_origin_id_for_default_cache_behavior(
+                        valid_origins)
+                else:
+                    cache_behavior['target_origin_id'] = str(cache_behavior.get('target_origin_id'))
+            if 'forwarded_values' not in cache_behavior:
+                cache_behavior['forwarded_values'] = {}
+            forwarded_values = cache_behavior.get('forwarded_values')
+            forwarded_values['headers'] = self.__helpers.python_list_to_aws_list(
+                forwarded_values.get('headers'))
+            if 'cookies' not in forwarded_values:
+                forwarded_values['cookies'] = {}
+                forwarded_values['cookies']['forward'] = self.__default_cache_behavior_forwarded_values_forward_cookies
+            else:
+                forwarded_values['cookies']['whitelisted_names'] = self.__helpers.python_list_to_aws_list(
+                    forwarded_values['cookies'].get('whitelisted_names'))
+                cookie_forwarding = forwarded_values['cookies'].get('forward')
+                self.validate_attribute_with_allowed_values(cookie_forwarding,
+                                                            'cache_behavior.forwarded_values.cookies.forward', self.__valid_cookie_forwarding)
+            forwarded_values['query_string_cache_keys'] = self.__helpers.python_list_to_aws_list(
+                forwarded_values.get('query_string_cache_keys'))
+            if 'query_string' not in forwarded_values:
+                forwarded_values['query_string'] = self.__default_cache_behavior_forwarded_values_query_string
+            allowed_methods = cache_behavior.get('allowed_methods')
+            if allowed_methods is not None:
+                if 'items' not in allowed_methods:
+                    self.module.fail_json(
+                        msg="cache_behavior.allowed_methods.items[] must be specified")
+                temp_cached_methods = allowed_methods.get('cached_methods')
+                temp_allowed_methods = allowed_methods.get('items')
+                self.validate_attribute_with_allowed_values(temp_cached_methods,
+                                                            'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
+                self.validate_is_list(temp_allowed_methods,
+                                      'cache_behavior.allowed_methods.items')
+                if 'cached_methods' in allowed_methods:
+                    self.validate_is_list(temp_cached_methods,
+                                          'cache_behavior.allowed_methods.cached_methods')
+                    self.validate_attribute_with_allowed_values(temp_cached_methods,
+                                                                'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
+                cache_behavior['allowed_methods'] = self.__helpers.python_list_to_aws_list(
+                    temp_allowed_methods)
+                cache_behavior['allowed_methods']['cached_methods'] = self.__helpers.python_list_to_aws_list(
+                    temp_cached_methods)
+            lambda_function_associations = cache_behavior.get('lambda_function_associations')
             if lambda_function_associations is not None:
                 self.validate_is_list(lambda_function_associations, 'lambda_function_associations')
                 for association in lambda_function_associations:
-                    association = change_dict_key_name(association, 'lambda_function_arn', 'lambda_function_a_r_n')
-                    self.validate_attribute_with_allowed_values(association.get('event_type'), 'cache_behaviors[].lambda_function_associations.event_type',
-                                                                self.__valid_lambda_function_association_event_types)
-                cache_behavior['lambda_function_associations'] = ansible_list_to_cloudfront_list(lambda_function_associations)
+                    if 'lambda_function_arn' in association:
+                        association = self.__helpers.change_dict_key_name(association, 'lambda_function_arn',
+                                                                          'lambda_function_a_r_n')
+                    if 'event_type' in association:
+                        self.validate_attribute_with_allowed_values(association.get('event_type'),
+                                                                    'cache_behaviors[].lambda_function_associations.event_type',
+                                                                    self.__valid_lambda_function_association_event_types)
+            cache_behavior['lambda_function_associations'] = self.__helpers.python_list_to_aws_list(
+                lambda_function_associations)
+            if 'viewer_protocol_policy' not in cache_behavior:
+                cache_behavior['viewer_protocol_policy'] = self.__default_cache_behavior_viewer_protocol_policy
             else:
-                if 'lambda_function_associations' in config:
-                    cache_behavior['lambda_function_associations'] = config.get('lambda_function_associations')
-                else:
-                    cache_behavior['lambda_function_associations'] = ansible_list_to_cloudfront_list([])
+                self.validate_attribute_with_allowed_values(cache_behavior.get('viewer_protocol_policy'),
+                                                            'cache_behavior.viewer_protocol_policy', self.__valid_viewer_protocol_policies)
+            if 'smooth_streaming' not in cache_behavior:
+                cache_behavior['smooth_streaming'] = self.__default_cache_behavior_smooth_streaming
+            cache_behavior['trusted_signers'] = self.validate_trusted_signers(
+                cache_behavior.get('trusted_signers'))
             return cache_behavior
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating lambda function associations")
+            self.module.fail_json(msg="error validating distribution cache behavior - " + str(e))
 
-    def validate_allowed_methods(self, config, allowed_methods, cache_behavior):
-        try:
-            if allowed_methods is not None:
-                self.validate_required_key('items', 'cache_behavior.allowed_methods.items[]', allowed_methods)
-                temp_allowed_items = allowed_methods.get('items')
-                self.validate_is_list(temp_allowed_items, 'cache_behavior.allowed_methods.items')
-                self.validate_attribute_list_with_allowed_list(temp_allowed_items, 'cache_behavior.allowed_methods.items[]',
-                                                               self.__valid_methods_allowed_methods)
-                cached_items = allowed_methods.get('cached_methods')
-                if 'cached_methods' in allowed_methods:
-                    self.validate_is_list(cached_items, 'cache_behavior.allowed_methods.cached_methods')
-                    self.validate_attribute_list_with_allowed_list(cached_items, 'cache_behavior.allowed_items.cached_methods[]',
-                                                                   self.__valid_methods_cached_methods)
-                # we don't care if the order of how cloudfront stores the methods differs - preserving existing
-                # order reduces likelihood of making unnecessary changes
-                if 'allowed_methods' in config and set(config['allowed_methods']['items']) == set(temp_allowed_items):
-                    cache_behavior['allowed_methods'] = config['allowed_methods']
-                else:
-                    cache_behavior['allowed_methods'] = ansible_list_to_cloudfront_list(temp_allowed_items)
-
-                if cached_items and set(cached_items) == set(config.get('allowed_methods', {}).get('cached_methods', {}).get('items', [])):
-                    cache_behavior['allowed_methods']['cached_methods'] = config['allowed_methods']['cached_methods']
-                else:
-                    cache_behavior['allowed_methods']['cached_methods'] = ansible_list_to_cloudfront_list(cached_items)
-            else:
-                if 'allowed_methods' in config:
-                    cache_behavior['allowed_methods'] = config.get('allowed_methods')
-            return cache_behavior
-        except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating allowed methods")
-
-    def validate_trusted_signers(self, config, trusted_signers, cache_behavior):
+    def validate_trusted_signers(self, trusted_signers):
         try:
             if trusted_signers is None:
                 trusted_signers = {}
-            if 'items' in trusted_signers:
-                valid_trusted_signers = ansible_list_to_cloudfront_list(trusted_signers.get('items'))
-            else:
-                valid_trusted_signers = dict(quantity=config.get('quantity', 0))
-                if 'items' in config:
-                    valid_trusted_signers = dict(items=config['items'])
-            valid_trusted_signers['enabled'] = trusted_signers.get('enabled', config.get('enabled', self.__default_trusted_signers_enabled))
-            cache_behavior['trusted_signers'] = valid_trusted_signers
-            return cache_behavior
+            if 'enabled' not in trusted_signers:
+                trusted_signers['enabled'] = self.__default_trusted_signers_enabled
+            if 'items' not in trusted_signers:
+                trusted_signers['items'] = []
+            valid_trusted_signers = self.__helpers.python_list_to_aws_list(
+                trusted_signers.get('items'))
+            valid_trusted_signers['enabled'] = trusted_signers.get('enabled')
+            return valid_trusted_signers
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating trusted signers")
+            self.module.fail_json(msg="error validating trusted signers - " + str(e))
+
+    def validate_s3_origin(self, s3_origin, default_s3_origin_domain_name, default_s3_origin_origin_access_identity):
+        try:
+            if s3_origin is not None:
+                if 'domain_name' not in s3_origin:
+                    self.module.fail_json("s3_origin.domain_name must be specified for s3_origin")
+                if 'origin_access_identity' not in s3_origin:
+                    self.module.fail_json(
+                        "s3_origin.origin_origin_access_identity must be specified for s3_origin")
+                return s3_origin
+            s3_origin = {}
+            if default_s3_origin_domain_name is not None:
+                s3_origin['domain_name'] = default_s3_origin_domain_name
+            else:
+                self.module.fail_json(msg="s3_origin and default_s3_origin_domain_name not specified. " +
+                                      "please specify one.")
+            if default_s3_origin_origin_access_identity is not None:
+                s3_origin['origin_access_identity'] = default_s3_origin_origin_access_identity
+            else:
+                s3_origin['origin_access_identity'] = ''
+            return s3_origin
+        except Exception as e:
+            self.module.fail_json(msg="error validating s3 origin - " + str(e))
 
     def validate_viewer_certificate(self, viewer_certificate):
         try:
             if viewer_certificate is None:
                 return None
-            if viewer_certificate.get('cloudfront_default_certificate') and viewer_certificate.get('ssl_support_method') is not None:
-                self.module.fail_json(msg="viewer_certificate.ssl_support_method should not be specified with viewer_certificate_cloudfront_default" +
-                                      "_certificate set to true.")
-            self.validate_attribute_with_allowed_values(viewer_certificate.get('ssl_support_method'), 'viewer_certificate.ssl_support_method',
-                                                        self.__valid_viewer_certificate_ssl_support_methods)
-            self.validate_attribute_with_allowed_values(viewer_certificate.get('minimum_protocol_version'), 'viewer_certificate.minimum_protocol_version',
-                                                        self.__valid_viewer_certificate_minimum_protocol_versions)
-            self.validate_attribute_with_allowed_values(viewer_certificate.get('certificate_source'), 'viewer_certificate.certificate_source',
-                                                        self.__valid_viewer_certificate_certificate_sources)
-            viewer_certificate = change_dict_key_name(viewer_certificate, 'cloudfront_default_certificate', 'cloud_front_default_certificate')
-            viewer_certificate = change_dict_key_name(viewer_certificate, 'ssl_support_method', 's_s_l_support_method')
-            viewer_certificate = change_dict_key_name(viewer_certificate, 'iam_certificate_id', 'i_a_m_certificate_id')
-            viewer_certificate = change_dict_key_name(viewer_certificate, 'acm_certificate_arn', 'a_c_m_certificate_arn')
+            if(viewer_certificate.get('cloudfront_default_certificate') and
+                    viewer_certificate.get('ssl_support_method') is not None):
+                self.module.fail_json(msg="viewer_certificate.ssl_support_method should not be specified with" +
+                                      "viewer_certificate_cloudfront_default_certificate set to true")
+            if 'ssl_support_method' in viewer_certificate:
+                self.validate_attribute_with_allowed_values(viewer_certificate.get('ssl_support_method'),
+                                                            'viewer_certificate.ssl_support_method',
+                                                            self.__valid_viewer_certificate_ssl_support_methods)
+            if 'minimum_protocol_version' in viewer_certificate:
+                self.validate_attribute_with_allowed_values(viewer_certificate.get('minimum_protocol_version'),
+                                                            'viewer_certificate.minimum_protocol_version',
+                                                            self.__valid_viewer_certificate_minimum_protocol_versions)
+            if 'certificate_source' in viewer_certificate:
+                self.validate_attribute_with_allowed_values(viewer_certificate.get('certificate_source'),
+                                                            'viewer_certificate.certificate_source',
+                                                            self.__valid_viewer_certificate_certificate_sources)
+            if 'ssl_support_method' in viewer_certificate:
+                viewer_certificate = self.__helpers.change_dict_key_name(viewer_certificate, 'ssl_support_method',
+                                                                         's_s_l_support_method')
+            if 'iam_certificate' in viewer_certificate:
+                viewer_certificate = self.__helpers.change_dict_key_name(viewer_certificate, 'iam_certificate_id',
+                                                                         'i_a_m_certificate_id')
+            if 'acm_certificate' in viewer_certificate:
+                viewer_certificate = self.__helpers.change_dict_key_name(viewer_certificate, 'acm_certificate_arn',
+                                                                         'a_c_m_certificate_arn')
             return viewer_certificate
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating viewer certificate")
+            self.module.fail_json(msg="error validating viewer certificate - " + str(e))
 
-    def validate_custom_error_responses(self, config, custom_error_responses, purge_custom_error_responses):
+    def validate_custom_error_responses(self, custom_error_responses):
         try:
-            if custom_error_responses is None and not purge_custom_error_responses:
-                return ansible_list_to_cloudfront_list(config)
+            if custom_error_responses is None:
+                return None
             self.validate_is_list(custom_error_responses, 'custom_error_responses')
-            result = list()
-            existing_responses = dict((response['error_code'], response) for response in custom_error_responses)
             for custom_error_response in custom_error_responses:
-                self.validate_required_key('error_code', 'custom_error_responses[].error_code', custom_error_response)
-                custom_error_response = change_dict_key_name(custom_error_response, 'error_caching_min_ttl', 'error_caching_min_t_t_l')
-                if 'response_code' in custom_error_response:
-                    custom_error_response['response_code'] = str(custom_error_response['response_code'])
-                if custom_error_response['error_code'] in existing_responses:
-                    del(existing_responses[custom_error_response['error_code']])
-                result.append(custom_error_response)
-            if not purge_custom_error_responses:
-                result.extend(existing_responses.values())
-
-            return ansible_list_to_cloudfront_list(result)
+                if custom_error_response.get('error_code') is None:
+                    self.module.json_fail(
+                        msg="custom_error_responses[].error_code must be specified")
+                custom_error_response = self.__helpers.change_dict_key_name(custom_error_responses, 'error_caching_min_ttl',
+                                                                            'error_caching_min_t_t_l')
+            return self.__helpers.python_list_to_aws_list(custom_error_responses)
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating custom error responses")
+            self.module.fail_json(msg="error validating custom error responses - " + str(e))
 
-    def validate_restrictions(self, config, restrictions, purge_restrictions=False):
+    def validate_restrictions(self, restrictions):
         try:
             if restrictions is None:
-                if purge_restrictions:
-                    return None
-                else:
-                    return config
-            self.validate_required_key('geo_restriction', 'restrictions.geo_restriction', restrictions)
+                return None
             geo_restriction = restrictions.get('geo_restriction')
-            self.validate_required_key('restriction_type', 'restrictions.geo_restriction.restriction_type', geo_restriction)
-            existing_restrictions = config.get('geo_restriction', {}).get(geo_restriction['restriction_type'], {}).get('items', [])
-            geo_restriction_items = geo_restriction.get('items')
-            if not purge_restrictions:
-                geo_restriction_items.extend([rest for rest in existing_restrictions if
-                                              rest not in geo_restriction_items])
-            valid_restrictions = ansible_list_to_cloudfront_list(geo_restriction_items)
-            valid_restrictions['restriction_type'] = geo_restriction.get('restriction_type')
+            if geo_restriction is None:
+                self.module.fail_json(msg="restrictions.geo_restriction must be specified")
+            restriction_type = geo_restriction.get('restriction_type')
+            if restriction_type is None:
+                self.module.fail_json(
+                    msg="restrictions.geo_restriction.restriction_type must be specified")
+            items = geo_restriction.get('items')
+            valid_restrictions = python_list_to_aws_list(items)
+            valid_restrictions['restriction_type'] = restriction_type
             return valid_restrictions
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating restrictions")
+            self.module.fail_json(msg="error validating restrictions - " + str(e))
 
-    def validate_distribution_config_parameters(self, config, default_root_object, ipv6_enabled, http_version, web_acl_id):
+    def validate_update_delete_distribution_parameters(self, alias, distribution_id, config, e_tag):
         try:
-            config['default_root_object'] = default_root_object or config.get('default_root_object', '')
-            config['is_i_p_v_6_enabled'] = ipv6_enabled or config.get('i_p_v_6_enabled', self.__default_ipv6_enabled)
-            if http_version is not None or config.get('http_version'):
-                self.validate_attribute_with_allowed_values(http_version, 'http_version', self.__valid_http_versions)
-                config['http_version'] = http_version or config.get('http_version')
-            if web_acl_id or config.get('web_a_c_l_id'):
-                config['web_a_c_l_id'] = web_acl_id or config.get('web_a_c_l_id')
+            if distribution_id is None and alias is None:
+                self.module.fail_json(msg="distribution_id or alias must be specified for updating or "
+                                      "deleting a distribution.")
+            if distribution_id is None:
+                distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(
+                    alias)
+            if config is None:
+                config = self.__cloudfront_facts_mgr.get_distribution_config(
+                    distribution_id).get('DistributionConfig')
+            if e_tag is None:
+                e_tag = self.__cloudfront_facts_mgr.get_etag_from_distribution_id(
+                    distribution_id, False)
+            return distribution_id, config, e_tag
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating parameters for distribution update and delete - " + str(e))
+
+    def validate_update_delete_streaming_distribution_parameters(self, alias, streaming_distribution_id,
+                                                                 config, e_tag):
+        try:
+            if streaming_distribution_id is None and alias is None:
+                self.module.fail_json(msg="streaming_distribution_id or alias must be specified for updating " +
+                                      "or deleting a streaming distribution.")
+            if streaming_distribution_id is None:
+                streaming_distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(
+                    alias)
+            if config is None:
+                config = self.__cloudfront_facts_mgr.get_streaming_distribution_config(
+                    streaming_distribution_id).get('StreamingDistributionConfig')
+            if e_tag is None:
+                e_tag = self.__cloudfront_facts_mgr.get_etag_from_distribution_id(
+                    streaming_distribution_id, True)
+            return streaming_distribution_id, config, e_tag
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating parameters for streaming distribution update and delete - " + str(e))
+
+    def validate_tagging_arn(self, alias, distribution_id, streaming_distribution_id):
+        try:
+            if alias is not None and (distribution_id is not None or streaming_distribution_id is not None):
+                self.module.fail_json(msg="both alias and a distribution id have been specified for tagging a resource. " +
+                                      "please only specify one.")
+            if distribution_id is not None and streaming_distribution_id is not None:
+                self.module.fail_json(msg="both distribution_id and streaming_distribution_id have been specified. " +
+                                      "please only specify one.")
+            if alias is not None:
+                distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(
+                    alias)
+            if distribution_id is not None:
+                distribution_response = self.__cloudfront_facts_mgr.get_distribution(
+                    distribution_id)
+            if distribution_response is not None:
+                distribution = distribution_response.get('Distribution')
+                if distribution is not None:
+                    return distribution.get('ARN')
+            streaming_distribution_response = self.__cloudfront_facts_mgr.get_streaming_distribution(
+                streaming_distribution_id)
+            if streaming_distribution_response is not None:
+                streaming_distribution = streaming_distribution_response.get(
+                    'StreamingDistribution')
+                if streaming_distribution is not None:
+                    return streaming_distribution.get('ARN')
+            self.module.fail_json(
+                msg="unable to find a matching distribution with given parameters")
+        except Exception as e:
+            self.module.fail_json(msg="error validating tagging parameters - " + str(e))
+
+    def validate_tags(self, tags):
+        try:
+            if tags is None:
+                return None
+            list_items = []
+            for tag in tags:
+                key = tag.keys()[0]
+                value = str(tag[key])
+                list_items.append({'Key': key, 'Value': value})
+            return list_items
+        except Exception as e:
+            self.module.fail_json(msg="error validating tags - " + str(e))
+
+    def validate_distribution_config_parameters(self, config, default_root_object, is_ipv6_enabled,
+                                                http_version, web_acl_id):
+        try:
+            if default_root_object is not None:
+                config['default_root_object'] = default_root_object
+            else:
+                config['default_root_object'] = ''
+            if is_ipv6_enabled is not None:
+                config['is_i_p_v_6_enabled'] = is_ipv6_enabled
+            else:
+                config['is_i_p_v_6_enabled'] = self.__default_is_ipv6_enabled
+            if http_version is not None:
+                self.valiate_attribute_with_allowed_values(
+                    http_version, 'http_version', self.__valid_http_versions)
+                config['http_version'] = http_version
+            if web_acl_id is not None:
+                config['web_a_c_l_id'] = web_acl_id
             return config
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating distribution config parameters")
+            self.module.fail_json(msg="error validating distribution config parameters - " + str(e))
 
-    def validate_common_distribution_parameters(self, config, enabled, aliases, logging, price_class, purge_aliases=False):
+    def validate_streaming_distribution_config_parameters(self, config, comment, trusted_signers, s3_origin,
+                                                          default_s3_origin_domain_name,
+                                                          default_s3_origin_origin_access_identity):
+        try:
+            if s3_origin is None:
+                s3_origin = config.get('s3_origin')
+            config['s3_origin'] = self.validate_s3_origin(s3_origin, default_s3_origin_domain_name,
+                                                          default_s3_origin_origin_access_identity)
+            config['trusted_signers'] = self.validate_trusted_signers(trusted_signers)
+            return config
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating streaming distribution config parameters - " + str(e))
+
+    def validate_common_distribution_parameters(self, config, enabled, aliases, logging,
+                                                price_class, comment, is_streaming_distribution):
         try:
             if config is None:
                 config = {}
             if aliases is not None:
-                if not purge_aliases:
-                    aliases.extend([alias for alias in config.get('aliases', {}).get('items', [])
-                                    if alias not in aliases])
-                config['aliases'] = ansible_list_to_cloudfront_list(aliases)
+                config['aliases'] = self.__helpers.python_list_to_aws_list(aliases)
             if logging is not None:
-                config['logging'] = self.validate_logging(logging)
-            config['enabled'] = enabled or config.get('enabled', self.__default_distribution_enabled)
+                config['logging'] = self.validate_logging(logging, is_streaming_distribution)
+            if enabled is not None:
+                config['enabled'] = enabled
+            else:
+                config['enabled'] = self.__default_distribution_enabled
             if price_class is not None:
-                self.validate_attribute_with_allowed_values(price_class, 'price_class', self.__valid_price_classes)
+                self.validate_attribute_with_allowed_values(
+                    price_class, 'price_class', self.__valid_price_classes)
                 config['price_class'] = price_class
+            if comment is not None:
+                config['comment'] = comment
+            else:
+                config['comment'] = "distribution created by ansible with datetime " + \
+                    self.__default_datetime_string
             return config
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating common distribution parameters")
+            self.module.fail_json(msg="error validating common distribution parameters - " + str(e))
 
-    def validate_comment(self, config, comment):
-        config['comment'] = comment or config.get('comment', "Distribution created by Ansible with datetime stamp " + self.__default_datetime_string)
-        return config
-
-    def validate_caller_reference(self, caller_reference):
-        return caller_reference or self.__default_datetime_string
+    def validate_caller_reference_for_distribution(self, config, caller_reference):
+        try:
+            if caller_reference is not None:
+                config['caller_reference'] = caller_reference
+            else:
+                config['caller_reference'] = self.__default_datetime_string
+            return config
+        except Exception as e:
+            self.module.fail_json(msg="error validating caller reference - " + str(e))
 
     def get_first_origin_id_for_default_cache_behavior(self, valid_origins):
         try:
             if valid_origins is not None:
                 valid_origins_list = valid_origins.get('items')
-                if valid_origins_list is not None and isinstance(valid_origins_list, list) and len(valid_origins_list) > 0:
+                if(valid_origins_list is not None and isinstance(valid_origins_list, list) and
+                        len(valid_origins_list) > 0):
                     return str(valid_origins_list[0].get('id'))
-            self.module.fail_json(msg="There are no valid origins from which to specify a target_origin_id for the default_cache_behavior configuration.")
+            self.module.fail_json(msg="there are no valid origins from which to specify a target_origin_id " +
+                                  "for the default_cache_behavior configuration")
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error getting first origin_id for default cache behavior")
-
-    def validate_attribute_list_with_allowed_list(self, attribute_list, attribute_list_name, allowed_list):
-        try:
-            self.validate_is_list(attribute_list, attribute_list_name)
-            if (isinstance(allowed_list, list) and set(attribute_list) not in allowed_list or
-                    isinstance(allowed_list, set) and not set(allowed_list).issuperset(attribute_list)):
-                self.module.fail_json(msg='The attribute list {0} must be one of [{1}]'.format(attribute_list_name, ' '.join(str(a) for a in allowed_list)))
-        except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating attribute list with allowed value list")
+            self.module.fail_json(
+                msg="error getting first origin_id for default cache behavior- " + str(e))
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
-        if attribute is not None and attribute not in allowed_list:
-            self.module.fail_json(msg='The attribute {0} must be one of [{1}]'.format(attribute_name, ' '.join(str(a) for a in allowed_list)))
-
-    def validate_distribution_from_caller_reference(self, caller_reference):
         try:
-            distributions = self.__cloudfront_facts_mgr.list_distributions(False)
-            distribution_name = 'Distribution'
-            distribution_config_name = 'DistributionConfig'
-            distribution_ids = [dist.get('Id') for dist in distributions]
-            for distribution_id in distribution_ids:
-                config = self.__cloudfront_facts_mgr.get_distribution(distribution_id)
-                distribution = config.get(distribution_name)
-                if distribution is not None:
-                    distribution_config = distribution.get(distribution_config_name)
-                    if distribution_config is not None and distribution_config.get('CallerReference') == caller_reference:
-                        distribution['DistributionConfig'] = distribution_config
-                        return distribution
-
+            if (attribute is not None and ((isinstance(attribute, list) and (not
+                                           set(attribute) < set(allowed_list))) or (not
+                                           isinstance(attribute, list) and attribute not in allowed_list))):
+                self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(attribute_name,
+                                                                                        ' '.join(str(a) for a in allowed_list)))
         except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating distribution from caller reference")
+            self.module.fail_json(msg="error validating attribute with allowed values - " + str(e))
 
-    def validate_distribution_from_aliases_caller_reference(self, distribution_id, aliases, caller_reference):
+    def validate_presigned_url_pem_expire_date(self, datetime_string):
         try:
-            if caller_reference is not None:
-                return self.validate_distribution_from_caller_reference(caller_reference)
+            return datetime.datetime.strptime(datetime_string, self.__default_presigned_url_pem_expire_date_format)
+        except Exception as e:
+            self.module.fail_json(msg="presigned_url_pem_expire_date must be in the format '{0}'".format(
+                self.__default_presigned_url_pem_expire_date_format))
+
+
+class CloudFrontHelpers:
+    """
+    Miscellaneous helpers for processing cloudfront data
+    """
+
+    def change_dict_key_name(self, dictionary, old_key, new_key):
+        if old_key in dictionary:
+            dictionary[new_key] = dictionary.get(old_key)
+            dictionary.pop(old_key, None)
+        return dictionary
+
+    def snake_dict_to_pascal_dict(self, snake_dict):
+        def pascalize(complex_type):
+            if complex_type is None:
+                return
+            new_type = type(complex_type)()
+            if isinstance(complex_type, dict):
+                for key in complex_type:
+                    new_type[pascal(key)] = pascalize(complex_type[key])
+            elif isinstance(complex_type, list):
+                for i in range(len(complex_type)):
+                    new_type.append(pascalize(complex_type[i]))
             else:
-                if aliases:
-                    distribution_id = self.validate_distribution_id_from_alias(aliases)
-                if distribution_id:
-                    return self.__cloudfront_facts_mgr.get_distribution(distribution_id)
-            return None
-        except Exception as e:
-            self.module.fail_json_aws(e, msg="Error validating distribution_id from alias, aliases and caller reference")
+                return complex_type
+            return new_type
 
-    def validate_distribution_id_from_alias(self, aliases):
-        distributions = self.__cloudfront_facts_mgr.list_distributions(False)
-        if distributions:
-            for distribution in distributions:
-                distribution_aliases = distribution.get('Aliases', {}).get('Items', [])
-                if set(aliases) & set(distribution_aliases):
-                    return distribution['Id']
-        return None
+        def pascal(words):
+            return words.capitalize().split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
+        return pascalize(snake_dict)
 
-    def wait_until_processed(self, client, wait_timeout, distribution_id, caller_reference):
-        if distribution_id is None:
-            distribution_id = self.validate_distribution_id_from_caller_reference(caller_reference=caller_reference)
+    def pascal_dict_to_snake_dict(self, pascal_dict, split_caps=False):
+        def pascal_to_snake(name):
+            import re
+            first_cap_re = re.compile('(.)([A-Z][a-z]+)')
+            all_cap_re = re.compile('([a-z0-9])([A-Z]+)')
+            split_cap_re = re.compile('([A-Z])')
+            s1 = first_cap_re.sub(r'\1\2', name)
+            if split_caps:
+                s2 = split_cap_re.sub(r'_\1', s1).lower()
+                s2 = s2[1:] if s2[0] == '_' else s2
+            else:
+                s2 = all_cap_re.sub(r'\1_\2', s1).lower()
+            return s2
 
-        try:
-            waiter = client.get_waiter('distribution_deployed')
-            attempts = 1 + int(wait_timeout / 60)
-            waiter.wait(Id=distribution_id, WaiterConfig={'MaxAttempts': attempts})
-        except botocore.exceptions.WaiterError as e:
-            self.module.fail_json(msg="Timeout waiting for cloudfront action. Waited for {0} seconds before timeout. "
-                                  "Error: {1}".format(to_text(wait_timeout), to_native(e)))
+        def value_is_list(pascal_list):
+            checked_list = []
+            for item in pascal_list:
+                if isinstance(item, dict):
+                    checked_list.append(self.pascal_dict_to_snake_dict(item, split_caps))
+                elif isinstance(item, list):
+                    checked_list.append(value_is_list(item))
+                else:
+                    checked_list.append(item)
+            return checked_list
+        snake_dict = {}
+        for k, v in pascal_dict.items():
+            if isinstance(v, dict):
+                snake_dict[pascal_to_snake(k)] = self.pascal_dict_to_snake_dict(v, split_caps)
+            elif isinstance(v, list):
+                snake_dict[pascal_to_snake(k)] = value_is_list(v)
+            else:
+                snake_dict[pascal_to_snake(k)] = v
+        return snake_dict
 
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            self.module.fail_json_aws(e, msg="Error getting distribution {0}".format(distribution_id))
+    def merge_validation_into_config(self, config, validated_node, node_name):
+        if validated_node is not None:
+            if isinstance(validated_node, dict):
+                config_node = config.get(node_name)
+                if config_node is not None:
+                    config_node_items = config_node.items()
+                else:
+                    config_node_items = []
+                config[node_name] = dict(config_node_items + validated_node.items())
+            if isinstance(validated_node, list):
+                config[node_name] = list(set(config.get(node_name) + validated_node))
+        return config
+
+    def python_list_to_aws_list(self, list_items=None, include_quantity=True):
+        if list_items is None:
+            list_items = []
+        if not isinstance(list_items, list):
+            self.module.fail_json(msg='expected a python list, got a python {0} with value {1}'.format(
+                type(list_items).__name__, str(list_items)))
+        result = {}
+        if include_quantity:
+            result['quantity'] = len(list_items)
+        result['items'] = list_items
+        return result
 
 
 def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        state=dict(choices=['present', 'absent'], default='present'),
-        caller_reference=dict(),
-        comment=dict(),
-        distribution_id=dict(),
-        e_tag=dict(),
-        tags=dict(type='dict', default={}),
-        purge_tags=dict(type='bool', default=False),
-        alias=dict(),
-        aliases=dict(type='list', default=[]),
-        purge_aliases=dict(type='bool', default=False),
-        default_root_object=dict(),
-        origins=dict(type='list'),
-        purge_origins=dict(type='bool', default=False),
-        default_cache_behavior=dict(type='dict'),
-        cache_behaviors=dict(type='list'),
-        purge_cache_behaviors=dict(type='bool', default=False),
-        custom_error_responses=dict(type='list'),
-        purge_custom_error_responses=dict(type='bool', default=False),
-        logging=dict(type='dict'),
-        price_class=dict(),
-        enabled=dict(type='bool'),
-        viewer_certificate=dict(type='dict'),
-        restrictions=dict(type='dict'),
-        web_acl_id=dict(),
-        http_version=dict(),
-        ipv6_enabled=dict(type='bool'),
-        default_origin_domain_name=dict(),
-        default_origin_path=dict(),
-        wait=dict(default=False, type='bool'),
-        wait_timeout=dict(default=1800, type='int')
+        state=dict(required=False, choices=['present', 'updated', 'absent',
+                            'duplicated', 'validated'], default=None),
+        streaming_distribution=dict(required=False, default=False, type='bool'),
+        generate_presigned_url_from_pem_private_key=dict(
+            required=False, default=False, type='bool'),
+        caller_reference=dict(required=False, default=None, type='str'),
+        comment=dict(required=False, default=None, type='str'),
+        distribution_id=dict(required=False, default=None, type='str'),
+        streaming_distribution_id=dict(required=False, default=None, type='str'),
+        invalidation_batch=dict(required=False, default=None, type='list'),
+        e_tag=dict(required=False, default=None, type='str'),
+        presigned_url_pem_private_key_path=dict(required=False, default=None, type='str'),
+        presigned_url_pem_private_key_password=dict(
+            required=False, default=None, type='str', no_log=True),
+        presigned_url_pem_url=dict(required=False, default=None, type='str'),
+        presigned_url_pem_expire_date=dict(required=False, default=None, type='str'),
+        config=dict(required=False, default=None, type='json'),
+        tags=dict(required=False, default=None, type='list'),
+        purge_tags=dict(required=False, default=None, type='bool'),
+        alias=dict(required=False, default=None, type='str'),
+        aliases=dict(required=False, default=None, type='list'),
+        default_root_object=dict(required=False, default=None, type='str'),
+        origins=dict(required=False, default=None, type='list'),
+        default_cache_behavior=dict(required=False, default=None, type='dict'),
+        cache_behaviors=dict(required=False, default=None, type='list'),
+        custom_error_responses=dict(required=False, default=None, type='list'),
+        logging=dict(required=False, default=None, type='dict'),
+        price_class=dict(required=False, default=None, type='str'),
+        enabled=dict(required=False, default=None, type='bool'),
+        viewer_certificate=dict(required=False, default=None, type='dict'),
+        restrictions=dict(required=False, default=None, type='json'),
+        web_acl_id=dict(required=False, default=None, type='str'),
+        http_version=dict(required=False, default=None, type='str'),
+        is_ipv6_enabled=dict(required=False, default=None, type='bool'),
+        s3_origin=dict(required=False, default=None, type='json'),
+        trusted_signers=dict(required=False, default=None, type='list'),
+        default_origin_domain_name=dict(required=False, default=None, type='str'),
+        default_origin_path=dict(required=False, default=None, type='str'),
+        default_s3_origin_access_identity=dict(required=False, default=None, type='str'),
+        default_s3_origin_domain_name=dict(required=False, default=None, type='str'),
+        default_s3_origin_origin_access_identity=dict(required=False, default=None, type='str')
     ))
 
     result = {}
-    changed = True
 
-    module = AnsibleAWSModule(
-        argument_spec=argument_spec,
-        supports_check_mode=False,
-        mutually_exclusive=[
-            ['distribution_id', 'alias'],
-            ['default_origin_domain_name', 'distribution_id'],
-            ['default_origin_domain_name', 'alias'],
-        ]
-    )
-
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='cloudfront', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    service_mgr = CloudFrontServiceManager(module)
     validation_mgr = CloudFrontValidationManager(module)
+    helpers = CloudFrontHelpers()
 
     state = module.params.get('state')
+    streaming_distribution = module.params.get('streaming_distribution')
+    generate_presigned_url_from_pem_private_key = module.params.get(
+        'generate_presigned_url_from_pem_private_key')
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
     e_tag = module.params.get('e_tag')
+    presigned_url_pem_private_key_path = module.params.get('presigned_url_pem_private_key_path')
+    presigned_url_pem_private_key_password = module.params.get(
+        'presigned_url_pem_private_key_password')
+    presigned_url_pem_url = module.params.get('presigned_url_pem_url')
+    presigned_url_pem_expire_date = module.params.get('presigned_url_pem_expire_date')
+    config = module.params.get('config')
     tags = module.params.get('tags')
     purge_tags = module.params.get('purge_tags')
     distribution_id = module.params.get('distribution_id')
+    streaming_distribution_id = module.params.get('streaming_distribution_id')
     alias = module.params.get('alias')
     aliases = module.params.get('aliases')
-    purge_aliases = module.params.get('purge_aliases')
     default_root_object = module.params.get('default_root_object')
     origins = module.params.get('origins')
-    purge_origins = module.params.get('purge_origins')
     default_cache_behavior = module.params.get('default_cache_behavior')
     cache_behaviors = module.params.get('cache_behaviors')
-    purge_cache_behaviors = module.params.get('purge_cache_behaviors')
     custom_error_responses = module.params.get('custom_error_responses')
-    purge_custom_error_responses = module.params.get('purge_custom_error_responses')
+    comment = module.params.get('comment')
     logging = module.params.get('logging')
     price_class = module.params.get('price_class')
     enabled = module.params.get('enabled')
     viewer_certificate = module.params.get('viewer_certificate')
     restrictions = module.params.get('restrictions')
-    purge_restrictions = module.params.get('purge_restrictions')
     web_acl_id = module.params.get('web_acl_id')
     http_version = module.params.get('http_version')
-    ipv6_enabled = module.params.get('ipv6_enabled')
+    is_ipv6_enabled = module.params.get('is_ipv6_enabled')
+    s3_origin = module.params.get('s3_origin')
+    trusted_signers = module.params.get('trusted_signers')
     default_origin_domain_name = module.params.get('default_origin_domain_name')
     default_origin_path = module.params.get('default_origin_path')
-    wait = module.params.get('wait')
-    wait_timeout = module.params.get('wait_timeout')
+    default_s3_origin_access_identity = module.params.get('default_s3_origin_access_identity')
+    default_s3_origin_domain_name = module.params.get('default_s3_origin_domain_name')
+    default_s3_origin_origin_access_identity = module.params.get(
+        'default_s3_origin_origin_access_identity')
 
-    if alias and alias not in aliases:
-        aliases.append(alias)
+    create_distribution = (state == 'present' and not streaming_distribution)
+    update_distribution = (state == 'updated' and not streaming_distribution)
+    delete_distribution = (state == 'absent' and not streaming_distribution)
+    duplicate_distribution = (state == 'duplicated' and not streaming_distribution)
+    validate_distribution = (state == 'validated' and not streaming_distribution)
+    create_streaming_distribution = (state == 'present' and streaming_distribution)
+    update_streaming_distribution = (state == 'updated' and streaming_distribution)
+    delete_streaming_distribution = (state == 'absent' and streaming_distribution)
+    duplicate_streaming_distribution = (state == 'duplicated' and streaming_distribution)
+    validate_streaming_distribution = (state == 'validated' and streaming_distribution)
 
-    distribution = validation_mgr.validate_distribution_from_aliases_caller_reference(distribution_id, aliases, caller_reference)
+    create_update_distribution = create_distribution or update_distribution
+    create_update_streaming_distribution = (create_streaming_distribution or
+            update_streaming_distribution)
+    update_delete_duplicate_distribution = (update_distribution or
+            delete_distribution or duplicate_distribution)
+    update_delete_duplicate_streaming_distribution = (update_streaming_distribution
+            or delete_streaming_distribution or duplicate_streaming_distribution)
+    create = create_distribution or create_streaming_distribution
+    update = update_distribution or update_streaming_distribution
+    validate = validate_distribution or validate_streaming_distribution
+    duplicate = duplicate_distribution or duplicate_streaming_distribution
+    delete = delete_distribution or delete_streaming_distribution
+    config_required = (create or update or delete or duplicate or validate)
 
-    update = state == 'present' and distribution
-    create = state == 'present' and not distribution
-    delete = state == 'absent' and distribution
+    if state is None and not generate_presigned_url_from_pem_private_key:
+        module.fail_json(msg="please select either a state or to generate a presigned url")
 
-    if not (update or create or delete):
-        module.exit_json(changed=False)
+    if sum(map(bool, [create_distribution, delete_distribution, update_distribution,
+            create_streaming_distribution, delete_streaming_distribution,
+            update_streaming_distribution, generate_presigned_url_from_pem_private_key,
+            duplicate_distribution, duplicate_streaming_distribution,
+            validate_distribution, validate_streaming_distribution])) > 1:
+        module.fail_json(
+            msg="more than one cloudfront action has been specified. please select only one action.")
 
-    if update or delete:
-        config = distribution['Distribution']['DistributionConfig']
-        e_tag = distribution['ETag']
-        distribution_id = distribution['Distribution']['Id']
-    else:
-        config = dict()
-    if update:
-        config = camel_dict_to_snake_dict(config, reversible=True)
+    if (validate or create) and config is None:
+        config = {}
 
-    if create or update:
-        config = validation_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging, price_class, purge_aliases)
-        config = validation_mgr.validate_distribution_config_parameters(config, default_root_object, ipv6_enabled, http_version, web_acl_id)
-        config['origins'] = validation_mgr.validate_origins(client, config.get('origins', {}).get('items', []), origins, default_origin_domain_name,
-                                                            default_origin_path, create, purge_origins)
-        config['cache_behaviors'] = validation_mgr.validate_cache_behaviors(config.get('cache_behaviors', {}).get('items', []),
-                                                                            cache_behaviors, config['origins'], purge_cache_behaviors)
-        config['default_cache_behavior'] = validation_mgr.validate_cache_behavior(config.get('default_cache_behavior', {}),
-                                                                                  default_cache_behavior, config['origins'], True)
-        config['custom_error_responses'] = validation_mgr.validate_custom_error_responses(config.get('custom_error_responses', {}).get('items', []),
-                                                                                          custom_error_responses, purge_custom_error_responses)
-        valid_restrictions = validation_mgr.validate_restrictions(config.get('restrictions', {}), restrictions, purge_restrictions)
-        if valid_restrictions:
-            config['restrictions'] = valid_restrictions
+    if update_delete_duplicate_distribution or config:
+        distribution_id, config, e_tag = validation_mgr.validate_update_delete_distribution_parameters(
+            alias, distribution_id, config, e_tag)
+
+    if update_delete_duplicate_streaming_distribution or validate_streaming_distribution:
+        streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias, streaming_distribution_id,
+                                                                                                                           config, e_tag)
+
+    if update or create or duplicate or validate:
+        valid_tags = validation_mgr.validate_tags(tags)
+
+    if config_required:
+        config = helpers.pascal_dict_to_snake_dict(config, True)
+
+    if create_update_distribution or create_update_streaming_distribution or duplicate:
+        config = validation_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging,
+                                                                        price_class, comment, create_update_streaming_distribution)
+
+    if create_update_distribution or validate:
+        valid_origins = validation_mgr.validate_origins(
+            origins, default_origin_domain_name, default_s3_origin_access_identity,
+            default_origin_path, create_update_streaming_distribution,
+            create_distribution)
+        config = helpers.merge_validation_into_config(config, valid_origins, 'origins')
+        config_origins = config.get('origins')
+        valid_cache_behaviors = validation_mgr.validate_cache_behaviors(
+            cache_behaviors, config_origins)
+        config = helpers.merge_validation_into_config(
+            config, valid_cache_behaviors, 'cache_behaviors')
+        valid_default_cache_behavior = validation_mgr.validate_cache_behavior(
+            default_cache_behavior, config_origins, True)
+        config = helpers.merge_validation_into_config(
+            config, valid_default_cache_behavior, 'default_cache_behavior')
+        valid_custom_error_responses = validation_mgr.validate_custom_error_responses(
+            custom_error_responses)
+        config = helpers.merge_validation_into_config(
+            config, valid_custom_error_responses, 'custom_error_responses')
+        valid_restrictions = validation_mgr.validate_restrictions(restrictions)
+        config = helpers.merge_validation_into_config(config, valid_restrictions, 'restrictions')
+        config = validation_mgr.validate_distribution_config_parameters(config, default_root_object,
+                                                                        is_ipv6_enabled, http_version, web_acl_id)
         valid_viewer_certificate = validation_mgr.validate_viewer_certificate(viewer_certificate)
-        config = merge_validation_into_config(config, valid_viewer_certificate, 'viewer_certificate')
-        config = validation_mgr.validate_comment(config, comment)
-        config = snake_dict_to_camel_dict(config, capitalize_first=True)
+        config = helpers.merge_validation_into_config(
+            config, valid_viewer_certificate, 'viewer_certificate')
+    elif create_update_streaming_distribution or validate:
+        config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment, trusted_signers,
+                                                                                  s3_origin, default_s3_origin_domain_name,
+                                                                                  default_s3_origin_origin_access_identity)
+    if(create_distribution or create_streaming_distribution or duplicate_distribution or
+            duplicate_streaming_distribution or validate):
+        config = validation_mgr.validate_caller_reference_for_distribution(config, caller_reference)
 
-    if create:
-        config['CallerReference'] = validation_mgr.validate_caller_reference(caller_reference)
-        result = create_distribution(client, module, config, ansible_dict_to_boto3_tag_list(tags))
-        result = camel_dict_to_snake_dict(result)
-        result['tags'] = list_tags_for_resource(client, module, result['arn'])
+    if config_required:
+        config = helpers.snake_dict_to_pascal_dict(config)
 
-    if delete:
-        if config['Enabled']:
-            config['Enabled'] = False
-            result = update_distribution(client, module, config, distribution_id, e_tag)
-            validation_mgr.wait_until_processed(client, wait_timeout, distribution_id, config.get('CallerReference'))
-        distribution = validation_mgr.validate_distribution_from_aliases_caller_reference(distribution_id, aliases, caller_reference)
-        # e_tag = distribution['ETag']
-        result = delete_distribution(client, module, distribution)
+    if generate_presigned_url_from_pem_private_key:
+        validated_pem_expire_date = validation_mgr.validate_presigned_url_pem_expire_date(
+            presigned_url_pem_expire_date)
+        result = service_mgr.generate_presigned_url_from_pem_private_key(distribution_id, presigned_url_pem_private_key_path,
+                                                                         presigned_url_pem_private_key_password,
+                                                                         presigned_url_pem_url, validated_pem_expire_date)
+    elif create_distribution or duplicate_distribution:
+        result = service_mgr.create_distribution(config, valid_tags)
+    elif delete_distribution:
+        result = service_mgr.delete_distribution(distribution_id, e_tag)
+    elif update_distribution:
+        result = service_mgr.update_distribution(config, distribution_id, e_tag)
+    elif create_streaming_distribution or duplicate_streaming_distribution:
+        result = service_mgr.create_streaming_distribution(config, valid_tags)
+    elif delete_streaming_distribution:
+        result = service_mgr.delete_streaming_distribution(streaming_distribution_id, e_tag)
+    elif update_streaming_distribution:
+        result = service_mgr.update_streaming_distribution(config, streaming_distribution_id, e_tag)
+    elif validate:
+        result = {'validation_result': 'OK'}
 
-    if update:
-        changed = config != distribution['Distribution']['DistributionConfig']
-        if changed:
-            result = update_distribution(client, module, config, distribution_id, e_tag)
-        else:
-            result = distribution['Distribution']
-        existing_tags = list_tags_for_resource(client, module, result['ARN'])
-        distribution['Distribution']['DistributionConfig']['tags'] = existing_tags
-        changed |= update_tags(client, module, existing_tags, tags, purge_tags, result['ARN'])
-        result = camel_dict_to_snake_dict(result)
-        result['distribution_config']['tags'] = config['tags'] = list_tags_for_resource(client, module, result['arn'])
-        result['diff'] = dict()
-        diff = recursive_diff(distribution['Distribution']['DistributionConfig'], config)
-        if diff:
-            result['diff']['before'] = diff[0]
-            result['diff']['after'] = diff[1]
+    if update and valid_tags is not None:
+        arn = validation_mgr.validate_tagging_arn(alias, distribution_id, streaming_distribution_id)
+        if purge_tags:
+            service_mgr.remove_all_tags_from_resource(arn)
+        valid_aws_tags = helpers.python_list_to_aws_list(valid_tags, False)
+        valid_pascal_aws_tags = helpers.snake_dict_to_pascal_dict(valid_aws_tags)
+        service_mgr.tag_resource(arn, valid_pascal_aws_tags)
 
-    if wait and (create or update):
-        validation_mgr.wait_until_processed(client, wait_timeout, distribution_id, config.get('CallerReference'))
-
-    if 'distribution_config' in result:
-        result.update(result['distribution_config'])
-        del(result['distribution_config'])
-
-    module.exit_json(changed=changed, **result)
+    module.exit_json(changed=(not validate), **helpers.pascal_dict_to_snake_dict(result))
 
 
 if __name__ == '__main__':
