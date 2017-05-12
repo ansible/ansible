@@ -29,7 +29,7 @@ short_description: Create, Update or Destory a Target_Proxy.
 description:
     - Create, Update or Destory a Target_Proxy. See
       U(https://cloud.google.com/compute/docs/load-balancing/http/target-proxies) for an overview.
-      More details on the Target_Proxy API can be found at 
+      More details on the Target_Proxy API can be found at
       U(https://cloud.google.com/compute/docs/reference/latest/targetHttpProxies#resource-representations).
 requirements:
   - "python >= 2.6"
