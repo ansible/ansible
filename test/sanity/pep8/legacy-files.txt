@@ -504,7 +504,6 @@ lib/ansible/modules/network/nxos/nxos_igmp_snooping.py
 lib/ansible/modules/network/nxos/nxos_install_os.py
 lib/ansible/modules/network/nxos/nxos_interface.py
 lib/ansible/modules/network/nxos/nxos_interface_ospf.py
-lib/ansible/modules/network/nxos/nxos_ip_interface.py
 lib/ansible/modules/network/nxos/nxos_ntp.py
 lib/ansible/modules/network/nxos/nxos_ntp_auth.py
 lib/ansible/modules/network/nxos/nxos_ntp_options.py
