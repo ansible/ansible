@@ -37,57 +37,29 @@ version_added: "2.4"
 author: Willem van Ketwich (@wilvk)
 
 options:
-    resource:
+    state:
       description:
-        - The desired state of the resource specified by the C(resource) tag.
-          present - creates a new resource
-            used for the resources
-              - distribution
-              - streaming_distribution_id
-              - origin_access_identity
-              - invalidation
-          absent - deletes an existing resource
-            used for the resources
-              - distribution
-              - streaming_distribution_id
-              - origin_access_identity
-          updated - updates an existing resource
-            used for the resources
-              - distribution
-              - streaming_distribution_id
-              - origin_access_identity
-          duplicated - duplicates and existing resource (can also make updates at the same time)
-            used for the resources
-              - distribution
-              - streaming_distribution_id
-          verified - verifies a configuration parameters but does no action on the resource.
-            used for the resources
-              - distribution
-              - streaming_distribution_id
+        - The desired state of the distribution or streaming distribution.
+          present - creates a new distribution
+          absent - deletes an existing distribution
+          updated - updates an existing distribution
+          duplicated - duplicates an existing distribution
+              (can also make updates at the same time)
+          verified - verifies a configuration parameters
+              (but does no action on the resource)
       choices: ['present', 'absent', 'updated', 'duplicated', 'verified']
       required: false
     distribution_id:
       description:
         - The id of the cloudfront distribution.
-          Used with
-            C(resource=distribution) or C(resource=invalidation) in conjunction
-            with C(state=updated) or C(state=duplicated) or
-            C(generate_presigned_url_from_pem_private_key=yes) exclusively.
-          This parameter can be exchanged with I(alias) and in conjunction with e_tag.
+          This parameter can be exchanged with C(alias) and in conjunction with C(e_tag).
+          Used with C(streaming_distribution=no)
       required: false
     streaming_distribution_id:
       description:
         - The id of the CloudFront streaming distribution.
-          Used with
-          C(resource=streaming_distribution) in conjunction with C(state=updated)
-          or C(state=duplicated).
           This parameter can be exchanged with C(alias) and in conjunction with C(e_tag).
-      required: false
-    origin_access_identity_id:
-      description:
-        - The id of the Origin Access Identity.
-          Used with
-            C(resource=origin_access_identity) in conjunction with C(state=present)
+          Used with C(streaming_distribution=yes)
       required: false
     e_tag:
       description:
@@ -245,8 +217,8 @@ options:
       description:
         - A config element that is a list of complex origin objects to be
           specified for the distribution. Used for creating, updating and duplicating
-          distributions. Only valid for distributions. Each origin
-          attribute comprises the attributes
+          distributions. Only valid for C(streaming_distribution=no). Each origin
+          item comprises the attributes
             id
             domain_name (defaults to default_origin_domain_name if not specified)
             origin_path
@@ -293,13 +265,13 @@ options:
               lambda_function_associations
                 - lambda_function_arn
                 - event_type
-          Only valid for C(resource=distribution).
+          Only valid for C(streaming_distribution=no).
       required: false
     cache_behaviors:
       description:
         - A config element that is a list of complex cache behavior objects to
           be specified for thecdistribution.
-          Only valid for distributions.
+          Only valid for C(streaming_distribution=no).
           Each cache behavior comprises the attributes of
             path_pattern
             target_origin_id
@@ -357,8 +329,8 @@ options:
     viewer_certificate:
       description:
         - A config element that is a complex object that specifies the encryption
-          details of the distribution. Only valid for distributions. Comprises
-          of the following attributes
+          details of the distribution. Only valid for C(streaming_distribution=no).
+          Comprises the following attributes
             cloudfront_default_certificate
             iam_certificate_id
             acm_certificate_arn
@@ -393,8 +365,7 @@ options:
 
 EXAMPLES = '''
 # create a basic distribution with defaults and tags
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: present
     default_origin_domain_name: www.my-cloudfront-origin.com
     tags:
@@ -403,23 +374,20 @@ EXAMPLES = '''
       - Priority: 1
 
 # update a distribution comment by distribution_id
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: updated
     distribution_id: E1RP5A2MJ8073O
     comment: modified by ansible cloudfront.py
 
 # update a distribution's aliases and comment using the distribution_id as a reference
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: present
     distribution_id: E1RP5A2MJ8073O
     comment: modified by cloudfront.py again
     aliases: [ 'www.my-distribution-source.com', 'zzz.aaa.io' ]
 
 # update a distribution's aliases and comment using an alias as a reference
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: updated
     distribution_id: E15BU8SDCGSG57
     comment: modified by cloudfront.py again
@@ -428,8 +396,7 @@ EXAMPLES = '''
       - zzz.aaa.io
 
 # update a distribution's comment and aliases and tags and remove existing tags
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: updated
     distribution_id: E15BU8SDCGSG57
     comment: modified by cloudfront.py again
@@ -440,8 +407,7 @@ EXAMPLES = '''
     purge_tags: yes
 
 # validate a distribution with an origin, logging and default cache behavior
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: validated
     origins:
       - id: 'my test origin-000111'
@@ -477,8 +443,7 @@ EXAMPLES = '''
     comment: this is a cloudfront distribution with logging
 
 # create a distribution with an origin, logging and default cache behavior
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: present
     origins:
         - id: 'my test origin-000111'
@@ -514,28 +479,25 @@ EXAMPLES = '''
     comment: this is a cloudfront distribution with logging
 
 # delete a distribution
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: absent
     distribution_id: E1ZNUV0U7KWO4P
 
 # duplicate a distribution by distribution_id and modify the comment field
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: duplicated
     distribution_id: E1RP5A2MJ8073O
     comment: duplicated distribution
 
 # duplicate a distribution based on distribution_id and set comment and aliases on new distribution
-- cloudfront:
-    resource: distribution
+- cloudfront_distribution:
     state: duplicated
     distribution_id: E1RP5A2MJ8073O
     comment: duplicated distribution with different aliases
     aliases: [ 'test.one', 'test.two', 'another.domain.not.in.original.com' ]
 
 # create a presigned url for a distribution based on a distribution_id and from a local pem file
-- cloudfront:
+- cloudfront_distribution:
     generate_presigned_url_from_pem_private_key: yes
     distribution_id: E1RP5A2MJ8073O
     presigned_url_pem_private_key_path: /home/user/ansible/pk-APKAJMTT6OPAZSFTNSCZ.pem
@@ -543,16 +505,15 @@ EXAMPLES = '''
     presigned_url_pem_expire_date: '2017-04-20'
 
 # create a streaming distribution
-- cloudfront:
-     resource: streaming_distribution
+- cloudfront_distribution:
+     streaming_distribution: yes
      state: present
      default_s3_origin_domain_name: example-bucket.s3.amazonaws.com
      comment: example streaming distribution
 
 # create a streaming distribution with tags
-- cloudfront:
-     resource: streaming_distribution
-     state: present
+- cloudfront_distribution:
+     streaming_distribution: yes
      default_s3_origin_domain_name: example-bucket.s3.amazonaws.com
      comment: example streaming distribution
      tags:
@@ -561,69 +522,37 @@ EXAMPLES = '''
        - Priority: 1
 
 # duplicate a streaming distribution
-- cloudfront:
+- cloudfront_distribution:
     resource: streaming_distribution
     state: duplicated
     streaming_distribution_id: E2RTIUCAA9RINU
 
 # update a streaming distribution
-- cloudfront:
-    resource: streaming_distribution
+- cloudfront_distribution:
+    streaming_distribution: yes
     state: updated
     streaming_distribution_id: E2RTIUCAA9RINU
     comment: modified streaming distribution
-
-# create an origin access identity
-- cloudfront:
-    resource: origin_access_identity
-    state: present
-    caller_reference: this is an example reference
-    comment: this is an example comment
-
-# update an origin access identity
-- cloudfront:
-     resource: origin_access_identity
-     state: updated
-     origin_access_identity_id: E17DRN9XUOAHZX
-     caller_reference: this is an example reference
-     e_tag: E2SOGFWHPXECAI
-     comment: this is a new comment
-
-# delete an origin access identity
-- cloudfront:
-    resource: origin_access_identity
-    state: absent
-    origin_access_identity_id: EBXCCWOVSAYYD
-    e_tag: E19J3JLL3TEPVY
-
-# create a batch of invalidations
-- cloudfront:
-    resource: invalidation
-    state: present
-    distribution_id: E15BU8SDCGSG57
-    invalidation_batch:
-      - /testpathone/test1.txt
-      - /testpathtwo/test2.log
-      - /testpaththree/test3.log
 '''
 
 RETURN = '''
 location:
     description: describes a url specifying the output of the action just run.
-    returned: applies to C(resource=distribution) and C(resource=streaming_distribution)
-      and C(origin_access_identity) and C(invalidation) with
-      C(state=present) and C(state=updated) and C(state=duplicated)
+    returned: applies to C(streaming_distribution=no) with C(state=present) or
+    C(state=updated) or C(state=duplicated) or when specifying
+    C(generate_presigned_url_from_pem_private_key=yes)
     type: str
 
 validation_result:
     description: either returns 'OK' or fails with a description of why the
       validation failed.
-    returned: applies to C(resource=distribution) and C(resource=streaming_distribution)
+    returned:
       with C(state=validated)
     type: str
 '''
 
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import get_aws_connection_info
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
@@ -662,53 +591,6 @@ class CloudFrontServiceManager:
                                        "boto configuration file"))
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="unable to establish connection - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
-
-    def create_origin_access_identity(self, caller_reference, comment):
-        try:
-            func = partial(self.client.create_cloud_front_origin_access_identity,
-                           CloudFrontOriginAccessIdentityConfig={
-                               'CallerReference': caller_reference,
-                               'Comment': comment
-                           })
-            return self.paginated_response(func)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="error creating cloud front origin access identity - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
-
-    def delete_origin_access_identity(self, origin_access_identity_id, e_tag):
-        try:
-            func = partial(self.client.delete_cloud_front_origin_access_identity,
-                           Id=origin_access_identity_id, IfMatch=e_tag)
-            return self.paginated_response(func)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="error deleting cloud front origin access identity - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
-
-    def update_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
-        try:
-            func = partial(self.client.update_cloud_front_origin_access_identity,
-                           CloudFrontOriginAccessIdentityConfig={
-                               'CallerReference': caller_reference,
-                               'Comment': comment
-                           },
-                           Id=origin_access_identity_id, IfMatch=e_tag)
-            return self.paginated_response(func)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="error updating cloud front origin access identity - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
-
-    def create_invalidation(self, distribution_id, invalidation_batch):
-        try:
-            func = partial(self.client.create_invalidation, DistributionId=distribution_id,
-                           InvalidationBatch=invalidation_batch)
-            return self.paginated_response(func)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="error creating invalidation(s) - " + str(e),
                                   exception=traceback.format_exc(),
                                   **camel_dict_to_snake_dict(e.response))
 
@@ -1336,7 +1218,8 @@ class CloudFrontValidationManager:
             self.module.fail_json(msg="error validating distribution config parameters - " + str(e))
 
     def validate_streaming_distribution_config_parameters(self, config, comment, trusted_signers, s3_origin,
-                                                          default_s3_origin_domain_name, default_s3_origin_origin_access_identity):
+                                                          default_s3_origin_domain_name,
+                                                          default_s3_origin_origin_access_identity):
         try:
             if s3_origin is None:
                 s3_origin = config.get('s3_origin')
@@ -1347,20 +1230,6 @@ class CloudFrontValidationManager:
         except Exception as e:
             self.module.fail_json(
                 msg="error validating streaming distribution config parameters - " + str(e))
-
-    def validate_invalidation_batch(self, invalidation_batch, caller_reference):
-        try:
-            if caller_reference is not None:
-                valid_caller_reference = caller_reference
-            else:
-                valid_caller_reference = self.__default_datetime_string
-            valid_invalidation_batch = {
-                'paths': self.__helpers.python_list_to_aws_list(invalidation_batch),
-                'caller_reference': valid_caller_reference
-            }
-            return valid_invalidation_batch
-        except Exception as e:
-            self.module.fail_json(msg="error validating invalidation batch - " + str(e))
 
     def validate_common_distribution_parameters(self, config, enabled, aliases, logging,
                                                 price_class, comment, is_streaming_distribution):
@@ -1402,8 +1271,9 @@ class CloudFrontValidationManager:
         try:
             if valid_origins is not None:
                 valid_origins_list = valid_origins.get('items')
-                if valid_origins_list is not None and isinstance(valid_origins_list, list) and len(valid_origins_list) > 0:
-                    return str(valid_origins.get('items')[0].get('id'))
+                if(valid_origins_list is not None and isinstance(valid_origins_list, list) and
+                        len(valid_origins_list) > 0):
+                    return str(valid_origins_list[0].get('id'))
             self.module.fail_json(msg="there are no valid origins from which to specify a target_origin_id " +
                                   "for the default_cache_behavior configuration")
         except Exception as e:
@@ -1522,13 +1392,11 @@ def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        resource=dict(choices=['distribution', 'streaming_distribution',
-                               'origin_access_identity', 'invalidation'], default=None),
-        state=dict(choices=['present', 'updated', 'absent',
+        state=dict(required=False, choices=['present', 'updated', 'absent',
                             'duplicated', 'validated'], default=None),
+        streaming_distribution=dict(required=False, default=False, type='bool'),
         generate_presigned_url_from_pem_private_key=dict(
             required=False, default=False, type='bool'),
-        origin_access_identity_id=dict(required=False, default=None, type='str'),
         caller_reference=dict(required=False, default=None, type='str'),
         comment=dict(required=False, default=None, type='str'),
         distribution_id=dict(required=False, default=None, type='str'),
@@ -1575,13 +1443,12 @@ def main():
     helpers = CloudFrontHelpers()
 
     state = module.params.get('state')
-    resource = module.params.get('resource')
+    streaming_distribution = module.params.get('streaming_distribution')
     generate_presigned_url_from_pem_private_key = module.params.get(
         'generate_presigned_url_from_pem_private_key')
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
     e_tag = module.params.get('e_tag')
-    origin_access_identity_id = module.params.get('origin_access_identity_id')
     presigned_url_pem_private_key_path = module.params.get('presigned_url_pem_private_key_path')
     presigned_url_pem_private_key_password = module.params.get(
         'presigned_url_pem_private_key_password')
@@ -1592,7 +1459,6 @@ def main():
     purge_tags = module.params.get('purge_tags')
     distribution_id = module.params.get('distribution_id')
     streaming_distribution_id = module.params.get('streaming_distribution_id')
-    invalidation_batch = module.params.get('invalidation_batch')
     alias = module.params.get('alias')
     aliases = module.params.get('aliases')
     default_root_object = module.params.get('default_root_object')
@@ -1618,43 +1484,39 @@ def main():
     default_s3_origin_origin_access_identity = module.params.get(
         'default_s3_origin_origin_access_identity')
 
-    create_origin_access_identity = (state == 'present' and resource == 'origin_access_identity')
-    update_origin_access_identity = (state == 'updated' and resource == 'origin_access_identity')
-    delete_origin_access_identity = (state == 'absent' and resource == 'origin_access_identity')
-    create_distribution = (state == 'present' and resource == 'distribution')
-    update_distribution = (state == 'updated' and resource == 'distribution')
-    delete_distribution = (state == 'absent' and resource == 'distribution')
-    duplicate_distribution = (state == 'duplicated' and resource == 'distribution')
-    validate_distribution = (state == 'validated' and resource == 'distribution')
-    create_streaming_distribution = (state == 'present' and resource == 'streaming_distribution')
-    update_streaming_distribution = (state == 'updated' and resource == 'streaming_distribution')
-    delete_streaming_distribution = (state == 'absent' and resource == 'streaming_distribution')
-    duplicate_streaming_distribution = (
-        state == 'duplicated' and resource == 'streaming_distribution')
-    validate_streaming_distribution = (
-        state == 'validated' and resource == 'streaming_distribution')
-    create_invalidation = (state == 'present' and resource == 'invalidation')
+    create_distribution = (state == 'present' and not streaming_distribution)
+    update_distribution = (state == 'updated' and not streaming_distribution)
+    delete_distribution = (state == 'absent' and not streaming_distribution)
+    duplicate_distribution = (state == 'duplicated' and not streaming_distribution)
+    validate_distribution = (state == 'validated' and not streaming_distribution)
+    create_streaming_distribution = (state == 'present' and streaming_distribution)
+    update_streaming_distribution = (state == 'updated' and streaming_distribution)
+    delete_streaming_distribution = (state == 'absent' and streaming_distribution)
+    duplicate_streaming_distribution = (state == 'duplicated' and streaming_distribution)
+    validate_streaming_distribution = (state == 'validated' and streaming_distribution)
 
     create_update_distribution = create_distribution or update_distribution
-    create_update_streaming_distribution = create_streaming_distribution or update_streaming_distribution
-    update_delete_duplicate_distribution = update_distribution or delete_distribution or duplicate_distribution
-    update_delete_duplicate_streaming_distribution = (update_streaming_distribution or delete_streaming_distribution or
-                                                      duplicate_streaming_distribution)
-    origin_access_identity = (create_origin_access_identity or update_origin_access_identity or
-                              delete_origin_access_identity)
+    create_update_streaming_distribution = (create_streaming_distribution or
+            update_streaming_distribution)
+    update_delete_duplicate_distribution = (update_distribution or
+            delete_distribution or duplicate_distribution)
+    update_delete_duplicate_streaming_distribution = (update_streaming_distribution
+            or delete_streaming_distribution or duplicate_streaming_distribution)
     create = create_distribution or create_streaming_distribution
     update = update_distribution or update_streaming_distribution
     validate = validate_distribution or validate_streaming_distribution
     duplicate = duplicate_distribution or duplicate_streaming_distribution
-    delete = delete_distribution or delete_streaming_distribution or delete_origin_access_identity
-    config_required = (create_distribution or update_delete_duplicate_distribution or create_streaming_distribution or
-                       update_delete_duplicate_streaming_distribution or validate)
+    delete = delete_distribution or delete_streaming_distribution
+    config_required = (create or update or delete or duplicate or validate)
 
-    if sum(map(bool, [create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
-                      create_distribution, delete_distribution, update_distribution, create_streaming_distribution,
-                      delete_streaming_distribution, update_streaming_distribution, generate_presigned_url_from_pem_private_key,
-                      duplicate_distribution, duplicate_streaming_distribution, validate_distribution,
-                      validate_streaming_distribution, create_invalidation])) > 1:
+    if state is None and not generate_presigned_url_from_pem_private_key:
+        module.fail_json(msg="please select either a state or to generate a presigned url")
+
+    if sum(map(bool, [create_distribution, delete_distribution, update_distribution,
+            create_streaming_distribution, delete_streaming_distribution,
+            update_streaming_distribution, generate_presigned_url_from_pem_private_key,
+            duplicate_distribution, duplicate_streaming_distribution,
+            validate_distribution, validate_streaming_distribution])) > 1:
         module.fail_json(
             msg="more than one cloudfront action has been specified. please select only one action.")
 
@@ -1682,7 +1544,8 @@ def main():
     if create_update_distribution or validate:
         valid_origins = validation_mgr.validate_origins(
             origins, default_origin_domain_name, default_s3_origin_access_identity,
-            default_origin_path, create_update_streaming_distribution, create_distribution)
+            default_origin_path, create_update_streaming_distribution,
+            create_distribution)
         config = helpers.merge_validation_into_config(config, valid_origins, 'origins')
         config_origins = config.get('origins')
         valid_cache_behaviors = validation_mgr.validate_cache_behaviors(
@@ -1715,21 +1578,7 @@ def main():
     if config_required:
         config = helpers.snake_dict_to_pascal_dict(config)
 
-    if create_invalidation:
-        valid_invalidation_batch = validation_mgr.validate_invalidation_batch(
-            invalidation_batch, caller_reference)
-        valid_invalidation_batch = helpers.snake_dict_to_pascal_dict(valid_invalidation_batch)
-
-    if create_origin_access_identity:
-        result = service_mgr.create_origin_access_identity(caller_reference, comment)
-    elif delete_origin_access_identity:
-        result = service_mgr.delete_origin_access_identity(origin_access_identity_id, e_tag)
-    elif update_origin_access_identity:
-        result = service_mgr.update_origin_access_identity(
-            caller_reference, comment, origin_access_identity_id, e_tag)
-    elif create_invalidation:
-        result = service_mgr.create_invalidation(distribution_id, valid_invalidation_batch)
-    elif generate_presigned_url_from_pem_private_key:
+    if generate_presigned_url_from_pem_private_key:
         validated_pem_expire_date = validation_mgr.validate_presigned_url_pem_expire_date(
             presigned_url_pem_expire_date)
         result = service_mgr.generate_presigned_url_from_pem_private_key(distribution_id, presigned_url_pem_private_key_path,
