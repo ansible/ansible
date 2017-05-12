@@ -171,11 +171,31 @@ def main():
     except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as e:
         fail_json_aws(module, e, msg="connecting to AWS")
 
-    if not api_id:
-        desc = "Incomplete API creation by ansible aws_api_gateway module"
-        awsret = create_api(client, name="ansible-temp-api", description=desc)
-        api_id = awsret["id"]
+    changed = True   # for now it will stay that way until we can sometimes avoid change
 
+    if state == "present":
+        if api_id is None:
+            api_id = create_empty_api(module, client)
+        api_data = get_api_definitions(module, swagger_file=swagger_file,
+                                       swagger_dict=swagger_dict, swagger_text=swagger_text)
+        conf_res, dep_res = ensure_api_in_correct_state(module, client, api_id=api_id,
+                                                        api_data=api_data, stage=stage,
+                                                        deploy_desc=deploy_desc)
+    if state == "absent":
+        raise NotImplementedError
+        # ensure_api_not_there():
+
+    exit_args = {"changed": changed, "api_id": api_id}
+
+    if conf_res is not None:
+        exit_args['configure_response'] = camel_dict_to_snake_dict(conf_res)
+    if dep_res is not None:
+        exit_args['deploy_response'] = camel_dict_to_snake_dict(dep_res)
+
+    module.exit_json(**exit_args)
+
+
+def get_api_definitions(module, swagger_file=None, swagger_dict=None, swagger_text=None):
     apidata = None
     if swagger_file is not None:
         try:
@@ -191,13 +211,41 @@ def main():
 
     if apidata is None:
         module.fail_json(msg='module error - failed to get API data')
+    return apidata
 
+
+def create_empty_api(module, client):
+    """
+    creates a new empty API ready to be configured.  The description is
+    temporarily set to show the API as incomplete but should be
+    updated when the API is configured.
+    """
+    desc = "Incomplete API creation by ansible aws_api_gateway module"
     try:
-        create_response = configure_api(client, apidata=apidata, api_id=api_id)
+        awsret = create_api(client, name="ansible-temp-api", description=desc)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
-        fail_json_aws(module, e, msg="configuring api {}".format(api_id))
+        fail_json_aws(module, e, msg="creating API")
+    return awsret["id"]
 
-    changed = True
+
+def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stage=None,
+                                deploy_desc=None):
+    """Make sure that we have the API configured and deployed as instructed.
+
+    This function first configures the API correctly uploading the
+    swagger definitions and then deploys those.  Configuration and
+    deployment should be closely tied because there is only one set of
+    definitions so if we stop, they may be updated by someone else and
+    then we deploy the wrong configuration.
+    """
+
+    configure_response = None
+    try:
+        configure_response = configure_api(client, api_data=api_data, api_id=api_id)
+    except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
+        fail_json_aws(module, e, msg="configuring API {}".format(api_id))
+
+    deploy_response = None
 
     if stage:
         try:
@@ -206,12 +254,8 @@ def main():
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             msg = "deploying api {} to stage {}".format(api_id, stage)
             fail_json_aws(module, e, msg)
-        module.exit_json(changed=changed, api_id=api_id,
-                         create_response=camel_dict_to_snake_dict(create_response),
-                         deploy_response=camel_dict_to_snake_dict(deploy_response))
-    else:
-            module.exit_json(changed=changed, api_id=api_id,
-                             create_response=camel_dict_to_snake_dict(create_response))
+
+    return configure_response, deploy_response
 
 
 retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
@@ -220,6 +264,7 @@ retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
 # There is a PR open to merge fail_json_aws this into the standard module code;
 # see https://github.com/ansible/ansible/pull/23882
 def fail_json_aws(module, exception, msg=None):
+
     """call fail_json with processed exception
     function for converting exceptions thrown by AWS SDK modules,
     botocore, boto3 and boto, into nice error messages.
@@ -248,8 +293,8 @@ def create_api(client, name=None, description=None):
 
 
 @AWSRetry.backoff(**retry_params)
-def configure_api(client, apidata=None, api_id=None, mode="overwrite"):
-    return client.put_rest_api(body=apidata, restApiId=api_id, mode=mode)
+def configure_api(client, api_data=None, api_id=None, mode="overwrite"):
+    return client.put_rest_api(body=api_data, restApiId=api_id, mode=mode)
 
 
 @AWSRetry.backoff(**retry_params)
