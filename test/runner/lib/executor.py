@@ -320,6 +320,7 @@ def network_inventory(remotes):
             ansible_user=remote.connection.username,
             ansible_ssh_private_key_file=remote.ssh_key.key,
             ansible_network_os=remote.platform,
+            ansible_connection='local'
         )
 
         groups[remote.platform].append(
