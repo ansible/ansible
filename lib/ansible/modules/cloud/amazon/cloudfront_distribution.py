@@ -1393,7 +1393,7 @@ def main():
 
     argument_spec.update(dict(
         state=dict(required=False, choices=['present', 'updated', 'absent',
-                            'duplicated', 'validated'], default=None),
+                   'duplicated', 'validated'], default=None),
         streaming_distribution=dict(required=False, default=False, type='bool'),
         generate_presigned_url_from_pem_private_key=dict(
             required=False, default=False, type='bool'),
@@ -1497,11 +1497,13 @@ def main():
 
     create_update_distribution = create_distribution or update_distribution
     create_update_streaming_distribution = (create_streaming_distribution or
-            update_streaming_distribution)
+                                            update_streaming_distribution)
     update_delete_duplicate_distribution = (update_distribution or
-            delete_distribution or duplicate_distribution)
-    update_delete_duplicate_streaming_distribution = (update_streaming_distribution
-            or delete_streaming_distribution or duplicate_streaming_distribution)
+                                            delete_distribution or
+                                            duplicate_distribution)
+    update_delete_duplicate_streaming_distribution = (update_streaming_distribution or
+                                                      delete_streaming_distribution or
+                                                      duplicate_streaming_distribution)
     create = create_distribution or create_streaming_distribution
     update = update_distribution or update_streaming_distribution
     validate = validate_distribution or validate_streaming_distribution
@@ -1513,10 +1515,10 @@ def main():
         module.fail_json(msg="please select either a state or to generate a presigned url")
 
     if sum(map(bool, [create_distribution, delete_distribution, update_distribution,
-            create_streaming_distribution, delete_streaming_distribution,
-            update_streaming_distribution, generate_presigned_url_from_pem_private_key,
-            duplicate_distribution, duplicate_streaming_distribution,
-            validate_distribution, validate_streaming_distribution])) > 1:
+           create_streaming_distribution, delete_streaming_distribution,
+           update_streaming_distribution, generate_presigned_url_from_pem_private_key,
+           duplicate_distribution, duplicate_streaming_distribution,
+           validate_distribution, validate_streaming_distribution])) > 1:
         module.fail_json(
             msg="more than one cloudfront action has been specified. please select only one action.")
 

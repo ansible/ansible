@@ -187,6 +187,7 @@ class CloudFrontOriginAccessIdentityServiceManager:
             loop = args['NextToken'] is not None
         return results
 
+
 class CloudFrontOriginAccessIdentityValidationManager:
     """
     Manages Cloudfront Origin Access Identities
@@ -199,7 +200,6 @@ class CloudFrontOriginAccessIdentityValidationManager:
 
     def get_etag_from_origin_access_identity(self, origin_access_identity_id):
         try:
-            print "______::" + str(origin_access_identity_id)
             oai = self.__cloudfront_facts_mgr.get_origin_access_identity(origin_access_identity_id)
             return oai.get('ETag')
         except Exception as e:
