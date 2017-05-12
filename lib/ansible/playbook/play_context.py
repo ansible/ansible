@@ -32,8 +32,6 @@ from ansible.compat.six import iteritems, string_types
 from ansible.compat.six.moves import shlex_quote
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
