@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: cloudfront
+module: cloudfront_distribution
 short_description: create, update, delete, duplicate and validate aws cloudfront distributions
 description:
     - Allows for easy creation, updating, deletion, duplication and validation of CloudFront distributions.
