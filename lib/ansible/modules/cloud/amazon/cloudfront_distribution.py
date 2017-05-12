@@ -539,8 +539,7 @@ location:
 validation_result:
     description: either returns 'OK' or fails with a description of why the
       validation failed.
-    returned:
-      with C(state=validated)
+    returned: with C(state=validated)
     type: str
 '''
 
