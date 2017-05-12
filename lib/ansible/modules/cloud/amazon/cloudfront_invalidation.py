@@ -21,20 +21,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: cloudfront_invalidation
-
 short_description: create invalidations for aws cloudfront distributions
-
 description:
     - Allows for invalidation of a batch of paths for a CloudFront distribution.
-
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
-
 version_added: "2.4"
-
 author: Willem van Ketwich (@wilvk)
-
 options:
     distribution_id:
       description:
@@ -51,7 +45,6 @@ options:
         - A list of paths on the distribution to invalidate.
           Each path should begin with '/'
       required: true
-
 '''
 
 EXAMPLES = '''
