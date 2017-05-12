@@ -1,5 +1,6 @@
 #
 # (c) 2016 Red Hat Inc.
+# (c) 2017 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -21,10 +22,6 @@ __metaclass__ = type
 import os
 import logging
 
-from ansible import constants as C
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
-from ansible.plugins.connection import ConnectionBase, ensure_connect
-
 try:
     from ncclient import manager
     from ncclient.operations import RPCError
@@ -32,6 +29,11 @@ try:
     from ncclient.xml_ import to_ele, to_xml
 except ImportError:
     raise AnsibleError("ncclient is not installed")
+
+from ansible import constants as C
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.module_utils._text import to_bytes, to_native
+from ansible.plugins.connection import ConnectionBase, ensure_connect
 
 try:
     from __main__ import display
@@ -107,19 +109,22 @@ class Connection(ConnectionBase):
     def exec_command(self, request):
         """Sends the request to the node and returns the reply
         """
+        # to_ele operates on native strings
+        request = to_native(request, errors='surrogate_or_strict')
+
         if request == 'open_session()':
-            return (0, 'ok', '')
+            return (0, b'ok', b'')
 
         req = to_ele(request)
         if req is None:
-            return (1, '', 'unable to parse request')
+            return (1, b'', b'unable to parse request')
 
         try:
             reply = self._manager.rpc(req)
         except RPCError as exc:
-            return (1, '', to_xml(exc.xml))
+            return (1, b'', to_bytes(to_xml(exc.xml), errors='surrogate_or_strict'))
 
-        return (0, reply.data_xml, '')
+        return (0, to_bytes(reply.data_xml, errors='surrogate_or_strict'), b'')
 
     def put_file(self, in_path, out_path):
         """Transfer a file from local to remote"""
