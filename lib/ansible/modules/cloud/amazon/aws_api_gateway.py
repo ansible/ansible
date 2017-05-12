@@ -265,16 +265,21 @@ retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
 # There is a PR open to merge fail_json_aws this into the standard module code;
 # see https://github.com/ansible/ansible/pull/23882
 def fail_json_aws(module, exception, msg=None):
-
     """call fail_json with processed exception
     function for converting exceptions thrown by AWS SDK modules,
     botocore, boto3 and boto, into nice error messages.
     """
     last_traceback = traceback.format_exc()
+
+    try:
+        except_msg = exception.message
+    except AttributeError:
+        except_msg = str(exception)
+
     if msg is not None:
-        message = '{}: {}'.format(msg, exception.message)
+        message = '{}: {}'.format(msg, except_msg)
     else:
-        message = exception.message
+        message = except_msg
 
     try:
         response = exception.response
