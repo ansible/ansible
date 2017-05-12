@@ -761,7 +761,11 @@ class CloudFrontValidationManager:
         self.__default_http_port = 80
         self.__default_https_port = 443
         self.__default_is_ipv6_enabled = False
-        self.__default_origin_ssl_protocols = ['TLSv1', 'TLSv1.1', 'TLSv1.2']
+        self.__default_origin_ssl_protocols = [
+            'TLSv1',
+            'TLSv1.1',
+            'TLSv1.2'
+        ]
         self.__default_custom_origin_protocol_policy = 'match-viewer'
         self.__default_datetime_string = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
         self.__default_cache_behavior_min_ttl = 0
@@ -775,18 +779,64 @@ class CloudFrontValidationManager:
         self.__default_cache_behavior_forwarded_values_query_string = True
         self.__default_trusted_signers_enabled = False
         self.__default_presigned_url_pem_expire_date_format = '%Y-%m-%d'
-        self.__valid_price_classes = ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
-        self.__valid_custom_origin_protocol_policies = ['http-only', 'match-viewer', 'https-only']
-        self.__valid_origin_ssl_protocols = ['SSLv3', 'TLSv1', 'TLSv1.1', 'TLSv1.2']
-        self.__valid_cookie_forwarding = ['none', 'whitelist', 'all']
-        self.__valid_viewer_protocol_policies = ['allow-all', 'https-only', 'redirect-to-https']
-        self.__valid_methods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE']
-        self.__valid_lambda_function_association_event_types = ['viewer-request', 'viewer-response',
-                                                                'origin-request', 'origin-response']
-        self.__valid_viewer_certificate_ssl_support_methods = ['sni-only', 'vip']
-        self.__valid_viewer_certificate_minimum_protocol_versions = ['SSLv3', 'TLSv1']
-        self.__valid_viewer_certificate_certificate_sources = ['cloudfront', 'iam', 'acm']
-        self.__valid_http_versions = ['http1.1', 'http2']
+        self.__valid_price_classes = [
+            'PriceClass_100',
+            'PriceClass_200',
+            'PriceClass_All'
+        ]
+        self.__valid_custom_origin_protocol_policies = [
+            'http-only',
+            'match-viewer',
+            'https-only'
+        ]
+        self.__valid_origin_ssl_protocols = [
+            'SSLv3',
+            'TLSv1',
+            'TLSv1.1',
+            'TLSv1.2'
+        ]
+        self.__valid_cookie_forwarding = [
+            'none',
+            'whitelist',
+            'all'
+        ]
+        self.__valid_viewer_protocol_policies = [
+            'allow-all',
+            'https-only',
+            'redirect-to-https'
+        ]
+        self.__valid_methods = [
+            'GET',
+            'HEAD',
+            'POST',
+            'PUT',
+            'PATCH',
+            'OPTIONS',
+            'DELETE'
+        ]
+        self.__valid_lambda_function_association_event_types = [
+            'viewer-request',
+            'viewer-response',
+            'origin-request',
+            'origin-response'
+        ]
+        self.__valid_viewer_certificate_ssl_support_methods = [
+            'sni-only',
+            'vip'
+        ]
+        self.__valid_viewer_certificate_minimum_protocol_versions = [
+            'SSLv3',
+            'TLSv1'
+        ]
+        self.__valid_viewer_certificate_certificate_sources = [
+            'cloudfront',
+            'iam',
+            'acm'
+        ]
+        self.__valid_http_versions = [
+            'http1.1',
+            'http2'
+        ]
         self.__s3_bucket_domain_identifier = '.s3.amazonaws.com'
 
     def validate_logging(self, logging, streaming):
