@@ -452,7 +452,8 @@ try:
                                           StorageProfile, OSProfile, OSDisk, \
                                           VirtualHardDisk, ImageReference,\
                                           NetworkProfile, LinuxConfiguration, \
-                                          SshConfiguration, SshPublicKey
+                                          SshConfiguration, SshPublicKey, \
+                                          Plan
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
                                           NetworkInterfaceIPConfiguration, Subnet
     from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
@@ -493,6 +494,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             ssh_password_enabled=dict(type='bool', default=True),
             ssh_public_keys=dict(type='list'),
             image=dict(type='dict'),
+            plan=dict(type='dict'),
             storage_account_name=dict(type='str', aliases=['storage_account']),
             storage_container_name=dict(type='str', aliases=['storage_container'], default='vhds'),
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
@@ -525,6 +527,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.ssh_password_enabled = None
         self.ssh_public_keys = None
         self.image = None
+        self.plan = None
         self.storage_account_name = None
         self.storage_container_name = None
         self.storage_blob_name = None
@@ -605,6 +608,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 if self.image['version'] == 'latest':
                     self.image['version'] = image_version.name
                     self.log("Using image version {0}".format(self.image['version']))
+
+            if self.plan:
+                if not self.plan.get('name') or not self.plan.get('product') or not self.plan.get('publisher'):
+                    self.error("parameter error: expecting plan to contain publisher, offer, & a name.")
 
             if not self.storage_blob_name:
                 self.storage_blob_name = self.name + '.vhd'
@@ -737,35 +744,69 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     nics = [NetworkInterfaceReference(id=id) for id in network_interfaces]
                     vhd = VirtualHardDisk(uri=requested_vhd_uri)
-                    vm_resource = VirtualMachine(
-                        self.location,
-                        tags=self.tags,
-                        os_profile=OSProfile(
-                            admin_username=self.admin_username,
-                            computer_name=self.short_hostname,
-                        ),
-                        hardware_profile=HardwareProfile(
-                            vm_size=self.vm_size
-                        ),
-                        storage_profile=StorageProfile(
-                            os_disk=OSDisk(
-                                self.storage_blob_name,
-                                vhd,
-                                DiskCreateOptionTypes.from_image,
-                                caching=self.os_disk_caching,
+                    if self.plan:
+                        vm_resource = VirtualMachine(
+                            self.location,
+                            tags=self.tags,
+                            os_profile=OSProfile(
+                                admin_username=self.admin_username,
+                                computer_name=self.short_hostname,
                             ),
-                            image_reference=ImageReference(
-                                publisher=self.image['publisher'],
-                                offer=self.image['offer'],
-                                sku=self.image['sku'],
-                                version=self.image['version'],
+                            hardware_profile=HardwareProfile(
+                                vm_size=self.vm_size
                             ),
-                        ),
-                        network_profile=NetworkProfile(
-                            network_interfaces=nics
-                        ),
-                    )
-
+                            plan=Plan(
+                                name=self.plan['name'],
+                                publisher=self.plan['publisher'],
+                                product=self.plan['product'],
+                            ),
+                            storage_profile=StorageProfile(
+                                os_disk=OSDisk(
+                                    self.storage_blob_name,
+                                    vhd,
+                                    DiskCreateOptionTypes.from_image,
+                                    caching=self.os_disk_caching,
+                                ),
+                                image_reference=ImageReference(
+                                    publisher=self.image['publisher'],
+                                    offer=self.image['offer'],
+                                    sku=self.image['sku'],
+                                    version=self.image['version'],
+                                ),
+                            ),
+                            network_profile=NetworkProfile(
+                                network_interfaces=nics
+                            ),
+                        )
+                    else:
+                        vm_resource = VirtualMachine(
+                            self.location,
+                            tags=self.tags,
+                            os_profile=OSProfile(
+                                admin_username=self.admin_username,
+                                computer_name=self.short_hostname,
+                            ),
+                            hardware_profile=HardwareProfile(
+                                vm_size=self.vm_size
+                            ),
+                            storage_profile=StorageProfile(
+                                os_disk=OSDisk(
+                                    self.storage_blob_name,
+                                    vhd,
+                                    DiskCreateOptionTypes.from_image,
+                                    caching=self.os_disk_caching,
+                                ),
+                                image_reference=ImageReference(
+                                    publisher=self.image['publisher'],
+                                    offer=self.image['offer'],
+                                    sku=self.image['sku'],
+                                    version=self.image['version'],
+                                ),
+                            ),
+                            network_profile=NetworkProfile(
+                                network_interfaces=nics
+                            ),
+                        )
                     if self.admin_password:
                         vm_resource.os_profile.admin_password = self.admin_password
 
