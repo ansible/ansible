@@ -190,12 +190,12 @@ class CloudFrontOriginAccessIdentityValidationManager:
         self.__helpers = CloudFrontHelpers()
         self.__cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
 
-    def get_etag_from_origin_access_identity(self, origin_access_identity_id):
+    def get_etag_from_origin_access_identity_id(self, origin_access_identity_id):
         try:
             oai = self.__cloudfront_facts_mgr.get_origin_access_identity(origin_access_identity_id)
             return oai.get('ETag')
         except Exception as e:
-            self.module.fail_json(msg="error getting etag from origin access identity - " + str(e))
+            self.module.fail_json(msg="error getting etag from origin_access_identity_id - " + str(e))
 
 
 def main():
@@ -203,7 +203,7 @@ def main():
 
     argument_spec.update(dict(
         state=dict(choices=['present', 'updated', 'absent'], default='present'),
-        origin_access_identity_id=dict(required=False, default=None, type='str'),
+        origin_access_identity_id=dict(required=True, default=None, type='str'),
         caller_reference=dict(required=False, default=None, type='str'),
         comment=dict(required=False, default=None, type='str')
     ))
@@ -221,7 +221,7 @@ def main():
     origin_access_identity_id = module.params.get('origin_access_identity_id')
 
     if state != 'present':
-        e_tag = validation_mgr.get_etag_from_origin_access_identity(origin_access_identity_id)
+        e_tag = validation_mgr.get_etag_from_origin_access_identity_id(origin_access_identity_id)
 
     if state == 'present':
         result = service_mgr.create_origin_access_identity(caller_reference, comment)
