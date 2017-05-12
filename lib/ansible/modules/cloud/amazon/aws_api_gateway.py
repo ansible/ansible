@@ -72,9 +72,9 @@ author:
 extends_documentation_fragment:
     - aws
 notes:
-   - a future version of this module will probably use tags or another
+   - A future version of this module will probably use tags or another
      ID so that an API can be create only once.
-   - as an early work around an intermediate version will probably do
+   - As an early work around an intermediate version will probably do
      the same using a tag embedded in the API name.
 
 '''
@@ -182,8 +182,8 @@ def main():
             with open(swagger_file) as f:
                 apidata = f.read()
         except Exception as e:
-            module.fail_json(msg="Failed trying to read swagger file " + str(swagger_file)
-                             + ":" + str(e), exception=traceback.format_exc())
+            msg = "Failed trying to read swagger file {}: {}".format(str(swagger_file), str(e))
+            module.fail_json(msg=msg, exception=traceback.format_exc())
     if swagger_dict is not None:
         apidata = json.dumps(swagger_dict)
     if swagger_text is not None:

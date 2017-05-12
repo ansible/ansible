@@ -163,4 +163,3 @@
   #       security_token='{{security_token}}'
   #       state=absent
   #     register: destroy_result
-
