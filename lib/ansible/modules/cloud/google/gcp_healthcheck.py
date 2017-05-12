@@ -162,7 +162,7 @@ healthcheck:
     description: GCP Healthcheck dictionary
     returned: Always. Refer to GCP documentation for detailed field descriptions.
     type: dict
-    sample: { "name": "my-hc", "port": 443, "requestPath": "/foo" ... }
+    sample: { "name": "my-hc", "port": 443, "requestPath": "/foo" }
 '''
 
 
