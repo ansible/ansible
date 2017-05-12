@@ -38,10 +38,6 @@ author: Willem van Ketwich (@wilvk)
 options:
     distribution_id:
       description:
-        - The id of the cloudfront distribution.
-      required: false
-    distribution_id:
-      description:
         - The alias of the cloudfront distribution.
           Can be specified instead of distribution_id.
       required: false
