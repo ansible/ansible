@@ -75,11 +75,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-reasons:
-    description: the reasons why the moule changed or did not change something
-    returned: success
-    type: list
-    sample: ["channel subscription was absent and state is `present'"]
 '''
 
 
@@ -190,10 +185,10 @@ def create(
             if (
                     (check is None or check == i['check']) and
                     (
-                        creator == 'Created via Ansible' or
+                        creator == '' or
                         creator == i['creator'])and
                     (
-                        reason == 'No reason given, tisk tisk' or
+                        reason == '' or
                         reason == i['reason']) and
                     (
                         expire is None or expire == i['expire']) and
@@ -250,10 +245,10 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             check=dict(required=False),
-            creator=dict(required=False, default='Created via Ansible'),
+            creator=dict(required=False),
             expire=dict(required=False),
             expire_on_resolve=dict(type=bool, required=False),
-            reason=dict(required=False, default='No reason given, tisk tisk'),
+            reason=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
             subscription=dict(required=True),
             url=dict(required=False, default='http://127.0.01:4567'),
