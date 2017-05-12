@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
+
 # (c) 2017, Steven Bambling <smbambling@gmail.com>
 #
 # This file is part of Ansible
@@ -40,8 +40,8 @@ options:
       - Specifies the entity responsible for this entry.
   expire:
     description:
-      - If specified, the silence entry will be automatically
-        cleared after this number of seconds.
+      - If specified, the silence entry will be automatically cleared
+        after this number of seconds.
   expire_on_resolve:
     description:
       - If specified as true, the silence entry will be automatically
@@ -72,11 +72,16 @@ options:
 '''
 
 EXAMPLES = '''
-  Some Examples:
 '''
 
 RETURN = '''
+reasons:
+    description: the reasons why the moule changed or did not change something
+    returned: success
+    type: list
+    sample: ["channel subscription was absent and state is `present'"]
 '''
+
 
 try:
     import json
