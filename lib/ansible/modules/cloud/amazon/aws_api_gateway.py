@@ -168,11 +168,16 @@ def main():
         client = boto3_conn(module, conn_type='client', resource='apigateway',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoRegionError:
-        module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
+        module.fail_json(msg="Region must be specified as a parameter, in "
+                         "AWS_DEFAULT_REGION environment variable or in boto configuration file")
     except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as e:
         fail_json_aws(module, e, msg="connecting to AWS")
 
     changed = True   # for now it will stay that way until we can sometimes avoid change
+
+    conf_res = None
+    dep_res = None
+    del_res = None
 
     if state == "present":
         if api_id is None:
@@ -183,8 +188,7 @@ def main():
                                                         api_data=api_data, stage=stage,
                                                         deploy_desc=deploy_desc)
     if state == "absent":
-        raise NotImplementedError
-        # ensure_api_not_there():
+        del_res = delete_rest_api(module, client, api_id)
 
     exit_args = {"changed": changed, "api_id": api_id}
 
@@ -192,6 +196,8 @@ def main():
         exit_args['configure_response'] = camel_dict_to_snake_dict(conf_res)
     if dep_res is not None:
         exit_args['deploy_response'] = camel_dict_to_snake_dict(dep_res)
+    if del_res is not None:
+        exit_args['delete_response'] = camel_dict_to_snake_dict(del_res)
 
     module.exit_json(**exit_args)
 
@@ -229,6 +235,19 @@ def create_empty_api(module, client):
     return awsret["id"]
 
 
+def delete_rest_api(module, client, api_id):
+    """
+    creates a new empty API ready to be configured.  The description is
+    temporarily set to show the API as incomplete but should be
+    updated when the API is configured.
+    """
+    try:
+        delete_response = delete_api(client, api_id=api_id)
+    except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
+        fail_json_aws(module, e, msg="deleting API {}".format(api_id))
+    return delete_response
+
+
 def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stage=None,
                                 deploy_desc=None):
     """Make sure that we have the API configured and deployed as instructed.
@@ -257,9 +276,6 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
             fail_json_aws(module, e, msg)
 
     return configure_response, deploy_response
-
-
-retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
 
 
 # There is a PR open to merge fail_json_aws this into the standard module code;
@@ -293,9 +309,17 @@ def fail_json_aws(module, exception, msg=None):
                          **camel_dict_to_snake_dict(response))
 
 
+retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
+
+
 @AWSRetry.backoff(**retry_params)
 def create_api(client, name=None, description=None):
     return client.create_rest_api(name="ansible-temp-api", description=description)
+
+
+@AWSRetry.backoff(**retry_params)
+def delete_api(client, api_id=None):
+    return client.delete_rest_api(restApiId=api_id)
 
 
 @AWSRetry.backoff(**retry_params)
