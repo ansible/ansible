@@ -22,7 +22,7 @@ if [ -s /tmp/windows.txt ]; then
 
     target="windows/ci/"
 
-    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements "${COVERAGE}" \
+    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements \
         --windows 2008-SP2 \
         --windows 2008-R2_SP1 \
         --windows 2012-RTM \
@@ -34,6 +34,6 @@ else
 
     target="windows/ci/group${job}/"
 
-    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements "${COVERAGE}" \
+    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements \
         --windows 2012-R2_RTM
 fi
