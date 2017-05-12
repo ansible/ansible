@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8 -*-
 
-# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
+# (c) 2017, Wayne  Witzel III <wayne@riotousliving.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -138,20 +138,20 @@ except ImportError:
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            username = dict(required=True),
-            first_name = dict(),
-            last_name = dict(),
-            password = dict(no_log=True),
-            email = dict(required=True),
-            superuser = dict(type='bool', default=False),
-            auditor = dict(type='bool', default=False),
-            tower_host = dict(),
-            tower_username = dict(),
-            tower_password = dict(no_log=True),
-            tower_verify_ssl = dict(type='bool', default=True),
-            tower_config_file = dict(type='path'),
-            state = dict(choices=['present', 'absent'], default='present'),
+        argument_spec=dict(
+            username=dict(required=True),
+            first_name=dict(),
+            last_name=dict(),
+            password=dict(no_log=True),
+            email=dict(required=True),
+            superuser=dict(type='bool', default=False),
+            auditor=dict(type='bool', default=False),
+            tower_host=dict(),
+            tower_username=dict(),
+            tower_password=dict(no_log=True),
+            tower_verify_ssl=dict(type='bool', default=True),
+            tower_config_file=dict(type='path'),
+            state=dict(choices=['present', 'absent'], default='present'),
         ),
         supports_check_mode=True
     )
@@ -177,8 +177,8 @@ def main():
         try:
             if state == 'present':
                 result = user.modify(username=username, first_name=first_name, last_name=last_name,
-                                    email=email, password=password, is_superuser=superuser,
-                                    is_auditor=auditor, create_on_missing=True)
+                                     email=email, password=password, is_superuser=superuser,
+                                     is_auditor=auditor, create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = user.delete(username=username)
