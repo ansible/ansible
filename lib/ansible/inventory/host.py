@@ -94,7 +94,7 @@ class Host:
         self.implicit = False
 
     def __repr__(self):
-        return self.get_name()
+        return "Host(name='{0}')".format(self.get_name())
 
     def get_name(self):
         return self.name
