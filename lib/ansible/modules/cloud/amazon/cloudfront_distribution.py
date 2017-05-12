@@ -516,7 +516,7 @@ EXAMPLES = '''
 
 # duplicate a streaming distribution
 - cloudfront_distribution:
-    resource: streaming_distribution
+    streaming_distribution: yes
     state: duplicated
     streaming_distribution_id: E2RTIUCAA9RINU
 
