@@ -563,6 +563,7 @@ Here are some examples::
          - debug: msg="{{ lookup('shelvefile', 'file=path_to_some_shelve_file.db key=key_to_retrieve') }}
 
          # The following lookups were added in 1.9
+         # url lookup splits lines by default, an option to disable this was added in 2.4
          - debug: msg="{{item}}"
            with_url:
                 - 'https://github.com/gremlin.keys'
