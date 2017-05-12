@@ -1,4 +1,3 @@
-
 - block:
 
     # ============================================================
@@ -93,9 +92,7 @@
         that:
           - bad_uri_result|failed
 
-
     # ============================================================
-
 
     - name: deploy first API
       aws_api_gateway:
@@ -153,7 +150,6 @@
            - 'destroy_result_2.changed == True'
 #           - '"created_response.created_date" in create_result'
 #           - '"deploy_response.created_date" in create_result'
-
 
   # always:
 

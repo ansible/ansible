@@ -17,7 +17,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -36,39 +36,37 @@ description:
      - swagger_file and swagger_text are passed directly on to AWS
        transparently whilst swagger_dict is an ansible dict which is
        converted to JSON before the API definitions are uploaded.
-version_added: '2.3'
+version_added: '2.4'
 requirements: [ boto3 ]
 options:
   api_id:
     description:
-      - The ID of the API you want to manage
-    required: false
+      - The ID of the API you want to manage.
   state:
     description:
-      - NOT IMPLEMENTED Create or delete API - currently we always create
-    required: false
+      - NOT IMPLEMENTED Create or delete API - currently we always create.
     default: present
     choices: [ 'present', 'absent' ]
   swagger_file:
     description:
-      - JSON or YAML file containing swagger definitions for API
-    required: false
+      - JSON or YAML file containing swagger definitions for API.
+        Exactly one of swagger_file, swagger_text or swagger_dict must
+        be present.
   swagger_text:
     description:
-      - Swagger definitions for API in JSON or YAML as a string direct from playbook
-    required: false
+      - Swagger definitions for API in JSON or YAML as a string direct
+        from playbook.
   swagger_dict:
     description:
-      - Swagger definitions API ansible dictionary which will be converted to JSON and uploaded
-    required: false
+      - Swagger definitions API ansible dictionary which will be
+        converted to JSON and uploaded.
   stage:
     description:
-      - stage API should be deployed to
-    required: false
+      - The name of the stage the API should be deployed to.
   deploy_desc:
     description:
-      - Description of the deployment - recorded and visible in the AWS console.  
-    required: false
+      - Description of the deployment - recorded and visible in the
+        AWS console.
 author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:

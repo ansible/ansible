@@ -39,22 +39,22 @@ def set_module_args(args):
     basic._ANSIBLE_ARGS = to_bytes(args)
 
 
-exit_return_dict={}
+exit_return_dict = {}
 
 
-def fake_exit_json(self,**kwargs):
+def fake_exit_json(self, **kwargs):
     """ store the kwargs given to exit_json rather than putting them out to stdout"""
     global exit_return_dict
-    exit_return_dict=kwargs
+    exit_return_dict = kwargs
     sys.exit(0)
 
 
 def test_upload_api(monkeypatch):
     class FakeConnection:
 
-        def put_rest_api(*args, **kwargs):
+        def put_rest_api(self, *args, **kwargs):
             assert kwargs["body"] == "the-swagger-text-is-fake"
-            return { "msg" : "success!" }
+            return {"msg": "success!"}
 
     def return_fake_connection(*args, **kwargs):
         return FakeConnection()
