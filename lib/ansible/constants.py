@@ -384,6 +384,8 @@ PARAMIKO_LOOK_FOR_KEYS         = get_config(p, 'paramiko_connection', 'look_for_
 PERSISTENT_CONNECT_TIMEOUT     = get_config(p, 'persistent_connection', 'connect_timeout', 'ANSIBLE_PERSISTENT_CONNECT_TIMEOUT', 30, value_type='integer')
 PERSISTENT_CONNECT_RETRIES     = get_config(p, 'persistent_connection', 'connect_retries', 'ANSIBLE_PERSISTENT_CONNECT_RETRIES', 30, value_type='integer')
 PERSISTENT_CONNECT_INTERVAL    = get_config(p, 'persistent_connection', 'connect_interval', 'ANSIBLE_PERSISTENT_CONNECT_INTERVAL', 1, value_type='integer')
+PERSISTENT_CONNECT_CONTROL_PATH = get_config(p, 'persistent_connection', 'control_path', 'ANSIBLE_PERSISTENT_CONNECTION_CONTROL_PATH', u'~/.ansible/pc')
+
 
 # obsolete -- will be formally removed
 ACCELERATE_PORT                = get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099, value_type='integer')
