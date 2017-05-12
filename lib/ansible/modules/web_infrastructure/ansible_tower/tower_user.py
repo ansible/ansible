@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -177,7 +177,7 @@ def main():
         try:
             if state == 'present':
                 result = user.modify(username=username, first_name=first_name, last_name=last_name,
-                                    email=email, password=password, is_superuser=superuser, 
+                                    email=email, password=password, is_superuser=superuser,
                                     is_auditor=auditor, create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
