@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six.moves import cPickle, StringIO
+from ansible.module_utils.six.moves import cPickle
 from ansible.plugins.connection import ConnectionBase
 
 try:
@@ -52,16 +52,20 @@ class Connection(ConnectionBase):
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
-        src = StringIO()
-        cPickle.dump(self._play_context.serialize(), src)
-        stdin.write(src.getvalue())
-        src.close()
+        # Need to force a protocol that is compatible with both py2 and py3.
+        # That would be protocol=2 or less.
+        # Also need to force a protocol that excludes certain control chars as
+        # stdin in this case is a pty and control chars will cause problems.
+        # that means only protocol=0 will work.
+        src = cPickle.dumps(self._play_context.serialize(), protocol=0)
+        stdin.write(src)
 
         stdin.write(b'\n#END_INIT#\n')
         stdin.write(to_bytes(action))
         stdin.write(b'\n\n')
-        stdin.close()
+
         (stdout, stderr) = p.communicate()
+        stdin.close()
 
         return (p.returncode, stdout, stderr)
 
