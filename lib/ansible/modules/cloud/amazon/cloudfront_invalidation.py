@@ -181,6 +181,9 @@ def main():
 
     result = {}
 
+    if distribution_id is None and alias is None:
+        module.fail_json(msg="please specify either distribution_id or alias for the invalidation(s)")
+
     distribution_id = validation_mgr.validate_distribution_id(distribution_id, alias)
 
     valid_invalidation_batch = validation_mgr.validate_invalidation_batch(
