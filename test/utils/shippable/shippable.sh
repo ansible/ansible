@@ -23,12 +23,6 @@ pip list --disable-pip-version-check
 
 export PATH="test/runner:${PATH}"
 export PYTHONIOENCODING='utf-8'
-export COVERAGE="${COVERAGE:-}"
-
-# run integration coverage if 'ci_coverage' is in the commit message or the COVERAGE var is non-empty
-if [[ "${COMMIT_MESSAGE}" =~ ci_coverage ]] || [ -n "${COVERAGE}" ]; then
-    export COVERAGE="--coverage"
-fi
 
 # remove empty core/extras module directories from PRs created prior to the repo-merge
 find lib/ansible/modules -type d -empty -print -delete
