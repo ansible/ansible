@@ -67,6 +67,7 @@ options:
     description:
       - Description of the deployment - recorded and visible in the
         AWS console.
+    default: Automatic deployment by Ansible.
 author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
@@ -136,14 +137,14 @@ def main():
             swagger_dict=dict(type='json', default=None),
             swagger_text=dict(type='str', default=None),
             stage=dict(type='str', default=None),
-            deploy_desc=dict(type='str', default=None),
+            deploy_desc=dict(type='str', default="Automatic deployment by Ansible."),
         )
     )
 
     mutually_exclusive = [['swagger_file', 'swagger_dict', 'swagger_text']]  # noqa: F841
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
+                           mutually_exclusive=mutually_exclusive)
 
     api_id = module.params.get('api_id')
     state = module.params.get('state')   # noqa: F841
@@ -201,7 +202,7 @@ def get_api_definitions(module, swagger_file=None, swagger_dict=None, swagger_te
         try:
             with open(swagger_file) as f:
                 apidata = f.read()
-        except Exception as e:
+        except OSError as e:
             msg = "Failed trying to read swagger file {}: {}".format(str(swagger_file), str(e))
             module.fail_json(msg=msg, exception=traceback.format_exc())
     if swagger_dict is not None:
@@ -300,8 +301,6 @@ def configure_api(client, api_data=None, api_id=None, mode="overwrite"):
 @AWSRetry.backoff(**retry_params)
 def create_deployment(client, api_id=None, stage=None, description=None):
     # we can also get None as an argument so we don't do this as a defult
-    if description is None:
-        description = "Automatic deployment by Ansible."
     return client.create_deployment(restApiId=api_id, stageName=stage, description=description)
 
 

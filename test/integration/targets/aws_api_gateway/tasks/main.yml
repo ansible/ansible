@@ -25,6 +25,22 @@
            - 'result.failed'
            - 'result.msg.startswith("Region must be specified")'
 
+    # ============================================================
+    - name: test disallow multiple swagger sources
+      aws_api_gateway:
+        api_id: 'fake-api-doesnt-exist'
+        region: 'fake_region'
+        swagger_file: foo.yml
+        swagger_text: "this is not really an API"
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with with minimal parameters but no region
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("parameters are mutually exclusive")'
+
     # This fails with
 
     # msg": "There is an issue in the code of the module. You must
