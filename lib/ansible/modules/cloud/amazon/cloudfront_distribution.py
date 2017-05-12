@@ -538,9 +538,9 @@ EXAMPLES = '''
 RETURN = '''
 location:
     description: describes a url specifying the output of the action just run.
-    returned: applies to C(streaming_distribution=no) with C(state=present) or
-    C(state=updated) or C(state=duplicated) or when specifying
-    C(generate_presigned_url_from_pem_private_key=yes)
+      returned: applies to C(streaming_distribution=no) with C(state=present)
+      or C(state=updated) or C(state=duplicated) or when specifying
+      C(generate_presigned_url_from_pem_private_key=yes)
     type: str
 
 validation_result:
