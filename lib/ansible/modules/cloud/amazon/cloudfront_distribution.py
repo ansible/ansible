@@ -21,9 +21,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: cloudfront_distribution
-short_description: create, update, delete, duplicate and validate aws cloudfront distributions
+short_description: create, update and delete aws cloudfront distributions.
 description:
-    - Allows for easy creation, updating, deletion, duplication and validation of CloudFront distributions.
+    - Allows for easy creation, updating and deletion of CloudFront distributions.
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
@@ -33,14 +33,9 @@ options:
     state:
       description:
         - The desired state of the distribution or streaming distribution.
-          present - creates a new distribution
+          present - creates a new distribution or updates an existing distribution
           absent - deletes an existing distribution
-          updated - updates an existing distribution
-          duplicated - duplicates an existing distribution
-              (can also make updates at the same time)
-          verified - verifies a configuration parameters
-              (but does no action on the resource)
-      choices: ['present', 'absent', 'updated', 'duplicated', 'verified']
+      choices: ['present', 'absent']
       required: false
     distribution_id:
       description:
@@ -51,8 +46,8 @@ options:
     streaming_distribution_id:
       description:
         - The id of the CloudFront streaming distribution.
-          This parameter can be exchanged with C(alias) and in conjunction with C(e_tag).
-          Used with C(streaming_distribution=yes)
+          This parameter can be exchanged with C(alias) and is used in conjunction with C(e_tag).
+          Used with C(streaming_distribution=yes).
       required: false
     e_tag:
       description:
@@ -60,7 +55,7 @@ options:
           Used in conjunction with C(distribution_id) or C(streaming_distribution_id).
           Is determined automatically if not specified.
       required: false
-    generate_presigned_url_from_pem_private_key:
+    generate_presigned_url:
       description:
         - Generates a presigned url for a distribution from a private I(.pem) file key.
       default: 'no'
@@ -74,20 +69,20 @@ options:
       description:
         - An array of path strings to be invalidated for a distribution.
       required: false
-    presigned_url_pem_private_key_path:
+    pem_key_path:
       description:
         - The path on the host to the .pem private key file.
           This key is used to sign the url.
       required: false
-    presigned_url_pem_private_key_password:
+    pem_key_password:
       description:
         - The optional password for the pem private key file.
       required: false
-    presigned_url_pem_url:
+    cloudfront_url_to_sign:
       description:
         - The cloudfront url to sign with the pem private key.
       required: false
-    presigned_url_pem_expire_date:
+    presigned_url_expire_date:
       description:
         - The expiry date of the presigned url. Date format is I(YYYY-MM-DD)
       required: false
@@ -171,40 +166,27 @@ options:
     default_origin_domain_name:
       description:
         - The domain name to use for an origin if no C(origins) have been specified.
-          This parameter is used for C(resource=distribution) in conjunction with
-          C(state=present) or C(state=updated) or C(state=duplicated).
       required: false
     default_origin_path:
       description:
         - The default origin path to specify for an origin if no C(origins) have
           specified. Defaults to empty if not specified.
-          This parameter is used for C(resource=distribution) in conjunction with
-          C(state=present) or C(state=updated) or C(state=duplicated).
       required: false
     default_s3_origin_access_identity:
       description:
         - The origin access identity to use for a distribution that references an
           s3 bucket if not specified in C(s3_origin_config).
           If the s3 bucket is public, can be omitted.
-          This parameter is used for C(resource=distribution) in
-          conjunction with C(state=present) or C(state=updated) or
-          C(state=duplicated).
       required: false
     default_s3_origin_domain_name:
       description:
         - The domain name of an s3 bucket to use for a streaming distribution.
           Required as a minimum if no other parameters are specified.
-          This parameter is used for C(resource=streaming_distribution) in
-          conjunction with C(state=present) or C(state=updated) or
-          C(state=duplicated).
       required: false
     default_s3_origin_origin_access_identity:
       description:
         - The default origin access identity to use for an s3 bucket used for
           a streaming distribution. If the s3 bucket is public, can be omitted.
-          This parameter is used for C(resource=streaming_distribution) in
-          conjunction with C(state=present) or C(state=updated) or
-          C(state=duplicated).
       required: false
     origins:
       description:
@@ -368,7 +350,7 @@ EXAMPLES = '''
 
 # update a distribution comment by distribution_id
 - cloudfront_distribution:
-    state: updated
+    state: present
     distribution_id: E1RP5A2MJ8073O
     comment: modified by ansible cloudfront.py
 
@@ -381,7 +363,7 @@ EXAMPLES = '''
 
 # update a distribution's aliases and comment using an alias as a reference
 - cloudfront_distribution:
-    state: updated
+    state: present
     distribution_id: E15BU8SDCGSG57
     comment: modified by cloudfront.py again
     aliases:
@@ -390,7 +372,7 @@ EXAMPLES = '''
 
 # update a distribution's comment and aliases and tags and remove existing tags
 - cloudfront_distribution:
-    state: updated
+    state: present
     distribution_id: E15BU8SDCGSG57
     comment: modified by cloudfront.py again
     aliases:
@@ -398,42 +380,6 @@ EXAMPLES = '''
     tags:
       - Project: distribution 1.2
     purge_tags: yes
-
-# validate a distribution with an origin, logging and default cache behavior
-- cloudfront_distribution:
-    state: validated
-    origins:
-      - id: 'my test origin-000111'
-        domain_name: www.example.com
-        origin_path: /production
-        custom_headers:
-          - header_name: MyCustomHeaderName
-            header_value: MyCustomHeaderValue
-    default_cache_behavior:
-      target_origin_id: 'my test origin-000111'
-      forwarded_values:
-        query_string: true
-        cookies:
-          forward: all
-        headers:
-          - '*'
-      viewer_protocol_policy: allow-all
-      smooth_streaming: true
-      compress: true
-      allowed_methods:
-        items:
-          - GET
-          - HEAD
-        cached_methods:
-          - GET
-          - HEAD
-    logging:
-      enabled: true
-      include_cookies: false
-      bucket: myawslogbucket.s3.amazonaws.com
-      prefix: myprefix/
-    enabled: false
-    comment: this is a cloudfront distribution with logging
 
 # create a distribution with an origin, logging and default cache behavior
 - cloudfront_distribution:
@@ -476,26 +422,13 @@ EXAMPLES = '''
     state: absent
     distribution_id: E1ZNUV0U7KWO4P
 
-# duplicate a distribution by distribution_id and modify the comment field
-- cloudfront_distribution:
-    state: duplicated
-    distribution_id: E1RP5A2MJ8073O
-    comment: duplicated distribution
-
-# duplicate a distribution based on distribution_id and set comment and aliases on new distribution
-- cloudfront_distribution:
-    state: duplicated
-    distribution_id: E1RP5A2MJ8073O
-    comment: duplicated distribution with different aliases
-    aliases: [ 'test.one', 'test.two', 'another.domain.not.in.original.com' ]
-
 # create a presigned url for a distribution based on a distribution_id and from a local pem file
 - cloudfront_distribution:
-    generate_presigned_url_from_pem_private_key: yes
+    generate_presigned_url: yes
     distribution_id: E1RP5A2MJ8073O
-    presigned_url_pem_private_key_path: /home/user/ansible/pk-APKAJMTT6OPAZSFTNSCZ.pem
-    presigned_url_pem_url: 'http://d3vodljfucvmwf.cloudfront.net/example.txt'
-    presigned_url_pem_expire_date: '2017-04-20'
+    pem_key_path: /home/user/ansible/pk-APKAJMTT6OPAZSFTNSCZ.pem
+    cloudfront_url_to_sign: 'http://d3vodljfucvmwf.cloudfront.net/example.txt'
+    presigned_url_expire_date: '2017-04-20'
 
 # create a streaming distribution
 - cloudfront_distribution:
@@ -514,16 +447,10 @@ EXAMPLES = '''
        - Project: example project
        - Priority: 1
 
-# duplicate a streaming distribution
-- cloudfront_distribution:
-    streaming_distribution: yes
-    state: duplicated
-    streaming_distribution_id: E2RTIUCAA9RINU
-
 # update a streaming distribution
 - cloudfront_distribution:
     streaming_distribution: yes
-    state: updated
+    state: present
     streaming_distribution_id: E2RTIUCAA9RINU
     comment: modified streaming distribution
 '''
@@ -532,14 +459,7 @@ RETURN = '''
 location:
     description: describes a url specifying the output of the action just run.
     returned: applies to C(streaming_distribution=no) with C(state=present)
-      or C(state=updated) or C(state=duplicated) or when specifying
-      C(generate_presigned_url_from_pem_private_key=yes)
-    type: str
-
-validation_result:
-    description: either returns 'OK' or fails with a description of why the
-      validation failed.
-    returned: with C(state=validated)
+      or when specifying C(generate_presigned_url=yes)
     type: str
 '''
 
@@ -586,9 +506,10 @@ class CloudFrontServiceManager:
                                   exception=traceback.format_exc(),
                                   **camel_dict_to_snake_dict(e.response))
 
-    def generate_presigned_url_from_pem_private_key(self, distribution_id, private_key_path, private_key_password, url, expire_date):
+    def generate_presigned_url(self, distribution_id, private_key_path,
+                               private_key_password, url, expire_date):
         try:
-            self.pem_private_key_path = private_key_path
+            self.pem_key_path = private_key_path
             self.pem_private_key_password = private_key_password
             cloudfront_signer = CloudFrontSigner(distribution_id, self.presigned_url_rsa_signer)
             presigned_url = cloudfront_signer.generate_presigned_url(
@@ -599,11 +520,11 @@ class CloudFrontServiceManager:
                                   exception=traceback.format_exc(),
                                   **camel_dict_to_snake_dict(e.response))
         finally:
-            self.pem_private_key_path = None
+            self.pem_key_path = None
             self.pem_private_key_password = None
 
     def presigned_url_rsa_signer(self, message):
-        with open(self.pem_private_key_path, 'rb') as key_file:
+        with open(self.pem_key_path, 'rb') as key_file:
             private_key = serialization.load_pem_private_key(
                 key_file.read(),
                 password=self.pem_private_key_password,
@@ -778,7 +699,7 @@ class CloudFrontValidationManager:
         self.__default_cache_behavior_forwarded_values_forward_cookies = 'none'
         self.__default_cache_behavior_forwarded_values_query_string = True
         self.__default_trusted_signers_enabled = False
-        self.__default_presigned_url_pem_expire_date_format = '%Y-%m-%d'
+        self.__default_presigned_url_expire_date_format = '%Y-%m-%d'
         self.__valid_price_classes = [
             'PriceClass_100',
             'PriceClass_200',
@@ -875,7 +796,7 @@ class CloudFrontValidationManager:
                 if default_origin_domain_name is not None:
                     origins = [{
                         'domain_name': default_origin_domain_name,
-                        'origin_path': '' if default_origin_path is None else str(default_origin_path)
+                        'origin_path': (default_origin_domain_name or '')
                     }]
             self.validate_is_list(origins, 'origins')
             quantity = len(origins)
@@ -892,10 +813,7 @@ class CloudFrontValidationManager:
     def validate_origin(self, origin, default_origin_path, default_s3_origin_access_identity, streaming):
         try:
             if 'origin_path' not in origin:
-                if default_origin_path is not None:
-                    origin['origin_path'] = default_origin_path
-                else:
-                    origin['origin_path'] = ''
+                origin['origin_path'] = (default_origin_path or '')
             if 'domain_name' not in origin:
                 self.module.fail_json(msg="origins[].domain_name must be specified for an origin")
             if 'id' not in origin:
@@ -915,10 +833,7 @@ class CloudFrontValidationManager:
             if self.__s3_bucket_domain_identifier in origin.get('domain_name'):
                 if 's3_origin_config' not in origin or 'origin_access_identity' not in origin.get('s3_origin_config'):
                     origin["s3_origin_config"] = {}
-                    if default_s3_origin_access_identity is not None:
-                        origin['s3_origin_config']['origin_access_identity'] = default_s3_origin_access_identity
-                    else:
-                        origin['s3_origin_config']['origin_access_identity'] = ''
+                    origin['s3_origin_config']['origin_access_identity'] = (default_s3_origin_access_identity or '')
             else:
                 if 'custom_origin_config' not in origin:
                     origin['custom_origin_config'] = {}
@@ -1082,10 +997,7 @@ class CloudFrontValidationManager:
             else:
                 self.module.fail_json(msg="s3_origin and default_s3_origin_domain_name not specified. " +
                                       "please specify one.")
-            if default_s3_origin_origin_access_identity is not None:
-                s3_origin['origin_access_identity'] = default_s3_origin_origin_access_identity
-            else:
-                s3_origin['origin_access_identity'] = ''
+            s3_origin['origin_access_identity'] = (default_s3_origin_origin_access_identity '')
             return s3_origin
         except Exception as e:
             self.module.fail_json(msg="error validating s3 origin - " + str(e))
@@ -1156,7 +1068,7 @@ class CloudFrontValidationManager:
         except Exception as e:
             self.module.fail_json(msg="error validating restrictions - " + str(e))
 
-    def validate_update_delete_distribution_parameters(self, alias, distribution_id, config, e_tag):
+    def validate_distribution_id_etag(self, alias, distribution_id, config, e_tag):
         try:
             if distribution_id is None and alias is None:
                 self.module.fail_json(msg="distribution_id or alias must be specified for updating or "
@@ -1175,8 +1087,8 @@ class CloudFrontValidationManager:
             self.module.fail_json(
                 msg="error validating parameters for distribution update and delete - " + str(e))
 
-    def validate_update_delete_streaming_distribution_parameters(self, alias, streaming_distribution_id,
-                                                                 config, e_tag):
+    def validate_streaming_distribution_id_etag(self, alias, streaming_distribution_id,
+                                                config, e_tag):
         try:
             if streaming_distribution_id is None and alias is None:
                 self.module.fail_json(msg="streaming_distribution_id or alias must be specified for updating " +
@@ -1233,7 +1145,10 @@ class CloudFrontValidationManager:
             for tag in tags:
                 key = tag.keys()[0]
                 value = str(tag[key])
-                list_items.append({'Key': key, 'Value': value})
+                list_items.append({
+                    'Key': key,
+                    'Value': value
+                })
             return list_items
         except Exception as e:
             self.module.fail_json(msg="error validating tags - " + str(e))
@@ -1241,10 +1156,7 @@ class CloudFrontValidationManager:
     def validate_distribution_config_parameters(self, config, default_root_object, is_ipv6_enabled,
                                                 http_version, web_acl_id):
         try:
-            if default_root_object is not None:
-                config['default_root_object'] = default_root_object
-            else:
-                config['default_root_object'] = ''
+            config['default_root_object'] = (default_root_object or '')
             if is_ipv6_enabled is not None:
                 config['is_i_p_v_6_enabled'] = is_ipv6_enabled
             else:
@@ -1332,12 +1244,26 @@ class CloudFrontValidationManager:
         except Exception as e:
             self.module.fail_json(msg="error validating attribute with allowed values - " + str(e))
 
-    def validate_presigned_url_pem_expire_date(self, datetime_string):
+    def validate_presigned_url_expire_date(self, datetime_string):
         try:
-            return datetime.datetime.strptime(datetime_string, self.__default_presigned_url_pem_expire_date_format)
+            return datetime.datetime.strptime(datetime_string, self.__default_presigned_url_expire_date_format)
         except Exception as e:
-            self.module.fail_json(msg="presigned_url_pem_expire_date must be in the format '{0}'".format(
-                self.__default_presigned_url_pem_expire_date_format))
+            self.module.fail_json(msg="presigned_url_expire_date must be in the format '{0}'".format(
+                self.__default_presigned_url_expire_date_format))
+
+    def validate_distribution_id_from_alias(self, alias, aliases):
+        try:
+            if alias is not None:
+                distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
+                if distribution_id is not None:
+                    return distribution_id
+            if aliases is not None:
+                for single_alias in aliases:
+                    distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(single_alias)
+                    if temp_alias is not None:
+                        return distribution_id
+        except Exception as e:
+            self.module.fail_json(msg="error validating distribution_id from alias")
 
 
 class CloudFrontHelpers:
@@ -1434,22 +1360,19 @@ def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        state=dict(required=False, choices=['present', 'updated', 'absent',
-                   'duplicated', 'validated'], default=None),
+        state=dict(required=False, choices=['present', 'absent'], default=None),
         streaming_distribution=dict(required=False, default=False, type='bool'),
-        generate_presigned_url_from_pem_private_key=dict(
-            required=False, default=False, type='bool'),
+        generate_presigned_url=dict(required=False, default=None, type='bool'),
         caller_reference=dict(required=False, default=None, type='str'),
         comment=dict(required=False, default=None, type='str'),
         distribution_id=dict(required=False, default=None, type='str'),
         streaming_distribution_id=dict(required=False, default=None, type='str'),
         invalidation_batch=dict(required=False, default=None, type='list'),
         e_tag=dict(required=False, default=None, type='str'),
-        presigned_url_pem_private_key_path=dict(required=False, default=None, type='str'),
-        presigned_url_pem_private_key_password=dict(
-            required=False, default=None, type='str', no_log=True),
-        presigned_url_pem_url=dict(required=False, default=None, type='str'),
-        presigned_url_pem_expire_date=dict(required=False, default=None, type='str'),
+        pem_key_path=dict(required=False, default=None, type='str'),
+        pem_key_password=dict(required=False, default=None, type='str', no_log=True),
+        cloudfront_url_to_sign=dict(required=False, default=None, type='str'),
+        presigned_url_expire_date=dict(required=False, default=None, type='str'),
         config=dict(required=False, default=None, type='json'),
         tags=dict(required=False, default=None, type='list'),
         purge_tags=dict(required=False, default=None, type='bool'),
@@ -1479,23 +1402,31 @@ def main():
 
     result = {}
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=False,
+        mutually_exclusive=[
+            ['state', 'generate_presigned_url'],
+            ['state', 'cloudfront_url_to_sign'],
+            ['state', 'pem_key_path'],
+            ['state', 'pem_key_password'],
+            ['state', 'presigned_url_expire_date']
+        ]
+    )
     service_mgr = CloudFrontServiceManager(module)
     validation_mgr = CloudFrontValidationManager(module)
     helpers = CloudFrontHelpers()
 
     state = module.params.get('state')
     streaming_distribution = module.params.get('streaming_distribution')
-    generate_presigned_url_from_pem_private_key = module.params.get(
-        'generate_presigned_url_from_pem_private_key')
+    generate_presigned_url = module.params.get('generate_presigned_url')
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
     e_tag = module.params.get('e_tag')
-    presigned_url_pem_private_key_path = module.params.get('presigned_url_pem_private_key_path')
-    presigned_url_pem_private_key_password = module.params.get(
-        'presigned_url_pem_private_key_password')
-    presigned_url_pem_url = module.params.get('presigned_url_pem_url')
-    presigned_url_pem_expire_date = module.params.get('presigned_url_pem_expire_date')
+    pem_key_path = module.params.get('pem_key_path')
+    pem_key_password = module.params.get('pem_key_password')
+    cloudfront_url_to_sign = module.params.get('cloudfront_url_to_sign')
+    presigned_url_expire_date = module.params.get('presigned_url_expire_date')
     config = module.params.get('config')
     tags = module.params.get('tags')
     purge_tags = module.params.get('purge_tags')
@@ -1526,66 +1457,59 @@ def main():
     default_s3_origin_origin_access_identity = module.params.get(
         'default_s3_origin_origin_access_identity')
 
-    create_distribution = (state == 'present' and not streaming_distribution)
-    update_distribution = (state == 'updated' and not streaming_distribution)
+    if alias is not None or aliases is not None and not generate_presigned_url:
+        if not streaming_distribution and distribution_id is None:
+            distribution_id = validation_mgr.validate_distribution_id_from_alias(alias, aliases)
+        if streaming_distribution_id and streaming_distribution_id is None:
+            streaming_distribution_id = validation_mgr.validate_distribution_id_from_alias(alias, aliases)
+
+    create_distribution = (state == 'present' and not streaming_distribution and
+                           distribution_id is None)
+    update_distribution = (state == 'present' and not streaming_distribution and
+                           distribution_id is not None)
     delete_distribution = (state == 'absent' and not streaming_distribution)
-    duplicate_distribution = (state == 'duplicated' and not streaming_distribution)
-    validate_distribution = (state == 'validated' and not streaming_distribution)
-    create_streaming_distribution = (state == 'present' and streaming_distribution)
-    update_streaming_distribution = (state == 'updated' and streaming_distribution)
+    create_streaming_distribution = (state == 'present' and streaming_distribution and
+                                     streaming_distribution_id is None)
+    update_streaming_distribution = (state == 'present' and streaming_distribution and
+                                     streaming_distribution_id is not None)
     delete_streaming_distribution = (state == 'absent' and streaming_distribution)
-    duplicate_streaming_distribution = (state == 'duplicated' and streaming_distribution)
-    validate_streaming_distribution = (state == 'validated' and streaming_distribution)
 
     create_update_distribution = create_distribution or update_distribution
     create_update_streaming_distribution = (create_streaming_distribution or
                                             update_streaming_distribution)
-    update_delete_duplicate_distribution = (update_distribution or
-                                            delete_distribution or
-                                            duplicate_distribution)
-    update_delete_duplicate_streaming_distribution = (update_streaming_distribution or
-                                                      delete_streaming_distribution or
-                                                      duplicate_streaming_distribution)
+    update_delete_distribution = (update_distribution or
+                                  delete_distribution)
+    update_delete_streaming_distribution = (update_streaming_distribution or
+                                            delete_streaming_distribution)
     create = create_distribution or create_streaming_distribution
     update = update_distribution or update_streaming_distribution
-    validate = validate_distribution or validate_streaming_distribution
-    duplicate = duplicate_distribution or duplicate_streaming_distribution
     delete = delete_distribution or delete_streaming_distribution
-    config_required = (create or update or delete or duplicate or validate)
 
-    if state is None and not generate_presigned_url_from_pem_private_key:
-        module.fail_json(msg="please select either a state or to generate a presigned url")
+    if state is None and not generate_presigned_url:
+        module.fail_json(msg="please select either a state or generate_presigned_url=yes")
 
-    if sum(map(bool, [create_distribution, delete_distribution, update_distribution,
-           create_streaming_distribution, delete_streaming_distribution,
-           update_streaming_distribution, generate_presigned_url_from_pem_private_key,
-           duplicate_distribution, duplicate_streaming_distribution,
-           validate_distribution, validate_streaming_distribution])) > 1:
-        module.fail_json(
-            msg="more than one cloudfront action has been specified. please select only one action.")
+    config = {}
 
-    if (validate or create) and config is None:
-        config = {}
-
-    if update_delete_duplicate_distribution or config:
-        distribution_id, config, e_tag = validation_mgr.validate_update_delete_distribution_parameters(
+    if update_delete_distribution:
+        distribution_id, config, e_tag = validation_mgr.validate_distribution_id_etag(
             alias, distribution_id, config, e_tag)
 
-    if update_delete_duplicate_streaming_distribution or validate_streaming_distribution:
-        streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias, streaming_distribution_id,
-                                                                                                                           config, e_tag)
+    if update_delete_streaming_distribution:
+        streaming_distribution_id, config, e_tag = validation_mgr.validate_streaming_distribution_id_etag(
+            alias, streaming_distribution_id, config, e_tag)
 
-    if update or create or duplicate or validate:
+    if create or update:
         valid_tags = validation_mgr.validate_tags(tags)
 
-    if config_required:
+    if create or update or delete:
         config = helpers.pascal_dict_to_snake_dict(config, True)
 
-    if create_update_distribution or create_update_streaming_distribution or duplicate:
+    if create or update:
         config = validation_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging,
-                                                                        price_class, comment, create_update_streaming_distribution)
+                                                                        price_class, comment,
+                                                                        create_update_streaming_distribution)
 
-    if create_update_distribution or validate:
+    if create_update_distribution:
         valid_origins = validation_mgr.validate_origins(
             origins, default_origin_domain_name, default_s3_origin_access_identity,
             default_origin_path, create_update_streaming_distribution,
@@ -1611,37 +1535,34 @@ def main():
         valid_viewer_certificate = validation_mgr.validate_viewer_certificate(viewer_certificate)
         config = helpers.merge_validation_into_config(
             config, valid_viewer_certificate, 'viewer_certificate')
-    elif create_update_streaming_distribution or validate:
+    elif create_update_streaming_distribution:
         config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment, trusted_signers,
                                                                                   s3_origin, default_s3_origin_domain_name,
                                                                                   default_s3_origin_origin_access_identity)
-    if(create_distribution or create_streaming_distribution or duplicate_distribution or
-            duplicate_streaming_distribution or validate):
+    if create:
         config = validation_mgr.validate_caller_reference_for_distribution(config, caller_reference)
 
-    if config_required:
+    if create or update or delete:
         config = helpers.snake_dict_to_pascal_dict(config)
 
-    if generate_presigned_url_from_pem_private_key:
-        validated_pem_expire_date = validation_mgr.validate_presigned_url_pem_expire_date(
-            presigned_url_pem_expire_date)
-        result = service_mgr.generate_presigned_url_from_pem_private_key(distribution_id, presigned_url_pem_private_key_path,
-                                                                         presigned_url_pem_private_key_password,
-                                                                         presigned_url_pem_url, validated_pem_expire_date)
-    elif create_distribution or duplicate_distribution:
+    if generate_presigned_url:
+        validated_pem_expire_date = validation_mgr.validate_presigned_url_expire_date(
+            presigned_url_expire_date)
+        result = service_mgr.generate_presigned_url(distribution_id, pem_key_path,
+                                                    pem_key_password, cloudfront_url_to_sign,
+                                                    validated_pem_expire_date)
+    elif create_distribution:
         result = service_mgr.create_distribution(config, valid_tags)
     elif delete_distribution:
         result = service_mgr.delete_distribution(distribution_id, e_tag)
     elif update_distribution:
         result = service_mgr.update_distribution(config, distribution_id, e_tag)
-    elif create_streaming_distribution or duplicate_streaming_distribution:
+    elif create_streaming_distribution:
         result = service_mgr.create_streaming_distribution(config, valid_tags)
     elif delete_streaming_distribution:
         result = service_mgr.delete_streaming_distribution(streaming_distribution_id, e_tag)
     elif update_streaming_distribution:
         result = service_mgr.update_streaming_distribution(config, streaming_distribution_id, e_tag)
-    elif validate:
-        result = {'validation_result': 'OK'}
 
     if update and valid_tags is not None:
         arn = validation_mgr.validate_tagging_arn(alias, distribution_id, streaming_distribution_id)
