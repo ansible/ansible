@@ -88,7 +88,6 @@ EXAMPLES = '''
     reason: Investigation alert issue
 
 # Silence multiple clients from a dict
-vars:
   silence:
     server1.example.dev:
       reason: 'Deployment in progress'
