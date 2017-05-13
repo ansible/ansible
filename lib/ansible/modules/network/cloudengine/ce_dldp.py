@@ -18,16 +18,16 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 
 module: ce_dldp
-version_added: "2.3"
-short_description: Manages global DLDP configuration.
+version_added: "2.4"
+short_description: Manages global DLDP configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages global DLDP configuration.
+    - Manages global DLDP configuration on HUAWEI CloudEngine switches.
 author:
     - Zhijin Zhou (@CloudEngine-Ansible)
 notes:
@@ -137,8 +137,8 @@ proposed:
                 "work_mode": "normal"
             }
 existing:
-    description:
-        - k/v pairs of existing global DLDP configration
+    description: k/v pairs of existing global DLDP configration
+    returned: always
     type: dict
     sample: {
                 "enable": "disable",
@@ -554,6 +554,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     dldp_obj = Dldp(argument_spec)
     dldp_obj.work()
+
 
 if __name__ == '__main__':
     main()
