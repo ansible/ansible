@@ -188,7 +188,7 @@ class Server():
                     if not data:
                         break
 
-                    signal.alarm(C.DEFAULT_TIMEOUT)
+                    signal.alarm(self.play_context.timeout)
 
                     rc = 255
                     try:
