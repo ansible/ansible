@@ -125,12 +125,13 @@ def write_data(text, options, outputname, module):
 #####################################################################################
 
 
-def list_modules(module_dir, depth=0):
+def list_modules(module_dir, depth=0, limit_to_modules="all"):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
 
     categories = dict()
     module_info = dict()
     aliases = defaultdict(set)
+    module_limit = limit_to_modules.split(",")
 
     # * windows powershell modules have documentation stubs in python docstring
     #   format (they are not executed) so skip the ps1 format files
@@ -167,8 +168,12 @@ def list_modules(module_dir, depth=0):
             aliases[source].add(module)
             continue
 
-        category[module] = module_path
-        module_info[module] = module_path
+        # Limit documentation building only to passed-in modules. The "none"
+        # below is not a typo (it should not be None). String "none" denotes
+        # don't build any module documentation.
+        if "none" not in module_limit and ("all" in module_limit or module in module_limit):
+            category[module] = module_path
+            module_info[module] = module_path
 
     # keep module tests out of becoming module docs
     if 'test' in categories:
@@ -194,6 +199,8 @@ def generate_parser():
     p.add_option("-v", "--verbose", action='store_true', default=False, help="Verbose")
     p.add_option("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
     p.add_option("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
+    p.add_option("-l", "--limit-to-modules", action="store", dest="limit_to_modules", default="all",
+                 help="Limit building module documentation to comma-separated list of modules. Specify 'all' or 'none' for all/no modules.")
     p.add_option('-V', action='version', help='Show version number and exit')
     return p
 
@@ -447,7 +454,7 @@ def main():
 
     env, template, outputname = jinja2_environment(options.template_dir, options.type)
 
-    mod_info, categories, aliases = list_modules(options.module_dir)
+    mod_info, categories, aliases = list_modules(options.module_dir, limit_to_modules=options.limit_to_modules)
     categories['all'] = mod_info
     categories['_aliases'] = aliases
     category_names = [c for c in categories.keys() if not c.startswith('_')]
