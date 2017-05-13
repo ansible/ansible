@@ -9,4 +9,6 @@ platform="${args[0]}"
 version="${args[1]}"
 target="posix/ci/"
 
-ansible-test integration --color -v --retry-on-error "${target}" --remote "${platform}/${version}" --remote-terminate success --exclude "posix/ci/cloud/"
+# shellcheck disable=SC2086
+ansible-test integration --color -v --retry-on-error "${target}" --remote "${platform}/${version}" --remote-terminate success --exclude "posix/ci/cloud/" \
+    ${COVERAGE:+"$COVERAGE"}
