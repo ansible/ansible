@@ -756,8 +756,7 @@ class NetStreamGlobal(object):
             for sampler_tmp in self.existing["sampler"]:
                 if self.interface == str(sampler_tmp["interface"]):
                     if (self.sampler_interval and str(sampler_tmp["sampler_interval"]) == self.sampler_interval) \
-                            and (self.sampler_direction
-                                 and str(sampler_tmp["sampler_direction"]) == self.sampler_direction):
+                            and (self.sampler_direction and str(sampler_tmp["sampler_direction"]) == self.sampler_direction):
                         self.sampler_changed = True
             for statistic_tmp in self.existing["statistic"]:
                 if str(statistic_tmp["interface"]) == self.interface and self.interface != "all":
