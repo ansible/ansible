@@ -19,13 +19,13 @@
 ANSIBLE_METADATA = {
     'status': ['preview'],
     'supported_by': 'community',
-    'version': '1.0'
+    'metadata_version': '1.0'
 }
 
 DOCUMENTATION = """
 ---
 module: ce_config
-version_added: "2.3"
+version_added: "2.4"
 author: "QijunPan (@CloudEngine-Ansible)"
 short_description: Manage Huawei CloudEngine configuration sections.
 description:
@@ -214,7 +214,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/ce_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
@@ -223,12 +223,14 @@ from ansible.module_utils.ce import get_config, load_config, run_commands
 from ansible.module_utils.ce import ce_argument_spec
 from ansible.module_utils.ce import check_args as ce_check_args
 
+
 def check_args(module, warnings):
     ce_check_args(module, warnings)
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
+
 
 def get_running_config(module):
     contents = module.params['config']
@@ -239,6 +241,7 @@ def get_running_config(module):
         contents = get_config(module, flags=flags)
     return NetworkConfig(indent=1, contents=contents)
 
+
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
@@ -247,6 +250,7 @@ def get_candidate(module):
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
+
 
 def run(module, result):
     match = module.params['match']
@@ -278,6 +282,7 @@ def run(module, result):
             load_config(module, commands)
 
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
