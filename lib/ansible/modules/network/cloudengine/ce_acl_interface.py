@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_acl_interface
-version_added: "2.3"
-short_description: Manages applying ACLs to interfaces.
+version_added: "2.4"
+short_description: Manages applying ACLs to interfaces on HUAWEI CloudEngine switches.
 description:
-    - Manages applying ACLs to interfaces on CloudEngine switches.
+    - Manages applying ACLs to interfaces on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -103,8 +103,8 @@ proposed:
              "interface": "40GE2/0/1",
              "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"acl interface": "traffic-filter acl lb inbound"}
 end_state:
