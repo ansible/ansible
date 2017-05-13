@@ -437,14 +437,6 @@ lib/ansible/modules/network/cumulus/_cl_ports.py
 lib/ansible/modules/network/cumulus/nclu.py
 lib/ansible/modules/net_tools/dnsimple.py
 lib/ansible/modules/net_tools/dnsmadeeasy.py
-lib/ansible/modules/network/eos/_eos_template.py
-lib/ansible/modules/network/eos/eos_banner.py
-lib/ansible/modules/network/eos/eos_command.py
-lib/ansible/modules/network/eos/eos_config.py
-lib/ansible/modules/network/eos/eos_eapi.py
-lib/ansible/modules/network/eos/eos_facts.py
-lib/ansible/modules/network/eos/eos_system.py
-lib/ansible/modules/network/eos/eos_user.py
 lib/ansible/modules/network/f5/bigip_gtm_facts.py
 lib/ansible/modules/network/f5/bigip_gtm_wide_ip.py
 lib/ansible/modules/network/f5/bigip_virtual_server.py

@@ -210,12 +210,14 @@ from ansible.module_utils.eos import run_commands
 from ansible.module_utils.eos import eos_argument_spec
 from ansible.module_utils.eos import check_args as eos_check_args
 
+
 def check_args(module, warnings):
     eos_check_args(module, warnings)
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
+
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=3)
@@ -226,11 +228,13 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
+
 def get_running_config(module):
     flags = []
     if module.params['defaults'] is True:
         flags.append('all')
     return get_config(module, flags)
+
 
 def run(module, result):
     match = module.params['match']
@@ -271,6 +275,7 @@ def run(module, result):
             result['session'] = response['session']
 
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
@@ -319,9 +324,7 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    result = dict(changed=False, warnings=warnings)
 
     if module.params['backup']:
         result['__backup__'] = get_config(module)

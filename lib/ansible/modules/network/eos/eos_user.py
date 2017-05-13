@@ -138,60 +138,69 @@ from ansible.module_utils.eos import get_config, load_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.eos import eos_argument_spec, check_args
 
+
 def validate_privilege(value, module):
     if not 1 <= value <= 15:
         module.fail_json(msg='privilege must be between 1 and 15, got %s' % value)
+
 
 def map_obj_to_commands(updates, module):
     commands = list()
     state = module.params['state']
     update_password = module.params['update_password']
 
+    def needs_update(nwant, nhave, attrib):
+        return nwant.get(attrib) and (nwant.get(attrib) != nhave.get(attrib))
+
+    def command_append(cmd, nwant, attrib):
+        cmd.append('username %s %s' % (nwant['username'], attrib))
+
     for update in updates:
         want, have = update
-
-        needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
-        add = lambda x: commands.append('username %s %s' % (want['username'], x))
 
         if want['state'] == 'absent':
             commands.append('no username %s' % want['username'])
             continue
 
-        if needs_update('role'):
-            add('role %s' % want['role'])
+        if needs_update(want, have, 'role'):
+            command_append(commands, want, 'role %s' % want['role'])
 
-        if needs_update('privilege'):
-            add('privilege %s' % want['privilege'])
+        if needs_update(want, have, 'privilege'):
+            command_append(commands, want, 'privilege %s' % want['privilege'])
 
-        if needs_update('password'):
+        if needs_update(want, have, 'password'):
             if update_password == 'always' or not have:
-                add('secret %s' % want['password'])
+                command_append(commands, want, 'secret %s' % want['password'])
 
-        if needs_update('sshkey'):
-            add('sshkey %s' % want['sshkey'])
+        if needs_update(want, have, 'sshkey'):
+            command_append(commands, want, 'sshkey %s' % want['sshkey'])
 
-        if needs_update('nopassword'):
+        if needs_update(want, have, 'nopassword'):
             if want['nopassword']:
-                add('nopassword')
+                command_append(commands, want, 'nopassword')
             else:
-                add('no username %s nopassword' % want['username'])
+                command_append(commands, want, 'no username %s nopassword' % want['username'])
 
     return commands
+
 
 def parse_role(data):
     match = re.search(r'role (\S+)', data, re.M)
     if match:
         return match.group(1)
 
+
 def parse_sshkey(data):
     match = re.search(r'sshkey (.+)$', data, re.M)
     if match:
         return match.group(1)
 
+
 def parse_privilege(data):
     match = re.search(r'privilege (\S+)', data, re.M)
     if match:
         return int(match.group(1))
+
 
 def map_config_to_obj(module):
     data = get_config(module, flags=['section username'])
@@ -219,6 +228,7 @@ def map_config_to_obj(module):
 
     return instances
 
+
 def get_param_value(key, item, module):
     # if key doesn't exist in the item, get it from module.params
     if not item.get(key):
@@ -237,6 +247,7 @@ def get_param_value(key, item, module):
         validator(value, module)
 
     return value
+
 
 def map_params_to_obj(module):
     users = module.params['users']
@@ -271,6 +282,7 @@ def map_params_to_obj(module):
 
     return objects
 
+
 def update_objects(want, have):
     updates = list()
     for entry in want:
@@ -282,6 +294,7 @@ def update_objects(want, have):
                 if value and value != item[key]:
                     updates.append((entry, item))
     return updates
+
 
 def main():
     """ main entry point for module execution
@@ -313,10 +326,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-
-    result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    result = dict(changed=False, warnings=warnings)
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)

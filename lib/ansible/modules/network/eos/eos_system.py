@@ -133,6 +133,7 @@ from ansible.module_utils.eos import eos_argument_spec
 
 _CONFIGURED_VRFS = None
 
+
 def has_vrf(module, vrf):
     global _CONFIGURED_VRFS
     if _CONFIGURED_VRFS is not None:
@@ -142,11 +143,13 @@ def has_vrf(module, vrf):
     _CONFIGURED_VRFS.append('default')
     return vrf in _CONFIGURED_VRFS
 
+
 def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
 
-    needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
+    def needs_update(nwant, nhave, attrib):
+        return nwant.get(attrib) and (nwant.get(attrib) != nhave.get(attrib))
 
     if state == 'absent':
         if have['domain_name']:
@@ -156,10 +159,10 @@ def map_obj_to_commands(want, have, module):
             commands.append('no hostname')
 
     if state == 'present':
-        if needs_update('hostname'):
+        if needs_update(want, have, 'hostname'):
             commands.append('hostname %s' % want['hostname'])
 
-        if needs_update('domain_name'):
+        if needs_update(want, have, 'domain_name'):
             commands.append('ip domain-name %s' % want['domain_name'])
 
         if want['domain_list']:
@@ -203,9 +206,9 @@ def map_obj_to_commands(want, have, module):
                         module.fail_json(msg='vrf %s is not configured' % item['vrf'])
                     if item['vrf'] not in ('default', None):
                         values = (item['vrf'], item['server'])
-                        commands.append('no ip name-server vrf %s %s' %  values)
+                        commands.append('no ip name-server vrf %s %s' % values)
                     else:
-                        commands.append('no ip name-server %s' %  item['server'])
+                        commands.append('no ip name-server %s' % item['server'])
 
             # handle name_servers items to be added
             for item in want['name_servers']:
@@ -220,30 +223,35 @@ def map_obj_to_commands(want, have, module):
 
     return commands
 
+
 def parse_hostname(config):
     match = re.search('^hostname (\S+)', config, re.M)
     if match:
         return match.group(1)
+
 
 def parse_domain_name(config):
     match = re.search('^ip domain-name (\S+)', config, re.M)
     if match:
         return match.group(1)
 
+
 def parse_lookup_source(config):
     objects = list()
     regex = 'ip domain lookup (?:vrf (\S+) )*source-interface (\S+)'
     for vrf, intf in re.findall(regex, config, re.M):
         if len(vrf) == 0:
-            vrf= None
+            vrf = None
         objects.append({'interface': intf, 'vrf': vrf})
     return objects
+
 
 def parse_name_servers(config):
     objects = list()
     for vrf, addr in re.findall('ip name-server vrf (\S+) (\S+)', config, re.M):
         objects.append({'server': addr, 'vrf': vrf})
     return objects
+
 
 def map_config_to_obj(module):
     config = get_config(module)
@@ -254,6 +262,7 @@ def map_config_to_obj(module):
         'lookup_source': parse_lookup_source(config),
         'name_servers': parse_name_servers(config)
     }
+
 
 def map_params_to_obj(module):
     obj = {
@@ -280,6 +289,7 @@ def map_params_to_obj(module):
 
     return obj
 
+
 def main():
     """ main entry point for module execution
     """
@@ -303,7 +313,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    result = {'changed': False}
+    result = dict(changed=False)
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
