@@ -17,15 +17,15 @@
 #
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_netstream_global
-version_added: "2.3"
-short_description: Manages global parameters of NetStream.
+version_added: "2.4"
+short_description: Manages global parameters of NetStream on HUAWEI CloudEngine switches.
 description:
-    - Manages global parameters of NetStream.
+    - Manages global parameters of NetStream on HUAWEI CloudEngine switches.
 author: YangYang (@CloudEngine-Ansible)
 options:
     type:
@@ -228,6 +228,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ce import get_config, load_config
 from ansible.module_utils.ce import ce_argument_spec
 
+
 def get_interface_type(interface):
     """Gets the type of interface, such as 10GE, ETH-TRUNK..."""
 
@@ -256,6 +257,7 @@ def get_interface_type(interface):
         return None
 
     return iftype.lower()
+
 
 class NetStreamGlobal(object):
     """
@@ -716,8 +718,8 @@ class NetStreamGlobal(object):
                 if self.interface == str(sampler_tmp["interface"]):
                     temp = True
                     if (self.sampler_interval and str(sampler_tmp["sampler_interval"]) != self.sampler_interval) \
-                            or (self.sampler_direction and \
-                                        str(sampler_tmp["sampler_direction"]) != self.sampler_direction):
+                            or (self.sampler_direction and
+                                str(sampler_tmp["sampler_direction"]) != self.sampler_direction):
                         self.sampler_changed = True
             if not temp:
                 if self.sampler_direction or self.sampler_interval:
@@ -754,7 +756,7 @@ class NetStreamGlobal(object):
             for sampler_tmp in self.existing["sampler"]:
                 if self.interface == str(sampler_tmp["interface"]):
                     if (self.sampler_interval and str(sampler_tmp["sampler_interval"]) == self.sampler_interval) \
-                            and (self.sampler_direction \
+                            and (self.sampler_direction
                                  and str(sampler_tmp["sampler_direction"]) == self.sampler_direction):
                         self.sampler_changed = True
             for statistic_tmp in self.existing["statistic"]:
