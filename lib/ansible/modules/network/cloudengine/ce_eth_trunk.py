@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_eth_trunk
-version_added: "2.3"
-short_description: Manages Eth-Trunk interfaces.
+version_added: "2.4"
+short_description: Manages Eth-Trunk interfaces on HUAWEI CloudEngine switches.
 description:
-    - Manages Eth-Trunk specific configuration parameters.
+    - Manages Eth-Trunk specific configuration parameters on HUAWEI CloudEngine switches.
 author: QijunPan (@CloudEngine-Ansible)
 notes:
     - C(state=absent) removes the Eth-Trunk config and interface if it
@@ -113,8 +113,8 @@ proposed:
     type: dict
     sample: {"trunk_id": "100", "members": ['10GE1/0/24','10GE1/0/25'], "mode": "lacp-static"}
 existing:
-    description:
-        - k/v pairs of existing Eth-Trunk
+    description: k/v pairs of existing Eth-Trunk
+    returned: always
     type: dict
     sample: {"trunk_id": "100", "hash_type": "mac", "members_detail": [
             {"memberIfName": "10GE1/0/25", "memberIfState": "Down"}],
