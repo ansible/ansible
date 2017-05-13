@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_aaa_server
-version_added: "2.3"
-short_description: Manages AAA server global configuration.
+version_added: "2.4"
+short_description: Manages AAA server global configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages AAA server global configuration.
+    - Manages AAA server global configuration on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -160,8 +160,8 @@ proposed:
     sample: {"accounting_mode": "hwtacacs", "acct_scheme_name": "test1",
             "hwtacas_template": "test2", "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"accounting scheme": [["hwtacacs"], ["default"]],
             "hwtacacs template": ["huawei"]}
