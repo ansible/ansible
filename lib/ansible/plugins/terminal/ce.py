@@ -52,4 +52,3 @@ class TerminalModule(TerminalBase):
             self._exec_cli_command('screen-length 0 temporary')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-
