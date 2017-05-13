@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_netstream_export
-version_added: "2.3"
-short_description: Manages netstream export.
+version_added: "2.4"
+short_description: Manages netstream export on HUAWEI CloudEngine switches.
 description:
-    - Configure NetStream flow statistics exporting and versions for exported packets.
+    - Configure NetStream flow statistics exporting and versions for exported packets on HUAWEI CloudEngine switches.
 author: Zhijin Zhou (@CloudEngine-Ansible)
 notes:
 options:
@@ -161,6 +161,7 @@ proposed:
             }
 existing:
     description: k/v pairs of existing attributes on the device
+    returned: always
     type: dict
     sample: {
                 "as_option": null,
@@ -175,7 +176,7 @@ existing:
 end_state:
     description: k/v pairs of end attributes on the device
     returned: always
-    type: dict or null
+    type: dict
     sample: {
                 "as_option": "origin",
                 "bgp_nexthop": "enable",
@@ -217,6 +218,7 @@ def is_ipv4_addr(ip_addr):
 
     return bool(re.match(ipv4_regex, ip_addr))
 
+
 def is_config_exist(cmp_cfg, test_cfg):
     """is configuration exist"""
 
@@ -226,6 +228,7 @@ def is_config_exist(cmp_cfg, test_cfg):
     if not result:
         return False
     return True
+
 
 class NetstreamExport(object):
     """Manange NetStream export"""
@@ -561,6 +564,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     netstream_export = NetstreamExport(argument_spec)
     netstream_export.work()
+
 
 if __name__ == '__main__':
     main()
