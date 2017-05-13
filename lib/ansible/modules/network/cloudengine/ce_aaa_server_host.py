@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_aaa_server_host
-version_added: "2.3"
-short_description: Manages AAA server host configuration.
+version_added: "2.4"
+short_description: Manages AAA server host configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages AAA server host configuration.
+    - Manages AAA server host configuration on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -257,8 +257,8 @@ proposed:
              "local_password": "******",
              "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server host
+    description: k/v pairs of existing aaa server host
+    returned: always
     type: dict
     sample: {"radius server ipv4": []}
 end_state:
