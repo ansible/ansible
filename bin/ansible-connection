@@ -41,8 +41,6 @@ import syslog
 import datetime
 import logging
 
-from io import BytesIO
-
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import PY3
@@ -214,7 +212,10 @@ class Server():
                             display.display("socket operation is CONTEXT", log_only=True)
                             pc_data = data.split(b'CONTEXT: ', 1)[1]
 
-                            pc_data = cPickle.loads(pc_data)
+                            if PY3:
+                                pc_data = cPickle.loads(pc_data, encoding='bytes')
+                            else:
+                                pc_data = cPickle.loads(pc_data)
 
                             pc = PlayContext()
                             pc.deserialize(pc_data)
@@ -267,11 +268,14 @@ def main():
         cur_line = stdin.readline()
         init_data = b''
         while cur_line.strip() != b'#END_INIT#':
-            if cur_line  == b'':
+            if cur_line == b'':
                 raise Exception("EOF found before init data was complete")
             init_data += cur_line
             cur_line = stdin.readline()
-        pc_data = cPickle.loads(init_data)
+        if PY3:
+            pc_data = cPickle.loads(init_data, encoding='bytes')
+        else:
+            pc_data = cPickle.loads(init_data)
 
         pc = PlayContext()
         pc.deserialize(pc_data)
