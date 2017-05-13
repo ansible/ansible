@@ -84,6 +84,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         self.show_content = True
+        self.included_files = []
 
         # Validate arguments
         dirs = 0
@@ -141,6 +142,7 @@ class ActionModule(ActionBase):
             result['failed'] = failed
             result['message'] = err_msg
 
+        result['ansible_included_var_files'] = self.included_files
         result['ansible_facts'] = results
         result['_ansible_no_log'] = not self.show_content
 
@@ -237,6 +239,7 @@ class ActionModule(ActionBase):
                 failed = True
                 err_msg = ('{0} must be stored as a dictionary/hash' .format(filename))
             else:
+                self.included_files.append(filename)
                 results.update(data)
 
         return failed, err_msg, results

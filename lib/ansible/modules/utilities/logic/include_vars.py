@@ -120,3 +120,17 @@ EXAMPLES = """
     ignore_files: 'bastion.yml'
     extensions: ['yml']
 """
+
+RETURN = '''
+ansible_facts:
+  description: Variables that were included and their values
+  returned: success
+  type: dict
+  sample: {'variable': 'value'}
+ansible_included_var_files:
+  description: A list of files that were successfully included
+  returned: success
+  type: list
+  sample: [ '/path/to/file.yml', '/path/to/file.json' ]
+  version_added: 2.4
+'''
