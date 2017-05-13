@@ -17,15 +17,15 @@
 #
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_evpn_bgp
-version_added: "2.3"
-short_description: Manages BGP EVPN configuration.
+version_added: "2.4"
+short_description: Manages BGP EVPN configuration on HUAWEI CloudEngine switches.
 description:
-    - This module offers the ability to configure a BGP EVPN peer relationship on CloudEngine switch.
+    - This module offers the ability to configure a BGP EVPN peer relationship on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@CloudEngine-Ansible)
 options:
@@ -126,8 +126,7 @@ proposed:
     type: dict
     sample: {"advertise_router_type": "arp", "bgp_instance": "100", "peer_group_name": "aaa", "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing rollback
+    description: k/v pairs of existing rollback
     returned: always
     type: dict
     sample: {"bgp_instance": "100", "peer_group_advertise_type": []}
@@ -164,6 +163,7 @@ def is_config_exist(cmp_cfg, test_cfg):
 
     return bool(test_cfg in cmp_cfg)
 
+
 def is_valid_address(address):
     """check ip-address is valid"""
 
@@ -179,6 +179,7 @@ def is_valid_address(address):
         return True
 
     return False
+
 
 def is_valid_as_number(as_number):
     """check as-number is valid"""
@@ -202,6 +203,7 @@ def is_valid_as_number(as_number):
             return True
 
         return False
+
 
 class EvpnBgp(object):
     """
