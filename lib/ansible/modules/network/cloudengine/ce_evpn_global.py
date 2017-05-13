@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_evpn_global
-version_added: "2.3"
-short_description: Manages global configuration of EVPN.
+version_added: "2.4"
+short_description: Manages global configuration of EVPN on HUAWEI CloudEngine switches.
 description:
-    - Manages global configuration of EVPN.
+    - Manages global configuration of EVPN on HUAWEI CloudEngine switches.
 author: Zhijin Zhou (@CloudEngine-Ansible)
 notes:
     - Before configuring evpn_overlay_enable=disable, delete other EVPN configurations.
@@ -74,6 +74,7 @@ proposed:
             }
 existing:
     description: k/v pairs of existing attributes on the device
+    returned: always
     type: dict
     sample: {
                 "evpn_overlay_enable": "disable"
@@ -81,7 +82,7 @@ existing:
 end_state:
     description: k/v pairs of end attributes on the interface
     returned: always
-    type: dict or null
+    type: dict
     sample: {
                 "evpn_overlay_enable": "enable"
             }
@@ -229,6 +230,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     evpn_global = EvpnGlobal(argument_spec)
     evpn_global.work()
+
 
 if __name__ == '__main__':
     main()
