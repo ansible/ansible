@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_info_center_trap
-version_added: "2.3"
-short_description: Manages information center trap configuration.
+version_added: "2.4"
+short_description: Manages information center trap configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages information center trap configurations on CloudEngine switches.
+    - Manages information center trap configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -145,8 +145,8 @@ proposed:
     type: dict
     sample: {"state": "present", "trap_buff_enable": "true", "trap_buff_size": "768"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"icTrapBuffEn": "false", "trapBuffSize": "256"}
 end_state:
