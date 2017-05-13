@@ -18,9 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -61,7 +61,7 @@ options:
     description:
       - Specifies the subscription which the silence entry applies to.
       - To create a silence entry for a client append C(client:) to client name.
-      - Example: C(client:server1.example.dev)
+        Example - C(client:)server1.example.dev
     required: true
     default: []
   url:
@@ -72,6 +72,35 @@ options:
 '''
 
 EXAMPLES = '''
+# Silence ALL checks for a given client
+- name: Silence server1.example.dev
+  sensu_silence:
+    subscription: client:server1.example.dev
+    creator: "{{ ansible_user_id }}"
+    reason: Performing maintenance
+
+# Silence specific check for a client
+- name: Silence CPU_Usage check for server1.example.dev
+  sensu_silence:
+    subscription: client:server1.example.dev
+    check: CPU_Usage
+    creator: "{{ ansible_user_id }}"
+    reason: Investigation alert issue
+
+# Silence multiple clients from a dict
+vars:
+  silence:
+    server1.example.dev:
+      reason: 'Deployment in progress'
+    server2.example.dev:
+      reason: 'Deployment in progress'
+
+- name: Silence several clients from a dict
+  sensu_silence:
+    subscription: "client:{{ item.key }}"
+    reason: "{{ item.value.reason }}"
+    creator: "{{ ansible_user_id }}"
+  with_dict: "{{ silence }}"
 '''
 
 RETURN = '''
