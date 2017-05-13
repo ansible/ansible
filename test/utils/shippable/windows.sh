@@ -22,6 +22,7 @@ if [ -s /tmp/windows.txt ]; then
 
     target="windows/ci/"
 
+    # shellcheck disable=SC2086
     ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements ${COVERAGE:+"$COVERAGE"} \
         --windows 2008-SP2 \
         --windows 2008-R2_SP1 \
@@ -34,6 +35,7 @@ else
 
     target="windows/ci/group${job}/"
 
+    # shellcheck disable=SC2086
     ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements ${COVERAGE:+"$COVERAGE"} \
         --windows 2012-R2_RTM
 fi
