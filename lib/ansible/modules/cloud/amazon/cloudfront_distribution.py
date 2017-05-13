@@ -516,7 +516,8 @@ class CloudFrontServiceManager:
         try:
             self.pem_key_path = private_key_path
             self.pem_private_key_password = private_key_password
-            cloudfront_signer = CloudFrontSigner(distribution_id, self.presigned_url_rsa_signer)
+            cloudfront_signer = CloudFrontSigner(distribution_id,
+                                                 self.presigned_url_rsa_signer)
             presigned_url = cloudfront_signer.generate_presigned_url(
                 url, date_less_than=expire_date)
             return {'presigned_url': presigned_url}
@@ -574,8 +575,9 @@ class CloudFrontServiceManager:
 
     def update_distribution(self, config, distribution_id, e_tag):
         try:
-            func = partial(self.client.update_distribution, DistributionConfig=config,
-                           Id=distribution_id, IfMatch=e_tag)
+            func = partial(self.client.update_distribution,
+                           DistributionConfig=config, Id=distribution_id,
+                           IfMatch=e_tag)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(
@@ -615,7 +617,8 @@ class CloudFrontServiceManager:
                 exception=traceback.format_exc(),
                 **camel_dict_to_snake_dict(e.response))
 
-    def update_streaming_distribution(self, config, streaming_distribution_id, e_tag):
+    def update_streaming_distribution(self, config, streaming_distribution_id,
+                                      e_tag):
         try:
             func = partial(self.client.update_streaming_distribution,
                            StreamingDistributionConfig=config,
@@ -670,8 +673,8 @@ class CloudFrontServiceManager:
     def paginated_response(self, func, result_key=''):
         '''
         Returns expanded response for paginated operations.
-        The 'result_key' is used to define the concatenated results that are combined
-        from each paginated response.
+        The 'result_key' is used to define the concatenated results
+        that are combined from each paginated response.
         '''
         args = dict()
         results = dict()
@@ -708,7 +711,8 @@ class CloudFrontValidationManager:
             'TLSv1.2'
         ]
         self.__default_custom_origin_protocol_policy = 'match-viewer'
-        self.__default_datetime_string = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
+        self.__default_datetime_string = datetime.datetime.now().strftime(
+            '%Y-%m-%dT%H:%M:%S.%f')
         self.__default_cache_behavior_min_ttl = 0
         self.__default_cache_behavior_max_ttl = 31536000
         self.__default_cache_behavior_default_ttl = 86400
@@ -762,7 +766,7 @@ class CloudFrontValidationManager:
             ],
             [
                 'GET',
-                'HEAD'
+                'HEAD',
                 'OPTIONS'
             ]
         ]
@@ -803,17 +807,20 @@ class CloudFrontValidationManager:
             valid_logging = {}
             if not streaming:
                 if(logging and ('enabled' not in logging or
-                                'include_cookies' not in logging or 'bucket' not in logging or
+                                'include_cookies' not in logging or
+                                'bucket' not in logging or
                                 'prefix' not in logging)):
                     self.module.fail_json(
                         msg="the logging parameters enabled, include_cookies," +
                         " bucket and prefix must be specified")
                 valid_logging['include_cookies'] = logging.get('include_cookies')
             else:
-                if logging and ('enabled' not in logging or 'bucket' not in logging or
-                                'prefix' not in logging):
+                if(logging and ('enabled' not in logging or
+                                'bucket' not in logging or
+                                'prefix' not in logging)):
                     self.module.fail_json(
-                        msg="the logging parameters enabled, bucket and prefix must be specified")
+                        msg="the logging parameters enabled, bucket and " +
+                        "prefix must be specified")
             valid_logging['enabled'] = logging.get('enabled')
             valid_logging['bucket'] = logging.get('bucket')
             valid_logging['prefix'] = logging.get('prefix')
@@ -871,7 +878,8 @@ class CloudFrontValidationManager:
                     "distribution. custom headers are for web distributions only")
             if 'custom_headers' in origin and len(origin.get('custom_headers')) > 0:
                 for custom_header in origin.get('custom_headers'):
-                    if 'header_name' not in custom_header or 'header_value' not in custom_header:
+                    if('header_name' not in custom_header or
+                       'header_value' not in custom_header):
                         self.module.fail_json(
                             msg="both origins[].custom_headers.header_name and " +
                             "origins[].custom_headers.header_value must be specified")
@@ -883,7 +891,8 @@ class CloudFrontValidationManager:
                 if('s3_origin_config' not in origin or
                    'origin_access_identity' not in origin.get('s3_origin_config')):
                     origin["s3_origin_config"] = {}
-                    origin['s3_origin_config']['origin_access_identity'] = (default_s3_origin_access_identity or '')
+                    origin['s3_origin_config']['origin_access_identity'] = (
+                        default_s3_origin_access_identity or '')
             else:
                 if 'custom_origin_config' not in origin:
                     origin['custom_origin_config'] = {}
@@ -893,7 +902,8 @@ class CloudFrontValidationManager:
                 else:
                     self.validate_attribute_with_allowed_values(
                         custom_origin_config.get('origin_protocol_policy'),
-                        'origins[].custom_origin_config.origin_protocol_policy', self.__valid_origin_protocol_policies)
+                        'origins[].custom_origin_config.origin_protocol_policy',
+                        self.__valid_origin_protocol_policies)
                 if 'http_port' not in custom_origin_config:
                     custom_origin_config['h_t_t_p_port'] = self.__default_http_port
                 else:
@@ -961,9 +971,33 @@ class CloudFrontValidationManager:
                         valid_origins)
                 else:
                     cache_behavior['target_origin_id'] = str(cache_behavior.get('target_origin_id'))
-            if 'forwarded_values' not in cache_behavior:
-                cache_behavior['forwarded_values'] = {}
-            forwarded_values = cache_behavior.get('forwarded_values')
+            cache_behavior = self.validate_forwarded_values(
+                cache_behavior.get('forwarded_values'), cache_behavior)
+            cache_behavior = self.validate_allowed_methods(
+                cache_behavior.get('allowed_methods'), cache_behavior)
+            cache_behavior = self.validate_lambda_function_associations(
+                cache_behavior.get('lambda_function_associations'), cache_behavior)
+            if 'viewer_protocol_policy' not in cache_behavior:
+                cache_behavior['viewer_protocol_policy'] = self.__default_cache_behavior_viewer_protocol_policy
+            else:
+                self.validate_attribute_with_allowed_values(cache_behavior.get(
+                    'viewer_protocol_policy'),
+                    'cache_behavior.viewer_protocol_policy',
+                    self.__valid_viewer_protocol_policies)
+            if 'smooth_streaming' not in cache_behavior:
+                cache_behavior['smooth_streaming'] = self.__default_cache_behavior_smooth_streaming
+            cache_behavior['trusted_signers'] = self.validate_trusted_signers(
+                cache_behavior.get('trusted_signers'))
+            return cache_behavior
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating distribution cache behavior - " + str(e) +
+                "\n" + traceback.format_exc())
+
+    def validate_forwarded_values(self, forwarded_values, cache_behavior):
+        try:
+            if forwarded_values is None:
+                forwarded_values = {}
             forwarded_values['headers'] = self.__helpers.python_list_to_aws_list(
                 forwarded_values.get('headers'))
             if 'cookies' not in forwarded_values:
@@ -981,43 +1015,16 @@ class CloudFrontValidationManager:
                 forwarded_values.get('query_string_cache_keys'))
             if 'query_string' not in forwarded_values:
                 forwarded_values['query_string'] = self.__default_cache_behavior_forwarded_values_query_string
-            temp_allowed_methods = cache_behavior.get('allowed_methods')
-            if temp_allowed_methods is not None:
-                if 'items' not in temp_allowed_methods:
-                    self.module.fail_json(
-                        msg="cache_behavior.allowed_methods.items[] must be specified")
-                temp_allowed_items = temp_allowed_methods.get('items')
-                self.validate_is_list(
-                    temp_allowed_items, 'cache_behavior.allowed_methods.items')
-                allowed_match = False
-                for valid_allowed_methods in self.__valid_methods_allowed_methods:
-                    allowed_match |= self.validate_attribute_with_allowed_values(
-                        temp_allowed_items, 'cache_behavior.allowed_items.allowed_methods[]',
-                        valid_allowed_methods, True)
-                if not allowed_match:
-                    self.module.fail_json(
-                        msg="list values for cache_behavior.allowed_items." +
-                        "cached_methods[] values are incorrect.")
-                temp_cached_items = temp_allowed_methods.get('cached_methods')
-                if 'cached_methods' in temp_allowed_methods:
-                    self.validate_is_list(
-                        temp_cached_items, 'cache_behavior.allowed_methods.cached_methods')
-                    cached_match = False
-                    for valid_cached_methods in self.__valid_methods_cached_methods:
-                        cached_match |= self.validate_attribute_with_allowed_values(
-                            temp_cached_items,
-                            'cache_behavior.allowed_items.cached_methods[]',
-                            valid_cached_methods, True)
-                    if not cached_match:
-                        self.module.fail_json(
-                            msg="list values for cache_behavior.allowed_items." +
-                            "cached_methods[] values are incorrect.")
-                cache_behavior['allowed_methods'] = self.__helpers.python_list_to_aws_list(
-                    temp_allowed_items)
-                cache_behavior['allowed_methods']['cached_methods'] = self.__helpers.python_list_to_aws_list(
-                    temp_cached_items)
-            lambda_function_associations = cache_behavior.get(
-                'lambda_function_associations')
+            cache_behavior['forwarded_values'] = forwarded_values
+            return cache_behavior
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating forwarded values - " + str(e) +
+                "\n" + traceback.format_exc())
+
+    def validate_lambda_function_associations(self, lambda_function_associations,
+                                              cache_behavior):
+        try:
             if lambda_function_associations is not None:
                 self.validate_is_list(
                     lambda_function_associations, 'lambda_function_associations')
@@ -1033,22 +1040,41 @@ class CloudFrontValidationManager:
                             self.__valid_lambda_function_association_event_types)
             cache_behavior['lambda_function_associations'] = self.__helpers.python_list_to_aws_list(
                 lambda_function_associations)
-            if 'viewer_protocol_policy' not in cache_behavior:
-                cache_behavior['viewer_protocol_policy'] = self.__default_cache_behavior_viewer_protocol_policy
-            else:
-                self.validate_attribute_with_allowed_values(cache_behavior.get(
-                    'viewer_protocol_policy'),
-                    'cache_behavior.viewer_protocol_policy',
-                    self.__valid_viewer_protocol_policies)
-            if 'smooth_streaming' not in cache_behavior:
-                cache_behavior['smooth_streaming'] = self.__default_cache_behavior_smooth_streaming
-            cache_behavior['trusted_signers'] = self.validate_trusted_signers(
-                cache_behavior.get('trusted_signers'))
             return cache_behavior
         except Exception as e:
             self.module.fail_json(
-                msg="error validating distribution cache behavior - " + str(e) +
+                msg="error validating lambda function associations - " + str(e) +
                 "\n" + traceback.format_exc())
+
+    def validate_allowed_methods(self, allowed_methods, cache_behavior):
+        try:
+            if allowed_methods is not None:
+                if 'items' not in allowed_methods:
+                    self.module.fail_json(
+                        msg="cache_behavior.allowed_methods.items[] must be specified")
+                temp_allowed_items = allowed_methods.get('items')
+                self.validate_is_list(
+                    temp_allowed_items, 'cache_behavior.allowed_methods.items')
+                self.validate_attribute_list_with_allowed_list(
+                    temp_allowed_items, 'cache_behavior.allowed_items.allowed_methods[]',
+                    self.__valid_methods_allowed_methods)
+                cached_items = allowed_methods.get('cached_methods')
+                if 'cached_methods' in allowed_methods:
+                    self.validate_is_list(
+                        cached_items, 'cache_behavior.allowed_methods.cached_methods')
+                    self.validate_attribute_list_with_allowed_list(
+                        cached_items,
+                        'cache_behavior.allowed_items.cached_methods[]',
+                        self.__valid_methods_cached_methods)
+                cache_behavior['allowed_methods'] = self.__helpers.python_list_to_aws_list(
+                    temp_allowed_items)
+                cache_behavior['allowed_methods']['cached_methods'] = self.__helpers.python_list_to_aws_list(
+                    cached_items)
+            return cache_behavior
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating allowed methods - " + str(e) + "\n" +
+                traceback.format_exc())
 
     def validate_trusted_signers(self, trusted_signers):
         try:
@@ -1076,7 +1102,8 @@ class CloudFrontValidationManager:
                         "s3_origin.domain_name must be specified for s3_origin")
                 if 'origin_access_identity' not in s3_origin:
                     self.module.fail_json(
-                        "s3_origin.origin_origin_access_identity must be specified for s3_origin")
+                        "s3_origin.origin_origin_access_identity must be " +
+                        "specified for s3_origin")
                 return s3_origin
             s3_origin = {}
             if default_s3_origin_domain_name is not None:
@@ -1099,8 +1126,9 @@ class CloudFrontValidationManager:
             if(viewer_certificate.get('cloudfront_default_certificate') and
                     viewer_certificate.get('ssl_support_method') is not None):
                 self.module.fail_json(
-                    msg="viewer_certificate.ssl_support_method should not be specified with" +
-                    "viewer_certificate_cloudfront_default_certificate set to true")
+                    msg="viewer_certificate.ssl_support_method should not " +
+                    "be specified with viewer_certificate_cloudfront_default" +
+                    "_certificate set to true")
             if 'ssl_support_method' in viewer_certificate:
                 self.validate_attribute_with_allowed_values(
                     viewer_certificate.get('ssl_support_method'),
@@ -1118,13 +1146,16 @@ class CloudFrontValidationManager:
                     self.__valid_viewer_certificate_certificate_sources)
             if 'ssl_support_method' in viewer_certificate:
                 viewer_certificate = self.__helpers.change_dict_key_name(
-                    viewer_certificate, 'ssl_support_method', 's_s_l_support_method')
+                    viewer_certificate, 'ssl_support_method',
+                    's_s_l_support_method')
             if 'iam_certificate' in viewer_certificate:
                 viewer_certificate = self.__helpers.change_dict_key_name(
-                    viewer_certificate, 'iam_certificate_id', 'i_a_m_certificate_id')
+                    viewer_certificate, 'iam_certificate_id',
+                    'i_a_m_certificate_id')
             if 'acm_certificate' in viewer_certificate:
                 viewer_certificate = self.__helpers.change_dict_key_name(
-                    viewer_certificate, 'acm_certificate_arn', 'a_c_m_certificate_arn')
+                    viewer_certificate, 'acm_certificate_arn',
+                    'a_c_m_certificate_arn')
             return viewer_certificate
         except Exception as e:
             self.module.fail_json(
@@ -1160,7 +1191,8 @@ class CloudFrontValidationManager:
             restriction_type = geo_restriction.get('restriction_type')
             if restriction_type is None:
                 self.module.fail_json(
-                    msg="restrictions.geo_restriction.restriction_type must be specified")
+                    msg="restrictions.geo_restriction.restriction_type" +
+                    "must be specified")
             items = geo_restriction.get('items')
             valid_restrictions = python_list_to_aws_list(items)
             valid_restrictions['restriction_type'] = restriction_type
@@ -1170,12 +1202,13 @@ class CloudFrontValidationManager:
                 msg="error validating restrictions - " + str(e) +
                 "\n" + traceback.format_exc())
 
-    def validate_distribution_id_etag(self, alias, distribution_id, config, e_tag):
+    def validate_distribution_id_etag(self, alias, distribution_id,
+                                      config, e_tag):
         try:
             if distribution_id is None and alias is None:
                 self.module.fail_json(
-                    msg="distribution_id or alias must be specified for updating or "
-                    "deleting a distribution.")
+                    msg="distribution_id or alias must be specified " +
+                    "for updating or deleting a distribution.")
             if distribution_id is None:
                 distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(
                     alias)
@@ -1188,8 +1221,9 @@ class CloudFrontValidationManager:
             return distribution_id, config, e_tag
         except Exception as e:
             self.module.fail_json(
-                msg="error validating parameters for distribution update and delete - " +
-                str(e) + "\n" + traceback.format_exc())
+                msg="error validating parameters for distribution " +
+                "update and delete - " + str(e) + "\n" +
+                traceback.format_exc())
 
     def validate_streaming_distribution_id_etag(self, alias, streaming_distribution_id,
                                                 config, e_tag):
@@ -1318,8 +1352,9 @@ class CloudFrontValidationManager:
                 self.validate_attribute_with_allowed_values(
                     price_class, 'price_class', self.__valid_price_classes)
                 config['price_class'] = price_class
-            config['comment'] = (comment or "distribution created by ansible with datetime " +
-                                 self.__default_datetime_string)
+            config['comment'] = (
+                comment or "distribution created by ansible with datetime " +
+                self.__default_datetime_string)
             return config
         except Exception as e:
             self.module.fail_json(
@@ -1350,22 +1385,33 @@ class CloudFrontValidationManager:
                 msg="error getting first origin_id for default cache behavior- " +
                 str(e) + "\n" + traceback.format_exc())
 
-    def validate_attribute_with_allowed_values(self, attribute, attribute_name,
-                                               allowed_list, return_value=False):
+    def validate_attribute_list_with_allowed_list(self, attribute_list,
+                                                  attribute_list_name,
+                                                  allowed_list):
         try:
-            if (attribute is not None and
-                ((isinstance(attribute, list) and
-                 (not set(attribute) == set(allowed_list))) or
-                 (not isinstance(attribute, list) and attribute not in
-                 allowed_list))):
-                if return_value:
-                    return False
-                else:
-                    self.module.fail_json(
-                        msg='the attribute {0} must be one of {1}'.format(
-                            attribute_name, ' '.join(str(a) for a in allowed_list)))
-            if return_value:
-                return True
+            if not isinstance(attribute_list, list):
+                self.module.fail_json(msg="expected a list. got a " +
+                                      type(attribute_list).__name__)
+            matched_one = False
+            for allowed_sub_list in allowed_list:
+                matched_one |= (set(attribute_list) == set(allowed_sub_list))
+            if not matched_one:
+                self.module.fail_json(
+                    msg='the attribute list {0} must be one of [{1}]'.format(
+                        attribute_list_name, ' '
+                        .join(str(a) for a in allowed_list)))
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating attribute with allowed values - " +
+                str(e) + "\n" + traceback.format_exc())
+
+    def validate_attribute_with_allowed_values(self, attribute, attribute_name,
+                                               allowed_list):
+        try:
+            if (attribute is not None and attribute not in allowed_list):
+                self.module.fail_json(
+                    msg='the attribute {0} must be one of {1}'.format(
+                        attribute_name, ' '.join(str(a) for a in allowed_list)))
         except Exception as e:
             self.module.fail_json(
                 msg="error validating attribute with allowed values - " +
@@ -1630,7 +1676,8 @@ def main():
         module.fail_json(
             msg="please select either a state or generate_presigned_url=yes")
 
-    config = {}
+    if create and config is None:
+        config = {}
 
     if update_delete_distribution:
         distribution_id, config, e_tag = validation_mgr.validate_distribution_id_etag(
