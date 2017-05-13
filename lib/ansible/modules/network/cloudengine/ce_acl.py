@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_acl
-version_added: "2.3"
-short_description: Manages base ACL configuration.
+version_added: "2.4"
+short_description: Manages base ACL configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages base ACL configurations on CloudEngine switches.
+    - Manages base ACL configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -194,8 +194,8 @@ proposed:
     type: dict
     sample: {"acl_name": "test", "state": "delete_acl"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"aclNumOrName": "test", "aclType": "Basic"}
 end_state:
