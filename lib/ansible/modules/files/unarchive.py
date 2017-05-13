@@ -376,6 +376,10 @@ class ZipArchive(object):
                 ftype = 'f'
 
             # Some files may be storing FAT permissions, not Unix permissions
+            # For FAT permissions, we will use a base permissions set of 777 if the item is a directory or has the execute bit set.  Otherwise, 666.
+            #     This permission will then be modified by the system UMask.
+            # For Unix style permissions, we want to use them directly.
+            #     So we set the UMask for this file to zero.  That permission set will then be unchanged when calling _permstr_to_octal
             if len(permstr) == 6:
                 if path[-1] == '/':
                     permstr = 'rwxrwxrwx'
@@ -383,6 +387,8 @@ class ZipArchive(object):
                     permstr = 'rwxrwxrwx'
                 else:
                     permstr = 'rw-rw-rw-'
+            else:
+                umask=0
 
             # Test string conformity
             if len(permstr) != 9 or not ZIP_FILE_MODE_RE.match(permstr):
