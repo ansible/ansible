@@ -17,15 +17,15 @@
 #
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_netstream_aging
-version_added: "2.3"
-short_description: Manages timeout mode of NetStream.
+version_added: "2.4"
+short_description: Manages timeout mode of NetStream on HUAWEI CloudEngine switches.
 description:
-    - Manages timeout mode of NetStream.
+    - Manages timeout mode of NetStream on HUAWEI CloudEngine switches.
 author: YangYang (@CloudEngine-Ansible)
 options:
     timeout_interval:
