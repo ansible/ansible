@@ -18,12 +18,12 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_facts
-version_added: "2.3"
+version_added: "2.4"
 author: "wangdezhuang (@CloudEngine-Ansible)"
 short_description: Gets facts about HUAWEI CloudEngine switches.
 description:
