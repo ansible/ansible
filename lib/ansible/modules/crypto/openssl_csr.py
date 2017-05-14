@@ -145,7 +145,7 @@ csr:
     type: string
     sample: /etc/ssl/csr/www.ansible.com.csr
 subject:
-    description: A dictionnary of the subject attached to the CSR
+    description: A dictionary of the subject attached to the CSR
     returned: changed or success
     type: list
     sample: {'CN': 'www.ansible.com', 'O': 'Ansible'}
