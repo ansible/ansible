@@ -64,7 +64,7 @@ class JSONFileCache(object):
 
     # This provides a dict like interface that stores JSON serializable objects.
     # The objects are serialized to JSON and stored in a file.  These values can be retrieved at a later time.
-    
+
     CACHE_DIR = os.path.expanduser(os.path.join('~', '.aws', 'cli', 'cache'))
 
     def __init__(self, working_dir=CACHE_DIR):
@@ -150,7 +150,7 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
                          'must specify either both, resource, or client to '
                          'the conn_type parameter in the boto3_conn function '
                          'call')
-    
+
     # Create a session with assume role provider credentials cache
     session = botocore.session.get_session()
     cred_chain = session.get_component('credential_provider')
