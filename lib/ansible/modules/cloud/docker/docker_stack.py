@@ -35,9 +35,9 @@ options:
         description:
         -   Stack name
     state:
-        required: true
         description:
         -   Service state.
+        default: "present"
         choices:
         -   present
         -   absent
