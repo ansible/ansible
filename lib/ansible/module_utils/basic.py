@@ -1999,7 +1999,7 @@ class AnsibleModule(object):
                     else:
                         self.deprecate(d)
             else:
-                self.deprecate(d)
+                self.deprecate(kwargs['deprecations'])
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations
