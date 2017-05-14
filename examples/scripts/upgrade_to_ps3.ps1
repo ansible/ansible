@@ -24,6 +24,12 @@ Function Write-LogOutput
     Write-host $Message
 }
 
+$EventSource = $MyInvocation.MyCommand.Name
+If (-Not $EventSource)
+{
+    $EventSource = "Powershell CLI"
+}
+
 if ($PSVersionTable.psversion.Major -ge 3)
 {
     Write-LogOutput "Powershell 3 Installed already; You don't need this"
