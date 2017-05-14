@@ -343,7 +343,7 @@ def stack_operation(cfn, stack_name, operation):
             else:
                 ret.update({'changed': False, 'failed': True, 'output' : 'Stack not found.'})
                 return ret
-        elif stack['StackStatus'].endswith('_ROLLBACK_COMPLETE'):
+        elif stack['StackStatus'].endswith('ROLLBACK_COMPLETE'):
             ret.update({'changed': True, 'failed' :True, 'output': 'Problem with %s. Rollback complete' % operation})
             return ret
         # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
