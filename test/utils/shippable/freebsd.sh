@@ -10,4 +10,5 @@ version="${args[1]}"
 target="posix/ci/"
 
 # shellcheck disable=SC2086
-ansible-test integration --color -v --retry-on-error "${target}" --remote "${platform}/${version}" --exclude "posix/ci/cloud/" ${COVERAGE:+"$COVERAGE"}
+ansible-test integration --color -v --retry-on-error "${target}" --remote "${platform}/${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
+    --exclude "posix/ci/cloud/"

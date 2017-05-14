@@ -965,7 +965,7 @@ def detect_changes(args):
     :type args: TestConfig
     :rtype: list[str] | None
     """
-    if is_shippable():
+    if args.changed and is_shippable():
         display.info('Shippable detected, collecting parameters from environment.')
         paths = detect_changes_shippable(args)
     elif args.changed_from or args.changed_path:

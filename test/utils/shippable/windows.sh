@@ -7,7 +7,8 @@ IFS='/:' read -ra args <<< "${TEST}"
 
 job="${args[1]}"
 
-ansible-test windows-integration --explain 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
+# shellcheck disable=SC2086
+ansible-test windows-integration --explain ${CHANGED:+"$CHANGED"} 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
 
 if [ -s /tmp/windows.txt ]; then
     echo "Detected changes requiring integration tests specific to Windows:"
@@ -23,7 +24,7 @@ if [ -s /tmp/windows.txt ]; then
     target="windows/ci/"
 
     # shellcheck disable=SC2086
-    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements ${COVERAGE:+"$COVERAGE"} \
+    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
         --windows 2008-SP2 \
         --windows 2008-R2_SP1 \
         --windows 2012-RTM \
@@ -36,6 +37,6 @@ else
     target="windows/ci/group${job}/"
 
     # shellcheck disable=SC2086
-    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements ${COVERAGE:+"$COVERAGE"} \
+    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
         --windows 2012-R2_RTM
 fi
