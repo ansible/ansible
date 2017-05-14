@@ -199,10 +199,10 @@ def main():
             if isinstance(before_after_differences[k], dict):
                 before_after_differences[k].pop('UpdatedAt', None)
                 before_after_differences[k].pop('Version', None)
-                if len(before_after_differences[k].keys()) == 0:
+                if not list(before_after_differences[k].keys()):
                     before_after_differences.pop(k)
 
-        if before_after_differences == {}:
+        if not before_after_differences:
             module.exit_json(changed=False)
         else:
             module.exit_json(
@@ -215,7 +215,7 @@ def main():
                                            "down",
                                            name])
 
-        if not rc == 0:
+        if rc != 0:
             module.fail_json(msg="'docker stack down' command failed",
                              out=out,
                              rc=rc,
