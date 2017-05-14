@@ -29,8 +29,8 @@
 import os
 import re
 import json
+import datetime
 from time import sleep
-from datetime import datetime
 
 from ansible.module_utils.cloud import CloudRetry
 
@@ -86,7 +86,7 @@ class JSONFileCache(object):
     def __setitem__(self, cache_key, value):
         full_key = self._convert_cache_key(cache_key)
         try:
-            file_content = json.dumps(value, default=lambda d: d.isoformat() if isinstance(d, datetime) else d)
+            file_content = json.dumps(value, default=lambda d: d.isoformat() if isinstance(d, datetime.datetime) else d)
         except (TypeError, ValueError):
             raise ValueError("Value cannot be cached, must be "
                              "JSON serializable: %s" % value)
