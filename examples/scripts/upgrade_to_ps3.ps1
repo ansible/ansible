@@ -46,7 +46,7 @@ if (!(test-path $powershellpath))
     $FileName = $DownLoadUrl.Split('/')[-1]
     download-file $downloadurl "$powershellpath\$filename"
     Start-Process -FilePath "$powershellpath\$filename" -Wait -ArgumentList '/quiet','/norestart'
-    write-host ".NET Framework 4.5 is installed, please reboot and run this script again."
+    write-host ".NET Framework 4.5 is installed."
 }
 
 }
@@ -90,3 +90,4 @@ $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
 
 Start-Process -FilePath "$powershellpath\$filename" -ArgumentList /quiet
+write-host "Installing Powershell 3.0 (with reboot)"
