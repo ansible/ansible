@@ -343,8 +343,10 @@ def stack_operation(cfn, stack_name, operation):
             else:
                 ret.update({'changed': False, 'failed': True, 'output' : 'Stack not found.'})
                 return ret
+        # it covers ROLLBACK_COMPLETE, UPDATE_ROLLBACK_COMPLETE and UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS
+        # Possible states: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w1ab2c15c17c21c13
         elif stack['StackStatus'].endswith('ROLLBACK_COMPLETE'):
-            ret.update({'changed': True, 'failed' :True, 'output': 'Problem with %s. Rollback complete' % operation})
+            ret.update({'changed': True, 'failed': True, 'output': 'Problem with %s. Rollback complete' % operation})
             return ret
         # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
         elif stack['StackStatus'].endswith('_COMPLETE'):
