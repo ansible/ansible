@@ -52,6 +52,12 @@ options:
         required: false
         default: None
         version_added: "2.1"
+    validate_certs:
+        description:
+            - If False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+        required: false
+        default: True
+        version_added: "2.4"
     host_name:
         description:
             - Name of the host.
@@ -177,6 +183,7 @@ def main():
             login_password=dict(type='str', required=True, no_log=True),
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
+            validate_certs=dict(type='bool', required=False, default=True),
             host_name=dict(type='str', required=True),
             macro_name=dict(type='str', required=True),
             macro_value=dict(type='str', required=True),
@@ -194,6 +201,7 @@ def main():
     login_password = module.params['login_password']
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
+    validate_certs = module.params['validate_certs']
     host_name = module.params['host_name']
     macro_name  = (module.params['macro_name']).upper()
     macro_value = module.params['macro_value']
@@ -203,7 +211,8 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
+        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                               validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
