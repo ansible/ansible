@@ -101,6 +101,7 @@ import subprocess
 
 
 class BackendProp(object):
+
     def __init__(self, module):
         self._module = module
 
@@ -121,7 +122,7 @@ class BackendProp(object):
         else:
             self._module.fail_json(msg="Error message: " + str(stderr))
 
-    def set_property(self, opendj_bindir, hostname, port, username, password_method, backend_name,name, value):
+    def set_property(self, opendj_bindir, hostname, port, username, password_method, backend_name, name, value):
         my_command = [
             opendj_bindir + '/dsconfig',
             'set-backend-prop',
@@ -163,7 +164,9 @@ def main():
             value=dict(required=True),
             state=dict(default="present"),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        mutually_exclusive=[['password', 'passwordfile']],
+        required_one_of=[['password', 'passwordfile']]
     )
 
     opendj_bindir = module.params['opendj_bindir']
@@ -181,11 +184,6 @@ def main():
         password_method = ['-w', password]
     elif module.params["passwordfile"] is not None:
         password_method = ['-j', passwordfile]
-    else:
-        module.fail_json(msg="No credentials are given. Use either 'password' or 'passwordfile'")
-
-    if module.params["passwordfile"] and module.params["password"]:
-        module.fail_json(msg="only one of 'password' or 'passwordfile' can be set")
 
     opendj = BackendProp(module)
     validate = opendj.get_property(opendj_bindir=opendj_bindir,
@@ -216,7 +214,7 @@ def main():
         module.exit_json(changed=False)
 
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()
