@@ -17,17 +17,28 @@
 # 6.2 is 2012
 # 6.3 is 2012 R2
 
-Function Write-LogOutput
+Function Write-Log
 {
     $Message = $args[0]
     Write-EventLog -LogName Application -Source $EventSource -EntryType Information -EventId 1 -Message $Message
-    Write-host $Message
+}
+
+Function Write-HostLog
+{
+    $Message = $args[0]
+    Write-Host $Message
+    Write-Log $Message
 }
 
 $EventSource = $MyInvocation.MyCommand.Name
 If (-Not $EventSource)
 {
     $EventSource = "Powershell CLI"
+}
+
+If ([System.Diagnostics.EventLog]::Exists('Application') -eq $False -or [System.Diagnostics.EventLog]::SourceExists($EventSource) -eq $False)
+{
+    New-EventLog -LogName Application -Source $EventSource
 }
 
 if ($PSVersionTable.psversion.Major -ge 3)
