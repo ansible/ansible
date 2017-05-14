@@ -28,7 +28,9 @@
 
 import os
 import re
+import json
 from time import sleep
+from datetime import datetime
 
 from ansible.module_utils.cloud import CloudRetry
 
@@ -56,6 +58,48 @@ from ansible.module_utils.six import string_types, binary_type, text_type
 
 class AnsibleAWSError(Exception):
     pass
+
+
+class JSONFileCache(object):
+
+    # This provides a dict like interface that stores JSON serializable objects.
+    # The objects are serialized to JSON and stored in a file.  These values can be retrieved at a later time.
+    
+    CACHE_DIR = os.path.expanduser(os.path.join('~', '.aws', 'cli', 'cache'))
+
+    def __init__(self, working_dir=CACHE_DIR):
+        self._working_dir = working_dir
+
+    def __contains__(self, cache_key):
+        actual_key = self._convert_cache_key(cache_key)
+        return os.path.isfile(actual_key)
+
+    def __getitem__(self, cache_key):
+        """Retrieve value from a cache key."""
+        actual_key = self._convert_cache_key(cache_key)
+        try:
+            with open(actual_key) as f:
+                return json.load(f)
+        except (OSError, ValueError, IOError):
+            raise KeyError(cache_key)
+
+    def __setitem__(self, cache_key, value):
+        full_key = self._convert_cache_key(cache_key)
+        try:
+            file_content = json.dumps(value, default=lambda d: d.isoformat() if isinstance(d, datetime) else d)
+        except (TypeError, ValueError):
+            raise ValueError("Value cannot be cached, must be "
+                             "JSON serializable: %s" % value)
+        if not os.path.isdir(self._working_dir):
+            os.makedirs(self._working_dir)
+        with os.fdopen(os.open(full_key,
+                               os.O_WRONLY | os.O_CREAT, 0o600), 'w') as f:
+            f.truncate()
+            f.write(file_content)
+
+    def _convert_cache_key(self, cache_key):
+        full_path = os.path.join(self._working_dir, cache_key + '.json')
+        return full_path
 
 
 def _botocore_exception_maybe():
@@ -106,16 +150,22 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
                          'must specify either both, resource, or client to '
                          'the conn_type parameter in the boto3_conn function '
                          'call')
+    
+    # Create a session with assume role provider credentials cache
+    session = botocore.session.get_session()
+    cred_chain = session.get_component('credential_provider')
+    provider = cred_chain.get_provider('assume-role')
+    provider.cache = JSONFileCache()
 
     if conn_type == 'resource':
-        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = boto3.session.Session(botocore_session=session, profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return resource
     elif conn_type == 'client':
-        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
+        client = boto3.session.Session(botocore_session=session, profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
         return client
     else:
-        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
-        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        client = boto3.session.Session(botocore_session=session, profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = boto3.session.Session(botocore_session=session, profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
 boto3_inventory_conn = _boto3_conn
