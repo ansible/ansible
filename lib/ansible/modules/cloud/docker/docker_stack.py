@@ -167,27 +167,27 @@ def main():
     name = module.params['name']
 
     if state == 'present':
-        if compose_yaml and compose_file:
-            module.fail_json(msg="both compose_file and compose_yaml " +
-                                 "parameters given")
-        elif compose_yaml:
-            fd, compose_file = mkstemp()
-            stack_file = open(compose_file, 'w')
-            stack_file.write(compose_yaml)
-            stack_file.close()
-            os.close(fd)
-        elif not compose_file:
-            module.fail_json(msg="compose_yaml or compose_file " +
-                                 "parameters required if state==up")
+        try:
+            if compose_yaml and compose_file:
+                module.fail_json(msg="both compose_file and compose_yaml " +
+                                     "parameters given")
+            elif compose_yaml:
+                compose_file_fd, compose_file = mkstemp()
+                with os.fdopen(compose_file_fd, 'w') as stack_file:
+                    stack_file.write(compose_yaml)
+            elif not compose_file:
+                module.fail_json(msg="compose_yaml or compose_file " +
+                                     "parameters required if state=='present'")
 
-        before_stack_services = docker_stack_inspect(module, name)
+            before_stack_services = docker_stack_inspect(module, name)
 
-        rc, out, err = docker_stack_deploy(module, name, compose_file)
+            rc, out, err = docker_stack_deploy(module, name, compose_file)
 
-        after_stack_services = docker_stack_inspect(module, name)
+            after_stack_services = docker_stack_inspect(module, name)
 
-        if compose_yaml:
-            os.remove(compose_file)
+        finally:
+            if compose_yaml and compose_file:
+                os.remove(compose_file)
         if rc != 0:
             module.fail_json(msg="docker stack up deploy command failed",
                              out=out,
