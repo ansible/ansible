@@ -45,7 +45,7 @@ if (!(test-path $powershellpath))
     $DownloadUrl = "http://download.microsoft.com/download/B/A/4/BA4A7E71-2906-4B2D-A0E1-80CF16844F5F/dotNetFx45_Full_x86_x64.exe"
     $FileName = $DownLoadUrl.Split('/')[-1]
     download-file $downloadurl "$powershellpath\$filename"
-    Start-Process -FilePath "$powershellpath\$filename" -Wait /quiet /norestart
+    Start-Process -FilePath "$powershellpath\$filename" -Wait -ArgumentList /quiet /norestart
     write-host ".NET Framework 4.5 is installed, please reboot and run this script again."
 }
 
