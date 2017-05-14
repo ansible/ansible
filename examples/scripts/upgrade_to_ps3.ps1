@@ -43,7 +43,7 @@ If ([System.Diagnostics.EventLog]::Exists('Application') -eq $False -or [System.
 
 if ($PSVersionTable.psversion.Major -ge 3)
 {
-    Write-LogOutput "Powershell 3 Installed already; You don't need this"
+    Write-HostLog "Powershell 3 Installed already; You don't need this"
     Exit
 }
 
@@ -69,7 +69,7 @@ if (!(test-path $powershellpath))
     $FileName = $DownLoadUrl.Split('/')[-1]
     download-file $downloadurl "$powershellpath\$filename"
     Start-Process -FilePath "$powershellpath\$filename" -Wait -ArgumentList '/quiet','/norestart'
-    Write-LogOutput ".NET Framework 4.5 is installed."
+    Write-HostLog ".NET Framework 4.5 is installed."
 }
 
 }
@@ -77,7 +77,7 @@ if (!(test-path $powershellpath))
 # If the Operating System is above 6.2, then you already have PowerShell Version > 3
 if ([Environment]::OSVersion.Version.Major -gt 6)
 {
-    Write-LogOutput "OS is new; upgrade not needed."
+    Write-HostLog "OS is new; upgrade not needed."
     Exit
 }
 
@@ -113,4 +113,4 @@ $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
 
 Start-Process -FilePath "$powershellpath\$filename" -ArgumentList /quiet
-Write-LogOutput "Installing Powershell 3.0 (with reboot)"
+Write-HostLog "Installing Powershell 3.0 (with reboot)"
