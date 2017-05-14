@@ -248,7 +248,7 @@ tags:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, \
-    ec2_argument_spec, boto3_tag_list_to_ansible_dict
+    ec2_argument_spec, boto3_tag_list_to_ansible_dict, compare_aws_tags, ansible_dict_to_boto3_tag_list
 import time
 import traceback
 
@@ -258,6 +258,14 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+
+def get_target_group_tags(connection, module, target_group_arn):
+
+    try:
+        return connection.describe_tags(ResourceArns=[target_group_arn])['TagDescriptions'][0]['Tags']
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
 def get_target_group(connection, module):
@@ -488,18 +496,34 @@ def create_or_update_target_group(connection, module):
     # Get the target group again
     tg = get_target_group(connection, module)
 
-    # Tags
-    if tags is not None:
-        try:
-            current_tags = boto3_tag_list_to_ansible_dict(connection.describe_tags(ResourceArns=[tg['TargetGroupArn']])['TagDescriptions'][0]['Tags'])
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    # Tags - only need to play with tags if tags parameter has been set to something
+    if tags:
+        # Get tags
+        current_tags = get_target_group_tags(connection, module, tg['TargetGroupArn'])
 
-        # TODO: Compare tags with helper function once https://github.com/ansible/ansible/pull/23387 is merged
+        # Delete necessary tags
+        tags_need_modify, tags_to_delete = compare_aws_tags(boto3_tag_list_to_ansible_dict(current_tags), tags, purge_tags)
+        if tags_to_delete:
+            try:
+                connection.remove_tags(ResourceArns=[tg['TargetGroupArn']], TagKeys=tags_to_delete)
+            except ClientError as e:
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            changed = True
 
-    tg['tags'] = current_tags
+        # Add/update tags
+        if tags_need_modify:
+            try:
+                connection.add_tags(ResourceArns=[tg['TargetGroupArn']], Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
+            except ClientError as e:
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            changed = True
 
-    module.exit_json(changed=changed, **camel_dict_to_snake_dict(tg))
+    # Convert tg to snake_case
+    snaked_tg = camel_dict_to_snake_dict(tg)
+
+    snaked_tg['tags'] = boto3_tag_list_to_ansible_dict(get_target_group_tags(connection, module, tg['TargetGroupArn']))
+
+    module.exit_json(changed=changed, **snaked_tg)
 
 
 def delete_target_group(connection, module):
