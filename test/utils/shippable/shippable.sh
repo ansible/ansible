@@ -23,11 +23,27 @@ pip list --disable-pip-version-check
 
 export PATH="test/runner:${PATH}"
 export PYTHONIOENCODING='utf-8'
-export COVERAGE="${COVERAGE:-}"
 
-# run integration coverage if 'ci_coverage' is in the commit message or the COVERAGE var is non-empty
-if [[ "${COMMIT_MESSAGE}" =~ ci_coverage ]] || [ -n "${COVERAGE}" ]; then
+if [ -n "${COVERAGE:-}" ]; then
+    # on-demand coverage reporting triggered by setting the COVERAGE environment variable to a non-empty value
     export COVERAGE="--coverage"
+elif [[ "${COMMIT_MESSAGE}" =~ ci_coverage ]]; then
+    # on-demand coverage reporting triggered by having 'ci_coverage' in the latest commit message
+    export COVERAGE="--coverage"
+else
+    # on-demand coverage reporting disabled (default behavior, always-on coverage reporting remains enabled)
+    export COVERAGE=""
+fi
+
+if [ -n "${COMPLETE:-}" ]; then
+    # disable change detection triggered by setting the COMPLETE environment variable to a non-empty value
+    export CHANGED=""
+elif [[ "${COMMIT_MESSAGE}" =~ ci_complete ]]; then
+    # disable change detection triggered by having 'ci_complete' in the latest commit message
+    export CHANGED=""
+else
+    # enable change detection (default behavior)
+    export CHANGED="--changed"
 fi
 
 # remove empty core/extras module directories from PRs created prior to the repo-merge
