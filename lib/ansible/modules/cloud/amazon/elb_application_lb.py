@@ -376,7 +376,8 @@ def get_elb(connection, module):
     """
 
     try:
-        return connection.describe_load_balancers(Names=[module.params.get("name")])['LoadBalancers'][0]
+        load_balancer_paginator = connection.get_paginator('describe_load_balancers')
+        return (load_balancer_paginator.paginate(Names=[module.params.get("name")]).build_full_result())['LoadBalancers'][0]
     except ClientError as e:
         if e.response['Error']['Code'] == 'LoadBalancerNotFound':
             return None
