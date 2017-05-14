@@ -36,7 +36,7 @@ function download-file
 
 if (!(test-path $powershellpath))
 {
-    New-Item -ItemType directory -Path $powershellpath
+    New-Item -ItemType directory -Path $powershellpath | Out-Null
 }
 
 
