@@ -34,21 +34,21 @@ function download-file
     $client.downloadfile($path, $local)
 }
 
-if (!(test-path $powershellpath))
-{
-    New-Item -ItemType directory -Path $powershellpath | Out-Null
-}
-
-
 # .NET Framework 4.0 is necessary.
 
 if (($PSVersionTable.CLRVersion.Major) -lt 3)
 {
+
+if (!(test-path $powershellpath))
+{
+    New-Item -ItemType directory -Path $powershellpath | Out-Null
     $DownloadUrl = "http://download.microsoft.com/download/B/A/4/BA4A7E71-2906-4B2D-A0E1-80CF16844F5F/dotNetFx45_Full_x86_x64.exe"
     $FileName = $DownLoadUrl.Split('/')[-1]
     download-file $downloadurl "$powershellpath\$filename"
     ."$powershellpath\$filename" /quiet /norestart
     write-host ".NET Framework 4.5 is installed, please reboot and run this script again."
+}
+
 }
 
 # If the Operating System is above 6.2, then you already have PowerShell Version > 3
