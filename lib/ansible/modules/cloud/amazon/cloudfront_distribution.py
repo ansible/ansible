@@ -1308,7 +1308,7 @@ class CloudFrontValidationManager:
             config['is_i_p_v_6_enabled'] = (is_ipv6_enabled or
                                             self.__default_is_ipv6_enabled)
             if http_version is not None:
-                self.valiate_attribute_with_allowed_values(
+                self.validate_attribute_with_allowed_values(
                     http_version, 'http_version', self.__valid_http_versions)
                 config['http_version'] = http_version
             if web_acl_id is not None:
@@ -1410,7 +1410,7 @@ class CloudFrontValidationManager:
         try:
             if (attribute is not None and attribute not in allowed_list):
                 self.module.fail_json(
-                    msg='the attribute {0} must be one of {1}'.format(
+                    msg='the attribute {0} must be one of [{1}]'.format(
                         attribute_name, ' '.join(str(a) for a in allowed_list)))
         except Exception as e:
             self.module.fail_json(
@@ -1435,7 +1435,7 @@ class CloudFrontValidationManager:
             if aliases is not None:
                 for single_alias in aliases:
                     distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(single_alias)
-                    if temp_alias is not None:
+                    if distribution_id is not None:
                         return distribution_id
         except Exception as e:
             self.module.fail_json(
@@ -1593,7 +1593,18 @@ def main():
             ['state', 'cloudfront_url_to_sign'],
             ['state', 'pem_key_path'],
             ['state', 'pem_key_password'],
-            ['state', 'presigned_url_expire_date']
+            ['state', 'presigned_url_expire_date'],
+            ['state', 'presigned_url_expire_date'],
+            ['s3_origin', 'default_cache_behavior'],
+            ['s3_origin', 'origins'],
+            ['s3_origin', 'cache_behaviors'],
+            ['s3_origin', 'custom_error_responses'],
+            ['s3_origin', 'restrictions'],
+            ['s3_origin', 'custom_error_responses'],
+            ['s3_origin', 'viewer_certificate'],
+            ['s3_origin', 'web_acl_id'],
+            ['s3_origin', 'trusted_signers'],
+            ['distribution_id', 'streaming_distribution_id']
         ]
     )
     service_mgr = CloudFrontServiceManager(module)
@@ -1729,6 +1740,7 @@ def main():
         config = validation_mgr.validate_streaming_distribution_config_parameters(
             config, comment, trusted_signers, s3_origin,
             default_s3_origin_domain_name, default_s3_origin_origin_access_identity)
+
     if create:
         config = validation_mgr.validate_caller_reference_for_distribution(
             config, caller_reference)
