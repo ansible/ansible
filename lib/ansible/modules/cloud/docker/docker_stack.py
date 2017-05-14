@@ -158,7 +158,8 @@ def main():
             'prune': dict(default=False, type='bool'),
             'state': dict(default='present', choices=['present', 'absent'])
         },
-        supports_check_mode=False
+        supports_check_mode=False,
+        mutually_exclusive=[['compose_yaml', 'compose_file']]
     )
 
     state = module.params['state']
@@ -168,10 +169,7 @@ def main():
 
     if state == 'present':
         try:
-            if compose_yaml and compose_file:
-                module.fail_json(msg="both compose_file and compose_yaml " +
-                                     "parameters given")
-            elif compose_yaml:
+            if compose_yaml:
                 compose_file_fd, compose_file = mkstemp()
                 with os.fdopen(compose_file_fd, 'w') as stack_file:
                     stack_file.write(compose_yaml)
