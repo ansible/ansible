@@ -48,9 +48,8 @@ if (($PSVersionTable.CLRVersion.Major) -lt 3)
     $FileName = $DownLoadUrl.Split('/')[-1]
     download-file $downloadurl "$powershellpath\$filename"
     ."$powershellpath\$filename" /quiet /norestart
+    write-host ".NET Framework 4.5 is installed, please reboot and run this script again."
 }
-
-#You may need to reboot after the .NET install if so just run the script again.
 
 # If the Operating System is above 6.2, then you already have PowerShell Version > 3
 if ([Environment]::OSVersion.Version.Major -gt 6)
