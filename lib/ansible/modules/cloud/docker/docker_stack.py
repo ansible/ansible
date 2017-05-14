@@ -84,6 +84,7 @@ EXAMPLES = '''
         state: present
         name: stack1
         compose_file: /opt/stack.compose
+
 -   name: deploy 'stack2' from yaml
     docker_stack:
         state: present
@@ -95,6 +96,7 @@ EXAMPLES = '''
                     image: nginx
                     ports:
                     -   "80:80"
+
 -   name: deprovision 'stack1'
     docker_stack:
         state: absent
