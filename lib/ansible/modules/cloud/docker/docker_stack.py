@@ -107,6 +107,7 @@ from tempfile import mkstemp
 import json
 from jsondiff import diff as json_diff
 
+
 def docker_stack_services(module, stack_name):
     rc, out, err = module.run_command(["docker",
                                        "stack",
@@ -132,7 +133,7 @@ def docker_service_inspect(module, service_name):
 
 
 def docker_stack_deploy(module, stack_name, compose_file):
-    command=["docker", "stack", "deploy"]
+    command = ["docker", "stack", "deploy"]
     if module.params["prune"]:
         command += ["--prune"]
     command += ["--compose-file",
@@ -195,7 +196,7 @@ def main():
         before_after_differences = json_diff(before_stack_services,
                                              after_stack_services)
         for k in before_after_differences.keys():
-            if isinstance(before_after_differences[k],dict):
+            if isinstance(before_after_differences[k], dict):
                 before_after_differences[k].pop('UpdatedAt', None)
                 before_after_differences[k].pop('Version', None)
                 if len(before_after_differences[k].keys()) == 0:
@@ -204,9 +205,9 @@ def main():
         if before_after_differences == {}:
             module.exit_json(changed=False)
         else:
-            module.exit_json(changed=True,
-                             docker_stack_spec_diff=str(
-                                before_after_differences))
+            module.exit_json(
+                changed=True,
+                docker_stack_spec_diff=str(before_after_differences))
 
     else:
         rc, out, err = module.run_command(["docker",
