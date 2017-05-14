@@ -116,7 +116,7 @@ def docker_stack_services(module, stack_name):
                                        "--format",
                                        "{{.Name}}"])
     if out != ("Nothing found in stack %s\n" % stack_name):
-        return(out.strip().split('\n'))
+        return out.strip().split('\n')
     return []
 
 
@@ -129,7 +129,7 @@ def docker_service_inspect(module, service_name):
         return None
     else:
         ret = json.loads(out)[0]['Spec']
-        return(ret)
+        return ret
 
 
 def docker_stack_deploy(module, stack_name, compose_file):
