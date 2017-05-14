@@ -689,11 +689,14 @@ def create_or_update_elb(connection, connection_ec2, module):
     # Get the ELB attributes again
     elb.update(get_elb_attributes(connection, module, elb['LoadBalancerArn']))
 
+    # Convert to snake_case
+    snaked_elb = camel_dict_to_snake_dict(elb)
+
     # Get the tags of the ELB
     elb_tags = connection.describe_tags(ResourceArns=[elb['LoadBalancerArn']])['TagDescriptions'][0]['Tags']
-    elb['Tags'] = boto3_tag_list_to_ansible_dict(elb_tags)
+    snaked_elb['tags'] = boto3_tag_list_to_ansible_dict(elb_tags)
 
-    module.exit_json(changed=changed, **camel_dict_to_snake_dict(elb))
+    module.exit_json(changed=changed, **snaked_elb)
 
 
 def delete_elb(connection, module):
