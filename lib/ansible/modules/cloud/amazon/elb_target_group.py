@@ -263,7 +263,8 @@ except ImportError:
 def get_target_group(connection, module):
 
     try:
-        return connection.describe_target_groups(Names=[module.params.get("name")])['TargetGroups'][0]
+        target_group_paginator = connection.get_paginator('describe_target_groups')
+        return (target_group_paginator.paginate(Names=[module.params.get("name")]).build_full_result())['TargetGroups'][0]
     except ClientError as e:
         if e.response['Error']['Code'] == 'TargetGroupNotFound':
             return None
