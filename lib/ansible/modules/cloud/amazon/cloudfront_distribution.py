@@ -1594,7 +1594,6 @@ def main():
             ['state', 'pem_key_path'],
             ['state', 'pem_key_password'],
             ['state', 'presigned_url_expire_date'],
-            ['state', 'presigned_url_expire_date'],
             ['s3_origin', 'default_cache_behavior'],
             ['s3_origin', 'origins'],
             ['s3_origin', 'cache_behaviors'],
