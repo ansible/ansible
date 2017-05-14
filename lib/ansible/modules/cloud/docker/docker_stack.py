@@ -152,7 +152,7 @@ def docker_stack_inspect(module, stack_name):
 def main():
     module = AnsibleModule(
         argument_spec={
-            'name': dict(required=True),
+            'name': dict(required=True, type='str'),
             'compose_yaml': dict(),
             'compose_file': dict(),
             'prune': dict(default=False, type='bool'),
