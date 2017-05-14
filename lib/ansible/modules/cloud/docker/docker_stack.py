@@ -51,9 +51,7 @@ options:
         required: false
         default: ""
         description:
-        -   >
-            Path on the module executing node of a file containing
-            the compose file to be deployed
+        -   Path of the stack file on the remote/target machine.
     prune:
         required: false
         default: false
