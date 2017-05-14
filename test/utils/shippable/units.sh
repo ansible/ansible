@@ -9,4 +9,5 @@ version="${args[1]}"
 
 retry.py pip install tox --disable-pip-version-check
 
-ansible-test units --color -v --tox --coverage --python "${version}"
+# shellcheck disable=SC2086
+ansible-test units --color -v --tox --python "${version}" --coverage ${CHANGED:+"$CHANGED"} \
