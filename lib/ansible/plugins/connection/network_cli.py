@@ -181,10 +181,10 @@ class Connection(_Connection):
         """Matches the command prompt and responds"""
         if isinstance(obj, (binary_type, text_type)) or not isinstance(obj['prompt'], Sequence):
             obj['prompt'] = [obj['prompt']]
-        prompts = [re.compile(r, re.I) for r in obj['prompt']]
+        prompts = [re.compile(to_text(r, errors='surrogate_or_strict'), re.I) for r in obj['prompt']]
         answer = obj['answer']
         for regex in prompts:
-            match = regex.search(resp)
+            match = regex.search(to_text(resp, errors='surrogate_or_strict'))
             if match:
                 self._shell.sendall(b'%s\r' % answer)
                 return True

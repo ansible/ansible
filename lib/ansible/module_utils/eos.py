@@ -30,6 +30,7 @@
 import os
 import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import to_list, ComplexList
@@ -64,6 +65,7 @@ ARGS_DEFAULT_VALUE = {
     'validate_certs': True
 }
 
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in eos_argument_spec:
@@ -89,12 +91,14 @@ def check_args(module, warnings):
             if provider.get(param):
                 module.no_log_values.update(return_values(provider[param]))
 
+
 def load_params(module):
     provider = module.params.get('provider') or dict()
     for key, value in iteritems(provider):
         if key in eos_argument_spec:
             if module.params.get(key) is None and value is not None:
                 module.params[key] = value
+
 
 def get_connection(module):
     global _DEVICE_CONNECTION
@@ -158,9 +162,9 @@ class Cli:
 
         for cmd in to_list(commands):
             rc, out, err = self.exec_command(cmd)
-
+            out = to_text(out, errors='surrogate_or_strict')
             if check_rc and rc != 0:
-                self._module.fail_json(msg=err)
+                self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'))
 
             try:
                 out = self._module.from_json(out)
@@ -185,9 +189,9 @@ class Cli:
 
             rc, out, err = self.exec_command(command)
             if rc != 0:
-                return (rc, out, err)
+                return (rc, out, to_text(err, errors='surrogate_or_strict'))
 
-        return (rc, 'ok','')
+        return (rc, 'ok', '')
 
     def configure(self, commands):
         """Sends configuration commands to the remote device
@@ -221,7 +225,7 @@ class Cli:
             pass
 
         if not all((bool(use_session), self.supports_sessions)):
-            return configure(self, commands)
+            return self.configure(self, commands)
 
         conn = get_connection(self)
         session = 'ansible_%s' % int(time.time())
@@ -250,13 +254,14 @@ class Cli:
 
         return result
 
+
 class Eapi:
 
     def __init__(self, module):
         self._module = module
         self._enable = None
         self._session_support = None
-        self._device_configs =  {}
+        self._device_configs = {}
 
         host = module.params['provider']['host']
         port = module.params['provider']['port']
@@ -380,8 +385,8 @@ class Eapi:
         cmds.extend(commands)
 
         responses = self.send_request(commands)
-        if 'error' in response:
-            err = response['error']
+        if 'error' in responses:
+            err = responses['error']
             self._module.fail_json(msg=err['message'], code=err['code'])
 
         return responses[1:]
@@ -394,7 +399,7 @@ class Eapi:
         there will be no returned diff or session values
         """
         if not self.supports_sessions:
-            return configure(self, commands)
+            return self.configure(self, config)
 
         session = 'ansible_%s' % int(time.time())
         result = {'session': session}
@@ -425,15 +430,16 @@ class Eapi:
 
         return result
 
-is_json = lambda x: str(x).endswith('| json')
-is_text = lambda x: not str(x).endswith('| json')
 
-supports_sessions = lambda x: get_connection(module).supports_sessions
+def is_json(cmd):
+    return str(cmd).endswith('| json')
+
 
 def is_eapi(module):
     transport = module.params['transport']
     provider_transport = (module.params['provider'] or {}).get('transport')
     return 'eapi' in (transport, provider_transport)
+
 
 def to_command(module, commands):
     if is_eapi(module):
@@ -450,15 +456,17 @@ def to_command(module, commands):
 
     return transform(to_list(commands))
 
+
 def get_config(module, flags=[]):
     conn = get_connection(module)
     return conn.get_config(flags)
+
 
 def run_commands(module, commands):
     conn = get_connection(module)
     return conn.run_commands(to_command(module, commands))
 
+
 def load_config(module, config, commit=False, replace=False):
     conn = get_connection(module)
     return conn.load_config(config, commit, replace)
-
