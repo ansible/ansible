@@ -17,10 +17,16 @@
 # 6.2 is 2012
 # 6.3 is 2012 R2
 
+Function Write-LogOutput
+{
+    $Message = $args[0]
+    Write-EventLog -LogName Application -Source $EventSource -EntryType Information -EventId 1 -Message $Message
+    Write-host $Message
+}
 
 if ($PSVersionTable.psversion.Major -ge 3)
 {
-    write-host "Powershell 3 Installed already; You don't need this"
+    Write-LogOutput "Powershell 3 Installed already; You don't need this"
     Exit
 }
 
@@ -46,7 +52,7 @@ if (!(test-path $powershellpath))
     $FileName = $DownLoadUrl.Split('/')[-1]
     download-file $downloadurl "$powershellpath\$filename"
     Start-Process -FilePath "$powershellpath\$filename" -Wait -ArgumentList '/quiet','/norestart'
-    write-host ".NET Framework 4.5 is installed."
+    Write-LogOutput ".NET Framework 4.5 is installed."
 }
 
 }
@@ -54,7 +60,7 @@ if (!(test-path $powershellpath))
 # If the Operating System is above 6.2, then you already have PowerShell Version > 3
 if ([Environment]::OSVersion.Version.Major -gt 6)
 {
-    write-host "OS is new; upgrade not needed."
+    Write-LogOutput "OS is new; upgrade not needed."
     Exit
 }
 
@@ -90,4 +96,4 @@ $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
 
 Start-Process -FilePath "$powershellpath\$filename" -ArgumentList /quiet
-write-host "Installing Powershell 3.0 (with reboot)"
+Write-LogOutput "Installing Powershell 3.0 (with reboot)"
