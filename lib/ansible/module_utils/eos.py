@@ -135,6 +135,7 @@ class Cli:
     def check_authorization(self):
         for cmd in ['show clock', 'prompt()']:
             rc, out, err = self.exec_command(cmd)
+            out = to_text(out, errors='surrogate_or_strict')
         return out.endswith('#')
 
     def get_config(self, flags=[]):
@@ -149,8 +150,9 @@ class Cli:
         except KeyError:
             conn = get_connection(self)
             rc, out, err = self.exec_command(cmd)
+            out = to_text(out, errors='surrogate_or_strict')
             if rc != 0:
-                self._module.fail_json(msg=err)
+                self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'))
             cfg = str(out).strip()
             self._device_configs[cmd] = cfg
             return cfg
@@ -203,11 +205,11 @@ class Cli:
 
         rc, out, err = self.exec_command('configure')
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=err)
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_or_strict'))
 
         rc, out, err = self.send_config(commands)
         if rc != 0:
-            self._module.fail_json(msg=err)
+            self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'))
 
         self.exec_command('end')
         return {}
@@ -233,7 +235,7 @@ class Cli:
 
         rc, out, err = self.exec_command('configure session %s' % session)
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=err)
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_or_strict'))
 
         if replace:
             self.exec_command('rollback clean-config', check_rc=True)
@@ -241,11 +243,11 @@ class Cli:
         rc, out, err = self.send_config(commands)
         if rc != 0:
             self.exec_command('abort')
-            self._module.fail_json(msg=err, commands=commands)
+            self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), commands=commands)
 
         rc, out, err = self.exec_command('show session-config diffs')
         if rc == 0 and out:
-            result['diff'] = out.strip()
+            result['diff'] = to_text(out, errors='surrogate_or_strict').strip()
 
         if commit:
             self.exec_command('commit')
