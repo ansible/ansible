@@ -696,7 +696,6 @@ lib/ansible/modules/system/sysctl.py
 lib/ansible/modules/system/systemd.py
 lib/ansible/modules/system/timezone.py
 lib/ansible/modules/system/ufw.py
-lib/ansible/modules/system/user.py
 lib/ansible/modules/utilities/helper/_accelerate.py
 lib/ansible/modules/utilities/logic/async_status.py
 lib/ansible/modules/utilities/logic/async_wrapper.py
