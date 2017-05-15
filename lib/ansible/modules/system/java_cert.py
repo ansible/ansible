@@ -37,12 +37,17 @@ options:
   pkcs12_path:
     description:
       - Local path to load PKCS12 keystore from.
+    version_added: "2.4"
   pkcs12_password:
     description:
       - Password for importing from PKCS12 keystore.
+    default: ''
+    version_added: "2.4"
   pkcs12_alias:
     description:
-      - Alias in the PKCS12 keystore. Default: 1
+      - Alias in the PKCS12 keystore.
+    default: 1
+    version_added: "2.4"
   keystore_path:
     description:
       - Path to keystore.
@@ -194,8 +199,8 @@ def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, p
         keystore_path as alias '''
     import_cmd = ("%s -importkeystore -noprompt -destkeystore '%s' -srcstoretype PKCS12 "
                   "-deststorepass '%s' -destkeypass '%s' -srckeystore '%s' -srcstorepass '%s' "
-                  "-srcalias '%s' -destalias '%s'")%(executable, keystore_path, keystore_pass,
-                                                     keystore_pass, path, pkcs12_pass, pkcs12_alias, alias)
+                  "-srcalias '%s' -destalias '%s'") % (executable, keystore_path, keystore_pass,
+                                                       keystore_pass, path, pkcs12_pass, pkcs12_alias, alias)
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -245,18 +250,18 @@ def test_keystore(module, keystore_path):
         ## Keystore doesn't exist we want to create it
         return module.fail_json(changed=False,
                                 msg="Module require existing keystore at keystore_path '%s'"
-                                %(keystore_path))
+                                % (keystore_path))
 
 def main():
     argument_spec = dict(
         cert_url=dict(type='str'),
-        cert_path=dict(type='str'),
-        pkcs12_path=dict(type='str'),
+        cert_path=dict(type='path'),
+        pkcs12_path=dict(type='path'),
         pkcs12_pass=dict(type='str', no_log=True),
         pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
         cert_port=dict(default='443', type='int'),
-        keystore_path=dict(type='str'),
+        keystore_path=dict(type='path'),
         keystore_pass=dict(required=True, type='str', no_log=True),
         keystore_create=dict(default=False, type='bool'),
         executable=dict(default='keytool', type='str'),
@@ -277,10 +282,10 @@ def main():
     url = module.params.get('cert_url')
     path = module.params.get('cert_path')
     port = module.params.get('cert_port')
-    
+
     pkcs12_path = module.params.get('pkcs12_path')
-    pkcs12_pass = module.params.get('pkcs12_password') or ''
-    pkcs12_alias = module.params.get('pkcs12_alias') or '1'
+    pkcs12_pass = module.params.get('pkcs12_password', '')
+    pkcs12_alias = module.params.get('pkcs12_alias', '1')
 
     cert_alias = module.params.get('cert_alias') or url
 
