@@ -273,7 +273,7 @@ class ASGRetry(CloudRetry):
 
     @staticmethod
     def status_code_from_exception(error):
-        return error.response['Error']['Code']
+        return error.error_code
 
     @staticmethod
     def found(response_code):
