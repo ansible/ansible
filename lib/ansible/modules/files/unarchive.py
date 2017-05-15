@@ -387,8 +387,9 @@ class ZipArchive(object):
                     permstr = 'rwxrwxrwx'
                 else:
                     permstr = 'rw-rw-rw-'
+                file_umask=umask
             else:
-                umask=0
+                file_umask=0
 
             # Test string conformity
             if len(permstr) != 9 or not ZIP_FILE_MODE_RE.match(permstr):
@@ -490,7 +491,7 @@ class ZipArchive(object):
                 elif ztype == '?':
                     mode = self._permstr_to_octal(permstr, 0)
                 else:
-                    mode = self._permstr_to_octal(permstr, umask)
+                    mode = self._permstr_to_octal(permstr, file_umask)
 
                 if mode != stat.S_IMODE(st.st_mode):
                     change = True
