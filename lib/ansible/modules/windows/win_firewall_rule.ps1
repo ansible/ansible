@@ -80,7 +80,6 @@ function getFirewallRule ($fwsettings) {
     $diff = $false
     $result = @{
         changed = $false
-        diff = @{ }
         identical = $false
         exists = $false
         failed = $false
@@ -111,27 +110,21 @@ function getFirewallRule ($fwsettings) {
                     $output = $HashProps
                 }
             if ($($output|measure).count -gt 0) {
+                $diff = $false
                 $result.exists = $true
-                $result.msg += @("The rule '$($fwsettings.'Rule Name')' exists.")
+                #$result.msg += @("The rule '$($fwsettings.'Rule Name')' exists.")
                 if ($($output|measure).count -gt 1) {
                     $result.multiple = $true
                     $result.msg += @("The rule '$($fwsettings.'Rule Name')' has multiple entries.")
-                    if ($diff_support) {
-                        $result.diff.after = ConvertTo-SortedKV $fwsettings
-                        $result.diff.before = ConvertTo-SortedKV $rule $unsupported
-                    }
-                    ForEach($rule in $output.GetEnumerator()) {
-                        ForEach($fwsetting in $fwsettings.GetEnumerator()) {
-                            if ($rule.$fwsetting -ne $fwsettings.$fwsetting) {
-                                $diff = $true
-                            }
-                        }
-                        if (-not $diff) {
-                            $result.identical = $true
-                        }
+                    $result.diff = @{}
+                    $result.diff.after = ConvertTo-SortedKV $fwsettings
+                    $result.diff.before = ConvertTo-SortedKV $rule $unsupported
+                    if ($result.diff.after -ne $result.diff.before ) {
+                        $diff = $true
                     }
                 } else {
                     if ($diff_support) {
+                        $result.diff = @{}
                         $result.diff.after = ConvertTo-SortedKV $fwsettings
                         $result.diff.before = ConvertTo-SortedKV $output $unsupported
                     }
@@ -146,15 +139,16 @@ function getFirewallRule ($fwsettings) {
                                 Continue
                             } else {
                                 $diff = $true
+                                Break
                             }
                         }
                     }
-                    if (-not $diff) {
-                        $result.identical = $true
-                    }
+                }
+                if (-not $diff) {
+                    $result.identical = $true
                 }
                 if ($result.identical) {
-                    $result.msg += @("An identical rule exists")
+                    $result.msg += @("The rule '$name' exists and is identical")
                 } else {
                     $result.msg += @("The rule '$name' exists but has different values")
                 }
@@ -172,7 +166,6 @@ function getFirewallRule ($fwsettings) {
 function createFireWallRule ($fwsettings) {
     $result = @{
         changed = $false
-        diff = @{}
         failed = $false
         msg = @()
     }
@@ -202,6 +195,7 @@ function createFireWallRule ($fwsettings) {
         }
         if ($rc -eq 0) {
             if ($diff_support) {
+                $result.diff = @{}
                 $result.diff.after = ConvertTo-SortedKV $fwsettings
                 $result.diff.before= ""
             }
@@ -222,7 +216,6 @@ function createFireWallRule ($fwsettings) {
 function removeFireWallRule ($fwsettings) {
     $result = @{
         changed = $false
-        diff = @{}
         failed = $false
         msg = @()
     }
@@ -249,6 +242,7 @@ function removeFireWallRule ($fwsettings) {
         }
         if ($rc -eq 0 -or $rc -eq 1) {
             if ($diff_support) {
+                $result.diff = @{}
                 $result.diff.after = ""
                 $result.diff.before = ConvertTo-SortedKV $fwsettings
             }
@@ -267,7 +261,7 @@ function removeFireWallRule ($fwsettings) {
 }
 
 # FIXME: Unsupported keys
-#$unsupported = @("Description", "Grouping", "Rule name", "Rule source")
+#$unsupported = @("Grouping", "Rule source")
 $unsupported = @("Rule source")
 
 $result = @{
@@ -380,13 +374,38 @@ if ($get.failed) {
 
 $result.diff = $get.diff
 
-switch ($state){
-    "present" {
-        if (-not $get.exists) {
+if ($state -eq "present") {
+    if (-not $get.exists) {
+
+        $create = createFireWallRule($result.fwsettings)
+        $result.msg += $create.msg
+        $result.diff = $create.diff
+
+        if ($create.failed) {
+            $result.error = $create.error
+            $result.output = $create.output
+            Fail-Json $result $result.msg
+        }
+
+        $result.changed = $true
+
+    } elseif (-not $get.identical) {
+        # FIXME: This ought to use netsh advfirewall firewall set instead !
+        if ($force) {
+
+            $remove = removeFirewallRule($result.fwsettings)
+            # NOTE: We retain the diff output from $get.diff here
+            $result.msg += $remove.msg
+
+            if ($remove.failed) {
+                $result.error = $remove.error
+                $result.output = $remove.output
+                Fail-Json $result $result.msg
+            }
 
             $create = createFireWallRule($result.fwsettings)
+            # NOTE: We retain the diff output from $get.diff here
             $result.msg += $create.msg
-            $result.diff = $create.diff
 
             if ($create.failed) {
                 $result.error = $create.error
@@ -396,65 +415,38 @@ switch ($state){
 
             $result.changed = $true
 
-        } elseif (-not $get.identical) {
-            # FIXME: This ought to use netsh advfirewall firewall set instead !
-            if ($force) {
-
-                $remove = removeFirewallRule($result.fwsettings)
-                # NOTE: We retain the diff output from $get.diff here
-                $result.msg += $remove.msg
-
-                if ($remove.failed) {
-                    $result.error = $remove.error
-                    $result.output = $remove.output
-                    Fail-Json $result $result.msg
-                }
-
-                $create = createFireWallRule($result.fwsettings)
-                # NOTE: We retain the diff output from $get.diff here
-                $result.msg += $create.msg
-
-                if ($create.failed) {
-                    $result.error = $create.error
-                    $result.output = $create.output
-                    Fail-Json $result $result.msg
-                }
-
-                $result.changed = $true
-
-            } else {
-
-                $result.msg += @("There was already a rule '$name' with different values, use the 'force' parameter to overwrite it")
-                Fail-Json $result $result.msg
-
-            }
         } else {
 
-            $result.msg += @("Firewall rule '$name' was already created")
+            $result.msg += @("There was already a rule '$name' with different values, use the 'force' parameter to overwrite it")
+            Fail-Json $result $result.msg
 
         }
+    } else {
+
+        $result.msg += @("Firewall rule '$name' was already created")
+
     }
 
-    "absent" {
-        if ($get.exists) {
+} elseif ($state -eq "absent") {
 
-            $remove = removeFirewallRule($result.fwsettings)
-            $result.msg += $remove.msg
-            $result.diff = $remove.diff
+    if ($get.exists) {
 
-            if ($remove.failed) {
-                $result.error = $remove.error
-                $result.output = $remove.output
-                Fail-Json $result $result.msg
-            }
+        $remove = removeFirewallRule($result.fwsettings)
+        $result.diff = $remove.diff
+        $result.msg += $remove.msg
 
-            $result.changed = $true
-
-        } else {
-
-            $result.msg += @("Firewall rule '$name' did not exist")
-
+        if ($remove.failed) {
+            $result.error = $remove.error
+            $result.output = $remove.output
+            Fail-Json $result $result.msg
         }
+
+        $result.changed = $true
+
+    } else {
+
+        $result.msg += @("Firewall rule '$name' did not exist")
+
     }
 }
 
