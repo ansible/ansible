@@ -311,7 +311,7 @@ Supporting Check Mode
 `````````````````````
 .. versionadded:: 1.1
 
-Modules may optionally support `check mode <http://docs.ansible.com/ansible/playbooks_checkmode.html>`. If the user runs Ansible in check mode, a module should try to predict and report whether changes will occur but not actually make any changes (modules that do not support check mode will also take no action, but just will not report what changes they might have made).
+Modules may optionally support `check mode <http://docs.ansible.com/ansible/playbooks_checkmode.html>`_. If the user runs Ansible in check mode, a module should try to predict and report whether changes will occur but not actually make any changes (modules that do not support check mode will also take no action, but just will not report what changes they might have made).
 
 For your module to support check mode, you must pass ``supports_check_mode=True`` when instantiating the AnsibleModule object. The AnsibleModule.check_mode attribute will evaluate to True when check mode is enabled. For example:
 
