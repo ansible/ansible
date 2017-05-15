@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vca_fw
 short_description: add remove firewall rules in a gateway  in a vca
@@ -40,7 +40,7 @@ options:
 extends_documentation_fragment: vca.documentation
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 
 #Add a set of firewall rules
 
@@ -66,6 +66,9 @@ EXAMPLES = '''
            policy: "allow"
 
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vca import VcaError, vca_argument_spec, vca_login
 
 try:
     from pyvcloud.schema.vcd.v1_5.schemas.vcloud.networkType import FirewallRuleType
@@ -243,8 +246,5 @@ def main():
 
     return module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.vca import *
 if __name__ == '__main__':
     main()
