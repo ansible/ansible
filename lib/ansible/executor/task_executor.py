@@ -259,7 +259,13 @@ class TaskExecutor:
             # the value may be 'None', so we still need to default it back to 'item'
             loop_var = self._task.loop_control.loop_var or 'item'
             label = self._task.loop_control.label or ('{{' + loop_var + '}}')
-            loop_pause = self._task.loop_control.pause or 0
+            # Check if a variable has been passed as the 'pause' var
+            if self._task.loop_control.pause is not None and not isinstance(self._task.loop_control.pause,float):
+                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+                loop_pause = float(templar.template(self._task.loop_control.pause))
+            else:
+                loop_pause = self._task.loop_control.pause or 0
+
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
