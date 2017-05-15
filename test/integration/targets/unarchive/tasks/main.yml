@@ -38,9 +38,18 @@
 - name: prep a tar.gz file
   shell: tar czvf test-unarchive.tar.gz foo-unarchive.txt chdir={{output_dir}}
 
+- name: prep a chmodded file for zip
+  copy: src=foo.txt dest={{output_dir}}/foo-unarchive-777.txt mode=0777
+  
+- name: prep a windows permission file for our zip
+  copy: src=foo.txt dest={{output_dir}}/foot-unarchive-win.txt
+  
 - name: prep a zip file
-  shell: zip test-unarchive.zip foo-unarchive.txt chdir={{output_dir}}
+  shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{output_dir}}
 
+- name: add a file with Windows permissions to zip file
+  shell: zip -k test-unarchive.zip foo-unarchive-win.txt chdir={{output_dir}}
+  
 - name: prep a subdirectory
   file: path={{output_dir}}/unarchive-dir state=directory
 
@@ -141,17 +150,30 @@
       - "unarchive03.changed == true"
       # Verify that file list is generated
       - "'files' in unarchive03"
-      - "{{unarchive03['files']| length}} == 1"
+      - "{{unarchive03['files']| length}} == 3"
       - "'foo-unarchive.txt' in unarchive03['files']"
 
 - name: verify that the file was unarchived
   file: path={{output_dir}}/test-unarchive-zip/foo-unarchive.txt state=file
 
+- name: repeat the last request to verify no changes
+  unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
+  register: unarchive03-2
+  
+  - name: verify that the task was not marked as changed
+  assert:
+    that:
+      - "unarchive03-2.changed == false"
+      
 - name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
 
-- name: remove our test file for the archive
-  file: path={{output_dir}}/foo-unarchive.txt state=absent
+- name: remove our test files for the archive
+  file: path={{output_dir}}/{{item}} state=absent
+  with_items:
+    - foo-unarchive.txt
+    - foo-unarchive-777.txt
+    - foo-unarchive-win.txt
 
 - name: check if /tmp/foo-unarchive.text exists
   stat: path=/tmp/foo-unarchive.txt
