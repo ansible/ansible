@@ -30,6 +30,7 @@ from xml.etree.ElementTree import Element, SubElement
 from xml.etree.ElementTree import tostring, fromstring
 
 from ansible.module_utils.connection import exec_command
+from ansible.module_utils._text impot to_native
 
 
 NS_MAP = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
@@ -38,7 +39,13 @@ def send_request(module, obj, check_rc=True):
     request = tostring(obj)
     rc, out, err = exec_command(module, request)
     if rc != 0 and check_rc:
-        error_root = fromstring(err)
+        ### DEBUGGING: TAKE OUT BEFORE MERGING
+        try:
+            error_root = fromstring(err)
+        except Exception as e:
+            module.fail_json(msg=to_native(e), out=to_native(out), err=to_native(err), rc=rc)
+        ### END DEBUGGING: TAKE OUT BEFORE MERGING
+        #error_root = fromstring(err)
         fake_parent = Element('root')
         fake_parent.append(error_root)
 
