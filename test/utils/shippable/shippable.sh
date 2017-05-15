@@ -52,7 +52,15 @@ find lib/ansible/modules -type d -empty -print -delete
 function cleanup
 {
     if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
-        ansible-test coverage xml --color -v --requirements --group-by command --group-by version
+        # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
+        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [ "${TEST}" == "other" ]; then
+            stub="--stub"
+        else
+            stub=""
+        fi
+
+        # shellcheck disable=SC2086
+        ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
         cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
         # upload coverage report to codecov.io only when using complete on-demand coverage

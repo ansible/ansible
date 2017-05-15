@@ -516,6 +516,14 @@ def add_extra_coverage_options(parser):
                         choices=lib.cover.COVERAGE_GROUPS,
                         help='group output by: %s' % ', '.join(lib.cover.COVERAGE_GROUPS))
 
+    parser.add_argument('--all',
+                        action='store_true',
+                        help='include all python source files')
+
+    parser.add_argument('--stub',
+                        action='store_true',
+                        help='generate empty report of all python source files')
+
 
 def add_extra_docker_options(parser, integration=True):
     """
