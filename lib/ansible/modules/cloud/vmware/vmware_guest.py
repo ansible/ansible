@@ -1113,9 +1113,7 @@ class PyVmomiHelper(object):
                         self.module.fail_json(msg='virtual machine "{0}" does not contain snapshot named "{1}"'.format(
                             self.params['template'], self.params['snapshot_src']))
 
-                    if len(snapshot) == 1:
-                        snapshot = snapshot[0].snapshot
-                    clonespec.snapshot = snapshot
+                    clonespec.snapshot = snapshot[0].snapshot
 
                 clonespec.config = self.configspec
                 task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
