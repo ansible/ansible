@@ -38,9 +38,18 @@
 - name: prep a tar.gz file
   shell: tar czvf test-unarchive.tar.gz foo-unarchive.txt chdir={{output_dir}}
 
+- name: prep a chmodded file for zip
+  copy: src=foo.txt dest={{output_dir}}/foo-unarchive-777.txt mode=0777
+  
+- name: prep a windows permission file for our zip
+  copy: src=foo.txt dest={{output_dir}}/FOO-UNAR.TXT
+  
 - name: prep a zip file
-  shell: zip test-unarchive.zip foo-unarchive.txt chdir={{output_dir}}
+  shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{output_dir}}
 
+- name: add a file with Windows permissions to zip file
+  shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{output_dir}}
+  
 - name: prep a subdirectory
   file: path={{output_dir}}/unarchive-dir state=directory
 
@@ -141,17 +150,36 @@
       - "unarchive03.changed == true"
       # Verify that file list is generated
       - "'files' in unarchive03"
-      - "{{unarchive03['files']| length}} == 1"
+      - "{{unarchive03['files']| length}} == 3"
       - "'foo-unarchive.txt' in unarchive03['files']"
-
+      - "'foo-unarchive-777.txt' in unarchive03['files']"
+      - "'FOO-UNAR.TXT' in unarchive03['files']"
+      
 - name: verify that the file was unarchived
-  file: path={{output_dir}}/test-unarchive-zip/foo-unarchive.txt state=file
+  file: path={{output_dir}}/test-unarchive-zip/{{item}} state=file
+  with_items:
+    - foo-unarchive.txt
+    - foo-unarchive-777.txt
+    - FOO-UNAR.TXT
 
+- name: repeat the last request to verify no changes
+  unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
+  register: unarchive03b
+  
+- name: verify that the task was not marked as changed
+  assert:
+    that:
+      - "unarchive03b.changed == false"
+      
 - name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
 
-- name: remove our test file for the archive
-  file: path={{output_dir}}/foo-unarchive.txt state=absent
+- name: remove our test files for the archive
+  file: path={{output_dir}}/{{item}} state=absent
+  with_items:
+    - foo-unarchive.txt
+    - foo-unarchive-777.txt
+    - FOO-UNAR.TXT
 
 - name: check if /tmp/foo-unarchive.text exists
   stat: path=/tmp/foo-unarchive.txt
@@ -289,22 +317,22 @@
 
 - name: create our unarchive destination
   file:
-    path: "{{ output_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+    path: "{{ output_dir }}/test-unarchive-nonascii-????-tar-gz"
     state: directory
 
 - name: test that unarchive works with an archive that contains non-ascii filenames
   unarchive:
     # Both the filename of the tarball and the filename inside the tarball have
     # nonascii chars
-    src: "test-unarchive-nonascii-くらとみ.tar.gz"
-    dest: "{{ output_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+    src: "test-unarchive-nonascii-????.tar.gz"
+    dest: "{{ output_dir }}/test-unarchive-nonascii-????-tar-gz"
     mode: "u+rwX,go+rX"
     remote_src: no
   register: nonascii_result0
 
 - name: Check that file is really there
   stat:
-    path: "{{ output_dir | expanduser }}/test-unarchive-nonascii-くらとみ-tar-gz/storage/àâæçéèïîôœ(copy)!@#$%^&-().jpg"
+    path: "{{ output_dir | expanduser }}/test-unarchive-nonascii-????-tar-gz/storage/a`a^æc¸e´e`i¨i^o^œ(copy)!@#$%^&-().jpg"
   register: nonascii_stat0
 
 - name: Assert that nonascii tests succeeded
@@ -314,7 +342,7 @@
       - "nonascii_stat0.stat.exists == true"
 
 - name: remove nonascii test
-  file: path="{{ output_dir }}/test-unarchive-nonascii-くらとみ-tar-gz" state=absent
+  file: path="{{ output_dir }}/test-unarchive-nonascii-????-tar-gz" state=absent
 
 # Test that unarchiving is performed if files are missing
 # https://github.com/ansible/ansible-modules-core/issues/1064
