@@ -42,13 +42,13 @@
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive-777.txt mode=0777
   
 - name: prep a windows permission file for our zip
-  copy: src=foo.txt dest={{output_dir}}/foo-unarchive-win.txt
+  copy: src=foo.txt dest={{output_dir}}/FOO-UNAR.TXT
   
 - name: prep a zip file
   shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{output_dir}}
 
 - name: add a file with Windows permissions to zip file
-  shell: zip -k test-unarchive.zip foo-unarchive-win.txt chdir={{output_dir}}
+  shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{output_dir}}
   
 - name: prep a subdirectory
   file: path={{output_dir}}/unarchive-dir state=directory
@@ -152,18 +152,24 @@
       - "'files' in unarchive03"
       - "{{unarchive03['files']| length}} == 3"
       - "'foo-unarchive.txt' in unarchive03['files']"
-
+      - "'foo-unarchive-777.txt' in unarchive03['files']"
+      - "'FOO-UNAR.TXT' in unarchive03['files']"
+      
 - name: verify that the file was unarchived
-  file: path={{output_dir}}/test-unarchive-zip/foo-unarchive.txt state=file
+  file: path={{output_dir}}/test-unarchive-zip/{{item}} state=file
+  with_items:
+    - foo-unarchive.txt
+    - foo-unarchive-777.txt
+    - FOO-UNAR.TXT
 
 - name: repeat the last request to verify no changes
   unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
-  register: unarchive03-2
+  register: unarchive03b
   
-  - name: verify that the task was not marked as changed
+- name: verify that the task was not marked as changed
   assert:
     that:
-      - "unarchive03-2.changed == false"
+      - "unarchive03b.changed == false"
       
 - name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
@@ -173,7 +179,7 @@
   with_items:
     - foo-unarchive.txt
     - foo-unarchive-777.txt
-    - foo-unarchive-win.txt
+    - FOO-UNAR.TXT
 
 - name: check if /tmp/foo-unarchive.text exists
   stat: path=/tmp/foo-unarchive.txt
