@@ -508,7 +508,6 @@ lib/ansible/modules/network/nxos/nxos_ntp.py
 lib/ansible/modules/network/nxos/nxos_ntp_auth.py
 lib/ansible/modules/network/nxos/nxos_ntp_options.py
 lib/ansible/modules/network/nxos/nxos_nxapi.py
-lib/ansible/modules/network/nxos/nxos_ospf.py
 lib/ansible/modules/network/nxos/nxos_ospf_vrf.py
 lib/ansible/modules/network/nxos/nxos_overlay_global.py
 lib/ansible/modules/network/nxos/nxos_pim.py
