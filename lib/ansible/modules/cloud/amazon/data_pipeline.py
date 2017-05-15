@@ -34,48 +34,70 @@ description:
       so the uniqueId is created by hashing the options (minus objects) given to the datapipeline.
 
       The pipeline definition must be in the format given here
-      U(http://docs.aws.amazon.com/datapipeline/latest/APIReference/API_PutPipelineDefinition.html#API_PutPipelineDefinition_RequestSyntax)
+      U(http://docs.aws.amazon.com/datapipeline/latest/APIReference/API_PutPipelineDefinition.html#API_PutPipelineDefinition_RequestSyntax).
 
       Also operations will wait for a configurable amount
       of time to ensure the pipeline is in the requested state.
 options:
   name:
     description:
-      - Name of the Datapipeline
+      - The name of the Datapipeline to create/modify/delete.
     required: true
   description:
     description:
-      - Optional pipeline description
-    required: false
+      - An optional description for the pipeline being created.
     default: ''
   objects:
     description:
-      - List of pipeline Objects
-    required: false
+      - A list of pipeline object definitions, each of which is a dict that takes the keys C(id), C(name) and C(fields).
+    type: list
+    suboptions:
+      id:
+        description:
+          - The ID of the object.
+        type: str
+      name:
+        description:
+          - The name of the object.
+        type: str
+      fields:
+        description:
+          - A list of dicts that take the keys C(key) and C(stringValue)/C(refValue).
+            The value is specified as a reference to another object C(refValue) or as a string value C(stringValue)
+            but not as both.
+        type: list
   parameters:
     description:
-      - List of pipeline parameters
-    required: false
+      - A list of parameter objects (dicts) in the pipeline definition.
+    type: list
+    suboptions:
+      id:
+        description:
+          - The ID of the parameter object.
+        type: str
+      attributes:
+        description:
+          - A list of attributes (dicts) of the parameter object. Each attribute takes the keys C(key) and C(stringValue) both
+            of which are strings.
+        type: list
   values:
     description:
-      - List of pipeline values
-    required: false
+      - A list of parameter values (dicts) in the pipeline definition. Each dict takes the keys C(id) and C(stringValue) both
+        of which are strings.
+    type: list
   timeout:
     description:
-      - Time in seconds to wait for the pipeline to transion to the requested
-        state, fail otherwise
-    required: false
+      - Time in seconds to wait for the pipeline to transition to the requested state, fail otherwise.
     default: 300
   state:
     description:
-      - Requested state of the pipeline
+      - The requested state of the pipeline.
     choices: ['present', 'absent', 'active', 'inactive']
-    required: false
     default: present
   tags:
     description:
-      - dict of key:value pair(s) to add to the pipeline
-    required: false
+      - A dict of key:value pair(s) to add to the pipeline.
+    type: dict
     default: null
 '''
 
@@ -93,6 +115,29 @@ EXAMPLES = '''
       key1: val1
       key2: val2
     state: present
+
+# Example populating and activating a pipeline that demonstrates two ways of providing pipeline objects
+- data_pipeline:
+  name: test-dp
+  objects:
+    - "id": "DefaultSchedule"
+      "name": "Every 1 day"
+      "fields":
+        - "key": "period"
+          "stringValue": "1 days"
+        - "key": "type"
+          "stringValue": "Schedule"
+        - "key": "startAt"
+          "stringValue": "FIRST_ACTIVATION_DATE_TIME"
+    - "id": "Default"
+      "name": "Default"
+      "fields": [ { "key": "resourceRole", "stringValue": "my_resource_role" },
+                  { "key": "role", "stringValue": "DataPipelineDefaultRole" },
+                  { "key": "pipelineLogUri", "stringValue": "s3://my_s3_log.txt" },
+                  { "key": "scheduleType", "stringValue": "cron" },
+                  { "key": "schedule", "refValue": "DefaultSchedule" },
+                  { "key": "failureAndRerunMode", "stringValue": "CASCADE" } ]
+  state: active
 
 # Activate pipeline
 - data_pipeline:
