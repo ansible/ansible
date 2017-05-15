@@ -7,6 +7,7 @@ import re
 
 from lib.target import (
     walk_module_targets,
+    walk_compile_targets,
 )
 
 from lib.util import (
@@ -43,6 +44,14 @@ def command_coverage_combine(args):
 
     counter = 0
     groups = {}
+
+    if args.all or args.stub:
+        sources = sorted(os.path.abspath(target.path) for target in walk_compile_targets())
+    else:
+        sources = []
+
+    if args.stub:
+        groups['=stub'] = dict((source, set()) for source in sources)
 
     for coverage_file in coverage_files:
         counter += 1
@@ -115,6 +124,9 @@ def command_coverage_combine(args):
 
             updated.add_arcs({filename: list(arc_data[filename])})
 
+        if args.all:
+            updated.add_arcs(dict((source, []) for source in sources))
+
         if not args.explain:
             output_file = COVERAGE_FILE + group
             updated.write_file(output_file)
@@ -130,7 +142,7 @@ def command_coverage_report(args):
     output_files = command_coverage_combine(args)
 
     for output_file in output_files:
-        if args.group_by:
+        if args.group_by or args.stub:
             display.info('>>> Coverage Group: %s' % ' '.join(os.path.basename(output_file).split('=')[1:]))
 
         env = common_environment()
@@ -238,3 +250,5 @@ class CoverageConfig(EnvironmentConfig):
         super(CoverageConfig, self).__init__(args, 'coverage')
 
         self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: frozenset[str]
+        self.all = args.all if 'all' in args else False  # type: bool
+        self.stub = args.stub if 'stub' in args else False  # type: bool
