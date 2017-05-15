@@ -25,7 +25,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import traceback
 from contextlib import contextmanager
+
 from xml.etree.ElementTree import Element, SubElement
 from xml.etree.ElementTree import tostring, fromstring
 
@@ -43,7 +45,7 @@ def send_request(module, obj, check_rc=True):
         try:
             error_root = fromstring(err)
         except Exception as e:
-            module.fail_json(msg=to_native(e), out=to_native(out), err=to_native(err), rc=rc)
+            module.fail_json(msg=to_native(e), out=to_native(out), err=to_native(err), rc=rc, exception=traceback.format_exc)
         ### END DEBUGGING: TAKE OUT BEFORE MERGING
         #error_root = fromstring(err)
         fake_parent = Element('root')
