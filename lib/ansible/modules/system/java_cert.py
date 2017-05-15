@@ -72,40 +72,38 @@ author: Adam Hamsik @haad
 '''
 
 EXAMPLES = '''
-# Import SSL certificate from google.com to a given cacerts keystore
-java_cert:
-  cert_url: google.com
-  cert_port: 443
-  keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
-  keystore_pass: changeit
-  state: present
+-name: Import SSL certificate from google.com to a given cacerts keystore
+  java_cert:
+    cert_url: google.com
+    cert_port: 443
+    keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
+    keystore_pass: changeit
+    state: present
 
-# Remove certificate with given alias from a keystore
-java_cert:
-  cert_url: google.com
-  keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
-  keystore_pass: changeit
-  executable: /usr/lib/jvm/jre7/bin/keytool
-  state: absent
+- name: Remove certificate with given alias from a keystore
+  java_cert:
+    cert_url: google.com
+    keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
+    keystore_pass: changeit
+    executable: /usr/lib/jvm/jre7/bin/keytool
+    state: absent
 
-# Import SSL certificate from google.com to a keystore,
-# create it if it doesn't exist
-java_cert:
-  cert_url: google.com
-  keystore_path: /tmp/cacerts
-  keystore_pass: changeit
-  keystore_create: yes
-  state: present
+- name: Import SSL certificate from google.com to a keystore, create it if it doesn't exist
+  java_cert:
+    cert_url: google.com
+    keystore_path: /tmp/cacerts
+    keystore_pass: changeit
+    keystore_create: yes
+    state: present
 
-# Import a pkcs12 keystore with a specified alias,
-# create it if it doesn't exist
-java_cert_cust:
-  pkcs12_path: "/tmp/importkeystore.p12"
-  cert_alias: default
-  keystore_path: /opt/wildfly/standalone/configuration/defaultkeystore.jks
-  keystore_pass: changeit
-  keystore_create: yes
-  state: present
+- name: Import a pkcs12 keystore with a specified alias, create it if it doesn't exist
+  java_cert:
+    pkcs12_path: "/tmp/importkeystore.p12"
+    cert_alias: default
+    keystore_path: /opt/wildfly/standalone/configuration/defaultkeystore.jks
+    keystore_pass: changeit
+    keystore_create: yes
+    state: present
 '''
 
 RETURN = '''
