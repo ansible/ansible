@@ -72,7 +72,7 @@ author: Adam Hamsik @haad
 '''
 
 EXAMPLES = '''
--name: Import SSL certificate from google.com to a given cacerts keystore
+- name: Import SSL certificate from google.com to a given cacerts keystore
   java_cert:
     cert_url: google.com
     cert_port: 443
