@@ -72,7 +72,6 @@ lib/ansible/module_utils/gce.py
 lib/ansible/module_utils/gcp.py
 lib/ansible/module_utils/infinibox.py
 lib/ansible/module_utils/ios.py
-lib/ansible/module_utils/iosxr.py
 lib/ansible/module_utils/json_utils.py
 lib/ansible/module_utils/junos.py
 lib/ansible/module_utils/known_hosts.py
@@ -854,7 +853,6 @@ lib/ansible/plugins/strategy/linear.py
 lib/ansible/plugins/terminal/asa.py
 lib/ansible/plugins/terminal/eos.py
 lib/ansible/plugins/terminal/ios.py
-lib/ansible/plugins/terminal/iosxr.py
 lib/ansible/plugins/terminal/junos.py
 lib/ansible/plugins/terminal/nxos.py
 lib/ansible/plugins/terminal/vyos.py
