@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vca_vapp
 short_description: Manages vCloud Air vApp instances.
@@ -133,7 +133,7 @@ options:
     default: None
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 
 - name: Creates a new vApp in a VCA instance
   vca_vapp:
@@ -146,6 +146,8 @@ EXAMPLES = '''
     password: '<your password here>'
 
 '''
+
+from ansible.module_utils.vca import VcaAnsibleModule, VcaError, vca_argument_spec, vca_login
 
 DEFAULT_VAPP_OPERATION = 'noop'
 
@@ -283,8 +285,5 @@ def main():
 
     return module.exit(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.vca import *
 if __name__ == '__main__':
     main()
