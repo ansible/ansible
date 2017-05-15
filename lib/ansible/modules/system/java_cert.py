@@ -255,7 +255,7 @@ def main():
         cert_url=dict(type='str'),
         cert_path=dict(type='path'),
         pkcs12_path=dict(type='path'),
-        pkcs12_pass=dict(type='str', no_log=True),
+        pkcs12_password=dict(type='str', no_log=True),
         pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
         cert_port=dict(default='443', type='int'),
