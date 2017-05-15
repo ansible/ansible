@@ -32,7 +32,7 @@ from xml.etree.ElementTree import Element, SubElement
 from xml.etree.ElementTree import tostring, fromstring
 
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils._text impot to_native
+from ansible.module_utils._text import to_native
 
 
 NS_MAP = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
