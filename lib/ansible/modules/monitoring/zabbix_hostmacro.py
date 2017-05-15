@@ -52,12 +52,6 @@ options:
         required: false
         default: None
         version_added: "2.1"
-    validate_certs:
-        description:
-            - If False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
-        required: false
-        default: True
-        version_added: "2.4"
     host_name:
         description:
             - Name of the host.
@@ -82,6 +76,9 @@ options:
         description:
             - The timeout of API request (seconds).
         default: 10
+
+extends_documentation_fragment:
+    - validate_certs
 '''
 
 EXAMPLES = '''

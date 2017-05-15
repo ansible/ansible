@@ -54,12 +54,6 @@ options:
         required: false
         default: None
         version_added: "2.1"
-    validate_certs:
-        description:
-            - If False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
-        required: false
-        default: True
-        version_added: "2.4"
     timeout:
         description:
             - The timeout of API request (seconds).
@@ -74,6 +68,10 @@ options:
               The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s)
               will just be updated as needed.
         required: true
+
+extends_documentation_fragment:
+    - validate_certs
+
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
