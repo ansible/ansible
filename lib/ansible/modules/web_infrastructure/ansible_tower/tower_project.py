@@ -210,11 +210,13 @@ def main():
             if state == 'present':
                 org_res = tower_cli.get_resource('organization')
                 org = org_res.get(name=organization)
+                cred_res = tower_cli.get_resource('credential')
+                cred = cred_res.get(name=scm_credential)
 
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
                                         scm_type=scm_type, scm_url=scm_url, local_path=local_path,
-                                        scm_branch=scm_branch, scm_clean=scm_clean, scm_credential=scm_credential,
+                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=cred['id'],
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
                                         create_on_missing=True)
