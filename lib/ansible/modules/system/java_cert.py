@@ -34,6 +34,15 @@ options:
   cert_alias:
     description:
       - Imported certificate alias.
+  pkcs12_path:
+    description:
+      - Local path to load PKCS12 keystore from.
+  pkcs12_password:
+    description:
+      - Password for importing from PKCS12 keystore.
+  pkcs12_alias:
+    description:
+      - Alias in the PKCS12 keystore. Default: 1
   keystore_path:
     description:
       - Path to keystore.
@@ -79,6 +88,16 @@ java_cert:
 java_cert:
   cert_url: google.com
   keystore_path: /tmp/cacerts
+  keystore_pass: changeit
+  keystore_create: yes
+  state: present
+
+# Import a pkcs12 keystore with a specified alias,
+# create it if it doesn't exist
+java_cert_cust:
+  pkcs12_path: "/tmp/importkeystore.p12"
+  cert_alias: default
+  keystore_path: /opt/wildfly/standalone/configuration/defaultkeystore.jks
   keystore_pass: changeit
   keystore_create: yes
   state: present
@@ -170,6 +189,30 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
     else:
         return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
 
+def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, pkcs12_pass, pkcs12_alias, alias):
+    ''' Import pkcs12 from path into keystore located on
+        keystore_path as alias '''
+    import_cmd = ("%s -importkeystore -noprompt -destkeystore '%s' -srcstoretype PKCS12 "
+                  "-deststorepass '%s' -destkeypass '%s' -srckeystore '%s' -srcstorepass '%s' "
+                  "-srcalias '%s' -destalias '%s'")%(executable, keystore_path, keystore_pass,
+                                                     keystore_pass, path, pkcs12_pass, pkcs12_alias, alias)
+
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    # Use local certificate from local path and import it to a java keystore
+    (import_rc, import_out, import_err) = module.run_command(import_cmd,
+                                                             check_rc=False)
+
+    diff = {'before': '\n', 'after': '%s\n'%alias}
+    if import_rc == 0:
+        return module.exit_json(changed=True, msg=import_out,
+                                rc=import_rc, cmd=import_cmd, stdout=import_out,
+                                error=import_err, diff=diff)
+    else:
+        return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
+
+
 def delete_cert(module, executable, keystore_path, keystore_pass, alias):
     ''' Delete certificate identified with alias from keystore on keystore_path '''
     del_cmd = ("%s -delete -keystore '%s' -storepass '%s' "
@@ -208,6 +251,9 @@ def main():
     argument_spec = dict(
         cert_url=dict(type='str'),
         cert_path=dict(type='str'),
+        pkcs12_path=dict(type='str'),
+        pkcs12_pass=dict(type='str', no_log=True),
+        pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
         cert_port=dict(default='443', type='int'),
         keystore_path=dict(type='str'),
@@ -220,10 +266,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=[['cert_path', 'cert_url']],
+        required_one_of=[['cert_path', 'cert_url', 'pkcs12_path']],
         required_together=[['keystore_path', 'keystore_pass']],
         mutually_exclusive=[
-            ['cert_url', 'cert_path']
+            ['cert_url', 'cert_path', 'pkcs12_path']
         ],
         supports_check_mode=True,
     )
@@ -231,6 +277,11 @@ def main():
     url = module.params.get('cert_url')
     path = module.params.get('cert_path')
     port = module.params.get('cert_port')
+    
+    pkcs12_path = module.params.get('pkcs12_path')
+    pkcs12_pass = module.params.get('pkcs12_password') or ''
+    pkcs12_alias = module.params.get('pkcs12_alias') or '1'
+
     cert_alias = module.params.get('cert_alias') or url
 
     keystore_path = module.params.get('keystore_path')
@@ -258,6 +309,10 @@ def main():
 
     elif state == 'present':
         if not cert_present:
+            if pkcs12_path:
+                import_pkcs12_path(module, executable, pkcs12_path, keystore_path,
+                                   keystore_pass, pkcs12_pass, pkcs12_alias, cert_alias)
+
             if path:
                 import_cert_path(module, executable, path, keystore_path,
                                  keystore_pass, cert_alias)
