@@ -45,7 +45,19 @@ def send_request(module, obj, check_rc=True):
         try:
             error_root = fromstring(err)
         except Exception as e:
-            module.fail_json(msg=to_native(e), out=to_native(out), err=to_native(err), rc=rc, exception=traceback.format_exc)
+            with open('/tmp/outfile', 'wb') as f:
+                f.write(to_bytes(out, errors='surrogate_then_replace'))
+
+            with open('/tmp/errfile', 'wb') as f:
+                f.write(to_bytes(out, errors='surrogate_then_replace'))
+
+            with open('/tmp/rcfile', 'wb') as f:
+                f.write(to_bytes(rc, errors='surrogate_then_replace'))
+
+            with open('/tmp/traceback_file', 'wb') as f:
+                f.write(to_bytes(traceback.format_exc(), errors='surrogate_then_replace'))
+
+            raise
         ### END DEBUGGING: TAKE OUT BEFORE MERGING
         #error_root = fromstring(err)
         fake_parent = Element('root')
