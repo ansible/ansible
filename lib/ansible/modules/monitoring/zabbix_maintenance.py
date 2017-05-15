@@ -58,12 +58,6 @@ options:
         required: false
         default: None
         version_added: "2.1"
-    validate_certs:
-        description:
-            - If False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
-        required: false
-        default: True
-        version_added: "2.4"
     host_names:
         description:
             - Hosts to manage maintenance window for.
@@ -109,6 +103,10 @@ options:
         default: 10
         version_added: "2.1"
         required: false
+
+extends_documentation_fragment:
+    - validate_certs
+
 notes:
     - Useful for setting hosts in maintenance mode before big update,
       and removing maintenance window after update.

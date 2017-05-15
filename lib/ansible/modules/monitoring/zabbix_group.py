@@ -55,12 +55,6 @@ options:
         required: false
         default: None
         version_added: "2.1"
-    validate_certs:
-        description:
-            - If False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
-        required: false
-        default: True
-        version_added: "2.4"
     state:
         description:
             - Create or delete host group.
@@ -76,6 +70,10 @@ options:
             - List of host groups to create or delete.
         required: true
         aliases: [ "host_group" ]
+
+extends_documentation_fragment:
+    - validate_certs
+
 notes:
     - Too many concurrent updates to the same group may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
