@@ -103,7 +103,7 @@ options:
     required: false
     default: ""
     choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
-                    "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION" ]
+                    "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS" ]
   state:
     description:
       - The user (role) state
@@ -219,7 +219,7 @@ else:
     postgresqldb_found = True
 from ansible.module_utils.six import iteritems
 
-_flags = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
+_flags = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION', 'BYPASSRLS')
 VALID_FLAGS = frozenset(itertools.chain(_flags, ('NO%s' % f for f in _flags)))
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
@@ -230,7 +230,7 @@ VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRU
 PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
                              CREATEUSER='rolcreateuser', CREATEDB='rolcreatedb',
                              INHERIT='rolinherit', LOGIN='rolcanlogin',
-                             REPLICATION='rolreplication')
+                             REPLICATION='rolreplication', BYPASSRLS='rolbypassrls')
 
 class InvalidFlagsError(Exception):
     pass
@@ -569,7 +569,8 @@ def parse_role_attrs(role_attr_flags):
 
         attributes := CREATEDB,CREATEROLE,NOSUPERUSER,...
         [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
-                            "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION" ]
+                            "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION",
+                            "[NO]BYPASSRLS" ]
 
     """
     if ',' in role_attr_flags:
