@@ -68,8 +68,8 @@ packaging/release/ansible_release
 /.cache/
 /test/results/coverage/*=coverage.*
 /test/results/coverage/coverage*
-/test/results/reports/coverage.xml
-/test/results/reports/coverage/
+/test/results/reports/coverage*.xml
+/test/results/reports/coverage*/
 /test/results/bot/*.json
 /test/results/junit/*.xml
 /test/results/logs/*.log

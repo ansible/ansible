@@ -858,7 +858,7 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     version = python_version or args.python_version
     interpreter = find_executable('python%s' % version)
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
-        args.command, target_name, args.coverage_label or 'local-%s' % version, version)))
+        args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 
     env['PATH'] = inject_path + os.pathsep + env['PATH']
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
