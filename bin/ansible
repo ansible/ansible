@@ -71,7 +71,7 @@ if __name__ == '__main__':
         sub = None
         target = me.split('-')
         if target[-1][0].isdigit():
-            # Remove any version or pthon version info as downstreams
+            # Remove any version or python version info as downstreams
             # sometimes add that
             target = target[:-1]
 
