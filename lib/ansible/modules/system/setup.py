@@ -22,8 +22,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: setup
 version_added: historical
@@ -32,7 +31,7 @@ options:
     gather_subset:
         version_added: "2.1"
         description:
-            - "if supplied, restrict the additional facts collected to the given subset.
+            - "If supplied, restrict the additional facts collected to the given subset.
               Possible values: all, hardware, network, virtual, ohai, and
               facter Can specify a list of values to specify a larger subset.
               Values can also be used with an initial C(!) to specify that
@@ -40,29 +39,25 @@ options:
               !hardware, !network, !virtual, !ohai, !facter.  Note that a few
               facts are always collected.  Use the filter parameter if you do
               not want to display those."
-        required: false
-        default: 'all'
+        default: all
     gather_timeout:
         version_added: "2.2"
         description:
-            - "Set the default timeout in seconds for individual fact gathering"
-        required: false
+            - Set the default timeout in seconds for individual fact gathering.
         default: 10
     filter:
         version_added: "1.1"
         description:
-            - if supplied, only return facts that match this shell-style (fnmatch) wildcard.
-        required: false
+            - If supplied, only return facts that match this shell-style (fnmatch) wildcard.
         default: '*'
     fact_path:
         version_added: "1.3"
         description:
-            - path used for local ansible facts (*.fact) - files in this dir
+            - Path used for local ansible facts (*.fact) - files in this dir
               will be run (if executable) and their results be added to ansible_local facts
               if a file is not executable it is read. Check notes for Windows options. (from 2.1 on)
               File/results format can be json or ini-format
-        required: false
-        default: '/etc/ansible/facts.d'
+        default: /etc/ansible/facts.d
 description:
      - This module is automatically called by playbooks to gather useful
        variables about remote hosts that can be used in playbooks. It can also be
@@ -86,12 +81,12 @@ notes:
       output of your scripts.
       This option was added in Ansible 2.1.
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
-    - "David O'Brien @david_obrien davidobrien1985"
+    - Ansible Core Team
+    - Michael DeHaan (@mpdehaan)
+    - David O'Brien (@david_obrien)"
 '''
 
-EXAMPLES = """
+EXAMPLES = r"""
 # Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
 # ansible all -m setup --tree /tmp/facts
 
@@ -117,23 +112,23 @@ EXAMPLES = """
 # ansible windows -m setup -a "fact_path='c:\\custom_facts'"
 """
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.facts import get_all_facts
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            gather_subset=dict(default=["all"], required=False, type='list'),
-            gather_timeout=dict(default=10, required=False, type='int'),
-            filter=dict(default="*", required=False),
-            fact_path=dict(default='/etc/ansible/facts.d', required=False, type='path'),
+        argument_spec=dict(
+            gather_subset=dict(type='list', default=['all']),
+            gather_timeout=dict(type='int', default=10),
+            filter=dict(default='*'),
+            fact_path=dict(type='path', default='/etc/ansible/facts.d'),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
     data = get_all_facts(module)
     module.exit_json(**data)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.facts import *
 
 if __name__ == '__main__':
     main()
