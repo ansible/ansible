@@ -4,7 +4,6 @@ contrib/inventory/vmware_inventory.py
 docs/api/conf.py
 docs/bin/dump_keywords.py
 docs/bin/plugin_formatter.py
-docs/docsite/rst/conf.py
 examples/scripts/uptime.py
 hacking/cherrypick.py
 hacking/get_library.py
@@ -43,22 +42,18 @@ lib/ansible/inventory/dir.py
 lib/ansible/inventory/expand_hosts.py
 lib/ansible/inventory/group.py
 lib/ansible/inventory/host.py
-lib/ansible/inventory/ini.py
 lib/ansible/inventory/script.py
 lib/ansible/inventory/vars_plugins/__init__.py
 lib/ansible/inventory/vars_plugins/noop.py
 lib/ansible/inventory/yaml.py
-lib/ansible/module_utils/_text.py
 lib/ansible/module_utils/a10.py
 lib/ansible/module_utils/ansible_tower.py
 lib/ansible/module_utils/aos.py
 lib/ansible/module_utils/api.py
-lib/ansible/module_utils/asa.py
 lib/ansible/module_utils/avi.py
 lib/ansible/module_utils/azure_rm_common.py
 lib/ansible/module_utils/basic.py
 lib/ansible/module_utils/bigswitch_utils.py
-lib/ansible/module_utils/cloudengine.py
 lib/ansible/module_utils/connection.py
 lib/ansible/module_utils/database.py
 lib/ansible/module_utils/docker_common.py
@@ -92,8 +87,6 @@ lib/ansible/module_utils/postgres.py
 lib/ansible/module_utils/pycompat24.py
 lib/ansible/module_utils/redhat.py
 lib/ansible/module_utils/service.py
-lib/ansible/module_utils/shell.py
-lib/ansible/module_utils/six/_six.py
 lib/ansible/module_utils/splitter.py
 lib/ansible/module_utils/sros.py
 lib/ansible/module_utils/univention_umc.py
@@ -149,7 +142,6 @@ lib/ansible/modules/cloud/amazon/ecs_service.py
 lib/ansible/modules/cloud/amazon/ecs_service_facts.py
 lib/ansible/modules/cloud/amazon/ecs_task.py
 lib/ansible/modules/cloud/amazon/ecs_taskdefinition.py
-lib/ansible/modules/cloud/amazon/efs.py
 lib/ansible/modules/cloud/amazon/efs_facts.py
 lib/ansible/modules/cloud/amazon/elasticache.py
 lib/ansible/modules/cloud/amazon/elasticache_snapshot.py
@@ -191,7 +183,6 @@ lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualmachineimage_facts.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork_facts.py
-lib/ansible/modules/cloud/centurylink/clc_loadbalancer.py
 lib/ansible/modules/cloud/cloudscale/cloudscale_server.py
 lib/ansible/modules/cloud/cloudstack/cs_account.py
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py
@@ -274,11 +265,8 @@ lib/ansible/modules/cloud/openstack/os_user_group.py
 lib/ansible/modules/cloud/openstack/os_user_role.py
 lib/ansible/modules/cloud/openstack/os_zone.py
 lib/ansible/modules/cloud/ovh/ovh_ip_loadbalancing_backend.py
-lib/ansible/modules/cloud/ovirt/ovirt_affinity_groups.py
 lib/ansible/modules/cloud/ovirt/ovirt_disks.py
 lib/ansible/modules/cloud/ovirt/ovirt_nics.py
-lib/ansible/modules/cloud/ovirt/ovirt_permissions.py
-lib/ansible/modules/cloud/ovirt/ovirt_vms.py
 lib/ansible/modules/cloud/packet/packet_device.py
 lib/ansible/modules/cloud/packet/packet_sshkey.py
 lib/ansible/modules/cloud/profitbricks/profitbricks.py
@@ -286,23 +274,13 @@ lib/ansible/modules/cloud/profitbricks/profitbricks_datacenter.py
 lib/ansible/modules/cloud/profitbricks/profitbricks_nic.py
 lib/ansible/modules/cloud/profitbricks/profitbricks_volume.py
 lib/ansible/modules/cloud/profitbricks/profitbricks_volume_attachments.py
-lib/ansible/modules/cloud/rackspace/rax_cbs_attachments.py
 lib/ansible/modules/cloud/rackspace/rax_cdb.py
-lib/ansible/modules/cloud/rackspace/rax_clb.py
 lib/ansible/modules/cloud/rackspace/rax_clb_ssl.py
-lib/ansible/modules/cloud/rackspace/rax_dns.py
-lib/ansible/modules/cloud/rackspace/rax_dns_record.py
-lib/ansible/modules/cloud/rackspace/rax_facts.py
-lib/ansible/modules/cloud/rackspace/rax_files.py
-lib/ansible/modules/cloud/rackspace/rax_keypair.py
-lib/ansible/modules/cloud/rackspace/rax_meta.py
 lib/ansible/modules/cloud/rackspace/rax_mon_alarm.py
 lib/ansible/modules/cloud/rackspace/rax_mon_check.py
 lib/ansible/modules/cloud/rackspace/rax_mon_entity.py
 lib/ansible/modules/cloud/rackspace/rax_mon_notification.py
 lib/ansible/modules/cloud/rackspace/rax_mon_notification_plan.py
-lib/ansible/modules/cloud/rackspace/rax_network.py
-lib/ansible/modules/cloud/rackspace/rax_queue.py
 lib/ansible/modules/cloud/smartos/vmadm.py
 lib/ansible/modules/cloud/softlayer/sl_vm.py
 lib/ansible/modules/cloud/univention/udm_dns_record.py
@@ -317,7 +295,6 @@ lib/ansible/modules/cloud/vmware/vmware_cluster.py
 lib/ansible/modules/cloud/vmware/vmware_dvswitch.py
 lib/ansible/modules/cloud/vmware/vmware_guest.py
 lib/ansible/modules/cloud/vmware/vmware_local_user_manager.py
-lib/ansible/modules/cloud/vmware/vmware_migrate_vmk.py
 lib/ansible/modules/cloud/vmware/vmware_target_canonical_facts.py
 lib/ansible/modules/cloud/vmware/vmware_vm_shell.py
 lib/ansible/modules/cloud/vmware/vmware_vmotion.py
@@ -604,7 +581,6 @@ lib/ansible/modules/packaging/os/macports.py
 lib/ansible/modules/packaging/os/openbsd_pkg.py
 lib/ansible/modules/packaging/os/opkg.py
 lib/ansible/modules/packaging/os/pacman.py
-lib/ansible/modules/packaging/os/pkg5.py
 lib/ansible/modules/packaging/os/pkg5_publisher.py
 lib/ansible/modules/packaging/os/pkgin.py
 lib/ansible/modules/packaging/os/pkgng.py
@@ -643,7 +619,6 @@ lib/ansible/modules/storage/infinidat/infini_vol.py
 lib/ansible/modules/storage/netapp/na_cdot_qtree.py
 lib/ansible/modules/storage/netapp/na_cdot_volume.py
 lib/ansible/modules/storage/netapp/netapp_e_amg.py
-lib/ansible/modules/storage/netapp/netapp_e_storagepool.py
 lib/ansible/modules/storage/netapp/sf_account_manager.py
 lib/ansible/modules/storage/netapp/sf_snapshot_schedule_manager.py
 lib/ansible/modules/storage/netapp/sf_volume_access_group_manager.py
@@ -673,7 +648,6 @@ lib/ansible/modules/system/kernel_blacklist.py
 lib/ansible/modules/system/locale_gen.py
 lib/ansible/modules/system/lvg.py
 lib/ansible/modules/system/lvol.py
-lib/ansible/modules/system/modprobe.py
 lib/ansible/modules/system/mount.py
 lib/ansible/modules/system/ohai.py
 lib/ansible/modules/system/open_iscsi.py
@@ -748,7 +722,6 @@ lib/ansible/plugins/action/fetch.py
 lib/ansible/plugins/action/group_by.py
 lib/ansible/plugins/action/ios_template.py
 lib/ansible/plugins/action/iosxr_template.py
-lib/ansible/plugins/action/junos.py
 lib/ansible/plugins/action/junos_template.py
 lib/ansible/plugins/action/normal.py
 lib/ansible/plugins/action/nxos.py
@@ -760,7 +733,6 @@ lib/ansible/plugins/action/patch.py
 lib/ansible/plugins/action/pause.py
 lib/ansible/plugins/action/script.py
 lib/ansible/plugins/action/service.py
-lib/ansible/plugins/action/set_stats.py
 lib/ansible/plugins/action/sros_config.py
 lib/ansible/plugins/action/synchronize.py
 lib/ansible/plugins/action/template.py
@@ -853,7 +825,6 @@ lib/ansible/plugins/strategy/free.py
 lib/ansible/plugins/strategy/linear.py
 lib/ansible/plugins/terminal/asa.py
 lib/ansible/plugins/terminal/eos.py
-lib/ansible/plugins/terminal/ios.py
 lib/ansible/plugins/terminal/iosxr.py
 lib/ansible/plugins/terminal/junos.py
 lib/ansible/plugins/terminal/nxos.py
@@ -864,10 +835,8 @@ lib/ansible/plugins/test/mathstuff.py
 lib/ansible/plugins/vars/__init__.py
 lib/ansible/release.py
 lib/ansible/template/__init__.py
-lib/ansible/template/safe_eval.py
 lib/ansible/template/template.py
 lib/ansible/template/vars.py
-lib/ansible/utils/cmd_functions.py
 lib/ansible/utils/color.py
 lib/ansible/utils/display.py
 lib/ansible/utils/encrypt.py
@@ -875,7 +844,6 @@ lib/ansible/utils/helpers.py
 lib/ansible/utils/listify.py
 lib/ansible/utils/path.py
 lib/ansible/utils/ssh_functions.py
-lib/ansible/utils/unicode.py
 lib/ansible/utils/vars.py
 lib/ansible/vars/__init__.py
 lib/ansible/vars/hostvars.py
@@ -910,7 +878,6 @@ test/units/module_utils/basic/test_no_log.py
 test/units/module_utils/basic/test_run_command.py
 test/units/module_utils/basic/test_safe_eval.py
 test/units/module_utils/basic/test_set_mode_if_different.py
-test/units/module_utils/ec2/test_aws.py
 test/units/module_utils/gcp/test_auth.py
 test/units/module_utils/json_utils/test_filter_non_json_lines.py
 test/units/module_utils/test_basic.py
@@ -923,7 +890,6 @@ test/units/modules/cloud/amazon/test_lambda.py
 test/units/modules/cloud/amazon/test_s3.py
 test/units/modules/cloud/docker/test_docker.py
 test/units/modules/cloud/google/test_gce_tag.py
-test/units/modules/cloud/openstack/test_os_server.py
 test/units/modules/network/cumulus/test_nclu.py
 test/units/modules/network/eos/eos_module.py
 test/units/modules/network/eos/test_eos_command.py
@@ -954,7 +920,6 @@ test/units/parsing/test_mod_args.py
 test/units/parsing/utils/test_addresses.py
 test/units/parsing/utils/test_jsonify.py
 test/units/parsing/vault/test_vault.py
-test/units/parsing/vault/test_vault_editor.py
 test/units/parsing/yaml/test_dumper.py
 test/units/parsing/yaml/test_loader.py
 test/units/parsing/yaml/test_objects.py
@@ -962,8 +927,6 @@ test/units/playbook/role/test_role.py
 test/units/playbook/test_attribute.py
 test/units/playbook/test_base.py
 test/units/playbook/test_block.py
-test/units/playbook/test_conditional.py
-test/units/playbook/test_helpers.py
 test/units/playbook/test_play_context.py
 test/units/playbook/test_playbook.py
 test/units/playbook/test_taggable.py
@@ -987,4 +950,3 @@ test/units/test_constants.py
 test/units/utils/test_helpers.py
 test/units/utils/test_shlex.py
 test/units/utils/test_vars.py
-test/units/vars/test_variable_manager.py
