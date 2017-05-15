@@ -208,10 +208,16 @@ def main():
         project = tower_cli.get_resource('project')
         try:
             if state == 'present':
-                org_res = tower_cli.get_resource('organization')
-                org = org_res.get(name=organization)
-                cred_res = tower_cli.get_resource('credential')
-                cred = cred_res.get(name=scm_credential)
+                try:
+                    org_res = tower_cli.get_resource('organization')
+                    org = org_res.get(name=organization)
+                except (exc.NotFound) as excinfo:
+                    module.fail_json(msg='Failed to update project, organization not found: {0}'.format(excinfo), changed=False)
+                try:
+                    cred_res = tower_cli.get_resource('credential')
+                    cred = cred_res.get(name=scm_credential)
+                except (exc.NotFound) as excinfo:
+                    module.fail_json(msg='Failed to update project, credential not found: {0}'.format(excinfo), changed=False)
 
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
@@ -223,8 +229,6 @@ def main():
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = project.delete(name=name)
-        except (exc.NotFound) as excinfo:
-            module.fail_json(msg='Failed to update project, organization not found: {0}'.format(excinfo), changed=False)
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to update project: {0}'.format(excinfo), changed=False)
 
