@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: fortios_address
-version_added: "2.3"
+version_added: "2.4"
 author: "Benjamin Jolivot (@bjolivot)"
 short_description: Manage fortios firewall address objects
 description:
@@ -50,7 +50,7 @@ options:
     choices: ['iprange', 'fqdn', 'ipmask', 'geography']
   value:
     description:
-      - Address value, absed on type.
+      - Address value, based on type.
         If type=fqdn, somthing like www.google.com.
         If type=ipmask, you can use simple ip (192.168.0.1), ip+mask (192.168.0.1 255.255.255.0) or CIDR (192.168.0.1/32).
   start_ip:
@@ -70,7 +70,7 @@ options:
     description:
       - free text to describe address.
 notes:
-  - This module requires pyFG and netaddr python library.
+  - This module requires netaddr python library.
 """
 
 EXAMPLES = """
@@ -120,49 +120,43 @@ change_string:
 """
 
 from ansible.module_utils.fortios import fortios_argument_spec, fortios_required_if
-from ansible.module_utils.fortios import backup
+from ansible.module_utils.fortios import backup, AnsibleFortios
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
-#check for pyFG lib
-try:
-    from pyFG import FortiOS, FortiConfig
-    from pyFG.fortios import logger
-    from pyFG.exceptions import CommandExecutionException, FailedCommit, ForcedCommit
-    HAS_PYFG=True
-except:
-    HAS_PYFG=False
 
-#check for netaddr lib
+# check for netaddr lib
 try:
     from netaddr import IPNetwork
-    HAS_NETADDR=True
+    HAS_NETADDR = True
 except:
-    HAS_NETADDR=False
+    HAS_NETADDR = False
 
 
-#define valid country list for GEOIP address type
-FG_COUNTRY_LIST=('ZZ','A1','A2','O1','AD','AE','AF','AG','AI','AL','AM','AN','AO',
-'AP','AQ','AR','AS','AT','AU','AW','AX','AZ','BA','BB','BD','BE',
-'BF','BG','BH','BI','BJ','BL','BM','BN','BO','BQ','BR','BS','BT',
-'BV','BW','BY','BZ','CA','CC','CD','CF','CG','CH','CI','CK','CL',
-'CM','CN','CO','CR','CU','CV','CW','CX','CY','CZ','DE','DJ','DK',
-'DM','DO','DZ','EC','EE','EG','EH','ER','ES','ET','EU','FI','FJ',
-'FK','FM','FO','FR','GA','GB','GD','GE','GF','GG','GH','GI','GL',
-'GM','GN','GP','GQ','GR','GS','GT','GU','GW','GY','HK','HM','HN',
-'HR','HT','HU','ID','IE','IL','IM','IN','IO','IQ','IR','IS','IT',
-'JE','JM','JO','JP','KE','KG','KH','KI','KM','KN','KP','KR','KW',
-'KY','KZ','LA','LB','LC','LI','LK','LR','LS','LT','LU','LV','LY',
-'MA','MC','MD','ME','MF','MG','MH','MK','ML','MM','MN','MO','MP',
-'MQ','MR','MS','MT','MU','MV','MW','MX','MY','MZ','NA','NC','NE',
-'NF','NG','NI','NL','NO','NP','NR','NU','NZ','OM','PA','PE','PF',
-'PG','PH','PK','PL','PM','PN','PR','PS','PT','PW','PY','QA','RE',
-'RO','RS','RU','RW','SA','SB','SC','SD','SE','SG','SH','SI','SJ',
-'SK','SL','SM','SN','SO','SR','SS','ST','SV','SX','SY','SZ','TC',
-'TD','TF','TG','TH','TJ','TK','TL','TM','TN','TO','TR','TT','TV',
-'TW','TZ','UA','UG','UM','US','UY','UZ','VA','VC','VE','VG','VI',
-'VN','VU','WF','WS','YE','YT','ZA','ZM','ZW')
+# define valid country list for GEOIP address type
+FG_COUNTRY_LIST = (
+    'ZZ', 'A1', 'A2', 'O1', 'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AN', 'AO',
+    'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ', 'BA', 'BB', 'BD', 'BE',
+    'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT',
+    'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL',
+    'CM', 'CN', 'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK',
+    'DM', 'DO', 'DZ', 'EC', 'EE', 'EG', 'EH', 'ER', 'ES', 'ET', 'EU', 'FI', 'FJ',
+    'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL',
+    'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HM', 'HN',
+    'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT',
+    'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW',
+    'KY', 'KZ', 'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY',
+    'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP',
+    'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA', 'NC', 'NE',
+    'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF',
+    'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE',
+    'RO', 'RS', 'RU', 'RW', 'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ',
+    'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SX', 'SY', 'SZ', 'TC',
+    'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV',
+    'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI',
+    'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW'
+)
 
 
 def get_formated_ipaddr(input_ip):
@@ -197,107 +191,93 @@ def get_formated_ipaddr(input_ip):
 
 def main():
     argument_spec = dict(
-        state     = dict(required=True, choices=['present', 'absent']),
-        name      = dict(required=True, type='str'),
-        type      = dict(choices=['iprange', 'fqdn', 'ipmask', 'geography'], default='ipmask'),
-        value     = dict(type='str'),
-        start_ip  = dict(type='str'),
-        end_ip    = dict(type='str'),
-        country   = dict(type='str'),
-        interface = dict(type='str', default='any'),
-        comment   = dict(type='str'),
+        state=dict(required=True, choices=['present', 'absent']),
+        name=dict(required=True),
+        type=dict(choices=['iprange', 'fqdn', 'ipmask', 'geography'], default='ipmask'),
+        value=dict(),
+        start_ip=dict(),
+        end_ip=dict(),
+        country=dict(),
+        interface=dict(default='any'),
+        comment=dict(),
     )
 
-    fortios_address_required_if = [
-        ['type',   'ipmask'   , ['value']             ],
-        ['type',   'fqdn'     , ['value']             ],
-        ['type',   'iprange'  , ['start_ip', 'end_ip']],
-        ['type',   'geography', ['country']           ],
-    ]
-
-    #merge global required_if & argument_spec from module_utils/fortios.py
+    # merge argument_spec from module_utils/fortios.py
     argument_spec.update(fortios_argument_spec)
-    required_if = fortios_required_if + fortios_address_required_if
 
-
+    # Load module
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_if=required_if,
+        required_if=fortios_required_if,
         supports_check_mode=True,
     )
-
     result = dict(changed=False)
 
-    # fail if libs not present
-    msg = ""
-    if not HAS_PYFG:
-        msg += 'Could not import the python library pyFG required by this module'
-
     if not HAS_NETADDR:
-        msg += 'Could not import the python library netaddr required by this module'
-
-    if msg != "":
-        module.fail_json(msg=msg)
-
-    #validate country
-    if module.params['type'] == "geography":
-        if module.params['country'] not in FG_COUNTRY_LIST:
-            module.fail_json(msg="Invalid country arg, need to be in `diagnose firewall ipgeo country-list`")
-
-    # rewrite ip address in case of CIDR format
-    if module.params['type'] == "ipmask":
-        formated_ip = get_formated_ipaddr(module.params['value'])
-        if formated_ip is not False:
-            module.params['value'] = get_formated_ipaddr(module.params['value'])
-        else:
-            module.fail_json(msg="Bad ip address format")
-
-    #define device
-    f = FortiOS( module.params['host'],
-        username=module.params['username'],
-        password=module.params['password'],
-        timeout=module.params['timeout'],
-        vdom=module.params['vdom'])
-
-    #Config path
-    path = 'firewall address'
-
-    #connect
-    try:
-        f.open()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg='Error connecting device. %s' % e)
-
-
-
-    #get  config
-    try:
-        f.load_config(path=path)
-        result['firewall_address_config'] = f.running_config.to_text()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg='Error reading running config. %s' % e)
-
-    #Absent State
+        module.fail_json(msg='Could not import the python library netaddr required by this module')
+    
+    # check params
     if module.params['state'] == 'absent':
-        f.candidate_config[path].del_block(module.params['name'])
-        change_string = f.compare_config()
-        if change_string:
-            result['change_string'] = change_string
-            result['changed'] = True
+        if module.params['type'] != "ipmask":
+            module.fail_json(msg='Invalid argument type=%s when state=absent' %  module.params['type'])
+        if module.params['value'] is not None:
+            module.fail_json(msg='Invalid argument `value` when state=absent')
+        if module.params['start_ip'] is not None:
+            module.fail_json(msg='Invalid argument `start_ip` when state=absent')
+        if module.params['end_ip'] is not None:
+            module.fail_json(msg='Invalid argument `end_ip` when state=absent')
+        if module.params['country'] is not None:
+            module.fail_json(msg='Invalid argument `country` when state=absent')
+        if module.params['interface'] != "any":
+            module.fail_json(msg='Invalid argument `interface` when state=absent')
+        if module.params['comment'] is not None:
+            module.fail_json(msg='Invalid argument `comment` when state=absent')
+    else:
+        # state=present
+        # validate IP
+        if module.params['type'] == "ipmask":
+            formated_ip = get_formated_ipaddr(module.params['value'])
+            if formated_ip is not False:
+                module.params['value'] = get_formated_ipaddr(module.params['value'])
+            else:
+                module.fail_json(msg="Bad ip address format")
+ 
+        # validate country
+        if module.params['type'] == "geography":
+            if module.params['country'] not in FG_COUNTRY_LIST:
+                module.fail_json(msg="Invalid country argument, need to be in `diagnose firewall ipgeo country-list`")
+
+        # validate iprange
+        if module.params['type'] == "iprange":
+            if module.params['start_ip'] is None:
+                module.fail_json(msg="Missing argument 'start_ip' when type is iprange")
+            if module.params['end_ip'] is None:
+                module.fail_json(msg="Missing argument 'end_ip' when type is iprange")
 
 
-    #Present state
+    # init forti object
+    fortigate = AnsibleFortios(module)
+
+    # Config path
+    config_path = 'firewall address'
+
+    # load config
+    fortigate.load_config(config_path)
+
+    # Absent State
+    if module.params['state'] == 'absent':
+        fortigate.candidate_config[config_path].del_block(module.params['name'])
+
+    # Present state
     if module.params['state'] == 'present':
-        #define address params
-        new_addr = FortiConfig(module.params['name'], 'edit')
+        # define address params
+        new_addr = fortigate.get_empty_configuration_block(module.params['name'], 'edit')
 
         if module.params['comment'] is not None:
             new_addr.set_param('comment', '"%s"' % (module.params['comment']))
 
         if module.params['type'] == 'iprange':
-            new_addr.set_param('iprange', module.params['start_ip'])
+            new_addr.set_param('type', 'iprange')
             new_addr.set_param('start-ip', module.params['start_ip'])
             new_addr.set_param('end-ip', module.params['end_ip'])
 
@@ -315,26 +295,11 @@ def main():
             if module.params['type'] == 'ipmask':
                 new_addr.set_param('subnet', module.params['value'])
 
-        #add to candidate config
-        f.candidate_config[path][module.params['name']] = new_addr
+        # add the new address object to the device
+        fortigate.add_block(module.params['name'], new_addr)
 
-        #check if change needed
-        change_string = f.compare_config()
-        if change_string:
-            result['change_string'] = change_string
-            result['changed'] = True
-
-    #Commit if not check mode
-    if module.check_mode is False and change_string != "":
-        try:
-            f.commit()
-        except FailedCommit:
-            #rollback
-            e = get_exception()
-            module.fail_json(msg="Unable to commit change, check your args, the error was %s" % (e.message))
-
-    module.exit_json(**result)
+    # Apply changes (check mode is managed directly by the fortigate object)
+    fortigate.apply_changes()
 
 if __name__ == '__main__':
     main()
-
