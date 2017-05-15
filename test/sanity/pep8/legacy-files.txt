@@ -739,7 +739,6 @@ lib/ansible/plugins/action/iosxr_template.py
 lib/ansible/plugins/action/junos.py
 lib/ansible/plugins/action/junos_template.py
 lib/ansible/plugins/action/normal.py
-lib/ansible/plugins/action/nxos.py
 lib/ansible/plugins/action/nxos_template.py
 lib/ansible/plugins/action/ops_config.py
 lib/ansible/plugins/action/ops_template.py
