@@ -215,11 +215,11 @@ def main():
 
     if not HAS_NETADDR:
         module.fail_json(msg='Could not import the python library netaddr required by this module')
-    
+
     # check params
     if module.params['state'] == 'absent':
         if module.params['type'] != "ipmask":
-            module.fail_json(msg='Invalid argument type=%s when state=absent' %  module.params['type'])
+            module.fail_json(msg='Invalid argument type=%s when state=absent' % module.params['type'])
         if module.params['value'] is not None:
             module.fail_json(msg='Invalid argument `value` when state=absent')
         if module.params['start_ip'] is not None:
@@ -241,7 +241,7 @@ def main():
                 module.params['value'] = get_formated_ipaddr(module.params['value'])
             else:
                 module.fail_json(msg="Bad ip address format")
- 
+
         # validate country
         if module.params['type'] == "geography":
             if module.params['country'] not in FG_COUNTRY_LIST:
@@ -253,7 +253,6 @@ def main():
                 module.fail_json(msg="Missing argument 'start_ip' when type is iprange")
             if module.params['end_ip'] is None:
                 module.fail_json(msg="Missing argument 'end_ip' when type is iprange")
-
 
     # init forti object
     fortigate = AnsibleFortios(module)
