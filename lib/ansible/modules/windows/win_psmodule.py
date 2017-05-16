@@ -90,8 +90,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
---- 
-output: 
+---
+output:
   description: A message describing the task result.
   returned: always
   sample: "Module PowerShellCookbook installed"
