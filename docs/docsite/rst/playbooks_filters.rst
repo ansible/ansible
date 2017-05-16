@@ -645,6 +645,7 @@ To always exhaust all list use ``zip_longest``::
 
 
 .. versionadded:: 2.4
+
 To format a date using a string (like with the shell date command), use the "strftime" filter::
 
     # Display year-month-day
