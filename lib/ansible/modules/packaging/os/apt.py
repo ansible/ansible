@@ -551,8 +551,9 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             pkg = apt.debfile.DebPackage(deb_file)
             pkg_name = get_field_of_deb(m, deb_file, "Package")
             pkg_version = get_field_of_deb(m, deb_file, "Version")
+            pkg_arch = get_field_of_deb(m, deb_file, "Architecture")
             try:
-                installed_pkg = apt.Cache()[pkg_name]
+                installed_pkg = apt.Cache()[pkg_name + ":" + pkg_arch]
                 installed_version = installed_pkg.installed.version
                 if package_version_compare(pkg_version, installed_version) == 0:
                     # Does not need to down-/upgrade, move on to next package
