@@ -176,7 +176,6 @@ def create_target_http_proxy(client, params, project_id):
         raise
 
 
-
 def delete_target_http_proxy(client, name, project_id):
     """
     Delete a Target_Proxy.
