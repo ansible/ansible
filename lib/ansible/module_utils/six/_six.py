@@ -43,8 +43,6 @@ if PY3:
     class_types = type,
     text_type = str
     binary_type = bytes
-    cmp = lambda a, b: (a > b) - (a < b)
-
     MAXSIZE = sys.maxsize
 else:
     string_types = basestring,
@@ -52,7 +50,6 @@ else:
     class_types = (type, types.ClassType)
     text_type = unicode
     binary_type = str
-    cmp = cmp
 
     if sys.platform.startswith("java"):
         # Jython always uses 32 bits.
