@@ -426,7 +426,7 @@ class VMWareInventory(object):
         # Reset the inventory keys
         for k, v in name_mapping.items():
 
-            if not host_mapping or not k in host_mapping:
+            if not host_mapping or k not in host_mapping:
                 continue
 
             # set ansible_host (2.x)
@@ -742,5 +742,3 @@ class VMWareInventory(object):
 if __name__ == "__main__":
     # Run the script
     print(VMWareInventory().show())
-
-
