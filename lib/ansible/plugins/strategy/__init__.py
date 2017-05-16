@@ -241,11 +241,13 @@ class StrategyBase:
         return host_list
 
     def get_delegated_hosts(self, result, task):
-
-        host_name = task.delegate_to
-        actual_host = self._inventory.get_host(host_name)
-        if actual_host is None:
-            actual_host = Host(name=host_name)
+        host_name = result.get('_ansible_delegated_vars', {}).get('ansible_host', None)
+        if host_name is not None:
+            actual_host = self._inventory.get_host(host_name)
+            if actual_host is None:
+                actual_host = Host(name=host_name)
+        else:
+            actual_host = Host(name=task.delegate_to)
 
         return [actual_host]
 
