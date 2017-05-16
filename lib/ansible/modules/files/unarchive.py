@@ -548,7 +548,7 @@ class ZipArchive(object):
 
         # DEBUG
 #        out = old_out + out
-        print "Err: ",err
+
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd, diff=diff)
 
     def unarchive(self):
