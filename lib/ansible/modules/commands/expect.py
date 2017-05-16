@@ -40,10 +40,10 @@ options:
     required: true
   creates:
     description:
-      - A filename, when it already exists, this step will B(not) be run.
+      - A filename or (since 2.4) a glob pattern, when it already exists, this step will B(not) be run.
   removes:
     description:
-      - A filename, when it does not exist, this step will B(not) be run.
+      - A filename or (since 2.4) a glob pattern, when it does not exist, this step will B(not) be run.
   chdir:
     description:
       - Change into this directory before running the command.
@@ -99,6 +99,7 @@ EXAMPLES = r'''
 
 import datetime
 import os
+import glob
 
 try:
     import pexpect
@@ -170,7 +171,7 @@ def main():
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
         # of command executions.
-        if os.path.exists(creates):
+        if glob.glob(creates):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s exists" % creates,
@@ -182,7 +183,7 @@ def main():
         # do not run the command if the line contains removes=filename
         # and the filename does not exist.  This allows idempotence
         # of command executions.
-        if not os.path.exists(removes):
+        if not glob.glob(removes):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s does not exist" % removes,
