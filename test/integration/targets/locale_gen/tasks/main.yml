@@ -16,4 +16,4 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - include: 'locale_gen.yml'
-  when: ansible_distribution in ('Ubuntu', 'Debian')
+  when: ansible_os_family in ('Debian',)
