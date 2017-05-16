@@ -311,7 +311,6 @@ lib/ansible/modules/files/iso_extract.py
 lib/ansible/modules/files/replace.py
 lib/ansible/modules/files/synchronize.py
 lib/ansible/modules/files/tempfile.py
-lib/ansible/modules/files/unarchive.py
 lib/ansible/modules/files/xattr.py
 lib/ansible/modules/identity/opendj/opendj_backendprop.py
 lib/ansible/modules/messaging/rabbitmq_binding.py
