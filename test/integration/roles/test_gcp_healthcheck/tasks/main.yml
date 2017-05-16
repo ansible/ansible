@@ -1,7 +1,8 @@
 # GCP Healthcheck Integration Tests.
-# TODO(supertom): in progress, NOT WORKING
 ######
+# ============================================================
 - name: param check
+# ============================================================
   gcp_healthcheck:
     service_account_email: "{{ service_account_email }}"
     credentials_file: "{{ credentials_file }}"
@@ -21,7 +22,9 @@
   assert:
     that:
       'result.msg == "timeout (30) is greater than check_interval (10)"'
+# ============================================================
 - name: create "{{ http_healthcheck }}"
+# ============================================================
   gcp_healthcheck:
     service_account_email: "{{ service_account_email }}"
     credentials_file: "{{ credentials_file }}"
@@ -41,7 +44,32 @@
     that:
       - 'result.state == "present"'
       - 'result.changed'
+# ============================================================
+- name: "update {{ http_healthcheck }}, no change"
+# ============================================================
+  gcp_healthcheck:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    healthcheck_name: "{{ http_healthcheck }}"
+    healthcheck_type: HTTP
+    host_header: my-host
+    request_path: /hc
+    check_interval: 5
+    timeout: 5
+    unhealthy_threshold: 2
+    healthy_threshold: 1
+    state: present
+  register: result
+- name: assert update no change
+  assert:
+    that:
+      - 'result.state == "present"'
+      - 'not result.changed'
+      - 'result.port == 80'
+# ============================================================
 - name: create minimum "{{ https_healthcheck }}"
+# ============================================================
   gcp_healthcheck:
     service_account_email: "{{ service_account_email }}"
     credentials_file: "{{ credentials_file }}"
@@ -55,7 +83,26 @@
     that:
       - 'result.state == "present"'
       - 'result.changed'
+# ============================================================
+- name: "update {{ https_healthcheck }}, no change"
+# ============================================================
+  gcp_healthcheck:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    healthcheck_name: "{{ https_healthcheck }}"
+    healthcheck_type: HTTPS
+    state: present
+  register: result
+- name: assert not updated
+  assert:
+    that:
+      - 'result.state == "present"'
+      - 'result.port == 443'
+      - 'not result.changed'
+# ============================================================
 - name: update "{{ https_healthcheck }}"
+# ============================================================
   gcp_healthcheck:
     service_account_email: "{{ service_account_email }}"
     credentials_file: "{{ credentials_file }}"
@@ -68,6 +115,7 @@
     timeout: 5
     unhealthy_threshold: 2
     healthy_threshold: 1
+    port: 444
     state: present
   register: result
 - name: assert update "{{ https_healthcheck }}"
@@ -75,8 +123,12 @@
     that:
       - 'result.state == "present"'
       - 'result.changed'
-      - 'result.updated_healthcheck'
+      - 'result.port == 444'
+# ============================================================
+- pause: seconds=5
+# ============================================================
 - name: delete "{{ http_healthcheck }}"
+# ============================================================
   gcp_healthcheck:
     service_account_email: "{{ service_account_email }}"
     credentials_file: "{{ credentials_file }}"
@@ -98,8 +150,9 @@
     that:
       - 'result.state == "absent"'
       - 'result.changed'
-- pause: seconds=5
+# ============================================================
 - name: delete "{{ https_healthcheck }}"
+# ============================================================
   gcp_healthcheck:
     service_account_email: "{{ service_account_email }}"
     credentials_file: "{{ credentials_file }}"
