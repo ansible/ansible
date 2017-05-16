@@ -1,9 +1,20 @@
-# This code is part of Ansible, but is an independent component.
-# This file identifies and gains playbook params, and provides this params to ansible module ecs.
-# This file implements connection between ansible and Alicloud ecs api via footmark.
 #
-# Copyright (c), xiao zhu <heguimin36@163.com.com>, 2016.08
-# All rights reserved.
+# Copyright (c) 2017 Alibaba Group Holding Limited. He Guimin <heguimin36@163.com.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 

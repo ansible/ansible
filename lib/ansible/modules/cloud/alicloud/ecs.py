@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright 2017 Alibaba Group Holding Limited.
+# Copyright (c) 2017 Alibaba Group Holding Limited. He Guimin <heguimin36@163.com.com>
 #
 # This file is part of Ansible
 #
@@ -31,27 +31,6 @@ description:
     - Creates, starts, stops, restarts or terminates ecs instances.
     - Adds or removes ecs instances to/from security group.
 common options:
-  alicloud_access_key:
-    description:
-      - Aliyun Cloud access key. If not set then the value of the `ALICLOUD_ACCESS_KEY`, `ACS_ACCESS_KEY_ID`, 
-        `ACS_ACCESS_KEY` or `ECS_ACCESS_KEY` environment variable is used.
-    required: false
-    default: null
-    aliases: ['acs_access_key', 'ecs_access_key','access_key']
-  alicloud_secret_key:
-    description:
-      - Aliyun Cloud secret key. If not set then the value of the `ALICLOUD_SECRET_KEY`, `ACS_SECRET_ACCESS_KEY`,
-        `ACS_SECRET_KEY`, or `ECS_SECRET_KEY` environment variable is used.
-    required: false
-    default: null
-    aliases: ['acs_secret_access_key', 'ecs_secret_key','secret_key']
-  alicloud_region:
-    description:
-      - The Aliyun Cloud region to use. If not specified then the value of the `ALICLOUD_REGION`, `ACS_REGION`, 
-        `ACS_DEFAULT_REGION` or `ECS_REGION` environment variable, if any, is used.
-    required: false
-    default: null
-    aliases: ['acs_region', 'ecs_region', 'region']
   status:
     description:
       - The state of the instance after operating.
