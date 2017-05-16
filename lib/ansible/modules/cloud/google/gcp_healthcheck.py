@@ -25,10 +25,10 @@ DOCUMENTATION = '''
 ---
 module: gcp_healthcheck
 version_added: "2.4"
-short_description: Create, Update or Destory a Healthcheck.
+short_description: Create, Update or Destroy a Healthcheck.
 description:
-    - Create, Update or Destory a Healthcheck. Currently only HTTP and
-      HTTPS Healthchecs are supported. Healthchecks are used to monitor
+    - Create, Update or Destroy a Healthcheck. Currently only HTTP and
+      HTTPS Healthchecks are supported. Healthchecks are used to monitor
       individual instances, managed instance groups and/or backend
       services. Healtchecks are reusable.
     - Visit
@@ -79,11 +79,16 @@ options:
        - The request path of the HTTPS health check request.
          The default value is "/".
     required: false
+  state:
+    description: State of the Healthcheck
+    returned: Always.
+    type: str
+    sample: present
   timeout:
     description:
-       - How long (in seconds) to wait before claiming failure. The default
-         value is 5 seconds. It is invalid for timeout to have a greater
-         value than check_interval.
+       - How long (in seconds) to wait for a response before claiming
+         failure. The default value is 5 seconds. It is invalid for timeout
+         to have a greater value than check_interval.
     required: false
   unhealthy_threshold:
     description:
@@ -95,6 +100,35 @@ options:
        - A so-far unhealthy instance will be marked healthy after this
          many consecutive successes. The default value is 2.
     required: false
+  service_account_email:
+    description:
+      - service account email
+    required: false
+    default: null
+  service_account_permissions:
+    version_added: "2.0"
+    description:
+      - service account permissions (see
+        U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
+        --scopes section for detailed information)
+    required: false
+    default: null
+    choices: [
+      "bigquery", "cloud-platform", "compute-ro", "compute-rw",
+      "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
+      "monitoring", "sql-admin", "storage-full", "storage-ro",
+      "storage-rw", "taskqueue", "userinfo-email"
+    ]
+  credentials_file:
+    description:
+      - Path to the JSON file associated with the service account email
+    default: null
+    required: false
+  project_id:
+    description:
+      - Your GCP project ID
+    required: false
+    default: null
 '''
 
 EXAMPLES = '''
@@ -142,12 +176,6 @@ state:
     returned: Always.
     type: str
     sample: present
-updated_healthcheck:
-    description: True if the healthcheck has been updated. Will not appear on
-                 initial healthcheck creation.
-    returned: if the healthcheck has been updated.
-    type: bool
-    sample: true
 healthcheck_name:
     description: Name of the Healthcheck
     returned: Always
@@ -165,12 +193,6 @@ healthcheck:
     sample: { "name": "my-hc", "port": 443, "requestPath": "/foo" }
 '''
 
-
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -374,13 +396,8 @@ def main():
         state=dict(choices=['absent', 'present'], default='present'),
         service_account_email=dict(),
         service_account_permissions=dict(type='list'),
-        pem_file=dict(),
         credentials_file=dict(),
         project_id=dict(), ), )
-
-    if not HAS_PYTHON26:
-        module.fail_json(
-            msg="GCE module requires python's 'ast' module, python v2.6+")
 
     client, conn_params = get_google_api_client(module, 'compute', user_agent_product=USER_AGENT_PRODUCT,
                                                 user_agent_version=USER_AGENT_VERSION)
@@ -436,8 +453,6 @@ def main():
                                                                  name=params['healthcheck_name'],
                                                                  project_id=conn_params['project_id'],
                                                                  resource_type=params['healthcheck_type'])
-        json_output['updated_healthcheck'] = changed
-
     json_output['changed'] = changed
     json_output.update(params)
     module.exit_json(**json_output)
