@@ -31,9 +31,7 @@ except ImportError:
 __all__ = ('to_bytes', 'to_unicode', 'to_str', 'unicode_wrap')
 
 
-###
-### Backwards compat
-###
+# Backwards compat
 
 def to_bytes(*args, **kwargs):
     display.deprecated(u'ansible.utils.unicode.to_bytes is deprecated.  Use ansible.module_utils._text.to_bytes instead', version=u'2.4')
@@ -55,7 +53,7 @@ def to_str(*args, **kwargs):
         kwargs['errors'] = 'replace'
     return to_native(*args, **kwargs)
 
-### End Backwards compat
+# End Backwards compat
 
 
 def unicode_wrap(func, *args, **kwargs):
