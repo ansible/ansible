@@ -6,10 +6,6 @@ docs/bin/dump_keywords.py
 docs/bin/plugin_formatter.py
 docs/docsite/rst/conf.py
 examples/scripts/uptime.py
-hacking/cherrypick.py
-hacking/get_library.py
-hacking/metadata-tool.py
-hacking/tests/gen_distribution_version_testcase.py
 lib/ansible/cli/__init__.py
 lib/ansible/cli/adhoc.py
 lib/ansible/cli/console.py
