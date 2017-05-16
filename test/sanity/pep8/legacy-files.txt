@@ -401,7 +401,6 @@ lib/ansible/modules/network/aos/aos_template.py
 lib/ansible/modules/network/asa/asa_acl.py
 lib/ansible/modules/network/asa/asa_command.py
 lib/ansible/modules/network/asa/asa_config.py
-lib/ansible/modules/net_tools/basics/get_url.py
 lib/ansible/modules/net_tools/basics/uri.py
 lib/ansible/modules/network/bigswitch/bigmon_chain.py
 lib/ansible/modules/network/bigswitch/bigmon_policy.py
