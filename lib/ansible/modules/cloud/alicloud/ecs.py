@@ -36,9 +36,10 @@ options:
       required: false
       default: 'present'
       aliases: ['state']
-      choices: [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
-               map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
-                           'describe_status']
+      choices: 
+        - [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
+        - map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
+                        'describe_status']
     alicloud_zone:
       description: Aliyun availability zone ID in which to launch the instance
       required: false
