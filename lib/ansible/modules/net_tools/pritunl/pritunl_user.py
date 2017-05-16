@@ -99,6 +99,12 @@ options:
         default: True
         description:
             - Enable/Disable Gravatar usage for the user C(user_name).
+
+    validate_certs:
+        required: false
+        default : true
+        description:
+            - If certificates should be validated or not.
 '''
 
 EXAMPLES = '''

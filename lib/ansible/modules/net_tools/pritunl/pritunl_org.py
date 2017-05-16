@@ -60,6 +60,12 @@ options:
         default: null
         description:
             - Name of the Organization to manage in Pritunl.
+
+    validate_certs:
+        required: false
+        default : true
+        description:
+            - If certificates should be validated or not.
 '''
 
 EXAMPLES = '''
