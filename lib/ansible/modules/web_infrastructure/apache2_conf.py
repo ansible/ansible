@@ -26,26 +26,33 @@ module: apache2_conf
 version_added: "2.4"
 author:
     - Den Ivanov (@urajio)
-short_description: enables/disables a configuration snippet of the Apache2 webserver
+short_description: Enables or disables a specified site, module or configuration snippet of the Apache2 webserver.
 description:
-   - Enables or disables a specified site or configuration snippet of the Apache2 webserver.
-     This module support Debian/Ubuntu based systems, and requires a2enconf, a2disconf, a2ensite, a2dissite scripts.
+   - This module manage Debian-style Apache configuration, where configuration snippets stored in 
+     /etc/apache2/[conf|sites|mods]-available dirs, and can be enabled by creating symlinks within corresponding 
+     /etc/apache2/[conf|sites|mods]-enabled directory. Use a2enconf, a2disconf, a2ensite, a2dissite, a2enmod, a2dismod scripts.
 options:
    type:
      description:
-        - type of fragment
+        - type of configuration snippet
      required: true
-     choices: ['conf', 'site']
+     choices: ['conf', 'site', 'mod']
    name:
      description:
-        - name of the configuration snippet to enable/disable
+        - name of the configuration snippet. It can be a complete file name or file name without the suffix. 
      required: true
    state:
      description:
         - indicate the desired state of the resource
      choices: ['present', 'absent']
      default: present
-requirements: ["a2enconf","a2disconf","a2ensite","a2dissite"]
+   force:
+     description:
+        - force disabling of default modules and override Debian warnings
+     required: false
+     choices: ['True', 'False']
+     default: False
+requirements: ["a2enconf","a2disconf","a2ensite","a2dissite","a2enmod","a2dismod"]
 '''
 
 EXAMPLES = '''
@@ -54,6 +61,11 @@ EXAMPLES = '''
     type: conf
     state: present
     name: charset.conf
+# disable config fragment using a short name
+- apache2_conf:
+    type: conf
+    state: absent
+    name: charset
 # disable config fragment
 - apache2_conf:
     type: conf
@@ -63,6 +75,22 @@ EXAMPLES = '''
 - apache2_conf:
     type: site
     name: default-ssl.conf
+# enables the Apache2 module unique_id
+- apache2_conf:
+    type: mod
+    state: present
+    name: unique_id.load
+# disables the Apache2 module
+- apache2_conf:
+    type: mod
+    state: absent
+    name: unique_id.load
+# disable essential module for Debian
+- apache2_conf:
+    type: mod
+    state: absent
+    name: autoindex.load
+    force: True
 '''
 
 RETURN = '''
@@ -111,47 +139,67 @@ class ApacheFragmentUnsupported(ApacheFragmentException):
 class ApacheFragment(object):
     available_dir = None
     enabled_dir = None
-    fragment_suffix = '.conf'
+    fragment_suffix = None
     command_names = dict(present=None, absent=None)
 
     def __init__(self, name):
-        self.fragment_file = basename(name)
         for required_dir in (self.available_dir, self.enabled_dir):
             if not exists(required_dir):
                 raise ApacheFragmentUnsupported("directory %s not found" % required_dir)
 
-    def state(self):
-        """
-        :return: "present" if fragment enabled, "absent" otherwise. Raise exception if fragment not found.
-        """
-        available_fragment = join(self.available_dir, self.fragment_file)
-        if not exists(available_fragment):
+        if name != basename(name):
+            raise ApacheFragmentException("Configuration fragment name should not contain path")
+
+        if name.endswith(self.fragment_suffix):
+            self.fragment_file = name
+            self.fragment_name = splitext(name)[0]
+        else:
+            self.fragment_file = name + self.fragment_suffix
+            self.fragment_name = name
+        if not exists(join(self.available_dir, self.fragment_file)):
             raise ApacheFragmentException(
                 "Apache config fragment %s not found in %s" % (self.fragment_file, self.available_dir))
+
+    def state(self):
+        """
+        :return: "present" if fragment enabled, "absent" otherwise.
+        """
+        available_fragment = join(self.available_dir, self.fragment_file)
         for enabled_fragment in glob.glob(join(self.enabled_dir, '*' + self.fragment_suffix)):
             if islink(enabled_fragment) and samefile(available_fragment, enabled_fragment):
                 return "present"
         return "absent"
 
     def set(self, state=None):
+        if module.params['force']:
+            force = ' -f'
+        else:
+            force = None
         command_name = module.get_bin_path(self.command_names[state])
         if command_name is None:
             raise ApacheFragmentUnsupported("command %s not found" % self.command_names[state])
-        # Short name of fragment: without path and suffix
-        fragment_name = splitext(self.fragment_file)[0]
-        return module.run_command([command_name, fragment_name], check_rc=True)
+        return module.run_command([command_name, force, self.fragment_name], check_rc=True)
 
 
 class ApacheConfigFragment(ApacheFragment):
     available_dir = '/etc/apache2/conf-available'
     enabled_dir = '/etc/apache2/conf-enabled'
+    fragment_suffix = '.conf'
     command_names = dict(present='a2enconf', absent='a2disconf')
 
 
 class ApacheSiteFragment(ApacheFragment):
     available_dir = '/etc/apache2/sites-available'
     enabled_dir = '/etc/apache2/sites-enabled'
+    fragment_suffix = '.conf'
     command_names = dict(present='a2ensite', absent='a2dissite')
+
+
+class ApacheModuleFragment(ApacheFragment):
+    available_dir = '/etc/apache2/mods-available'
+    enabled_dir = '/etc/apache2/mods-enabled'
+    fragment_suffix = '.load'
+    command_names = dict(present='a2enmod', absent='a2dismod')
 
 
 def _set_state(state):
@@ -162,6 +210,8 @@ def _set_state(state):
         fragment = ApacheConfigFragment(name)
     elif type == 'site':
         fragment = ApacheSiteFragment(name)
+    elif type == 'mod':
+        fragment = ApacheModuleFragment(name)
 
     if fragment.state() != state:
         if module.check_mode:
@@ -181,9 +231,10 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            type=dict(required=True, choices=['conf', 'site']),
+            type=dict(required=True, choices=['conf', 'site', 'mod']),
             name=dict(required=True),
-            state=dict(default='present', choices=['absent', 'present'])
+            state=dict(default='present', choices=['absent', 'present']),
+            force=dict(required=False, type='bool', default=False)
         ),
         supports_check_mode=True
     )

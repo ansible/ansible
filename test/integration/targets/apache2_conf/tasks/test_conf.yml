@@ -74,3 +74,40 @@
     that:
       - 'disable_nonexistent|failed'
       - 'not disable_nonexistent.changed'
+
+- name: enable conf by short name
+  apache2_conf:
+    type: conf
+    name: conf_example
+    state: present
+  register: enable_short
+
+- name: ensure changed on successful enable
+  assert:
+    that:
+      - 'enable_short.changed'
+
+- name: disable conf by short name
+  apache2_conf:
+    type: conf
+    name: conf_example
+    state: absent
+  register: disable_short
+
+- name: ensure changed on successful disable
+  assert:
+    that:
+      - 'disable_short.changed'
+
+- name: enable wrong conf
+  apache2_conf:
+    type: conf
+    name: /etc/resolv.conf
+    state: present
+  register: enable_wrong
+  ignore_errors: True
+
+- name: ensure failed on enable wrong conf
+  assert:
+    that:
+      - 'enable_wrong|failed'

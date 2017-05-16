@@ -1,13 +1,20 @@
 ---
-- name: Prepare for testing
-  include: prepare.yml
-  when: ansible_distribution in ('Ubuntu', 'Debian')
+- name: Prepare Dabian family distribution for testing
+  include: prepare_Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- name: Prepare Suse family distribution for testing
+  include: prepare_Suse.yml
+  when: ansible_os_family == 'Suse'
 
 - name: Test 'conf'
   include: test_conf.yml
-  when: ansible_distribution in ('Ubuntu', 'Debian')
-
+  when: ansible_os_family == 'Debian'
 
 - name: Test 'site'
   include: test_site.yml
-  when: ansible_distribution in ('Ubuntu', 'Debian')
+  when: ansible_os_family == 'Debian'
+
+- name: Test 'mod'
+  include: test_mod.yml
+  when: ansible_os_family in ('Debian', 'Suse')

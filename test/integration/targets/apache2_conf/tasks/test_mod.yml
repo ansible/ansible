@@ -1,8 +1,8 @@
 ---
-- name: disable disabled site
+- name: disable disabled mod
   apache2_conf:
-    type: site
-    name: site_example.conf
+    type: mod
+    name: mod_example.load
     state: absent
   register: disable_disabled
 
@@ -11,10 +11,10 @@
     that:
       - 'not disable_disabled.changed'
 
-- name: enable site
+- name: enable mod
   apache2_conf:
-    type: site
-    name: site_example.conf
+    type: mod
+    name: mod_example.load
     state: present
   register: enable
 
@@ -23,10 +23,10 @@
     that:
       - 'enable.changed'
 
-- name: enable enabled site
+- name: enable enabled mod
   apache2_conf:
-    type: site
-    name: site_example.conf
+    type: mod
+    name: mod_example.load
     state: present
   register: enable_enabled
 
@@ -35,10 +35,10 @@
     that:
       - 'not enable_enabled.changed'
 
-- name: disable site
+- name: disable mod
   apache2_conf:
-    type: site
-    name: site_example.conf
+    type: mod
+    name: mod_example.load
     state: absent
   register: disable
 
@@ -47,38 +47,38 @@
     that:
       - 'disable.changed'
 
-- name: enable nonexistent site
+- name: enable nonexistent mod
   apache2_conf:
-    type: site
-    name: site_nonexistent.conf
+    type: mod
+    name: mod_nonexistent.load
     state: present
   register: enable_nonexistent
   ignore_errors: True
 
-- name: ensure failed on nonexistent site enable
+- name: ensure failed on nonexistent conf enable
   assert:
     that:
       - 'enable_nonexistent|failed'
       - 'not enable_nonexistent.changed'
 
-- name: disable nonexistent site
+- name: disable nonexistent mod
   apache2_conf:
-    type: site
-    name: site_nonexistent.conf
+    type: mod
+    name: mod_nonexistent.load
     state: absent
   register: disable_nonexistent
   ignore_errors: True
 
-- name: ensure failed on nonexistent site disable
+- name: ensure failed on nonexistent conf disable
   assert:
     that:
       - 'disable_nonexistent|failed'
       - 'not disable_nonexistent.changed'
 
-- name: enable site by short name
+- name: enable mod by short name
   apache2_conf:
-    type: site
-    name: site_example
+    type: mod
+    name: mod_example
     state: present
   register: enable_short
 
@@ -87,10 +87,10 @@
     that:
       - 'enable_short.changed'
 
-- name: disable site by short name
+- name: disable mod by short name
   apache2_conf:
-    type: site
-    name: site_example
+    type: mod
+    name: mod_example
     state: absent
   register: disable_short
 
@@ -98,16 +98,3 @@
   assert:
     that:
       - 'disable_short.changed'
-
-- name: enable wrong site
-  apache2_conf:
-    type: site
-    name: /etc/resolv.conf
-    state: present
-  register: enable_wrong
-  ignore_errors: True
-
-- name: ensure failed on enable wrong conf
-  assert:
-    that:
-      - 'enable_wrong|failed'
