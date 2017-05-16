@@ -32,7 +32,17 @@ BOOLEANS_TRUE = ['y', 'yes', 'on', '1', 'true', 1, True]
 BOOLEANS_FALSE = ['n', 'no', 'off', '0', 'false', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
-SIZE_RANGES = { 'Y': 1<<80, 'Z': 1<<70, 'E': 1<<60, 'P': 1<<50, 'T': 1<<40, 'G': 1<<30, 'M': 1<<20, 'K': 1<<10, 'B': 1 }
+SIZE_RANGES = {
+    'Y': 1 << 80,
+    'Z': 1 << 70,
+    'E': 1 << 60,
+    'P': 1 << 50,
+    'T': 1 << 40,
+    'G': 1 << 30,
+    'M': 1 << 20,
+    'K': 1 << 10,
+    'B': 1,
+}
 
 FILE_ATTRIBUTES = {
     'A': 'noatime',
@@ -61,31 +71,31 @@ FILE_ATTRIBUTES = {
 # development of Python modules, the functions available here can
 # be used to do many common tasks
 
+import datetime
+import errno
+import grp
 import locale
 import os
+import platform
+import pwd
 import re
-import shlex
-import subprocess
-import sys
-import types
-import time
 import select
+import shlex
 import shutil
 import stat
+import subprocess
+import sys
 import tempfile
+import time
 import traceback
-import grp
-import pwd
-import platform
-import errno
-import datetime
+import types
 from itertools import repeat, chain
 
 try:
     import syslog
-    HAS_SYSLOG=True
+    HAS_SYSLOG = True
 except ImportError:
-    HAS_SYSLOG=False
+    HAS_SYSLOG = False
 
 try:
     from systemd import journal
@@ -93,10 +103,10 @@ try:
 except ImportError:
     has_journal = False
 
-HAVE_SELINUX=False
+HAVE_SELINUX = False
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
     pass
 
@@ -161,10 +171,10 @@ except ImportError:
         pass
 
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
-from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
-        iteritems, text_type, string_types)
+from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types, iteritems, text_type, string_types)
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
+
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
@@ -208,45 +218,46 @@ _literal_eval = literal_eval
 # is an internal implementation detail
 _ANSIBLE_ARGS = None
 
-FILE_COMMON_ARGUMENTS=dict(
-    src = dict(),
-    mode = dict(type='raw'),
-    owner = dict(),
-    group = dict(),
-    seuser = dict(),
-    serole = dict(),
-    selevel = dict(),
-    setype = dict(),
-    follow = dict(type='bool', default=False),
+FILE_COMMON_ARGUMENTS = dict(
+    src=dict(type='path'),
+    mode=dict(type='raw'),
+    owner=dict(),
+    group=dict(),
+    seuser=dict(type='str'),
+    serole=dict(type='str'),
+    selevel=dict(type='str'),
+    setype=dict(type='str'),
+    follow=dict(type='bool', default=False),
     # not taken by the file module, but other modules call file so it must ignore them.
-    content = dict(no_log=True),
-    backup = dict(),
-    force = dict(),
-    remote_src = dict(), # used by assemble
-    regexp = dict(), # used by assemble
-    delimiter = dict(), # used by assemble
-    directory_mode = dict(), # used by copy
-    unsafe_writes  = dict(type='bool'), # should be available to any module using atomic_move
-    attributes = dict(aliases=['attr']),
+    content=dict(type='str', no_log=True),
+    backup=dict(type='bool'),
+    force=dict(type='bool'),
+    remote_src=dict(type='path'),  # used by assemble
+    regexp=dict(type='str'),  # used by assemble
+    delimiter=dict(type='str'),  # used by assemble
+    directory_mode=dict(type='raw'),  # used by copy
+    unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
+    attributes=dict(aliases=['attr']),
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 
 # Can't use 07777 on Python 3, can't use 0o7777 on Python 2.4
-PERM_BITS = int('07777', 8)      # file mode permission bits
-EXEC_PERM_BITS = int('00111', 8) # execute permission bits
-DEFAULT_PERM = int('0666', 8)    # default file permission bits
+PERM_BITS = int('07777', 8)  # file mode permission bits
+EXEC_PERM_BITS = int('00111', 8)  # execute permission bits
+DEFAULT_PERM = int('0666', 8)  # default file permission bits
 
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
     return platform.system()
 
+
 def get_distribution():
     ''' return the distribution name '''
     if platform.system() == 'Linux':
         try:
-            supported_dists = platform._supported_dists + ('arch','alpine')
+            supported_dists = platform._supported_dists + ('arch', 'alpine')
             distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
             if not distribution and os.path.isfile('/etc/system-release'):
                 distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
@@ -261,6 +272,7 @@ def get_distribution():
         distribution = None
     return distribution
 
+
 def get_distribution_version():
     ''' return the distribution version '''
     if platform.system() == 'Linux':
@@ -274,6 +286,7 @@ def get_distribution_version():
     else:
         distribution_version = None
     return distribution_version
+
 
 def get_all_subclasses(cls):
     '''
@@ -338,6 +351,7 @@ def json_dict_unicode_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'
     else:
         return d
 
+
 def json_dict_bytes_to_unicode(d, encoding='utf-8', errors='surrogate_or_strict'):
     ''' Recursively convert dict keys and values to byte str
 
@@ -356,6 +370,7 @@ def json_dict_bytes_to_unicode(d, encoding='utf-8', errors='surrogate_or_strict'
         return tuple(map(json_dict_bytes_to_unicode, d, repeat(encoding), repeat(errors)))
     else:
         return d
+
 
 def return_values(obj):
     """ Return native stringified values from datastructures.
@@ -380,6 +395,7 @@ def return_values(obj):
         yield to_native(obj, nonstring='simplerepr')
     else:
         raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
+
 
 def remove_values(value, no_log_strings):
     """ Remove strings in no_log_strings from value.  If value is a container
@@ -410,7 +426,7 @@ def remove_values(value, no_log_strings):
     elif isinstance(value, SEQUENCETYPE):
         return [remove_values(elem, no_log_strings) for elem in value]
     elif isinstance(value, Mapping):
-        return dict((k, remove_values(v, no_log_strings)) for k, v in value.items())
+        return dict((k, remove_values(v, no_log_strings)) for (k, v) in value.items())
     elif isinstance(value, tuple(chain(NUMBERTYPES, (bool, NoneType)))):
         stringy_value = to_native(value, encoding='utf-8', errors='surrogate_or_strict')
         if stringy_value in no_log_strings:
@@ -489,6 +505,7 @@ def heuristic_log_sanitize(data, no_log_values=None):
         output = remove_values(output, no_log_values)
     return output
 
+
 def bytes_to_human(size, isbits=False, unit=None):
 
     base = 'Bytes'
@@ -505,10 +522,10 @@ def bytes_to_human(size, isbits=False, unit=None):
     else:
         suffix = base
 
-    return '%.2f %s' % (float(size)/ limit, suffix)
+    return '%.2f %s' % (float(size) / limit, suffix)
+
 
 def human_to_bytes(number, default_unit=None, isbits=False):
-
     '''
     Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument
     ex:
@@ -516,7 +533,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     '''
     m = re.search('^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
     if m is None:
-        raise ValueError("human_to_bytes() can't interpret following string: %s" % str(number))
+        raise ValueError("human_to_bytes() can't interpret following string: %s" % number)
     try:
         num = float(m.group(1))
     except:
@@ -555,6 +572,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
 
     return int(round(num * limit))
 
+
 def is_executable(path):
     '''is the given path executable?
 
@@ -567,6 +585,7 @@ def is_executable(path):
     # looking for, then bitwise-and with the file's mode to determine if any
     # execute bits are set.
     return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
+
 
 def _load_params():
     ''' read the modules parameters and store them globally.
@@ -623,6 +642,7 @@ def _load_params():
               '"failed": true}')
         sys.exit(1)
 
+
 def env_fallback(*args, **kwargs):
     ''' Load value from environment '''
     for arg in args:
@@ -630,6 +650,7 @@ def env_fallback(*args, **kwargs):
             return os.environ[arg]
     else:
         raise AnsibleFallbackNotFound
+
 
 def _lenient_lowercase(lst):
     """Lowercase elements of a list.
@@ -644,6 +665,7 @@ def _lenient_lowercase(lst):
             lowered.append(value)
     return lowered
 
+
 def format_attributes(attributes):
     attribute_list = []
     for attr in attributes:
@@ -651,12 +673,14 @@ def format_attributes(attributes):
             attribute_list.append(FILE_ATTRIBUTES[attr])
     return attribute_list
 
+
 def get_flags_from_attributes(attributes):
     flags = []
-    for key,attr in FILE_ATTRIBUTES.items():
+    for key, attr in FILE_ATTRIBUTES.items():
         if attr in attributes:
             flags.append(key)
     return ''.join(flags)
+
 
 class AnsibleFallbackNotFound(Exception):
     pass
@@ -667,14 +691,13 @@ class AnsibleModule(object):
                  check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
                  required_if=None):
-
         '''
         common code for quickly building an ansible module in Python
         (although you can write modules in anything that can return JSON)
         see library/* for examples
         '''
 
-        self._name = os.path.basename(__file__) #initialize name until we can parse from options
+        self._name = os.path.basename(__file__)  # initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
@@ -696,7 +719,7 @@ class AnsibleModule(object):
                               '_ansible_socket']
 
         if add_file_common_args:
-            for k, v in FILE_COMMON_ARGUMENTS.items():
+            for (k, v) in FILE_COMMON_ARGUMENTS.items():
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
@@ -808,15 +831,15 @@ class AnsibleModule(object):
             b_path = os.path.realpath(b_path)
             path = to_native(b_path)
 
-        mode   = params.get('mode', None)
-        owner  = params.get('owner', None)
-        group  = params.get('group', None)
+        mode = params.get('mode', None)
+        owner = params.get('owner', None)
+        group = params.get('group', None)
 
         # selinux related options
-        seuser    = params.get('seuser', None)
-        serole    = params.get('serole', None)
-        setype    = params.get('setype', None)
-        selevel   = params.get('selevel', None)
+        seuser = params.get('seuser', None)
+        serole = params.get('serole', None)
+        setype = params.get('setype', None)
+        selevel = params.get('selevel', None)
         secontext = [seuser, serole, setype]
 
         if self.selinux_mls_enabled():
@@ -833,7 +856,6 @@ class AnsibleModule(object):
             seuser=seuser, serole=serole, setype=setype,
             selevel=selevel, secontext=secontext, attributes=attributes,
         )
-
 
     # Detect whether using selinux that is MLS-aware.
     # While this means you can set the level/range with
@@ -853,7 +875,7 @@ class AnsibleModule(object):
         if not HAVE_SELINUX:
             seenabled = self.get_bin_path('selinuxenabled')
             if seenabled is not None:
-                (rc,out,err) = self.run_command(seenabled)
+                (rc, out, err) = self.run_command(seenabled)
                 if rc == 0:
                     self.fail_json(msg="Aborting, target uses selinux but python bindings (libselinux-python) aren't installed!")
             return False
@@ -1127,7 +1149,7 @@ class AnsibleModule(object):
                 e = get_exception()
                 if os.path.islink(b_path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
                     pass
-                elif e.errno in (errno.ENOENT, errno.ELOOP): # Can't set mode on broken symbolic links
+                elif e.errno in (errno.ENOENT, errno.ELOOP):  # Can't set mode on broken symbolic links
                     pass
                 else:
                     raise e
@@ -1154,7 +1176,7 @@ class AnsibleModule(object):
 
         existing = self.get_file_attributes(b_path)
 
-        if existing.get('attr_flags','') != attributes:
+        if existing.get('attr_flags', '') != attributes:
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
                 attrcmd = [attrcmd, '=%s' % attributes, b_path]
@@ -1187,13 +1209,12 @@ class AnsibleModule(object):
                 rc, out, err = self.run_command(attrcmd)
                 if rc == 0:
                     res = out.split(' ')[0:2]
-                    output['attr_flags'] =  res[1].replace('-','').strip()
+                    output['attr_flags'] = res[1].replace('-', '').strip()
                     output['version'] = res[0].strip()
                     output['attributes'] = format_attributes(output['attr_flags'])
             except:
                 pass
         return output
-
 
     def _symbolic_mode_to_octal(self, path_stat, symbolic_mode):
         new_mode = stat.S_IMODE(path_stat.st_mode)
@@ -1217,7 +1238,7 @@ class AnsibleModule(object):
         return new_mode
 
     def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
-        if operator  ==  '=':
+        if operator == '=':
             if user == 'u':
                 mask = stat.S_IRWXU | stat.S_ISUID
             elif user == 'g':
@@ -1247,13 +1268,13 @@ class AnsibleModule(object):
             X_perms = {
                 'u': {'X': stat.S_IXUSR},
                 'g': {'X': stat.S_IXGRP},
-                'o': {'X': stat.S_IXOTH}
+                'o': {'X': stat.S_IXOTH},
             }
         else:
             X_perms = {
                 'u': {'X': 0},
                 'g': {'X': 0},
-                'o': {'X': 0}
+                'o': {'X': 0},
             }
 
         user_perms_to_modes = {
@@ -1265,7 +1286,8 @@ class AnsibleModule(object):
                 't': 0,
                 'u': prev_mode & stat.S_IRWXU,
                 'g': (prev_mode & stat.S_IRWXG) << 3,
-                'o': (prev_mode & stat.S_IRWXO) << 6 },
+                'o': (prev_mode & stat.S_IRWXO) << 6,
+            },
             'g': {
                 'r': stat.S_IRGRP,
                 'w': stat.S_IWGRP,
@@ -1274,7 +1296,8 @@ class AnsibleModule(object):
                 't': 0,
                 'u': (prev_mode & stat.S_IRWXU) >> 3,
                 'g': prev_mode & stat.S_IRWXG,
-                'o': (prev_mode & stat.S_IRWXO) << 3 },
+                'o': (prev_mode & stat.S_IRWXO) << 3,
+            },
             'o': {
                 'r': stat.S_IROTH,
                 'w': stat.S_IWOTH,
@@ -1283,14 +1306,17 @@ class AnsibleModule(object):
                 't': stat.S_ISVTX,
                 'u': (prev_mode & stat.S_IRWXU) >> 6,
                 'g': (prev_mode & stat.S_IRWXG) >> 3,
-                'o': prev_mode & stat.S_IRWXO }
+                'o': prev_mode & stat.S_IRWXO,
+            },
         }
 
         # Insert X_perms into user_perms_to_modes
         for key, value in X_perms.items():
             user_perms_to_modes[key].update(value)
 
-        or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
+        def or_reduce(mode, perm):
+            return mode | user_perms_to_modes[user][perm]
+
         return reduce(or_reduce, perms, 0)
 
     def set_fs_attributes_if_different(self, file_args, changed, diff=None, expand=True):
@@ -1383,10 +1409,10 @@ class AnsibleModule(object):
 
     def _handle_aliases(self, spec=None):
         # this uses exceptions as it happens before we can safely call fail_json
-        aliases_results = {} #alias:canon
+        aliases_results = {}  # alias:canon
         if spec is None:
             spec = self.argument_spec
-        for (k,v) in spec.items():
+        for (k, v) in spec.items():
             self._legal_inputs.append(k)
             aliases = v.get('aliases', None)
             default = v.get('default', None)
@@ -1409,7 +1435,7 @@ class AnsibleModule(object):
     def _check_arguments(self, check_invalid_arguments):
         self._syslog_facility = 'LOG_USER'
         unsupported_parameters = set()
-        for (k,v) in list(self.params.items()):
+        for (k, v) in list(self.params.items()):
 
             if k == '_ansible_check_mode' and v:
                 self.check_mode = True
@@ -1444,7 +1470,7 @@ class AnsibleModule(object):
             elif check_invalid_arguments and k not in self._legal_inputs:
                 unsupported_parameters.add(k)
 
-            #clean up internal params:
+            # clean up internal params:
             if k.startswith('_ansible_'):
                 del self.params[k]
 
@@ -1482,20 +1508,20 @@ class AnsibleModule(object):
         if spec is None:
             return
         for check in spec:
-            counts = [ self._count_terms([field]) for field in check ]
-            non_zero = [ c for c in counts if c > 0 ]
+            counts = [self._count_terms([field]) for field in check]
+            non_zero = [c for c in counts if c > 0]
             if len(non_zero) > 0:
                 if 0 in counts:
                     self.fail_json(msg="parameters are required together: %s" % (check,))
 
-    def _check_required_arguments(self, spec=None, param=None ):
+    def _check_required_arguments(self, spec=None, param=None):
         ''' ensure all required arguments are present '''
         missing = []
         if spec is None:
             spec = self.argument_spec
         if param is None:
             param = self.params
-        for (k,v) in spec.items():
+        for (k, v) in spec.items():
             required = v.get('required', False)
             if required and k not in param:
                 missing.append(k)
@@ -1534,8 +1560,8 @@ class AnsibleModule(object):
             spec = self.argument_spec
         if param is None:
             param = self.params
-        for (k,v) in spec.items():
-            choices = v.get('choices',None)
+        for (k, v) in spec.items():
+            choices = v.get('choices', None)
             if choices is None:
                 continue
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
@@ -1561,8 +1587,8 @@ class AnsibleModule(object):
                                 (param[k],) = overlap
 
                         if param[k] not in choices:
-                            choices_str=",".join([to_native(c) for c in choices])
-                            msg="value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
+                            choices_str = ",".join([to_native(c) for c in choices])
+                            msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                             self.fail_json(msg=msg)
             else:
                 self.fail_json(msg="internal error: choices for argument %s are not iterable: %s" % (k, choices))
@@ -1610,7 +1636,7 @@ class AnsibleModule(object):
         if isinstance(value, string_types):
             return value.split(",")
         elif isinstance(value, int) or isinstance(value, float):
-            return [ str(value) ]
+            return [str(value)]
 
         raise TypeError('%s cannot be converted to a list' % type(value))
 
@@ -1703,13 +1729,11 @@ class AnsibleModule(object):
     def _check_type_raw(self, value):
         return value
 
-
     def _check_type_bytes(self, value):
         try:
             self.human_to_bytes(value)
         except ValueError:
             raise TypeError('%s cannot be converted to a Byte value' % type(value))
-
 
     def _check_type_bits(self, value):
         try:
@@ -1723,7 +1747,7 @@ class AnsibleModule(object):
         if spec is None:
             spec = self.argument_spec
         if param is None:
-            param= self.params
+            param = self.params
         for (k, v) in spec.items():
             wanted = v.get('type', None)
             if k not in param:
@@ -1760,7 +1784,7 @@ class AnsibleModule(object):
                     self._check_argument_values(spec, param[k])
 
     def _set_defaults(self, pre=True):
-        for (k,v) in self.argument_spec.items():
+        for (k, v) in self.argument_spec.items():
             default = v.get('default', None)
             if pre is True:
                 # this prevents setting defaults on required items
@@ -1772,7 +1796,7 @@ class AnsibleModule(object):
                     self.params[k] = default
 
     def _set_fallbacks(self):
-        for k,v in self.argument_spec.items():
+        for (k, v) in self.argument_spec.items():
             fallback = v.get('fallback', (None,))
             fallback_strategy = fallback[0]
             fallback_args = []
@@ -1855,16 +1879,18 @@ class AnsibleModule(object):
         log_args = dict()
 
         for param in self.params:
-            canon  = self.aliases.get(param, param)
+            canon = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
             no_log = arg_opts.get('no_log', False)
 
             if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
             # try to capture all passwords/passphrase named fields missed by no_log
-            elif PASSWORD_MATCH.search(param) and \
-              arg_opts.get('type', 'str') != 'bool' and \
-              not arg_opts.get('choices', False):
+            elif (
+                PASSWORD_MATCH.search(param) and
+                arg_opts.get('type', 'str') != 'bool' and
+                not arg_opts.get('choices', False)
+            ):
                 # skip boolean and enums as they are about 'password' state
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
                 self.warn('Module did not set no_log for %s' % param)
@@ -1884,11 +1910,10 @@ class AnsibleModule(object):
 
         self.log(msg, log_args=log_args)
 
-
     def _set_cwd(self):
         try:
             cwd = os.getcwd()
-            if not os.access(cwd, os.F_OK|os.R_OK):
+            if not os.access(cwd, os.F_OK | os.R_OK):
                 raise Exception()
             return cwd
         except:
@@ -1896,7 +1921,7 @@ class AnsibleModule(object):
             # Try and move to a neutral location to prevent errors
             for cwd in [os.path.expandvars('$HOME'), tempfile.gettempdir()]:
                 try:
-                    if os.access(cwd, os.F_OK|os.R_OK):
+                    if os.access(cwd, os.F_OK | os.R_OK):
                         os.chdir(cwd)
                         return cwd
                 except:
@@ -2010,7 +2035,7 @@ class AnsibleModule(object):
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
 
-        if not 'changed' in kwargs:
+        if 'changed' not in kwargs:
             kwargs['changed'] = False
 
         self.do_cleanup_files()
@@ -2171,7 +2196,7 @@ class AnsibleModule(object):
                 native_suffix = os.path.basename(b_dest)
                 native_prefix = b('.ansible_tmp')
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp( prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
                 except (OSError, IOError):
                     e = get_exception()
                     self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e))
@@ -2256,7 +2281,6 @@ class AnsibleModule(object):
         except (shutil.Error, OSError, IOError):
             e = get_exception()
             self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e), exception=traceback.format_exc())
-
 
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):
         data = b('')
@@ -2346,7 +2370,7 @@ class AnsibleModule(object):
 
         # expand things like $HOME and ~
         if not shell:
-            args = [ os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None ]
+            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
 
         rc = 0
         msg = None
@@ -2374,9 +2398,12 @@ class AnsibleModule(object):
         # Clean out python paths set by ansiballz
         if 'PYTHONPATH' in os.environ:
             pypaths = os.environ['PYTHONPATH'].split(':')
-            pypaths = [x for x in pypaths \
-                        if not x.endswith('/ansible_modlib.zip') \
-                        and not x.endswith('/debug_dir')]
+            pypaths = [
+                x for x in pypaths if (
+                    not x.endswith('/ansible_modlib.zip') and
+                    not x.endswith('/debug_dir')
+                )
+            ]
             os.environ['PYTHONPATH'] = ':'.join(pypaths)
             if not os.environ['PYTHONPATH']:
                 del os.environ['PYTHONPATH']
@@ -2497,7 +2524,7 @@ class AnsibleModule(object):
             self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
         except Exception:
             e = get_exception()
-            self.log("Error Executing CMD:%s Exception:%s" % (clean_args,to_native(traceback.format_exc())))
+            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(traceback.format_exc())))
             self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
 
         # Restore env settings
