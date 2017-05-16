@@ -66,10 +66,10 @@ class AdHocCLI(CLI):
 
         # options unique to ansible ad-hoc
         self.parser.add_option('-a', '--args', dest='module_args',
-            help="module arguments", default=C.DEFAULT_MODULE_ARGS)
+                               help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         self.parser.add_option('-m', '--module-name', dest='module_name',
-            help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
-            default=C.DEFAULT_MODULE_NAME)
+                               help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
+                               default=C.DEFAULT_MODULE_NAME)
 
         super(AdHocCLI, self).parse()
 
@@ -84,10 +84,10 @@ class AdHocCLI(CLI):
     def _play_ds(self, pattern, async, poll):
         check_raw = self.options.module_name in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         return dict(
-            name = "Ansible Ad-Hoc",
-            hosts = pattern,
-            gather_facts = 'no',
-            tasks = [ dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args, check_raw=check_raw)), async=async, poll=poll) ]
+            name="Ansible Ad-Hoc",
+            hosts=pattern,
+            gather_facts='no',
+            tasks=[dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args, check_raw=check_raw)), async=async, poll=poll)]
         )
 
     def run(self):
@@ -98,12 +98,12 @@ class AdHocCLI(CLI):
         # only thing left should be host pattern
         pattern = to_text(self.args[0], errors='surrogate_or_strict')
 
-        sshpass    = None
+        sshpass = None
         becomepass = None
 
         self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
-        passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
+        passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
         loader, inventory, variable_manager = self._play_prereqs(self.options)
 
@@ -155,11 +155,11 @@ class AdHocCLI(CLI):
         else:
             cb = 'minimal'
 
-        run_tree=False
+        run_tree = False
         if self.options.tree:
             C.DEFAULT_CALLBACK_WHITELIST.append('tree')
             C.TREE_DIR = self.options.tree
-            run_tree=True
+            run_tree = True
 
         # now create a task queue manager to execute the play
         self._tqm = None
