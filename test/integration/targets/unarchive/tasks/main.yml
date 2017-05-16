@@ -317,22 +317,22 @@
 
 - name: create our unarchive destination
   file:
-    path: "{{ output_dir }}/test-unarchive-nonascii-????-tar-gz"
+    path: "{{ output_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
     state: directory
 
 - name: test that unarchive works with an archive that contains non-ascii filenames
   unarchive:
     # Both the filename of the tarball and the filename inside the tarball have
     # nonascii chars
-    src: "test-unarchive-nonascii-????.tar.gz"
-    dest: "{{ output_dir }}/test-unarchive-nonascii-????-tar-gz"
+    src: "test-unarchive-nonascii-くらとみ.tar.gz"
+    dest: "{{ output_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
     mode: "u+rwX,go+rX"
     remote_src: no
   register: nonascii_result0
 
 - name: Check that file is really there
   stat:
-    path: "{{ output_dir | expanduser }}/test-unarchive-nonascii-????-tar-gz/storage/a`a^æc¸e´e`i¨i^o^œ(copy)!@#$%^&-().jpg"
+    path: "{{ output_dir | expanduser }}/test-unarchive-nonascii-くらとみ-tar-gz/storage/àâæçéèïîôœ(copy)!@#$%^&-().jpg"
   register: nonascii_stat0
 
 - name: Assert that nonascii tests succeeded
@@ -342,7 +342,7 @@
       - "nonascii_stat0.stat.exists == true"
 
 - name: remove nonascii test
-  file: path="{{ output_dir }}/test-unarchive-nonascii-????-tar-gz" state=absent
+  file: path="{{ output_dir }}/test-unarchive-nonascii-くらとみ-tar-gz" state=absent
 
 # Test that unarchiving is performed if files are missing
 # https://github.com/ansible/ansible-modules-core/issues/1064
