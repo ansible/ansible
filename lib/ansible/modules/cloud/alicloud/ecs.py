@@ -36,7 +36,7 @@ options:
       required: false
       default: 'present'
       aliases: ['state']
-      choices: 
+      choices:
         - [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
         - map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
                         'describe_status']
@@ -65,7 +65,7 @@ options:
       required: false
       default: False
       aliases: []
-      choices:["True", "False"]
+      choices: ["True", "False"]
     vswitch_id:
       description: The subnet ID in which to launch the instance (VPC).
       required: false
@@ -89,10 +89,12 @@ options:
     internet_data:
       description:
         - A hash/dictionaries of internet to the new instance;
-        - '{"key":"value"}'; keys allowed:
-          - charge_type (required:false; default: "PayByBandwidth", choices:["PayByBandwidth", "PayByTraffic"] )
+        - >
+          '{"key":"value"}'; keys allowed:
+          - charge_type ( required:false;default: "PayByBandwidth", choices:["PayByBandwidth", "PayByTraffic"] )
           - max_bandwidth_in(required:false, default:200)
           - max_bandwidth_out(required:false, default:0).
+
       required: false
       default: null
       aliases: []
@@ -109,7 +111,8 @@ options:
     system_disk:
       description:
         - A hash/dictionaries of system disk to the new instance;
-        - '{"key":"value"}'; keys allowed:
+        - >
+          '{"key":"value"}'; keys allowed:
           - disk_category (required:false; default: "cloud"; choices:["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"] )
           - disk_size (required: false, default: max[40, ImageSize], choice: [40-500])
           - disk_name (required: false, default: Null)
@@ -120,7 +123,8 @@ options:
     disks:
       description:
         - A list of hash/dictionaries of volumes to add to the new instance;
-        - '[{"key":"value", "key":"value"}]'; keys allowed:
+        - >
+          '[{"key":"value", "key":"value"}]'; keys allowed:
           - disk_category (required:false; default: "cloud"; choices:["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"] )
           - disk_size (required:false; default:null; choices:depends on disk_category)
           - disk_name (required: false; default:null)
@@ -136,7 +140,7 @@ options:
       required: false
       default: 1
       aliases: []
-    allocate_public_ip
+    allocate_public_ip:
       description: Whether allocate a public ip for the new instance.
       required: false
       default: true
@@ -144,11 +148,12 @@ options:
       choices: ["true", "false"]
     bind_eip:
       description: ID of Elastic IP Address bind to the new instance.
-      required:false
+      required: false
       default: null
       aliases: []
     instance_tags:
-      description: - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]',
+      description:
+        - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]',
                      tag_key must be not null when tag_value isn't null
       required: false
       default: null
@@ -163,37 +168,44 @@ options:
       default: null
       aliases: [ 'id' ]
     instance_charge_type:
-      description: - The charge type of the instance.
+      description: 
+        - The charge type of the instance.
       required: false
-      choices:["PrePaid", "PostPaid"]
+      choices: ["PrePaid", "PostPaid"]
       default: "PostPaid"
     period:
-      description: - The charge duration of the instance, the value is vaild when instance_charge_type is "PrePaid".
+      description:
+        - The charge duration of the instance, the value is vaild when instance_charge_type is "PrePaid".
       required: false
-      choices:[1~9,12,24,36]
+      choices: [1~9,12,24,36]
       default: null
     auto_renew:
-      description: - Whether automate renew the charge of the instance.
+      description:
+        - Whether automate renew the charge of the instance.
       required: false
-      choices:[true, false]
+      choices: [true, false]
       default: false
     auto_renew_period:
-      description: - The duration of the automatic renew the charge of the instance. It is vaild when auto_renew is true.
+      description:
+        - The duration of the automatic renew the charge of the instance. It is vaild when auto_renew is true.
       required: false
-      choices:[1, 2, 3, 6, 12]
+      choices: [1, 2, 3, 6, 12]
       default: false
     instance_ids:
-      description: A list of instance ids, currently used for states: running, stopped, restarted, absent, and join or leave instances from security group.
+      description:
+        - A list of instance ids, currently used for states: running, stopped, restarted, absent, and join or leave instances from security group.
       required: true
       default: null
       aliases: ["instance_id"]
     force:
-      description: Whether force to operation, currently used fo states: stopped, restarted .
+      description:
+        - Whether force to operation, currently used fo states: stopped, restarted .
       required: false
       default: False
       aliases: []
     instance_tags:
-      description: - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]',
+      description:
+        - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]',
                     tag_key must be not null when tag_value isn't null
       required: false
       default: null
@@ -223,11 +235,11 @@ options:
       aliases: []
     page_number:
       description: Page number of the instance status list
-      required:false
+      required: false
       default: 1
     page_size:
         description: Sets the number of lines per page for queries per page
-        required:false
+        required: false
         default: 10
     wait:
       description:
@@ -1208,4 +1220,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main() 
