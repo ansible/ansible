@@ -23,49 +23,49 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: async_status
 short_description: Obtain status of asynchronous task
 description:
-     - "This module gets the status of an asynchronous task."
+     - This module gets the status of an asynchronous task.
 version_added: "0.5"
 options:
   jid:
     description:
-      - Job or task identifier
+      - Job or task identifier.
     required: true
-    default: null
-    aliases: []
   mode:
     description:
-      - if C(status), obtain the status; if C(cleanup), clean up the async job cache
+      - If C(status), obtain the status; if C(cleanup), clean up the async job cache
         located in C(~/.ansible_async/) for the specified job I(jid).
-    required: false
-    choices: [ "status", "cleanup" ]
-    default: "status"
+    choices: [ cleanup, status ]
+    default: status
 notes:
     - See also U(http://docs.ansible.com/playbooks_async.html)
-requirements: []
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
+    - Ansible Core Team
+    - Michael DeHaan (@mpdehaan)
 '''
 
 import datetime
+import json
+import os
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
+
 
 def main():
 
     module = AnsibleModule(argument_spec=dict(
         jid=dict(required=True),
-        mode=dict(default='status', choices=['status','cleanup']),
+        mode=dict(type='str', default='status', choices=['cleanup', 'status']),
     ))
 
     mode = module.params['mode']
-    jid  = module.params['jid']
+    jid = module.params['jid']
 
     # setup logging directory
     logdir = os.path.expanduser("~/.ansible_async")
@@ -92,9 +92,9 @@ def main():
             module.exit_json(results_file=log_path, ansible_job_id=jid, started=1, finished=0)
         else:
             module.fail_json(ansible_job_id=jid, results_file=log_path,
-                msg="Could not parse job output: %s" % data, started=1, finished=1)
+                             msg="Could not parse job output: %s" % data, started=1, finished=1)
 
-    if not 'started' in data:
+    if 'started' not in data:
         data['finished'] = 1
         data['ansible_job_id'] = jid
     elif 'finished' not in data:
@@ -105,8 +105,6 @@ def main():
 
     module.exit_json(**data)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
