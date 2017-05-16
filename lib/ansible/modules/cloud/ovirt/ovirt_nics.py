@@ -105,7 +105,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 nic:
     description: "Dictionary of all the network interface attributes. Network interface attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/nic."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/nic."
     returned: On success if network interface is found.
     type: dict
 '''

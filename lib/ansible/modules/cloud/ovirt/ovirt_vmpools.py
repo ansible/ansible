@@ -104,7 +104,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 vm_pool:
     description: "Dictionary of all the VM pool attributes. VM pool attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm_pool."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm_pool."
     returned: On success if VM pool is found.
     type: dict
 '''
