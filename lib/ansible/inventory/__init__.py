@@ -211,14 +211,14 @@ class Inventory(object):
         results = []
         try:
             if not pattern_str.startswith('~'):
-                pattern = re.compile(fnmatch.translate(pattern_str))
+                pattern = re.compile('^' + fnmatch.translate(pattern_str))
             else:
                 pattern = re.compile(pattern_str[1:])
         except Exception:
             raise AnsibleError('invalid host pattern: %s' % pattern_str)
 
         for item in items:
-            if pattern.match(getattr(item, item_attr)):
+            if pattern.search(getattr(item, item_attr)):
                 results.append(item)
         return results
 
