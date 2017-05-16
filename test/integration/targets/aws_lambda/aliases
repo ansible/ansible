@@ -1,0 +1,4 @@
+cloud/aws
+posix/ci/cloud/aws
+execute_lambda
+lambda
