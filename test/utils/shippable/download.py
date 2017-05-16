@@ -138,7 +138,7 @@ def main():
 
         project_id = response.json()[0]['id']
 
-        url = 'https://api.shippable.com/runs?projectIds=%s' % project_id
+        url = 'https://api.shippable.com/runs?projectIds=%s&runNumbers=%s' % (project_id, run_number)
 
         response = requests.get(url, headers=headers)
 
