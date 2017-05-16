@@ -65,29 +65,29 @@ class Task(Base, Conditional, Taggable, Become):
     # will be used if defined
     # might be possible to define others
 
-    _args                 = FieldAttribute(isa='dict', default=dict())
-    _action               = FieldAttribute(isa='string')
+    _args = FieldAttribute(isa='dict', default=dict())
+    _action = FieldAttribute(isa='string')
 
-    _async                = FieldAttribute(isa='int', default=0)
-    _changed_when         = FieldAttribute(isa='list', default=[])
-    _delay                = FieldAttribute(isa='int', default=5)
-    _delegate_to          = FieldAttribute(isa='string')
-    _delegate_facts       = FieldAttribute(isa='bool', default=False)
-    _failed_when          = FieldAttribute(isa='list', default=[])
-    _loop                 = FieldAttribute(isa='string', private=True, inherit=False)
-    _loop_args            = FieldAttribute(isa='list', private=True, inherit=False)
-    _loop_control         = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
-    _name                 = FieldAttribute(isa='string', default='')
-    _notify               = FieldAttribute(isa='list')
-    _poll                 = FieldAttribute(isa='int', default=10)
-    _register             = FieldAttribute(isa='string')
-    _retries              = FieldAttribute(isa='int')
-    _until                = FieldAttribute(isa='list', default=[])
+    _async = FieldAttribute(isa='int', default=0)
+    _changed_when = FieldAttribute(isa='list', default=[])
+    _delay = FieldAttribute(isa='int', default=5)
+    _delegate_to = FieldAttribute(isa='string')
+    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _failed_when = FieldAttribute(isa='list', default=[])
+    _loop = FieldAttribute(isa='string', private=True, inherit=False)
+    _loop_args = FieldAttribute(isa='list', private=True, inherit=False)
+    _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
+    _name = FieldAttribute(isa='string', default='')
+    _notify = FieldAttribute(isa='list')
+    _poll = FieldAttribute(isa='int', default=10)
+    _register = FieldAttribute(isa='string')
+    _retries = FieldAttribute(isa='int')
+    _until = FieldAttribute(isa='list', default=[])
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
 
-        self._role   = role
+        self._role = role
         self._parent = None
 
         if task_include:
@@ -125,10 +125,10 @@ class Task(Base, Conditional, Taggable, Become):
             return ds
         elif isinstance(ds, dict):
             buf = ""
-            for (k,v) in iteritems(ds):
+            for (k, v) in iteritems(ds):
                 if k.startswith('_'):
                     continue
-                buf = buf + "%s=%s " % (k,v)
+                buf = buf + "%s=%s " % (k, v)
             buf = buf.strip()
             return buf
 
@@ -186,11 +186,11 @@ class Task(Base, Conditional, Taggable, Become):
             if 'cmd' in args:
                 if args.get('_raw_params', '') != '':
                     raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified."
-                            " Please put everything in one or the other place.", obj=ds)
+                                       " Please put everything in one or the other place.", obj=ds)
                 args['_raw_params'] = args.pop('cmd')
 
-        new_ds['action']      = action
-        new_ds['args']        = args
+        new_ds['action'] = action
+        new_ds['args'] = args
         new_ds['delegate_to'] = delegate_to
 
         # we handle any 'vars' specified in the ds here, as we may
@@ -203,7 +203,7 @@ class Task(Base, Conditional, Taggable, Become):
         else:
             new_ds['vars'] = dict()
 
-        for (k,v) in iteritems(ds):
+        for (k, v) in iteritems(ds):
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were
                 # determined by the ModuleArgsParser() above
@@ -216,9 +216,9 @@ class Task(Base, Conditional, Taggable, Become):
                 # here, and show a deprecation message as we will remove this at
                 # some point in the future.
                 if action == 'include' and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
-                    display.deprecated("Specifying include variables at the top-level of the task is deprecated."
-                            " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
-                            " for currently supported syntax regarding included files and variables", version="2.7")
+                    display.deprecated("Specifying include variables at the top-level of the task is deprecated. "
+                                       "Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n "
+                                       "for currently supported syntax regarding included files and variables", version="2.7")
                     new_ds['vars'][k] = v
                 else:
                     new_ds[k] = v

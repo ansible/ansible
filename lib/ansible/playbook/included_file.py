@@ -30,13 +30,14 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class IncludedFile:
 
     def __init__(self, filename, args, task):
         self._filename = filename
-        self._args     = args
-        self._task     = task
-        self._hosts    = []
+        self._args = args
+        self._task = task
+        self._hosts = []
 
     def add_host(self, host):
         if host not in self._hosts:
@@ -69,7 +70,7 @@ class IncludedFile:
                         continue
                     include_results = res._result['results']
                 else:
-                    include_results = [ res._result ]
+                    include_results = [res._result]
 
                 for include_result in include_results:
                     # if the task result was skipped or failed, continue

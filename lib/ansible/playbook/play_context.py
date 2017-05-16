@@ -54,42 +54,42 @@ except ImportError:
 # in variable names.
 
 MAGIC_VARIABLE_MAPPING = dict(
-    connection       = ('ansible_connection',),
-    remote_addr      = ('ansible_ssh_host', 'ansible_host'),
-    remote_user      = ('ansible_ssh_user', 'ansible_user'),
-    port             = ('ansible_ssh_port', 'ansible_port'),
-    timeout          = ('ansible_ssh_timeout', 'ansible_timeout'),
-    ssh_executable   = ('ansible_ssh_executable',),
-    accelerate_port  = ('ansible_accelerate_port',),
-    password         = ('ansible_ssh_pass', 'ansible_password'),
-    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
-    pipelining       = ('ansible_ssh_pipelining', 'ansible_pipelining'),
-    shell            = ('ansible_shell_type',),
-    network_os       = ('ansible_network_os',),
-    become           = ('ansible_become',),
-    become_method    = ('ansible_become_method',),
-    become_user      = ('ansible_become_user',),
-    become_pass      = ('ansible_become_password','ansible_become_pass'),
-    become_exe       = ('ansible_become_exe',),
-    become_flags     = ('ansible_become_flags',),
-    ssh_common_args  = ('ansible_ssh_common_args',),
-    docker_extra_args= ('ansible_docker_extra_args',),
-    sftp_extra_args  = ('ansible_sftp_extra_args',),
-    scp_extra_args   = ('ansible_scp_extra_args',),
-    ssh_extra_args   = ('ansible_ssh_extra_args',),
-    ssh_transfer_method = ('ansible_ssh_transfer_method',),
-    sudo             = ('ansible_sudo',),
-    sudo_user        = ('ansible_sudo_user',),
-    sudo_pass        = ('ansible_sudo_password', 'ansible_sudo_pass'),
-    sudo_exe         = ('ansible_sudo_exe',),
-    sudo_flags       = ('ansible_sudo_flags',),
-    su               = ('ansible_su',),
-    su_user          = ('ansible_su_user',),
-    su_pass          = ('ansible_su_password', 'ansible_su_pass'),
-    su_exe           = ('ansible_su_exe',),
-    su_flags         = ('ansible_su_flags',),
-    executable       = ('ansible_shell_executable',),
-    module_compression = ('ansible_module_compression',),
+    connection=('ansible_connection', ),
+    remote_addr=('ansible_ssh_host', 'ansible_host'),
+    remote_user=('ansible_ssh_user', 'ansible_user'),
+    port=('ansible_ssh_port', 'ansible_port'),
+    timeout=('ansible_ssh_timeout', 'ansible_timeout'),
+    ssh_executable=('ansible_ssh_executable', ),
+    accelerate_port=('ansible_accelerate_port', ),
+    password=('ansible_ssh_pass', 'ansible_password'),
+    private_key_file=('ansible_ssh_private_key_file', 'ansible_private_key_file'),
+    pipelining=('ansible_ssh_pipelining', 'ansible_pipelining'),
+    shell=('ansible_shell_type', ),
+    network_os=('ansible_network_os', ),
+    become=('ansible_become', ),
+    become_method=('ansible_become_method', ),
+    become_user=('ansible_become_user', ),
+    become_pass=('ansible_become_password', 'ansible_become_pass'),
+    become_exe=('ansible_become_exe', ),
+    become_flags=('ansible_become_flags', ),
+    ssh_common_args=('ansible_ssh_common_args', ),
+    docker_extra_args=('ansible_docker_extra_args', ),
+    sftp_extra_args=('ansible_sftp_extra_args', ),
+    scp_extra_args=('ansible_scp_extra_args', ),
+    ssh_extra_args=('ansible_ssh_extra_args', ),
+    ssh_transfer_method=('ansible_ssh_transfer_method', ),
+    sudo=('ansible_sudo', ),
+    sudo_user=('ansible_sudo_user', ),
+    sudo_pass=('ansible_sudo_password', 'ansible_sudo_pass'),
+    sudo_exe=('ansible_sudo_exe', ),
+    sudo_flags=('ansible_sudo_flags', ),
+    su=('ansible_su', ),
+    su_user=('ansible_su_user', ),
+    su_pass=('ansible_su_password', 'ansible_su_pass'),
+    su_exe=('ansible_su_exe', ),
+    su_flags=('ansible_su_flags', ),
+    executable=('ansible_shell_executable', ),
+    module_compression=('ansible_module_compression', ),
 )
 
 b_SU_PROMPT_LOCALIZATIONS = [
@@ -155,6 +155,7 @@ RESET_VARS = (
     'ansible_port',
 )
 
+
 class PlayContext(Base):
 
     '''
@@ -165,60 +166,60 @@ class PlayContext(Base):
 
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
-    _docker_extra_args  = FieldAttribute(isa='string')
-    _remote_addr      = FieldAttribute(isa='string')
-    _password         = FieldAttribute(isa='string')
+    _docker_extra_args = FieldAttribute(isa='string')
+    _remote_addr = FieldAttribute(isa='string')
+    _password = FieldAttribute(isa='string')
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
-    _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
-    _shell            = FieldAttribute(isa='string')
-    _network_os       = FieldAttribute(isa='string')
-    _connection_user  = FieldAttribute(isa='string')
-    _ssh_args         = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
-    _ssh_common_args  = FieldAttribute(isa='string')
-    _sftp_extra_args  = FieldAttribute(isa='string')
-    _scp_extra_args   = FieldAttribute(isa='string')
-    _ssh_extra_args   = FieldAttribute(isa='string')
-    _ssh_executable   = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
+    _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
+    _shell = FieldAttribute(isa='string')
+    _network_os = FieldAttribute(isa='string')
+    _connection_user = FieldAttribute(isa='string')
+    _ssh_args = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
+    _ssh_common_args = FieldAttribute(isa='string')
+    _sftp_extra_args = FieldAttribute(isa='string')
+    _scp_extra_args = FieldAttribute(isa='string')
+    _ssh_extra_args = FieldAttribute(isa='string')
+    _ssh_executable = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
     _ssh_transfer_method = FieldAttribute(isa='string', default=C.DEFAULT_SSH_TRANSFER_METHOD)
-    _connection_lockfd= FieldAttribute(isa='int')
-    _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
-    _accelerate       = FieldAttribute(isa='bool', default=False)
-    _accelerate_ipv6  = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _accelerate_port  = FieldAttribute(isa='int', default=C.ACCELERATE_PORT, always_post_validate=True)
-    _executable       = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
+    _connection_lockfd = FieldAttribute(isa='int')
+    _pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
+    _accelerate = FieldAttribute(isa='bool', default=False)
+    _accelerate_ipv6 = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _accelerate_port = FieldAttribute(isa='int', default=C.ACCELERATE_PORT, always_post_validate=True)
+    _executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
     _module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
 
     # privilege escalation fields
-    _become           = FieldAttribute(isa='bool')
-    _become_method    = FieldAttribute(isa='string')
-    _become_user      = FieldAttribute(isa='string')
-    _become_pass      = FieldAttribute(isa='string')
-    _become_exe       = FieldAttribute(isa='string')
-    _become_flags     = FieldAttribute(isa='string')
-    _prompt           = FieldAttribute(isa='string')
+    _become = FieldAttribute(isa='bool')
+    _become_method = FieldAttribute(isa='string')
+    _become_user = FieldAttribute(isa='string')
+    _become_pass = FieldAttribute(isa='string')
+    _become_exe = FieldAttribute(isa='string')
+    _become_flags = FieldAttribute(isa='string')
+    _prompt = FieldAttribute(isa='string')
 
     # backwards compatibility fields for sudo/su
-    _sudo_exe         = FieldAttribute(isa='string')
-    _sudo_flags       = FieldAttribute(isa='string')
-    _sudo_pass        = FieldAttribute(isa='string')
-    _su_exe           = FieldAttribute(isa='string')
-    _su_flags         = FieldAttribute(isa='string')
-    _su_pass          = FieldAttribute(isa='string')
+    _sudo_exe = FieldAttribute(isa='string')
+    _sudo_flags = FieldAttribute(isa='string')
+    _sudo_pass = FieldAttribute(isa='string')
+    _su_exe = FieldAttribute(isa='string')
+    _su_flags = FieldAttribute(isa='string')
+    _su_pass = FieldAttribute(isa='string')
 
     # general flags
-    _verbosity        = FieldAttribute(isa='int', default=0)
-    _only_tags        = FieldAttribute(isa='set', default=set())
-    _skip_tags        = FieldAttribute(isa='set', default=set())
-    _check_mode       = FieldAttribute(isa='bool', default=False)
-    _force_handlers   = FieldAttribute(isa='bool', default=False)
-    _start_at_task    = FieldAttribute(isa='string')
-    _step             = FieldAttribute(isa='bool', default=False)
-    _diff             = FieldAttribute(isa='bool', default=C.DIFF_ALWAYS)
+    _verbosity = FieldAttribute(isa='int', default=0)
+    _only_tags = FieldAttribute(isa='set', default=set())
+    _skip_tags = FieldAttribute(isa='set', default=set())
+    _check_mode = FieldAttribute(isa='bool', default=False)
+    _force_handlers = FieldAttribute(isa='bool', default=False)
+    _start_at_task = FieldAttribute(isa='string')
+    _step = FieldAttribute(isa='bool', default=False)
+    _diff = FieldAttribute(isa='bool', default=C.DIFF_ALWAYS)
 
     # Fact gathering settings
-    _gather_subset    = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
-    _gather_timeout   = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_TIMEOUT)
-    _fact_path        = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    _gather_subset = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
+    _gather_timeout = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_TIMEOUT)
+    _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
     def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
 
@@ -227,10 +228,10 @@ class PlayContext(Base):
         if passwords is None:
             passwords = {}
 
-        self.password    = passwords.get('conn_pass','')
-        self.become_pass = passwords.get('become_pass','')
+        self.password = passwords.get('conn_pass', '')
+        self.become_pass = passwords.get('become_pass', '')
 
-        self.prompt      = ''
+        self.prompt = ''
         self.success_key = ''
 
         # a file descriptor to be used during locking operations
@@ -242,7 +243,6 @@ class PlayContext(Base):
 
         if play:
             self.set_play(play)
-
 
     def set_play(self, play):
         '''
@@ -283,18 +283,18 @@ class PlayContext(Base):
         '''
 
         # privilege escalation
-        self.become        = options.become
+        self.become = options.become
         self.become_method = options.become_method
-        self.become_user   = options.become_user
+        self.become_user = options.become_user
 
         self.check_mode = boolean(options.check)
 
         # get ssh options FIXME: make these common to all connections
         for flag in ['ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
-            setattr(self, flag, getattr(options,flag, ''))
+            setattr(self, flag, getattr(options, flag, ''))
 
         # general flags (should we move out?)
-        for flag in ['connection','remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff']:
+        for flag in ['connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff']:
             attribute = getattr(options, flag, False)
             if attribute:
                 setattr(self, flag, attribute)
@@ -435,7 +435,7 @@ class PlayContext(Base):
                 if connection_type in delegated_vars:
                     break
             else:
-                remote_addr_local  = new_info.remote_addr in C.LOCALHOST
+                remote_addr_local = new_info.remote_addr in C.LOCALHOST
                 inv_hostname_local = delegated_vars.get('inventory_hostname') in C.LOCALHOST
                 if remote_addr_local and inv_hostname_local:
                     setattr(new_info, 'connection', 'local')
@@ -464,13 +464,12 @@ class PlayContext(Base):
         if task.check_mode is not None:
             new_info.check_mode = task.check_mode
 
-
         return new_info
 
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """
 
-        prompt      = None
+        prompt = None
         success_key = None
         self.prompt = None
 
@@ -479,8 +478,8 @@ class PlayContext(Base):
             if not executable:
                 executable = self.executable
 
-            becomecmd   = None
-            randbits    = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
+            becomecmd = None
+            randbits = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
             success_cmd = shlex_quote('echo %s; %s' % (success_key, cmd))
 
@@ -490,18 +489,22 @@ class PlayContext(Base):
                 command = success_cmd
 
             # set executable to use for the privilege escalation method, with various overrides
-            exe = self.become_exe or \
-                  getattr(self, '%s_exe' % self.become_method, None) or \
-                  C.DEFAULT_BECOME_EXE or \
-                  getattr(C, 'DEFAULT_%s_EXE' % self.become_method.upper(), None) or \
-                  self.become_method
+            exe = (
+                self.become_exe or
+                getattr(self, '%s_exe' % self.become_method, None) or
+                C.DEFAULT_BECOME_EXE or
+                getattr(C, 'DEFAULT_%s_EXE' % self.become_method.upper(), None) or
+                self.become_method
+            )
 
             # set flags to use for the privilege escalation method, with various overrides
-            flags = self.become_flags or \
-                    getattr(self, '%s_flags' % self.become_method, None) or \
-                    C.DEFAULT_BECOME_FLAGS or \
-                    getattr(C, 'DEFAULT_%s_FLAGS' % self.become_method.upper(), None) or \
-                    ''
+            flags = (
+                self.become_flags or
+                getattr(self, '%s_flags' % self.become_method, None) or
+                C.DEFAULT_BECOME_FLAGS or
+                getattr(C, 'DEFAULT_%s_FLAGS' % self.become_method.upper(), None) or
+                ''
+            )
 
             if self.become_method == 'sudo':
                 # If we have a password, we run sudo with a randomly-generated
@@ -517,10 +520,9 @@ class PlayContext(Base):
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if self.become_pass:
                     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p "%s" -u %s %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, command)
+                    becomecmd = '%s %s -p "%s" -u %s %s' % (exe, flags.replace('-n', ''), prompt, self.become_user, command)
                 else:
                     becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
-
 
             elif self.become_method == 'su':
 
@@ -537,7 +539,7 @@ class PlayContext(Base):
 
             elif self.become_method == 'pbrun':
 
-                prompt='Password:'
+                prompt = 'Password:'
                 becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
 
             elif self.become_method == 'ksu':
@@ -575,7 +577,7 @@ class PlayContext(Base):
                 if self.become_user:
                     flags += ' -u %s ' % self.become_user
 
-                #FIXME: make shell independent
+                # FIXME: make shell independent
                 becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
 
             elif self.become_method == 'dzdo':
@@ -591,7 +593,7 @@ class PlayContext(Base):
 
                 exe = self.become_exe or 'pmrun'
 
-                prompt='Enter UPM user password:'
+                prompt = 'Enter UPM user password:'
                 becomecmd = '%s %s %s' % (exe, flags, shlex_quote(command))
 
             else:
@@ -645,4 +647,3 @@ class PlayContext(Base):
             self.connection = conn_type
 
         return self._attributes['connection']
-
