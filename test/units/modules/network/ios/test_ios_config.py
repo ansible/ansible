@@ -69,9 +69,10 @@ class TestIosConfigModule(TestIosModule):
         self.assertIn('__backup__', result)
 
     def test_ios_config_save(self):
+        self.run_commands.return_value = "Hostname foo"
         set_module_args(dict(save=True))
         self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 1)
+        self.assertEqual(self.run_commands.call_count, 2)
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.load_config.call_count, 0)
         args = self.run_commands.call_args[0][1]
