@@ -17,16 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see http://www.gnu.org/licenses/.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
 
 DOCUMENTATION = '''
 ---
 module: ecs
 version_added: "1.0"
-short_description: Create, Start, Stop, Restart or Terminate an Instance in ECS. Add or Remove Instance to/from a 
-                   Security Group
+short_description: Create, Start, Stop, Restart or Terminate an Instance in ECS. Add or Remove Instance to/from a Security Group.
 description:
     - Creates, starts, stops, restarts or terminates ecs instances.
     - Adds or removes ecs instances to/from security group.
@@ -41,9 +40,9 @@ common options:
             map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
                            'describe_status']
 
-function: create instance
-  description: create an instance in ecs
-  options:
+# function: create instance
+#   description: create an instance in ecs
+options:
     alicloud_zone:
       description: Aliyun availability zone ID in which to launch the instance
       required: false
@@ -130,7 +129,8 @@ function: create instance
           - disk_name (required: false; default:null)
           - disk_description (required: false; default:null)
           - delete_on_termination (required:false, default:"true")
-          - snapshot_id (required:false; default:null), volume_type (str), iops (int) - device_type is deprecated use volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
+          - snapshot_id (required:false; default:null), volume_type (str), iops (int) - device_type is deprecated use 
+                    volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
       required: false
       default: null
       aliases: [ 'volumes' ]
@@ -151,13 +151,16 @@ function: create instance
       default: null
       aliases: []
     instance_tags:
-      description: - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]', tag_key must be not null when tag_value isn't null
+      description: - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]', 
+                     tag_key must be not null when tag_value isn't null
       required: false
       default: null
       aliases: [ 'tags' ]
     ids:
       description:
-        - A list of identifier for this instance or set of instances, so that the module will be idempotent with respect to ECS instances. This identifier should not be reused for another call later on. For details, see the description of client token at U(https://help.aliyun.com/document_detail/25693.html?spm=5176.doc25499.2.7.mrVgE2).
+        - A list of identifier for this instance or set of instances, so that the module will be idempotent with respect to ECS instances. 
+          This identifier should not be reused for another call later on. 
+          For details, see the description of client token at U(https://help.aliyun.com/document_detail/25693.html?spm=5176.doc25499.2.7.mrVgE2).
         - The length of the ids is the same with count
       required: false
       default: null
@@ -617,6 +620,10 @@ EXAMPLES = '''
         sg_action: '{{ sg_action }}'
 '''
 
+import time
+import sys
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.alicloud_ecs import get_acs_connection_info, ecs_argument_spec, ecs_connect
 
 HAS_FOOTMARK = False
 
@@ -681,7 +688,6 @@ def get_instances(module, ecs, instance_ids):
     #     for key, value in instance_tags.items():
     #         filters["tag:" + key] = value
 
-
     for inst in ecs.get_all_instances(instance_ids=instance_ids):
         # print("inst:====", get_instance_info(inst))
         instance_dict_array.append(get_instance_info(inst))
@@ -689,7 +695,8 @@ def get_instances(module, ecs, instance_ids):
 
     # C2C : Commented printing on to console as it causing error from ansible
     # print(instance_dict_array)
-    return (changed, instance_dict_array, instance_ids)
+
+    return changed, instance_dict_array, instance_ids
 
 
 def terminate_instances(module, ecs, instance_ids, instance_tags):
@@ -1248,10 +1255,5 @@ def main():
             (changed, result) = get_instance_status(module, ecs, zone_id, pagenumber, pagesize)
             module.exit_json(changed=changed, result=result)
 
-
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.alicloud_ecs import *
 
 main()

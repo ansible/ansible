@@ -24,7 +24,7 @@ class ModuleDocFragment(object):
 options:
   alicloud_access_key:
     description:
-      - Aliyun Cloud access key. If not set then the value of the `ALICLOUD_ACCESS_KEY`, `ACS_ACCESS_KEY_ID`, 
+      - Aliyun Cloud access key. If not set then the value of the `ALICLOUD_ACCESS_KEY`, `ACS_ACCESS_KEY_ID`,
         `ACS_ACCESS_KEY` or `ECS_ACCESS_KEY` environment variable is used.
     required: false
     default: null
@@ -38,7 +38,7 @@ options:
     aliases: ['acs_secret_access_key', 'ecs_secret_key','secret_key']
   alicloud_region:
     description:
-      - The Aliyun Cloud region to use. If not specified then the value of the `ALICLOUD_REGION`, `ACS_REGION`, 
+      - The Aliyun Cloud region to use. If not specified then the value of the `ALICLOUD_REGION`, `ACS_REGION`,
         `ACS_DEFAULT_REGION` or `ECS_REGION` environment variable, if any, is used.
     required: false
     default: null

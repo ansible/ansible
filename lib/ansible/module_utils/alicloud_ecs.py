@@ -119,6 +119,7 @@ def connect_to_acs(acs_module, region, **params):
                 "Unknown problem connecting to region %s for acs module %s." % (region, acs_module.__name__))
     return conn
 
+
 def ecs_connect(module):
     """ Return an ecs connection"""
 
@@ -131,6 +132,7 @@ def ecs_connect(module):
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     return ecs
+
 
 def slb_connect(module):
     """ Return an slb connection"""
@@ -145,6 +147,7 @@ def slb_connect(module):
     # Otherwise, no region so we fallback to the old connection method
     return slb
 
+
 def vpc_connect(module):
     """ Return an vpc connection"""
 
@@ -157,6 +160,7 @@ def vpc_connect(module):
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     return vpc
+
 
 def rds_connect(module):
     """ Return an rds connection"""
