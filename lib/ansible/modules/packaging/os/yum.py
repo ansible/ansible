@@ -583,6 +583,9 @@ def local_nvra(module, path):
     fd = os.open(path, os.O_RDONLY)
     try:
         header = ts.hdrFromFdno(fd)
+    except:
+        if module.params.get('skip_broken'):
+            return None
     finally:
         os.close(fd)
 
@@ -687,6 +690,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
             # download package so that we can check if it's already installed
             package = fetch_rpm_from_url(spec, module=module)
             nvra = local_nvra(module, package)
+            if not nvra and module.params.get('skip_broken'):
+                continue
             if is_installed(module, repoq, nvra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                 # if it's there, skip it
                 continue
