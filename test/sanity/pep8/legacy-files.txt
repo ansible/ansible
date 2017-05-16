@@ -96,7 +96,6 @@ lib/ansible/module_utils/six/_six.py
 lib/ansible/module_utils/splitter.py
 lib/ansible/module_utils/sros.py
 lib/ansible/module_utils/univention_umc.py
-lib/ansible/module_utils/urls.py
 lib/ansible/module_utils/vca.py
 lib/ansible/module_utils/vmware.py
 lib/ansible/module_utils/vyos.py

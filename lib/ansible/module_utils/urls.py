@@ -96,14 +96,14 @@ for users making use of a module. If possible, avoid third party libraries by us
 this code instead.
 '''
 
+import base64
 import netrc
 import os
 import re
-import sys
-import socket
 import platform
+import socket
+import sys
 import tempfile
-import base64
 
 try:
     import httplib
@@ -206,16 +206,13 @@ except ImportError:
         HAS_MATCH_HOSTNAME = False
 
 if not HAS_MATCH_HOSTNAME:
-    ###
-    ### The following block of code is under the terms and conditions of the
-    ### Python Software Foundation License
-    ###
+    # The following block of code is under the terms and conditions of the
+    # Python Software Foundation License
 
     """The match_hostname() function from Python 3.4, essential when using SSL."""
 
     class CertificateError(ValueError):
         pass
-
 
     def _dnsname_match(dn, hostname, max_wildcards=1):
         """Matching according to RFC 6125, section 6.4.3
@@ -269,7 +266,6 @@ if not HAS_MATCH_HOSTNAME:
         pat = re.compile(r'\A' + r'\.'.join(pats) + r'\Z', re.IGNORECASE)
         return pat.match(hostname)
 
-
     def match_hostname(cert, hostname):
         """Verify that *cert* (in decoded format as returned by
         SSLSocket.getpeercert()) matches the *hostname*.  RFC 2818 and RFC 6125
@@ -299,20 +295,13 @@ if not HAS_MATCH_HOSTNAME:
                             return
                         dnsnames.append(value)
         if len(dnsnames) > 1:
-            raise CertificateError("hostname %r "
-                "doesn't match either of %s"
-                % (hostname, ', '.join(map(repr, dnsnames))))
+            raise CertificateError("hostname %r doesn't match either of %s" % (hostname, ', '.join(map(repr, dnsnames))))
         elif len(dnsnames) == 1:
-            raise CertificateError("hostname %r "
-                "doesn't match %r"
-                % (hostname, dnsnames[0]))
+            raise CertificateError("hostname %r doesn't match %r" % (hostname, dnsnames[0]))
         else:
-            raise CertificateError("no appropriate commonName or "
-                "subjectAltName fields were found")
+            raise CertificateError("no appropriate commonName or subjectAltName fields were found")
 
-    ###
-    ### End of Python Software Foundation Licensed code
-    ###
+    # End of Python Software Foundation Licensed code
 
     HAS_MATCH_HOSTNAME = True
 
@@ -398,8 +387,12 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
             if HAS_SSLCONTEXT or HAS_URLLIB3_PYOPENSSLCONTEXT:
                 self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
             elif HAS_URLLIB3_SSL_WRAP_SOCKET:
-                self.sock = ssl_wrap_socket(sock, keyfile=self.key_file, cert_reqs=ssl.CERT_NONE, certfile=self.cert_file, ssl_version=PROTOCOL,
-                        server_hostname=server_hostname)
+                self.sock = ssl_wrap_socket(sock,
+                                            keyfile=self.key_file,
+                                            cert_reqs=ssl.CERT_NONE,
+                                            certfile=self.cert_file,
+                                            ssl_version=PROTOCOL,
+                                            server_hostname=server_hostname)
             else:
                 self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
@@ -448,24 +441,24 @@ def generic_urlparse(parts):
     if hasattr(parts, 'netloc'):
         # urlparse is newer, just read the fields straight
         # from the parts object
-        generic_parts['scheme']   = parts.scheme
-        generic_parts['netloc']   = parts.netloc
-        generic_parts['path']     = parts.path
-        generic_parts['params']   = parts.params
-        generic_parts['query']    = parts.query
+        generic_parts['scheme'] = parts.scheme
+        generic_parts['netloc'] = parts.netloc
+        generic_parts['path'] = parts.path
+        generic_parts['params'] = parts.params
+        generic_parts['query'] = parts.query
         generic_parts['fragment'] = parts.fragment
         generic_parts['username'] = parts.username
         generic_parts['password'] = parts.password
         generic_parts['hostname'] = parts.hostname
-        generic_parts['port']     = parts.port
+        generic_parts['port'] = parts.port
     else:
         # we have to use indexes, and then parse out
         # the other parts not supported by indexing
-        generic_parts['scheme']   = parts[0]
-        generic_parts['netloc']   = parts[1]
-        generic_parts['path']     = parts[2]
-        generic_parts['params']   = parts[3]
-        generic_parts['query']    = parts[4]
+        generic_parts['scheme'] = parts[0]
+        generic_parts['netloc'] = parts[1]
+        generic_parts['path'] = parts[2]
+        generic_parts['params'] = parts[3]
+        generic_parts['query'] = parts[4]
         generic_parts['fragment'] = parts[5]
         # get the username, password, etc.
         try:
@@ -488,12 +481,12 @@ def generic_urlparse(parts):
             generic_parts['username'] = username
             generic_parts['password'] = password
             generic_parts['hostname'] = hostname
-            generic_parts['port']     = port
+            generic_parts['port'] = port
         except:
             generic_parts['username'] = None
             generic_parts['password'] = None
             generic_parts['hostname'] = parts[1]
-            generic_parts['port']     = None
+            generic_parts['port'] = None
     return generic_parts
 
 
@@ -551,9 +544,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
             if do_redirect:
                 # be conciliant with URIs containing a space
                 newurl = newurl.replace(' ', '%20')
-                newheaders = dict((k,v) for k,v in req.headers.items()
-                                  if k.lower() not in ("content-length", "content-type")
-                                 )
+                newheaders = dict((k, v) for k, v in req.headers.items() if k.lower() not in ("content-length", "content-type"))
                 try:
                     # Python 2-3.3
                     origin_req_host = req.get_origin_req_host()
@@ -561,9 +552,9 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
                     # Python 3.4+
                     origin_req_host = req.origin_req_host
                 return urllib_request.Request(newurl,
-                               headers=newheaders,
-                               origin_req_host=origin_req_host,
-                               unverifiable=True)
+                                              headers=newheaders,
+                                              origin_req_host=origin_req_host,
+                                              unverifiable=True)
             else:
                 raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
 
@@ -660,7 +651,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 dir_contents = os.listdir(path)
                 for f in dir_contents:
                     full_path = os.path.join(path, f)
-                    if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt','.pem'):
+                    if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
                         try:
                             cert_file = open(full_path, 'rb')
                             cert = cert_file.read()
@@ -738,7 +729,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 if proxy_parts.get('scheme') == 'http':
                     s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
                     if proxy_parts.get('username'):
-                        credentials = "%s:%s" % (proxy_parts.get('username',''), proxy_parts.get('password',''))
+                        credentials = "%s:%s" % (proxy_parts.get('username', ''), proxy_parts.get('password', ''))
                         s.sendall(b('Proxy-Authorization: Basic %s\r\n') % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())
                     s.sendall(b('\r\n'))
                     connect_result = b("")
@@ -767,7 +758,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
                     match_hostname(ssl_s.getpeercert(), self.hostname)
             # close the ssl connection
-            #ssl_s.unwrap()
+            # ssl_s.unwrap()
             s.close()
         except (ssl.SSLError, CertificateError):
             e = get_exception()
@@ -923,7 +914,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     data = to_bytes(data, nonstring='passthru')
     if method:
-        if method.upper() not in ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT','PATCH'):
+        if method.upper() not in ('CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'TRACE'):
             raise ConnectionError('invalid HTTP request method; %s' % method.upper())
         request = RequestWithMethod(url, method.upper(), data)
     else:
@@ -951,7 +942,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             request.add_header(header, headers[header])
 
     urlopen_args = [request, None]
-    if sys.version_info >= (2,6,0):
+    if sys.version_info >= (2, 6, 0):
         # urlopen in python prior to 2.6.0 did not
         # have a timeout parameter
         urlopen_args.append(timeout)
@@ -959,9 +950,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     r = urllib_request.urlopen(*urlopen_args)
     return r
 
-#
+
 # Module-related functions
-#
 
 
 def basic_auth_header(username, password):
@@ -977,16 +967,16 @@ def url_argument_spec():
     that will be requesting content via urllib/urllib2
     '''
     return dict(
-        url=dict(),
-        force=dict(default='no', aliases=['thirsty'], type='bool'),
-        http_agent=dict(default='ansible-httpget'),
-        use_proxy=dict(default='yes', type='bool'),
-        validate_certs=dict(default='yes', type='bool'),
-        url_username=dict(required=False),
-        url_password=dict(required=False, no_log=True),
-        force_basic_auth=dict(required=False, type='bool', default='no'),
-        client_cert=dict(required=False, type='path', default=None),
-        client_key=dict(required=False, type='path', default=None),
+        url=dict(type='str'),
+        force=dict(type='bool', default='no', aliases=['thirsty']),
+        http_agent=dict(type='str', default='ansible-httpget'),
+        use_proxy=dict(type='bool', default='yes'),
+        validate_certs=dict(type='bool', default='yes'),
+        url_username=dict(type='str'),
+        url_password=dict(type='str', no_log=True),
+        force_basic_auth=dict(type='bool', default='no'),
+        client_cert=dict(type='path'),
+        client_key=dict(type='path'),
     )
 
 
