@@ -65,6 +65,8 @@ ARGS_DEFAULT_VALUE = {
     'validate_certs': True
 }
 
+def get_argspec():
+    return eos_argument_spec
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}

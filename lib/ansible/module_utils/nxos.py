@@ -61,6 +61,8 @@ ARGS_DEFAULT_VALUE = {
     'timeout': 10
 }
 
+def get_argspec():
+    return nxos_argument_spec
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}

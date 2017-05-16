@@ -44,6 +44,8 @@ ios_argument_spec = {
     'provider': dict(type='dict'),
 }
 
+def get_argspec():
+    return ios_argument_spec
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}

@@ -786,7 +786,10 @@ class TaskExecutor:
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
             handler_name = module_prefix
         else:
-            handler_name = 'normal'
+            # handler_name = 'normal'
+            plugin = self._shared_loader_obj.module_loader.find_plugin(self._task.action)
+            module = self._shared_loader_obj.module_loader._load_module_source(self._task.action, plugin)
+            handler_name = getattr(module, 'ANSIBLE_ACTION_HANDLER', 'normal')
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
