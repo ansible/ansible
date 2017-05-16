@@ -61,16 +61,16 @@ class TaskExecutor:
     SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
 
     def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q):
-        self._host              = host
-        self._task              = task
-        self._job_vars          = job_vars
-        self._play_context      = play_context
-        self._new_stdin         = new_stdin
-        self._loader            = loader
+        self._host = host
+        self._task = task
+        self._job_vars = job_vars
+        self._play_context = play_context
+        self._new_stdin = new_stdin
+        self._loader = loader
         self._shared_loader_obj = shared_loader_obj
-        self._connection        = None
-        self._rslt_q            = rslt_q
-        self._loop_eval_error   = None
+        self._connection = None
+        self._rslt_q = rslt_q
+        self._loop_eval_error = None
 
         self._task.squash()
 
@@ -99,7 +99,7 @@ class TaskExecutor:
                     # loop through the item results, and remember the changed/failed
                     # result flags based on any item there.
                     changed = False
-                    failed  = False
+                    failed = False
                     for item in item_results:
                         if 'changed' in item and item['changed']:
                             changed = True
@@ -148,7 +148,7 @@ class TaskExecutor:
                             else:
                                 raise
                 elif isinstance(res, list):
-                    for idx,item in enumerate(res):
+                    for (idx, item) in enumerate(res):
                         res[idx] = _clean_res(item, errors=errors)
                 return res
 
@@ -189,7 +189,6 @@ class TaskExecutor:
         # get search path for this task to pass to lookup plugins
         self._job_vars['ansible_search_path'] = self._task.get_search_path()
 
-
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
         if self._task.loop:
@@ -211,7 +210,7 @@ class TaskExecutor:
                 for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
                     if subdir in self._task.action:
                         break
-                setattr(mylookup,'_subdir', subdir + 's')
+                setattr(mylookup, '_subdir', subdir + 's')
 
                 # run lookup
                 items = mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True)
@@ -249,7 +248,7 @@ class TaskExecutor:
 
         # make copies of the job vars and task so we can add the item to
         # the variables and re-validate the task with the item variable
-        #task_vars = self._job_vars.copy()
+        # task_vars = self._job_vars.copy()
         task_vars = self._job_vars
 
         loop_var = 'item'
@@ -263,8 +262,8 @@ class TaskExecutor:
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
-                    u"You should set the `loop_var` value in the `loop_control` option for the task"
-                    u" to something else to avoid variable collisions and unexpected behavior." % loop_var)
+                            u"You should set the `loop_var` value in the `loop_control` option for the task"
+                            u" to something else to avoid variable collisions and unexpected behavior." % loop_var)
 
         ran_once = False
         items = self._squash_items(items, loop_var, task_vars)
@@ -369,7 +368,7 @@ class TaskExecutor:
                         else:
                             # Restore the name parameter
                             self._task.args['name'] = name
-                #elif:
+                # elif:
                     # Right now we only optimize single entries.  In the future we
                     # could optimize more types:
                     # * lists can be squashed together
@@ -544,7 +543,7 @@ class TaskExecutor:
             if self._task.async > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
-                    #FIXME callback 'v2_runner_on_async_poll' here
+                    # FIXME callback 'v2_runner_on_async_poll' here
 
                 # ensure no log is preserved
                 result["_ansible_no_log"] = self._play_context.no_log
@@ -651,7 +650,7 @@ class TaskExecutor:
 
         async_task = Task().load(dict(action='async_status jid=%s' % async_jid))
 
-        #FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
+        # FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader

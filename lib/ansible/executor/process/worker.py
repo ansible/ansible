@@ -28,11 +28,11 @@ from jinja2.exceptions import TemplateNotFound
 
 # TODO: not needed if we use the cryptography library with its default RNG
 # engine
-HAS_ATFORK=True
+HAS_ATFORK = True
 try:
     from Crypto.Random import atfork
 except ImportError:
-    HAS_ATFORK=False
+    HAS_ATFORK = False
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
@@ -59,13 +59,13 @@ class WorkerProcess(multiprocessing.Process):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
-        self._rslt_q            = rslt_q
-        self._task_vars         = task_vars
-        self._host              = host
-        self._task              = task
-        self._play_context      = play_context
-        self._loader            = loader
-        self._variable_manager  = variable_manager
+        self._rslt_q = rslt_q
+        self._task_vars = task_vars
+        self._host = host
+        self._task = task
+        self._play_context = play_context
+        self._loader = loader
+        self._variable_manager = variable_manager
         self._shared_loader_obj = shared_loader_obj
 
         if sys.stdin.isatty():
@@ -95,9 +95,9 @@ class WorkerProcess(multiprocessing.Process):
         signify that they are ready for their next task.
         '''
 
-        #import cProfile, pstats, StringIO
-        #pr = cProfile.Profile()
-        #pr.enable()
+        # import cProfile, pstats, StringIO
+        # pr = cProfile.Profile()
+        # pr.enable()
 
         if HAS_ATFORK:
             atfork()
@@ -160,11 +160,10 @@ class WorkerProcess(multiprocessing.Process):
 
         display.debug("WORKER PROCESS EXITING")
 
-        #pr.disable()
-        #s = StringIO.StringIO()
-        #sortby = 'time'
-        #ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        #ps.print_stats()
-        #with open('worker_%06d.stats' % os.getpid(), 'w') as f:
-        #    f.write(s.getvalue())
-
+        # pr.disable()
+        # s = StringIO.StringIO()
+        # sortby = 'time'
+        # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        # ps.print_stats()
+        # with open('worker_%06d.stats' % os.getpid(), 'w') as f:
+        #     f.write(s.getvalue())
