@@ -84,6 +84,7 @@ Callback plugins are created by creating a new class with the Base(Callbacks) cl
   from ansible import constants as C
 
   class CallbackModule(CallbackBase):
+      pass
 
 From there, override the specific methods from the CallbackBase that you want to provide a callback for. For plugins intended for use with Ansible version 2.0 and later, you should only override methods that start with `v2`. For a complete list of methods that you can override, please see ``__init__.py`` in the `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_ directory.
 

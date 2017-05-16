@@ -41,7 +41,7 @@ For more information about action plugins, go `here <https://docs.ansible.com/an
 
 3. Should you use a role instead?
 
-Check out the roles documentation `here <http://docs.ansible.com/ansible/playbooks_roles.html#roles>`_.
+Check out the `roles documentation <http://docs.ansible.com/ansible/playbooks_roles.html#roles>`_.
 
 
 .. _developing_modules_all:
