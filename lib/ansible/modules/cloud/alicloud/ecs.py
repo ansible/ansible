@@ -151,13 +151,6 @@ options:
       required: false
       default: null
       aliases: []
-    instance_tags:
-      description:
-        - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]',
-                     tag_key must be not null when tag_value isn't null
-      required: false
-      default: null
-      aliases: [ 'tags' ]
     ids:
       description:
         - A list of identifier for this instance or set of instances, so that the module will be idempotent with respect to ECS instances.
@@ -221,11 +214,6 @@ options:
             - password (required=false; default=null; description=The password to login instance)
             - host_name (required=false; default=null; description=Instance host name)
       required: false
-      default: null
-      aliases: []
-    group_id:
-      description: Security group id (or list of ids) to use with the instance
-      required: true
       default: null
       aliases: []
     sg_action:
