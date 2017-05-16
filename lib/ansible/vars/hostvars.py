@@ -40,6 +40,7 @@ except ImportError:
 
 __all__ = ['HostVars']
 
+
 # Note -- this is a Mapping, not a MutableMapping
 class HostVars(collections.Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
