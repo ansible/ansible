@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 # (c) 2017, Alen Komic
 #
 # This file is part of Ansible
