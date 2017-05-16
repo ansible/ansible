@@ -115,7 +115,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 template:
     description: "Dictionary of all the template attributes. Template attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/template."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/template."
     returned: On success if template is found.
     type: dict
 '''

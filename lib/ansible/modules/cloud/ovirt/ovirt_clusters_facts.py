@@ -58,7 +58,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_clusters:
     description: "List of dictionaries describing the clusters. Cluster attribues are mapped to dictionary keys,
-                  all clusters attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/cluster."
+                  all clusters attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/cluster."
     returned: On success.
     type: list
 '''

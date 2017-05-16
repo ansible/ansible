@@ -194,14 +194,14 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 disk:
     description: "Dictionary of all the disk attributes. Disk attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/disk."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/disk."
     returned: "On success if disk is found and C(vm_id) or C(vm_name) wasn't passed."
     type: dict
 
 disk_attachment:
     description: "Dictionary of all the disk attachment attributes. Disk attachment attributes can be found
                   on your oVirt/RHV instance at following url:
-                  https://ovirt.example.com/ovirt-engine/api/model#types/disk_attachment."
+                  http://ovirt.github.io/ovirt-engine-api-model/master/#types/disk_attachment."
     returned: "On success if disk is found and C(vm_id) or C(vm_name) was passed and VM was found."
     type: dict
 '''

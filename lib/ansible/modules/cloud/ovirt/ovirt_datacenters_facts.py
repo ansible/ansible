@@ -57,7 +57,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_datacenters:
     description: "List of dictionaries describing the datacenters. Datacenter attribues are mapped to dictionary keys,
-                  all datacenters attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/data_center."
+                  all datacenters attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/data_center."
     returned: On success.
     type: list
 '''

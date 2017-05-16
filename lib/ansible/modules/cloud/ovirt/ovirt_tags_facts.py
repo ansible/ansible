@@ -74,7 +74,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_tags:
     description: "List of dictionaries describing the tags. Tags attribues are mapped to dictionary keys,
-                  all tags attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/tag."
+                  all tags attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/tag."
     returned: On success.
     type: list
 '''

@@ -86,7 +86,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 group:
     description: "Dictionary of all the group attributes. Group attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/group."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/group."
     returned: On success if group is found.
     type: dict
 '''
