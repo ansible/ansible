@@ -212,12 +212,12 @@ def main():
                     org_res = tower_cli.get_resource('organization')
                     org = org_res.get(name=organization)
                 except (exc.NotFound) as excinfo:
-                    module.fail_json(msg='Failed to update project, organization not found: {0}'.format(excinfo), changed=False)
+                    module.fail_json(msg='Failed to update project, organization not found: {0}'.format(organization), changed=False)
                 try:
                     cred_res = tower_cli.get_resource('credential')
                     cred = cred_res.get(name=scm_credential)
                 except (exc.NotFound) as excinfo:
-                    module.fail_json(msg='Failed to update project, credential not found: {0}'.format(excinfo), changed=False)
+                    module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
 
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
