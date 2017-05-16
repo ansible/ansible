@@ -25,7 +25,6 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 import json
 import os
@@ -76,8 +75,7 @@ def _get_gcp_ansible_credentials(module):
     """Helper to fetch creds from AnsibleModule object."""
     service_account_email = module.params.get('service_account_email', None)
     # Note: pem_file is discouraged and will be deprecated
-    credentials_file = module.params.get('pem_file', None) or module.params.get(
-        'credentials_file', None)
+    credentials_file = module.params.get('pem_file', None) or module.params.get('credentials_file', None)
     project_id = module.params.get('project_id', None)
 
     return (service_account_email, credentials_file, project_id)
@@ -85,8 +83,7 @@ def _get_gcp_ansible_credentials(module):
 
 def _get_gcp_environ_var(var_name, default_value):
     """Wrapper around os.environ.get call."""
-    return os.environ.get(
-        var_name, default_value)
+    return os.environ.get(var_name, default_value)
 
 
 def _get_gcp_environment_credentials(service_account_email, credentials_file, project_id):
@@ -96,10 +93,11 @@ def _get_gcp_environment_credentials(service_account_email, credentials_file, pr
     if not service_account_email:
         service_account_email = _get_gcp_environ_var('GCE_EMAIL', None)
     if not credentials_file:
-        credentials_file = _get_gcp_environ_var(
-            'GCE_CREDENTIALS_FILE_PATH', None) or _get_gcp_environ_var(
-                'GOOGLE_APPLICATION_CREDENTIALS', None) or _get_gcp_environ_var(
-                    'GCE_PEM_FILE_PATH', None)
+        credentials_file = (
+            _get_gcp_environ_var('GCE_CREDENTIALS_FILE_PATH', None) or
+            _get_gcp_environ_var('GOOGLE_APPLICATION_CREDENTIALS', None) or
+            _get_gcp_environ_var('GCE_PEM_FILE_PATH', None)
+        )
     if not project_id:
         project_id = _get_gcp_environ_var('GCE_PROJECT', None) or _get_gcp_environ_var(
             'GOOGLE_CLOUD_PROJECT', None)
@@ -207,8 +205,7 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
             if project_id is None:
                 # TODO(supertom): this message is legacy and integration tests
                 # depend on it.
-                module.fail_json(msg='Missing GCE connection parameters in libcloud '
-                                 'secrets file.')
+                module.fail_json(msg='Missing GCE connection parameters in libcloud secrets file.')
         else:
             if project_id is None:
                 module.fail_json(msg=('GCP connection error: unable to determine project (%s) or '
@@ -442,7 +439,7 @@ def check_min_pkg_version(pkg_name, minimum_version):
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
-    return 'Unexpected response: (%s). Detail: %s' % (str(error), traceback.format_exc())
+    return 'Unexpected response: (%s). Detail: %s' % (error, traceback.format_exc())
 
 
 def get_valid_location(module, driver, location, location_type='zone'):
@@ -509,8 +506,7 @@ class GCPUtils(object):
 
     @staticmethod
     def underscore_to_camel(txt):
-        return txt.split('_')[0] + ''.join(x.capitalize()
-                                           or '_' for x in txt.split('_')[1:])
+        return txt.split('_')[0] + ''.join(x.capitalize() or '_' for x in txt.split('_')[1:])
 
     @staticmethod
     def remove_non_gcp_params(params):
@@ -631,13 +627,13 @@ class GCPUtils(object):
                         return True
                     elif op_resp['operationType'] in ['insert', 'update', 'patch']:
                         # TODO(supertom): Isolate 'build-new-request' stuff.
-                        resource_name_singular = GCPUtils.get_entity_name_from_resource_name(
-                            resource_name)
-                        if op_resp['operationType'] == 'insert' or not 'entity_name' in parsed_url:
-                            parsed_url['entity_name'] = GCPUtils.parse_gcp_url(op_resp['targetLink'])[
-                                'entity_name']
-                        args = {'project': project_id,
-                                resource_name_singular: parsed_url['entity_name']}
+                        resource_name_singular = GCPUtils.get_entity_name_from_resource_name(resource_name)
+                        if op_resp['operationType'] == 'insert' or 'entity_name' not in parsed_url:
+                            parsed_url['entity_name'] = GCPUtils.parse_gcp_url(op_resp['targetLink'])['entity_name']
+                        args = {
+                            'project': project_id,
+                            resource_name_singular: parsed_url['entity_name'],
+                        }
                         new_req = resource.get(**args)
                         resp = new_req.execute()
                         return resp
@@ -648,8 +644,7 @@ class GCPUtils(object):
                         return resp
             else:
                 # operation didn't complete on time.
-                raise GCPOperationTimeoutError("Operation timed out: %s" % (
-                    op_resp['targetLink']))
+                raise GCPOperationTimeoutError("Operation timed out: %s" % op_resp['targetLink'])
 
     @staticmethod
     def build_resource_from_name(client, resource_name):
@@ -657,8 +652,7 @@ class GCPUtils(object):
             method = getattr(client, resource_name)
             return method()
         except AttributeError:
-            raise NotImplementedError('%s is not an attribute of %s' % (resource_name,
-                                                                        client))
+            raise NotImplementedError('%s is not an attribute of %s' % (resource_name, client))
 
     @staticmethod
     def get_gcp_resource_from_methodId(methodId):
