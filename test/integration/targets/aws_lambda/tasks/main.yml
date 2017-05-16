@@ -1,0 +1,92 @@
+---
+#
+#  Author: Michael De La Rue
+#  based on ec2_key.yml + lambda.py
+
+- block:
+
+    # ============================================================
+    - name: test with no parameters
+      lambda:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: name")'
+
+    # ============================================================
+    - name: test with no parameters except state absent
+      lambda:
+        state=absent
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: name")'
+
+    # ============================================================
+    - name: test with no role or handler
+      lambda:
+        name=ansible-testing-fake-should-not-be-created
+        runtime="python2.7"
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("state is present but the following are missing: handler")'
+
+    # ============================================================
+    - name: test with all module required variables but no region
+      lambda:
+        name=ansible-testing-fake-should-not-be-created
+        runtime="python2.7"
+        handler="no-handler"
+        role=arn:fake-role-doesnt-exist
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with only 'name'
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "region must be specified"'
+
+
+    # ============================================================
+    # direct zip file upload
+
+
+    # ============================================================
+    # upload via s3 bucket
+
+
+    # ============================================================
+    # update already existing function
+
+
+  always:
+
+    # ============================================================
+    - name: test state=absent (expect changed=false)
+      lambda:
+        name="{{lambda_function_name}}"
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=absent
+      register: result
+
+    - name: assert state=absent
+      assert:
+        that:
+           - '"failed" not in result'
