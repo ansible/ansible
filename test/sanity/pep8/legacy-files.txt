@@ -51,8 +51,6 @@ lib/ansible/modules/cloud/amazon/elb_classic_lb.py
 lib/ansible/modules/cloud/amazon/execute_lambda.py
 lib/ansible/modules/cloud/amazon/iam.py
 lib/ansible/modules/cloud/amazon/iam_policy.py
-lib/ansible/modules/cloud/amazon/lambda.py
-lib/ansible/modules/cloud/amazon/lambda_facts.py
 lib/ansible/modules/cloud/amazon/rds_subnet_group.py
 lib/ansible/modules/cloud/amazon/redshift.py
 lib/ansible/modules/cloud/amazon/route53_health_check.py

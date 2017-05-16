@@ -262,7 +262,7 @@ def main():
 
     if invoke_params['InvocationType'] == 'RequestResponse':
         try:
-            results['output'] = json.loads(response['Payload'].read())
+            results['output'] = json.loads(response['Payload'].read().decode('utf8'))
         except Exception as e:
             module.fail_json(msg="Failed while decoding function return value", exception=traceback.format_exc())
 
