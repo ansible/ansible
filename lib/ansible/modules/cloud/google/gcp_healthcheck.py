@@ -71,8 +71,8 @@ options:
     required: true
   port:
     description:
-       - The TCP port number for health check request.The default value is 443
-         for HTTPS and 80 for HTTP.
+       - The TCP port number for the health check request. The default value is
+         443 for HTTPS and 80 for HTTP.
     required: false
   request_path:
     description:
@@ -82,6 +82,7 @@ options:
   state:
     description: State of the Healthcheck.
     required: true
+    choices: ["present", "absent"]
   timeout:
     description:
        - How long (in seconds) to wait for a response before claiming
@@ -238,16 +239,16 @@ def _build_healthcheck_dict(params):
         gcp_dict['timeoutSec'] = gcp_dict['timeout']
         del gcp_dict['timeout']
 
-    if 'check_interval' in gcp_dict:
-        gcp_dict['checkIntervalSec'] = gcp_dict['check_interval']
-        del gcp_dict['check_interval']
+    if 'checkInterval' in gcp_dict:
+        gcp_dict['checkIntervalSec'] = gcp_dict['checkInterval']
+        del gcp_dict['checkInterval']
 
-    if 'host_header' in gcp_dict:
-        gcp_dict['host'] = gcp_dict['host_header']
-        del gcp_dict['host_header']
+    if 'hostHeader' in gcp_dict:
+        gcp_dict['host'] = gcp_dict['hostHeader']
+        del gcp_dict['hostHeader']
 
-    if 'healthcheck_type' in gcp_dict:
-        del gcp_dict['healthcheck_type']
+    if 'healthcheckType' in gcp_dict:
+        del gcp_dict['healthcheckType']
     return gcp_dict
 
 
@@ -363,7 +364,6 @@ def update_healthcheck(client, healthcheck, params, name, project_id,
     :rtype: ``tuple`` in the format of (bool, dict)
     """
     gcp_dict = _build_healthcheck_dict(params)
-
     ans = GCPUtils.are_params_equal(healthcheck, gcp_dict)
     if ans:
         return (False, 'no update necessary')
@@ -388,7 +388,7 @@ def main():
         check_interval=dict(required=False, type='int', default=5),
         healthy_threshold=dict(required=False, type='int', default=2),
         unhealthy_threshold=dict(required=False, type='int', default=2),
-        host_header=dict(required=False, type='str'),
+        host_header=dict(required=False, type='str', default=''),
         timeout=dict(required=False, type='int', default=5),
         port=dict(required=False, type='int'),
         state=dict(choices=['absent', 'present'], default='present'),
@@ -410,9 +410,13 @@ def main():
     params['unhealthy_threshold'] = module.params.get('unhealthy_threshold')
     params['host_header'] = module.params.get('host_header')
     params['timeout'] = module.params.get('timeout')
-    params['port'] = module.params.get('port')
+    params['port'] = module.params.get('port', None)
     params['state'] = module.params.get('state')
 
+    if not params['port']:
+        params['port'] = 80
+        if params['healthcheck_type'] == 'HTTPS':
+            params['port'] = 443
     try:
         _validate_healthcheck_params(params)
     except Exception as e:

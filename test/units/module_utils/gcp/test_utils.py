@@ -356,11 +356,11 @@ class GCPUtilsTestCase(unittest.TestCase):
             u'unhealthyThreshold': 2,
             u'creationTimestamp': u'2017-05-16T15:09:36.546-07:00',
             u'id': u'8727093129334146639',
-            u'selfLink': u'https://www.googleapis.com/compute/v1/projects/graphite-demo-supertom/global/httpsHealthChecks/ans-int-healthcheck-https-ansible-testing-5zk3ospa',
-            u'name': u'ans-int-healthcheck-https-ansible-testing-5zk3ospa'}
+            u'selfLink': u'https://www.googleapis.com/compute/v1/projects/myproject/global/httpsHealthChecks/myhealthcheck',
+            u'name': u'myhealthcheck'}
 
         expected = {
-            'name': 'ans-int-healthcheck-https-ansible-testing-5zk3ospa',
+            'name': 'myhealthcheck',
             'checkIntervalSec': 5,
             'port': 443,
             'unhealthyThreshold': 2,
