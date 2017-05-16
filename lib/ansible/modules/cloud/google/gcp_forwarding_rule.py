@@ -25,9 +25,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_forwarding_rule
 version_added: "2.4"
-short_description: Create, Update or Destory a Forwarding_Rule.
+short_description: Create, Update or Destroy a Forwarding_Rule.
 description:
-    - Create, Update or Destory a Forwarding_Rule. See
+    - Create, Update or Destroy a Forwarding_Rule. See
       U(https://cloud.google.com/compute/docs/load-balancing/http/target-proxies) for an overview.
       More details on the Global Forwarding_Rule API can be found at
       U(https://cloud.google.com/compute/docs/reference/latest/globalForwardingRules)
@@ -68,6 +68,11 @@ options:
     description:
        - The region for this forwarding rule. Currently, only 'global' is supported.
     required: false
+  state:
+    description:
+       - The state of the Forwarding Rule. 'present' or 'absent'
+    required: true
+    choices: ["present", "absent"]
   target:
     description:
        - Target resource for forwarding rule. For global proxy, this is a Global
@@ -123,20 +128,8 @@ state:
     returned: Always.
     type: str
     sample: present
-updated_forwarding_rule:
-    description: True if the forwarding_rule has been updated. Will not appear on
-                 initial forwarding_rule creation.
-    returned: if the forwarding_rule has been updated.
-    type: bool
-    sample: true
 '''
 
-
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -214,10 +207,6 @@ def create_global_forwarding_rule(client, params, project_id):
     :rtype: ``tuple`` in the format of (bool, dict)
     """
     gcp_dict = _build_global_forwarding_rule_dict(params, project_id)
-    with open('/tmp/mylog.log', 'w') as f:
-        f.write(str(params))
-        f.write(str(gcp_dict))
-    f.close()
     try:
         req = client.globalForwardingRules().insert(project=project_id, body=gcp_dict)
         return_data = GCPUtils.execute_api_client_req(req, client, raw=False)
@@ -313,10 +302,6 @@ def main():
         credentials_file=dict(),
         project_id=dict(), ), )
 
-    if not HAS_PYTHON26:
-        module.fail_json(
-            msg="GCE module requires python's 'ast' module, python v2.6+")
-
     client, conn_params = get_google_api_client(module, 'compute', user_agent_product=USER_AGENT_PRODUCT,
                                                 user_agent_version=USER_AGENT_VERSION)
 
@@ -367,7 +352,6 @@ def main():
                                                                                 params=params,
                                                                                 name=params['forwarding_rule_name'],
                                                                                 project_id=conn_params['project_id'])
-        json_output['updated_forwarding_rule'] = changed
 
     json_output['changed'] = changed
     json_output.update(params)
