@@ -110,7 +110,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 agent:
     description: "Dictionary of all the agent attributes. Agent attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/agent."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/agent."
     returned: On success if agent is found.
     type: dict
 '''

@@ -88,7 +88,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 tag:
     description: "Dictionary of all the tag attributes. Tag attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/tag."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/tag."
     returned: On success if tag is found.
     type: dict
 '''

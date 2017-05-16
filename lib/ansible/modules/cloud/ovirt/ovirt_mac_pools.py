@@ -82,7 +82,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 template:
     description: "Dictionary of all the MAC pool attributes. MAC pool attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/mac_pool."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/mac_pool."
     returned: On success if MAC pool is found.
     type: dict
 '''
