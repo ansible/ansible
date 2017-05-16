@@ -13,7 +13,7 @@ from ansible.playbook.task import Task
 template_file = 'playbooks_keywords.rst.j2'
 oblist = {}
 clist = []
-class_list = [ Play, Role, Block, Task ]
+class_list = [Play, Role, Block, Task]
 
 p = optparse.OptionParser(
     version='%prog 1.0',
@@ -62,8 +62,8 @@ for aclass in class_list:
 
 env = Environment(loader=FileSystemLoader(options.template_dir), trim_blocks=True,)
 template = env.get_template(template_file)
-outputname = options.output_dir + template_file.replace('.j2','')
-tempvars = { 'oblist': oblist, 'clist': clist }
+outputname = options.output_dir + template_file.replace('.j2', '')
+tempvars = {'oblist': oblist, 'clist': clist}
 
-with open( outputname, 'w') as f:
+with open(outputname, 'w') as f:
     f.write(template.render(tempvars))
