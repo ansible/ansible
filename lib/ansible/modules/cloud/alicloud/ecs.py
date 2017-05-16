@@ -168,7 +168,7 @@ options:
       default: null
       aliases: [ 'id' ]
     instance_charge_type:
-      description: 
+      description:
         - The charge type of the instance.
       required: false
       choices: ["PrePaid", "PostPaid"]
@@ -193,13 +193,14 @@ options:
       default: false
     instance_ids:
       description:
-        - A list of instance ids, currently used for states: running, stopped, restarted, absent, and join or leave instances from security group.
+        - "A list of instance ids, currently used for states: running, stopped, restarted, absent,
+          and applied to join or leave instances from security group."
       required: true
       default: null
       aliases: ["instance_id"]
     force:
       description:
-        - Whether force to operation, currently used fo states: stopped, restarted .
+        - Whether force to operation, currently used fo states: stopped and restarted.
       required: false
       default: False
       aliases: []
@@ -252,6 +253,8 @@ options:
         - how long before wait gives up, in seconds
       required: false
       default: 300
+author:
+    - "He Guimin (@xiaozhu36)"
 '''
 
 EXAMPLES = '''
@@ -1220,4 +1223,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main() 
+    main()
