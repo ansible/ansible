@@ -396,7 +396,7 @@ class ZipArchive(object):
                 raise UnarchiveError('ZIP info perm format incorrect, %s' % permstr)
 
             # DEBUG
-#            err += "%s%s %10d %s\n" % (ztype, permstr, size, path)
+            err += "%s%s %10d %s\n" % (ztype, permstr, size, path)
 
             dest = os.path.join(self.dest, path)
             try:
