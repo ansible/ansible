@@ -112,7 +112,7 @@ class ActionModule(_ActionModule):
         path = unfrackpath("$HOME/.ansible/pc")
         # use play_context.connection instea of play_context.port to avoid
         # collision if netconf is listening on port 22
-        #cp = ssh._create_control_path(play_context.remote_addr, play_context.connection, play_context.remote_user)
+        # cp = ssh._create_control_path(play_context.remote_addr, play_context.connection, play_context.remote_user)
         cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user)
         return cp % dict(directory=path)
 

@@ -30,7 +30,7 @@ from ansible.module_utils._text import to_text
 from ansible.parsing.quoting import unquote
 from ansible.utils.path import makedirs_safe
 
-BOOL_TRUE = frozenset( [ "true", "t", "y", "1", "yes", "on" ] )
+BOOL_TRUE = frozenset(["true", "t", "y", "1", "yes", "on"])
 
 
 def mk_boolean(value):
@@ -173,48 +173,48 @@ p, CONFIG_FILE = load_config_file()
 # non configurable but used as defaults
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 # the default whitelist for cow stencils
-DEFAULT_COW_WHITELIST = [ 'bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant',
-                          'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep',
-                          'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder',
-                          'vader-koala', 'vader', 'www', ]
+DEFAULT_COW_WHITELIST = ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant',
+                         'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep',
+                         'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder',
+                         'vader-koala', 'vader', 'www']
 
 # sections in config file
-DEFAULTS='defaults'
+DEFAULTS = 'defaults'
 
-#### DEPRECATED VARS ### # FIXME: add deprecation warning when these get set
-#none left now
+# DEPRECATED VARS # FIXME: add deprecation warning when these get set
+# none left now
 
-#### DEPRECATED FEATURE TOGGLES: these will eventually be removed as it becomes the standard ####
+# DEPRECATED FEATURE TOGGLES: these will eventually be removed as it becomes the standard
 
 # If --tags or --skip-tags is given multiple times on the CLI and this is True, merge the lists of tags together.
 # If False, let the last argument overwrite any previous ones.
 # Behaviour is overwrite through 2.2.  2.3 overwrites but prints deprecation.  2.4 the default is to merge.
-MERGE_MULTIPLE_CLI_TAGS   = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'ANSIBLE_MERGE_MULTIPLE_CLI_TAGS', True, value_type='boolean')
+MERGE_MULTIPLE_CLI_TAGS = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'ANSIBLE_MERGE_MULTIPLE_CLI_TAGS', True, value_type='boolean')
 
 # Controls which 'precedence path' to take, remove when decide on which!
-SOURCE_OVER_GROUPS        = get_config(p, 'vars', 'source_over_groups', 'ANSIBLE_SOURCE_OVER_GROUPS', True, value_type='boolean')
+SOURCE_OVER_GROUPS = get_config(p, 'vars', 'source_over_groups', 'ANSIBLE_SOURCE_OVER_GROUPS', True, value_type='boolean')
 
-#### GENERALLY CONFIGURABLE THINGS ####
-DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, value_type='boolean')
-DEFAULT_VERBOSITY         = get_config(p, DEFAULTS, 'verbosity',        'ANSIBLE_VERBOSITY',        0, value_type='integer')
-DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',
-                                       '~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles', value_type='pathlist', expand_relative_paths=True)
-DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '~/.ansible/tmp')
-DEFAULT_LOCAL_TMP         = get_config(p, DEFAULTS, 'local_tmp',        'ANSIBLE_LOCAL_TEMP',      '~/.ansible/tmp', value_type='tmppath')
-DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
-DEFAULT_FACT_PATH         = get_config(p, DEFAULTS, 'fact_path',        'ANSIBLE_FACT_PATH', None, value_type='path')
-DEFAULT_FORKS             = get_config(p, DEFAULTS, 'forks',            'ANSIBLE_FORKS',            5, value_type='integer')
-DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
-DEFAULT_MODULE_LANG       = get_config(p, DEFAULTS, 'module_lang',      'ANSIBLE_MODULE_LANG',      os.getenv('LANG', 'en_US.UTF-8'))
-DEFAULT_MODULE_SET_LOCALE = get_config(p, DEFAULTS, 'module_set_locale','ANSIBLE_MODULE_SET_LOCALE',False, value_type='boolean')
-DEFAULT_MODULE_COMPRESSION= get_config(p, DEFAULTS, 'module_compression', None, 'ZIP_DEFLATED')
-DEFAULT_TIMEOUT           = get_config(p, DEFAULTS, 'timeout',          'ANSIBLE_TIMEOUT',          10, value_type='integer')
-DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE_POLL_INTERVAL',    15, value_type='integer')
-DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      None)
-DEFAULT_ASK_PASS          = get_config(p, DEFAULTS, 'ask_pass',  'ANSIBLE_ASK_PASS',    False, value_type='boolean')
-DEFAULT_PRIVATE_KEY_FILE  = get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None, value_type='path')
-DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      None, value_type='integer')
-DEFAULT_ASK_VAULT_PASS    = get_config(p, DEFAULTS, 'ask_vault_pass',    'ANSIBLE_ASK_VAULT_PASS',    False, value_type='boolean')
+# GENERALLY CONFIGURABLE THINGS ####
+DEFAULT_DEBUG = get_config(p, DEFAULTS, 'debug', 'ANSIBLE_DEBUG', False, value_type='boolean')
+DEFAULT_VERBOSITY = get_config(p, DEFAULTS, 'verbosity', 'ANSIBLE_VERBOSITY', 0, value_type='integer')
+DEFAULT_ROLES_PATH = get_config(p, DEFAULTS, 'roles_path', 'ANSIBLE_ROLES_PATH',
+                                             '~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles', value_type='pathlist', expand_relative_paths=True)
+DEFAULT_REMOTE_TMP = get_config(p, DEFAULTS, 'remote_tmp', 'ANSIBLE_REMOTE_TEMP', '~/.ansible/tmp')
+DEFAULT_LOCAL_TMP = get_config(p, DEFAULTS, 'local_tmp', 'ANSIBLE_LOCAL_TEMP', '~/.ansible/tmp', value_type='tmppath')
+DEFAULT_MODULE_NAME = get_config(p, DEFAULTS, 'module_name', None, 'command')
+DEFAULT_FACT_PATH = get_config(p, DEFAULTS, 'fact_path', 'ANSIBLE_FACT_PATH', None, value_type='path')
+DEFAULT_FORKS = get_config(p, DEFAULTS, 'forks', 'ANSIBLE_FORKS', 5, value_type='integer')
+DEFAULT_MODULE_ARGS = get_config(p, DEFAULTS, 'module_args', 'ANSIBLE_MODULE_ARGS', '')
+DEFAULT_MODULE_LANG = get_config(p, DEFAULTS, 'module_lang', 'ANSIBLE_MODULE_LANG', os.getenv('LANG', 'en_US.UTF-8'))
+DEFAULT_MODULE_SET_LOCALE = get_config(p, DEFAULTS, 'module_set_locale', 'ANSIBLE_MODULE_SET_LOCALE', False, value_type='boolean')
+DEFAULT_MODULE_COMPRESSION = get_config(p, DEFAULTS, 'module_compression', None, 'ZIP_DEFLATED')
+DEFAULT_TIMEOUT = get_config(p, DEFAULTS, 'timeout', 'ANSIBLE_TIMEOUT', 10, value_type='integer')
+DEFAULT_POLL_INTERVAL = get_config(p, DEFAULTS, 'poll_interval', 'ANSIBLE_POLL_INTERVAL', 15, value_type='integer')
+DEFAULT_REMOTE_USER = get_config(p, DEFAULTS, 'remote_user', 'ANSIBLE_REMOTE_USER', None)
+DEFAULT_ASK_PASS = get_config(p, DEFAULTS, 'ask_pass', 'ANSIBLE_ASK_PASS', False, value_type='boolean')
+DEFAULT_PRIVATE_KEY_FILE = get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None, value_type='path')
+DEFAULT_REMOTE_PORT = get_config(p, DEFAULTS, 'remote_port', 'ANSIBLE_REMOTE_PORT', None, value_type='integer')
+DEFAULT_ASK_VAULT_PASS = get_config(p, DEFAULTS, 'ask_vault_pass', 'ANSIBLE_ASK_VAULT_PASS', False, value_type='boolean')
 DEFAULT_VAULT_PASSWORD_FILE = get_config(p, DEFAULTS, 'vault_password_file', 'ANSIBLE_VAULT_PASSWORD_FILE', None, value_type='path')
 DEFAULT_TRANSPORT = get_config(p, DEFAULTS, 'transport', 'ANSIBLE_TRANSPORT', 'smart')
 DEFAULT_SCP_IF_SSH = get_config(p, 'ssh_connection', 'scp_if_ssh', 'ANSIBLE_SCP_IF_SSH', 'smart')
@@ -226,12 +226,12 @@ DEFAULT_KEEP_REMOTE_FILES = get_config(p, DEFAULTS, 'keep_remote_files', 'ANSIBL
 DEFAULT_HASH_BEHAVIOUR = get_config(p, DEFAULTS, 'hash_behaviour', 'ANSIBLE_HASH_BEHAVIOUR', 'replace')
 DEFAULT_PRIVATE_ROLE_VARS = get_config(p, DEFAULTS, 'private_role_vars', 'ANSIBLE_PRIVATE_ROLE_VARS', False, value_type='boolean')
 DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBLE_JINJA2_EXTENSIONS', None)
-DEFAULT_EXECUTABLE        = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
-DEFAULT_GATHERING         = get_config(p, DEFAULTS, 'gathering', 'ANSIBLE_GATHERING', 'implicit').lower()
-DEFAULT_GATHER_SUBSET     = get_config(p, DEFAULTS, 'gather_subset', 'ANSIBLE_GATHER_SUBSET', 'all').lower()
-DEFAULT_GATHER_TIMEOUT    = get_config(p, DEFAULTS, 'gather_timeout', 'ANSIBLE_GATHER_TIMEOUT', 10, value_type='integer')
-DEFAULT_LOG_PATH          = get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', '', value_type='path')
-DEFAULT_FORCE_HANDLERS    = get_config(p, DEFAULTS, 'force_handlers', 'ANSIBLE_FORCE_HANDLERS', False, value_type='boolean')
+DEFAULT_EXECUTABLE = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
+DEFAULT_GATHERING = get_config(p, DEFAULTS, 'gathering', 'ANSIBLE_GATHERING', 'implicit').lower()
+DEFAULT_GATHER_SUBSET = get_config(p, DEFAULTS, 'gather_subset', 'ANSIBLE_GATHER_SUBSET', 'all').lower()
+DEFAULT_GATHER_TIMEOUT = get_config(p, DEFAULTS, 'gather_timeout', 'ANSIBLE_GATHER_TIMEOUT', 10, value_type='integer')
+DEFAULT_LOG_PATH = get_config(p, DEFAULTS, 'log_path', 'ANSIBLE_LOG_PATH', '', value_type='path')
+DEFAULT_FORCE_HANDLERS = get_config(p, DEFAULTS, 'force_handlers', 'ANSIBLE_FORCE_HANDLERS', False, value_type='boolean')
 DEFAULT_VAR_COMPRESSION_LEVEL = get_config(p, DEFAULTS, 'var_compression_level', 'ANSIBLE_VAR_COMPRESSION_LEVEL', 0, value_type='integer')
 DEFAULT_INTERNAL_POLL_INTERVAL = get_config(p, DEFAULTS, 'internal_poll_interval', None, 0.001, value_type='float')
 DEFAULT_ALLOW_UNSAFE_LOOKUPS = get_config(p, DEFAULTS, 'allow_unsafe_lookups', None, False, value_type='boolean')
@@ -240,16 +240,16 @@ SHOW_CUSTOM_STATS = get_config(p, DEFAULTS, 'show_custom_stats', 'ANSIBLE_SHOW_C
 NAMESPACE_FACTS = get_config(p, DEFAULTS, 'restrict_facts_namespace', 'ANSIBLE_RESTRICT_FACTS', False, value_type='boolean')
 
 # Inventory
-DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', '/etc/ansible/hosts', value_type='path', expand_relative_paths=True)
-INVENTORY_ENABLED         = get_config(p, DEFAULTS,'inventory_enabled', 'ANSIBLE_INVENTORY_ENABLED',
-                                       [ 'host_list', 'script', 'ini', 'yaml' ], value_type='list')
-INVENTORY_IGNORE_EXTS     = get_config(p, DEFAULTS, 'inventory_ignore_extensions', 'ANSIBLE_INVENTORY_IGNORE',
-                                       BLACKLIST_EXTS + (".orig", ".ini", ".cfg", ".retry"), value_type='list')
+DEFAULT_HOST_LIST = get_config(p, DEFAULTS, 'inventory', 'ANSIBLE_INVENTORY', '/etc/ansible/hosts', value_type='path', expand_relative_paths=True)
+INVENTORY_ENABLED = get_config(p, DEFAULTS, 'inventory_enabled', 'ANSIBLE_INVENTORY_ENABLED',
+                               ['host_list', 'script', 'ini', 'yaml'], value_type='list')
+INVENTORY_IGNORE_EXTS = get_config(p, DEFAULTS, 'inventory_ignore_extensions', 'ANSIBLE_INVENTORY_IGNORE',
+                                   BLACKLIST_EXTS + (".orig", ".ini", ".cfg", ".retry"), value_type='list')
 INVENTORY_IGNORE_PATTERNS = get_config(p, DEFAULTS, 'inventory_ignore_patterns', 'ANSIBLE_INVENTORY_IGNORE_REGEX', [], value_type='list')
-VARIABLE_PRECEDENCE       = get_config(p, DEFAULTS, 'precedence', 'ANSIBLE_PRECEDENCE',
-                                       ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play',
-                                        'groups_plugins_inventory', 'groups_plugins_play'],
-                                       value_type='list')
+VARIABLE_PRECEDENCE = get_config(p, DEFAULTS, 'precedence', 'ANSIBLE_PRECEDENCE',
+                                 ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play',
+                                  'groups_plugins_inventory', 'groups_plugins_play'],
+                                 value_type='list')
 # Static includes
 DEFAULT_TASK_INCLUDES_STATIC = get_config(p, DEFAULTS, 'task_includes_static', 'ANSIBLE_TASK_INCLUDES_STATIC', False, value_type='boolean')
 DEFAULT_HANDLER_INCLUDES_STATIC = get_config(p, DEFAULTS, 'handler_includes_static', 'ANSIBLE_HANDLER_INCLUDES_STATIC', False, value_type='boolean')
@@ -455,4 +455,4 @@ IGNORE_FILES = ["COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUID
 INTERNAL_RESULT_KEYS = ['add_host', 'add_group']
 RESTRICTED_RESULT_KEYS = ['ansible_rsync_path', 'ansible_playbook_python']
 # check all of these extensions when looking for 'variable' files which should be YAML or JSON.
-YAML_FILENAME_EXTENSIONS = [ ".yml", ".yaml", ".json" ]
+YAML_FILENAME_EXTENSIONS = [".yml", ".yaml", ".json"]

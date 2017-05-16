@@ -36,16 +36,16 @@ class ShellBase(object):
         if C.DEFAULT_MODULE_SET_LOCALE:
             self.env.update(
                 dict(
-                    LANG        = C.DEFAULT_MODULE_LANG,
-                    LC_ALL      = C.DEFAULT_MODULE_LANG,
-                    LC_MESSAGES = C.DEFAULT_MODULE_LANG,
+                    LANG=C.DEFAULT_MODULE_LANG,
+                    LC_ALL=C.DEFAULT_MODULE_LANG,
+                    LC_MESSAGES=C.DEFAULT_MODULE_LANG,
                 )
             )
 
     def env_prefix(self, **kwargs):
         env = self.env.copy()
         env.update(kwargs)
-        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k,v in env.items()])
+        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in env.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)

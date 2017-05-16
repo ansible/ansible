@@ -80,7 +80,7 @@ class InventoryModule(BaseInventoryPlugin):
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
         # directory when '.' is not in PATH.
-        cmd = [ path, "--list" ]
+        cmd = [path, "--list"]
 
         try:
             cache_key = self.get_cache_prefix(path)
@@ -95,7 +95,7 @@ class InventoryModule(BaseInventoryPlugin):
 
                 path = to_native(path)
                 if stderr:
-                    err =  to_native(stderr) + "\n"
+                    err = to_native(stderr) + "\n"
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
@@ -140,13 +140,12 @@ class InventoryModule(BaseInventoryPlugin):
                     try:
                         got = processed.get(host, {})
                     except AttributeError as e:
-                        raise AnsibleError("Improperly formatted host information for %s: %s" % (host,to_native(e)))
+                        raise AnsibleError("Improperly formatted host information for %s: %s" % (host, to_native(e)))
 
                     self.populate_host_vars(host, got, group)
 
         except Exception as e:
             raise AnsibleParserError(to_native(e))
-
 
     def _parse_group(self, group, data):
 
@@ -155,7 +154,7 @@ class InventoryModule(BaseInventoryPlugin):
         if not isinstance(data, dict):
             data = {'hosts': data}
         # is not those subkeys, then simplified syntax, host with vars
-        elif not any(k in data for k in ('hosts','vars','children')):
+        elif not any(k in data for k in ('hosts', 'vars', 'children')):
             data = {'hosts': [group], 'vars': data}
 
         if 'hosts' in data:

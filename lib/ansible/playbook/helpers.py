@@ -179,13 +179,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             include_target = templar.template(t.args['_raw_params'])
                         except AnsibleUndefinedVariable:
                             raise AnsibleParserError(
-                                "Error when evaluating variable in include name: %s.\n\n" \
-                                "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n" \
-                                "or extra-vars passed in from the command line. Static includes cannot use variables from inventory\n" \
+                                "Error when evaluating variable in include name: %s.\n\n"
+                                "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n"
+                                "or extra-vars passed in from the command line. Static includes cannot use variables from inventory\n"
                                 "sources like group or host vars." % t.args['_raw_params'],
                                 obj=task_ds,
                                 suppress_extended_error=True,
-                                )
+                            )
                         if t._role:
                             include_file = loader.path_dwim_relative(t._role._role_path, subdir, include_target)
                         else:
@@ -209,11 +209,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                            C.DEFAULT_HANDLER_INCLUDES_STATIC and use_handlers:
                             raise
                         display.deprecated(
-                            "Included file '%s' not found, however since this include is not " \
-                            "explicitly marked as 'static: yes', we will try and include it dynamically " \
-                            "later. In the future, this will be an error unless 'static: no' is used " \
-                            "on the include task. If you do not want missing includes to be considered " \
-                            "dynamic, use 'static: yes' on the include or set the global ansible.cfg " \
+                            "Included file '%s' not found, however since this include is not "
+                            "explicitly marked as 'static: yes', we will try and include it dynamically "
+                            "later. In the future, this will be an error unless 'static: no' is used "
+                            "on the include task. If you do not want missing includes to be considered "
+                            "dynamic, use 'static: yes' on the include or set the global ansible.cfg "
                             "options to make all inclues static for tasks and/or handlers" % include_file, version="2.7"
                         )
                         task_list.append(t)
@@ -242,7 +242,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     if len(tags) > 0:
                         if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
-                                "Include tasks should not specify tags in more than one way (both via args and directly on the task). " \
+                                "Include tasks should not specify tags in more than one way (both via args and directly on the task). "
                                 "Mixing styles in which tags are specified is prohibited for whole import hierarchy, not only for single import statement",
                                 obj=task_ds,
                                 suppress_extended_error=True,
@@ -275,8 +275,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     role=role,
                     task_include=None,
                     variable_manager=variable_manager,
-                    loader=loader
-                    )
+                    loader=loader,
+                )
 
                 #   1. the user has set the 'static' option to false or true
                 #   2. one of the appropriate config options was set
@@ -293,9 +293,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             if not templar.is_template(ir.args[param]):
                                 needs_templating = True
                                 break
-                    is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
-                                (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                                (not needs_templating and ir.all_parents_static() and not ir.loop)
+                    is_static = (
+                        C.DEFAULT_TASK_INCLUDES_STATIC or
+                        (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or
+                        (not needs_templating and ir.all_parents_static() and not ir.loop)
+                    )
                     display.debug('Determined that if include_role static is %s' % str(is_static))
                 if is_static:
                     # uses compiled list from object
@@ -331,4 +333,3 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
         roles.append(i)
 
     return roles
-

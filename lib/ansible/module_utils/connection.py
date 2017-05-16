@@ -25,27 +25,29 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+
+import signal
 import socket
 import struct
-import signal
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils._text import to_bytes, to_native
 
+
 def send_data(s, data):
-    packed_len = struct.pack('!Q',len(data))
+    packed_len = struct.pack('!Q', len(data))
     return s.sendall(packed_len + data)
 
+
 def recv_data(s):
-    header_len = 8 # size of a packed unsigned long long
+    header_len = 8  # size of a packed unsigned long long
     data = to_bytes("")
     while len(data) < header_len:
         d = s.recv(header_len - len(data))
         if not d:
             return None
         data += d
-    data_len = struct.unpack('!Q',data[:header_len])[0]
+    data_len = struct.unpack('!Q', data[:header_len])[0]
     data = data[header_len:]
     while len(data) < data_len:
         d = s.recv(data_len - len(data))
@@ -53,6 +55,7 @@ def recv_data(s):
             return None
         data += d
     return data
+
 
 def exec_command(module, command):
     try:

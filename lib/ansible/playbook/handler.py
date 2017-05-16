@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
 
+
 class Handler(Task):
 
     _listen = FieldAttribute(isa='list')
@@ -41,7 +42,7 @@ class Handler(Task):
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def flag_for_host(self, host):
-        #assert instanceof(host, Host)
+        # assert instanceof(host, Host)
         if host not in self._flagged_hosts:
             self._flagged_hosts.append(host)
 

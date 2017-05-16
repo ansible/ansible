@@ -95,7 +95,7 @@ end {
     Write-Output $output
 }
 
-''' # end exec_wrapper
+'''  # end exec_wrapper
 
 leaf_exec = br'''
 Function Run($payload) {
@@ -144,7 +144,7 @@ Function Run($payload) {
         $host.SetShouldExit($exit_code)
     }
 }
-''' # end leaf_exec
+'''  # end leaf_exec
 
 
 become_wrapper = br'''
@@ -434,7 +434,7 @@ Function Run($payload) {
 
 }
 
-''' # end become_wrapper
+'''  # end become_wrapper
 
 
 async_wrapper = br'''
@@ -836,7 +836,7 @@ Function Run($payload) {
     return $result_json
 }
 
-''' # end async_wrapper
+'''  # end async_wrapper
 
 async_watchdog = br'''
 Set-StrictMode -Version 2
@@ -964,7 +964,8 @@ Function Run($payload) {
     #$rs.Close() | Out-Null
 }
 
-''' # end async_watchdog
+'''  # end async_watchdog
+
 
 class ShellModule(object):
 
@@ -1184,7 +1185,10 @@ class ShellModule(object):
             subs.append(('$', '`$'))
         pattern = '|'.join('(%s)' % re.escape(p) for p, s in subs)
         substs = [s for p, s in subs]
-        replace = lambda m: substs[m.lastindex - 1]
+
+        def replace(m):
+            return substs[m.lastindex - 1]
+
         return re.sub(pattern, replace, value)
 
     def _encode_script(self, script, as_list=False, strict_mode=True, preserve_rc=True):

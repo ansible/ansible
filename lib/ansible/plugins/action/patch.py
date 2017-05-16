@@ -34,7 +34,7 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        src        = self._task.args.get('src', None)
+        src = self._task.args.get('src', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'))
 
         if src is None:
@@ -61,7 +61,7 @@ class ActionModule(ActionBase):
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
         self._transfer_file(src, tmp_src)
 
-        self._fixup_perms2((tmp, tmp_src) )
+        self._fixup_perms2((tmp, tmp_src))
 
         new_module_args = self._task.args.copy()
         new_module_args.update(
