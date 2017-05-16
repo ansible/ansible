@@ -128,7 +128,7 @@ def ecs_connect(module):
     if region:
         try:
             ecs = connect_to_acs(footmark.ecs, region, **ecs_params)
-        except AnsibleACSError, e:
+        except AnsibleACSError as e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     return ecs

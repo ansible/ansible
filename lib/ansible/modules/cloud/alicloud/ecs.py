@@ -37,7 +37,7 @@ common options:
     default: 'present'
     aliases: ['state']
     choices: [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
-            map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
+             map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
                            'describe_status']
 
 # function: create instance
@@ -129,7 +129,7 @@ options:
           - disk_name (required: false; default:null)
           - disk_description (required: false; default:null)
           - delete_on_termination (required:false, default:"true")
-          - snapshot_id (required:false; default:null), volume_type (str), iops (int) - device_type is deprecated use 
+          - snapshot_id (required:false; default:null), volume_type (str), iops (int) - device_type is deprecated use
                     volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
       required: false
       default: null
@@ -151,15 +151,15 @@ options:
       default: null
       aliases: []
     instance_tags:
-      description: - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]', 
+      description: - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]',
                      tag_key must be not null when tag_value isn't null
       required: false
       default: null
       aliases: [ 'tags' ]
     ids:
       description:
-        - A list of identifier for this instance or set of instances, so that the module will be idempotent with respect to ECS instances. 
-          This identifier should not be reused for another call later on. 
+        - A list of identifier for this instance or set of instances, so that the module will be idempotent with respect to ECS instances.
+          This identifier should not be reused for another call later on.
           For details, see the description of client token at U(https://help.aliyun.com/document_detail/25693.html?spm=5176.doc25499.2.7.mrVgE2).
         - The length of the ids is the same with count
       required: false
@@ -1256,4 +1256,5 @@ def main():
             module.exit_json(changed=changed, result=result)
 
 
-main()
+if __name__ == '__main__':
+    main()
