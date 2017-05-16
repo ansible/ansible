@@ -39,7 +39,7 @@ NONMODULE_PY_FILES = frozenset(('async_wrapper.py',))
 NONMODULE_MODULE_NAMES = frozenset(os.path.splitext(p)[0] for p in NONMODULE_PY_FILES)
 
 # Default metadata
-DEFAULT_METADATA = {'metadata_version': '1.0', 'status': ['preview'], 'supported_by':'community'}
+DEFAULT_METADATA = {'metadata_version': '1.0', 'status': ['preview'], 'supported_by': 'community'}
 
 
 class ParseError(Exception):
@@ -85,6 +85,7 @@ def parse_args(arg_string):
         usage()
 
     return action, {'version': version, 'overwrite': overwrite, 'csvfile': csvfile}
+
 
 def seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_node_col):
     """Look for the end of a dict in a set of lines
@@ -222,7 +223,7 @@ def extract_metadata(module_data):
 
                         try:
                             # Determine where the next node starts
-                            next_node = mod_ast_tree.body[root_idx+1]
+                            next_node = mod_ast_tree.body[root_idx + 1]
                             next_lineno = next_node.lineno
                             next_col_offset = next_node.col_offset
                         except IndexError:
@@ -232,8 +233,10 @@ def extract_metadata(module_data):
 
                         # Determine where the current metadata ends
                         end_line, end_col = seek_end_of_dict(module_data,
-                                child.lineno - 1, child.col_offset, next_lineno,
-                                next_col_offset)
+                                                             child.lineno - 1,
+                                                             child.col_offset,
+                                                             next_lineno,
+                                                             next_col_offset)
 
                     elif isinstance(child.value, ast.Str):
                         metadata = yaml.safe_load(child.value.s)
@@ -483,9 +486,8 @@ def metadata_summary(plugins, version=None):
 
     return list(no_metadata.values()), list(has_metadata.values()), supported_by, status
 
-#
 # Filters to convert between metadata versions
-#
+
 
 def convert_metadata_pre_1_0_to_1_0(metadata):
     """
@@ -511,9 +513,8 @@ def convert_metadata_pre_1_0_to_1_0(metadata):
 
     return new_metadata
 
-#
 # Subcommands
-#
+
 
 def add_from_csv(csv_file, version=None, overwrite=False):
     """Implement the subcommand to add metadata from a csv file
@@ -670,9 +671,9 @@ def report(version=None):
     print('== Summary ==')
     print('No Metadata: {0}             Has Metadata: {1}'.format(len(no_metadata), len(has_metadata)))
     print('Supported by core: {0}      Supported by community: {1}    Supported by value curated: {2}'.format(len(support['core']),
-                len(support['community']), len(support['curated'])))
+          len(support['community']), len(support['curated'])))
     print('Status StableInterface: {0} Status Preview: {1}            Status Deprecated: {2}      Status Removed: {3}'.format(len(status['stableinterface']),
-                len(status['preview']), len(status['deprecated']), len(status['removed'])))
+          len(status['preview']), len(status['deprecated']), len(status['removed'])))
 
     return 0
 
