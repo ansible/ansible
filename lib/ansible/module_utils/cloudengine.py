@@ -261,7 +261,9 @@ def prepare_config(commands):
 def prepare_commands(commands):
     """ prepare_commands """
 
-    jsonify = lambda x: '%s | json' % x
+    def jsonify(x):
+        return '%s | json' % x
+
     for cmd in to_list(commands):
         if cmd.output == 'json':
             cmd.command_string = jsonify(cmd)
