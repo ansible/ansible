@@ -19,13 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors.yaml_strings import ( YAML_POSITION_DETAILS,
-        YAML_COMMON_UNQUOTED_VARIABLE_ERROR,
-        YAML_COMMON_DICT_ERROR,
-        YAML_COMMON_UNQUOTED_COLON_ERROR,
-        YAML_COMMON_PARTIALLY_QUOTED_LINE_ERROR,
-        YAML_COMMON_UNBALANCED_QUOTES_ERROR,
-        YAML_COMMON_LEADING_TAB_ERROR)
+from ansible.errors.yaml_strings import (
+    YAML_COMMON_DICT_ERROR,
+    YAML_COMMON_LEADING_TAB_ERROR,
+    YAML_COMMON_PARTIALLY_QUOTED_LINE_ERROR,
+    YAML_COMMON_UNBALANCED_QUOTES_ERROR,
+    YAML_COMMON_UNQUOTED_COLON_ERROR,
+    YAML_COMMON_UNQUOTED_VARIABLE_ERROR,
+    YAML_POSITION_DETAILS,
+)
 from ansible.module_utils._text import to_native, to_text
 
 
@@ -107,9 +109,9 @@ class AnsibleError(Exception):
                 target_line = to_text(target_line)
                 prev_line = to_text(prev_line)
                 if target_line:
-                    stripped_line = target_line.replace(" ","")
-                    arrow_line    = (" " * (col_number-1)) + "^ here"
-                    #header_line   = ("=" * 73)
+                    stripped_line = target_line.replace(" ", "")
+                    arrow_line = (" " * (col_number - 1)) + "^ here"
+                    # header_line = ("=" * 73)
                     error_message += "\nThe offending line appears to be:\n\n%s\n%s\n%s\n" % (prev_line.rstrip(), target_line.rstrip(), arrow_line)
 
                     # TODO: There may be cases where there is a valid tab in a line that has other errors.
@@ -143,8 +145,8 @@ class AnsibleError(Exception):
                                 match = True
 
                             if (len(middle) > 0 and
-                                    middle[0] in [ '"', "'" ] and
-                                    middle[-1] in [ '"', "'" ] and
+                                    middle[0] in ['"', "'"] and
+                                    middle[-1] in ['"', "'"] and
                                     target_line.count("'") > 2 or
                                     target_line.count('"') > 2):
                                 unbalanced = True
@@ -161,53 +163,67 @@ class AnsibleError(Exception):
 
         return error_message
 
+
 class AnsibleOptionsError(AnsibleError):
     ''' bad or incomplete options passed '''
     pass
+
 
 class AnsibleParserError(AnsibleError):
     ''' something was detected early that is wrong about a playbook or data file '''
     pass
 
+
 class AnsibleInternalError(AnsibleError):
     ''' internal safeguards tripped, something happened in the code that should never happen '''
     pass
+
 
 class AnsibleRuntimeError(AnsibleError):
     ''' ansible had a problem while running a playbook '''
     pass
 
+
 class AnsibleModuleError(AnsibleRuntimeError):
     ''' a module failed somehow '''
     pass
+
 
 class AnsibleConnectionFailure(AnsibleRuntimeError):
     ''' the transport / connection_plugin had a fatal error '''
     pass
 
+
 class AnsibleFilterError(AnsibleRuntimeError):
     ''' a templating failure '''
     pass
+
 
 class AnsibleLookupError(AnsibleRuntimeError):
     ''' a lookup failure '''
     pass
 
+
 class AnsibleCallbackError(AnsibleRuntimeError):
     ''' a callback failure '''
     pass
+
 
 class AnsibleUndefinedVariable(AnsibleRuntimeError):
     ''' a templating failure '''
     pass
 
+
 class AnsibleFileNotFound(AnsibleRuntimeError):
     ''' a file missing failure '''
     pass
 
+
 class AnsibleActionSkip(AnsibleRuntimeError):
     ''' an action runtime skip'''
     pass
+
+
 class AnsibleActionFail(AnsibleRuntimeError):
     ''' an action runtime failure'''
     pass
