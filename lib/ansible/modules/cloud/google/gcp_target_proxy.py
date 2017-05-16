@@ -25,9 +25,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_target_proxy
 version_added: "2.4"
-short_description: Create, Update or Destory a Target_Proxy.
+short_description: Create, Update or Destroy a Target_Proxy.
 description:
-    - Create, Update or Destory a Target_Proxy. See
+    - Create, Update or Destroy a Target_Proxy. See
       U(https://cloud.google.com/compute/docs/load-balancing/http/target-proxies) for an overview.
       More details on the Target_Proxy API can be found at
       U(https://cloud.google.com/compute/docs/reference/latest/targetHttpProxies#resource-representations).
@@ -49,7 +49,7 @@ options:
     description:
        - Type of Target_Proxy. HTTP, HTTPS or SSL. Only HTTP is currently supported.
     required: true
-  url_map:
+  url_map_name:
     description:
        - Name of the Url Map.  Required if type is HTTP or HTTPS proxy.
     required: false
@@ -63,7 +63,7 @@ EXAMPLES = '''
     project_id: "{{ project_id }}"
     target_proxy_name: my-target_proxy
     target_proxy_type: HTTP
-    url_map: my-url-map
+    url_map_name: my-url-map
     state: present
 '''
 
@@ -96,12 +96,6 @@ target_proxy:
     sample: { "name": "my-target-proxy", "urlMap": "..." }
 '''
 
-
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -150,12 +144,9 @@ def get_target_http_proxy(client, name, project_id=None):
     :return: A dict resp from the respective GCP 'get' request.
     :rtype: ``dict``
     """
-    try:
-        req = client.targetHttpProxies().get(project=project_id,
-                                             targetHttpProxy=name)
-        return GCPUtils.execute_api_client_req(req, raise_404=False)
-    except:
-        raise
+    req = client.targetHttpProxies().get(project=project_id,
+                                         targetHttpProxy=name)
+    return GCPUtils.execute_api_client_req(req, raise_404=False)
 
 
 def create_target_http_proxy(client, params, project_id):
@@ -183,6 +174,7 @@ def create_target_http_proxy(client, params, project_id):
         return (True, return_data)
     except:
         raise
+
 
 
 def delete_target_http_proxy(client, name, project_id):
@@ -255,17 +247,13 @@ def main():
     module = AnsibleModule(argument_spec=dict(
         target_proxy_name=dict(required=True),
         target_proxy_type=dict(required=True, choices=['HTTP']),
-        url_map=dict(required=False),
+        url_map_name=dict(required=False),
         state=dict(required=True, choices=['absent', 'present']),
         service_account_email=dict(),
         service_account_permissions=dict(type='list'),
         pem_file=dict(),
         credentials_file=dict(),
         project_id=dict(), ), )
-
-    if not HAS_PYTHON26:
-        module.fail_json(
-            msg="GCE module requires python's 'ast' module, python v2.6+")
 
     client, conn_params = get_google_api_client(module, 'compute', user_agent_product=USER_AGENT_PRODUCT,
                                                 user_agent_version=USER_AGENT_VERSION)
@@ -274,7 +262,7 @@ def main():
     params['state'] = module.params.get('state')
     params['target_proxy_name'] = module.params.get('target_proxy_name')
     params['target_proxy_type'] = module.params.get('target_proxy_type')
-    params['url_map'] = module.params.get('url_map', None)
+    params['url_map_name'] = module.params.get('url_map_name', None)
 
     changed = False
     json_output = {'state': params['state']}
