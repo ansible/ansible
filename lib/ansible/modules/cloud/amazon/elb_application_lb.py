@@ -54,7 +54,8 @@ options:
     default: 60
   listeners:
     description:
-      - A list of dicts containing listeners to attach to the ELB. See examples for detail of the dict required.
+      - A list of dicts containing listeners to attach to the ELB. See examples for detail of the dict required. Note that listener keys
+        are CamelCased.
     required: false
   name:
     description:
@@ -111,17 +112,20 @@ EXAMPLES = '''
       - subnet-012345678
       - subnet-abcdef000
     listeners:
-      - protocol: http # Required. The protocol for connections from clients to the load balancer (http or https).
-        port: 80 # Required. The port on which the load balancer is listening.
-        ssl_policy: # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
-        certificates: # The ARN of the certificate (only one certficate ARN should be provided)
-        default_actions:
-          - type: forward # Required. Only 'forward' is accepted at this time
-            target_group_arn: # Required. The ARN of the target group
+      - Protocol: http # Required. The protocol for connections from clients to the load balancer (http or https).
+        Port: 80 # Required. The port on which the load balancer is listening.
+        SslPolicy: # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+        Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
+        DefaultActions:
+          - Type: forward # Required. Only 'forward' is accepted at this time
+            TargetGroupName: # Required. The name of the target group
     state: present
 
-# Create an ELB and attach a listener and attributes
+# Create an ELB and attach a listener with logging enabled
 - elb_application_lb:
+    access_logs_enabled: yes
+    access_logs_s3_bucket: mybucket
+    access_logs_s3_prefix: "/logs"
     name: myelb
     security_groups:
       - sg-12345678
@@ -130,20 +134,17 @@ EXAMPLES = '''
       - subnet-012345678
       - subnet-abcdef000
     listeners:
-      - protocol: http # Required. The protocol for connections from clients to the load balancer (http or https).
-        port: 80 # Required. The port on which the load balancer is listening.
-        ssl_policy: # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
-        certificates: # The ARN of the certificate (only one certficate ARN should be provided)
-        default_actions:
-          - type: forward # Required. Only 'forward' is accepted at this time
-            target_group_arn: # Required. The ARN of the target group
-    attributes:
-        - Key: idle_timeout.timeout_seconds
-          Value: '60'
+      - Protocol: http # Required. The protocol for connections from clients to the load balancer (http or https).
+        Port: 80 # Required. The port on which the load balancer is listening.
+        SslPolicy: # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+        Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
+        DefaultActions:
+          - Type: forward # Required. Only 'forward' is accepted at this time
+            TargetGroupName: # Required. The name of the target group
     state: present
 
 # Create an ALB with listeners and rules
-- elb_lb_application:
+- elb_application_lb:
     name: test-alb
     subnets:
       - subnet-12345678
@@ -181,94 +182,149 @@ EXAMPLES = '''
 RETURN = '''
 access_logs_s3_bucket:
     description: The name of the S3 bucket for the access logs.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: mys3bucket
 access_logs_s3_enabled:
     description: Indicates whether access logs stored in Amazon S3 are enabled.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: true
 access_logs_s3_prefix:
     description: The prefix for the location in the S3 bucket.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: /my/logs
 availability_zones:
     description: The Availability Zones for the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: list
     sample: "[{'subnet_id': 'subnet-aabbccddff', 'zone_name': 'ap-southeast-2a'}]"
 canonical_hosted_zone_id:
     description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: ABCDEF12345678
 created_time:
     description: The date and time the load balancer was created.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: "2015-02-12T02:14:02+00:00"
 deletion_protection_enabled:
     description: Indicates whether deletion protection is enabled.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: true
 dns_name:
     description: The public DNS name of the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: internal-my-elb-123456789.ap-southeast-2.elb.amazonaws.com
 idle_timeout_timeout_seconds:
     description: The idle timeout value, in seconds.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: 60
 ip_address_type:
     description:  The type of IP addresses used by the subnets for the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: ipv4
+listeners:
+    description: Information about the listeners.
+    returned: when state is present
+    type: complex
+    contains:
+        listener_arn:
+            description: The Amazon Resource Name (ARN) of the listener.
+            returned: when state is present
+            type: string
+            sample: ""
+        load_balancer_arn:
+            description: The Amazon Resource Name (ARN) of the load balancer.
+            returned: when state is present
+            type: string
+            sample: ""
+        port:
+            description: The port on which the load balancer is listening.
+            returned: when state is present
+            type: int
+            sample: 80
+        protocol:
+            description: The protocol for connections from clients to the load balancer.
+            returned: when state is present
+            type: string
+            sample: HTTPS
+        certificates:
+            description: The SSL server certificate.
+            returned: when state is present
+            type: complex
+            contains:
+                certificate_arn:
+                    description: The Amazon Resource Name (ARN) of the certificate.
+                    returned: when state is present
+                    type: string
+                    sample: ""
+        ssl_policy:
+            description: The security policy that defines which ciphers and protocols are supported.
+            returned: when state is present
+            type: string
+            sample: ""
+        default_actions:
+            description: The default actions for the listener.
+            returned: when state is present
+            type: string
+            contains:
+                type:
+                    description: The type of action.
+                    returned: when state is present
+                    type: string
+                    sample: ""
+                target_group_arn:
+                    description: The Amazon Resource Name (ARN) of the target group.
+                    returned: when state is present
+                    type: string
+                    sample: ""
 load_balancer_arn:
     description: The Amazon Resource Name (ARN) of the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: arn:aws:elasticloadbalancing:ap-southeast-2:0123456789:loadbalancer/app/my-elb/001122334455
 load_balancer_name:
     description: The name of the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: my-elb
 scheme:
     description: Internet-facing or internal load balancer.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: internal
 security_groups:
     description: The IDs of the security groups for the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: list
     sample: ['sg-0011223344']
 state:
     description: The state of the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: dict
     sample: "{'code': 'active'}"
 tags:
     description: The tags attached to the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: dict
     sample: "{
         'Tag': 'Example'
     }"
 type:
     description: The type of load balancer.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: application
 vpc_id:
     description: The ID of the VPC for the load balancer.
-    returned: when status is present
+    returned: when state is present
     type: string
     sample: vpc-0011223344
 '''
@@ -304,7 +360,7 @@ def convert_tg_name_arn(connection, module, tg_name):
     try:
         response = connection.describe_target_groups(Names=[tg_name])
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     tg_arn = response['TargetGroups'][0]['TargetGroupArn']
 
@@ -316,7 +372,7 @@ def convert_tg_arn_name(connection, module, tg_arn):
     try:
         response = connection.describe_target_groups(TargetGroupArns=[tg_arn])
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     tg_name = response['TargetGroups'][0]['TargetGroupName']
 
@@ -337,7 +393,7 @@ def wait_for_status(connection, module, elb_arn, status):
             else:
                 time.sleep(polling_increment_secs)
         except ClientError as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     result = response
     return status_achieved, result
@@ -350,6 +406,14 @@ def _get_subnet_ids_from_subnet_list(subnet_list):
         subnet_id_list.append(subnet['SubnetId'])
 
     return subnet_id_list
+
+
+def get_elb_listeners(connection, module, elb_arn):
+    
+    try:
+        return connection.describe_listeners(LoadBalancerArn=elb_arn)['Listeners']
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
 def get_elb_attributes(connection, module, elb_arn):
@@ -396,7 +460,7 @@ def create_or_update_elb_listeners(connection, module, elb):
     listener_matches = False
 
     if listeners is not None:
-        current_listeners = connection.describe_listeners(LoadBalancerArn=elb['LoadBalancerArn'])['Listeners']
+        current_listeners = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
         # If there are no current listeners we can just create the new ones
         current_listeners_array = []
 
@@ -685,6 +749,9 @@ def create_or_update_elb(connection, connection_ec2, module):
 
     # Get the ELB again
     elb = get_elb(connection, module)
+    
+    # Get the ELB listeners again
+    elb['listeners'] = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
 
     # Get the ELB attributes again
     elb.update(get_elb_attributes(connection, module, elb['LoadBalancerArn']))
@@ -754,7 +821,11 @@ def main():
         for listener in listeners:
             for key in listener.keys():
                 if key not in ['Protocol', 'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules']:
-                    module.fail_json(msg="listeners parameter contains invalid dict keys")
+                    module.fail_json(msg="listeners parameter contains invalid dict keys. Should be one of 'Protocol', "
+                                         "'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules'.")
+                # TODO: Test this uppercasing
+                #if key is 'Protocol':
+                #    listener[key] = listener[key].upper()
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
