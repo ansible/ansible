@@ -142,7 +142,7 @@ def slb_connect(module):
     if region:
         try:
             slb = connect_to_acs(footmark.slb, region, **slb_params)
-        except AnsibleACSError, e:
+        except AnsibleACSError as e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     return slb
@@ -156,7 +156,7 @@ def vpc_connect(module):
     if region:
         try:
             vpc = connect_to_acs(footmark.vpc, region, **vpc_params)
-        except AnsibleACSError, e:
+        except AnsibleACSError as e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     return vpc
@@ -170,7 +170,7 @@ def rds_connect(module):
     if region:
         try:
             rds = connect_to_acs(footmark.rds, region, **rds_params)
-        except AnsibleACSError, e:
+        except AnsibleACSError as e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     return rds

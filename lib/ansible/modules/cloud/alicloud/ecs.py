@@ -29,20 +29,16 @@ short_description: Create, Start, Stop, Restart or Terminate an Instance in ECS.
 description:
     - Creates, starts, stops, restarts or terminates ecs instances.
     - Adds or removes ecs instances to/from security group.
-common options:
-  status:
-    description:
-      - The state of the instance after operating.
-    required: false
-    default: 'present'
-    aliases: ['state']
-    choices: [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
-             map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
-                           'describe_status']
-
-# function: create instance
-#   description: create an instance in ecs
 options:
+    status:
+      description:
+        - The state of the instance after operating.
+      required: false
+      default: 'present'
+      aliases: ['state']
+      choices: [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
+               map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
+                           'describe_status']
     alicloud_zone:
       description: Aliyun availability zone ID in which to launch the instance
       required: false
@@ -185,6 +181,53 @@ options:
       required: false
       choices:[1, 2, 3, 6, 12]
       default: false
+    instance_ids:
+      description: A list of instance ids, currently used for states: running, stopped, restarted, absent, and join or leave instances from security group.
+      required: true
+      default: null
+      aliases: ["instance_id"]
+    force:
+      description: Whether force to operation, currently used fo states: stopped, restarted .
+      required: false
+      default: False
+      aliases: []
+    instance_tags:
+      description: - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]',
+                    tag_key must be not null when tag_value isn't null
+      required: false
+      default: null
+      aliases: ["tags"]
+    attributes:
+      description:
+        - A list of hash/dictionaries of instance attributes. If it's set, the specified instance's attributes would be modified.
+        - keys allowed are
+            - id (required=true; default=null; description=ID of an ECS instance )
+            - name (required=false; default=null; description=Name of the instance to modify)
+            - description (required=false; default=null; description=Description of the instance to use)
+            - password (required=false; default=null; description=The password to login instance)
+            - host_name (required=false; default=null; description=Instance host name)
+      required: false
+      default: null
+      aliases: []
+    group_id:
+      description: Security group id (or list of ids) to use with the instance
+      required: true
+      default: null
+      aliases: []
+    sg_action:
+      description: The action of operating security group.
+      required: true
+      default: null
+      choices: ['join', 'leave']
+      aliases: []
+    page_number:
+      description: Page number of the instance status list
+      required:false
+      default: 1
+    page_size:
+        description: Sets the number of lines per page for queries per page
+        required:false
+        default: 10
     wait:
       description:
         - wait for the AMI to be in state 'available' before returning.
@@ -196,99 +239,6 @@ options:
         - how long before wait gives up, in seconds
       required: false
       default: 300
-
-
-function: start, stop, restart, terminate instance
-  description: start, stop, restart and terminate instances in ecs
-  options:
-    instance_ids:
-      description: A list of instance ids, currently used for states: running, stopped, restarted, absent
-      required: true
-      default: null
-      aliases: ["instance_id"]
-    force:
-      description: Whether force to operation, currently used fo states: stopped, restarted.
-      required: false
-      default: False
-      aliases: []
-    instance_tags:
-      description: - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]',
-                    tag_key must be not null when tag_value isn't null
-      required: false
-      default: null
-      aliases: ["tags"]
-
-
-function: modify instance attribute
-  description: modify instances attributes in ecs
-  options:
-    attributes:
-      description:
-        - A list of hash/dictionaries of instance attributes
-        - keys allowed are
-            - id (required=true; default=null; description=ID of an ECS instance )
-            - name (required=false; default=null; description=Name of the instance to modify)
-            - description (required=false; default=null; description=Description of the instance to use)
-            - password (required=false; default=null; description=The password to login instance)
-            - host_name (required=false; default=null; description=Instance host name)
-      required: false
-      default: null
-      aliases: []
-
-
-function: modify instance security group attribute
-  description: join or leave instances from security group.
-  options:
-    group_id:
-      description: Security group id (or list of ids) to use with the instance
-      required: true
-      default: null
-      aliases: []
-    instance_id:
-      description: A list of instance ids.
-      required: true
-      default: null
-      aliases: [ 'instance_ids' ]
-    sg_action:
-      description: The action of operating security group.
-      required: true
-      default: null
-      choices: ['join', 'leave']
-      aliases: []
-
-
-function: querying instance status
-  description: obtain the list of all the instances of the current user in batches with status information
-  options:
-    alicloud_zone:
-      description: Aliyun availability zone ID in which to launch the instance
-      required: false
-      default: null
-      aliases: ['zone_id', 'acs_zone', 'ecs_zone', 'zone' ]
-    page_number:
-      description: Page number of the instance status list
-      required:false
-      default: 1
-    page_size:
-        description: Sets the number of lines per page for queries per page
-        required:false
-        default: 10
-
-function: modify instance attribute
-  description: modify instances attributes in ecs
-  options:
-    attributes:
-      description:
-        - A list of hash/dictionaries of instance vpc attributes
-        - keys allowed are
-            - id (required=true; default=null; description=ID of an ECS instance )
-            - name (required=false; default=null; description=Name of the instance to modify)
-            - description (required=false; default=null; description=Description of the instance to use)
-            - password (required=false; default=null; description=The password to login instance)
-            - host_name (required=false; default=null; description=Instance host name)
-      required: false
-      default: null
-      aliases: []
 '''
 
 EXAMPLES = '''
