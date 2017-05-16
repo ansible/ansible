@@ -17,16 +17,29 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Legacy
+from abc import ABCMeta, abstractproperty
+from collections import defaultdict
+
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.six import iteritems, with_metaclass
+
+try:
+    from f5.bigip import ManagementRoot as BigIpMgmt
+    from f5.bigip.contexts import TransactionContextManager as BigIpTxContext
+
+    from f5.bigiq import ManagementRoot as BigIqMgmt
+
+    from f5.iworkflow import ManagementRoot as iWorkflowMgmt
+    from icontrol.session import iControlUnexpectedHTTPError
+    HAS_F5SDK = True
+except ImportError:
+    HAS_F5SDK = False
 
 try:
     import bigsuds
     bigsuds_found = True
 except ImportError:
     bigsuds_found = False
-
-
-from ansible.module_utils.basic import env_fallback
 
 
 def f5_argument_spec():
@@ -49,14 +62,13 @@ def f5_argument_spec():
             fallback=(env_fallback, ['F5_PASSWORD'])
         ),
         validate_certs=dict(
-            default='yes',
             type='bool',
+            default='yes',
             fallback=(env_fallback, ['F5_VALIDATE_CERTS'])
         ),
         server_port=dict(
             type='int',
             default=443,
-            required=False,
             fallback=(env_fallback, ['F5_SERVER_PORT'])
         ),
         state=dict(
@@ -80,7 +92,7 @@ def f5_parse_arguments(module):
         import ssl
         if not hasattr(ssl, 'SSLContext'):
             module.fail_json(
-                msg="bigsuds does not support verifying certificates with python < 2.7.9." \
+                msg="bigsuds does not support verifying certificates with python < 2.7.9."
                     "Either update python or set validate_certs=False on the task'")
 
     return (
@@ -122,43 +134,17 @@ def bigip_api(bigip, user, password, validate_certs, port=443):
 
 
 # Fully Qualified name (with the partition)
-def fq_name(partition,name):
+def fq_name(partition, name):
     if name is not None and not name.startswith('/'):
-        return '/%s/%s' % (partition,name)
+        return '/%s/%s' % (partition, name)
     return name
 
 
 # Fully Qualified name (with partition) for a list
-def fq_list_names(partition,list_names):
+def fq_list_names(partition, list_names):
     if list_names is None:
         return None
-    return map(lambda x: fq_name(partition,x),list_names)
-
-
-
-
-
-# New style
-
-from abc import ABCMeta, abstractproperty
-from ansible.module_utils.six import with_metaclass
-from collections import defaultdict
-
-try:
-    from f5.bigip import ManagementRoot as BigIpMgmt
-    from f5.bigip.contexts import TransactionContextManager as BigIpTxContext
-
-    from f5.bigiq import ManagementRoot as BigIqMgmt
-
-    from f5.iworkflow import ManagementRoot as iWorkflowMgmt
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
-
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.six import iteritems
+    return map(lambda x: fq_name(partition, x), list_names)
 
 
 F5_COMMON_ARGS = dict(
@@ -286,7 +272,7 @@ class AnsibleF5Parameters(object):
     def __init__(self, params=None):
         self._values = defaultdict(lambda: None)
         if params:
-            for k,v in iteritems(params):
+            for (k, v) in iteritems(params):
                 if self.api_map is not None and k in self.api_map:
                     dict_to_use = self.api_map
                     map_key = self.api_map[k]
