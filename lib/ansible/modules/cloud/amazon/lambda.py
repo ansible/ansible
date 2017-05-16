@@ -36,7 +36,6 @@ options:
   state:
     description:
       - Create or delete Lambda function
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   runtime:
@@ -48,7 +47,7 @@ options:
     description:
       - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS)
         resources. You may use the bare ARN if the role belongs to the same AWS account.
-    default: null
+    required: true
   handler:
     description:
       - The function within your code that Lambda calls to begin execution
@@ -233,8 +232,8 @@ def main():
     argument_spec.update(dict(
         name=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['present', 'absent']),
-        runtime=dict(type='str', required=True),
-        role=dict(type='str', default=None),
+        runtime=dict(type='str'),
+        role=dict(type='str'),
         handler=dict(type='str', default=None),
         zip_file=dict(type='str', default=None, aliases=['src']),
         s3_bucket=dict(type='str'),
@@ -247,7 +246,7 @@ def main():
         vpc_security_group_ids=dict(type='list', default=None),
         environment_variables=dict(type='dict', default=None),
         dead_letter_arn=dict(type='str', default=None),
-        )
+    )
     )
 
     mutually_exclusive = [['zip_file', 's3_key'],
@@ -257,10 +256,13 @@ def main():
     required_together = [['s3_key', 's3_bucket'],
                          ['vpc_subnet_ids', 'vpc_security_group_ids']]
 
+    required_if = [['state', 'present', ['runtime', 'handler', 'role']]]
+
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            mutually_exclusive=mutually_exclusive,
-                           required_together=required_together)
+                           required_together=required_together,
+                           required_if=required_if)
 
     name = module.params.get('name')
     state = module.params.get('state').lower()
@@ -298,17 +300,18 @@ def main():
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
         module.fail_json(msg=str(e))
 
-    if role.startswith('arn:aws:iam'):
-        role_arn = role
-    else:
-        # get account ID and assemble ARN
-        try:
-            iam_client = boto3_conn(module, conn_type='client', resource='iam',
-                                region=region, endpoint=ec2_url, **aws_connect_kwargs)
-            account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
-            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
-        except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-            module.fail_json(msg=str(e))
+    if state == 'present':
+        if role.startswith('arn:aws:iam'):
+            role_arn = role
+        else:
+            # get account ID and assemble ARN
+            try:
+                iam_client = boto3_conn(module, conn_type='client', resource='iam',
+                                    region=region, endpoint=ec2_url, **aws_connect_kwargs)
+                account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
+                role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
+            except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
+                module.fail_json(msg=str(e))
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
@@ -335,7 +338,7 @@ def main():
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
         if (environment_variables is not None) and (current_config.get('Environment', {}).get('Variables', {}) != environment_variables):
-            func_kwargs.update({'Environment':{'Variables': environment_variables}})
+            func_kwargs.update({'Environment': {'Variables': environment_variables}})
         if dead_letter_arn is not None:
             if current_config.get('DeadLetterConfig'):
                 if current_config['DeadLetterConfig']['TargetArn'] != dead_letter_arn:
@@ -372,7 +375,7 @@ def main():
             if ('VpcConfig' in current_config and
                     'VpcId' in current_config['VpcConfig'] and
                     current_config['VpcConfig']['VpcId'] != ''):
-                func_kwargs.update({'VpcConfig':{'SubnetIds': [], 'SecurityGroupIds': []}})
+                func_kwargs.update({'VpcConfig': {'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
         if len(func_kwargs) > 1:
