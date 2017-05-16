@@ -696,17 +696,6 @@ lib/ansible/modules/utilities/logic/async_wrapper.py
 lib/ansible/modules/utilities/logic/wait_for.py
 lib/ansible/modules/web_infrastructure/ejabberd_user.py
 lib/ansible/modules/web_infrastructure/jboss.py
-lib/ansible/parsing/dataloader.py
-lib/ansible/parsing/mod_args.py
-lib/ansible/parsing/quoting.py
-lib/ansible/parsing/splitter.py
-lib/ansible/parsing/utils/__init__.py
-lib/ansible/parsing/utils/addresses.py
-lib/ansible/parsing/utils/jsonify.py
-lib/ansible/parsing/vault/__init__.py
-lib/ansible/parsing/yaml/__init__.py
-lib/ansible/parsing/yaml/constructor.py
-lib/ansible/parsing/yaml/dumper.py
 lib/ansible/playbook/__init__.py
 lib/ansible/playbook/attribute.py
 lib/ansible/playbook/base.py
