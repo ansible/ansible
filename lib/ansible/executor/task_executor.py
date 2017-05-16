@@ -724,7 +724,7 @@ class TaskExecutor:
         # if using persistent paramiko connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
         # then we use the persistent connection plugion. Otherwise load the requested connection plugin
         if C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
-            conn_type == 'persistent'
+            conn_type = 'persistent'
         else:
             conn_type = self._play_context.connection
 
