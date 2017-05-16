@@ -31,7 +31,7 @@ module: win_psmodule
 version_added: "2.4"
 short_description: Adds or removes a Powershell Module.
 description:
-    - This module helps to install Powershell modules and register custom modules repository on Windows Server. Powershell 5.0 or higer is needed.
+    - This module helps to install Powershell modules and register custom modules repository on Windows Server.
 options:
   name:
     description:
@@ -57,13 +57,16 @@ options:
     choices:
       - present
       - absent
+notes:
+   -  Powershell 5.0 or higer is needed.
+
 author: Daniele Lazzari
 '''
 
 EXAMPLES = '''
 ---
 - name: Add a powershell module
-  win_route:
+  win_psmodule:
     name: PowershellModule
     state: present
 
@@ -87,4 +90,9 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+output:
+  description: A message describing the task result.
+  returned: always
+  type: string
+  sample: "Module PowerShellCookbook installed", "Module PowerShellCookbook already present"
 '''

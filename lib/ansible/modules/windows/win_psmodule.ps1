@@ -42,6 +42,7 @@ Function Install-NugetProvider {
   if (!($PackageProvider)){
       try{
         Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop -WhatIf:$CheckMode | out-null
+        $result.changed = $true
       }
       catch{
         $ErrorMessage = "Problems adding package provider: $($_.Exception.Message)"
@@ -65,6 +66,7 @@ Function Install-Repository {
       try {
         if (!($CheckMode)){
           Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop
+          $result.changed = $true
         }
       }
       catch {
@@ -88,6 +90,7 @@ Function Remove-Repository{
         try{
           if (!($CheckMode)){
             Unregister-PSRepository -Name $Name -ErrorAction Stop
+            $result.changed = $true
           }
         }
         catch{
@@ -139,8 +142,8 @@ Function Remove-PsModule {
     if (Get-Module -Listavailable|?{$_.name -eq $Name}){
       try{
         Uninstall-Module -Name $Name -Confirm:$false -Force -ErrorAction Stop -WhatIf:$CheckMode | out-null
-        $result.changed = $true
         $result.output = "Module $($Name) removed"
+        $result.changed = $true
       }
       catch{
         $ErrorMessage = "Problems removing $($Name) module: $($_.Exception.Message)"
