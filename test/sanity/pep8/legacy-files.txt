@@ -94,7 +94,6 @@ lib/ansible/module_utils/univention_umc.py
 lib/ansible/module_utils/urls.py
 lib/ansible/module_utils/vca.py
 lib/ansible/module_utils/vmware.py
-lib/ansible/module_utils/vyos.py
 lib/ansible/modules/cloud/amazon/_ec2_ami_search.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/aws_kms.py
@@ -848,7 +847,6 @@ lib/ansible/plugins/terminal/eos.py
 lib/ansible/plugins/terminal/ios.py
 lib/ansible/plugins/terminal/junos.py
 lib/ansible/plugins/terminal/nxos.py
-lib/ansible/plugins/terminal/vyos.py
 lib/ansible/plugins/test/core.py
 lib/ansible/plugins/test/files.py
 lib/ansible/plugins/test/mathstuff.py
