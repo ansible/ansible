@@ -29,6 +29,7 @@ ignore_errors: Boolean that allows you to ignore task failures and continue with
 max_fail_percentage: can be used to abort the run after a given percentage of hosts in the current batch has failed.
 name: It's a name, works mostly for documentation, in the case of tasks/handlers it can be an identifier.
 no_log: Boolean that controls information disclosure.
+order: Controls the sorting of hosts as they are used for executing the play. Possible values are inventory (default), sorted, reverse_sorted, reverse_inventory and shuffle.
 port: Used to override the default port used in a connection.
 post_tasks: A list of tasks to execute after the ``tasks`` section.
 pre_tasks: A list of tasks to execute before ``roles``.
