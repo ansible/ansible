@@ -242,7 +242,8 @@ class StrategyBase:
 
     def get_delegated_hosts(self, result, task):
 
-        host_name = task.delegate_to
+        templar = Templar(loader=self._loader, variables=result)
+        host_name = templar.template(task.delegate_to)
         actual_host = self._inventory.get_host(host_name)
         if actual_host is None:
             actual_host = Host(name=host_name)
