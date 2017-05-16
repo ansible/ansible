@@ -14,9 +14,6 @@ lib/ansible/cli/galaxy.py
 lib/ansible/cli/playbook.py
 lib/ansible/cli/pull.py
 lib/ansible/cli/vault.py
-lib/ansible/compat/__init__.py
-lib/ansible/compat/selectors/__init__.py
-lib/ansible/compat/tests/__init__.py
 lib/ansible/constants.py
 lib/ansible/errors/__init__.py
 lib/ansible/executor/__init__.py
