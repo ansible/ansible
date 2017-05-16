@@ -789,8 +789,3 @@ lib/ansible/plugins/test/files.py
 lib/ansible/plugins/test/mathstuff.py
 lib/ansible/plugins/vars/__init__.py
 lib/ansible/release.py
-lib/ansible/template/__init__.py
-lib/ansible/template/safe_eval.py
-lib/ansible/template/template.py
-lib/ansible/template/vars.py
-lib/ansible/vars/manager.py

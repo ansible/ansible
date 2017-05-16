@@ -61,7 +61,7 @@ def preprocess_vars(a):
     if a is None:
         return None
     elif not isinstance(a, list):
-        data = [ a ]
+        data = [a]
     else:
         data = a
 
@@ -111,15 +111,15 @@ class VariableManager:
 
     def __getstate__(self):
         data = dict(
-            fact_cache = self._fact_cache,
-            np_fact_cache = self._nonpersistent_fact_cache,
-            vars_cache = self._vars_cache,
-            extra_vars = self._extra_vars,
-            host_vars_files = self._host_vars_files,
-            group_vars_files = self._group_vars_files,
-            omit_token = self._omit_token,
-            options_vars = self._options_vars,
-            inventory = self._inventory,
+            fact_cache=self._fact_cache,
+            np_fact_cache=self._nonpersistent_fact_cache,
+            vars_cache=self._vars_cache,
+            extra_vars=self._extra_vars,
+            host_vars_files=self._host_vars_files,
+            group_vars_files=self._group_vars_files,
+            omit_token=self._omit_token,
+            options_vars=self._options_vars,
+            inventory=self._inventory,
         )
         return data
 
@@ -169,7 +169,7 @@ class VariableManager:
         if a is None:
             return None
         elif not isinstance(a, list):
-            data = [ a ]
+            data = [a]
         else:
             data = a
 
@@ -223,20 +223,20 @@ class VariableManager:
             all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
 
         if host:
-            ### INIT WORK (use unsafe as we are going to copy/merge vars, no need to x2 copy)
+            # INIT WORK (use unsafe as we are going to copy/merge vars, no need to x2 copy)
             # basedir, THE 'all' group and the rest of groups for a host, used below
             basedir = self._loader.get_basedir()
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
-            ### internal fuctions that actually do the work ###
+            # internal fuctions that actually do the work
             def _plugins_inventory(entities):
                 ''' merges all entities by inventory source '''
                 data = {}
                 for inventory_dir in self._inventory._sources:
-                    if ',' in inventory_dir: # skip host lists
+                    if ',' in inventory_dir:  # skip host lists
                         continue
-                    elif not os.path.isdir(inventory_dir): # always pass 'inventory directory'
+                    elif not os.path.isdir(inventory_dir):  # always pass 'inventory directory'
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
@@ -251,7 +251,7 @@ class VariableManager:
                     data = combine_vars(data, plugin.get_vars(self._loader, basedir, entities))
                 return data
 
-            ### configurable functions that are sortable via config ###
+            # configurable functions that are sortable via config
             def all_inventory():
                 return all_group.get_vars()
 
@@ -424,7 +424,7 @@ class VariableManager:
         if host:
             # host already provides some magic vars via host.get_vars()
             if self._inventory:
-                variables['groups']  = self._inventory.get_groups_dict()
+                variables['groups'] = self._inventory.get_groups_dict()
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
 
