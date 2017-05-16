@@ -874,7 +874,6 @@ lib/ansible/utils/helpers.py
 lib/ansible/utils/listify.py
 lib/ansible/utils/path.py
 lib/ansible/utils/ssh_functions.py
-lib/ansible/utils/unicode.py
 lib/ansible/utils/vars.py
 lib/ansible/vars/__init__.py
 lib/ansible/vars/hostvars.py
