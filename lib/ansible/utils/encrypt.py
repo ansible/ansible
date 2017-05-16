@@ -17,13 +17,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-
+import multiprocessing
 import os
 import stat
 import tempfile
-import multiprocessing
 import time
 import warnings
+
+from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text, to_bytes
 
 PASSLIB_AVAILABLE = False
 try:
@@ -38,7 +41,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-KEYCZAR_AVAILABLE=False
+KEYCZAR_AVAILABLE = False
 try:
     try:
         # some versions of pycrypto may not have this?
@@ -53,21 +56,17 @@ try:
             from keyczar.keys import AesKey
         except PowmInsecureWarning:
             display.system_warning(
-                "The version of gmp you have installed has a known issue regarding " + \
-                "timing vulnerabilities when used with pycrypto. " + \
+                "The version of gmp you have installed has a known issue regarding "
+                "timing vulnerabilities when used with pycrypto. "
                 "If possible, you should update it (i.e. yum update gmp)."
             )
             warnings.resetwarnings()
             warnings.simplefilter("ignore")
             import keyczar.errors as key_errors
             from keyczar.keys import AesKey
-        KEYCZAR_AVAILABLE=True
+        KEYCZAR_AVAILABLE = True
 except ImportError:
     pass
-
-from ansible import constants as C
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text, to_bytes
 
 __all__ = ['do_encrypt']
 
@@ -100,6 +99,7 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
     # impact calling code.
     return to_text(result, errors='strict')
 
+
 def key_for_hostname(hostname):
     # fireball mode is an implementation of ansible firing up zeromq via SSH
     # to use no persistent daemons or key management
@@ -129,11 +129,11 @@ def key_for_hostname(hostname):
     key_path = os.path.join(key_path, hostname)
 
     # use new AES keys every 2 hours, which means fireball must not allow running for longer either
-    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60 * 60 * 2):
         # avoid race with multiple forks trying to create key
         # but limit when locking is needed to creation only
         with(_LOCK):
-            if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+            if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60 * 60 * 2):
                 key = AesKey.Generate()
                 # use temp file to ensure file only appears once it has
                 # desired contents and permissions
@@ -152,12 +152,13 @@ def key_for_hostname(hostname):
     fh.close()
     return key
 
+
 def keyczar_encrypt(key, msg):
     return key.Encrypt(msg.encode('utf-8'))
+
 
 def keyczar_decrypt(key, msg):
     try:
         return key.Decrypt(msg)
     except key_errors.InvalidSignatureError:
         raise AnsibleError("decryption failed")
-
