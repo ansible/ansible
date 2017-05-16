@@ -200,7 +200,7 @@ options:
       aliases: ["instance_id"]
     force:
       description:
-        - Whether force to operation, currently used fo states: stopped and restarted.
+        - "Whether force to operation, currently used fo states: stopped and restarted."
       required: false
       default: False
       aliases: []
@@ -1065,8 +1065,7 @@ def leave_security_group(module, ecs, instance_ids, security_group_id):
 
 def main():
     if HAS_FOOTMARK is False:
-        print("footmark required for this module")
-        sys.exit(1)
+        module.fail_json(msg='footmark required for this module')
     else:
         argument_spec = ecs_argument_spec()
         argument_spec.update(dict(
