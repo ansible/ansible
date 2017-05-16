@@ -47,7 +47,7 @@ class InventoryScript:
         # path information but happen to be in the current working
         # directory when '.' is not in PATH.
         self.filename = os.path.abspath(filename)
-        cmd = [ self.filename, "--list" ]
+        cmd = [self.filename, "--list"]
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as e:
@@ -55,7 +55,7 @@ class InventoryScript:
         (stdout, stderr) = sp.communicate()
 
         if sp.returncode != 0:
-            raise AnsibleError("Inventory script (%s) had an execution error: %s " % (filename,stderr))
+            raise AnsibleError("Inventory script (%s) had an execution error: %s" % (filename, stderr))
 
         # make sure script output is unicode so that json loader will output
         # unicode strings itself
@@ -108,13 +108,12 @@ class InventoryScript:
             if not isinstance(data, dict):
                 data = {'hosts': data}
             # is not those subkeys, then simplified syntax, host with vars
-            elif not any(k in data for k in ('hosts','vars','children')):
+            elif not any(k in data for k in ('hosts', 'vars', 'children')):
                 data = {'hosts': [group_name], 'vars': data}
 
             if 'hosts' in data:
                 if not isinstance(data['hosts'], list):
-                    raise AnsibleError("You defined a group \"%s\" with bad "
-                        "data for the host list:\n %s" % (group_name, data))
+                    raise AnsibleError("You defined a group \"%s\" with bad data for the host list:\n %s" % (group_name, data))
 
                 for hostname in data['hosts']:
                     if hostname not in all_hosts:
@@ -124,8 +123,7 @@ class InventoryScript:
 
             if 'vars' in data:
                 if not isinstance(data['vars'], dict):
-                    raise AnsibleError("You defined a group \"%s\" with bad "
-                        "data for variables:\n %s" % (group_name, data))
+                    raise AnsibleError("You defined a group \"%s\" with bad data for variables:\n %s" % (group_name, data))
 
                 for k, v in iteritems(data['vars']):
                     group.set_variable(k, v)
@@ -153,7 +151,7 @@ class InventoryScript:
             try:
                 got = self.host_vars_from_top.get(host.name, {})
             except AttributeError as e:
-                raise AnsibleError("Improperly formatted host information for %s: %s" % (host.name,to_native(e)))
+                raise AnsibleError("Improperly formatted host information for %s: %s" % (host.name, to_native(e)))
             return got
 
         cmd = [self.filename, "--host", host.name]

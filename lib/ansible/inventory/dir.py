@@ -24,15 +24,16 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.utils.vars import combine_vars
 from ansible.module_utils._text import to_native
+from ansible.utils.vars import combine_vars
 
-#FIXME: make into plugins
+# FIXME: make into plugins
 from ansible.inventory.ini import InventoryParser as InventoryINIParser
-from ansible.inventory.yaml import InventoryParser as InventoryYAMLParser
 from ansible.inventory.script import InventoryScript
+from ansible.inventory.yaml import InventoryParser as InventoryYAMLParser
 
 __all__ = ['get_file_parser']
+
 
 def get_file_parser(hostsfile, groups, loader):
     # check to see if the specified file starts with a
@@ -52,7 +53,7 @@ def get_file_parser(hostsfile, groups, loader):
     except:
         pass
 
-    #FIXME: make this 'plugin loop'
+    # FIXME: make this 'plugin loop'
     # script
     if loader.is_executable(hostsfile):
         try:
@@ -85,6 +86,7 @@ def get_file_parser(hostsfile, groups, loader):
         raise AnsibleError('\n'.join(myerr))
 
     return parser
+
 
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
@@ -119,7 +121,7 @@ class InventoryDirectory(object):
             else:
                 parser = get_file_parser(fullpath, self.groups, loader)
                 if parser is None:
-                    #FIXME: needs to use display
+                    # FIXME: needs to use display
                     import warnings
                     warnings.warning("Could not find parser for %s, skipping" % fullpath)
                     continue
@@ -176,7 +178,7 @@ class InventoryDirectory(object):
         # all should only contain direct children, not grandchildren
         # direct children should have dept == 1
         if 'all' in self.groups:
-            allgroup = self.groups['all' ]
+            allgroup = self.groups['all']
             # loop on a copy of all's  child groups, as we want to change that list
             for group in allgroup.child_groups[:]:
                 # groups might once have beeen added to all, and later be added
@@ -269,7 +271,7 @@ class InventoryDirectory(object):
         # variables
         group.vars = combine_vars(group.vars, newgroup.vars)
 
-    def _merge_hosts(self,host, newhost):
+    def _merge_hosts(self, host, newhost):
         """ Merge all of instance newhost into host """
 
         # name
