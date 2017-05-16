@@ -20,13 +20,15 @@
 
 DOCUMENTATION = '''
 ---
-module: gcdataproc
+module: gcp_dataproc
 short_description: Module for Google Cloud Dataproc clusters.
 description:
   - Creates or destroys Google Cloud Dataproc clusters on Google Cloud.
     For more information on Dataproc, see "https://cloud.google.com/dataproc/".
 version_added: "2.3"
 author: "John Baublitz @jbaublitz"
+notes:
+  - Dataproc API must be enabled. U(https://console.cloud.google.com/dataproc/enableApi)
 requirements:
   - "python >= 2.6"
   - "google-api-python-client >= 1.5.4"
@@ -111,12 +113,12 @@ notes:
 
 EXAMPLES = '''
 # Creating a dataproc cluster with default paramters
-- gcdataproc:
-    name: test
+- gcp_dataproc:
+    cluster_name: test
 
 # Creating a dataproc cluster with defaults, fire and forget
-- gcdataproc:
-    name: test
+- gcp_dataproc:
+    cluster_name: test
     sync: false
 '''
 
@@ -153,31 +155,19 @@ response:
 import os
 import time
 
-try:
-    from oauth2client.service_account import ServiceAccountCredentials
-    from apiclient.discovery import build
-    from googleapiclient.errors import HttpError
-    HAS_GOOGLE_API_LIB = True
-except ImportError:
-    HAS_GOOGLE_API_LIB = False
+from googleapiclient.errors import HttpError
 
-def google_auth(module, cred_path):
-    scopes = ['https://www.googleapis.com/auth/cloud-platform']
-    credentials = None
-    try:
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-                          cred_path,
-                          scopes=scopes
-                      )
-    except Exception as e:
-        module.fail_json(msg=e, changed=False)
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gcp import get_google_api_client, GCPUtils
 
-    return credentials
+USER_AGENT_PRODUCT = 'ansible-dataproc'
+USER_AGENT_VERSION = '0.0.1'
+
 
 def generate_resource_uri(project, *args):
-    google_base_uri = \
-            'https://www.googleapis.com/compute/v1/projects/%s/' % project
-    return google_base_uri + '/'.join(args)
+    return '%s/%s' % (GCPUtils.build_googleapi_url(project), '/'.join(args))
+
 
 def populate_request_body(module, name, project, region, zone):
     image_version = module.params.get('image_version')
@@ -217,10 +207,10 @@ def populate_request_body(module, name, project, region, zone):
         body['config']['gceClusterConfig']['networkUri'] = \
             generate_resource_uri(
                 project,
-                'regions',   
+                'regions',
                 region,
                 network
-            )
+        )
     if subnetwork:
         body['config']['gceClusterConfig']['subnetworkUri'] = \
             generate_resource_uri(
@@ -228,10 +218,10 @@ def populate_request_body(module, name, project, region, zone):
                 'regions',
                 region,
                 subnetwork
-            )
+        )
     if service_account_scopes:
         body['config']['gceConfigCluster']['serviceAccountScopes'] = \
-            ['https://www.googleapis.com/auth/' + scope \
+            ['https://www.googleapis.com/auth/' + scope
              for scope in service_account_scopes]
     if metadata:
         body['config']['gceConfigCluster']['metadata'] = metadata
@@ -246,35 +236,38 @@ def populate_request_body(module, name, project, region, zone):
 
     return body
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(default='present'),
-            network = dict(),
-            subnetwork = dict(),
-            region = dict(default='us-central1'),
-            zone = dict(default='us-central1-a'),
-            sync = dict(type='bool', default=True),
-            poll_interval = dict(type='int', default=1),
-            image_version = dict(),
-            service_account_scopes = dict(type='list'),
-            metadata = dict(type='dict'),
-            init_actions = dict(type='list'),
-            master_config = dict(type='dict'),
-            worker_config = dict(type='dict'),
-            second_worker_config = dict(type='dict'),
-            bucket = dict()
+        argument_spec=dict(
+            cluster_name=dict(required=True),
+            state=dict(default='present'),
+            network=dict(),
+            subnetwork=dict(),
+            region=dict(default='us-central1'),
+            zone=dict(default='us-central1-a'),
+            sync=dict(type='bool', default=True),
+            poll_interval=dict(type='int', default=1),
+            image_version=dict(),
+            service_account_scopes=dict(type='list'),
+            metadata=dict(type='dict'),
+            init_actions=dict(type='list'),
+            master_config=dict(type='dict'),
+            worker_config=dict(type='dict'),
+            second_worker_config=dict(type='dict'),
+            bucket=dict(),
+            service_account_email=dict(),
+            service_account_permissions=dict(type='list'),
+            pem_file=dict(),
+            credentials_file=dict(),
+            project_id=dict(),
         ),
-        mutually_exclusive = [
+        mutually_exclusive=[
             ('network', 'subnetwork')
         ]
     )
 
-    if not HAS_GOOGLE_API_LIB:
-        module.fail_json(msg="Please install google-api-python-client library")
-
-    name = module.params.get('name')
+    cluster_name = module.params.get('cluster_name')
     state = module.params.get('state')
     region = module.params.get('region')
     zone = module.params.get('zone')
@@ -284,39 +277,32 @@ def main():
     if not zone.startswith(region):
         module.fail_json(msg="Region %s must contain zone %s" % (region, zone))
 
-    gce_email = os.environ.get('GCE_EMAIL', None)
-    gce_project = os.environ.get('GCE_PROJECT', None)
-    gce_credentials = os.environ.get('GCE_CREDENTIALS_FILE_PATH', None)
-    if not gce_email or not gce_project or not gce_credentials:
-        module.fail_json(msg="Please define Google auth environment " \
-                             "variables GCE_EMAIL, GCE_PROJECT and " \
-                             "GCE_CREDENTIALS_FILE_PATH",
-                             changed=False)
-
-    credentials = google_auth(module, gce_credentials)
-    dataproc = build('dataproc', 'v1', credentials=credentials)
+    dataproc, conn_params = get_google_api_client(module, 'dataproc',
+                                                  user_agent_product=USER_AGENT_PRODUCT,
+                                                  user_agent_version=USER_AGENT_VERSION)
     json = {}
     changed = False
     if state in ['present', 'active']:
         try:
             json = dataproc.projects().regions().clusters() \
-                   .get(projectId=gce_project,
-                        region='global',
-                        clusterName=name).execute()
+                .get(projectId=conn_params['project_id'],
+                     region='global',
+                     clusterName=cluster_name).execute()
         except HttpError:
-            body = populate_request_body(module, name, gce_project, region, zone)
+            body = populate_request_body(
+                module, cluster_name, conn_params['project_id'], region, zone)
             json = dataproc.projects().regions().clusters() \
-                    .create(projectId=gce_project,
-                            region='global',
-                            body=body
-                    ).execute()
+                .create(projectId=conn_params['project_id'],
+                        region='global',
+                        body=body
+                        ).execute()
             if sync:
                 while 'status' not in json or \
                         json['status']['state'] != 'RUNNING':
                     json = dataproc.projects().regions().clusters() \
-                           .get(projectId=gce_project,
-                                region='global',
-                                clusterName=name).execute();
+                        .get(projectId=conn_params['project_id'],
+                             region='global',
+                             clusterName=cluster_name).execute()
                     time.sleep(poll_interval)
             changed = True
         except Exception as e:
@@ -324,23 +310,23 @@ def main():
     elif state in ['absent', 'deleted']:
         try:
             json = dataproc.projects().regions().clusters() \
-                   .get(projectId=gce_project,
-                        region='global',
-                        clusterName=name).execute()
+                .get(projectId=conn_params['project_id'],
+                     region='global',
+                     clusterName=cluster_name).execute()
         except HttpError as e:
             pass
         except Exception as e:
             module.fail_json(changed=changed, msg=str(e))
         else:
             json = dataproc.projects().regions().clusters() \
-                   .delete(projectId=gce_project,
-                           region='global',
-                           clusterName=name
-                   ).execute()
+                .delete(projectId=conn_params['project_id'],
+                        region='global',
+                        clusterName=cluster_name
+                        ).execute()
             changed = True
 
     module.exit_json(changed=changed, **json)
 
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
