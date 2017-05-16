@@ -8,15 +8,15 @@ try:
     from setuptools import setup, find_packages
 except ImportError:
     print("Ansible now needs setuptools in order to build. Install it using"
-            " your package manager (usually python-setuptools) or via pip (pip"
-            " install setuptools).")
+          " your package manager (usually python-setuptools) or via pip (pip"
+          " install setuptools).")
     sys.exit(1)
 
 with open('requirements.txt') as requirements_file:
     install_requirements = requirements_file.read().splitlines()
     if not install_requirements:
         print("Unable to read requirements from the requirements.txt file"
-                "That indicates this copy of the source code is incomplete.")
+              "That indicates this copy of the source code is incomplete.")
         sys.exit(2)
 
 SYMLINKS = {'ansible': frozenset(('ansible-console',
@@ -49,7 +49,7 @@ setup(
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
     install_requires=install_requirements,
-    package_dir={ '': 'lib' },
+    package_dir={'': 'lib'},
     packages=find_packages('lib'),
     package_data={
         '': [

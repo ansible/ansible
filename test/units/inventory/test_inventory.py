@@ -144,9 +144,9 @@ class InventoryDefaultGroup(unittest.TestCase):
 
     def _get_inventory(self, inventory_content):
 
-        fake_loader = DictDataLoader({ __file__: inventory_content})
+        fake_loader = DictDataLoader({__file__: inventory_content})
 
-        return InventoryManager(loader=fake_loader,  sources=[__file__])
+        return InventoryManager(loader=fake_loader, sources=[__file__])
 
     def _test_default_groups(self, inventory_content):
         inventory = self._get_inventory(inventory_content)
