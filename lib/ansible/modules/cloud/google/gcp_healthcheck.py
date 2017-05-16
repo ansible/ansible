@@ -80,10 +80,8 @@ options:
          The default value is "/".
     required: false
   state:
-    description: State of the Healthcheck
-    returned: Always.
-    type: str
-    sample: present
+    description: State of the Healthcheck.
+    required: true
   timeout:
     description:
        - How long (in seconds) to wait for a response before claiming
