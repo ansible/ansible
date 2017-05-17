@@ -169,12 +169,12 @@
     - FOO-UNAR.TXT
     
 # debugging
-- name: List files
-  command: "ls --full-time {{output_dir}}/test-unarchive-zip/"
-  register: zipcheck
-- name: Print
-  debug: msg={{zipcheck.stdout_lines}}
-- name: List zip contents
+#- name: List files
+#  command: "ls --full-time {{output_dir}}/test-unarchive-zip/"
+#  register: zipcheck
+#- name: Print
+#  debug: msg={{zipcheck.stdout_lines}}
+#- name: List zip contents
   command: "zipinfo -T {{output_dir}}/test-unarchive.zip"
   register: zipfilecheck
 - name: Print zip contents
