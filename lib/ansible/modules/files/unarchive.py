@@ -459,7 +459,7 @@ class ZipArchive(object):
                         self.includes.append(path)
                         err += 'File %s differs in mtime (%f vs %f)\n' % (path, timestamp, st.st_mtime)
                         # debugging
-                        err += 'Zip timestamp of %t, date object of %d' % (z_timestamp, dt_object)
+                        err += 'Zip timestamp of %s, date object of %s' % (z_timestamp, dt_object)
                         
                         itemized[4] = 't'
 
