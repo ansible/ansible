@@ -392,11 +392,11 @@ class Connection(ConnectionBase):
         return (result.status_code, result.std_out, result.std_err)
 
     def is_clixml(self, value):
-        return value.startswith("#< CLIXML")
+        return value.startswith(b"#< CLIXML")
 
     # hacky way to get just stdout- not always sure of doc framing here, so use with care
     def parse_clixml_stream(self, clixml_doc, stream_name='Error'):
-        clear_xml = clixml_doc.replace('#< CLIXML\r\n', '')
+        clear_xml = clixml_doc.replace(b'#< CLIXML\r\n', b'')
         doc = xmltodict.parse(clear_xml)
         lines = [l.get('#text', '').replace('_x000D__x000A_', '') for l in doc.get('Objs', {}).get('S', {}) if l.get('@S') == stream_name]
         return '\r\n'.join(lines)
