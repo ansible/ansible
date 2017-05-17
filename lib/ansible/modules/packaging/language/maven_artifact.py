@@ -402,7 +402,10 @@ def main():
 
     prev_state = "absent"
     if os.path.isdir(dest):
-        dest = posixpath.join(dest, artifact_id + "-" + version + "." + extension)
+        if classifier:
+            dest = posixpath.join(dest, artifact_id + "-" + version + "-" + classifier + "." + extension)
+        else:
+            dest = posixpath.join(dest, artifact_id + "-" + version + "." + extension)
     if os.path.lexists(dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
         prev_state = "present"
     else:
