@@ -52,23 +52,25 @@ author:
 options:
   check_interval:
     description:
-       - How often (in seconds) to send a health check. The default
-         value is 5 seconds.
+       - How often (in seconds) to send a health check.
     required: false
+    default: 5
   healthcheck_name:
     description:
        - Name of the Healthcheck.
     required: true
   healthcheck_type:
     description:
-       - Type of Healthcheck. HTTP or HTTPS.
+       - Type of Healthcheck.
     required: true
+    choices: ["HTTP", "HTTPS"]
   host_header:
     description:
        - The value of the host header in the health check request. If left
-         empty (default value), the public IP on behalf of which this health
+         empty, the public IP on behalf of which this health
          check is performed will be used.
     required: true
+    default: ""
   port:
     description:
        - The TCP port number for the health check request. The default value is
@@ -77,8 +79,8 @@ options:
   request_path:
     description:
        - The request path of the HTTPS health check request.
-         The default value is "/".
     required: false
+    default: "/"
   state:
     description: State of the Healthcheck.
     required: true
@@ -86,19 +88,22 @@ options:
   timeout:
     description:
        - How long (in seconds) to wait for a response before claiming
-         failure. The default value is 5 seconds. It is invalid for timeout
+         failure. It is invalid for timeout
          to have a greater value than check_interval.
     required: false
+    default: 5
   unhealthy_threshold:
     description:
        - A so-far healthy instance will be marked unhealthy after this
-         many consecutive failures. The default value is 2.
+         many consecutive failures.
     required: false
+    default: 2
   healthy_threshold:
     description:
        - A so-far unhealthy instance will be marked healthy after this
-         many consecutive successes. The default value is 2.
+         many consecutive successes.
     required: false
+    default: 2
   service_account_email:
     description:
       - service account email
