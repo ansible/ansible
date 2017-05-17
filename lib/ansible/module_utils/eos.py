@@ -30,7 +30,7 @@
 import os
 import time
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import to_list, ComplexList
@@ -135,7 +135,7 @@ class Cli:
     def check_authorization(self):
         for cmd in ['show clock', 'prompt()']:
             rc, out, err = self.exec_command(cmd)
-            out = to_text(out, errors='surrogate_or_strict')
+            out = to_text(out, errors='surrogate_then_replace')
         return out.endswith('#')
 
     def get_config(self, flags=[]):
@@ -150,9 +150,9 @@ class Cli:
         except KeyError:
             conn = get_connection(self)
             rc, out, err = self.exec_command(cmd)
-            out = to_text(out, errors='surrogate_or_strict')
+            out = to_text(out, errors='surrogate_then_replace')
             if rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'))
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
             cfg = str(out).strip()
             self._device_configs[cmd] = cfg
             return cfg
@@ -164,9 +164,9 @@ class Cli:
 
         for cmd in to_list(commands):
             rc, out, err = self.exec_command(cmd)
-            out = to_text(out, errors='surrogate_or_strict')
+            out = to_text(out, errors='surrogate_then_replace')
             if check_rc and rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'))
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
             try:
                 out = self._module.from_json(out)
@@ -191,7 +191,7 @@ class Cli:
 
             rc, out, err = self.exec_command(command)
             if rc != 0:
-                return (rc, out, to_text(err, errors='surrogate_or_strict'))
+                return (rc, out, to_text(err, errors='surrogate_then_replace'))
 
         return (rc, 'ok', '')
 
@@ -205,11 +205,11 @@ class Cli:
 
         rc, out, err = self.exec_command('configure')
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_or_strict'))
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
 
         rc, out, err = self.send_config(commands)
         if rc != 0:
-            self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'))
+            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
         self.exec_command('end')
         return {}
@@ -235,7 +235,7 @@ class Cli:
 
         rc, out, err = self.exec_command('configure session %s' % session)
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_or_strict'))
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
 
         if replace:
             self.exec_command('rollback clean-config', check_rc=True)
@@ -243,11 +243,11 @@ class Cli:
         rc, out, err = self.send_config(commands)
         if rc != 0:
             self.exec_command('abort')
-            self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), commands=commands)
+            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), commands=commands)
 
         rc, out, err = self.exec_command('show session-config diffs')
         if rc == 0 and out:
-            result['diff'] = to_text(out, errors='surrogate_or_strict').strip()
+            result['diff'] = to_text(out, errors='surrogate_then_replace').strip()
 
         if commit:
             self.exec_command('commit')
@@ -319,7 +319,7 @@ class Eapi:
 
         try:
             data = response.read()
-            response = self._module.from_json(to_text(data, errors='surrogate_or_strict'))
+            response = self._module.from_json(to_text(data, errors='surrogate_then_replace'))
         except ValueError:
             self._module.fail_json(msg='unable to load response from device', data=data)
 
@@ -434,7 +434,7 @@ class Eapi:
 
 
 def is_json(cmd):
-    return str(cmd).endswith('| json')
+    return to_native(cmd, errors='surrogate_then_replace').endswith('| json')
 
 
 def is_eapi(module):
