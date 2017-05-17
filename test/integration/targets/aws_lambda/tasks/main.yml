@@ -60,13 +60,57 @@
            - 'result.failed'
            - 'result.msg == "region must be specified"'
 
-
     # ============================================================
     # direct zip file upload
+    - name: move lambda into place for archive module
+      copy:
+        src: "mini_lambda.py"
+        dest: "{{output_dir}}/mini_lambda.py"
 
+    - name: bundle lambda into a zip
+      archive:
+        format: zip
+        path: "{{output_dir}}/mini_lambda.py"
+        dest: "{{output_dir}}/mini_lambda.zip"
+      register: zip_res
+
+    - name: test state=present - upload the lambda
+      lambda:
+        name="{{lambda_function_name}}"
+        runtime="python2.7"
+        handler="mini_lambda.handler"
+        role="ansible_lambda_role"
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        zip_file="{{zip_res.dest}}"
+      register: result
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - '"failed" not in result'
+
+    - name: test lambda works
+      execute_lambda:
+        name: "{{lambda_function_name}}"
+        payload:
+          name: "Mr Ansible Tests"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - '"failed" not in result'
+           - 'result.result.output.message == "hello Mr Ansible Tests"'
 
     # ============================================================
-    # upload via s3 bucket
+    # upload via s3 bucket - multi function
 
 
     # ============================================================
