@@ -109,8 +109,8 @@ extends_documentation_fragment:
     - aws
     - ec2
 notes:
-    - This modules leverage the uniqueness of end_id, private_ip_address and subnet_id,
-      or instance_id and device_id to uniquely identify Elastic Network Interfaces (ENIs).
+    - This module identifies and ENI based on either the eni_id, a combination of private_ip_address and subnet_id,
+      or a combination of instance_id and device_id. Any of these options will let you specify a particular ENI.
 '''
 
 EXAMPLES = '''
