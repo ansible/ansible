@@ -143,7 +143,11 @@
 - name: unarchive a zip file
   unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
   register: unarchive03
-
+- name: List files
+  command: "ls --full-time {{output_dir}}/test-unarchive-zip/"
+  register: zipcheck
+- name: Print
+  debug: msg={{zipcheck.stdout_lines}}
 - name: verify that the file was marked as changed
   assert:
     that:
