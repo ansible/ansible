@@ -34,25 +34,20 @@
       - result1.changed == True
       - result1.msg == 'section and option added'
 
-# sha1sum: df66db77ecc39daa88abd1aac930dd6b762547b4'
-# expected content:
-#"""
-#
-#[drinks]
-#fav = lemonade
-#"""
+- name: set expected content and get current ini file content
+  set_fact:
+    expected1: |-
 
-- name: stat the file to compute checksum
-  stat:
-    path: "{{ output_file }}"
-  register: resultstat1
+      [drinks]
+      fav = lemonade
+    content1: "{{ lookup('file', output_file) }}"
 
-- name: Verify content of ini file is as expected (checksum)
+- name: Verify content of ini file is as expected
   assert:
     that:
-      - resultstat1.stat.checksum == 'df66db77ecc39daa88abd1aac930dd6b762547b4'
+      - content1 == expected1
 
-- name: add "fav=lemonade" is in section "[drinks]" in specified file again
+- name: add "fav=lemonade" is in section "[drinks]" again
   ini_file:
     path: "{{ output_file }}"
     section: drinks
@@ -66,7 +61,7 @@
       - result2.changed == False
       - result2.msg == 'OK'
 
-- name: Ensure "hate=coke" is in section "[drinks]" in specified file
+- name: Ensure "hate=coke" is in section "[drinks]"
   ini_file:
     path: "{{ output_file }}"
     section: drinks
@@ -74,30 +69,21 @@
     value: coke
   register: result3
 
-- name: assert 'changed' is true
+- name: set expected content and get current ini file content
+  set_fact:
+    expected3: |-
+
+      [drinks]
+      fav = lemonade
+      hate = coke
+    content3: "{{ lookup('file', output_file) }}"
+
+- name: assert 'changed' is true and content is OK
   assert:
     that:
       - result3.changed == True
       - result3.msg == 'option added'
-
-# sha1sum: 1bfd93f5e6d8a9ca932864a66a85c50cf0a222fe
-# expected content:
-#"""
-#
-#[drinks]
-#fav = lemonade
-#hate = coke
-#"""
-
-- name: stat the file to compute checksum
-  stat:
-    path: "{{ output_file }}"
-  register: resultstat2
-
-- name: Verify content of ini file is as expected (checksum)
-  assert:
-    that:
-      - resultstat2.stat.checksum == '1bfd93f5e6d8a9ca932864a66a85c50cf0a222fe'
+      - content3 == expected3
 
 - name: Remove option "hate=coke"
   ini_file:
@@ -107,21 +93,16 @@
     state: absent
   register: result4
 
-- name: assert changed
+- name: get ini file content
+  set_fact:
+    content4: "{{ lookup('file', output_file) }}"
+
+- name: assert changed and content is as expected
   assert:
     that:
       - result4.changed == True
       - result4.msg == 'option changed'
-
-- name: stat the file to compute checksum
-  stat:
-    path: "{{ output_file }}"
-  register: resultstat3
-
-- name: Verify content of ini file is as expected (checksum)
-  assert:
-    that:
-      - resultstat3.stat.checksum == resultstat1.stat.checksum
+      - content4 == expected1
 
 - name: remove section 'drinks'
   ini_file:
@@ -130,24 +111,13 @@
     state: absent
   register: result5
 
+- name: get current ini file content
+  set_fact:
+    content5: "{{ lookup('file', output_file) }}"
+
 - name: assert changed
   assert:
     that:
       - result5.changed == True
       - result5.msg == 'section removed'
-
-# sha1sum: adc83b19e793491b1c6ea0fd8b46cd9f32e592fc
-# expected content:
-#"""
-#
-#"""
-
-- name: stat the file to compute checksum
-  stat:
-    path: "{{ output_file }}"
-  register: resultstat4
-
-- name: Verify with checksum that content of ini file empty ('\n')
-  assert:
-    that:
-      - resultstat4.stat.checksum == 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+      - content5 == ""
