@@ -59,7 +59,7 @@ def check_args(module, warnings):
 
 def get_defaults_flag(module):
     rc, out, err = exec_command(module, 'show running-config ?')
-    out = to_text(out, errors='surrogate_or_strict')
+    out = to_text(out, errors='surrogate_then_replace')
 
     commands = set()
     for line in out.splitlines():
@@ -82,8 +82,8 @@ def get_config(module, flags=[]):
     except KeyError:
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
-        cfg = to_text(out, errors='surrogate_or_strict').strip()
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_then_replace'))
+        cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
@@ -105,8 +105,8 @@ def run_commands(module, commands, check_rc=True):
         cmd = module.jsonify(cmd)
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
-            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
-        responses.append(to_text(out, errors='surrogate_or_strict'))
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_then_replace'))
     return responses
 
 
@@ -114,13 +114,13 @@ def load_config(module, commands):
 
     rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', err=to_text(out, errors='surrogate_or_strict'))
+        module.fail_json(msg='unable to enter configuration mode', err=to_text(out, errors='surrogate_then_replace'))
 
     for command in to_list(commands):
         if command == 'end':
             continue
         rc, out, err = exec_command(module, command)
         if rc != 0:
-            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), command=command, rc=rc)
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
 
     exec_command(module, 'end')
