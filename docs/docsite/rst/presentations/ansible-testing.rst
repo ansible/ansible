@@ -50,7 +50,7 @@ This talk is Free Software
 Requirements
 ============
 
-What do we want from testing Ansible
+What do we want from testing Ansible:
 
 * Different OS, python versions
 * Ability to run same tests locally
@@ -72,6 +72,7 @@ Solution: ansible-test
 .. container:: handout
 
    Into Matt Clay
+   Different OS + Local runs fit together
    Duration: Tracking of Python imports
 
 Types of tests
@@ -93,16 +94,14 @@ Ansible-test Platform Features
 * Python versions
 * OS versions
    * Linux via Docker
-   *  AWS, or macstadium)
+   * FreeBSD, Windows, Network via AWS
+   *  OSX via Parallels
 * Network version
 * Cloud platforms (AWS, others coming soon)
 
 .. container:: handout
 
-   * DEMO: show shippable
-
-     * Show list of platforms
-
+   * Docker images are available for you to use locally ``ansible-test --docker``
 
 Improving Testing
 =================
@@ -115,6 +114,10 @@ Spot common issues
 2.1: added integration testing using docker containers
 2.2: switched from Travis to Shippable, added Windows, FreeBSD and OSX testing, added more docker containers
 2.3: SINGLE REPO (therefore versioned along side code),  ansible-test, integration testing for network modules
+
+.. container:: handout
+
+   Bulk changes that update all modules are prefered, though speak to us first
 
 Improvements in 2.4
 ===================
@@ -151,10 +154,10 @@ Lets look at a PR...
 
    * FIXME link to PR
    * Start with a PR
-   * Show the different checks that have failed
+   * Show the different checks that have failed - Only sanity & compile tests are listed
    * Command that you can run locally
    * Shippable
-     * Generaly you wouldn't need to look here
+     * Need to look here if an unit or integration test has failed
      * List of platforms
      * Tests tab on left hand side
      * Show console
@@ -190,14 +193,61 @@ Integration Tests: File structure
 
 Directory: ``test/integration/targets/file/``
 
-.. code::
+.. code-block:: bash
    :caption: file/aliases
 
    posix/ci/group2
    needs/root
 
-.. code::
+.. code-block:: bash
    :caption: file/tasks/main.yml
 
    # Standard playbook
-   
+
+
+Integration Tests: Test structure
+=================================
+
+* Setup (ensure clean state)
+* Set & register
+* Check result & changed
+* Set again (idempotent)
+* Check no change
+* Repeat for ``state=absent``
+* Teardown
+
+.. container:: handout
+
+  Find an example of this
+
+
+Integration Tests: Best practices
+=================================
+
+* tempdir
+* Add tests before refactoring
+
+
+Code Coverage
+=============
+
+* Helps you find gaps
+* Now run nightly
+
+Cloud Tests
+===========
+
+* Currently undergoing changes
+* Aim: all AWS tests will be invoked via ``ansible-test``
+
+Network Tests
+=============
+
+
+Where to find out more
+======================
+
+* https://docs.ansible.com/ansible/dev_guide/testing.html
+  * Testing working group
+* Freenode: ``#ansible-devel``
+* Writing tests is easy (install ``argcomplete``)
