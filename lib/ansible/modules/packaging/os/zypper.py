@@ -342,13 +342,21 @@ def package_present(m, name, want_latest):
     retvals = {'rc': 0, 'stdout': '', 'stderr': ''}
     name_install, name_remove, urls = get_want_state(m, name)
 
-    # if a version string is given, pass it to zypper
-    install_version = [p+name_install[p] for p in name_install if name_install[p]]
-    remove_version = [p+name_remove[p] for p in name_remove if name_remove[p]]
+    # filter versioned packages
+    install_version = dict((p, name_install[p]) for p in name_install if name_install[p])
+    remove_version = dict((p, name_remove[p]) for p in name_remove if name_remove[p])
 
-    # add oldpackage flag when a version is given to allow downgrades
     if install_version or remove_version:
+        # add oldpackage flag when a version is given to allow downgrades
         m.params['oldpackage'] = True
+
+        # Remove versioned packages from unversioned package list to avoid duplicates
+        name_install = dict((p, None) for p in name_install if p not in install_version)
+        name_remove = dict((p, None) for p in name_remove if p not in remove_version)
+
+        # Create a list of versioned packages
+        install_version = [p + install_version[p] for p in install_version]
+        remove_version = [p + remove_version[p] for p in remove_version]
 
     if not want_latest:
         # for state=present: filter out already installed packages
@@ -358,9 +366,10 @@ def package_present(m, name, want_latest):
         # generate lists of packages to install or remove
         name_install = [p for p in name_install if p not in prerun_state]
         name_remove = [p for p in name_remove if p in prerun_state]
-        if not any((name_install, name_remove, urls, install_version, remove_version)):
-            # nothing to install/remove and nothing to update
-            return None, retvals
+
+    if not any((name_install, name_remove, urls, install_version, remove_version)):
+        # nothing to install/remove and nothing to update
+        return None, retvals
 
     # zypper install also updates packages
     cmd = get_cmd(m, 'install')
