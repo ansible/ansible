@@ -148,8 +148,8 @@
 #- name: List files
 #  command: "ls --full-time {{output_dir}}/test-unarchive-zip/"
 #  register: zipcheck
-- name: Print
-  debug: msg={{zipcheck.stdout_lines}}
+#- name: Print
+#  debug: msg={{zipcheck.stdout_lines}}
 - name: verify that the file was marked as changed
   assert:
     that:
