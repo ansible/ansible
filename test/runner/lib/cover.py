@@ -7,6 +7,7 @@ import re
 
 from lib.target import (
     walk_module_targets,
+    walk_compile_targets,
 )
 
 from lib.util import (
@@ -14,6 +15,7 @@ from lib.util import (
     ApplicationError,
     EnvironmentConfig,
     run_command,
+    common_environment,
 )
 
 from lib.executor import (
@@ -23,11 +25,13 @@ from lib.executor import (
 
 COVERAGE_DIR = 'test/results/coverage'
 COVERAGE_FILE = os.path.join(COVERAGE_DIR, 'coverage')
+COVERAGE_GROUPS = ('command', 'target', 'environment', 'version')
 
 
 def command_coverage_combine(args):
     """Patch paths in coverage files and merge into a single file.
     :type args: CoverageConfig
+    :rtype: list[str]
     """
     coverage = initialize_coverage(args)
 
@@ -35,18 +39,31 @@ def command_coverage_combine(args):
 
     coverage_files = [os.path.join(COVERAGE_DIR, f) for f in os.listdir(COVERAGE_DIR) if '=coverage.' in f]
 
-    arc_data = {}
-
     ansible_path = os.path.abspath('lib/ansible/') + '/'
     root_path = os.getcwd() + '/'
 
     counter = 0
+    groups = {}
+
+    if args.all or args.stub:
+        sources = sorted(os.path.abspath(target.path) for target in walk_compile_targets())
+    else:
+        sources = []
+
+    if args.stub:
+        groups['=stub'] = dict((source, set()) for source in sources)
 
     for coverage_file in coverage_files:
         counter += 1
         display.info('[%4d/%4d] %s' % (counter, len(coverage_files), coverage_file), verbosity=2)
 
         original = coverage.CoverageData()
+
+        group = get_coverage_group(args, coverage_file)
+
+        if group is None:
+            display.warning('Unexpected name for coverage file: %s' % coverage_file)
+            continue
 
         if os.path.getsize(coverage_file) == 0:
             display.warning('Empty coverage file: %s' % coverage_file)
@@ -83,46 +100,80 @@ def command_coverage_combine(args):
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
 
+            if group not in groups:
+                groups[group] = {}
+
+            arc_data = groups[group]
+
             if filename not in arc_data:
                 arc_data[filename] = set()
 
             arc_data[filename].update(arcs)
 
-    updated = coverage.CoverageData()
+    output_files = []
 
-    for filename in arc_data:
-        if not os.path.isfile(filename):
-            display.warning('Invalid coverage path: %s' % filename)
-            continue
+    for group in sorted(groups):
+        arc_data = groups[group]
 
-        updated.add_arcs({filename: list(arc_data[filename])})
+        updated = coverage.CoverageData()
 
-    if not args.explain:
-        updated.write_file(COVERAGE_FILE)
+        for filename in arc_data:
+            if not os.path.isfile(filename):
+                display.warning('Invalid coverage path: %s' % filename)
+                continue
+
+            updated.add_arcs({filename: list(arc_data[filename])})
+
+        if args.all:
+            updated.add_arcs(dict((source, []) for source in sources))
+
+        if not args.explain:
+            output_file = COVERAGE_FILE + group
+            updated.write_file(output_file)
+            output_files.append(output_file)
+
+    return sorted(output_files)
 
 
 def command_coverage_report(args):
     """
     :type args: CoverageConfig
     """
-    command_coverage_combine(args)
-    run_command(args, ['coverage', 'report'])
+    output_files = command_coverage_combine(args)
+
+    for output_file in output_files:
+        if args.group_by or args.stub:
+            display.info('>>> Coverage Group: %s' % ' '.join(os.path.basename(output_file).split('=')[1:]))
+
+        env = common_environment()
+        env.update(dict(COVERAGE_FILE=output_file))
+        run_command(args, env=env, cmd=['coverage', 'report'])
 
 
 def command_coverage_html(args):
     """
     :type args: CoverageConfig
     """
-    command_coverage_combine(args)
-    run_command(args, ['coverage', 'html', '-d', 'test/results/reports/coverage'])
+    output_files = command_coverage_combine(args)
+
+    for output_file in output_files:
+        dir_name = 'test/results/reports/%s' % os.path.basename(output_file)
+        env = common_environment()
+        env.update(dict(COVERAGE_FILE=output_file))
+        run_command(args, env=env, cmd=['coverage', 'html', '-d', dir_name])
 
 
 def command_coverage_xml(args):
     """
     :type args: CoverageConfig
     """
-    command_coverage_combine(args)
-    run_command(args, ['coverage', 'xml', '-o', 'test/results/reports/coverage.xml'])
+    output_files = command_coverage_combine(args)
+
+    for output_file in output_files:
+        xml_name = 'test/results/reports/%s.xml' % os.path.basename(output_file)
+        env = common_environment()
+        env.update(dict(COVERAGE_FILE=output_file))
+        run_command(args, env=env, cmd=['coverage', 'xml', '-o', xml_name])
 
 
 def command_coverage_erase(args):
@@ -163,6 +214,33 @@ def initialize_coverage(args):
     return coverage
 
 
+def get_coverage_group(args, coverage_file):
+    """
+    :type args: CoverageConfig
+    :type coverage_file: str
+    :rtype: str
+    """
+    parts = os.path.basename(coverage_file).split('=', 4)
+
+    if len(parts) != 5 or not parts[4].startswith('coverage.'):
+        return None
+
+    names = dict(
+        command=parts[0],
+        target=parts[1],
+        environment=parts[2],
+        version=parts[3],
+    )
+
+    group = ''
+
+    for part in COVERAGE_GROUPS:
+        if part in args.group_by:
+            group += '=%s' % names[part]
+
+    return group
+
+
 class CoverageConfig(EnvironmentConfig):
     """Configuration for the coverage command."""
     def __init__(self, args):
@@ -170,3 +248,7 @@ class CoverageConfig(EnvironmentConfig):
         :type args: any
         """
         super(CoverageConfig, self).__init__(args, 'coverage')
+
+        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: frozenset[str]
+        self.all = args.all if 'all' in args else False  # type: bool
+        self.stub = args.stub if 'stub' in args else False  # type: bool

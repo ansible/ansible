@@ -337,6 +337,8 @@ def parse_args():
     coverage_combine.set_defaults(func=lib.cover.command_coverage_combine,
                                   config=lib.cover.CoverageConfig)
 
+    add_extra_coverage_options(coverage_combine)
+
     coverage_erase = coverage_subparsers.add_parser('erase',
                                                     parents=[coverage_common],
                                                     help='erase coverage data files')
@@ -351,6 +353,8 @@ def parse_args():
     coverage_report.set_defaults(func=lib.cover.command_coverage_report,
                                  config=lib.cover.CoverageConfig)
 
+    add_extra_coverage_options(coverage_report)
+
     coverage_html = coverage_subparsers.add_parser('html',
                                                    parents=[coverage_common],
                                                    help='generate html coverage report')
@@ -358,12 +362,16 @@ def parse_args():
     coverage_html.set_defaults(func=lib.cover.command_coverage_html,
                                config=lib.cover.CoverageConfig)
 
+    add_extra_coverage_options(coverage_html)
+
     coverage_xml = coverage_subparsers.add_parser('xml',
                                                   parents=[coverage_common],
                                                   help='generate xml coverage report')
 
     coverage_xml.set_defaults(func=lib.cover.command_coverage_xml,
                               config=lib.cover.CoverageConfig)
+
+    add_extra_coverage_options(coverage_xml)
 
     if argcomplete:
         argcomplete.autocomplete(parser, always_complete_options=False, validator=lambda i, k: True)
@@ -496,6 +504,25 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         help='terminate remote instance: %(choices)s (default: %(default)s)',
                         choices=['never', 'always', 'success'],
                         default='never')
+
+
+def add_extra_coverage_options(parser):
+    """
+    :type parser: argparse.ArgumentParser
+    """
+    parser.add_argument('--group-by',
+                        metavar='GROUP',
+                        action='append',
+                        choices=lib.cover.COVERAGE_GROUPS,
+                        help='group output by: %s' % ', '.join(lib.cover.COVERAGE_GROUPS))
+
+    parser.add_argument('--all',
+                        action='store_true',
+                        help='include all python source files')
+
+    parser.add_argument('--stub',
+                        action='store_true',
+                        help='generate empty report of all python source files')
 
 
 def add_extra_docker_options(parser, integration=True):

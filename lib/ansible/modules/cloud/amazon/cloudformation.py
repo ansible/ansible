@@ -343,8 +343,10 @@ def stack_operation(cfn, stack_name, operation):
             else:
                 ret.update({'changed': False, 'failed': True, 'output' : 'Stack not found.'})
                 return ret
-        elif stack['StackStatus'].endswith('_ROLLBACK_COMPLETE'):
-            ret.update({'changed': True, 'failed' :True, 'output': 'Problem with %s. Rollback complete' % operation})
+        # it covers ROLLBACK_COMPLETE and UPDATE_ROLLBACK_COMPLETE
+        # Possible states: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w1ab2c15c17c21c13
+        elif stack['StackStatus'].endswith('ROLLBACK_COMPLETE'):
+            ret.update({'changed': True, 'failed': True, 'output': 'Problem with %s. Rollback complete' % operation})
             return ret
         # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
         elif stack['StackStatus'].endswith('_COMPLETE'):
@@ -433,7 +435,7 @@ def main():
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
     template_parameters = module.params['template_parameters']
-    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':v} for k, v in template_parameters.items()]
+    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]
 
     if isinstance(module.params.get('tags'), dict):
         stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])

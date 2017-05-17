@@ -33,9 +33,9 @@ Ok, let's get going with an example.  We're going to use Python.  For starters, 
     import json
 
     date = str(datetime.datetime.now())
-    print json.dumps({
+    print(json.dumps({
         "time" : date
-    })
+    }))
 
 .. _module_testing:
 
@@ -146,10 +146,10 @@ a lot shorter than this:
                 # can be added.
 
                 if rc != 0:
-                    print json.dumps({
+                    print(json.dumps({
                         "failed" : True,
                         "msg"    : "failed setting the time"
-                    })
+                    }))
                     sys.exit(1)
 
                 # when things do not fail, we do not
@@ -160,10 +160,10 @@ a lot shorter than this:
                 # notifiers to be used in playbooks.
 
                 date = str(datetime.datetime.now())
-                print json.dumps({
+                print(json.dumps({
                     "time" : date,
                     "changed" : True
-                })
+                }))
                 sys.exit(0)
 
     # if no parameters are sent, the module may or
@@ -171,9 +171,9 @@ a lot shorter than this:
     # return the time
 
     date = str(datetime.datetime.now())
-    print json.dumps({
+    print(json.dumps({
         "time" : date
-    })
+    }))
 
 Let's test that module::
 
@@ -311,7 +311,7 @@ Supporting Check Mode
 `````````````````````
 .. versionadded:: 1.1
 
-Modules may optionally support `check mode <http://docs.ansible.com/ansible/playbooks_checkmode.html>`. If the user runs Ansible in check mode, a module should try to predict and report whether changes will occur but not actually make any changes (modules that do not support check mode will also take no action, but just will not report what changes they might have made).
+Modules may optionally support `check mode <http://docs.ansible.com/ansible/playbooks_checkmode.html>`_. If the user runs Ansible in check mode, a module should try to predict and report whether changes will occur but not actually make any changes (modules that do not support check mode will also take no action, but just will not report what changes they might have made).
 
 For your module to support check mode, you must pass ``supports_check_mode=True`` when instantiating the AnsibleModule object. The AnsibleModule.check_mode attribute will evaluate to True when check mode is enabled. For example:
 

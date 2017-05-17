@@ -6,10 +6,6 @@ docs/bin/dump_keywords.py
 docs/bin/plugin_formatter.py
 docs/docsite/rst/conf.py
 examples/scripts/uptime.py
-hacking/cherrypick.py
-hacking/get_library.py
-hacking/metadata-tool.py
-hacking/tests/gen_distribution_version_testcase.py
 lib/ansible/cli/__init__.py
 lib/ansible/cli/adhoc.py
 lib/ansible/cli/console.py
@@ -53,7 +49,6 @@ lib/ansible/module_utils/a10.py
 lib/ansible/module_utils/ansible_tower.py
 lib/ansible/module_utils/aos.py
 lib/ansible/module_utils/api.py
-lib/ansible/module_utils/asa.py
 lib/ansible/module_utils/avi.py
 lib/ansible/module_utils/azure_rm_common.py
 lib/ansible/module_utils/basic.py
@@ -94,19 +89,16 @@ lib/ansible/module_utils/service.py
 lib/ansible/module_utils/shell.py
 lib/ansible/module_utils/six/_six.py
 lib/ansible/module_utils/splitter.py
-lib/ansible/module_utils/sros.py
 lib/ansible/module_utils/univention_umc.py
 lib/ansible/module_utils/urls.py
 lib/ansible/module_utils/vca.py
 lib/ansible/module_utils/vmware.py
-lib/ansible/module_utils/vyos.py
 lib/ansible/modules/cloud/amazon/_ec2_ami_search.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/aws_kms.py
 lib/ansible/modules/cloud/amazon/cloudformation.py
 lib/ansible/modules/cloud/amazon/cloudformation_facts.py
 lib/ansible/modules/cloud/amazon/cloudfront_facts.py
-lib/ansible/modules/cloud/amazon/cloudtrail.py
 lib/ansible/modules/cloud/amazon/cloudwatchevent_rule.py
 lib/ansible/modules/cloud/amazon/dynamodb_table.py
 lib/ansible/modules/cloud/amazon/ec2.py
@@ -136,7 +128,6 @@ lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_options.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_igw.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_nacl.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_nacl_facts.py
-lib/ansible/modules/cloud/amazon/ec2_vpc_nat_gateway.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_net.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_net_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_peer.py
@@ -487,7 +478,6 @@ lib/ansible/modules/network/nxos/_nxos_mtu.py
 lib/ansible/modules/network/nxos/_nxos_template.py
 lib/ansible/modules/network/nxos/nxos_aaa_server.py
 lib/ansible/modules/network/nxos/nxos_aaa_server_host.py
-lib/ansible/modules/network/nxos/nxos_bgp_neighbor.py
 lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py
 lib/ansible/modules/network/nxos/nxos_command.py
 lib/ansible/modules/network/nxos/nxos_config.py
@@ -507,7 +497,6 @@ lib/ansible/modules/network/nxos/nxos_ntp.py
 lib/ansible/modules/network/nxos/nxos_ntp_auth.py
 lib/ansible/modules/network/nxos/nxos_ntp_options.py
 lib/ansible/modules/network/nxos/nxos_nxapi.py
-lib/ansible/modules/network/nxos/nxos_ospf.py
 lib/ansible/modules/network/nxos/nxos_ospf_vrf.py
 lib/ansible/modules/network/nxos/nxos_overlay_global.py
 lib/ansible/modules/network/nxos/nxos_pim.py
@@ -680,7 +669,6 @@ lib/ansible/modules/system/openwrt_init.py
 lib/ansible/modules/system/osx_defaults.py
 lib/ansible/modules/system/pam_limits.py
 lib/ansible/modules/system/pamd.py
-lib/ansible/modules/system/parted.py
 lib/ansible/modules/system/puppet.py
 lib/ansible/modules/system/runit.py
 lib/ansible/modules/system/seboolean.py
@@ -855,7 +843,6 @@ lib/ansible/plugins/terminal/eos.py
 lib/ansible/plugins/terminal/iosxr.py
 lib/ansible/plugins/terminal/junos.py
 lib/ansible/plugins/terminal/nxos.py
-lib/ansible/plugins/terminal/vyos.py
 lib/ansible/plugins/test/core.py
 lib/ansible/plugins/test/files.py
 lib/ansible/plugins/test/mathstuff.py
@@ -873,11 +860,7 @@ lib/ansible/utils/helpers.py
 lib/ansible/utils/listify.py
 lib/ansible/utils/path.py
 lib/ansible/utils/ssh_functions.py
-lib/ansible/utils/unicode.py
 lib/ansible/utils/vars.py
-lib/ansible/vars/__init__.py
-lib/ansible/vars/hostvars.py
-lib/ansible/vars/reserved.py
 setup.py
 test/integration/cleanup_azure.py
 test/integration/cleanup_ec2.py

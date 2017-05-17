@@ -2,6 +2,7 @@
 - name: setup
   cs_vpc:
     name: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
     state: absent
   register: vpc
 - name: verify setup
@@ -11,6 +12,7 @@
 
 - name: test fail missing name of vpc
   cs_vpc:
+    zone: "{{ cs_common_zone_adv }}"
   ignore_errors: true
   register: vpc
 - name: verify test fail missing name of vpc
@@ -22,6 +24,7 @@
 - name: test fail missing cidr for vpc
   cs_vpc:
     name: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
   ignore_errors: true
   register: vpc
 - name: verify test fail missing cidr for vpc

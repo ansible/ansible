@@ -59,7 +59,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_hosts:
     description: "List of dictionaries describing the hosts. Host attribues are mapped to dictionary keys,
-                  all hosts attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host."
+                  all hosts attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/host."
     returned: On success.
     type: list
 '''
