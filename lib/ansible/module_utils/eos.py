@@ -319,7 +319,7 @@ class Eapi:
 
         try:
             data = response.read()
-            response = self._module.from_json(data)
+            response = self._module.from_json(to_text(data, errors='surrogate_or_strict'))
         except ValueError:
             self._module.fail_json(msg='unable to load response from device', data=data)
 
