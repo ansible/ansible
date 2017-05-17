@@ -2037,9 +2037,9 @@ class AnsibleModule(object):
         """
         last_traceback=traceback.format_exc()
         if msg is not None:
-            message = '{}: {}'.format(msg, exception.message)
+            message = '{}: {}'.format(msg, str(exception))
         else:
-            message = exception.message
+            message = str(exception)
 
         try:
             response=exception.response
