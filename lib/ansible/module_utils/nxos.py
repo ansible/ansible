@@ -124,8 +124,8 @@ class Cli:
         except KeyError:
             rc, out, err = self.exec_command(cmd)
             if rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'))
-            cfg = to_text(out, errors='surrogate_or_strict').strip()
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            cfg = to_text(out, errors='surrogate_then_replace').strip()
             self._device_configs[cmd] = cfg
             return cfg
 
@@ -143,9 +143,9 @@ class Cli:
                 cmd = item['command']
 
             rc, out, err = self.exec_command(cmd)
-            out = to_text(out, errors='surrogate_or_strict')
+            out = to_text(out, errors='surrogate_then_replace')
             if check_rc and rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'))
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
             try:
                 out = self._module.from_json(out)
@@ -160,12 +160,12 @@ class Cli:
         """
         rc, out, err = self.exec_command('configure')
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_or_strict'))
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
 
         for cmd in config:
             rc, out, err = self.exec_command(cmd)
             if rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_or_strict'))
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
         self.exec_command('end')
 
