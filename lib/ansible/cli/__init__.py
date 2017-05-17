@@ -308,7 +308,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 action="callback", callback=CLI.expand_tilde, type=str)
         if runtask_opts:
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-                help="set additional variables as key=value or YAML/JSON", default=[])
+                help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
 
         if fork_opts:
             parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',

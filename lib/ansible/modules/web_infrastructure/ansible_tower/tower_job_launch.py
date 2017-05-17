@@ -54,7 +54,7 @@ options:
       default: null
     extra_vars:
       description:
-        - Extra_vars to use for the job_template. Use '@' for a file.
+        - Extra_vars to use for the job_template. Prepend '@' if a file.
       default: null
     limit:
       description:
