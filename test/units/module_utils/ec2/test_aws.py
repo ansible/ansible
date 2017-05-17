@@ -120,7 +120,7 @@ class ErrorReportingTestcase(unittest.TestCase):
                 raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
             except Exception as e:
                 print("exception is " + str(e))
-                module.fail_json_aws(e, msg="Failure looking for you")
+                module.fail_json_aws(e, msg="Fake failure for testing boto exception messages")
 
         assert(len(fail_json_double.mock_calls) > 0), "failed to call fail_json when should have"
         assert(len(fail_json_double.mock_calls) < 2), "called fail_json multiple times when once would do"
@@ -130,7 +130,7 @@ class ErrorReportingTestcase(unittest.TestCase):
                "traceback doesn't include correct function, fail call was actually: " \
                 + str(fail_json_double.mock_calls[0])
 
-        assert("Failure looking for you:" in fail_json_double.mock_calls[0][2]["msg"]), \
+        assert("Fake failure for testing boto exception messages:" in fail_json_double.mock_calls[0][2]["msg"]), \
             "error message doesn't include the local message; was: " \
             + str(fail_json_double.mock_calls[0])
         assert("Could not find you" in fail_json_double.mock_calls[0][2]["msg"]), \
@@ -159,7 +159,7 @@ class ErrorReportingTestcase(unittest.TestCase):
                 raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
             except Exception as e:
                 print("exception is " + str(e))
-                module.fail_json_aws(e, msg="Failure looking for you")
+                module.fail_json_aws(e, msg="Fake failure for testing boto exception messages again")
 
         assert(len(fail_json_double.mock_calls) > 0), "failed to call fail_json when should have"
         assert(len(fail_json_double.mock_calls) < 2), \
@@ -170,7 +170,7 @@ class ErrorReportingTestcase(unittest.TestCase):
                "traceback doesn't include correct function, fail call was actually: " \
                + str(fail_json_double.mock_calls[0])
 
-        assert("Failure looking for you:" in fail_json_double.mock_calls[0][2]["msg"]), \
+        assert("Fake failure for testing boto exception messages again:" in fail_json_double.mock_calls[0][2]["msg"]), \
             "error message doesn't include the local message; was: " \
             + str(fail_json_double.mock_calls[0])
 
