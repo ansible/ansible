@@ -17,15 +17,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""CLI tool for downloading results from Shippable CI runs."""
 
 from __future__ import print_function
 
+# noinspection PyCompatibility
+import argparse
 import json
 import os
 import re
 import requests
-
-from argparse import ArgumentParser
 
 try:
     import argcomplete
@@ -34,9 +35,10 @@ except ImportError:
 
 
 def main():
+    """Main program body."""
     api_key = get_api_key()
 
-    parser = ArgumentParser(description='Download results from a Shippable run.')
+    parser = argparse.ArgumentParser(description='Download results from a Shippable run.')
 
     parser.add_argument('run_id',
                         metavar='RUN',
@@ -120,7 +122,9 @@ def main():
         Authorization='apiToken %s' % args.api_key,
     )
 
-    match = re.search(r'^https://app.shippable.com/github/(?P<account>[^/]+)/(?P<project>[^/]+)/runs/(?P<run_number>[0-9]+)$', args.run_id)
+    match = re.search(
+        r'^https://app.shippable.com/github/(?P<account>[^/]+)/(?P<project>[^/]+)/runs/(?P<run_number>[0-9]+)(?:/summary|(/(?P<job_number>[0-9]+)))?$',
+        args.run_id)
 
     if not match:
         match = re.search(r'^(?P<account>[^/]+)/(?P<project>[^/]+)/(?P<run_number>[0-9]+)$', args.run_id)
@@ -129,6 +133,13 @@ def main():
         account = match.group('account')
         project = match.group('project')
         run_number = int(match.group('run_number'))
+        job_number = int(match.group('job_number')) if match.group('job_number') else None
+
+        if job_number:
+            if args.job_number:
+                exit('ERROR: job number found in url and specified with --job-number')
+
+            args.job_number = [job_number]
 
         url = 'https://api.shippable.com/projects'
         response = requests.get(url, dict(projectFullNames='%s/%s' % (account, project)), headers=headers)
@@ -148,7 +159,7 @@ def main():
         run = [run for run in response.json() if run['runNumber'] == run_number][0]
 
         args.run_id = run['id']
-    else:
+    elif re.search('^[a-f0-9]+$', args.run_id):
         url = 'https://api.shippable.com/runs/%s' % args.run_id
 
         response = requests.get(url, headers=headers)
@@ -161,6 +172,8 @@ def main():
         account = run['subscriptionOrgName']
         project = run['projectName']
         run_number = run['runNumber']
+    else:
+        exit('ERROR: invalid run: %s' % args.run_id)
 
     output_dir = '%s/%s/%s' % (account, project, run_number)
 
@@ -228,6 +241,11 @@ def main():
 
 
 def extract_contents(args, path, output_dir):
+    """
+    :type args: any
+    :type path: str
+    :type output_dir: str
+    """
     if not args.test:
         if not os.path.exists(path):
             return
@@ -256,6 +274,13 @@ def extract_contents(args, path, output_dir):
 
 
 def download(args, headers, path, url, is_json=True):
+    """
+    :type args: any
+    :type headers: dict[str, str]
+    :type path: str
+    :type url: str
+    :type is_json: bool
+    """
     if args.verbose or args.test:
         print(path)
 
@@ -278,16 +303,24 @@ def download(args, headers, path, url, is_json=True):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        with open(path, 'w') as f:
-            f.write(content)
+        with open(path, 'w') as content_fd:
+            content_fd.write(content)
 
 
 def get_api_key():
+    """
+    rtype: str
+    """
+    key = os.environ.get('SHIPPABLE_KEY', None)
+
+    if key:
+        return key
+
     path = os.path.join(os.environ['HOME'], '.shippable.key')
 
     try:
-        with open(path, 'r') as f:
-            return f.read().strip()
+        with open(path, 'r') as key_fd:
+            return key_fd.read().strip()
     except IOError:
         return None
 
