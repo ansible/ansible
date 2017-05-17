@@ -23,7 +23,7 @@ import json
 import re
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.plugins.terminal import TerminalBase
 
 
@@ -36,7 +36,7 @@ class TerminalModule(TerminalBase):
 
     terminal_stderr_re = [
         re.compile(br"% ?Error"),
-        #re.compile(br"^% \w+", re.M),
+        # re.compile(br"^% \w+", re.M),
         re.compile(br"% ?Bad secret"),
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
