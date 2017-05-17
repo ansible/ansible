@@ -110,8 +110,160 @@
            - 'result.result.output.message == "hello Mr Ansible Tests"'
 
     # ============================================================
-    # upload via s3 bucket - multi function
+    # parallel lambda creation
 
+    - name: parallel lambda creation 1/4
+      lambda:
+        name: "{{lambda_function_name}}_1"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_1
+
+    - name: parallel lambda creation 2/4
+      lambda:
+        name: "{{lambda_function_name}}_2"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_2
+
+    - name: parallel lambda creation 3/4
+      lambda:
+        name: "{{lambda_function_name}}_3"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_3
+
+    - name: parallel lambda creation 4/4
+      lambda:
+        name: "{{lambda_function_name}}_4"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      register: result
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - '"failed" not in result'
+
+    - name: wait for async job 1
+      async_status: jid={{ async_1.ansible_job_id }}
+      register: job_result
+      until: job_result.finished
+      retries: 30
+
+    - name: wait for async job 2
+      async_status: jid={{ async_1.ansible_job_id }}
+      register: job_result
+      until: job_result.finished
+      retries: 30
+
+    - name: wait for async job 3
+      async_status: jid={{ async_3.ansible_job_id }}
+      register: job_result
+      until: job_result.finished
+      retries: 30
+
+
+    - name: parallel lambda deletion 1/4
+      lambda:
+        name: "{{lambda_function_name}}_1"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_1
+
+    - name: parallel lambda deletion 2/4
+      lambda:
+        name: "{{lambda_function_name}}_2"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_2
+
+    - name: parallel lambda deletion 3/4
+      lambda:
+        name: "{{lambda_function_name}}_3"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_3
+
+    - name: parallel lambda deletion 4/4
+      lambda:
+        name: "{{lambda_function_name}}_4"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      register: result
+
+    - name: assert lambda creation has succeeded
+      assert:
+        that:
+           - '"failed" not in result'
+
+    - name: wait for async job 1
+      async_status: jid={{ async_1.ansible_job_id }}
+      register: job_result
+      until: job_result.finished
+      retries: 30
+
+    - name: wait for async job 2
+      async_status: jid={{ async_1.ansible_job_id }}
+      register: job_result
+      until: job_result.finished
+      retries: 30
+
+    - name: wait for async job 3
+      async_status: jid={{ async_3.ansible_job_id }}
+      register: job_result
+      until: job_result.finished
+      retries: 30
+
+
+    # ============================================================
+    # upload via s3 bucket - multi function
 
     # ============================================================
     # update already existing function
