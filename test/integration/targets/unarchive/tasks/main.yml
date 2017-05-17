@@ -174,7 +174,7 @@
 #  register: zipcheck
 #- name: Print
 #  debug: msg={{zipcheck.stdout_lines}}
-#- name: List zip contents
+- name: List zip contents
   command: "zipinfo -T {{output_dir}}/test-unarchive.zip"
   register: zipfilecheck
 - name: Print zip contents
