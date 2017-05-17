@@ -24,6 +24,11 @@ pip list --disable-pip-version-check
 export PATH="test/runner:${PATH}"
 export PYTHONIOENCODING='utf-8'
 
+if [ "${JOB_TRIGGERED_BY_NAME:-}" == "nightly-trigger" ]; then
+    COVERAGE=yes
+    COMPLETE=yes
+fi
+
 if [ -n "${COVERAGE:-}" ]; then
     # on-demand coverage reporting triggered by setting the COVERAGE environment variable to a non-empty value
     export COVERAGE="--coverage"
