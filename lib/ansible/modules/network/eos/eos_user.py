@@ -122,6 +122,13 @@ EXAMPLES = """
       - username: netend
     privilege: 15
     state: present
+    
+- name: Change Password for User netop
+  eos_user:
+    username: netop
+    password: "{{ new_password }}"
+    update_password: always
+    state: present
 """
 
 RETURN = """
