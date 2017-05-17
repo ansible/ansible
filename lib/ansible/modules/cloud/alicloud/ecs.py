@@ -688,7 +688,7 @@ def terminate_instances(module, ecs, instance_ids, instance_tags):
                 module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
             changed = True
 
-    return (changed, instance_dict_array, terminated_instance_ids)
+    return changed, instance_dict_array, terminated_instance_ids
 
 
 def startstop_instances(module, ecs, instance_ids, state, instance_tags):
@@ -744,7 +744,7 @@ def startstop_instances(module, ecs, instance_ids, state, instance_tags):
                 module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
             changed = True
 
-    return (changed, instance_dict_array, instance_ids)
+    return changed, instance_dict_array, instance_ids
 
 
 def delete_instance(module, ecs, instance_id):
