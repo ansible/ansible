@@ -339,6 +339,7 @@ options:
 '''
 
 EXAMPLES = '''
+
 # create a basic distribution with defaults and tags
 - cloudfront_distribution:
     state: present
@@ -354,14 +355,16 @@ EXAMPLES = '''
     distribution_id: E1RP5A2MJ8073O
     comment: modified by ansible cloudfront.py
 
-# update a distribution's aliases and comment using the distribution_id as a reference
+# update a distribution's aliases and comment
+# using the distribution_id as a reference
 - cloudfront_distribution:
     state: present
     distribution_id: E1RP5A2MJ8073O
     comment: modified by cloudfront.py again
     aliases: [ 'www.my-distribution-source.com', 'zzz.aaa.io' ]
 
-# update a distribution's aliases and comment using an alias as a reference
+# update a distribution's aliases and comment
+# using an alias as a reference
 - cloudfront_distribution:
     state: present
     distribution_id: E15BU8SDCGSG57
@@ -370,7 +373,8 @@ EXAMPLES = '''
       - www.my-distribution-source.com
       - zzz.aaa.io
 
-# update a distribution's comment and aliases and tags and remove existing tags
+# update a distribution's comment and aliases
+# and tags and remove existing tags
 - cloudfront_distribution:
     state: present
     distribution_id: E15BU8SDCGSG57
@@ -381,7 +385,8 @@ EXAMPLES = '''
       - Project: distribution 1.2
     purge_tags: yes
 
-# create a distribution with an origin, logging and default cache behavior
+# create a distribution with an origin,
+# logging and default cache behavior
 - cloudfront_distribution:
     state: present
     origins:
@@ -422,7 +427,8 @@ EXAMPLES = '''
     state: absent
     distribution_id: E1ZNUV0U7KWO4P
 
-# create a presigned url for a distribution based on a distribution_id and from a local pem file
+# create a presigned url for a distribution based on a
+# distribution_id and from a local pem file
 - cloudfront_distribution:
     generate_presigned_url: yes
     distribution_id: E1RP5A2MJ8073O
@@ -453,6 +459,7 @@ EXAMPLES = '''
     state: present
     streaming_distribution_id: E2RTIUCAA9RINU
     comment: modified streaming distribution
+
 '''
 
 RETURN = '''
@@ -468,6 +475,7 @@ from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
+from ansible.module_utils.cloudfront import CloudFrontHelpers
 from botocore.signers import CloudFrontSigner
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -1443,97 +1451,6 @@ class CloudFrontValidationManager:
                 "\n" + traceback.format_exc())
 
 
-class CloudFrontHelpers:
-    """
-    Miscellaneous helpers for processing cloudfront data
-    """
-
-    def change_dict_key_name(self, dictionary, old_key, new_key):
-        if old_key in dictionary:
-            dictionary[new_key] = dictionary.get(old_key)
-            dictionary.pop(old_key, None)
-        return dictionary
-
-    def snake_dict_to_pascal_dict(self, snake_dict):
-        def pascalize(complex_type):
-            if complex_type is None:
-                return
-            new_type = type(complex_type)()
-            if isinstance(complex_type, dict):
-                for key in complex_type:
-                    new_type[pascal(key)] = pascalize(complex_type[key])
-            elif isinstance(complex_type, list):
-                for i in range(len(complex_type)):
-                    new_type.append(pascalize(complex_type[i]))
-            else:
-                return complex_type
-            return new_type
-
-        def pascal(words):
-            return words.capitalize().split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
-        return pascalize(snake_dict)
-
-    def pascal_dict_to_snake_dict(self, pascal_dict, split_caps=False):
-        def pascal_to_snake(name):
-            import re
-            first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-            all_cap_re = re.compile('([a-z0-9])([A-Z]+)')
-            split_cap_re = re.compile('([A-Z])')
-            s1 = first_cap_re.sub(r'\1\2', name)
-            if split_caps:
-                s2 = split_cap_re.sub(r'_\1', s1).lower()
-                s2 = s2[1:] if s2[0] == '_' else s2
-            else:
-                s2 = all_cap_re.sub(r'\1_\2', s1).lower()
-            return s2
-
-        def value_is_list(pascal_list):
-            checked_list = []
-            for item in pascal_list:
-                if isinstance(item, dict):
-                    checked_list.append(self.pascal_dict_to_snake_dict(item, split_caps))
-                elif isinstance(item, list):
-                    checked_list.append(value_is_list(item))
-                else:
-                    checked_list.append(item)
-            return checked_list
-        snake_dict = {}
-        for k, v in pascal_dict.items():
-            if isinstance(v, dict):
-                snake_dict[pascal_to_snake(k)] = self.pascal_dict_to_snake_dict(v, split_caps)
-            elif isinstance(v, list):
-                snake_dict[pascal_to_snake(k)] = value_is_list(v)
-            else:
-                snake_dict[pascal_to_snake(k)] = v
-        return snake_dict
-
-    def merge_validation_into_config(self, config, validated_node, node_name):
-        if validated_node is not None:
-            if isinstance(validated_node, dict):
-                config_node = config.get(node_name)
-                if config_node is not None:
-                    config_node_items = config_node.items()
-                else:
-                    config_node_items = []
-                config[node_name] = dict(config_node_items + validated_node.items())
-            if isinstance(validated_node, list):
-                config[node_name] = list(set(config.get(node_name) + validated_node))
-        return config
-
-    def python_list_to_aws_list(self, list_items=None, include_quantity=True):
-        if list_items is None:
-            list_items = []
-        if not isinstance(list_items, list):
-            self.module.fail_json(
-                msg='expected a python list, got a python {0} with value {1}'.format(
-                    type(list_items).__name__, str(list_items)))
-        result = {}
-        if include_quantity:
-            result['quantity'] = len(list_items)
-        result['items'] = list_items
-        return result
-
-
 def main():
     argument_spec = ec2_argument_spec()
 
@@ -1603,6 +1520,15 @@ def main():
             ['s3_origin', 'viewer_certificate'],
             ['s3_origin', 'web_acl_id'],
             ['s3_origin', 'trusted_signers'],
+            ['default_s3_origin_domain_name', 'default_cache_behavior'],
+            ['default_s3_origin_domain_name', 'origins'],
+            ['default_s3_origin_domain_name', 'cache_behaviors'],
+            ['default_s3_origin_domain_name', 'custom_error_responses'],
+            ['default_s3_origin_domain_name', 'restrictions'],
+            ['default_s3_origin_domain_name', 'custom_error_responses'],
+            ['default_s3_origin_domain_name', 'viewer_certificate'],
+            ['default_s3_origin_domain_name', 'web_acl_id'],
+            ['default_s3_origin_domain_name', 'trusted_signers'],
             ['distribution_id', 'streaming_distribution_id']
         ]
     )
