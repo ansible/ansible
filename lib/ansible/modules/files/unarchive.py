@@ -438,7 +438,8 @@ class ZipArchive(object):
             # When that happens, we report a change and re-unzip the file
             dt_object = datetime.datetime(*(time.strptime(pcs[6], '%Y%m%d.%H%M%S')[0:6]))
             timestamp = time.mktime(dt_object.timetuple())
-
+            z_timestamp = pcs[6]
+            
             # Compare file timestamps
             if stat.S_ISREG(st.st_mode):
                 if self.module.params['keep_newer']:
@@ -457,6 +458,9 @@ class ZipArchive(object):
                         change = True
                         self.includes.append(path)
                         err += 'File %s differs in mtime (%f vs %f)\n' % (path, timestamp, st.st_mtime)
+                        # debugging
+                        err += 'Zip timestamp of %t, date object of %d' % (z_timestamp, dt_object)
+                        
                         itemized[4] = 't'
 
             # Compare file sizes
