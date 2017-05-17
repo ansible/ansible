@@ -334,7 +334,7 @@ class TaskQueueManager:
         defunct = False
         for idx,x in enumerate(self._workers):
             if hasattr(x[0], 'exitcode'):
-                if x[0].exitcode in [-9, -15]:
+                if x[0].exitcode in [-9, -11, -15]:
                     defunct = True
         return defunct
 
