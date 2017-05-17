@@ -460,7 +460,8 @@ class ZipArchive(object):
                         err += 'File %s differs in mtime (%f vs %f)\n' % (path, timestamp, st.st_mtime)
                         # debugging
                         err += 'Zip timestamp of %s, date object of %s' % (z_timestamp, dt_object)
-                        
+                        err += 'File last modified: %s' % time.ctime(os.path.getmtime(dest))
+
                         itemized[4] = 't'
 
             # Compare file sizes
