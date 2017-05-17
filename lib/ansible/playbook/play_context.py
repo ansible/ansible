@@ -305,13 +305,13 @@ class PlayContext(Base):
         # get the tag info from options. We check to see if the options have
         # the attribute, as it is not always added via the CLI
         if hasattr(options, 'tags'):
-            self.only_tags.update(options.tags)
+            self.only_tags = self.only_tags | set(options.tags)
 
         if len(self.only_tags) == 0:
             self.only_tags = set(['all'])
 
         if hasattr(options, 'skip_tags'):
-            self.skip_tags.update(options.skip_tags)
+            self.skip_tags = self.skip_tags | set(options.skip_tags)
 
     def set_task_and_variable_override(self, task, variables, templar):
         '''
