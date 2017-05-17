@@ -30,6 +30,8 @@ matrix:
     - env: TEST=linux/centos7/1
     - env: TEST=linux/fedora24/1
     - env: TEST=linux/fedora25/1
+    - env: TEST=linux/opensuse42.1/1
+    - env: TEST=linux/opensuse42.2/1
     - env: TEST=linux/ubuntu1404/1
     - env: TEST=linux/ubuntu1604/1
     - env: TEST=linux/ubuntu1604py3/1
