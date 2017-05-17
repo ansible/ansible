@@ -73,6 +73,12 @@ options:
     required: false
     default: true
     version_added: "2.1"
+  force:
+    description:
+      - Option use to skip errors when importing malformed sql files.
+    required: false
+    default: false
+    version_added: 2.4
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
@@ -186,7 +192,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     return rc, stdout, stderr
 
 
-def db_import(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None):
+def db_import(module, host, user, password, db_name, force, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None):
     if not os.path.exists(target):
         return module.fail_json(msg="target %s does not exist on the host" % target)
 
@@ -204,6 +210,8 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--ssl-cert=%s" % pipes.quote(ssl_cert))
     if ssl_key is not None:
         cmd.append("--ssl-key=%s" % pipes.quote(ssl_key))
+    if force:
+        cmd.append("-f")
     if ssl_cert is not None:
         cmd.append("--ssl-ca=%s" % pipes.quote(ssl_ca))
     else:
@@ -275,6 +283,7 @@ def main():
             config_file=dict(default="~/.my.cnf", type='path'),
             single_transaction=dict(default=False, type='bool'),
             quick=dict(default=True, type='bool'),
+            force=dict(default=False, type='bool'),
         ),
         supports_check_mode=True
     )
@@ -301,6 +310,7 @@ def main():
     login_host = module.params["login_host"]
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
+    force = module.params["force"]
 
     if state in ['dump', 'import']:
         if target is None:
@@ -357,7 +367,7 @@ def main():
                 module.exit_json(changed=True, db=db)
             else:
                 rc, stdout, stderr = db_import(module, login_host, login_user,
-                                               login_password, db, target,
+                                               login_password, db, force, target,
                                                all_databases,
                                                login_port, config_file,
                                                socket, ssl_cert, ssl_key, ssl_ca)
@@ -391,7 +401,7 @@ def main():
                     changed = db_create(cursor, db, encoding, collation)
                     if changed:
                         rc, stdout, stderr = db_import(module, login_host, login_user,
-                                                       login_password, db, target, all_databases,
+                                                       login_password, db, force, target, all_databases,
                                                        login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
                         if rc != 0:
                             module.fail_json(msg="%s" % stderr)
