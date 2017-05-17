@@ -439,7 +439,7 @@ class ZipArchive(object):
             dt_object = datetime.datetime(*(time.strptime(pcs[6], '%Y%m%d.%H%M%S')[0:6]))
             timestamp = time.mktime(dt_object.timetuple())
             z_timestamp = pcs[6]
-            
+
             # Compare file timestamps
             if stat.S_ISREG(st.st_mode):
                 if self.module.params['keep_newer']:
