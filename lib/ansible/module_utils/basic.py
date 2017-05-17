@@ -2043,7 +2043,7 @@ class AnsibleModule(object):
             except_msg = str(exception)
 
         if msg is not None:
-            message = '{}: {}'.format(msg, except_msg)
+            message = '{0}: {1}'.format(msg, except_msg)
         else:
             message = except_msg
 
