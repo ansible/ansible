@@ -54,11 +54,6 @@ options:
         - Password of the user.
       required: False
       default: null
-    organization:
-      description:
-        - Organization the user should be made a member of.
-      required: False
-      default: null
     superuser:
       description:
         - User is a system wide administator.
@@ -149,7 +144,6 @@ def main():
             last_name=dict(),
             password=dict(no_log=True),
             email=dict(required=True),
-            organization=dict(),
             superuser=dict(type='bool', default=False),
             auditor=dict(type='bool', default=False),
             tower_host=dict(),
@@ -170,7 +164,6 @@ def main():
     last_name = module.params.get('last_name')
     password = module.params.get('password')
     email = module.params.get('email')
-    organization = module.params.get('organization')
     superuser = module.params.get('superuser')
     auditor = module.params.get('auditor')
     state = module.params.get('state')
@@ -184,8 +177,8 @@ def main():
         try:
             if state == 'present':
                 result = user.modify(username=username, first_name=first_name, last_name=last_name,
-                                     email=email, password=password, organization=organization,
-                                     is_superuser=superuser, is_auditor=auditor, create_on_missing=True)
+                                     email=email, password=password, is_superuser=superuser,
+                                     is_auditor=auditor, create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = user.delete(username=username)
