@@ -2036,10 +2036,16 @@ class AnsibleModule(object):
         botocore, boto3 and boto, into nice error messages.
         """
         last_traceback=traceback.format_exc()
+
+        try:
+            except_msg = exception.message
+        except AttributeError:
+            except_msg = str(exception)
+
         if msg is not None:
-            message = '{}: {}'.format(msg, str(exception))
+            message = '{}: {}'.format(msg, except_msg)
         else:
-            message = str(exception)
+            message = except_msg
 
         try:
             response=exception.response
