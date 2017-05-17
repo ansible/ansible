@@ -18,12 +18,13 @@
 #
 from contextlib import contextmanager
 
-from xml.etree.ElementTree import Element, SubElement
+from xml.etree.ElementTree import Element, SubElement, fromstring
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
 JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
@@ -36,17 +37,34 @@ junos_argument_spec = {
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'timeout': dict(type='int', default=10),
-    'provider': dict(type='dict', no_log=True),
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict'),
     'transport': dict()
+}
+
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'timeout': 10
 }
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in junos_argument_spec:
-        if key in ('provider',) and module.params[key]:
+        if key not in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 def _validate_rollback_id(module, value):
     try:
@@ -91,10 +109,12 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             cfg = SubElement(obj, lookup[format])
 
         if isinstance(candidate, string_types):
-            cfg.text = candidate
+            if format == 'xml':
+                cfg.append(fromstring(candidate))
+            else:
+                cfg.text = to_text(candidate, encoding='latin1')
         else:
             cfg.append(candidate)
-
     return send_request(module, obj)
 
 def get_configuration(module, compare=False, format='xml', rollback='0'):
@@ -144,7 +164,7 @@ def get_diff(module):
     reply = get_configuration(module, compare=True, format='text')
     output = reply.find('.//configuration-output')
     if output is not None:
-        return output.text
+        return to_text(output.text, encoding='latin1').strip()
 
 def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
@@ -161,7 +181,6 @@ def load_config(module, candidate, warnings, action='merge', commit=False, forma
         diff = get_diff(module)
 
         if diff:
-            diff = str(diff).strip()
             if commit:
                 commit_configuration(module, confirm=confirm, comment=comment,
                                      confirm_timeout=confirm_timeout)

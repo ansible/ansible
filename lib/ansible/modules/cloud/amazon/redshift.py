@@ -155,7 +155,7 @@ RETURN = '''
 cluster:
     description: dictionary containing all the cluster information
     returned: success
-    type: dictionary
+    type: complex
     contains:
         identifier:
             description: Id of the cluster.
@@ -436,7 +436,7 @@ def main():
         elastic_ip                          = dict(required=False),
         new_cluster_identifier              = dict(aliases=['new_identifier']),
         wait                                = dict(type='bool', default=False),
-        wait_timeout                        = dict(default=300),
+        wait_timeout                        = dict(type='int', default=300),
     )
     )
 

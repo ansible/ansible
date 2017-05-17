@@ -24,9 +24,8 @@ import sys
 import copy
 
 from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.eos import ARGS_DEFAULT_VALUE, eos_argument_spec
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_bytes
 from ansible.plugins import connection_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.path import unfrackpath
@@ -57,6 +56,8 @@ class ActionModule(_ActionModule):
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'network_cli'
             pc.network_os = 'eos'
+            pc.remote_addr = provider['host'] or self._play_context.remote_addr
+            pc.port = provider['port'] or self._play_context.port or 22
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
@@ -64,6 +65,7 @@ class ActionModule(_ActionModule):
             pc.become = provider['authorize'] or False
             pc.become_pass = provider['auth_pass']
 
+            display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
             socket_path = self._get_socket_path(pc)
@@ -71,8 +73,8 @@ class ActionModule(_ActionModule):
 
             if not os.path.exists(socket_path):
                 # start the connection if it isn't started
-                display.vvvv('calling open_shell()', pc.remote_addr)
                 rc, out, err = connection.exec_command('open_shell()')
+                display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
                 if not rc == 0:
                     return {'failed': True,
                             'msg': 'unable to open shell. Please see: ' +
@@ -94,8 +96,12 @@ class ActionModule(_ActionModule):
             if provider.get('host') is None:
                 provider['host'] = self._play_context.remote_addr
 
+            if provider.get('use_ssl') is None:
+                provider['use_ssl'] = ARGS_DEFAULT_VALUE['use_ssl']
+
             if provider.get('port') is None:
-                provider['port'] = eos_argument_spec['port']['default']
+                default_port = 443 if provider['use_ssl'] else 80
+                provider['port'] = self._play_context.port or default_port
 
             if provider.get('timeout') is None:
                 provider['timeout'] = self._play_context.timeout
@@ -109,15 +115,13 @@ class ActionModule(_ActionModule):
             if provider.get('authorize') is None:
                 provider['authorize'] = False
 
-            if provider.get('use_ssl') is None:
-                provider['use_ssl'] = eos_argument_spec['use_ssl']['default']
-
             if provider.get('validate_certs') is None:
-                provider['validate_certs'] = eos_argument_spec['validate_certs']['default']
+                provider['validate_certs'] = ARGS_DEFAULT_VALUE['validate_certs']
 
             self._task.args['provider'] = provider
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)

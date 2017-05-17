@@ -176,8 +176,8 @@ def daemonize(module, cmd):
         # even after fds close, we might want to wait for pid to die
         p.wait()
 
-        # Return a pickled data o parent
-        return_data = pickle.dumps([p.returncode, to_text(output[p.stdout]), to_text(output[p.stderr])])
+        # Return a pickled data of parent
+        return_data = pickle.dumps([p.returncode, to_text(output[p.stdout]), to_text(output[p.stderr])], protocol=pickle.HIGHEST_PROTOCOL)
         os.write(pipe[1], to_bytes(return_data, errors=errors))
 
         # clean up
@@ -202,7 +202,10 @@ def daemonize(module, cmd):
                     break
                 return_data += b(data)
 
-        return pickle.loads(to_text(return_data, errors=errors))
+        # Note: no need to specify encoding on py3 as this module sends the
+        # pickle to itself (thus same python interpreter so we aren't mixing
+        # py2 and py3)
+        return pickle.loads(to_bytes(return_data, errors=errors))
 
 def check_ps(module, pattern):
 

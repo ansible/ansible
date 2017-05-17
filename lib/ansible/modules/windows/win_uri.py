@@ -130,7 +130,6 @@ body:
   returned: when body is specified
   type: string
   sample: '{"id":1}'
-  version_added: "2.3"
 status_code:
   description: The HTTP Status Code of the response.
   returned: success

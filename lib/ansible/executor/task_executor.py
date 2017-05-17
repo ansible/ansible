@@ -20,22 +20,22 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import sys
 import time
 import traceback
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils._text import to_text
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
+from ansible.plugins.connection import ConnectionBase
 from ansible.template import Templar
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.ssh_functions import check_for_controlpersist
-from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
     from __main__ import display
@@ -194,14 +194,15 @@ class TaskExecutor:
         items = None
         if self._task.loop:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
+                fail = True
                 if self._task.loop == 'first_found':
                     # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False,
-                                                             convert_bare=False)
+                    fail = False
+
+                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=fail,
+                                                         convert_bare=False)
+                if not fail:
                     loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
-                else:
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True,
-                                                             convert_bare=False)
 
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar)
@@ -227,7 +228,6 @@ class TaskExecutor:
                 del self._job_vars[k]
 
         if items:
-            from ansible.vars.unsafe_proxy import UnsafeProxy
             for idx, item in enumerate(items):
                 if item is not None and not isinstance(item, UnsafeProxy):
                     items[idx] = UnsafeProxy(item)
@@ -465,7 +465,8 @@ class TaskExecutor:
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
-                display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts")
+                display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts",
+                                   version="2.6")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
 
@@ -475,16 +476,17 @@ class TaskExecutor:
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
             self._connection = self._get_connection(variables=variables, templar=templar)
             hostvars = variables.get('hostvars', None)
-            if hostvars:
+            # only template the vars if the connection actually implements set_host_overrides
+            # NB: this is expensive, and should be removed once connection-specific vars are being handled by play_context
+            sho_impl = getattr(type(self._connection), 'set_host_overrides', None)
+            if hostvars and sho_impl and sho_impl != ConnectionBase.set_host_overrides:
                 try:
-                    target_hostvars = hostvars.raw_get(self._host.name)
+                    target_hostvars = hostvars.get(self._host.name)
                 except:
                     # FIXME: this should catch the j2undefined error here
                     #        specifically instead of all exceptions
                     target_hostvars = dict()
-            else:
-                target_hostvars = dict()
-            self._connection.set_host_overrides(host=self._host, hostvars=target_hostvars)
+                self._connection.set_host_overrides(host=self._host, hostvars=target_hostvars)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
@@ -523,6 +525,10 @@ class TaskExecutor:
             display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
+            except AnsibleActionSkip as e:
+                return dict(skipped=True, msg=to_text(e))
+            except AnsibleActionFail as e:
+                return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
             display.debug("handler run complete")
@@ -536,7 +542,7 @@ class TaskExecutor:
                 vars_copy[self._task.register] = wrap_var(result.copy())
 
             if self._task.async > 0:
-                if self._task.poll > 0 and not result.get('skipped'):
+                if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
                     #FIXME callback 'v2_runner_on_async_poll' here
 
@@ -715,27 +721,12 @@ class TaskExecutor:
                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
-        conn_type = self._play_context.connection
-        if conn_type == 'smart':
-            conn_type = 'ssh'
-            if sys.platform.startswith('darwin') and self._play_context.password:
-                # due to a current bug in sshpass on OSX, which can trigger
-                # a kernel panic even for non-privileged users, we revert to
-                # paramiko on that OS when a SSH password is specified
-                conn_type = "paramiko"
-            else:
-                # see if SSH can support ControlPersist if not use paramiko
-                if not check_for_controlpersist(self._play_context.ssh_executable):
-                    conn_type = "paramiko"
-
-        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
-        if conn_type == 'persistent':
-            self._play_context.connection = 'paramiko'
-
-        # if using persistent connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
+        # if using persistent paramiko connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
         # then we use the persistent connection plugion. Otherwise load the requested connection plugin
-        elif C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
-            conn_type == 'persistent'
+        if C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
+            conn_type = 'persistent'
+        else:
+            conn_type = self._play_context.connection
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
 
@@ -744,7 +735,7 @@ class TaskExecutor:
 
         if self._play_context.accelerate:
             # accelerate is deprecated as of 2.1...
-            display.deprecated('Accelerated mode is deprecated. Consider using SSH with ControlPersist and pipelining enabled instead')
+            display.deprecated('Accelerated mode is deprecated. Consider using SSH with ControlPersist and pipelining enabled instead', version='2.6')
             # launch the accelerated daemon here
             ssh_connection = connection
             handler = self._shared_loader_obj.action_loader.get(

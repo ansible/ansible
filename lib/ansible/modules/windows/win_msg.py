@@ -96,4 +96,3 @@ wait:
     type: boolean
     sample: false
 '''
-

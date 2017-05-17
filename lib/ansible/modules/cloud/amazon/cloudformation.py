@@ -204,6 +204,7 @@ log:
   sample: ["updating stack"]
 stack_resources:
   description: AWS stack resources and their status. List of dictionaries, one dict per resource.
+  returned: state == present
   type: list
   sample: [
           {
@@ -218,7 +219,7 @@ stack_resources:
 stack_outputs:
   type: dict
   description: A key:value dictionary of all the stack outputs currently defined. If there are no stack outputs, it is an empty dictionary.
-  returned: always
+  returned: state == present
   sample: {"MySg": "AnsibleModuleTestYAML-CFTestSg-C8UVS567B6NS"}
 '''  # NOQA
 
@@ -432,7 +433,7 @@ def main():
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
     template_parameters = module.params['template_parameters']
-    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':v} for k, v in template_parameters.items()]
+    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]
 
     if isinstance(module.params.get('tags'), dict):
         stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])

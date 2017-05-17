@@ -83,7 +83,7 @@ RETURN = '''
 service:
     description: Dictionary describing the service.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Service ID.

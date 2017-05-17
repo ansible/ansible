@@ -27,16 +27,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_tags
-short_description: Module to manage tags in oVirt
+short_description: Module to manage tags in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "This module manage tags in oVirt. It can also manage assignments
+    - "This module manage tags in oVirt/RHV. It can also manage assignments
        of those tags to entities."
 options:
     name:
         description:
-            - "Name of the the tag to manage."
+            - "Name of the tag to manage."
         required: true
     state:
         description:
@@ -45,7 +45,7 @@ options:
         default: present
     description:
         description:
-            - "Description of the the tag to manage."
+            - "Description of the tag to manage."
     parent:
         description:
             - "Name of the parent tag."
@@ -87,9 +87,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 tag:
-    description: "Dictionary of all the tag attributes. Tag attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/tag."
+    description: "Dictionary of all the tag attributes. Tag attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/tag."
     returned: On success if tag is found.
+    type: dict
 '''
 
 import traceback

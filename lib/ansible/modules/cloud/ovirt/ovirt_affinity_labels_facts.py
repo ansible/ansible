@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_affinity_labels_facts
-short_description: Retrieve facts about one or more oVirt affinity labels
+short_description: Retrieve facts about one or more oVirt/RHV affinity labels
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt affinity labels."
+    - "Retrieve facts about one or more oVirt/RHV affinity labels."
 notes:
     - "This module creates a new top-level C(ovirt_affinity_labels) fact, which
        contains a list of affinity labels."
@@ -84,7 +84,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_affinity_labels:
     description: "List of dictionaries describing the affinity labels. Affinity labels attribues are mapped to dictionary keys,
-                  all affinity labels attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/affinity_label."
+                  all affinity labels attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/affinity_label."
     returned: On success.
     type: list
 '''

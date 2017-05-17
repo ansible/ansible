@@ -36,7 +36,7 @@ description:
 options:
   free_form:
     description:
-      - the win_shell module takes a free form command to run.  There is no parameter actually named 'free form'.
+      - The C(win_shell) module takes a free form command to run.  There is no parameter actually named 'free form'.
         See the examples!
     required: true
   creates:
@@ -57,8 +57,9 @@ notes:
       better to use the M(win_command) module instead. Best practices when writing
       playbooks will follow the trend of using M(win_command) unless C(win_shell) is
       explicitly required. When running ad-hoc commands, use your best judgement.
-   -  WinRM will not return from a command execution until all child processes created have exited. Thus, it is not possible to use win_shell to spawn
-      long-running child or background processes. Consider creating a Windows service for managing background processes.
+   -  WinRM will not return from a command execution until all child processes created have exited.
+      Thus, it is not possible to use C(win_shell) to spawn long-running child or background processes.
+      Consider creating a Windows service for managing background processes.
 author:
     - Matt Davis
 '''
@@ -130,6 +131,6 @@ rc:
 stdout_lines:
     description: The command standard output split in lines
     returned: always
-    type: list of strings
+    type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
 '''

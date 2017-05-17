@@ -65,8 +65,9 @@ EXAMPLES = """
     state: present
 
 - name: remove the motd banner
-  banner: motd
-  state: absent
+  eos_banner:
+    banner: motd
+    state: absent
 """
 
 RETURN = """

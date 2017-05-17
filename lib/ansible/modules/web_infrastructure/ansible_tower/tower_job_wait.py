@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -76,12 +76,12 @@ started:
     description: timestamp of when the job started running
     returned: success
     type: string
-    sample: 2017-03-01T17:03:53.200234Z
+    sample: "2017-03-01T17:03:53.200234Z"
 finished:
     description: timestamp of when the job finished running
     returned: success
     type: string
-    sample: 2017-03-01T17:04:04.078782Z
+    sample: "2017-03-01T17:04:04.078782Z"
 status:
     description: current status of job
     returned: success
@@ -116,10 +116,10 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
-        job_id = dict(type='int', required=True),
-        timeout = dict(type='int'),
-        min_interval = dict(type='float', default=1),
-        max_interval = dict(type='float', default=30),
+        job_id=dict(type='int', required=True),
+        timeout=dict(type='int'),
+        min_interval=dict(type='float', default=1),
+        max_interval=dict(type='float', default=30),
     ))
 
     module = AnsibleModule(

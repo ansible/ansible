@@ -503,7 +503,7 @@ def get_custom_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     custom = [
         'allowas_in_max',
@@ -958,13 +958,9 @@ def main():
     if state == 'present' or (state == 'absent' and existing):
         candidate = CustomNetworkConfig(indent=3)
         invoke('state_%s' % state, module, existing, proposed, candidate)
+        response = load_config(module, candidate)
+        result.update(response)
 
-        try:
-            response = load_config(module, candidate)
-            result.update(response)
-        except ShellError:
-            exc = get_exception()
-            module.fail_json(msg=str(exc))
     else:
         result['updates'] = []
 

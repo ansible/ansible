@@ -104,6 +104,16 @@ options:
             - Wait until vCenter detects an IP address for the VM
             - This requires vmware-tools (vmtoolsd) to properly work after creation
         default: False
+   snapshot_src:
+        description:
+            - Name of an existing snapshot to use to create a clone of a VM.
+        default: None
+        version_added: "2.4"
+   linked_clone:
+        description:
+            - Whether to create a Linked Clone from the snapshot specified
+        default: False
+        version_added: "2.4"
    force:
         description:
             - Ignore warnings and complete the actions
@@ -190,6 +200,7 @@ EXAMPLES = '''
         mac: 'aa:bb:dd:aa:00:14'
       template: template_el7
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Clone a VM from Template and customize
@@ -222,6 +233,7 @@ EXAMPLES = '''
         password: new_vm_password
         runonce:
         - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\Enable-WinRM.ps1 -ForceNewSSLCert
+    delegate_to: localhost
 
 # Create a VM template
   - name: create a VM template
@@ -246,6 +258,7 @@ EXAMPLES = '''
         num_cpus: 1
         scsi: lsilogic
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Rename a VM (requires the VM's uuid)
@@ -256,6 +269,7 @@ EXAMPLES = '''
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       name: new_name
       state: present
+    delegate_to: localhost
 
 # Remove a VM by uuid
   - vmware_guest:
@@ -264,11 +278,12 @@ EXAMPLES = '''
       password: vmware
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       state: absent
+    delegate_to: localhost
 '''
 
 RETURN = """
 instance:
-    descripton: metadata about the new virtualmachine
+    description: metadata about the new virtualmachine
     returned: always
     type: dict
     sample: None
@@ -384,7 +399,6 @@ class PyVmomiDeviceHelper(object):
                                       (device_type, device_infos['name']))
 
         nic.device.wakeOnLanEnabled = True
-        nic.device.addressType = 'assigned'
         nic.device.deviceInfo = vim.Description()
         nic.device.deviceInfo.label = device_label
         nic.device.deviceInfo.summary = device_infos['name']
@@ -393,7 +407,10 @@ class PyVmomiDeviceHelper(object):
         nic.device.connectable.allowGuestControl = True
         nic.device.connectable.connected = True
         if 'mac' in device_infos:
+            nic.device.addressType = 'assigned'
             nic.device.macAddress = device_infos['mac']
+        else:
+            nic.device.addressType = 'generated'
 
         return nic
 
@@ -1006,7 +1023,7 @@ class PyVmomiHelper(object):
             if not rp[0]:
                 continue
 
-            if not hasattr(rp[0], 'parent'):
+            if not hasattr(rp[0], 'parent') or not rp[0].parent:
                 continue
 
             # Find resource pool on host
@@ -1085,13 +1102,27 @@ class PyVmomiHelper(object):
             if self.should_deploy_from_template():
                 # create the relocation spec
                 relospec = vim.vm.RelocateSpec()
-                relospec.host = hostsystem
+                # Only provide specific host when using ESXi host directly
+                if self.params['esxi_hostname']:
+                    relospec.host = hostsystem
                 relospec.datastore = datastore
                 relospec.pool = resource_pool
+
+                if self.params['snapshot_src'] is not None and self.params['linked_clone']:
+                    relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
 
                 clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=relospec)
                 if self.customspec:
                     clonespec.customization = self.customspec
+
+                if self.params['snapshot_src'] is not None:
+                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
+                                                                      snapname=self.params['snapshot_src'])
+                    if len(snapshot) != 1:
+                        self.module.fail_json(msg='virtual machine "{0}" does not contain snapshot named "{1}"'.format(
+                            self.params['template'], self.params['snapshot_src']))
+
+                    clonespec.snapshot = snapshot[0].snapshot
 
                 clonespec.config = self.configspec
                 task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
@@ -1108,7 +1139,8 @@ class PyVmomiHelper(object):
                 self.change_detected = True
             self.wait_for_task(task)
         except TypeError:
-            self.module.fail_json(msg="TypeError was returned, please ensure to give correct inputs.")
+            e = get_exception()
+            self.module.fail_json(msg="TypeError was returned, please ensure to give correct inputs. %s" % e)
 
         if task.info.state == 'error':
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2021361
@@ -1133,6 +1165,15 @@ class PyVmomiHelper(object):
 
             vm_facts = self.gather_facts(vm)
             return {'changed': self.change_detected, 'failed': False, 'instance': vm_facts}
+
+    def get_snapshots_by_name_recursively(self, snapshots, snapname):
+        snap_obj = []
+        for snapshot in snapshots:
+            if snapshot.name == snapname:
+                snap_obj.append(snapshot)
+            else:
+                snap_obj = snap_obj + self.get_snapshots_by_name_recursively(snapshot.childSnapshotList, snapname)
+        return snap_obj
 
     def reconfigure_vm(self):
         self.configspec = vim.vm.ConfigSpec()
@@ -1276,6 +1317,8 @@ def main():
             esxi_hostname=dict(type='str'),
             cluster=dict(type='str'),
             wait_for_ip_address=dict(type='bool', default=False),
+            snapshot_src=dict(type='str', default=None),
+            linked_clone=dict(type='bool', default=False),
             networks=dict(type='list', default=[]),
             resource_pool=dict(type='str'),
             customization=dict(type='dict', no_log=True, default={}),

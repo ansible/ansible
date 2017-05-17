@@ -13,6 +13,18 @@ Ansible Changes By Release
   Python-2.5 you'll need to install Python-2.6 or better there or run
   Ansible-2.3 until you can upgrade the system.
 
+### Deprecations
+* The behaviour when specifying --tags (or --skip-tags) multiple times on the command line
+  has changed so that the tags are merged together by default.  See the
+  documentation for how to temporarily use the old behaviour if needed:
+  https://docs.ansible.com/ansible/intro_configuration.html#merge-multiple-cli-tags
+* The fetch module's validate_md5 parameter has been deprecated and will be
+  removed in 2.8.  If you wish to disable post-validation of the downloaded
+  file, use validate_checksum instead.
+* Those using ansible as a library should note that the ansible.vars.unsafe_proxy
+  module is deprecated and slated to go away in 2.8.  The functionality has been
+  moved to ansible.utils.unsafe_proxy to avoid a circular import.
+
 ### Minor Changes
 * removed previously deprecated config option 'hostfile' and env var 'ANSIBLE_HOSTS'
 * removed unused and deprecated config option 'pattern'
@@ -33,15 +45,33 @@ Ansible Changes By Release
 
   The new behaviour mirrors how the variables would appear if there was no hash
   mark in the string.
+- As of 2.4.0, the fetch module fails if there are errors reading the remote
+  file.  Use ignore_errors or failed_when in playbooks if you wish to ignore
+  errors.
 
-####New Inventory scripts:
+#### New Inventory scripts:
 - lxd
 
 #### New: Tests
 - any : true if any element is true
 - all: true if all elements are true
 
-## 2.3 "Ramble On" - RELEASE CANDIDATE
+### Module Notes
+
+### New Modules
+
+- avi
+  * avi_cloud
+  * avi_cloudproperties.
+  * avi_gslb
+  * avi_gslbhealthmonitor
+  * avi_gslbservice
+  * avi_ipaddrgroup
+  * avi_network
+  * avi_serviceenginegroup
+
+
+## 2.3 "Ramble On" - 2017-04-12
 
 ### Major Changes
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
@@ -145,6 +175,8 @@ Ansible Changes By Release
 - bigswitch:
   * bigmon_chain
   * bigmon_policy
+- cisco
+  * cisco_spark
 - cloudengine:
   * ce_command
 - cloudscale_server
@@ -708,7 +740,7 @@ Notice given that the following will be removed in Ansible 2.4:
 * Security fix for CVE-2016-8628 - Command injection by compromised server via fact variables. In some situations, facts returned by modules could overwrite connection-based facts or some other special variables, leading to injected commands running on the Ansible controller as the user running Ansible (or via escalated permissions).
 * Security fix for CVE-2016-8614 - apt_key module not properly validating keys in some situations.
 
-###Minor Changes:
+### Minor Changes:
 * The subversion module from core now marks its password parameter as no_log so
   the password is obscured when logging.
 * The postgresql_lang and postgresql_ext modules from extras now mark
@@ -784,7 +816,7 @@ Module fixes:
 
 ## 2.1 "The Song Remains the Same"
 
-###Major Changes:
+### Major Changes:
 
 * Official support for the networking modules, originally available in 2.0 as a tech preview.
 * Refactored and expanded support for Docker with new modules and many improvements to existing modules, as well as a new Kubernetes module.
@@ -942,12 +974,12 @@ Module fixes:
 * issubset
 * issuperset
 
-####New Inventory scripts:
+#### New Inventory scripts:
 * brook
 * rackhd
 * azure_rm
 
-###Minor Changes:
+### Minor Changes:
 
 * Added support for pipelining mode to more connection plugins, which helps prevent
   module data from being written to disk.
@@ -962,7 +994,7 @@ Module fixes:
   10-first-callback.py and 20-second-callback.py.
 * Added (alpha) Centirfy's dzdo as another become meethod (privilege escalation)
 
-###Deprecations:
+### Deprecations:
 
 * Deprecated the use of "bare" variables in loops (ie. `with_items: foo`, where `foo` is a variable).
   The full jinja2 variable syntax of `{{foo}}` should always be used instead. This warning will be removed
@@ -1057,7 +1089,7 @@ Module fixes:
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
-###Major Changes:
+### Major Changes:
 
 * Releases are now named after Led Zeppelin songs, 1.9 will be the last Van Halen named release.
 * The new block/rescue/always directives allow for making task blocks and exception-like semantics
@@ -1148,13 +1180,13 @@ allowed in future versions:
           with_items: my_dirs
     ```
 
-###Plugins
+### Plugins
 
 * Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases
 * WinRM connection plugin passes all vars named `ansible_winrm_*` to the underlying pywinrm client. This allows, for instance, `ansible_winrm_server_cert_validation=ignore` to be used with newer versions of pywinrm to disable certificate validation on Python 2.7.9+.
 * WinRM connection plugin put_file is significantly faster and no longer has file size limitations.
 
-####Deprecated Modules (new ones in parens):
+#### Deprecated Modules (new ones in parens):
 
 * ec2_ami_search (ec2_ami_find)
 * quantum_network (os_network)
@@ -1165,7 +1197,7 @@ allowed in future versions:
 * quantum_router_gateway (os_router)
 * quantum_router_interface (os_router)
 
-####New Modules:
+#### New Modules:
 
 - amazon
   * ec2_ami_copy
@@ -1381,7 +1413,7 @@ allowed in future versions:
   * zabbix_screen
 - znode
 
-####New Inventory scripts:
+#### New Inventory scripts:
 
 * cloudstack
 * fleetctl
@@ -1392,27 +1424,27 @@ allowed in future versions:
 * rudder
 * serf
 
-####New Lookups:
+#### New Lookups:
 
 * credstash
 * hashi_vault
 * ini
 * shelvefile
 
-####New Filters:
+#### New Filters:
 
 * combine
 
-####New Connection:
+#### New Connection:
 
 * docker: for talking to docker containers on the ansible controller machine without using ssh.
 
-####New Callbacks:
+#### New Callbacks:
 
 * logentries: plugin to send play data to logentries service
 * skippy: same as default but does not display skip messages
 
-###Minor changes:
+### Minor changes:
 
 * Many more tests. The new API makes things more testable and we took advantage of it.
 * big_ip modules now support turning off ssl certificate validation (use only for self-signed certificates).

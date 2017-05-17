@@ -62,7 +62,7 @@ _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
-DEPRECATED = " (D)"
+DEPRECATED = b" (D)"
 #####################################################################################
 
 def rst_ify(text):
@@ -116,8 +116,8 @@ def write_data(text, options, outputname, module):
     if options.output_dir is not None:
         fname = os.path.join(options.output_dir, outputname % module)
         fname = fname.replace(".py","")
-        f = open(fname, 'w')
-        f.write(text.encode('utf-8'))
+        f = open(fname, 'wb')
+        f.write(to_bytes(text))
         f.close()
     else:
         print(text)
@@ -336,9 +336,9 @@ def print_modules(module, category_file, deprecated, options, env, template, out
         modstring = module[1:]
     modname = modstring
     if module in deprecated:
-        modstring = modstring + DEPRECATED
+        modstring = to_bytes(modstring) + DEPRECATED
 
-    category_file.write("  %s - %s <%s_module>\n" % (to_bytes(modstring), to_bytes(rst_ify(module_map[module][1])), to_bytes(modname)))
+    category_file.write(b"  %s - %s <%s_module>\n" % (to_bytes(modstring), to_bytes(rst_ify(module_map[module][1])), to_bytes(modname)))
 
 def process_category(category, categories, options, env, template, outputname):
 
@@ -362,7 +362,7 @@ def process_category(category, categories, options, env, template, outputname):
         aliases = categories['_aliases']
 
     category_file_path = os.path.join(options.output_dir, "list_of_%s_modules.rst" % category)
-    category_file = open(category_file_path, "w")
+    category_file = open(category_file_path, "wb")
     print("*** recording category %s in %s ***" % (category, category_file_path))
 
     # start a new category file
@@ -386,10 +386,10 @@ def process_category(category, categories, options, env, template, outputname):
 
     modules.sort(key=lambda k: k[1:] if k.startswith('_') else k)
 
-    category_header = "%s Modules" % (category.title())
-    underscores = "`" * len(category_header)
+    category_header = b"%s Modules" % (to_bytes(category.title()))
+    underscores = b"`" * len(category_header)
 
-    category_file.write("""\
+    category_file.write(b"""\
 %s
 %s
 
@@ -406,16 +406,16 @@ def process_category(category, categories, options, env, template, outputname):
 
     sections.sort()
     for section in sections:
-        category_file.write("\n%s\n%s\n\n" % (section.replace("_"," ").title(),'-' * len(section)))
-        category_file.write(".. toctree:: :maxdepth: 1\n\n")
+        category_file.write(b"\n%s\n%s\n\n" % (to_bytes(section.replace("_"," ").title()), b'-' * len(section)))
+        category_file.write(b".. toctree:: :maxdepth: 1\n\n")
 
-        section_modules = module_map[section].keys()
+        section_modules = list(module_map[section].keys())
         section_modules.sort(key=lambda k: k[1:] if k.startswith('_') else k)
         #for module in module_map[section]:
         for module in (m for m in section_modules if m in module_info):
             print_modules(module, category_file, deprecated, options, env, template, outputname, module_info, aliases)
 
-    category_file.write("""\n\n
+    category_file.write(b"""\n\n
 .. note::
     - %s: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.
        The module documentation details page may explain more about this rationale.
@@ -455,15 +455,15 @@ def main():
 
     # Write master category list
     category_list_path = os.path.join(options.output_dir, "modules_by_category.rst")
-    with open(category_list_path, "w") as category_list_file:
-        category_list_file.write("Module Index\n")
-        category_list_file.write("============\n")
-        category_list_file.write("\n\n")
-        category_list_file.write(".. toctree::\n")
-        category_list_file.write("   :maxdepth: 1\n\n")
+    with open(category_list_path, "wb") as category_list_file:
+        category_list_file.write(b"Module Index\n")
+        category_list_file.write(b"============\n")
+        category_list_file.write(b"\n\n")
+        category_list_file.write(b".. toctree::\n")
+        category_list_file.write(b"   :maxdepth: 1\n\n")
 
         for category in category_names:
-            category_list_file.write("   list_of_%s_modules\n" % category)
+            category_list_file.write(b"   list_of_%s_modules\n" % to_bytes(category))
 
     #
     # Import all the docs into memory

@@ -35,6 +35,11 @@ description:
 version_added: "2.1"
 
 options:
+  auto_remove:
+    description:
+      - enable auto-removal of the container on daemon side when the container's process exits
+    default: false
+    version_added: "2.4"
   blkio_weight:
     description:
       - Block IO (relative weight), between 10 and 1000.
@@ -688,6 +693,7 @@ class TaskParameters(DockerBaseClass):
         super(TaskParameters, self).__init__()
         self.client = client
 
+        self.auto_remove = None
         self.blkio_weight = None
         self.capabilities = None
         self.cleanup = None
@@ -942,6 +948,11 @@ class TaskParameters(DockerBaseClass):
             devices='devices',
             pid_mode='pid_mode'
         )
+
+        if HAS_DOCKER_PY_2:
+            # auto_remove is only supported in docker>=2
+            host_config_params['auto_remove'] = 'auto_remove'
+
         params = dict()
         for key, value in host_config_params.items():
             if getattr(self, value, None) is not None:
@@ -1228,6 +1239,7 @@ class Container(DockerBaseClass):
 
         # Map parameters to container inspect results
         config_mapping = dict(
+            auto_remove=host_config.get('AutoRemove'),
             image=config.get('Image'),
             expected_cmd=config.get('Cmd'),
             hostname=config.get('Hostname'),
@@ -1954,6 +1966,7 @@ class ContainerManager(DockerBaseClass):
 
 def main():
     argument_spec = dict(
+        auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
         cleanup=dict(type='bool', default=False),
@@ -2034,6 +2047,9 @@ def main():
         required_if=required_if,
         supports_check_mode=True
     )
+
+    if not HAS_DOCKER_PY_2 and client.module.params.get('auto_remove'):
+        client.module.fail_json(msg="'auto_remove' is not compatible with docker-py, and requires the docker python module")
 
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)

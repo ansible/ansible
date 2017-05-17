@@ -123,6 +123,7 @@ proposed:
     sample: {"group": "30", "version": "2", "vip": "10.30.1.1"}
 existing:
     description: k/v pairs of existing hsrp info on the interface
+    returned: always
     type: dict
     sample: {}
 end_state:
@@ -147,7 +148,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 
@@ -491,6 +491,7 @@ def main():
         else:
             load_config(module, commands)
             if transport == 'cli':
+                body = run_commands(module, commands)
                 validate_config(body, vip, module)
             changed = True
             end_state = get_hsrp_group(group, interface, module)

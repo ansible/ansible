@@ -27,15 +27,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_external_providers
-short_description: Module to manage external providers in oVirt
+short_description: Module to manage external providers in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage external providers in oVirt"
+    - "Module to manage external providers in oVirt/RHV"
 options:
     name:
         description:
-            - "Name of the the external provider to manage."
+            - "Name of the external provider to manage."
     state:
         description:
             - "Should the external be present or absent"
@@ -130,23 +130,23 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 external_host_provider:
-    description: "Dictionary of all the external_host_provider attributes. External provider attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/external_host_provider."
+    description: "Dictionary of all the external_host_provider attributes. External provider attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/external_host_provider."
     returned: "On success and if parameter 'type: foreman' is used."
     type: dictionary
 openstack_image_provider:
-    description: "Dictionary of all the openstack_image_provider attributes. External provider attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/openstack_image_provider."
+    description: "Dictionary of all the openstack_image_provider attributes. External provider attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_image_provider."
     returned: "On success and if parameter 'type: os_image' is used."
     type: dictionary
 openstack_volume_provider:
-    description: "Dictionary of all the openstack_volume_provider attributes. External provider attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/openstack_volume_provider."
+    description: "Dictionary of all the openstack_volume_provider attributes. External provider attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_volume_provider."
     returned: "On success and if parameter 'type: os_volume' is used."
     type: dictionary
 openstack_network_provider:
-    description: "Dictionary of all the openstack_network_provider attributes. External provider attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/openstack_network_provider."
+    description: "Dictionary of all the openstack_network_provider attributes. External provider attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_network_provider."
     returned: "On success and if parameter 'type: network' is used."
     type: dictionary
 '''

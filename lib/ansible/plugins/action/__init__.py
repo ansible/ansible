@@ -30,7 +30,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
 from ansible.executor.module_common import modify_module, build_windows_module_payload
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
@@ -39,7 +39,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.release import __version__
-from ansible.vars.unsafe_proxy import wrap_var
+from ansible.utils.unsafe_proxy import wrap_var
 
 
 try:
@@ -90,17 +90,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         * Module parameters.  These are stored in self._task.args
         """
 
-        result = {'skipped': True}
+        result = {}
 
         if self._task.async and not self._supports_async:
-            result['msg'] = 'async is not supported for this task.'
+            raise AnsibleActionFail('async is not supported for this task.')
         elif self._play_context.check_mode and not self._supports_check_mode:
-            result['msg'] = 'check mode is not supported for this task.'
+            raise AnsibleActionSkip('check mode is not supported for this task.')
         elif self._task.async and self._play_context.check_mode:
-            result['msg'] = 'check mode and async cannot be used on same task.'
-        else:
-            # we run!
-            del result['skipped']
+            raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         return result
 
@@ -521,6 +518,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         2 = permissions issue
         3 = its a directory, not a file
         4 = stat module failed, likely due to not finding python
+        5 = appropriate json module not found
         '''
         x = "0"  # unknown error has occurred
         try:
@@ -535,6 +533,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 x = "2"  # cannot read file
             elif errormsg.endswith(u'MODULE FAILURE'):
                 x = "4"  # python not found or module uncaught exception
+            elif 'json' in errormsg or 'simplejson' in errormsg:
+                x = "5" # json or simplejson modules needed
         finally:
             return x
 
@@ -952,12 +952,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 else:
                     display.debug("Reading local copy of the file %s" % source)
                     try:
-                        src = open(source)
-                        src_contents = src.read()
+                        with open(source, 'rb') as src:
+                            src_contents = src.read()
                     except Exception as e:
                         raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, str(e)))
 
-                    if "\x00" in src_contents:
+                    if b"\x00" in src_contents:
                         diff['src_binary'] = 1
                     else:
                         diff['after_header'] = source

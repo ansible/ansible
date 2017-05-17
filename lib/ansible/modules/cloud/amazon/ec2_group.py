@@ -92,7 +92,7 @@ EXAMPLES = '''
     name: example
     description: an example EC2 group
     vpc_id: 12345
-    region: eu-west-1a
+    region: eu-west-1
     aws_secret_key: SECRET
     aws_access_key: ACCESS
     rules:
@@ -141,7 +141,7 @@ EXAMPLES = '''
     name: example2
     description: an example2 EC2 group
     vpc_id: 12345
-    region: eu-west-1a
+    region: eu-west-1
     rules:
       # 'ports' rule keyword was introduced in version 2.4. It accepts a single port value or a list of values including ranges (from_port-to_port).
       - proto: tcp
@@ -171,6 +171,7 @@ EXAMPLES = '''
           - sg-edcd9784
 '''
 
+import json
 import re
 import time
 from ansible.module_utils.basic import AnsibleModule
@@ -185,6 +186,13 @@ except ImportError:
     HAS_BOTO = False
 
 import traceback
+
+
+def deduplicate_rules_args(rules):
+    """Returns unique rules"""
+    if rules is None:
+        return None
+    return list(dict(zip((json.dumps(r, sort_keys=True) for r in rules), rules)).values())
 
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
@@ -203,10 +211,10 @@ def make_rule_key(prefix, rule, group_id, cidr_ip):
     return key.lower().replace('-none', '-None')
 
 
-def addRulesToLookup(rules, prefix, dict):
+def addRulesToLookup(rules, prefix, rules_dict):
     for rule in rules:
         for grant in rule.grants:
-            dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
+            rules_dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
 
 
 def validate_rule(module, rule):
@@ -382,8 +390,8 @@ def main():
     name = module.params['name']
     description = module.params['description']
     vpc_id = module.params['vpc_id']
-    rules = rules_expand_sources(rules_expand_ports(module.params['rules']))
-    rules_egress = rules_expand_sources(rules_expand_ports(module.params['rules_egress']))
+    rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules'])))
+    rules_egress = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules_egress'])))
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
@@ -486,10 +494,7 @@ def main():
                 # If rule already exists, don't later delete it
                 for thisip in ip:
                     ruleId = make_rule_key('in', rule, group_id, thisip)
-                    if ruleId in groupRules:
-                        del groupRules[ruleId]
-                    # Otherwise, add new rule
-                    else:
+                    if ruleId not in groupRules:
                         grantGroup = None
                         if group_id:
                             grantGroup = groups[group_id]
@@ -497,6 +502,8 @@ def main():
                         if not module.check_mode:
                             group.authorize(rule['proto'], rule['from_port'], rule['to_port'], thisip, grantGroup)
                         changed = True
+                    else:
+                        del groupRules[ruleId]
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:

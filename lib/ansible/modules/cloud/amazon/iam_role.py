@@ -92,26 +92,32 @@ RETURN = '''
 path:
     description: the path to the role
     type: string
+    returned: always
     sample: /
 role_name:
     description: the friendly name that identifies the role
     type: string
+    returned: always
     sample: myrole
 role_id:
     description: the stable and unique string identifying the role
     type: string
+    returned: always
     sample: ABCDEFF4EZ4ABCDEFV4ZC
 arn:
     description: the Amazon Resource Name (ARN) specifying the role
     type: string
+    returned: always
     sample: "arn:aws:iam::1234567890:role/mynewrole"
 create_date:
     description: the date and time, in ISO 8601 date-time format, when the role was created
     type: string
+    returned: always
     sample: "2016-08-14T04:36:28+00:00"
 assume_role_policy_document:
     description: the policy that grants an entity permission to assume the role
     type: string
+    returned: always
     sample: {
                 'statement': [
                     {
@@ -128,6 +134,7 @@ assume_role_policy_document:
 attached_policies:
     description: a list of dicts containing the name and ARN of the managed IAM policies attached to the role
     type: list
+    returned: always
     sample: [
         {
             'policy_arn': 'arn:aws:iam::aws:policy/PowerUserAccess',
@@ -183,7 +190,7 @@ def create_or_update_role(connection, module):
     changed = False
 
     # Get role
-    role = get_role(connection, params['RoleName'])
+    role = get_role(connection, params['RoleName'], module)
 
     # If role is None, create it
     if role is None:
@@ -251,7 +258,7 @@ def create_or_update_role(connection, module):
         connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
 
     # Get the role again
-    role = get_role(connection, params['RoleName'])
+    role = get_role(connection, params['RoleName'], module)
 
     role['attached_policies'] = get_attached_policy_list(connection, params['RoleName'])
     module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role))
@@ -262,7 +269,7 @@ def destroy_role(connection, module):
     params = dict()
     params['RoleName'] = module.params.get('name')
 
-    if get_role(connection, params['RoleName']):
+    if get_role(connection, params['RoleName'], module):
 
         # We need to remove any instance profiles from the role before we delete it
         try:
@@ -294,7 +301,7 @@ def destroy_role(connection, module):
     module.exit_json(changed=True)
 
 
-def get_role(connection, name):
+def get_role(connection, name, module):
 
     params = dict()
     params['RoleName'] = name

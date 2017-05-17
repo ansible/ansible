@@ -20,7 +20,9 @@ pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynami
 Hosts and Groups
 ++++++++++++++++
 
-The format for ``/etc/ansible/hosts`` is an INI-like format and looks like this::
+The format for ``/etc/ansible/hosts`` is an INI-like format and looks like this:
+
+.. code-block:: ini
 
     mail.example.com
 
@@ -43,24 +45,31 @@ If you have hosts that run on non-standard SSH ports you can put the port number
 after the hostname with a colon.  Ports listed in your SSH config file won't be used with the `paramiko`
 connection but will be used with the `openssh` connection.
 
-To make things explicit, it is suggested that you set them if things are not running on the default port::
+To make things explicit, it is suggested that you set them if things are not running on the default port:
+
+.. code-block:: ini
 
     badwolf.example.com:5309
 
-Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this::
+Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this:
+
+.. code-block:: ini
 
     jumper ansible_port=5555 ansible_host=192.0.2.50
 
 In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.0.2.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
 way to define variables that describe your system policy, but we'll share suggestions on doing this later.  We're just getting started.
 
-Adding a lot of hosts?  If you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
+Adding a lot of hosts?  If you have a lot of hosts following similar patterns you can do this rather than listing each hostname:
 
+.. code-block:: ini
 
     [webservers]
     www[01:50].example.com
 
-For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.  You can also define alphabetic ranges::
+For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.  You can also define alphabetic ranges:
+
+.. code-block:: ini
 
     [databases]
     db-[a:f].example.com
@@ -70,7 +79,7 @@ For numeric patterns, leading zeros can be included or removed, as desired. Rang
 
 You can also select the connection type and user on a per host basis:
 
-::
+.. code-block:: ini
 
    [targets]
 
@@ -86,7 +95,9 @@ in the 'host_vars' directory a bit later on.
 Host Variables
 ++++++++++++++
 
-As alluded to above, it is easy to assign variables to hosts that will be used later in playbooks::
+As alluded to above, it is easy to assign variables to hosts that will be used later in playbooks:
+
+.. code-block:: ini
 
    [atlanta]
    host1 http_port=80 maxRequestsPerChild=808

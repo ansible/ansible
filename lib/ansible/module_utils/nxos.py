@@ -30,7 +30,7 @@
 import re
 import collections
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.six import iteritems
@@ -54,12 +54,29 @@ nxos_argument_spec = {
     'transport': dict(choices=['cli', 'nxapi'])
 }
 
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'timeout': 10
+}
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in nxos_argument_spec:
         if key not in ['provider', 'transport'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 def load_params(module):
     provider = module.params.get('provider') or dict()
@@ -72,9 +89,7 @@ def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
         load_params(module)
-        transport = module.params['transport']
-        provider_transport = (module.params['provider'] or {}).get('transport')
-        if 'nxapi' in (transport, provider_transport):
+        if is_nxapi(module):
             conn = Nxapi(module)
         else:
             conn = Cli(module)
@@ -235,7 +250,7 @@ class Nxapi:
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        timeout = self._module.params['timeout'] or 10
+        timeout = self._module.params['timeout']
 
         for req in requests:
             if self._nxapi_auth:

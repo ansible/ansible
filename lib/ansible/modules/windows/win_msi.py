@@ -82,4 +82,3 @@ EXAMPLES = r'''
     path: C:\7z920-x64.msi
     state: absent
 '''
-

@@ -54,7 +54,7 @@ As of Ansible 2.2, the batch sizes can be specified as a list, as follows::
 In the above example, the first batch would contain a single host, the next would contain 5 hosts, and (if there are any hosts left),
 every following batch would contain 10 hosts until all available hosts are used.
 
-It is also possible to list multiple batche sizes as percentages::
+It is also possible to list multiple batch sizes as percentages::
 
     - name: test play
       hosts: webservers
@@ -182,7 +182,7 @@ In 2.0, the directive `delegate_facts` may be set to `True` to assign the task's
           with_items: "{{groups['dbservers']}}"
 
 The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
-This way you can lookup `hostvars['dbhost1']['default_ipv4_addresses'][0]` even though dbservers were not part of the play, or left out by using `--limit`.
+This way you can lookup `hostvars['dbhost1']['default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.
 
 
 .. _run_once:

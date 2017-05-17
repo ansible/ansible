@@ -25,10 +25,10 @@ DOCUMENTATION = """
 module: iosxr_facts
 version_added: "2.2"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Collect facts from remote devices running IOS-XR
+short_description: Collect facts from remote devices running IOS XR
 description:
   - Collects a base set of device facts from a remote device that
-    is running iosxr.  This module prepends all of the
+    is running IOS XR.  This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
@@ -174,11 +174,11 @@ class Hardware(FactsBase):
         self.facts['filesystems'] = self.parse_filesystems(
             results['dir /all'])
 
-        match = re.search(r'Physical Memory (\d+)M total \((\d+)',
+        match = re.search(r'Physical Memory: (\d+)M total \((\d+)',
             results['show memory summary'])
         if match:
-            self.facts['memtotal_mb'] = int(match[0])
-            self.facts['memfree_mb'] = int(match[1])
+            self.facts['memtotal_mb'] = match.group(1)
+            self.facts['memfree_mb'] = match.group(2)
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)', data, re.M)
@@ -239,6 +239,8 @@ class Interfaces(FactsBase):
 
     def populate_ipv6_interfaces(self, data):
         for key, value in iteritems(data):
+            if key in ['No', 'RPF'] or key.startswith('IP'):
+                continue
             self.facts['interfaces'][key]['ipv6'] = list()
             addresses = re.findall(r'\s+(.+), subnet', value, re.M)
             subnets = re.findall(r', subnet is (.+)$', value, re.M)

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -83,12 +83,12 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
-        job_id = dict(type='int', required=True),
-        fail_if_not_running = dict(type='bool', default=False),
+        job_id=dict(type='int', required=True),
+        fail_if_not_running=dict(type='bool', default=False),
     ))
 
     module = AnsibleModule(
-        argument_spec = argument_spec,
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 

@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: asa_config
 version_added: "2.2"
 author: "Peter Sprygada (@privateip), Patrick Ogenstad (@ogenstad)"
-short_description: Manage Cisco ASA configuration sections
+short_description: Manage configuration sections on Cisco ASA devices
 description:
   - Cisco ASA configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
@@ -223,7 +223,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
 responses:
   description: The set of responses from issuing the commands on the device

@@ -80,6 +80,7 @@ proposed:
     sample: {"interface": "loopback16", "vrf": "ntc"}
 existing:
     description: k/v pairs of existing vrf on the interface
+    returned: always
     type: dict
     sample: {"interface": "loopback16", "vrf": ""}
 end_state:
@@ -103,7 +104,6 @@ import re
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 WARNINGS = []

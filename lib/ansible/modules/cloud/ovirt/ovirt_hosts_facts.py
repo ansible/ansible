@@ -27,18 +27,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_hosts_facts
-short_description: Retrieve facts about one or more oVirt hosts
+short_description: Retrieve facts about one or more oVirt/RHV hosts
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt hosts."
+    - "Retrieve facts about one or more oVirt/RHV hosts."
 notes:
     - "This module creates a new top-level C(ovirt_hosts) fact, which
        contains a list of hosts."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search host X from datacenter Y use following pattern:
            name=X and datacenter=Y"
 extends_documentation_fragment: ovirt_facts
@@ -59,7 +59,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_hosts:
     description: "List of dictionaries describing the hosts. Host attribues are mapped to dictionary keys,
-                  all hosts attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host."
+                  all hosts attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/host."
     returned: On success.
     type: list
 '''

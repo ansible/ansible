@@ -1,8 +1,9 @@
+*********************
 Developer Information
-=====================
+*********************
 
 Ansible Developer Guide
-```````````````````````
+=======================
 
 Welcome to the Ansible Developer Guide!
 
@@ -16,14 +17,22 @@ To get started, select one of the following topics.
 
    overview_architecture
    developing_modules
-   developing_python3
+   developing_modules_general
+   developing_modules_documenting
+   developing_modules_best_practices
+   developing_modules_checklist
+   developing_modules_in_groups
+   developing_program_flow_modules
+   developing_module_utilities
    developing_plugins
    developing_inventory
-   developing_api
-   developing_module_utilities
    developing_core
+   developing_python3
+   developing_api
    developing_test_pr
    developing_rebasing
+   testing
    repomerge
    developing_releases
    ../committer_guidelines
+   ./style_guide/index

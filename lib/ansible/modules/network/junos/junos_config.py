@@ -45,7 +45,7 @@ options:
   src:
     description:
       - The I(src) argument provides a path to the configuration file
-        to load into the remote system.  The path can either be a full
+        to load into the remote system. The path can either be a full
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) argument.
@@ -142,12 +142,22 @@ requirements:
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Loading JSON-formatted configuration I(json) is supported
+    starting in Junos OS Release 16.1 onwards.
 """
 
 EXAMPLES = """
 - name: load configure file into device
   junos_config:
     src: srx.cfg
+    comment: update config
+    provider: "{{ netconf }}"
+
+- name: load configure lines into device
+  junos_config:
+    lines:
+      - set interfaces ge-0/0/1 unit 0 description "Test interface"
+      - set vlans vlan01 description "Test vlan"
     comment: update config
     provider: "{{ netconf }}"
 
@@ -170,11 +180,12 @@ RETURN = """
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 """
 import re
 import json
+import sys
 
 from xml.etree import ElementTree
 
@@ -184,6 +195,13 @@ from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text, to_native
+
+if sys.version_info < (2, 7):
+    from xml.parsers.expat import ExpatError
+    ParseError = ExpatError
+else:
+    ParseError = ElementTree.ParseError
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
@@ -207,7 +225,7 @@ def guess_format(config):
     try:
         ElementTree.fromstring(config)
         return 'xml'
-    except ElementTree.ParseError:
+    except ParseError:
         pass
 
     if config.startswith('set') or config.startswith('delete'):
@@ -221,7 +239,7 @@ def filter_delete_statements(module, candidate):
     if match is None:
         # Could not find configuration-set in reply, perhaps device does not support it?
         return candidate
-    config = str(match.text)
+    config = to_native(match.text, encoding='latin1')
 
     modified_candidate = candidate[:]
     for index, line in enumerate(candidate):
@@ -314,7 +332,7 @@ def main():
         else:
             module.fail_json(msg='unable to retrieve device configuration')
 
-        result['__backup__'] = str(match.text).strip()
+        result['__backup__'] = match.text.strip()
 
     if module.params['rollback']:
         if not module.check_mode:

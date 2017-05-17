@@ -41,7 +41,7 @@ from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
-from ansible.vars.unsafe_proxy import wrap_var
+from ansible.utils.unsafe_proxy import wrap_var
 from ansible.module_utils._text import to_native
 
 try:
@@ -71,7 +71,7 @@ def preprocess_vars(a):
     if a is None:
         return None
     elif not isinstance(a, list):
-        data = [ a ]
+        data = [a]
     else:
         data = a
 
@@ -80,6 +80,7 @@ def preprocess_vars(a):
             raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
 
     return data
+
 
 def strip_internal_keys(dirty):
     '''
@@ -119,15 +120,15 @@ class VariableManager:
 
     def __getstate__(self):
         data = dict(
-            fact_cache = self._fact_cache,
-            np_fact_cache = self._nonpersistent_fact_cache,
-            vars_cache = self._vars_cache,
-            extra_vars = self._extra_vars,
-            host_vars_files = self._host_vars_files,
-            group_vars_files = self._group_vars_files,
-            omit_token = self._omit_token,
-            options_vars = self._options_vars,
-            #inventory = self._inventory,
+            fact_cache=self._fact_cache,
+            np_fact_cache=self._nonpersistent_fact_cache,
+            vars_cache=self._vars_cache,
+            extra_vars=self._extra_vars,
+            host_vars_files=self._host_vars_files,
+            group_vars_files=self._group_vars_files,
+            omit_token=self._omit_token,
+            options_vars=self._options_vars,
+            # inventory=self._inventory,
         )
         return data
 
@@ -192,7 +193,7 @@ class VariableManager:
         if a is None:
             return None
         elif not isinstance(a, list):
-            data = [ a ]
+            data = [a]
         else:
             data = a
 
@@ -307,7 +308,7 @@ class VariableManager:
                 # the with_first_found mechanism.
                 vars_file_list = vars_file_item
                 if not isinstance(vars_file_list, list):
-                    vars_file_list = [ vars_file_list ]
+                    vars_file_list = [vars_file_list]
 
                 # now we iterate through the (potential) files, and break out
                 # as soon as we read one from the list. If none are found, we
@@ -389,7 +390,7 @@ class VariableManager:
         if task and task.delegate_to is not None and include_delegate_to:
             all_vars['ansible_delegated_vars'] = self._get_delegated_vars(loader, play, task, all_vars)
 
-        #VARIABLE_CACHE[cache_entry] = all_vars
+        # VARIABLE_CACHE[cache_entry] = all_vars
         if task or play:
             all_vars['vars'] = all_vars.copy()
 
@@ -414,7 +415,7 @@ class VariableManager:
         if host:
             # host already provides some magic vars via host.get_vars()
             if self._inventory:
-                variables['groups']  = self._inventory.get_group_dict()
+                variables['groups'] = self._inventory.get_group_dict()
 
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
@@ -429,13 +430,18 @@ class VariableManager:
             variables['inventory_dir'] = self._inventory.basedir()
             variables['inventory_file'] = self._inventory.src()
             if play:
+                templar = Templar(loader=loader)
+                if templar.is_template(play.hosts):
+                    pattern = 'all'
+                else:
+                    pattern = play.hosts or 'all'
                 # add the list of hosts in the play, as adjusted for limit/filters
-                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
+                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=pattern, ignore_restrictions=True)]
                 variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
                 variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts() if x.name not in play._removed_hosts]
 
-                #DEPRECATED: play_hosts should be deprecated in favor of ansible_play_batch,
-                #  however this would take work in the templating engine, so for now we'll add both
+                # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_batch,
+                # however this would take work in the templating engine, so for now we'll add both
                 variables['play_hosts'] = variables['ansible_play_batch']
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
@@ -550,7 +556,7 @@ class VariableManager:
         else:
             return name
 
-    def _load_inventory_file(self, path, loader):
+    def _load_inventory_file(self, path, loader, filter_ext=False):
         '''
         helper function, which loads the file and gets the
         basename of the file without the extension
@@ -569,24 +575,26 @@ class VariableManager:
             names.sort()
 
             # do not parse hidden files or dirs, e.g. .svn/
-            paths = [os.path.join(path, name) for name in names if not name.startswith('.')]
+            paths = [os.path.join(path, name) for name in names if not (name.startswith('.') or name.endswith('~'))]
             for p in paths:
-                results = self._load_inventory_file(path=p, loader=loader)
+                results = self._load_inventory_file(path=p, loader=loader, filter_ext=True)
                 if results is not None:
                     data = combine_vars(data, results)
 
         else:
             file_name, ext = os.path.splitext(path)
             data = None
-            if not ext or ext not in C.YAML_FILENAME_EXTENSIONS:
-                for test_ext in C.YAML_FILENAME_EXTENSIONS:
-                    new_path = path + test_ext
-                    if loader.path_exists(new_path):
-                        data = loader.load_from_file(new_path)
-                        break
-            else:
+            if not filter_ext or ext in C.YAML_FILENAME_EXTENSIONS:
                 if loader.path_exists(path):
                     data = loader.load_from_file(path)
+                else:
+                    # try appending yaml extenstion to find valid files
+                    # avoid empty extensions otherwise all files would be tried
+                    for test_ext in (ext for ext in C.YAML_FILENAME_EXTENSIONS if ext):
+                        new_path = path + test_ext
+                        if loader.path_exists(new_path):
+                            data = loader.load_from_file(new_path)
+                            break
 
         rval = AnsibleInventoryVarsData()
         rval.path = path
@@ -620,7 +628,6 @@ class VariableManager:
                 self._host_vars_files[name].append(data)
 
         return data
-
 
     def add_group_vars_file(self, path, loader):
         '''

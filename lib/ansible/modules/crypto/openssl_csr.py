@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: openssl_csr
 author: "Yanis Guenane (@Spredzy)"
-version_added: "2.3"
+version_added: "2.4"
 short_description: Generate OpenSSL Certificate Signing Request (CSR)
 description:
     - "This module allows one to (re)generates OpenSSL certificate signing requests.
@@ -141,23 +141,17 @@ EXAMPLES = '''
 RETURN = '''
 csr:
     description: Path to the generated Certificate Signing Request
-    returned:
-        - changed
-        - success
+    returned: changed or success
     type: string
     sample: /etc/ssl/csr/www.ansible.com.csr
 subject:
     description: A dictionnary of the subject attached to the CSR
-    returned:
-        - changed
-        - success
+    returned: changed or success
     type: list
     sample: {'CN': 'www.ansible.com', 'O': 'Ansible'}
 subjectAltName:
     description: The alternative names this CSR is valid for
-    returned:
-        - changed
-        - success
+    returned: changed or success
     type: string
     sample: 'DNS:www.ansible.com,DNS:m.ansible.com'
 '''

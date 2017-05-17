@@ -170,7 +170,7 @@ Looping over Fileglobs
             src: "{{ item }}"
             dest: "/etc/fooapp/"
             owner: "root"
-            mode: 600
+            mode: 0600
           with_fileglob:
             - "/playbooks/files/fooapp/*"
 
@@ -349,8 +349,7 @@ Do-Until Loops
 
 Sometimes you would want to retry a task until a certain condition is met.  Here's an example::
 
-    - action:
-        shell /usr/bin/foo
+    - shell: /usr/bin/foo
       register: result
       until: result.stdout.find("all systems go") != -1
       retries: 5

@@ -647,7 +647,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         )
 
         def _mock_ismount(path):
-            if path == '/':
+            if path == b'/':
                 return True
             return False
 
@@ -655,7 +655,9 @@ class TestModuleUtilsBasic(ModuleTestCase):
             self.assertEqual(am.find_mount_point('/root/fs/../mounted/path/to/whatever'), '/')
 
         def _mock_ismount(path):
-            if path == '/subdir/mount':
+            if path == b'/subdir/mount':
+                return True
+            if path == b'/':
                 return True
             return False
 

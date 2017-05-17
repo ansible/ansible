@@ -52,7 +52,8 @@ options:
         required: false
         default: None
         description:
-            - The VLAN id of the fake bridge to manage (must be between 0 and 4095)
+            - The VLAN id of the fake bridge to manage (must be between 0 and
+              4095). This parameter is required if I(parent) parameter is set.
     state:
         required: false
         default: "present"
@@ -83,7 +84,9 @@ options:
         required: false
         default: None
         description:
-            - Set a single property on a bridge.
+            - Run set command after bridge configuration. This parameter is
+              non-idempotent, play will always return I(changed) state if
+              present
 '''
 
 EXAMPLES = '''
@@ -109,277 +112,178 @@ EXAMPLES = '''
       bridge-id: br-int
 '''
 
-def truncate_before(value, srch):
-    """ Return content of str before the srch parameters. """
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.pycompat24 import get_exception
 
-    before_index = value.find(srch)
-    if (before_index >= 0):
-        return value[:before_index]
+def _fail_mode_to_str(text):
+    if not text:
+        return None
     else:
-        return value
+        return text.strip()
 
-def _set_to_get(set_cmd, module):
-    """ Convert set command to get command and set value.
-    return tuple (get command, set value)
-    """
+def _external_ids_to_dict(text):
+    if not text:
+        return None
+    else:
+        d = {}
 
-    ##
-    # If set has option: then we want to truncate just before that.
-    set_cmd = truncate_before(set_cmd, " option:")
-    get_cmd = set_cmd.split(" ")
-    (key, value) = get_cmd[-1].split("=")
-    module.log("get commands %s " % key)
-    return (["--", "get"] + get_cmd[:-1] + [key], value)
+        for l in text.splitlines():
+            if l:
+                k, v = l.split('=')
+                d[k] = v
 
+        return d
 
-class OVSBridge(object):
-    """ Interface to ovs-vsctl. """
-    def __init__(self, module):
-        self.module = module
-        self.bridge = module.params['bridge']
-        self.parent = module.params['parent']
-        self.vlan = module.params['vlan']
-        self.state = module.params['state']
-        self.timeout = module.params['timeout']
-        self.fail_mode = module.params['fail_mode']
-        self.set_opt = module.params.get('set', None)
+def map_obj_to_commands(want, have, module):
+    commands = list()
 
-        if self.parent:
-            if self.vlan is None:
-                self.module.fail_json(msg='VLAN id must be set when parent is defined')
-            elif self.vlan < 0 or self.vlan > 4095:
-                self.module.fail_json(msg='Invalid VLAN ID (must be between 0 and 4095)')
+    if module.params['state'] == 'absent':
+        if have:
+            templatized_command = ("%(ovs-vsctl)s -t %(timeout)s del-br"
+                                   " %(bridge)s")
+            command = templatized_command % module.params
+            commands.append(command)
+    else:
+        if have:
+            if want['fail_mode'] != have['fail_mode']:
+                templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                       " set-fail-mode %(bridge)s"
+                                       " %(fail_mode)s")
+                command = templatized_command % module.params
+                commands.append(command)
 
-    def _vsctl(self, command):
-        '''Run ovs-vsctl command'''
-        return self.module.run_command(['ovs-vsctl', '-t',
-                                        str(self.timeout)] + command)
-
-    def exists(self):
-        '''Check if the bridge already exists'''
-        rtc, _, err = self._vsctl(['br-exists', self.bridge])
-        if rtc == 0:  # See ovs-vsctl(8) for status codes
-            return True
-        if rtc == 2:
-            return False
-        self.module.fail_json(msg=err)
-
-    def set(self, set_opt):
-        """ Set attributes on a bridge. """
-        self.module.log("set called %s" % set_opt)
-        if (not set_opt):
-            return False
-
-        (get_cmd, set_value) = _set_to_get(set_opt, self.module)
-        (rtc, out, err) = self._vsctl(get_cmd, False)
-        if rtc != 0:
-            ##
-            # ovs-vsctl -t 5 -- get Interface port external_ids:key
-            # returns failure if key does not exist.
-            out = None
+            if want['external_ids'] != have['external_ids']:
+                templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                       " br-set-external-id %(bridge)s")
+                command = templatized_command % module.params
+                for k, v in iteritems(want['external_ids']):
+                    if (k not in have['external_ids']
+                            or want['external_ids'][k] != have['external_ids'][k]):
+                        command += " " + k + " " + v
+                        commands.append(command)
         else:
-            out = out.strip("\n")
-            out = out.strip('"')
+            templatized_command = ("%(ovs-vsctl)s -t %(timeout)s add-br"
+                                   " %(bridge)s")
+            command = templatized_command % module.params
 
-        if (out == set_value):
-            return False
+            if want['parent']:
+                templatized_command =  "%(parent)s %(vlan)s"
+                command += " " + templatized_command % module.params
 
-        (rtc, out, err) = self._vsctl(["--", "set"] + set_opt.split(" "))
-        if rtc != 0:
-            self.module.fail_json(msg=err)
+            if want['set']:
+                templatized_command = " -- set %(set)s"
+                command += templatized_command % module.params
 
-        return True
+            commands.append(command)
 
-    def add(self):
-        '''Create the bridge'''
-        cmd = ['add-br', self.bridge]
-        if self.parent and self.vlan: # Add fake bridge
-            cmd += [self.parent, str(self.vlan)]
+            if want['fail_mode']:
+                templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                       " set-fail-mode %(bridge)s"
+                                       " %(fail_mode)s")
+                command = templatized_command % module.params
+                commands.append(command)
 
-        if self.set and self.set_opt:
-            cmd += ["--", "set"]
-            cmd += self.set_opt.split(" ")
+            if want['external_ids']:
+                for k, v in iteritems(want['external_ids']):
+                    templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                        " br-set-external-id %(bridge)s")
+                    command = templatized_command % module.params
+                    command += " " + k + " " + v
+                    commands.append(command)
+    return commands
 
-        rtc, _, err = self._vsctl(cmd)
-        if rtc != 0:
-            self.module.fail_json(msg=err)
-        if self.fail_mode:
-            self.set_fail_mode()
 
-    def delete(self):
-        '''Delete the bridge'''
-        rtc, _, err = self._vsctl(['del-br', self.bridge])
-        if rtc != 0:
-            self.module.fail_json(msg=err)
+def map_config_to_obj(module):
+    templatized_command = "%(ovs-vsctl)s -t %(timeout)s list-br"
+    command = templatized_command % module.params
+    rc, out, err = module.run_command(command, check_rc=True)
+    if rc != 0:
+        module.fail_json(msg=err)
 
-    def check(self):
-        '''Run check mode'''
-        changed = False
+    obj = {}
 
-        # pylint: disable=W0703
-        try:
-            if self.state == 'present' and self.exists():
-                if (self.fail_mode and
-                   (self.fail_mode != self.get_fail_mode())):
-                    changed = True
+    if module.params['bridge'] in out.splitlines():
+        obj['bridge'] = module.params['bridge']
 
-                ##
-                # Check if external ids would change.
-                current_external_ids = self.get_external_ids()
-                exp_external_ids = self.module.params['external_ids']
-                if exp_external_ids is not None:
-                    for (key, value) in exp_external_ids:
-                        if ((key in current_external_ids) and
-                           (value != current_external_ids[key])):
-                            changed = True
+        templatized_command = ("%(ovs-vsctl)s -t %(timeout)s br-to-parent"
+                               " %(bridge)s")
+        command = templatized_command % module.params
+        rc, out, err = module.run_command(command, check_rc=True)
+        obj['parent'] = out.strip()
 
-                    ##
-                    # Check if external ids would be removed.
-                    for (key, value) in current_external_ids.items():
-                        if key not in exp_external_ids:
-                            changed = True
+        templatized_command = ("%(ovs-vsctl)s -t %(timeout)s br-to-vlan"
+                               " %(bridge)s")
+        command = templatized_command % module.params
+        rc, out, err = module.run_command(command, check_rc=True)
+        obj['vlan'] = out.strip()
 
-            elif self.state == 'absent' and self.exists():
-                changed = True
-            elif self.state == 'present' and not self.exists():
-                changed = True
-        except Exception:
-            earg = get_exception()
-            self.module.fail_json(msg=str(earg))
+        templatized_command = ("%(ovs-vsctl)s -t %(timeout)s get-fail-mode"
+                               " %(bridge)s")
+        command = templatized_command % module.params
+        rc, out, err = module.run_command(command, check_rc=True)
+        obj['fail_mode'] = _fail_mode_to_str(out)
 
-        # pylint: enable=W0703
-        self.module.exit_json(changed=changed)
+        templatized_command = ("%(ovs-vsctl)s -t %(timeout)s br-get-external-id"
+                               " %(bridge)s")
+        command = templatized_command % module.params
+        rc, out, err = module.run_command(command, check_rc=True)
+        obj['external_ids'] = _external_ids_to_dict(out)
 
-    def run(self):
-        '''Make the necessary changes'''
-        changed = False
-        # pylint: disable=W0703
+    return obj
 
-        try:
-            if self.state == 'absent':
-                if self.exists():
-                    self.delete()
-                    changed = True
-            elif self.state == 'present':
 
-                if not self.exists():
-                    self.add()
-                    changed = True
+def map_params_to_obj(module):
+    obj = {
+        'bridge': module.params['bridge'],
+        'parent': module.params['parent'],
+        'vlan': module.params['vlan'],
+        'fail_mode': module.params['fail_mode'],
+        'external_ids': module.params['external_ids'],
+        'set': module.params['set']
+    }
 
-                ##
-                # If the -- set changed check here and make changes
-                # but this only makes sense when state=present.
-                if (not changed):
-                    changed = self.set(self.set_opt) or changed
-
-                current_fail_mode = self.get_fail_mode()
-                if self.fail_mode and (self.fail_mode != current_fail_mode):
-                    self.module.log( "changing fail mode %s to %s" % (current_fail_mode, self.fail_mode))
-                    self.set_fail_mode()
-                    changed = True
-
-                current_external_ids = self.get_external_ids()
-
-                ##
-                # Change and add existing external ids.
-                exp_external_ids = self.module.params['external_ids']
-                if exp_external_ids is not None:
-                    for (key, value) in exp_external_ids.items():
-                        if ((value != current_external_ids.get(key, None)) and
-                           self.set_external_id(key, value)):
-                            changed = True
-
-                    ##
-                    # Remove current external ids that are not passed in.
-                    for (key, value) in current_external_ids.items():
-                        if ((key not in exp_external_ids) and
-                           self.set_external_id(key, None)):
-                            changed = True
-
-        except Exception:
-            raise
-            earg = get_exception()
-            self.module.fail_json(msg=str(earg))
-        # pylint: enable=W0703
-        self.module.exit_json(changed=changed)
-
-    def get_external_ids(self):
-        """ Return the bridge's external ids as a dict. """
-        results = {}
-        if self.exists():
-            rtc, out, err = self._vsctl(['br-get-external-id', self.bridge])
-            if rtc != 0:
-                self.module.fail_json(msg=err)
-            lines = out.split("\n")
-            lines = [item.split("=") for item in lines if len(item) > 0]
-            for item in lines:
-                results[item[0]] = item[1]
-
-        return results
-
-    def set_external_id(self, key, value):
-        """ Set external id. """
-        if self.exists():
-            cmd = ['br-set-external-id', self.bridge, key]
-            if value:
-                cmd += [value]
-
-            (rtc, _, err) = self._vsctl(cmd)
-            if rtc != 0:
-                self.module.fail_json(msg=err)
-            return True
-        return False
-
-    def get_fail_mode(self):
-        """ Get failure mode. """
-        value = ''
-        if self.exists():
-            rtc, out, err = self._vsctl(['get-fail-mode', self.bridge])
-            if rtc != 0:
-                self.module.fail_json(msg=err)
-            value = out.strip("\n")
-        return value
-
-    def set_fail_mode(self):
-        """ Set failure mode. """
-
-        if self.exists():
-            (rtc, _, err) = self._vsctl(['set-fail-mode', self.bridge,
-                                         self.fail_mode])
-            if rtc != 0:
-                self.module.fail_json(msg=err)
-
+    return obj
 
 # pylint: disable=E0602
 def main():
     """ Entry point. """
-    module = AnsibleModule(
-        argument_spec={
-            'bridge': {'required': True},
-            'parent': {'default': None},
-            'vlan': {'default': None, 'type': 'int'},
-            'state': {'default': 'present', 'choices': ['present', 'absent']},
-            'timeout': {'default': 5, 'type': 'int'},
-            'external_ids': {'default': None, 'type': 'dict'},
-            'fail_mode': {'default': None},
-            'set': {'required': False, 'default': None}
-        },
-        supports_check_mode=True,
-    )
+    argument_spec={
+        'bridge': {'required': True},
+        'parent': {'default': None},
+        'vlan': {'default': None, 'type': 'int'},
+        'state': {'default': 'present', 'choices': ['present', 'absent']},
+        'timeout': {'default': 5, 'type': 'int'},
+        'external_ids': {'default': None, 'type': 'dict'},
+        'fail_mode': {'default': None},
+        'set': {'required': False, 'default': None}
+    }
 
-    bridge = OVSBridge(module)
-    if module.check_mode:
-        bridge.check()
-    else:
-        bridge.run()
+    required_if = [('parent', not None, ('vlan',))]
 
-# pylint: disable=W0614
-# pylint: disable=W0401
-# pylint: disable=W0622
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_if=required_if,
+                           supports_check_mode=True)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+    result = {'changed': False}
+
+    # We add ovs-vsctl to module_params to later build up templatized commands
+    module.params["ovs-vsctl"] = module.get_bin_path("ovs-vsctl", True)
+
+    want = map_params_to_obj(module)
+    have = map_config_to_obj(module)
+
+    commands = map_obj_to_commands(want, have, module)
+    result['commands'] = commands
+
+    if commands:
+        if not module.check_mode:
+            for c in commands:
+                module.run_command(c, check_rc=True)
+        result['changed'] = True
+
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

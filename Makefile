@@ -9,7 +9,7 @@
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
-#   make tests ---------------- run the tests (see test/README.md for requirements)
+#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/dev_guide/testing_units.html for requirements)
 #   make pyflakes, make pep8 -- source code checks
 
 ########################################################
@@ -192,7 +192,7 @@ sdist: clean docs
 sdist_upload: clean docs
 	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
-rpmcommon: docs sdist
+rpmcommon: sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
 	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
@@ -297,8 +297,10 @@ deb-src-upload: deb-src
 	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
 	done
 
-# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
+epub:
+	(cd docs/docsite/; CPUS=$(CPUS) make epub)
 
+# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 

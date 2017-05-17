@@ -103,33 +103,32 @@ EXAMPLES = '''
 '''
 
 
-def map_obj_to_command(want, have, module):
+def map_obj_to_commands(want, have, module):
     """ Define ovs-vsctl command to meet desired state """
-    command = None
+    commands = list()
 
     if module.params['state'] == 'absent':
         if 'key' in have.keys():
             templatized_command = "%(ovs-vsctl)s -t %(timeout)s remove %(table)s %(record)s " \
                                   "%(col)s %(key)s=%(value)s"
-            command = templatized_command % module.params
+            commands.append(templatized_command % module.params)
     else:
         if 'key' not in have.keys():
             templatized_command = "%(ovs-vsctl)s -t %(timeout)s add %(table)s %(record)s " \
                                   "%(col)s %(key)s=%(value)s"
-            command = templatized_command % module.params
+            commands.append(templatized_command % module.params)
         elif want['value'] != have['value']:
             templatized_command = "%(ovs-vsctl)s -t %(timeout)s set %(table)s %(record)s " \
                                   "%(col)s:%(key)s=%(value)s"
-            command = templatized_command % module.params
+            commands.append(templatized_command % module.params)
 
-    return command
+    return commands
 
 
 def map_config_to_obj(module):
     templatized_command = "%(ovs-vsctl)s -t %(timeout)s list %(table)s %(record)s"
     command = templatized_command % module.params
     rc, out, err = module.run_command(command, check_rc=True)
-
     if rc != 0:
         module.fail_json(msg=err)
 
@@ -137,7 +136,7 @@ def map_config_to_obj(module):
 
     col_value = match.group(3)
     col_value_to_dict = {}
-    if match.group(3):
+    if col_value and col_value != '{}':
         for kv in col_value[1:-1].split(','):
             k, v = kv.split('=')
             col_value_to_dict[k.strip()] = v.strip()
@@ -191,12 +190,13 @@ def main():
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    command = map_obj_to_command(want, have, module)
-    result['command'] = command
+    commands = map_obj_to_commands(want, have, module)
+    result['commands'] = commands
 
-    if command:
+    if commands:
         if not module.check_mode:
-            module.run_command(command, check_rc=True)
+            for c in commands:
+                module.run_command(c, check_rc=True)
         result['changed'] = True
 
     module.exit_json(**result)

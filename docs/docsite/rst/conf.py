@@ -28,8 +28,8 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
-VERSION='2.2'
-AUTHOR='Ansible, Inc'
+VERSION = '2.4'
+AUTHOR = 'Ansible, Inc'
 
 
 # General configuration
@@ -38,7 +38,7 @@ AUTHOR='Ansible, Inc'
 # Add any Sphinx extension module names here, as strings.
 # They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx']
 
 # Later on, add 'sphinx.ext.viewcode' to the list if you want to have
 # colorized code generated too for references.
@@ -55,7 +55,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible Documentation'
-copyright = "2013-2016 Ansible, Inc"
+copyright = "2013-2017 Ansible, Inc"
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -203,8 +203,7 @@ htmlhelp_basename = 'Poseidodoc'
 # (source start file, target name, title, author, document class
 # [howto/manual]).
 latex_documents = [
-    ('index', 'ansible.tex', 'Ansible 1.2 Documentation',
-   AUTHOR, 'manual'),
+    ('index', 'ansible.tex', 'Ansible 2.2 Documentation', AUTHOR, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -225,3 +224,7 @@ latex_documents = [
 #latex_use_modindex = True
 
 autoclass_content = 'both'
+
+intersphinx_mapping = {'python': ('https://docs.python.org/2', (None, '../python2-2.7.13.inv')),
+                       'python3': ('https://docs.python.org/3', (None, '../python3-3.6.1.inv')),
+                       'jinja2': ('http://jinja.pocoo.org/docs', (None, 'jinja2-2.9.6.inv'))}

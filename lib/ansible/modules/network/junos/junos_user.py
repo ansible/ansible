@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: junos_user
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage local user accounts on Juniper devices
+short_description: Manage local user accounts on Juniper JUNOS devices
 description:
   - This module manages locally configured user accounts on remote
     network devices running the JUNOS operating system.  It provides
@@ -116,17 +116,20 @@ RETURN = """
 """
 from functools import partial
 
-from ncclient.xml_ import new_ele, sub_ele, to_xml
+from xml.etree.ElementTree import Element, SubElement, tostring
 
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import load_config
 from ansible.module_utils.six import iteritems
 
 ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
+USE_PERSISTENT_CONNECTION = True
+
 
 def map_obj_to_ele(want):
-    element = new_ele('system')
-    login = sub_ele(element, 'login', {'replace': 'replace'})
+    element = Element('system')
+    login = SubElement(element, 'login', {'replace': 'replace'})
 
     for item in want:
         if item['state'] != 'present':
@@ -134,22 +137,23 @@ def map_obj_to_ele(want):
         else:
             operation = 'replace'
 
-        user = sub_ele(login, 'user', {'operation': operation})
+        user = SubElement(login, 'user', {'operation': operation})
 
-        sub_ele(user, 'name').text = item['name']
+        SubElement(user, 'name').text = item['name']
 
         if operation == 'replace':
-            sub_ele(user, 'class').text = item['role']
+            SubElement(user, 'class').text = item['role']
 
             if item.get('full_name'):
-                sub_ele(user, 'full-name').text = item['full_name']
+                SubElement(user, 'full-name').text = item['full_name']
 
             if item.get('sshkey'):
-                auth = sub_ele(user, 'authentication')
-                ssh_rsa = sub_ele(auth, 'ssh-rsa')
-                key = sub_ele(ssh_rsa, 'name').text = item['sshkey']
+                auth = SubElement(user, 'authentication')
+                ssh_rsa = SubElement(auth, 'ssh-rsa')
+                key = SubElement(ssh_rsa, 'name').text = item['sshkey']
 
     return element
+
 
 def get_param_value(key, item, module):
     # if key doesn't exist in the item, get it from module.params
@@ -169,6 +173,7 @@ def get_param_value(key, item, module):
         validator(value, module)
 
     return value
+
 
 def map_params_to_obj(module):
     users = module.params['users']
@@ -229,11 +234,16 @@ def main():
 
     mutually_exclusive = [('users', 'name')]
 
+    argument_spec.update(junos_argument_spec)
+
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    result = {'changed': False}
+    warnings = list()
+    check_args(module, warnings)
+
+    result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
     ele = map_obj_to_ele(want)
@@ -242,7 +252,7 @@ def main():
     if module.params['purge']:
         kwargs['action'] = 'replace'
 
-    diff = load_config(module, ele, **kwargs)
+    diff = load_config(module, tostring(ele), warnings, **kwargs)
 
     if diff:
         result.update({

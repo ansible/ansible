@@ -18,6 +18,14 @@
         dest: "/etc/pki/ca-trust/source/anchors/ansible.pem"
       when: ansible_os_family == 'RedHat'
 
+    - name: Get client cert/key
+      get_url:
+        url: "http://ansible.http.tests/{{ item }}"
+        dest: "{{ output_dir }}/{{ item }}"
+      with_items:
+        - client.pem
+        - client.key
+
     - name: Suse - Retrieve test cacert
       get_url:
         url: "http://ansible.http.tests/cacert.pem"

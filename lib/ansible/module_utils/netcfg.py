@@ -67,6 +67,10 @@ class ConfigLine(object):
         return _obj_to_text(self._children)
 
     @property
+    def child_objs(self):
+        return self._children
+
+    @property
     def parents(self):
         return _obj_to_text(self._parents)
 
@@ -150,6 +154,9 @@ class NetworkConfig(object):
 
     def __str__(self):
         return '\n'.join([c.raw for c in self.items])
+
+    def __len__(self):
+        return len(self._items)
 
     def load(self, s):
         self._items = self.parse(s)
@@ -364,22 +371,18 @@ class NetworkConfig(object):
 
 class CustomNetworkConfig(NetworkConfig):
 
+    def items_text(self):
+        return [item.text for item in self.items]
+
     def expand_section(self, configobj, S=None):
         if S is None:
             S = list()
         S.append(configobj)
-        for child in configobj.children:
+        for child in configobj.child_objs:
             if child in S:
                 continue
             self.expand_section(child, S)
         return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
 
     def to_block(self, section):
         return '\n'.join([item.raw for item in section])
@@ -398,55 +401,3 @@ class CustomNetworkConfig(NetworkConfig):
         if not obj:
             raise ValueError('path does not exist in config')
         return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-

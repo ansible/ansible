@@ -53,12 +53,14 @@ class ActionModule(_ActionModule):
         pc = copy.deepcopy(self._play_context)
         pc.connection = 'network_cli'
         pc.network_os = 'vyos'
+        pc.remote_addr = provider['host'] or self._play_context.remote_addr
         pc.port = provider['port'] or self._play_context.port or 22
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
         pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
         pc.timeout = provider['timeout'] or self._play_context.timeout
 
+        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = self._get_socket_path(pc)
@@ -67,8 +69,12 @@ class ActionModule(_ActionModule):
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
             rc, out, err = connection.exec_command('open_shell()')
-            if rc != 0:
-                return {'failed': True, 'msg': 'unable to connect to control socket'}
+            display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
+            if not rc == 0:
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
+                        'rc': rc}
         else:
             # make sure we are in the right cli context which should be
             # enable mode and not config module
@@ -80,7 +86,8 @@ class ActionModule(_ActionModule):
 
         task_vars['ansible_socket'] = socket_path
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)

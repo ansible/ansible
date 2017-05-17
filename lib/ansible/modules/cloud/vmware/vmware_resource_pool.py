@@ -135,7 +135,7 @@ EXAMPLES = '''
 
 RETURN = """
 instance:
-    descripton: metadata about the new resource pool
+    description: metadata about the new resource pool
     returned: always
     type: dict
     sample: None

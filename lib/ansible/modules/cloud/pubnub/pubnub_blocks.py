@@ -227,6 +227,7 @@ module_cache:
   used few times it is better to pass cached data to next module calls to speed
   up process."
   type: dict
+  returned: always
 '''
 import copy
 import os

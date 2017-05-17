@@ -4,7 +4,6 @@ from __future__ import absolute_import, print_function
 
 import ast
 import os
-import uuid
 
 from lib.util import (
     display,
@@ -110,7 +109,7 @@ def get_python_module_utils_imports(compile_targets):
         display.info('%s reports imports from parent package %s' % (virtual_util, parent_package), verbosity=6)
 
     for module_util in sorted(imports):
-        if not len(imports[module_util]):
+        if not imports[module_util]:
             display.warning('No imports found which use the "%s" module_util.' % module_util)
 
     return imports
@@ -156,11 +155,10 @@ def extract_python_module_utils_imports(path, module_utils):
         try:
             tree = ast.parse(code)
         except SyntaxError as ex:
-            # Setting the full path to the filename results in only the filename being given for str(ex).
-            # As a work-around, set the filename to a UUID and replace it in the final string output with the actual path.
-            ex.filename = str(uuid.uuid4())
-            error = str(ex).replace(ex.filename, path)
-            raise ApplicationError('AST parse error: %s' % error)
+            # Treat this error as a warning so tests can be executed as best as possible.
+            # The compile test will detect and report this syntax error.
+            display.warning('%s:%s Syntax error extracting module_utils imports: %s' % (path, ex.lineno, ex.msg))
+            return set()
 
         finder = ModuleUtilFinder(path, module_utils)
         finder.visit(tree)
@@ -239,4 +237,6 @@ class ModuleUtilFinder(ast.NodeVisitor):
         if self.path.startswith('test/'):
             return  # invalid imports in tests are ignored
 
-        raise ApplicationError('%s:%d Invalid module_utils import: %s' % (self.path, line_number, import_name))
+        # Treat this error as a warning so tests can be executed as best as possible.
+        # This error should be detected by unit or integration tests.
+        display.warning('%s:%d Invalid module_utils import: %s' % (self.path, line_number, import_name))

@@ -201,7 +201,7 @@ def changemaster(cursor, chm, chm_params):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),
@@ -290,7 +290,7 @@ def main():
         module.exit_json(**status)
 
     elif mode in "changemaster":
-        chm=[]
+        chm = []
         chm_params = {}
         result = {}
         if master_host:
@@ -347,7 +347,7 @@ def main():
         except Exception:
             e = get_exception()
             module.fail_json(msg='%s. Query == CHANGE MASTER TO %s' % (e, chm))
-        result['changed']=True
+        result['changed'] = True
         module.exit_json(**result)
     elif mode in "startslave":
         started = start_slave(cursor)

@@ -78,6 +78,7 @@ proposed:
     sample: {"portchannel": "100", "vpc": "10"}
 existing:
     description: k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {}
 end_state:
@@ -101,7 +102,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':

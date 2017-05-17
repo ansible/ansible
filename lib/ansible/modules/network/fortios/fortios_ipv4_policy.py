@@ -29,7 +29,7 @@ DOCUMENTATION = """
 module: fortios_ipv4_policy
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
-short_description: Manage fortios firewall IPv4 policy objects
+short_description: Manage IPv4 policy objects on Fortinet FortiOS firewall devices
 description:
   - This module provides management of firewall IPv4 policies on FortiOS devices.
 extends_documentation_fragment: fortios
@@ -117,6 +117,18 @@ options:
   application_list:
     description:
       - Specifies Application Control name.
+  logtraffic:
+    version_added: "2.4"
+    description:
+      - Logs sessions that matched policy.
+    default: utm
+    choices: ['disable', 'utm', 'all']
+  logtraffic_start:
+    version_added: "2.4"
+    description:
+      - Logs begining of session as well.
+    default: false
+    choices: ["true", "false"]
   comment:
     description:
       - free text to describe policy.
@@ -131,12 +143,13 @@ EXAMPLES = """
     username: admin
     password: password
     id: 42
-    srcaddr: internal_network
-    dstaddr: all
+    src_addr: internal_network
+    dst_addr: all
     service: dns
     nat: True
     state: present
     policy_action: accept
+    logtraffic: disable
 
 - name: Public Web
   fortios_ipv4_policy:
@@ -144,8 +157,8 @@ EXAMPLES = """
     username: admin
     password: password
     id: 42
-    srcaddr: all
-    dstaddr: webservers
+    src_addr: all
+    dst_addr: webservers
     services:
       - http
       - https
@@ -197,6 +210,8 @@ def main():
         webfilter_profile         = dict(type='str'),
         ips_sensor                = dict(type='str'),
         application_list          = dict(type='str'),
+        logtraffic                = dict(choices=['disable','all','utm'], default='utm'),
+        logtraffic_start          = dict(type='bool', default=False),
     )
 
     #merge global required_if & argument_spec from module_utils/fortios.py
@@ -225,6 +240,11 @@ def main():
             module.fail_json(msg='Poolname param requires NAT to be true.')
         if module.params['fixedport']:
             module.fail_json(msg='Fixedport param requires NAT to be true.')
+
+    #log options
+    if module.params['logtraffic_start']:
+        if not module.params['logtraffic'] == 'all':
+            module.fail_json(msg='Logtraffic_start param requires logtraffic to be set to "all".')
 
     #id must be str(int) for pyFG to work
     policy_id = str(module.params['id'])
@@ -259,6 +279,14 @@ def main():
 
         # action
         new_policy.set_param('action', '%s' % (module.params['policy_action']))
+
+        #logging
+        new_policy.set_param('logtraffic', '%s' % (module.params['logtraffic']))
+        if module.params['logtraffic'] == 'all':
+            if module.params['logtraffic_start']:
+                new_policy.set_param('logtraffic-start', 'enable')
+            else:
+                new_policy.set_param('logtraffic-start', 'disable')
 
         # Schedule
         new_policy.set_param('schedule', '%s' % (module.params['schedule']))

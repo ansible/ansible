@@ -160,7 +160,7 @@ bwc_policy:
 connection_limit:
     description: The new connection limit for the route domain
     returned: changed
-    type: integer
+    type: int
     sample: 100
 flow_eviction_policy:
     description: The new eviction policy to use with this route domain

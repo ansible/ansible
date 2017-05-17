@@ -506,9 +506,27 @@ class Base(with_metaclass(BaseMeta, object)):
         Dumps all attributes to a dictionary
         '''
         attrs = dict()
-        for name in self._valid_attrs.keys():
-            attrs[name] = getattr(self, name)
+        for (name, attribute) in iteritems(self._valid_attrs):
+            attr = getattr(self, name)
+            if attribute.isa == 'class' and attr is not None and hasattr(attr, 'serialize'):
+                attrs[name] = attr.serialize()
+            else:
+                attrs[name] = attr
         return attrs
+
+    def from_attrs(self, attrs):
+        '''
+        Loads attributes from a dictionary
+        '''
+        for (attr, value) in iteritems(attrs):
+            if attr in self._valid_attrs:
+                attribute = self._valid_attrs[attr]
+                if attribute.isa == 'class' and isinstance(value, dict):
+                    obj = attribute.class_type()
+                    obj.deserialize(value)
+                    setattr(self, attr, obj)
+                else:
+                    setattr(self, attr, value)
 
     def serialize(self):
         '''

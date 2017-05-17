@@ -1,7 +1,7 @@
 Frequently Asked Questions
 ==========================
 
-Here are some commonly-asked questions and their answers.
+Here are some commonly asked questions and their answers.
 
 
 .. _set_environment:
@@ -9,7 +9,7 @@ Here are some commonly-asked questions and their answers.
 How can I set the PATH or any other environment variable for a task or entire playbook?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Setting environment variables can be done with the `environment` keyword. It can be used at task or play level::
+Setting environment variables can be done with the `environment` keyword. It can be used at the task or the play level::
 
     environment:
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
@@ -111,18 +111,17 @@ How do I handle python pathing not having a Python 2.X in /usr/bin/python on a r
 While you can write ansible modules in any language, most ansible modules are written in Python, and some of these
 are important core ones.
 
-By default Ansible assumes it can find a /usr/bin/python on your remote system that is a 2.X version of Python, specifically
+By default, Ansible assumes it can find a /usr/bin/python on your remote system that is a 2.X version of Python, specifically
 2.6 or higher.
 
-Setting of an inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
+Setting the inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
 used when executing python modules.   Thus, you can point to any python you want on the system if /usr/bin/python on your
 system does not point to a Python 2.X interpreter.  
 
 Some Linux operating systems, such as Arch, may only have Python 3 installed by default.  This is not sufficient and you will
-get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same
-language as Python 2.  Ansible modules currently need to support older Pythons for users that  still have Enterprise Linux 5 deployed, so they are not yet ported to run under Python 3.0.  This is not a problem though as you can just install Python 2 also on a managed host.
-
-Python 3.0 support will likely be addressed at a later point in time when usage becomes more mainstream.
+get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same language as Python 2.  Python 3
+support is being worked on but some Ansible modules are not yet ported to run under Python 3.0.  This is not a problem though
+as you can just install Python 2 also on a managed host.
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
 
@@ -174,7 +173,7 @@ This will print out a dictionary of all of the facts that are available for that
 How do I see all the inventory vars defined for my host?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-You can see the resulting vars you define in inventory running the following command:
+By running the following command, you can see vars resulting from what you've defined in the inventory:
 
 .. code-block:: shell-session
 
@@ -230,7 +229,7 @@ How do I access a variable of the first host in a group?
 
 What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too.  Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-was static and predictable.  (If you are using :doc:`tower`, it will use database order, so this isn't a problem even if you are using cloud
+is static and predictable.  (If you are using :doc:`tower`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick:
@@ -253,7 +252,7 @@ Notice how we interchanged the bracket syntax for dots -- that can be done anywh
 How do I copy files recursively onto a target host?
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The "copy" module has a recursive parameter, though if you want to do something more efficient for a large number of files, take a look at the "synchronize" module instead, which wraps rsync.  See the module index for info on both of these modules.
+The "copy" module has a recursive parameter.  However, take a look at the "synchronize" module if you want to do something more efficient for a large number of files.  The "synchronize" module wraps rsync.  See the module index for info on both of these modules.
 
 .. _shell_env:
 
@@ -261,7 +260,7 @@ How do I access shell environment variables?
 ++++++++++++++++++++++++++++++++++++++++++++
 
 If you just need to access existing variables, use the 'env' lookup plugin.  For example, to access the value of the HOME
-environment variable on management machine::
+environment variable on the management machine::
 
    ---
    # ...
@@ -270,7 +269,7 @@ environment variable on management machine::
 
 If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Ansible 1.4 will also make remote environment variables available via facts in the 'ansible_env' variable:
+Starting with Ansible 1.4, remote environment variables are available via facts in the 'ansible_env' variable:
 
 .. code-block:: jinja
 
@@ -326,7 +325,7 @@ and easy to use. See :doc:`tower`.
 How do I submit a change to the documentation?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
-Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docsite/README.md>`_.  Thanks!
+Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docs/docsite/README.md>`_.  Thanks!
 
 .. _keep_secret_data:
 
@@ -365,7 +364,7 @@ A steadfast rule is 'always use {{ }} except when `when:`'.
 Conditionals are always run through Jinja2 as to resolve the expression,
 so `when:`, `failed_when:` and `changed_when:` are always templated and you should avoid adding `{{}}`.
 
-In most other cases you should always use the brackets, even if previouslly you could use variables without specifying (like `with_` clauses),
+In most other cases you should always use the brackets, even if previously you could use variables without specifying (like `with_` clauses),
 as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this:

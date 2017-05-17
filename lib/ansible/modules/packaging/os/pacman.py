@@ -96,7 +96,7 @@ RETURN = '''
 packages:
     description: a list of packages that have been changed
     returned: when upgrade is set to yes
-    type: list of strings
+    type: list
     sample: ['package', 'other-package']
 '''
 
@@ -211,7 +211,7 @@ def upgrade(module, pacman_path):
     }
 
     if rc == 0:
-        regex = re.compile('(\w+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        regex = re.compile('([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
         b = []
         a = []
         for p in data:
@@ -258,15 +258,15 @@ def remove_packages(module, pacman_path, packages):
         cmd = "%s -%s %s --noconfirm --noprogressbar" % (pacman_path, args, package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
+        if rc != 0:
+            module.fail_json(msg="failed to remove %s" % (package))
+
         if module._diff:
             d = stdout.split('\n')[2].split(' ')[2:]
             for i, pkg in enumerate(d):
                 d[i] = re.sub('-[0-9].*$', '', d[i].split('/')[-1])
                 diff['before'] += "%s\n" % pkg
             data.append('\n'.join(d))
-
-        if rc != 0:
-            module.fail_json(msg="failed to remove %s" % (package))
 
         remove_c += 1
 
@@ -305,30 +305,32 @@ def install_packages(module, pacman_path, state, packages, package_files):
     if to_install_repos:
         cmd = "%s -S %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_repos))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+
+        if rc != 0:
+            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
+
         data = stdout.split('\n')[3].split(' ')[2:]
         data = [ i for i in data if i != '' ]
         for i, pkg in enumerate(data):
             data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
             if module._diff:
                 diff['after'] += "%s\n" % pkg
-
-        if rc != 0:
-            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
 
         install_c += len(to_install_repos)
 
     if to_install_files:
         cmd = "%s -U %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_files))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+
+        if rc != 0:
+            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
+
         data = stdout.split('\n')[3].split(' ')[2:]
         data = [ i for i in data if i != '' ]
         for i, pkg in enumerate(data):
             data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
             if module._diff:
                 diff['after'] += "%s\n" % pkg
-
-        if rc != 0:
-            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
 
         install_c += len(to_install_files)
 

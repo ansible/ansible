@@ -219,7 +219,7 @@ RETURN Block
 The RETURN section documents what the module returns, and is required for all new modules.
 
 For each value returned, provide a ``description``, in what circumstances the value is ``returned``,
-the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module::
+the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module:
 
 
 The following fields can be used and are all required unless specified otherwise.
@@ -350,3 +350,5 @@ To test your documentation against your ``argument_spec`` you can use ``validate
 
    If you're having a problem with the syntax of your YAML you can
    validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
+
+For more information in testing, including how to add unit and integration tests, see :doc:`testing`.
