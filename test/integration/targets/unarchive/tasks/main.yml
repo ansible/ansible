@@ -31,8 +31,7 @@
 
 - name: prep our file
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
-- name: sleep 1
-  shell: "sleep 1"
+
 - name: prep a tar file
   shell: tar cvf test-unarchive.tar foo-unarchive.txt chdir={{output_dir}}
 
@@ -41,8 +40,7 @@
 
 - name: prep a chmodded file for zip
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive-777.txt mode=0777
-- name: sleep 2
-  shell: "sleep 2"
+
 - name: prep a windows permission file for our zip
   copy: src=foo.txt dest={{output_dir}}/FOO-UNAR.TXT
   
@@ -145,7 +143,6 @@
 - name: unarchive a zip file
   unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
   register: unarchive03
-
 
 - name: verify that the file was marked as changed
   assert:
