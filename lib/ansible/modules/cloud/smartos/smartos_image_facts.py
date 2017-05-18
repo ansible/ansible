@@ -53,7 +53,6 @@ RETURN = '''
 '''
 
 import json
-
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -101,11 +100,9 @@ def main():
 
     image_facts = ImageFacts(module)
 
-    data = {}
-    data['smartos_images'] = image_facts.return_all_installed_images()
+    data = dict(smartos_images=image_facts.return_all_installed_images())
 
     module.exit_json(ansible_facts=data)
-
 
 if __name__ == '__main__':
     main()
