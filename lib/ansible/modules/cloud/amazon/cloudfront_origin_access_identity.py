@@ -21,9 +21,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: cloudfront_origin_access_identity
-short_description: create, update and delete origin access identities for a cloudfront distribution.
+short_description: create, update and delete origin access identities for a
+                   cloudfront distribution.
 description:
-    - Allows for easy creation, updating and deletion of origin access identities.
+    - Allows for easy creation, updating and deletion of origin access
+      identities.
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
@@ -87,7 +89,7 @@ location:
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3
 from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
-from ansible.module_utils.cloudfront import CloudFrontHelpers
+import ansible.module_utils.cloudfront as helpers
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.basic import AnsibleModule
 from botocore.signers import CloudFrontSigner
@@ -102,7 +104,7 @@ except ImportError:
     pass
 
 
-class CloudFrontOriginAccessIdentityServiceManager:
+class CloudFrontOriginAccessIdentityServiceManager(object):
     """
     Handles cloudfront origin access identity service calls to aws
     """
@@ -165,14 +167,13 @@ class CloudFrontOriginAccessIdentityServiceManager:
                 str(e) + "\n" + traceback.format_exc())
 
 
-class CloudFrontOriginAccessIdentityValidationManager:
+class CloudFrontOriginAccessIdentityValidationManager(object):
     """
     Manages Cloudfront Origin Access Identities
     """
 
     def __init__(self, module):
         self.module = module
-        self.__helpers = CloudFrontHelpers()
         self.__cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
 
     def get_etag_from_origin_access_identity_id(self, origin_access_identity_id):
@@ -201,7 +202,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
     service_mgr = CloudFrontOriginAccessIdentityServiceManager(module)
     validation_mgr = CloudFrontOriginAccessIdentityValidationManager(module)
-    helpers = CloudFrontHelpers()
 
     state = module.params.get('state')
     caller_reference = module.params.get('caller_reference')
