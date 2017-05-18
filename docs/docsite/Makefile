@@ -10,7 +10,7 @@ endif
 
 # Assume we are building documentation for all modules unless specified
 # otherwise via environment variable.
-MODULES ?= all
+MODULES ?= ""
 
 all: docs
 

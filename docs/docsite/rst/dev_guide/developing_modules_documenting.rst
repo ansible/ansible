@@ -341,9 +341,9 @@ built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.
 In order to limit module documentation building to the module you are working on
 (and therefore speeding the build process by quite a bit), run the command:
 ``MODULES=$MODULENAME make webdocs``. The ``MODULES`` environment variable
-accepts a comma-separated list of module names, or special keywords ``all`` (for
-building documentation for all modules) and ``none`` (for skipping the module
-documentation building process entirely).
+accepts a comma-separated list of module names. In order to skip building
+documentation for all modules, specify non-existing module name, for example
+``MODULES=none make webdocs``.
 
 To test your documentation against your ``argument_spec`` you can use ``validate-modules``. Note that this option isn't currently enabled in Shippable due to the time it takes to run.
 
