@@ -30,8 +30,8 @@ Prerequisites
 =============
 
 The tests will assume things like hg, svn, and git are installed and in path.  Some tests
-such as those for Amazon Web Services need separate definitions (see later in this
-document).
+(such as those for Amazon Web Services) need separate definitions, which will be covered
+later in this document.
 
 (Complete list pending)
 
@@ -144,8 +144,7 @@ To test with Python 3 use the following images:
 Legacy Cloud Tests
 ==================
 
-Some of the cloud tests run as normal integration tests.  Other ones
-currently run in an older way.  See the
+Some of the cloud tests run as normal integration tests, and others run as legacy tests; see the
 :doc:`testing_integration_legacy` page for more information.
 
 
@@ -160,20 +159,13 @@ tests now use the file test/integration/cloud-config-aws.yml
 IAM policies for AWS
 ====================
 
-In order to run the tests in an AWS account ansible needs fairly wide ranging powers which
-can be provided to a dedicated user.  These need to be configured in advance of running
-the test.
+Ansible needs fairly wide ranging powers to run the tests in an AWS account.  This rights can be provided to a dedicated user. These need to be configured before running the test.
 
 testing-iam-policy.json.j2
 --------------------------
 
 The testing-iam-policy.json.j2 file contains a policy which can be given to the user
-running the tests to minimize the rights of that user.  Please note that this does not
-fully restrict the user; The user has wide privileges for viewing account definitions and
-is also able to manage some resources that are not related to testing (e.g. AWS lambdas
-with different names) primarily due to the limitations of the Amazon ARN notation.  At the
-very least the policy limits the user to one region, however tests should not be run in a
-primary production account in any case.
+running the tests to minimize the rights of that user.  Please note that while this policy does limit the user to one region, this does not fully restrict the user (primarily due to the limitations of the Amazon ARN notation). The user will still have wide privileges for viewing account definitions, and will also able to manage some resources that are not related to testing (for example, AWS lambdas with different names).  Tests should not be run in a primary production account in any case.
 
 Other Definitions required
 --------------------------
