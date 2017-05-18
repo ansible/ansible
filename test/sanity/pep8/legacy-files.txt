@@ -23,11 +23,6 @@ lib/ansible/executor/process/worker.py
 lib/ansible/executor/stats.py
 lib/ansible/executor/task_executor.py
 lib/ansible/executor/task_queue_manager.py
-lib/ansible/galaxy/__init__.py
-lib/ansible/galaxy/api.py
-lib/ansible/galaxy/login.py
-lib/ansible/galaxy/role.py
-lib/ansible/galaxy/token.py
 lib/ansible/inventory/__init__.py
 lib/ansible/inventory/dir.py
 lib/ansible/inventory/expand_hosts.py
