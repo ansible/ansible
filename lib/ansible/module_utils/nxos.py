@@ -56,6 +56,7 @@ nxos_argument_spec = {
 
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {
+    'transport': 'cli',
     'timeout': 10
 }
 
