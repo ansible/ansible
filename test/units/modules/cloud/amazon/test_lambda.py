@@ -272,3 +272,21 @@ def test_warn_region_not_specified():
             except AnsibleFailJson as e:
                 result = e.args[0]
                 assert("region must be specified" in result['msg'])
+
+def test_no_role_specified():
+
+    # Test with 'role' key removed from base_module_args
+    module_args = dict((k, v) for (k, v) in base_module_args.items() if k != 'role')
+    set_module_args(module_args)
+
+    get_aws_connection_info_double=Mock(return_value=(None,None,None))
+
+    with patch.object(lda, 'get_aws_connection_info', get_aws_connection_info_double):
+        with patch.object(basic.AnsibleModule, 'fail_json', fail_json_double):
+            try:
+                lda.main()
+            except AnsibleFailJson as e:
+                result = e.args[0]
+                assert("missing required arguments: role" in result['msg'])
+
+
