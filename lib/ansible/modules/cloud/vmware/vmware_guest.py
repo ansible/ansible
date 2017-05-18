@@ -140,7 +140,8 @@ options:
    networks:
         description:
           - Network to use should include C(name) or C(vlan) entry
-          - Add an optional C(ip) and C(netmask) for network configuration
+          - 'Add an optional C(ip) and C(netmask) for static network configuration (this implies C(type: static))'
+          - Add an optional C(type) for specifying C(dhcp) or C(static) IP assignment
           - Add an optional C(gateway) entry to configure a gateway
           - Add an optional C(mac) entry to customize mac address
           - Add an optional C(dns_servers) or C(domain) entry per interface (Windows)
@@ -297,7 +298,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs
+from ansible.module_utils.vmware import connect_to_api, gather_vm_facts, get_all_objs
 
 try:
     import json
@@ -312,6 +313,30 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     pass
+
+
+def find_obj(content, vimtype, name, first=True):
+    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
+    obj_list = container.view
+    container.Destroy()
+
+    # Backward compatible with former get_obj() function
+    if name is None:
+        if obj_list:
+            return obj_list[0]
+        return None
+
+    # Select the first match
+    if first is True:
+        for obj in obj_list:
+            if obj.name == name:
+                return obj
+
+        # If no object found, return None
+        return None
+
+    # Return all matching objects if needed
+    return [obj for obj in obj_list if obj.name == name]
 
 
 class PyVmomiDeviceHelper(object):
@@ -748,29 +773,38 @@ class PyVmomiHelper(object):
         adaptermaps = []
         for network in self.params['networks']:
 
+            guest_map = vim.vm.customization.AdapterMapping()
+            guest_map.adapter = vim.vm.customization.IPSettings()
+
             if 'ip' in network and 'netmask' in network:
-                guest_map = vim.vm.customization.AdapterMapping()
-                guest_map.adapter = vim.vm.customization.IPSettings()
+                if 'type' in network and network['type'] != 'static':
+                    self.module.fail_json(msg='Static IP information provided for network "%(name)s", but "type" is set to "%(type)s".' % network)
                 guest_map.adapter.ip = vim.vm.customization.FixedIp()
                 guest_map.adapter.ip.ipAddress = str(network['ip'])
                 guest_map.adapter.subnetMask = str(network['netmask'])
+            elif 'type' in network and network['type'] == 'static':
+                self.module.fail_json(msg='Network "%(name)s" was set to type "%(type)s", but "ip" and "netmask" are missing.' % network)
+            elif 'type' in network and network['type'] == 'dhcp':
+                guest_map.adapter.ip = vim.vm.customization.DhcpIpGenerator()
+            else:
+                self.module.fail_json(msg='Network "%(name)s" was set to unknown type "%(type)s".' % network)
 
-                if 'gateway' in network:
-                    guest_map.adapter.gateway = network['gateway']
+            if 'gateway' in network:
+                guest_map.adapter.gateway = network['gateway']
 
-                # On Windows, DNS domain and DNS servers can be set by network interface
-                # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.IPSettings.html
-                if 'domain' in network:
-                    guest_map.adapter.dnsDomain = network['domain']
-                elif 'domain' in self.params['customization']:
-                    guest_map.adapter.dnsDomain = self.params['customization']['domain']
+            # On Windows, DNS domain and DNS servers can be set by network interface
+            # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.IPSettings.html
+            if 'domain' in network:
+                guest_map.adapter.dnsDomain = network['domain']
+            elif 'domain' in self.params['customization']:
+                guest_map.adapter.dnsDomain = self.params['customization']['domain']
 
-                if 'dns_servers' in network:
-                    guest_map.adapter.dnsServerList = network['dns_servers']
-                elif 'dns_servers' in self.params['customization']:
-                    guest_map.adapter.dnsServerList = self.params['customization']['dns_servers']
+            if 'dns_servers' in network:
+                guest_map.adapter.dnsServerList = network['dns_servers']
+            elif 'dns_servers' in self.params['customization']:
+                guest_map.adapter.dnsServerList = self.params['customization']['dns_servers']
 
-                adaptermaps.append(guest_map)
+            adaptermaps.append(guest_map)
 
         # Global DNS settings
         globalip = vim.vm.customization.GlobalIPSettings()
@@ -851,7 +885,8 @@ class PyVmomiHelper(object):
             ident.hostName.name = str(self.params['customization'].get('hostname', self.params['name']))
 
         self.customspec = vim.vm.customization.Specification()
-        self.customspec.nicSettingMap = adaptermaps
+        if adaptermaps:
+            self.customspec.nicSettingMap = adaptermaps
         self.customspec.globalIPSettings = globalip
         self.customspec.identity = ident
 
@@ -1118,7 +1153,16 @@ class PyVmomiHelper(object):
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
 
-        if len(self.params['customization']) > 0 or len(self.params['networks']) > 0:
+        # Find if we need network customizations (find keys in dictionary that requires customizations)
+        network_changes = False
+        for nw in self.params['networks']:
+            for key in nw:
+                # We don't need customizations for these keys
+                if key not in ('name', 'vlan_id', 'device_type'):
+                    network_changes = True
+                    break
+
+        if len(self.params['customization']) > 0 or network_changes is True:
             self.customize_vm(vm_obj=vm_obj)
 
         try:
@@ -1142,8 +1186,7 @@ class PyVmomiHelper(object):
                     snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
                                                                       snapname=self.params['snapshot_src'])
                     if len(snapshot) != 1:
-                        self.module.fail_json(msg='virtual machine "{0}" does not contain snapshot named "{1}"'.format(
-                            self.params['template'], self.params['snapshot_src']))
+                        self.module.fail_json(msg='virtual machine "%(template)s" does not contain snapshot named "%(snapshot_src)s"' % self.params)
 
                     clonespec.snapshot = snapshot[0].snapshot
 
