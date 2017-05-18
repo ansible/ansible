@@ -187,7 +187,7 @@ DEFAULTS='defaults'
 #### DEPRECATED FEATURE TOGGLES: these will eventually be removed as it becomes the standard ####
 
 # If --tags or --skip-tags is given multiple times on the CLI and this is True, merge the lists of tags together.
-# If False, let the last argument overwrite any previous ones. 
+# If False, let the last argument overwrite any previous ones.
 # Behaviour is overwrite through 2.2.  2.3 overwrites but prints deprecation.  2.4 the default is to merge.
 MERGE_MULTIPLE_CLI_TAGS   = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'ANSIBLE_MERGE_MULTIPLE_CLI_TAGS', True, value_type='boolean')
 
@@ -240,13 +240,16 @@ SHOW_CUSTOM_STATS = get_config(p, DEFAULTS, 'show_custom_stats', 'ANSIBLE_SHOW_C
 NAMESPACE_FACTS = get_config(p, DEFAULTS, 'restrict_facts_namespace', 'ANSIBLE_RESTRICT_FACTS', False, value_type='boolean')
 
 # Inventory
-DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', '/etc/ansible/hosts', value_type='path')
+DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', '/etc/ansible/hosts', value_type='path', expand_relative_paths=True)
 INVENTORY_ENABLED         = get_config(p, DEFAULTS,'inventory_enabled', 'ANSIBLE_INVENTORY_ENABLED',
-                                       ['host_list', 'script', 'ini', 'yaml', 'group_host_vars'], value_type='list')
+                                       [ 'host_list', 'script', 'ini', 'yaml' ], value_type='list')
 INVENTORY_IGNORE_EXTS     = get_config(p, DEFAULTS, 'inventory_ignore_extensions', 'ANSIBLE_INVENTORY_IGNORE',
                                        BLACKLIST_EXTS + (".orig", ".ini", ".cfg", ".retry"), value_type='list')
 INVENTORY_IGNORE_PATTERNS = get_config(p, DEFAULTS, 'inventory_ignore_patterns', 'ANSIBLE_INVENTORY_IGNORE_REGEX', [], value_type='list')
-
+VARIABLE_PRECEDENCE       = get_config(p, DEFAULTS, 'precedence', 'ANSIBLE_PRECEDENCE',
+                                       ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play',
+                                        'groups_plugins_inventory', 'groups_plugins_play'],
+                                       value_type='list')
 # Static includes
 DEFAULT_TASK_INCLUDES_STATIC = get_config(p, DEFAULTS, 'task_includes_static', 'ANSIBLE_TASK_INCLUDES_STATIC', False, value_type='boolean')
 DEFAULT_HANDLER_INCLUDES_STATIC = get_config(p, DEFAULTS, 'handler_includes_static', 'ANSIBLE_HANDLER_INCLUDES_STATIC', False, value_type='boolean')

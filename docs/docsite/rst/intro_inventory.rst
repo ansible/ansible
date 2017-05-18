@@ -261,9 +261,7 @@ ansible_ssh_extra_args
     This setting is always appended to the default :command:`ssh` command line.
 ansible_ssh_pipelining
     Determines whether or not to use SSH pipelining. This can override the ``pipelining`` setting in :file:`ansible.cfg`.
-
-.. versionadded:: 2.2
-ansible_ssh_executable
+ansible_ssh_executable (added in version 2.2)
     This setting overrides the default behavior to use the system :command:`ssh`. This can override the ``ssh_executable`` setting in :file:`ansible.cfg`.
 
 
@@ -368,3 +366,4 @@ Here is an example of how to instantly deploy to created containers::
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
+

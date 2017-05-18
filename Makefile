@@ -182,6 +182,7 @@ clean:
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
 	$(MAKE) -C docs/api clean
+	find test/ -type f -name '*.retry' -delete
 
 python:
 	$(PYTHON) setup.py build

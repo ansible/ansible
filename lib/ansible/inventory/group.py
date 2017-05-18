@@ -31,15 +31,10 @@ class Group:
         self.name = name
         self.hosts = []
         self.vars = {}
-        self._file_data = {}
         self.child_groups = []
         self.parent_groups = []
         self._hosts_cache = None
         self.priority = 1
-
-        #self.clear_hosts_cache()
-        #if self.name is None:
-        #    raise Exception("group name is required")
 
     def __repr__(self):
         return self.get_name()
@@ -134,12 +129,6 @@ class Group:
         else:
             self.vars[key] = value
 
-    def load_data(self, data):
-
-        self._file_data = combine_vars(self._file_data, data)
-        if 'ansible_group_priority' in self._file_data:
-            self.set_priority(int(self._file_data.pop('ansible_group_priority')))
-
     def clear_hosts_cache(self):
 
         self._hosts_cache = None
@@ -150,7 +139,6 @@ class Group:
 
         if self._hosts_cache is None:
             self._hosts_cache = self._get_hosts()
-
         return self._hosts_cache
 
     def _get_hosts(self):
@@ -173,17 +161,8 @@ class Group:
                 hosts.append(mine)
         return hosts
 
-    def get_vars(self, include_file_data=True):
-        ret = {}
-        if include_file_data:
-            ret = combine_vars(self.vars, self._file_data)
-        else:
-            ret = self.vars.copy()
-        return ret
-
-    def get_file_vars(self):
-        ''' this is here due to precedence compatiblity '''
-        return self._file_data.copy()
+    def get_vars(self):
+        return self.vars.copy()
 
     def _get_ancestors(self):
 

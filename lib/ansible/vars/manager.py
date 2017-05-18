@@ -34,14 +34,15 @@ from jinja2.exceptions import UndefinedError
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
+from ansible.inventory.helpers import sort_groups, get_group_vars
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, string_types, text_type
-from ansible.plugins import lookup_loader
+from ansible.plugins import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.module_utils._text import to_native
 
 try:
     from __main__ import display
@@ -49,28 +50,6 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-
-VARIABLE_CACHE = {}
-
-
-class AnsibleInventory(object):
-    ''' mock inventory group '''
-    def __init__(self):
-        self.groups = {}
-        self.hosts = {}
-
-class AnsibleInventoryObject(object):
-    ''' class to hold data not in inventory '''
-    def __init__(self):
-        self.vars = {}
-
-    def load_data(self, data):
-        data = preprocess_vars(data)
-        for item in data:
-            self.vars = combine_vars(self.vars, item)
-
-    def get_vars(self, include_file_data=True):
-        return self.vars
 
 def preprocess_vars(a):
     '''
@@ -155,16 +134,6 @@ class VariableManager:
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
 
-    def _get_cache_entry(self, play=None, host=None, task=None):
-        play_id = host_id = task_id = "NONE"
-        if play:
-            play_id = play._uuid
-        if host:
-            host_id = host.get_name()
-        if task:
-            task_id = task._uuid
-        return "PLAY:%s;HOST:%s;TASK:%s" % (play_id, host_id, task_id)
-
     @property
     def extra_vars(self):
         ''' ensures a clean copy of the extra_vars are made '''
@@ -231,10 +200,6 @@ class VariableManager:
         '''
 
         display.debug("in VariableManager get_vars()")
-        cache_entry = self._get_cache_entry(play=play, host=host, task=task)
-        if cache_entry in VARIABLE_CACHE and use_cache:
-            display.debug("vars are cached, returning them now")
-            return VARIABLE_CACHE[cache_entry]
 
         all_vars = dict()
         magic_variables = self._get_magic_variables(
@@ -259,72 +224,78 @@ class VariableManager:
 
         if host:
             ### INIT WORK (use unsafe as we are going to copy/merge vars, no need to x2 copy)
-            # loader basedir
+            # basedir, THE 'all' group and the rest of groups for a host, used below
             basedir = self._loader.get_basedir()
+            all_group = self._inventory.groups.get('all')
+            host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
-            # load host vars if needed (datalaoder keeps cache)
-            if not host.name in self._host_vars_files:
-                self._host_vars_files[host.name] = AnsibleInventoryObject()
-            self._loader.load_vars_files(self._host_vars_files, os.path.join(basedir, 'host_vars'), unsafe=True)
+            ### internal fuctions that actually do the work ###
+            def _plugins_inventory(entities):
+                ''' merges all entities by inventory source '''
+                data = {}
+                for inventory_dir in self._inventory._sources:
+                    if ',' in inventory_dir: # skip host lists
+                        continue
+                    elif not os.path.isdir(inventory_dir): # always pass 'inventory directory'
+                        inventory_dir = os.path.dirname(inventory_dir)
 
-            # load group vars if needed (dataloader keeps cache)
-            for group in host.get_groups():
-                if group.name not in self._group_vars_files:
-                    self._group_vars_files[group.name] = AnsibleInventoryObject()
-            self._loader.load_vars_files(self._group_vars_files, os.path.join(basedir, 'group_vars'), unsafe=True)
+                    for plugin in vars_loader.all():
+                        data = combine_vars(data, plugin.get_vars(self._loader, inventory_dir, entities))
 
-            ### START MERGING
-            if C.SOURCE_OVER_GROUPS:
+                return data
 
-                # all from inventory
-                all_vars = combine_vars(all_vars, self._inventory.groups['all'].get_vars(include_file_data=False))
+            def _plugins_play(entities):
+                ''' merges all entities adjacent to play '''
+                data = {}
+                for plugin in vars_loader.all():
+                    data = combine_vars(data, plugin.get_vars(self._loader, basedir, entities))
+                return data
 
-                # groups from inventory
-                for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.priority, g.name)):
-                    if group.name != 'all':
-                        all_vars = combine_vars(all_vars, self._inventory.groups[group.name].get_vars(include_file_data=False))
+            ### configurable functions that are sortable via config ###
+            def all_inventory():
+                return all_group.get_vars()
 
-                # 'all' inventory group_vars
-                all_vars = combine_vars(all_vars, self._inventory.groups['all'].get_file_vars())
+            def all_plugins_inventory():
+                return _plugins_inventory([all_group])
 
-                # 'all' play group_vars
-                if 'all' in self._group_vars_files:
-                    all_vars = combine_vars(all_vars, self._group_vars_files['all'].vars)
+            def all_plugins_play():
+                return _plugins_play([all_group])
 
-                # inventory group_vars
-                for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.priority, g.name)):
-                    # all is special and process separately
-                    if group.name != 'all':
-                        all_vars = combine_vars(all_vars, self._inventory.groups[group.name].get_file_vars())
+            def groups_inventory():
+                ''' gets group vars from inventory '''
+                return get_group_vars(host_groups)
 
-                # play group_vars files from pb
-                for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.priority, g.name)):
-                    # all is special and process separately
-                    if group.name != 'all' and group.name in self._group_vars_files:
-                        # play group_vars
-                        all_vars = combine_vars(all_vars, self._group_vars_files[group.name].vars)
-            else:
-                # go over groups following hierarchy over source
-                seen = set()
-                mygroups = host.get_groups()
-                def _merge_group_vars(myvars, group):
-                    if group.name not in seen and group in mygroups:
-                        seen.add(group.name)
-                        myvars = combine_vars(myvars, self._inventory.groups[group.name].vars)
-                        if group.name in self._group_vars_files:
-                            # play group_vars
-                            myvars = combine_vars(myvars, self._group_vars_files[group.name].vars)
-                        for cgroup in sorted(group.child_groups, key=lambda g: (g.depth, g.priority, g.name)):
-                            _merge_group_vars(myvars, cgroup)
+            def groups_plugins_inventory():
+                ''' gets plugin sources from inventory for groups '''
+                return _plugins_inventory(host_groups)
 
-                _merge_group_vars(all_vars, self._inventory.groups['all'])
+            def groups_plugins_play():
+                ''' gets plugin sources from play for groups '''
+                return _plugins_play(host_groups)
 
-            # now we merge in host vars from the inventory host (includes host_vars already)
-            all_vars = combine_vars(all_vars, host.vars)
+            def plugins_by_groups():
+                '''
+                    merges all plugin sources by group,
+                    This should be used instead, NOT in combination with the other groups_plugins* functions
+                '''
+                data = {}
+                for group in host_groups:
+                    data[group] = combine_vars(data[group], _plugins_inventory(group))
+                    data[group] = combine_vars(data[group], _plugins_play(group))
+                return data
 
-            # now play host_vars
-            if host.name in self._host_vars_files:
-                all_vars = combine_vars(all_vars, self._host_vars_files[host.name].vars)
+            # Merge as per precedence config
+            for entry in C.VARIABLE_PRECEDENCE:
+                # only allow to call the functions we want exposed
+                if entry.startswith('_') or '.' in entry:
+                    continue
+                display.debug('Calling %s to load vars for %s' % (entry, host.name))
+                all_vars = combine_vars(all_vars, locals()[entry]())
+
+            # host vars, from inventory, inventory adjacent and play adjacent via plugins
+            all_vars = combine_vars(all_vars, host.get_vars())
+            all_vars = combine_vars(all_vars, _plugins_inventory([host]))
+            all_vars = combine_vars(all_vars, _plugins_play([host]))
 
             # finally, the facts caches for this host, if it exists
             try:
@@ -561,10 +532,10 @@ class VariableManager:
                                 break
                         else:
                             delegated_host = Host(name=delegated_host_name)
-                            delegated_host.load_data(new_delegated_host_vars)
+                            delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars)
             else:
                 delegated_host = Host(name=delegated_host_name)
-                delegated_host.load_data(new_delegated_host_vars)
+                delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars)
 
             # now we go fetch the vars for the delegated-to host and save them in our
             # master dictionary of variables to be used later in the TaskExecutor/PlayContext

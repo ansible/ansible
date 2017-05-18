@@ -62,7 +62,6 @@ class Host:
             vars=self.vars.copy(),
             address=self.address,
             uuid=self._uuid,
-            gathered_facts=self._gathered_facts,
             groups=groups,
             implicit=self.implicit,
         )
@@ -84,18 +83,16 @@ class Host:
 
     def __init__(self, name=None, port=None, gen_uuid=True):
 
-        self.name = name
         self.vars = {}
-        self._file_data = {}
         self.groups = []
+        self._uuid = None
 
+        self.name = name
         self.address = name
 
         if port:
             self.set_variable('ansible_port', int(port))
 
-        self._gathered_facts = False
-        self._uuid = None
         if gen_uuid:
             self._uuid = get_unique_id()
         self.implicit = False
@@ -103,26 +100,20 @@ class Host:
     def get_name(self):
         return self.name
 
-    @property
-    def gathered_facts(self):
-        return self._gathered_facts
-
-    def set_gathered_facts(self, gathered):
-        self._gathered_facts = gathered
 
     def populate_ancestors(self):
-
         # populate ancestors
         for group in self.groups:
             self.add_group(group)
 
     def add_group(self, group):
 
-        # populate ancestors
+        # populate ancestors first
         for oldg in group.get_ancestors():
             if oldg not in self.groups:
                 self.add_group(oldg)
 
+        # actually add group
         if group not in self.groups:
             self.groups.append(group)
 
@@ -142,27 +133,12 @@ class Host:
 
 
     def set_variable(self, key, value):
-
         self.vars[key]=value
-
-    def load_data(self, data):
-
-        self._file_data = combine_vars(self._file_data, data)
 
     def get_groups(self):
         return self.groups
 
-    def get_group_vars(self, include_all=True):
-
-        results = {}
-        groups = self.get_groups()
-        for group in sorted(groups, key=lambda g: (g.depth, g.priority, g.name)):
-            if include_all or group.name != 'all':
-                results = combine_vars(results, group.get_vars())
-
-        return results
-
-    def get_host_vars(self):
+    def get_magic_vars(self):
         results = {}
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
@@ -170,13 +146,6 @@ class Host:
 
         return combine_vars(self.vars, results)
 
-    def get_vars(self, include_file_data=True):
+    def get_vars(self):
+        return combine_vars(self.vars, self.get_magic_vars())
 
-        ret = combine_vars(self.get_group_vars(include_all=True), self.get_host_vars())
-        if include_file_data:
-            ret = combine_vars(ret, self._file_data)
-
-        return ret
-
-    def get_file_vars(self):
-        return self._file_data

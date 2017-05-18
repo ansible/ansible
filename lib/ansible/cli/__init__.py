@@ -484,8 +484,8 @@ class CLI(with_metaclass(ABCMeta, object)):
                 if isinstance(self.options.inventory, string_types):
                     self.options.inventory = [self.options.inventory]
 
-                # expand tilde for each option
-                self.options.inventory = [os.path.expanduser(opt) if ',' not in opt else opt for opt in self.options.inventory]
+                # Ensure full paths when needed
+                self.options.inventory = [unfrackpath(opt) if ',' not in opt else opt for opt in self.options.inventory]
 
             else:
                 # set default if it exists

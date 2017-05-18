@@ -768,7 +768,6 @@ lib/ansible/plugins/inventory/__init__.py
 lib/ansible/plugins/inventory/ini.py
 lib/ansible/plugins/inventory/yaml.py
 lib/ansible/plugins/inventory/script.py
-lib/ansible/plugins/inventory/group_host_vars.py
 lib/ansible/plugins/lookup/__init__.py
 lib/ansible/plugins/lookup/cartesian.py
 lib/ansible/plugins/lookup/csvfile.py
@@ -816,7 +815,6 @@ lib/ansible/plugins/test/core.py
 lib/ansible/plugins/test/files.py
 lib/ansible/plugins/test/mathstuff.py
 lib/ansible/plugins/vars/__init__.py
-lib/ansible/plugins/vars/noop.py
 lib/ansible/release.py
 lib/ansible/template/__init__.py
 lib/ansible/template/safe_eval.py

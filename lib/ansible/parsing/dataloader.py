@@ -109,6 +109,7 @@ class DataLoader:
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
 
         file_name = self.path_dwim(file_name)
+        display.debug("Loading data from %s" % file_name)
 
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
@@ -435,35 +436,5 @@ class DataLoader:
         for f in self._tempfiles:
             try:
                 self.cleanup_tmp_file(f)
-            except:
-                pass  # TODO: this should at least warn
-
-    def load_vars_files(self, entities, path, cache=True, unsafe=False):
-        ''' cycle over entities and load vars files if they exist '''
-
-        for entity in entities:
-            display.debug("Examining %s for %s" % (path, entity))
-            files = self._find_vars_files(path, entity)
-            for varfile in files:
-                display.debug("\tloading vars from %s" % (varfile))
-                entities[entity].load_data(self.load_from_file(varfile, cache=cache, unsafe=unsafe))
-
-    def _find_vars_files(self, path, entity):
-        """ Find {group,host}_vars files """
-
-        b_path = to_bytes(os.path.join(path, entity))
-        found = []
-        for ext in C.YAML_FILENAME_EXTENSIONS:
-            full_path = b_path + to_bytes(ext)
-            if os.path.exists(full_path):
-                display.debug("\tfound %s" % to_text(full_path))
-                if os.path.isdir(full_path):
-                    # matched dir name, so use all files included recursively
-                    for spath in os.listdir(full_path):
-                        if os.path.isdir(spath):
-                            found.extend(self._find_vars_files(spath, entity))
-                        else:
-                            found.append(spath)
-                else:
-                    found.append(full_path)
-        return found
+            except Exception as e:
+                display.warning("Unable to cleanup temp files: %s" % to_native(e))

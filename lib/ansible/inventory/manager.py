@@ -128,9 +128,8 @@ class InventoryManager(object):
         self._subset = None
 
         # caches
-        self._pattern_cache = {}        # resolved host patterns
-        self._inventory_generators = {}  # for retrieving inventory
-        self._inventory_processors = {} # for modifying inventory
+        self._pattern_cache = {}      # resolved host patterns
+        self._inventory_plugins = {}  # for generating inventory
 
         # the inventory dirs, files, script paths or lists of hosts
         if sources is None:
@@ -173,10 +172,6 @@ class InventoryManager(object):
     def get_host(self, hostname):
         return self._inventory.get_host(hostname)
 
-    def _drop_inventory_plugins(self):
-        self._inventory_generators = {}
-        self._inventory_processors = {}
-
     def _setup_inventory_plugins(self):
         ''' sets up loaded inventory plugins for usage '''
 
@@ -185,17 +180,11 @@ class InventoryManager(object):
 
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
-            plugin_type = getattr(plugin, 'TYPE', 'storage').lower()
             name = os.path.splitext(os.path.basename(plugin._original_path))[0]
+            self._inventory_plugins[name] = plugin
 
-            if plugin_type == 'processor':
-                self._inventory_processors[name] = plugin
-            else: #generator/storage
-                self._inventory_generators[name] = plugin
-
-        if not self._inventory_generators:
+        if not self._inventory_plugins:
             raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
-        #FIXME: self._inventory_processors should have group/host vars .. but not required, merits error?
 
     def parse_sources(self, cache=True):
         ''' iterate over inventory sources and parse each one to populate it'''
@@ -219,7 +208,7 @@ class InventoryManager(object):
         else:
             display.warning("No inventory was parsed, only implicit localhost is available")
 
-        self._drop_inventory_plugins()
+        self._inventory_plugins = {}
 
     def parse_source(self, source, cache=True):
         ''' Generate or update inventory for the source provided '''
@@ -251,16 +240,16 @@ class InventoryManager(object):
             self._inventory.current_source = source
 
             # get inventory plugins if needed, there should always be at least one generator
-            if not self._inventory_generators:
+            if not self._inventory_plugins:
                 self._setup_inventory_plugins()
 
             # try source with each plugin
             failures = []
-            for plugin in self._inventory_generators:
+            for plugin in self._inventory_plugins:
                 display.debug(u'Attempting to use plugin %s' % plugin)
 
                 # initialize
-                inv = self._inventory_generators[plugin]
+                inv = self._inventory_plugins[plugin]
                 if inv.verify_file(source):
                     try:
                         inv.parse(self._inventory, self._loader, source, cache=cache)
@@ -276,22 +265,6 @@ class InventoryManager(object):
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
                         display.warning(fail)
-
-            # postprocessing plugins (group/host_vars done here), if we have inventory
-            if parsed:
-                display.vvv(u'post processing %s' % source)
-                for plugin in self._inventory_processors:
-                    display.debug(u'ran %s' % plugin)
-                    inv = self._inventory_processors[plugin]
-                    if inv.verify_file(source):
-                        try:
-                            inv.parse(self._inventory, self._loader, source, cache=cache)
-                            display.vvv(u'%s acted on inventory source %s' % (plugin, to_text(source)))
-                        except AnsibleParserError as e:
-                            display.warning(u'Could not process %s with %s plugin: %s' %(to_text(source), plugin, to_text(e)))
-                    else:
-                        # the plugin is not that into you
-                        display.debug(u'%s passes on %s' % (plugin, to_text(source)))
 
         if not parsed:
             display.warning(u"Unable to parse %s as an inventory source" % to_text(source))

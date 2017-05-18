@@ -130,14 +130,11 @@ class InventoryData(object):
         for g in self.groups:
             group = self.groups[g]
             group_names.add(group.name)
-            #FIXME: need to trigger update for group_vars?
 
         host_names = set()
         # get host vars from host_vars/ files and vars plugins
         for host in self.hosts.values():
             host_names.add(host.name)
-            #FIXME: need to trigger update for group vars
-            #FIXME: need to trigger update for group_vars/host_vars?
 
             mygroups = host.get_groups()
 
