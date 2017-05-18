@@ -54,18 +54,23 @@ options:
     e_tag:
       description:
         - A unique identifier of a modified or existing distribution.
-          Used in conjunction with C(distribution_id) or C(streaming_distribution_id).
+          Used in conjunction with C(distribution_id) or
+          C(streaming_distribution_id).
           Is determined automatically if not specified.
       required: false
     generate_presigned_url:
       description:
-        - Generates a presigned url for a distribution from a private I(.pem) file key.
+        - Generates a presigned url for a distribution from a private
+          I(.pem) file key.
       default: 'no'
       choices: ['yes', 'no']
       required: false
     caller_reference:
       description:
-        - A unique identifier for creating and updating cloudfront distributions.
+        - A unique identifier for creating and updating cloudfront
+          distributions.
+          This can be used instead of C(distribution_id) and
+          C(streaming_distribution_id) so that the distribution is idempotent.
       required: false
     pem_key_path:
       description:
@@ -87,13 +92,15 @@ options:
     config:
       description:
         - This is the main variable used for creating and updating distributions
-          and streaming distributions. When used, it will be a complex data type as
-          a dictionary that represents the config of the distribution.
+          and streaming distributions. When used, it will be a complex data
+          type as a dictionary that represents the config of the distribution.
           When used for creating a distribution, it must contain at least one
-          origin in C(origins) or the parameter C(default_domain_name_origin) should be
-          used instead. Components of C(config) can be specified entirely in
+          origin in C(origins) or the parameter C(default_domain_name_origin)
+          should be used instead.
+          Components of C(config) can be specified entirely in
           C(config) or as separate elements outside of the config.
-          This parameter applies to both distributions and streaming distributions.
+          This parameter applies to both distributions and streaming
+          distributions.
           Elements of a distribution are
             caller_reference
             aliases
@@ -120,14 +127,14 @@ options:
             trusted_signers
             http_version
             is_ipv6_enabled
-          Most of these elements have sub-elements that can be seen in their entirety
-          in the boto3 documentation at
+          Most of these elements have sub-elements that can be seen in their
+          entirety in the boto3 documentation at
             U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution)
           and
             U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_streaming_distribution).
-          When element variables are specified as well as the C(config) variable, the
-          elements specified will have precendence and overwrite any relevant data
-          for that element in the C(config) variable.
+          When element variables are specified as well as the C(config)
+          variable, the elements specified will have precendence and overwrite
+          any relevant data for that element in the C(config) variable.
       required: false
     tags:
       description:
@@ -142,21 +149,23 @@ options:
           distribution.
       required: false
       default: 'no'
-      choices ['yes', 'no']
+      choices: ['yes', 'no']
     alias:
       description:
         - The name of an alias that is used in a distribution. This is used to
-          effectively reference a distribution by its alias as an alias can only
-          be used by one distribution per AWS account. This variable avoids having
-          to provide the C(distribution_id) or C(streaming_distribution_id) as well
-          as the C(e_tag) to reference a distribution. This variable is used for
-          updating distributions and streaming distributions.
+          effectively reference a distribution by its alias as an alias can
+          only be used by one distribution per AWS account. This variable
+          avoids having to provide the C(distribution_id) or
+          C(streaming_distribution_id) as well as the C(e_tag) to reference a
+          distribution. This variable is used for updating distributions and
+          streaming distributions.
       required: false
     aliases:
       description:
-        - A list of domain name aliases as strings to be used for the distribution.
-          Each alias must be unique across all distributions for the AWS account.
-          Applies to both distributions and streaming distributions.
+        - A list of domain name aliases as strings to be used for the
+          distribution. Each alias must be unique across all distributions for
+          the AWS account. Applies to both distributions and streaming
+          distributions.
       required: false
     default_root_object:
       description:
@@ -170,7 +179,7 @@ options:
     default_origin_domain_name:
       description:
         - The domain name to use for an origin if no C(origins) have been specified.
-        Used with C(streaming_distribution=no)
+          Used with C(streaming_distribution=no)
       required: false
     default_origin_path:
       description:
@@ -200,9 +209,9 @@ options:
     origins:
       description:
         - A config element that is a list of complex origin objects to be
-          specified for the distribution. Used for creating, updating and duplicating
-          distributions. Only valid for C(streaming_distribution=no). Each origin
-          item comprises the attributes
+          specified for the distribution. Used for creating, updating
+          distributions. Only valid for C(streaming_distribution=no).
+          Each origin item comprises the attributes
             id
             domain_name (defaults to default_origin_domain_name if not specified)
             origin_path
@@ -283,8 +292,8 @@ options:
       required: false
     comment:
       description:
-        - A unique comment to describe the cloudfront distribution. Applies to both
-          distributions and streaming distributions.
+        - A unique comment to describe the cloudfront distribution.
+          Applies to both distributions and streaming distributions.
           If not specified, it defaults to a generic message that it has been
           created with Ansible, and a datetime stamp.
       required: false
@@ -300,8 +309,8 @@ options:
       required: false
     price_class:
       description:
-        - A string that specifies the pricing class of the distribution. Applies to
-          both distributions and streaming distributions.
+        - A string that specifies the pricing class of the distribution.
+          Applies to both distributions and streaming distributions.
       choices: ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
       required: false
     enabled:
@@ -476,11 +485,13 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+
 location:
     description: describes a url specifying the output of the action just run.
     returned: applies to C(streaming_distribution=no) with C(state=present)
       or when specifying C(generate_presigned_url=yes)
     type: str
+
 '''
 
 from ansible.module_utils.ec2 import get_aws_connection_info
@@ -1521,7 +1532,6 @@ def main():
         comment=dict(required=False, default=None, type='str'),
         distribution_id=dict(required=False, default=None, type='str'),
         streaming_distribution_id=dict(required=False, default=None, type='str'),
-        invalidation_batch=dict(required=False, default=None, type='list'),
         e_tag=dict(required=False, default=None, type='str'),
         pem_key_path=dict(required=False, default=None, type='str'),
         pem_key_password=dict(required=False, default=None, type='str',
