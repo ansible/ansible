@@ -863,6 +863,7 @@ def main():
                 module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
+
     module.exit_json(**res_args)
 
 
