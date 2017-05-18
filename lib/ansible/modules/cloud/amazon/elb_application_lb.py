@@ -112,10 +112,11 @@ EXAMPLES = '''
       - subnet-012345678
       - subnet-abcdef000
     listeners:
-      - Protocol: http # Required. The protocol for connections from clients to the load balancer (http or https).
+      - Protocol: HTTP # Required. The protocol for connections from clients to the load balancer (HTTP or HTTPS) (case-sensitive).
         Port: 80 # Required. The port on which the load balancer is listening.
-        SslPolicy: # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+        SslPolicy: ELBSecurityPolicy-2015-05 # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
+          - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
           - Type: forward # Required. Only 'forward' is accepted at this time
             TargetGroupName: # Required. The name of the target group
@@ -134,10 +135,11 @@ EXAMPLES = '''
       - subnet-012345678
       - subnet-abcdef000
     listeners:
-      - Protocol: http # Required. The protocol for connections from clients to the load balancer (http or https).
+      - Protocol: HTTP # Required. The protocol for connections from clients to the load balancer (HTTP or HTTPS) (case-sensitive).
         Port: 80 # Required. The port on which the load balancer is listening.
-        SslPolicy: # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+        SslPolicy: ELBSecurityPolicy-2015-05 # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
+          - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
           - Type: forward # Required. Only 'forward' is accepted at this time
             TargetGroupName: # Required. The name of the target group
@@ -331,7 +333,7 @@ vpc_id:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, get_ec2_security_group_ids_from_names, \
-    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
+    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
 import collections
 from copy import deepcopy
 import traceback
@@ -339,7 +341,6 @@ import traceback
 try:
     import boto3
     from botocore.exceptions import ClientError, NoCredentialsError
-    HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
 
@@ -409,7 +410,7 @@ def _get_subnet_ids_from_subnet_list(subnet_list):
 
 
 def get_elb_listeners(connection, module, elb_arn):
-    
+
     try:
         return connection.describe_listeners(LoadBalancerArn=elb_arn)['Listeners']
     except ClientError as e:
@@ -749,7 +750,7 @@ def create_or_update_elb(connection, connection_ec2, module):
 
     # Get the ELB again
     elb = get_elb(connection, module)
-    
+
     # Get the ELB listeners again
     elb['listeners'] = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
 
@@ -823,9 +824,6 @@ def main():
                 if key not in ['Protocol', 'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules']:
                     module.fail_json(msg="listeners parameter contains invalid dict keys. Should be one of 'Protocol', "
                                          "'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules'.")
-                # TODO: Test this uppercasing
-                #if key is 'Protocol':
-                #    listener[key] = listener[key].upper()
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
