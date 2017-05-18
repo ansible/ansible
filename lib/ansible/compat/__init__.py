@@ -24,4 +24,3 @@ Compat library for ansible.  This contains compatibility definitions for older p
 When we need to import a module differently depending on python version, do it
 here.  Then in the code we can simply import from compat in order to get what we want.
 '''
-
