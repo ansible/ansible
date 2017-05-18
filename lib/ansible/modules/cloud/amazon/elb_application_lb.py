@@ -34,8 +34,8 @@ options:
     choices: [ 'yes', 'no' ]
   access_logs_s3_bucket:
     description:
-      - "The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same \
-      region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket."
+      - The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same 
+        region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
     required: false
   access_logs_s3_prefix:
     description:
@@ -59,20 +59,20 @@ options:
     required: false
   name:
     description:
-      - The name of the load balancer. This name must be unique within your AWS account, can have a maximum of 32 characters, must contain only alphanumeric \
-      characters or hyphens, and must not begin or end with a hyphen.
+      - The name of the load balancer. This name must be unique within your AWS account, can have a maximum of 32 characters, must contain only alphanumeric 
+        characters or hyphens, and must not begin or end with a hyphen.
     required: true
   purge_tags:
     description:
-      - If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tag parameter is not set then tags \
-      will not be modified.
+      - If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tag parameter is not set then tags 
+        will not be modified.
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
   subnets:
     description:
-      - "A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from \
-      at least two Availability Zones. Required if state=present."
+      - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from 
+        at least two Availability Zones. Required if state=present.
     required: false
   security_groups:
     description:
@@ -114,7 +114,8 @@ EXAMPLES = '''
     listeners:
       - Protocol: HTTP # Required. The protocol for connections from clients to the load balancer (HTTP or HTTPS) (case-sensitive).
         Port: 80 # Required. The port on which the load balancer is listening.
-        SslPolicy: ELBSecurityPolicy-2015-05 # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+        # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+        SslPolicy: ELBSecurityPolicy-2015-05
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
@@ -137,7 +138,8 @@ EXAMPLES = '''
     listeners:
       - Protocol: HTTP # Required. The protocol for connections from clients to the load balancer (HTTP or HTTPS) (case-sensitive).
         Port: 80 # Required. The port on which the load balancer is listening.
-        SslPolicy: ELBSecurityPolicy-2015-05 # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+        # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+        SslPolicy: ELBSecurityPolicy-2015-05
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
