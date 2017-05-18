@@ -71,7 +71,7 @@ What do we want from testing Ansible:
 .. container:: handout
 
    * Local run - common request from the community
-   * Increasing tha matrix of Python & OS versions vs timely feedback
+   * Increasing the matrix of Python & OS versions vs timely feedback
    * Main aim: Stable product, find issues sooner, speed up PR work flow
 
 
@@ -292,6 +292,14 @@ Integration Tests: Why?
 
 Integration Tests: File structure
 =================================
+
+DEMO
+
+* test/integration/targets/file/
+* file/aliases
+
+
+# FIXME Comment this out
 
 Directory: ``test/integration/targets/file/``
 
