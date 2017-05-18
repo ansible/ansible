@@ -98,6 +98,9 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             kinesis_stream.find_stream(client, 'test', check_mode=True)
         )
         should_return = {
+            'OpenShardsCount': 5,
+            'ClosedShardsCount': 0,
+            'ShardsCount': 5,
             'HasMoreShards': True,
             'RetentionPeriodHours': 24,
             'StreamName': 'test',
@@ -115,6 +118,9 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             )
         )
         should_return = {
+            'OpenShardsCount': 5,
+            'ClosedShardsCount': 0,
+            'ShardsCount': 5,
             'HasMoreShards': True,
             'RetentionPeriodHours': 24,
             'StreamName': 'test',
@@ -230,9 +236,21 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
         )
         self.assertFalse(success)
 
+    def test_update_shard_count(self):
+        client = boto3.client('kinesis', region_name=aws_region)
+        success, err_msg = (
+            kinesis_stream.update_shard_count(
+                client, 'test', 5, check_mode=True
+            )
+        )
+        self.assertTrue(success)
+
     def test_update(self):
         client = boto3.client('kinesis', region_name=aws_region)
         current_stream = {
+            'OpenShardsCount': 5,
+            'ClosedShardsCount': 0,
+            'ShardsCount': 1,
             'HasMoreShards': True,
             'RetentionPeriodHours': 24,
             'StreamName': 'test',
@@ -245,7 +263,7 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
         }
         success, changed, err_msg = (
             kinesis_stream.update(
-                client, current_stream, 'test', retention_period=48,
+                client, current_stream, 'test', number_of_shards=2, retention_period=48,
                 tags=tags, check_mode=True
             )
         )
@@ -266,6 +284,9 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             )
         )
         should_return = {
+            'open_shards_count': 5,
+            'closed_shards_count': 0,
+            'shards_count': 5,
             'has_more_shards': True,
             'retention_period_hours': 24,
             'stream_name': 'test',
