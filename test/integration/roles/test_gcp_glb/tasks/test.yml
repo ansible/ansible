@@ -1,0 +1,172 @@
+# GCP Cross Region Load Balancer integration test
+# https://cloud.google.com/compute/docs/load-balancing/http/cross-region-example
+######
+# ============================================================
+- name: Create Instance template
+# ============================================================
+  gce_instance_template:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    name: "{{ instance_template }}"
+    image: rhel-7-v20170426
+    state: "present"
+    tags:
+      - http-server
+    metadata: 
+      startup-script: |
+        #!/bin/bash
+        yum install -y httpd curl
+        systemctl start httpd
+        zone=$(curl -sv -H "Metadata-flavor: Google" http://metadata/computeMetadata/v1/instance/zone)
+        host=$(curl -sv -H "Metadata-flavor: Google" http://metadata/computeMetadata/v1/instance/name)
+        echo "${host}-${zone}" > /var/www/html/index.html
+# ============================================================
+- name: Create MIG one
+# ============================================================
+  gce_mig:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    name: "{{ mig_one }}"
+    zone: "{{ mig_one_zone }}"
+    state: "present"
+    size: 1
+    autoscaling:
+      enabled: yes
+      name: "{{ mig_one }}"
+      policy:
+        min_instances: 1
+        max_instances: 3
+        cool_down_period: 60
+        cpu_utilization:
+          target: 0.6
+    template: "{{ instance_template }}"
+    named_ports:
+      - name: "{{ http_port_name }}"
+        port: "{{ http_port }}"
+# ============================================================
+- name: Create MIG two
+# ============================================================
+  gce_mig:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    name: "{{ mig_two }}"
+    zone: "{{ mig_two_zone }}"
+    state: "present"
+    size: 1
+    autoscaling:
+      enabled: yes
+      name: "{{ mig_two }}"
+      policy:
+        min_instances: 1
+        max_instances: 3
+        cool_down_period: 60
+        cpu_utilization:
+          target: 0.6
+    template: "{{ instance_template }}"
+    named_ports:
+      - name: "{{ http_port_name }}"
+        port: "{{ http_port }}"
+# ============================================================
+- name: Create Healthcheck
+# ============================================================
+  gcp_healthcheck:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    healthcheck_name: "{{ bes_healthcheck }}"
+    healthcheck_type: "HTTP"
+    state: "present"
+# ============================================================
+- name: Create Backend Service
+# ============================================================
+  gcp_backend_service:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    backend_service_name: "{{ bes }}"
+    backends:
+      - instance_group: "{{ mig_one }}"
+        balancing_mode: RATE
+        max_rate_per_instance: 10.00
+      - instance_group: "{{ mig_two }}"
+    healthchecks:
+      - "{{ bes_healthcheck }}"
+    port_name: "{{ http_port_name }}"
+    protocol: HTTP
+    timeout: 60
+    state: "present"
+  register: result
+- name: "assert backend service present"
+  assert:
+    that:
+      - 'result.state == "present"'
+# ============================================================
+- name: Create URLMap
+# ============================================================
+  gcp_url_map:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    url_map_name: "{{ urlmap }}"
+    default_service: "{{ bes }}"
+    state: "present"
+  register: result
+- name: "assert urlmap present"
+  assert:
+    that:
+      - 'result.state == "present"'
+- pause: seconds=10
+# ============================================================
+- name: Create TargetHTTPProxy
+# ============================================================
+  gcp_target_proxy:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    target_proxy_name: "{{ targethttpproxy }}"
+    target_proxy_type: "HTTP"
+    url_map_name: "{{ urlmap }}"
+    state: "present"
+  register: result
+- name: "assert targethttpproxy present"
+  assert:
+    that:
+      - 'result.state == "present"'
+
+# ============================================================
+- name: Create Static Address
+# ============================================================
+  gce_eip:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    name: "{{ external_address_name }}"
+    region: global
+    state: "present"
+  register: result
+- name: "assert static address present"
+  assert:
+    that:
+      - 'result.state == "present"'
+
+# ============================================================
+- name: Create Global Forwarding Rule
+# ============================================================
+  gcp_forwarding_rule:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    forwarding_rule_name: "{{ gfr }}"
+    region: global
+    target: "{{ targethttpproxy }}"
+    address: "{{ external_address_name }}"
+    port_range: 80
+    state: "present"
+  register: result
+- name: "assert gfr present"
+  assert:
+    that:
+      - 'result.state == "present"'
