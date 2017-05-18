@@ -118,7 +118,7 @@ class Connection(ConnectionBase):
         old_version_subcommand = ['version']
 
         old_docker_cmd = [self.docker_cmd] + cmd_args + old_version_subcommand
-        p = subprocess.Popen(old_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=sys_encoding)
+        p = subprocess.Popen(old_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=self.sys_encoding)
         cmd_output, err = p.communicate()
 
         return old_docker_cmd, cmd_output, err, p.returncode
@@ -132,7 +132,7 @@ class Connection(ConnectionBase):
         new_version_subcommand = ['version', '--format', "'{{.Server.Version}}'"]
 
         new_docker_cmd = [self.docker_cmd] + cmd_args + new_version_subcommand
-        p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,encoding=sys_encoding)
+        p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,encoding=self.sys_encoding)
         cmd_output, err = p.communicate()
         return new_docker_cmd, cmd_output, err, p.returncode
 
@@ -153,7 +153,7 @@ class Connection(ConnectionBase):
     def _get_docker_remote_user(self):
         """ Get the default user configured in the docker container """
         p = subprocess.Popen([self.docker_cmd, 'inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=sys_encoding)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=self.sys_encoding)
 
         out, err = p.communicate()
 
@@ -204,7 +204,7 @@ class Connection(ConnectionBase):
         display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=sys_encoding)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=self.sys_encoding)
 
         stdout, stderr = p.communicate(in_data)
         return (p.returncode, stdout, stderr)
@@ -243,7 +243,7 @@ class Connection(ConnectionBase):
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
             try:
                 p = subprocess.Popen(args, stdin=in_file,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,encoding=sys_encoding)
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,encoding=self.sys_encoding)
             except OSError:
                 raise AnsibleError("docker connection requires dd command in the container to put files")
             stdout, stderr = p.communicate()
