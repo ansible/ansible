@@ -278,7 +278,7 @@ class HAProxy(object):
                 self.module.fail_json(msg="The specified backend '%s/%s' was not found!" % (backend, svname))
 
             if state is not None:
-                self.execute(Template(cmd).substitute(pxname = backend, svname = svname))
+                self.execute(Template(cmd).substitute(pxname=backend, svname=svname))
                 if self.wait:
                     self.wait_until_status(backend, svname, wait_for_status)
 
