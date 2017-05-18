@@ -396,7 +396,7 @@ class ZipArchive(object):
                 raise UnarchiveError('ZIP info perm format incorrect, %s' % permstr)
 
             # DEBUG
-            err += "%s%s %10d %s\n" % (ztype, permstr, size, path)
+#            err += "%s%s %10d %s\n" % (ztype, permstr, size, path)
 
             dest = os.path.join(self.dest, path)
             try:
@@ -438,7 +438,6 @@ class ZipArchive(object):
             # When that happens, we report a change and re-unzip the file
             dt_object = datetime.datetime(*(time.strptime(pcs[6], '%Y%m%d.%H%M%S')[0:6]))
             timestamp = time.mktime(dt_object.timetuple())
-            z_timestamp = pcs[6]
 
             # Compare file timestamps
             if stat.S_ISREG(st.st_mode):
@@ -458,10 +457,6 @@ class ZipArchive(object):
                         change = True
                         self.includes.append(path)
                         err += 'File %s differs in mtime (%f vs %f)\n' % (path, timestamp, st.st_mtime)
-                        # debugging
-                        err += 'Zip timestamp of %s, date object of %s' % (z_timestamp, dt_object)
-                        err += 'File last modified: %s' % time.ctime(os.path.getmtime(dest))
-
                         itemized[4] = 't'
 
             # Compare file sizes
@@ -862,15 +857,12 @@ def main():
         # do we need to change perms?
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
-            # debugging
-            time.sleep(2)
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError) as e:
                 module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
-
     module.exit_json(**res_args)
 
 
