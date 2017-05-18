@@ -145,11 +145,8 @@
 - name: unarchive a zip file
   unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
   register: unarchive03
-#- name: List files
-#  command: "ls --full-time {{output_dir}}/test-unarchive-zip/"
-#  register: zipcheck
-#- name: Print
-#  debug: msg={{zipcheck.stdout_lines}}
+
+
 - name: verify that the file was marked as changed
   assert:
     that:
@@ -168,19 +165,6 @@
     - foo-unarchive-777.txt
     - FOO-UNAR.TXT
     
-# debugging
-#- name: List files
-#  command: "ls --full-time {{output_dir}}/test-unarchive-zip/"
-#  register: zipcheck
-#- name: Print
-#  debug: msg={{zipcheck.stdout_lines}}
-- name: List zip contents
-  command: "zipinfo -T {{output_dir}}/test-unarchive.zip"
-  register: zipfilecheck
-- name: Print zip contents
-  debug: msg={{zipfilecheck.stdout_lines}}
-  
-  
 - name: repeat the last request to verify no changes
   unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
   register: unarchive03b
