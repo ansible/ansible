@@ -22,7 +22,7 @@ __metaclass__ = type
 from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -96,17 +96,22 @@ class AnsibleConstructor(SafeConstructor):
 
     def construct_vault_encrypted_unicode(self, node):
         value = self.construct_scalar(node)
-        ciphertext_data = to_bytes(value)
 
-        if self._b_vault_password is None:
-            raise ConstructorError(None, None,
-                    "found vault but no vault password provided", node.start_mark)
+        vault = self._vaults['default']
+
+        if not vault:
+            # FIXME: raise exception?
+            return AnsibleUnicode(value)
+
+        b_ciphertext = to_bytes(value)
 
         # could pass in a key id here to choose the vault to associate with
-        vault = self._vaults['default']
-        ret = AnsibleVaultEncryptedUnicode(ciphertext_data)
-        ret.vault = vault
-        return ret
+        try:
+            return AnsibleVaultEncryptedUnicode.from_ciphertext_and_vault(b_ciphertext, vault)
+        except Exception:
+            # FIXME: likely just let the vault error bubble up
+            raise ConstructorError(None, None,
+                                   "found vault but unable to decrypt", node.start_mark)
 
     def construct_yaml_seq(self, node):
         data = AnsibleSequence()
@@ -159,4 +164,7 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'!vault',
     AnsibleConstructor.construct_vault_encrypted_unicode)
-AnsibleConstructor.add_constructor( u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
+
+AnsibleConstructor.add_constructor(
+    u'!vault-encrypted',
+    AnsibleConstructor.construct_vault_encrypted_unicode)

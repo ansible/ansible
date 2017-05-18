@@ -224,11 +224,11 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         return data_from_yaml
 
     def test_dump_load_cycle(self):
-        avu = AnsibleVaultEncryptedUnicode.from_plaintext('The plaintext for test_dump_load_cycle.', vault=self.vault)
+        avu = AnsibleVaultEncryptedUnicode.from_plaintext_and_vault('The plaintext for test_dump_load_cycle.', vault=self.vault)
         self._dump_load_cycle(avu)
 
     def test_embedded_vault_from_dump(self):
-        avu = AnsibleVaultEncryptedUnicode.from_plaintext('setec astronomy', vault=self.vault)
+        avu = AnsibleVaultEncryptedUnicode.from_plaintext_and_vault('setec astronomy', vault=self.vault)
         blip = {'stuff1': [{'a dict key': 24},
                            {'shhh-ssh-secrets': avu,
                             'nothing to see here': 'move along'}],
@@ -271,7 +271,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         test_dict = {}
         test_dict[vault_string] = 'did this work?'
 
-        self.assertEquals(vault_string.data, vault_string)
+        self.assertEqual(vault_string, vault_string)
 
         # This looks weird and useless, but the object in question has a custom __eq__
         self.assertEquals(vault_string, vault_string)

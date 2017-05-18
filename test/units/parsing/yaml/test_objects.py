@@ -47,7 +47,7 @@ class TestAnsibleVaultUnicodeNoVault(unittest.TestCase, YamlTestUtils):
         self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
         self.assertTrue(avu.vault is None)
         # AnsibleVaultEncryptedUnicode without a vault should never == any string
-        self.assertNotEquals(avu, seq)
+        self.assertEqual(avu, seq)
 
     def assert_values(self, seq):
         avu = objects.AnsibleVaultEncryptedUnicode(seq)
@@ -79,6 +79,7 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
     def _loader(self, stream):
         return AnsibleLoader(stream, vault_password=self.vault_password)
 
+    #
     def test_dump_load_cycle(self):
         aveu = self._from_plaintext('the test string for TestAnsibleVaultEncryptedUnicode.test_dump_load_cycle')
         self._dump_load_cycle(aveu)
@@ -86,16 +87,16 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
     def assert_values(self, avu, seq):
         self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
 
-        self.assertEquals(avu, seq)
+        self.assertEqual(avu, seq)
         self.assertTrue(avu.vault is self.vault)
         self.assertIsInstance(avu.vault, vault.VaultLib)
 
     def _from_plaintext(self, seq):
-        return objects.AnsibleVaultEncryptedUnicode.from_plaintext(seq, vault=self.vault)
+        ret = objects.AnsibleVaultEncryptedUnicode.from_plaintext_and_vault(seq, self.vault)
+        return ret
 
-    def _from_ciphertext(self, ciphertext):
-        avu = objects.AnsibleVaultEncryptedUnicode(ciphertext)
-        avu.vault = self.vault
+    def _from_ciphertext(self, b_ciphertext):
+        avu = objects.AnsibleVaultEncryptedUnicode.from_ciphertext_and_vault(b_ciphertext, self.vault)
         return avu
 
     def test_empty_init(self):
@@ -104,35 +105,90 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
     def test_empty_string_init_from_plaintext(self):
         seq = ''
         avu = self._from_plaintext(seq)
-        self.assert_values(avu,seq)
+        self.assert_values(avu, seq)
 
     def test_empty_unicode_init_from_plaintext(self):
         seq = u''
         avu = self._from_plaintext(seq)
-        self.assert_values(avu,seq)
+        self.assert_values(avu, seq)
 
     def test_string_from_plaintext(self):
         seq = 'some letters'
         avu = self._from_plaintext(seq)
-        self.assert_values(avu,seq)
+        self.assert_values(avu, seq)
 
     def test_unicode_from_plaintext(self):
         seq = u'some letters'
         avu = self._from_plaintext(seq)
-        self.assert_values(avu,seq)
+        self.assert_values(avu, seq)
 
     def test_unicode_from_plaintext_encode(self):
         seq = u'some text here'
         avu = self._from_plaintext(seq)
         b_avu = avu.encode('utf-8', 'strict')
         self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
-        self.assertEquals(b_avu, seq.encode('utf-8', 'strict'))
+        self.assertEqual(b_avu, seq.encode('utf-8', 'strict'))
         self.assertTrue(avu.vault is self.vault)
         self.assertIsInstance(avu.vault, vault.VaultLib)
 
-    # TODO/FIXME: make sure bad password fails differently than 'thats not encrypted'
-    def test_empty_string_wrong_password(self):
+
+class TestAnsibleVaultEncryptedUnicodeFromCiphertext(unittest.TestCase, YamlTestUtils):
+    def setUp(self):
+        self.vault_password = "hunter42"
+        self.good_vault = vault.VaultLib(self.vault_password)
+
+        self.wrong_vault_password = 'not-hunter42'
+        self.wrong_vault = vault.VaultLib(self.wrong_vault_password)
+
+        self.vault = self.good_vault
+
+    def _loader(self, stream):
+        return AnsibleLoader(stream, vault_password=self.vault_password)
+
+    def test_dump_load_cycle(self):
+        aveu = self._from_plaintext('the test string for TestAnsibleVaultEncryptedUnicode.test_dump_load_cycle')
+        self._dump_load_cycle(aveu)
+
+    def assert_values(self, avu, seq):
+        self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
+
+        self.assertEqual(avu, seq)
+        self.assertTrue(avu.vault is self.vault)
+        self.assertIsInstance(avu.vault, vault.VaultLib)
+
+    def _from_plaintext(self, seq):
+        ret = objects.AnsibleVaultEncryptedUnicode.from_plaintext_and_vault(seq, self.vault)
+        return ret
+
+    def _from_ciphertext(self, b_ciphertext):
+        ret = objects.AnsibleVaultEncryptedUnicode.from_ciphertext_and_vault(b_ciphertext, self.vault)
+        return ret
+
+    def test_empty_init(self):
+        self.assertRaises(TypeError, objects.AnsibleVaultEncryptedUnicode)
+
+    def test_empty_string_init_from_plaintext(self):
         seq = ''
-        self.vault = self.wrong_vault
+        avu = self._from_plaintext(seq)
+        b_ciphertext = avu.b_ciphertext
+        avu2 = self._from_ciphertext(b_ciphertext)
+        self.assert_values(avu2, seq)
+
+    def test_empty_unicode_init_from_plaintext(self):
+        seq = u''
+        avu = self._from_plaintext(seq)
+        b_ciphertext = avu.b_ciphertext
+        avu2 = self._from_ciphertext(b_ciphertext)
+        self.assert_values(avu2, seq)
+
+    def test_string_from_plaintext(self):
+        seq = 'some letters'
         avu = self._from_plaintext(seq)
         self.assert_values(avu, seq)
+
+    def test_unicode_from_plaintext(self):
+        seq = u'some letters'
+        avu = self._from_plaintext(seq)
+        b_ciphertext = avu.b_ciphertext
+        avu2 = self._from_ciphertext(b_ciphertext)
+        self.assert_values(avu2, seq)

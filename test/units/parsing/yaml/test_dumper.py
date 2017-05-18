@@ -35,6 +35,7 @@ from ansible.parsing import vault
 
 from units.mock.yaml_helper import YamlTestUtils
 
+
 class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
     def setUp(self):
         self.vault_password = "hunter42"
@@ -43,7 +44,7 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         self.stream = self._build_stream()
         self.dumper = dumper.AnsibleDumper
 
-    def _build_stream(self,yaml_text=None):
+    def _build_stream(self, yaml_text=None):
         text = yaml_text or u''
         stream = io.StringIO(text)
         return stream
@@ -53,7 +54,7 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
 
     def test(self):
         plaintext = 'This is a string we are going to encrypt.'
-        avu = objects.AnsibleVaultEncryptedUnicode.from_plaintext(plaintext, vault=self.vault)
+        avu = objects.AnsibleVaultEncryptedUnicode.from_plaintext_and_vault(plaintext, vault=self.vault)
 
         yaml_out = self._dump_string(avu, dumper=self.dumper)
         stream = self._build_stream(yaml_out)
@@ -61,4 +62,4 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
 
         data_from_yaml = loader.get_single_data()
 
-        self.assertEquals(plaintext, data_from_yaml.data)
+        self.assertEqual(plaintext, data_from_yaml)
