@@ -27,6 +27,8 @@ from ansible.module_utils.gcp import (_get_gcp_ansible_credentials, _get_gcp_cre
 
 # Fake data/function used for testing
 fake_env_data = {'GCE_EMAIL': 'gce-email'}
+
+
 def fake_get_gcp_environ_var(var_name, default_value):
     if var_name not in fake_env_data:
         return default_value
@@ -34,6 +36,8 @@ def fake_get_gcp_environ_var(var_name, default_value):
         return fake_env_data[var_name]
 
 # Fake AnsibleModule for use in tests
+
+
 class FakeModule(object):
     class Params():
         data = {}
@@ -50,6 +54,10 @@ class FakeModule(object):
 
     def fail_json(self, **kwargs):
         raise ValueError("fail_json")
+
+    def deprecate(self, **kwargs):
+        return None
+
 
 class GCPAuthTestCase(unittest.TestCase):
     """Tests to verify different Auth mechanisms."""
@@ -74,28 +82,30 @@ class GCPAuthTestCase(unittest.TestCase):
         existing_var_name = 'gcp_ansible_auth_test_54321'
         non_existing_var_name = 'doesnt_exist_gcp_ansible_auth_test_12345'
         os.environ[existing_var_name] = 'foobar'
-        self.assertEqual('foobar', _get_gcp_environ_var(existing_var_name, None))
+        self.assertEqual('foobar', _get_gcp_environ_var(
+            existing_var_name, None))
         del os.environ[existing_var_name]
         self.assertEqual('default_value', _get_gcp_environ_var(
             non_existing_var_name, 'default_value'))
 
     def test_get_gcp_libcloud_credentials_no_import(self):
         """No secrets imported.  Whatever is sent in should come out."""
-        actual = _get_gcp_libcloud_credentials(service_account_email=None,
+        module = FakeModule()
+        actual = _get_gcp_libcloud_credentials(module,
+                                               service_account_email=None,
                                                credentials_file=None,
                                                project_id=None)
         expected = (None, None, None)
         self.assertEqual(expected, actual)
         # no libcloud, with values
-        actual = _get_gcp_libcloud_credentials(service_account_email='sa-email',
+        actual = _get_gcp_libcloud_credentials(module,
+                                               service_account_email='sa-email',
                                                credentials_file='creds-file',
                                                project_id='proj-id')
         expected = ('sa-email', 'creds-file', 'proj-id')
         self.assertEqual(expected, actual)
 
-    @mock.patch("ansible.utils.display.Display.deprecated",
-                name='mock_deprecated', return_value=None)
-    def test_get_gcp_libcloud_credentials_import(self, mock_deprecated):
+    def test_get_gcp_libcloud_credentials_import(self):
         """secrets is imported and those values should be used."""
         # Note: Opted for a real class here rather than MagicMock as
         # __getitem__ comes for free.
@@ -109,21 +119,25 @@ class GCPAuthTestCase(unittest.TestCase):
 
         # patch in module
         fake_secrets = FakeSecrets()
-        patcher = mock.patch.dict(sys.modules,{'secrets': fake_secrets})
+        patcher = mock.patch.dict(sys.modules, {'secrets': fake_secrets})
         patcher.start()
 
         # obtain sa and creds from secrets
-        actual = _get_gcp_libcloud_credentials(service_account_email=None,
+        module = FakeModule()
+        actual = _get_gcp_libcloud_credentials(module,
+                                               service_account_email=None,
                                                credentials_file=None,
                                                project_id='proj-id')
         expected = ('secrets-sa', 'secrets-file.json', 'proj-id')
         self.assertEqual(expected, actual)
 
-        # fetch project id.  Current logic requires sa-email or creds to be set.
+        # fetch project id.  Current logic requires sa-email or creds to be
+        # set.
         fake_secrets.GCE_KEYWORD_PARAMS['project'] = 'new-proj-id'
         fake_secrets.GCE_PARAMS[1] = 'my-creds.json'
-
-        actual = _get_gcp_libcloud_credentials(service_account_email='my-sa',
+        module = FakeModule()
+        actual = _get_gcp_libcloud_credentials(module,
+                                               service_account_email='my-sa',
                                                credentials_file=None,
                                                project_id=None)
         expected = ('my-sa', 'my-creds.json', 'new-proj-id')
@@ -132,9 +146,7 @@ class GCPAuthTestCase(unittest.TestCase):
         # stop patching
         patcher.stop()
 
-    @mock.patch("ansible.utils.display.Display.deprecated",
-                name='mock_deprecated', return_value=None)
-    def test_validate_credentials_file(self, mock_deprecated):
+    def test_validate_credentials_file(self):
         # TODO(supertom): Only dealing with p12 here, check the other states
         # of this function
         module = mock.MagicMock()
@@ -190,7 +202,8 @@ class GCPAuthTestCase(unittest.TestCase):
         # data passed in, picking up project id only
         fake_env_data = {'GOOGLE_CLOUD_PROJECT': 'my-project'}
         expected = tuple(['my-sa-email', '/path/to/creds.json', 'my-project'])
-        actual = _get_gcp_environment_credentials('my-sa-email', '/path/to/creds.json', None)
+        actual = _get_gcp_environment_credentials(
+            'my-sa-email', '/path/to/creds.json', None)
         self.assertEqual(expected, actual)
 
     @mock.patch('ansible.module_utils.gcp._get_gcp_environ_var',
@@ -207,7 +220,8 @@ class GCPAuthTestCase(unittest.TestCase):
 
         # project_id (only) is set from Ansible params.
         module.params.data['project_id'] = 'my-project'
-        actual = _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False)
+        actual = _get_gcp_credentials(
+            module, require_valid_json=True, check_libcloud=False)
         expected = {'service_account_email': '',
                     'project_id': 'my-project',
                     'credentials_file': ''}
