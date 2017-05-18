@@ -125,6 +125,7 @@ import codecs
 import datetime
 import grp
 import os
+import platform
 import pwd
 import re
 import stat
@@ -180,6 +181,7 @@ class ZipArchive(object):
         self.excludes = module.params['exclude']
         self.includes = []
         self.cmd_path = self.module.get_bin_path('unzip')
+        self.zipinfocmd_path = self.module.get_bin_path('zipinfo')
         self._files_in_archive = []
         self._infodict = dict()
 
@@ -261,7 +263,8 @@ class ZipArchive(object):
         return self._files_in_archive
 
     def is_unarchived(self):
-        cmd = [self.cmd_path, '-ZT', '-s', self.src]
+      # BSD unzip doesn't support zipinfo listings with timestamp.
+        cmd = [self.zipinfocmd_path, 'T', '-s', self.src]
         if self.excludes:
             cmd.extend(['-x', ] + self.excludes)
         rc, out, err = self.module.run_command(cmd)
@@ -277,6 +280,7 @@ class ZipArchive(object):
         # Get some information related to user/group ownership
         umask = os.umask(0)
         os.umask(umask)
+        systemtype = platform.system()
 
         # Get current user and group information
         groups = os.getgroups()
@@ -387,6 +391,8 @@ class ZipArchive(object):
                     permstr = 'rwxrwxrwx'
                 else:
                     permstr = 'rw-rw-rw-'
+                file_umask=umask
+            elif 'bsd' in 'bsd' in systemtype.lower():
                 file_umask=umask
             else:
                 file_umask=0
