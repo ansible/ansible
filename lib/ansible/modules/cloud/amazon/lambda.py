@@ -247,7 +247,7 @@ def main():
         vpc_security_group_ids=dict(type='list', default=None),
         environment_variables=dict(type='dict', default=None),
         dead_letter_arn=dict(type='str', default=None),
-        )
+    )
     )
 
     mutually_exclusive = [['zip_file', 's3_key'],
@@ -306,7 +306,7 @@ def main():
         # get account ID and assemble ARN
         try:
             iam_client = boto3_conn(module, conn_type='client', resource='iam',
-                                region=region, endpoint=ec2_url, **aws_connect_kwargs)
+                                    region=region, endpoint=ec2_url, **aws_connect_kwargs)
             account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
             role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
         except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
@@ -337,7 +337,7 @@ def main():
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
         if (environment_variables is not None) and (current_config.get('Environment', {}).get('Variables', {}) != environment_variables):
-            func_kwargs.update({'Environment':{'Variables': environment_variables}})
+            func_kwargs.update({'Environment': {'Variables': environment_variables}})
         if dead_letter_arn is not None:
             if current_config.get('DeadLetterConfig'):
                 if current_config['DeadLetterConfig']['TargetArn'] != dead_letter_arn:
@@ -368,13 +368,13 @@ def main():
 
             if 'VpcConfig' not in current_config or subnet_net_id_changed or vpc_security_group_ids_changed:
                 func_kwargs.update({'VpcConfig':
-                                    {'SubnetIds': vpc_subnet_ids,'SecurityGroupIds': vpc_security_group_ids}})
+                                    {'SubnetIds': vpc_subnet_ids, 'SecurityGroupIds': vpc_security_group_ids}})
         else:
             # No VPC configuration is desired, assure VPC config is empty when present in current config
             if ('VpcConfig' in current_config and
                     'VpcId' in current_config['VpcConfig'] and
                     current_config['VpcConfig']['VpcId'] != ''):
-                func_kwargs.update({'VpcConfig':{'SubnetIds': [], 'SecurityGroupIds': []}})
+                func_kwargs.update({'VpcConfig': {'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
         if len(func_kwargs) > 1:
