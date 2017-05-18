@@ -56,7 +56,7 @@ class DocCLI(CLI):
             usage='usage: %prog [options] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
-            epilog="See man pages for Ansbile CLI options or website for tutorials https://docs.ansible.com"
+            epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
 
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
