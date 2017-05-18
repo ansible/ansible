@@ -64,7 +64,7 @@ def find_obj(content, vimtype, name, first=True):
         return None
 
     # Select the first match
-    if first:
+    if first is True:
         for obj in obj_list:
             if obj.name == name:
                 return obj
