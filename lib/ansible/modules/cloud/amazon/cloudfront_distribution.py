@@ -316,7 +316,8 @@ options:
     restrictions:
       description:
         - A config element that is a complex object that describes how a
-          distribution should restrict it's content. Only valid for distributions.
+          distribution should restrict it's content.
+          Only valid for C(streaming_distribution=no).
           The restriction object comprises the following attributes
             geo_restriction
       required: false
@@ -859,13 +860,15 @@ class CloudFrontValidationManager:
                     }]
             self.validate_is_list(origins, 'origins')
             quantity = len(origins)
-            if quantity == 0 and default_origin_domain_name is None and create_distribution:
+            if(quantity == 0 and default_origin_domain_name is None and
+               create_distribution):
                 self.module.fail_json(
                     msg="both origins[] and default_origin_domain_name have " +
                     "not been specified. please specify at least one.")
             for origin in origins:
                 origin = self.validate_origin(
-                    origin, default_origin_path, default_s3_origin_access_identity, streaming)
+                    origin, default_origin_path,
+                    default_s3_origin_access_identity, streaming)
             return self.__helpers.python_list_to_aws_list(origins)
         except Exception as e:
             self.module.fail_json(
@@ -1052,8 +1055,7 @@ class CloudFrontValidationManager:
                             association.get('event_type'),
                             'cache_behaviors[].lambda_function_associations.event_type',
                             self.__valid_lambda_function_association_event_types)
-            cache_behavior['lambda_function_associations'] = self.__helpers.python_list_to_aws_list(
-                lambda_function_associations)
+            cache_behavior['lambda_function_associations'] = self.__helpers.python_list_to_aws_list(lambda_function_associations)
             return cache_behavior
         except Exception as e:
             self.module.fail_json(
@@ -1126,7 +1128,8 @@ class CloudFrontValidationManager:
                 self.module.fail_json(
                     msg="s3_origin and default_s3_origin_domain_name not " +
                     "specified. please specify one.")
-            s3_origin['origin_access_identity'] = (default_s3_origin_origin_access_identity or '')
+            s3_origin['origin_access_identity'] = (
+                default_s3_origin_origin_access_identity or '')
             return s3_origin
         except Exception as e:
             self.module.fail_json(
@@ -1239,7 +1242,8 @@ class CloudFrontValidationManager:
                 "update and delete - " + str(e) + "\n" +
                 traceback.format_exc())
 
-    def validate_streaming_distribution_id_etag(self, alias, streaming_distribution_id,
+    def validate_streaming_distribution_id_etag(self, alias,
+                                                streaming_distribution_id,
                                                 config, e_tag):
         try:
             if streaming_distribution_id is None and alias is None:
@@ -1388,7 +1392,8 @@ class CloudFrontValidationManager:
         try:
             if valid_origins is not None:
                 valid_origins_list = valid_origins.get('items')
-                if(valid_origins_list is not None and isinstance(valid_origins_list, list) and
+                if(valid_origins_list is not None and
+                   isinstance(valid_origins_list, list) and
                    len(valid_origins_list) > 0):
                     return str(valid_origins_list[0].get('id'))
             self.module.fail_json(
@@ -1440,7 +1445,8 @@ class CloudFrontValidationManager:
                 msg="presigned_url_expire_date must be in the format '{0}'".format(
                     self.__default_presigned_url_expire_date_format))
 
-    def validate_distribution_id_from_caller_reference(self, caller_reference, streaming=False):
+    def validate_distribution_id_from_caller_reference(self, caller_reference,
+                                                       streaming=False):
         try:
             if streaming:
                 distributions = self.__cloudfront_facts_mgr.list_streaming_distributions()
@@ -1453,27 +1459,32 @@ class CloudFrontValidationManager:
             distribution_ids = list(distributions.keys())
             for distribution_id in distribution_ids:
                 if streaming:
-                    config = self.__cloudfront_facts_mgr.get_streaming_distribution(distribution_id)
+                    config = self.__cloudfront_facts_mgr.get_streaming_distribution(
+                        distribution_id)
                 else:
-                    config = self.__cloudfront_facts_mgr.get_distribution(distribution_id)
+                    config = self.__cloudfront_facts_mgr.get_distribution(
+                        distribution_id)
                 distribution = config.get(distribution_name)
                 if distribution is not None:
-                    distribution_config = distribution.get(distribution_config_name)
+                    distribution_config = distribution.get(
+                        distribution_config_name)
                     if distribution_config is not None:
                         temp_caller_reference = distribution_config.get('CallerReference')
                         if temp_caller_reference == caller_reference:
                             return distribution_id
         except Exception as e:
             self.module.fail_json(
-                msg="error validating (streaming)distribution_id from caller reference" + str(e) +
-                "\n" + traceback.format_exc())
+                msg="error validating (streaming)distribution_id from caller " +
+                "reference" + str(e) + "\n" + traceback.format_exc())
 
-    def validate_streaming_distribution_id_from_caller_reference(self, caller_reference):
+    def validate_streaming_distribution_id_from_caller_reference(self,
+                                                                 caller_reference):
         try:
             streaming_distributions = self.__cloudfront_facts_mgr.list_streaming_distributions()
             streaming_distribution_ids = list(streaming_distributions.keys())
             for streaming_distribution_id in streaming_distribution_ids:
-                config = self.__cloudfront_facts_mgr.get_streaming_distribution(streaming_distribution_id)
+                config = self.__cloudfront_facts_mgr.get_streaming_distribution(
+                    streaming_distribution_id)
                 streaming_distribution = config.get('StreamingDistribution')
                 if streaming_distribution is not None:
                     streaming_distribution_config = distribution.get('StreamingDistributionConfig')
@@ -1483,8 +1494,8 @@ class CloudFrontValidationManager:
                             return streaming_distribution_id
         except Exception as e:
             self.module.fail_json(
-                msg="error validating streaming_distribution_id from caller reference" + str(e) +
-                "\n" + traceback.format_exc())
+                msg="error validating streaming_distribution_id from caller " +
+                "reference" + str(e) + "\n" + traceback.format_exc())
 
 
 def main():
