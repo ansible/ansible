@@ -197,7 +197,7 @@ def generate_parser():
     p.add_option("-v", "--verbose", action='store_true', default=False, help="Verbose")
     p.add_option("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
     p.add_option("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
-    p.add_option("-l", "--limit-to-modules", action="store", dest="limit_to_modules", default="",
+    p.add_option("-l", "--limit-to-modules", action="store", dest="limit_to_modules", default=None,
                  help="Limit building module documentation to comma-separated list of modules. Specify non-existing module name for no modules.")
     p.add_option('-V', action='version', help='Show version number and exit')
     return p
@@ -453,12 +453,10 @@ def main():
     env, template, outputname = jinja2_environment(options.template_dir, options.type)
 
     # Convert passed-in limit_to_modules to None or list of modules.
-    if options.limit_to_modules == "":
-        limit_to_modules = None
-    else:
-        limit_to_modules = [s.lower() for s in options.limit_to_modules.split(",")]
+    if options.limit_to_modules is not None:
+        options.limit_to_modules = [s.lower() for s in options.limit_to_modules.split(",")]
 
-    mod_info, categories, aliases = list_modules(options.module_dir, limit_to_modules=limit_to_modules)
+    mod_info, categories, aliases = list_modules(options.module_dir, limit_to_modules=options.limit_to_modules)
     categories['all'] = mod_info
     categories['_aliases'] = aliases
     category_names = [c for c in categories.keys() if not c.startswith('_')]
