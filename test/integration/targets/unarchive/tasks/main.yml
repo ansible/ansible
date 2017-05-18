@@ -43,7 +43,17 @@
 
 - name: prep a windows permission file for our zip
   copy: src=foo.txt dest={{output_dir}}/FOO-UNAR.TXT
-  
+
+# This gets around an unzip timestamp bug in some distributions
+- name: Synchronize timestamps as bug workaround
+  file:
+    path="{{item}}"
+    state=touch
+  with_items:
+    - foo-unarchive.txt
+    - foo-unarchive-777.txt
+    - FOO-UNAR.TXT
+
 - name: prep a zip file
   shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{output_dir}}
 
