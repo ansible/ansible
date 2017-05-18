@@ -1,5 +1,5 @@
 - name: Is the locale we're going to test against installed?
-  shell: locale -a | grep pt_BR
+  shell: locale -a | grep "^pt_BR$"
   register: initial_state
   ignore_errors: True
 
@@ -9,7 +9,7 @@
     state: absent
 
 - name: Is the locale present?
-  shell: locale -a | grep pt_BR
+  shell: locale -a | grep "^pt_BR$"
   register: cleaned
   ignore_errors: True
 
@@ -25,7 +25,7 @@
   register: output
 
 - name: Is the locale present?
-  shell: locale -a | grep pt_BR
+  shell: locale -a | grep "^pt_BR$"
   register: post_check_output
   ignore_errors: True
 
@@ -42,7 +42,7 @@
   register: output
 
 - name: Is the locale present?
-  shell: locale -a | grep pt_BR
+  shell: locale -a | grep "^pt_BR$"
   register: post_check_output
   ignore_errors: True
 
@@ -59,7 +59,7 @@
   register: output
 
 - name: Is the locale present?
-  shell: locale -a | grep pt_BR
+  shell: locale -a | grep "^pt_BR$"
   register: post_check_output
   ignore_errors: True
 
@@ -76,7 +76,7 @@
   register: output
 
 - name: Is the locale present?
-  shell: locale -a | grep pt_BR
+  shell: locale -a | grep "^pt_BR$"
   register: post_check_output
   ignore_errors: True
 
