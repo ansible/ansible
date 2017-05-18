@@ -49,7 +49,6 @@ options:
       - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS)
         resources. You may use the bare ARN if the role belongs to the same AWS account.
     required: true
-    default: null
   handler:
     description:
       - The function within your code that Lambda calls to begin execution
