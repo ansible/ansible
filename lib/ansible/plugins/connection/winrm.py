@@ -307,10 +307,10 @@ class Connection(ConnectionBase):
 
     def _create_raw_wrapper_payload(self, cmd, environment=dict()):
         payload = {
-            'module_entry': base64.b64encode(to_bytes(cmd)),
+            'module_entry': to_text(base64.b64encode(to_bytes(cmd))),
             'powershell_modules': {},
             'actions': ['exec'],
-            'exec': base64.b64encode(to_bytes(leaf_exec)),
+            'exec': to_text(base64.b64encode(to_bytes(leaf_exec))),
             'environment': environment
         }
 
