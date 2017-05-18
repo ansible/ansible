@@ -86,7 +86,7 @@ from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudfront import CloudFrontHelpers
+import ansible.module_utils.cloudfront as helpers
 from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
 import datetime
 from functools import partial
@@ -98,7 +98,7 @@ except ImportError:
     pass
 
 
-class CloudFrontInvalidationServiceManager:
+class CloudFrontInvalidationServiceManager(object):
     """
     Handles CloudFront service calls to AWS for invalidations
     """
@@ -139,14 +139,13 @@ class CloudFrontInvalidationServiceManager:
                 **camel_dict_to_snake_dict(e.response))
 
 
-class CloudFrontInvalidationValidationManager:
+class CloudFrontInvalidationValidationManager(object):
     """
     Manages Cloudfront validations for invalidation batches
     """
 
     def __init__(self, module):
         self.module = module
-        self.__helpers = CloudFrontHelpers()
         self.__cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
 
     def validate_distribution_id(self, distribution_id, alias):
@@ -171,7 +170,7 @@ class CloudFrontInvalidationValidationManager:
             else:
                 valid_caller_reference = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
             valid_invalidation_batch = {
-                'paths': self.__helpers.python_list_to_aws_list(invalidation_batch),
+                'paths': helpers.python_list_to_aws_list(invalidation_batch),
                 'caller_reference': valid_caller_reference
             }
             return valid_invalidation_batch
@@ -199,7 +198,6 @@ def main():
             ['distribution_id', 'alias']
         ])
 
-    helpers = CloudFrontHelpers()
     validation_mgr = CloudFrontInvalidationValidationManager(module)
     service_mgr = CloudFrontInvalidationServiceManager(module)
 
