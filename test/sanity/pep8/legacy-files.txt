@@ -162,7 +162,6 @@ lib/ansible/modules/cloud/rackspace/rax_mon_check.py
 lib/ansible/modules/cloud/rackspace/rax_mon_entity.py
 lib/ansible/modules/cloud/rackspace/rax_mon_notification.py
 lib/ansible/modules/cloud/rackspace/rax_mon_notification_plan.py
-lib/ansible/modules/cloud/smartos/vmadm.py
 lib/ansible/modules/cloud/softlayer/sl_vm.py
 lib/ansible/modules/cloud/univention/udm_dns_record.py
 lib/ansible/modules/cloud/univention/udm_dns_zone.py
