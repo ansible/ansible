@@ -61,8 +61,7 @@ def find_obj(content, vimtype, name, first=True):
     if name is None:
         if obj_list:
             return obj_list[0]
-        else:
-            return None
+        return None
 
     # Select the first match
     if first:
@@ -73,8 +72,8 @@ def find_obj(content, vimtype, name, first=True):
         # If no object found, return None
         return None
 
-    # Return all objects if needed
-    return obj_list
+    # Return all matching objects if needed
+    return [obj for obj in obj_list if obj.name == name]
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
