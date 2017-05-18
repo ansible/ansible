@@ -237,14 +237,16 @@ class DataLoader:
             b_main = b'main%s' % (suffix)
             b_tasked = b'tasks/%s' % (b_main)
 
-            if b_path.endswith(b'tasks') and os.path.exists(os.path.join(b_path, b_main)) \
-              or os.path.exists(os.path.join(b_upath, b_tasked)) \
-              or os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked)):
+            if (
+                b_path.endswith(b'tasks') and
+                os.path.exists(os.path.join(b_path, b_main)) or
+                os.path.exists(os.path.join(b_upath, b_tasked)) or
+                os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked))
+            ):
                 isit = True
                 break
 
         return isit
-
 
     def path_dwim_relative(self, path, dirname, source, is_role=False):
         '''
@@ -283,7 +285,7 @@ class DataLoader:
                 search.append(self.path_dwim(os.path.join(basedir, 'tasks', source)))
 
             # try to create absolute path for loader basedir + templates/files/vars + filename
-            search.append(self.path_dwim(os.path.join(dirname,source)))
+            search.append(self.path_dwim(os.path.join(dirname, source)))
             search.append(self.path_dwim(os.path.join(basedir, source)))
 
             # try to create absolute path for loader basedir + filename
