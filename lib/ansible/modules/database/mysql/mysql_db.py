@@ -78,7 +78,7 @@ options:
       - Option use to skip errors when importing malformed sql files.
     required: false
     default: false
-    version_added: 2.4
+    version_added: "2.4"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
