@@ -593,7 +593,7 @@ class Templar:
                 ran = None
 
             if ran and not allow_unsafe:
-                from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
+                from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
