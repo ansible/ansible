@@ -44,7 +44,11 @@ options:
       required: false
     comment:
       description:
-        - A unique comment to describe the cloudfront origin access identity.
+        - A comment to describe the cloudfront origin access identity.
+      required: false
+    caller_reference:
+      description:
+        - A unique identifier to reference the origin access identity by.
       required: false
 
 '''
@@ -205,12 +209,15 @@ def main():
     origin_access_identity_id = module.params.get('origin_access_identity_id')
 
     if state != 'present':
-        e_tag = validation_mgr.get_etag_from_origin_access_identity_id(origin_access_identity_id)
+        e_tag = validation_mgr.get_etag_from_origin_access_identity_id(
+            origin_access_identity_id)
 
     if state == 'present':
-        result = service_mgr.create_origin_access_identity(caller_reference, comment)
+        result = service_mgr.create_origin_access_identity(caller_reference,
+                                                           comment)
     elif state == 'absent':
-        result = service_mgr.delete_origin_access_identity(origin_access_identity_id, e_tag)
+        result = service_mgr.delete_origin_access_identity(
+            origin_access_identity_id, e_tag)
     elif state == 'updated':
         result = service_mgr.update_origin_access_identity(
             caller_reference, comment, origin_access_identity_id, e_tag)
