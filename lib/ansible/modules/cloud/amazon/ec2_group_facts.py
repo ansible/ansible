@@ -153,11 +153,13 @@ def main():
     except ClientError as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc())
 
-    # Modify boto3 tags list to be ansible friendly dict and then camel_case
     snaked_security_groups = []
     for security_group in security_groups['SecurityGroups']:
-        security_group['Tags'] = boto3_tag_list_to_ansible_dict(security_group['Tags'])
-        snaked_security_groups.append(camel_dict_to_snake_dict(security_group))
+        # Modify boto3 tags list to be ansible friendly dict
+        # but don't camel case tags
+        security_group = camel_dict_to_snake_dict(security_group)
+        security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group['tags'], tag_name_key_name='key', tag_value_key_name='value')
+        snaked_security_groups.append(security_group)
 
     module.exit_json(security_groups=snaked_security_groups)
 
