@@ -32,8 +32,14 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             term_file = os.path.basename(term)
-            dwimmed_path = self.find_file_in_search_path(variables, 'files', os.path.dirname(term))
-            if dwimmed_path:
+            term_dir = os.path.dirname(term)
+
+            paths = self.get_search_path(variables)
+            candidates = self._loader.path_dwim_get_candidates(paths, 'files', term_dir)
+
+            for b_candidate in candidates:
+                dwimmed_path = to_text(b_candidate)
                 globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'))
-                ret.extend(to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g))
+                found = [to_text(os.path.normpath(g), errors='surrogate_or_strict') for g in globbed if os.path.isfile(g)]
+                ret.extend(f for f in found if f not in ret)
         return ret

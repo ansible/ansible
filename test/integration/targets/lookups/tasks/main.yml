@@ -291,3 +291,41 @@
 - assert:
     that:
       - "hello_world|trim == 'Hello world!'"
+
+# Fileglob lookup
+- name: Prepare directories for fileglob test
+  file: path={{output_dir}}/fileglob_dir_{{item}} state=directory
+  with_items: [one, two]
+
+- name: Create files for fileglob test
+  copy: dest={{output_dir}}/{{item}} mode=0644 content=""
+  with_items: [fileglob_dir_one/some.conf, fileglob_dir_one/other.conf, fileglob_dir_two/some.conf]
+
+- name: Test globbing of filenames
+  debug: var=item
+  with_fileglob: "{{output_dir}}/fileglob_dir_one/*.conf"
+  register: fileglob_files
+
+- name: Verify globbing of filenames
+  assert:
+    that:
+        - fileglob_files.results|length == 2
+
+- name: Test globbing of files with asterisk in path component
+  debug: var=item
+  with_fileglob: "{{output_dir}}/fileglob_dir_*/some.conf"
+  register: fileglob_dirs
+
+- name: Verify globbing of files with asterisk in path component
+  assert:
+    that:
+        - fileglob_dirs.results|length == 2
+
+- name: Cleanup fileglob test directories
+  file: dest={{item}} state=absent
+  with_items:
+  - "{{output_dir}}/fileglob_dir_one/some.conf"
+  - "{{output_dir}}/fileglob_dir_one/other.conf"
+  - "{{output_dir}}/fileglob_dir_two/some.conf"
+  - "{{output_dir}}/fileglob_dir_one"
+  - "{{output_dir}}/fileglob_dir_two"

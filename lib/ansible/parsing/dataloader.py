@@ -246,6 +246,50 @@ class DataLoader:
         return isit
 
 
+    def path_dwim_get_candidates(self, paths, dirname, source, is_role=False):
+        '''
+        Get search target candidates for given paths in a directory dirname.
+        '''
+        b_dirname = to_bytes(dirname)
+        b_source = to_bytes(source)
+        search = []
+
+        if source and (source.startswith('~') or source.startswith(os.path.sep)):
+            # path is absolute, no relative needed, return source
+            search.append(to_bytes(unfrackpath(b_source), errors='surrogate_or_strict'))
+        else:
+            display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
+            for path in paths:
+                upath = unfrackpath(path)
+                b_upath = to_bytes(upath, errors='surrogate_or_strict')
+                b_mydir = os.path.dirname(b_upath)
+
+                # FIXME: this detection fails with non main.yml roles
+                # if path is in role and 'tasks' not there already, add it into the search
+                if is_role or self._is_role(path):
+                    if b_mydir.endswith(b'tasks'):
+                        search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
+                        search.append(os.path.join(b_mydir, b_source))
+                    else:
+                        # don't add dirname if user already is using it in source
+                        if b_source.split(b'/')[0] != b_dirname:
+                            search.append(os.path.join(b_upath, b_dirname, b_source))
+                        search.append(os.path.join(b_upath, b_source))
+
+                elif b_dirname not in b_source.split(b'/'):
+                    # don't add dirname if user already is using it in source
+                    if b_source.split(b'/')[0] != dirname:
+                        search.append(os.path.join(b_upath, b_dirname, b_source))
+                    search.append(os.path.join(b_upath, b_source))
+
+            # always append basedir as last resort
+            # don't add dirname if user already is using it in source
+            if b_source.split(b'/')[0] != dirname:
+                search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
+            search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
+
+        return search
+
     def path_dwim_relative(self, path, dirname, source, is_role=False):
         '''
         find one file in either a role or playbook dir with or without
@@ -306,48 +350,12 @@ class DataLoader:
         :rtype: A text string
         :returns: An absolute path to the filename ``source``
         '''
-        b_dirname = to_bytes(dirname)
-        b_source = to_bytes(source)
 
         result = None
         if source is None:
             display.warning('Invalid request to find a file that matches a "null" value')
-        elif source and (source.startswith('~') or source.startswith(os.path.sep)):
-            # path is absolute, no relative needed, check existence and return source
-            test_path = unfrackpath(b_source)
-            if os.path.exists(to_bytes(test_path, errors='surrogate_or_strict')):
-                result = test_path
         else:
-            search = []
-            display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
-            for path in paths:
-                upath = unfrackpath(path)
-                b_upath = to_bytes(upath, errors='surrogate_or_strict')
-                b_mydir = os.path.dirname(b_upath)
-
-                # FIXME: this detection fails with non main.yml roles
-                # if path is in role and 'tasks' not there already, add it into the search
-                if is_role or self._is_role(path):
-                    if b_mydir.endswith(b'tasks'):
-                        search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
-                        search.append(os.path.join(b_mydir, b_source))
-                    else:
-                        # don't add dirname if user already is using it in source
-                        if b_source.split(b'/')[0] != b_dirname:
-                            search.append(os.path.join(b_upath, b_dirname, b_source))
-                        search.append(os.path.join(b_upath, b_source))
-
-                elif b_dirname not in b_source.split(b'/'):
-                    # don't add dirname if user already is using it in source
-                    if b_source.split(b'/')[0] != dirname:
-                        search.append(os.path.join(b_upath, b_dirname, b_source))
-                    search.append(os.path.join(b_upath, b_source))
-
-            # always append basedir as last resort
-            # don't add dirname if user already is using it in source
-            if b_source.split(b'/')[0] != dirname:
-                search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
-            search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
+            search = self.path_dwim_get_candidates(paths, dirname, source, is_role)
 
             display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
             for b_candidate in search:
