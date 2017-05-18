@@ -65,7 +65,7 @@ options:
     description:
       - Password for the user account to run the scheduled task as
     version_added: "2.4"
-  run_level:
+  runlevel:
     description:
       - The level of user rights used to run the task
     default: limited
@@ -131,7 +131,7 @@ EXAMPLES = r'''
     state: present
     enabled: yes
     user: NETWORK SERVICE
-    run_level: highest
+    runlevel: highest
 
 # Change the same task as above to run under a domain user account, storing credentials for the task
 - win_scheduled_task:
@@ -145,7 +145,7 @@ EXAMPLES = r'''
     enabled: yes
     user: DOMAIN\user
     password: passwordGoesHere
-    run_level: highest
+    runlevel: highest
 
 # Change the same task again, choosing not to store the password for the account
 -  win_scheduled_task:
@@ -158,6 +158,6 @@ EXAMPLES = r'''
     state: present
     enabled: yes
     user: DOMAIN\user
-    run_level: highest
+    runlevel: highest
     do_not_store_password: yes
 '''

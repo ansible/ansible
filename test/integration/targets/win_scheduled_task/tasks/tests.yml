@@ -187,28 +187,28 @@
     win_scheduled_task:
       <<: *wstr1_present
       user: NETWORK SERVICE
-      run_level: highest
-    register: change_scheduled_task_run_options_run_level
+      runlevel: highest
+    register: change_scheduled_task_run_options_runlevel
 
-  - name: Test change_scheduled_task_run_options_run_level
+  - name: Test change_scheduled_task_run_options_runlevel
     assert:
       that:
-      - change_scheduled_task_run_options_run_level.changed == true
-      - change_scheduled_task_run_options_run_level.exists == true
+      - change_scheduled_task_run_options_runlevel.changed == true
+      - change_scheduled_task_run_options_runlevel.exists == true
 
 
   - name: Change scheduled task run options run level (again)
     win_scheduled_task:
       <<: *wstr1_present
       user: NETWORK SERVICE
-      run_level: highest
-    register: change_scheduled_task_run_options_run_level_again
+      runlevel: highest
+    register: change_scheduled_task_run_options_runlevel_again
 
-  - name: Test change_scheduled_task_run_options_run_level_again
+  - name: Test change_scheduled_task_run_options_runlevel_again
     assert:
       that:
-      - change_scheduled_task_run_options_run_level_again.changed == false
-      - change_scheduled_task_run_options_run_level_again.exists == true
+      - change_scheduled_task_run_options_runlevel_again.changed == false
+      - change_scheduled_task_run_options_runlevel_again.exists == true
 
 
   # Should ignore change as account being tested is a built-in service account
@@ -216,7 +216,7 @@
     win_scheduled_task:
       <<: *wstr1_present
       user: NETWORK SERVICE
-      run_level: highest
+      runlevel: highest
       do_not_store_password: yes
     register: change_scheduled_task_run_options_store_password
 

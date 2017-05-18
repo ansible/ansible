@@ -47,7 +47,7 @@ $time = Get-AnsibleParam -obj $params -name "time" -type "str" -failifempty $pre
 
 $user = Get-AnsibleParam -obj $params -name "user" -default "$env:USERDOMAIN\$env:USERNAME" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -default $null -type "str"
-$run_level = Get-AnsibleParam -obj $params -name "run_level" -default "limited" -type "str" -validateset "limited", "highest"
+$runlevel = Get-AnsibleParam -obj $params -name "runlevel" -default "limited" -type "str" -validateset "limited", "highest"
 $do_not_store_password = Get-AnsibleParam -obj $params -name "do_not_store_password" -default $false -type "bool"
 
 $weekly = $frequency -eq "weekly"
@@ -120,14 +120,14 @@ try {
 
     if ($do_not_store_password) {
         # Create a ScheduledTaskPrincipal for the task to run under
-        $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel $run_level -Id Author
+        $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel $runlevel -Id Author
         $registerRunOptionParams = @{Principal = $principal}
     }
     else {
         # Specify direct credential and run-level values to add to Register-ScheduledTask
         $registerRunOptionParams = @{
             User = $user
-            RunLevel = $run_level
+            RunLevel = $runlevel
         }
         if ($password) {
             $registerRunOptionParams.Password = $password
@@ -165,7 +165,7 @@ try {
         }
 
         if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $executable -and
-        $taskState -eq $enabled -and $task.Principal.UserId -eq $user -and $task.Principal.RunLevel -eq $run_level -and $passwordStoreConsistent) {
+        $taskState -eq $enabled -and $task.Principal.UserId -eq $user -and $task.Principal.RunLevel -eq $runlevel -and $passwordStoreConsistent) {
             # No change in the task
             $result.msg = "No change in task $name"
         }
