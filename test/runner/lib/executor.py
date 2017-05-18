@@ -40,7 +40,6 @@ from lib.util import (
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
-    MissingEnvironmentVariable,
     display,
     run_command,
     common_environment,
@@ -1289,10 +1288,7 @@ class SanityConfig(TestConfig):
         if args.base_branch:
             self.base_branch = args.base_branch  # str
         elif is_shippable():
-            try:
-                self.base_branch = os.environ['BASE_BRANCH']  # str
-            except KeyError as ex:
-                raise MissingEnvironmentVariable(name=ex.args[0])
+            self.base_branch = os.environ.get('BASE_BRANCH', '')  # str
 
             if self.base_branch:
                 self.base_branch = 'origin/%s' % self.base_branch
