@@ -46,9 +46,9 @@
 
 # This gets around an unzip timestamp bug in some distributions
 # Recent unzip on Fedora, Ubuntu, and BSD will randomly round some timestamps up.
-# But that doesn't seem to happen when the timestamp has an even second.
+# But that doesn't seem to happen when the timestamp has an even second. 
 - name: Bug work around
-  command: touch -d 1pm {{output_dir}}/foo-unarchive.txt {{output_dir}}/foo-unarchive-777.txt {{output_dir}}/FOO-UNAR.TXT
+  command: touch -t "201705111530.00" {{output_dir}}/foo-unarchive.txt {{output_dir}}/foo-unarchive-777.txt {{output_dir}}/FOO-UNAR.TXT
 # See Fedora bug 1451953: https://bugzilla.redhat.com/show_bug.cgi?id=1451953
 # See Ubuntu bug 1691636: https://bugs.launchpad.net/ubuntu/+source/unzip/+bug/1691636
 # When these are fixed, this code should be removed.  
