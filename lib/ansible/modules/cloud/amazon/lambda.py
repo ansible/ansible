@@ -298,7 +298,9 @@ def main():
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
         module.fail_json(msg=str(e))
 
-    if role.startswith('arn:aws:iam'):
+    if not role:
+        role_arn = None
+    elif role.startswith('arn:aws:iam'):
         role_arn = role
     else:
         # get account ID and assemble ARN
