@@ -885,8 +885,7 @@ class PyVmomiHelper(object):
             ident.hostName.name = str(self.params['customization'].get('hostname', self.params['name']))
 
         self.customspec = vim.vm.customization.Specification()
-        if adaptermaps:
-            self.customspec.nicSettingMap = adaptermaps
+        self.customspec.nicSettingMap = adaptermaps
         self.customspec.globalIPSettings = globalip
         self.customspec.identity = ident
 
