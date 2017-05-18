@@ -138,7 +138,7 @@ Types of tests
 
   * compile
 
-    * Does NOT ensure code is py2.6+ and py3.5+ compatable
+    * Does NOT ensure code is py2.6+ and py3.5+ compatible
 
   * Sanity
 
@@ -323,7 +323,7 @@ Integration Tests: Test structure
 Integration Tests: Best practices
 =================================
 
-* tempdir
+* output_dir
 * Add tests before refactoring
 
 .. container:: handout
