@@ -80,6 +80,7 @@ EXAMPLES = '''
     priority: -10
 '''
 
+import os
 import re
 from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception
@@ -146,6 +147,8 @@ def main():
         try:
             # install the requested path if necessary
             if path not in all_alternatives:
+                if not os.path.exists(path):
+                    module.fail_json(msg="Specfied path %s does not exist" % path)
                 if not link:
                     module.fail_json(msg="Needed to install the alternative, but unable to do so as we are missing the link")
 
