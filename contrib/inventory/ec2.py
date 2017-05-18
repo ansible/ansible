@@ -1066,6 +1066,24 @@ class Ec2Inventory(object):
             except AttributeError:
                 self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                                 'Please upgrade boto >= 2.3.0.']))
+        # Inventory: Group by tag keys
+        if self.group_by_tag_keys:
+            for k, v in instance.tags.items():
+                if self.expand_csv_tags and v and ',' in v:
+                    values = map(lambda x: x.strip(), v.split(','))
+                else:
+                    values = [v]
+
+                for v in values:
+                    if v:
+                        key = self.to_safe("tag_" + k + "=" + v)
+                    else:
+                        key = self.to_safe("tag_" + k)
+                    self.push(self.inventory, key, hostname)
+                    if self.nested_groups:
+                        self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                        if v:
+                            self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
         # Inventory: Group by engine
         if self.group_by_rds_engine:
@@ -1078,6 +1096,12 @@ class Ec2Inventory(object):
             self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group.name), hostname)
             if self.nested_groups:
                 self.push_group(self.inventory, 'rds_parameter_groups', self.to_safe("rds_parameter_group_" + instance.parameter_group.name))
+
+        # Global Tag: instances without tags
+        if self.group_by_tag_none and len(instance.tags) == 0:
+            self.push(self.inventory, 'tag_none', hostname)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'tags', 'tag_none')
 
         # Global Tag: all RDS instances
         self.push(self.inventory, 'rds', hostname)
