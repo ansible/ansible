@@ -124,9 +124,21 @@ commands:
     sample: ["interface vlan10", "hsrp version 2", "hsrp 30", "ip 10.30.1.1"]
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+
+
+def execute_show_command(command, module):
+    if module.params['transport'] == 'cli':
+        command += ' | json'
+        cmds = [command]
+        body = run_commands(module, cmds)
+    elif module.params['transport'] == 'nxapi':
+        cmds = [command]
+        body = run_commands(module, cmds)
+
+    return body
 
 
 def apply_key_map(key_map, table):
@@ -303,18 +315,6 @@ def get_commands_config_hsrp(delta, interface, args):
     return commands
 
 
-def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
-
-
 def is_default(interface, module):
     command = 'show run interface {0}'.format(interface)
 
@@ -470,7 +470,7 @@ def main():
             end_state = get_hsrp_group(group, interface, module)
             if 'configure' in commands:
                 commands.pop(0)
-    
+
     results['commands'] = commands
     module.exit_json(**results)
 
