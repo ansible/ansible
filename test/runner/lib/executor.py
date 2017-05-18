@@ -245,6 +245,11 @@ def command_network_integration(args):
     """
     :type args: NetworkIntegrationConfig
     """
+    filename = 'test/integration/inventory.networking'
+
+    if not args.explain and not args.platform and not os.path.isfile(filename):
+        raise ApplicationError('Use the --platform option or provide an inventory file (see %s.template).' % filename)
+
     internal_targets = command_integration_filter(args, walk_network_integration_targets())
     platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
 
@@ -275,8 +280,6 @@ def command_network_integration(args):
 
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = network_inventory(remotes)
-
-        filename = 'test/integration/inventory.networking'
 
         display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
 
@@ -349,6 +352,11 @@ def command_windows_integration(args):
     """
     :type args: WindowsIntegrationConfig
     """
+    filename = 'test/integration/inventory.winrm'
+
+    if not args.explain and not args.windows and not os.path.isfile(filename):
+        raise ApplicationError('Use the --windows option or provide an inventory file (see %s.template).' % filename)
+
     internal_targets = command_integration_filter(args, walk_windows_integration_targets())
 
     if args.windows:
@@ -367,8 +375,6 @@ def command_windows_integration(args):
 
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = windows_inventory(remotes)
-
-        filename = 'test/integration/inventory.winrm'
 
         display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
 
