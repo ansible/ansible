@@ -28,7 +28,7 @@ Ansible Testing
 
    Set the scene
 
-     * Quick taster, give you enought to know what's possible and point you in the right direction
+     * Quick taster, give you enough to know what's possible and point you in the right direction
 
    Testing Working Group
 
@@ -72,7 +72,7 @@ What do we want from testing Ansible:
 
    * Local run - common request from the community
    * Increasing tha matrix of Python & OS versions vs timely feedback
-   * Main aim: Stable product, find issues sooner, speed up PR workflow
+   * Main aim: Stable product, find issues sooner, speed up PR work flow
 
 
 
@@ -95,7 +95,7 @@ Solution: ansible-test
 
    * Q: If I said Shippable or Travis who would know what they are:
 
-     * Shippable is a Continious Integration (CI) tool, like Travis
+     * Shippable is a Continuous Integration (CI) tool, like Travis
      * Integrate with GitHub to test (PRs) + merges
      * Originally used Travis, moved as Shippable is cheaper
      * 52 Concurrent jobs as of May 2017
@@ -175,7 +175,7 @@ Spot common issues
 
 .. container:: handout
 
-   * Bulk changes that update all modules are prefered, though speak to us first
+   * Bulk changes that update all modules are preferred, though speak to us first
    * Fix a **single** class of issues only, easier to review
    * Recent examples: Modules DOCUMENATION & RETURNS blocks
 
@@ -202,7 +202,7 @@ Improvements since 2.0
 .. container:: handout
 
    * Again, lot of this is Matt
-   * Single repo; therefore versioned along side code); reall pain to write tests before
+   * Single repo; therefore versioned along side code); real pain to write tests before
 
 Improvements in 2.4
 ===================
@@ -225,7 +225,7 @@ Improvements in 2.4
    * pep8 exceptions list dropping at a good rate
    * The last three have
 
-     * dramaticly improved our online documentation. Previously some module docs were not being displayed at all
+     * dramatically improved our online documentation. Previously some module docs were not being displayed at all
      * Massive reduction human time to review modules
 
 
@@ -234,7 +234,11 @@ Improvements in 2.4
 Testing Working Group
 =====================
 
-Subscribe to the GitHub issue for updates
+* One of special interest groups, others are Core, Networking and Windows
+* Weekly public meeting on ``#ansible-meeting``
+* Set direction and combine powers
+* Subscribe to the GitHub issue for updates
+* Links at the end of the presentation
 
 Demo
 ====
@@ -250,6 +254,7 @@ Lets look at a PR...
    * Show the different checks that have failed - Only sanity & compile tests are listed
    * Command that you can run locally
    * Shippable
+
      * Need to look here if an unit or integration test has failed
      * List of platforms
      * Tests tab on left hand side
@@ -260,11 +265,11 @@ Lets look at a PR...
 Unit Tests: Creating
 ====================
 
-``test/units/``
+* ``test/units/``
 
-Unit tests can't use external services
-
-Ansible modules are mostly about external services
+* Unit tests can't use external services
+* Ansible modules are mostly about external services
+* ``ansible-test units --tox [ --python X.Y ] [ modulename ]``
 
 
 .. container:: handout
@@ -336,8 +341,9 @@ Integration Tests: Demo
 
 Demo of running tests with Docker
 
-source hacking/env setup
-ansible-test integration --docker  centos7 pip
+``source hacking/env setup``
+
+``ansible-test integration --docker centos7 pip``
 
 
 .. container:: handout
