@@ -5,7 +5,6 @@ docs/api/conf.py
 docs/bin/dump_keywords.py
 docs/bin/plugin_formatter.py
 docs/docsite/rst/conf.py
-examples/scripts/uptime.py
 lib/ansible/cli/__init__.py
 lib/ansible/cli/adhoc.py
 lib/ansible/cli/console.py
@@ -14,11 +13,6 @@ lib/ansible/cli/galaxy.py
 lib/ansible/cli/playbook.py
 lib/ansible/cli/pull.py
 lib/ansible/cli/vault.py
-lib/ansible/compat/__init__.py
-lib/ansible/compat/selectors/__init__.py
-lib/ansible/compat/tests/__init__.py
-lib/ansible/constants.py
-lib/ansible/errors/__init__.py
 lib/ansible/executor/__init__.py
 lib/ansible/executor/action_write_locks.py
 lib/ansible/executor/module_common.py
@@ -66,7 +60,6 @@ lib/ansible/module_utils/gcdns.py
 lib/ansible/module_utils/gce.py
 lib/ansible/module_utils/gcp.py
 lib/ansible/module_utils/infinibox.py
-lib/ansible/module_utils/ios.py
 lib/ansible/module_utils/json_utils.py
 lib/ansible/module_utils/junos.py
 lib/ansible/module_utils/known_hosts.py
@@ -414,7 +407,6 @@ lib/ansible/modules/network/asa/asa_acl.py
 lib/ansible/modules/network/asa/asa_command.py
 lib/ansible/modules/network/asa/asa_config.py
 lib/ansible/modules/net_tools/basics/get_url.py
-lib/ansible/modules/net_tools/basics/slurp.py
 lib/ansible/modules/net_tools/basics/uri.py
 lib/ansible/modules/network/bigswitch/bigmon_chain.py
 lib/ansible/modules/network/bigswitch/bigmon_policy.py
@@ -669,7 +661,6 @@ lib/ansible/modules/system/openwrt_init.py
 lib/ansible/modules/system/osx_defaults.py
 lib/ansible/modules/system/pam_limits.py
 lib/ansible/modules/system/pamd.py
-lib/ansible/modules/system/parted.py
 lib/ansible/modules/system/puppet.py
 lib/ansible/modules/system/runit.py
 lib/ansible/modules/system/seboolean.py
@@ -841,7 +832,6 @@ lib/ansible/plugins/strategy/free.py
 lib/ansible/plugins/strategy/linear.py
 lib/ansible/plugins/terminal/asa.py
 lib/ansible/plugins/terminal/eos.py
-lib/ansible/plugins/terminal/ios.py
 lib/ansible/plugins/terminal/junos.py
 lib/ansible/plugins/terminal/nxos.py
 lib/ansible/plugins/test/core.py
@@ -893,7 +883,6 @@ test/units/module_utils/basic/test_run_command.py
 test/units/module_utils/basic/test_safe_eval.py
 test/units/module_utils/basic/test_set_mode_if_different.py
 test/units/module_utils/ec2/test_aws.py
-test/units/module_utils/gcp/test_auth.py
 test/units/module_utils/json_utils/test_filter_non_json_lines.py
 test/units/module_utils/test_basic.py
 test/units/module_utils/test_distribution_version.py

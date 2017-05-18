@@ -9,4 +9,5 @@
     - { role: test_gce_net, tags: test_gce_net }
     - { role: test_gcp_url_map, tags: test_gcp_url_map }
     - { role: test_gcp_glb, tags: test_gcp_glb }
+    - { role: test_gcp_healthcheck, tags: test_gcp_healthcheck }
     # TODO: tests for gce_lb, gc_storage

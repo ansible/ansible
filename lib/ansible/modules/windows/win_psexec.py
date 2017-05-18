@@ -58,7 +58,8 @@ options:
   nobanner:
     description:
     - Do not display the startup banner and copyright message.
-    default: 'yes'
+    - This only works for specific versions of the PsExec binary.
+    default: 'no'
     choices: [ 'no', 'yes' ]
     version_added: '2.4'
   noprofile:

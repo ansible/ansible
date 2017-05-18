@@ -20,7 +20,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -192,14 +192,13 @@ EXAMPLES = """
 
 
 from ansible.module_utils.basic import AnsibleModule
-import locale
 import math
 import re
 import os
 
 
 # Reference prefixes (International System of Units and IEC)
-units_si  = ['B', 'KB', 'MB', 'GB', 'TB']
+units_si = ['B', 'KB', 'MB', 'GB', 'TB']
 units_iec = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
 parted_units = units_si + units_iec + ['s', '%', 'cyl', 'chs', 'compact']
 
@@ -219,8 +218,8 @@ def parse_unit(size_str, unit=''):
 
         size = {
             'cylinder': int(matches.group(1)),
-            'head':     int(matches.group(2)),
-            'sector':   int(matches.group(3))
+            'head': int(matches.group(2)),
+            'sector': int(matches.group(3))
         }
         unit = 'chs'
 
@@ -266,12 +265,12 @@ def parse_partition_info(parted_output, unit):
     size, unit = parse_unit(generic_params[1], unit)
 
     generic = {
-        'dev':   generic_params[0],
-        'size':  size,
-        'unit':  unit.lower(),
+        'dev': generic_params[0],
+        'size': size,
+        'unit': unit.lower(),
         'table': generic_params[5],
         'model': generic_params[6],
-        'logical_block':  int(generic_params[3]),
+        'logical_block': int(generic_params[3]),
         'physical_block': int(generic_params[4])
     }
 
@@ -281,9 +280,9 @@ def parse_partition_info(parted_output, unit):
         cyl_size, cyl_unit = parse_unit(chs_info[3])
         generic['chs_info'] = {
             'cylinders': int(chs_info[0]),
-            'heads':     int(chs_info[1]),
-            'sectors':   int(chs_info[2]),
-            'cyl_size':  cyl_size,
+            'heads': int(chs_info[1]),
+            'sectors': int(chs_info[2]),
+            'cyl_size': cyl_size,
             'cyl_size_unit': cyl_unit.lower()
         }
         lines = lines[1:]
@@ -297,23 +296,23 @@ def parse_partition_info(parted_output, unit):
         # behaviour down to parted version 1.8.3, which is the first version
         # that supports the machine parseable output.
         if unit != 'chs':
-            size   = parse_unit(part_params[3])[0]
+            size = parse_unit(part_params[3])[0]
             fstype = part_params[4]
-            flags  = part_params[6]
+            flags = part_params[6]
 
         else:
-            size   = ""
+            size = ""
             fstype = part_params[3]
-            flags  = part_params[5]
+            flags = part_params[5]
 
         parts.append({
-            'num':    int(part_params[0]),
-            'begin':  parse_unit(part_params[1])[0],
-            'end':    parse_unit(part_params[2])[0],
-            'size':   size,
+            'num': int(part_params[0]),
+            'begin': parse_unit(part_params[1])[0],
+            'end': parse_unit(part_params[2])[0],
+            'size': size,
             'fstype': fstype,
-            'flags':  [f.strip() for f in flags.split(', ') if f != ''],
-            'unit':  unit.lower(),
+            'flags': [f.strip() for f in flags.split(', ') if f != ''],
+            'unit': unit.lower(),
         })
 
     return {'generic': generic, 'partitions': parts}
@@ -380,23 +379,23 @@ def get_unlabeled_device_info(device, unit):
     device_name = os.path.basename(device)
     base = "/sys/block/%s" % device_name
 
-    vendor      = read_record(base + "/device/vendor", "Unknown")
-    model       = read_record(base + "/device/model", "model")
+    vendor = read_record(base + "/device/vendor", "Unknown")
+    model = read_record(base + "/device/model", "model")
     logic_block = int(read_record(base + "/queue/logical_block_size", 0))
-    phys_block  = int(read_record(base + "/queue/physical_block_size", 0))
-    size_bytes  = int(read_record(base + "/size", 0)) * logic_block
+    phys_block = int(read_record(base + "/queue/physical_block_size", 0))
+    size_bytes = int(read_record(base + "/size", 0)) * logic_block
 
-    size, unit  = format_disk_size(size_bytes, unit)
+    size, unit = format_disk_size(size_bytes, unit)
 
     return {
         'generic': {
-            'dev':            device,
-            'table':          "unknown",
-            'size':           size,
-            'unit':           unit,
-            'logical_block':  logic_block,
+            'dev': device,
+            'table': "unknown",
+            'size': size,
+            'unit': unit,
+            'logical_block': logic_block,
             'physical_block': phys_block,
-            'model':          "%s %s" % (vendor, model),
+            'model': "%s %s" % (vendor, model),
         },
         'partitions': []
     }
@@ -472,7 +471,7 @@ def parted_version():
     # Convert version to numbers
     major = int(matches.group(1))
     minor = int(matches.group(2))
-    rev   = 0
+    rev = 0
     if matches.group(3) is not None:
         rev = int(matches.group(3))
 
@@ -587,17 +586,17 @@ def main():
     )
 
     # Data extraction
-    device      = module.params['device']
-    align       = module.params['align']
-    number      = module.params['number']
-    unit        = module.params['unit']
-    label       = module.params['label']
-    part_type   = module.params['part_type']
-    part_start  = module.params['part_start']
-    part_end    = module.params['part_end']
-    name        = module.params['name']
-    state       = module.params['state']
-    flags       = module.params['flags']
+    device = module.params['device']
+    align = module.params['align']
+    number = module.params['number']
+    unit = module.params['unit']
+    label = module.params['label']
+    part_type = module.params['part_type']
+    part_start = module.params['part_start']
+    part_end = module.params['part_end']
+    name = module.params['name']
+    state = module.params['state']
+    flags = module.params['flags']
 
     # Parted executable
     parted_exec = module.get_bin_path('parted', True)
@@ -668,7 +667,7 @@ def main():
             if flags:
                 # Compute only the changes in flags status
                 flags_off = list(set(partition['flags']) - set(flags))
-                flags_on  = list(set(flags) - set(partition['flags']))
+                flags_on = list(set(flags) - set(partition['flags']))
 
                 for f in flags_on:
                     script += "set %s %s on " % (number, f)

@@ -141,8 +141,8 @@ cert_days:
 challenge_data:
   description: per domain / challenge type challenge data
   returned: changed
-  type: dictionary
-  sample:
+  type: complex
+  contains:
     resource:
       description: the challenge resource that must be created for validation
       returned: changed
@@ -156,8 +156,8 @@ challenge_data:
 authorizations:
   description: ACME authorization data.
   returned: changed
-  type: list
-  sample:
+  type: complex
+  contains:
       authorization:
         description: ACME authorization object. See https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.1.2
         returned: success
