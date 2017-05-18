@@ -18,7 +18,6 @@ lib/ansible/compat/__init__.py
 lib/ansible/compat/selectors/__init__.py
 lib/ansible/compat/tests/__init__.py
 lib/ansible/constants.py
-lib/ansible/errors/__init__.py
 lib/ansible/executor/__init__.py
 lib/ansible/executor/action_write_locks.py
 lib/ansible/executor/module_common.py
