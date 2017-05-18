@@ -24,9 +24,9 @@ from yaml.nodes import MappingNode
 
 from ansible.module_utils._text import to_bytes
 from ansible.parsing.vault import VaultLib
-from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
-from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import wrap_var
+
 
 try:
     from __main__ import display
@@ -56,8 +56,8 @@ class AnsibleConstructor(SafeConstructor):
         # (pyyaml silently allows overwriting keys)
         if not isinstance(node, MappingNode):
             raise ConstructorError(None, None,
-                    "expected a mapping node, but found %s" % node.id,
-                    node.start_mark)
+                                   "expected a mapping node, but found %s" % node.id,
+                                   node.start_mark)
         self.flatten_mapping(node)
         mapping = AnsibleMapping()
 
@@ -70,11 +70,11 @@ class AnsibleConstructor(SafeConstructor):
                 hash(key)
             except TypeError as exc:
                 raise ConstructorError("while constructing a mapping", node.start_mark,
-                        "found unacceptable key (%s)" % exc, key_node.start_mark)
+                                       "found unacceptable key (%s)" % exc, key_node.start_mark)
 
             if key in mapping:
                 display.warning(u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).'
-                u' Using last defined value only.'.format(key, *mapping.ansible_pos))
+                                u' Using last defined value only.'.format(key, *mapping.ansible_pos))
 
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
@@ -99,8 +99,7 @@ class AnsibleConstructor(SafeConstructor):
         ciphertext_data = to_bytes(value)
 
         if self._b_vault_password is None:
-            raise ConstructorError(None, None,
-                    "found vault but no vault password provided", node.start_mark)
+            raise ConstructorError(None, None, "found vault but no vault password provided", node.start_mark)
 
         # could pass in a key id here to choose the vault to associate with
         vault = self._vaults['default']
@@ -159,4 +158,5 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'!vault',
     AnsibleConstructor.construct_vault_encrypted_unicode)
-AnsibleConstructor.add_constructor( u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
+
+AnsibleConstructor.add_constructor(u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)

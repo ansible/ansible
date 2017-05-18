@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
 import codecs
+import re
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_text
@@ -36,7 +36,7 @@ _ESCAPE_SEQUENCE_RE = re.compile(r'''
     | \\x{2}           # 2-digit hex escapes
     | \\N\{{[^}}]+\}}  # Unicode characters by name
     | \\[\\'"abfnrtv]  # Single-character escapes
-    )'''.format(_HEXCHAR*8, _HEXCHAR*4, _HEXCHAR*2), re.UNICODE | re.VERBOSE)
+    )'''.format(_HEXCHAR * 8, _HEXCHAR * 4, _HEXCHAR * 2), re.UNICODE | re.VERBOSE)
 
 
 def _decode_escapes(s):
@@ -112,7 +112,7 @@ def _get_quote_state(token, quote_char):
     prev_char = None
     for idx, cur_char in enumerate(token):
         if idx > 0:
-            prev_char = token[idx-1]
+            prev_char = token[idx - 1]
         if cur_char in '"\'' and prev_char != '\\':
             if quote_char:
                 if cur_char == quote_char:
@@ -128,7 +128,7 @@ def _count_jinja2_blocks(token, cur_depth, open_token, close_token):
     given opening/closing type and adjusts the current depth for that
     block based on the difference
     '''
-    num_open  = token.count(open_token)
+    num_open = token.count(open_token)
     num_close = token.count(close_token)
     if num_open != num_close:
         cur_depth += (num_open - num_close)
@@ -171,13 +171,13 @@ def split_args(args):
 
     quote_char = None
     inside_quotes = False
-    print_depth   = 0  # used to count nested jinja2 {{ }} blocks
-    block_depth   = 0  # used to count nested jinja2 {% %} blocks
+    print_depth = 0  # used to count nested jinja2 {{ }} blocks
+    block_depth = 0  # used to count nested jinja2 {% %} blocks
     comment_depth = 0  # used to count nested jinja2 {# #} blocks
 
     # now we loop over each split chunk, coalescing tokens if the white space
     # split occurred within quotes or a jinja2 block of some kind
-    for itemidx,item in enumerate(items):
+    for (itemidx, item) in enumerate(items):
 
         # we split on spaces and newlines separately, so that we
         # can tell which character we split on for reassembly
@@ -185,7 +185,7 @@ def split_args(args):
         tokens = item.strip().split(' ')
 
         line_continuation = False
-        for idx,token in enumerate(tokens):
+        for (idx, token) in enumerate(tokens):
 
             # if we hit a line continuation character, but
             # we're not inside quotes, ignore it and continue
