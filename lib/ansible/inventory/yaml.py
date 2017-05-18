@@ -79,10 +79,10 @@ class InventoryParser(object):
             self.groups[group] = Group(name=group)
 
         if isinstance(group_data, dict):
-            #make sure they are dicts
+            # make sure they are dicts
             for section in ['vars', 'children', 'hosts']:
                 if section in group_data and isinstance(group_data[section], string_types):
-                    group_data[section] = { group_data[section]: None}
+                    group_data[section] = {group_data[section]: None}
 
             if 'vars' in group_data:
                 for var in group_data['vars']:
@@ -98,7 +98,6 @@ class InventoryParser(object):
                     hosts = self._parse_host(host_pattern, group_data['hosts'][host_pattern])
                     for h in hosts:
                         self.groups[group].add_host(h)
-
 
     def _parse_host(self, host_pattern, host_data):
         '''
@@ -167,4 +166,4 @@ class InventoryParser(object):
         '''
         Compiles the regular expressions required to parse the inventory and stores them in self.patterns.
         '''
-        self.patterns['groupname'] = re.compile( r'''^[A-Za-z_][A-Za-z0-9_]*$''')
+        self.patterns['groupname'] = re.compile(r'''^[A-Za-z_][A-Za-z0-9_]*$''')

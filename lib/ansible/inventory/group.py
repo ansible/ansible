@@ -19,10 +19,11 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 
+
 class Group:
     ''' a group of ansible hosts '''
 
-    #__slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
+    # __slots__ = ['name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache']
 
     def __init__(self, name=None):
 
@@ -35,9 +36,9 @@ class Group:
         self._hosts_cache = None
         self.priority = 1
 
-        #self.clear_hosts_cache()
-        #if self.name is None:
-        #    raise Exception("group name is required")
+        # self.clear_hosts_cache()
+        # if self.name is None:
+        #     raise Exception("group name is required")
 
     def __repr__(self):
         return self.get_name()
@@ -87,7 +88,7 @@ class Group:
             self.child_groups.append(group)
 
             # update the depth of the child
-            group.depth = max([self.depth+1, group.depth])
+            group.depth = max([self.depth + 1, group.depth])
 
             # update the depth of the grandchildren
             group._check_children_depth()
@@ -105,7 +106,7 @@ class Group:
 
         try:
             for group in self.child_groups:
-                group.depth = max([self.depth+1, group.depth])
+                group.depth = max([self.depth + 1, group.depth])
                 group._check_children_depth()
         except RuntimeError:
             raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
@@ -181,6 +182,5 @@ class Group:
         try:
             self.priority = int(priority)
         except TypeError:
-            #FIXME: warn about invalid priority
+            # FIXME: warn about invalid priority
             pass
-

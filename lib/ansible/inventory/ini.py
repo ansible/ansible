@@ -69,7 +69,7 @@ class InventoryParser(object):
             for line in b_data.splitlines():
                 if line and line[0] in self.b_COMMENT_MARKERS:
                     # Replace is okay for comment lines
-                    #data.append(to_text(line, errors='surrogate_then_replace'))
+                    # data.append(to_text(line, errors='surrogate_then_replace'))
                     # Currently we only need these lines for accurate lineno in errors
                     data.append(u'')
                 else:
@@ -155,7 +155,7 @@ class InventoryParser(object):
                 for h in hosts:
                     self.groups[groupname].add_host(h)
 
-                #FIXME: needed to save hosts to group, find out why
+                # FIXME: needed to save hosts to group, find out why
                 self.groups[groupname].get_hosts()
 
             # [groupname:vars] contains variable definitions that must be

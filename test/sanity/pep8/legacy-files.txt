@@ -28,16 +28,6 @@ lib/ansible/galaxy/api.py
 lib/ansible/galaxy/login.py
 lib/ansible/galaxy/role.py
 lib/ansible/galaxy/token.py
-lib/ansible/inventory/__init__.py
-lib/ansible/inventory/dir.py
-lib/ansible/inventory/expand_hosts.py
-lib/ansible/inventory/group.py
-lib/ansible/inventory/host.py
-lib/ansible/inventory/ini.py
-lib/ansible/inventory/script.py
-lib/ansible/inventory/vars_plugins/__init__.py
-lib/ansible/inventory/vars_plugins/noop.py
-lib/ansible/inventory/yaml.py
 lib/ansible/module_utils/_text.py
 lib/ansible/module_utils/a10.py
 lib/ansible/module_utils/ansible_tower.py

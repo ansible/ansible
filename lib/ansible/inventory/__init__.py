@@ -20,12 +20,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import fnmatch
+import itertools
 import os
+import re
 import subprocess
 import sys
-import re
-import itertools
-
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -66,12 +65,12 @@ class Inventory(object):
         # caching to avoid repeated calculations, particularly with
         # external inventory scripts.
 
-        self._vars_per_host    = {}
-        self._vars_per_group   = {}
-        self._hosts_cache      = {}
-        self._pattern_cache    = {}
+        self._vars_per_host = {}
+        self._vars_per_group = {}
+        self._hosts_cache = {}
+        self._pattern_cache = {}
         self._group_dict_cache = {}
-        self._vars_plugins     = []
+        self._vars_plugins = []
 
         self._basedir = self.basedir()
 
@@ -108,7 +107,7 @@ class Inventory(object):
         if isinstance(host_list, string_types):
             if "," in host_list:
                 host_list = host_list.split(",")
-                host_list = [ h for h in host_list if h and h.strip() ]
+                host_list = [h for h in host_list if h and h.strip()]
 
         self.parser = None
 
@@ -157,9 +156,9 @@ class Inventory(object):
         else:
             display.warning("Host file not found: %s" % to_text(host_list))
 
-        self._vars_plugins = [ x for x in vars_loader.all(self) ]
+        self._vars_plugins = [x for x in vars_loader.all(self)]
 
-        ### POST PROCESS groups and hosts after specific parser was invoked
+        # POST PROCESS groups and hosts after specific parser was invoked
 
         hosts = []
         group_names = set()
@@ -250,11 +249,11 @@ class Inventory(object):
             if not ignore_limits and self._subset:
                 # exclude hosts not in a subset, if defined
                 subset = self._evaluate_patterns(self._subset)
-                hosts = [ h for h in hosts if h in subset ]
+                hosts = [h for h in hosts if h in subset]
 
             if not ignore_restrictions and self._restriction:
                 # exclude hosts mentioned in any restriction (ex: failed hosts)
-                hosts = [ h for h in hosts if h.name in self._restriction ]
+                hosts = [h for h in hosts if h.name in self._restriction]
 
             seen = set()
             HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
@@ -358,11 +357,11 @@ class Inventory(object):
             else:
                 that = self._match_one_pattern(p)
                 if p.startswith("!"):
-                    hosts = [ h for h in hosts if h not in that ]
+                    hosts = [h for h in hosts if h not in that]
                 elif p.startswith("&"):
-                    hosts = [ h for h in hosts if h in that ]
+                    hosts = [h for h in hosts if h in that]
                 else:
-                    to_append = [ h for h in that if h.name not in [ y.name for y in hosts ] ]
+                    to_append = [h for h in that if h.name not in [y.name for y in hosts]]
                     hosts.extend(to_append)
         return hosts
 
@@ -476,10 +475,10 @@ class Inventory(object):
 
         if end:
             if end == -1:
-                end = len(hosts)-1
-            return hosts[start:end+1]
+                end = len(hosts) - 1
+            return hosts[start:end + 1]
         else:
-            return [ hosts[start] ]
+            return [hosts[start]]
 
     def _enumerate_matches(self, pattern):
         """
@@ -514,7 +513,7 @@ class Inventory(object):
             matched = True
 
         if not matched:
-            display.warning("Could not match supplied host pattern, ignoring: %s" %  pattern)
+            display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
         return results
 
     def _create_implicit_localhost(self, pattern):
@@ -531,8 +530,8 @@ class Inventory(object):
                 py_interp = sys.executable
                 if not py_interp:
                     # sys.executable is not set in some cornercases.  #13585
-                    display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default.'
-                            ' You can correct this by setting ansible_python_interpreter for localhost')
+                    display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. '
+                                    'You can correct this by setting ansible_python_interpreter for localhost')
                     py_interp = '/usr/bin/python'
                 new_host.set_variable("ansible_python_interpreter", py_interp)
             self.get_group("ungrouped").add_host(new_host)
@@ -567,7 +566,7 @@ class Inventory(object):
         matching_host = None
         if hostname in C.LOCALHOST:
             if self.localhost:
-                matching_host= self.localhost
+                matching_host = self.localhost
             else:
                 for host in self.get_group('all').get_hosts():
                     if host.name in C.LOCALHOST:
@@ -605,7 +604,7 @@ class Inventory(object):
         vars = {}
 
         # plugin.get_group_vars retrieves just vars for specific group
-        vars_results = [ plugin.get_group_vars(group, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'get_group_vars')]
+        vars_results = [plugin.get_group_vars(group, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'get_group_vars')]
         for updated in vars_results:
             if updated is not None:
                 vars = combine_vars(vars, updated)
@@ -651,13 +650,13 @@ class Inventory(object):
         vars = {}
 
         # plugin.run retrieves all vars (also from groups) for host
-        vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'run')]
+        vars_results = [plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'run')]
         for updated in vars_results:
             if updated is not None:
                 vars = combine_vars(vars, updated)
 
         # plugin.get_host_vars retrieves just vars for specific host
-        vars_results = [ plugin.get_host_vars(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'get_host_vars')]
+        vars_results = [plugin.get_host_vars(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'get_host_vars')]
         for updated in vars_results:
             if updated is not None:
                 vars = combine_vars(vars, updated)
@@ -680,7 +679,7 @@ class Inventory(object):
 
         """ return a list of hostnames for a pattern """
 
-        result = [ h for h in self.get_hosts(pattern) ]
+        result = [h for h in self.get_hosts(pattern)]
         if len(result) == 0 and pattern in C.LOCALHOST:
             result = [pattern]
         return result
@@ -697,8 +696,8 @@ class Inventory(object):
         if restriction is None:
             return
         elif not isinstance(restriction, list):
-            restriction = [ restriction ]
-        self._restriction = [ h.name for h in restriction ]
+            restriction = [restriction]
+        self._restriction = [h.name for h in restriction]
 
     def subset(self, subset_pattern):
         """
@@ -895,9 +894,9 @@ class Inventory(object):
         self.clear_pattern_cache()
         self.clear_group_dict_cache()
 
-        self._hosts_cache    = {}
-        self._vars_per_host  = {}
+        self._hosts_cache = {}
+        self._vars_per_host = {}
         self._vars_per_group = {}
-        self.groups          = {}
+        self.groups = {}
 
         self.parse_inventory(self.host_list)
