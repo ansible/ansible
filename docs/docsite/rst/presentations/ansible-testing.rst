@@ -2,6 +2,8 @@ Ansible Testing
 ===============
 
 
+Current as of Ansible 2.3 (May 2017)
+
 Who am I?
 =========
 
@@ -9,7 +11,11 @@ John Barker
 
 * Principal Engineer, Ansible by Red Hat
 * Hats: Ansible Networking, QA and community
-* Freenode/GitHub: gundalow
+* Freenode/GitHub: `gundalow <https://github.com/gundalow>`_
+
+.. container:: handout
+
+    Based in the UK
 
 Ansible Testing
 ===============
@@ -21,17 +27,20 @@ Ansible Testing
 .. container:: handout
 
    Set the scene
-     Quick taster, give you enought to know what's possible and where to find out more
+
+     * Quick taster, give you enought to know what's possible and point you in the right direction
 
    Testing Working Group
 
-     gundalow & Matt Clay
+     * Setup after AnsibleFest SanFran 2016, ~ year
+     * gundalow & Matt Clay, good community
 
    Tailor content:
 
-     * Q: Show of hands for version, devel -> 1.9? - upgrade!
+     * Q: Show of hands for version, devel, 2.3, -> 1.9? - upgrade!
      * Q: Who's raised a PR?
-     * Q: Module PR?
+     * Q: Updated a module (bug fix or functionality)
+     * Q: Created a new module - how long ago (should have improved)
 
 
 This talk is Free Software
@@ -42,9 +51,12 @@ This talk is Free Software
 
 .. container:: handout
 
-   Will update with feedback
-   Add link from the Meetup event
-   Questions welcome at anypoint
+   * Trialing new way of doing presentations
+   * Will be on website
+   * Aim is that they will evolve over time
+   * RST contains speakers notes, which have more detail
+   * Add link from the Meetup event
+   * Questions welcome at anypoint - Will ask Mark to make a note
 
 
 Requirements
@@ -52,56 +64,106 @@ Requirements
 
 What do we want from testing Ansible:
 
-* Different OS, python versions
-* Ability to run same tests locally
+* Ability to run same tests locally as run by CI (Shippable)
+* Different OS, Python versions (2.4+, 3.5+)
 * Reasonable run time
 
 .. container:: handout
 
-   Increasing tha matrix of Python & OS versions vs timely feedback
+   * Local run - common request from the community
+   * Increasing tha matrix of Python & OS versions vs timely feedback
+   * Main aim: Stable product, find issues sooner, speed up PR workflow
+
+
 
 Solution: ansible-test
 ======================
 
-* Different OS/Py: Docker & tox
+* Shippable
+* Different OS & Python: Docker & tox
 * Local runs: Shippable is just a wrapper
-* Duration: Inspect git diff. File to test mapping. Nightly runs
+* Duration: Inspect git diff. File to test mapping.
+* Nightly runs with code coverage analysis.
 
-``test/runner/ansible-test``
 
 .. container:: handout
 
-   Into Matt Clay
-   Different OS + Local runs fit together
-   Duration: Tracking of Python imports
+   * Into Matt Clay
+
+     * Principal Engineer in USA
+     * Full time on Testing, great Python programmer
+
+   * Q: If I said Shippable or Travis who would know what they are:
+
+     * Shippable is a Continious Integration (CI) tool, like Travis
+     * Integrate with GitHub to test (PRs) + merges
+     * Originally used Travis, moved as Shippable is cheaper
+     * 52 Concurrent jobs as of May 2017
+
+   * tox: Sanity & Unit tests
+   * Local Runs
+
+     * Different OS + Local runs fit together
+     * Shippable is just a wrapper, all logic in ansible-tets
+
+   * Duration: Tracking of Python imports
+   * Code coverage is ~1.5 - 3x as slow (integration - Unit tests)
 
 Types of tests
 ==============
 
-:compile:
+* **compile**
+
   * Test python code against a variety of Python versions.
-:sanity:
+
+* **sanity**
+
   * Sanity tests are made up of scripts and tools used to perform static code analysis.
   * The primary purpose of these tests is to enforce Ansible coding standards and requirements.
-:integration:
+
+* **integration**
+
   * Functional tests of modules and Ansible core functionality.
-:units:
+
+* **units**
+
   * Tests directly against individual parts of the code base.
 
-Ansible-test Platform Features
+.. container:: handout
+
+   * Explain each type in basic terms
+
+     * What type of issues they identify
+     * How long they take to run
+
+  * compile
+
+    * Does NOT ensure code is py2.6+ and py3.5+ compatable
+
+  * Sanity
+
+    * ansible-doc, ansible-var-precedence-check
+    * Code: no-iterkeys, pep8, pylint, shellcheck
+    * ``ansible-test sanity --list-tests`` for full list
+
+ansible-test platform features
 ==============================
 
 * Python versions
 * OS versions
+
    * Linux via Docker
    * FreeBSD, Windows, Network via AWS
-   *  OSX via Parallels
+   * OSX via Parallels
+
 * Network version
-* Cloud platforms (AWS, others coming soon)
+* Cloud platforms (AWS, CloudStack, others coming soon)
 
 .. container:: handout
 
+   * OS: CentOS, Fedora, Ubuntu, OpenSUSE, Windows
    * Docker images are available for you to use locally ``ansible-test --docker``
+   * Network tests are getting there, vyos, working on others
 
 Improving Testing
 =================
@@ -111,31 +173,62 @@ Spot common issues
  * Improve existing code
  * Enforce higher standard via CI
 
-2.1: added integration testing using docker containers
-2.2: switched from Travis to Shippable, added Windows, FreeBSD and OSX testing, added more docker containers
-2.3: SINGLE REPO (therefore versioned along side code),  ansible-test, integration testing for network modules
+.. container:: handout
+
+   * Bulk changes that update all modules are prefered, though speak to us first
+   * Fix a **single** class of issues only, easier to review
+   * Recent examples: Modules DOCUMENATION & RETURNS blocks
+
+
+Improvements since 2.0
+======================
+
+* 2.1
+
+   * added integration testing using Docker containers
+
+* 2.2
+
+   * switched from Travis to Shippable
+   * added Windows, FreeBSD and OSX testing
+   * added more docker containers
+
+* 2.3
+
+   * SINGLE GIT REPO!
+   * ansible-test
+   * integration testing for Network modules
 
 .. container:: handout
 
-   Bulk changes that update all modules are prefered, though speak to us first
+   * Again, lot of this is Matt
+   * Single repo; therefore versioned along side code); reall pain to write tests before
 
 Improvements in 2.4
 ===================
 
 
-* added “cloud” module testing (AWD, CloudStack, VMware [in progress])
-* enhanced code coverage analysis [in progress]
+* added "cloud" module testing (AWS, CloudStack)
+* enhanced code coverage analysis
 
-* Unit tests for core modules
+* unit tests for core modules
 * pep8
 * pylint
 * rstcheck
-* Module DOCUMENTATION
-* Module RETURNS
+* module DOCUMENTATION
+* module RETURNS
 
 .. container:: handout
 
-   The last three have dramaticly improved our online documentation. Previously some module docs were not being displayed at all
+   * Unit tests: Networking team adding lots
+   * pep8 and pylint continually being updated and spotting more issues
+   * pep8 exceptions list dropping at a good rate
+   * The last three have
+
+     * dramaticly improved our online documentation. Previously some module docs were not being displayed at all
+     * Massive reduction human time to review modules
+
+
 
 
 Testing Working Group
@@ -169,19 +262,23 @@ Unit Tests: Creating
 
 ``test/units/``
 
-If you start writing a test that requires external services then you may be writing an integration test, rather than a unit test.
+Unit tests can't use external services
+
+Ansible modules are mostly about external services
+
 
 .. container:: handout
 
-   That's all I'm going to say on unit tests
-   For more info join ``#ansible-devel``
+   * That's all I'm going to say on unit tests
+   * For more info join ``#ansible-devel``
 
 Integration Tests: Why?
 =======================
 
-If you can write a Playbook you can write a test
-Much easier to write than an unit test
-Testing the interface, can deal with module being rewritten
+* If you can write a Playbook you can write a test
+* Much easier to write than an unit test
+* Testing the interface, can deal with module being rewritten
+* Speak with us in TWG or IRC for more info
 
 
 .. container:: handout
@@ -193,14 +290,16 @@ Integration Tests: File structure
 
 Directory: ``test/integration/targets/file/``
 
+``file/aliases``
+
 .. code-block:: bash
-   :caption: file/aliases
 
    posix/ci/group2
    needs/root
 
+``file/tasks/main.yml``
+
 .. code-block:: bash
-   :caption: file/tasks/main.yml
 
    # Standard playbook
 
@@ -218,7 +317,7 @@ Integration Tests: Test structure
 
 .. container:: handout
 
-  Find an example of this
+   * Find an example of this
 
 
 Integration Tests: Best practices
@@ -227,6 +326,26 @@ Integration Tests: Best practices
 * tempdir
 * Add tests before refactoring
 
+.. container:: handout
+
+   * FIXME Add examples
+
+
+Integration Tests: Demo
+=======================
+
+Demo of running tests with Docker
+
+source hacking/env setup
+ansible-test integration --docker  centos7 pip
+
+
+.. container:: handout
+
+  * FIXME Demo
+  * FIXME Add talking points
+  * FIXME Document commands here
+  * ansible-test uses the tests and ansible from it's source tree
 
 Code Coverage
 =============
@@ -234,20 +353,33 @@ Code Coverage
 * Helps you find gaps
 * Now run nightly
 
+.. container:: handout
+
+  * FIXME Add URL
+  * FIXME Add talking points
+
 Cloud Tests
 ===========
 
 * Currently undergoing changes
 * Aim: all AWS tests will be invoked via ``ansible-test``
 
+.. container:: handout
+
+  * FIXME move API key out the way and run, update docs
+  * FIXME Add talking points
+
 Network Tests
 =============
 
+* AWS images exist for some platforms
+* Previously tests have been ran manually
+* Work in progress
 
 Where to find out more
 ======================
 
 * https://docs.ansible.com/ansible/dev_guide/testing.html
-  * Testing working group
+* Testing working group
 * Freenode: ``#ansible-devel``
 * Writing tests is easy (install ``argcomplete``)
