@@ -1255,8 +1255,11 @@ class PyVmomiHelper(object):
             self.change_detected = True
 
         relospec = vim.vm.RelocateSpec()
-        hostsystem = self.select_host()
-        relospec.pool = self.select_resource_pool_by_host(hostsystem)
+        if self.params['resource_pool']:
+            relospec.pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+        else:
+            hostsystem = self.select_host()
+            relospec.pool = self.select_resource_pool_by_host(hostsystem)
 
         change_applied = False
         if relospec.pool != self.current_vm_obj.resourcePool:
