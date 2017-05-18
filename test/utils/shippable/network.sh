@@ -15,10 +15,7 @@ target="network/ci/"
 # python versions to test in order
 # all versions run full tests
 python_versions=(
-    2.6
     2.7
-    3.5
-    3.6
 )
 
 if [ -s /tmp/network.txt ]; then
