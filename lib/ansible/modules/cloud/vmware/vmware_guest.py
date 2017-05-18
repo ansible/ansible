@@ -297,7 +297,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.vmware import get_all_objs, connect_to_api, gather_vm_facts
+from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs
 
 try:
     import json
@@ -425,19 +425,19 @@ class PyVmomiCache(object):
 
     def get_network(self, network):
         if network not in self.networks:
-            self.networks[network] = get_obj(self.content, [vim.Network], network)
+            self.networks[network] = find_obj(self.content, [vim.Network], network)
 
         return self.networks[network]
 
     def get_cluster(self, cluster):
         if cluster not in self.clusters:
-            self.clusters[cluster] = get_obj(self.content, [vim.ClusterComputeResource], cluster)
+            self.clusters[cluster] = find_obj(self.content, [vim.ClusterComputeResource], cluster)
 
         return self.clusters[cluster]
 
     def get_esx_host(self, host):
         if host not in self.esx_hosts:
-            self.esx_hosts[host] = get_obj(self.content, [vim.HostSystem], host)
+            self.esx_hosts[host] = find_obj(self.content, [vim.HostSystem], host)
 
         return self.esx_hosts[host]
 
@@ -643,7 +643,7 @@ class PyVmomiHelper(object):
                     self.module.fail_json(msg="Both 'ip' and 'netmask' are required together.")
 
             if 'name' in network:
-                if get_obj(self.content, [vim.Network], network['name']) is None:
+                if find_obj(self.content, [vim.Network], network['name']) is None:
                     self.module.fail_json(msg="Network '%(name)s' does not exists" % network)
 
             elif 'vlan' in network:
@@ -692,7 +692,7 @@ class PyVmomiHelper(object):
 
             if hasattr(self.cache.get_network(network_devices[key]['name']), 'portKeys'):
                 # VDS switch
-                pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
+                pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
                 if (nic.device.backing and
                         (nic.device.backing.port.portgroupKey != pg_obj.key or
@@ -747,6 +747,7 @@ class PyVmomiHelper(object):
         # Network settings
         adaptermaps = []
         for network in self.params['networks']:
+
             if 'ip' in network and 'netmask' in network:
                 guest_map = vim.vm.customization.AdapterMapping()
                 guest_map.adapter = vim.vm.customization.IPSettings()
@@ -761,11 +762,12 @@ class PyVmomiHelper(object):
                 # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.IPSettings.html
                 if 'domain' in network:
                     guest_map.adapter.dnsDomain = network['domain']
-                elif self.params['customization'].get('domain'):
+                elif 'domain' in self.params['customization']:
                     guest_map.adapter.dnsDomain = self.params['customization']['domain']
+
                 if 'dns_servers' in network:
                     guest_map.adapter.dnsServerList = network['dns_servers']
-                elif self.params['customization'].get('dns_servers'):
+                elif 'dns_servers' in self.params['customization']:
                     guest_map.adapter.dnsServerList = self.params['customization']['dns_servers']
 
                 adaptermaps.append(guest_map)
@@ -773,10 +775,13 @@ class PyVmomiHelper(object):
         # Global DNS settings
         globalip = vim.vm.customization.GlobalIPSettings()
         if 'dns_servers' in self.params['customization']:
-            globalip.dnsServerList = self.params['customization'].get('dns_servers')
+            globalip.dnsServerList = self.params['customization']['dns_servers']
+
         # TODO: Maybe list the different domains from the interfaces here by default ?
-        if 'dns_suffix' in self.params['customization'] or 'domain' in self.params['customization']:
-            globalip.dnsSuffixList = self.params['customization'].get('dns_suffix', self.params['customization']['domain'])
+        if 'dns_suffix' in self.params['customization']:
+            globalip.dnsSuffixList = self.params['customization']['dns_suffix']
+        elif 'domain' in self.params['customization']:
+            globalip.dnsSuffixList = self.params['customization']['domain']
 
         if self.params['guest_id']:
             guest_id = self.params['guest_id']
@@ -789,15 +794,24 @@ class PyVmomiHelper(object):
             ident = vim.vm.customization.Sysprep()
 
             ident.userData = vim.vm.customization.UserData()
+
+            # Setting hostName, orgName and fullName is mandatory, so we set some default when missing
             ident.userData.computerName = vim.vm.customization.FixedName()
             ident.userData.computerName.name = str(self.params['customization'].get('hostname', self.params['name']))
             ident.userData.fullName = str(self.params['customization'].get('fullname', 'Administrator'))
             ident.userData.orgName = str(self.params['customization'].get('orgname', 'ACME'))
 
+            if 'productid' in self.params['customization']:
+                ident.userData.productId = str(self.params['customization']['productid'])
+
             ident.guiUnattended = vim.vm.customization.GuiUnattended()
-            ident.guiUnattended.autoLogon = self.params['customization'].get('autologon', False)
-            ident.guiUnattended.autoLogonCount = self.params['customization'].get('autologoncount', 1)
-            ident.guiUnattended.timeZone = self.params['customization'].get('timezone', 85)
+
+            if 'autologon' in self.params['customization']:
+                ident.guiUnattended.autoLogon = self.params['customization']['autologon']
+                ident.guiUnattended.autoLogonCount = self.params['customization'].get('autologoncount', 1)
+
+            if 'timezone' in self.params['customization']:
+                ident.guiUnattended.timeZone = self.params['customization']['timezone']
 
             ident.identification = vim.vm.customization.Identification()
 
@@ -805,36 +819,34 @@ class PyVmomiHelper(object):
                 ident.guiUnattended.password = vim.vm.customization.Password()
                 ident.guiUnattended.password.value = str(self.params['customization']['password'])
                 ident.guiUnattended.password.plainText = True
-            else:
-                self.module.fail_json(msg="The 'customization' section requires a 'password' entry, which cannot be empty.")
-
-            if 'productid' in self.params['customization']:
-                ident.userData.orgName = str(self.params['customization']['productid'])
 
             if 'joindomain' in self.params['customization']:
                 if 'domainadmin' not in self.params['customization'] or 'domainadminpassword' not in self.params['customization']:
                     self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use "
                                               "joindomain feature")
 
-                ident.identification.domainAdmin = str(self.params['customization'].get('domainadmin'))
-                ident.identification.joinDomain = str(self.params['customization'].get('joindomain'))
+                ident.identification.domainAdmin = str(self.params['customization']['domainadmin'])
+                ident.identification.joinDomain = str(self.params['customization']['joindomain'])
                 ident.identification.domainAdminPassword = vim.vm.customization.Password()
-                ident.identification.domainAdminPassword.value = str(self.params['customization'].get('domainadminpassword'))
+                ident.identification.domainAdminPassword.value = str(self.params['customization']['domainadminpassword'])
                 ident.identification.domainAdminPassword.plainText = True
 
             elif 'joinworkgroup' in self.params['customization']:
-                ident.identification.joinWorkgroup = str(self.params['customization'].get('joinworkgroup'))
+                ident.identification.joinWorkgroup = str(self.params['customization']['joinworkgroup'])
 
             if 'runonce' in self.params['customization']:
                 ident.guiRunOnce = vim.vm.customization.GuiRunOnce()
                 ident.guiRunOnce.commandList = self.params['customization']['runonce']
+
         else:
             # Else use LinuxPrep
             # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.LinuxPrep.html
             ident = vim.vm.customization.LinuxPrep()
+
             # TODO: Maybe add domain from interface if missing ?
             if 'domain' in self.params['customization']:
-                ident.domain = str(self.params['customization'].get('domain'))
+                ident.domain = str(self.params['customization']['domain'])
+
             ident.hostName = vim.vm.customization.FixedName()
             ident.hostName.name = str(self.params['customization'].get('hostname', self.params['name']))
 
@@ -955,14 +967,16 @@ class PyVmomiHelper(object):
         if self.params['cluster']:
             cluster = self.cache.get_cluster(self.params['cluster'])
             if not cluster:
-                self.module.fail_json(msg="Failed to find a cluster named %(cluster)s" % self.params)
+                self.module.fail_json(msg='Failed to find cluster "%(cluster)s"' % self.params)
             hostsystems = [x for x in cluster.host]
+            if not hostsystems:
+                self.module.fail_json(msg='No hosts found in cluster "%(cluster)s. Maybe you lack the right privileges ?"' % self.params)
             # TODO: add a policy to select host
             hostsystem = hostsystems[0]
         else:
             hostsystem = self.cache.get_esx_host(self.params['esxi_hostname'])
             if not hostsystem:
-                self.module.fail_json(msg="Failed to find a host named %(esxi_hostname)s" % self.params)
+                self.module.fail_json(msg='Failed to find ESX host "%(esxi_hostname)s"' % self.params)
 
         return hostsystem
 
@@ -991,7 +1005,7 @@ class PyVmomiHelper(object):
 
             elif 'datastore' in self.params['disk'][0]:
                 datastore_name = self.params['disk'][0]['datastore']
-                datastore = get_obj(self.content, [vim.Datastore], datastore_name)
+                datastore = find_obj(self.content, [vim.Datastore], datastore_name)
             else:
                 self.module.fail_json(msg="Either datastore or autoselect_datastore "
                                           "should be provided to select datastore")
@@ -1017,7 +1031,13 @@ class PyVmomiHelper(object):
             if current_parent is None:
                 return False
 
-    def select_resource_pool(self, host):
+    def select_resource_pool_by_name(self, resource_pool_name):
+        resource_pool = find_obj(self.content, [vim.ResourcePool], resource_pool_name)
+        if resource_pool is None:
+            self.module.fail_json(msg='Could not find resource_pool "%s"' % resource_pool_name)
+        return resource_pool
+
+    def select_resource_pool_by_host(self, host):
         resource_pools = get_all_objs(self.content, [vim.ResourcePool])
         for rp in resource_pools.items():
             if not rp[0]:
@@ -1061,8 +1081,8 @@ class PyVmomiHelper(object):
         #   - static IPs
 
         #datacenters = get_all_objs(self.content, [vim.Datacenter])
-        datacenter = get_obj(self.content, [vim.Datacenter], self.params['datacenter'])
-        if not datacenter:
+        datacenter = find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
+        if datacenter is None:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
 
         destfolder = None
@@ -1074,19 +1094,22 @@ class PyVmomiHelper(object):
             self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
         destfolder = f_obj
 
-        hostsystem = self.select_host()
-
         if self.should_deploy_from_template():
             # FIXME: need to search for this in the same way as guests to ensure accuracy
-            vm_obj = get_obj(self.content, [vim.VirtualMachine], self.params['template'])
-            if not vm_obj:
+            vm_obj = find_obj(self.content, [vim.VirtualMachine], self.params['template'])
+            if vm_obj is None:
                 self.module.fail_json(msg="Could not find a template named %(template)s" % self.params)
         else:
             vm_obj = None
 
+        if self.params['resource_pool']:
+            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+        else:
+            hostsystem = self.select_host()
+            resource_pool = self.select_resource_pool_by_host(hostsystem)
+
         # set the destination datastore for VM & disks
         (datastore, datastore_name) = self.select_datastore(vm_obj)
-        resource_pool = self.select_resource_pool(hostsystem)
 
         self.configspec = vim.vm.ConfigSpec(cpuHotAddEnabled=True, memoryHotAddEnabled=True)
         self.configspec.deviceChange = []
@@ -1191,7 +1214,7 @@ class PyVmomiHelper(object):
 
         relospec = vim.vm.RelocateSpec()
         hostsystem = self.select_host()
-        relospec.pool = self.select_resource_pool(hostsystem)
+        relospec.pool = self.select_resource_pool_by_host(hostsystem)
 
         change_applied = False
         if relospec.pool != self.current_vm_obj.resourcePool:
@@ -1251,27 +1274,6 @@ class PyVmomiHelper(object):
         return facts
 
 
-def get_obj(content, vimtype, name):
-    """
-    Return an object by name, if name is None the
-    first found object is returned
-    """
-    obj = None
-    container = content.viewManager.CreateContainerView(
-        content.rootFolder, vimtype, True)
-    for c in container.view:
-        if name:
-            if c.name == name:
-                obj = c
-                break
-        else:
-            obj = c
-            break
-
-    container.Destroy()
-    return obj
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -1317,7 +1319,7 @@ def main():
             esxi_hostname=dict(type='str'),
             cluster=dict(type='str'),
             wait_for_ip_address=dict(type='bool', default=False),
-            snapshot_src=dict(type='str', default=None),
+            snapshot_src=dict(type='str'),
             linked_clone=dict(type='bool', default=False),
             networks=dict(type='list', default=[]),
             resource_pool=dict(type='str'),
