@@ -298,7 +298,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.vmware import connect_to_api, gather_vm_facts, get_all_objs
+from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs
 
 try:
     import json
@@ -313,30 +313,6 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     pass
-
-
-def find_obj(content, vimtype, name, first=True):
-    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
-    obj_list = container.view
-    container.Destroy()
-
-    # Backward compatible with former get_obj() function
-    if name is None:
-        if obj_list:
-            return obj_list[0]
-        return None
-
-    # Select the first match
-    if first is True:
-        for obj in obj_list:
-            if obj.name == name:
-                return obj
-
-        # If no object found, return None
-        return None
-
-    # Return all matching objects if needed
-    return [obj for obj in obj_list if obj.name == name]
 
 
 class PyVmomiDeviceHelper(object):
