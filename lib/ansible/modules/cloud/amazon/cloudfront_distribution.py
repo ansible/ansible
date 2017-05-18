@@ -719,6 +719,8 @@ class CloudFrontValidationManager:
             'TLSv1.2'
         ]
         self.__default_custom_origin_protocol_policy = 'match-viewer'
+        self.__default_custom_origin_read_timeout = 30
+        self.__default_custom_origin_keepalive_timeout = 5
         self.__default_datetime_string = datetime.datetime.now().strftime(
             '%Y-%m-%dT%H:%M:%S.%f')
         self.__default_cache_behavior_min_ttl = 0
@@ -912,6 +914,10 @@ class CloudFrontValidationManager:
                         custom_origin_config.get('origin_protocol_policy'),
                         'origins[].custom_origin_config.origin_protocol_policy',
                         self.__valid_origin_protocol_policies)
+                if 'origin_read_timeout' not in custom_origin_config:
+                    custom_origin_config['origin_read_timeout'] = self.__default_custom_origin_read_timeout
+                if 'origin_keepalive_timeout' not in custom_origin_config:
+                    custom_origin_config['origin_keepalive_timeout'] = self.__default_custom_origin_keepalive_timeout
                 if 'http_port' not in custom_origin_config:
                     custom_origin_config['h_t_t_p_port'] = self.__default_http_port
                 else:
@@ -1434,20 +1440,50 @@ class CloudFrontValidationManager:
                 msg="presigned_url_expire_date must be in the format '{0}'".format(
                     self.__default_presigned_url_expire_date_format))
 
-    def validate_distribution_id_from_alias(self, alias, aliases):
+    def validate_distribution_id_from_caller_reference(self, caller_reference, streaming=False):
         try:
-            if alias is not None:
-                distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
-                if distribution_id is not None:
-                    return distribution_id
-            if aliases is not None:
-                for single_alias in aliases:
-                    distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(single_alias)
-                    if distribution_id is not None:
-                        return distribution_id
+            if streaming:
+                distributions = self.__cloudfront_facts_mgr.list_streaming_distributions()
+                distribution_name = 'StreamingDistribution'
+                distribution_config_name = 'StreamingDistributionConfig'
+            else:
+                distributions = self.__cloudfront_facts_mgr.list_distributions()
+                distribution_name = 'Distribution'
+                distribution_config_name = 'DistributionConfig'
+            distribution_ids = list(distributions.keys())
+            for distribution_id in distribution_ids:
+                if streaming:
+                    config = self.__cloudfront_facts_mgr.get_streaming_distribution(distribution_id)
+                else:
+                    config = self.__cloudfront_facts_mgr.get_distribution(distribution_id)
+                distribution = config.get(distribution_name)
+                if distribution is not None:
+                    distribution_config = distribution.get(distribution_config_name)
+                    if distribution_config is not None:
+                        temp_caller_reference = distribution_config.get('CallerReference')
+                        if temp_caller_reference == caller_reference:
+                            return distribution_id
         except Exception as e:
             self.module.fail_json(
-                msg="error validating distribution_id from alias" + str(e) +
+                msg="error validating (streaming)distribution_id from caller reference" + str(e) +
+                "\n" + traceback.format_exc())
+
+    def validate_streaming_distribution_id_from_caller_reference(self, caller_reference):
+        try:
+            streaming_distributions = self.__cloudfront_facts_mgr.list_streaming_distributions()
+            streaming_distribution_ids = list(streaming_distributions.keys())
+            for streaming_distribution_id in streaming_distribution_ids:
+                config = self.__cloudfront_facts_mgr.get_streaming_distribution(streaming_distribution_id)
+                streaming_distribution = config.get('StreamingDistribution')
+                if streaming_distribution is not None:
+                    streaming_distribution_config = distribution.get('StreamingDistributionConfig')
+                    if streaming_distribution_config is not None:
+                        temp_streaming_caller_reference = distribution_config.get('CallerReference')
+                        if temp_streaming_caller_reference == caller_reference:
+                            return streaming_distribution_id
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating streaming_distribution_id from caller reference" + str(e) +
                 "\n" + traceback.format_exc())
 
 
@@ -1529,7 +1565,9 @@ def main():
             ['default_s3_origin_domain_name', 'viewer_certificate'],
             ['default_s3_origin_domain_name', 'web_acl_id'],
             ['default_s3_origin_domain_name', 'trusted_signers'],
-            ['distribution_id', 'streaming_distribution_id']
+            ['distribution_id', 'streaming_distribution_id'],
+            ['distribution_id', 'alias'],
+            ['streaming_distribution_id', 'alias']
         ]
     )
     service_mgr = CloudFrontServiceManager(module)
@@ -1578,6 +1616,11 @@ def main():
     default_s3_origin_origin_access_identity = module.params.get(
         'default_s3_origin_origin_access_identity')
 
+    if caller_reference is not None:
+        if streaming_distribution:
+            streaming_distribution_id = validation_mgr.validate_distribution_id_from_caller_reference(caller_reference, True)
+        else:
+            distribution_id = validation_mgr.validate_distribution_id_from_caller_reference(caller_reference, False)
     if alias is not None or aliases is not None and not generate_presigned_url:
         if not streaming_distribution and distribution_id is None:
             distribution_id = validation_mgr.validate_distribution_id_from_alias(
@@ -1616,11 +1659,14 @@ def main():
         config = {}
 
     if update_delete_distribution:
-        distribution_id, config, e_tag = validation_mgr.validate_distribution_id_etag(
+        (distribution_id,
+            config, e_tag) = validation_mgr.validate_distribution_id_etag(
             alias, distribution_id, config, e_tag)
 
     if update_delete_streaming_distribution:
-        streaming_distribution_id, config, e_tag = validation_mgr.validate_streaming_distribution_id_etag(
+        (streaming_distribution_id,
+            config,
+            e_tag) = validation_mgr.validate_streaming_distribution_id_etag(
             alias, streaming_distribution_id, config, e_tag)
 
     if create or update:
@@ -1694,14 +1740,15 @@ def main():
         result = service_mgr.update_streaming_distribution(
             config, streaming_distribution_id, e_tag)
 
-    if update and valid_tags is not None:
+    if update:
         arn = validation_mgr.validate_tagging_arn(
             alias, distribution_id, streaming_distribution_id)
         if purge_tags:
             service_mgr.remove_all_tags_from_resource(arn)
-        valid_aws_tags = helpers.python_list_to_aws_list(valid_tags, False)
-        valid_pascal_aws_tags = helpers.snake_dict_to_pascal_dict(valid_aws_tags)
-        service_mgr.tag_resource(arn, valid_pascal_aws_tags)
+        if valid_tags is not None:
+            valid_aws_tags = helpers.python_list_to_aws_list(valid_tags, False)
+            valid_pascal_aws_tags = helpers.snake_dict_to_pascal_dict(valid_aws_tags)
+            service_mgr.tag_resource(arn, valid_pascal_aws_tags)
 
     module.exit_json(changed=True, **helpers.pascal_dict_to_snake_dict(result))
 
