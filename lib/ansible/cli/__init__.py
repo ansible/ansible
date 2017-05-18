@@ -162,6 +162,8 @@ class CLI(with_metaclass(ABCMeta, object)):
             else:
                 display.display(u"No config file found; using defaults")
 
+        display.vvv('Current config:\n%s' % C.dumps_config())
+
     @staticmethod
     def ask_vault_passwords():
         ''' prompt for vault password and/or password change '''

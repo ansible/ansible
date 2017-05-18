@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 import tempfile
+from collections import defaultdict
 from string import ascii_letters, digits
 
 from ansible.errors import AnsibleOptionsError
@@ -54,6 +55,27 @@ def shell_expand(path, expand_relative_paths=False):
                 path = os.path.join(CFGDIR, path)
             path = os.path.abspath(path)
     return path
+
+
+active_config_dict = defaultdict(dict)
+
+
+class ConfigItem:
+    def __init__(self, section=None, key=None, value=None, source=None, default=None):
+        self.section = section
+        self.key = key
+        self.value = value
+        self.source = source
+        self.default = default
+
+    def __str__(self):
+        lines = []
+        lines.append('# from %s' % self.source)
+        if self.default is not None:
+            lines.append('# default: %s' % self.default)
+        lines.append('%s = %s' % (self.key, self.value))
+        return '\n'.join(lines)
+
 
 def get_config(p, section, key, env_var, default, value_type=None, expand_relative_paths=False):
     ''' return a configuration variable with casting
@@ -128,6 +150,9 @@ def _get_config(p, section, key, env_var, default):
     if p is not None:
         try:
             value = p.get(section, key, raw=True)
+            active_config_dict[section][key] = ConfigItem(section, key, value,
+                                                          source='file %s' % CONFIG_FILE,
+                                                          default=default)
         except:
             pass
 
@@ -135,6 +160,10 @@ def _get_config(p, section, key, env_var, default):
         env_value = os.environ.get(env_var, None)
         if env_value is not None:
             value = env_value
+
+            active_config_dict[section][key] = ConfigItem(section, key, value,
+                                                          source='environment variable %s' % env_var,
+                                                          default=default)
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
@@ -167,6 +196,19 @@ def load_config_file():
 
 
 p, CONFIG_FILE = load_config_file()
+
+
+def dumps_config():
+    lines = []
+    # sort by section to get a stable format
+    for section, config_dict in sorted(active_config_dict.items()):
+        lines.append('[%s]' % section)
+        for config_item_key, config_item in sorted(config_dict.items()):
+            lines.append(str(config_item))
+            lines.append('')
+
+    return '\n'.join(lines)
+
 
 # check all of these extensions when looking for yaml files for things like
 # group variables -- really anything we can load
