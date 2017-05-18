@@ -1117,6 +1117,14 @@ def get_integration_local_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --allow-destructive to run locally: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    if args.python_version.startswith('3'):
+        skip = 'skip/python3/'
+        skipped = [target.name for target in targets if skip in target.aliases]
+        if skipped:
+            exclude.append(skip)
+            display.warning('Excluding tests marked "%s" which are not yet supported on python 3: %s'
+                            % (skip.rstrip('/'), ', '.join(skipped)))
+
     return exclude
 
 
