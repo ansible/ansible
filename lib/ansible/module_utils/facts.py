@@ -1618,6 +1618,7 @@ class SunOSHardware(Hardware):
     platform = 'SunOS'
 
     def populate(self):
+        self.module. module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
