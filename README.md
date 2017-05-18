@@ -11,7 +11,7 @@ Read the documentation and more at https://ansible.com/
 
 Many users run straight from the development branch (it's generally fine to do so), but you might also wish to consume a release.
 
-You can find instructions [here](http://docs.ansible.com/ansible/intro_installation.html) for a variety of platforms.
+You can find instructions [here](https://docs.ansible.com/ansible/intro_installation.html) for a variety of platforms.
 
 Design Principles
 =================
