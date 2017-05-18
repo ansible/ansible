@@ -33,25 +33,27 @@ options:
     state:
       description:
         - The desired state of the distribution or streaming distribution.
-          present - creates a new distribution or updates an existing distribution
-          absent - deletes an existing distribution
+          present - creates a new distribution or updates an existing distribution.
+          absent - deletes an existing distribution.
       choices: ['present', 'absent']
       required: false
     distribution_id:
       description:
         - The id of the cloudfront distribution.
-          This parameter can be exchanged with C(alias) and in conjunction with C(e_tag).
+          This parameter can be exchanged with C(alias) and is used in
+          conjunction with C(e_tag).
           Used with C(streaming_distribution=no)
       required: false
     streaming_distribution_id:
       description:
         - The id of the CloudFront streaming distribution.
-          This parameter can be exchanged with C(alias) and is used in conjunction with C(e_tag).
+          This parameter can be exchanged with C(alias) and is used in
+          conjunction with C(e_tag).
           Used with C(streaming_distribution=yes).
       required: false
     e_tag:
       description:
-        - A unique identifier of a modified or newly created distribution.
+        - A unique identifier of a modified or existing distribution.
           Used in conjunction with C(distribution_id) or C(streaming_distribution_id).
           Is determined automatically if not specified.
       required: false
@@ -63,15 +65,11 @@ options:
       required: false
     caller_reference:
       description:
-        - A unique identifier for creating and duplicating cloudfront distributions.
-      required: false
-    invalidation_batch:
-      description:
-        - An array of path strings to be invalidated for a distribution.
+        - A unique identifier for creating and updating cloudfront distributions.
       required: false
     pem_key_path:
       description:
-        - The path on the host to the .pem private key file.
+        - The path on the host to the I(.pem) private key file.
           This key is used to sign the url.
       required: false
     pem_key_password:
@@ -111,6 +109,8 @@ options:
             viewer_certificate
             restrictions
             web_acl_id
+            http_version
+            is_ipv6_enabled
           Elements of a streaming distribution are
             caller_reference
             s3_origin
@@ -118,6 +118,8 @@ options:
             comment
             logging
             trusted_signers
+            http_version
+            is_ipv6_enabled
           Most of these elements have sub-elements that can be seen in their entirety
           in the boto3 documentation at
             U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution)
@@ -125,21 +127,22 @@ options:
             U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_streaming_distribution).
           When element variables are specified as well as the C(config) variable, the
           elements specified will have precendence and overwrite any relevant data
-          for that element in the config variable.
+          for that element in the C(config) variable.
       required: false
     tags:
       description:
         - Used for distributions and streaming distributions in conjunction with
           C(config). Should be input as a list of I(Key) I(Value) pairs.
-          When updating a distribution, it removes existing tags then adds the
-          new tags.
       required: false
     purge_tags:
       description:
         - Specifies whether existing tags will be removed before adding new tags.
           Used in conjunction with the C(tags) parameter.
+          If not tags are specified, it removes all existing tags for the
+          distribution.
       required: false
       default: 'no'
+      choices ['yes', 'no']
     alias:
       description:
         - The name of an alias that is used in a distribution. This is used to
@@ -147,46 +150,52 @@ options:
           be used by one distribution per AWS account. This variable avoids having
           to provide the C(distribution_id) or C(streaming_distribution_id) as well
           as the C(e_tag) to reference a distribution. This variable is used for
-          updating and duplicating distributions and streaming distributions.
+          updating distributions and streaming distributions.
       required: false
     aliases:
       description:
         - A list of domain name aliases as strings to be used for the distribution.
-          Each alias must be unique across all distributions for the account.
+          Each alias must be unique across all distributions for the AWS account.
           Applies to both distributions and streaming distributions.
       required: false
     default_root_object:
       description:
-        - A config element that specifies the path to request when
-          the user requests the origin.
+        - A config element that specifies the path to request when the user
+          requests the origin.
           eg. if specified as 'index.html', this maps to www.example.com/index.html
           when www.example.com is called by the user. This prevents the entire
           distribution origin from being exposed at the root.
+          Used with C(streaming_distribution=no)
       required: false
     default_origin_domain_name:
       description:
         - The domain name to use for an origin if no C(origins) have been specified.
+        Used with C(streaming_distribution=no)
       required: false
     default_origin_path:
       description:
         - The default origin path to specify for an origin if no C(origins) have
           specified. Defaults to empty if not specified.
+          Used with C(streaming_distribution=no).
       required: false
     default_s3_origin_access_identity:
       description:
         - The origin access identity to use for a distribution that references an
           s3 bucket if not specified in C(s3_origin_config).
           If the s3 bucket is public, can be omitted.
+          Used with C(streaming_distribution=yes)
       required: false
     default_s3_origin_domain_name:
       description:
         - The domain name of an s3 bucket to use for a streaming distribution.
           Required as a minimum if no other parameters are specified.
+          Used with C(streaming_distribution=yes)
       required: false
     default_s3_origin_origin_access_identity:
       description:
         - The default origin access identity to use for an s3 bucket used for
           a streaming distribution. If the s3 bucket is public, can be omitted.
+          Used with C(streaming_distribution=yes)
       required: false
     origins:
       description:
@@ -246,7 +255,6 @@ options:
       description:
         - A config element that is a list of complex cache behavior objects to
           be specified for thecdistribution.
-          Only valid for C(streaming_distribution=no).
           Each cache behavior comprises the attributes of
             path_pattern
             target_origin_id
@@ -260,22 +268,23 @@ options:
             max_ttl
             compress
             lambda_function_associations
+          Only valid for C(streaming_distribution=no).
       required: false
     custom_error_responses:
       description:
         - A config element that is a list of complex custom error responses to be
           specified for the distribution. This attribute configures custom http
           error messages returned to the user.
-          Only valid for distributions.
           Each custom error response comprises the attributes
             error_code
             reponse_page_path
             response_code error_caching_min_ttl
+          Only valid for C(streaming_distribution=no)
       required: false
     comment:
       description:
         - A unique comment to describe the cloudfront distribution. Applies to both
-          distributions, streaming distributions and origin access identities.
+          distributions and streaming distributions.
           If not specified, it defaults to a generic message that it has been
           created with Ansible, and a datetime stamp.
       required: false
@@ -323,20 +332,21 @@ options:
       required: false
     web_acl_id:
       description:
-        - The id of a Web App Firewall acl. Only valid for distributions.
+        - The id of a Web App Firewall acl.
+          Only valid for C(streaming_distribution=no).
       required: false
     http_version:
       description:
-        - The version of http to use for the distribution. Valid for both
-          distributions and streaming distributions.
-          Only valid for distributions.
+        - The version of http to use for the distribution.
+          Valid for both distributions and streaming distributions.
       choices: [ 'http1.1', 'http2' ]
       required: false
     is_ipv6_enabled:
       description:
-        - Determines whether IPv6 suppoer is enabled or not.
+        - Determines whether IPv6 support is enabled or not.
       choices: ['yes', 'no']
       default: 'no'
+
 '''
 
 EXAMPLES = '''
@@ -390,6 +400,7 @@ EXAMPLES = '''
 # logging and default cache behavior
 - cloudfront_distribution:
     state: present
+    caller_reference: unique test distribution id
     origins:
         - id: 'my test origin-000111'
           domain_name: www.example.com
@@ -448,6 +459,7 @@ EXAMPLES = '''
 - cloudfront_distribution:
      streaming_distribution: yes
      default_s3_origin_domain_name: example-bucket.s3.amazonaws.com
+     caller_reference: test streaming
      comment: example streaming distribution
      tags:
        - Name: example distribution
