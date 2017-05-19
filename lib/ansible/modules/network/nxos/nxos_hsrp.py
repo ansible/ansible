@@ -146,7 +146,11 @@ def apply_key_map(key_map, table):
     for key in table:
         new_key = key_map.get(key)
         if new_key:
-            new_dict[new_key] = str(table.get(key))
+            value = table.get(key)
+            if value:
+                new_dict[new_key] = str(value)
+            else:
+                new_dict[new_key] = value
     return new_dict
 
 
@@ -248,10 +252,7 @@ def get_hsrp_group(group, interface, module):
 
 
 def get_commands_remove_hsrp(group, interface):
-    commands = []
-    cmds = 'interface {0}'.format(interface), 'no hsrp {0}'.format(group)
-    for cmd in cmds:
-        commands.append(cmd)
+    commands = ['interface {0}'.format(interface), 'no hsrp {0}'.format(group)]
     return commands
 
 
