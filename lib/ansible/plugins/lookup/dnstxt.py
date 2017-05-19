@@ -27,6 +27,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_native
 
 # ==============================================================
 # DNSTXT: DNS TXT records
@@ -57,7 +58,7 @@ class LookupModule(LookupBase):
             except dns.resolver.Timeout:
                 string = ''
             except DNSException as e:
-                raise AnsibleError("dns.resolver unhandled exception", e)
+                raise AnsibleError("dns.resolver unhandled exception %s" % to_native(e))
 
             ret.append(''.join(string))
 
