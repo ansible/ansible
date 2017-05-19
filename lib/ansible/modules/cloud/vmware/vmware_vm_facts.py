@@ -49,6 +49,14 @@ EXAMPLES = r'''
     password: password
 '''
 
+RETURN = """
+virtual_machines:
+    description: metadata about virtual machines
+    returned: always
+    type: dict
+    sample: None
+"""
+
 try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
