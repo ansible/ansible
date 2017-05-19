@@ -308,25 +308,25 @@ PARAM_TO_COMMAND_KEYMAP = {
     'neighbor': 'neighbor',
     'additional_paths_receive': 'capability additional-paths receive',
     'additional_paths_send': 'capability additional-paths send',
-    'advertise_map_exist': 'advertise-map exist',
-    'advertise_map_non_exist': 'advertise-map non-exist',
+    'advertise_map_exist': 'advertise-map',
+    'advertise_map_non_exist': 'advertise-map',
     'allowas_in': 'allowas-in',
-    'allowas_in_max': 'allowas-in max',
+    'allowas_in_max': 'allowas-in',
     'as_override': 'as-override',
     'default_originate': 'default-originate',
     'default_originate_route_map': 'default-originate route-map',
-    'filter_list_in': 'filter-list in',
-    'filter_list_out': 'filter-list out',
+    'filter_list_in': 'filter-list',
+    'filter_list_out': 'filter-list',
     'max_prefix_limit': 'maximum-prefix',
     'max_prefix_interval': 'maximum-prefix options',
     'max_prefix_threshold': 'maximum-prefix options',
     'max_prefix_warning': 'maximum-prefix options',
     'next_hop_self': 'next-hop-self',
     'next_hop_third_party': 'next-hop-third-party',
-    'prefix_list_in': 'prefix-list in',
-    'prefix_list_out': 'prefix-list out',
-    'route_map_in': 'route-map in',
-    'route_map_out': 'route-map out',
+    'prefix_list_in': 'prefix-list',
+    'prefix_list_out': 'prefix-list',
+    'route_map_in': 'route-map',
+    'route_map_out': 'route-map',
     'route_reflector_client': 'route-reflector-client',
     'safi': 'address-family',
     'send_community': 'send-community',
@@ -344,59 +344,68 @@ def invoke(name, *args, **kwargs):
 
 
 def get_value(arg, config, module):
-    if arg in BOOL_PARAMS:
-        REGEX = re.compile(r'\s+{0}\s*'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+    custom = [
+        'allowas_in_max',
+        'additional_paths_send',
+        'additional_paths_receive',
+        'advertise_map_exist',
+        'advertise_map_non_exist',
+        'max_prefix_limit',
+        'max_prefix_interval',
+        'max_prefix_threshold',
+        'max_prefix_warning',
+        'next_hop_third_party',
+        'soft_reconfiguration_in'
+    ]
+    command = PARAM_TO_COMMAND_KEYMAP[arg]
+    has_command = re.search(r'\s+{0}\s*'.format(command), config, re.M)
+    has_command_val = command_val_re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+
+    if arg in custom:
+        value = get_custom_value(arg, config, module)
+
+    elif arg in BOOL_PARAMS:
         value = False
-        try:
-            if REGEX.search(config):
-                value = True
-        except TypeError:
-            value = False
-    else:
-        REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+        if has_command:
+            value = True
+
+    elif command.split()[0] in ['filter-list', 'prefix-list', 'route-map']:
         value = ''
-        if PARAM_TO_COMMAND_KEYMAP[arg] in config:
-            value = REGEX.search(config).group('value')
-    return value
+        direction = arg.rsplit('_', 1)[1]
+        if has_command_val:
+            params = has_command_val.group('value').split()
+            if params[-1] == direction:
+                value = params[0]
 
+    elif arg == 'send_community':
+        if has_command:
+            value = 'none'
+            if has_command_val:
+                value = has_command_val.group('value')
 
-def in_out_param(arg, config, module):
-    value = ''
-    for line in config:
-        if PARAM_TO_COMMAND_KEYMAP[arg].split()[0] in line:
-            splitted_line = line.split()
-            if splitted_line[-1] == PARAM_TO_COMMAND_KEYMAP[arg].split()[1]:
-                value = splitted_line[1]
+    else:
+        value = ''
+
+        if has_command_val:
+            value = has_command_val.group('value')
+
     return value
 
 
 def get_custom_value(arg, config, module):
+    command = PARAM_TO_COMMAND_KEYMAP.get(arg)
     splitted_config = config.splitlines()
     value = ''
 
-    if (arg.startswith('filter_list') or arg.startswith('prefix_list') or
-            arg.startswith('route_map')):
-        value = in_out_param(arg, splitted_config, module)
-    elif arg == 'send_community':
-        for line in splitted_config:
-            if PARAM_TO_COMMAND_KEYMAP[arg] in line:
-                splitted_line = line.split()
-                if len(splitted_line) == 1:
-                    value = 'none'
-                else:
-                    value = splitted_line[1]
-    elif arg == 'additional_paths_receive':
+    command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
+    has_command = command_re.search(config)
+    command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
+    has_command_val = command_val_re.search(config)
+
+    if arg.startswith('additional_paths'):
         value = 'inherit'
         for line in splitted_config:
-            if PARAM_TO_COMMAND_KEYMAP[arg] in line:
-                if 'disable' in line:
-                    value = 'disable'
-                else:
-                    value = 'enable'
-    elif arg == 'additional_paths_send':
-        value = 'inherit'
-        for line in splitted_config:
-            if PARAM_TO_COMMAND_KEYMAP[arg] in line:
+            if command in line:
                 if 'disable' in line:
                     value = 'disable'
                 else:
@@ -407,18 +416,21 @@ def get_custom_value(arg, config, module):
             if 'advertise-map' in line and 'exist-map' in line:
                 splitted_line = line.split()
                 value = [splitted_line[1], splitted_line[3]]
-    elif arg == 'advertise_map_non_exist':
+    elif command == 'advertise-map':
         value = []
+        exclude = 'non_exist' in arg
         for line in splitted_config:
-            if 'advertise-map' in line and 'non-exist-map' in line:
+            if 'advertise-map' in line and (
+                (exclude and 'non-exist-map' in line) or
+                (not exclude and 'exist-map' in line)
+            ):
                 splitted_line = line.split()
                 value = [splitted_line[1], splitted_line[3]]
     elif arg == 'allowas_in_max':
-        for line in splitted_config:
-            if 'allowas-in' in line:
-                splitted_line = line.split()
-                if len(splitted_line) == 2:
-                    value = splitted_line[-1]
+        if has_command_val:
+            split_line = has_command_val.group('value').split()
+            if len(split_line) == 2:
+                value = splitted_line[-1]
     elif arg.startswith('max_prefix'):
         for line in splitted_config:
             if 'maximum-prefix' in line:
@@ -434,29 +446,20 @@ def get_custom_value(arg, config, module):
                     except ValueError:
                         value = ''
                 elif arg == 'max_prefix_warning':
-                    if 'warning-only' in line:
-                        value = True
-                    else:
-                        value = False
+                    value = 'warning-only' in line
     elif arg == 'soft_reconfiguration_in':
         value = 'inherit'
         for line in splitted_config:
-            if PARAM_TO_COMMAND_KEYMAP[arg] in line:
+            if command in line:
                 if 'always' in line:
                     value = 'always'
                 else:
                     value = 'enable'
     elif arg == 'next_hop_third_party':
-        PRESENT_REGEX = re.compile(r'\s+{0}\s*'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-        ABSENT_REGEX = re.compile(r'\s+no\s+{0}\s*'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+        no_command_re = re.compile(r'\s+no\s+{0}\s*'.format(command), re.M)
         value = False
-        try:
-            if ABSENT_REGEX.search(config):
-                value = False
-            elif PRESENT_REGEX.search(config):
-                value = True
-        except TypeError:
-            value = False
+        if not no_command_re.search(config) and command_re.search(config):
+            value = True
 
     return value
 
@@ -465,51 +468,24 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    custom = [
-        'allowas_in_max',
-        'send_community',
-        'additional_paths_send',
-        'additional_paths_receive',
-        'advertise_map_exist',
-        'advertise_map_non_exist',
-        'filter_list_in',
-        'filter_list_out',
-        'max_prefix_limit',
-        'max_prefix_interval',
-        'max_prefix_threshold',
-        'max_prefix_warning',
-        'next_hop_third_party',
-        'prefix_list_in',
-        'prefix_list_out',
-        'route_map_in',
-        'route_map_out',
-        'soft_reconfiguration_in'
-    ]
-    try:
-        asn_regex = '.*router\sbgp\s(?P<existing_asn>\d+).*'
-        match_asn = re.match(asn_regex, str(netcfg), re.DOTALL)
-        existing_asn_group = match_asn.groupdict()
-        existing_asn = existing_asn_group['existing_asn']
-    except AttributeError:
-        existing_asn = ''
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    match_asn = asn_regex.match(str(netcfg))
 
-    if existing_asn:
+    if match_asn:
+        existing_asn = match_asn.group('existing_asn')
         parents = ["router bgp {0}".format(existing_asn)]
+
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
 
         parents.append('neighbor {0}'.format(module.params['neighbor']))
-        parents.append('address-family {0} {1}'.format(
-            module.params['afi'], module.params['safi']))
+        parents.append('address-family {0} {1}'.format(module.params['afi'], module.params['safi']))
         config = netcfg.get_section(parents)
 
         if config:
             for arg in args:
                 if arg not in ['asn', 'vrf', 'neighbor', 'afi', 'safi']:
-                    if arg in custom:
-                        existing[arg] = get_custom_value(arg, config, module)
-                    else:
-                        existing[arg] = get_value(arg, config, module)
+                    existing[arg] = get_value(arg, config, module)
 
             existing['asn'] = existing_asn
             existing['neighbor'] = module.params['neighbor']
@@ -827,18 +803,15 @@ def main():
     args = PARAM_TO_COMMAND_KEYMAP.keys()
     existing = get_existing(module, args, warnings)
 
-    existing = invoke('get_existing', module, args)
-    if existing.get('asn'):
-        if (existing.get('asn') != module.params['asn'] and
-                state == 'present'):
+    if existing.get('asn') and state == 'present':
+        if existing.get('asn') != module.params['asn']:
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
 
-    if module.params['advertise_map_exist'] == ['default']:
-        module.params['advertise_map_exist'] = 'default'
-    if module.params['advertise_map_non_exist'] == ['default']:
-        module.params['advertise_map_non_exist'] = 'default'
+    for param in ['advertise_map_exist', 'advertise_map_non_exist']:
+        if module.params[param] == ['default']:
+            module.params[param] = 'default'
 
     proposed_args = dict((k, v) for k, v in module.params.items() if v is not None and k in args)
 
@@ -851,13 +824,11 @@ def main():
                 elif str(value).lower() == 'false':
                     value = False
                 elif str(value).lower() == 'default':
-                    value = PARAM_TO_DEFAULT_KEYMAP.get(key)
-                    if value is None:
-                        if key in BOOL_PARAMS:
-                            value = False
-                        else:
-                            value = 'default'
-            if existing.get(key) or (not existing.get(key) and value):
+                    if key in BOOL_PARAMS:
+                        value = False
+                    else:
+                        value = 'default'
+            if existing.get(key) != value:
                 proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)
