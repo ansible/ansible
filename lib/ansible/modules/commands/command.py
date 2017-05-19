@@ -119,7 +119,7 @@ def check_command(commandline):
                   'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                   'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
                   'dnf': 'dnf', 'zypper': 'zypper' }
-    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas' ]
+    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun' ]
     warnings = list()
     command = os.path.basename(commandline.split()[0])
     if command in arguments:

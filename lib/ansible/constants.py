@@ -276,7 +276,8 @@ BECOME_ERROR_STRINGS = {
     'pfexec': '',
     'doas': 'Permission denied',
     'dzdo': '',
-    'ksu': 'Password incorrect'
+    'ksu': 'Password incorrect',
+    'pmrun': 'You are not permitted to run this command'
 }  # FIXME: deal with i18n
 BECOME_MISSING_STRINGS = {
     'sudo': 'sorry, a password is required to run sudo',
@@ -285,9 +286,10 @@ BECOME_MISSING_STRINGS = {
     'pfexec': '',
     'doas': 'Authorization required',
     'dzdo': '',
-    'ksu': 'No password given'
+    'ksu': 'No password given',
+    'pmrun': ''
 }  # FIXME: deal with i18n
-BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas']
+BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun']
 BECOME_ALLOW_SAME_USER = get_config(p, 'privilege_escalation', 'become_allow_same_user', 'ANSIBLE_BECOME_ALLOW_SAME_USER', False, value_type='boolean')
 DEFAULT_BECOME_METHOD = get_config(p, 'privilege_escalation', 'become_method', 'ANSIBLE_BECOME_METHOD',
                                    'sudo' if DEFAULT_SUDO else 'su' if DEFAULT_SU else 'sudo').lower()
@@ -296,7 +298,6 @@ DEFAULT_BECOME_USER = get_config(p, 'privilege_escalation', 'become_user', 'ANSI
 DEFAULT_BECOME_EXE = get_config(p, 'privilege_escalation', 'become_exe', 'ANSIBLE_BECOME_EXE', None)
 DEFAULT_BECOME_FLAGS = get_config(p, 'privilege_escalation', 'become_flags', 'ANSIBLE_BECOME_FLAGS', None)
 DEFAULT_BECOME_ASK_PASS = get_config(p, 'privilege_escalation', 'become_ask_pass', 'ANSIBLE_BECOME_ASK_PASS', False, value_type='boolean')
-
 
 # PLUGINS
 
