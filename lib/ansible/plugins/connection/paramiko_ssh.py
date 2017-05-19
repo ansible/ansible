@@ -43,7 +43,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 try:
     from __main__ import display
@@ -376,7 +376,7 @@ class Connection(ConnectionBase):
         try:
             self.sftp = self._connect_sftp()
         except Exception as e:
-            raise AnsibleError("failed to open a SFTP connection (%s)", e)
+            raise AnsibleError("failed to open a SFTP connection (%s)" % to_native(e))
 
         try:
             self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
