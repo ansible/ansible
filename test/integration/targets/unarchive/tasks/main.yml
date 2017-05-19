@@ -17,17 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 # Make sure we start fresh
 
-- name: Ensure zip is present to create test archive (yum)
-  yum: name=zip state=latest
-  when: ansible_pkg_mgr  ==  'yum'
-
-  #- name: Ensure zip is present to create test archive (dnf)
-  #  dnf: name=zip state=latest
-  #  when: ansible_pkg_mgr  ==  'dnf'
-
-- name: Ensure zip is present to create test archive (apt)
-  apt: name=zip state=latest
-  when: ansible_pkg_mgr  ==  'apt'
+# Need unzup for unarchive module, and zip for archive creation.
+- name: Make sure zip and unzip is available
+  package: name=zip,unzip state=latest
 
 - name: prep our file
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
