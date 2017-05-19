@@ -722,7 +722,7 @@ class ACMEClient(object):
             if parsed_link and parsed_link.group(2) == "up":
                 chain_link = parsed_link.group(1)
                 chain_result, chain_info = fetch_url(self.module, chain_link, method='GET')
-                if chain_info['status'] in [200,201]:
+                if chain_info['status'] in [200, 201]:
                     chain = [chain_result.read()]
 
         if info['status'] not in [200, 201]:
