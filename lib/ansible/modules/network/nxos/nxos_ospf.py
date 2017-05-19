@@ -100,15 +100,6 @@ def get_existing(module):
     return existing
 
 
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table:
-        new_key = key_map.get(key)
-        if new_key:
-            new_dict[new_key] = table.get(key)
-    return new_dict
-
-
 def state_present(module, proposed, candidate):
     commands = ['router ospf {0}'.format(proposed['ospf'])]
     candidate.add(commands, parents=[])
