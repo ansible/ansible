@@ -25,7 +25,6 @@
 #
 # { "groups": ["utility", "databases"], "a": false, "b": true }
 
-import urllib
 try:
     import json
 except ImportError:
@@ -35,6 +34,7 @@ import sys
 from optparse import OptionParser
 
 from six import iteritems
+from six.moves.urllib.parse import urlencode
 
 from ansible.module_utils.urls import open_url
 
@@ -97,7 +97,7 @@ class ProxmoxAPI(object):
     def auth(self):
         request_path = '{}api2/json/access/ticket'.format(self.options.url)
 
-        request_params = urllib.urlencode({
+        request_params = urlencode({
             'username': self.options.username,
             'password': self.options.password,
         })
