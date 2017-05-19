@@ -1,15 +1,15 @@
 - name: Is the locale we're going to test against installed?
-  shell: locale -a | grep "^pt_BR$"
+  shell: 'locale -a | grep "^{{ locale.normalized }}$"'
   register: initial_state
   ignore_errors: True
 
 - name: Make sure the locale is not installed
   locale_gen:
-    name: pt_BR
+    name: '{{ locale.name }}'
     state: absent
 
 - name: Is the locale present?
-  shell: locale -a | grep "^pt_BR$"
+  shell: 'locale -a | grep "^{{ locale.normalized }}$"'
   register: cleaned
   ignore_errors: True
 
@@ -20,12 +20,12 @@
 
 - name: Install the locale
   locale_gen:
-    name: pt_BR
+    name: '{{ locale.name }}'
     state: present
   register: output
 
 - name: Is the locale present?
-  shell: locale -a | grep "^pt_BR$"
+  shell: 'locale -a | grep "^{{ locale.normalized }}$"'
   register: post_check_output
   ignore_errors: True
 
@@ -37,12 +37,12 @@
 
 - name: Install the locale a second time
   locale_gen:
-    name: pt_BR
+    name: '{{ locale.name }}'
     state: present
   register: output
 
 - name: Is the locale present?
-  shell: locale -a | grep "^pt_BR$"
+  shell: 'locale -a | grep "^{{ locale.normalized }}$"'
   register: post_check_output
   ignore_errors: True
 
@@ -54,12 +54,12 @@
 
 - name: Remove the locale
   locale_gen:
-    name: pt_BR
+    name: '{{ locale.name }}'
     state: absent
   register: output
 
 - name: Is the locale present?
-  shell: locale -a | grep "^pt_BR$"
+  shell: 'locale -a | grep "^{{ locale.normalized }}$"'
   register: post_check_output
   ignore_errors: True
 
@@ -71,12 +71,12 @@
 
 - name: Remove the locale a second time
   locale_gen:
-    name: pt_BR
+    name: '{{ locale.name }}'
     state: absent
   register: output
 
 - name: Is the locale present?
-  shell: locale -a | grep "^pt_BR$"
+  shell: 'locale -a | grep "^{{ locale.normalized }}$"'
   register: post_check_output
   ignore_errors: True
 
@@ -89,6 +89,6 @@
 # Cleanup
 - name: Reinstall the locale we tested against if it was initially installed
   locale_gen:
-    name: pt_BR
+    name: '{{ locale.name }}'
     state: present
   when: initial_state.rc == 0
