@@ -292,7 +292,7 @@ from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
-WARNINGS = []
+
 BOOL_PARAMS = [
     'allowas_in',
     'as_override',
@@ -337,9 +337,6 @@ PARAM_TO_COMMAND_KEYMAP = {
     'weight': 'weight',
     'vrf': 'vrf'
 }
-PARAM_TO_DEFAULT_KEYMAP = {}
-
-
 def invoke(name, *args, **kwargs):
     func = globals().get(name)
     if func:
@@ -464,7 +461,7 @@ def get_custom_value(arg, config, module):
     return value
 
 
-def get_existing(module, args):
+def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
@@ -520,22 +517,18 @@ def get_existing(module, args):
             existing['afi'] = module.params['afi']
             existing['safi'] = module.params['safi']
     else:
-        WARNINGS.append("The BGP process didn't exist but the task"
-                        " just created it.")
+        warnings.append("The BGP process didn't exist but the task just created it.")
 
     return existing
 
 
 def apply_key_map(key_map, table):
     new_dict = {}
-    for key, value in table.items():
+    for key in table:
         new_key = key_map.get(key)
         if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
+            new_dict[new_key] = table.get(key)
+
     return new_dict
 
 
@@ -691,7 +684,6 @@ def fix_proposed(module, proposed):
 
 def state_present(module, existing, proposed, candidate):
     commands = list()
-
     proposed = fix_proposed(module, proposed)
 
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
@@ -745,7 +737,7 @@ def state_present(module, existing, proposed, candidate):
             commands.append(command)
 
     if commands:
-        parents = ["router bgp {0}".format(module.params['asn'])]
+        parents = ['router bgp {0}'.format(module.params['asn'])]
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
 
@@ -763,7 +755,7 @@ def state_present(module, existing, proposed, candidate):
                 candidate.add(commands, parents=parents)
 
 
-def state_absent(module, existing, proposed, candidate):
+def state_absent(module, existing, candidate):
     commands = []
     parents = ["router bgp {0}".format(module.params['asn'])]
     if module.params['vrf'] != 'default':
@@ -811,66 +803,29 @@ def main():
         unsuppress_map=dict(required=False, type='str'),
         weight=dict(required=False, type='str'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
-
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['advertise_map_exist', 'advertise_map_non_exist']],
+        required_together=[['max_prefix_limit', 'max_prefix_interval'],
+                           ['max_prefix_limit', 'max_prefix_warning'],
+                           ['max_prefix_limit', 'max_prefix_threshold']],
         supports_check_mode=True,
     )
 
     warnings = list()
     check_args(module, warnings)
+    result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
-    if ((module.params['max_prefix_interval'] or module.params['max_prefix_warning'] or
-         module.params['max_prefix_threshold']) and not module.params['max_prefix_limit']):
-        module.fail_json(msg='max_prefix_limit is required when using '
-                             'max_prefix_warning, max_prefix_limit or '
-                             'max_prefix_threshold.')
+
     if module.params['vrf'] == 'default' and module.params['soo']:
         module.fail_json(msg='SOO is only allowed in non-default VRF')
 
-    args = [
-        'afi',
-        'asn',
-        'neighbor',
-        'additional_paths_receive',
-        'additional_paths_send',
-        'advertise_map_exist',
-        'advertise_map_non_exist',
-        'allowas_in',
-        'allowas_in_max',
-        'as_override',
-        'default_originate',
-        'default_originate_route_map',
-        'filter_list_in',
-        'filter_list_out',
-        'max_prefix_limit',
-        'max_prefix_interval',
-        'max_prefix_threshold',
-        'max_prefix_warning',
-        'next_hop_self',
-        'next_hop_third_party',
-        'prefix_list_in',
-        'prefix_list_out',
-        'route_map_in',
-        'route_map_out',
-        'soft_reconfiguration_in',
-        'soo',
-        'suppress_inactive',
-        'unsuppress_map',
-        'weight',
-        'route_reflector_client',
-        'safi',
-        'send_community',
-        'vrf'
-    ]
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
+    existing = get_existing(module, args, warnings)
 
     existing = invoke('get_existing', module, args)
     if existing.get('asn'):
@@ -885,7 +840,6 @@ def main():
     if module.params['advertise_map_non_exist'] == ['default']:
         module.params['advertise_map_non_exist'] = 'default'
 
-    end_state = existing
     proposed_args = dict((k, v) for k, v in module.params.items() if v is not None and k in args)
 
     proposed = {}
@@ -906,24 +860,19 @@ def main():
             if existing.get(key) or (not existing.get(key) and value):
                 proposed[key] = value
 
-    result = {}
-    if state == 'present' or (state == 'absent' and existing):
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('state_%s' % state, module, existing, proposed, candidate)
-        response = load_config(module, candidate)
-        result.update(response)
+    candidate = CustomNetworkConfig(indent=3)
+    if state == 'present':
+        state_present(module, existing, proposed, candidate)
+    elif state == 'absent' and existing:
+        state_absent(module, existing, proposed, candidate)
 
+    if candidate:
+        candidate = candidate.items_text()
+        load_config(module, candidate)
+        result['changed'] = True
+        result['commands'] = candidate
     else:
-        result['updates'] = []
-
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed_args
-
-    if WARNINGS:
-        result['warnings'] = WARNINGS
+        result['commands'] = []
 
     module.exit_json(**result)
 
