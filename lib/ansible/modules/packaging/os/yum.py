@@ -136,6 +136,13 @@ options:
     default: "/"
     aliases: []
 
+  security:
+    description:
+      - If set to C(yes), then installs all security updates.
+    default: "no"
+    choices: ["yes", "no"]
+    version_added: "2.4"
+
 notes:
   - When used with a loop of package names in a playbook, ansible optimizes
     the call to the yum module.  Instead of calling the module with a single
@@ -165,6 +172,7 @@ author:
     - "Seth Vidal"
     - "Eduard Snesarev (github.com/verm666)"
     - "Berend De Schouwer (github.com/berenddeschouwer)"
+    - "Abhijeet Kasurde (github.com/akasurde)"
 '''
 
 EXAMPLES = '''
@@ -1058,7 +1066,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     return res
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
-           disable_gpg_check, exclude, repoq, skip_broken, installroot='/'):
+           disable_gpg_check, exclude, repoq, skip_broken, security, installroot='/'):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1160,6 +1168,8 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     elif state == 'latest':
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
+        if security:
+            yum_basecmd.append('--security')
         res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot)
     else:
         # should be caught by AnsibleModule argument_spec
@@ -1200,6 +1210,7 @@ def main():
             installroot=dict(required=False, default="/", type='str'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(required=False, default="yes", type='bool'),
+            security=dict(default="no", type='bool'),
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
@@ -1254,9 +1265,10 @@ def main():
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
         skip_broken = params['skip_broken']
+        security = params['security']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
-                         skip_broken, params['installroot'])
+                         skip_broken, security, params['installroot'])
         if repoquery:
             results['msg'] = '%s %s' % (results.get('msg', ''),
                     'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
