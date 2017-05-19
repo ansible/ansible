@@ -37,7 +37,6 @@ options:
         - The state of the resource. Valid states are
             present
             absent
-            updated
       required: false
       default: present
     origin_access_identity_id:
@@ -88,7 +87,8 @@ location:
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3
-from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
+from ansible.modules.cloud.amazon.cloudfront_facts import (
+    CloudFrontFactsServiceManager)
 import ansible.module_utils.cloudfront as helpers
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.basic import AnsibleModule
@@ -176,30 +176,66 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
         self.module = module
         self.__cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
 
-    def get_etag_from_origin_access_identity_id(self, origin_access_identity_id):
+    def validate_etag_from_origin_access_identity_id(self,
+                                                     origin_access_identity_id):
         try:
+            if origin_access_identity_id is None:
+                return
             oai = self.__cloudfront_facts_mgr.get_origin_access_identity(
                 origin_access_identity_id)
-            return oai.get('ETag')
+            if oai is not None:
+                return oai.get('ETag')
         except Exception as e:
             self.module.fail_json(
                 msg="error getting etag from origin_access_identity_id - " +
                 str(e) + "\n" + traceback.format_exc())
+
+    def validate_origin_access_identity_id_from_caller_reference(
+            self, caller_reference):
+        try:
+            origin_access_identities = (
+                self.__cloudfront_facts_mgr.list_origin_access_identities())
+            origin_origin_access_identity_ids = [oai.get('Id') for oai in
+                                                 origin_access_identities]
+            for origin_access_identity_id in origin_origin_access_identity_ids:
+                oai_config = (
+                    self.__cloudfront_facts_mgr.get_origin_access_identity_config(
+                        origin_access_identity_id))
+                temp_caller_reference = oai_config.get(
+                    'CloudFrontOriginAccessIdentityConfig').get(
+                    'CallerReference')
+                if temp_caller_reference == caller_reference:
+                    return origin_access_identity_id
+        except Exception as e:
+            self.module.fail_json(
+                msg="error getting origin access identity from " +
+                "caller_reference - " + str(e) + "\n" + traceback.format_exc())
+
+    def validate_comment(self, comment):
+        if comment is None:
+            comment = (
+                "origin access identity created by Ansible with datetime " +
+                datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f'))
+        return comment
 
 
 def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        state=dict(choices=['present', 'updated', 'absent'], default='present'),
-        origin_access_identity_id=dict(required=False, default=None, type='str'),
+        state=dict(choices=['present', 'absent'], default='present'),
+        origin_access_identity_id=dict(required=False, default=None,
+                                       type='str'),
         caller_reference=dict(required=False, default=None, type='str'),
         comment=dict(required=False, default=None, type='str')
     ))
 
     result = {}
+    e_tag = None
+    changed = False
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=False)
     service_mgr = CloudFrontOriginAccessIdentityServiceManager(module)
     validation_mgr = CloudFrontOriginAccessIdentityValidationManager(module)
 
@@ -208,25 +244,40 @@ def main():
     comment = module.params.get('comment')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
 
+    comment = validation_mgr.validate_comment(comment)
+
+    if origin_access_identity_id is None and caller_reference is not None:
+        origin_access_identity_id = (
+            validation_mgr.validate_origin_access_identity_id_from_caller_reference(
+                caller_reference))
+
+    if origin_access_identity_id is not None and state == 'present':
+        state = 'updated'
+
     if state != 'present':
-        e_tag = validation_mgr.get_etag_from_origin_access_identity_id(
+        e_tag = validation_mgr.validate_etag_from_origin_access_identity_id(
             origin_access_identity_id)
 
     if state == 'present':
         result = service_mgr.create_origin_access_identity(caller_reference,
                                                            comment)
-    elif state == 'absent':
+        changed = True
+    elif(state == 'absent' and origin_access_identity_id is not None and
+         e_tag is not None):
         result = service_mgr.delete_origin_access_identity(
             origin_access_identity_id, e_tag)
+        changed = True
     elif state == 'updated':
         result = service_mgr.update_origin_access_identity(
             caller_reference, comment, origin_access_identity_id, e_tag)
+        changed = True
 
-    results = result
-    results.pop('ResponseMetadata', None)
-    result.update(results)
+    if result:
+        results = result
+        results.pop('ResponseMetadata', None)
+        result.update(results)
 
-    module.exit_json(changed=True, **helpers.pascal_dict_to_snake_dict(result))
+    module.exit_json(changed=changed, **helpers.pascal_dict_to_snake_dict(result))
 
 
 if __name__ == '__main__':
