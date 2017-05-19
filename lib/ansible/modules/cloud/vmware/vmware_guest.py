@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vmware_guest
 short_description: Manages virtual machines in vCenter
@@ -38,7 +38,7 @@ author:
 notes:
     - Tested on vSphere 5.5 and 6.0
 requirements:
-    - "python >= 2.6"
+    - python >= 2.6
     - PyVmomi
 options:
    state:
@@ -46,10 +46,11 @@ options:
             - What state should the virtual machine be in?
             - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments.
         required: yes
-        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']
+        choices: [ 'present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest' ]
    name:
         description:
             - Name of the VM to work with.
+            - VM names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
         required: yes
    name_match:
         description:
@@ -70,10 +71,10 @@ options:
             - Flag the instance as a template.
         default: 'no'
         choices: [ 'no', 'yes' ]
-        version_added: "2.3"
+        version_added: '2.3'
    folder:
         description:
-            - Destination folder, absolute path to find an existing guest or create the new guest
+            - Destination folder, absolute path to find an existing guest or create the new guest.
    hardware:
         description:
             - "Manage some VM hardware attributes."
@@ -86,217 +87,214 @@ options:
             - >
               Valid values are referenced here:
               https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
-        version_added: "2.3"
+        version_added: '2.3'
    disk:
         description:
-            - "A list of disks to add"
-            - "Valid attributes are: size_[tb,gb,mb,kb], C(type), C(datastore) and C(autoselect_datastore)."
-            - "C(type): Valid value is C(thin) (default: None)."
-            - "C(datastore): Datastore to use for the disk. If autoselect_datastore is True, filter datastore selection."
-            - "C(autoselect_datastore) (bool): select the less used datastore."
+            - A list of disks to add.
+            - 'Valid attributes are:'
+            - '  C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
+            - '  C(type) (string): Valid value is C(thin) (default: None).'
+            - '  C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
+            - '  C(autoselect_datastore) (bool): select the less used datastore.'
    resource_pool:
         description:
             - Affect machine to the given resource pool.
             - Resource pool should be child of the selected host parent.
-        version_added: "2.3"
+        version_added: '2.3'
    wait_for_ip_address:
         description:
-            - Wait until vCenter detects an IP address for the VM
-            - This requires vmware-tools (vmtoolsd) to properly work after creation
+            - Wait until vCenter detects an IP address for the VM.
+            - This requires vmware-tools (vmtoolsd) to properly work after creation.
         default: 'no'
         choices: [ 'no', 'yes' ]
    snapshot_src:
         description:
             - Name of an existing snapshot to use to create a clone of a VM.
-        version_added: "2.4"
+        version_added: '2.4'
    linked_clone:
         description:
-            - Whether to create a Linked Clone from the snapshot specified
+            - Whether to create a Linked Clone from the snapshot specified.
         default: 'no'
         choices: [ 'no', 'yes' ]
-        version_added: "2.4"
+        version_added: '2.4'
    force:
         description:
-            - Ignore warnings and complete the actions
+            - Ignore warnings and complete the actions.
         default: 'no'
         choices: [ 'no', 'yes' ]
    datacenter:
         description:
-            - Destination datacenter for the deploy operation
+            - Destination datacenter for the deploy operation.
         default: ha-datacenter
    cluster:
         description:
             - The cluster name where the VM will run.
-        version_added: "2.3"
+        version_added: '2.3'
    esxi_hostname:
         description:
             - The esxi hostname where the VM will run.
    annotation:
         description:
-            - A note or annotation to include in the VM
-        version_added: "2.3"
+            - A note or annotation to include in the VM.
+        version_added: '2.3'
    customvalues:
         description:
             - Define a list of customvalues to set on VM.
-            - "A customvalue object takes 2 fields 'key' and 'value'."
-        version_added: "2.3"
+            - A customvalue object takes 2 fields C(key) and C(value).
+        version_added: '2.3'
    networks:
         description:
-          - Network to use should include C(name) or C(vlan) entry
-          - 'Add an optional C(ip) and C(netmask) for static network configuration (this implies C(type: static))'
-          - Add an optional C(type) for specifying C(dhcp) or C(static) IP assignment
-          - Add an optional C(gateway) entry to configure a gateway
-          - Add an optional C(mac) entry to customize mac address
-          - Add an optional C(dns_servers) or C(domain) entry per interface (Windows)
-          - Add an optional C(device_type) to configure the virtual NIC (pcnet32, vmxnet2, vmxnet3, e1000, e1000e)
-        version_added: "2.3"
+          - Network to use should include C(name) or C(vlan) entry.
+          - 'Add an optional C(ip) and C(netmask) for static network configuration (this implies C(type: static)).'
+          - Add an optional C(type) for specifying C(dhcp) or C(static) IP assignment.
+          - Add an optional C(gateway) entry to configure a gateway.
+          - Add an optional C(mac) entry to customize mac address.
+          - Add an optional C(dns_servers) or C(domain) entry per interface (Windows).
+          - Add an optional C(device_type) to configure the virtual NIC (C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3), C(sriov)).
+        version_added: '2.3'
    customization:
         description:
-          - "Parameters to customize template"
-          - "Common parameters (Linux/Windows):"
-          - "  C(dns_servers) (list): List of DNS servers to configure"
-          - "  C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter)"
-          - "  C(domain) (string): DNS domain name to use"
-          - "  C(hostname) (string): Computer hostname (default: C(name) parameter)"
-          - "Parameters related to windows customization:"
-          - "  C(autologon) (bool): Auto logon after VM customization (default: False)"
-          - "  C(autologoncount) (int): Number of autologon after reboot (default: 1)"
-          - "  C(domainadmin) (string): User used to join in AD domain (mandatory with joindomain)"
-          - "  C(domainadminpassword) (string): Password used to join in AD domain (mandatory with joindomain)"
-          - "  C(fullname) (string): Server owner name (default: Administrator)"
-          - "  C(joindomain) (string): AD domain to join (Not compatible with C(joinworkgroup))"
-          - "  C(joinworkgroup) (string): Workgroup to join (Not compatible with C(joindomain), default: WORKGROUP)"
-          - "  C(orgname) (string): Organisation name (default: ACME)"
-          - "  C(password) (string): Local administrator password (mandatory)"
-          - "  C(productid) (string): Product ID"
-          - "  C(runonce) (list): List of commands to run at first user logon"
-          - "  C(timezone) (int): Timezone (default: 85) See U(https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx)"
-        version_added: "2.3"
+          - Parameters to customize template.
+          - 'Common parameters (Linux/Windows):'
+          - '  C(dns_servers) (list): List of DNS servers to configure'
+          - '  C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter)'
+          - '  C(domain) (string): DNS domain name to use'
+          - '  C(hostname) (string): Computer hostname (default: shorted C(name) parameter)'
+          - 'Parameters related to Windows customization:'
+          - '  C(autologon) (bool): Auto logon after VM customization (default: False)'
+          - '  C(autologoncount) (int): Number of autologon after reboot (default: 1)'
+          - '  C(domainadmin) (string): User used to join in AD domain (mandatory with joindomain)'
+          - '  C(domainadminpassword) (string): Password used to join in AD domain (mandatory with joindomain)'
+          - '  C(fullname) (string): Server owner name (default: Administrator)'
+          - '  C(joindomain) (string): AD domain to join (Not compatible with C(joinworkgroup))'
+          - '  C(joinworkgroup) (string): Workgroup to join (Not compatible with C(joindomain), default: WORKGROUP)'
+          - '  C(orgname) (string): Organisation name (default: ACME)'
+          - '  C(password) (string): Local administrator password'
+          - '  C(productid) (string): Product ID'
+          - '  C(runonce) (list): List of commands to run at first user logon'
+          - '  C(timezone) (int): Timezone (default: 85) See U(https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx)'
+        version_added: '2.3'
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
-# Create a VM from a template
-  - name: create the VM
-    vmware_guest:
-      hostname: 192.0.2.44
-      username: administrator@vsphere.local
-      password: vmware
-      validate_certs: no
-      esxi_hostname: 192.0.2.117
-      datacenter: datacenter1
-      folder: testvms
-      name: testvm_2
-      state: poweredon
-      guest_id: centos64guest
-      disk:
-      - size_gb: 10
-        type: thin
-        datastore: g73_datastore
-      hardware:
-        memory_mb: 512
-        num_cpus: 1
-        scsi: paravirtual
-      networks:
-      - name: VM Network
-        ip: 192.168.1.100
-        netmask: 255.255.255.0
-        mac: 'aa:bb:dd:aa:00:14'
-      template: template_el7
-      wait_for_ip_address: yes
-    delegate_to: localhost
-    register: deploy
+EXAMPLES = r'''
+- name: Create a VM from a template
+  vmware_guest:
+    hostname: 192.0.2.44
+    username: administrator@vsphere.local
+    password: vmware
+    validate_certs: no
+    esxi_hostname: 192.0.2.117
+    datacenter: datacenter1
+    folder: testvms
+    name: testvm_2
+    state: poweredon
+    guest_id: centos64guest
+    disk:
+    - size_gb: 10
+      type: thin
+      datastore: g73_datastore
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+    networks:
+    - name: VM Network
+      ip: 192.168.1.100
+      netmask: 255.255.255.0
+      mac: 'aa:bb:dd:aa:00:14'
+    template: template_el7
+    wait_for_ip_address: yes
+  delegate_to: localhost
+  register: deploy
 
-# Clone a VM from Template and customize
-  - name: Clone template and customize
-    vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      validate_certs: no
-      datacenter: datacenter1
-      cluster: cluster
-      name: testvm-2
-      template: template_windows
-      networks:
-      - name: VM Network
-        ip: 192.168.1.100
-        netmask: 255.255.255.0
-        gateway: 192.168.1.1
-        mac: 'aa:bb:dd:aa:00:14'
-        domain: my_domain
-        dns_servers:
-        - 192.168.1.1
-        - 192.168.1.2
-      customization:
-        autologon: True
-        dns_servers:
-        - 192.168.1.1
-        - 192.168.1.2
-        domain: my_domain
-        password: new_vm_password
-        runonce:
-        - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\Enable-WinRM.ps1 -ForceNewSSLCert
-    delegate_to: localhost
+- name: Clone a VM from Template and customize
+  vmware_guest:
+    hostname: 192.168.1.209
+    username: administrator@vsphere.local
+    password: vmware
+    validate_certs: no
+    datacenter: datacenter1
+    cluster: cluster
+    name: testvm-2
+    template: template_windows
+    networks:
+    - name: VM Network
+      ip: 192.168.1.100
+      netmask: 255.255.255.0
+      gateway: 192.168.1.1
+      mac: aa:bb:dd:aa:00:14
+      domain: my_domain
+      dns_servers:
+      - 192.168.1.1
+      - 192.168.1.2
+    customization:
+      autologon: yes
+      dns_servers:
+      - 192.168.1.1
+      - 192.168.1.2
+      domain: my_domain
+      password: new_vm_password
+      runonce:
+      - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
+  delegate_to: localhost
 
-# Create a VM template
-  - name: create a VM template
-    vmware_guest:
-      hostname: 192.0.2.88
-      username: administrator@vsphere.local
-      password: vmware
-      validate_certs: no
-      datacenter: datacenter1
-      cluster: vmware_cluster_esx
-      resource_pool: highperformance_pool
-      folder: testvms
-      name: testvm_6
-      is_template: yes
-      guest_id: debian6_64Guest
-      disk:
-      - size_gb: 10
-        type: thin
-        datastore: g73_datastore
-      hardware:
-        memory_mb: 512
-        num_cpus: 1
-        scsi: lsilogic
-      wait_for_ip_address: yes
-    delegate_to: localhost
-    register: deploy
+- name: Create a VM template
+  vmware_guest:
+    hostname: 192.0.2.88
+    username: administrator@vsphere.local
+    password: vmware
+    validate_certs: no
+    datacenter: datacenter1
+    cluster: vmware_cluster_esx
+    resource_pool: highperformance_pool
+    folder: testvms
+    name: testvm_6
+    is_template: yes
+    guest_id: debian6_64Guest
+    disk:
+    - size_gb: 10
+      type: thin
+      datastore: g73_datastore
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: lsilogic
+    wait_for_ip_address: yes
+  delegate_to: localhost
+  register: deploy
 
-# Rename a VM (requires the VM's uuid)
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      uuid: 421e4592-c069-924d-ce20-7e7533fab926
-      name: new_name
-      state: present
-    delegate_to: localhost
+- name: Rename a VM (requires the VM's uuid)
+  vmware_guest:
+    hostname: 192.168.1.209
+    username: administrator@vsphere.local
+    password: vmware
+    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    name: new_name
+    state: present
+  delegate_to: localhost
 
-# Remove a VM by uuid
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      uuid: 421e4592-c069-924d-ce20-7e7533fab926
-      state: absent
-    delegate_to: localhost
+- name: Remove a VM by uuid
+  vmware_guest:
+    hostname: 192.168.1.209
+    username: administrator@vsphere.local
+    password: vmware
+    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    state: absent
+  delegate_to: localhost
 '''
 
-RETURN = """
+RETURN = r'''
 instance:
     description: metadata about the new virtualmachine
     returned: always
     type: dict
     sample: None
-"""
+'''
 
 import os
 import time
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
@@ -399,8 +397,7 @@ class PyVmomiDeviceHelper(object):
         elif device_type == 'sriov':
             nic.device = vim.vm.device.VirtualSriovEthernetCard()
         else:
-            self.module.fail_json(msg="Invalid device_type '%s' for network %s" %
-                                      (device_type, device_infos['name']))
+            self.module.fail_json(msg='Invalid device_type "%s" for network "%s"' % (device_type, device_infos['name']))
 
         nic.device.wakeOnLanEnabled = True
         nic.device.deviceInfo = vim.Description()
@@ -461,9 +458,6 @@ class PyVmomiHelper(object):
         self.customspec = None
         self.current_vm_obj = None
         self.cache = PyVmomiCache(self.content)
-
-    def should_deploy_from_template(self):
-        return self.params.get('template') is not None
 
     def getvm(self, name=None, uuid=None, folder=None):
 
@@ -588,7 +582,7 @@ class PyVmomiHelper(object):
 
     def configure_guestid(self, vm_obj, vm_creation=False):
         # guest_id is not required when using templates
-        if self.should_deploy_from_template() and self.params.get('guest_id') is None:
+        if self.params['template'] and not self.params['guest_id']:
             return
 
         # guest_id is only mandatory on VM creation
@@ -607,7 +601,7 @@ class PyVmomiHelper(object):
                 if vm_obj is None or self.configspec.numCPUs != vm_obj.config.hardware.numCPU:
                     self.change_detected = True
             # num_cpu is mandatory for VM creation
-            elif vm_creation and not self.should_deploy_from_template():
+            elif vm_creation and not self.params['template']:
                 self.module.fail_json(msg="hardware.num_cpus attribute is mandatory for VM creation")
 
             if 'memory_mb' in self.params['hardware']:
@@ -615,7 +609,7 @@ class PyVmomiHelper(object):
                 if vm_obj is None or self.configspec.memoryMB != vm_obj.config.hardware.memoryMB:
                     self.change_detected = True
             # memory_mb is mandatory for VM creation
-            elif vm_creation and not self.should_deploy_from_template():
+            elif vm_creation and not self.params['template']:
                 self.module.fail_json(msg="hardware.memory_mb attribute is mandatory for VM creation")
 
     def get_vm_network_interfaces(self, vm=None):
@@ -680,7 +674,7 @@ class PyVmomiHelper(object):
                                                 network_devices[key])
 
             nic_change_detected = False
-            if key < len(current_net_devices) and (vm_obj or self.should_deploy_from_template()):
+            if key < len(current_net_devices) and (vm_obj or self.params['template']):
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
                 # Changing mac address has no effect when editing interface
                 if 'mac' in network_devices[key] and nic.device.macAddress != current_net_devices[key].macAddress:
@@ -800,7 +794,7 @@ class PyVmomiHelper(object):
         else:
             guest_id = vm_obj.summary.config.guestId
 
-        # If I install a Windows use Sysprep
+        # For windows guest OS, use SysPrep
         # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.Sysprep.html#field_detail
         if 'win' in guest_id:
             ident = vim.vm.customization.Sysprep()
@@ -851,7 +845,7 @@ class PyVmomiHelper(object):
                 ident.guiRunOnce.commandList = self.params['customization']['runonce']
 
         else:
-            # Else use LinuxPrep
+            # For Linux guest OS, use LinuxPrep
             # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.LinuxPrep.html
             ident = vim.vm.customization.LinuxPrep()
 
@@ -860,7 +854,7 @@ class PyVmomiHelper(object):
                 ident.domain = str(self.params['customization']['domain'])
 
             ident.hostName = vim.vm.customization.FixedName()
-            ident.hostName.name = str(self.params['customization'].get('hostname', self.params['name']))
+            ident.hostName.name = str(self.params['customization'].get('hostname', self.params['name'].split('.')[0]))
 
         self.customspec = vim.vm.customization.Specification()
         self.customspec.nicSettingMap = adaptermaps
@@ -965,7 +959,7 @@ class PyVmomiHelper(object):
             # VMWare doesn't allow to reduce disk sizes
             if kb < diskspec.device.capacityInKB:
                 self.module.fail_json(
-                    msg="Given disk size is lesser than found (%d < %d). Reducing disks is not allowed." %
+                    msg="Given disk size is smaller than found (%d < %d). Reducing disks is not allowed." %
                         (kb, diskspec.device.capacityInKB))
 
             if kb != diskspec.device.capacityInKB or disk_modified:
@@ -1019,9 +1013,8 @@ class PyVmomiHelper(object):
                 datastore_name = self.params['disk'][0]['datastore']
                 datastore = find_obj(self.content, [vim.Datastore], datastore_name)
             else:
-                self.module.fail_json(msg="Either datastore or autoselect_datastore "
-                                          "should be provided to select datastore")
-        if not datastore and self.should_deploy_from_template():
+                self.module.fail_json(msg="Either datastore or autoselect_datastore should be provided to select datastore")
+        if not datastore and self.params['template']:
             # use the template's existing DS
             disks = [x for x in vm_obj.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
             datastore = disks[0].backing.datastore
@@ -1106,7 +1099,7 @@ class PyVmomiHelper(object):
             self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
         destfolder = f_obj
 
-        if self.should_deploy_from_template():
+        if self.params['template']:
             # FIXME: need to search for this in the same way as guests to ensure accuracy
             vm_obj = find_obj(self.content, [vim.VirtualMachine], self.params['template'])
             if vm_obj is None:
@@ -1143,7 +1136,7 @@ class PyVmomiHelper(object):
             self.customize_vm(vm_obj=vm_obj)
 
         try:
-            if self.should_deploy_from_template():
+            if self.params['template']:
                 # create the relocation spec
                 relospec = vim.vm.RelocateSpec()
 
@@ -1163,8 +1156,7 @@ class PyVmomiHelper(object):
                     clonespec.customization = self.customspec
 
                 if self.params['snapshot_src'] is not None:
-                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
-                                                                      snapname=self.params['snapshot_src'])
+                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList, snapname=self.params['snapshot_src'])
                     if len(snapshot) != 1:
                         self.module.fail_json(msg='virtual machine "%(template)s" does not contain snapshot named "%(snapshot_src)s"' % self.params)
 
@@ -1282,7 +1274,7 @@ class PyVmomiHelper(object):
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.Task.html
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.TaskInfo.html
         # https://github.com/virtdevninja/pyvmomi-community-samples/blob/master/samples/tools/tasks.py
-        while task.info.state not in ['success', 'error']:
+        while task.info.state not in ['error', 'success']:
             time.sleep(1)
 
     def wait_for_vm_ip(self, vm, poll=100, sleep=5):
@@ -1304,37 +1296,16 @@ class PyVmomiHelper(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            hostname=dict(
-                type='str',
-                default=os.environ.get('VMWARE_HOST')
-            ),
-            username=dict(
-                type='str',
-                default=os.environ.get('VMWARE_USER')
-            ),
-            password=dict(
-                type='str', no_log=True,
-                default=os.environ.get('VMWARE_PASSWORD')
-            ),
-            state=dict(
-                required=False,
-                choices=[
-                    'poweredon',
-                    'poweredoff',
-                    'present',
-                    'absent',
-                    'restarted',
-                    'suspended',
-                    'shutdownguest',
-                    'rebootguest'
-                ],
-                default='present'),
+            hostname=dict(type='str', default=os.environ.get('VMWARE_HOST')),
+            username=dict(type='str', default=os.environ.get('VMWARE_USER')),
+            password=dict(type='str', default=os.environ.get('VMWARE_PASSWORD'), no_log=True),
+            state=dict(type='str', default='present', choices=['absent', 'poweredoff', 'poweredon', 'present', 'rebootguest', 'restarted', 'shutdownguest', 'suspended']),
             validate_certs=dict(type='bool', default=True),
-            template_src=dict(type='str', aliases=['template']),
+            template=dict(type='str', aliases=['template_src']),
             is_template=dict(type='bool', default=False),
             annotation=dict(type='str', aliases=['notes']),
             customvalues=dict(type='list', default=[]),
-            name=dict(required=True, type='str'),
+            name=dict(type='str', required=True),
             name_match=dict(type='str', default='first'),
             uuid=dict(type='str'),
             folder=dict(type='str', default='/vm'),
@@ -1350,15 +1321,11 @@ def main():
             linked_clone=dict(type='bool', default=False),
             networks=dict(type='list', default=[]),
             resource_pool=dict(type='str'),
-            customization=dict(type='dict', no_log=True, default={}),
+            customization=dict(type='dict', default={}, no_log=True),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
-            ['esxi_hostname', 'cluster'],
-        ],
-        required_together=[
-            ['state', 'force'],
-            ['template'],
+            ['cluster', 'esxi_hostname'],
         ],
     )
 
@@ -1370,10 +1337,9 @@ def main():
     module.params['folder'] = module.params['folder'].rstrip('/')
 
     pyv = PyVmomiHelper(module)
+
     # Check if the VM exists before continuing
-    vm = pyv.getvm(name=module.params['name'],
-                   folder=module.params['folder'],
-                   uuid=module.params['uuid'])
+    vm = pyv.getvm(name=module.params['name'], folder=module.params['folder'], uuid=module.params['uuid'])
 
     # VM already exists
     if vm:
@@ -1400,9 +1366,6 @@ def main():
         if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
             # Create it ...
             result = pyv.deploy_vm()
-
-    if 'failed' not in result:
-        result['failed'] = False
 
     if result['failed']:
         module.fail_json(**result)
