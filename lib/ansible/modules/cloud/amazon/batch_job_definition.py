@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -324,7 +323,7 @@ def get_current_job_definition(module, connection):
         environments = connection.client().describe_job_definitions(
             jobDefinitionName=module.params['job_definition_name']
         )
-        if len(environments) > 0:
+        if len(environments['jobDefinitions']) > 0:
             latest_revision = max(map(lambda d: d['revision'], environments['jobDefinitions']))
             latest_definition = next((x for x in environments['jobDefinitions'] if x['revision'] == latest_revision),
                                      None)
