@@ -26,12 +26,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: vmware_guest
-short_description: Manages virtual machines in vcenter
+short_description: Manages virtual machines in vCenter
 description:
-    - Create new virtual machines (from templates or not)
-    - Power on/power off/restart a virtual machine
-    - Modify, rename or remove a virtual machine
-version_added: 2.2
+    - Create new virtual machines (from templates or not).
+    - Power on/power off/restart a virtual machine.
+    - Modify, rename or remove a virtual machine.
+version_added: '2.2'
 author:
     - James Tanner (@jctanner) <tanner.jc@gmail.com>
     - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
@@ -44,18 +44,18 @@ options:
    state:
         description:
             - What state should the virtual machine be in?
-            - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments
-        required: True
+            - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments.
+        required: yes
         choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']
    name:
         description:
-            - Name of the VM to work with
-        required: True
+            - Name of the VM to work with.
+        required: yes
    name_match:
         description:
-            - If multiple VMs matching the name, use the first or last found
+            - If multiple VMs matching the name, use the first or last found.
         default: 'first'
-        choices: ['first', 'last']
+        choices: [ 'first', 'last' ]
    uuid:
         description:
             - UUID of the instance to manage if known, this is VMware's unique identifier.
@@ -67,8 +67,9 @@ options:
             - If the VM exists already this setting will be ignored.
    is_template:
         description:
-            - Flag the instance as a template
-        default: False
+            - Flag the instance as a template.
+        default: 'no'
+        choices: [ 'no', 'yes' ]
         version_added: "2.3"
    folder:
         description:
@@ -76,12 +77,12 @@ options:
    hardware:
         description:
             - "Manage some VM hardware attributes."
-            - "Valid attributes are: memory_mb, num_cpus and scsi"
-            - "scsi: Valid values are buslogic, lsilogic, lsilogicsas and paravirtual (default)"
+            - "Valid attributes are: C(memory_mb), C(num_cpus) and C(scsi)."
+            - "scsi: Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default)."
    guest_id:
         description:
-            - "Set the guest ID (Debian, RHEL, Windows...)"
-            - "This field is required when creating a VM"
+            - "Set the guest ID (Debian, RHEL, Windows...)."
+            - "This field is required when creating a VM."
             - >
               Valid values are referenced here:
               https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
@@ -89,34 +90,36 @@ options:
    disk:
         description:
             - "A list of disks to add"
-            - "Valid attributes are: size_[tb,gb,mb,kb], type, datastore and autoselect_datastore"
-            - "type: Valid value is thin (default: None)"
-            - "datastore: Datastore to use for the disk. If autoselect_datastore is True, filter datastore selection."
-            - "autoselect_datastore (bool): select the less used datastore."
+            - "Valid attributes are: size_[tb,gb,mb,kb], C(type), C(datastore) and C(autoselect_datastore)."
+            - "C(type): Valid value is C(thin) (default: None)."
+            - "C(datastore): Datastore to use for the disk. If autoselect_datastore is True, filter datastore selection."
+            - "C(autoselect_datastore) (bool): select the less used datastore."
    resource_pool:
         description:
-            - Affect machine to the given resource pool
-            - Resource pool should be child of the selected host parent
-        default: None
+            - Affect machine to the given resource pool.
+            - Resource pool should be child of the selected host parent.
         version_added: "2.3"
    wait_for_ip_address:
         description:
             - Wait until vCenter detects an IP address for the VM
             - This requires vmware-tools (vmtoolsd) to properly work after creation
-        default: False
+        default: 'no'
+        choices: [ 'no', 'yes' ]
    snapshot_src:
         description:
             - Name of an existing snapshot to use to create a clone of a VM.
-        default: None
         version_added: "2.4"
    linked_clone:
         description:
             - Whether to create a Linked Clone from the snapshot specified
-        default: False
+        default: 'no'
+        choices: [ 'no', 'yes' ]
         version_added: "2.4"
    force:
         description:
             - Ignore warnings and complete the actions
+        default: 'no'
+        choices: [ 'no', 'yes' ]
    datacenter:
         description:
             - Destination datacenter for the deploy operation
@@ -615,7 +618,6 @@ class PyVmomiHelper(object):
             elif vm_creation and not self.should_deploy_from_template():
                 self.module.fail_json(msg="hardware.memory_mb attribute is mandatory for VM creation")
 
-
     def get_vm_network_interfaces(self, vm=None):
         if vm is None:
             return []
@@ -640,7 +642,7 @@ class PyVmomiHelper(object):
         network_devices = list()
         for network in self.params['networks']:
             if 'ip' in network or 'netmask' in network:
-                if 'ip' not in network or not 'netmask' in network:
+                if 'ip' not in network or 'netmask' not in network:
                     self.module.fail_json(msg="Both 'ip' and 'netmask' are required together.")
 
             if 'name' in network:
@@ -807,7 +809,7 @@ class PyVmomiHelper(object):
 
             # Setting hostName, orgName and fullName is mandatory, so we set some default when missing
             ident.userData.computerName = vim.vm.customization.FixedName()
-            ident.userData.computerName.name = str(self.params['customization'].get('hostname', self.params['name']))
+            ident.userData.computerName.name = str(self.params['customization'].get('hostname', self.params['name'].split('.')[0]))
             ident.userData.fullName = str(self.params['customization'].get('fullname', 'Administrator'))
             ident.userData.orgName = str(self.params['customization'].get('orgname', 'ACME'))
 
@@ -1090,7 +1092,7 @@ class PyVmomiHelper(object):
         #   - multiple templates by the same name
         #   - static IPs
 
-        #datacenters = get_all_objs(self.content, [vim.Datacenter])
+        # datacenters = get_all_objs(self.content, [vim.Datacenter])
         datacenter = find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
         if datacenter is None:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
@@ -1114,9 +1116,9 @@ class PyVmomiHelper(object):
 
         if self.params['resource_pool']:
             resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
-        else:
-            hostsystem = self.select_host()
-            resource_pool = self.select_resource_pool_by_host(hostsystem)
+
+            if resource_pool is None:
+                self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
 
         # set the destination datastore for VM & disks
         (datastore, datastore_name) = self.select_datastore(vm_obj)
@@ -1133,7 +1135,7 @@ class PyVmomiHelper(object):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('name', 'vlan_id', 'device_type'):
+                if key not in ('name', 'vlan', 'device_type'):
                     network_changes = True
                     break
 
@@ -1144,11 +1146,14 @@ class PyVmomiHelper(object):
             if self.should_deploy_from_template():
                 # create the relocation spec
                 relospec = vim.vm.RelocateSpec()
-                # Only provide specific host when using ESXi host directly
+
+                # Only select specific host when ESXi hostname is provided
                 if self.params['esxi_hostname']:
                     relospec.host = hostsystem
                 relospec.datastore = datastore
-                relospec.pool = resource_pool
+
+                if self.params['resource_pool']:
+                    relospec.pool = resource_pool
 
                 if self.params['snapshot_src'] is not None and self.params['linked_clone']:
                     relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
@@ -1230,18 +1235,19 @@ class PyVmomiHelper(object):
             self.configspec.annotation = str(self.params['annotation'])
             self.change_detected = True
 
+        change_applied = False
+
         relospec = vim.vm.RelocateSpec()
         if self.params['resource_pool']:
             relospec.pool = self.select_resource_pool_by_name(self.params['resource_pool'])
-        else:
-            hostsystem = self.select_host()
-            relospec.pool = self.select_resource_pool_by_host(hostsystem)
 
-        change_applied = False
-        if relospec.pool != self.current_vm_obj.resourcePool:
-            task = self.current_vm_obj.RelocateVM_Task(spec=relospec)
-            self.wait_for_task(task)
-            change_applied = True
+            if relospec.pool is None:
+                self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
+
+            elif relospec.pool != self.current_vm_obj.resourcePool:
+                task = self.current_vm_obj.RelocateVM_Task(spec=relospec)
+                self.wait_for_task(task)
+                change_applied = True
 
         # Only send VMWare task if we see a modification
         if self.change_detected:

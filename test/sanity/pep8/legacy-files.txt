@@ -299,7 +299,6 @@ lib/ansible/modules/cloud/vmware/vca_nat.py
 lib/ansible/modules/cloud/vmware/vca_vapp.py
 lib/ansible/modules/cloud/vmware/vmware_cluster.py
 lib/ansible/modules/cloud/vmware/vmware_dvswitch.py
-lib/ansible/modules/cloud/vmware/vmware_guest.py
 lib/ansible/modules/cloud/vmware/vmware_local_user_manager.py
 lib/ansible/modules/cloud/vmware/vmware_migrate_vmk.py
 lib/ansible/modules/cloud/vmware/vmware_target_canonical_facts.py
