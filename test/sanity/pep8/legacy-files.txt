@@ -65,7 +65,6 @@ lib/ansible/module_utils/netcli.py
 lib/ansible/module_utils/netconf.py
 lib/ansible/module_utils/network.py
 lib/ansible/module_utils/network_common.py
-lib/ansible/module_utils/nxos.py
 lib/ansible/module_utils/openstack.py
 lib/ansible/module_utils/openswitch.py
 lib/ansible/module_utils/ordnance.py
@@ -814,7 +813,6 @@ lib/ansible/plugins/strategy/linear.py
 lib/ansible/plugins/terminal/asa.py
 lib/ansible/plugins/terminal/eos.py
 lib/ansible/plugins/terminal/junos.py
-lib/ansible/plugins/terminal/nxos.py
 lib/ansible/plugins/test/core.py
 lib/ansible/plugins/test/files.py
 lib/ansible/plugins/test/mathstuff.py
