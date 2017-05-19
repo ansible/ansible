@@ -75,7 +75,7 @@ EXAMPLES = '''
   nclu:
     template: |
         {% for iface in range(1,49) %}
-        add int swp{{i}}
+        add int swp{{iface}}
         {% endfor %}
     commit: true
     description: "Ansible - add swps1-48"
