@@ -28,152 +28,162 @@ DOCUMENTATION = r'''
 module: vmware_guest
 short_description: Manages virtual machines in vCenter
 description:
-    - Create new virtual machines (from templates or not).
-    - Power on/power off/restart a virtual machine.
-    - Modify, rename or remove a virtual machine.
+- Create new virtual machines (from templates or not).
+- Power on/power off/restart a virtual machine.
+- Modify, rename or remove a virtual machine.
 version_added: '2.2'
 author:
-    - James Tanner (@jctanner) <tanner.jc@gmail.com>
-    - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
+- James Tanner (@jctanner) <tanner.jc@gmail.com>
+- Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 notes:
-    - Tested on vSphere 5.5 and 6.0
+- Tested on vSphere 5.5 and 6.0
 requirements:
-    - python >= 2.6
-    - PyVmomi
+- python >= 2.6
+- PyVmomi
 options:
-   state:
-        description:
-            - What state should the virtual machine be in?
-            - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments.
-        required: yes
-        choices: [ 'present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest' ]
-   name:
-        description:
-            - Name of the VM to work with.
-            - VM names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
-        required: yes
-   name_match:
-        description:
-            - If multiple VMs matching the name, use the first or last found.
-        default: 'first'
-        choices: [ 'first', 'last' ]
-   uuid:
-        description:
-            - UUID of the instance to manage if known, this is VMware's unique identifier.
-            - This is required if name is not supplied.
-   template:
-        description:
-            - Template used to create VM.
-            - If this value is not set, VM is created without using a template.
-            - If the VM exists already this setting will be ignored.
-   is_template:
-        description:
-            - Flag the instance as a template.
-        default: 'no'
-        choices: [ 'no', 'yes' ]
-        version_added: '2.3'
-   folder:
-        description:
-            - Destination folder, absolute path to find an existing guest or create the new guest.
-   hardware:
-        description:
-            - "Manage some VM hardware attributes."
-            - "Valid attributes are: C(memory_mb), C(num_cpus) and C(scsi)."
-            - "scsi: Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default)."
-   guest_id:
-        description:
-            - "Set the guest ID (Debian, RHEL, Windows...)."
-            - "This field is required when creating a VM."
-            - >
-              Valid values are referenced here:
-              https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
-        version_added: '2.3'
-   disk:
-        description:
-            - A list of disks to add.
-            - 'Valid attributes are:'
-            - '  C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
-            - '  C(type) (string): Valid value is C(thin) (default: None).'
-            - '  C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
-            - '  C(autoselect_datastore) (bool): select the less used datastore.'
-   resource_pool:
-        description:
-            - Affect machine to the given resource pool.
-            - Resource pool should be child of the selected host parent.
-        version_added: '2.3'
-   wait_for_ip_address:
-        description:
-            - Wait until vCenter detects an IP address for the VM.
-            - This requires vmware-tools (vmtoolsd) to properly work after creation.
-        default: 'no'
-        choices: [ 'no', 'yes' ]
-   snapshot_src:
-        description:
-            - Name of an existing snapshot to use to create a clone of a VM.
-        version_added: '2.4'
-   linked_clone:
-        description:
-            - Whether to create a Linked Clone from the snapshot specified.
-        default: 'no'
-        choices: [ 'no', 'yes' ]
-        version_added: '2.4'
-   force:
-        description:
-            - Ignore warnings and complete the actions.
-        default: 'no'
-        choices: [ 'no', 'yes' ]
-   datacenter:
-        description:
-            - Destination datacenter for the deploy operation.
-        default: ha-datacenter
-   cluster:
-        description:
-            - The cluster name where the VM will run.
-        version_added: '2.3'
-   esxi_hostname:
-        description:
-            - The esxi hostname where the VM will run.
-   annotation:
-        description:
-            - A note or annotation to include in the VM.
-        version_added: '2.3'
-   customvalues:
-        description:
-            - Define a list of customvalues to set on VM.
-            - A customvalue object takes 2 fields C(key) and C(value).
-        version_added: '2.3'
-   networks:
-        description:
-          - Network to use should include C(name) or C(vlan) entry.
-          - 'Add an optional C(ip) and C(netmask) for static network configuration (this implies C(type: static)).'
-          - Add an optional C(type) for specifying C(dhcp) or C(static) IP assignment.
-          - Add an optional C(gateway) entry to configure a gateway.
-          - Add an optional C(mac) entry to customize mac address.
-          - Add an optional C(dns_servers) or C(domain) entry per interface (Windows).
-          - Add an optional C(device_type) to configure the virtual NIC (C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3), C(sriov)).
-        version_added: '2.3'
-   customization:
-        description:
-          - Parameters to customize template.
-          - 'Common parameters (Linux/Windows):'
-          - '  C(dns_servers) (list): List of DNS servers to configure'
-          - '  C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter)'
-          - '  C(domain) (string): DNS domain name to use'
-          - '  C(hostname) (string): Computer hostname (default: shorted C(name) parameter)'
-          - 'Parameters related to Windows customization:'
-          - '  C(autologon) (bool): Auto logon after VM customization (default: False)'
-          - '  C(autologoncount) (int): Number of autologon after reboot (default: 1)'
-          - '  C(domainadmin) (string): User used to join in AD domain (mandatory with joindomain)'
-          - '  C(domainadminpassword) (string): Password used to join in AD domain (mandatory with joindomain)'
-          - '  C(fullname) (string): Server owner name (default: Administrator)'
-          - '  C(joindomain) (string): AD domain to join (Not compatible with C(joinworkgroup))'
-          - '  C(joinworkgroup) (string): Workgroup to join (Not compatible with C(joindomain), default: WORKGROUP)'
-          - '  C(orgname) (string): Organisation name (default: ACME)'
-          - '  C(password) (string): Local administrator password'
-          - '  C(productid) (string): Product ID'
-          - '  C(runonce) (list): List of commands to run at first user logon'
-          - '  C(timezone) (int): Timezone (default: 85) See U(https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx)'
-        version_added: '2.3'
+  state:
+    description:
+    - What state should the virtual machine be in?
+    - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments.
+    required: yes
+    choices: [ 'present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest' ]
+  name:
+    description:
+    - Name of the VM to work with.
+    - VM names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
+    required: yes
+  name_match:
+    description:
+    - If multiple VMs matching the name, use the first or last found.
+    default: 'first'
+    choices: [ 'first', 'last' ]
+  uuid:
+    description:
+    - UUID of the instance to manage if known, this is VMware's unique identifier.
+    - This is required if name is not supplied.
+  template:
+    description:
+    - Template used to create VM.
+    - If this value is not set, VM is created without using a template.
+    - If the VM exists already this setting will be ignored.
+  is_template:
+    description:
+    - Flag the instance as a template.
+    default: 'no'
+    type: bool
+    version_added: '2.3'
+  folder:
+    description:
+    - Destination folder, absolute path to find an existing guest or create the new guest.
+    default: /
+  hardware:
+    description:
+    - Manage some VM hardware attributes.
+    - 'Valid attributes are:'
+    - ' - C(memory_mb) (integer): Amount of memory in MB.'
+    - ' - C(num_cpus) (integer): Number of CPUs.'
+    - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
+  guest_id:
+    description:
+    - Set the guest ID (Debian, RHEL, Windows...).
+    - This field is required when creating a VM.
+    - >
+         Valid values are referenced here:
+         https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
+    version_added: '2.3'
+  disk:
+    description:
+    - A list of disks to add.
+    - 'Valid attributes are:'
+    - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
+    - ' - C(type) (string): Valid value is C(thin) (default: None).'
+    - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
+    - ' - C(autoselect_datastore) (bool): select the less used datastore.'
+  resource_pool:
+    description:
+    - Affect machine to the given resource pool.
+    - Resource pool should be child of the selected host parent.
+    version_added: '2.3'
+  wait_for_ip_address:
+    description:
+    - Wait until vCenter detects an IP address for the VM.
+    - This requires vmware-tools (vmtoolsd) to properly work after creation.
+    default: 'no'
+    type: bool
+  snapshot_src:
+    description:
+    - Name of an existing snapshot to use to create a clone of a VM.
+    version_added: '2.4'
+  linked_clone:
+    description:
+    - Whether to create a Linked Clone from the snapshot specified.
+    default: 'no'
+    type: bool
+    version_added: '2.4'
+  force:
+    description:
+    - Ignore warnings and complete the actions.
+    default: 'no'
+    type: bool
+  datacenter:
+    description:
+    - Destination datacenter for the deploy operation.
+    default: ha-datacenter
+  cluster:
+    description:
+    - The cluster name where the VM will run.
+    version_added: '2.3'
+  esxi_hostname:
+    description:
+    - The ESXi hostname where the VM will run.
+  annotation:
+    description:
+    - A note or annotation to include in the VM.
+    version_added: '2.3'
+  customvalues:
+    description:
+    - Define a list of customvalues to set on VM.
+    - A customvalue object takes 2 fields C(key) and C(value).
+    version_added: '2.3'
+  networks:
+    description:
+    - A list of networks (in the order of the NICs).
+    - 'One of the below parameters is required per entry:'
+    - ' - C(name) (string): Name of the portgroup for this interface.'
+    - ' - C(vlan) (integer): VLAN number for this interface.'
+    - 'Optional parameters per entry (used for virtual hardware):'
+    - ' - C(device_type) (string): Virtual network device (one of C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov)).'
+    - ' - C(mac) (string): Customize mac address.'
+    - 'Optional parameters per entry (used for OS customization):'
+    - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)).'
+    - ' - C(ip) (string): Static IP address (implies C(type: static)).'
+    - ' - C(netmask) (string): Static netmask required for C(ip).'
+    - ' - C(gateway) (string): Static gateway.'
+    - ' - C(dns_servers) (string): DNS servers for this network interface (Windows).'
+    - ' - C(domain) (string): Domain name for this network interface (Windows).'
+    version_added: '2.3'
+  customization:
+    description:
+    - Parameters for OS customization when cloning from template.
+    - 'Common parameters (Linux/Windows):'
+    - ' - C(dns_servers) (list): List of DNS servers to configure.'
+    - ' - C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter).'
+    - ' - C(domain) (string): DNS domain name to use.'
+    - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter).'
+    - 'Parameters related to Windows customization:'
+    - ' - C(autologon) (bool): Auto logon after VM customization (default: False).'
+    - ' - C(autologoncount) (int): Number of autologon after reboot (default: 1).'
+    - ' - C(domainadmin) (string): User used to join in AD domain (mandatory with C(joindomain)).'
+    - ' - C(domainadminpassword) (string): Password used to join in AD domain (mandatory with C(joindomain)).'
+    - ' - C(fullname) (string): Server owner name (default: Administrator).'
+    - ' - C(joindomain) (string): AD domain to join (Not compatible with C(joinworkgroup)).'
+    - ' - C(joinworkgroup) (string): Workgroup to join (Not compatible with C(joindomain), default: WORKGROUP).'
+    - ' - C(orgname) (string): Organisation name (default: ACME).'
+    - ' - C(password) (string): Local administrator password.'
+    - ' - C(productid) (string): Product ID.'
+    - ' - C(runonce) (list): List of commands to run at first user logon.'
+    - ' - C(timezone) (int): Timezone (See U(https://msdn.microsoft.com/en-us/library/ms912391.aspx)).'
+    version_added: '2.3'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -184,12 +194,10 @@ EXAMPLES = r'''
     username: administrator@vsphere.local
     password: vmware
     validate_certs: no
-    esxi_hostname: 192.0.2.117
-    datacenter: datacenter1
     folder: /testvms
     name: testvm_2
     state: poweredon
-    guest_id: centos64guest
+    template: template_el7
     disk:
     - size_gb: 10
       type: thin
@@ -200,10 +208,7 @@ EXAMPLES = r'''
       scsi: paravirtual
     networks:
     - name: VM Network
-      ip: 192.168.1.100
-      netmask: 255.255.255.0
-      mac: 'aa:bb:dd:aa:00:14'
-    template: template_el7
+      mac: aa:bb:dd:aa:00:14
     wait_for_ip_address: yes
   delegate_to: localhost
   register: deploy
@@ -228,6 +233,8 @@ EXAMPLES = r'''
       dns_servers:
       - 192.168.1.1
       - 192.168.1.2
+    - vlan: 1234
+      type: dhcp
     customization:
       autologon: yes
       dns_servers:
@@ -260,7 +267,6 @@ EXAMPLES = r'''
       memory_mb: 512
       num_cpus: 1
       scsi: lsilogic
-    wait_for_ip_address: yes
   delegate_to: localhost
   register: deploy
 
@@ -845,6 +851,8 @@ class PyVmomiHelper(object):
                 ident.guiRunOnce.commandList = self.params['customization']['runonce']
 
         else:
+            # FIXME: We have no clue whether this non-Windows OS is actually Linux, hence it might fail !
+
             # For Linux guest OS, use LinuxPrep
             # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.LinuxPrep.html
             ident = vim.vm.customization.LinuxPrep()
@@ -1128,7 +1136,7 @@ class PyVmomiHelper(object):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('name', 'vlan', 'device_type'):
+                if key not in ('device_type', 'mac', 'name', 'vlan'):
                     network_changes = True
                     break
 
@@ -1299,7 +1307,8 @@ def main():
             hostname=dict(type='str', default=os.environ.get('VMWARE_HOST')),
             username=dict(type='str', default=os.environ.get('VMWARE_USER')),
             password=dict(type='str', default=os.environ.get('VMWARE_PASSWORD'), no_log=True),
-            state=dict(type='str', default='present', choices=['absent', 'poweredoff', 'poweredon', 'present', 'rebootguest', 'restarted', 'shutdownguest', 'suspended']),
+            state=dict(type='str', default='present',
+                       choices=['absent', 'poweredoff', 'poweredon', 'present', 'rebootguest', 'restarted', 'shutdownguest', 'suspended']),
             validate_certs=dict(type='bool', default=True),
             template=dict(type='str', aliases=['template_src']),
             is_template=dict(type='bool', default=False),
