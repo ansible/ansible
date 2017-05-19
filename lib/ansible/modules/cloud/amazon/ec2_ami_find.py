@@ -263,12 +263,12 @@ platform:
     type: string
     sample: null
 root_device_name:
-    description: rood device name of image
+    description: root device name of image
     returned: when AMI found
     type: string
     sample: "/dev/xvda"
 root_device_type:
-    description: rood device type of image
+    description: root device type of image
     returned: when AMI found
     type: string
     sample: "ebs"
