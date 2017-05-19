@@ -29,7 +29,7 @@ module: vmware_vm_facts
 short_description: Return basic facts pertaining to vSphere virtual machines.
 description:
     - Return basic facts pertaining to vSphere virtual machines.
-version_added: 2.0
+version_added: "2.0"
 author: Joseph Callen (@jcpowermac)
 notes:
     - Tested on vSphere 5.5
@@ -56,6 +56,9 @@ virtual_machines:
     type: dict
     sample: None
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import connect_to_api, get_all_objs, vmware_argument_spec
 
 try:
     from pyVmomi import vim, vmodl
@@ -93,8 +96,7 @@ def get_all_virtual_machines(content):
 def main():
 
     argument_spec = vmware_argument_spec()
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
@@ -110,9 +112,6 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (connect_to_api, get_all_objs,
-                                         vmware_argument_spec)
 
 if __name__ == '__main__':
     main()
