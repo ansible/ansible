@@ -111,7 +111,7 @@ def main():
         module.fail_json(msg=str(e))
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import *
+from ansible.module_utils.vmware import connect_to_api, get_all_objs, vmware_argument_spec
 
 if __name__ == '__main__':
     main()
