@@ -154,7 +154,7 @@ EXAMPLES = '''
 # DNSMadeEasy module specific support methods.
 #
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 IMPORT_ERROR = None
 try:
@@ -204,7 +204,7 @@ class DME2:
     def query(self, resource, method, data=None):
         url = self.baseurl + resource
         if data and not isinstance(data, basestring):
-            data = urllib.urlencode(data)
+            data = urlencode(data)
 
         response, info = fetch_url(self.module, url, data=data, method=method, headers=self._headers())
         if info['status'] not in (200, 201, 204):

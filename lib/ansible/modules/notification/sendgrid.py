@@ -140,7 +140,7 @@ EXAMPLES = '''
 # =======================================
 # sendgrid module support methods
 #
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 try:
     import sendgrid
@@ -157,7 +157,7 @@ def post_sendgrid_api(module, username, password, from_address, to_addresses,
         AGENT = "Ansible"
         data = {'api_user': username, 'api_key':password,
                 'from':from_address, 'subject': subject, 'text': body}
-        encoded_data = urllib.urlencode(data)
+        encoded_data = urlencode(data)
         to_addresses_api = ''
         for recipient in to_addresses:
             if isinstance(recipient, unicode):
