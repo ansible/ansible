@@ -66,7 +66,6 @@ lib/ansible/module_utils/netconf.py
 lib/ansible/module_utils/network.py
 lib/ansible/module_utils/network_common.py
 lib/ansible/module_utils/nxos.py
-lib/ansible/module_utils/openstack.py
 lib/ansible/module_utils/openswitch.py
 lib/ansible/module_utils/ordnance.py
 lib/ansible/module_utils/ovirt.py
