@@ -619,7 +619,7 @@ except ImportError:
     pass
 
 
-class CloudFrontServiceManager:
+class CloudFrontServiceManager(object):
     """
     Handles CloudFront service calls to AWS
     """
@@ -827,7 +827,7 @@ class CloudFrontServiceManager:
         return results
 
 
-class CloudFrontValidationManager:
+class CloudFrontValidationManager(object):
     """
     Manages Cloudfront validations
     """
