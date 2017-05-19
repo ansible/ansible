@@ -432,6 +432,9 @@ def main():
 
     # Function doesn't exists, create new Lambda function
     elif state == 'present':
+        if not role_arn:
+            module.fail_json(msg='A role is required for Lambda function creation')
+
         if s3_bucket and s3_key:
             # If function is stored on S3
             code = {'S3Bucket': s3_bucket,
