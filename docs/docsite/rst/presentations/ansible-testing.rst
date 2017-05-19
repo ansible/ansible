@@ -15,7 +15,8 @@ John Barker
 
 .. container:: handout
 
-    Based in the UK
+   * Based in the UK
+   * ~ 1 year
 
 Ansible Testing
 ===============
@@ -29,11 +30,7 @@ Ansible Testing
    Set the scene
 
      * Quick taster, give you enough to know what's possible and point you in the right direction
-
-   Testing Working Group
-
-     * Setup after AnsibleFest SanFran 2016, ~ year
-     * gundalow & Matt Clay, good community
+     * Important: Reduce regression, help support Python 3
 
    Tailor content:
 
@@ -64,6 +61,7 @@ Requirements
 
 What do we want from testing Ansible:
 
+* Reduce bugs & speed up development
 * Ability to run same tests locally as run by CI (Shippable)
 * Different OS, Python versions (2.4+, 3.5+)
 * Reasonable run time
@@ -73,7 +71,6 @@ What do we want from testing Ansible:
    * Local run - common request from the community
    * Increasing the matrix of Python & OS versions vs timely feedback
    * Main aim: Stable product, find issues sooner, speed up PR work flow
-
 
 
 Solution: ansible-test
@@ -88,12 +85,12 @@ Solution: ansible-test
 
 .. container:: handout
 
-   * Into Matt Clay
+   * Intro Matt Clay
 
      * Principal Engineer in USA
      * Full time on Testing, great Python programmer
 
-   * Q: If I said Shippable or Travis who would know what they are:
+   * Q: If I said Shippable or Travis, who would know what they are:
 
      * Shippable is a Continuous Integration (CI) tool, like Travis
      * Integrate with GitHub to test (PRs) + merges
@@ -106,7 +103,11 @@ Solution: ansible-test
      * Different OS + Local runs fit together
      * Shippable is just a wrapper, all logic in ansible-tets
 
-   * Duration: Tracking of Python imports
+   * Duration
+
+     * Tracking of Python imports
+     * No need to run integration tests on RST changes
+
    * Code coverage is ~1.5 - 3x as slow (integration - Unit tests)
 
 Types of tests
@@ -136,15 +137,16 @@ Types of tests
      * What type of issues they identify
      * How long they take to run
 
-  * compile
+   * compile
 
-    * Does NOT ensure code is py2.6+ and py3.5+ compatible
+     * Does NOT ensure code is py2.6+ and py3.5+ compatible
+     * PY3: Not a porting job, need to support py2.6 + py3.5+
 
-  * Sanity
+   * Sanity
 
-    * ansible-doc, ansible-var-precedence-check
-    * Code: no-iterkeys, pep8, pylint, shellcheck
-    * ``ansible-test sanity --list-tests`` for full list
+     * ansible-doc, ansible-var-precedence-check
+     * Code: no-iterkeys, pep8, pylint, shellcheck
+     * ``ansible-test sanity --list-tests`` for full list
 
 ansible-test platform features
 ==============================
@@ -154,7 +156,7 @@ ansible-test platform features
 
    * Linux via Docker
    * FreeBSD, Windows, Network via AWS
-   * OSX via Parallels
+   * macOS via Parallels
 
 * Network version
 * Cloud platforms (AWS, CloudStack, others coming soon)
@@ -177,6 +179,8 @@ Spot common issues
 
    * Bulk changes that update all modules are preferred, though speak to us first
    * Fix a **single** class of issues only, easier to review
+   * e.g Look at lots if new module PRs. Also about improving documentation
+   * Fixes to existing modules, people often copy them
    * Recent examples: Modules DOCUMENATION & RETURNS blocks
 
 
@@ -202,7 +206,11 @@ Improvements since 2.0
 .. container:: handout
 
    * Again, lot of this is Matt
-   * Single repo; therefore versioned along side code); real pain to write tests before
+   * Single repo
+
+     * therefore versioned along side code
+     * real pain to write tests before
+     * NOW: Single PR with module & tests
 
 Improvements in 2.4
 ===================
@@ -223,44 +231,69 @@ Improvements in 2.4
    * Unit tests: Networking team adding lots
    * pep8 and pylint continually being updated and spotting more issues
    * pep8 exceptions list dropping at a good rate
-   * The last three have
+   * The last three have:
 
-     * dramatically improved our online documentation. Previously some module docs were not being displayed at all
-     * Massive reduction human time to review modules
+     * Dramatically improved our online documentation. Previously some module docs were not being displayed at all
+     * Massive reduction of human time to review modules
 
 
+Demo
+====
 
+Lets look at a PR to see how this all fits together...
+
+
+.. container:: handout
+
+   * https://github.com/ansible/ansible/pull/24748#issuecomment-302212014
+
+     * Start with a PR
+     * Show the different checks that have failed - Only sanity & compile tests are listed
+     * Command that you can run locally
+     * Lots of issues spotted that previously humans may or may not have seen
+
+   * Shippable
+
+     * https://app.shippable.com/github/ansible/ansible/runs/22111/summary
+     * Need to look here if an unit or integration test has failed
+     * List of platforms
+
+       * Go to Tests tab first
+       * File name of test
+       * Failure reason
+       * Go to console tab, and click through till you find the message
+       * Failure will be rerun with higher verbosity
+       * Describe "unstable tests"
+
+         * Work around transitent issues, such as network issue pulling packages
 
 Testing Working Group
 =====================
 
-* One of special interest groups, others are Core, Networking and Windows
+* One of the special interest groups, others are Core, Networking and Windows
 * Weekly public meeting on ``#ansible-meeting``
 * Set direction and combine powers
 * Subscribe to the GitHub issue for updates
 * Links at the end of the presentation
 
-Demo
-====
+.. container:: handout
 
-Lets look at a PR...
+  * Setup after AnsibleFest SanFran 2016, ~ year
+  * gundalow & Matt Clay, good community
+
+  * Join ``#ansible-meeting`` on Freenode, see topic for link
+  * TWG is 6pm Thu UK time BST
+  * Core is Tue 8pm, Thu 4pm BST
+  * Network is Wed 6pm BST
+  * If you can't make the meeting Dev questions welcome in ''#ansible-devel''
 
 
+Part 2: Writing and running tests
+=================================
 
 .. container:: handout
 
-   * FIXME link to PR
-   * Start with a PR
-   * Show the different checks that have failed - Only sanity & compile tests are listed
-   * Command that you can run locally
-   * Shippable
-
-     * Need to look here if an unit or integration test has failed
-     * List of platforms
-     * Tests tab on left hand side
-     * Show console
-     * Describe "unstable tests"
-
+   * No content here, just a point to pause for questions so far
 
 Unit Tests: Creating
 ====================
@@ -269,6 +302,8 @@ Unit Tests: Creating
 
 * Unit tests can't use external services
 * Ansible modules are mostly about external services
+* Good for ``lib/{module_utils,playbook,plugins,utils}``
+* Bad fit for Modules
 * ``ansible-test units --tox [ --python X.Y ] [ modulename ]``
 
 
@@ -282,62 +317,53 @@ Integration Tests: Why?
 
 * If you can write a Playbook you can write a test
 * Much easier to write than an unit test
-* Testing the interface, can deal with module being rewritten
-* Speak with us in TWG or IRC for more info
+* Testing the interface (Options such as ``state``, ``name``), can deal with module being rewritten
+* More info: Testing Working Group, or ``#ansible-devel``
 
 
 .. container:: handout
 
+   * Q: Who has found a regression when upgrading
+   * Q: Would you like to help reduce the chance of future regressions?
+   * Q: Who has written more than a handfull of Playbooks?
+
+     * You have already have the skills to write integration tests :)
+
    FIXME: Need to sell/convince people
-
-Integration Tests: File structure
-=================================
-
-DEMO
-
-* test/integration/targets/file/
-* file/aliases
-
-
-# FIXME Comment this out
-
-Directory: ``test/integration/targets/file/``
-
-``file/aliases``
-
-.. code-block:: bash
-
-   posix/ci/group2
-   needs/root
-
-``file/tasks/main.yml``
-
-.. code-block:: bash
-
-   # Standard playbook
-
 
 Integration Tests: Test structure
 =================================
 
-* Setup (ensure clean state)
-* Set & register
-* Check result & changed
-* Set again (idempotent)
-* Check no change
-* Repeat for ``state=absent``
-* Teardown
+Example package test
+
+1 Setup - remove Apache
+
+2 Install Apache
+
+3 Check result & changed
+
+4 Install Apache again
+
+5 Check no change
+
+6 Repeat for ``state=absent``
+
+7 Teardown (if needed)
 
 .. container:: handout
 
-   * Find an example of this
+   * Idempotent is a key feature, test it
+
 
 
 Integration Tests: Best practices
 =================================
 
-* output_dir
+* ``set_fact: output_file={{output_dir}}/foo.txt``
 * Add tests before refactoring
+* Negative Testing - backtraces are bugs
+* Test multiple options
+* Check RETURNed data with ``register`` and ``assert``
 
 .. container:: handout
 
@@ -351,25 +377,50 @@ Demo of running tests with Docker
 
 ``source hacking/env setup``
 
-``ansible-test integration --docker centos7 pip``
+``ansible-test integration --docker ubuntu1604 apt``
+
+``find test/integration/targets/apt/``
 
 
 .. container:: handout
 
-  * FIXME Demo
-  * FIXME Add talking points
-  * FIXME Document commands here
-  * ansible-test uses the tests and ansible from it's source tree
+  * DEMO
+  * I don't have ansible installed as a I swap branches a lot
+  * source ``hacking/env-setup``
+  * ``which ansible-playbook``
+  * Show you ``ansible-test``, inc tab completion
+  * ``ansible-test <tab><tab>``
+  * ``ansible-test integration --docker ubuntu1604 <tab>tab>``
+
+  * Run ``ansible-test`` apt
+
+     * Show the docker instane being span up
+     * Reminder: Exactly the same as in Shippable
+     * ansible-test uses the tests and ansible from it's source tree
+
+  * How did that work
+
+    * Last argument = name of test
+    * ``test/integration/target/NAME``
+    * dir = module names
+    * cat aliases
+    * ``cat test/integration/targets/*/aliases  | sort -u1``
+    * main.yml
+
+      * Use of output_dir
+      * Conditional include selinux
 
 Code Coverage
 =============
 
 * Helps you find gaps
 * Now run nightly
+* https://codecov.io/gh/ansible/ansible/
+
 
 .. container:: handout
 
-  * FIXME Add URL
+  * https://codecov.io/gh/ansible/ansible/
   * FIXME Add talking points
 
 Cloud Tests
@@ -380,7 +431,7 @@ Cloud Tests
 
 .. container:: handout
 
-  * FIXME move API key out the way and run, update docs
+  * See online docs
   * FIXME Add talking points
 
 Network Tests
