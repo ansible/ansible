@@ -255,26 +255,22 @@ def main():
             validation_mgr.validate_origin_access_identity_id_from_caller_reference(
                 caller_reference))
 
-    if origin_access_identity_id is not None and state == 'present':
-        state = 'updated'
-
-    if state != 'present':
-        e_tag = validation_mgr.validate_etag_from_origin_access_identity_id(
-            origin_access_identity_id)
+    e_tag = validation_mgr.validate_etag_from_origin_access_identity_id(
+        origin_access_identity_id)
+    comment = validation_mgr.validate_comment(comment)
 
     if state == 'present':
-        comment = validation_mgr.validate_comment(comment)
-        result = service_mgr.create_origin_access_identity(
-            caller_reference, comment)
+        if origin_access_identity_id is not None and e_tag is not None:
+            result = service_mgr.update_origin_access_identity(
+                caller_reference, comment, origin_access_identity_id, e_tag)
+        else:
+            result = service_mgr.create_origin_access_identity(
+                caller_reference, comment)
         changed = True
     elif(state == 'absent' and origin_access_identity_id is not None and
          e_tag is not None):
         result = service_mgr.delete_origin_access_identity(
             origin_access_identity_id, e_tag)
-        changed = True
-    elif state == 'updated':
-        result = service_mgr.update_origin_access_identity(
-            caller_reference, comment, origin_access_identity_id, e_tag)
         changed = True
 
     if result:
