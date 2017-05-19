@@ -107,6 +107,7 @@ options:
           - This will add additional devices to the ignore list which
             currently only ignores the loopback device "lo".
         required: false
+        version_added: 2.4
     force_stop:
         description:
           - If this is true, the C(lxd_container) forces to stop the container
