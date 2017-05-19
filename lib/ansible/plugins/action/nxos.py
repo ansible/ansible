@@ -63,7 +63,13 @@ class ActionModule(_ActionModule):
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
             pc.timeout = provider['timeout'] or self._play_context.timeout
-
+            self._task.args['provider'] = provider.update(
+                host=pc.remote_addr,
+                port=pc.port,
+                username=pc.remote_user,
+                password=pc.password,
+                ssh_keyfile=pc.private_key_file
+            )
             display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
@@ -76,8 +82,8 @@ class ActionModule(_ActionModule):
                 display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
                 if rc != 0:
                     return {'failed': True,
-                            'msg': 'unable to open shell. Please see: '
-                                   + 'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
+                            'msg': 'unable to open shell. Please see: ' +
+                            'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
                             'rc': rc}
             else:
                 # make sure we are in the right cli context which should be
@@ -88,12 +94,9 @@ class ActionModule(_ActionModule):
                     connection.exec_command('exit')
                     rc, out, err = connection.exec_command('prompt()')
 
-
             task_vars['ansible_socket'] = socket_path
-
         else:
             provider['transport'] = 'nxapi'
-
             if provider.get('host') is None:
                 provider['host'] = self._play_context.remote_addr
 
