@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community',
+}
 
 
 DOCUMENTATION = '''
@@ -28,237 +30,237 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages BGP address-family's neighbors configuration.
 description:
-    - Manages BGP address-family's neighbors configurations on NX-OS switches.
+  - Manages BGP address-family's neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 notes:
-    - C(state=absent) removes the whole BGP address-family's
-      neighbor configuration.
-    - Default, when supported, removes properties
-    - In order to default maximum-prefix configuration, only
-      C(max_prefix_limit=default) is needed.
+  - C(state=absent) removes the whole BGP address-family's
+    neighbor configuration.
+  - Default, when supported, removes properties
+  - In order to default maximum-prefix configuration, only
+    C(max_prefix_limit=default) is needed.
 options:
-    asn:
-        description:
-            - BGP autonomous system number. Valid values are String,
-              Integer in ASPLAIN or ASDOT notation.
-        required: true
-    vrf:
-        description:
-            - Name of the VRF. The name 'default' is a valid VRF representing
-              the global bgp.
-        required: false
-        default: default
-    neighbor:
-        description:
-            - Neighbor Identifier. Valid values are string. Neighbors may use
-              IPv4 or IPv6 notation, with or without prefix length.
-        required: true
-    afi:
-        description:
-            - Address Family Identifier.
-        required: true
-        choices: ['ipv4','ipv6', 'vpnv4', 'vpnv6', 'l2vpn']
-    safi:
-        description:
-            - Sub Address Family Identifier.
-        required: true
-        choices: ['unicast','multicast', 'evpn']
-    additional_paths_receive:
-        description:
-            - Valid values are enable for basic command enablement; disable
-              for disabling the command at the neighbor af level
-              (it adds the disable keyword to the basic command); and inherit
-              to remove the command at this level (the command value is
-              inherited from a higher BGP layer).
-        required: false
-        choices: ['enable','disable', 'inherit']
-        default: null
-    additional_paths_send:
-        description:
-            - Valid values are enable for basic command enablement; disable
-              for disabling the command at the neighbor af level
-              (it adds the disable keyword to the basic command); and inherit
-              to remove the command at this level (the command value is
-              inherited from a higher BGP layer).
-        required: false
-        choices: ['enable','disable', 'inherit']
-        default: null
-    advertise_map_exist:
-        description:
-            - Conditional route advertisement. This property requires two
-              route maps, an advertise-map and an exist-map. Valid values are
-              an array specifying both the advertise-map name and the exist-map
-              name, or simply 'default' e.g. ['my_advertise_map',
-              'my_exist_map']. This command is mutually exclusive with the
-              advertise_map_non_exist property.
-        required: false
-        default: null
-    advertise_map_non_exist:
-        description:
-            - Conditional route advertisement. This property requires two
-              route maps, an advertise-map and an exist-map. Valid values are
-              an array specifying both the advertise-map name and the
-              non-exist-map name, or simply 'default' e.g.
-              ['my_advertise_map', 'my_non_exist_map']. This command is mutually
-              exclusive with the advertise_map_exist property.
-        required: false
-        default: null
-    allowas_in:
-        description:
-            - Activate allowas-in property
-        required: false
-        default: null
-    allowas_in_max:
-        description:
-            - Optional max-occurrences value for allowas_in. Valid values are
-              an integer value or 'default'. Can be used independently or in
-              conjunction with allowas_in.
-        required: false
-        default: null
-    as_override:
-        description:
-            - Activate the as-override feature.
-        required: false
-        choices: ['true', 'false']
-        default: null
-    default_originate:
-        description:
-            - Activate the default-originate feature.
-        required: false
-        choices: ['true', 'false']
-        default: null
-    default_originate_route_map:
-        description:
-            - Optional route-map for the default_originate property. Can be
-              used independently or in conjunction with C(default_originate).
-              Valid values are a string defining a route-map name,
-              or 'default'.
-        required: false
-        default: null
-    filter_list_in:
-        description:
-            - Valid values are a string defining a filter-list name,
-              or 'default'.
-        required: false
-        default: null
-    filter_list_out:
-        description:
-            - Valid values are a string defining a filter-list name,
-              or 'default'.
-        required: false
-        default: null
-    max_prefix_limit:
-        description:
-            - maximum-prefix limit value. Valid values are an integer value
-              or 'default'.
-        required: false
-        default: null
-    max_prefix_interval:
-        description:
-            - Optional restart interval. Valid values are an integer.
-              Requires max_prefix_limit.
-        required: false
-        default: null
-    max_prefix_threshold:
-        description:
-            - Optional threshold percentage at which to generate a warning.
-              Valid values are an integer value.
-              Requires max_prefix_limit.
-        required: false
-        default: null
-    max_prefix_warning:
-        description:
-            - Optional warning-only keyword. Requires max_prefix_limit.
-        required: false
-        choices: ['true','false']
-        default: null
-    next_hop_self:
-        description:
-            - Activate the next-hop-self feature.
-        required: false
-        choices: ['true','false']
-        default: null
-    next_hop_third_party:
-        description:
-            - Activate the next-hop-third-party feature.
-        required: false
-        choices: ['true','false']
-        default: null
-    prefix_list_in:
-        description:
-            - Valid values are a string defining a prefix-list name,
-              or 'default'.
-        required: false
-        default: null
-    prefix_list_out:
-        description:
-            - Valid values are a string defining a prefix-list name,
-              or 'default'.
-        required: false
-        default: null
-    route_map_in:
-        description:
-            - Valid values are a string defining a route-map name,
-              or 'default'.
-        required: false
-        default: null
-    route_map_out:
-        description:
-            - Valid values are a string defining a route-map name,
-              or 'default'.
-        required: false
-        default: null
-    route_reflector_client:
-        description:
-            - Router reflector client.
-        required: false
-        choices: ['true','false']
-        default: null
-    send_community:
-        description:
-            - send-community attribute.
-        required: false
-        choices: ['none', 'both', 'extended', 'standard', 'default']
-        default: null
-    soft_reconfiguration_in:
-        description:
-            - Valid values are 'enable' for basic command enablement; 'always'
-              to add the always keyword to the basic command; and 'inherit' to
-              remove the command at this level (the command value is inherited
-              from a higher BGP layer).
-        required: false
-        choices: ['enable','always','inherit']
-        default: null
-    soo:
-        description:
-            - Site-of-origin. Valid values are a string defining a VPN
-              extcommunity or 'default'.
-        required: false
-        default: null
-    suppress_inactive:
-        description:
-            - suppress-inactive feature.
-        required: false
-        choices: ['true','false','default']
-        default: null
-    unsuppress_map:
-        description:
-            - unsuppress-map. Valid values are a string defining a route-map
-              name or 'default'.
-        required: false
-        default: null
-    weight:
-        description:
-            - Weight value. Valid values are an integer value or 'default'.
-        required: false
-        default: null
-    state:
-        description:
-            - Determines whether the config should be present or not
-              on the device.
-        required: false
-        default: present
-        choices: ['present','absent']
+  asn:
+    description:
+      - BGP autonomous system number. Valid values are String,
+        Integer in ASPLAIN or ASDOT notation.
+    required: true
+  vrf:
+    description:
+      - Name of the VRF. The name 'default' is a valid VRF representing
+        the global bgp.
+    required: false
+    default: default
+  neighbor:
+    description:
+      - Neighbor Identifier. Valid values are string. Neighbors may use
+        IPv4 or IPv6 notation, with or without prefix length.
+    required: true
+  afi:
+    description:
+      - Address Family Identifier.
+    required: true
+    choices: ['ipv4','ipv6', 'vpnv4', 'vpnv6', 'l2vpn']
+  safi:
+    description:
+      - Sub Address Family Identifier.
+    required: true
+    choices: ['unicast','multicast', 'evpn']
+  additional_paths_receive:
+    description:
+      - Valid values are enable for basic command enablement; disable
+        for disabling the command at the neighbor af level
+        (it adds the disable keyword to the basic command); and inherit
+        to remove the command at this level (the command value is
+        inherited from a higher BGP layer).
+    required: false
+    choices: ['enable','disable', 'inherit']
+    default: null
+  additional_paths_send:
+    description:
+      - Valid values are enable for basic command enablement; disable
+        for disabling the command at the neighbor af level
+        (it adds the disable keyword to the basic command); and inherit
+        to remove the command at this level (the command value is
+        inherited from a higher BGP layer).
+    required: false
+    choices: ['enable','disable', 'inherit']
+    default: null
+  advertise_map_exist:
+    description:
+      - Conditional route advertisement. This property requires two
+        route maps, an advertise-map and an exist-map. Valid values are
+        an array specifying both the advertise-map name and the exist-map
+        name, or simply 'default' e.g. ['my_advertise_map',
+        'my_exist_map']. This command is mutually exclusive with the
+        advertise_map_non_exist property.
+    required: false
+    default: null
+  advertise_map_non_exist:
+    description:
+      - Conditional route advertisement. This property requires two
+        route maps, an advertise-map and an exist-map. Valid values are
+        an array specifying both the advertise-map name and the
+        non-exist-map name, or simply 'default' e.g.
+        ['my_advertise_map', 'my_non_exist_map']. This command is mutually
+        exclusive with the advertise_map_exist property.
+    required: false
+    default: null
+  allowas_in:
+    description:
+      - Activate allowas-in property
+    required: false
+    default: null
+  allowas_in_max:
+    description:
+      - Optional max-occurrences value for allowas_in. Valid values are
+        an integer value or 'default'. Can be used independently or in
+        conjunction with allowas_in.
+    required: false
+    default: null
+  as_override:
+    description:
+      - Activate the as-override feature.
+    required: false
+    choices: ['true', 'false']
+    default: null
+  default_originate:
+    description:
+      - Activate the default-originate feature.
+    required: false
+    choices: ['true', 'false']
+    default: null
+  default_originate_route_map:
+    description:
+      - Optional route-map for the default_originate property. Can be
+        used independently or in conjunction with C(default_originate).
+        Valid values are a string defining a route-map name,
+        or 'default'.
+    required: false
+    default: null
+  filter_list_in:
+    description:
+      - Valid values are a string defining a filter-list name,
+        or 'default'.
+    required: false
+    default: null
+  filter_list_out:
+    description:
+      - Valid values are a string defining a filter-list name,
+        or 'default'.
+    required: false
+    default: null
+  max_prefix_limit:
+    description:
+      - maximum-prefix limit value. Valid values are an integer value
+        or 'default'.
+    required: false
+    default: null
+  max_prefix_interval:
+    description:
+      - Optional restart interval. Valid values are an integer.
+        Requires max_prefix_limit.
+    required: false
+    default: null
+  max_prefix_threshold:
+    description:
+      - Optional threshold percentage at which to generate a warning.
+        Valid values are an integer value.
+        Requires max_prefix_limit.
+    required: false
+    default: null
+  max_prefix_warning:
+    description:
+      - Optional warning-only keyword. Requires max_prefix_limit.
+    required: false
+    choices: ['true','false']
+    default: null
+  next_hop_self:
+    description:
+      - Activate the next-hop-self feature.
+    required: false
+    choices: ['true','false']
+    default: null
+  next_hop_third_party:
+    description:
+      - Activate the next-hop-third-party feature.
+    required: false
+    choices: ['true','false']
+    default: null
+  prefix_list_in:
+    description:
+      - Valid values are a string defining a prefix-list name,
+        or 'default'.
+    required: false
+    default: null
+  prefix_list_out:
+    description:
+      - Valid values are a string defining a prefix-list name,
+        or 'default'.
+    required: false
+    default: null
+  route_map_in:
+    description:
+      - Valid values are a string defining a route-map name,
+        or 'default'.
+    required: false
+    default: null
+  route_map_out:
+    description:
+      - Valid values are a string defining a route-map name,
+        or 'default'.
+    required: false
+    default: null
+  route_reflector_client:
+    description:
+      - Router reflector client.
+    required: false
+    choices: ['true','false']
+    default: null
+  send_community:
+    description:
+      - send-community attribute.
+    required: false
+    choices: ['none', 'both', 'extended', 'standard', 'default']
+    default: null
+  soft_reconfiguration_in:
+    description:
+      - Valid values are 'enable' for basic command enablement; 'always'
+        to add the always keyword to the basic command; and 'inherit' to
+        remove the command at this level (the command value is inherited
+        from a higher BGP layer).
+    required: false
+    choices: ['enable','always','inherit']
+    default: null
+  soo:
+    description:
+      - Site-of-origin. Valid values are a string defining a VPN
+        extcommunity or 'default'.
+    required: false
+    default: null
+  suppress_inactive:
+    description:
+      - suppress-inactive feature.
+    required: false
+    choices: ['true','false','default']
+    default: null
+  unsuppress_map:
+    description:
+      - unsuppress-map. Valid values are a string defining a route-map
+        name or 'default'.
+    required: false
+    default: null
+  weight:
+    description:
+      - Weight value. Valid values are an integer value or 'default'.
+    required: false
+    default: null
+  state:
+    description:
+      - Determines whether the config should be present or not
+        on the device.
+    required: false
+    default: present
+    choices: ['present','absent']
 '''
 EXAMPLES = '''
 - name: configure RR client
@@ -275,56 +277,17 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"afi": "ipv4", "asn": "65535",
-            "neighbor": "3.3.3.3", "route_reflector_client": true,
-            "safi": "unicast", "vrf": "default"}
-existing:
-    description: k/v pairs of existing configuration
-    returned: verbose mode
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"additional_paths_receive": "inherit",
-            "additional_paths_send": "inherit",
-            "advertise_map_exist": [], "advertise_map_non_exist": [],
-            "afi": "ipv4", "allowas_in": false,
-            "allowas_in_max": "", "as_override": false,
-            "asn": "65535", "default_originate": false,
-            "default_originate_route_map": "", "filter_list_in": "",
-            "filter_list_out": "", "max_prefix_interval": "",
-            "max_prefix_limit": "", "max_prefix_threshold": "",
-            "max_prefix_warning": "", "neighbor": "3.3.3.3",
-            "next_hop_self": false, "next_hop_third_party": true,
-            "prefix_list_in": "", "prefix_list_out": "",
-            "route_map_in": "", "route_map_out": "",
-            "route_reflector_client": true, "safi": "unicast",
-            "send_community": "",
-            "soft_reconfiguration_in": "inherit", "soo": "",
-            "suppress_inactive": false, "unsuppress_map": "",
-            "vrf": "default", "weight": ""}
-updates:
-    description: commands sent to the device
-    returned: always
-    type: list
-    sample: ["router bgp 65535", "neighbor 3.3.3.3",
-            "address-family ipv4 unicast", "route-reflector-client"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
+commands:
+  description: commands sent to the device
+  returned: always
+  type: list
+  sample: ["router bgp 65535", "neighbor 3.3.3.3",
+           "address-family ipv4 unicast", "route-reflector-client"]
 '''
 
-
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
