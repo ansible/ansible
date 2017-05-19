@@ -145,8 +145,8 @@ DEFAULT_RULE_FIELDS = {
     'Protocol': '-1'
 }
 
-DEFAULT_INGRESS = dict(DEFAULT_RULE_FIELDS.items() + [('Egress', False)])
-DEFAULT_EGRESS = dict(DEFAULT_RULE_FIELDS.items() + [('Egress', True)])
+DEFAULT_INGRESS = dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', False)])
+DEFAULT_EGRESS = dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', True)])
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
