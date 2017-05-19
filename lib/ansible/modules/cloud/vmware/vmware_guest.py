@@ -186,7 +186,7 @@ EXAMPLES = r'''
     validate_certs: no
     esxi_hostname: 192.0.2.117
     datacenter: datacenter1
-    folder: testvms
+    folder: /testvms
     name: testvm_2
     state: poweredon
     guest_id: centos64guest
@@ -248,7 +248,7 @@ EXAMPLES = r'''
     datacenter: datacenter1
     cluster: vmware_cluster_esx
     resource_pool: highperformance_pool
-    folder: testvms
+    folder: /testvms
     name: testvm_6
     is_template: yes
     guest_id: debian6_64Guest
