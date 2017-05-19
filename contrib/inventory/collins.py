@@ -74,7 +74,6 @@ import re
 import sys
 from time import time
 import traceback
-import urllib
 
 try:
     import json
@@ -82,6 +81,7 @@ except ImportError:
     import simplejson as json
 
 from six import iteritems
+from six.moves.urllib.parse import urlencode
 
 from ansible.module_utils.urls import open_url
 
@@ -194,7 +194,7 @@ class CollinsInventory(object):
             query_parameters['page'] = cur_page
             query_url = "%s?%s" % (
                 (CollinsDefaults.ASSETS_API_ENDPOINT % self.collins_host),
-                urllib.urlencode(query_parameters, doseq=True)
+                urlencode(query_parameters, doseq=True)
             )
             try:
                 response = open_url(query_url,

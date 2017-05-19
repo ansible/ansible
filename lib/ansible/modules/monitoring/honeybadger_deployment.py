@@ -82,11 +82,10 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
-import urllib
-
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import *
 
 # ===========================================
@@ -131,7 +130,7 @@ def main():
         module.exit_json(changed=True)
 
     try:
-        data = urllib.urlencode(params)
+        data = urlencode(params)
         response, info = fetch_url(module, url, data=data)
     except Exception:
         e = get_exception()
@@ -144,4 +143,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

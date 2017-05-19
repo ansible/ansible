@@ -112,8 +112,8 @@ import os
 import re
 import tempfile
 import json
-import urllib
 
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 
 class StackiHost:
@@ -152,7 +152,7 @@ class StackiHost:
 
         # Get Final CSRF and Session ID
         login_req = self.do_request(self.module, login_endpoint, headers=header,
-                                    payload=urllib.urlencode(auth_creds), method="POST")
+                                    payload=urlencode(auth_creds), method='POST')
 
         cookie_f = login_req.headers.get('Set-Cookie').split(';')
         csrftoken = None

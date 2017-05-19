@@ -289,10 +289,9 @@ except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
 
-import urllib
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
 
 
@@ -449,7 +448,7 @@ class CloudflareAPI(object):
             name = self.zone
         param = ''
         if name:
-            param = '?' + urllib.urlencode({'name' : name})
+            param = '?' + urlencode({'name' : name})
         zones,status = self._cf_api_call('/zones' + param)
         return zones
 
@@ -475,7 +474,7 @@ class CloudflareAPI(object):
         if value:
             query['content'] = value
         if query:
-            api_call += '?' + urllib.urlencode(query)
+            api_call += '?' + urlencode(query)
 
         records,status = self._cf_api_call(api_call)
         return records

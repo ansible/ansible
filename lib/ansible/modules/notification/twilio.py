@@ -109,7 +109,7 @@ EXAMPLES = '''
 # =======================================
 # twilio module support methods
 #
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 
 def post_twilio_api(module, account_sid, auth_token, msg, from_number,
@@ -121,7 +121,7 @@ def post_twilio_api(module, account_sid, auth_token, msg, from_number,
     data = {'From':from_number, 'To':to_number, 'Body':msg}
     if media_url:
         data['MediaUrl'] = media_url
-    encoded_data = urllib.urlencode(data)
+    encoded_data = urlencode(data)
 
     headers = {'User-Agent': AGENT,
             'Content-type': 'application/x-www-form-urlencoded',
