@@ -32,6 +32,7 @@
 
 - name: Ensure zip & unzup is present to create test archive (pkg)
   pkgng: name=zip,unzip state=present
+  when: ansible_pkg_mgr  ==  'pkgng'
 
 - name: prep our file
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
