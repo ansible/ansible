@@ -1142,7 +1142,7 @@ class PyVmomiHelper(object):
 
                 # Only select specific host when ESXi hostname is provided
                 if self.params['esxi_hostname']:
-                    relospec.host = hostsystem
+                    relospec.host = self.select_host()
                 relospec.datastore = datastore
 
                 if self.params['resource_pool']:
