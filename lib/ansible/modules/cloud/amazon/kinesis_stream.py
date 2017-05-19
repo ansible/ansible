@@ -876,7 +876,7 @@ def update(client, current_stream, stream_name, number_of_shards=1, retention_pe
                 )
             )
             if not wait_success:
-                return wait_success, False, wait_msg
+                return wait_success, changed, wait_msg
         else:
             stream_found, stream_msg, current_stream = (
                 find_stream(client, stream_name, check_mode=check_mode)
