@@ -473,7 +473,6 @@ lib/ansible/modules/network/nxos/nxos_facts.py
 lib/ansible/modules/network/nxos/nxos_feature.py
 lib/ansible/modules/network/nxos/nxos_gir.py
 lib/ansible/modules/network/nxos/nxos_gir_profile_management.py
-lib/ansible/modules/network/nxos/nxos_hsrp.py
 lib/ansible/modules/network/nxos/nxos_igmp.py
 lib/ansible/modules/network/nxos/nxos_igmp_interface.py
 lib/ansible/modules/network/nxos/nxos_igmp_snooping.py
