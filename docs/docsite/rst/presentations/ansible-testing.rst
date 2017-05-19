@@ -27,12 +27,12 @@ Ansible Testing
 
 .. container:: handout
 
-   Set the scene
+   * Set the scene
 
      * Quick taster, give you enough to know what's possible and point you in the right direction
      * Important: Reduce regression, help support Python 3
 
-   Tailor content:
+   * Tailor content:
 
      * Q: Show of hands for version, devel, 2.3, -> 1.9? - upgrade!
      * Q: Who's raised a PR?
@@ -154,9 +154,9 @@ ansible-test platform features
 * Python versions
 * OS versions
 
-   * Linux via Docker
-   * FreeBSD, Windows, Network via AWS
-   * macOS via Parallels
+  * Linux via Docker
+  * FreeBSD, Windows, Network via AWS
+  * macOS via Parallels
 
 * Network version
 * Cloud platforms (AWS, CloudStack, others coming soon)
@@ -189,19 +189,19 @@ Improvements since 2.0
 
 * 2.1
 
-   * added integration testing using Docker containers
+  * added integration testing using Docker containers
 
 * 2.2
 
-   * switched from Travis to Shippable
-   * added Windows, FreeBSD and OSX testing
-   * added more docker containers
+  * switched from Travis to Shippable
+  * added Windows, FreeBSD and OSX testing
+  * added more docker containers
 
 * 2.3
 
-   * SINGLE GIT REPO!
-   * ansible-test
-   * integration testing for Network modules
+  * SINGLE GIT REPO!
+  * ansible-test
+  * integration testing for Network modules
 
 .. container:: handout
 
@@ -394,9 +394,9 @@ Demo of running tests with Docker
 
   * Run ``ansible-test`` apt
 
-     * Show the docker instane being span up
-     * Reminder: Exactly the same as in Shippable
-     * ansible-test uses the tests and ansible from it's source tree
+    * Show the docker instane being span up
+    * Reminder: Exactly the same as in Shippable
+    * ansible-test uses the tests and ansible from it's source tree
 
   * How did that work
 
