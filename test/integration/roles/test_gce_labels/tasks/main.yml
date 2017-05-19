@@ -1,0 +1,5 @@
+---
+# test role for gce_labels
+- include: setup.yml
+- include: test.yml
+- include: teardown.yml
