@@ -121,6 +121,11 @@ options:
             - Enable or disable the pool.
             - Disabling will terminate all open connections and pause health monitors.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+    external_autoscale_groups:
+        description:
+            - Names of external auto-scale groups for pool servers.
+            - Currently available only for aws.
+            - Field introduced in 17.1.2.
     fail_action:
         description:
             - Enable an action - close connection, http redirect, local http response, or backup pool - when a pool failure happens.
@@ -176,8 +181,8 @@ options:
     max_concurrent_connections_per_server:
         description:
             - The maximum number of concurrent connections allowed to each server within the pool.
-            - Allowed values are 50-10000.
-            - Special values are 0 - 'infinite'.
+            - Note  applied value will be no less than the number of service engines that the pool is placed on.
+            - If set to 0, no limit is applied.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     max_conn_rate_per_server:
         description:
@@ -195,7 +200,6 @@ options:
         description:
             - A list of nsx service groups where the servers for the pool are created.
             - Field introduced in 17.1.1.
-        version_added: "2.4"
     pki_profile_ref:
         description:
             - Avi will validate the ssl certificate present by a server against the selected pki profile.
@@ -341,6 +345,7 @@ def main():
         domain_name=dict(type='list',),
         east_west=dict(type='bool',),
         enabled=dict(type='bool',),
+        external_autoscale_groups=dict(type='list',),
         fail_action=dict(type='dict',),
         fewest_tasks_feedback_delay=dict(type='int',),
         graceful_disable_timeout=dict(type='int',),
