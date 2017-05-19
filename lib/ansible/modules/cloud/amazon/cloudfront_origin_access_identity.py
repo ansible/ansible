@@ -57,22 +57,28 @@ options:
 EXAMPLES = '''
 
 # create an origin access identity
+
 - cloudfront_origin_access_identity:
     state: present
     caller_reference: this is an example reference
     comment: this is an example comment
 
-# update an origin access identity
+# update an existing origin access identity
+# using caller_reference as an identifier
+
 - cloudfront_origin_access_identity:
-     state: updated
+     state: present
      origin_access_identity_id: E17DRN9XUOAHZX
      caller_reference: this is an example reference
      comment: this is a new comment
 
-# delete an origin access identity
+# delete an existing origin access identity
+# using caller_reference as an identifier
+
 - cloudfront_origin_access_identity:
-    state: absent
-    origin_access_identity_id: EBXCCWOVSAYYD
+     state: absent
+     caller_reference: this is an example reference
+     comment: this is a new comment
 
 '''
 
@@ -244,8 +250,6 @@ def main():
     comment = module.params.get('comment')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
 
-    comment = validation_mgr.validate_comment(comment)
-
     if origin_access_identity_id is None and caller_reference is not None:
         origin_access_identity_id = (
             validation_mgr.validate_origin_access_identity_id_from_caller_reference(
@@ -259,8 +263,9 @@ def main():
             origin_access_identity_id)
 
     if state == 'present':
-        result = service_mgr.create_origin_access_identity(caller_reference,
-                                                           comment)
+        comment = validation_mgr.validate_comment(comment)
+        result = service_mgr.create_origin_access_identity(
+            caller_reference, comment)
         changed = True
     elif(state == 'absent' and origin_access_identity_id is not None and
          e_tag is not None):
