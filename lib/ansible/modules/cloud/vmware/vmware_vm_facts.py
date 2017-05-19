@@ -23,14 +23,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vmware_vm_facts
-short_description: Return basic facts pertaining to a vSphere virtual machine guest
+short_description: Return basic facts pertaining to vSphere virtual machines.
 description:
-    - Return basic facts pertaining to a vSphere virtual machine guest
+    - Return basic facts pertaining to vSphere virtual machines.
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac)"
+author: Joseph Callen (@jcpowermac)
 notes:
     - Tested on vSphere 5.5
     - Tested on vSphere 6.5
@@ -40,7 +40,7 @@ requirements:
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Gather all registered virtual machines
   local_action:
     module: vmware_vm_facts
@@ -85,7 +85,8 @@ def get_all_virtual_machines(content):
 def main():
 
     argument_spec = vmware_argument_spec()
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=False)
 
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
@@ -101,8 +102,8 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
