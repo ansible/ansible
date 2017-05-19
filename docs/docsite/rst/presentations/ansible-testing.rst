@@ -45,15 +45,16 @@ This talk is Free Software
 
 * Written for `presentty` https://pypi.python.org/pypi/presentty
 * ``docs/docsite/rst/presentations/ansible-testing.rst`` (once I've committed it)
+* Meetup event will be updated with the link
 
 .. container:: handout
 
-   * Trialing new way of doing presentations
+   * Trailing new way of doing presentations
    * Will be on website
    * Aim is that they will evolve over time
    * RST contains speakers notes, which have more detail
    * Add link from the Meetup event
-   * Questions welcome at anypoint - Will ask Mark to make a note
+   * Questions welcome at any point - Will ask Mark to make a note
 
 
 Requirements
@@ -101,7 +102,7 @@ Solution: ansible-test
    * Local Runs
 
      * Different OS + Local runs fit together
-     * Shippable is just a wrapper, all logic in ansible-tets
+     * Shippable is just a wrapper, all logic in ansible-test
 
    * Duration
 
@@ -279,7 +280,7 @@ Testing Working Group
 .. container:: handout
 
   * Setup after AnsibleFest SanFran 2016, ~ year
-  * gundalow & Matt Clay, good community
+  * gundalow & Matt Clay + good community
 
   * Join ``#ansible-meeting`` on Freenode, see topic for link
   * TWG is 6pm Thu UK time BST
@@ -325,11 +326,11 @@ Integration Tests: Why?
 
    * Q: Who has found a regression when upgrading
    * Q: Would you like to help reduce the chance of future regressions?
-   * Q: Who has written more than a handfull of Playbooks?
+   * Q: Who has written more than a handful of Playbooks?
 
      * You have already have the skills to write integration tests :)
 
-   FIXME: Need to sell/convince people
+   * Need to sell/convince people
 
 Integration Tests: Test structure
 =================================
