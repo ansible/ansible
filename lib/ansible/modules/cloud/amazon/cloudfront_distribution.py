@@ -1650,29 +1650,6 @@ class CloudFrontValidationManager(object):
                 msg="error validating (streaming)distribution_id from caller " +
                 "reference" + str(e) + "\n" + traceback.format_exc())
 
-    def validate_streaming_distribution_id_from_caller_reference(
-            self, caller_reference):
-        try:
-            streaming_distributions = (
-                self.__cloudfront_facts_mgr.list_streaming_distributions())
-            streaming_distribution_ids = list(streaming_distributions.keys())
-            for streaming_distribution_id in streaming_distribution_ids:
-                config = self.__cloudfront_facts_mgr.get_streaming_distribution(
-                    streaming_distribution_id)
-                streaming_distribution = config.get('StreamingDistribution')
-                if streaming_distribution is not None:
-                    streaming_distribution_config = (
-                        distribution.get('StreamingDistributionConfig'))
-                    if streaming_distribution_config is not None:
-                        temp_streaming_caller_reference = (
-                            distribution_config.get('CallerReference'))
-                        if temp_streaming_caller_reference == caller_reference:
-                            return streaming_distribution_id
-        except Exception as e:
-            self.module.fail_json(
-                msg="error validating streaming_distribution_id from caller " +
-                "reference" + str(e) + "\n" + traceback.format_exc())
-
 
 def main():
     argument_spec = ec2_argument_spec()
