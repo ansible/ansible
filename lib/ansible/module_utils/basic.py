@@ -2023,6 +2023,9 @@ class AnsibleModule(object):
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
 
+        if not 'changed' in kwargs:
+            kwargs['changed'] = False
+
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(1)

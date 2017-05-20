@@ -95,7 +95,7 @@
 - name: check fetch directory result
   assert:
     that:
-      - "failed_fetch_dir['failed']"
+      - "failed_fetch_dir|failed"
       - "fetch_dir.msg"
 
 - name: create symlink to a file that we can fetch
