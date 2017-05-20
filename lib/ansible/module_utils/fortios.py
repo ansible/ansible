@@ -167,7 +167,7 @@ class AnsibleFortios(object):
                 try:
                     f = open(self.module.params['config_file'], 'w')
                     f.write(self.candidate_config.to_text())
-                    f.close
+                    f.close()
                 except IOError:
                     e = get_exception()
                     self.module.fail_json(msg='Error writing configuration file. %s' % e)
