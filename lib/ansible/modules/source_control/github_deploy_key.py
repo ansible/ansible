@@ -29,7 +29,8 @@ version_added: "2.4"
 author: "Ali (@bincyber)"
 short_description: Manages deploy keys for GitHub repositories.
 description:
-  - "Adds or removes deploy keys for GitHub repositories. Supports authentication using username and password, username and password and 2-factor authentication code (OTP), OAuth2 token, or personal access token. Refer to GitHub's API documentation here: U(https://developer.github.com/v3/repos/keys/)."
+  - "Adds or removes deploy keys for GitHub repositories. Supports authentication using username and password,
+  username and password and 2-factor authentication code (OTP), OAuth2 token, or personal access token."
 options:
   owner:
     description:
@@ -95,7 +96,7 @@ options:
 requirements:
    - python-requests
 notes:
-    - Check mode isn't supported at this time.
+   - "Refer to GitHub's API documentation here: https://developer.github.com/v3/repos/keys/."
 '''
 
 EXAMPLES = '''
@@ -263,31 +264,31 @@ class GithubDeployKey(object):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            owner = dict(required=True, type='str', aliases=['account', 'organization']),
-            repo = dict(required=True, type='str', aliases=['repository']),
-            name = dict(required=True, type='str', aliases=['title', 'label']),
-            key = dict(required=True, type='str'),
-            read_only = dict(required=False, type='bool', default=True),
-            state = dict(default='present', choices=['present', 'absent']),
-            force = dict(required=False, type='bool', default=False),
-            username = dict(required=False, type='str'),
-            password = dict(required=False, type='str', no_log=True),
-            otp = dict(required=False, type='int', aliases=['2fa_token'], no_log=True),
-            token = dict(required=False, type='str', no_log=True)
-            ),
-            mutually_exclusive = [
-                ['password', 'token']
-            ],
-            required_together = [
-                ['username', 'password'],
-                ['otp', 'username', 'password']
-            ],
-            required_one_of = [
-                ['username', 'token']
-            ],
-            supports_check_mode = True,
-        )
+        argument_spec=dict(
+            owner=dict(required=True, type='str', aliases=['account', 'organization']),
+            repo=dict(required=True, type='str', aliases=['repository']),
+            name=dict(required=True, type='str', aliases=['title', 'label']),
+            key=dict(required=True, type='str'),
+            read_only=dict(required=False, type='bool', default=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            force=dict(required=False, type='bool', default=False),
+            username=dict(required=False, type='str'),
+            password=dict(required=False, type='str', no_log=True),
+            otp=dict(required=False, type='int', aliases=['2fa_token'], no_log=True),
+            token=dict(required=False, type='str', no_log=True)
+        ),
+        mutually_exclusive=[
+            ['password', 'token']
+        ],
+        required_together=[
+            ['username', 'password'],
+            ['otp', 'username', 'password']
+        ],
+        required_one_of=[
+            ['username', 'token']
+        ],
+        supports_check_mode=True,
+    )
 
     owner = module.params['owner']
     repo = module.params['repo']
