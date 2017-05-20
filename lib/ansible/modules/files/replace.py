@@ -224,7 +224,11 @@ def main():
         module.fail_json(rc=257, msg='Path %s does not exist !' % path)
     else:
         f = open(path, 'rb')
-        contents = to_text(f.read(), errors='surrogate_or_strict')
+        data = f.read()
+        try:
+            contents = to_text(data, errors='surrogate_or_strict')
+        except:
+            contents = bytes(data)
         f.close()
 
     pattern = ''
