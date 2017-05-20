@@ -107,7 +107,8 @@ options:
           - This will add additional devices to the ignore list which
             currently only ignores the loopback device "lo".
         required: false
-        version_added: 2.4
+        version_added: "2.4"
+        default: ['lo']
     force_stop:
         description:
           - If this is true, the C(lxd_container) forces to stop the container
@@ -308,7 +309,7 @@ class LXDContainerManagement(object):
 
         self.timeout = self.module.params['timeout']
         self.wait_for_ipv4_addresses = self.module.params['wait_for_ipv4_addresses']
-        self.wait_for_ipv4_addresses_ignore_devices = self.module.params['wait_for_ipv4_addresses_ignore_devices']
+        self.wait_for_ipv4_addresses_ignore_devices = ['lo'] + self.module.params['wait_for_ipv4_addresses_ignore_devices']
         self.force_stop = self.module.params['force_stop']
         self.addresses = None
 
@@ -389,7 +390,7 @@ class LXDContainerManagement(object):
 
     def _container_ipv4_addresses(self, ignore_devices=['lo']):
         if self.wait_for_ipv4_addresses_ignore_devices:
-            ignore_devices = ['lo'] + self.wait_for_ipv4_addresses_ignore_devices
+            ignore_devices = self.wait_for_ipv4_addresses_ignore_devices
         resp_json = self._get_container_state_json()
         network = resp_json['metadata']['network'] or {}
         network = dict((k, v) for k, v in network.items() if k not in ignore_devices) or {}
