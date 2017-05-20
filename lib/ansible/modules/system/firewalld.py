@@ -160,7 +160,6 @@ fw_offline = False
 Rich_Rule = None
 FirewallClientZoneSettings = None
 
-module = None
 
 #####################
 # exception handling
