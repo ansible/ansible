@@ -62,6 +62,17 @@ Function Exit-Json($obj)
         $obj = @{ }
     }
 
+    if (-not $obj.ContainsKey("changed")) {
+        # Still using Set-Attr for PSObject compatibility
+        Set-Attr $obj "changed" $false
+    }
+
+    # Required, especially for modules returning a (potentially) non-zero rc value
+    if (-not $obj.ContainsKey("failed")) {
+        # Still using Set-Attr for PSObject compatibility
+        Set-Attr $obj "failed" $false
+    }
+
     echo $obj | ConvertTo-Json -Compress -Depth 99
     Exit
 }
@@ -82,6 +93,11 @@ Function Fail-Json($obj, $message = $null)
         # If the first argument is undefined or a different type,
         # make it a Hashtable
         $obj = @{ }
+    }
+
+    if (-not $obj.ContainsKey("changed")) {
+        # Still using Set-Attr for PSObject compatibility
+        Set-Attr $obj "changed" $false
     }
 
     # Still using Set-Attr for PSObject compatibility
