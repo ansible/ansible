@@ -155,6 +155,7 @@
     expected:
       changed: False
       examined: 5
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -237,6 +238,7 @@
     expected:
       changed: False
       examined: 11
+      failed: False
       files:
       - { isarchive: True,
           attributes: "Hidden, Archive",
@@ -278,6 +280,7 @@
     expected:
       changed: False
       examined: 5
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -315,6 +318,7 @@
     expected:
       changed: False
       examined: 8
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -383,6 +387,7 @@
     expected:
       changed: False
       examined: 10
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -465,6 +470,7 @@
     expected:
       changed: False
       examined: 2
+      failed: False
       files:
       - { isarchive: False,
           attributes: Directory,
@@ -529,6 +535,7 @@
     expected:
       changed: False
       examined: 5
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -571,6 +578,7 @@
     expected:
       changed: False
       examined: 5
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,

@@ -93,4 +93,8 @@ class ActionModule(ActionBase):
 
         result['changed'] = True
 
+        if 'rc' in result and result['rc'] != 0:
+            result['failed'] = True
+            result['msg'] = 'non-zero return code'
+
         return result

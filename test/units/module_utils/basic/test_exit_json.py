@@ -81,7 +81,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 1)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(msg="message", failed=True, invocation=empty_invocation))
+        self.assertEquals(return_val, dict(msg="message", changed=False, failed=True, invocation=empty_invocation))
 
     def test_exit_json_proper_changed(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -143,7 +143,6 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
         self.maxDiff = None
         for args, return_val, expected in self.dataset:
             expected = copy.deepcopy(expected)
-            del expected['changed']
             expected['failed'] = True
             params = dict(ANSIBLE_MODULE_ARGS=args)
             params = json.dumps(params)
