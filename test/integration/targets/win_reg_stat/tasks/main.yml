@@ -52,6 +52,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       properties:
         binary: { raw_value: ["0x01", "0x16"], type: 'REG_BINARY', value: [1, 22] }
         dword: { raw_value: 1, type: 'REG_DWORD', value: 1 }
@@ -79,6 +80,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       properties:
         none: { raw_value: [], type: 'REG_NONE', value: [] }
         none1: { raw_value: ["0x00"], type: 'REG_NONE', value: [0] }
@@ -101,6 +103,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       properties: {}
       sub_keys: []
   register: expected
@@ -120,6 +123,7 @@
     expected:
       changed: false
       exists: false
+      failed: false
 
 - name: validate test
   assert:
@@ -137,6 +141,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       raw_value: 'test'
       type: 'REG_SZ'
       value: 'test'
@@ -157,6 +162,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       raw_value: '%windir%\dir'
       type: 'REG_EXPAND_SZ'
       value: "{{win_dir_value.stdout_lines[0]}}\\dir"
@@ -177,6 +183,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       raw_value: ['a, b', 'c']
       type: 'REG_MULTI_SZ'
       value: ['a, b', 'c']
@@ -197,6 +204,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       raw_value: ["0x01", "0x16"]
       type: 'REG_BINARY'
       value: [1, 22]
@@ -217,6 +225,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       raw_value: 1
       type: 'REG_DWORD'
       value: 1
@@ -237,6 +246,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       raw_value: 1
       type: 'REG_QWORD'
       value: 1
@@ -257,6 +267,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       raw_value: []
       type: 'REG_NONE'
       value: []
@@ -277,6 +288,7 @@
     expected:
       changed: false
       exists: true
+      failed: false
       raw_value: ["0x00"]
       type: 'REG_NONE'
       value: [0]
@@ -297,6 +309,7 @@
     expected:
       changed: false
       exists: false
+      failed: false
 
 - name: validate test
   assert:

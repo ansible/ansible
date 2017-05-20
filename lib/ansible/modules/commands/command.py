@@ -204,7 +204,7 @@ def main():
     if err is None:
         err = b('')
 
-    module.exit_json(
+    result = dict(
         cmd      = args,
         stdout   = out.rstrip(b("\r\n")),
         stderr   = err.rstrip(b("\r\n")),
@@ -215,6 +215,12 @@ def main():
         changed  = True,
         warnings = warnings
     )
+
+    if rc != 0:
+        module.fail_json(msg='non-zero return code', **result)
+
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

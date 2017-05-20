@@ -221,7 +221,7 @@ def main():
     if out is None:
         out = ''
 
-    ret = dict(
+    result = dict(
         cmd=args,
         stdout=out.rstrip('\r\n'),
         rc=rc,
@@ -231,11 +231,12 @@ def main():
         changed=True,
     )
 
-    if rc is not None:
-        module.exit_json(**ret)
-    else:
-        ret['msg'] = 'command exceeded timeout'
-        module.fail_json(**ret)
+    if rc is None:
+        module.fail_json(msg='command exceeded timeout', **result)
+    elif rc != 0:
+        module.fail_json(msg='non-zero return code', **result)
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

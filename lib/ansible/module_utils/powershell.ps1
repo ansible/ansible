@@ -62,6 +62,10 @@ Function Exit-Json($obj)
         $obj = @{ }
     }
 
+    if (-not $obj.ContainsKey('changed')) {
+        Set-Attr $obj "changed" $false
+    }
+
     echo $obj | ConvertTo-Json -Compress -Depth 99
     Exit
 }
@@ -87,6 +91,10 @@ Function Fail-Json($obj, $message = $null)
     # Still using Set-Attr for PSObject compatibility
     Set-Attr $obj "msg" $message
     Set-Attr $obj "failed" $true
+
+    if (-not $obj.ContainsKey('changed')) {
+        Set-Attr $obj "changed" $false
+    }
 
     echo $obj | ConvertTo-Json -Compress -Depth 99
     Exit 1

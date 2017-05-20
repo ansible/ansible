@@ -570,10 +570,13 @@ class TaskExecutor:
                     vars_copy.update(result['ansible_facts'])
                 vars_copy.update({'ansible_facts': result['ansible_facts']})
 
-            # set the failed property if the result has a non-zero rc. This will be
-            # overridden below if the failed_when property is set
-            if result.get('rc', 0) != 0:
-                result['failed'] = True
+            # set the failed property if it was missing.
+            if 'failed' not in result:
+                result['failed'] = False
+
+            # set the changed property if it was missing.
+            if 'changed' not in result:
+                result['changed'] = False
 
             # if we didn't skip this task, use the helpers to evaluate the changed/
             # failed_when properties

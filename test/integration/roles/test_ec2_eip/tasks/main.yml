@@ -111,7 +111,6 @@
 - name: assert new EIP was assigned
   assert:
     that:
-      - '"failed" not in result'
       - '"public_ip" in result'
 
 
@@ -128,10 +127,6 @@
     instance_id={{ instance_id }}
   register: result
 
-- name: assert success disassociate EIP associated with instance
-  assert:
-    that:
-      - '"failed" not in result'
 
 # eip allocated:1 assigned:0
 
@@ -152,7 +147,6 @@
 - name: assert new EIP was assigned
   assert:
     that:
-      - '"failed" not in result'
       - '"public_ip" in result'
 
 
@@ -175,11 +169,6 @@
     ec2_access_key={{ ec2_access_key }}
     ec2_secret_key={{ ec2_secret_key }}
   register: result
-
-- name: assert EIP deactivated
-  assert:
-    that:
-      - '"failed" not in result'
 
 
 # eip allocated:0 assigned:0
@@ -205,7 +194,6 @@
 - name: assert provision EIP with instance_id
   assert:
     that:
-      - '"failed" not in result'
       - '"public_ip" in result'
 
 
@@ -245,7 +233,6 @@
 - name: assert VPC EIP creation
   assert:
     that:
-      - '"failed" not in result'
       - '"public_ip" in result'
 
 
@@ -268,7 +255,6 @@
 #- name: assert new VPC EIP was assigned
 #  assert:
 #    that:
-#      - '"failed" not in result'
 #      - '"public_ip" in result'
 #
 #
@@ -307,7 +293,6 @@
 - name: assert environment variable EC2_REGION
   assert:
     that:
-      - '"failed" not in result'
       - '"public_ip" in result'
 
 
