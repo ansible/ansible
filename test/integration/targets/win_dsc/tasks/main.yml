@@ -1,0 +1,107 @@
+# test code for the win_feature module
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+- name: check whether servermanager module is available (windows 2008 r2 or later)
+  raw: PowerShell -Command Import-Module ServerManager
+  register: win_feature_has_servermanager
+  ignore_errors: true
+
+- name: start with feature absent
+  win_feature:
+    name: "{{ test_win_feature_name }}"
+    state: absent
+  when: win_feature_has_servermanager|success
+
+- name: Invoke DSC with check mode
+  win_dsc:
+    resource_name: windowsfeature
+    name: "{{ test_win_feature_name }}"
+  check_mode: yes
+  register: win_dsc_checkmode_result
+
+- name: check result of Invoke DSC with check mode
+  assert:
+    that:
+      - "win_dsc_checkmode_result|changed"
+      - "win_dsc_checkmode_result.success"
+
+- name: Make sure the feature is still absent
+  win_dsc:
+    resource_name: windowsfeature
+    name: "{{ test_win_feature_name }}"
+    ensure: absent
+  register: win_dsc_1_result
+
+- name: check result of Make sure the feature is still absent
+  assert:
+    that:
+      - "not win_dsc_1_result|changed"
+      - "win_dsc_1_result.success"
+
+- name: Install feature for realz
+  win_dsc:
+    resource_name: windowsfeature
+    name: "{{ test_win_feature_name }}"
+  register: win_dsc_2_result
+
+- name: check result of Install feature for realz
+  assert:
+    that:
+      - "win_dsc_2_result|changed"
+      - "win_dsc_2_result.success"
+
+- name: Ensure clean failure
+  win_dsc:
+    resource_name: some_unknown_resource_that_wont_ever_exist
+    name: "{{ test_win_feature_name }}"
+  register: win_dsc_3_result
+  ignore_errors: true
+
+- name: check result of Ensure clean failure
+  assert:
+    that:
+      - "not win_dsc_3_result|changed"
+      - "not win_dsc_3_result.success"
+
+- name: Make sure the feature is absent
+  win_dsc:
+    resource_name: windowsfeature
+    name: "{{ test_win_feature_name }}"
+    ensure: absent
+  register: win_dsc_4_result
+
+- name: check result of Make sure the feature is absent
+  assert:
+    that:
+      - "win_dsc_4_result|changed"
+      - "win_dsc_4_result.success"
+
+- name: Make sure the feature is still absent with no changes
+  win_dsc:
+    resource_name: windowsfeature
+    name: "{{ test_win_feature_name }}"
+    ensure: absent
+  register: win_dsc_5_result
+
+- name: check result of Make sure the feature is absent
+  assert:
+    that:
+      - "not win_dsc_5_result|changed"
+      - "win_dsc_5_result.success"
+
