@@ -764,6 +764,13 @@ class AnsibleFallbackNotFound(Exception):
     pass
 
 
+class _SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Set):
+            return list(obj)
+        return super(_SetEncoder, self).default(obj)
+
+
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
@@ -1802,7 +1809,7 @@ class AnsibleModule(object):
             return value.strip()
         else:
             if isinstance(value, (list, tuple, dict)):
-                return json.dumps(value)
+                return self.jsonify(value)
         raise TypeError('%s cannot be converted to a json string' % type(value))
 
     def _check_type_raw(self, value):
@@ -2052,14 +2059,14 @@ class AnsibleModule(object):
     def jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
             try:
-                return json.dumps(data, encoding=encoding)
+                return json.dumps(data, encoding=encoding, cls=_SetEncoder)
             # Old systems using old simplejson module does not support encoding keyword.
             except TypeError:
                 try:
                     new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
                 except UnicodeDecodeError:
                     continue
-                return json.dumps(new_data)
+                return json.dumps(new_data, cls=_SetEncoder)
             except UnicodeDecodeError:
                 continue
         self.fail_json(msg='Invalid unicode encoding encountered')
