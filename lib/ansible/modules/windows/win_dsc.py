@@ -21,15 +21,17 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_dsc
 version_added: "2.4"
 short_description: Invokes a PowerShell DSC configuration
 description: |
-     Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer). Note that most of the parameters are dynamic and will vary
-     depending on the DSC Resource. If the DSC resource takes a parameter named "Name", use the parameter "item_name" in Ansible to represent it.
-     Also note that credentials are handled as follows: If the resource accepts a credential type property called "cred", the ansible parameters would be cred_username and cred_password.
+     Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer). 
+     Note that most of the parameters are dynamic and will vary depending on the DSC Resource. 
+     If the DSC resource takes a parameter named "Name", use the parameter "item_name" in Ansible to represent it.
+     Also note that credentials are handled as follows: If the resource accepts a credential type property called "cred", 
+     the ansible parameters would be cred_username and cred_password.
      These will be used to inject a credential object on the fly for the DSC resource.
 options:
   resource_name:
@@ -40,7 +42,7 @@ options:
 author: Trond Hindenes
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Playbook example
   - name: Extract zip file
     win_dsc5:
@@ -48,4 +50,34 @@ EXAMPLES = '''
       ensure="Present"
       path="C:\Temp\zipfile.zip"
       destination="C:\Temp\Temp2"
+'''
+
+RETURN = r'''
+resource_name:
+    description: The name of the invoked resource
+    returned: always
+    type: string
+    sample: windowsfeature
+attributes:
+    description: The attributes/parameters passed in to the DSC resource as key/value pairs
+    returned: always
+    type: complex
+    sample: 
+    contains:
+      Key:
+          description: Attribute key
+      Value:
+          description: Attribute value
+DSCAttributes:
+    description: The attributes/parameters as returned from the DSC engine in dict format
+    returned: always
+    type: complex
+reboot_required:
+    description: flag returned from the DSC engine indicating whether or not the machine requires a reboot for the invoked changes to take effect
+    returned: always
+    type: boolean
+    sample: True
+message:
+    description: any error message from invoking the DSC resource
+    returned:
 '''
