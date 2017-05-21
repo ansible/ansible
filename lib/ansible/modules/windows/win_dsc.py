@@ -45,7 +45,7 @@ options:
     default: null
   module_version:
     description: |
-      Can be used to configure the exact version of the dsc resource to be invoked. 
+      Can be used to configure the exact version of the dsc resource to be invoked.
       Useful if the target node has multiple versions installed of the module containing the DSC resource
     required: false
     default: latest
@@ -73,11 +73,11 @@ resource_name:
     returned: always
     type: string
     sample: windowsfeature
-module_version
+module_version:
     description: The version of the dsc resource/module used.
     returned: success
     type: string
-    sample: 1.0.1
+    sample: "1.0.1"
 attributes:
     description: The attributes/parameters passed in to the DSC resource as key/value pairs
     returned: always
