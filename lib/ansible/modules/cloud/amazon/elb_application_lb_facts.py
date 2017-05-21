@@ -57,7 +57,6 @@ EXAMPLES = '''
     names:
       - elb1
       - elb2
-
 '''
 
 RETURN = '''
@@ -220,10 +219,13 @@ def list_load_balancers(connection, module):
     # Get the attributes and tags for each target group
     for load_balancer in load_balancers['LoadBalancers']:
         load_balancer.update(get_load_balancer_attributes(connection, module, load_balancer['LoadBalancerArn']))
-        load_balancer['tags'] = get_load_balancer_tags(connection, module, load_balancer['LoadBalancerArn'])
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_load_balancers = [camel_dict_to_snake_dict(load_balancer) for load_balancer in load_balancers['LoadBalancers']]
+
+    # Get tags for each load balancer
+    for snaked_load_balancer in snaked_load_balancers:
+        snaked_load_balancer['tags'] = get_load_balancer_tags(connection, module, load_balancer['LoadBalancerArn'])
 
     module.exit_json(load_balancers=snaked_load_balancers)
 
