@@ -126,6 +126,13 @@ options:
     required: false
     default: false
     version_added: "2.1"
+  suppress_daemon_actions:
+    description:
+      - Suppress any daemon actions, like starting or stopping, during the runtime of the module invocation.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
@@ -230,6 +237,7 @@ stderr:
 import warnings
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
+import contextlib
 import datetime
 import fnmatch
 import itertools
@@ -796,6 +804,14 @@ def get_cache(module):
     return cache
 
 
+@contextlib.contextmanager
+def suppress_daemon_actions(yesno):
+    if yesno:
+        pass #TODO impl
+    else:
+        yield
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -813,6 +829,7 @@ def main():
             autoremove=dict(type='bool', aliases=['autoclean']),
             only_upgrade=dict(type='bool', default=False),
             allow_unauthenticated=dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
+            suppress_daemon_actions=dict(default='no', type='bool'),
         ),
         mutually_exclusive=[['package', 'upgrade', 'deb']],
         required_one_of=[['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
@@ -914,10 +931,11 @@ def main():
                 module.fail_json(msg="deb only supports state=present")
             if '://' in p['deb']:
                 p['deb'] = download(module, p['deb'])
-            install_deb(module, p['deb'], cache,
-                        install_recommends=install_recommends,
-                        allow_unauthenticated=allow_unauthenticated,
-                        force=force_yes, dpkg_options=p['dpkg_options'])
+            with suppress_daemon_actions(p['suppress_daemon_actions']):
+                install_deb(module, p['deb'], cache,
+                            install_recommends=install_recommends,
+                            allow_unauthenticated=allow_unauthenticated,
+                            force=force_yes, dpkg_options=p['dpkg_options'])
 
         packages = p['package']
         latest = p['state'] == 'latest'
@@ -936,20 +954,21 @@ def main():
             if p['state'] == 'build-dep':
                 state_builddep = True
 
-            success, retvals = install(
-                module,
-                packages,
-                cache,
-                upgrade=state_upgrade,
-                default_release=p['default_release'],
-                install_recommends=install_recommends,
-                force=force_yes,
-                dpkg_options=dpkg_options,
-                build_dep=state_builddep,
-                autoremove=autoremove,
-                only_upgrade=p['only_upgrade'],
-                allow_unauthenticated=allow_unauthenticated
-            )
+            with suppress_daemon_actions(p['suppress_daemon_actions']):
+                success, retvals = install(
+                    module,
+                    packages,
+                    cache,
+                    upgrade=state_upgrade,
+                    default_release=p['default_release'],
+                    install_recommends=install_recommends,
+                    force=force_yes,
+                    dpkg_options=dpkg_options,
+                    build_dep=state_builddep,
+                    autoremove=autoremove,
+                    only_upgrade=p['only_upgrade'],
+                    allow_unauthenticated=allow_unauthenticated
+                )
 
             # Store if the cache has been updated
             retvals['cache_updated'] = updated_cache
