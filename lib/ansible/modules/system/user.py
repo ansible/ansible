@@ -638,7 +638,7 @@ class User(object):
                 os.mkdir(ssh_dir, int('0700', 8))
                 os.chown(ssh_dir, info[2], info[3])
                 if HAVE_SELINUX and self.module.selinux_enabled():
-                self.set_selinux_type(ssh_dir, 'ssh_home_t')
+                    self.set_selinux_type(ssh_dir, 'ssh_home_t')
             except OSError:
                 e = get_exception()
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
