@@ -43,17 +43,28 @@ options:
       - The DSC Resource to use. Must be accessible to PowerShell using any of the default paths.
     required: true
     default: null
+  module_version:
+    description: |
+      Can be used to configure the exact version of the dsc resource to be invoked. 
+      Useful if the target node has multiple versions installed of the module containing the DSC resource
+    required: false
+    default: latest
 author: Trond Hindenes
 '''
 
 EXAMPLES = r'''
 # Playbook example
   - name: Extract zip file
-    win_dsc5:
+    win_dsc:
       resource_name="archive"
       ensure="Present"
-      path="C:\Temp\zipfile.zip"
-      destination="C:\Temp\Temp2"
+      path="C:\\Temp\\zipfile.zip"
+      destination="C:\\Temp\\Temp2"
+
+  - name: Invoke DSC with check mode
+    win_dsc:
+      resource_name: windowsfeature
+      name: telnet-client
 '''
 
 RETURN = r'''
@@ -62,6 +73,11 @@ resource_name:
     returned: always
     type: string
     sample: windowsfeature
+module_version
+    description: The version of the dsc resource/module used.
+    returned: success
+    type: string
+    sample: 1.0.1
 attributes:
     description: The attributes/parameters passed in to the DSC resource as key/value pairs
     returned: always

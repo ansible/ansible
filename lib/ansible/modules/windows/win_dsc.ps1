@@ -23,41 +23,32 @@
 #Set-StrictMode -Off
 
 $params = Parse-Args $args -supports_check_mode $true
-$result = New-Object psobject
-Set-Attr $result "changed" $false
+$result = @{
+    changed = $false
+}
 
 #Check that we're on at least Powershell version 5
 if ($PSVersionTable.PSVersion.Major -lt 5)
 {
     Fail-Json -obj $Result -message "This module only runs on Powershell version 5 or higher"
 }
-
-$CheckMode = $False
-$CheckFlag = $params.psobject.Properties | where {$_.Name -eq "_ansible_check_mode"}
-if ($CheckFlag)
-{
-    if (($CheckFlag.Value) -eq $True)
-    {
-        $CheckMode = $True
-    }
-
-}
-
-$resourcename = Get-Attr -obj $params -name resource_name -failifempty $true -resultobj $result
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$resourcename = Get-AnsibleParam -obj $params -name "resource_name" -type "str" -failifempty $true -resultobj $result
+$module_version = Get-AnsibleParam -obj $params -name "module_version" -type "str" -default "latest"
 
 #From Ansible 2.3 onwards, params is now a Hash Array
 $Attributes = $params.GetEnumerator() | where {$_.key -ne "resource_name"} | where {$_.key -notlike "_ansible_*"}
-
 
 if (!($Attributes))
 {
     Fail-Json -obj $result -message "No attributes specified"
 }
 
-#Always return the name
-set-attr -obj $result -name "resource_name" -value $resourcename
-set-attr -obj $result -name "attributes" -value $Attributes
-set-attr -obj $result -name "reboot_required" -value $null
+#Always return some basic info
+$result['resource_name'] = $resourcename
+$result['attributes'] = $Attributes
+$result['reboot_required'] = $null
+
 
 # Build Attributes Hashtable for DSC Resource Propertys
 $Attrib = @{}
@@ -81,21 +72,34 @@ $Config = @{
         }
     }
 
+#Get the latest version of the module
+if ($module_version -eq "latest")
+{
+    $Resource = Get-DscResource -Name $resourcename -ErrorAction SilentlyContinue | sort Version | select -Last 1
+}
+else 
+{
+    $Resource = Get-DscResource -Name $resourcename -ErrorAction SilentlyContinue | where {$_.Version -eq $module_version}
+}
 
-$Resource = Get-DscResource -Name $resourcename -ErrorAction SilentlyContinue
 if (!$Resource)
 {
-    Fail-Json -obj $result -message "Resource $resourcename not found"
+    if ($module_version -eq "latest")
+    {
+        Fail-Json -obj $result -message "Resource $resourcename not found"
+    }
+    else 
+    {
+        Fail-Json -obj $result -message "Resource $resourcename with version $module_version not found"
+    }
+    
 }
 
 #Get the Module that provides the resource. Will be used as
 #mandatory argument for Invoke-DscResource
 $Module = $Resource.ModuleName
-if (@($Module).Count -gt 1) {
-    Fail-Json -obj $result -message "Multiple DSC modules found with resource name [$($resourcename)]"
-}
+$result['module_version'] = $Module.Version.ToString()
 
-#Convert params to correct datatype and inject
 #Convert params to correct datatype and inject
 $attrib.Keys | foreach-object {
     $Key = $_.replace("item_name", "name")
@@ -198,15 +202,16 @@ $attrib.Keys | foreach-object {
 
 try
 {
+    #Defined variables in strictmode
+    $TestError, $TestError = $null
     $TestResult = Invoke-DscResource @Config -Method Test -ModuleName $Module -ErrorVariable TestError -ErrorAction SilentlyContinue
     if ($TestError)
-
     {
        throw ($TestError[0].Exception.Message)
     }
-    ElseIf (($testResult.InDesiredState) -ne $true)
+    ElseIf (($TestResult.InDesiredState) -ne $true)
     {
-        if ($CheckMode -eq $False)
+        if ($check_mode -eq $False)
         {
             $SetResult = Invoke-DscResource -Method Set @Config -ModuleName $Module -ErrorVariable SetError -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
             set-attr -obj $result -name "reboot_required" -value $SetResult.RebootRequired
