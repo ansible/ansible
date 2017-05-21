@@ -90,10 +90,9 @@ class TestRemoveValues(unittest.TestCase):
             },
             frozenset(['nope'])
         ),
-        ('Toshio くら', frozenset(['とみ'])),
-        (u'Toshio くら', frozenset(['とみ'])),
+        (u'Toshio くら'.encode('utf-8'), frozenset([u'とみ'.encode('utf-8')])),
+        (u'Toshio くら', frozenset([u'とみ'])),
     )
-
     dataset_remove = (
         ('string', frozenset(['string']), OMIT),
         (1234, frozenset(['1234']), OMIT),
@@ -138,8 +137,8 @@ class TestRemoveValues(unittest.TestCase):
             frozenset(['enigma', 'mystery', 'secret']),
             'This sentence has an ******** wrapped in a ******** inside of a ********. - mr ********'
         ),
-        ('Toshio くらとみ', frozenset(['くらとみ']), 'Toshio ********'),
-        (u'Toshio くらとみ', frozenset(['くらとみ']), u'Toshio ********'),
+        (u'Toshio くらとみ'.encode('utf-8'), frozenset([u'くらとみ'.encode('utf-8')]), u'Toshio ********'.encode('utf-8')),
+        (u'Toshio くらとみ', frozenset([u'くらとみ']), u'Toshio ********'),
     )
 
     def test_no_removal(self):
@@ -152,3 +151,30 @@ class TestRemoveValues(unittest.TestCase):
 
     def test_unknown_type(self):
         self.assertRaises(TypeError, remove_values, object(), frozenset())
+
+    def test_hit_recursion_limit(self):
+        """ Check that we do not hit a recursion limit"""
+        data_list = []
+        inner_list = data_list
+        for i in range(0, 10000):
+            new_list = []
+            inner_list.append(new_list)
+            inner_list = new_list
+        inner_list.append('secret')
+
+        # Check that this does not hit a recursion limit
+        actual_data_list = remove_values(data_list, frozenset(('secret',)))
+
+        levels = 0
+        inner_list = actual_data_list
+        while inner_list:
+            if isinstance(inner_list, list):
+                self.assertEquals(len(inner_list), 1)
+            else:
+                levels -= 1
+                break
+            inner_list = inner_list[0]
+            levels += 1
+
+        self.assertEquals(inner_list, self.OMIT)
+        self.assertEquals(levels, 10000)
