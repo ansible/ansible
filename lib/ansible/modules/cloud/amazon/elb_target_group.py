@@ -23,15 +23,15 @@ DOCUMENTATION = '''
 module: elb_target_group
 short_description: Manage a target group for an Application load balancer
 description:
-    - Manage an AWS Application Elastic Load Balancer target group. See 
-      U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
+    - "Manage an AWS Application Elastic Load Balancer target group. See 
+      U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details."
 version_added: "2.4"
 author: "Rob White (@wimnat)"
 options:
   deregistration_delay_timeout:
     description:
-      - The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused. 
-        The range is 0-3600 seconds.
+      - "The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused. 
+        The range is 0-3600 seconds."
   health_check_protocol:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
@@ -69,8 +69,8 @@ options:
     required: true
   port:
     description:
-      - The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if 
-        I(state) is C(present).
+      - "The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if 
+        I(state) is C(present)."
     required: false
   protocol:
     description:
@@ -79,8 +79,8 @@ options:
     choices: [ 'http', 'https' ]
   purge_tags:
     description:
-      - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the tag parameter is not set then 
-        tags will not be modified.
+      - "If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the tag parameter is not set then 
+        tags will not be modified."
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
@@ -95,8 +95,8 @@ options:
     choices: [ 'yes', 'no' ]
   stickiness_lb_cookie_duration:
     description:
-      - The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load 
-        balancer-generated cookie is considered stale. The range is 1 second to 1 week (604800 seconds).
+      - "The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load 
+        balancer-generated cookie is considered stale. The range is 1 second to 1 week (604800 seconds)."
   stickiness_type:
     description:
       - The type of sticky sessions. The possible value is lb_cookie.
@@ -113,7 +113,7 @@ options:
     required: false
   targets:
     description:
-      - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then 
+      - "A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then 
         all existing targets will be removed from the group. The list should be an Id and a Port parameter. See the Examples for detail."
     required: false
   unhealthy_threshold_count:
