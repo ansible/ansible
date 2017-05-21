@@ -57,6 +57,7 @@ if (!($Attributes))
 #Always return the name
 set-attr -obj $result -name "resource_name" -value $resourcename
 set-attr -obj $result -name "attributes" -value $Attributes
+set-attr -obj $result -name "reboot_required" -value $null
 
 # Build Attributes Hashtable for DSC Resource Propertys
 $Attrib = @{}
@@ -207,7 +208,8 @@ try
     {
         if ($CheckMode -eq $False)
         {
-            Invoke-DscResource -Method Set @Config -ModuleName $Module -ErrorVariable SetError -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+            $SetResult = Invoke-DscResource -Method Set @Config -ModuleName $Module -ErrorVariable SetError -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+            set-attr -obj $result -name "reboot_required" -value $SetResult.RebootRequired
         }
 
         Set-Attr $result "changed" $true
