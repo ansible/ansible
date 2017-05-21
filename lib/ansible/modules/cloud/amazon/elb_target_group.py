@@ -23,29 +23,15 @@ DOCUMENTATION = '''
 module: elb_target_group
 short_description: Manage a target group for an Application load balancer
 description:
-    - "Manage an AWS Application Elastic Load Balancer target group. See \
-    U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details."
+    - Manage an AWS Application Elastic Load Balancer target group. See 
+      U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
 version_added: "2.4"
 author: "Rob White (@wimnat)"
 options:
-  name:
+  deregistration_delay_timeout:
     description:
-      - The name of the target group.
-    required: true
-  protocol:
-    description:
-      - The protocol to use for routing traffic to the targets. Required if state=present.
-    required: false
-    choices: [ 'http', 'https' ]
-  port:
-    description:
-      - "The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if \
-      state=present."
-    required: false
-  vpc_id:
-    description:
-      - The identifier of the virtual private cloud (VPC). Required if state=present.
-    required: false
+      - The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused. 
+        The range is 0-3600 seconds.
   health_check_protocol:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
@@ -64,55 +50,80 @@ options:
     description:
       - The approximate amount of time, in seconds, between health checks of an individual target.
     required: false
-    default: 30
   health_check_timeout:
     description:
       - The amount of time, in seconds, during which no response from a target means a failed health check.
     required: false
-    default: 5
   healthy_threshold_count:
     description:
       - The number of consecutive health checks successes required before considering an unhealthy target healthy.
     required: false
-    default: 5
-  unhealthy_threshold_count:
+  modify_targets:
     description:
-      - The number of consecutive health check failures required before considering a target unhealthy.
+      - Whether or not to alter existing targets in the group to match what is passed with the module
     required: false
-    default: 2
+    default: yes
+  name:
+    description:
+      - The name of the target group.
+    required: true
+  port:
+    description:
+      - The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if 
+        I(state) is C(present).
+    required: false
+  protocol:
+    description:
+      - The protocol to use for routing traffic to the targets. Required when I(state) is C(present).
+    required: false
+    choices: [ 'http', 'https' ]
+  purge_tags:
+    description:
+      - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the tag parameter is not set then 
+        tags will not be modified.
+    required: false
+    default: yes
+    choices: [ 'yes', 'no' ]
+  state:
+    description:
+      - Create or destroy the target group.
+    required: true
+    choices: [ 'present', 'absent' ]
+  stickiness_enabled:
+    description:
+      - Indicates whether sticky sessions are enabled.
+    choices: [ 'yes', 'no' ]
+  stickiness_lb_cookie_duration:
+    description:
+      - The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load 
+        balancer-generated cookie is considered stale. The range is 1 second to 1 week (604800 seconds).
+  stickiness_type:
+    description:
+      - The type of sticky sessions. The possible value is lb_cookie.
+    default: lb_cookie
   successful_response_codes:
     description:
       - >
         The HTTP codes to use when checking for a successful response from a target. You can specify multiple values (for example, "200,202") or a range of
         values (for example, "200-299").
     required: false
-    default: 200
-  modify_targets:
-    description:
-      - Whether or not to alter existing targets in the group to match what is passed with the module
-    required: false
-    default: yes
-  purge_tags:
-    description:
-      - If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tag parameter is not set then tags
-        will not be modified.
-    required: false
-    default: yes
-    choices: [ 'yes', 'no' ]
-  targets:
-    description:
-      - "A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then \
-      all existing targets will be removed from the group. The list should be an Id and a Port parameter. See the Examples for detail."
-    required: false
   tags:
     description:
       - A dictionary of one or more tags to assign to the target group.
     required: false
-  state:
+  targets:
     description:
-      - Create or destroy the target group.
-    required: true
-    choices: [ 'present', 'absent' ]
+      - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then 
+        all existing targets will be removed from the group. The list should be an Id and a Port parameter. See the Examples for detail."
+    required: false
+  unhealthy_threshold_count:
+    description:
+      - The number of consecutive health check failures required before considering a target unhealthy.
+    required: false
+  vpc_id:
+    description:
+      - The identifier of the virtual private cloud (VPC). Required when I(state) is C(present).
+    required: false
 extends_documentation_fragment:
     - aws
     - ec2
@@ -165,46 +176,31 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-target_group_arn:
-    description: The Amazon Resource Name (ARN) of the target group.
-    returned: when state present
-    type: string
-    sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
-target_group_name:
-    description: The name of the target group.
-    returned: when state present
-    type: string
-    sample: mytargetgroup
-protocol:
-    description: The protocol to use for routing traffic to the targets.
-    returned: when state present
-    type: string
-    sample: HTTP
-port:
-    description: The port on which the targets are listening.
+deregistration_delay_timeout_seconds:
+    description: The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused.
     returned: when state present
     type: int
-    sample: 80
-vpc_id:
-    description: The ID of the VPC for the targets.
-    returned: when state present
-    type: string
-    sample: vpc-0123456
-health_check_protocol:
-    description: The protocol to use to connect with the target.
-    returned: when state present
-    type: string
-    sample: HTTP
-health_check_port:
-    description: The port to use to connect with the target.
-    returned: when state present
-    type: string
-    sample: traffic-port
+    sample: 300
 health_check_interval_seconds:
     description: The approximate amount of time, in seconds, between health checks of an individual target.
     returned: when state present
     type: int
     sample: 30
+health_check_path:
+    description: The destination for the health check request.
+    returned: when state present
+    type: string
+    sample: /index.html
+health_check_port:
+    description: The port to use to connect with the target.
+    returned: when state present
+    type: string
+    sample: traffic-port
+health_check_protocol:
+    description: The protocol to use to connect with the target.
+    returned: when state present
+    type: string
+    sample: HTTP
 health_check_timeout_seconds:
     description: The amount of time, in seconds, during which no response means a failed health check.
     returned: when state present
@@ -215,16 +211,11 @@ healthy_threshold_count:
     returned: when state present
     type: int
     sample: 5
-unhealthy_threshold_count:
-    description: The number of consecutive health check failures required before considering the target unhealthy.
+load_balancer_arns:
+    description: The Amazon Resource Names (ARN) of the load balancers that route traffic to this target group.
     returned: when state present
-    type: int
-    sample: 2
-health_check_path:
-    description: The destination for the health check request.
-    returned: when state present
-    type: string
-    sample: /index.html
+    type: list
+    sample: []
 matcher:
     description: The HTTP codes to use when checking for a successful response from a target.
     returned: when state present
@@ -232,11 +223,31 @@ matcher:
     sample: {
         "http_code": "200"
     }
-load_balancer_arns:
-    description: The Amazon Resource Names (ARN) of the load balancers that route traffic to this target group.
+port:
+    description: The port on which the targets are listening.
     returned: when state present
-    type: list
-    sample: []
+    type: int
+    sample: 80
+protocol:
+    description: The protocol to use for routing traffic to the targets.
+    returned: when state present
+    type: string
+    sample: HTTP
+stickiness_enabled:
+    description: Indicates whether sticky sessions are enabled.
+    returned: when state present
+    type: bool
+    sample: true
+stickiness_lb_cookie_duration_seconds:
+    description: The time period, in seconds, during which requests from a client should be routed to the same target.
+    returned: when state present
+    type: int
+    sample: 86400
+stickiness_type:
+    description: The type of sticky sessions.
+    returned: when state present
+    type: string
+    sample: lb_cookie
 tags:
     description: The tags attached to the target group.
     returned: when state present
@@ -244,6 +255,26 @@ tags:
     sample: "{
         'Tag': 'Example'
     }"
+target_group_arn:
+    description: The Amazon Resource Name (ARN) of the target group.
+    returned: when state present
+    type: string
+    sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
+target_group_name:
+    description: The name of the target group.
+    returned: when state present
+    type: string
+    sample: mytargetgroup
+unhealthy_threshold_count:
+    description: The number of consecutive health check failures required before considering the target unhealthy.
+    returned: when state present
+    type: int
+    sample: 2
+vpc_id:
+    description: The ID of the VPC for the targets.
+    returned: when state present
+    type: string
+    sample: vpc-0123456
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -258,6 +289,21 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+
+def get_tg_attributes(connection, module, tg_arn):
+
+    try:
+        tg_attributes = boto3_tag_list_to_ansible_dict(connection.describe_target_group_attributes(TargetGroupArn=tg_arn)['Attributes'])
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+    # Replace '.' with '_' in attribute key names to make it more Ansibley
+    for k, v in tg_attributes.items():
+        tg_attributes[k.replace('.', '_')] = v
+        del tg_attributes[k]
+
+    return tg_attributes
 
 
 def get_target_group_tags(connection, module, target_group_arn):
@@ -310,6 +356,10 @@ def create_or_update_target_group(connection, module):
     params['VpcId'] = module.params.get("vpc_id")
     tags = module.params.get("tags")
     purge_tags = module.params.get("purge_tags")
+    deregistration_delay_timeout = module.params.get("deregistration_delay_timeout")
+    stickiness_enabled = module.params.get("stickiness_enabled")
+    stickiness_lb_cookie_duration = module.params.get("stickiness_lb_cookie_duration")
+    stickiness_type = module.params.get("stickiness_type")
 
     # If health check path not None, set health check attributes
     if module.params.get("health_check_path") is not None:
@@ -476,6 +526,7 @@ def create_or_update_target_group(connection, module):
         try:
             connection.create_target_group(**params)
             changed = True
+            new_target_group = True
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
@@ -493,8 +544,34 @@ def create_or_update_target_group(connection, module):
                 if not status_achieved:
                     module.fail_json(msg='Error waiting for target registration - please check the AWS console')
 
-    # Get the target group again
-    tg = get_target_group(connection, module)
+    # Now set target group attributes
+    update_attributes = []
+
+    # Get current attributes
+    current_tg_attributes = get_tg_attributes(connection, module, tg['TargetGroupArn'])
+
+    if deregistration_delay_timeout is not None:
+        if str(deregistration_delay_timeout) != current_tg_attributes['deregistration_delay_timeout_seconds']:
+            update_attributes.append({'Key': 'deregistration_delay.timeout_seconds', 'Value': str(deregistration_delay_timeout)})
+    if stickiness_enabled is not None:
+        if stickiness_enabled and current_tg_attributes['stickiness_enabled'] != "true":
+            update_attributes.append({'Key': 'stickiness.enabled', 'Value': 'true'})
+    if stickiness_lb_cookie_duration is not None:
+        if str(stickiness_lb_cookie_duration) != current_tg_attributes['stickiness_lb_cookie_duration_seconds']:
+            update_attributes.append({'Key': 'stickiness.lb_cookie.duration_seconds', 'Value': str(stickiness_lb_cookie_duration)})
+    if stickiness_type is not None:
+        if stickiness_type != current_tg_attributes['stickiness_type']:
+            update_attributes.append({'Key': 'stickiness.type', 'Value': stickiness_type})
+
+    if update_attributes:
+        try:
+            connection.modify_target_group_attributes(TargetGroupArn=tg['TargetGroupArn'], Attributes=update_attributes)
+            changed = True
+        except ClientError as e:
+            # Something went wrong setting attributes. If this target group was created during this task, delete it to leave a consistent state
+            if new_target_group:
+                connection.delete_target_group(TargetGroupArn=tg['TargetGroupArn'])
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Tags - only need to play with tags if tags parameter has been set to something
     if tags:
@@ -517,6 +594,12 @@ def create_or_update_target_group(connection, module):
             except ClientError as e:
                 module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             changed = True
+
+    # Get the target group again
+    tg = get_target_group(connection, module)
+
+    # Get the target group attributes again
+    tg.update(get_tg_attributes(connection, module, tg['TargetGroupArn']))
 
     # Convert tg to snake_case
     snaked_tg = camel_dict_to_snake_dict(tg)
@@ -546,7 +629,8 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            health_check_protocol=dict(required=False, choices=['http', 'https'], type='str'),
+            deregistration_delay_timeout=dict(type='int'),
+            health_check_protocol=dict(required=False, choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
             health_check_port=dict(required=False, type='int'),
             health_check_path=dict(required=False, default=None, type='str'),
             health_check_interval=dict(required=False, type='int'),
@@ -557,6 +641,9 @@ def main():
             port=dict(required=False, type='int'),
             protocol=dict(required=False, choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
             purge_tags=dict(required=False, default=True, type='bool'),
+            stickiness_enabled=dict(type='bool'),
+            stickiness_type=dict(default='lb_cookie', type='str'),
+            stickiness_lb_cookie_duration=dict(type='int'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             successful_response_codes=dict(required=False, type='str'),
             tags=dict(required=False, default={}, type='dict'),
