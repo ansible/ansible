@@ -260,6 +260,11 @@ try:
 except:
     HAVE_SPWD=False
 
+try:
+    import selinux
+    HAVE_SELINUX=True
+except ImportError:
+    HAVE_SELINUX=False
 
 class User(object):
     """
@@ -632,6 +637,8 @@ class User(object):
             try:
                 os.mkdir(ssh_dir, int('0700', 8))
                 os.chown(ssh_dir, info[2], info[3])
+                if HAVE_SELINUX and self.module.selinux_enabled():
+                self.set_selinux_type(ssh_dir, 'ssh_home_t')
             except OSError:
                 e = get_exception()
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
@@ -726,6 +733,12 @@ class User(object):
             e = get_exception()
             self.module.exit_json(failed=True, msg="%s" % e)
 
+    def set_selinux_type(self, path, setype):
+        newcon = self.module.selinux_context(path)
+        if self.seuser is not None:
+            newcon[0]=self.seuser
+        newcon[2]=setype
+        self.module.set_context_if_different(path, newcon, True)
 
 # ===========================================
 
@@ -2225,6 +2238,9 @@ def main():
             if not module.check_mode:
                 user.create_homedir(user.home)
                 user.chown_homedir(info[2], info[3], user.home)
+                os.chmod(user.home, int('0700', 8))
+                if HAVE_SELINUX and user.module.selinux_enabled():
+                    user.set_selinux_type(user.home, 'user_home_dir_t')
             result['changed'] = True
 
         # deal with ssh key
