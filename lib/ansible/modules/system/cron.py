@@ -638,7 +638,8 @@ def main():
     if cron_file:
         cron_file_basename = os.path.basename(cron_file)
         if not re.search(r'^[A-Z0-9_-]+$', cron_file_basename, re.I):
-            warnings.append('Filename portion of cron_file ("%s") should consist solely of upper- and lower-case letters, digits, underscores, and hyphens' % cron_file_basename)
+            warnings.append('Filename portion of cron_file ("%s") should consist' % cron_file_basename
+            + ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(int('022', 8))
