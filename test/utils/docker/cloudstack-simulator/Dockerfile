@@ -45,6 +45,8 @@ RUN wget https://github.com/apache/cloudstack/archive/4.9.2.0.tar.gz -O /opt/clo
 WORKDIR /opt/cloudstack
 
 RUN mvn -Pdeveloper -Dsimulator -DskipTests clean install
+RUN mvn -Pdeveloper -Dsimulator dependency:go-offline
+RUN mvn -pl client jetty:run -Dsimulator -Djetty.skip -Dorg.eclipse.jetty.annotations.maxWait=120
 
 RUN (/usr/bin/mysqld_safe &); \
     sleep 5; \
@@ -53,11 +55,11 @@ RUN (/usr/bin/mysqld_safe &); \
     MARVIN_FILE=$(find /opt/cloudstack/tools/marvin/dist/ -name "Marvin*.tar.gz"); \
     pip install $MARVIN_FILE;
 
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY zones.cfg /opt/zones.cfg
 COPY nginx_default.conf /etc/nginx/sites-available/default
 RUN pip install cs
 COPY run.sh /opt/run.sh
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 8888 8080 8096
 
