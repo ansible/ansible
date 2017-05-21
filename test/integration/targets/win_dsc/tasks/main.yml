@@ -22,6 +22,7 @@
   register: win_feature_has_servermanager
   ignore_errors: true
 
+#Block conditional is at the end
 block:
   - name: start with feature absent
     win_feature:
@@ -106,6 +107,6 @@ block:
       that:
         - "not win_dsc_5_result|changed"
         - "win_dsc_5_result.success"
-when: win_feature_has_servermanager|success
+when: win_feature_has_servermanager|success and ansible_os_family == "Windows" and ansible_powershell_version is defined and ansible_powershell_version >= 5
 
 
