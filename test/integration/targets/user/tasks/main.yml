@@ -92,6 +92,45 @@
   when: "jinja2_version.stdout|version_compare('2.6', '<')"
 
 ##
+## Create home and ssh keys for existing user
+##
+
+- name: try to create a second user
+  user:
+      name: dennis
+      state: present
+      createhome: false
+
+- name: try to create home directory and ssh keys for existing user
+  user:
+      name: dennis
+      state: present
+      createhome: true
+      generate_ssh_key: yes
+  register: user_test0c
+
+- name: get context for new directories
+  command: ls -lZd {{user_test0c.home}} {{user_test0c.home}}/.ssh
+  register: user_test0d
+
+- name: validate ownership, permissions, and SELinux context
+  assert:
+      that:
+          - '"user_home_dir_t" in user_test0d.stdout_lines[0]'
+          - '"drwx------" in user_test0d.stdout_lines[0]'
+          - '"dennis dennis" in user_test0d.stdout_lines[0]'
+          - '"ssh_home_t" in user_test0d.stdout_lines[1]'
+          - '"drwx------" in user_test0d.stdout_lines[1]'
+          - '"dennis dennis" in user_test0d.stdout_lines[1]'
+
+- name: Remove user
+  user:
+    name=dennis
+    state=absent
+    force=yes
+    remove=yes
+
+##
 ## user remove
 ##
             
@@ -108,3 +147,4 @@
   assert:
       that:
           - '"ansibulluser" not in user_names2.stdout_lines'
+          - '"dennis" not in user_names2.stdout_lines'
