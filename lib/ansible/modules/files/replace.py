@@ -160,7 +160,7 @@ import os
 import re
 import tempfile
 
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -226,7 +226,7 @@ def main():
         f = open(path, 'rb')
         data = f.read()
         try:
-            contents = to_text(data, errors='surrogate_or_strict')
+            contents = to_native(data, errors='surrogate_or_strict')
         except:
             contents = bytes(data)
         f.close()
