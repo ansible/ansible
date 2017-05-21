@@ -107,33 +107,53 @@
       state: present
       createhome: true
       generate_ssh_key: yes
-  register: user_test0c
+  register: user_test3
 
-- name: get context for new directories
-  command: ls -lZd {{user_test0c.home}} {{user_test0c.home}}/.ssh
-  register: user_test0d
+- name: Verify existence, ownership and permissions on home and .ssh directories.
+  file:
+      name="{{item}}"
+      state=directory
+      mode=0700
+      owner=dennis
+  with_items:
+      - "{{user_test3.home}}"
+      - "{{user_test3.home}}/.ssh"
 
-- name: validate ownership, permissions, and SELinux context
-  assert:
-      that:
-          - '"user_home_dir_t" in user_test0d.stdout_lines[0]'
-          - '"drwx------" in user_test0d.stdout_lines[0]'
-          - '"dennis dennis" in user_test0d.stdout_lines[0]'
-          - '"ssh_home_t" in user_test0d.stdout_lines[1]'
-          - '"drwx------" in user_test0d.stdout_lines[1]'
-          - '"dennis dennis" in user_test0d.stdout_lines[1]'
+- name: Verify existence, ownership, and permissions on SSH key
+  file:
+      name="{{user_test3.home}}/.ssh/id_rsa"
+      state=file
+      mode=0600
+      owner=dennis
 
-- name: Remove user
-  user:
-    name=dennis
-    state=absent
-    force=yes
-    remove=yes
+###
+# SELinux checks only if Python bindings are installed, and SELinux is on.
+- block:
+      - name: get context for new directories
+        command: ls -lZd {{user_test3.home}} {{user_test3.home}}/.ssh
+        register: user_test3a
+
+      - name: validate ownership, permissions, and SELinux context
+        assert:
+            that:
+                - '"user_home_dir_t" in user_test3a.stdout_lines[0]'
+                - '"ssh_home_t" in user_test3a.stdout_lines[1]'
+  when: ansible_selinux != False and ansible_selinux.status != "disabled"
+###
+
 
 ##
 ## user remove
 ##
-            
+
+
+- name: remove user and home directory
+  user:
+      name=dennis
+      state=absent
+      force=yes
+      remove=yes
+
 - name: try to delete the user
   user:
       name: ansibulluser
