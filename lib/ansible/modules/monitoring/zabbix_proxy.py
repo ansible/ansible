@@ -225,7 +225,8 @@ class Proxy(object):
                    self.existing_data[item] != data[item]:
                         parameters[item] = data[item]
 
-            parameters.pop('interface')
+            if 'interface' in parameters:
+                parameters.pop('interface')
 
             if 'interface' in data and data['status'] == '6':
                 new_interface = self.compile_interface_params(data['interface'])
