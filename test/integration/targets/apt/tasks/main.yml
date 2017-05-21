@@ -20,3 +20,6 @@
 
 - include: 'apt-builddep.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')
+
+- include: 'apt-suppress-daemon-actions.yml'
+  when: ansible_distribution in ('Ubuntu', 'Debian')

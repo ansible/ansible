@@ -1,0 +1,254 @@
+### suppress_daemon_actions testing
+
+- name: configure the name of the debian package and daemon process we want to use for suppress_daemon_actions testing
+  set_fact:
+    apt_sda_test_package: ntp
+    apt_sda_test_daemon: ntp
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: apply some fixes to the container in case the base image does not have them already
+  shell: apt-get update -y; apt-get install -y apt-utils; rm /usr/sbin/policy-rc.d; rm /sbin/initctl; dpkg-divert --rename --remove /sbin/initctl
+  ignore_errors: yes
+  tags: ['test_apt_suppress_daemon_actions']
+
+# UNINSTALL package
+- name: uninstall {{apt_sda_test_package}} with apt
+  apt: name={{apt_sda_test_package}} state=absent purge=yes
+  register: apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check {{apt_sda_test_package}} with dpkg
+  shell: dpkg-query -l {{apt_sda_test_package}}
+  failed_when: False
+  register: dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify uninstallation of {{apt_sda_test_package}}
+  assert:
+    that:
+        - "dpkg_result.rc == 1"
+  tags: ['test_apt_suppress_daemon_actions']
+
+# INSTALL package
+- name: install {{apt_sda_test_package}} with apt, without suppressing daemon startup
+  apt: name={{apt_sda_test_package}} state=present
+  register: apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check {{apt_sda_test_package}} with dpkg
+  shell: dpkg-query -l {{apt_sda_test_package}}
+  failed_when: False
+  register: dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check whether {{apt_sda_test_daemon}} is running
+  shell: ps ax | grep {{apt_sda_test_daemon}} | grep -v grep
+  failed_when: False
+  register: daemon_running
+  tags: ['test_apt_suppress_daemon_actions']
+
+- debug: var=apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+- debug: var=dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+- debug: var=daemon_running
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify installation of {{apt_sda_test_package}}
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+        - "daemon_running.rc == 0"
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify apt module outputs
+  assert:
+    that:
+        - "'changed' in apt_result"
+        - "'stderr' in apt_result"
+        - "'stdout' in apt_result"
+        - "'stdout_lines' in apt_result"
+        - "daemon_running.stdout_lines"
+  tags: ['test_apt_suppress_daemon_actions']
+
+
+# UNINSTALL package
+- name: uninstall {{apt_sda_test_package}} with apt
+  apt: name={{apt_sda_test_package}} state=absent purge=yes
+  register: apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check {{apt_sda_test_package}} with dpkg
+  shell: dpkg-query -s {{apt_sda_test_package}}
+  failed_when: False
+  register: dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify uninstallation of {{apt_sda_test_package}}
+  assert:
+    that:
+        - "'changed' in apt_result"
+        - "dpkg_result.rc == 1"
+  tags: ['test_apt_suppress_daemon_actions']
+
+
+# INSTALL package with start suppression
+- name: install {{apt_sda_test_package}} with apt, suppressing daemon startup
+  apt: name={{apt_sda_test_package}} state=present suppress_daemon_actions=yes
+  register: apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check {{apt_sda_test_package}} with dpkg
+  shell: dpkg-query -l {{apt_sda_test_package}}
+  failed_when: False
+  register: dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check whether {{apt_sda_test_daemon}} is running
+  shell: ps ax | grep {{apt_sda_test_daemon}} | grep -v grep
+  failed_when: False
+  register: daemon_running
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check whether the policy file has been removed
+  file: path=/usr/sbin/policy-rc.d
+  ignore_errors: yes
+  register: policy_file_found
+
+- debug: var=apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+- debug: var=dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+- debug: var=daemon_running
+  tags: ['test_apt_suppress_daemon_actions']
+- debug: var=policy_file_found
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify installation and daemon status of {{apt_sda_test_package}}
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+        - "daemon_running.rc == 1"
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify command outputs
+  assert:
+    that:
+        - "'changed' in apt_result"
+        - "'stderr' in apt_result"
+        - "'stdout' in apt_result"
+        - "'stdout_lines' in apt_result"
+        - "not daemon_running.stdout_lines"
+        - "policy_file_found | failed"
+  tags: ['test_apt_suppress_daemon_actions']
+
+
+# UNINSTALL package
+- name: uninstall {{apt_sda_test_package}} with apt
+  apt: name={{apt_sda_test_package}} state=absent purge=yes
+  register: apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check {{apt_sda_test_package}} with dpkg
+  shell: dpkg-query -s {{apt_sda_test_package}}
+  failed_when: False
+  register: dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify uninstallation of {{apt_sda_test_package}}
+  assert:
+    that:
+        - "'changed' in apt_result"
+        - "dpkg_result.rc == 1"
+  tags: ['test_apt_suppress_daemon_actions']
+
+
+
+# INSTALL package with start suppression and pre-existing policy file
+
+- name: write pre-existing policy file
+  copy: content="hello world" dest="/usr/sbin/policy-rc.d"
+
+- name: get policy file checksum
+  shell: md5sum /usr/sbin/policy-rc.d
+  failed_when: False
+  register: checksum
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: install {{apt_sda_test_package}} with apt, suppressing daemon startup
+  apt: name={{apt_sda_test_package}} state=present suppress_daemon_actions=yes
+  register: apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check {{apt_sda_test_package}} with dpkg
+  shell: dpkg-query -l {{apt_sda_test_package}}
+  failed_when: False
+  register: dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check whether {{apt_sda_test_daemon}} is running
+  shell: ps ax | grep {{apt_sda_test_daemon}} | grep -v grep
+  failed_when: False
+  register: daemon_running
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: get policy file checksum
+  shell: md5sum /usr/sbin/policy-rc.d
+  failed_when: False
+  register: checksum2
+  tags: ['test_apt_suppress_daemon_actions']
+
+- debug: var=checksum
+  tags: ['test_apt_suppress_daemon_actions']
+- debug: var=apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+- debug: var=dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+- debug: var=daemon_running
+  tags: ['test_apt_suppress_daemon_actions']
+- debug: var=checksum2
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify installation and daemon check status of {{apt_sda_test_package}}
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+        - "daemon_running.rc == 1"
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify command outputs and check that previous policy file was restored
+  assert:
+    that:
+        - "'changed' in apt_result"
+        - "'stderr' in apt_result"
+        - "'stdout' in apt_result"
+        - "'stdout_lines' in apt_result"
+        - "not daemon_running.stdout_lines"
+        - "checksum.stdout == checksum2.stdout"
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: delete policy file
+  file: path=/usr/sbin/policy-rc.d state=absent
+
+
+# UNINSTALL package
+- name: uninstall {{apt_sda_test_package}} with apt
+  apt: name={{apt_sda_test_package}} state=absent purge=yes
+  register: apt_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: check {{apt_sda_test_package}} with dpkg
+  shell: dpkg-query -s {{apt_sda_test_package}}
+  failed_when: False
+  register: dpkg_result
+  tags: ['test_apt_suppress_daemon_actions']
+
+- name: verify uninstallation of {{apt_sda_test_package}}
+  assert:
+    that:
+        - "'changed' in apt_result"
+        - "dpkg_result.rc == 1"
+  tags: ['test_apt_suppress_daemon_actions']
