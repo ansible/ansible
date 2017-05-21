@@ -31,10 +31,10 @@ module: win_dsc
 version_added: "2.4"
 short_description: Invokes a PowerShell DSC configuration
 description: |
-     Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer). 
-     Note that most of the parameters are dynamic and will vary depending on the DSC Resource. 
+     Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer).
+     Note that most of the parameters are dynamic and will vary depending on the DSC Resource.
      If the DSC resource takes a parameter named "Name", use the parameter "item_name" in Ansible to represent it.
-     Also note that credentials are handled as follows: If the resource accepts a credential type property called "cred", 
+     Also note that credentials are handled as follows: If the resource accepts a credential type property called "cred",
      the ansible parameters would be cred_username and cred_password.
      These will be used to inject a credential object on the fly for the DSC resource.
 options:
@@ -66,7 +66,7 @@ attributes:
     description: The attributes/parameters passed in to the DSC resource as key/value pairs
     returned: always
     type: complex
-    sample: 
+    sample:
     contains:
       Key:
           description: Attribute key
@@ -76,6 +76,11 @@ DSCAttributes:
     description: The attributes/parameters as returned from the DSC engine in dict format
     returned: always
     type: complex
+    contains:
+      Key:
+          description: Attribute key
+      Value:
+          description: Attribute value
 reboot_required:
     description: flag returned from the DSC engine indicating whether or not the machine requires a reboot for the invoked changes to take effect
     returned: always
@@ -83,5 +88,7 @@ reboot_required:
     sample: True
 message:
     description: any error message from invoking the DSC resource
-    returned:
+    returned: error
+    type: string
+    sample: Multiple DSC modules found with resource name xyz
 '''
