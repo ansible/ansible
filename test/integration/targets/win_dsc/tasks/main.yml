@@ -22,86 +22,90 @@
   register: win_feature_has_servermanager
   ignore_errors: true
 
-- name: start with feature absent
-  win_feature:
-    name: "{{ test_win_feature_name }}"
-    state: absent
-  when: win_feature_has_servermanager|success
+block:
+  - name: start with feature absent
+    win_feature:
+      name: "{{ test_win_feature_name }}"
+      state: absent
 
-- name: Invoke DSC with check mode
-  win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-  check_mode: yes
-  register: win_dsc_checkmode_result
+  - name: Invoke DSC with check mode
+    win_dsc:
+      resource_name: windowsfeature
+      name: "{{ test_win_feature_name }}"
+    check_mode: yes
+    register: win_dsc_checkmode_result
+    when: win_feature_has_servermanager|success
 
-- name: check result of Invoke DSC with check mode
-  assert:
-    that:
-      - "win_dsc_checkmode_result|changed"
-      - "win_dsc_checkmode_result.success"
+  - name: check result of Invoke DSC with check mode
+    assert:
+      that:
+        - "win_dsc_checkmode_result|changed"
+        - "win_dsc_checkmode_result.success"
+    when: win_feature_has_servermanager|success
 
-- name: Make sure the feature is still absent
-  win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-    ensure: absent
-  register: win_dsc_1_result
+  - name: Make sure the feature is still absent
+    win_dsc:
+      resource_name: windowsfeature
+      name: "{{ test_win_feature_name }}"
+      ensure: absent
+    register: win_dsc_1_result
 
-- name: check result of Make sure the feature is still absent
-  assert:
-    that:
-      - "not win_dsc_1_result|changed"
-      - "win_dsc_1_result.success"
+  - name: check result of Make sure the feature is still absent
+    assert:
+      that:
+        - "not win_dsc_1_result|changed"
+        - "win_dsc_1_result.success"
 
-- name: Install feature for realz
-  win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-  register: win_dsc_2_result
+  - name: Install feature for realz
+    win_dsc:
+      resource_name: windowsfeature
+      name: "{{ test_win_feature_name }}"
+    register: win_dsc_2_result
 
-- name: check result of Install feature for realz
-  assert:
-    that:
-      - "win_dsc_2_result|changed"
-      - "win_dsc_2_result.success"
+  - name: check result of Install feature for realz
+    assert:
+      that:
+        - "win_dsc_2_result|changed"
+        - "win_dsc_2_result.success"
 
-- name: Ensure clean failure
-  win_dsc:
-    resource_name: some_unknown_resource_that_wont_ever_exist
-    name: "{{ test_win_feature_name }}"
-  register: win_dsc_3_result
-  ignore_errors: true
+  - name: Ensure clean failure
+    win_dsc:
+      resource_name: some_unknown_resource_that_wont_ever_exist
+      name: "{{ test_win_feature_name }}"
+    register: win_dsc_3_result
+    ignore_errors: true
 
-- name: check result of Ensure clean failure
-  assert:
-    that:
-      - "not win_dsc_3_result|changed"
-      - "not win_dsc_3_result.success"
+  - name: check result of Ensure clean failure
+    assert:
+      that:
+        - "not win_dsc_3_result|changed"
+        - "not win_dsc_3_result.success"
 
-- name: Make sure the feature is absent
-  win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-    ensure: absent
-  register: win_dsc_4_result
+  - name: Make sure the feature is absent
+    win_dsc:
+      resource_name: windowsfeature
+      name: "{{ test_win_feature_name }}"
+      ensure: absent
+    register: win_dsc_4_result
 
-- name: check result of Make sure the feature is absent
-  assert:
-    that:
-      - "win_dsc_4_result|changed"
-      - "win_dsc_4_result.success"
+  - name: check result of Make sure the feature is absent
+    assert:
+      that:
+        - "win_dsc_4_result|changed"
+        - "win_dsc_4_result.success"
 
-- name: Make sure the feature is still absent with no changes
-  win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-    ensure: absent
-  register: win_dsc_5_result
+  - name: Make sure the feature is still absent with no changes
+    win_dsc:
+      resource_name: windowsfeature
+      name: "{{ test_win_feature_name }}"
+      ensure: absent
+    register: win_dsc_5_result
 
-- name: check result of Make sure the feature is absent
-  assert:
-    that:
-      - "not win_dsc_5_result|changed"
-      - "win_dsc_5_result.success"
+  - name: check result of Make sure the feature is absent
+    assert:
+      that:
+        - "not win_dsc_5_result|changed"
+        - "win_dsc_5_result.success"
+when: win_feature_has_servermanager|success
+
 
