@@ -243,7 +243,9 @@ import fnmatch
 import itertools
 import os
 import re
+import stat
 import sys
+import tempfile
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -807,7 +809,27 @@ def get_cache(module):
 @contextlib.contextmanager
 def suppress_daemon_actions(yesno):
     if yesno:
-        pass #TODO impl
+        polscript = '/usr/sbin/policy-rc.d'
+        orig_polscript = None
+        if os.path.isfile(polscript):
+            # atomically rename to new temporary file in the same directory
+            # race (another process might create the same tmpfile) unavoidable without some explicit advisory locking
+            orig_polscript = tempfile.mktemp(dir=os.path.dirname(polscript))
+            os.rename(polscript, orig_polscript)
+
+        try:
+            with open(polscript, 'w') as f:
+                f.write("#!/bin/sh\nexit 101")
+            os.chmod(polscript, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+
+            yield
+
+        finally:
+            if orig_polscript:
+                os.rename(orig_polscript, polscript)
+            else:
+                os.remove(polscript)
+
     else:
         yield
 
