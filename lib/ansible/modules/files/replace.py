@@ -242,28 +242,30 @@ def main():
 
     pattern = u''
     if params['after'] and params['before']:
-        pattern = u'%s(.*?)%s' % (params['before'], params['after'])
+        pattern = u'%s(?P<subsection>.*?)%s' % (params['before'], params['after'])
     elif params['after']:
-        pattern = u'%s(.*)' % params['after']
+        pattern = u'%s(?P<subsection>.*)' % params['after']
     elif params['before']:
-        pattern = u'(.*)%s' % params['before']
+        pattern = u'(?P<subsection>.*)%s' % params['before']
 
     if pattern:
         section_re = re.compile(pattern, re.DOTALL)
         match = re.search(section_re, contents)
         if match:
-            section = match.group(0)
-
-        mre = re.compile(params['regexp'], re.MULTILINE)
-        result = re.subn(mre, params['replace'], section, 0)
-        if result[1] > 0 and section != result[0]:
-            result = (contents.replace(section, result[0]), result[1])
-
+            section = match.group('subsection')
+        else:
+            res_args['msg'] = 'Pattern for before/after params did not match the given file: %s' % pattern
+            res_args['changed'] = False
+            module.exit_json(**res_args)
     else:
-        mre = re.compile(params['regexp'], re.MULTILINE)
-        result = re.subn(mre, params['replace'], contents, 0)
+        section = contents
 
-    if result[1] > 0 and contents != result[0]:
+    mre = re.compile(params['regexp'], re.MULTILINE)
+    result = re.subn(mre, params['replace'], section, 0)
+
+    if result[1] > 0 and section != result[0]:
+        if pattern:
+            result = (contents.replace(section, result[0]), result[1])
         msg = '%s replacements made' % result[1]
         changed = True
         if module._diff:
