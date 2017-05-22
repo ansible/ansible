@@ -121,13 +121,6 @@
         state: present
         createhome: false
         home: /Users/dennis
-# debugging
-  - name: ls users
-    command: ls -l /Users/
-    register: mac_debug
-  - name: list debug
-    debug: msg={{mac_debug.stdout_lines}}
-  when: ansible_distribution == 'MacOSX'
 
 - name: try to create a second user
   user:
@@ -153,6 +146,7 @@
   with_items:
       - "{{user_test3.home}}"
       - "{{user_test3.home}}/.ssh"
+  register: homedirrun
 
 - name: Verify existence, ownership, and permissions on SSH key
   file:
@@ -160,6 +154,13 @@
       state=file
       mode=0600
       owner=dennis
+  register: sshkeyrun
+
+- name: Verify file checks
+  assert:
+      that:
+          - "not sshkeyrun.changed"
+          - "not homedirrun.changed"
 
 ###
 # SELinux checks only if Python bindings are installed, and SELinux is on.
