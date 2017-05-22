@@ -235,7 +235,7 @@ def gather_vm_facts(content, vm):
 
     ethernet_idx = 0
     for idx, entry in enumerate(vm.config.hardware.device):
-        if not getattr(entry, 'macAddress', None) is not None:
+        if not getattr(entry, 'macAddress', None):
             continue
 
         if entry.macAddress:
