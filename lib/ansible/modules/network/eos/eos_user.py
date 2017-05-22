@@ -46,6 +46,7 @@ options:
       - The username to be configured on the remote Arista EOS
         device.  This argument accepts a stringv value and is mutually
         exclusive with the C(users) argument.
+        Please note that this option is not same as C(provider username).
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
