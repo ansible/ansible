@@ -294,39 +294,6 @@ class Debian(Distrib):
             raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
 
-class Ubuntu(Debian):
-    REGEXP = '^(?P<locale>\S+_\S+) (?P<charset>\S+)\s*$'
-    LOCALES_AVAILABLE = '/usr/share/i18n/SUPPORTED'
-
-
-    def generate(self, name, lang, charset, modifier):
-        # Ubuntu's patched locale-gen automatically adds the new locale to /var/lib/locales/supported.d/local
-        localeGenExitValue = call(["locale-gen", name])
-
-        if localeGenExitValue != 0:
-            raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
-
-    def delete(self, name, lang, charset, modifier):
-        # Delete locale involves discarding the locale from /var/lib/locales/supported.d/local and regenerating all locales.
-        try:
-            f = open("/var/lib/locales/supported.d/local", "r")
-            content = f.readlines()
-        finally:
-            f.close()
-        try:
-            f = open("/var/lib/locales/supported.d/local", "w")
-            for line in content:
-                lang, charset = line.split(' ')
-                if  lang != name:
-                    f.write(line)
-        finally:
-            f.close()
-        # Purge locales and regenerate.
-        # Please provide a patch if you know how to avoid regenerating the locales to keep!
-        localeGenExitValue = call(["locale-gen", "--purge"])
-
-        if localeGenExitValue != 0:
-            raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
 
 # ==============================================================
