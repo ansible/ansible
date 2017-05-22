@@ -188,7 +188,6 @@ import re
 #
 # ---------------------------------------------------------------------------------------------------
 
-
 class AWSConnection:
     """
     Create the connection object and client objects as required.
@@ -297,7 +296,7 @@ def get_current_compute_environment(module, connection):
             computeEnvironments=[module.params['compute_environment_name']]
         )
         return environments['computeEnvironments'][0] if len(environments['computeEnvironments']) > 0 else None
-    except botocore.exceptions.ClientError:
+    except ClientError:
         return None
 
 
@@ -379,12 +378,12 @@ def manage_state(module, aws):
     maxv_cpus = module.params['maxv_cpus']
     desiredv_cpus = module.params['desiredv_cpus']
     action_taken = 'none'
-    response = None
 
     check_mode = module.check_mode
 
     # check if the compute environment exists
     current_compute_environment = get_current_compute_environment(module, aws)
+    response = current_compute_environment
     if current_compute_environment:
         current_state = 'present'
 
@@ -418,18 +417,17 @@ def manage_state(module, aws):
                         response = aws.client().update_compute_environment(**compute_kwargs)
                     changed = True
                     action_taken = "updated"
-                except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+                except (ParamValidationError, ClientError) as e:
                     module.fail_json(msg=str(e))
 
         else:
             # Create Batch Compute Environment
             changed = create_compute_environment(module, aws)
+            # Describe compute environment
+            response = get_current_compute_environment(module, aws)
+            if not response:
+                module.fail_json(msg='Unable to get compute environment information after creating')
             action_taken = 'added'
-
-        # Describe compute environment
-        response = get_current_compute_environment(module, aws)
-        if not response:
-            module.fail_json(msg='Unable to get compute environment information after creating/updating')
     else:
         if current_state == 'present':
             # remove the compute environment
