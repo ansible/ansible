@@ -261,7 +261,7 @@ from distutils.version import LooseVersion
 try:
     import azure as windows_azure
 
-    if hasattr(windows_azure, '__version__') and LooseVersion(windows_azure.__version__) <= "0.11.1":
+    if getattr(windows_azure, '__version__', None) is not None and LooseVersion(windows_azure.__version__) <= "0.11.1":
         from azure import WindowsAzureError as AzureException
         from azure import WindowsAzureMissingResourceError as AzureMissingException
     else:
@@ -559,7 +559,7 @@ def main():
 
     wait_timeout_redirects = int(module.params.get('wait_timeout_redirects'))
 
-    if hasattr(windows_azure, '__version__') and LooseVersion(windows_azure.__version__) <= "0.8.0":
+    if getattr(windows_azure, '__version__', None) is not None and LooseVersion(windows_azure.__version__) <= "0.8.0":
         # wrapper for handling redirects which the sdk <= 0.8.0 is not following
         azure = Wrapper(ServiceManagementService(subscription_id, management_cert_path), wait_timeout_redirects)
     else:
@@ -594,7 +594,7 @@ class Wrapper(object):
         self.wait_timeout = wait_timeout
 
     def __getattr__(self, name):
-        if hasattr(self.other, name):
+        if getattr(self.other, name, None) is not None:
             func = getattr(self.other, name)
             return lambda *args, **kwargs: self._wrap(func, args, kwargs)
         raise AttributeError(name)

@@ -128,7 +128,7 @@ class BaseMeta(type):
             recursively on through grandparent objects
             '''
             for parent in parents:
-                if hasattr(parent, '__dict__'):
+                if getattr(parent, '__dict__', None) is not None:
                     _create_attrs(parent.__dict__, dst_dict)
                     new_dst_dict = parent.__dict__.copy()
                     new_dst_dict.update(dst_dict)
@@ -199,13 +199,13 @@ class Base(with_metaclass(BaseMeta, object)):
         if depth == 0:
             print("DUMPING OBJECT ------------------------------------------------------")
         print("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
-        if hasattr(self, '_parent') and self._parent:
+        if getattr(self, '_parent') and self._paren, Nonet is not None:
             self._parent.dump_me(depth+2)
             dep_chain = self._parent.get_dep_chain()
             if dep_chain:
                 for dep in dep_chain:
                     dep.dump_me(depth+2)
-        if hasattr(self, '_play') and self._play:
+        if getattr(self, '_play') and self._pla, Noney is not None:
             self._play.dump_me(depth+2)
 
     def preprocess_data(self, ds):
@@ -332,7 +332,7 @@ class Base(with_metaclass(BaseMeta, object)):
         new_me._uuid = self._uuid
 
         # if the ds value was set on the object, copy it to the new copy too
-        if hasattr(self, '_ds'):
+        if getattr(self, '_ds', None) is not None:
             new_me._ds = self._ds
 
         return new_me
@@ -508,7 +508,7 @@ class Base(with_metaclass(BaseMeta, object)):
         attrs = dict()
         for (name, attribute) in iteritems(self._valid_attrs):
             attr = getattr(self, name)
-            if attribute.isa == 'class' and attr is not None and hasattr(attr, 'serialize'):
+            if attribute.isa == 'class' and attr is not None and getattr(attr, 'serialize', None) is not None:
                 attrs[name] = attr.serialize()
             else:
                 attrs[name] = attr

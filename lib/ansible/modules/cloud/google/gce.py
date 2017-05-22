@@ -450,7 +450,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
             except SyntaxError as e:
                 module.fail_json(msg='bad metadata syntax')
 
-        if hasattr(libcloud, '__version__') and libcloud.__version__ < '0.15':
+        if getattr(libcloud, '__version__', None) is not None and libcloud.__version__ < '0.15':
             items = []
             for k, v in md.items():
                 items.append({"key": k, "value": v})
@@ -686,11 +686,11 @@ def main():
         module.fail_json(msg='Must specify a "zone"', changed=False)
 
     lc_zone = get_valid_location(module, gce, zone)
-    if preemptible is not None and hasattr(libcloud, '__version__') and libcloud.__version__ < '0.20':
+    if preemptible is not None and getattr(libcloud, '__version__', None) is not None and libcloud.__version__ < '0.20':
         module.fail_json(msg="Apache Libcloud 0.20.0+ is required to use 'preemptible' option",
                          changed=False)
 
-    if subnetwork is not None and not hasattr(gce, 'ex_get_subnetwork'):
+    if subnetwork is not None and not getattr(gce, 'ex_get_subnetwork', None):
         module.fail_json(msg="Apache Libcloud 1.0.0+ is required to use 'subnetwork' option",
                          changed=False)
 

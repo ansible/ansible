@@ -694,7 +694,7 @@ def update_named_ports(mig, named_ports):
     changed = False
     existing_ports = []
     new_ports = []
-    if hasattr(mig.instance_group, 'named_ports'):
+    if getattr(mig.instance_group, 'named_ports', None) is not None:
         existing_ports = sorted(mig.instance_group.named_ports,
                                 key=lambda x: x['name'])
     if named_ports is not None:
@@ -734,7 +734,7 @@ def main():
             msg='libcloud with GCE Managed Instance Group support (1.2+) required for this module.')
 
     gce = gce_connect(module)
-    if not hasattr(gce, 'ex_create_instancegroupmanager'):
+    if not getattr(gce, 'ex_create_instancegroupmanager', None) is not None:
         module.fail_json(
             msg='libcloud with GCE Managed Instance Group support (1.2+) required for this module.',
             changed=False)
@@ -753,8 +753,8 @@ def main():
     if not valid_autoscaling:
         module.fail_json(msg=as_msg, changed=False)
 
-    if params['named_ports'] is not None and not hasattr(
-            gce, 'ex_instancegroup_set_named_ports'):
+    if params['named_ports'] is not None and getattr(
+            gce, 'ex_instancegroup_set_named_ports', None) is None:
         module.fail_json(
             msg="Apache Libcloud 1.3.0+ is required to use 'named_ports' option",
             changed=False)

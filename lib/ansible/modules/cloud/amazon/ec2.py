@@ -639,7 +639,7 @@ def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
 
     instances = []
     for res in reservations:
-        if hasattr(res, 'instances'):
+        if getattr(res, 'instances', None) is not None:
             for inst in res.instances:
                 instances.append(inst)
 
@@ -798,7 +798,7 @@ def boto_supports_volume_encryption():
     Returns:
         True if boto library has the named param as an argument on the request_spot_instances method, else False
     """
-    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
+    return getattr(boto, 'Version', None) is not None and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
 
 
 def create_block_device(module, ec2, volume):

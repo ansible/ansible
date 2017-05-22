@@ -128,7 +128,7 @@ def _get_gcp_libcloud_credentials(module, service_account_email=None, credential
                                   "Ansible YAML files instead" % (secrets.__file__)), version=2.5)
         except ImportError:
             secrets = None
-        if hasattr(secrets, 'GCE_PARAMS'):
+        if getattr(secrets, 'GCE_PARAMS', None) is not None:
             if not service_account_email:
                 service_account_email = secrets.GCE_PARAMS[0]
             if not credentials_file:

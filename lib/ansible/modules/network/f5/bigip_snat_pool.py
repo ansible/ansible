@@ -211,7 +211,7 @@ class BigIpSnatPoolManager(object):
         """
         result = dict()
         result['name'] = str(pool.name)
-        if hasattr(pool, 'members'):
+        if getattr(pool, 'members', None) is not None:
             result['members'] = self.format_current_members(pool)
         return result
 

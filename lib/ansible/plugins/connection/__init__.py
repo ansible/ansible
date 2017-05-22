@@ -69,15 +69,15 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     allow_executable = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
-        # All these hasattrs allow subclasses to override these parameters
-        if not hasattr(self, '_play_context'):
+        # All these getattrs allow subclasses to override these parameters
+        if not getattr(self, '_play_context', None):
             self._play_context = play_context
-        if not hasattr(self, '_new_stdin'):
+        if not getattr(self, '_new_stdin', None):
             self._new_stdin = new_stdin
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
-        if not hasattr(self, '_display'):
+        if not getattr(self, '_display', None):
             self._display = display
-        if not hasattr(self, '_connected'):
+        if not getattr(self, '_connected', None):
             self._connected = False
 
         self.success_key = None
@@ -87,7 +87,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         # load the shell plugin for this action/connection
         if play_context.shell:
             shell_type = play_context.shell
-        elif hasattr(self, '_shell_type'):
+        elif getattr(self, '_shell_type', None) is not None:
             shell_type = getattr(self, '_shell_type')
         else:
             shell_type = 'sh'

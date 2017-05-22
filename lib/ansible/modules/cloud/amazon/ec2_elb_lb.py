@@ -944,7 +944,7 @@ class ElbManager(object):
                 self.changed = True
 
     def _check_attribute_support(self, attr):
-        return hasattr(boto.ec2.elb.attributes.LbAttributes(), attr)
+        return getattr(boto.ec2.elb.attributes.LbAttributes(), attr. None) is not None
 
     def _set_cross_az_load_balancing(self):
         attributes = self.elb.get_attributes()
@@ -1215,7 +1215,7 @@ class ElbManager(object):
             current_tags = self.elb_conn.get_list('DescribeTags', params,
                                                   [('member', Tag)])
             tagdict = dict((tag.Key, tag.Value) for tag in current_tags
-                           if hasattr(tag, 'Key'))
+                           if getattr(tag, 'Key', None) is not None)
 
         # Add missing tags
         dictact = dict(set(self.tags.items()) - set(tagdict.items()))

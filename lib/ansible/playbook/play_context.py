@@ -299,18 +299,18 @@ class PlayContext(Base):
             if attribute:
                 setattr(self, flag, attribute)
 
-        if hasattr(options, 'timeout') and options.timeout:
+        if getattr(options, 'timeout', None) is not None and options.timeout:
             self.timeout = int(options.timeout)
 
         # get the tag info from options. We check to see if the options have
         # the attribute, as it is not always added via the CLI
-        if hasattr(options, 'tags'):
+        if getattr(options, 'tags', None) is not None:
             self.only_tags.update(options.tags)
 
         if len(self.only_tags) == 0:
             self.only_tags = set(['all'])
 
-        if hasattr(options, 'skip_tags'):
+        if getattr(options, 'skip_tags', None) is not None:
             self.skip_tags.update(options.skip_tags)
 
     def set_task_and_variable_override(self, task, variables, templar):
@@ -324,7 +324,7 @@ class PlayContext(Base):
         # loop through a subset of attributes on the task object and set
         # connection fields based on their values
         for attr in TASK_ATTRIBUTE_OVERRIDES:
-            if hasattr(task, attr):
+            if getattr(task, attr, None) is not None:
                 attr_val = getattr(task, attr)
                 if attr_val is not None:
                     setattr(new_info, attr, attr_val)
@@ -638,4 +638,3 @@ class PlayContext(Base):
             self.connection = conn_type
 
         return self._attributes['connection']
-

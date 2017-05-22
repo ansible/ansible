@@ -87,7 +87,7 @@ class TestVaultEditor(unittest.TestCase):
                  'read_data',
                  'write_data']
         for slot in slots:
-            assert hasattr(v, slot), "VaultLib is missing the %s method" % slot
+            assert getattr(v, slot, None) is not None, "VaultLib is missing the %s method" % slot
 
     def _create_test_dir(self):
         suffix = '_ansible_unit_test_%s_' % (self.__class__.__name__)

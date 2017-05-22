@@ -8,7 +8,7 @@ Prior to 2.0, modules may have been written in boto or boto3. The effort to port
 
 ## Bug fixing
 
-Bug fixes to code that relies on boto will still be accepted. When possible, the code should be ported to use boto3. 
+Bug fixes to code that relies on boto will still be accepted. When possible, the code should be ported to use boto3.
 
 ## Naming your module
 
@@ -29,7 +29,7 @@ functionality that uses a new feature of boto3, it should only
 fail if that feature actually needs to be run, with a message
 saying which version of boto3 is needed.
 
-Use feature testing (e.g. `hasattr('boto3.module', 'shiny_new_method')`)
+Use feature testing (e.g. `getattr('boto3.module', 'shiny_new_method', None) is not None`)
 to check whether boto3 supports a feature rather than version checking
 
 e.g. from the `ec2` module:

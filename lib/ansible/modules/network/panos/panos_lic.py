@@ -111,7 +111,7 @@ def apply_authcode(xapi, module, auth_code):
         xapi.op(cmd='request license fetch auth-code "%s"' % auth_code,
                 cmd_xml=True)
     except pan.xapi.PanXapiError:
-        if hasattr(xapi, 'xml_document'):
+        if getattr(xapi, 'xml_document', None) is not None:
             if 'Successfully' in xapi.xml_document:
                 return
 
@@ -127,7 +127,7 @@ def fetch_authcode(xapi, module):
     try:
         xapi.op(cmd='request license fetch', cmd_xml=True)
     except pan.xapi.PanXapiError:
-        if hasattr(xapi, 'xml_document'):
+        if getattr(xapi, 'xml_document', None) is not None:
             if 'Successfully' in xapi.xml_document:
                 return
 

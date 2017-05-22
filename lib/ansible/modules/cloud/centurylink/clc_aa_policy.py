@@ -219,9 +219,9 @@ class ClcAntiAffinityPolicy:
         else:
             changed, policy = self._ensure_policy_is_present(p)
 
-        if hasattr(policy, 'data'):
+        if getattr(policy, 'data', None) is not None:
             policy = policy.data
-        elif hasattr(policy, '__dict__'):
+        elif getattr(policy, '__dict__', None) is not None:
             policy = policy.__dict__
 
         self.module.exit_json(changed=changed, policy=policy)
@@ -338,7 +338,7 @@ class ClcAntiAffinityPolicy:
 
     @staticmethod
     def _set_user_agent(clc):
-        if hasattr(clc, 'SetRequestsSession'):
+        if getattr(clc, 'SetRequestsSession', None) is not None:
             agent_string = "ClcAnsibleModule/" + __version__
             ses = requests.Session()
             ses.headers.update({"Api-Client": agent_string})

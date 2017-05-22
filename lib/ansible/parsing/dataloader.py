@@ -194,7 +194,7 @@ class DataLoader:
         # if the YAML exception contains a problem mark, use it to construct
         # an object the error class can use to display the faulty line
         err_obj = None
-        if hasattr(yaml_exc, 'problem_mark'):
+        if getattr(yaml_exc, 'problem_mark', None) is not None:
             err_obj = AnsibleBaseYAMLObject()
             err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 

@@ -153,10 +153,10 @@ class BigIpDeviceNtp(object):
         p = dict()
         r = self.api.tm.sys.ntp.load()
 
-        if hasattr(r, 'servers'):
+        if getattr(r, 'servers', None) is not None:
             # Deliberately using sets to suppress duplicates
             p['servers'] = set([str(x) for x in r.servers])
-        if hasattr(r, 'timezone'):
+        if getattr(r, 'timezone', None) is not None:
             p['timezone'] = str(r.timezone)
         return p
 

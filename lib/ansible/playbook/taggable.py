@@ -54,7 +54,7 @@ class Taggable:
         tags = self._attributes['tags']
         if tags is None:
             tags = []
-        if hasattr(self, '_get_parent_attribute'):
+        if getattr(self, '_get_parent_attribute', None) is not None:
             tags = self._get_parent_attribute('tags', extend=True)
         return tags
 

@@ -337,7 +337,7 @@ def pubnub_application(module, account):
         application = account.application(params['application'])
     except (exceptions.AccountError, exceptions.GeneralPubNubError) as exc:
         exc_msg = _failure_title_from_exception(exc)
-        exc_descr = exc.message if hasattr(exc, 'message') else exc.args[0]
+        exc_descr = exc.message if getattr(exc, 'message', None) is not None else exc.args[0]
         module.fail_json(msg=exc_msg, description=exc_descr,
                          changed=account.changed,
                          module_cache=dict(account))
@@ -408,7 +408,7 @@ def pubnub_block(module, account, keyset):
         block = keyset.block(params['name'])
     except (exceptions.KeysetError, exceptions.GeneralPubNubError) as exc:
         exc_msg = _failure_title_from_exception(exc)
-        exc_descr = exc.message if hasattr(exc, 'message') else exc.args[0]
+        exc_descr = exc.message if getattr(exc, 'message', None) is not None else exc.args[0]
         module.fail_json(msg=exc_msg, description=exc_descr,
                          changed=account.changed, module_cache=dict(account))
 
@@ -616,7 +616,7 @@ def main():
             module_cache = dict(account)
             module_cache.update(dict(pnm_user=dict(user)))
             exc_msg = _failure_title_from_exception(exc)
-            exc_descr = exc.message if hasattr(exc, 'message') else exc.args[0]
+            exc_descr = exc.message if getattr(exc, 'message', None) is not None else exc.args[0]
             module.fail_json(msg=exc_msg, description=exc_descr,
                              changed=account.changed,
                              module_cache=module_cache)

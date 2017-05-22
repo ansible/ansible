@@ -177,7 +177,7 @@ class TaskQueueManager:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
         for callback_plugin in callback_loader.all(class_only=True):
-            if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
+            if getattr(callback_plugin, 'CALLBACK_VERSION', None) is not None and callback_plugin.CALLBACK_VERSION >= 2.0:
                 # we only allow one callback of type 'stdout' to be loaded, so check
                 # the name of the current plugin and type to see if we need to skip
                 # loading this callback plugin
@@ -242,7 +242,7 @@ class TaskQueueManager:
 
         play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
         for callback_plugin in self._callback_plugins:
-            if hasattr(callback_plugin, 'set_play_context'):
+            if getattr(callback_plugin, 'set_play_context', None) is not None:
                 callback_plugin.set_play_context(play_context)
 
         self.send_callback('v2_playbook_on_play_start', new_play)
@@ -299,7 +299,7 @@ class TaskQueueManager:
         self._cleanup_processes()
 
     def _cleanup_processes(self):
-        if hasattr(self, '_workers'):
+        if getattr(self, '_workers', None) is not None:
             for (worker_prc, rslt_q) in self._workers:
                 rslt_q.close()
                 if worker_prc and worker_prc.is_alive():
@@ -333,7 +333,7 @@ class TaskQueueManager:
 
         defunct = False
         for idx,x in enumerate(self._workers):
-            if hasattr(x[0], 'exitcode'):
+            if getattr(x[0], 'exitcode', None) is not None:
                 if x[0].exitcode in [-9, -11, -15]:
                     defunct = True
         return defunct

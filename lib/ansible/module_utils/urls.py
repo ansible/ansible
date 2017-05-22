@@ -367,7 +367,7 @@ class NoSSLError(SSLValidationError):
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
 # against openssl and thus do not have any HTTPS support.
 CustomHTTPSConnection = CustomHTTPSHandler = None
-if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler'):
+if getattr(httplib, 'HTTPSConnection', None) is not None and getattr(urllib_request, 'HTTPSHandler', None) is not None:
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
             httplib.HTTPSConnection.__init__(self, *args, **kwargs)
@@ -382,7 +382,7 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
         def connect(self):
             "Connect to a host on a given (SSL) port."
 
-            if hasattr(self, 'source_address'):
+            if getattr(self, 'source_address', None) is not None:
                 sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
             else:
                 sock = socket.create_connection((self.host, self.port), self.timeout)
@@ -445,7 +445,7 @@ def generic_urlparse(parts):
     library do not support named attributes (ie. .netloc)
     '''
     generic_parts = dict()
-    if hasattr(parts, 'netloc'):
+    if getattr(parts, 'netloc', None) is not None:
         # urlparse is newer, just read the fields straight
         # from the parts object
         generic_parts['scheme']   = parts.scheme
@@ -913,7 +913,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     # pre-2.6 versions of python cannot use the custom https
     # handler, since the socket class is lacking create_connection.
     # Some python builds lack HTTPS support.
-    if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
+    if getattr(socket, 'create_connection', None) is not None and CustomHTTPSHandler:
         handlers.append(CustomHTTPSHandler)
 
     handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))

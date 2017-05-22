@@ -114,7 +114,7 @@ def get_eni_info(interface):
                       'private_ip_addresses': private_addresses
                       }
 
-    if hasattr(interface, 'publicDnsName'):
+    if getattr(interface, 'publicDnsName', None) is not None:
         interface_info['association'] = {'public_ip_address': interface.publicIp,
                                          'public_dns_name': interface.publicDnsName,
                                          'ip_owner_id': interface.ipOwnerId

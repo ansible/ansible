@@ -211,9 +211,9 @@ except ImportError:
 
 def boto_exception(err):
     '''generic error message handler'''
-    if hasattr(err, 'error_message'):
+    if getattr(err, 'error_message', None) is not None:
         error = err.error_message
-    elif hasattr(err, 'message'):
+    elif getattr(err, 'message', None) is not None:
         error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
     else:
         error = '%s: %s' % (Exception, err)
@@ -373,7 +373,7 @@ def head_s3(s3, bucket, s3keys):
         try:
             retentry['s3_head'] = s3.head_object(Bucket=bucket, Key=entry['s3_path'])
         except botocore.exceptions.ClientError as err:
-            if (hasattr(err, 'response') and
+            if (getattr(err, 'response', None) is not None and
                     'ResponseMetadata' in err.response and
                     'HTTPStatusCode' in err.response['ResponseMetadata'] and
                     str(err.response['ResponseMetadata']['HTTPStatusCode']) == '404'):

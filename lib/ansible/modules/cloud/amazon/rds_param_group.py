@@ -321,7 +321,7 @@ def main():
                 changed_params, group_params = modify_group(next_group, group_params, immediate)
                 changed.update(changed_params)
 
-                if hasattr(next_group, 'Marker'):
+                if getattr(next_group, 'Marker', None) is not None:
                     marker = next_group.Marker
                 else:
                     break
@@ -343,4 +343,3 @@ from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
-

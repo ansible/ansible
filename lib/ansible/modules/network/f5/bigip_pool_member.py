@@ -395,7 +395,7 @@ def main():
 
     if module.params['validate_certs']:
         import ssl
-        if not hasattr(ssl, 'SSLContext'):
+        if not getattr(ssl, 'SSLContext', None):
             module.fail_json(
                 msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task'
             )

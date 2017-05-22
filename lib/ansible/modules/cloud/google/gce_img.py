@@ -216,7 +216,7 @@ def main():
     family = module.params.get('family')
     changed = False
 
-    if family is not None and hasattr(libcloud, '__version__') and libcloud.__version__ <= '0.20.1':
+    if family is not None and getattr(libcloud, '__version__', None) is not None and libcloud.__version__ <= '0.20.1':
         module.fail_json(msg="Apache Libcloud 1.0.0+ is required to use 'family' option",
                          changed=False)
 

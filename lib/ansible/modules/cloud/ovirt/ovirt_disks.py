@@ -423,7 +423,7 @@ class DisksModule(BaseModule):
                 ],
             ) if logical_unit else None,
         )
-        if hasattr(disk, 'initial_size'):
+        if getattr(disk, 'initial_size', None) is not None:
             disk.initial_size = convert_to_bytes(
                 self._module.params.get('size')
             )

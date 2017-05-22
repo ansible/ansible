@@ -193,14 +193,14 @@ class BigIpGtmDatacenter(object):
             partition=partition
         )
 
-        if hasattr(r, 'servers'):
+        if getattr(r, 'servers', None) is not None:
             # Deliberately using sets to suppress duplicates
             p['servers'] = set([str(x) for x in r.servers])
-        if hasattr(r, 'contact'):
+        if getattr(r, 'contact', None) is not None:
             p['contact'] = str(r.contact)
-        if hasattr(r, 'location'):
+        if getattr(r, 'location', None) is not None:
             p['location'] = str(r.location)
-        if hasattr(r, 'description'):
+        if getattr(r, 'description', None) is not None:
             p['description'] = str(r.description)
         if r.enabled:
             p['enabled'] = True

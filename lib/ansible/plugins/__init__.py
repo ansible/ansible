@@ -153,7 +153,7 @@ class PluginLoader:
 
         if not self.package:
             return []
-        if not hasattr(self, 'package_path'):
+        if not getattr(self, 'package_path', None) is not None:
             m = __import__(self.package)
             parts = self.package.split('.')[1:]
             for parent_mod in parts:
@@ -547,4 +547,3 @@ terminal_loader = PluginLoader(
     'terminal_plugins',
     'terminal_plugins'
 )
-

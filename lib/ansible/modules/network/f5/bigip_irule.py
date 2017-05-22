@@ -206,7 +206,7 @@ class BigIpiRule(object):
                 partition=partition
             )
 
-        if hasattr(r, 'apiAnonymous'):
+        if getattr(r, 'apiAnonymous', None) is not None:
             p['content'] = str(r.apiAnonymous.strip())
         p['name'] = name
         return p

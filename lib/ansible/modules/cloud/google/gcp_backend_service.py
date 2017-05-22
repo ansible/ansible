@@ -370,7 +370,7 @@ def main():
             msg='libcloud with GCE Backend Service support (1.3+) required for this module.')
 
     gce = gce_connect(module)
-    if not hasattr(gce, 'ex_create_instancegroupmanager'):
+    if not getattr(gce, 'ex_create_instancegroupmanager', None):
         module.fail_json(
             msg='libcloud with GCE Backend Service support (1.3+) required for this module.',
             changed=False)

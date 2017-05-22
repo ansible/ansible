@@ -294,7 +294,7 @@ class BigIpSelfIp(object):
             partition=partition
         )
 
-        if hasattr(r, 'address'):
+        if getattr(r, 'address', None) is not None:
             p['route_domain'] = str(None)
             if '%' in r.address:
                 ipaddr = []
@@ -305,11 +305,11 @@ class BigIpSelfIp(object):
             ipnet = IPNetwork(r.address)
             p['address'] = str(ipnet.ip)
             p['netmask'] = str(ipnet.netmask)
-        if hasattr(r, 'trafficGroup'):
+        if getattr(r, 'trafficGroup', None) is not None:
             p['traffic_group'] = str(r.trafficGroup)
-        if hasattr(r, 'vlan'):
+        if getattr(r, 'vlan', None) is not None:
             p['vlan'] = str(r.vlan)
-        if hasattr(r, 'allowService'):
+        if getattr(r, 'allowService', None) is not None:
             if r.allowService == 'all':
                 p['allow_service'] = set(['all'])
             else:

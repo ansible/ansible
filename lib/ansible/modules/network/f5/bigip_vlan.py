@@ -208,17 +208,17 @@ class BigIpVlan(object):
             partition=partition
         )
         ifcs = r.interfaces_s.get_collection()
-        if hasattr(r, 'tag'):
+        if getattr(r, 'tag', None) is not None:
             p['tag'] = int(r.tag)
-        if hasattr(r, 'description'):
+        if getattr(r, 'description', None) is not None:
             p['description'] = str(r.description)
         if len(ifcs) is not 0:
             untagged = []
             tagged = []
             for x in ifcs:
-                if hasattr(x, 'tagged'):
+                if getattr(x, 'tagged', None) is not None:
                     tagged.append(str(x.name))
-                elif hasattr(x, 'untagged'):
+                elif getattr(x, 'untagged', None) is not None:
                     untagged.append(str(x.name))
             if untagged:
                 p['untagged_interfaces'] = list(set(untagged))

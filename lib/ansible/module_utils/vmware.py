@@ -235,7 +235,7 @@ def gather_vm_facts(content, vm):
 
     ethernet_idx = 0
     for idx, entry in enumerate(vm.config.hardware.device):
-        if not hasattr(entry, 'macAddress'):
+        if not getattr(entry, 'macAddress', None) is not None:
             continue
 
         if entry.macAddress:
@@ -318,7 +318,7 @@ def connect_to_api(module, disconnect_atexit=True):
     password = module.params['password']
     validate_certs = module.params['validate_certs']
 
-    if validate_certs and not hasattr(ssl, 'SSLContext'):
+    if validate_certs and not getattr(ssl, 'SSLContext', None) is not None:
         module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
                              'python or or use validate_certs=false')
 

@@ -12,7 +12,7 @@ UMASK = 0
 WORKDIR = "/"
 MAXFD = 1024
 
-if (hasattr(os, "devnull")):
+if (getattr(os, "devnull", None) is not None):
    REDIRECT_TO = os.devnull
 else:
    REDIRECT_TO = "/dev/null"
@@ -64,4 +64,3 @@ if __name__ == "__main__":
 
    while True:
        time.sleep(1000)
-

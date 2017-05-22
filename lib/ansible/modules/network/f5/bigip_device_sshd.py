@@ -284,20 +284,20 @@ class BigIpDeviceSshd(object):
         p = dict()
         r = self.api.tm.sys.sshd.load()
 
-        if hasattr(r, 'allow'):
+        if getattr(r, 'allow', None) is not None:
             # Deliberately using sets to suppress duplicates
             p['allow'] = set([str(x) for x in r.allow])
-        if hasattr(r, 'banner'):
+        if getattr(r, 'banner', None) is not None:
             p['banner'] = str(r.banner)
-        if hasattr(r, 'bannerText'):
+        if getattr(r, 'bannerText', None) is not None:
             p['banner_text'] = str(r.bannerText)
-        if hasattr(r, 'inactivityTimeout'):
+        if getattr(r, 'inactivityTimeout', None) is not None:
             p['inactivity_timeout'] = str(r.inactivityTimeout)
-        if hasattr(r, 'logLevel'):
+        if getattr(r, 'logLevel', None) is not None:
             p['log_level'] = str(r.logLevel)
-        if hasattr(r, 'login'):
+        if getattr(r, 'login', None) is not None:
             p['login'] = str(r.login)
-        if hasattr(r, 'port'):
+        if getattr(r, 'port', None) is not None:
             p['port'] = int(r.port)
         return p
 

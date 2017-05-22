@@ -478,7 +478,7 @@ def main():
         try:
             region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
             boto3_dynamodb = boto3_conn(module, conn_type='client', resource='dynamodb', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-            if not hasattr(boto3_dynamodb, 'tag_resource'):
+            if not getattr(boto3_dynamodb, 'tag_resource', None) is not None:
                 module.fail_json(msg='boto3 connection does not have tag_resource(), likely due to using an old version')
             boto3_sts = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoCredentialsError as e:

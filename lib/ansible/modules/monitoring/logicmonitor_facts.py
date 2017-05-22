@@ -360,7 +360,7 @@ class LogicMonitor(object):
             h = None
 
             # Determine if we're creating a group from host or hostgroup class
-            if hasattr(self, '_build_host_group_hash'):
+            if getattr(self, '_build_host_group_hash', None) is not None:
                 h = self._build_host_group_hash(
                     fullpath,
                     self.description,
@@ -437,7 +437,7 @@ class Host(LogicMonitor):
             self.module.debug("Host found by displayname")
             # Used the host information to grab the collector description
             # if not provided
-            if (not hasattr(self.params, "collector") and
+            if (not getattr(self.params, "collector", None) and
                "agentDescription" in info):
                 self.module.debug("Setting collector from host response. " +
                                   "Collector " + info["agentDescription"])

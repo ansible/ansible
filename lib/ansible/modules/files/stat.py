@@ -426,7 +426,7 @@ def format_output(module, path, st):
             ('st_creator', 'creator'),
             ('st_type', 'file_type'),
     ]:
-        if hasattr(st, other[0]):
+        if getattr(st, other[0], None) is not None:
             output[other[1]] = getattr(st, other[0])
 
 

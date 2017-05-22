@@ -393,7 +393,7 @@ class ClcSnapshot:
 
     @staticmethod
     def _set_user_agent(clc):
-        if hasattr(clc, 'SetRequestsSession'):
+        if getattr(clc, 'SetRequestsSession', None) is not None:
             agent_string = "ClcAnsibleModule/" + __version__
             ses = requests.Session()
             ses.headers.update({"Api-Client": agent_string})

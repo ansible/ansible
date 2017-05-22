@@ -63,7 +63,7 @@ class StrategyModule(LinearStrategyModule):
         super(StrategyModule, self)._queue_task(host, task, task_vars, play_context)
 
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
-        if not hasattr(self, "curr_host"):
+        if not getattr(self, "curr_host", None):
             return super(StrategyModule, self)._process_pending_results(iterator, one_pass, max_passes)
 
         prev_host_state = iterator.get_host_state(self.curr_host)

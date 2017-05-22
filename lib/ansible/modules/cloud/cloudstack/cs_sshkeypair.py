@@ -233,7 +233,7 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 
     def _get_ssh_fingerprint(self, public_key):
         key = sshpubkeys.SSHKey(public_key)
-        if hasattr(key, 'hash_md5'):
+        if getattr(key, 'hash_md5', None) is not None:
             return key.hash_md5().replace(to_native('MD5:'), to_native(''))
         return key.hash()
 

@@ -111,7 +111,7 @@ class Connection(ConnectionBase):
 
         self._kinit_cmd  = hostvars.get('ansible_winrm_kinit_cmd', 'kinit')
 
-        if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
+        if getattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES', None) is not None:
             self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
         else:
             # for legacy versions of pywinrm, use the values we know are supported

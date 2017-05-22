@@ -104,9 +104,9 @@ if sys.version_info >= (3, 5):
             return func(*args, **kwargs)
         except (OSError, IOError, select.error) as e:
             errcode = None
-            if hasattr(e, "errno"):
+            if getattr(e, "errno", None) is not None:
                 errcode = e.errno
-            elif hasattr(e, "args"):
+            elif getattr(e, "args", None) is not None:
                 errcode = e.args[0]
             raise SelectorError(errcode)
 else:
@@ -141,13 +141,13 @@ else:
             except (OSError, IOError, select.error) as e:
                 # select.error wasn't a subclass of OSError in the past.
                 errcode = None
-                if hasattr(e, "errno"):
+                if getattr(e, "errno", None) is not None:
                     errcode = e.errno
-                elif hasattr(e, "args"):
+                elif getattr(e, "args", None) is not None:
                     errcode = e.args[0]
 
                 # Also test for the Windows equivalent of EINTR.
-                is_interrupt = (errcode == errno.EINTR or (hasattr(errno, "WSAEINTR") and
+                is_interrupt = (errcode == errno.EINTR or (getattr(errno, "WSAEINTR", None) is not None and
                                                            errcode == errno.WSAEINTR))
 
                 if is_interrupt:
@@ -324,7 +324,7 @@ class BaseSelector(object):
         self.close()
 
 # Almost all platforms have select.select()
-if hasattr(select, "select"):
+if getattr(select, "select", None) is not None:
     class SelectSelector(BaseSelector):
         """ Select-based selector. """
         def __init__(self):
@@ -376,7 +376,7 @@ if hasattr(select, "select"):
     __all__.append('SelectSelector')
 
 
-if hasattr(select, "poll"):
+if getattr(select, "poll", None) is not None:
     class PollSelector(BaseSelector):
         """ Poll-based selector """
         def __init__(self):
@@ -430,7 +430,7 @@ if hasattr(select, "poll"):
 
     __all__.append('PollSelector')
 
-if hasattr(select, "epoll"):
+if getattr(select, "epoll", None) is not None:
     class EpollSelector(BaseSelector):
         """ Epoll-based selector """
         def __init__(self):
@@ -499,7 +499,7 @@ if hasattr(select, "epoll"):
     __all__.append('EpollSelector')
 
 
-if hasattr(select, "devpoll"):
+if getattr(select, "devpoll", None) is not None:
     class DevpollSelector(BaseSelector):
         """Solaris /dev/poll selector."""
 
@@ -562,7 +562,7 @@ if hasattr(select, "devpoll"):
     __all__.append('DevpollSelector')
 
 
-if hasattr(select, "kqueue"):
+if getattr(select, "kqueue", None) is not None:
     class KqueueSelector(BaseSelector):
         """ Kqueue / Kevent-based selector """
         def __init__(self):

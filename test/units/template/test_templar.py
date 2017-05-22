@@ -60,7 +60,7 @@ class BaseTemplar(object):
         if obj is None:
             return False
 
-        if hasattr(obj, '__UNSAFE__'):
+        if getattr(obj, '__UNSAFE__', None) is not None:
             return True
 
         if isinstance(obj, AnsibleUnsafe):
@@ -76,7 +76,7 @@ class BaseTemplar(object):
                 if self.is_unsafe(item):
                     return True
 
-        if isinstance(obj, string_types) and hasattr(obj, '__UNSAFE__'):
+        if isinstance(obj, string_types) and getattr(obj, '__UNSAFE__', None) is not None:
             return True
 
         return False

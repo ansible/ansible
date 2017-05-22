@@ -271,7 +271,7 @@ def yum_base(conf_file=None, installroot='/'):
     if conf_file and os.path.exists(conf_file):
         my.preconf.fn = conf_file
     if os.geteuid() != 0:
-        if hasattr(my, 'setCacheDir'):
+        if getattr(my, 'setCacheDir', None) is not None:
             my.setCacheDir()
         else:
             cachedir = yum.misc.getCacheDir()
@@ -315,7 +315,7 @@ def fetch_rpm_from_url(spec, module=None):
 
 def po_to_nevra(po):
 
-    if hasattr(po, 'ui_nevra'):
+    if getattr(po, 'ui_nevra', None) is not None:
         return po.ui_nevra
     else:
         return '%s-%s-%s.%s' % (po.name, po.version, po.release, po.arch)
