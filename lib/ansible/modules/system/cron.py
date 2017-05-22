@@ -656,6 +656,10 @@ def main():
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
         module.fail_json(msg="You must specify time and date fields or special time.")
 
+    # cannot support special_time on solaris
+    if (special_time or reboot) and os.uname()[0] == 'SunOS':
+        module.fail_json(msg="Solaris does not support special_time=... or @reboot")
+
     if cron_file and do_install:
         if not user:
             module.fail_json(msg="To use cron_file=... parameter you must specify user=... as well")
