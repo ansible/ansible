@@ -199,13 +199,13 @@ class Base(with_metaclass(BaseMeta, object)):
         if depth == 0:
             print("DUMPING OBJECT ------------------------------------------------------")
         print("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
-        if getattr(self, '_parent') and self._paren, Nonet is not None:
+        if getattr(self, '_parent', None) is not None and self._parent:
             self._parent.dump_me(depth+2)
             dep_chain = self._parent.get_dep_chain()
             if dep_chain:
                 for dep in dep_chain:
                     dep.dump_me(depth+2)
-        if getattr(self, '_play') and self._pla, Noney is not None:
+        if getattr(self, '_play', None) is not None and self._play:
             self._play.dump_me(depth+2)
 
     def preprocess_data(self, ds):
