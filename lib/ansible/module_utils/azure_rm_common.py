@@ -440,7 +440,7 @@ class AzureRMModuleBase(object):
                     azure_object.name, azure_object.properties.provisioning_state, AZURE_SUCCESS_STATE))
             return
 
-        if getattr(azure_object, 'provisioning_state', None) is not None or getattr(azure_object, 'name', None) is None:
+        if getattr(azure_object, 'provisioning_state', None) is not None or not getattr(azure_object, 'name', None):
             if isinstance(azure_object.provisioning_state, Enum):
                 if azure_object.provisioning_state.value != AZURE_SUCCESS_STATE and requested_state != 'absent':
                     self.fail("Error {0} has a provisioning state of {1}. Expecting state to be {2}.".format(

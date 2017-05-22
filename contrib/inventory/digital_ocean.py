@@ -177,7 +177,7 @@ class DigitalOceanInventory(object):
         self.read_cli_args()
 
         # Verify credentials were set
-        if getattr(self, 'api_token') is None:
+        if not getattr(self, 'api_token', None):
             sys.stderr.write('''Could not find values for DigitalOcean api_token.
 They must be specified via either ini file, command line argument (--api-token),
 or environment variables (DO_API_TOKEN)\n''')

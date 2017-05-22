@@ -183,7 +183,7 @@ class Ec2Inventory(object):
         # Make sure that profile_name is not passed at all if not set
         # as pre 2.24 boto will fall over otherwise
         if self.boto_profile:
-            if getattr(boto.ec2.EC2Connection, 'profile_name') is not None:
+            if not getattr(boto.ec2.EC2Connection, 'profile_name', None):
                 self.fail_with_error("boto version must be >= 2.24 to use profile")
 
         # Cache
