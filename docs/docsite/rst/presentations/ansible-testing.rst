@@ -35,25 +35,9 @@ Ansible Testing
    * Tailor content:
 
      * Q: Show of hands for version, devel, 2.3, -> 1.9? - upgrade!
-     * Q: Who's raised a PR?
-     * Q: Updated a module (bug fix or functionality)
-     * Q: Created a new module - how long ago (should have improved)
+     * Q: Who's raised a PR, should be getting easier on each release, especially modules
 
-
-This talk is Free Software
-==========================
-
-* Written for `presentty` https://pypi.python.org/pypi/presentty
-* ``docs/docsite/rst/presentations/ansible-testing.rst`` (once I've committed it)
-* Meetup event will be updated with the link
-
-.. container:: handout
-
-   * Trailing new way of doing presentations
-   * Will be on website
-   * Aim is that they will evolve over time
-   * RST contains speakers notes, which have more detail
-   * Add link from the Meetup event
+   * ReStructured Text: Slides will be made available online, which include speakers notes
    * Questions welcome at any point - Will ask Mark to make a note
 
 
@@ -98,11 +82,11 @@ Solution: ansible-test
      * Originally used Travis, moved as Shippable is cheaper
      * 52 Concurrent jobs as of May 2017
 
-   * tox: Sanity & Unit tests
    * Local Runs
 
      * Different OS + Local runs fit together
      * Shippable is just a wrapper, all logic in ansible-test
+     * tox: Sanity & Unit tests
 
    * Duration
 
@@ -126,17 +110,14 @@ Types of tests
 * **integration**
 
   * Functional tests of modules and Ansible core functionality.
+  * Best for testing modules and core features (become, ``with_*``, add_host)
 
 * **units**
 
   * Tests directly against individual parts of the code base.
+  * Best for testing libraries (``module_utils``)
 
 .. container:: handout
-
-   * Explain each type in basic terms
-
-     * What type of issues they identify
-     * How long they take to run
 
    * compile
 
@@ -148,6 +129,7 @@ Types of tests
      * ansible-doc, ansible-var-precedence-check
      * Code: no-iterkeys, pep8, pylint, shellcheck
      * ``ansible-test sanity --list-tests`` for full list
+
 
 ansible-test platform features
 ==============================
@@ -164,7 +146,7 @@ ansible-test platform features
 
 .. container:: handout
 
-   * OS: CentOS, Fedora, Ubuntu, OpenSUSE, Windows
+   * Linux: CentOS, Fedora, Ubuntu, OpenSUSE
    * Docker images are available for you to use locally ``ansible-test --docker``
    * Network tests are getting there, vyos, working on others
 
@@ -178,14 +160,14 @@ Spot common issues
 
 .. container:: handout
 
-   * Bulk changes that update all modules are preferred, though speak to us first
    * Fix a **single** class of issues only, easier to review
    * e.g Look at lots if new module PRs. Also about improving documentation
+   * Bulk changes that update all modules are preferred, though speak to us first
    * Fixes to existing modules, people often copy them
    * Recent examples: Modules DOCUMENATION & RETURNS blocks
 
 
-Improvements since 2.0
+Improvements since 2.1
 ======================
 
 * 2.1
@@ -271,7 +253,7 @@ Lets look at a PR to see how this all fits together...
 Testing Working Group
 =====================
 
-* One of the special interest groups, others are Core, Networking and Windows
+* One of the special interest groups, others are: Core, Networking and Windows
 * Weekly public meeting on ``#ansible-meeting``
 * Set direction and combine powers
 * Subscribe to the GitHub issue for updates
@@ -279,22 +261,15 @@ Testing Working Group
 
 .. container:: handout
 
-  * Setup after AnsibleFest SanFran 2016, ~ year
-  * gundalow & Matt Clay + good community
+  * Q: Who knows ``#ansible-devel``
+  * Q: Who knows about IRC Meetings?
+  * Testing Working Group
+
+    * Setup after AnsibleFest SanFran 2016, ~ year
+    * gundalow & Matt Clay + a good community
 
   * Join ``#ansible-meeting`` on Freenode, see topic for link
-  * TWG is 6pm Thu UK time BST
-  * Core is Tue 8pm, Thu 4pm BST
-  * Network is Wed 6pm BST
-  * If you can't make the meeting Dev questions welcome in ''#ansible-devel''
 
-
-Part 2: Writing and running tests
-=================================
-
-.. container:: handout
-
-   * No content here, just a point to pause for questions so far
 
 Unit Tests: Creating
 ====================
@@ -329,6 +304,7 @@ Integration Tests: Why?
    * Q: Who has written more than a handful of Playbooks?
 
      * You have already have the skills to write integration tests :)
+     * Just add ``assert``
 
    * Need to sell/convince people
 
@@ -355,20 +331,6 @@ Example package test
 
    * Idempotent is a key feature, test it
 
-
-
-Integration Tests: Best practices
-=================================
-
-* ``set_fact: output_file={{output_dir}}/foo.txt``
-* Add tests before refactoring
-* Negative Testing - backtraces are bugs
-* Test multiple options
-* Check RETURNed data with ``register`` and ``assert``
-
-.. container:: handout
-
-   * FIXME Add examples
 
 
 Integration Tests: Demo
@@ -410,6 +372,19 @@ Demo of running tests with Docker
 
       * Use of output_dir
       * Conditional include selinux
+
+Integration Tests: Best practices
+=================================
+
+* ``set_fact: output_file={{output_dir}}/foo.txt``
+* Add tests before refactoring
+* Negative Testing - backtraces are bugs
+* Test multiple options
+* Check RETURNed data with ``register`` and ``assert``
+
+.. container:: handout
+
+   * FIXME Add examples
 
 Code Coverage
 =============
