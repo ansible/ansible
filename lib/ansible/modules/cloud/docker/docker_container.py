@@ -59,6 +59,8 @@ options:
   command:
     description:
       - Command to execute when the container starts.
+        A command may be either a string or a list.
+        Prior to version 2.4, strings were split on commas.
     default: null
     required: false
   cpu_period:
@@ -814,7 +816,8 @@ class TaskParameters(DockerBaseClass):
 
         if self.command:
             # convert from list to str
-            self.command = ' '.join([str(x) for x in self.command])
+            if isinstance(self.command, list):
+                self.command = ' '.join([str(x) for x in self.command])
 
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
@@ -1970,7 +1973,7 @@ def main():
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
         cleanup=dict(type='bool', default=False),
-        command=dict(type='list'),
+        command=dict(type='raw'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
