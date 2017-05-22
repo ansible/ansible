@@ -128,7 +128,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     module_name = 'win_%s' % module_name
 
                 # Remove extra quotes surrounding path parameters before sending to module.
-                if module_name in ('win_stat', 'win_file', 'win_copy', 'slurp') and module_args and getattr(self._connection._shell, '_unquote', None) is not None:
+                if module_name in ('win_stat', 'win_file', 'win_copy', 'slurp') and module_args and \
+                   getattr(self._connection._shell, '_unquote', None) is not None:
                     for key in ('src', 'dest', 'path'):
                         if key in module_args:
                             module_args[key] = self._connection._shell._unquote(module_args[key])

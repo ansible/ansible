@@ -138,7 +138,8 @@ class CLI(with_metaclass(ABCMeta, object)):
             # that could be legal for this command
             tmp_parser = InvalidOptsParser(self.parser)
             tmp_options, tmp_args = tmp_parser.parse_args(self.args)
-            if not(getattr(tmp_options, 'help', None) is not None and tmp_options.help) or (getattr(tmp_options, 'version', None) is not None and tmp_options.version):
+            if not(getattr(tmp_options, 'help', None) is not None and tmp_options.help) or \
+               (getattr(tmp_options, 'version', None) is not None and tmp_options.version):
                 raise AnsibleOptionsError("Missing required action")
 
     def execute(self):

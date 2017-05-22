@@ -605,7 +605,8 @@ class Inventory(object):
         vars = {}
 
         # plugin.get_group_vars retrieves just vars for specific group
-        vars_results = [ plugin.get_group_vars(group, vault_password=vault_password) for plugin in self._vars_plugins if getattr(plugin, 'get_group_vars', None) is not None]
+        vars_results = [plugin.get_group_vars(group, vault_password=vault_password)
+                        for plugin in self._vars_plugins if getattr(plugin, 'get_group_vars', None) is not None]
         for updated in vars_results:
             if updated is not None:
                 vars = combine_vars(vars, updated)
@@ -657,7 +658,8 @@ class Inventory(object):
                 vars = combine_vars(vars, updated)
 
         # plugin.get_host_vars retrieves just vars for specific host
-        vars_results = [ plugin.get_host_vars(host, vault_password=vault_password) for plugin in self._vars_plugins if getattr(plugin, 'get_host_vars', None) is not None]
+        vars_results = [plugin.get_host_vars(host, vault_password=vault_password)
+                        for plugin in self._vars_plugins if getattr(plugin, 'get_host_vars', None) is not None]
         for updated in vars_results:
             if updated is not None:
                 vars = combine_vars(vars, updated)

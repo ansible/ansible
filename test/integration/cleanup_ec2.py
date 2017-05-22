@@ -73,7 +73,8 @@ def delete_aws_instances(reservation, opts):
 def prompt_and_delete(item, prompt, assumeyes):
     if not assumeyes:
         assumeyes = raw_input(prompt).lower() == 'y'
-    assert getattr(item, 'delete', None) is not None or getattr(item, 'terminate', None) is not None , "Class <%s> has no delete or terminate attribute" % item.__class__
+    assert getattr(item, 'delete', None) is not None or \
+           getattr(item, 'terminate', None) is not None , "Class <%s> has no delete or terminate attribute" % item.__class__
     if assumeyes:
         if getattr(item, 'delete', None) is not None:
             item.delete()
