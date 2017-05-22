@@ -15,6 +15,7 @@ redis
 setuptools > 0.6 # pytest-xdist installed via requirements does not work with very old setuptools (sanity_ok)
 unittest2 ; python_version < '2.7'
 netaddr
+ipaddress
 
 # requirements for F5 specific modules
 f5-sdk ; python_version >= '2.7'

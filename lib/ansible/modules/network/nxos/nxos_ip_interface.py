@@ -136,7 +136,7 @@ end_state:
                            {"addr": "20.20.20.20", "mask": 24, "tag": 100, "secondary": true}],
             "interface": "ethernet1/32", "prefixes": ["11.11.0.0/17", "20.20.20.0/24"],
             "type": "ethernet", "vrf": "default"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
@@ -274,7 +274,7 @@ def parse_unstructured_data(body, interface_name, version, module):
                 address = each_line.strip().split(' ')[0]
                 if address not in address_list:
                     address_list.append(address)
-                    interface['prefixes'].append(str(ipaddress.ip_interface(address.decode('utf-8')).network))
+                    interface['prefixes'].append(str(ipaddress.ip_interface(address).network))
 
             if address_list:
                 for ipv6 in address_list:
@@ -299,7 +299,7 @@ def parse_unstructured_data(body, interface_name, version, module):
                         match_dict['secondary'] = True
                     match_dict['tag'] = int(match_dict['tag'])
                     interface['addresses'].append(match_dict)
-                    prefix = str(ipaddress.ip_interface("{addr}/{mask}".format(**match_dict).decode('utf-8')).network)
+                    prefix = str(ipaddress.ip_interface(u"%(addr)s/%(mask)s" % match_dict).network)
                     interface['prefixes'].append(prefix)
 
     try:
@@ -319,7 +319,6 @@ def parse_unstructured_data(body, interface_name, version, module):
 def get_ip_interface(interface_name, version, module):
     body = send_show_command(interface_name, version, module)
     interface = parse_unstructured_data(body, interface_name, version, module)
-
     return interface
 
 
@@ -435,7 +434,7 @@ def validate_params(addr, interface, mask, tag, allow_secondary, version, state,
                              mask=mask)
     if addr is not None and mask is not None:
         try:
-            ipaddress.ip_interface('{}/{}'.format(addr, mask).decode('utf-8'))
+            ipaddress.ip_interface(u'%s/%s' % (addr, mask))
         except ValueError:
             module.fail_json(msg="Warning! Invalid ip address or mask set.", addr=addr, mask=mask)
 
@@ -532,7 +531,7 @@ def main():
     results['proposed'] = proposed
     results['existing'] = existing
     results['end_state'] = end_state
-    results['updates'] = cmds
+    results['commands'] = cmds
     results['changed'] = changed
     results['warnings'] = warnings
 
