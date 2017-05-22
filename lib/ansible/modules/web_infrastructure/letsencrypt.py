@@ -464,7 +464,8 @@ class ACMEAccount(object):
             # ...and check if update is necessary
             do_update = False
             if 'contact' in result:
-                if cmp(contact, result['contact']) != 0:
+#                if cmp(contact, result['contact']) != 0:
+                if contact != result['contact']:
                     do_update = True
             elif len(contact) > 0:
                 do_update = True
