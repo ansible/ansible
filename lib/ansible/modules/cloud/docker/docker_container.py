@@ -59,6 +59,8 @@ options:
   command:
     description:
       - Command to execute when the container starts.
+        A command may be either a string or a list.
+        Prior to version 2.4, strings were split on commas.
     default: null
     required: false
   cpu_period:
