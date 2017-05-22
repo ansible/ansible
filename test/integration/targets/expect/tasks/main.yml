@@ -31,7 +31,7 @@
 
 - name: test expect
   expect:
-    command: "python3 {{test_command_file}}"
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
     responses:
       foo: bar
   register: expect_result
@@ -84,7 +84,7 @@
 
 - name: test echo option
   expect:
-    command: "python3 {{test_command_file}}"
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
     responses:
       foo: bar
     echo: true
