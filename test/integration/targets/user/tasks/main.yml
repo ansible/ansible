@@ -156,11 +156,20 @@
       owner=dennis
   register: sshkeyrun
 
+- name: Verify home directory settings on fresh user
+  file:
+      name="{{user_test0.home}}"
+      state=directory
+      mode=0700
+      owner="{{user_test0}}"
+  register: freshhomedirrun
+
 - name: Verify file checks
   assert:
       that:
           - "not sshkeyrun.changed"
           - "not homedirrun.changed"
+          - "not freshhomedirrun.changed"
 
 ###
 # SELinux checks only if Python bindings are installed, and SELinux is on.
