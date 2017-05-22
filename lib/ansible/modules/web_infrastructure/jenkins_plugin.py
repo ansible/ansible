@@ -330,7 +330,12 @@ class JenkinsPlugin(object):
         csrf_data = self._get_json_data(
             "%s/%s" % (self.url, "api/json"), 'CSRF')
 
-        return csrf_data["useCrumbs"]
+        try:
+            return csrf_data["useCrumbs"]
+        except:
+            self.module.fail_json(
+                msg="Required fields not found in the Crum response.",
+                details=csrf_data)
 
     def _get_json_data(self, url, what, **kwargs):
         # Get the JSON data
@@ -338,12 +343,12 @@ class JenkinsPlugin(object):
 
         # Parse the JSON data
         try:
-            json_data = json.load(r)
+            json_data = json.loads(to_native(r.read()))
         except Exception:
             e = get_exception()
             self.module.fail_json(
                 msg="Cannot parse %s JSON data." % what,
-                details=e.message)
+                details=to_native(e))
 
         return json_data
 
@@ -366,7 +371,7 @@ class JenkinsPlugin(object):
                 self.module.fail_json(msg=msg_status, details=info['msg'])
         except Exception:
             e = get_exception()
-            self.module.fail_json(msg=msg_exception, details=e.message)
+            self.module.fail_json(msg=msg_exception, details=to_native(e))
 
         return response
 
