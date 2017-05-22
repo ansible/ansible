@@ -193,6 +193,76 @@ def apply_change_ubuntu(targetState, name):
     if localeGenExitValue!=0:
         raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
+
+class Locale(object):
+    def __init__(self, name):
+        self.lang = None
+        self.codeset = None
+        self.modifier = None
+        self.name = name
+        self._normalized_codeset = None
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
+        self.lang, self.codeset, self.modifier = self.split(name)
+
+    @property
+    def normalized_codeset(self):
+        if not self._normalized_codeset:
+            if self.codeset:
+                self._normalized_codeset = self.normalize_codeset(self.codeset)
+
+        return self._normalized_codeset
+
+    @property
+    def normalized(self):
+        normalized = self.lang
+
+        if self.codeset:
+            normalized = '%s.%s' % (self.lang, self.normalized_codeset)
+
+        if self.modifier:
+            normalized = '%s@%s' % (normalized, self.modifier)
+
+        return normalized
+
+    @staticmethod
+    def split(name):
+        """Analyse name and return lang, codeset, modifier"""
+        if '.' not in name:
+            lang = name
+            codeset = None
+        else:
+            lang, codeset = name.split('.')
+
+        if '@' in lang:
+            # name was sv_FI@euro
+            lang, modifier = lang.split('@')
+        elif codeset and '@' in codeset:
+            # name was sv_FI.ISO-8859-15@euro
+            codeset, modifier = codeset.split('@')
+        else:
+            modifier = None
+
+        return lang, codeset, modifier
+
+    @staticmethod
+    def normalize_codeset(codeset):
+        """Same as 'normalize_codeset' in localedef.c from glibc"""
+        if codeset.isdigit():
+            codeset = 'iso%s' % codeset
+        else:
+            codeset = codeset.lower()
+            codeset = ''.join(car for car in codeset if car.isalnum())
+
+        return codeset
+
+
 # ==============================================================
 # main
 
