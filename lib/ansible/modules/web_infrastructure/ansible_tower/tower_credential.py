@@ -125,7 +125,7 @@ options:
       description:
         - Become method to Use for privledge escalation.
       required: False
-      choices: ["None", "sudo", "su", "pbrun", "pfexec"]
+      choices: ["None", "sudo", "su", "pbrun", "pfexec", "pmrun"]
       default: "None"
     become_username:
       description:
