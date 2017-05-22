@@ -112,5 +112,9 @@ else
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
 
-Start-Process -FilePath "$powershellpath\$filename" -ArgumentList /quiet
+# Extraction is needed if run remotely: https://support.microsoft.com/en-us/help/2773898/
+
+Start-Process wusa.exe "$powershellpath\$filename /extract:$powershellpath"
+$filenamecab = (Get-Item $powershellpath\$filename).Basename
+Start-Process dism.exe "/online /add-package /PackagePath:$powershellpath\$filenamecab.cab /quiet"
 Write-HostLog "Installing Powershell 3.0 (with reboot)"
