@@ -235,7 +235,7 @@ def setup_creation(client, module):
             if endpoint['VpcId'] == vpc_id and endpoint['ServiceName'] == service_name:
                 sorted_endpoint_rt_ids = sorted(endpoint['RouteTableIds'])
                 sorted_route_table_ids = sorted(route_table_ids)
-                if cmp(sorted_endpoint_rt_ids, sorted_route_table_ids) == 0:
+                if sorted_endpoint_rt_ids == sorted_route_table_ids:
                     return False, camel_dict_to_snake_dict(endpoint)
 
     changed, result = create_vpc_endpoint(client, module)
