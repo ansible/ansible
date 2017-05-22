@@ -271,9 +271,6 @@ EXAMPLES = '''
     safi: unicast
     route_reflector_client: true
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
