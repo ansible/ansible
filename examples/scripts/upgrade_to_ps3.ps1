@@ -112,5 +112,5 @@ else
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
 
-Start-Process -FilePath "$powershellpath\$filename" -Verb runAs -ArgumentList /quiet
+Start-Process -FilePath "$powershellpath\$filename" -ArgumentList /quiet -Verb runAs
 Write-HostLog "Installing Powershell 3.0 (with reboot)"
