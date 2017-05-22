@@ -193,9 +193,9 @@ def check(schema_facts, schema, usage_roles, create_roles, owner):
         return False
     if owner and owner.lower() == schema_facts[schema_key]['owner'].lower():
         return False
-    if cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0:
+    if sorted(usage_roles) !=  sorted(schema_facts[schema_key]['usage_roles']):
         return False
-    if cmp(sorted(create_roles), sorted(schema_facts[schema_key]['create_roles'])) != 0:
+    if sorted(create_roles) !=  sorted(schema_facts[schema_key]['create_roles']):
         return False
     return True
 
