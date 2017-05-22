@@ -217,7 +217,6 @@ class DBusWrapper(object):
             extra_environment = {'DBUS_SESSION_BUS_ADDRESS': self.dbus_session_bus_address}
             rc, out, err = self.module.run_command(command, environ_update=extra_environment)
 
-
         return rc, out, err
 
 
