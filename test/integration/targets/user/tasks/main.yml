@@ -26,7 +26,7 @@
 # Install SELinux bindings for python
 - name: Install python selinux (yum)
   yum:
-    name=libselinux-python
+    name=policycoreutils-python
     state=installed
   when: ansible_pkg_mgr == 'yum'
 
