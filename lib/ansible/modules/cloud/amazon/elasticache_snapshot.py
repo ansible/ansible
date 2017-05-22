@@ -136,6 +136,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+
 def create(module, connection, replication_id, cluster_id, name):
     """ Create an Elasticache backup. """
     try:
@@ -151,6 +152,7 @@ def create(module, connection, replication_id, cluster_id, name):
             module.fail_json(msg="Unable to create the snapshot.", exception=traceback.format_exc())
     return response, changed
 
+
 def copy(module, connection, name, target, bucket):
     """ Copy an Elasticache backup. """
     try:
@@ -161,6 +163,7 @@ def copy(module, connection, name, target, bucket):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to copy the snapshot.", exception=traceback.format_exc())
     return response, changed
+
 
 def delete(module, connection, name):
     """ Delete an Elasticache backup. """
@@ -199,7 +202,7 @@ def main():
 
     name = module.params.get('name')
     state = module.params.get('state')
-    replication_id  = module.params.get('replication_id')
+    replication_id = module.params.get('replication_id')
     cluster_id = module.params.get('cluster_id')
     target = module.params.get('target')
     bucket = module.params.get('bucket')
@@ -207,7 +210,7 @@ def main():
     # Retrieve any AWS settings from the environment.
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     if not region:
-        module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
+        module.fail_json(msg=str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
 
     connection = boto3_conn(module, conn_type='client',
                             resource='elasticache', region=region,
