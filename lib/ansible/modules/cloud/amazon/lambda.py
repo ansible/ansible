@@ -116,6 +116,12 @@ options:
     required: false
     default: None
     version_added: "2.3"
+  tags:
+    description:
+      - tag dict to apply to the function
+    required: false
+    default: None
+    version_added: "2.4"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -141,6 +147,8 @@ tasks:
     - sg-123abcde
     - sg-edcba321
     environment_variables: '{{ item.env_vars }}'
+    tags:
+      key1: 'value1'
   with_items:
     - name: HelloWorld
       zip_file: hello-code.zip
@@ -152,6 +160,18 @@ tasks:
       env_vars:
         key1: "1"
         key2: "2"
+
+# To remove previously added tags pass a empty dict
+tasks:
+- name: looped creation
+  lambda:
+    name: 'Lambda function'
+    state: present
+    zip_file: 'code.zip'
+    runtime: 'python2.7'
+    role: 'arn:aws:iam::987654321012:role/lambda_basic_execution'
+    handler: 'hello_python.my_handler'
+    tags: {}
 
 # Basic Lambda function deletion
 tasks:
@@ -271,6 +291,47 @@ def sha256sum(filename):
 
     return hex_digest
 
+def set_tag(client, tags, function):
+    changed = False
+    c = client
+    arn = function['Configuration']['FunctionArn']
+
+    try:
+        response = c.list_tags(
+            Resource=arn
+        )
+
+        unset_keys = []
+        for key in response['Tags']:
+            if not key in tags:
+                unset_keys.append(key)
+
+        if len(unset_keys) > 0:
+            c.untag_resource(
+                Resource=arn,
+                TagKeys=unset_keys
+            )
+            changed = True
+
+        for key, value in tags.iteritems():
+            if not key in response['Tags']:
+                c.tag_resource(
+                    Resource=arn,
+                    Tags=tags
+                )
+                changed = True
+
+            elif not tags[key] == response['Tags'][key]:
+                c.tag_resource(
+                    Resource=arn,
+                    Tags=tags
+                )
+                changed = True
+
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=str(e))
+
+    return changed
 
 def main():
     argument_spec = dict(
@@ -323,6 +384,7 @@ def main():
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
     dead_letter_arn = module.params.get('dead_letter_arn')
+    tags = module.params.get('tags')
 
     check_mode = module.check_mode
     changed = False
@@ -442,6 +504,11 @@ def main():
                 except IOError as e:
                     module.fail_json(msg=str(e), exception=traceback.format_exc())
 
+        # Tag Function
+        if not tags is None and len(tags) >= 0:
+            if set_tag(client, tags, current_function):
+                changed = True
+
         # Upload new code if needed (e.g. code checksum has changed)
         if len(code_kwargs) > 2:
             try:
@@ -518,6 +585,11 @@ def main():
             changed = True
         except (ParamValidationError, ClientError) as e:
             module.fail_json_aws(e, msg="Trying to create function")
+
+        # Tag Function
+        if not tags is None and len(tags) >= 0:
+            if set_tag(client, tags, get_current_function(client, name)):
+                changed = True
 
         response = get_current_function(client, name, qualifier=current_version)
         if not response:
