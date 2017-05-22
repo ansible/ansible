@@ -127,7 +127,7 @@
     register: mac_debug
   - name: list debug
     debug: msg={{mac_debug.stdout_lines}}
-when: ansible_distribution == 'MacOSX'
+  when: ansible_distribution == 'MacOSX'
 
 - name: try to create a second user
   user:
