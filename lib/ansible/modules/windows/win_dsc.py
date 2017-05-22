@@ -42,12 +42,10 @@ options:
     description:
       - The DSC Resource to use. Must be accessible to PowerShell using any of the default paths.
     required: true
-    default: null
   module_version:
     description: |
       Can be used to configure the exact version of the dsc resource to be invoked.
       Useful if the target node has multiple versions installed of the module containing the DSC resource
-    required: false
     default: latest
 author: Trond Hindenes
 '''
@@ -56,10 +54,10 @@ EXAMPLES = r'''
 # Playbook example
   - name: Extract zip file
     win_dsc:
-      resource_name="archive"
-      ensure="Present"
-      path="C:\\Temp\\zipfile.zip"
-      destination="C:\\Temp\\Temp2"
+      resource_name: archive
+      ensure: Present
+      path: "C:\\Temp\\zipfile.zip"
+      destination: "C:\\Temp\\Temp2"
 
   - name: Invoke DSC with check mode
     win_dsc:
@@ -88,7 +86,7 @@ attributes:
           description: Attribute key
       Value:
           description: Attribute value
-DSCAttributes:
+dsc_attributes:
     description: The attributes/parameters as returned from the DSC engine in dict format
     returned: always
     type: complex

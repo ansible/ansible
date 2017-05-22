@@ -45,26 +45,20 @@ if (!($Attributes))
 }
 
 #Always return some basic info
-$result['resource_name'] = $resourcename
-$result['attributes'] = $Attributes
-$result['reboot_required'] = $null
+$result["resource_name"] = $resourcename
+$result["attributes"] = $Attributes
+$result["reboot_required"] = $null
 
 
 # Build Attributes Hashtable for DSC Resource Propertys
 $Attrib = @{}
 foreach ($key in $Attributes)
 {
-    set-attr -obj $result -name $key.name -value $key.value
+    $result[$key.name] = $key.value
     $Attrib.Add($Key.Key,$Key.Value)
 }
-Set-Attr -obj $result -name DSCAttributes = -value $Attrib
 
-<#
-$params.Keys | foreach-object {
-    $Attrib.Add($_,$params.Item($_))
-    set-attr -obj $result -name $_ -value $params.Item($_)
-    }
-#>
+$result["dsc_attributes"] = $attrib
 
 $Config = @{
    Name = ($resourcename)
@@ -98,7 +92,7 @@ if (!$Resource)
 #Get the Module that provides the resource. Will be used as
 #mandatory argument for Invoke-DscResource
 $Module = $Resource.ModuleName
-$result['module_version'] = $Module.Version.ToString()
+$result["module_version"] = $Module.Version.ToString()
 
 #Convert params to correct datatype and inject
 $attrib.Keys | foreach-object {
@@ -198,6 +192,19 @@ $attrib.Keys | foreach-object {
       }
       $config.Property.Add($key,$KeyVal)
     }
+    ElseIf ($prop.PropertyType -eq "[Int32]")
+    {
+        # Add Supoort for Int32
+        [int]$KeyValue = $attrib.Item($_)
+        $config.Property.Add($key,$KeyValue)
+    }
+    ElseIf ($prop.PropertyType -eq "[UInt32]")
+    {
+        # Add Support for [UInt32]
+        [UInt32]$KeyValue = $attrib.Item($_)
+        $config.Property.Add($key,$KeyValue)
+    }
+
   }
 
 try
@@ -214,17 +221,15 @@ try
         if ($check_mode -eq $False)
         {
             $SetResult = Invoke-DscResource -Method Set @Config -ModuleName $Module -ErrorVariable SetError -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
-            set-attr -obj $result -name "reboot_required" -value $SetResult.RebootRequired
+            $result["reboot_required"] = $SetResult.RebootRequired
         }
 
-        Set-Attr $result "changed" $true
+        $result["changed"] = $true
         if ($SetError)
         {
            throw ($SetError[0].Exception.Message)
         }
-
     }
-
 }
 Catch
 {
