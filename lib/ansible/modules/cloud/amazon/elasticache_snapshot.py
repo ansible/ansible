@@ -28,6 +28,7 @@ description:
   - Returns information about the specified snapshot.
 version_added: "2.3"
 author: "Sloane Hertel (@s-hertel)"
+requirements: [ boto3, botocore ]
 options:
   name:
     description:
