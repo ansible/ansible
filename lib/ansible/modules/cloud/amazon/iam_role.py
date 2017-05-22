@@ -46,6 +46,12 @@ options:
       - A list of managed policy ARNs (can't use friendly names due to AWS API limitation) to attach to the role. To embed an inline policy,
         use M(iam_policy). To remove existing policies, use an empty list item.
     required: true
+  remove_unlisted_policies:
+    description:
+      - Detaches any managed policies not listed in the "managed_policy" option. Set to false if you want to attach policies elsewhere.
+    type: bool
+    default: true
+    version_added: "2.4"
   state:
     description:
       - Create or remove the IAM role
@@ -211,24 +217,25 @@ def create_or_update_role(connection, module):
     # Check attached managed policies
     current_attached_policies = get_attached_policy_list(connection, params['RoleName'])
     if not compare_attached_role_policies(current_attached_policies, managed_policies):
-        # If managed_policies has a single empty element we want to remove all attached policies
-        if len(managed_policies) == 1 and managed_policies[0] == "":
+        if module.params.get('remove_unlisted_policies'):
+            # If managed_policies has a single empty element we want to remove all attached policies
+            if len(managed_policies) == 1 and managed_policies[0] == "":
+                for policy in current_attached_policies:
+                    try:
+                        connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
+                    except (ClientError, ParamValidationError) as e:
+                        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+
+            # Detach policies not present
+            current_attached_policies_arn_list = []
             for policy in current_attached_policies:
+                current_attached_policies_arn_list.append(policy['PolicyArn'])
+
+            for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
                 try:
-                    connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
+                    connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
                 except (ClientError, ParamValidationError) as e:
                     module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-
-        # Detach policies not present
-        current_attached_policies_arn_list = []
-        for policy in current_attached_policies:
-            current_attached_policies_arn_list.append(policy['PolicyArn'])
-
-        for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
-            try:
-                connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
-            except (ClientError, ParamValidationError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
         # Attach each policy
         for policy_arn in managed_policies:
@@ -237,6 +244,7 @@ def create_or_update_role(connection, module):
             except (ClientError, ParamValidationError) as e:
                 module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
+    if current_attached_policies != get_attached_policy_list(connection, params['RoleName']):
         changed = True
 
     # We need to remove any instance profiles from the role before we delete it
@@ -335,6 +343,7 @@ def main():
             path=dict(default="/", required=False, type='str'),
             assume_role_policy_document=dict(required=False, type='json'),
             managed_policy=dict(default=[], required=False, type='list'),
+            remove_unlisted_policies=dict(type='bool', default=True),
             state=dict(default=None, choices=['present', 'absent'], required=True)
         )
     )
