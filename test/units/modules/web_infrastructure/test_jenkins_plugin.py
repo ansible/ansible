@@ -25,8 +25,7 @@ def test__get_json_data(mocker):
     jenkins_plugin = JenkinsPlugin(module)
 
     json_data = jenkins_plugin._get_json_data(
-            "{url}".format(
-                url=url),
-            'CSRF')
+        "{url}".format(url=url),
+        'CSRF')
 
     assert isinstance(json_data, collections.Mapping)
