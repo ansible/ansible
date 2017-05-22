@@ -31,19 +31,19 @@ description:
   - This module allows modifications and reading of dconf database. The module
     is implemented as a wrapper around dconf tool. Please see the dconf(1) man
     page for more details.
+  - Since C(dconf) requires a running D-Bus session to change values, the module
+    will try to detect an existing session and reuse it, or run the tool via
+    C(dbus-run-session).
 notes:
-  - Since C(dconf) tool requires a running D-Bus user session to change values,
-    it is up to the module user to ensure that it is available, and that its
-    address is supplied to the module. In addition to using the module
-    parameter, D-Bus user session bus address can be provided via environment
-    variable C(DBUS_SESSION_BUS_ADDRESS).
-  - Ensuring the session is available is a non-trivial task, and depending on
-    distribution you are running may be more or less straightforward.
-  - At time of this writing, if you are running a distribution which utilsies
-    C(systemd), session may be auto-actived for you and its address is fixed for
-    the specific user the module will run as. To check if the location is fixed,
-    try logging-in into the machine and checking value of environment variable
-    C(DBUS_SESSION_BUS_ADDRESS).
+  - This module depends on C(psutil) Python library (version 4.0.0 and upwards),
+    C(dconf), C(dbus-send), and C(dbus-run-session) binaries. Depending on
+    distribution you are using, you may need to install additional packages to
+    have these available.
+  - Detection of existing, running D-Bus session, required to change settings
+    via C(dconf), is not 100% reliable due to implementation details of D-Bus
+    daemon itself. This might lead to running applications not picking-up
+    changes on the fly if options are changed via Ansible and
+    C(dbus-run-session).
   - Keep in mind that the C(dconf) CLI tool, which this module wraps around,
     utilises an unusual syntax for the values (GVariant). For example, if you
     wanted to provide a string value, the correct syntax would be
@@ -75,14 +75,6 @@ options:
       - absent
     description:
       - The action to take upon the key/value.
-  dbus_address:
-    required: false
-    default: read from running environment variable
-    description:
-      - D-Bus session bus address associated with D-Bus user session. Can be set
-        via environment variable C(DBUS_SESSION_BUS_ADDRESS) as well. If state
-        is C(read), D-Bus session is not used, and this parameter is not
-        required at all.
 """
 
 RETURN = """
@@ -99,23 +91,18 @@ EXAMPLES = """
     key: "/org/gnome/libgnomekbd/keyboard/layouts"
     value: "['us', 'se']"
     state: present
-    dbus_address: "unix:path=/run/user/1000/bus"
 
 - name: Read currently available keyboard layouts in Gnome
   dconf:
     key: "/org/gnome/libgnomekbd/keyboard/layouts"
     state: read
+  register: keyboard_layouts
 
 - name: Reset the available keyboard layouts in Gnome
   dconf:
     key: "/org/gnome/libgnomekbd/keyboard/layouts"
     state: absent
-  environment:
-    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1005/bus"
 
-# This specific example would most likely fail, unless you were running with
-# local Ansible connection type, didn't use become, and your environment already
-# has the DBUS_SESSION_BUS_ADDRESS variable set.
 - name: Disable desktop effects in Cinnamon
   dconf:
     key: "/org/cinnamon/desktop-effects"
@@ -126,17 +113,119 @@ EXAMPLES = """
 
 import os
 
+try:
+    import psutil
+    psutil_found = True
+except ImportError:
+    psutil_found = False
+
 from ansible.module_utils.basic import AnsibleModule
+
+
+class DBusWrapper(object):
+    """
+    Helper class that can be used for running a command with a working D-Bus
+    session.
+
+    If possible, command will be run against an existing D-Bus session,
+    otherwise the session will be spawned via dbus-run-session.
+
+    Example usage:
+
+    dbus_wrapper = DBusWrapper(ansible_module)
+    dbus_wrapper.run_command(["printenv", "DBUS_SESSION_BUS_ADDRESS"])
+    """
+
+    def __init__(self, module):
+        """
+        Initialises an instance of the class.
+
+        :param module: Ansible module instance used to signal failures and run commands.
+        :type module: AnsibleModule
+        """
+
+        # Store passed-in arguments and set-up some defaults.
+        self.module = module
+
+        # Try to extract existing D-Bus session address.
+        self.dbus_session_bus_address = self._get_existing_dbus_session()
+
+        # If no existing D-Bus session was detected, check if dbus-run-session
+        # is available.
+        if self.dbus_session_bus_address is None and not any(os.access(os.path.join(path, 'dbus-run-session'), os.X_OK)
+                                                             for path in os.environ["PATH"].split(os.pathsep)):
+            self.module.fail_json('Could not locate running D-Bus user session, and dbus-run-session binary is missing as well.')
+
+    def _get_existing_dbus_session(self):
+        """
+        Detects and returns an existing D-Bus session bus address.
+
+        :returns: string -- D-Bus session bus address. If a running D-Bus session was not detected, returns None.
+        """
+
+        # We'll be checking the processes of current user only.
+        uid = os.getuid()
+
+        # Go through all the pids for this user, try to extract the D-Bus
+        # session bus address from environment, and ensure it is possible to
+        # connect to it.
+        self.module.debug("Trying to detect existing D-Bus user session for user: %d" % uid)
+
+        for pid in psutil.pids():
+            process = psutil.Process(pid)
+            process_real_uid, _, _ = process.uids()
+            try:
+                if process_real_uid == uid and 'DBUS_SESSION_BUS_ADDRESS' in process.environ():
+                    dbus_session_bus_address_candidate = process.environ()['DBUS_SESSION_BUS_ADDRESS']
+                    self.module.debug("Found D-Bus user session candidate at address: %s" % dbus_session_bus_address_candidate)
+                    command = ['dbus-send', '--address=%s' % dbus_session_bus_address_candidate, '--type=signal', '/', 'com.example.test']
+                    rc, _, _ = self.module.run_command(command)
+
+                    if rc == 0:
+                        self.module.debug("Verified D-Bus user session candidate as usable at address: %s" % dbus_session_bus_address_candidate)
+
+                        return dbus_session_bus_address_candidate
+
+            # This can happen with things like SSH sessions etc.
+            except psutil.AccessDenied:
+                pass
+
+        self.module.debug("Failed to find running D-Bus user session, will use dbus-run-session")
+
+        return None
+
+    def run_command(self, command):
+        """
+        Runs the specified command within a functional D-Bus session. Command is
+        effectively passed-on to AnsibleModule.run_command() method, with
+        modification for using dbus-run-session if necessary.
+
+        :param command: Command to run, including parameters. Each element of the list should be a string.
+        :type module: list
+
+        :returns: tuple(result_code, standard_output, standard_error) -- Result code, standard output, and standard error from running the command.
+        """
+
+        if self.dbus_session_bus_address is None:
+            self.module.debug("Using dbus-run-session wrapper for running commands.")
+            command = ['dbus-run-session'] + command
+            rc, out, err = self.module.run_command(command)
+
+            if self.dbus_session_bus_address is None and rc == 127:
+                self.module.fail_json("Failed to run passed-in command, dbus-run-session faced an internal erorr: %s" % err)
+        else:
+            extra_environment = {'DBUS_SESSION_BUS_ADDRESS': self.dbus_session_bus_address}
+            rc, out, err = self.module.run_command(command, environ_update=extra_environment)
+
+
+        return rc, out, err
 
 
 class DconfPreference(object):
 
-    def __init__(self, dbus_session_bus_address, module, check_mode=False):
+    def __init__(self, module, check_mode=False):
         """
         Initialises instance of the class.
-
-        :param dbus_session_bus_address: D-Bus session bus address.
-        :type dbus_session_bus_address: str
 
         :param module: Ansible module instance used to signal failures and run commands.
         :type module: AnsibleModule
@@ -147,11 +236,6 @@ class DconfPreference(object):
 
         self.module = module
         self.check_mode = check_mode
-
-        if dbus_session_bus_address is None:
-            self.environment = {}
-        else:
-            self.environment = {'DBUS_SESSION_BUS_ADDRESS': dbus_session_bus_address}
 
     def read(self, key):
         """
@@ -164,7 +248,7 @@ class DconfPreference(object):
 
         command = ["dconf", "read", key]
 
-        rc, out, err = self.module.run_command(command, environ_update=self.environment)
+        rc, out, err = self.module.run_command(command)
 
         if rc != 0:
             self.module.fail_json(msg='dconf failed while reading the value with error: %s' % err)
@@ -203,17 +287,18 @@ class DconfPreference(object):
         command = ["dconf", "write", key, value]
 
         # Run the command and fetch standard return code, stdout, and stderr.
-        rc, out, err = self.module.run_command(command, environ_update=self.environment)
+        dbus_wrapper = DBusWrapper(self.module)
+        rc, out, err = dbus_wrapper.run_command(command)
 
         if rc != 0:
-            self.module.fail_json(msg='dconf failed while writing the value with error: %s' % err)
+            self.module.fail_json(msg='dconf failed while write the value with error: %s' % err)
 
         # Value was changed.
         return True
 
     def reset(self, key):
         """
-        Resets value for the specified key (removes it from user configuration).
+        Rests value for the specified key (removes it from user configuration).
 
         If an error occurs, a call will be made to AnsibleModule.fail_json.
 
@@ -238,7 +323,8 @@ class DconfPreference(object):
         command = ["dconf", "reset", key]
 
         # Run the command and fetch standard return code, stdout, and stderr.
-        rc, out, err = self.module.run_command(command, environ_update=self.environment)
+        dbus_wrapper = DBusWrapper(self.module)
+        rc, out, err = dbus_wrapper.run_command(command)
 
         if rc != 0:
             self.module.fail_json(msg='dconf failed while reseting the value with error: %s' % err)
@@ -254,22 +340,19 @@ def main():
             state=dict(default='present', choices=['present', 'absent', 'read']),
             key=dict(required=True, type='str'),
             value=dict(required=False, default=None, type='str'),
-            dbus_address=dict(required=False, default=os.environ.get('DBUS_SESSION_BUS_ADDRESS', None), type='str'),
         ),
         supports_check_mode=True
     )
 
-    # If we are changing the value via this module, we need to ensure
-    # dbus_address is available.
-    if not module.check_mode and module.params['state'] != 'read' and module.params['dbus_address'] is None:
-        module.fail_json(msg="D-Bus session bus address was not specified, and it could not be extracted from running environment")
+    if not psutil_found:
+        module.fail_json(msg="Python module psutil is required on managed machine")
 
     # If present state was specified, value must be provided.
     if module.params['state'] == 'present' and module.params['value'] is None:
         module.fail_json(msg='State "present" requires "value" to be set.')
 
     # Create wrapper instance.
-    dconf = DconfPreference(module.params['dbus_address'], module, module.check_mode)
+    dconf = DconfPreference(module, module.check_mode)
 
     # Process based on different states.
     if module.params['state'] == 'read':
