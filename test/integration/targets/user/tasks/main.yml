@@ -114,6 +114,15 @@
       name: dennis
       state: present
       createhome: false
+      home: /Users/dennis
+when: ansible_distribution == 'MacOSX'
+
+- name: try to create a second user
+  user:
+      name: dennis
+      state: present
+      createhome: false
+when: ansible_distribution != 'MacOSX'
 
 - name: try to create home directory and ssh keys for existing user
   user:
