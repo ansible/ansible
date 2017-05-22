@@ -28,8 +28,8 @@ author:
     - Den Ivanov (@urajio)
 short_description: Enables or disables a specified site, module or configuration snippet of the Apache2 webserver.
 description:
-   - This module manage Debian-style Apache configuration, where configuration snippets stored in 
-     /etc/apache2/[conf|sites|mods]-available dirs, and can be enabled by creating symlinks within corresponding 
+   - This module manage Debian-style Apache configuration, where configuration snippets stored in
+     /etc/apache2/[conf|sites|mods]-available dirs, and can be enabled by creating symlinks within corresponding
      /etc/apache2/[conf|sites|mods]-enabled directory. Use a2enconf, a2disconf, a2ensite, a2dissite, a2enmod, a2dismod scripts.
 options:
    type:
@@ -39,7 +39,7 @@ options:
      choices: ['conf', 'site', 'mod']
    name:
      description:
-        - name of the configuration snippet. It can be a complete file name or file name without the suffix. 
+        - name of the configuration snippet. It can be a complete file name or file name without the suffix.
      required: true
    state:
      description:
