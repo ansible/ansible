@@ -28,6 +28,22 @@
     - user|failed
     - 'user.msg == "missing required arguments: account,email,password,first_name,last_name"'
 
+- name: test create user in check mode
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    account: "admin"
+  register: user
+  check_mode: true
+- name: verify results of create user in check mode
+  assert:
+    that:
+    - user|success
+    - user|changed
+
 - name: test create user
   cs_user:
     username: "{{ cs_resource_prefix }}_user"
@@ -65,6 +81,30 @@
     that:
     - user|success
     - not user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.first_name == "{{ cs_resource_prefix }}_first_name"
+    - user.last_name == "{{ cs_resource_prefix }}_last_name"
+    - user.email == "{{ cs_resource_prefix }}@example.com"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test update user in check mode
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name1"
+    first_name: "{{ cs_resource_prefix }}_first_name1"
+    email: "{{ cs_resource_prefix }}@example.com1"
+    account: "admin"
+  register: user
+  check_mode: true
+- name: verify results of update user in check mode
+  assert:
+    that:
+    - user|success
+    - user|changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.first_name == "{{ cs_resource_prefix }}_first_name"
     - user.last_name == "{{ cs_resource_prefix }}_last_name"
@@ -120,6 +160,23 @@
     - user.state == "enabled"
     - user.domain == "ROOT"
 
+- name: test lock user in check mode
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: locked
+  register: user
+  check_mode: true
+- name: verify results of lock user in check mode
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state != "locked"
+    - user.domain == "ROOT"
+
 - name: test lock user
   cs_user:
     username: "{{ cs_resource_prefix }}_user"
@@ -152,6 +209,23 @@
     - user.state == "locked"
     - user.domain == "ROOT"
 
+- name: test disable user in check mode
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: disabled
+  register: user
+  check_mode: true
+- name: verify results of disable user in check mode
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state != "disabled"
+    - user.domain == "ROOT"
+
 - name: test disable user
   cs_user:
     username: "{{ cs_resource_prefix }}_user"
@@ -178,6 +252,23 @@
     that:
     - user|success
     - not user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "disabled"
+    - user.domain == "ROOT"
+
+- name: test lock disabled user in check mode
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: locked
+  register: user
+  check_mode: true
+- name: verify results of lock disabled user in check mode
+  assert:
+    that:
+    - user|success
+    - user|changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -216,6 +307,23 @@
     - user.state == "locked"
     - user.domain == "ROOT"
 
+- name: test enable user in check mode
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: enabled
+  register: user
+  check_mode: true
+- name: verify results of enable user in check mode
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state != "enabled"
+    - user.domain == "ROOT"
+
 - name: test enable user
   cs_user:
     username: "{{ cs_resource_prefix }}_user"
@@ -242,6 +350,23 @@
     that:
     - user|success
     - not user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test remove user in check mode
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: user
+  check_mode: true
+- name: verify results of remove user in check mode
+  assert:
+    that:
+    - user|success
+    - user|changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
