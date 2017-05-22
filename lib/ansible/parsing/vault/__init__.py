@@ -368,7 +368,6 @@ class VaultEditor:
         return real_path
 
     def encrypt_bytes(self, b_plaintext):
-        check_prereqs()
 
         b_ciphertext = self.vault.encrypt(b_plaintext)
 
