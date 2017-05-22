@@ -32,6 +32,22 @@
       - pod|failed
       - "pod.msg == 'missing required arguments: name'"
 
+
+- name: test create pod in check mode
+  cs_pod:
+    name: "{{ cs_resource_prefix }}-pod"
+    zone: "{{ cs_resource_prefix }}-zone"
+    start_ip: 10.100.10.101
+    gateway: 10.100.10.1
+    netmask: 255.255.255.0
+  register: pod_origin
+  check_mode: true
+- name: verify test create pod  in check mode
+  assert:
+    that:
+      - pod_origin|changed
+      - pod_origin.zone == "{{ cs_resource_prefix }}-zone"
+
 - name: test create pod
   cs_pod:
     name: "{{ cs_resource_prefix }}-pod"
@@ -63,6 +79,26 @@
   assert:
     that:
       - not pod|changed
+      - pod.allocation_state == "Enabled"
+      - pod.start_ip == "10.100.10.101"
+      - pod.end_ip == "10.100.10.254"
+      - pod.gateway == "10.100.10.1"
+      - pod.netmask == "255.255.255.0"
+      - pod.zone == "{{ cs_resource_prefix }}-zone"
+
+- name: test update pod in check mode
+  cs_pod:
+    name: "{{ cs_resource_prefix }}-pod"
+    zone: "{{ cs_resource_prefix }}-zone"
+    start_ip: 10.100.10.102
+    gateway: 10.100.10.1
+    netmask: 255.255.255.0
+  register: pod
+  check_mode: true
+- name: verify test update pod in check mode
+  assert:
+    that:
+      - pod|changed
       - pod.allocation_state == "Enabled"
       - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
@@ -108,6 +144,25 @@
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
+- name: test disable pod in check mode
+  cs_pod:
+    name: "{{ cs_resource_prefix }}-pod"
+    zone: "{{ cs_resource_prefix }}-zone"
+    state: disabled
+  register: pod
+  check_mode: true
+- name: verify test enable pod in check mode
+  assert:
+    that:
+      - pod|changed
+      - pod.allocation_state == "Enabled"
+      - pod.id == pod_origin.id
+      - pod.start_ip == "10.100.10.102"
+      - pod.end_ip == "10.100.10.254"
+      - pod.gateway == "10.100.10.1"
+      - pod.netmask == "255.255.255.0"
+      - pod.zone == "{{ cs_resource_prefix }}-zone"
+
 - name: test disable pod
   cs_pod:
     name: "{{ cs_resource_prefix }}-pod"
@@ -136,6 +191,25 @@
   assert:
     that:
       - not pod|changed
+      - pod.allocation_state == "Disabled"
+      - pod.id == pod_origin.id
+      - pod.start_ip == "10.100.10.102"
+      - pod.end_ip == "10.100.10.254"
+      - pod.gateway == "10.100.10.1"
+      - pod.netmask == "255.255.255.0"
+      - pod.zone == "{{ cs_resource_prefix }}-zone"
+
+- name: test enable pod in check mode
+  cs_pod:
+    name: "{{ cs_resource_prefix }}-pod"
+    zone: "{{ cs_resource_prefix }}-zone"
+    state: enabled
+  register: pod
+  check_mode: true
+- name: verify test disable pod in check mode
+  assert:
+    that:
+      - pod|changed
       - pod.allocation_state == "Disabled"
       - pod.id == pod_origin.id
       - pod.start_ip == "10.100.10.102"
@@ -175,6 +249,25 @@
       - not pod|changed
       - pod.allocation_state == "Enabled"
       - pod.id == pod_origin.id
+      - pod.start_ip == "10.100.10.102"
+      - pod.end_ip == "10.100.10.254"
+      - pod.gateway == "10.100.10.1"
+      - pod.netmask == "255.255.255.0"
+      - pod.zone == "{{ cs_resource_prefix }}-zone"
+
+- name: test absent pod in check mode
+  cs_pod:
+    name: "{{ cs_resource_prefix }}-pod"
+    zone: "{{ cs_resource_prefix }}-zone"
+    state: absent
+  register: pod
+  check_mode: true
+- name: verify test create pod in check mode
+  assert:
+    that:
+      - pod|changed
+      - pod.id == pod_origin.id
+      - pod.allocation_state == "Enabled"
       - pod.start_ip == "10.100.10.102"
       - pod.end_ip == "10.100.10.254"
       - pod.gateway == "10.100.10.1"
