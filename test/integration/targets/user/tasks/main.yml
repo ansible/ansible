@@ -108,14 +108,26 @@
 ##
 ## Create home and ssh keys for existing user
 ##
+# Debug
+- block: 
+  - name: user cleanup
+    user:
+        name: dennis
+        state: absent
 
-- name: try to create a second user
-  user:
-      name: dennis
-      state: present
-      createhome: false
-      home: /Users/dennis
-  when: ansible_distribution == 'MacOSX'
+  - name: try to create a second user
+    user:
+        name: dennis
+        state: present
+        createhome: false
+        home: /Users/dennis
+# debugging
+  - name: ls users
+    command: ls -l /Users/
+    register: mac_debug
+  - name: list debug
+    debug: msg={{mac_debug.stdout_lines}}
+when: ansible_distribution == 'MacOSX'
 
 - name: try to create a second user
   user:
@@ -123,13 +135,6 @@
       state: present
       createhome: false
   when: ansible_distribution != 'MacOSX'
-
-# debugging
-- name: ls users
-  command: ls -l /Users/
-  register: mac_debug
-- name: list debug
-  debug: msg={{mac_debug.stdout_lines}}
 
 - name: try to create home directory and ssh keys for existing user
   user:
