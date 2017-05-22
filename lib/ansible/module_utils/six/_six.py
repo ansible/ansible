@@ -215,7 +215,7 @@ class _SixMetaPathImporter(object):
         We need this method to get correct spec objects with
         Python 3.4 (see PEP451)
         """
-        return getattr(self.__get_module(fullname), "__path__", None) is not None
+        return hasattr(self.__get_module(fullname), "__path__")
 
     def get_code(self, fullname):
         """Return None
