@@ -228,7 +228,7 @@ def main():
     existing = gw_mgr.describe_gateways(module.params['ip_address'])
     # describe_gateways returns a key of CustomerGateways where as create_gateway returns a
     # key of CustomerGateway. For consistency, change it here
-    existing['CustomerGateway'] = existing['CustomerGateways']
+    existing['CustomerGateway'] = existing['CustomerGateways'][0]
 
     results = dict(changed=False)
     if module.params['state'] == 'present':
