@@ -313,7 +313,7 @@ def set_tag(client, tags, function):
             )
             changed = True
 
-        for key, value in tags.iteritems():
+        for key, value in tags.items():
             if not key in response['Tags']:
                 c.tag_resource(
                     Resource=arn,
@@ -505,7 +505,7 @@ def main():
                     module.fail_json(msg=str(e), exception=traceback.format_exc())
 
         # Tag Function
-        if not tags is None and len(tags) >= 0:
+        if tags is not None and len(tags) >= 0:
             if set_tag(client, tags, current_function):
                 changed = True
 
@@ -587,7 +587,7 @@ def main():
             module.fail_json_aws(e, msg="Trying to create function")
 
         # Tag Function
-        if not tags is None and len(tags) >= 0:
+        if tags is not None and len(tags) >= 0:
             if set_tag(client, tags, get_current_function(client, name)):
                 changed = True
 
