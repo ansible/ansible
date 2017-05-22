@@ -347,7 +347,26 @@ def substitute_controller(path):
     return path
 
 
-def is_rsh_needed(source, dest):
+def is_rsh_in_rsync_opts(rsync_opts):
+    if not rsync_opts:
+        return False
+    if '--rsh' in rsync_opts:
+        return True
+    if '-e' in rsync_opts:
+        return True
+    if any(opt.startswith('--rsh=') for opt in rsync_opts):
+        return True
+    if any(opt.startswith('-')
+           and not opt.startswith('--')
+           and opt.endswith('e')
+           for opt in rsync_opts):
+        return True
+    return False
+
+
+def is_rsh_required(source, dest, rsync_opts):
+    if is_rsh_in_rsync_opts(rsync_opts):
+        return False
     if source.startswith('rsync://') or dest.startswith('rsync://'):
         return False
     if ':' in source or ':' in dest:
@@ -473,7 +492,7 @@ def main():
     if source.startswith('rsync://') and dest.startswith('rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
-    if is_rsh_needed(source, dest):
+    if is_rsh_required(source, dest, rsync_opts):
         ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
         if private_key is not None:
             ssh_cmd.extend(['-i', private_key])
