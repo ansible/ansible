@@ -126,7 +126,8 @@ class AdHocCLI(CLI):
 
         variable_manager.options_vars = load_options_vars(self.options)
 
-        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
+        # Generate dynamic inventory base on the provided patterns
+        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory, play_hosts=pattern)
         variable_manager.set_inventory(inventory)
 
         no_hosts = False

@@ -28,6 +28,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.inventory import Inventory
 from ansible.parsing.dataloader import DataLoader
+from ansible.playbook import Playbook
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.utils.vars import load_extra_vars
@@ -127,8 +128,18 @@ class PlaybookCLI(CLI):
 
         variable_manager.options_vars = load_options_vars(self.options)
 
+        # Load playbook at first, get all play host patterns and
+        # generate dynamic inventory base on the provided host patterns
+        play_hosts = list()
+        playbooks =  list()
+        for playbook_path in self.args:
+            pb = Playbook.load(playbook_path, variable_manager=variable_manager, loader=loader)
+            playbooks.append(pb)
+            for play in pb.get_plays():
+                play_hosts.append(play.hosts)
+
         # create the inventory, and filter it based on the subset specified (if any)
-        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
+        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory, play_hosts=play_hosts)
         variable_manager.set_inventory(inventory)
 
         # (which is not returned in list_hosts()) is taken into account for
@@ -152,7 +163,7 @@ class PlaybookCLI(CLI):
             self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
-        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options,
+        pbex = PlaybookExecutor(playbooks=playbooks, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options,
                                 passwords=passwords)
 
         results = pbex.run()

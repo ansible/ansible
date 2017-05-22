@@ -34,7 +34,7 @@ from ansible.inventory.script import InventoryScript
 
 __all__ = ['get_file_parser']
 
-def get_file_parser(hostsfile, groups, loader):
+def get_file_parser(hostsfile, groups, loader, play_hosts=None):
     # check to see if the specified file starts with a
     # shebang (#!/), so if an error is raised by the parser
     # class we can show a more apropos error
@@ -56,7 +56,7 @@ def get_file_parser(hostsfile, groups, loader):
     # script
     if loader.is_executable(hostsfile):
         try:
-            parser = InventoryScript(loader=loader, groups=groups, filename=hostsfile)
+            parser = InventoryScript(loader=loader, groups=groups, filename=hostsfile, play_hosts=play_hosts)
             processed = True
         except Exception as e:
             myerr.append('Attempted to execute "%s" as inventory script: %s' % (hostsfile, to_native(e)))
@@ -89,7 +89,7 @@ def get_file_parser(hostsfile, groups, loader):
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
 
-    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST, play_hosts=None):
         if groups is None:
             groups = dict()
 
@@ -117,7 +117,7 @@ class InventoryDirectory(object):
             if os.path.isdir(fullpath):
                 parser = InventoryDirectory(loader=loader, groups=groups, filename=fullpath)
             else:
-                parser = get_file_parser(fullpath, self.groups, loader)
+                parser = get_file_parser(fullpath, self.groups, loader, play_hosts)
                 if parser is None:
                     #FIXME: needs to use display
                     import warnings
