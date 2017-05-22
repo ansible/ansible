@@ -334,10 +334,6 @@ PARAM_TO_COMMAND_KEYMAP = {
     'weight': 'weight',
     'vrf': 'vrf'
 }
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
 
 
 def get_value(arg, config, module):
@@ -505,101 +501,6 @@ def apply_key_map(key_map, table):
     return new_dict
 
 
-def get_address_family_command(key, value, module):
-    command = "address-family {0} {1}".format(
-        module.params['afi'], module.params['safi'])
-    return command
-
-
-def get_capability_additional_paths_receive_command(key, value, module):
-    command = ''
-    if value == 'enable':
-        command = key
-    elif value == 'disable':
-        command = '{0} {1}'.format(key, value)
-    return command
-
-
-def get_capability_additional_paths_send_command(key, value, module):
-    command = ''
-    if value == 'enable':
-        command = key
-    elif value == 'disable':
-        command = '{0} {1}'.format(key, value)
-    return command
-
-
-def get_advertise_map_exist_command(key, value, module):
-    command = 'advertise-map {0} exist-map {1}'.format(
-        value[0], value[1])
-    return command
-
-
-def get_advertise_map_non_exist_command(key, value, module):
-    command = 'advertise-map {0} non-exist-map {1}'.format(
-        value[0], value[1])
-    return command
-
-
-def get_allowas_in_max_command(key, value, module):
-    command = 'allowas-in {0}'.format(value)
-    return command
-
-
-def get_filter_list_in_command(key, value, module):
-    command = 'filter-list {0} in'.format(value)
-    return command
-
-
-def get_filter_list_out_command(key, value, module):
-    command = 'filter-list {0} out'.format(value)
-    return command
-
-
-def get_prefix_list_in_command(key, value, module):
-    command = 'prefix-list {0} in'.format(value)
-    return command
-
-
-def get_prefix_list_out_command(key, value, module):
-    command = 'prefix-list {0} out'.format(value)
-    return command
-
-
-def get_route_map_in_command(key, value, module):
-    command = 'route-map {0} in'.format(value)
-    return command
-
-
-def get_route_map_out_command(key, value, module):
-    command = 'route-map {0} out'.format(value)
-    return command
-
-
-def get_maximum_prefix_command(key, value, module):
-    return get_maximum_prefix_options_command(key, value, module)
-
-
-def get_maximum_prefix_options_command(key, value, module):
-    command = 'maximum-prefix {0}'.format(module.params['max_prefix_limit'])
-    if module.params['max_prefix_threshold']:
-        command += ' {0}'.format(module.params['max_prefix_threshold'])
-    if module.params['max_prefix_interval']:
-        command += ' restart {0}'.format(module.params['max_prefix_interval'])
-    elif module.params['max_prefix_warning']:
-        command += ' warning-only'
-    return command
-
-
-def get_soft_reconfiguration_inbound_command(key, value, module):
-    command = ''
-    if value == 'enable':
-        command = key
-    elif value == 'always':
-        command = '{0} {1}'.format(key, value)
-    return command
-
-
 def get_default_command(key, value, existing_commands):
     command = ''
     if key == 'send-community' and existing_commands.get(key) == 'none':
@@ -652,6 +553,12 @@ def fix_proposed(module, proposed):
     elif allowas_in and allowas_in_max:
         proposed.pop('allowas_in')
 
+    for key, value in proposed.items():
+        if key in ['filter_list_in', 'prefix_list_in', 'route_map_in']:
+            proposed[key] = [value, 'in']
+        elif key in ['filter_list_out', 'prefix_list_out', 'route_map_out']:
+            proposed[key] = [value, 'out']
+
     return proposed
 
 
@@ -661,34 +568,21 @@ def state_present(module, existing, proposed, candidate):
 
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
-
-    custom = [
-        'address-family',
-        'capability additional-paths receive',
-        'capability additional-paths send',
-        'advertise-map exist',
-        'advertise-map non-exist',
-        'allowas-in max',
-        'filter-list in',
-        'filter-list out',
-        'maximum-prefix',
-        'maximum-prefix options',
-        'prefix-list in',
-        'prefix-list out',
-        'route-map in',
-        'route-map out',
-        'soft-reconfiguration inbound'
-    ]
     for key, value in proposed_commands.items():
-        if key == 'send-community' and value == 'none':
-            commands.append('{0}'.format(key))
+        if key.startswith('maximum-prefix'):
+            command = 'maximum-prefix {0}'.format(module.params['max_prefix_limit'])
+            if module.params['max_prefix_threshold']:
+                command += ' {0}'.format(module.params['max_prefix_threshold'])
+            if module.params['max_prefix_interval']:
+                command += ' restart {0}'.format(module.params['max_prefix_interval'])
+            elif module.params['max_prefix_warning']:
+                command += ' warning-only'
+            commands.append(command)
 
-        elif value is True and key != 'maximum-prefix options':
+        elif value is True:
             commands.append(key)
-
-        elif value is False and key != 'maximum-prefix options':
+        elif value is False:
             commands.append('no {0}'.format(key))
-
         elif value == 'default' or value == 'inherit':
             command = get_default_command(key, value, existing_commands)
 
@@ -700,15 +594,36 @@ def state_present(module, existing, proposed, candidate):
                     if cmd not in commands:
                         commands.append(cmd)
 
-        elif key in custom:
-            fixed_key = key.replace(' ', '_').replace('-', '_')
-            command = invoke('get_%s_command' % fixed_key, key, value, module)
-            if command and command not in commands:
-                commands.append(command)
+        elif key == 'address-family':
+            commands.append("address-family {0} {1}".format(module.params['afi'], module.params['safi']))
+        elif key.startswith('capability additional-paths'):
+            command = key
+            if value == 'disable':
+                command += ' disable'
+            commands.append(command)
+        elif key.startswith('advertise-map'):
+            direction = key.split()[0]
+            commands.append('advertise-map {1} {0} {2}'.format(direction, *value))
+        elif key in ['filter-list', 'prefix-list', 'route-map']:
+            commands.append('{0} {1} {2}'.format(key, *value))
+
+        elif key == 'soft-reconfiguration inbound':
+            command = ''
+            if value == 'enable':
+                command = key
+            elif value == 'always':
+                command = '{0} {1}'.format(key, value)
+            commands.append(command)
+        elif key == 'send-community':
+            command = key
+            if value != 'none':
+                command += ' {0}'.format(value)
+            commands.append(command)
         else:
             command = '{0} {1}'.format(key, value)
             commands.append(command)
 
+    commands = set(commands)
     if commands:
         parents = ['router bgp {0}'.format(module.params['asn'])]
         if module.params['vrf'] != 'default':
