@@ -22,6 +22,20 @@
   delegate_to: localhost
 - debug: var=jinja2_version
 
+# Install SELinux bindings
+# Install SELinux bindings for python
+- name: Install python selinux (yum)
+  yum:
+    name=libselinux-python
+    state=installed
+  when: ansible_pkg_mgr == 'yum'
+
+- name: Install python selinux (dnf)
+  dnf:
+    name=libselinux-python
+    state=installed
+  when: ansible_pkg_mgr == 'dnf'
+
 ##
 ## user add
 ##
