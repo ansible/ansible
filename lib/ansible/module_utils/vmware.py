@@ -318,7 +318,7 @@ def connect_to_api(module, disconnect_atexit=True):
     password = module.params['password']
     validate_certs = module.params['validate_certs']
 
-    if validate_certs and not getattr(ssl, 'SSLContext', None) is not None:
+    if validate_certs and not getattr(ssl, 'SSLContext', None):
         module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
                              'python or or use validate_certs=false')
 
