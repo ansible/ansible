@@ -944,7 +944,7 @@ class ElbManager(object):
                 self.changed = True
 
     def _check_attribute_support(self, attr):
-        return getattr(boto.ec2.elb.attributes.LbAttributes(), attr. None) is not None
+        return getattr(boto.ec2.elb.attributes.LbAttributes(), attr, None) is not None
 
     def _set_cross_az_load_balancing(self):
         attributes = self.elb.get_attributes()
