@@ -129,7 +129,6 @@ lib/ansible/modules/cloud/amazon/ecs_taskdefinition.py
 lib/ansible/modules/cloud/amazon/efs.py
 lib/ansible/modules/cloud/amazon/efs_facts.py
 lib/ansible/modules/cloud/amazon/elasticache.py
-lib/ansible/modules/cloud/amazon/elasticache_snapshot.py
 lib/ansible/modules/cloud/amazon/elasticache_subnet_group.py
 lib/ansible/modules/cloud/amazon/execute_lambda.py
 lib/ansible/modules/cloud/amazon/iam.py
