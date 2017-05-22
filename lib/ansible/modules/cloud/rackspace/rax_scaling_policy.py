@@ -197,7 +197,7 @@ def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
 
             if getattr(policy, 'desiredCapacity', None) is not None and change:
                 kwargs['change'] = change
-            elif ((getattr(policy, 'change', None) is not None` or
+            elif ((getattr(policy, 'change', None) is not None or
                     getattr(policy, 'changePercent', None) is not None) and desired_capacity):
                 kwargs['desired_capacity'] = desired_capacity
 
