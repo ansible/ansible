@@ -161,7 +161,7 @@
       name="{{user_test0.home}}"
       state=directory
       mode=0700
-      owner="{{user_test0}}"
+      owner="{{user_test0.name}}"
   register: freshhomedirrun
 
 - name: Verify file checks
