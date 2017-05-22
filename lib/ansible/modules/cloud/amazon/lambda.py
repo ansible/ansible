@@ -163,7 +163,7 @@ tasks:
 
 # To remove previously added tags pass a empty dict
 tasks:
-- name: looped creation
+- name: remove tags
   lambda:
     name: 'Lambda function'
     state: present
