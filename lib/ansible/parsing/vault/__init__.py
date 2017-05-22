@@ -414,7 +414,7 @@ class VaultEditor:
         # follow the symlink
         filename = self._real_path(filename)
 
-	ciphertext = self.read_data(filename)
+        ciphertext = self.read_data(filename)
 
         try:
             plaintext = self.vault.decrypt(ciphertext)
