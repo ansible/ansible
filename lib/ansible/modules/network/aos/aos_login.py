@@ -46,7 +46,7 @@ options:
   port:
     description:
       - Port number to use when connecting to the AOS server.
-    default: 8888
+    default: 443
   user:
     description:
       - Login username to use when connecting to the AOS server.
