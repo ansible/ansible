@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_file_copy
-version_added: "2.3"
-short_description: Copy a file to a remote cloudengine device over SCP.
+version_added: "2.4"
+short_description: Copy a file to a remote cloudengine device over SCP on HUAWEI CloudEngine switches.
 description:
-    - Copy a file to a remote cloudengine device over SCP.
+    - Copy a file to a remote cloudengine device over SCP on HUAWEI CloudEngine switches.
 author:
     - Zhou Zhijin (@CloudEngine-Ansible)
 notes:
@@ -389,6 +389,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     filecopy_obj = FileCopy(argument_spec)
     filecopy_obj.work()
+
 
 if __name__ == '__main__':
     main()
