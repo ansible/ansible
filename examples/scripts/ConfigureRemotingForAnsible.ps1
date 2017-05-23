@@ -281,14 +281,13 @@ if ($EnsureSslOnly -and ($listeners | Where {$_.Keys -like "TRANSPORT=HTTP"})) {
     Remove-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset
     Write-HostLog "Removed WinRM HTTP listener"
 
-    # Remove firewall rule if it exists
-    $httpfirewallrule = Get-NetFirewallPortFilter `
-        | Where { $_.LocalPort -eq $WinRmHttpPort } `
-        | Get-NetFirewallRule
+    $httpfirewallrule = (netsh advfirewall firewall show rule name=all) `
+        | Where { $_ -match "LocalPort:\s+$($WinRmHttpPort)$" }
 
-    if ($httpfirewallrule) {
+    # Remove firewall rule if it exists
+    if ($httpfirewallrule.Count -gt 0) {
         # Remove firewall rule
-        $httpfirewallrule | Remove-NetFirewallRule
+        netsh advfirewall firewall delete rule name=all localport=$WinRmHttpPort protocol=TCP      
         Write-HostLog "Removed WinRM HTTP firewall rule"
     }
 }
@@ -322,20 +321,21 @@ If (($credsspAuthSetting.Value) -eq $false -and $AuthTypes -contains 'CredSSP')
 }
 
 # Configure firewall to allow WinRM HTTPS connections.
-$httpsfirewallrule = Get-NetFirewallPortFilter `
-    | Where { $_.LocalPort -eq $WinRmHttpsPort } `
-    | Get-NetFirewallRule
+$httpsfirewallrule = (netsh advfirewall firewall show rule name=all) `
+    | Where { $_ -match "LocalPort:\s+$WinRmHttpsPort$" }
+$httpsfirewallanyprofilerule = (netsh advfirewall firewall show rule name=all profile=any) `
+    | Where { $_ -match "LocalPort:\s+$WinRmHttpsPort$" }
 
 If (!$httpsfirewallrule)
 {
     Write-Verbose "Adding firewall rule to allow WinRM HTTPS."
-    New-NetFirewallRule -DisplayName 'Allow WinRM HTTPS' -LocalPort $WinRmHttpsPort -Protocol TCP -Profile Any    
+    netsh advfirewall firewall add rule profile=any name="Allow WinRM HTTPS" dir=in localport=$WinRmHttpsPort protocol=TCP action=allow  
     Write-Log "Added firewall rule to allow WinRM HTTPS."
 }
-ElseIf ($httpsfirewallrule.Profile -notcontains 'Any')
+ElseIf (!$httpsfirewallanyprofilerule)
 {
-    Write-Verbose "Updating firewall rule(s) to allow WinRM HTTPS for any profile."
-    $httpsfirewallrule | Set-NetFirewallRule -Profile 'Any'
+    Write-Verbose "Updating firewall rule(s) to allow WinRM HTTPS for any profile."    
+    netsh advfirewall firewall set rule name=all localport=$WinRmHttpsPort protocol=TCP new profile=any
     Write-Log "Updated firewall rule(s) to allow WinRM HTTPS for any profile."
 }
 Else
