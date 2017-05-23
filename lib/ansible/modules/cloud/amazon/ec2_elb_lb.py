@@ -405,11 +405,6 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
 import time
 import traceback
 import random
@@ -417,6 +412,7 @@ import random
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, AnsibleAWSError
 from ansible.module_utils.ec2 import get_aws_connection_info
+from ansible.module_utils.six import string_types
 
 
 def _throttleable_operation(max_retries):
@@ -1337,7 +1333,7 @@ def main():
             grp_details = ec2.get_all_security_groups(filters=filters)
 
             for group_name in security_group_names:
-                if isinstance(group_name, basestring):
+                if isinstance(group_name, string_types):
                     group_name = [group_name]
 
                 group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
