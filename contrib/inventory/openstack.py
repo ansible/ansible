@@ -132,7 +132,7 @@ def get_host_groups_from_cloud(inventory):
     firstpass = collections.defaultdict(list)
     hostvars = {}
     list_args = {}
-    if hasattr(inventory, 'extra_config'):
+    if getattr(inventory, 'extra_config', None) is not None:
         use_hostnames = inventory.extra_config['use_hostnames']
         list_args['expand'] = inventory.extra_config['expand_hostvars']
         if StrictVersion(shade.__version__) >= StrictVersion("1.6.0"):
@@ -220,7 +220,7 @@ def main():
             config_files=config_files,
             private=args.private,
         )
-        if hasattr(shade.inventory.OpenStackInventory, 'extra_config'):
+        if getattr(shade.inventory.OpenStackInventory, 'extra_config', None) is not None:
             inventory_args.update(dict(
                 config_key='ansible',
                 config_defaults={

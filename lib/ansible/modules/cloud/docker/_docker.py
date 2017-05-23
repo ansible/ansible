@@ -628,7 +628,7 @@ def is_running(container):
 
 
 def get_docker_py_versioninfo():
-    if hasattr(docker, '__version__'):
+    if getattr(docker, '__version__', None) is not None:
         # a '__version__' attribute was added to the module but not until
         # after 0.3.0 was pushed to pypi. If it's there, use it.
         version = []
@@ -645,7 +645,7 @@ def get_docker_py_versioninfo():
                     version.append(int(digit))
                 if nondigit:
                     version.append(nondigit)
-    elif hasattr(docker.Client, '_get_raw_response_socket'):
+    elif getattr(docker.Client, '_get_raw_response_socket', None) is not None:
         # HACK: if '__version__' isn't there, we check for the existence of
         # `_get_raw_response_socket` in the docker.Client class, which was
         # added in 0.3.0

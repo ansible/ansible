@@ -310,21 +310,21 @@ class BigIpSysGlobalManager(object):
 
     def format_sys_global_information(self, settings):
         result = dict()
-        if hasattr(settings, 'guiSecurityBanner'):
+        if getattr(settings, 'guiSecurityBanner', None) is not None:
             result['security_banner'] = str(settings.guiSecurityBanner)
-        if hasattr(settings, 'guiSecurityBannerText'):
+        if getattr(settings, 'guiSecurityBannerText', None) is not None:
             result['banner_text'] = str(settings.guiSecurityBannerText)
-        if hasattr(settings, 'guiSetup'):
+        if getattr(settings, 'guiSetup', None) is not None:
             result['gui_setup'] = str(settings.guiSetup)
-        if hasattr(settings, 'lcdDisplay'):
+        if getattr(settings, 'lcdDisplay', None) is not None:
             result['lcd_display'] = str(settings.lcdDisplay)
-        if hasattr(settings, 'mgmtDhcp'):
+        if getattr(settings, 'mgmtDhcp', None) is not None:
             result['mgmt_dhcp'] = str(settings.mgmtDhcp)
-        if hasattr(settings, 'netReboot'):
+        if getattr(settings, 'netReboot', None) is not None:
             result['net_reboot'] = str(settings.netReboot)
-        if hasattr(settings, 'quietBoot'):
+        if getattr(settings, 'quietBoot', None) is not None:
             result['quiet_boot'] = str(settings.quietBoot)
-        if hasattr(settings, 'consoleInactivityTimeout'):
+        if getattr(settings, 'consoleInactivityTimeout', None) is not None:
             result['console_timeout'] = int(settings.consoleInactivityTimeout)
         return result
 

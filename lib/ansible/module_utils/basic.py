@@ -1109,7 +1109,7 @@ class AnsibleModule(object):
             # FIXME: comparison against string above will cause this to be executed
             # every time
             try:
-                if hasattr(os, 'lchmod'):
+                if getattr(os, 'lchmod', None) is not None:
                     os.lchmod(b_path, mode)
                 else:
                     if not os.path.islink(b_path):
@@ -2048,7 +2048,7 @@ class AnsibleModule(object):
             self.fail_json(msg="attempted to take checksum of directory: %s" % filename)
 
         # preserve old behaviour where the third parameter was a hash algorithm object
-        if hasattr(algorithm, 'hexdigest'):
+        if getattr(algorithm, 'hexdigest', None) is not None:
             digest_method = algorithm
         else:
             try:
@@ -2131,13 +2131,13 @@ class AnsibleModule(object):
                 os.chown(b_src, dest_stat.st_uid, dest_stat.st_gid)
 
                 # try to copy flags if possible
-                if hasattr(os, 'chflags') and hasattr(dest_stat, 'st_flags'):
+                if getattr(os, 'chflags', None) is not None and getattr(dest_stat, 'st_flags', None) is not None:
                     try:
                         os.chflags(b_src, dest_stat.st_flags)
                     except OSError:
                         e = get_exception()
                         for err in 'EOPNOTSUPP', 'ENOTSUP':
-                            if hasattr(errno, err) and e.errno == getattr(errno, err):
+                            if getattr(errno, err, None) is not None and e.errno == getattr(errno, err):
                                 break
                         else:
                             raise

@@ -458,7 +458,7 @@ class TestManager(unittest.TestCase):
         results = pm.exec_module()
 
         assert results['changed'] is False
-        assert not hasattr(results, 'shell')
+        assert not getattr(results, 'shell', None)
 
     def test_update_user_shell_to_bash(self, *args):
         set_module_args(dict(
@@ -865,7 +865,7 @@ class TestLegacyManager(unittest.TestCase):
         results = upm.exec_module()
 
         assert results['changed'] is False
-        assert not hasattr(results, 'shell')
+        assert not getattr(results, 'shell', None)
 
     def test_update_user_shell_to_bash(self, *args):
         set_module_args(dict(

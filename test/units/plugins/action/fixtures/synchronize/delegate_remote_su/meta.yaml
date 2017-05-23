@@ -20,7 +20,7 @@ hostvars:
     '::1': {}
     'localhost': {}
 asserts:
-    - "hasattr(SAM._connection, 'ismock')"
+    - "getattr(SAM._connection, 'ismock', None) is not None"
     - "SAM._connection.transport == 'ssh'"
     - "self._play_context.shell == None"
     - "self._play_context.remote_addr == 'u1404'"

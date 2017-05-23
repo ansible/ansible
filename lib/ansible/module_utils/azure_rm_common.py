@@ -424,8 +424,9 @@ class AzureRMModuleBase(object):
         :return None
         '''
 
-        if hasattr(azure_object, 'properties') and hasattr(azure_object.properties, 'provisioning_state') and \
-           hasattr(azure_object, 'name'):
+        if getattr(azure_object, 'properties', None) is not None and \
+           getattr(azure_object.properties, 'provisioning_state', None) is not None and \
+           getattr(azure_object, 'name', None) is not None:
             # resource group object fits this model
             if isinstance(azure_object.properties.provisioning_state, Enum):
                 if azure_object.properties.provisioning_state.value != AZURE_SUCCESS_STATE and \
@@ -439,7 +440,7 @@ class AzureRMModuleBase(object):
                     azure_object.name, azure_object.properties.provisioning_state, AZURE_SUCCESS_STATE))
             return
 
-        if hasattr(azure_object, 'provisioning_state') or not hasattr(azure_object, 'name'):
+        if getattr(azure_object, 'provisioning_state', None) is not None or not getattr(azure_object, 'name', None):
             if isinstance(azure_object.provisioning_state, Enum):
                 if azure_object.provisioning_state.value != AZURE_SUCCESS_STATE and requested_state != 'absent':
                     self.fail("Error {0} has a provisioning state of {1}. Expecting state to be {2}.".format(

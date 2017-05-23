@@ -221,7 +221,7 @@ def rand(environment, end, start=None, step=None, seed=None):
         if not step:
             step = 1
         return r.randrange(start, end, step)
-    elif hasattr(end, '__iter__'):
+    elif getattr(end, '__iter__', None) is not None:
         if start or step:
             raise errors.AnsibleFilterError('start and step can only be used with integer values')
         return r.choice(end)

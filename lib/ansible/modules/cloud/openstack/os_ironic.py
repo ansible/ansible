@@ -300,7 +300,7 @@ def main():
 
                 # Add the pre-existing chassis_uuid only if
                 # it is present in the server configuration.
-                if hasattr(server, 'chassis_uuid'):
+                if getattr(server, 'chassis_uuid', None) is not None:
                     server_config['chassis_uuid'] = server['chassis_uuid']
 
                 # Note(TheJulia): If a password is defined and concealed, a

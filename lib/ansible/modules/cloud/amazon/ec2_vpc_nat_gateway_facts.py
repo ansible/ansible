@@ -101,7 +101,7 @@ except ImportError:
 
 
 def date_handler(obj):
-    return obj.isoformat() if hasattr(obj, 'isoformat') else obj
+    return obj.isoformat() if getattr(obj, 'isoformat', None) is not None else obj
 
 
 def get_nat_gateways(client, module, nat_gateway_id=None):

@@ -368,7 +368,7 @@ def get_block_device_mapping(image):
 
     bdm_dict = dict()
 
-    if image is not None and hasattr(image, 'block_device_mapping'):
+    if image is not None and getattr(image, 'block_device_mapping', None) is not None:
         bdm = getattr(image,'block_device_mapping')
         for device_name in bdm.keys():
             bdm_dict[device_name] = {
@@ -516,13 +516,13 @@ def deregister_image(module, ec2):
 
     # Get all associated snapshot ids before deregistering image otherwise this information becomes unavailable
     snapshots = []
-    if hasattr(img, 'block_device_mapping'):
+    if getattr(img, 'block_device_mapping', None) is not None:
         for key in img.block_device_mapping:
             snapshots.append(img.block_device_mapping[key].snapshot_id)
 
     # When trying to re-delete already deleted image it doesn't raise an exception
     # It just returns an object without image attributes
-    if hasattr(img, 'id'):
+    if getattr(img, 'id', None) is not None:
         try:
             params = {'image_id': image_id,
                       'delete_snapshot': delete_snapshot}

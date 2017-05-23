@@ -78,7 +78,7 @@ def f5_parse_arguments(module):
 
     if module.params['validate_certs']:
         import ssl
-        if not hasattr(ssl, 'SSLContext'):
+        if getattr(ssl, 'SSLContext', None) is None:
             module.fail_json(
                 msg="bigsuds does not support verifying certificates with python < 2.7.9." \
                     "Either update python or set validate_certs=False on the task'")
@@ -109,7 +109,7 @@ def bigip_api(bigip, user, password, validate_certs, port=443):
             api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
         else:
             import ssl
-            if hasattr(ssl, 'SSLContext'):
+            if getattr(ssl, 'SSLContext', None) is not None:
                 # Really, you should never do this.  It disables certificate
                 # verification *globally*.  But since older bigip libraries
                 # don't give us a way to toggle verification we need to

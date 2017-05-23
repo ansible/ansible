@@ -182,7 +182,7 @@ class AnsibleContext(Context):
             for item in val:
                 if self._is_unsafe(item):
                     return True
-        elif isinstance(val, string_types) and hasattr(val, '__UNSAFE__'):
+        elif isinstance(val, string_types) and getattr(val, '__UNSAFE__', None) is not None:
             return True
         return False
 
@@ -317,7 +317,7 @@ class Templar:
     def _clean_data(self, orig_data):
         ''' remove jinja2 template tags from data '''
 
-        if hasattr(orig_data, '__ENCRYPTED__'):
+        if getattr(orig_data, '__ENCRYPTED__', None) is not None:
             ret = orig_data
 
         elif isinstance(orig_data, list):
@@ -395,7 +395,7 @@ class Templar:
         '''
 
         # Don't template unsafe variables, just return them.
-        if hasattr(variable, '__UNSAFE__'):
+        if getattr(variable, '__UNSAFE__', None) is not None:
             return variable
 
         if fail_on_undefined is None:
@@ -447,7 +447,7 @@ class Templar:
                             disable_lookups=disable_lookups,
                         )
 
-                        unsafe = hasattr(result, '__UNSAFE__')
+                        unsafe = getattr(result, '__UNSAFE__', None) is not None
                         if convert_data and not self._no_type_regex.match(variable):
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method
                             if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \

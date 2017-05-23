@@ -185,23 +185,23 @@ def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
             if cooldown != policy.cooldown:
                 kwargs['cooldown'] = cooldown
 
-            if hasattr(policy, 'change') and change != policy.change:
+            if getattr(policy, 'change', None) is not None and change != policy.change:
                 kwargs['change'] = change
 
-            if hasattr(policy, 'changePercent') and is_percent is False:
+            if getattr(policy, 'changePercent', None) is not None and is_percent is False:
                 kwargs['change'] = change
                 kwargs['is_percent'] = False
-            elif hasattr(policy, 'change') and is_percent is True:
+            elif getattr(policy, 'change', None) is not None and is_percent is True:
                 kwargs['change'] = change
                 kwargs['is_percent'] = True
 
-            if hasattr(policy, 'desiredCapacity') and change:
+            if getattr(policy, 'desiredCapacity', None) is not None and change:
                 kwargs['change'] = change
-            elif ((hasattr(policy, 'change') or
-                    hasattr(policy, 'changePercent')) and desired_capacity):
+            elif ((getattr(policy, 'change', None) is not None or
+                    getattr(policy, 'changePercent', None) is not None) and desired_capacity):
                 kwargs['desired_capacity'] = desired_capacity
 
-            if hasattr(policy, 'args') and args != policy.args:
+            if getattr(policy, 'args', None) is not None and args != policy.args:
                 kwargs['args'] = args
 
             if kwargs:

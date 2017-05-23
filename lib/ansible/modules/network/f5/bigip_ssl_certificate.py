@@ -391,7 +391,7 @@ class BigIpSslCertificate(object):
                 name=name,
                 partition=partition
             )
-            if hasattr(key, 'checksum'):
+            if getattr(key, 'checksum', None) is not None:
                 p['key_checksum'] = str(key.checksum)
 
         if self.cert_exists():
@@ -399,7 +399,7 @@ class BigIpSslCertificate(object):
                 name=name,
                 partition=partition
             )
-            if hasattr(cert, 'checksum'):
+            if getattr(cert, 'checksum', None) is not None:
                 p['cert_checksum'] = str(cert.checksum)
 
         p['name'] = name

@@ -111,9 +111,9 @@ except ImportError:
 
 def boto_exception(err):
     '''generic error message handler'''
-    if hasattr(err, 'error_message'):
+    if getattr(err, 'error_message', None) is not None:
         error = err.error_message
-    elif hasattr(err, 'message'):
+    elif getattr(err, 'message', None) is not None:
         error = err.message
     else:
         error = '%s: %s' % (Exception, err)

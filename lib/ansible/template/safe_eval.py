@@ -108,7 +108,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
                 # Disallow calls to builtin functions that we have not vetted
                 # as safe.  Other functions are excluded by setting locals in
                 # the call to eval() later on
-                if hasattr(builtins, node.id) and node.id not in CALL_WHITELIST:
+                if getattr(builtins, node.id, None) is not None and node.id not in CALL_WHITELIST:
                     raise Exception("invalid function: %s" % node.id)
             # iterate over all child nodes
             for child_node in ast.iter_child_nodes(node):

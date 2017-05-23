@@ -86,7 +86,7 @@ class ActionModule(ActionBase):
                 pass
 
             # Use win_ping on winrm/powershell, else use ping
-            if hasattr(self._connection, '_shell_type') and self._connection._shell_type == 'powershell':
+            if getattr(self._connection, '_shell_type', None) == 'powershell':
                 ping_result = self._execute_module(module_name='win_ping', module_args=dict(), tmp=tmp, task_vars=task_vars)
             else:
                 ping_result = self._execute_module(module_name='ping', module_args=dict(), tmp=tmp, task_vars=task_vars)
@@ -102,7 +102,7 @@ class ActionModule(ActionBase):
 
         try:
             # If the connection has a transport_test method, use it first
-            if hasattr(self._connection, 'transport_test'):
+            if getattr(self._connection, 'transport_test', None) is not None:
                 self.do_until_success_or_timeout(self._connection.transport_test, timeout, connect_timeout, what_desc="connection port up", sleep=sleep)
 
             # Use the ping module test to determine end-to-end connectivity

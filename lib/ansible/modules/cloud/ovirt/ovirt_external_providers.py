@@ -186,7 +186,7 @@ class ExternalProviderModule(BaseModule):
             )
 
         for key, value in self._module.params.items():
-            if hasattr(provider_type, key):
+            if getattr(provider_type, key, None) is not None:
                 setattr(provider_type, key, value)
 
         return provider_type

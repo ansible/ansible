@@ -138,7 +138,8 @@ class CLI(with_metaclass(ABCMeta, object)):
             # that could be legal for this command
             tmp_parser = InvalidOptsParser(self.parser)
             tmp_options, tmp_args = tmp_parser.parse_args(self.args)
-            if not(hasattr(tmp_options, 'help') and tmp_options.help) or (hasattr(tmp_options, 'version') and tmp_options.version):
+            if not(getattr(tmp_options, 'help', None) is not None and tmp_options.help) or \
+               (getattr(tmp_options, 'version', None) is not None and tmp_options.version):
                 raise AnsibleOptionsError("Missing required action")
 
     def execute(self):
@@ -440,10 +441,10 @@ class CLI(with_metaclass(ABCMeta, object)):
                 # arguments and options, do it here.
         """
         self.options, self.args = self.parser.parse_args(self.args[1:])
-        if hasattr(self.options, 'tags') and not self.options.tags:
+        if getattr(self.options, 'tags', None) is not None and not self.options.tags:
             # optparse defaults does not do what's expected
             self.options.tags = ['all']
-        if hasattr(self.options, 'tags') and self.options.tags:
+        if getattr(self.options, 'tags', None) is not None and self.options.tags:
             if not C.MERGE_MULTIPLE_CLI_TAGS:
                 if len(self.options.tags) > 1:
                     display.deprecated('Specifying --tags multiple times on the command line currently uses the last specified value. '
@@ -457,7 +458,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                     tags.add(tag.strip())
             self.options.tags = list(tags)
 
-        if hasattr(self.options, 'skip_tags') and self.options.skip_tags:
+        if getattr(self.options, 'skip_tags', None) is not None and self.options.skip_tags:
             if not C.MERGE_MULTIPLE_CLI_TAGS:
                 if len(self.options.skip_tags) > 1:
                     display.deprecated('Specifying --skip-tags multiple times on the command line currently uses the last specified value. '
@@ -668,4 +669,3 @@ class CLI(with_metaclass(ABCMeta, object)):
             if os.pathsep in data:
                 data = data.split(os.pathsep)[0]
         return data
-

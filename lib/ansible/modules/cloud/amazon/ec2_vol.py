@@ -331,7 +331,7 @@ def boto_supports_volume_encryption():
     Returns:
         True if boto library has the named param as an argument on the request_spot_instances method, else False
     """
-    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
+    return getattr(boto, 'Version', None) is not None and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
 
 def boto_supports_kms_key_id():
     """
@@ -340,7 +340,7 @@ def boto_supports_kms_key_id():
     Returns:
         True if version is equal to or higher then the version needed, else False
     """
-    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.39.0')
+    return getattr(boto, 'Version', None) is not None and LooseVersion(boto.Version) >= LooseVersion('2.39.0')
 
 def create_volume(module, ec2, zone):
     changed = False
@@ -500,7 +500,7 @@ def get_volume_info(volume, state):
         },
         'tags': volume.tags
     }
-    if hasattr(attachment, 'deleteOnTermination'):
+    if getattr(attachment, 'deleteOnTermination', None) is not None:
         volume_info['attachment_set']['deleteOnTermination'] = attachment.deleteOnTermination
 
     return volume_info

@@ -275,7 +275,7 @@ class Rhn(redhat.RegistrationBase):
         '''
             Convenience RPC wrapper
         '''
-        if not hasattr(self, 'server') or self.server is None:
+        if not getattr(self, 'server', None) or self.server is None:
             if self.hostname != 'rhn.redhat.com':
                 url = "https://%s/rpc/api" % self.hostname
             else:

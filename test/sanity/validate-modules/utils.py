@@ -28,7 +28,7 @@ import yaml.reader
 def find_globals(g, tree):
     """Uses AST to find globals in an ast tree"""
     for child in tree:
-        if hasattr(child, 'body') and isinstance(child.body, list):
+        if getattr(child, 'body', None) is not None and isinstance(child.body, list):
             find_globals(g, child.body)
         elif isinstance(child, (ast.FunctionDef, ast.ClassDef)):
             g.add(child.name)

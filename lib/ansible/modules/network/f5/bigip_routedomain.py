@@ -248,23 +248,23 @@ class BigIpRouteDomain(object):
         p['id'] = int(r.id)
         p['name'] = str(r.name)
 
-        if hasattr(r, 'connectionLimit'):
+        if getattr(r, 'connectionLimit', None) is not None:
             p['connection_limit'] = int(r.connectionLimit)
-        if hasattr(r, 'description'):
+        if getattr(r, 'description', None) is not None:
             p['description'] = str(r.description)
-        if hasattr(r, 'strict'):
+        if getattr(r, 'strict', None) is not None:
             p['strict'] = str(r.strict)
-        if hasattr(r, 'parent'):
+        if getattr(r, 'parent', None) is not None:
             p['parent'] = r.parent
-        if hasattr(r, 'vlans'):
+        if getattr(r, 'vlans', None) is not None:
             p['vlans'] = list(set([str(x) for x in r.vlans]))
-        if hasattr(r, 'routingProtocol'):
+        if getattr(r, 'routingProtocol', None) is not None:
             p['routing_protocol'] = list(set([str(x) for x in r.routingProtocol]))
-        if hasattr(r, 'flowEvictionPolicy'):
+        if getattr(r, 'flowEvictionPolicy', None) is not None:
             p['flow_eviction_policy'] = str(r.flowEvictionPolicy)
-        if hasattr(r, 'bwcPolicy'):
+        if getattr(r, 'bwcPolicy', None) is not None:
             p['bwc_policy'] = str(r.bwcPolicy)
-        if hasattr(r, 'servicePolicy'):
+        if getattr(r, 'servicePolicy', None) is not None:
             p['service_policy'] = str(r.servicePolicy)
         return p
 

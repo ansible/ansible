@@ -374,7 +374,7 @@ def create_instance_template(module, gce):
             except SyntaxError as e:
                 module.fail_json(msg='bad metadata syntax')
 
-        if hasattr(libcloud, '__version__') and libcloud.__version__ < '0.15':
+        if getattr(libcloud, '__version__', None) is not None and libcloud.__version__ < '0.15':
             items = []
             for k, v in md.items():
                 items.append({"key": k, "value": v})

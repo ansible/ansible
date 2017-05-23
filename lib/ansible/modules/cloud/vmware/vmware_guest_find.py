@@ -133,7 +133,7 @@ class PyVmomiHelper(object):
                 'name': folder.name}
 
         children = None
-        if hasattr(folder, 'childEntity'):
+        if getattr(folder, 'childEntity', None) is not None:
             children = folder.childEntity
 
         if children:
@@ -200,7 +200,7 @@ class PyVmomiHelper(object):
             paths.append(vobj.name)
 
         thisobj = vobj
-        while hasattr(thisobj, 'parent'):
+        while getattr(thisobj, 'parent', None) is not None:
             thisobj = thisobj.parent
             if isinstance(thisobj, vim.Folder):
                 paths.append(thisobj.name)

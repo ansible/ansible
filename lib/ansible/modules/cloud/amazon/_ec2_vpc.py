@@ -378,10 +378,10 @@ def create_vpc(module, vpc_conn):
             while wait and wait_timeout > time.time() and pending:
                 try:
                     pvpc = vpc_conn.get_all_vpcs(vpc.id)
-                    if hasattr(pvpc, 'state'):
+                    if getattr(pvpc, 'state', None) is not None:
                         if pvpc.state == "available":
                             pending = False
-                    elif hasattr(pvpc[0], 'state'):
+                    elif getattr(pvpc[0], 'state', None) is not None:
                         if pvpc[0].state == "available":
                             pending = False
                 # sometimes vpc_conn.create_vpc() will return a vpc that can't be found yet by vpc_conn.get_all_vpcs()

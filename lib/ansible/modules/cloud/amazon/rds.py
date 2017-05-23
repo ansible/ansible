@@ -352,10 +352,10 @@ DEFAULT_PORTS = {
 
 class RDSException(Exception):
     def __init__(self, exc):
-        if hasattr(exc, 'error_message') and exc.error_message:
+        if getattr(exc, 'error_message', None) is not None and exc.error_message:
             self.message = exc.error_message
             self.code = exc.error_code
-        elif hasattr(exc, 'body') and 'Error' in exc.body:
+        elif getattr(exc, 'body', None) is not None and 'Error' in exc.body:
             self.message = exc.body['Error']['Message']
             self.code = exc.body['Error']['Code']
         else:
@@ -575,7 +575,7 @@ class RDSDBInstance:
         }
 
         # Only assign an Endpoint if one is available
-        if hasattr(self.instance, 'endpoint'):
+        if getattr(self.instance, 'endpoint', None) is not None:
             d["endpoint"] = self.instance.endpoint[0]
             d["port"] = self.instance.endpoint[1]
             if self.instance.vpc_security_groups is not None:
@@ -646,9 +646,9 @@ class RDSSnapshot:
             'instance_created': self.snapshot.instance_create_time,
         }
         # needs boto >= 2.21.0
-        if hasattr(self.snapshot, 'snapshot_type'):
+        if getattr(self.snapshot, 'snapshot_type', None) is not None:
             d["snapshot_type"] = self.snapshot.snapshot_type
-        if hasattr(self.snapshot, 'iops'):
+        if getattr(self.snapshot, 'iops', None) is not None:
             d["iops"] = self.snapshot.iops
         return d
 

@@ -113,7 +113,7 @@ class VMwareInventory(object):
 
         # Override certificate checks
         if not sslcheck:
-            if hasattr(ssl, '_create_unverified_context'):
+            if getattr(ssl, '_create_unverified_context', None) is not None:
                 ssl._create_default_https_context = ssl._create_unverified_context
 
         # Create the VMware client connection.

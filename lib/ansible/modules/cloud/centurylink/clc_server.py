@@ -1339,7 +1339,7 @@ class ClcServer:
             else:
                 # Try to shut down the server and fall back to power off when unable to shut down.
                 result = server.ShutDown()
-                if result and hasattr(result, 'requests') and result.requests[0]:
+                if result and getattr(result, 'requests', None) is not None and result.requests[0]:
                     return result
                 else:
                     result = server.PowerOff()
@@ -1570,7 +1570,7 @@ class ClcServer:
 
     @staticmethod
     def _set_user_agent(clc):
-        if hasattr(clc, 'SetRequestsSession'):
+        if getattr(clc, 'SetRequestsSession', None) is not None:
             agent_string = "ClcAnsibleModule/" + __version__
             ses = requests.Session()
             ses.headers.update({"Api-Client": agent_string})

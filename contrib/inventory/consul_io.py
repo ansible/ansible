@@ -414,7 +414,7 @@ class ConsulConfig(dict):
         self.read_cli_args()
 
     def has_config(self, name):
-        if hasattr(self, name):
+        if getattr(self, name, None) is not None:
             return getattr(self, name)
         else:
             return False
@@ -465,7 +465,7 @@ class ConsulConfig(dict):
         token = None
         scheme = 'http'
 
-        if hasattr(self, 'url'):
+        if getattr(self, 'url', None) is not None:
             from urlparse import urlparse
             o = urlparse(self.url)
             if o.hostname:
@@ -475,7 +475,7 @@ class ConsulConfig(dict):
             if o.scheme:
                 scheme = o.scheme
 
-        if hasattr(self, 'token'):
+        if getattr(self, 'token', None) is not None:
             token = self.token
             if not token:
                 token = 'anonymous'

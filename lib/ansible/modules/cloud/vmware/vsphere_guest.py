@@ -1586,7 +1586,7 @@ def gather_facts(vm):
     ifidx = 0
     for entry in vm.properties.config.hardware.device:
 
-        if not hasattr(entry, 'macAddress'):
+        if not getattr(entry, 'macAddress', None):
             continue
 
         factname = 'hw_eth' + str(ifidx)
@@ -1783,7 +1783,7 @@ def main():
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
-    if validate_certs and not hasattr(ssl, 'SSLContext') and not vcenter_hostname.startswith('http://'):
+    if validate_certs and not getattr(ssl, 'SSLContext', None) and not vcenter_hostname.startswith('http://'):
         module.fail_json(msg='pysphere does not support verifying certificates with python < 2.7.9.  Either update python or set '
                              'validate_certs=False on the task')
 

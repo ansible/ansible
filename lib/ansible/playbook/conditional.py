@@ -56,7 +56,7 @@ class Conditional:
         # when used directly, this class needs a loader, but we want to
         # make sure we don't trample on the existing one if this class
         # is used as a mix-in with a playbook base class
-        if not hasattr(self, '_loader'):
+        if not getattr(self, '_loader', None):
             if loader is None:
                 raise AnsibleError("a loader must be specified when using Conditional() directly")
             else:
@@ -74,7 +74,7 @@ class Conditional:
         when = self._attributes['when']
         if when is None:
             when = []
-        if hasattr(self, '_get_parent_attribute'):
+        if getattr(self, '_get_parent_attribute', None) is not None:
             when = self._get_parent_attribute('when', extend=True, prepend=True)
         return when
 
@@ -100,7 +100,7 @@ class Conditional:
         # associated with it, so we pull it out now in case we need it for
         # error reporting below
         ds = None
-        if hasattr(self, '_ds'):
+        if getattr(self, '_ds', None) is not None:
             ds = getattr(self, '_ds')
 
         try:
@@ -149,14 +149,14 @@ class Conditional:
 
         try:
             # if the conditional is "unsafe", disable lookups
-            disable_lookups = hasattr(conditional, '__UNSAFE__')
+            disable_lookups = getattr(conditional, '__UNSAFE__', None) is not None
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional
 
             # update the lookups flag, as the string returned above may now be unsafe
             # and we don't want future templating calls to do unsafe things
-            disable_lookups |= hasattr(conditional, '__UNSAFE__')
+            disable_lookups |= getattr(conditional, '__UNSAFE__', None) is not None
 
             # First, we do some low-level jinja2 parsing involving the AST format of the
             # statement to ensure we don't do anything unsafe (using the disable_lookup flag above)
@@ -239,4 +239,3 @@ class Conditional:
                 raise AnsibleUndefinedVariable(
                     "error while evaluating conditional (%s): %s" % (original, e)
                 )
-

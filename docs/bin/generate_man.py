@@ -106,7 +106,7 @@ if __name__ == '__main__':
         allvars[libname] = opts_docs(cli_object, libname)
 
         for extras in ('ARGUMENTS'):
-            if hasattr(cli_object, extras):
+            if getattr(cli_object, extras, None) is not None:
                 allvars[libname][extras.lower()] = getattr(cli_object, extras)
 
     cli_list = allvars.keys()

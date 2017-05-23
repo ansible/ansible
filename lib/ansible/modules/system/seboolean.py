@@ -190,7 +190,7 @@ def main():
     result = {}
     result['name'] = name
 
-    if hasattr(selinux, 'selinux_boolean_sub'):
+    if getattr(selinux, 'selinux_boolean_sub', None) is not None:
         # selinux_boolean_sub allows sites to rename a boolean and alias the old name
         # Feature only available in selinux library since 2012.
         name = selinux.selinux_boolean_sub(name)

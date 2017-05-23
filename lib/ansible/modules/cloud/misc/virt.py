@@ -507,7 +507,7 @@ def core(module):
                 res = { command: res }
             return VIRT_SUCCESS, res
 
-        elif hasattr(v, command):
+        elif getattr(v, command, None) is not None:
             res = getattr(v, command)()
             if not isinstance(res, dict):
                 res = { command: res }

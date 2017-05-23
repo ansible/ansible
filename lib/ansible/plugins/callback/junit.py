@@ -120,7 +120,7 @@ class CallbackModule(CallbackBase):
 
         task_uuid = result._task._uuid
 
-        if hasattr(result, '_host'):
+        if getattr(result, '_host', None) is not None:
             host_uuid = result._host._uuid
             host_name = result._host.name
         else:

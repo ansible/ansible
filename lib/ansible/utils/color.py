@@ -25,7 +25,7 @@ from ansible import constants as C
 ANSIBLE_COLOR=True
 if C.ANSIBLE_NOCOLOR:
     ANSIBLE_COLOR=False
-elif not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
+elif not getattr(sys.stdout, 'isatty', None) or not sys.stdout.isatty():
     ANSIBLE_COLOR=False
 else:
     try:
@@ -110,4 +110,3 @@ def hostcolor(host, stats, color=True):
         else:
             return u"%-37s" % stringc(host, C.COLOR_OK)
     return u"%-26s" % host
-

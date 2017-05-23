@@ -20,7 +20,7 @@ hostvars:
     '::1': {}
     'localhost': {}
 asserts:
-    - "hasattr(SAM._connection, 'ismock')"
+    - "getattr(SAM._connection, 'ismock', None) is not None"
     - "SAM._connection.transport == 'local'"
     - "self.execute_called"
     - "self.final_module_args['_local_rsync_path'] == 'rsync'"

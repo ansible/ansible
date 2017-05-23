@@ -649,7 +649,7 @@ class PyVmomiHelper(object):
             elif 'vlan' in network:
                 dvps = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
                 for dvp in dvps:
-                    if hasattr(dvp.config.defaultPortConfig, 'vlan') and dvp.config.defaultPortConfig.vlan.vlanId == network['vlan']:
+                    if getattr(dvp.config.defaultPortConfig, 'vlan', None) is not None and dvp.config.defaultPortConfig.vlan.vlanId == network['vlan']:
                         network['name'] = dvp.config.name
                         break
                     if dvp.config.name == network['vlan']:
@@ -690,7 +690,7 @@ class PyVmomiHelper(object):
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
                 nic_change_detected = True
 
-            if hasattr(self.cache.get_network(network_devices[key]['name']), 'portKeys'):
+            if getattr(self.cache.get_network(network_devices[key]['name']), 'portKeys', None) is not None:
                 # VDS switch
                 pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
@@ -1023,7 +1023,7 @@ class PyVmomiHelper(object):
             if not rp[0]:
                 continue
 
-            if not hasattr(rp[0], 'parent') or not rp[0].parent:
+            if not getattr(rp[0], 'parent', None) or not rp[0].parent:
                 continue
 
             # Find resource pool on host

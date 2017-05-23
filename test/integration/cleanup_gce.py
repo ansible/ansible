@@ -33,7 +33,7 @@ def delete_gce_resources(get_func, attr, opts):
 def prompt_and_delete(item, prompt, assumeyes):
     if not assumeyes:
         assumeyes = raw_input(prompt).lower() == 'y'
-    assert hasattr(item, 'destroy'), "Class <%s> has no delete attribute" % item.__class__
+    assert getattr(item, 'destroy', None) is not None, "Class <%s> has no delete attribute" % item.__class__
     if assumeyes:
         item.destroy()
         print ("Deleted %s" % item)

@@ -192,7 +192,7 @@ except ImportError:
 
 
 def date_handler(obj):
-    return obj.isoformat() if hasattr(obj, 'isoformat') else obj
+    return obj.isoformat() if getattr(obj, 'isoformat', None) is not None else obj
 
 
 def wait_for_status(client, module, resource_id, status):

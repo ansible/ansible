@@ -86,7 +86,7 @@ class AnsibleJ2Vars:
         # HostVars is special, return it as-is, as is the special variable
         # 'vars', which contains the vars structure
         from ansible.vars.hostvars import HostVars
-        if isinstance(variable, dict) and varname == "vars" or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
+        if isinstance(variable, dict) and varname == "vars" or isinstance(variable, HostVars) or getattr(variable, '__UNSAFE__', None) is not None:
             return variable
         else:
             value = None

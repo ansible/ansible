@@ -359,7 +359,7 @@ class BigIpGtmFactsWideIps(BigIpGtmFactsCommon):
 
     def format_pool_facts(self, wideip):
         result = []
-        if not hasattr(wideip, 'pools'):
+        if not getattr(wideip, 'pools', None):
             return dict(pools=[])
         for pool in wideip.pools:
             pool_facts = self.format_string_facts(pool)
@@ -395,7 +395,7 @@ class BigIpGtmFactsVirtualServers(BigIpGtmFactsCommon):
 
     def format_address_facts(self, server):
         result = []
-        if not hasattr(server, 'addresses'):
+        if not getattr(server, 'addresses', None):
             return dict(addresses=[])
         for address in server.addresses:
             address_facts = self.format_string_facts(address)

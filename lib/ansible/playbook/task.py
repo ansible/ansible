@@ -101,7 +101,9 @@ class Task(Base, Conditional, Taggable, Become):
         ''' return the absolute path of the task with its line number '''
 
         path = ""
-        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
+        if getattr(self, '_ds', None) is not None and \
+           getattr(self._ds, '_data_source', None) is not None and \
+           getattr(self._ds, '_line_number', None) is not None:
             path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
         return path
 

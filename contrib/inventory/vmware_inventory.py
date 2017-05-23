@@ -335,7 +335,7 @@ class VMWareInventory(object):
                   'pwd': self.password,
                   'port': int(self.port)}
 
-        if hasattr(ssl, 'SSLContext') and not self.validate_certs:
+        if getattr(ssl, 'SSLContext', None) is not None and not self.validate_certs:
             context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             context.verify_mode = ssl.CERT_NONE
             kwargs['sslContext'] = context
@@ -742,5 +742,3 @@ class VMWareInventory(object):
 if __name__ == "__main__":
     # Run the script
     print(VMWareInventory().show())
-
-

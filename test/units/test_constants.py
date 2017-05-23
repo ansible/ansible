@@ -82,14 +82,14 @@ def cwd():
     os.getcwd = lambda : data
 
     old_cwdu = None
-    if hasattr(os, 'getcwdu'):
+    if getattr(os, 'getcwdu', None) is not None:
         old_cwdu = os.getcwdu
         os.getcwdu = lambda : to_text(data)
 
     yield data
 
     os.getcwd = old_cwd
-    if hasattr(os, 'getcwdu'):
+    if getattr(os, 'getcwdu', None) is not None:
         os.getcwdu = old_cwdu
 
 
@@ -215,4 +215,3 @@ class TestGetConfig:
 # Need to test this
 #def test_load_config_file():
 #    pass
-

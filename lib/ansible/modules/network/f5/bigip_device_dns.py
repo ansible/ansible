@@ -188,11 +188,11 @@ class BigIpDeviceDns(object):
         result['cache'] = str(cache.value)
         result['forwarders'] = str(proxy.value).split(' ')
 
-        if hasattr(dns, 'nameServers'):
+        if getattr(dns, 'nameServers', None) is not None:
             result['name_servers'] = dns.nameServers
-        if hasattr(dns, 'search'):
+        if getattr(dns, 'search', None) is not None:
             result['search'] = dns.search
-        if hasattr(dns, 'include') and 'options inet6' in dns.include:
+        if getattr(dns, 'include', None) is not None and 'options inet6' in dns.include:
             result['ip_version'] = 6
         else:
             result['ip_version'] = 4
