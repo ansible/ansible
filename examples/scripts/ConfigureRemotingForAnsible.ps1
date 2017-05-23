@@ -26,6 +26,14 @@
 #
 # Use option -SubjectName to specify the CN name of the certificate. This
 # defaults to the system's hostname and generally should not be specified.
+#
+# Option EnableCredSSP is deprecated, you can use AuthTypes with 'CredSSP' to
+# enable CredSSP optionally.
+#
+# Use option -AuthTypes to specify a list of authentication types to enable. By
+# default, Basic is enabled. Acceptable values are 'Basic' and 'CredSSP'. If
+# the legacy option EnableCredSSP is enabled, CredSSP will be added to the AuthTypes
+# array.
 
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
@@ -52,7 +60,9 @@ Param (
     [switch]$SkipNetworkProfileCheck,
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert,
-    [switch]$EnableCredSSP
+    [switch]$EnableCredSSP,
+    [ValidateSet('Basic', 'CredSSP')]
+    [string[]]$AuthTypes = @('Basic')
 )
 
 Function Write-Log
@@ -253,7 +263,7 @@ Else
 
 # Check for basic authentication.
 $basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "Basic"}
-If (($basicAuthSetting.Value) -eq $false)
+If (($basicAuthSetting.Value) -eq $false -and $AuthTypes -contains 'Basic')
 {
     Write-Verbose "Enabling basic auth support."
     Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $true
@@ -264,17 +274,19 @@ Else
     Write-Verbose "Basic auth is already enabled."
 }
 
-# If EnableCredSSP if set to true
-If ($EnableCredSSP)
+# Support backwards-compatible switch
+If ($EnableCredSSP -and $AuthTypes -notcontains 'CredSSP') {
+    $AuthTypes = @($AuthTypes) + 'CredSSP'
+}
+# Check for CredSSP authentication.
+$credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "CredSSP"}
+If (($credsspAuthSetting.Value) -eq $false -and $AuthTypes -contains 'CredSSP')
 {
-    # Check for CredSSP authentication
-    $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "CredSSP"}
-    If (($credsspAuthSetting.Value) -eq $false)
-    {
-        Write-Verbose "Enabling CredSSP auth support."
-        Enable-WSManCredSSP -role server -Force
-        Write-Log "Enabled CredSSP auth support."
-    }
+    Write-Verbose "Enabling CredSSP auth support."
+    Enable-WSManCredSSP -Role Server -Force
+    Write-Log "Enabled CredSSP auth support."
+} Else {
+    Write-Verbose "CredSSP auth is already enabled."
 }
 
 # Configure firewall to allow WinRM HTTPS connections.
