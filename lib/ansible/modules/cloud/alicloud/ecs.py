@@ -594,7 +594,7 @@ instances:
     description: Details about the ecs instances that were created.
     returned: 'on create, modify and getinfo'
     type: dict
-    contains:
+    contains: {
         "block_device_mapping": {
             "d-2ze9mho1vp79mctdoro0": {
                 "delete_on_termination": true,
@@ -610,7 +610,7 @@ instances:
         "instance_name": "test-instance",
         "instance_type": "ecs.n1.small",
         "io_optimized": true,
-        "launch_time": "2017-05-23T00:56Z", 
+        "launch_time": "2017-05-23T00:56Z",
         "private_ip": "10.31.153.209",
         "public_ip": "47.94.45.175",
         "region_id": "cn-beijing",
@@ -624,6 +624,7 @@ instances:
             "ip_address": []
         },
         "zone_id": "cn-beijing-a"
+    }
 total_count:
     description: The number of all instances after operating ecs instance.
     returned: always
