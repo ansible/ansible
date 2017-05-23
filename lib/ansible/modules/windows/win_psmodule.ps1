@@ -31,8 +31,9 @@ $allow_clobber = Get-AnsibleParam -obj $params "allow_clobber" -type "bool" -def
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $result = @{"changed" = $false
-            "output" = ""}
-
+            "output" = ""
+            "nuget_changed" = $false
+            "repository_changed" = $false}
 
 Function Install-NugetProvider {
   param(
@@ -43,6 +44,7 @@ Function Install-NugetProvider {
       try{
         Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop -WhatIf:$CheckMode | out-null
         $result.changed = $true
+        $result.nuget_changed = $true
       }
       catch{
         $ErrorMessage = "Problems adding package provider: $($_.Exception.Message)"
@@ -64,10 +66,11 @@ Function Install-Repository {
     # If repository isn't already present, try to register it as trusted.
     if ($Repo -notcontains $Url){ 
       try {
-        if (!($CheckMode)){
-          Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop
+           if (!($CheckMode)) {
+               Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop       
+           }
           $result.changed = $true
-        }
+          $result.repository_changed = $true
       }
       catch {
         $ErrorMessage = "Problems adding $($Name) repository: $($_.Exception.Message)"
@@ -87,13 +90,14 @@ Function Remove-Repository{
 
     # Try to remove the repository
     if ($Repo -contains $Name){
-        try{
-          if (!($CheckMode)){
-            Unregister-PSRepository -Name $Name -ErrorAction Stop
+        try {         
+            if (!($CheckMode)) {
+                Unregister-PSRepository -Name $Name -ErrorAction Stop
+            }
             $result.changed = $true
-          }
+            $result.repository_changed = $true
         }
-        catch{
+        catch {
             $ErrorMessage = "Problems removing $($Name)repository: $($_.Exception.Message)"
             Fail-Json $result $ErrorMessage
         }
@@ -156,7 +160,6 @@ Function Remove-PsModule {
     }
 }
 
-
 # Check powershell version, fail if < 5.0
 $PsVersion = $PSVersionTable.PSVersion
 if ($PsVersion.Major -lt 5){
@@ -164,21 +167,20 @@ if ($PsVersion.Major -lt 5){
   Fail-Json $result $ErrorMessage
 }
 
-if ($state -eq "present"){
-    if (($repo) -and ($url)){
-          Install-Repository -Name $repo -Url $url -CheckMode $check_mode 
-        }
-    else {
-      $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
+if ($state -eq "present") {
+    if (($repo) -and ($url)) {
+        Install-Repository -Name $repo -Url $url -CheckMode $check_mode 
     }
-  Install-PsModule -Name $Name -CheckMode $check_mode -AllowClobber $allow_clobber
+    else {
+        $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
+    }
+    Install-PsModule -Name $Name -CheckMode $check_mode -AllowClobber $allow_clobber
 }
-else{
-  if ($repo){
-          Remove-Repository -Name $repo -CheckMode $check_mode
-        }
-  Remove-PsModule -Name $Name -CheckMode $check_mode
+else {  
+    if ($repo) {   
+        Remove-Repository -Name $repo -CheckMode $check_mode
+    }
+    Remove-PsModule -Name $Name -CheckMode $check_mode
 }
-
 
 Exit-Json $result
