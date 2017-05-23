@@ -18,16 +18,16 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 
 module: ce_dldp_interface
-version_added: "2.3"
-short_description: Manages interface DLDP configuration.
+version_added: "2.4"
+short_description: Manages interface DLDP configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages interface DLDP configuration.
+    - Manages interface DLDP configuration on HUAWEI CloudEngine switches.
 author:
     - Zhou Zhijin (@CloudEngine-Ansible)
 notes:
@@ -136,8 +136,8 @@ proposed:
                 "reset": "enable"
             }
 existing:
-    description:
-        - k/v pairs of existing interface DLDP configration
+    description: k/v pairs of existing interface DLDP configration
+    returned: always
     type: dict
     sample: {
                 "enable": "disable",
@@ -424,8 +424,7 @@ class DldpInterface(object):
                                       "are not expected to configure.")
 
         if self.local_mac and (self.mode_enable == 'disable' or
-                               (self.dldp_intf_conf['dldpCompatibleEnable'] == 'disable'
-                                and self.mode_enable != 'enable')):
+                               (self.dldp_intf_conf['dldpCompatibleEnable'] == 'disable' and self.mode_enable != 'enable')):
             self.module.fail_json(msg="Error: when DLDP compatible-mode is disabled on this port, "
                                       "Configuring local_mac is not allowed.")
 
@@ -661,6 +660,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     dldp_intf_obj = DldpInterface(argument_spec)
     dldp_intf_obj.work()
+
 
 if __name__ == '__main__':
     main()
