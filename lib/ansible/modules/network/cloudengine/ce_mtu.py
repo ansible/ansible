@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_mtu
-version_added: "2.3"
-short_description: Manages MTU settings on CloudEngine switch.
+version_added: "2.4"
+short_description: Manages MTU settings on HUAWEI CloudEngine switches.
 description:
-    - Manages MTU settings on CloudEngine switch.
+    - Manages MTU settings on HUAWEI CloudEngine switches.
 author: QijunPan (@CloudEngine-Ansible)
 notes:
     - Either C(sysmtu) param is required or C(interface) AND C(mtu) params are req'd.
@@ -120,8 +120,8 @@ proposed:
     type: dict
     sample: {"mtu": "1700", "jumbo_max": "9000", jumbo_min: "8000"}
 existing:
-    description:
-        - k/v pairs of existing mtu/sysmtu on the interface/system
+    description: k/v pairs of existing mtu/sysmtu on the interface/system
+    returned: always
     type: dict
     sample: {"mtu": "1600", "jumbo_max": "9216", "jumbo_min": "1518"}
 end_state:
@@ -608,6 +608,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     interface = Mtu(argument_spec)
     interface.work()
+
 
 if __name__ == '__main__':
     main()
