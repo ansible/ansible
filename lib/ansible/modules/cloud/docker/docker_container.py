@@ -1287,7 +1287,7 @@ class Container(DockerBaseClass):
                         self.log("comparing lists: %s" % key)
                         set_a = set(getattr(self.parameters, key))
                         set_b = set(value)
-                        match = (set_a <= set_b)
+                        match = (set_a == set_b)
                 elif isinstance(getattr(self.parameters, key), dict) and isinstance(value, dict):
                     # compare two dicts
                     self.log("comparing two dicts: %s" % key)
