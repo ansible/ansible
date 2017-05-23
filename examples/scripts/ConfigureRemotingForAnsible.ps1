@@ -46,6 +46,7 @@
 # Updated by Nicolas Simond <contact@nicolas-simond.com>
 # Updated by Dag Wieërs <dag@wieers.com>
 # Updated by Jordan Borean <jborean93@gmail.com>
+# Updated by Kamran Ayub <kamran.ayub@gmail.com>
 #
 # Version 1.0 - 2014-07-06
 # Version 1.1 - 2014-11-11
