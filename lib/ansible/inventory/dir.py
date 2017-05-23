@@ -111,7 +111,7 @@ class InventoryDirectory(object):
             if i.startswith('.') and not i.startswith('./'):
                 continue
             # These are things inside of an inventory basedir
-            if i in ("host_vars", "group_vars", "vars_plugins"):
+            if i in ("host_vars", "group_vars", "vars_plugins", "files"):
                 continue
             fullpath = os.path.join(self.directory, i)
             if os.path.isdir(fullpath):
