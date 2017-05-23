@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_bgp_neighbor
-version_added: "2.3"
-short_description: Manages BGP peer configuration.
+version_added: "2.4"
+short_description: Manages BGP peer configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages BGP peer configurations on CloudEngine switches.
+    - Manages BGP peer configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -276,8 +276,8 @@ proposed:
     type: dict
     sample: {"peer_addr": "192.168.10.10", "remote_as": "500", "state": "present", "vrf_name": "js"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"bgp peer": []}
 end_state:
