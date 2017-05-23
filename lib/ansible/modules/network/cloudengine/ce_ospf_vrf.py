@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_ospf_vrf
-version_added: "2.3"
-short_description: Manages configuration of an OSPF VPN instance.
+version_added: "2.4"
+short_description: Manages configuration of an OSPF VPN instance on HUAWEI CloudEngine switches.
 description:
-    - Manages configuration of an OSPF VPN instance.
+    - Manages configuration of an OSPF VPN instance on HUAWEI CloudEngine switches.
 author: Yang yang (@CloudEngine Ansible)
 options:
     ospf:
@@ -62,7 +62,7 @@ options:
     lsaalflag:
         description:
             - Specifies the mode of timer to calculate interval of arrive LSA.
-              If set the parameter but not specifies value,the default will be used.
+              If set the parameter but not specifies value, the default will be used.
               If true use general timer.
               If false use intelligent timer.
         required: false
@@ -376,10 +376,12 @@ CE_NC_DELETE_OSPF = """
       </ospfv2>
 """
 
+
 def build_config_xml(xmlstr):
     """build_config_xml"""
 
     return '<config> ' + xmlstr + ' </config>'
+
 
 class OspfVrf(object):
     """
