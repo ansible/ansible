@@ -594,7 +594,7 @@ instances:
     description: Details about the ecs instances that were created.
     returned: 'on create, modify and getinfo'
     type: dict
-    contains: {
+    sample: {
         "block_device_mapping": {
             "d-2ze9mho1vp79mctdoro0": {
                 "delete_on_termination": true,
