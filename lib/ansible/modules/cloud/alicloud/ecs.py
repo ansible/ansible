@@ -574,6 +574,73 @@ EXAMPLES = '''
         sg_action: '{{ sg_action }}'
 '''
 
+RETURN = '''
+instance_ids:
+    description: List all instances's id after operating ecs instance.
+    returned: always
+    type: list
+    sample: ["i-35b333d9","i-ddav***"]
+instance_ips:
+    description: List all instances's public ip address after operating ecs instance.
+    returned: 'on create, modify and getinfo'
+    type: list
+    sample: ["10.1.1.1","10.1.1.2"]
+instance_statuses:
+    description: List all instances's status after operating ecs instance except deleted.
+    returned: always
+    type: list
+    sample: ["running","stopped"]
+instances:
+    description: Details about the ecs instances that were created.
+    returned: 'on create, modify and getinfo'
+    type: dict
+    contains:
+        "block_device_mapping": {
+            "d-2ze9mho1vp79mctdoro0": {
+                "delete_on_termination": true, 
+                "status": "in_use", 
+                "volume_id": "d-2ze9mho1vp79mctdoro0"
+            }
+        }, 
+        "eip": "", 
+        "group_id": "sg-2zefacu0pduhah3yrhhz",
+        "id": "i-2ze9zfjdhtasdrfbgay1", 
+        "image_id": "ubuntu1404_64_40G_cloudinit_20160727.raw", 
+        "instance_name": "test-instance",
+        "instance_type": "ecs.n1.small", 
+        "io_optimized": true, 
+        "launch_time": "2017-05-23T00:56Z", 
+        "private_ip": "10.31.153.209", 
+        "public_ip": "47.94.45.175", 
+        "region_id": "cn-beijing", 
+        "status": "running", 
+        "subnet_id": "", 
+        "tags": {
+            "create_test": "0.01"
+        }, 
+        "vpc_id": "", 
+        "vpc_private_ip": {
+            "ip_address": []
+        }, 
+        "zone_id": "cn-beijing-a"
+total_count:
+    description: The number of all instances after operating ecs instance.
+    returned: always
+    type: int
+    sample: 3
+failed_instance_ids:
+    description: List all instances's id when operating ecs instance is failed.
+    returned: 'on join/leave security group'
+    type: list
+    sample: ["i-35b333d9","i-ddav***"]
+group_id:
+    description: The security group id that join instance or remove instance.
+    returned: 'on join/leave security group'
+    type: string
+    sample: "sg-35b333d9"
+
+'''
+
 import time
 import sys
 from ansible.module_utils.basic import AnsibleModule
@@ -601,7 +668,10 @@ def get_instance_info(inst):
                      'region_id': inst.region_id,
                      'launch_time': inst.creation_time,
                      'instance_type': inst.instance_type,
-                     'state': inst.state,
+                     'instance_name': inst.instance_name,
+                     'host_name': inst.host_name,
+                     'group_id': inst.group_id,
+                     'status': inst.status,
                      'tags': inst.tags,
                      'vpc_id': inst.vpc_id,
                      'subnet_id': inst.subnet_id,
@@ -641,6 +711,7 @@ def get_instances(module, ecs, instance_ids):
     # if instance_tags:
     #     for key, value in instance_tags.items():
     #         filters["tag:" + key] = value
+    print ("############# instance_ids:",instance_ids)
 
     for inst in ecs.get_all_instances(instance_ids=instance_ids):
         # print("inst:====", get_instance_info(inst))
@@ -648,7 +719,6 @@ def get_instances(module, ecs, instance_ids):
         changed = True
 
     # C2C : Commented printing on to console as it causing error from ansible
-    # print(instance_dict_array)
 
     return changed, instance_dict_array, instance_ids
 
@@ -744,7 +814,7 @@ def startstop_instances(module, ecs, instance_ids, state, instance_tags):
                 module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
             changed = True
 
-    return changed, instance_dict_array, instance_ids
+    return (changed, instance_dict_array, instance_ids)
 
 
 def delete_instance(module, ecs, instance_id):
@@ -879,7 +949,7 @@ def create_instance(module, ecs, image_id, instance_type, group_id, zone_id, ins
                                               auto_renew=auto_renew, auto_renew_period=auto_renew_period,
                                               instance_tags=instance_tags, ids=ids, wait=wait,
                                               wait_timeout=wait_timeout)
-
+        print ("############# result:",result)
         if 'error' in (''.join(str(result))).lower():
             module.fail_json(changed=changed, msg=result)
 
@@ -956,11 +1026,12 @@ def get_instance_status(module, ecs, zone_id=None, pagenumber=None, pagesize=Non
     return changed, result
 
 
-def join_security_group(module, ecs, instance_ids, security_group_id):
+def joinleave_security_group(module, ecs, action, instance_ids, security_group_id):
     """
     Instance joins security group id
     :param module: Ansible module object
     :param ecs: authenticated ecs connection object
+    :param action: join or leave security group
     :param instance_ids: The list of instance id's which are to be assigned to the security group
     :param security_group_id: ID of the security group to which a instance is to be added
     :return:
@@ -970,19 +1041,22 @@ def join_security_group(module, ecs, instance_ids, security_group_id):
     changed = False
     # check whether the required parameter passed or not
     if not instance_ids:
-        module.fail_json(msg='instance_id is required to join to new security group')
+        module.fail_json(msg='instance_id is required to join in new security group or remove from an existing security group.')
 
     if not isinstance(instance_ids, list):
         module.fail_json(msg='instance_id must be a list')
 
     if not security_group_id:
-        module.fail_json(msg='group_id is required to join to new security group')
+        module.fail_json(msg='group_id is required to join in new security group or remove from an existing security group')
 
-    # call join_security_group method from footmark
+    # call join_security_group or leave_security_groupmethod from footmark
     try:
-        changed, result, success_instance_ids, failed_instance_ids = ecs.join_security_group(instance_ids,
+        if action == 'join':
+            changed, result, success_instance_ids, failed_instance_ids = ecs.join_security_group(instance_ids,
                                                                                              security_group_id)
-
+        else:
+            changed, result, success_instance_ids, failed_instance_ids = ecs.leave_security_group(instance_ids,
+                                                                                                  security_group_id)
         flag = 0
         if len(result) > 0:
             for item in result:
@@ -997,56 +1071,10 @@ def join_security_group(module, ecs, instance_ids, security_group_id):
             failed_instance_ids = None
 
         if flag == 1:
-            module.fail_json(msg=result, group_id=security_group_id, success_instance_ids=success_instance_ids,
+            module.fail_json(msg=result, group_id=security_group_id, instance_ids=success_instance_ids,
                              failed_instance_ids=failed_instance_ids)
     except ECSResponseError as e:
-        module.fail_json(msg='Unable to add instance to security group, error: {0}'.format(e))
-
-    return changed, result, success_instance_ids, failed_instance_ids, security_group_id
-
-
-def leave_security_group(module, ecs, instance_ids, security_group_id):
-    """
-    Instance leaves security group id
-    :param module: Ansible module object
-    :param ecs: authenticated ecs connection object
-    :param instance_ids: The list of instance id's which are to be assigned to the security group
-    :param security_group_id: ID of the security group to which a instance is to be added
-    :return:
-        changed: If instance is removed successfully in security group. the changed will be set to True else False
-        result: detailed server response
-    """
-    changed = False
-    # check whether the required parameter passed or not
-    if not instance_ids:
-        module.fail_json(msg='instance_ids is required to leave from security group')
-    if not isinstance(instance_ids, list):
-        module.fail_json(msg='instance_id must be a list')
-    if not security_group_id:
-        module.fail_json(msg='group_id is required to leave from an existing security group')
-
-    # call leave_security_group method from footmark
-    try:
-        changed, result, success_instance_ids, failed_instance_ids = ecs.leave_security_group(instance_ids,
-                                                                                              security_group_id)
-        flag = 0
-        if len(result) > 0:
-            for item in result:
-                if 'error code' in str(item).lower():
-                    flag = 1
-        else:
-            flag = 1
-
-        if len(success_instance_ids) == 0:
-            success_instance_ids = None
-        if len(failed_instance_ids) == 0:
-            failed_instance_ids = None
-
-        if flag == 1:
-            module.fail_json(msg=result, group_id=security_group_id, success_instance_ids=success_instance_ids,
-                             failed_instance_ids=failed_instance_ids)
-    except ECSResponseError as e:
-        module.fail_json(msg='Unable to remove instance from security group, error: {0}'.format(e))
+        module.fail_json(msg='Unable to join instance in security group or remove from it, error: {0}'.format(e))
 
     return changed, result, success_instance_ids, failed_instance_ids, security_group_id
 
@@ -1103,7 +1131,7 @@ def main():
             instance_id = module.params['instance_id']
 
             result = delete_instance(module=module, ecs=ecs, instance_id=instance_id)
-            module.exit_json(changed=True, result=result)
+            module.exit_json(changed=True, instance_ids=result, total_count=len(result))
 
         elif status in ('running', 'stopped', 'restarted'):
             instance_ids = module.params['instance_ids']
@@ -1114,8 +1142,12 @@ def main():
 
             (changed, instance_dict_array, new_instance_ids) = startstop_instances(module, ecs, instance_ids, status,
                                                                                    instance_tags)
-            module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array,
-                             tagged_instances=tagged_instances)
+            (_, instance_dict_array, new_instance_ids) = get_instances(module, ecs, instance_ids)
+            statuses = []
+            for inst in instance_dict_array:
+                statuses.append(str(inst["status"]))
+            module.exit_json(changed=changed, instance_ids=new_instance_ids, instance_statuses=statuses,
+                             total_count=len(new_instance_ids))
 
         elif status == 'present':
             # Join and leave security group is handled in state present
@@ -1125,32 +1157,43 @@ def main():
             attributes = module.params['attributes']
 
             if sg_action:
+                action = sg_action.strip().lower()
+
+                if action not in ('join', 'leave'):
+                    module.fail_json(msg='To perform join_security_group or leave_security_group operation,'
+                                         'sg_action must be either join or leave respectively')
+
                 instance_ids = module.params['instance_id']
                 security_group_id = module.params['group_id']
 
-                if sg_action.strip().lower() == 'join':
+                if action == 'join':
                     # Adding an Instance to a Security Group
                     (changed, result, success_instance_ids, failed_instance_ids, security_group_id) = \
-                        join_security_group(module, ecs, instance_ids, security_group_id)
-
-                    module.exit_json(changed=changed, result=result, group_id=security_group_id,
-                                     success_instance_ids=success_instance_ids, failed_instance_ids=failed_instance_ids)
-
-                elif sg_action.strip().lower() == 'leave':
+                        joinleave_security_group(module, ecs, action, instance_ids, security_group_id)
+                else:
                     # Removing an Instance from a Security Group
                     (changed, result, success_instance_ids, failed_instance_ids, security_group_id) = \
-                        leave_security_group(module, ecs, instance_ids, security_group_id)
+                        joinleave_security_group(module, ecs, action, instance_ids, security_group_id)
 
-                    module.exit_json(changed=changed, result=result, group_id=security_group_id,
-                                     success_instance_ids=success_instance_ids, failed_instance_ids=failed_instance_ids)
-                else:
-                    module.fail_json(msg='To perform join_security_group or leave_security_group operation,'
-                                         'sg_action must be either join or leave respectively')
+                (_, instance_dict_array, new_instance_ids) = get_instances(module, ecs, instance_ids)
+                statuses = []
+                for inst in instance_dict_array:
+                    statuses.append(str(inst["status"]))
+                module.exit_json(changed=changed, group_id=security_group_id, instance_ids=success_instance_ids,
+                                 failed_instance_ids=failed_instance_ids, instance_statuses=statuses,
+                                 total_count=len(new_instance_ids))
             # region Security Group join/leave ends here
+
             elif attributes:
                 # Modifying Instance Attributes
                 changed, instance_ids, result = modify_instance(module, ecs, attributes)
-                module.exit_json(changed=changed, instance_ids=instance_ids, result=result)
+
+                (_, instance_dict_array, new_instance_ids) = get_instances(module, ecs, instance_ids)
+                statuses = []
+                for inst in instance_dict_array:
+                    statuses.append(str(inst["status"]))
+                module.exit_json(changed=changed, instance_ids=instance_ids, instance_statuses=statuses,
+                                 instances=instance_dict_array, total_count=len(instance_ids))
             else:
                 # Create New Instance
                 zone_id = module.params['alicloud_zone']
@@ -1191,14 +1234,29 @@ def main():
                                                     auto_renew=auto_renew, auto_renew_period=auto_renew_period,
                                                     instance_tags=instance_tags, ids=ids, wait=wait,
                                                     wait_timeout=wait_timeout)
-                module.exit_json(changed=changed, result=result)
+                instance_ids = []
+                for inst in result:
+                    instance_ids.append(str(inst["instance_id"]))
+                (_, instance_dict_array, new_instance_ids) = get_instances(module, ecs, instance_ids)
+                statuses = []
+                public_ips = []
+                for inst in instance_dict_array:
+                    statuses.append(str(inst["status"]))
+                    public_ips.append(str(inst["public_ip"]))
+                module.exit_json(changed=changed, instance_ids=instance_ids, instance_statuses=statuses,
+                                 instance_ips=public_ips, instances=instance_dict_array, total_count=len(instance_ids))
 
         elif status == 'getinfo':
             instance_ids = module.params['instance_ids']
 
             (changed, instance_dict_array, new_instance_ids) = get_instances(module, ecs, instance_ids)
-            module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array,
-                             tagged_instances=tagged_instances)
+            statuses = []
+            public_ips = []
+            for inst in instance_dict_array:
+                statuses.append(str(inst["status"]))
+                public_ips.append(str(inst["public_ip"]))
+            module.exit_json(changed=changed, instance_ids=new_instance_ids, instance_statuses=statuses,
+                             instance_ips=public_ips, instances=instance_dict_array, total_count=len(new_instance_ids))
 
         elif status == 'getstatus':
             pagenumber = module.params['pagenumber']
@@ -1206,7 +1264,14 @@ def main():
             zone_id = module.params['alicloud_zone']
 
             (changed, result) = get_instance_status(module, ecs, zone_id, pagenumber, pagesize)
-            module.exit_json(changed=changed, result=result)
+
+            instance_ids = []
+            instance_statuses = []
+            for inst in result["InstanceStatuses"]["InstanceStatus"]:
+                instance_ids.append(str(inst["InstanceId"]))
+                instance_statuses.append(str.lower(str(inst["Status"])))
+            module.exit_json(changed=changed, instance_ids=instance_ids,
+                             instance_statuses=instance_statuses, total_count=result["TotalCount"])
 
 
 if __name__ == '__main__':
