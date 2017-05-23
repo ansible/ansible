@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_info_center_global
-version_added: "2.3"
-short_description: Manages outputting logs.
+version_added: "2.4"
+short_description: Manages outputting logs on HUAWEI CloudEngine switches.
 description:
-    - This module offers the ability to be output to the log buffer, log file, console, terminal, or log host on CloudEngine switch.
+    - This module offers the ability to be output to the log buffer, log file, console, terminal, or log host on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@CloudEngine-Ansible)
 options:
@@ -257,8 +257,7 @@ proposed:
     sample: {"channel_id": "1", "facility": "local4", "is_default_vpn": True, "level": "alert", "server_domain": "aaa",
     "server_port": "100", "state": "present", "timestamp": "localtime", "transport_mode": "tcp"}
 existing:
-    description:
-        - k/v pairs of existing rollback
+    description: k/v pairs of existing rollback
     returned: always
     type: dict
     sample:
