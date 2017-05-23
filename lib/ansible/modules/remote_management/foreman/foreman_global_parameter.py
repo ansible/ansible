@@ -2,6 +2,70 @@
 # -*- coding: utf-8 -*-
 # (c)Matthias Dellweg & Bernhard Hopfenmüller 2017
 
+DOCUMENTATION = '''
+---
+module: foreman_global_parameter
+short_description: Manage Foreman Global Parameter
+description:
+    - Manage Foreman Global Parameter Entities
+author: "Matthias Dellweg (@mdellweg) & Bernhard Hopfenmueller(@Fobhep)"
+requirements:
+    - "nailgun >= 0.28.0"
+    - "python >= 2.6"
+options:
+    server_url:
+        description:
+            - URL of Foreman server
+        required: true
+    username:
+        description:
+            - Username on Foreman server
+        required: true
+    password:
+        description:
+            - Password for user accessing Foreman server
+        required: true
+    verify_ssl:
+        description:
+            - Verify SSL of the Foreman server
+        required: false
+    name:
+        description:
+            - Name of the Global Parameter
+        required: true
+    value:
+        description:
+            - Value of the Global Parameter
+        required: false
+    state:
+        description:
+            - State of the Global Parameter
+        required: false
+'''
+
+EXAMPLES = '''
+- name: "Create a Global Parameter"
+  local_action:
+      module: foreman_global_parameter
+      username: "admin"
+      password: "admin"
+      server_url: "https://fakeserver.com"
+      name: "TheAnswer"
+      value: "42"
+      state: present
+
+- name: "Delete a Global Parameter"
+  local_action:
+      module: foreman_global_parameter
+      username: "admin"
+      password: "admin"
+      server_url: "https://fakeserver.com"
+      name: "TheAnswer"
+      state: absent
+'''
+
+RETURN = '''# '''
+
 try:
     from nailgun.config import ServerConfig
     import nailgun.entity_mixins
