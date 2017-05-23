@@ -602,11 +602,11 @@ instances:
                 "volume_id": "d-2ze9mho1vp79mctdoro0"
             }
         },
-        "eip": "", 
+        "eip": "",
         "group_id": "sg-2zefacu0pduhah3yrhhz",
         "host_name": "myhost",
-        "id": "i-2ze9zfjdhtasdrfbgay1", 
-        "image_id": "ubuntu1404_64_40G_cloudinit_20160727.raw", 
+        "id": "i-2ze9zfjdhtasdrfbgay1",
+        "image_id": "ubuntu1404_64_40G_cloudinit_20160727.raw",
         "instance_name": "test-instance",
         "instance_type": "ecs.n1.small",
         "io_optimized": true,
@@ -619,7 +619,7 @@ instances:
         "tags": {
             "create_test": "0.01"
         },
-        "vpc_id": "", 
+        "vpc_id": "",
         "vpc_private_ip": {
             "ip_address": []
         },
@@ -639,7 +639,6 @@ group_id:
     returned: 'on join/leave security group'
     type: string
     sample: "sg-35b333d9"
-
 '''
 
 import time
@@ -1050,11 +1049,11 @@ def joinleave_security_group(module, ecs, action, instance_ids, security_group_i
     # call join_security_group or leave_security_groupmethod from footmark
     try:
         if action == 'join':
-            changed, result, success_instance_ids, failed_instance_ids = ecs.join_security_group(instance_ids,
-                                                                                             security_group_id)
+            changed, result, success_instance_ids, failed_instance_ids = \
+                ecs.join_security_group(instance_ids, security_group_id)
         else:
-            changed, result, success_instance_ids, failed_instance_ids = ecs.leave_security_group(instance_ids,
-                                                                                                  security_group_id)
+            changed, result, success_instance_ids, failed_instance_ids = \
+                ecs.leave_security_group(instance_ids, security_group_id)
         flag = 0
         if len(result) > 0:
             for item in result:
