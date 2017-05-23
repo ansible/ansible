@@ -20,8 +20,8 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-import sys
 import json
+import sys
 
 from units.mock.procenv import swap_stdin_and_argv
 
@@ -31,23 +31,21 @@ from ansible.compat.tests.mock import MagicMock
 
 class TestModuleUtilsBasic(unittest.TestCase):
     def test_module_utils_basic__log_invocation(self):
-        with swap_stdin_and_argv(stdin_data=json.dumps(
-            dict(
-                ANSIBLE_MODULE_ARGS=dict(
-                    foo=False, bar=[1,2,3], bam="bam", baz=u'baz'),
-                ))):
+        with swap_stdin_and_argv(stdin_data=json.dumps(dict(
+            ANSIBLE_MODULE_ARGS=dict(foo=False, bar=[1, 2, 3], bam="bam", baz=u'baz')),
+        )):
             from ansible.module_utils import basic
 
             # test basic log invocation
             basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
                 argument_spec=dict(
-                    foo = dict(default=True, type='bool'),
-                    bar = dict(default=[], type='list'),
-                    bam = dict(default="bam"),
-                    baz = dict(default=u"baz"),
-                    password = dict(default=True),
-                    no_log = dict(default="you shouldn't see me", no_log=True),
+                    foo=dict(default=True, type='bool'),
+                    bar=dict(default=[], type='list'),
+                    bam=dict(default="bam"),
+                    baz=dict(default=u"baz"),
+                    password=dict(default=True),
+                    no_log=dict(default="you shouldn't see me", no_log=True),
                 ),
             )
 
@@ -73,13 +71,14 @@ class TestModuleUtilsBasic(unittest.TestCase):
             self.assertIn(' password=NOT_LOGGING_PASSWORD', message)
 
             kwargs = am.log.call_args[1]
-            self.assertEqual(kwargs,
-                    dict(log_args={
-                        'foo': 'False',
-                        'bar': '[1, 2, 3]',
-                        'bam': 'bam',
-                        'baz': 'baz',
-                        'password': 'NOT_LOGGING_PASSWORD',
-                        'no_log': 'NOT_LOGGING_PARAMETER',
-                    })
-                )
+            self.assertEqual(
+                kwargs,
+                dict(log_args={
+                    'foo': 'False',
+                    'bar': '[1, 2, 3]',
+                    'bam': 'bam',
+                    'baz': 'baz',
+                    'password': 'NOT_LOGGING_PASSWORD',
+                    'no_log': 'NOT_LOGGING_PARAMETER',
+                })
+            )

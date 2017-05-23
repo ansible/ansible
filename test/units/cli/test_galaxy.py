@@ -19,20 +19,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible
 import os
 import shutil
 import tarfile
 import tempfile
 import yaml
 
+from ansible.cli.galaxy import GalaxyCLI
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, patch
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import PY3
 
-import ansible
-from ansible.errors import AnsibleError, AnsibleOptionsError
-
-from ansible.cli.galaxy import GalaxyCLI
 
 class TestGalaxy(unittest.TestCase):
     @classmethod
@@ -72,7 +71,7 @@ class TestGalaxy(unittest.TestCase):
         try:
             tar = tarfile.open(output_file, "w:gz")
             tar.add(source_dir, arcname=os.path.basename(source_dir))
-        except AttributeError: # tarfile obj. has no attribute __exit__ prior to python 2.    7
+        except AttributeError:  # tarfile obj. has no attribute __exit__ prior to python 2.    7
             pass
         finally:  # ensuring closure of tarfile obj
             tar.close()
@@ -101,7 +100,7 @@ class TestGalaxy(unittest.TestCase):
         gc = GalaxyCLI(args=self.default_args)
         role_info = {'name': 'some_role_name'}
         display_result = gc._display_role_info(role_info)
-        self.assertTrue(display_result.find('some_role_name') >-1)
+        self.assertTrue(display_result.find('some_role_name') > -1)
 
     def test_display_galaxy_info(self):
         gc = GalaxyCLI(args=self.default_args)
@@ -330,7 +329,7 @@ class ValidRoleTests(object):
             self.assertTrue(os.path.isdir(os.path.join(self.role_dir, d)), msg="Expected role subdirectory {0} doesn't exist".format(d))
 
     def test_travis_yml(self):
-        with open(os.path.join(self.role_dir,'.travis.yml'), 'r') as f:
+        with open(os.path.join(self.role_dir, '.travis.yml'), 'r') as f:
             contents = f.read()
 
         with open(os.path.join(self.role_skeleton_path, '.travis.yml'), 'r') as f:
@@ -378,7 +377,7 @@ class TestGalaxyInitContainerEnabled(unittest.TestCase, ValidRoleTests):
     def test_metadata_container_tag(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
             metadata = yaml.safe_load(mf)
-        self.assertIn('container', metadata.get('galaxy_info', dict()).get('galaxy_tags',[]), msg='container tag not set in role metadata')
+        self.assertIn('container', metadata.get('galaxy_info', dict()).get('galaxy_tags', []), msg='container tag not set in role metadata')
 
     def test_metadata_contents(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:

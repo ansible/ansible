@@ -52,7 +52,7 @@ class TestVariableManager(unittest.TestCase):
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
         vars = v.get_vars(use_cache=False)
 
-        #FIXME: not sure why we remove all and only test playbook_dir
+        # FIXME: not sure why we remove all and only test playbook_dir
         for remove in ['omit', 'vars', 'ansible_version', 'ansible_check_mode', 'ansible_playbook_python']:
             if remove in vars:
                 del vars[remove]

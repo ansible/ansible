@@ -17,10 +17,11 @@ import unittest
 import yaml
 
 from pprint import pprint
-from ansible import plugins
+
 import ansible.plugins
 from ansible.compat.tests.mock import patch, MagicMock
 from ansible.plugins.action.synchronize import ActionModule
+
 
 # Getting the incoming and outgoing task vars from the plugin's run method
 
@@ -41,8 +42,6 @@ with open('task_vars.json', 'wb') as f:
 '''
 
 
-
-
 class TaskMock(object):
     args = {'src': u'/tmp/deleteme',
             'dest': '/tmp/deleteme',
@@ -52,15 +51,18 @@ class TaskMock(object):
     become_user = None
     become_method = None
 
+
 class StdinMock(object):
     shell = None
+
 
 class ConnectionMock(object):
     ismock = True
     _play_context = None
-    #transport = 'ssh'
+    # transport = 'ssh'
     transport = None
     _new_stdin = StdinMock()
+
 
 class PlayContextMock(object):
     shell = None
@@ -75,12 +77,15 @@ class PlayContextMock(object):
     remote_user = None
     password = None
 
+
 class ModuleLoaderMock(object):
     def find_plugin(self, module_name, mod_type):
         pass
 
+
 class SharedLoaderMock(object):
     module_loader = ModuleLoaderMock()
+
 
 class SynchronizeTester(object):
 
@@ -95,7 +100,6 @@ class SynchronizeTester(object):
 
     final_task_vars = None
     execute_called = False
-
 
     def _execute_module(self, module_name, module_args=None, task_vars=None):
         self.execute_called = True
@@ -114,7 +118,7 @@ class SynchronizeTester(object):
         if '_play_context' in test_meta:
             if test_meta['_play_context']:
                 self.task.args = {}
-                for k,v in test_meta['_play_context'].items():
+                for (k, v) in test_meta['_play_context'].items():
                     if v == 'None':
                         v = None
                     setattr(self._play_context, k, v)
@@ -123,8 +127,8 @@ class SynchronizeTester(object):
         if '_task' in test_meta:
             if test_meta['_task']:
                 self.task.args = {}
-                for k,v in test_meta['_task'].items():
-                    #import epdb; epdb.st()
+                for (k, v) in test_meta['_task'].items():
+                    # import epdb; epdb.st()
                     if v == 'None':
                         v = None
                     setattr(self.task, k, v)
@@ -133,32 +137,30 @@ class SynchronizeTester(object):
         if 'task_args' in test_meta:
             if test_meta['task_args']:
                 self.task.args = {}
-                for k,v in test_meta['task_args'].items():
+                for (k, v) in test_meta['task_args'].items():
                     self.task.args[k] = v
 
         # load inital task vars
-        invarspath = os.path.join(fixturepath,
-                test_meta.get('fixtures', {}).get('taskvars_in', 'taskvars_in.json'))
+        invarspath = os.path.join(fixturepath, test_meta.get('fixtures', {}).get('taskvars_in', 'taskvars_in.json'))
         with open(invarspath, 'rb') as f:
             fdata = f.read()
         fdata = fdata.decode("utf-8")
         in_task_vars = json.loads(fdata)
 
         # load expected final task vars
-        outvarspath = os.path.join(fixturepath,
-                test_meta.get('fixtures', {}).get('taskvars_out', 'taskvars_out.json'))
+        outvarspath = os.path.join(fixturepath, test_meta.get('fixtures', {}).get('taskvars_out', 'taskvars_out.json'))
         with open(outvarspath, 'rb') as f:
             fdata = f.read()
         fdata = fdata.decode("utf-8")
         out_task_vars = json.loads(fdata)
 
         # fixup the connection
-        for k,v in test_meta['connection'].items():
+        for (k, v) in test_meta['connection'].items():
             setattr(self.connection, k, v)
 
         # fixup the hostvars
         if test_meta['hostvars']:
-            for k,v in test_meta['hostvars'].items():
+            for (k, v) in test_meta['hostvars'].items():
                 in_task_vars['hostvars'][k] = v
 
         # initalize and run the module
@@ -170,9 +172,9 @@ class SynchronizeTester(object):
         # run assertions
         for check in test_meta['asserts']:
             value = eval(check)
-            #if not value:
-            #    print(check, value)
-            #    import epdb; epdb.st()
+            # if not value:
+            #     print(check, value)
+            #     import epdb; epdb.st()
             assert value, check
 
 
@@ -190,54 +192,52 @@ class FakePluginLoader(object):
 
 class TestSynchronizeAction(unittest.TestCase):
 
-
     fixturedir = os.path.dirname(__file__)
     fixturedir = os.path.join(fixturedir, 'fixtures', 'synchronize')
-    #print(basedir)
-
+    # print(basedir)
 
     @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_basic(self):
         x = SynchronizeTester()
-        x.runtest(fixturepath=os.path.join(self.fixturedir,'basic'))
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic'))
 
     @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_basic_become(self):
         x = SynchronizeTester()
-        x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_become'))
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_become'))
 
     @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_basic_become_cli(self):
         # --become on the cli sets _play_context.become
         x = SynchronizeTester()
-        x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_become_cli'))
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_become_cli'))
 
     @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_basic_vagrant(self):
         # simple vagrant example
         x = SynchronizeTester()
-        x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_vagrant'))
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_vagrant'))
 
     @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_basic_vagrant_sudo(self):
         # vagrant plus sudo
         x = SynchronizeTester()
-        x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_vagrant_sudo'))
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_vagrant_sudo'))
 
     @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_basic_vagrant_become_cli(self):
         # vagrant plus sudo
         x = SynchronizeTester()
-        x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_vagrant_become_cli'))
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_vagrant_become_cli'))
 
     @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_delegate_remote(self):
         # delegate to other remote host
         x = SynchronizeTester()
-        x.runtest(fixturepath=os.path.join(self.fixturedir,'delegate_remote'))
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote'))
 
     @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_delegate_remote_su(self):
         # delegate to other remote host with su enabled
         x = SynchronizeTester()
-        x.runtest(fixturepath=os.path.join(self.fixturedir,'delegate_remote_su'))
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote_su'))

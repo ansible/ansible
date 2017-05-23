@@ -14,4 +14,3 @@ if __name__ == '__main__':
         mimetypes.add_type('application/json', '.json')
         import SimpleHTTPServer
         SimpleHTTPServer.test()
-

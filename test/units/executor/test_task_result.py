@@ -24,6 +24,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.executor.task_result import TaskResult
 
+
 class TestTaskResult(unittest.TestCase):
     def test_task_result_basic(self):
         mock_host = MagicMock()

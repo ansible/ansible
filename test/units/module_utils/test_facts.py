@@ -189,7 +189,7 @@ LSBLK_OUTPUT = b"""
 /dev/mapper/docker-253:1-1050967-pool
 """
 
-LSBLK_OUTPUT_2  = b"""
+LSBLK_OUTPUT_2 = b"""
 /dev/sda
 /dev/sda1                            32caaec3-ef40-4691-a3b6-438c3f9bc1c0
 /dev/sda2                            66Ojcd-ULtu-1cZa-Tywo-mx0d-RF4O-ysA9jK
@@ -244,166 +244,213 @@ grimlock.g.a:path_with'single_quotes /home/adrian/sshfs-grimlock-single-quote-2 
 grimlock.g.a:/mnt/data/foto's /home/adrian/fotos fuse.sshfs rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
 """
 
-MTAB_ENTRIES = \
+MTAB_ENTRIES = [
     [
-        ['sysfs',
-         '/sys',
-         'sysfs',
-         'rw,seclabel,nosuid,nodev,noexec,relatime',
-         '0',
-         '0'],
-        ['proc', '/proc', 'proc', 'rw,nosuid,nodev,noexec,relatime', '0', '0'],
-        ['devtmpfs',
-         '/dev',
-         'devtmpfs',
-         'rw,seclabel,nosuid,size=8044400k,nr_inodes=2011100,mode=755',
-         '0',
-         '0'],
-        ['securityfs',
-         '/sys/kernel/security',
-         'securityfs',
-         'rw,nosuid,nodev,noexec,relatime',
-         '0',
-         '0'],
-        ['tmpfs', '/dev/shm', 'tmpfs', 'rw,seclabel,nosuid,nodev', '0', '0'],
-        ['devpts',
-         '/dev/pts',
-         'devpts',
-         'rw,seclabel,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000',
-         '0',
-         '0'],
-        ['tmpfs', '/run', 'tmpfs', 'rw,seclabel,nosuid,nodev,mode=755', '0', '0'],
-        ['tmpfs',
-         '/sys/fs/cgroup',
-         'tmpfs',
-         'ro,seclabel,nosuid,nodev,noexec,mode=755',
-         '0',
-         '0'],
-        ['cgroup',
-         '/sys/fs/cgroup/systemd',
-         'cgroup',
-         'rw,nosuid,nodev,noexec,relatime,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd',
-         '0',
-         '0'],
-        ['pstore',
-         '/sys/fs/pstore',
-         'pstore',
-         'rw,seclabel,nosuid,nodev,noexec,relatime',
-         '0',
-         '0'],
-        ['cgroup',
-         '/sys/fs/cgroup/devices',
-         'cgroup',
-         'rw,nosuid,nodev,noexec,relatime,devices',
-         '0',
-         '0'],
-        ['cgroup',
+        'sysfs',
+        '/sys',
+        'sysfs',
+        'rw,seclabel,nosuid,nodev,noexec,relatime',
+        '0',
+        '0'
+    ],
+    ['proc', '/proc', 'proc', 'rw,nosuid,nodev,noexec,relatime', '0', '0'],
+    [
+        'devtmpfs',
+        '/dev',
+        'devtmpfs',
+        'rw,seclabel,nosuid,size=8044400k,nr_inodes=2011100,mode=755',
+        '0',
+        '0'
+    ],
+    [
+        'securityfs',
+        '/sys/kernel/security',
+        'securityfs',
+        'rw,nosuid,nodev,noexec,relatime',
+        '0',
+        '0'
+    ],
+    ['tmpfs', '/dev/shm', 'tmpfs', 'rw,seclabel,nosuid,nodev', '0', '0'],
+    [
+        'devpts',
+        '/dev/pts',
+        'devpts',
+        'rw,seclabel,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000',
+        '0',
+        '0'
+    ],
+    ['tmpfs', '/run', 'tmpfs', 'rw,seclabel,nosuid,nodev,mode=755', '0', '0'],
+    [
+        'tmpfs',
+        '/sys/fs/cgroup',
+        'tmpfs',
+        'ro,seclabel,nosuid,nodev,noexec,mode=755',
+        '0',
+        '0'
+    ],
+    [
+        'cgroup',
+        '/sys/fs/cgroup/systemd',
+        'cgroup',
+        'rw,nosuid,nodev,noexec,relatime,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd',
+        '0',
+        '0'
+    ],
+    [
+        'pstore',
+        '/sys/fs/pstore',
+        'pstore',
+        'rw,seclabel,nosuid,nodev,noexec,relatime',
+        '0',
+        '0'
+    ],
+    [
+        'cgroup',
+        '/sys/fs/cgroup/devices',
+        'cgroup',
+        'rw,nosuid,nodev,noexec,relatime,devices',
+        '0',
+        '0'
+    ],
+    [
+        'cgroup',
         '/sys/fs/cgroup/freezer',
         'cgroup',
         'rw,nosuid,nodev,noexec,relatime,freezer',
         '0',
-        '0'],
-        ['cgroup',
+        '0'
+    ],
+    [
+        'cgroup',
         '/sys/fs/cgroup/memory',
         'cgroup',
         'rw,nosuid,nodev,noexec,relatime,memory',
         '0',
-        '0'],
-        ['cgroup',
+        '0'
+    ],
+    [
+        'cgroup',
         '/sys/fs/cgroup/pids',
         'cgroup',
         'rw,nosuid,nodev,noexec,relatime,pids',
         '0',
-        '0'],
-        ['cgroup',
+        '0'
+    ],
+    [
+        'cgroup',
         '/sys/fs/cgroup/blkio',
         'cgroup',
         'rw,nosuid,nodev,noexec,relatime,blkio',
         '0',
-        '0'],
-        ['cgroup',
+        '0'
+    ],
+    [
+        'cgroup',
         '/sys/fs/cgroup/cpuset',
         'cgroup',
         'rw,nosuid,nodev,noexec,relatime,cpuset',
         '0',
-        '0'],
-        ['cgroup',
+        '0'
+    ],
+    [
+        'cgroup',
         '/sys/fs/cgroup/cpu,cpuacct',
         'cgroup',
         'rw,nosuid,nodev,noexec,relatime,cpu,cpuacct',
         '0',
-        '0'],
-        ['cgroup',
+        '0'
+    ],
+    [
+        'cgroup',
         '/sys/fs/cgroup/hugetlb',
         'cgroup',
         'rw,nosuid,nodev,noexec,relatime,hugetlb',
         '0',
-        '0'],
-        ['cgroup',
+        '0'
+    ],
+    [
+        'cgroup',
         '/sys/fs/cgroup/perf_event',
         'cgroup',
         'rw,nosuid,nodev,noexec,relatime,perf_event',
         '0',
-        '0'],
-        ['cgroup',
+        '0'
+    ],
+    [
+        'cgroup',
         '/sys/fs/cgroup/net_cls,net_prio',
         'cgroup',
         'rw,nosuid,nodev,noexec,relatime,net_cls,net_prio',
         '0',
-        '0'],
-        ['configfs', '/sys/kernel/config', 'configfs', 'rw,relatime', '0', '0'],
-        ['/dev/mapper/fedora_dhcp129--186-root',
+        '0'
+    ],
+    ['configfs', '/sys/kernel/config', 'configfs', 'rw,relatime', '0', '0'],
+    [
+        '/dev/mapper/fedora_dhcp129--186-root',
         '/',
         'ext4',
         'rw,seclabel,relatime,data=ordered',
         '0',
-        '0'],
-        ['selinuxfs', '/sys/fs/selinux', 'selinuxfs', 'rw,relatime', '0', '0'],
-        ['systemd-1',
+        '0'
+    ],
+    ['selinuxfs', '/sys/fs/selinux', 'selinuxfs', 'rw,relatime', '0', '0'],
+    [
+        'systemd-1',
         '/proc/sys/fs/binfmt_misc',
         'autofs',
         'rw,relatime,fd=24,pgrp=1,timeout=0,minproto=5,maxproto=5,direct',
         '0',
-        '0'],
-        ['debugfs', '/sys/kernel/debug', 'debugfs', 'rw,seclabel,relatime', '0', '0'],
-        ['hugetlbfs',
+        '0'
+    ],
+    ['debugfs', '/sys/kernel/debug', 'debugfs', 'rw,seclabel,relatime', '0', '0'],
+    [
+        'hugetlbfs',
         '/dev/hugepages',
         'hugetlbfs',
         'rw,seclabel,relatime',
         '0',
-        '0'],
-        ['tmpfs', '/tmp', 'tmpfs', 'rw,seclabel', '0', '0'],
-        ['mqueue', '/dev/mqueue', 'mqueue', 'rw,seclabel,relatime', '0', '0'],
-        ['/dev/loop0',
+        '0'
+    ],
+    ['tmpfs', '/tmp', 'tmpfs', 'rw,seclabel', '0', '0'],
+    ['mqueue', '/dev/mqueue', 'mqueue', 'rw,seclabel,relatime', '0', '0'],
+    [
+        '/dev/loop0',
         '/var/lib/machines',
         'btrfs',
         'rw,seclabel,relatime,space_cache,subvolid=5,subvol=/',
         '0',
-        '0'],
-        ['/dev/sda1', '/boot', 'ext4', 'rw,seclabel,relatime,data=ordered', '0', '0'],
-        # A 'none' fstype
-        ['/dev/sdz3', '/not/a/real/device', 'none', 'rw,seclabel,relatime,data=ordered', '0', '0'],
-        # lets assume this is a bindmount
-        ['/dev/sdz4', '/not/a/real/bind_mount', 'ext4', 'rw,seclabel,relatime,data=ordered', '0', '0'],
-        ['/dev/mapper/fedora_dhcp129--186-home',
+        '0'
+    ],
+    ['/dev/sda1', '/boot', 'ext4', 'rw,seclabel,relatime,data=ordered', '0', '0'],
+    # A 'none' fstype
+    ['/dev/sdz3', '/not/a/real/device', 'none', 'rw,seclabel,relatime,data=ordered', '0', '0'],
+    # lets assume this is a bindmount
+    ['/dev/sdz4', '/not/a/real/bind_mount', 'ext4', 'rw,seclabel,relatime,data=ordered', '0', '0'],
+    [
+        '/dev/mapper/fedora_dhcp129--186-home',
         '/home',
         'ext4',
         'rw,seclabel,relatime,data=ordered',
         '0',
-        '0'],
-        ['tmpfs',
+        '0'
+    ],
+    [
+        'tmpfs',
         '/run/user/1000',
         'tmpfs',
         'rw,seclabel,nosuid,nodev,relatime,size=1611044k,mode=700,uid=1000,gid=1000',
         '0',
-        '0'],
-        ['gvfsd-fuse',
+        '0'
+    ],
+    [
+        'gvfsd-fuse',
         '/run/user/1000/gvfs',
         'fuse.gvfsd-fuse',
         'rw,nosuid,nodev,relatime,user_id=1000,group_id=1000',
         '0',
-        '0'],
-        ['fusectl', '/sys/fs/fuse/connections', 'fusectl', 'rw,relatime', '0', '0']]
+        '0'
+    ],
+    ['fusectl', '/sys/fs/fuse/connections', 'fusectl', 'rw,relatime', '0', '0']]
 
 BIND_MOUNTS = ['/not/a/real/bind_mount']
 
@@ -481,7 +528,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIsInstance(bind_mounts, set)
         self.assertEqual(len(bind_mounts), 0)
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT,''))
+    @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT, ''))
     def test_lsblk_uuid(self, mock_run_lsblk):
         module = Mock()
         lh = facts.LinuxHardware(module=module, load_on_init=False)
@@ -492,7 +539,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIn(b'/dev/sda1', lsblk_uuids)
         self.assertEquals(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(37, LSBLK_OUTPUT,''))
+    @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(37, LSBLK_OUTPUT, ''))
     def test_lsblk_uuid_non_zero(self, mock_run_lsblk):
         module = Mock()
         lh = facts.LinuxHardware(module=module, load_on_init=False)
@@ -510,7 +557,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIsInstance(lsblk_uuids, dict)
         self.assertEquals(len(lsblk_uuids), 0)
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT_2,''))
+    @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT_2, ''))
     def test_lsblk_uuid_dev_with_space_in_name(self, mock_run_lsblk):
         module = Mock()
         lh = facts.LinuxHardware(module=module, load_on_init=False)

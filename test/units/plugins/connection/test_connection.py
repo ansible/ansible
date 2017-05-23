@@ -25,19 +25,18 @@ from ansible.compat.tests import mock
 from ansible.compat.tests import unittest
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
-
 from ansible.plugins.connection import ConnectionBase
-#from ansible.plugins.connection.accelerate import Connection as AccelerateConnection
-#from ansible.plugins.connection.chroot import Connection as ChrootConnection
-#from ansible.plugins.connection.funcd import Connection as FuncdConnection
-#from ansible.plugins.connection.jail import Connection as JailConnection
-#from ansible.plugins.connection.libvirt_lxc import Connection as LibvirtLXCConnection
+# from ansible.plugins.connection.accelerate import Connection as AccelerateConnection
+# from ansible.plugins.connection.chroot import Connection as ChrootConnection
+# from ansible.plugins.connection.funcd import Connection as FuncdConnection
+# from ansible.plugins.connection.jail import Connection as JailConnection
+# from ansible.plugins.connection.libvirt_lxc import Connection as LibvirtLXCConnection
 from ansible.plugins.connection.lxc import Connection as LxcConnection
 from ansible.plugins.connection.local import Connection as LocalConnection
 from ansible.plugins.connection.paramiko_ssh import Connection as ParamikoConnection
 from ansible.plugins.connection.ssh import Connection as SSHConnection
 from ansible.plugins.connection.docker import Connection as DockerConnection
-#from ansible.plugins.connection.winrm import Connection as WinRmConnection
+# from ansible.plugins.connection.winrm import Connection as WinRmConnection
 from ansible.plugins.connection.network_cli import Connection as NetworkCliConnection
 
 
@@ -68,19 +67,26 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def test_subclass_success(self):
         class ConnectionModule3(ConnectionBase):
+
             @property
             def transport(self):
                 pass
+
             def _connect(self):
                 pass
+
             def exec_command(self):
                 pass
+
             def put_file(self):
                 pass
+
             def fetch_file(self):
                 pass
+
             def close(self):
                 pass
+
         self.assertIsInstance(ConnectionModule3(self.play_context, self.in_stream), ConnectionModule3)
 
 #    def test_accelerate_connection_module(self):
@@ -190,17 +196,23 @@ debug1: Sending command: /bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzm
 '''
 
         class ConnectionFoo(ConnectionBase):
+
             @property
             def transport(self):
                 pass
+
             def _connect(self):
                 pass
+
             def exec_command(self):
                 pass
+
             def put_file(self):
                 pass
+
             def fetch_file(self):
                 pass
+
             def close(self):
                 pass
 
