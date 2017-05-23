@@ -405,6 +405,11 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 import time
 import traceback
 import random
