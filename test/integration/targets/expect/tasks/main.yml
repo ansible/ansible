@@ -94,4 +94,3 @@
   assert:
     that:
     - "'bar' in echo_result.stdout_lines"
-
