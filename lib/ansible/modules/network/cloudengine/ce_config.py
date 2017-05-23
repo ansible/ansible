@@ -102,18 +102,6 @@ options:
     required: false
     default: line
     choices: ['line', 'block']
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices current-configuration.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-      - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in a future release.
-    required: false
-    default: false
-    choices: [ "true", "false" ]
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -143,6 +131,7 @@ options:
         the all keyword.  When the value is set to false, the command
         is issued without the all keyword.
     required: false
+    type: bool
     default: false
   save:
     description:
@@ -153,6 +142,7 @@ options:
         startup config.  This option will always cause the module to
         return changed.
     required: false
+    type: bool
     default: false
 """
 
@@ -226,10 +216,6 @@ from ansible.module_utils.ce import check_args as ce_check_args
 
 def check_args(module, warnings):
     ce_check_args(module, warnings)
-    if module.params['force']:
-        warnings.append('The force argument is deprecated, please use '
-                        'match=none instead.  This argument will be '
-                        'removed in the future')
 
 
 def get_running_config(module):
@@ -298,11 +284,6 @@ def main():
 
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
-
-        # this argument is deprecated in favor of setting match: none
-        # it will be removed in a future version
-        force=dict(default=False, type='bool'),
-
         config=dict(),
         defaults=dict(type='bool', default=False),
 
@@ -322,9 +303,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
-
-    if module.params['force'] is True:
-        module.params['match'] = 'none'
 
     warnings = list()
     check_args(module, warnings)
