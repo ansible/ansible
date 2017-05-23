@@ -208,8 +208,8 @@ def check(user_facts, user, profile, resource_pool,
     if (expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or
            ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True')):
         return False
-    if roles and (sorted(roles) != sorted(user_facts[user_key]['roles'])  or \
-            sorted(roles) !=  sorted(user_facts[user_key]['default_roles'])):
+    if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
+            sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
         return False
     return True
 
