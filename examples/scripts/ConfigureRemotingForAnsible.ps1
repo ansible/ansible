@@ -34,6 +34,10 @@
 # default, Basic is enabled. Acceptable values are 'Basic' and 'CredSSP'. If
 # the legacy option EnableCredSSP is enabled, CredSSP will be added to the AuthTypes
 # array.
+#
+# Use option -EnsureSslOnly switch to ensure that only the HTTPS listener is
+# enabled. This will disable any HTTP listeners and remove any firewall rules
+# that allow WinRM HTTP traffic through.
 
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
@@ -62,8 +66,12 @@ Param (
     [switch]$ForceNewSSLCert,
     [switch]$EnableCredSSP,
     [ValidateSet('Basic', 'CredSSP')]
-    [string[]]$AuthTypes = @('Basic')
+    [string[]]$AuthTypes = @('Basic'),
+    [switch]$EnsureSslOnly
 )
+
+Set-Variable WinRmHttpPort -Option Constant -Value 5985
+Set-Variable WinRmHttpsPort -Option Constant -Value 5986
 
 Function Write-Log
 {
@@ -261,6 +269,29 @@ Else
     }
 }
 
+# If SSL only, remove existing HTTP listener
+if ($EnsureSslOnly -and ($listeners | Where {$_.Keys -like "TRANSPORT=HTTP"})) {
+    
+    # Delete the listener for HTTP
+    $selectorset = @{
+        Address = "*"
+        Transport = "HTTP"
+    }
+    Remove-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset
+    Write-HostLog "Removed WinRM HTTP listener"
+
+    # Remove firewall rule if it exists
+    $httpfirewallrule = Get-NetFirewallPortFilter `
+        | Where { $_.LocalPort -eq $WinRmHttpPort } `
+        | Get-NetFirewallRule
+
+    if ($httpfirewallrule) {
+        # Remove firewall rule
+        $httpfirewallrule | Remove-NetFirewallRule
+        Write-HostLog "Removed WinRM HTTP firewall rule"
+    }
+}
+
 # Check for basic authentication.
 $basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "Basic"}
 If (($basicAuthSetting.Value) -eq $false -and $AuthTypes -contains 'Basic')
@@ -290,19 +321,21 @@ If (($credsspAuthSetting.Value) -eq $false -and $AuthTypes -contains 'CredSSP')
 }
 
 # Configure firewall to allow WinRM HTTPS connections.
-$fwtest1 = netsh advfirewall firewall show rule name="Allow WinRM HTTPS"
-$fwtest2 = netsh advfirewall firewall show rule name="Allow WinRM HTTPS" profile=any
-If ($fwtest1.count -lt 5)
+$httpsfirewallrule = Get-NetFirewallPortFilter `
+    | Where { $_.LocalPort -eq $WinRmHttpsPort } `
+    | Get-NetFirewallRule
+
+If (!$httpsfirewallrule)
 {
     Write-Verbose "Adding firewall rule to allow WinRM HTTPS."
-    netsh advfirewall firewall add rule profile=any name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
+    New-NetFirewallRule -DisplayName 'Allow WinRM HTTPS' -LocalPort $WinRmHttpsPort -Protocol TCP -Profile Any    
     Write-Log "Added firewall rule to allow WinRM HTTPS."
 }
-ElseIf (($fwtest1.count -ge 5) -and ($fwtest2.count -lt 5))
+ElseIf ($httpsfirewallrule.Profile -notcontains 'Any')
 {
-    Write-Verbose "Updating firewall rule to allow WinRM HTTPS for any profile."
-    netsh advfirewall firewall set rule name="Allow WinRM HTTPS" new profile=any
-    Write-Log "Updated firewall rule to allow WinRM HTTPS for any profile."
+    Write-Verbose "Updating firewall rule(s) to allow WinRM HTTPS for any profile."
+    $httpsfirewallrule | Set-NetFirewallRule -Profile 'Any'
+    Write-Log "Updated firewall rule(s) to allow WinRM HTTPS for any profile."
 }
 Else
 {
@@ -310,7 +343,9 @@ Else
 }
 
 # Test a remoting connection to localhost, which should work.
-$httpResult = Invoke-Command -ComputerName "localhost" -ScriptBlock {$env:COMPUTERNAME} -ErrorVariable httpError -ErrorAction SilentlyContinue
+if (!$EnsureSslOnly) {
+    $httpResult = Invoke-Command -ComputerName "localhost" -ScriptBlock {$env:COMPUTERNAME} -ErrorVariable httpError -ErrorAction SilentlyContinue
+}
 $httpsOptions = New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck
 
 $httpsResult = New-PSSession -UseSSL -ComputerName "localhost" -SessionOption $httpsOptions -ErrorVariable httpsError -ErrorAction SilentlyContinue
