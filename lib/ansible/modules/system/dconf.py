@@ -88,17 +88,34 @@ value:
 EXAMPLES = """
 - name: Configure available keyboard layouts in Gnome
   dconf:
+    key: "/org/gnome/desktop/input-sources/sources"
+    value: "[('xkb', 'us'), ('xkb', 'se')]"
+    state: present
+
+- name: Read currently available keyboard layouts in Gnome
+  dconf:
+    key: "/org/gnome/desktop/input-sources/sources"
+    state: read
+  register: keyboard_layouts
+
+- name: Reset the available keyboard layouts in Gnome
+  dconf:
+    key: "/org/gnome/desktop/input-sources/sources"
+    state: absent
+
+- name: Configure available keyboard layouts in Cinnamon
+  dconf:
     key: "/org/gnome/libgnomekbd/keyboard/layouts"
     value: "['us', 'se']"
     state: present
 
-- name: Read currently available keyboard layouts in Gnome
+- name: Read currently available keyboard layouts in Cinnamon
   dconf:
     key: "/org/gnome/libgnomekbd/keyboard/layouts"
     state: read
   register: keyboard_layouts
 
-- name: Reset the available keyboard layouts in Gnome
+- name: Reset the available keyboard layouts in Cinnamon
   dconf:
     key: "/org/gnome/libgnomekbd/keyboard/layouts"
     state: absent
@@ -152,9 +169,8 @@ class DBusWrapper(object):
 
         # If no existing D-Bus session was detected, check if dbus-run-session
         # is available.
-        if self.dbus_session_bus_address is None and not any(os.access(os.path.join(path, 'dbus-run-session'), os.X_OK)
-                                                             for path in os.environ["PATH"].split(os.pathsep)):
-            self.module.fail_json('Could not locate running D-Bus user session, and dbus-run-session binary is missing as well.')
+        if self.dbus_session_bus_address is None:
+            self.module.get_bin_path('dbus-run-session', required=True)
 
     def _get_existing_dbus_session(self):
         """
@@ -297,7 +313,7 @@ class DconfPreference(object):
 
     def reset(self, key):
         """
-        Rests value for the specified key (removes it from user configuration).
+        Returns value for the specified key (removes it from user configuration).
 
         If an error occurs, a call will be made to AnsibleModule.fail_json.
 
