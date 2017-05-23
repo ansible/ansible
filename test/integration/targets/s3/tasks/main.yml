@@ -5,7 +5,7 @@
   command: bash -c 'echo ansible_test_$RANDOM'
   register: bucket
 # ============================================================
-- include_vars: "credentials.yml"
+#- include_vars: "credentials.yml"
 # ============================================================
 - name: test create bucket
   s3:
@@ -13,6 +13,7 @@
     mode: create
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
+    security_token: "{{security_token}}"
   register: result
 - name: assert changed is True
   assert:
@@ -25,6 +26,7 @@
     mode: create
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
+    security_token: "{{security_token}}"
   register: result
 - name: assert changed is False since the bucket already exists
   assert:
@@ -56,6 +58,7 @@
     object: delete.txt
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
+    security_token: "{{security_token}}"
   retries: 3
   delay: 3
   register: result
@@ -77,6 +80,7 @@
     mode: get
     dest: "{{ tmp2.path }}"
     object: delete.txt
+    security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
   retries: 3
@@ -101,6 +105,7 @@
     bucket: "{{ bucket.stdout }}"
     mode: geturl
     object: delete.txt
+    security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
   retries: 3
@@ -116,6 +121,7 @@
     bucket: "{{ bucket.stdout }}"
     mode: getstr
     object: delete.txt
+    security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
   retries: 3
@@ -130,6 +136,7 @@
   s3:
     bucket: "{{ bucket.stdout }}"
     mode: list
+    security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
   retries: 3
@@ -145,6 +152,7 @@
     bucket: "{{ bucket.stdout }}"
     mode: delobj
     object: delete.txt
+    security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
   retries: 3
@@ -159,6 +167,7 @@
   s3:
     bucket: "{{ bucket.stdout }}"
     mode: delete
+    security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
   register: result
