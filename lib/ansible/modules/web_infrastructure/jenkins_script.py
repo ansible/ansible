@@ -70,6 +70,7 @@ options:
       - The request timeout in seconds
     required: false
     default: 10
+    version_added: "2.4"
   args:
     description:
       - A dict of key-value pairs used in formatting the script.
@@ -159,7 +160,7 @@ def main():
             validate_certs=dict(required=False, type="bool", default=True),
             user=dict(required=False, no_log=True, type="str", default=None),
             password=dict(required=False, no_log=True, type="str", default=None),
-            timeout=dict(required=False, no_log=True, type="int", default=10),
+            timeout=dict(required=False, type="int", default=10),
             args=dict(required=False, type="dict", default=None)
         )
     )
