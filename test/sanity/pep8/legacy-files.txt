@@ -115,7 +115,6 @@ lib/ansible/modules/database/postgresql/postgresql_ext.py
 lib/ansible/modules/database/postgresql/postgresql_privs.py
 lib/ansible/modules/database/postgresql/postgresql_schema.py
 lib/ansible/modules/database/postgresql/postgresql_user.py
-lib/ansible/modules/database/vertica/vertica_schema.py
 lib/ansible/modules/database/vertica/vertica_user.py
 lib/ansible/modules/files/acl.py
 lib/ansible/modules/files/archive.py
