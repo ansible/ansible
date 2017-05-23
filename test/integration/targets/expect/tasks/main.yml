@@ -70,7 +70,7 @@
 
 - name: test timeout option
   expect:
-    command: "echo"
+    command: "cat"
     responses:
       foo: bar
     timeout: 0
