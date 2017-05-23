@@ -156,13 +156,6 @@
       owner=dennis
   register: sshkeyrun
 
-- name: Verify home directory settings on fresh user
-  file:
-      name="{{user_test0.home}}"
-      state=directory
-      mode=0700
-      owner="{{user_test0.name}}"
-  register: freshhomedirrun
 ### debug
 - name: debug fresh user home
   command: ls -ld {{user_test0.home}}
@@ -170,6 +163,15 @@
 - name: ls output
   debug: msg=debugrun.stdout_lines
 ###
+
+- name: Verify home directory settings on fresh user
+  file:
+      name="{{user_test0.home}}"
+      state=directory
+      mode=0700
+      owner="{{user_test0.name}}"
+  register: freshhomedirrun
+
 - name: Verify file checks
   assert:
       that:
