@@ -1,0 +1,96 @@
+# test code for the ping module
+# (c) 2014, James Cammarata <jcammarata@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: record the test_command file
+  set_fact: test_command_file={{output_dir | expanduser}}/test_command.py
+
+- name: copy script into output directory
+  copy: src=test_command.py dest={{test_command_file}} mode=0444
+
+- name: record the output file
+  set_fact: output_file={{output_dir}}/foo.txt
+
+- copy:
+   content: "foo"
+   dest: "{{output_file}}"
+
+- name: test expect
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+  register: expect_result
+
+- name: assert expect worked
+  assert:
+    that:
+    - "expect_result.changed == true"
+    - "expect_result.stdout == 'foobar'"
+
+- name: test creates option
+  expect:
+    command: "echo"
+    responses:
+      foo: bar
+    creates: "{{output_file}}"
+  register: creates_result
+
+- name: assert when creates is provided command is not run
+  assert:
+    that:
+    - "creates_result.changed == false"
+
+- name: test chdir
+  expect:
+    command: "pwd"
+    chdir: "{{output_dir}}"
+    responses:
+      foo: bar
+  register: chdir_result
+
+- name: assert chdir works
+  assert:
+    that:
+    - "chdir_result.stdout == '{{output_dir | expanduser | realpath}}'"
+
+- name: test timeout option
+  expect:
+    command: "cat"
+    responses:
+      foo: bar
+    timeout: 0
+  ignore_errors: true
+  register: timeout_result
+
+- name: assert failure message when timeout
+  assert:
+    that:
+    - "timeout_result.msg == 'command exceeded timeout'"
+
+- name: test echo option
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    echo: true
+  register: echo_result
+
+- name: assert echo works
+  assert:
+    that:
+    - "'bar' in echo_result.stdout_lines"
