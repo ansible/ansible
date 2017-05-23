@@ -15,18 +15,19 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import re
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO3, get_aws_connection_info, boto3_conn, ec2_argument_spec
 
 try:
-    import boto3
     from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-    HAS_BOTO3 = True
+    HAS_BOTOCORE = True
 except ImportError:
-    HAS_BOTO3 = False
-
+    HAS_BOTOCORE = False
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '0.1'}
+                    'metadata_version': '0.1'}
 
 DOCUMENTATION = '''
 ---
@@ -39,7 +40,7 @@ description:
       such as Kinesis streams, M(lambda_invoke) to execute a lambda function and M(lambda_facts) to gather facts
       relating to one or more lambda functions.
 
-version_added: "2.3"
+version_added: "2.4"
 
 author: Pierre Jodouin (@pjodouin)
 options:
@@ -403,7 +404,6 @@ def remove_policy_permission(module, aws):
 
 
 def manage_state(module, aws):
-
     changed = False
     current_state = 'absent'
     state = module.params['state']
@@ -451,16 +451,16 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            state=dict(required=False, default='present', choices=['present', 'absent']),
-            function_name=dict(required=True, default=None, aliases=['lambda_function_arn', 'function_arn']),
-            statement_id=dict(required=True, default=None, aliases=['sid']),
-            alias=dict(required=False, default=None),
-            version=dict(type='int', required=False, default=0),
-            action=dict(required=True, default=None),
-            principal=dict(required=True, default=None),
-            source_arn=dict(required=False, default=None),
-            source_account=dict(required=False, default=None),
-            event_source_token=dict(required=False, default=None),
+            state=dict(default='present', choices=['present', 'absent']),
+            function_name=dict(required=True, aliases=['lambda_function_arn', 'function_arn']),
+            statement_id=dict(required=True, aliases=['sid']),
+            alias=dict(),
+            version=dict(type='int', default=0),
+            action=dict(required=True, ),
+            principal=dict(required=True, ),
+            source_arn=dict(),
+            source_account=dict(),
+            event_source_token=dict(),
         )
     )
 
@@ -470,12 +470,13 @@ def main():
         mutually_exclusive=[['alias', 'version'],
                             ['event_source_token', 'source_arn'],
                             ['event_source_token', 'source_account']],
-        required_together=[]
     )
 
     # validate dependencies
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module.')
+    if not HAS_BOTOCORE:
+        module.fail_json(msg='botocore (exceptions) is required for this module.')
 
     aws = AWSConnection(module, ['lambda'])
 
@@ -485,10 +486,6 @@ def main():
 
     module.exit_json(**results)
 
-
-# ansible import module(s) kept at ~eof as recommended
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
