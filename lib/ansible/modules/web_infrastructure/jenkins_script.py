@@ -65,6 +65,11 @@ options:
       - The password to connect to the jenkins server with.
     required: false
     default: null
+  timeout:
+    description:
+      - The request timeout in seconds
+    required: false
+    default: 10
   args:
     description:
       - A dict of key-value pairs used in formatting the script.
@@ -154,6 +159,7 @@ def main():
             validate_certs=dict(required=False, type="bool", default=True),
             user=dict(required=False, no_log=True, type="str", default=None),
             password=dict(required=False, no_log=True, type="str", default=None),
+            timeout=dict(required=False, no_log=True, type="int", default=10),
             args=dict(required=False, type="dict", default=None)
         )
     )
@@ -180,7 +186,8 @@ def main():
                            module.params['url'] + "/scriptText",
                            data=urlencode({'script': script_contents}),
                            headers=headers,
-                           method="POST")
+                           method="POST",
+                           timeout=module.params['timeout'])
 
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
