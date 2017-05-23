@@ -94,10 +94,6 @@ options:
 
 '''
 
-RETURN = '''
-#
-'''
-
 EXAMPLES = '''
 # Create a new service-group
 - a10_service_group:
