@@ -141,11 +141,12 @@ def load_extra_vars(loader, options):
     return extra_vars
 
 
-def load_options_vars(options):
+def load_options_vars(options, version):
     options_vars = {}
     # For now only return check mode, but we can easily return more
     # options if we need variables for them
     options_vars['ansible_check_mode'] = options.check
+    options_vars['ansible_version'] = version
     return options_vars
 
 

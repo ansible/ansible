@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
+from ansible.utils.vars import combine_vars
 
 class Group:
     ''' a group of ansible hosts '''
@@ -35,11 +36,10 @@ class Group:
         self._hosts_cache = None
         self.priority = 1
 
-        #self.clear_hosts_cache()
-        #if self.name is None:
-        #    raise Exception("group name is required")
-
     def __repr__(self):
+        return self.get_name()
+
+    def __str__(self):
         return self.get_name()
 
     def __getstate__(self):
@@ -139,7 +139,6 @@ class Group:
 
         if self._hosts_cache is None:
             self._hosts_cache = self._get_hosts()
-
         return self._hosts_cache
 
     def _get_hosts(self):

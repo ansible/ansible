@@ -28,8 +28,8 @@ import yaml
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import iteritems, string_types
-from ansible.plugins import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader
+from ansible.module_utils.six import string_types
+from ansible.plugins import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader, PluginLoader
 from ansible.utils import plugin_docs
 
 try:
@@ -66,7 +66,7 @@ class DocCLI(CLI):
         self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
                 help='Show documentation for all plugins')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
-                help='Choose which plugin type', choices=['module','cache', 'connection', 'callback', 'lookup', 'strategy'])
+                help='Choose which plugin type', choices=['module','cache', 'connection', 'callback', 'lookup', 'strategy', 'inventory'])
 
         super(DocCLI, self).parse()
 
@@ -89,6 +89,8 @@ class DocCLI(CLI):
             loader = lookup_loader
         elif plugin_type == 'strategy':
             loader = strategy_loader
+        elif plugin_type == 'inventory':
+            loader = PluginLoader( 'InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
         else:
             loader = module_loader
 

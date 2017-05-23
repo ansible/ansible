@@ -14,6 +14,7 @@ lib/ansible/cli/galaxy.py
 lib/ansible/cli/playbook.py
 lib/ansible/cli/pull.py
 lib/ansible/cli/vault.py
+lib/ansible/constants.py
 lib/ansible/executor/__init__.py
 lib/ansible/executor/action_write_locks.py
 lib/ansible/executor/module_common.py
@@ -24,16 +25,10 @@ lib/ansible/executor/process/worker.py
 lib/ansible/executor/stats.py
 lib/ansible/executor/task_executor.py
 lib/ansible/executor/task_queue_manager.py
-lib/ansible/inventory/__init__.py
-lib/ansible/inventory/dir.py
-lib/ansible/inventory/expand_hosts.py
+lib/ansible/inventory/manager.py
+lib/ansible/inventory/data.py
 lib/ansible/inventory/group.py
 lib/ansible/inventory/host.py
-lib/ansible/inventory/ini.py
-lib/ansible/inventory/script.py
-lib/ansible/inventory/vars_plugins/__init__.py
-lib/ansible/inventory/vars_plugins/noop.py
-lib/ansible/inventory/yaml.py
 lib/ansible/module_utils/_text.py
 lib/ansible/module_utils/a10.py
 lib/ansible/module_utils/ansible_tower.py
@@ -769,6 +764,10 @@ lib/ansible/plugins/filter/core.py
 lib/ansible/plugins/filter/ipaddr.py
 lib/ansible/plugins/filter/json_query.py
 lib/ansible/plugins/filter/mathstuff.py
+lib/ansible/plugins/inventory/__init__.py
+lib/ansible/plugins/inventory/ini.py
+lib/ansible/plugins/inventory/yaml.py
+lib/ansible/plugins/inventory/script.py
 lib/ansible/plugins/lookup/__init__.py
 lib/ansible/plugins/lookup/cartesian.py
 lib/ansible/plugins/lookup/csvfile.py
@@ -830,6 +829,7 @@ lib/ansible/utils/listify.py
 lib/ansible/utils/path.py
 lib/ansible/utils/ssh_functions.py
 lib/ansible/utils/vars.py
+lib/ansible/vars/manager.py
 setup.py
 test/integration/cleanup_azure.py
 test/integration/cleanup_ec2.py

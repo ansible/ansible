@@ -69,3 +69,21 @@ def makedirs_safe(path, mode=None):
         except OSError as e:
             if e.errno != EEXIST:
                 raise AnsibleError("Unable to create local directories(%s): %s" % (to_native(rpath), to_native(e)))
+
+def basedir(source):
+    """ returns directory for inventory or playbook """
+
+    dname = None
+    if os.path.isdir(source):
+        dname = source
+    elif source in [None, '',  '.']:
+        dname = os.getcwd()
+    elif os.path.isfile(source):
+        dname = os.path.dirname(source)
+
+    if dname:
+        # don't follow symlinks for basedir, enables source re-use
+        dname = os.path.abspath(dname)
+
+    return dname
+

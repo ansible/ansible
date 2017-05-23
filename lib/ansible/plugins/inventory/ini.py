@@ -15,73 +15,137 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
+'''
+DOCUMENTATION:
+    inventory: ini
+    version_added: "2.4"
+    short_description: Uses an Ansible INI file as inventory source.
+    description:
+        - INI file based inventory, sections are groups or group related with special `:modifiers`.
+        - Entries in sections C([group_1]) are hosts, members of the group.
+        - Hosts can have variables defined inline as key/value pairs separated by C(=).
+        - The C(children) modifier indicates that the section contains groups.
+        - The C(vars) modifier indicates that the section contains variables assigned to members of the group.
+        - Anything found outside a section is considered an 'ungrouped' host.
+    notes:
+        - It takes the place of the previously hardcoded INI inventory.
+        - To function it requires being whitelisted in configuration.
+
+EXAMPLES:
+  example1: |
+      # example cfg file
+      [web]
+      host1
+      host2 ansible_port=222
+
+      [web:vars]
+      http_port=8080 # all members of 'web' will inherit these
+      myvar=23
+
+      [web:children] # child groups will automatically add their hosts to partent group
+      apache
+      nginx
+
+      [apache]
+      tomcat1
+      tomcat2 myvar=34 # host specific vars override group vars
+
+      [nginx]
+      jenkins1
+
+      [nginx:vars]
+      has_java = True # vars in child groups override same in parent
+
+      [all:vars]
+      has_java = False # 'all' is 'top' parent
+
+  example2: |
+      # other example config
+      host1 # this is 'ungrouped'
+
+      # both hsots have same IP but diff ports, also 'ungrouped'
+      host2 ansible_host=127.0.0.1 ansible_port=44
+      host3 ansible_host=127.0.0.1 ansible_port=45
+
+      [g1]
+      host4
+
+      [g2]
+      host4 # same host as above, but member of 2 groups, will inherit vars from both
+            # inventory hostnames are unique
+'''
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
 import re
 
-from ansible import constants as C
-from ansible.errors import AnsibleError
-from ansible.inventory.host import Host
-from ansible.inventory.group import Group
-from ansible.inventory.expand_hosts import detect_range
-from ansible.inventory.expand_hosts import expand_hostname_range
-from ansible.module_utils._text import to_text
+from ansible.plugins.inventory import BaseFileInventoryPlugin, detect_range, expand_hostname_range
 from ansible.parsing.utils.addresses import parse_address
+
+from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.utils.shlex import shlex_split
 
 
-class InventoryParser(object):
+class InventoryModule(BaseFileInventoryPlugin):
     """
     Takes an INI-format inventory file and builds a list of groups and subgroups
     with their associated hosts and variable settings.
     """
+    NAME = 'ini'
     _COMMENT_MARKERS = frozenset((u';', u'#'))
     b_COMMENT_MARKERS = frozenset((b';', b'#'))
 
-    def __init__(self, loader, groups, filename=C.DEFAULT_HOST_LIST):
-        self.filename = filename
+    def __init__(self):
 
-        # Start with an empty host list and whatever groups we're passed in
-        # (which should include the default 'all' and 'ungrouped' groups).
+        super(InventoryModule, self).__init__()
 
-        self.hosts = {}
         self.patterns = {}
-        self.groups = groups
+        self._filename = None
 
-        # Read in the hosts, groups, and variables defined in the
-        # inventory file.
-        if loader:
-            (b_data, private) = loader._get_file_contents(filename)
-        else:
-            with open(filename, 'rb') as fh:
-                b_data = fh.read()
+    def parse(self, inventory, loader, path, cache=True):
+
+        super(InventoryModule, self).parse(inventory, loader, path)
+
+        self._filename = path
 
         try:
-            # Faster to do to_text once on a long string than many
-            # times on smaller strings
-            data = to_text(b_data, errors='surrogate_or_strict').splitlines()
-        except UnicodeError:
-            # Handle non-utf8 in comment lines: https://github.com/ansible/ansible/issues/17593
-            data = []
-            for line in b_data.splitlines():
-                if line and line[0] in self.b_COMMENT_MARKERS:
-                    # Replace is okay for comment lines
-                    #data.append(to_text(line, errors='surrogate_then_replace'))
-                    # Currently we only need these lines for accurate lineno in errors
-                    data.append(u'')
-                else:
-                    # Non-comment lines still have to be valid uf-8
-                    data.append(to_text(line, errors='surrogate_or_strict'))
+            # Read in the hosts, groups, and variables defined in the
+            # inventory file.
+            if self.loader:
+                (b_data, private) = self.loader._get_file_contents(path)
+            else:
+                b_path = to_bytes(path)
+                with open(b_path, 'rb') as fh:
+                    b_data = fh.read()
 
-        self._parse(data)
+            try:
+                # Faster to do to_text once on a long string than many
+                # times on smaller strings
+                data = to_text(b_data, errors='surrogate_or_strict').splitlines()
+            except UnicodeError:
+                # Handle non-utf8 in comment lines: https://github.com/ansible/ansible/issues/17593
+                data = []
+                for line in b_data.splitlines():
+                    if line and line[0] in self.b_COMMENT_MARKERS:
+                        # Replace is okay for comment lines
+                        #data.append(to_text(line, errors='surrogate_then_replace'))
+                        # Currently we only need these lines for accurate lineno in errors
+                        data.append(u'')
+                    else:
+                        # Non-comment lines still have to be valid uf-8
+                        data.append(to_text(line, errors='surrogate_or_strict'))
+
+            self._parse(path, data)
+        except Exception as e:
+            raise AnsibleParserError(e)
+
 
     def _raise_error(self, message):
-        raise AnsibleError("%s:%d: " % (self.filename, self.lineno) + message)
+        raise AnsibleError("%s:%d: " % (self._filename, self.lineno) + message)
 
-    def _parse(self, lines):
+    def _parse(self, path, lines):
         '''
         Populates self.groups from the given array of lines. Raises an error on
         any parse failure.
@@ -127,16 +191,17 @@ class InventoryParser(object):
                 # the group anyway, but make a note in pending_declarations to
                 # check at the end.
 
-                if groupname not in self.groups:
-                    self.groups[groupname] = Group(name=groupname)
+                self.inventory.add_group(groupname)
 
-                    if state == 'vars':
-                        pending_declarations[groupname] = dict(line=self.lineno, state=state, name=groupname)
+                if state == 'vars':
+                    pending_declarations[groupname] = dict(line=self.lineno, state=state, name=groupname)
 
                 # When we see a declaration that we've been waiting for, we can
                 # delete the note.
 
                 if groupname in pending_declarations and state != 'vars':
+                    if pending_declarations[groupname]['state'] == 'children':
+                        self.inventory.add_child(pending_declarations[groupname]['parent'], groupname)
                     del pending_declarations[groupname]
 
                 continue
@@ -151,18 +216,14 @@ class InventoryParser(object):
             # [groupname] contains host definitions that must be added to
             # the current group.
             if state == 'hosts':
-                hosts = self._parse_host_definition(line)
-                for h in hosts:
-                    self.groups[groupname].add_host(h)
-
-                #FIXME: needed to save hosts to group, find out why
-                self.groups[groupname].get_hosts()
+                hosts, port, variables = self._parse_host_definition(line)
+                self.populate_host_vars(hosts, variables, groupname, port)
 
             # [groupname:vars] contains variable definitions that must be
             # applied to the current group.
             elif state == 'vars':
                 (k, v) = self._parse_variable_definition(line)
-                self.groups[groupname].set_variable(k, v)
+                self.inventory.set_variable(groupname, k, v)
 
             # [groupname:children] contains subgroup names that must be
             # added as children of the current group. The subgroup names
@@ -170,39 +231,26 @@ class InventoryParser(object):
             # may only be declared later.
             elif state == 'children':
                 child = self._parse_group_name(line)
-
-                if child not in self.groups:
-                    self.groups[child] = Group(name=child)
+                if child not in self.inventory.groups:
                     pending_declarations[child] = dict(line=self.lineno, state=state, name=child, parent=groupname)
-
-                self.groups[groupname].add_child_group(self.groups[child])
-
-                # Note: there's no reason why we couldn't accept variable
-                # definitions here, and set them on the named child group.
+                else:
+                    self.inventory.add_child(groupname, child)
 
             # This is a fencepost. It can happen only if the state checker
             # accepts a state that isn't handled above.
             else:
                 self._raise_error("Entered unhandled state: %s" % (state))
 
-        # Any entries in pending_declarations not removed by a group declaration
-        # above mean that there was an unresolved forward reference. We report
-        # only the first such error here.
+        # Any entries in pending_declarations not removed by a group declaration above mean that there was an unresolved reference.
+        # We report only the first such error here.
 
         for g in pending_declarations:
-            decl = pending_declarations[g]
-            if decl['state'] == 'vars':
-                raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (self.filename, decl['line'], decl['name'], decl['name']))
-            elif decl['state'] == 'children':
-                raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (self.filename, decl['line'], decl['parent'], decl['name']))
-
-        # Finally, add all top-level groups as children of 'all'.
-        # We exclude ungrouped here because it was already added as a child of
-        # 'all' at the time it was created.
-
-        for group in self.groups.values():
-            if group.depth == 0 and group.name != 'all':
-                self.groups['all'].add_child_group(group)
+            if g not in self.inventory.groups:
+                decl = pending_declarations[g]
+                if decl['state'] == 'vars':
+                    raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (path, decl['line'], decl['name'], decl['name']))
+                elif decl['state'] == 'children':
+                    raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (path, decl['line'], decl['parent'], decl['name']))
 
     def _parse_group_name(self, line):
         '''
@@ -233,7 +281,7 @@ class InventoryParser(object):
 
         self._raise_error("Expected key=value, got: %s" % (line))
 
-    def _parse_host_definition(self, line):
+    def _parse_host_definition(self, line ):
         '''
         Takes a single line and tries to parse it as a host definition. Returns
         a list of Hosts if successful, or raises an error.
@@ -255,10 +303,8 @@ class InventoryParser(object):
             self._raise_error("Error parsing host definition '%s': %s" % (line, e))
 
         (hostnames, port) = self._expand_hostpattern(tokens[0])
-        hosts = self._Hosts(hostnames, port)
 
         # Try to process anything remaining as a series of key=value pairs.
-
         variables = {}
         for t in tokens[1:]:
             if '=' not in t:
@@ -266,15 +312,7 @@ class InventoryParser(object):
             (k, v) = t.split('=', 1)
             variables[k] = self._parse_value(v)
 
-        # Apply any variable settings found to every host.
-
-        for h in hosts:
-            for k in variables:
-                h.set_variable(k, variables[k])
-                if k in ['ansible_host', 'ansible_ssh_host']:
-                    h.address = variables[k]
-
-        return hosts
+        return hostnames, port, variables
 
     def _expand_hostpattern(self, hostpattern):
         '''
@@ -302,25 +340,6 @@ class InventoryParser(object):
 
         return (hostnames, port)
 
-    def _Hosts(self, hostnames, port):
-        '''
-        Takes a list of hostnames and a port (which may be None) and returns a
-        list of Hosts (without recreating anything in self.hosts).
-        '''
-
-        hosts = []
-
-        # Note that we decide whether or not to create a Host based solely on
-        # the (non-)existence of its hostname in self.hosts. This means that one
-        # cannot add both "foo:22" and "foo:23" to the inventory.
-
-        for hn in hostnames:
-            if hn not in self.hosts:
-                self.hosts[hn] = Host(name=hn, port=port)
-            hosts.append(self.hosts[hn])
-
-        return hosts
-
     @staticmethod
     def _parse_value(v):
         '''
@@ -338,9 +357,6 @@ class InventoryParser(object):
             # Is this a hash with an equals at the end?
             pass
         return to_text(v, nonstring='passthru', errors='surrogate_or_strict')
-
-    def get_host_variables(self, host):
-        return {}
 
     def _compile_patterns(self):
         '''

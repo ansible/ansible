@@ -835,12 +835,12 @@ In 1.x, the precedence is as follows (with the last listed variables winning pri
 In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
 
   * role defaults [1]_
-  * inventory INI or script group vars [2]_
+  * inventory file or script group vars [2]_
   * inventory group_vars/all
   * playbook group_vars/all
   * inventory group_vars/*
   * playbook group_vars/*
-  * inventory INI or script host vars [2]_
+  * inventory file or script host vars [2]_
   * inventory host_vars/*
   * playbook host_vars/*
   * host facts

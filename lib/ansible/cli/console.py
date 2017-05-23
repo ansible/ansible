@@ -40,15 +40,12 @@ from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError
 from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.inventory import Inventory
 from ansible.module_utils._text import to_native, to_text
-from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import module_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
-from ansible.vars import VariableManager
 
 try:
     from __main__ import display
@@ -277,11 +274,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
         """
         if not arg:
             self.options.cwd = '*'
-        elif arg == '..':
-            try:
-                self.options.cwd = self.inventory.groups_for_host(self.options.cwd)[1].name
-            except Exception:
-                self.options.cwd = ''
         elif arg in '/*':
             self.options.cwd = 'all'
         elif self.inventory.get_hosts(arg):
@@ -402,7 +394,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         sshpass    = None
         becomepass = None
-        vault_pass = None
 
         # hosts
         if len(self.args) != 1:
@@ -421,19 +412,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         (sshpass, becomepass) = self.ask_passwords()
         self.passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
 
-        self.loader = DataLoader()
-
-        if self.options.vault_password_file:
-            # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=self.loader)
-            self.loader.set_vault_password(vault_pass)
-        elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()
-            self.loader.set_vault_password(vault_pass)
-
-        self.variable_manager = VariableManager()
-        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list=self.options.inventory)
-        self.variable_manager.set_inventory(self.inventory)
+        self.loader, self.inventory, self.variable_manager = self._play_prereqs(self.options)
 
         no_hosts = False
         if len(self.inventory.list_hosts()) == 0:

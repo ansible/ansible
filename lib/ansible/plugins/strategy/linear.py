@@ -245,7 +245,7 @@ class StrategyModule(StrategyBase):
                                 break
 
                         display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
@@ -355,7 +355,6 @@ class StrategyModule(StrategyBase):
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
-                                    loader=self._loader,
                                     play=iterator._play,
                                     task=included_file._task,
                                 )

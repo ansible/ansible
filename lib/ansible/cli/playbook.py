@@ -26,13 +26,8 @@ import stat
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
-from ansible.inventory import Inventory
-from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.utils.vars import load_extra_vars
-from ansible.utils.vars import load_options_vars
-from ansible.vars import VariableManager
 
 try:
     from __main__ import display
@@ -93,7 +88,6 @@ class PlaybookCLI(CLI):
         # Manage passwords
         sshpass    = None
         becomepass    = None
-        b_vault_pass = None
         passwords = {}
 
         # initial error check, to make sure all specified playbooks are accessible
@@ -110,26 +104,7 @@ class PlaybookCLI(CLI):
             (sshpass, becomepass) = self.ask_passwords()
             passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
 
-        loader = DataLoader()
-
-        if self.options.vault_password_file:
-            # read vault_pass from a file
-            b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
-            loader.set_vault_password(b_vault_pass)
-        elif self.options.ask_vault_pass:
-            b_vault_pass = self.ask_vault_passwords()
-            loader.set_vault_password(b_vault_pass)
-
-        # create the variable manager, which will be shared throughout
-        # the code, ensuring a consistent view of global variables
-        variable_manager = VariableManager()
-        variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
-
-        variable_manager.options_vars = load_options_vars(self.options)
-
-        # create the inventory, and filter it based on the subset specified (if any)
-        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
-        variable_manager.set_inventory(inventory)
+        loader, inventory, variable_manager = self._play_prereqs(self.options)
 
         # (which is not returned in list_hosts()) is taken into account for
         # warning if inventory is empty.  But it can't be taken into account for
@@ -146,6 +121,7 @@ class PlaybookCLI(CLI):
         if len(inventory.list_hosts()) == 0 and no_hosts is False:
             # Invalid limit
             raise AnsibleError("Specified --limit does not match any hosts")
+
 
         # flush fact cache if requested
         if self.options.flush_cache:
@@ -207,7 +183,7 @@ class PlaybookCLI(CLI):
 
                             return taskmsg
 
-                        all_vars = variable_manager.get_vars(loader=loader, play=play)
+                        all_vars = variable_manager.get_vars(play=play)
                         play_context = PlayContext(play=play, options=self.options)
                         for block in play.compile():
                             block = block.filter_tagged_tasks(play_context, all_vars)

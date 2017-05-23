@@ -381,6 +381,7 @@ class VarTestMaker(object):
         cmd = 'ansible-playbook -c local -i inventory site.yml'
         if 'extra_vars' in self.features:
             cmd += ' --extra-vars="findme=extra_vars"'
+        cmd = cmd + ' -vvvvv'
         self.ansible_command = cmd
         (rc, so, se) = run_command(cmd, cwd=TESTDIR)
         self.stdout = so
@@ -428,7 +429,7 @@ def main():
         'ini_host_vars_file',
         'ini_host',
         'pb_group_vars_file_child',
-        'ini_group_vars_file_child',
+        #'ini_group_vars_file_child', #FIXME: this contradicts documented precedence pb group vars files should override inventory ones
         'pb_group_vars_file_parent',
         'ini_group_vars_file_parent',
         'pb_group_vars_file_all',

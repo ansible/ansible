@@ -24,7 +24,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook import Playbook
-from ansible.vars import VariableManager
+from ansible.vars.manager import VariableManager
 
 from units.mock.loader import DictDataLoader
 

@@ -22,8 +22,8 @@ __metaclass__ = type
 from ansible.compat.tests import unittest
 from units.mock.loader import DictDataLoader
 
-from ansible.inventory import Inventory
-from ansible.vars import VariableManager
+from ansible.inventory.manager import InventoryManager
+from ansible.vars.manager import VariableManager
 
 from ansible.cli.playbook import PlaybookCLI
 
@@ -34,7 +34,7 @@ class TestPlaybookCLI(unittest.TestCase):
 
         variable_manager = VariableManager()
         fake_loader = DictDataLoader({'foobar.yml': ""})
-        inventory = Inventory(loader=fake_loader, variable_manager=variable_manager, host_list=['testhost'])
+        inventory = InventoryManager(loader=fake_loader, sources='testhost,')
 
         cli._flush_cache(inventory, variable_manager)
         self.assertFalse('testhost' in variable_manager._fact_cache)

@@ -79,7 +79,7 @@ class PlaybookExecutor:
         try:
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
-                self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
+                #FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
                 if self._tqm is None:  # we are doing a listing
                     entry = {'playbook': playbook_path}
@@ -122,7 +122,7 @@ class PlaybookExecutor:
 
                     # Create a temporary copy of the play here, so we can run post_validate
                     # on it without the templating changes affecting the original object.
-                    all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+                    all_vars = self._variable_manager.get_vars(play=play)
                     templar = Templar(loader=self._loader, variables=all_vars)
                     new_play = play.copy()
                     new_play.post_validate(templar)

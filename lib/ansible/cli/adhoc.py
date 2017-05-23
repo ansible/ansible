@@ -26,15 +26,10 @@ from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.inventory import Inventory
 from ansible.module_utils._text import to_text
-from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import get_all_plugin_loaders
-from ansible.utils.vars import load_extra_vars
-from ansible.utils.vars import load_options_vars
-from ansible.vars import VariableManager
 
 try:
     from __main__ import display
@@ -105,29 +100,12 @@ class AdHocCLI(CLI):
 
         sshpass    = None
         becomepass = None
-        b_vault_pass = None
 
         self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
         passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
 
-        loader = DataLoader()
-
-        if self.options.vault_password_file:
-            # read vault_pass from a file
-            b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
-            loader.set_vault_password(b_vault_pass)
-        elif self.options.ask_vault_pass:
-            b_vault_pass = self.ask_vault_passwords()
-            loader.set_vault_password(b_vault_pass)
-
-        variable_manager = VariableManager()
-        variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
-
-        variable_manager.options_vars = load_options_vars(self.options)
-
-        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
-        variable_manager.set_inventory(inventory)
+        loader, inventory, variable_manager = self._play_prereqs(self.options)
 
         no_hosts = False
         if len(inventory.list_hosts()) == 0:

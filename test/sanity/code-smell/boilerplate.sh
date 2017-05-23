@@ -9,6 +9,8 @@ metaclass2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
         -o -path ./lib/ansible/module_utils/six/_six.py -prune \
         -o -path ./lib/ansible/compat/selectors/_selectors2.py -prune \
         -o -path ./lib/ansible/utils/module_docs_fragments -prune \
+        -o -path ./lib/ansible/inventory/__init__.py \
+        -o -path ./lib/ansible/vars/__init__.py \
         -o -name '*.py' -exec grep -HL '__metaclass__ = type' '{}' '+')
 
 future2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
@@ -17,6 +19,8 @@ future2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
         -o -path ./lib/ansible/module_utils/six/_six.py -prune \
         -o -path ./lib/ansible/compat/selectors/_selectors2.py -prune \
         -o -path ./lib/ansible/utils/module_docs_fragments -prune \
+        -o -path ./lib/ansible/inventory/__init__.py \
+        -o -path ./lib/ansible/vars/__init__.py \
         -o -name '*.py' -exec grep -HL 'from __future__ import (absolute_import, division, print_function)' '{}' '+')
 
 ### TODO:

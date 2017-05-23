@@ -155,10 +155,15 @@ class PullCLI(CLI):
 
         # Attempt to use the inventory passed in as an argument
         # It might not yet have been downloaded so use localhost as default
-        if not self.options.inventory or ( ',' not in self.options.inventory and not os.path.exists(self.options.inventory)):
-            inv_opts = 'localhost,'
+        inv_opts = ''
+        if getattr(self.options, 'inventory'):
+            for inv in self.options.inventory:
+                if isinstance(inv, list):
+                    inv_opts += " -i '%s' " % ','.join(inv)
+                elif ',' in inv or os.path.exists(inv):
+                    inv_opts += ' -i %s ' % inv
         else:
-            inv_opts = self.options.inventory
+            inv_opts = "-i 'localhost,'"
 
         #FIXME: enable more repo modules hg/svn?
         if self.options.module_name == 'git':
@@ -190,7 +195,7 @@ class PullCLI(CLI):
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
         # hardcode local and inventory/host as this is just meant to fetch the repo
-        cmd = '%s/ansible -i "%s" %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts)
+        cmd = '%s/ansible %s %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts)
 
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
@@ -222,8 +227,8 @@ class PullCLI(CLI):
         cmd = '%s/ansible-playbook %s %s' % (bin_path, base_opts, playbook)
         if self.options.vault_password_file:
             cmd += " --vault-password-file=%s" % self.options.vault_password_file
-        if self.options.inventory:
-            cmd += ' -i "%s"' % self.options.inventory
+        if inv_opts:
+            cmd += ' %s' % inv_opts
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
         if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:

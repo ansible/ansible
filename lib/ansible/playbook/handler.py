@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
 

@@ -33,7 +33,6 @@ from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
-from ansible.inventory.group import Group
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
@@ -43,7 +42,8 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
-from ansible.vars import combine_vars, strip_internal_keys
+from ansible.utils.vars import combine_vars
+from ansible.vars.manager import strip_internal_keys
 
 
 try:
@@ -260,9 +260,10 @@ class StrategyBase:
         ret_results = []
 
         def get_original_host(host_name):
+            #FIXME: this should not need x2 _inventory
             host_name = to_text(host_name)
-            if host_name in self._inventory._hosts_cache:
-                return self._inventory._hosts_cache[host_name]
+            if host_name in self._inventory.hosts:
+                return self._inventory.hosts[host_name]
             else:
                 return self._inventory.get_host(host_name)
 
@@ -270,7 +271,7 @@ class StrategyBase:
             for handler_block in handler_blocks:
                 for handler_task in handler_block.block:
                     if handler_task.name:
-                        handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler_task)
+                        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
                         templar = Templar(loader=self._loader, variables=handler_vars)
                         try:
                             # first we check with the full result of get_name(), which may
@@ -304,7 +305,7 @@ class StrategyBase:
             if target_handler:
                 if isinstance(target_handler, (TaskInclude, IncludeRole)):
                     try:
-                        handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=target_handler)
+                        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=target_handler)
                         templar = Templar(loader=self._loader, variables=handler_vars)
                         target_handler_name = templar.template(target_handler.name)
                         if target_handler_name == handler_name:
@@ -589,50 +590,29 @@ class StrategyBase:
         Helper function to add a new host to inventory based on a task result.
         '''
 
-        host_name = host_info.get('host_name')
+        if host_info:
+            host_name = host_info.get('host_name')
 
-        # Check if host in inventory, add if not
-        new_host = self._inventory.get_host(host_name)
-        if not new_host:
-            new_host = Host(name=host_name)
-            self._inventory._hosts_cache[host_name] = new_host
-            self._inventory.get_host_vars(new_host)
+            # Check if host in inventory, add if not
+            if not host_name in self._inventory.hosts:
+                self._inventory.add_host(host_name, 'all')
+            new_host = self._inventory.hosts.get(host_name)
 
-            allgroup = self._inventory.get_group('all')
-            allgroup.add_host(new_host)
+            # Set/update the vars for this host
+            new_host.vars = combine_vars(new_host.get_vars(),  host_info.get('host_vars', dict()))
 
-        # Set/update the vars for this host
-        new_host.vars = combine_vars(new_host.vars, self._inventory.get_host_vars(new_host))
-        new_host.vars = combine_vars(new_host.vars,  host_info.get('host_vars', dict()))
+            new_groups = host_info.get('groups', [])
+            for group_name in new_groups:
+                if group_name not in self._inventory.groups:
+                    self._inventory.add_group(group_name)
+                new_group = self._inventory.groups[group_name]
+                new_group.add_host(self._inventory.hosts[host_name])
 
-        new_groups = host_info.get('groups', [])
-        for group_name in new_groups:
-            if not self._inventory.get_group(group_name):
-                new_group = Group(group_name)
-                self._inventory.add_group(new_group)
-                self._inventory.get_group_vars(new_group)
-                new_group.vars = self._inventory.get_group_variables(group_name)
-            else:
-                new_group = self._inventory.get_group(group_name)
+            # clear pattern caching completely since it's unpredictable what patterns may have referenced the group
+            self._inventory.clear_pattern_cache()
 
-            new_group.add_host(new_host)
-
-            # add this host to the group cache
-            if self._inventory.groups is not None:
-                if group_name in self._inventory.groups:
-                    if new_host not in self._inventory.get_group(group_name).hosts:
-                        self._inventory.get_group(group_name).hosts.append(new_host.name)
-
-        # clear pattern caching completely since it's unpredictable what
-        # patterns may have referenced the group
-        self._inventory.clear_pattern_cache()
-
-        # clear cache of group dict, which is used in magic host variables
-        self._inventory.clear_group_dict_cache()
-
-        # also clear the hostvar cache entry for the given play, so that
-        # the new hosts are available if hostvars are referenced
-        self._variable_manager.invalidate_hostvars_cache(play=iterator._play)
+            # reconcile inventory, ensures inventory rules are followed
+            self._inventory.reconcile_inventory()
 
     def _add_group(self, host, result_item):
         '''
@@ -645,28 +625,26 @@ class StrategyBase:
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        real_host = self._inventory.get_host(host.name)
-
+        real_host = self._inventory.hosts[host.name]
         group_name = result_item.get('add_group')
-        new_group = self._inventory.get_group(group_name)
-        if not new_group:
-            # create the new group and add it to inventory
-            new_group = Group(name=group_name)
-            self._inventory.add_group(new_group)
-            new_group.vars = self._inventory.get_group_vars(new_group)
 
-            # and add the group to the proper hierarchy
-            allgroup = self._inventory.get_group('all')
-            allgroup.add_child_group(new_group)
+        if group_name not in self._inventory.groups:
+            # create the new group and add it to inventory
+            self._inventory.add_group(group_name)
+            changed = True
+        group = self._inventory.groups[group_name]
+
+        if real_host.name not in group.get_hosts():
+            group.add_host(real_host)
             changed = True
 
         if group_name not in host.get_groups():
-            new_group.add_host(real_host)
+            real_host.add_group(group)
             changed = True
 
         if changed:
-            # clear cache of group dict, which is used in magic host variables
-            self._inventory.clear_group_dict_cache()
+            self._inventory.clear_pattern_cache()
+            self._inventory.reconcile_inventory()
 
         return changed
 
@@ -780,7 +758,7 @@ class StrategyBase:
         host_results = []
         for host in notified_hosts:
             if not handler.has_triggered(host) and (not iterator.is_failed(host) or play_context.force_handlers):
-                task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
+                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
                 if run_once:
@@ -867,7 +845,7 @@ class StrategyBase:
         #   on a meta task that doesn't support them
 
         def _evaluate_conditional(h):
-            all_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=h, task=task)
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task)
             templar = Templar(loader=self._loader, variables=all_vars)
             return task.evaluate_conditional(templar, all_vars)
 
