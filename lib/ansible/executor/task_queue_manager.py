@@ -210,7 +210,7 @@ class TaskQueueManager:
         if not self._callbacks_loaded:
             self.load_callbacks()
 
-        all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+        all_vars = self._variable_manager.get_vars(play=play)
         warn_if_reserved(all_vars)
         templar = Templar(loader=self._loader, variables=all_vars)
 

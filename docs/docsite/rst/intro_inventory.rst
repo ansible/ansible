@@ -5,22 +5,22 @@ Inventory
 
 .. contents:: Topics
 
-Ansible works against multiple systems in your infrastructure at the
-same time.  It does this by selecting portions of systems listed in
-Ansible's inventory file, which defaults to being saved in
-the location ``/etc/ansible/hosts``. You can specify a different inventory file using the
-``-i <path>`` option on the command line.
+Ansible works against multiple systems in your infrastructure at the same time.
+It does this by selecting portions of systems listed in Ansible's inventory,
+which defaults to being saved in the location ``/etc/ansible/hosts``.
+You can specify a different inventory file using the ``-i <path>`` option on the command line.
 
-Not only is this inventory configurable, but you can also use
-multiple inventory files at the same time (explained below) and also
+Not only is this inventory configurable, but you can also use multiple inventory files at the same time and
 pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynamic_inventory`.
+Introduced in version 2.4, Ansible has inventory plugins to make this flexible and customizable.
 
 .. _inventoryformat:
 
 Hosts and Groups
 ++++++++++++++++
 
-The format for ``/etc/ansible/hosts`` is an INI-like format and looks like this:
+The inventory file can be in one of many formats, depending on the inventory plugins you have.
+For this example, the format for ``/etc/ansible/hosts`` is an INI-like (one of Ansible's defaults) and looks like this::
 
 .. code-block:: ini
 
@@ -118,6 +118,8 @@ Variables can also be applied to an entire group at once::
    ntp_server=ntp.atlanta.example.com
    proxy=proxy.atlanta.example.com
 
+Be aware that this is only a convenient way to apply variables to multiple hosts at once; even though you can target hosts by group, variables are always flattened to the host level before a play is executed.
+
 .. _subgroups:
 
 Groups of Groups, and Group Variables
@@ -149,8 +151,11 @@ It is also possible to make groups of groups using the ``:children`` suffix. Jus
    southwest
    northwest
 
-If you need to store lists or hash data, or prefer to keep host and group specific variables
-separate from the inventory file, see the next section.
+If you need to store lists or hash data, or prefer to keep host and group specific variables separate from the inventory file, see the next section.
+Child groups have a couple of properties to note:
+
+ - First, any host that is member of a child group is automatically a member of the parent group.
+ - Second, a child group's variables will have higher precedence (override) a parent group's variables.
 
 .. _default_groups:
 
@@ -228,7 +233,7 @@ ansible_connection
 
 .. include:: ../rst_common/ansible_ssh_changes_note.rst
 
-SSH connection:
+General for all connections:
 
 ansible_host
     The name of the host to connect to, if different from the alias you wish to give to it.
@@ -236,6 +241,10 @@ ansible_port
     The ssh port number, if not 22
 ansible_user
     The default ssh user name to use.
+
+
+Specific to the SSH connection:
+
 ansible_ssh_pass
     The ssh password to use (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_ssh_private_key_file
@@ -252,10 +261,7 @@ ansible_ssh_extra_args
     This setting is always appended to the default :command:`ssh` command line.
 ansible_ssh_pipelining
     Determines whether or not to use SSH pipelining. This can override the ``pipelining`` setting in :file:`ansible.cfg`.
-
-.. versionadded:: 2.2
-
-ansible_ssh_executable
+ansible_ssh_executable (added in version 2.2)
     This setting overrides the default behavior to use the system :command:`ssh`. This can override the ``ssh_executable`` setting in :file:`ansible.cfg`.
 
 
@@ -295,7 +301,7 @@ ansible_shell_executable
     to use :command:`/bin/sh` (i.e. :command:`/bin/sh` is not installed on the target
     machine or cannot be run from sudo.).
 
-Examples from a host file::
+Examples from an Ansible-INI host file::
 
   some_host         ansible_port=2222     ansible_user=manager
   aws_host          ansible_ssh_private_key_file=/home/example/.ssh/aws.pem
@@ -360,3 +366,4 @@ Here is an example of how to instantly deploy to created containers::
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
+

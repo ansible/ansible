@@ -46,6 +46,12 @@ class Host:
     def __hash__(self):
         return hash(self.name)
 
+    def __str__(self):
+        return self.get_name()
+
+    def __repr__(self):
+        return self.get_name()
+
     def serialize(self):
         groups = []
         for group in self.groups:
@@ -56,7 +62,6 @@ class Host:
             vars=self.vars.copy(),
             address=self.address,
             uuid=self._uuid,
-            gathered_facts=self._gathered_facts,
             groups=groups,
             implicit=self.implicit,
         )
@@ -78,47 +83,37 @@ class Host:
 
     def __init__(self, name=None, port=None, gen_uuid=True):
 
-        self.name = name
         self.vars = {}
         self.groups = []
+        self._uuid = None
 
+        self.name = name
         self.address = name
 
         if port:
             self.set_variable('ansible_port', int(port))
 
-        self._gathered_facts = False
-        self._uuid = None
         if gen_uuid:
             self._uuid = get_unique_id()
         self.implicit = False
 
-    def __repr__(self):
-        return self.get_name()
-
     def get_name(self):
         return self.name
 
-    @property
-    def gathered_facts(self):
-        return self._gathered_facts
-
-    def set_gathered_facts(self, gathered):
-        self._gathered_facts = gathered
 
     def populate_ancestors(self):
-
         # populate ancestors
         for group in self.groups:
             self.add_group(group)
 
     def add_group(self, group):
 
-        # populate ancestors
+        # populate ancestors first
         for oldg in group.get_ancestors():
             if oldg not in self.groups:
                 self.add_group(oldg)
 
+        # actually add group
         if group not in self.groups:
             self.groups.append(group)
 
@@ -136,25 +131,21 @@ class Host:
                     else:
                         self.remove_group(oldg)
 
-    def set_variable(self, key, value):
 
+    def set_variable(self, key, value):
         self.vars[key]=value
 
     def get_groups(self):
         return self.groups
 
-    def get_vars(self):
-
+    def get_magic_vars(self):
         results = {}
-        results = combine_vars(results, self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
         results['group_names'] = sorted([ g.name for g in self.get_groups() if g.name != 'all'])
-        return results
 
-    def get_group_vars(self):
-        results = {}
-        groups = self.get_groups()
-        for group in sorted(groups, key=lambda g: (g.depth, g.priority, g.name)):
-            results = combine_vars(results, group.get_vars())
-        return results
+        return combine_vars(self.vars, results)
+
+    def get_vars(self):
+        return combine_vars(self.vars, self.get_magic_vars())
+

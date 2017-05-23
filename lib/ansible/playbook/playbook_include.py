@@ -59,7 +59,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
         all_vars = self.vars.copy()
         if variable_manager:
-            all_vars.update(variable_manager.get_vars(loader=loader))
+            all_vars.update(variable_manager.get_vars())
 
         templar = Templar(loader=loader, variables=all_vars)
 
