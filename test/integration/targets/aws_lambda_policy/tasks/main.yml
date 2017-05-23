@@ -1,0 +1,148 @@
+---
+#
+#  Author: Michael De La Rue
+#  based on ec2_key.yml + lambda.py
+
+- block:
+
+    # ============================================================
+    - name: test with no parameters
+      lambda_policy:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: statement_id")'
+
+    # ============================================================
+    - name: test with all required dummy parameters but no region
+      lambda_policy:
+        statement_id: dummy
+        principal: api_fakeway
+        action: fake:do_something_fake
+        function_name: dummy_fake_function
+      ignore_errors: true
+      register: result
+
+    - name: assert failure when called with only 'name' (expected failure)
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "region must be specified"'
+      ignore_errors: true
+
+    # ============================================================
+    # ============================================================
+    # direct zip file upload
+    - name: move lambda into place for archive module
+      copy:
+        src: "mini_http_lambda.py"
+        dest: "{{output_dir}}/mini_http_lambda.py"
+
+    - name: bundle lambda into a zip
+      archive:
+        format: zip
+        path: "{{output_dir}}/mini_http_lambda.py"
+        dest: "{{output_dir}}/mini_http_lambda.zip"
+      register: zip_res
+
+    - name: test state=present - upload the lambda
+      lambda:
+        name="{{lambda_function_name}}"
+        runtime="python2.7"
+        handler="mini_lambda.handler"
+        role="ansible_lambda_role"
+        ec2_region='{{ec2_region}}'
+        aws_access_key='{{aws_access_key}}'
+        aws_secret_key='{{aws_secret_key}}'
+        security_token='{{security_token}}'
+        zip_file="{{zip_res.dest}}"
+      register: lambda_result
+
+    - name: register lambda arn for use in template
+      set_fact:
+        mini_lambda_arn: "{{ lambda_result.configuration.function_arn }}"
+
+    - name: build API file
+      template:
+        src: endpoint-test-swagger-api.yml.j2
+        dest: "{{output_dir}}/endpoint-test-swagger-api.yml.j2"
+
+    - name: deploy new API
+      aws_api_gateway:
+        api_file: "{{output_dir}}/endpoint-test-swagger-api.yml.j2"
+        stage: "lambdabased"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+      register: create_result
+
+    - name: register api id for later
+      set_fact:
+        api_id: "{{ create_result.api_id }}"
+
+    - name: check API fails with permissions failure
+      uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/minimal/mini/Mr_Ansible_Tester"
+      register: unauth_uri_result
+      ignore_errors: true
+
+    - name: assert
+      assert:
+        that:
+          - unauth_uri_result|failed
+          - 'unauth_uri_result.status == 403'
+
+    - name: give api gateway execute permissions on lambda
+      lambda_policy:
+        function_name: "{{ lambda_function_name }}"
+        region: "{{ec2_region}}"
+        state: present
+        statement_id: api-gateway-invoke-lambdas
+        action: lambda:InvokeFunction
+        principal: apigateway.amazonaws.com
+        source_arn: "arn:aws:execute-api:{{ ec2_region }}:{{ aws_account_id }}:*/*"
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+
+    - name: check API works with execute permissions
+      uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/minimal/mini/Mr_Ansible_Tester"
+      register: uri_result
+
+    - name: assert API works success
+      assert:
+        that:
+           - 'uri_result'
+
+  always:
+
+    # ============================================================
+    - name: test state=absent (expect changed=false)
+      lambda:
+        name="{{lambda_function_name}}"
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=absent
+      register: result
+
+    - name: destroy api API
+      aws_api_gateway:
+        state: absent
+        api_id: '{{api_id}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ec2_access_key}}'
+        aws_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: destroy_result
+
+    - name: assert state=absent
+      assert:
+        that:
+           - 'destroy_result.changed == True'
+           - '"failed" not in result'
