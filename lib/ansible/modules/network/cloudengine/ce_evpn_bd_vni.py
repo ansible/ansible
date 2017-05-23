@@ -18,16 +18,16 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_evpn_bd_vni
-version_added: "2.3"
-short_description: Manages Huawei EVPN VXLAN Network Identifier (VNI).
+version_added: "2.4"
+short_description: Manages EVPN VXLAN Network Identifier (VNI) on HUAWEI CloudEngine switches.
 description:
-    - Manages Huawei Ethernet Virtual Private Network (EVPN) VXLAN Network
-      Identifier (VNI) configurations.
+    - Manages Ethernet Virtual Private Network (EVPN) VXLAN Network
+      Identifier (VNI) configurations on HUAWEI CloudEngine switches.
 author: Zhijin Zhou (@CloudEngine-Ansible)
 notes:
     - Ensure that EVPN has been configured to serve as the VXLAN control plane when state is present.
@@ -201,6 +201,7 @@ proposed:
             }
 existing:
     description: k/v pairs of existing attributes on the device
+    returned: always
     type: dict
     sample: {
                 "bridge_domain_id": "2",
@@ -213,7 +214,7 @@ existing:
 end_state:
     description: k/v pairs of end attributes on the device
     returned: always
-    type: dict or null
+    type: dict
     sample: {
                 "bridge_domain_id": "2",
                 "evpn": "enable",
@@ -1052,6 +1053,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     evpn_bd = EvpnBd(argument_spec)
     evpn_bd.work()
+
 
 if __name__ == '__main__':
     main()
