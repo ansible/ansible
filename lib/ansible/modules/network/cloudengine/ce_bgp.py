@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_bgp
-version_added: "2.3"
-short_description: Manages BGP configuration.
+version_added: "2.4"
+short_description: Manages BGP configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages BGP configurations on CloudEngine switches.
+    - Manages BGP configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -236,8 +236,8 @@ proposed:
     type: dict
     sample: {"as_number": "100", state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"bgp_enable": [["100"], ["true"]]}
 end_state:
