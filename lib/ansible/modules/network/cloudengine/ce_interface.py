@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_interface
-version_added: "2.3"
-short_description: Manages physical attributes of interfaces.
+version_added: "2.4"
+short_description: Manages physical attributes of interfaces on HUAWEI CloudEngine switches.
 description:
-    - Manages physical attributes of interfaces of Huawei CloudEngine switches.
+    - Manages physical attributes of interfaces on HUAWEI CloudEngine switches.
 author: QijunPan (@CloudEngine-Ansible)
 notes:
     - This module is also used to create logical interfaces such as
@@ -136,13 +136,14 @@ proposed:
     sample: {"interface": "10GE1/0/10", "admin_state": "down"}
 existing:
     description: k/v pairs of existing switchport
+    returned: always
     type: dict
     sample:  {"admin_state": "up", "description": "None",
               "interface": "10GE1/0/10", "mode": "layer2"}
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
-    type: dict or null
+    type: dict
     sample:  {"admin_state": "down", "description": "None",
               "interface": "10GE1/0/10", "mode": "layer2"}
 updates:
