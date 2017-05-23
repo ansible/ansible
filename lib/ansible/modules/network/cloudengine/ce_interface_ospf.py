@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_interface_ospf
-version_added: "2.3"
-short_description: Manages configuration of an OSPF interface instance.
+version_added: "2.4"
+short_description: Manages configuration of an OSPF interface instanceon HUAWEI CloudEngine switches.
 description:
-    - Manages configuration of an OSPF interface instance.
+    - Manages configuration of an OSPF interface instanceon HUAWEI CloudEngine switches.
 author: QijunPan (@CloudEngine-Ansible)
 options:
     interface:
