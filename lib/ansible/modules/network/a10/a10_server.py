@@ -88,10 +88,6 @@ options:
 
 '''
 
-RETURN = '''
-#
-'''
-
 EXAMPLES = '''
 # Create a new server
 - a10_server:
