@@ -15,9 +15,11 @@ def handler(event, context):
     # which will result in an amazon chosen failure from the lambda
     # which can be completely fine.
 
-    name = event["name"]
+    name = event["pathParameters"]["greet_name"]
 
-    return {"message": "hello " + name}
+    return {"statusCode": 200,
+            "body": 'hello: "' + name + '"',
+            "headers": {}}
 
 
 def main():

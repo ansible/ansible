@@ -53,7 +53,7 @@
       lambda:
         name="{{lambda_function_name}}"
         runtime="python2.7"
-        handler="mini_lambda.handler"
+        handler="mini_http_lambda.handler"
         role="ansible_lambda_role"
         ec2_region='{{ec2_region}}'
         aws_access_key='{{aws_access_key}}'
@@ -62,9 +62,9 @@
         zip_file="{{zip_res.dest}}"
       register: lambda_result
 
-    - name: register lambda arn for use in template
+    - name: register lambda uri for use in template
       set_fact:
-        mini_lambda_arn: "{{ lambda_result.configuration.function_arn }}"
+        mini_lambda_uri: "arn:aws:apigateway:{{ec2_region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{ec2_region}}:{{aws_account_id}}:function:{{ lambda_result.configuration.function_name }}/invocations"
 
     - name: build API file
       template:
@@ -86,15 +86,15 @@
         api_id: "{{ create_result.api_id }}"
 
     - name: check API fails with permissions failure
-      uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/minimal/mini/Mr_Ansible_Tester"
+      uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/lambdabased/mini/Mr_Ansible_Tester"
       register: unauth_uri_result
       ignore_errors: true
 
-    - name: assert
+    - name: assert internal server error due to permissions
       assert:
         that:
           - unauth_uri_result|failed
-          - 'unauth_uri_result.status == 403'
+          - 'unauth_uri_result.status == 500'
 
     - name: give api gateway execute permissions on lambda
       lambda_policy:
@@ -110,7 +110,7 @@
         security_token: '{{security_token}}'
 
     - name: check API works with execute permissions
-      uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/minimal/mini/Mr_Ansible_Tester"
+      uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/lambdabased/mini/Mr_Ansible_Tester"
       register: uri_result
 
     - name: assert API works success
@@ -121,7 +121,7 @@
   always:
 
     # ============================================================
-    - name: test state=absent (expect changed=false)
+    - name: destroy lambda for test cleanup if created
       lambda:
         name="{{lambda_function_name}}"
         ec2_region='{{ec2_region}}'
@@ -131,7 +131,7 @@
         state=absent
       register: result
 
-    - name: destroy api API
+    - name: destroy API for test cleanup if created
       aws_api_gateway:
         state: absent
         api_id: '{{api_id}}'
@@ -141,7 +141,7 @@
         security_token: '{{security_token}}'
       register: destroy_result
 
-    - name: assert state=absent
+    - name: assert destroy statements succeeded
       assert:
         that:
            - 'destroy_result.changed == True'
