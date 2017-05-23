@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_bgp_af
-version_added: "2.3"
-short_description: Manages BGP Address-family configuration.
+version_added: "2.4"
+short_description: Manages BGP Address-family configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages BGP Address-family configurations on CloudEngine switches.
+    - Manages BGP Address-family configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -480,8 +480,8 @@ proposed:
     sample: {"af_type": "ipv4uni",
              "state": "present", "vrf_name": "js"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {}
 end_state:
