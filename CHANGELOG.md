@@ -10,6 +10,9 @@ Ansible Changes By Release
 * Fix template so that the --diff command line option works when the destination is a directory
 * Fix python3 bugs in pam_limits
 * Fix unbound error when using module deprecation as a single string
+* Several places in which error handling was broken due to bad conversions or just typos
+* Fix to user module for appending/setting groups on OpenBSD (flags were reversed)
+* assemble fix to use safer os.join.path, avoids charset issues
 
 ## 2.3 "Ramble On" - 2017-04-12
 
