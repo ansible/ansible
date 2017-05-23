@@ -275,10 +275,8 @@ def present(user_facts, cursor, user, profile, resource_pool,
             changed = True
         if changed:
             cursor.execute(' '.join(query_fragments))
-==== BASE ====
-        if (roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or
-                cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0)):
-==== BASE ====
+        if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
+               sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
             update_roles(user_facts, cursor, user,
                 user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
             changed = True
