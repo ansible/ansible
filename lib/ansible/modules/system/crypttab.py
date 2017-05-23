@@ -34,7 +34,7 @@ options:
   name:
     description:
       - Name of the encrypted block device as it appears in the C(/etc/crypttab) file, or
-        optionaly prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
+        optionally prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
         will be stripped from I(name).
     required: true
     default: null

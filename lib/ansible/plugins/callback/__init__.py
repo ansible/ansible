@@ -322,7 +322,7 @@ class CallbackBase:
         self.runner_on_async_failed(host, result._result, jid)
 
     def v2_runner_on_file_diff(self, result, diff):
-        pass #no v1 correspondance
+        pass #no v1 correspondence
 
     def v2_playbook_on_start(self, playbook):
         self.playbook_on_start()
@@ -341,10 +341,10 @@ class CallbackBase:
         self.playbook_on_task_start(task.name, is_conditional)
 
     def v2_playbook_on_cleanup_task_start(self, task):
-        pass #no v1 correspondance
+        pass #no v1 correspondence
 
     def v2_playbook_on_handler_task_start(self, task):
-        pass #no v1 correspondance
+        pass #no v1 correspondence
 
     def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
         self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default)
@@ -372,7 +372,7 @@ class CallbackBase:
             self.on_file_diff(host, result._result['diff'])
 
     def v2_playbook_on_include(self, included_file):
-        pass #no v1 correspondance
+        pass #no v1 correspondence
 
     def v2_runner_item_on_ok(self, result):
         pass

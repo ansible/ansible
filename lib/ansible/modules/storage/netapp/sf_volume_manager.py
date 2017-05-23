@@ -72,7 +72,7 @@ options:
         description:
         - The ID of the volume to manage or update.
         - In order to create multiple volumes with the same name, but different volume_ids, please declare the I(volume_id)
-          parameter with an arbitary value. However, the specified volume_id will not be assigned to the newly created
+          parameter with an arbitrary value. However, the specified volume_id will not be assigned to the newly created
           volume (since it's an auto-generated property).
         required: false
         default: None

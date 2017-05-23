@@ -45,7 +45,7 @@
 ##                beta.example.org:
 
 # Ex 4: all vars
-# keeping withing 'all' group you can define common 'all' vars here with lowest precedence
+# keeping within 'all' group you can define common 'all' vars here with lowest precedence
 
 ##  vars:
 ##      commontoall: thisvar

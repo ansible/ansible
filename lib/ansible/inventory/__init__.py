@@ -865,7 +865,7 @@ class Inventory(object):
 
             scan_pass = scan_pass + 1
 
-            # it's not an eror if the directory does not exist, keep moving
+            # it's not an error if the directory does not exist, keep moving
             if not os.path.exists(basedir):
                 continue
 

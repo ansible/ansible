@@ -398,7 +398,7 @@ def write_metadata(filename, new_metadata, version=None, overwrite=False):
         raise ParseError('Could not add metadata to {}'.format(filename))
 
     if current_metadata is None:
-        # No curent metadata so we can just add it
+        # No current metadata so we can just add it
         start_line = find_documentation(module_data)
         if start_line < 0:
             if os.path.basename(filename) in NONMODULE_PY_FILES:

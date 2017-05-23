@@ -214,7 +214,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             "later. In the future, this will be an error unless 'static: no' is used " \
                             "on the include task. If you do not want missing includes to be considered " \
                             "dynamic, use 'static: yes' on the include or set the global ansible.cfg " \
-                            "options to make all inclues static for tasks and/or handlers" % include_file, version="2.7"
+                            "options to make all includes static for tasks and/or handlers" % include_file, version="2.7"
                         )
                         task_list.append(t)
                         continue

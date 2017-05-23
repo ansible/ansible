@@ -86,7 +86,7 @@ options:
     required: false
     default: null
     description:
-      - path to a file on the filesytem that must exist before continuing
+      - path to a file on the filesystem that must exist before continuing
   search_regex:
     version_added: "1.4"
     required: false

@@ -532,7 +532,7 @@ class FilterModule(object):
             'md5': md5s,
             # sha1 hex digeset of string
             'sha1': checksum_s,
-            # checksum of string as used by ansible for checksuming files
+            # checksum of string as used by ansible for checksumming files
             'checksum': checksum_s,
             # generic hashing
             'password_hash': get_encrypted_password,

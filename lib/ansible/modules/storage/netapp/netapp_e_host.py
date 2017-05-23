@@ -54,7 +54,7 @@ options:
         required: True
     name:
         description:
-            - If the host doesnt yet exist, the label to assign at creation time.
+            - If the host doesn't yet exist, the label to assign at creation time.
             - If the hosts already exists, this is what is used to identify the host to apply any desired changes
         required: True
     host_type_index:
@@ -204,7 +204,7 @@ class Host(object):
         if len(self.available_ports) > 0 and len(self.ports) <= len(self.available_ports):
             for port in self.ports:
                 for free_port in self.available_ports:
-                    # Desired Type matches but also make sure we havent already used the ID
+                    # Desired Type matches but also make sure we haven't already used the ID
                     if not free_port['id'] in used_ids:
                         # update the port arg to have an id attribute
                         used_ids.append(free_port['id'])
@@ -318,7 +318,7 @@ class Host(object):
                 self.post_body['portsToUpdate'].update(dict(
                     portRef=self.other_host['hostPortRef'],
                     hostRef=self.host_obj['id'],
-                    # Doesnt yet address port identifier or chap secret
+                    # Doesn't yet address port identifier or chap secret
                 ))
 
         if apply:

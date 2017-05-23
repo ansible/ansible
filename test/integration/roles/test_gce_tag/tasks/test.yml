@@ -59,9 +59,9 @@
        - 'result.failed'
        - 'result.msg == "Regex error for pattern &23424--[: unexpected end of regular expression"'
 
-## Non-existant instance tests ##
+## Non-existent instance tests ##
 # # ============================================================
-- name: "test tag non-existant instance (state==present)"
+- name: "test tag non-existent instance (state==present)"
   gce_tag:
     service_account_email: "{{ service_account_email }}"
     pem_file: "{{ pem_file }}"
@@ -79,7 +79,7 @@
        - 'result.failed'
 
 # # ============================================================
-- name: "test tag non-existant instance (state==absent)"
+- name: "test tag non-existent instance (state==absent)"
   gce_tag:
     service_account_email: "{{ service_account_email }}"
     pem_file: "{{ pem_file }}"

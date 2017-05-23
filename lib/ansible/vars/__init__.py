@@ -444,7 +444,7 @@ class VariableManager:
                 # however this would take work in the templating engine, so for now we'll add both
                 variables['play_hosts'] = variables['ansible_play_batch']
 
-        # the 'omit' value alows params to be left out if the variable they are based on is undefined
+        # the 'omit' value allows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
         variables['ansible_version'] = CLI.version_info(gitinfo=False)
         # Set options vars

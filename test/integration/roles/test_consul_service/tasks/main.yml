@@ -141,7 +141,7 @@
     that:
       - delete_service_result.changed
 
-- name: removal of an non-existant service causes no change
+- name: removal of an non-existent service causes no change
   consul:
     service_id: 'service1'
     state: absent
@@ -163,7 +163,7 @@
     that:
       - delete_check_result.changed
 
-- name: removal of an non-existant check causes no change
+- name: removal of an non-existent check causes no change
   consul:
     check_id: 'node_level'
     state: absent

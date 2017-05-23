@@ -251,7 +251,7 @@ class BigIpSslCertificate(object):
         key_content = self.params['key_content']
         passphrase = self.params['passphrase']
 
-        # Technically you dont need to provide us with anything in the form
+        # Technically you don't need to provide us with anything in the form
         # of content for your cert, but that's kind of illogical, so we just
         # return saying you didn't "do" anything if you left the cert and keys
         # empty.

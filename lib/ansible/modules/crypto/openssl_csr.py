@@ -68,7 +68,7 @@ options:
     subjectAltName:
         required: false
         description:
-            - SAN extention to attach to the certificate signing request
+            - SAN extension to attach to the certificate signing request
     countryName:
         required: false
         aliases: [ 'C' ]
@@ -114,7 +114,7 @@ EXAMPLES = '''
     privatekey_path: /etc/ssl/private/ansible.com.pem
     commonName: www.ansible.com
 
-# Generate an OpenSSL Certificate Signing Request with Subject informations
+# Generate an OpenSSL Certificate Signing Request with Subject information
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
@@ -145,7 +145,7 @@ csr:
     type: string
     sample: /etc/ssl/csr/www.ansible.com.csr
 subject:
-    description: A dictionnary of the subject attached to the CSR
+    description: A dictionary of the subject attached to the CSR
     returned: changed or success
     type: list
     sample: {'CN': 'www.ansible.com', 'O': 'Ansible'}
@@ -253,7 +253,7 @@ class CertificateSigningRequest(object):
                 self.changed = False
 
     def dump(self):
-        '''Serialize the object into a dictionnary.'''
+        '''Serialize the object into a dictionary.'''
 
         result = {
             'csr': self.path,
