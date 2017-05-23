@@ -32,7 +32,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
-    VALID_DIR_ARGUMENTS = [ 'dir', 'depth', 'files_matching', 'ignore_files', 'extensions', ]
+    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params', 'name']
 
     def _set_dir_defaults(self):
