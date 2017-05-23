@@ -30,63 +30,46 @@ options:
     description:
       - Name of certificate to add, update or remove.
     required: true
-    aliases: []
   new_name:
     description:
       - When present, this will update the name of the cert with the value passed here.
     required: false
-    aliases: []
   new_path:
     description:
       - When present, this will update the path of the cert with the value passed here.
     required: false
-    aliases: []
   state:
     description:
       - Whether to create, delete certificate. When present is specified it will attempt to make an update if new_path or new_name is specified.
     required: true
     default: null
     choices: [ "present", "absent" ]
-    aliases: []
   path:
     description:
       - When creating or updating, specify the desired path of the certificate
     required: false
     default: "/"
-    aliases: []
   cert_chain:
     description:
       - The CA certificate chain in PEM encoded format.
+      - Note that prior to 2.4, this parameter expected a path to a file. Since 2.4 this is now accomplished using a lookup plugin. See examples for detail
     required: false
     default: null
-    aliases: []
   cert:
     description:
       - The certificate body in PEM encoded format.
+      - Note that prior to 2.4, this parameter expected a path to a file. Since 2.4 this is now accomplished using a lookup plugin. See examples for detail
     required: false
-    aliases: []
   key:
     description:
       - The key of the certificate in PEM encoded format.
+      - Note that prior to 2.4, this parameter expected a path to a file. Since 2.4 this is now accomplished using a lookup plugin. See examples for detail
   dup_ok:
     description:
       - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as
         long as the name is unique.
     required: false
     default: False
-    aliases: []
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_access_key', 'access_key' ]
 
 
 requirements: [ "boto" ]
