@@ -1,7 +1,7 @@
 - name: Install
   package:
     name: attr
-    state: installed
+    state: present
   become: true
 
 - name: Create file
