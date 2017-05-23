@@ -597,31 +597,32 @@ instances:
     contains:
         "block_device_mapping": {
             "d-2ze9mho1vp79mctdoro0": {
-                "delete_on_termination": true, 
-                "status": "in_use", 
+                "delete_on_termination": true,
+                "status": "in_use",
                 "volume_id": "d-2ze9mho1vp79mctdoro0"
             }
-        }, 
+        },
         "eip": "", 
         "group_id": "sg-2zefacu0pduhah3yrhhz",
+        "host_name": "myhost",
         "id": "i-2ze9zfjdhtasdrfbgay1", 
         "image_id": "ubuntu1404_64_40G_cloudinit_20160727.raw", 
         "instance_name": "test-instance",
-        "instance_type": "ecs.n1.small", 
-        "io_optimized": true, 
+        "instance_type": "ecs.n1.small",
+        "io_optimized": true,
         "launch_time": "2017-05-23T00:56Z", 
-        "private_ip": "10.31.153.209", 
-        "public_ip": "47.94.45.175", 
-        "region_id": "cn-beijing", 
-        "status": "running", 
-        "subnet_id": "", 
+        "private_ip": "10.31.153.209",
+        "public_ip": "47.94.45.175",
+        "region_id": "cn-beijing",
+        "status": "running",
+        "subnet_id": "",
         "tags": {
             "create_test": "0.01"
-        }, 
+        },
         "vpc_id": "", 
         "vpc_private_ip": {
             "ip_address": []
-        }, 
+        },
         "zone_id": "cn-beijing-a"
 total_count:
     description: The number of all instances after operating ecs instance.
@@ -711,10 +712,8 @@ def get_instances(module, ecs, instance_ids):
     # if instance_tags:
     #     for key, value in instance_tags.items():
     #         filters["tag:" + key] = value
-    print ("############# instance_ids:",instance_ids)
 
     for inst in ecs.get_all_instances(instance_ids=instance_ids):
-        # print("inst:====", get_instance_info(inst))
         instance_dict_array.append(get_instance_info(inst))
         changed = True
 
@@ -949,7 +948,6 @@ def create_instance(module, ecs, image_id, instance_type, group_id, zone_id, ins
                                               auto_renew=auto_renew, auto_renew_period=auto_renew_period,
                                               instance_tags=instance_tags, ids=ids, wait=wait,
                                               wait_timeout=wait_timeout)
-        print ("############# result:",result)
         if 'error' in (''.join(str(result))).lower():
             module.fail_json(changed=changed, msg=result)
 
