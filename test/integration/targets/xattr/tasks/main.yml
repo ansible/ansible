@@ -66,5 +66,3 @@
 - assert:
     that:
     - "not xattr_set_again_result.changed"
-
-
