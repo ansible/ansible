@@ -223,8 +223,7 @@ class VMwareCluster(object):
                                  self.cluster.configurationEx.drsConfig.enabled,
                                  self.cluster.configurationEx.vsanConfigInfo.enabled)
 
-#                if cmp(desired_state, current_state) != 0:
-                if desired_state !=  current_state:
+                if desired_state != current_state:
                     return 'update'
                 else:
                     return 'present'

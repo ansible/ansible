@@ -233,8 +233,6 @@ def _needs_update(module, port, cloud):
         if module.params[key] is not None and module.params[key] != port[key]:
             return True
     for key in compare_dict:
-#        if module.params[key] is not None and cmp(module.params[key],
-#                                                  port[key]) != 0:
         if module.params[key] is not None and module.params[key] != port[key]:
             return True
     for key in compare_list:
