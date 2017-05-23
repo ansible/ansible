@@ -17,6 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 
 
@@ -37,7 +38,7 @@ class ActionModule(ActionBase):
             result['msg'] = "the 'key' param is required when using group_by"
             return result
 
-        group_name = self._task.args.get('key')
+        group_name = to_text(self._task.args.get('key'))
         group_name = group_name.replace(' ','-')
 
         result['changed'] = False
