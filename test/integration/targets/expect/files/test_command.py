@@ -1,2 +1,2 @@
-user_input = input('foo')
-print(str(user_input))
+user_input = str(input('foo'))
+print(user_input)
