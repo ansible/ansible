@@ -66,7 +66,7 @@
 - name: assert chdir works
   assert:
     that:
-    - "chdir_result.stdout == '{{output_dir | expanduser}}'"
+    - "chdir_result.stdout == '{{output_dir | expanduser | realpath}}'"
 
 - name: test timeout option
   expect:
