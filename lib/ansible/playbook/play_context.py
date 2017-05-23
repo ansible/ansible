@@ -587,6 +587,13 @@ class PlayContext(Base):
                 else:
                     becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
+            elif self.become_method == 'pmrun':
+
+                exe = self.become_exe or 'pmrun'
+
+                prompt='Enter UPM user password:'
+                becomecmd = '%s %s %s' % (exe, flags, shlex_quote(command))
+
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
