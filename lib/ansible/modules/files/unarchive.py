@@ -770,7 +770,6 @@ def main():
             src               = dict(required=True, type='path'),
             original_basename = dict(required=False, type='str'), # used to handle 'dest is a directory' via template, a slight hack
             dest              = dict(required=True, type='path'),
-            copy              = dict(required=False, default=True, type='bool'),
             remote_src        = dict(required=False, default=False, type='bool'),
             creates           = dict(required=False, type='path'),
             list_files        = dict(required=False, default=False, type='bool'),
@@ -780,21 +779,19 @@ def main():
             validate_certs    = dict(required=False, default=True, type='bool'),
         ),
         add_file_common_args = True,
-        mutually_exclusive   = [("copy", "remote_src"),],
         # check-mode only works for zip files, we cover that later
         supports_check_mode = True,
     )
 
     src        = module.params['src']
     dest       = module.params['dest']
-    copy       = module.params['copy']
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
     # did tar file arrive?
     if not os.path.exists(src):
-        if not remote_src and copy:
+        if not remote_src:
             module.fail_json(msg="Source '%s' failed to transfer" % src)
-        # If copy=false, and src= contains ://, try and download the file to a temp directory.
+        # If remote_src=true, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
             tempdir = os.path.dirname(os.path.realpath(__file__))
             package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
