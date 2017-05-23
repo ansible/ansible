@@ -109,7 +109,7 @@ RETURN = '''
 group:
     description: dictionary containing all the group information
     returned: success
-    type: dictionary
+    type: complex
     contains:
         arn:
             description: the Amazon Resource Name (ARN) specifying the group
@@ -134,7 +134,7 @@ group:
 users:
     description: list containing all the group members
     returned: success
-    type: list
+    type: complex
     contains:
         arn:
             description: the Amazon Resource Name (ARN) specifying the user
