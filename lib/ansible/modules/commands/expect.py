@@ -116,7 +116,7 @@ def response_closure(module, question, responses):
 
     def wrapped(info):
         try:
-            return resp_gen.next()
+            return next(resp_gen)
         except StopIteration:
             module.fail_json(msg="No remaining responses for '%s', "
                                  "output was '%s'" %
