@@ -424,7 +424,8 @@ New in 1.6, the 'gathering' setting controls the default policy of facts gatheri
 The value 'implicit' is the default, which means that the fact cache will be ignored and facts will be gathered per play unless 'gather_facts: False' is set.
 The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
 The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.
-This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the fact cache::
+The value 'refresh' is similar to 'smart', and will behave identically when using 'memory' backed fact caching. It will ensure that the first time during a playbook run each host will have facts scanned, and then behave the same as smart. This mode is useful for those utilising a persistent fact cache store, such as 'jsonfile' or 'redis', for additional custom facts, where it is desirable to re-gather system facts on each ansible run without expiring the custom facts as well.
+This option can be useful for those wishing to save fact gathering time. 'smart', 'refresh' and 'explicit' will use the fact cache::
 
     gathering = smart
 

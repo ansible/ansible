@@ -205,9 +205,12 @@ class PlayIterator:
         start_at_matched = False
         for host in inventory.get_hosts(self._play.hosts):
             self._host_states[host.name] = HostState(blocks=self._blocks)
+            # if refreshing of fact caching is not enabled and
             # if the host's name is in the variable manager's fact cache, then set
             # its _gathered_facts flag to true for smart gathering tests later
-            if host.name in variable_manager._fact_cache and variable_manager._fact_cache.get(host.name).get('module_setup', False):
+            if (C.DEFAULT_GATHERING != 'refresh'
+                    and host.name in variable_manager._fact_cache
+                    and variable_manager._fact_cache.get(host.name).get('module_setup', False)):
                 host._gathered_facts = True
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
@@ -310,7 +313,7 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
-                       (gathering == 'smart' and implied and not host._gathered_facts):
+                       (gathering in ('smart', 'refresh') and implied and not host._gathered_facts):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
