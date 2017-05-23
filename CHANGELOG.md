@@ -45,9 +45,9 @@ Ansible Changes By Release
 
   The new behaviour mirrors how the variables would appear if there was no hash
   mark in the string.
-- As of 2.4.0, the fetch module fails if there are errors reading the remote
-  file.  Use ignore_errors or failed_when in playbooks if you wish to ignore
-  errors.
+* As of 2.4.0, the fetch module fails if there are errors reading the remote file.
+  Use ignore_errors or failed_when in playbooks if you wish to ignore errors.
+* Experimentally added pmrun become method.
 
 #### New Inventory scripts:
 - lxd
