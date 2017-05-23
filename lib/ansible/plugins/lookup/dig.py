@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_native
 import socket
 
 try:
@@ -146,7 +147,7 @@ class LookupModule(LookupBase):
                             nsaddr = dns.resolver.query(ns)[0].address
                             nameservers.append(nsaddr)
                         except Exception as e:
-                            raise AnsibleError("dns lookup NS: ", str(e))
+                            raise AnsibleError("dns lookup NS: %s" % to_native(e))
                     myres.nameservers = nameservers
                 continue
             if '=' in t:
@@ -163,7 +164,7 @@ class LookupModule(LookupBase):
                     try:
                         rdclass = dns.rdataclass.from_text(arg)
                     except Exception as e:
-                        raise errors.AnsibleError("dns lookup illegal CLASS: ", str(e))
+                        raise AnsibleError("dns lookup illegal CLASS: %s" % to_native(e))
 
                 continue
 
@@ -186,7 +187,7 @@ class LookupModule(LookupBase):
             except dns.exception.SyntaxError:
                 pass
             except Exception as e:
-                raise AnsibleError("dns.reversename unhandled exception", str(e))
+                raise AnsibleError("dns.reversename unhandled exception %s" % to_native(e))
 
         try:
             answers = myres.query(domain, qtype, rdclass=rdclass)
@@ -216,6 +217,6 @@ class LookupModule(LookupBase):
         except dns.resolver.Timeout:
             ret.append('')
         except dns.exception.DNSException as e:
-            raise AnsibleError("dns.resolver unhandled exception", e)
+            raise AnsibleError("dns.resolver unhandled exception %s" % to_native(e))
 
         return ret

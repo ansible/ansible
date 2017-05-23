@@ -178,7 +178,7 @@ class LookupModule(LookupBase):
                 yield formatted
             except (ValueError, TypeError):
                 raise AnsibleError(
-                    "problem formatting %r with %r" % self.format
+                    "problem formatting %r with %r" % (i, self.format)
                 )
 
     def run(self, terms, variables, **kwargs):
