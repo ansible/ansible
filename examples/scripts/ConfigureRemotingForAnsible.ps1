@@ -121,6 +121,42 @@ Function New-LegacySelfSignedCert
     return $parsed_cert.Thumbprint
 }
 
+Function Use-MachineCert
+{
+    Param(
+        [string]$SubjectName
+    )
+
+    # First thing is to locate the certificate by CN. Make sure we get the most recent one.
+    try
+    {
+        $certificate = Get-ChildItem Cert:\LocalMachine\My `
+            | Where {$_.Subject -match $SubjectName } `
+            | Sort $_.NotAfter -Descending `
+            | Select -First 1 -ErrorAction Stop
+
+        $thumbprint = $certificate.Thumbprint
+        $UKCN = $certificate.PrivateKey.CspKeyContainerInfo.UniqueKeyContainerName
+    }
+    catch
+    {
+        return $null
+    }
+
+    # NETWORK SERVICE requires read access to private key data for WinRM
+    $machinekeypath = "$env:SystemDrive\ProgramData\Microsoft\Crypto\RSA\MachineKeys\"
+    $pathtoactualkey = $machinekeypath + $UKCN
+     
+    $acl = Get-Acl -Path $pathtoactualkey
+    $permission="NETWORK SERVICE","Read","Allow"
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $permission
+    $acl.AddAccessRule($accessRule)
+    
+    Set-Acl $pathtoactualkey $acl
+
+    return $thumbprint
+}
+
 # Setup error handling.
 Trap
 {
@@ -203,9 +239,31 @@ Else
 $listeners = Get-ChildItem WSMan:\localhost\Listener
 If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
 {
+    # Check for existing machine cert, if it exists also grant access
+    # to NETWORK SERVICE to access the private key (required for WinRM)
+    if (!$CreateSelfSignedCert) {
+        
+        # Append computer domain since certificate will be FQDN
+        if ($SubjectName -notcontains '.') {
+            $FQDN = $SubjectName + '.' + (Get-WmiObject win32_computersystem).Domain
+        }
+
+        $thumbprint = Use-MachineCert -SubjectName $FQDN
+
+        if ($thumbprint) {
+            # Use FQDN for WinRM hostname
+            $SubjectName = $FQDN
+        }
+    }
+
+    # If creating self-signed cert or existing machine cert doesn't exist
     # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
-    $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
-    Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+    if (!$thumbprint) {
+        $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
+        Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+    } else {        
+        Write-HostLog "Using existing machine certificate: $thumbprint. Granted access to private key to NETWORK SERVICE."
+    }
 
     # Create the hashtables of settings to be used.
     $valueset = @{
@@ -219,7 +277,7 @@ If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
     }
 
     Write-Verbose "Enabling SSL listener."
-    New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset
+    New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset | Out-Null
     Write-Log "Enabled SSL listener."
 }
 Else
@@ -247,7 +305,7 @@ Else
         Remove-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset
 
         # Add new Listener with new SSL cert
-        New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset
+        New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset | Out-Null
     }
 }
 
