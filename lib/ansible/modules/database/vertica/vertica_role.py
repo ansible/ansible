@@ -141,7 +141,7 @@ def check(role_facts, role, assigned_roles):
     role_key = role.lower()
     if role_key not in role_facts:
         return False
-    if assigned_roles and cmp(sorted(assigned_roles), sorted(role_facts[role_key]['assigned_roles'])) != 0:
+    if assigned_roles and sorted(assigned_roles) != sorted(role_facts[role_key]['assigned_roles']):
         return False
     return True
 
@@ -154,7 +154,7 @@ def present(role_facts, cursor, role, assigned_roles):
         return True
     else:
         changed = False
-        if assigned_roles and cmp(sorted(assigned_roles), sorted(role_facts[role_key]['assigned_roles'])) != 0:
+        if assigned_roles and (sorted(assigned_roles) !=  sorted(role_facts[role_key]['assigned_roles'])):
             update_roles(role_facts, cursor, role,
                 role_facts[role_key]['assigned_roles'], assigned_roles)
             changed = True
