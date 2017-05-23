@@ -15,6 +15,12 @@
 # starting from today. So you would specify -CertValidityDays 3650 to get
 # a 10-year valid certificate.
 #
+# Use option -CreateSelfSignedCert to specify whether to create a new self-signed
+# certificate or use an existing machine certificate (typically in domain-joined
+# scenarios). If a machine certificate does exist and is used, it will also
+# grant access to its private key for the NETWORK SERVICE account. If a machine 
+# certificate doesn't exist, it will fallback to using a self-signed cert.
+#
 # Use option -ForceNewSSLCert if the system has been SysPreped and a new
 # SSL Certifcate must be forced on the WinRM Listener when re-running this
 # script. This is necessary when a new SID and CN name is created.
@@ -34,6 +40,7 @@
 # Updated by Nicolas Simond <contact@nicolas-simond.com>
 # Updated by Dag Wieërs <dag@wieers.com>
 # Updated by Jordan Borean <jborean93@gmail.com>
+# Updated by Kamran Ayub <kamran.ayub@gmail.com>
 #
 # Version 1.0 - 2014-07-06
 # Version 1.1 - 2014-11-11
