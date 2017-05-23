@@ -140,6 +140,14 @@ class Play(Base, Taggable, Become):
 
         return super(Play, self).preprocess_data(ds)
 
+    def get_path(self):
+        ''' return the absolute path of the play with its line number '''
+
+        path = ""
+        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
+            path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        return path
+
     def _load_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
@@ -333,3 +341,43 @@ class Play(Base, Taggable, Become):
         new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
         return new_me
+
+class PlayCliJSON:
+    """
+    A JSON Class representation for Ansible play for Playbook CLI
+    """
+
+    # _json_prop_list is a list of properties desired for the JSON output from the ansible play class
+    _json_prop_list = [ 'name', 'tags', '_ds' ]
+
+    def __init__(self, play=None, tasks=None):
+
+        for prop in PlayCliJSON._json_prop_list:
+            if hasattr(play, prop):
+                setattr(self, prop, getattr(play, prop, None))
+        self.tasks = list()
+
+    def add_task(self, task):
+        """
+        Add task of class TaskCliJSON
+        """
+        if self.tasks is None:
+            self.tasks = [task]
+        else:
+            self.tasks.append(task)
+
+    def set_tasks(self, task_list):
+        """
+        Set tasks with list containing class TaskCliJSON
+        """
+        self.tasks = task_list
+
+    def json_cli_repr(self):
+        repr_dict = self.__dict__
+        ds_dict = dict()
+        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source'):
+            ds_dict['_data_source'] = self._ds._data_source
+        if hasattr(self, '_ds') and hasattr(self._ds, '_line_number'):
+            ds_dict['_line_number'] = self._ds._line_number
+        repr_dict['_ds'] = ds_dict
+        return repr_dict

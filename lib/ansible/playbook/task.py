@@ -455,3 +455,27 @@ class Task(Base, Conditional, Taggable, Become):
         if self._parent:
             return self._parent.all_parents_static()
         return True
+
+class TaskCliJSON:
+    """
+    A JSON Class representation for Ansible task output for Playbook CLI
+    """
+
+    # _json_prop_list is a list of properties desired for the JSON output from the ansible task class
+    _json_prop_list = [ 'name', 'action', 'tags', '_ds', 'ignore_errors' ]
+
+    def __init__(self, task=None):
+
+        for prop in TaskCliJSON._json_prop_list:
+            if hasattr(task, prop):
+                setattr(self, prop, getattr(task, prop, None))
+
+    def json_cli_repr(self):
+        repr_dict = self.__dict__
+        ds_dict = dict()
+        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source'):
+            ds_dict['_data_source'] = self._ds._data_source
+        if hasattr(self, '_ds') and hasattr(self._ds, '_line_number'):
+            ds_dict['_line_number'] = self._ds._line_number
+        repr_dict['_ds'] = ds_dict
+        return repr_dict

@@ -53,7 +53,7 @@ class PlaybookExecutor:
         self.passwords         = passwords
         self._unreachable_hosts = dict()
 
-        if options.listhosts or options.listtasks or options.listtags or options.syntax:
+        if options.listhosts or options.listtasks or options.listtaskswithpath or options.listtasksjson or options.listtags or options.syntax:
             self._tqm = None
         else:
             self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords=self.passwords)
