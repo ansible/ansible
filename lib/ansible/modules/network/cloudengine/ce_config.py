@@ -110,8 +110,8 @@ options:
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
     required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: false
   config:
     description:
       - The module, by default, will connect to the remote device and
