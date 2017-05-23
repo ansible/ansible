@@ -33,7 +33,7 @@
   expect:
     command: "{{ansible_python_interpreter}} {{test_command_file}}"
     responses:
-      foo: bar
+      foo: "bar"
   register: expect_result
 
 - name: assert expect worked
@@ -46,7 +46,7 @@
   expect:
     command: "echo"
     responses:
-      foo: bar
+      foo: "bar"
     creates: "{{output_file}}"
   register: creates_result
 
@@ -60,7 +60,7 @@
     command: "pwd"
     chdir: "{{output_dir}}"
     responses:
-      foo: bar
+      foo: "bar"
   register: chdir_result
 
 - name: assert chdir works
@@ -72,7 +72,7 @@
   expect:
     command: "echo"
     responses:
-      foo: bar
+      foo: "bar"
     timeout: 0
   ignore_errors: true
   register: timeout_result
@@ -86,7 +86,7 @@
   expect:
     command: "{{ansible_python_interpreter}} {{test_command_file}}"
     responses:
-      foo: bar
+      foo: "bar"
     echo: true
   register: echo_result
 
