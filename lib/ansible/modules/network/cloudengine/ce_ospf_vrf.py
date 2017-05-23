@@ -62,7 +62,7 @@ options:
     lsaalflag:
         description:
             - Specifies the mode of timer to calculate interval of arrive LSA.
-              If set the parameter but not specifies value, the default will be used.
+              If set the parameter but not specifies value,the default will be used.
               If true use general timer.
               If false use intelligent timer.
         required: false
