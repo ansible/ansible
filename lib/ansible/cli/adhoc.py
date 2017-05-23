@@ -83,6 +83,10 @@ class AdHocCLI(CLI):
         elif len(self.args) > 1:
             raise AnsibleOptionsError("Extraneous options or arguments")
 
+        if self.options.subset:
+            self.options.subset += ',%s' % self.args
+        else:
+            self.options.subset = self.args
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
 

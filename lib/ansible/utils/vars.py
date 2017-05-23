@@ -143,9 +143,18 @@ def load_extra_vars(loader, options):
 
 def load_options_vars(options):
     options_vars = {}
-    # For now only return check mode, but we can easily return more
+    # For now only return a few options, but we can easily return more
     # options if we need variables for them
     options_vars['ansible_check_mode'] = options.check
+    try:
+        options_vars['ansible_tags'] = options.tags.split(',')
+    except AttributeError:
+        pass
+    try:
+        options_vars['ansible_skip_tags'] = options.skip_tags.split(',')
+    except AttributeError:
+        pass
+    options_vars['ansible_limit'] = options.subset
     return options_vars
 
 
