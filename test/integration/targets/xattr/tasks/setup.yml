@@ -2,7 +2,6 @@
   package:
     name: attr
     state: present
-  become: true
 
 - name: Create file
   file:
