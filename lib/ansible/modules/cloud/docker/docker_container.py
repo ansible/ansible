@@ -1285,7 +1285,7 @@ class Container(DockerBaseClass):
             restart_retries=restart_policy.get('MaximumRetryCount'),
             # Cannot test shm_size, as shm_size is not included in container inspection results.
             # shm_size=host_config.get('ShmSize'),
-            security_opts=host_config.get("SecuriytOpt"),
+            security_opts=host_config.get("SecurityOpt"),
             stop_signal=config.get("StopSignal"),
             tty=config.get('Tty'),
             expected_ulimits=host_config.get('Ulimits'),
