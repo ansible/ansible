@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_bgp_neighbor_af
-version_added: "2.3"
-short_description: Manages BGP neighbor Address-family configuration.
+version_added: "2.4"
+short_description: Manages BGP neighbor Address-family configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages BGP neighbor Address-family configurations on CloudEngine switches.
+    - Manages BGP neighbor Address-family configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -437,8 +437,8 @@ proposed:
              "remote_address": "192.168.10.10",
              "state": "present", "vrf_name": "js"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"bgp neighbor af": {"af_type": "ipv4uni", "remote_address": "192.168.10.10",
                                  "vrf_name": "js"},
