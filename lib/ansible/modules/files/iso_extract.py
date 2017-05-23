@@ -13,18 +13,20 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 author:
 - Jeroen Hoekx (@jhoekx)
 - Matt Robinson (@ribbons)
+- Dag Wieers (@dagwieers)
 module: iso_extract
-short_description: Extract files from an ISO image.
+short_description: Extract files from an ISO image
 description:
-- This module mounts an iso image in a temporary directory and extracts
-  files from there to a given destination.
-version_added: "2.3"
+- This module extracts files from an ISO into a temporary directory and copies
+  files from there to a given destination, if needed.
+version_added: '2.3'
+requirements:
+- 7z (from I(7zip) or I(p7zip) package)
 options:
   image:
     description:
@@ -40,9 +42,24 @@ options:
     - A list of files to extract from the image.
     - Extracting directories does not work.
     required: true
+  force:
+    description:
+    - If C(yes), which will replace the remote file when contents are different than the source.
+    - If C(no), the file will only be extracted and copied if the destination does not already exist.
+    version_added: '2.4'
+    type: bool
+    default: 'yes'
+    aliases: [ "thirsty" ]
+  executable:
+    description:
+    - The path to the C(7z) executable to use for extracting files from the ISO.
+    version_added: '2.4'
+    default: '7z'
 notes:
-- Only the file hash (content) is taken into account for extracting files
-  from the ISO image.
+- Only the file checksum (content) is taken into account when extracting files
+  from the ISO image. If C(force=no) then it only checks the presence of the file.
+- In Ansible v2.3 this module was using C(mount) and C(umount) commands, requiring
+  root access. This is no longer needed with the introduction of 7zip for extraction.
 '''
 
 EXAMPLES = r'''
@@ -59,27 +76,45 @@ RETURN = r'''
 #
 '''
 
-import os
+import os.path
 import shutil
 import tempfile
 
+try:  # python 3.3+
+    from shlex import quote
+except ImportError:  # older python
+    from pipes import quote
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            image = dict(required=True, type='path', aliases=['path', 'src']),
-            dest = dict(required=True, type='path'),
-            files = dict(required=True, type='list'),
+        argument_spec=dict(
+            image=dict(type='path', required=True, aliases=['path', 'src']),
+            dest=dict(type='path', required=True),
+            files=dict(type='list', required=True),
+            force=dict(type='bool', default=True, aliases=['thirsty']),
+            executable=dict(type='path', default='7z'),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
     image = module.params['image']
     dest = module.params['dest']
     files = module.params['files']
+    force = module.params['force']
+    executable = module.params['executable']
 
-    changed = False
+    result = dict(
+        changed=False,
+        dest=dest,
+        image=image,
+    )
+
+    binary = module.get_bin_path(executable, None)
+
+    if not binary:
+        module.fail_json(msg='Executable "%s" is not found on the system' % executable)
 
     if not os.path.exists(dest):
         module.fail_json(msg='Directory "%s" does not exist' % dest)
@@ -87,35 +122,62 @@ def main():
     if not os.path.exists(os.path.dirname(image)):
         module.fail_json(msg='ISO image "%s" does not exist' % image)
 
+    result['files'] = []
+    extract_files = list(files)
+
+    if not force:
+        # Check if we have to process any files based on existence
+        for i, f in enumerate(files):
+            dest_file = os.path.join(dest, os.path.basename(f))
+            if os.path.exists(dest_file):
+                result['files'].append(dict(
+                    checksum=None,
+                    dest=dest_file,
+                    src=f,
+                ))
+                del(extract_files[i])
+
     tmp_dir = tempfile.mkdtemp()
-    rc, out, err = module.run_command('mount -o loop,ro "%s" "%s"' % (image, tmp_dir))
+    cmd = '%s x "%s" -o"%s" %s' % (binary, image, tmp_dir, ' '.join([quote(f) for f in files]))
+    rc, out, err = module.run_command(cmd)
     if rc != 0:
-        os.rmdir(tmp_dir)
-        module.fail_json(msg='Failed to mount ISO image "%s"' % image)
+        result.update(dict(
+            cmd=cmd,
+            rc=rc,
+            stderr=err,
+            stdout=out,
+        ))
+        shutil.rmtree(tmp_dir)
+        module.fail_json(msg='Failed to extract from ISO image "%s" to "%s"' % (image, tmp_dir), **result)
 
-    e = None
     try:
-        for file in files:
-            tmp_src = os.path.join(tmp_dir, file)
-            src_hash = module.sha1(tmp_src)
+        for f in extract_files:
+            tmp_src = os.path.join(tmp_dir, f)
+            src_checksum = module.sha1(tmp_src)
 
-            dest_file = os.path.join(dest, os.path.basename(file))
+            dest_file = os.path.join(dest, os.path.basename(f))
 
             if os.path.exists(dest_file):
-                dest_hash = module.sha1(dest_file)
+                dest_checksum = module.sha1(dest_file)
             else:
-                dest_hash = None
+                dest_checksum = None
 
-            if src_hash != dest_hash:
+            result['files'].append(dict(
+                checksum=src_checksum,
+                dest=dest_file,
+                src=f,
+            ))
+
+            if src_checksum != dest_checksum:
                 if not module.check_mode:
                     shutil.copy(tmp_src, dest_file)
 
-                changed = True
+                result['changed'] = True
     finally:
-        module.run_command('umount "%s"' % tmp_dir)
-        os.rmdir(tmp_dir)
+        shutil.rmtree(tmp_dir)
 
-    module.exit_json(changed=changed)
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
