@@ -815,7 +815,6 @@ lib/ansible/plugins/terminal/junos.py
 lib/ansible/plugins/test/core.py
 lib/ansible/plugins/test/files.py
 lib/ansible/plugins/test/mathstuff.py
-lib/ansible/plugins/vars/__init__.py
 lib/ansible/release.py
 lib/ansible/template/__init__.py
 lib/ansible/template/safe_eval.py
