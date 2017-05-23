@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_info_center_debug
-version_added: "2.3"
-short_description: Manages information center debug configuration.
+version_added: "2.4"
+short_description: Manages information center debug configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages information center debug configurations on CloudEngine switches.
+    - Manages information center debug configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -131,8 +131,8 @@ proposed:
     type: dict
     sample: {"state": "present", "debug_time_stamp": "date_boot"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"debugTimeStamp": "DATE_MILLISECOND"}
 end_state:
@@ -247,6 +247,7 @@ CHANNEL_DEFAULT_DBG_LEVEL = {"0": "debugging",
                              "7": "debugging",
                              "8": "debugging",
                              "9": "debugging"}
+
 
 class InfoCenterDebug(object):
     """ Manages info center debug configuration """
