@@ -28,3 +28,18 @@
   loop_control:
     loop_var: 'locale'
   when: ansible_os_family in ('Debian', 'RedHat',)
+
+# On Debian, test with an empty /etc/locale.gen file too
+- include: 'debian.yml'
+  when: ansible_os_family == 'Debian'
+  with_items:
+    - name: 'pt_BR' # without encoding and without modifier
+      normalized: 'pt_BR'
+    - name: 'sv_FI@euro' # with modifier
+      normalized: 'sv_FI@euro'
+    - name: 'ja_JP.EUC-JP' # with encoding
+      normalized: 'ja_JP.eucjp'
+    - name: 'nl_BE.ISO-8859-15@euro' # with encoding and modifier
+      normalized: 'nl_BE.iso885915@euro'
+  loop_control:
+    loop_var: 'locale'

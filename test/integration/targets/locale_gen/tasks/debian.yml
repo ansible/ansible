@@ -1,0 +1,14 @@
+- block:
+    - name: 'Wipe out /etc/locale.gen'
+      shell: 'mv /etc/locale.gen /etc/locale.gen.bak.ansible'
+
+    - name: 'Wipe out /etc/locale.gen'
+      file:
+        path: '/etc/locale.gen'
+        state: touch
+
+    - include: 'locale_gen.yml'
+
+  always:
+    - name: 'Restore /etc/locale.gen'
+      shell: 'mv /etc/locale.gen.bak.ansible /etc/locale.gen'
