@@ -26,7 +26,7 @@ short_description: manage objects in S3.
 description:
     - This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and
       deleting both objects and buckets, retrieving objects as files or strings and generating download links.
-      This module has a dependency on python-boto.
+      This module has a dependency on boto3 and botocore.
 version_added: "1.1"
 options:
   aws_access_key:
@@ -55,7 +55,7 @@ options:
     version_added: "1.3"
   encrypt:
     description:
-      - When set for PUT mode, asks for server-side encryption
+      - When set for PUT mode, asks for server-side encryption.
     required: false
     default: no
     version_added: "2.0"
@@ -170,9 +170,10 @@ options:
     aliases: []
     version_added: "2.3"
 
-requirements: [ "boto" ]
+requirements: [ "boto3", "botocore" ]
 author:
     - "Lester Wade (@lwade)"
+    - "Sloane Hertel (@s-hertel)"
 extends_documentation_fragment: aws
 '''
 
@@ -344,7 +345,7 @@ def create_bucket(module, s3, bucket, location=None):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     if location is None:
-        location = Location.DEFAULT
+        location = 'us-east-1'
     configuration = {}
     if location != ('us-east-1' or None):
         configuration['LocationConstraint'] = location
@@ -582,9 +583,7 @@ def main():
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
     if region in ('us-east-1', '', None):
-        # S3ism for the US Standard region
-        # need to find where to import Location.DEFAULT from
-        # Before this was the equivalent of location = "" - TODO need to test this thoroughly
+        # US Standard region
         location = 'us-east-1'
     else:
         # Boto uses symbolic names for locations but region strings will
