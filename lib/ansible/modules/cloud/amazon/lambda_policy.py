@@ -14,20 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
-import re
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO3, get_aws_connection_info, boto3_conn, ec2_argument_spec
-
-try:
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-    HAS_BOTOCORE = True
-except ImportError:
-    HAS_BOTOCORE = False
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '0.1'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -157,12 +147,23 @@ lambda_policy_action:
     type: string
 '''
 
+import json
+import re
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO3, get_aws_connection_info, boto3_conn, ec2_argument_spec
+
+try:
+    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    HAS_BOTOCORE = True
+except ImportError:
+    HAS_BOTOCORE = False
+
+
 # ---------------------------------------------------------------------------------------------------
 #
 #   Helper Functions & classes
 #
 # ---------------------------------------------------------------------------------------------------
-
 
 class AWSConnection:
     """
