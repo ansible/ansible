@@ -18,13 +18,13 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_info_center_log
-version_added: "2.3"
-short_description: Manages information center log configuration.
+version_added: "2.4"
+short_description: Manages information center log configuration on HUAWEI CloudEngine switches.
 description:
     - Setting the Timestamp Format of Logs.
       Configuring the Device to Output Logs to the Log Buffer.
