@@ -33,7 +33,8 @@ class ActionModule(ActionBase):
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
     VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions']
-    VALID_FILE_ARGUMENTS = ['file', '_raw_params', 'name']
+    VALID_FILE_ARGUMENTS = ['file', '_raw_params']
+    VALID_ALL = ['name']
 
     def _set_dir_defaults(self):
         if not self.depth:
@@ -92,6 +93,8 @@ class ActionModule(ActionBase):
                 dirs += 1
             elif arg in self.VALID_FILE_ARGUMENTS:
                 files += 1
+            elif arg in self.VALID_ALL:
+                pass
             else:
                 raise AnsibleError('{0} is not a valid option in debug'.format(arg))
 
@@ -205,7 +208,8 @@ class ActionModule(ActionBase):
             Bool
         """
         file_ext = path.splitext(source_file)
-        return bool(len(file_ext) > 1 and file_ext[-1] in self.valid_extensions)
+        print(file_ext[-1][2:])
+        return bool(len(file_ext) > 1 and file_ext[-1][1:] in self.valid_extensions)
 
     def _load_files(self, filename, validate_extensions=False):
         """ Loads a file and converts the output into a valid Python dict.
