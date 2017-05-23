@@ -59,13 +59,11 @@ options:
       description: Security group id to use with the instance
       required: false
       default: null
-      aliases: []
     io_optimized:
       description: Whether instance is using optimized volumes.
       required: false
       default: False
-      aliases: []
-      choices: ["True", "False"]
+      type: bool
     vswitch_id:
       description: The subnet ID in which to launch the instance (VPC).
       required: false
@@ -75,17 +73,14 @@ options:
       description: Private IP address of the instance, which cannot be specified separately.
       required: false
       default: null
-      aliases: []
     instance_name:
       description: Name of the instance to use.
       required: false
       default: null
-      aliases: []
     description:
       description: Description of the instance to use.
       required: false
       default: null
-      aliases: []
     internet_data:
       description:
         - A hash/dictionaries of internet to the new instance;
@@ -97,17 +92,14 @@ options:
 
       required: false
       default: null
-      aliases: []
     host_name:
       description: Instance host name.
       required: false
       default: null
-      aliases: []
     password:
       description: The password to login instance.
       required: false
       default: null
-      aliases: []
     system_disk:
       description:
         - A hash/dictionaries of system disk to the new instance;
@@ -119,7 +111,6 @@ options:
           - disk_description (required:false; default:null)
       required: false
       default: null
-      aliases: []
     disks:
       description:
         - A list of hash/dictionaries of volumes to add to the new instance;
@@ -139,18 +130,16 @@ options:
       description: The number of the new instance.
       required: false
       default: 1
-      aliases: []
     allocate_public_ip:
       description: Whether allocate a public ip for the new instance.
       required: false
       default: true
       aliases: [ 'assign_public_ip' ]
-      choices: ["true", "false"]
+      type: bool
     bind_eip:
       description: ID of Elastic IP Address bind to the new instance.
       required: false
       default: null
-      aliases: []
     ids:
       description:
         - A list of identifier for this instance or set of instances, so that the module will be idempotent with respect to ECS instances.
@@ -176,14 +165,14 @@ options:
       description:
         - Whether automate renew the charge of the instance.
       required: false
-      choices: [true, false]
+      type: bool
       default: false
     auto_renew_period:
       description:
         - The duration of the automatic renew the charge of the instance. It is vaild when auto_renew is true.
       required: false
       choices: [1, 2, 3, 6, 12]
-      default: false
+      default: null
     instance_ids:
       description:
         - "A list of instance ids, currently used for states: running, stopped, restarted, absent,
@@ -196,7 +185,7 @@ options:
         - "Whether force to operation, currently used fo states: stopped and restarted."
       required: false
       default: False
-      aliases: []
+      type: bool
     instance_tags:
       description:
         - A list of hash/dictionaries of instance tags, '[{tag_key:"value", tag_value:"value"}]',
@@ -215,13 +204,11 @@ options:
             - host_name (required=false; default=null; description=Instance host name)
       required: false
       default: null
-      aliases: []
     sg_action:
       description: The action of operating security group.
       required: true
       default: null
       choices: ['join', 'leave']
-      aliases: []
     page_number:
       description: Page number of the instance status list
       required: false
