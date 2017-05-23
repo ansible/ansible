@@ -6,7 +6,6 @@ docs/bin/dump_keywords.py
 docs/bin/plugin_formatter.py
 docs/docsite/rst/conf.py
 docs/docsite/rst/intro_inventory.rst
-examples/scripts/uptime.py
 lib/ansible/cli/__init__.py
 lib/ansible/cli/adhoc.py
 lib/ansible/cli/console.py
@@ -816,7 +815,6 @@ lib/ansible/plugins/terminal/junos.py
 lib/ansible/plugins/test/core.py
 lib/ansible/plugins/test/files.py
 lib/ansible/plugins/test/mathstuff.py
-lib/ansible/plugins/vars/__init__.py
 lib/ansible/release.py
 lib/ansible/template/__init__.py
 lib/ansible/template/safe_eval.py
@@ -831,7 +829,6 @@ lib/ansible/utils/listify.py
 lib/ansible/utils/path.py
 lib/ansible/utils/ssh_functions.py
 lib/ansible/utils/vars.py
-lib/ansible/vars/__init__.py
 setup.py
 test/integration/cleanup_azure.py
 test/integration/cleanup_ec2.py
