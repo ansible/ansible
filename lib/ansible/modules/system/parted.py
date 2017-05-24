@@ -204,6 +204,7 @@ import os
 units_si = ['B', 'KB', 'MB', 'GB', 'TB']
 units_iec = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
 parted_units = units_si + units_iec + ['s', '%', 'cyl', 'chs', 'compact']
+env_default = {'LANG': 'us_US.UTF-8'}
 
 
 def parse_unit(size_str, unit=''):
@@ -422,7 +423,7 @@ def get_device_info(device, unit):
         return get_unlabeled_device_info(device, unit)
 
     command = "%s -s -m %s -- unit '%s' print" % (parted_exec, device, unit)
-    rc, out, err = module.run_command(command)
+    rc, out, err = module.run_command(command, environ_update=env_default)
     if rc != 0 and 'unrecognised disk label' not in err:
         module.fail_json(msg=(
             "Error while getting device information with parted "
@@ -447,7 +448,7 @@ def check_parted_label(device):
         return False
 
     # Older parted versions return a message in the stdout and RC > 0.
-    rc, out, err = module.run_command("%s -s -m %s print" % (parted_exec, device))
+    rc, out, err = module.run_command("%s -s -m %s print" % (parted_exec, device), environ_update=env_default)
     if rc != 0 and 'unrecognised disk label' in out.lower():
         return True
 
@@ -460,7 +461,7 @@ def parted_version():
     """
     global module, parted_exec
 
-    rc, out, err = module.run_command("%s --version" % parted_exec)
+    rc, out, err = module.run_command("%s --version" % parted_exec, environ_update=env_default)
     if rc != 0:
         module.fail_json(
             msg="Failed to get parted version.", rc=rc, out=out, err=err
@@ -492,7 +493,7 @@ def parted(script, device, align):
 
     if script and not module.check_mode:
         command = "%s -s -m -a %s %s -- %s" % (parted_exec, align, device, script)
-        rc, out, err = module.run_command(command)
+        rc, out, err = module.run_command(command, environ_update=env_default)
 
         if rc != 0:
             module.fail_json(
