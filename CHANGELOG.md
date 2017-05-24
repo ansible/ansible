@@ -60,6 +60,7 @@ Ansible Changes By Release
 * As of 2.4.0, the fetch module fails if there are errors reading the remote file.
   Use ignore_errors or failed_when in playbooks if you wish to ignore errors.
 * Experimentally added pmrun become method.
+* Enable the docker connection plugin to use su as a become method
 
 #### New Inventory scripts:
 - lxd
