@@ -148,3 +148,15 @@
   assert:
     that:
         - "dpkg_force.changed"
+
+# NEGATIVE: upgrade all packages while providing additional packages to install
+- name: provide additional packages to install while upgrading all installed packages
+  apt: pkg=*,test state=latest
+  ignore_errors: True
+  register: apt_result
+
+- name: verify failure of upgrade packages and install
+  assert:
+    that:
+        - "not apt_result.changed"
+        - "apt_result.failed"
