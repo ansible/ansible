@@ -174,7 +174,7 @@ class DataLoader:
 
         b_file_name = to_bytes(file_name)
         if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
-            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_name)
+            raise AnsibleFileNotFound("the file named '%s' does not exist, or is not readable" % file_name)
 
         show_content = True
         try:
@@ -391,7 +391,7 @@ class DataLoader:
 
         b_file_path = to_bytes(file_path, errors='surrogate_or_strict')
         if not self.path_exists(b_file_path) or not self.is_file(b_file_path):
-            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % to_native(file_path))
+            raise AnsibleFileNotFound("the file named '%s' does not exist, or is not accessible" % to_native(file_path))
 
         if not self._vault:
             self._vault = VaultLib(b_password="")
