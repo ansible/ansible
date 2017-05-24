@@ -36,7 +36,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.vars import BaseVarsPlugin
-from ansible.utils.path import basedir
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
@@ -71,7 +70,9 @@ class VarsModule(BaseVarsPlugin):
                         self._display.debug("\tprocessing dir %s" % opath)
                         for found in self._find_vars_files(opath, entity.name):
                             self._display.debug("READING %s" % found)
-                            data = combine_vars(data, loader.load_from_file(found, cache=True, unsafe=True))
+                            new_data = loader.load_from_file(found, cache=True, unsafe=True)
+                            if new_data: # ignore empty files
+                                data = combine_vars(data, new_data)
                     else:
                         self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
 
