@@ -16,6 +16,7 @@ Ansible Changes By Release
 * fixed issue with solaris facts and i18n
 * added python2.4 compatiblity fix to sysctl module
 * Fix comparison of exisiting container security opts in the docker_container module
+* fixed service module invocation of insserv on certain platforms
 
 ## 2.3 "Ramble On" - 2017-04-12
 
