@@ -54,6 +54,25 @@ class TestNxosStaticRouteModule(TestNxosModule):
                              route_name='testing', pref=100))
         self.execute_module(changed=True, commands=['ip route 192.168.20.0/24 3.3.3.3 name testing 100'])
 
+    def test_nxos_static_route_present_vrf(self):
+        set_module_args(dict(prefix='192.168.20.64/24', next_hop='3.3.3.3', vrf='test'))
+        self.execute_module(changed=True, sort=False, commands=['vrf context test', 'ip route 192.168.20.0/24 3.3.3.3'])
+
+    def test_nxos_static_route_no_change(self):
+        set_module_args(dict(prefix='10.10.30.64/24', next_hop='1.2.4.8'))
+        self.execute_module(changed=False, commands=[])
+
     def test_nxos_static_route_absent(self):
         set_module_args(dict(prefix='10.10.30.12/24', next_hop='1.2.4.8', state='absent'))
         self.execute_module(changed=True, commands=['no ip route 10.10.30.0/24 1.2.4.8'])
+
+    def test_nxos_static_route_absent_no_change(self):
+        set_module_args(dict(prefix='192.168.20.6/24', next_hop='3.3.3.3', state='absent'))
+        self.execute_module(changed=False, commands=[])
+
+    def test_nxos_static_route_absent_vrf(self):
+        set_module_args(dict(prefix='10.11.12.13/14', next_hop='15.16.17.18', vrf='test', state='absent'))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['vrf context test', 'no ip route 10.8.0.0/14 15.16.17.18']
+        )
