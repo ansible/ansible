@@ -46,14 +46,20 @@ class TestNxosEvpnVniModule(TestNxosModule):
         self.mock_get_config.stop()
 
     def load_fixtures(self, commands=None):
+        self.get_config.return_value = load_fixture('nxos_evpn_vni_config.cfg')
         self.load_config.return_value = None
-
-    def test_nxos_evpn_vni_absent(self):
-        set_module_args(dict(vni='6000', state='absent'))
-        result = self.execute_module(changed=False)
-        self.assertEqual(result['commands'], [])
 
     def test_nxos_evpn_vni_present(self):
         set_module_args(dict(vni='6000', state='present'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['evpn', 'vni 6000 l2'])
+
+    def test_nxos_evpn_vni_absent_not_existing(self):
+        set_module_args(dict(vni='12000', state='absent'))
+        result = self.execute_module(changed=False)
+        self.assertEqual(result['commands'], [])
+
+    def test_nxos_evpn_vni_absent_existing(self):
+        set_module_args(dict(vni='6000', state='absent'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['evpn', 'no vni 6000 l2'])
