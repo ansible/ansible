@@ -30,13 +30,6 @@ from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
-
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
@@ -136,11 +129,6 @@ class Conditional:
         #   - 1 == 1
         if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
             conditional = all_vars[conditional]
-
-        if templar.is_template(conditional):
-            display.warning('when statements should not include jinja2 '
-                            'templating delimiters such as {{ }} or {%% %%}. '
-                            'Found: %s' % conditional)
 
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
