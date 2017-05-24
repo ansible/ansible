@@ -1,5 +1,5 @@
-# coding: utf-8
 #!/usr/bin/python
+# coding: utf-8
 #
 # Copyright 2017 Red Hat | Ansible
 #
@@ -102,7 +102,8 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.docker_common import DockerBaseClass, AnsibleDockerClient
 
 
 class TaskParameters(DockerBaseClass):
@@ -117,7 +118,7 @@ class TaskParameters(DockerBaseClass):
         self.force = None
         self.debug = None
 
-        for key, value in client.module.params.items():
+        for key, value in iteritems(client.module.params):
             setattr(self, key, value)
 
 
@@ -151,8 +152,7 @@ class DockerVolumeManager(object):
 
     def has_different_config(self):
         """
-        Evaluates an existing volume and returns a tuple containing a boolean
-        indicating if the configuration is different and a list of differences.
+        Return the list of differences between the current parameters and the existing volume.
 
         :return: list of options that differ
         """
@@ -163,7 +163,7 @@ class DockerVolumeManager(object):
             if not self.existing_volume.get('Options'):
                 differences.append('driver_options')
             else:
-                for key, value in self.parameters.driver_options.items():
+                for key, value in iteritems(self.parameters.driver_options):
                     if (not self.existing_volume['Options'].get(key) or
                             value != self.existing_volume['Options'][key]):
                         differences.append('driver_options.%s' % key)
@@ -194,7 +194,7 @@ class DockerVolumeManager(object):
             if not self.check_mode:
                 self.client.remove_volume(self.parameters.volume_name)
 
-            self.results['actions'].append("Removed volume %s" % (self.parameters.volume_name,))
+            self.results['actions'].append("Removed volume %s" % self.parameters.volume_name)
             self.results['changed'] = True
 
     def present(self):
@@ -222,13 +222,13 @@ class DockerVolumeManager(object):
 
 def main():
     argument_spec = dict(
-        volume_name        = dict(type='str', required=True, aliases=['name']),
-        state              = dict(type='str', default='present', choices=['present', 'absent']),
-        driver             = dict(type='str', default='local'),
-        driver_options     = dict(type='dict', default={}),
-        labels             = dict(type='dict', default={}),
-        force              = dict(type='bool', default=False),
-        debug              = dict(type='bool', default=False)
+        volume_name=dict(type='str', required=True, aliases=['name']),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        driver=dict(type='str', default='local'),
+        driver_options=dict(type='dict', default={}),
+        labels=dict(type='dict', default={}),
+        force=dict(type='bool', default=False),
+        debug=dict(type='bool', default=False)
     )
 
     client = AnsibleDockerClient(
