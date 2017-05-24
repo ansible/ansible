@@ -23,7 +23,7 @@ Sometimes, though, you want to continue on.  To do so, write a task that looks l
 
     - name: this will not be counted as a failure
       command: /bin/false
-      ignore_errors: yes
+      ignore_errors: True
 
 Note that the above system only governs the return value of failure of the particular task,
 so if you have an undefined variable used or a syntax error, it will still raise an error that users will need to address.
