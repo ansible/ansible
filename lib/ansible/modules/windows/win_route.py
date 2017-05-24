@@ -68,4 +68,9 @@ EXAMPLES = r'''
     state: absent
 '''
 RETURN = r'''
+outpot:
+    description: A message describing the task result.
+    returned: always
+    type: string
+    sample: "Route added"
 '''
