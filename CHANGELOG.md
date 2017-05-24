@@ -20,6 +20,8 @@ Ansible Changes By Release
 * Fix traceback in os_user in an error case.
 * Fix docker container to restart a container when changing to fewer exposed ports
 * Fix tracebacks in docker_network
+* Fixes to detection of updated docker images
+* Handle detection of docker image changes when published ports is changed
 
 ## 2.3 "Ramble On" - 2017-04-12
 
