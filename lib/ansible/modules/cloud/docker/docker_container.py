@@ -471,6 +471,7 @@ options:
       - Path to the working directory.
     default: null
     required: false
+    version_added: "2.4"
 extends_documentation_fragment:
     - docker
 
