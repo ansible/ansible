@@ -1,13 +1,25 @@
 ---
-- name: ensure iso is deleted
+- name: setup iso
   cs_iso:
     name: "{{ cs_resource_prefix }}-iso"
     state: absent
   register: iso
-- name: verify ensure iso is deleted
+- name: verify setup iso
   assert:
     that:
     - iso|success
+
+- name: test download iso in check mode
+  cs_iso:
+    name: "{{ cs_resource_prefix }}-iso"
+    url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
+    os_type: Debian GNU/Linux 7(64-bit)
+  register: iso
+  check_mode: true
+- name: verify test download iso in check mode
+  assert:
+    that:
+    - iso|changed
 
 - name: test download iso
   cs_iso:
@@ -33,21 +45,17 @@
     - not iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
 
-# TODO: on 4.6 simulator no checksum was returned
-# TODO: check if this is a bug in 4.6
-#- name: test download iso idempotence by checksum
-#  cs_iso:
-#    name: "{{ cs_resource_prefix }}-iso2"
-#    checksum: "{{ iso.checksum }}"
-#    url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
-#    os_type: Debian GNU/Linux 7(64-bit)
-#  register: iso2
-#- name: verify test download iso idempotence by checksum
-#  assert:
-#    that:
-#    - not iso2|changed
-#    - iso2.name == "{{ cs_resource_prefix }}-iso"
-#    - iso2.checksum == iso.checksum
+- name: test remove iso in check mode
+  cs_iso:
+    name: "{{ cs_resource_prefix }}-iso"
+    state: absent
+  register: iso
+  check_mode: true
+- name: verify test remove iso in check mode
+  assert:
+    that:
+    - iso|changed
+    - iso.name == "{{ cs_resource_prefix }}-iso"
 
 - name: test remove iso
   cs_iso:
