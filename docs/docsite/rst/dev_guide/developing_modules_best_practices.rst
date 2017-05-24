@@ -149,19 +149,30 @@ module file and test that the real module works via :command:`ansible` or
 
 Module Paths
 ````````````
-Ansible can find modules in several locations. The easiest way to include a module is by
-adding a `library` folder to your project relative to your playbooks. Module files (.py, etc.)
+Ansible can find modules in several locations. 
+
+**Relative to Playbooks**
+
+The easiest way to include a module is by
+adding a ``library`` folder to your project relative to your playbooks. Module files (.py, etc.)
 can be added there.
 
 .. note::
 
-    Currently Ansible does not support organizing modules into sub-folders under the `library`
+    Currently Ansible does not support organizing modules into sub-folders under the ``library``
     folder.
+
+**Ansible Configuration File**
 
 In the Ansible configuration file you can modify the `library <http://docs.ansible.com/ansible/intro_configuration.html#library>`_
 setting to add additional module search paths.
 
-You may also specify paths in the :envvar:`ANSIBLE_LIBRARY` environment variable. 
+**Environment & Command-Line**
+
+You can specify additional module paths using the ``--module-path`` command-line option. You may also 
+specify paths in the :envvar:`ANSIBLE_LIBRARY` environment variable. 
+
+**Troubleshooting Module Discovery**
 
 If you are having trouble getting your module "found" by ansible, be sure it is in one of 
 those search paths.
