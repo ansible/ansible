@@ -52,7 +52,7 @@ options:
       - The password to be configured on the remote Arista EOS device. The
         password needs to be provided in clear and it will be encrypted
         on the device.
-        Please note that this option is not same as C(provider username).
+        Please note that this option is not same as C(provider password).
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
