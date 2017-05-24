@@ -18,6 +18,8 @@ Ansible Changes By Release
 * Fix comparison of exisiting container security opts in the docker_container module
 * fixed service module invocation of insserv on certain platforms
 * Fix traceback in os_user in an error case.
+* Fix docker container to restart a container when changing to fewer exposed ports
+* Fix tracebacks in docker_network
 
 ## 2.3 "Ramble On" - 2017-04-12
 
