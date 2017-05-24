@@ -23,12 +23,12 @@ DOCUMENTATION:
     description:
         - Parses a host list string as a comma separated values of hosts and supports host ranges.
         - This plugin only applies to inventory sources that are not paths and contain at least one comma.
-EXAMPLES:
-# simple range
-ansible -i 'host[1:10],' -m ping
+EXAMPLES: |
+    # simple range
+    ansible -i 'host[1:10],' -m ping
 
-# still supports w/o ranges also
-ansible-playbook -i 'localhost,' play.yml
+    # still supports w/o ranges also
+    ansible-playbook -i 'localhost,' play.yml
 '''
 
 from __future__ import (absolute_import, division, print_function)
