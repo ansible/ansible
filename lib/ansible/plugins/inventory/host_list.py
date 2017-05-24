@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
+r'''
 DOCUMENTATION:
     inventory: host_list
     version_added: "2.4"
@@ -23,14 +23,14 @@ DOCUMENTATION:
         - Parses a host list string as a comma separated values of hosts
         - This plugin only applies to inventory strings that are not paths and contain a comma.
 EXAMPLES: |
-# define 2 hosts in command line
-ansible -i '10.10.2.6, 10.10.2.4' -m ping all
+    # define 2 hosts in command line
+    ansible -i '10.10.2.6, 10.10.2.4' -m ping all
 
-# DNS resolvable names
-ansible -i 'host1.example.com, host2' -m user -a 'name=me state=abset' all
+    # DNS resolvable names
+    ansible -i 'host1.example.com, host2' -m user -a 'name=me state=abset' all
 
-# just use localhost
-ansible-playbook -i 'localhost,' play.yml -c local
+    # just use localhost
+    ansible-playbook -i 'localhost,' play.yml -c local
 '''
 
 from __future__ import (absolute_import, division, print_function)
