@@ -70,6 +70,9 @@ Ansible Changes By Release
 
 ### Module Notes
 
+- The docker_container module has gained a new option, working_dir which allows
+  specifying the working directory for the command being run in the image.
+
 ### New Modules
 
 - avi
