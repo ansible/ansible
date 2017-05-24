@@ -44,7 +44,6 @@ class PlaybookCLI(CLI):
 
         # create parser for CLI options
         parser = CLI.base_parser(
-            usage="%prog [options] playbook.yml [playbook2 ...]",
             connect_opts=True,
             meta_opts=True,
             runas_opts=True,
@@ -59,14 +58,15 @@ class PlaybookCLI(CLI):
         )
 
         # ansible playbook specific opts
-        parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-                          help="list all tasks that would be executed")
-        parser.add_option('--list-tags', dest='listtags', action='store_true',
-                          help="list all available tags")
-        parser.add_option('--step', dest='step', action='store_true',
-                          help="one-step-at-a-time: confirm each task before running")
-        parser.add_option('--start-at-task', dest='start_at_task',
-                          help="start the playbook at the task matching this name")
+        parser.add_argument('--list-tasks', dest='listtasks', action='store_true',
+            help="list all tasks that would be executed")
+        parser.add_argument('--list-tags', dest='listtags', action='store_true',
+            help="list all available tags")
+        parser.add_argument('--step', dest='step', action='store_true',
+            help="one-step-at-a-time: confirm each task before running")
+        parser.add_argument('--start-at-task', dest='start_at_task',
+            help="start the playbook at the task matching this name")
+        parser.add_argument('args', metavar='playbook(s)', help='playbooks', nargs='*')
 
         self.parser = parser
         super(PlaybookCLI, self).parse()

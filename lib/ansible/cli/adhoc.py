@@ -49,7 +49,6 @@ class AdHocCLI(CLI):
         ''' create an options parser for bin/ansible '''
 
         self.parser = CLI.base_parser(
-            usage='%prog <host-pattern> [options]',
             runas_opts=True,
             inventory_opts=True,
             async_opts=True,
@@ -65,11 +64,12 @@ class AdHocCLI(CLI):
         )
 
         # options unique to ansible ad-hoc
-        self.parser.add_option('-a', '--args', dest='module_args',
-                               help="module arguments", default=C.DEFAULT_MODULE_ARGS)
-        self.parser.add_option('-m', '--module-name', dest='module_name',
-                               help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
-                               default=C.DEFAULT_MODULE_NAME)
+        self.parser.add_argument('-a', '--args', dest='module_args',
+            help="module arguments", default=C.DEFAULT_MODULE_ARGS)
+        self.parser.add_argument('-m', '--module-name', dest='module_name',
+            help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
+            default=C.DEFAULT_MODULE_NAME)
+        self.parser.add_argument('args', metavar='pattern', help='host pattern', nargs='*')
 
         super(AdHocCLI, self).parse()
 

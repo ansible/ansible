@@ -79,7 +79,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def parse(self):
         self.parser = CLI.base_parser(
-            usage='%prog [<host-pattern>] [options]',
             runas_opts=True,
             inventory_opts=True,
             connect_opts=True,
@@ -92,8 +91,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
         )
 
         # options unique to shell
-        self.parser.add_option('--step', dest='step', action='store_true',
-                               help="one-step-at-a-time: confirm each task before running")
+        self.parser.add_argument('--step', dest='step', action='store_true',
+            help="one-step-at-a-time: confirm each task before running")
+        self.parser.add_argument('args', metavar='pattern', help='host pattern', nargs='*')
 
         self.parser.set_defaults(cwd='*')
 

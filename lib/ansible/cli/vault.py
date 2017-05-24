@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import argparse
 import os
 import sys
 
@@ -61,48 +62,49 @@ class VaultCLI(CLI):
         self.encrypt_string_read_stdin = False
         super(VaultCLI, self).__init__(args)
 
-    def set_action(self):
-
-        super(VaultCLI, self).set_action()
-
-        # options specific to self.actions
-        if self.action == "create":
-            self.parser.set_usage("usage: %prog create [options] file_name")
-        elif self.action == "decrypt":
-            self.parser.set_usage("usage: %prog decrypt [options] file_name")
-        elif self.action == "edit":
-            self.parser.set_usage("usage: %prog edit [options] file_name")
-        elif self.action == "view":
-            self.parser.set_usage("usage: %prog view [options] file_name")
-        elif self.action == "encrypt":
-            self.parser.set_usage("usage: %prog encrypt [options] file_name")
-        # I have no prefence for either dash or underscore
-        elif self.action == "encrypt_string":
-            self.parser.add_option('-p', '--prompt', dest='encrypt_string_prompt',
-                                   action='store_true',
-                                   help="Prompt for the string to encrypt")
-            self.parser.add_option('-n', '--name', dest='encrypt_string_names',
-                                   action='append',
-                                   help="Specify the variable name")
-            self.parser.add_option('--stdin-name', dest='encrypt_string_stdin_name',
-                                   default=None,
-                                   help="Specify the variable name for stdin")
-            self.parser.set_usage("usage: %prog encrypt-string [--prompt] [options] string_to_encrypt")
-        elif self.action == "rekey":
-            self.parser.set_usage("usage: %prog rekey [options] file_name")
-
     def parse(self):
 
         self.parser = CLI.base_parser(
-            vault_opts=True,
-            usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
             desc="encryption/decryption utility for Ansbile data files",
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
-        self.set_action()
+        vault_parent = argparse.ArgumentParser(add_help=False)
+        self._vault_opts(vault_parent)
+
+        subparsers = self.parser.add_subparsers(dest='action')
+
+        for name in self.VALID_ACTIONS:
+            subparser = subparsers.add_parser(name, parents=[vault_parent])
+            if name in ('encrypt', 'decrypt', 'encrypt_string'):
+                subparser.add_argument('--output', default=None, dest='output_file',
+                    help='output file name for encrypt or decrypt; use - for stdout',
+                    type=CLI.expand_tilde)
+
+            if name in ('encrypt_string',):
+                subparser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
+                                       action='store_true',
+                                       help="Prompt for the string to encrypt")
+                subparser.add_argument('-n', '--name', dest='encrypt_string_names',
+                                       action='append',
+                                       help="Specify the variable name")
+                subparser.add_argument('--stdin-name', dest='encrypt_string_stdin_name',
+                                       default=None,
+                                       help="Specify the variable name for stdin")
+                subparser.add_argument('args', metavar='string_to_encrypt', help='String to encrypt')
+            else:
+                subparser.add_argument('args', metavar='file_name', help='File name')
+
+            if name in ('rekey',):
+                subparser.add_argument('--new-vault-password-file', dest='new_vault_password_file',
+                    help="new vault password file for rekey", type=CLI.expand_tilde)
 
         super(VaultCLI, self).parse()
+
+        self.action = self.options.action
+        if not self.action:
+            self.parser.print_help()
+            self.parser.exit()
 
         display.verbosity = self.options.verbosity
 
