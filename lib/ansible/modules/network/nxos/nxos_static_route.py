@@ -95,34 +95,34 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
-
-def state_present(module, candidate, prefix):
-    commands = list()
-    invoke('set_route', module, commands, prefix)
-    if commands:
-        if module.params['vrf'] == 'default':
-            candidate.add(commands, parents=[])
-        else:
-            candidate.add(commands, parents=['vrf context {0}'.format(module.params['vrf'])])
-
-
-def state_absent(module, candidate, prefix):
+def reconcile_candidate(module, candidate, prefix):
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
-    commands = list()
-    parents = 'vrf context {0}'.format(module.params['vrf'])
-    invoke('set_route', module, commands, prefix)
+    state = module.params['state']
+
+    set_command = set_route_command(module, prefix)
+    remove_command = remove_route_command(module, prefix)
+
+    parents = []
+    commands = []
     if module.params['vrf'] == 'default':
-        config = netcfg.get_section(commands[0])
-        if config:
-            invoke('remove_route', module, commands, config, prefix)
-            candidate.add(commands, parents=[])
+        config = netcfg.get_section(set_command)
+        if config and state == 'absent':
+            commands = [remove_command]
+        elif not config and state == 'present':
+            commands = [set_command]
     else:
+        parents = ['vrf context {0}'.format(module.params['vrf'])]
         config = netcfg.get_section(parents)
-        splitted_config = config.split('\n')
-        splitted_config = map(str.strip, splitted_config)
-        if commands[0] in splitted_config:
-            invoke('remove_route', module, commands, config, prefix)
-            candidate.add(commands, parents=[parents])
+        if not isinstance(config, list):
+            config = config.split('\n')
+        config = [line.strip() for line in config]
+        if set_command in config and state == 'absent':
+            commands = [remove_command]
+        elif set_command not in config and state == 'present':
+            commands = [set_command]
+
+    if commands:
+        candidate.add(commands, parents=parents)
 
 
 def fix_prefix_to_regex(prefix):
@@ -164,11 +164,11 @@ def get_existing(module, prefix, warnings):
     return group_route
 
 
-def remove_route(module, commands, config, prefix):
-    commands.append('no ip route {0} {1}'.format(prefix, module.params['next_hop']))
+def remove_route_command(module, prefix):
+    return 'no ip route {0} {1}'.format(prefix, module.params['next_hop'])
 
 
-def set_route(module, commands, prefix):
+def set_route_command(module, prefix):
     route_cmd = 'ip route {0} {1}'.format(prefix, module.params['next_hop'])
 
     if module.params['route_name']:
@@ -259,22 +259,13 @@ def main():
     check_args(module, warnings)
     result = dict(changed=False, warnings=warnings)
 
-    state = module.params['state']
+    prefix = normalize_prefix(module, module.params['prefix'])
 
-    result = dict(changed=False)
-    warnings = list()
-    prefix = invoke('normalize_prefix', module, module.params['prefix'])
+    candidate = CustomNetworkConfig(indent=3)
+    reconcile_candidate(module, candidate, prefix)
 
-    existing = invoke('get_existing', module, prefix, warnings)
-    end_state = existing
-
-    args = ['route_name', 'vrf', 'pref', 'tag', 'next_hop', 'prefix']
-    proposed = dict((k, v) for k, v in module.params.items() if v is not None and k in args)
-
-    if state == 'present' or (state == 'absent' and existing):
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('state_%s' % state, module, candidate, prefix)
-
+    if candidate:
+        candidate = candidate.items_text()
         load_config(module, candidate)
         result['commands'] = candidate
         result['changed'] = True
