@@ -14,6 +14,7 @@ Ansible Changes By Release
 * Fix to user module for appending/setting groups on OpenBSD (flags were reversed)
 * assemble fix to use safer os.join.path, avoids charset issues
 * fixed issue with solaris facts and i18n
+* added python2.4 compatiblity fix to sysctl module
 
 ## 2.3 "Ramble On" - 2017-04-12
 
