@@ -71,7 +71,7 @@ class VarsModule(BaseVarsPlugin):
                         for found in self._find_vars_files(opath, entity.name):
                             self._display.debug("READING %s" % found)
                             new_data = loader.load_from_file(found, cache=True, unsafe=True)
-                            if new_data: # ignore empty files
+                            if new_data:  # ignore empty files
                                 data = combine_vars(data, new_data)
                     else:
                         self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
