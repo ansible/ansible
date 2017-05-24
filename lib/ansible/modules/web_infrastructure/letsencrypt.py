@@ -568,7 +568,7 @@ class ACMEClient(object):
         for index, cur_auth in enumerate(self.authorizations):
             if (cur_auth['uri'] == auth['uri']):
                 # does the auth parameter contain updated data?
-                if cmp(cur_auth, auth) != 0:
+                if cur_auth != auth:
                     # yes, update our current authorization list
                     self.authorizations[index] = auth
                     return True
