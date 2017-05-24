@@ -282,22 +282,6 @@ Testing Working Group
   * Join ``#ansible-meeting`` on Freenode, see topic for link
 
 
-Unit Tests: Creating
-====================
-
-* ``test/units/``
-
-* Unit tests can't use external services
-* Ansible modules are mostly about external services
-* Good for ``lib/{module_utils,playbook,plugins,utils}``
-* Bad fit for Modules
-* ``ansible-test units --tox [ --python X.Y ] [ modulename ]``
-
-
-.. container:: handout
-
-   * That's all I'm going to say on unit tests
-   * For more info join ``#ansible-devel``
 
 Integration Tests: Why?
 =======================
@@ -376,7 +360,7 @@ Demo of running tests with Docker
 
     * Last argument = name of test
     * ``test/integration/target/NAME``
-    * dir = module names
+    * dir = module names, keyword (``become``,`` with_*``), add_host
     * cat aliases
     * ``cat test/integration/targets/*/aliases  | sort -u1``
     * main.yml
@@ -409,6 +393,23 @@ Code Coverage
 
   * https://codecov.io/gh/ansible/ansible/
   * FIXME Add talking points
+
+Unit Tests: Creating
+====================
+
+* ``test/units/``
+
+* Unit tests can't use external services
+* Ansible modules are mostly about external services
+* Good for ``lib/{module_utils,playbook,plugins,utils}``
+* Bad fit for Modules
+* ``ansible-test units --tox [ --python X.Y ] [ modulename ]``
+
+
+.. container:: handout
+
+   * That's all I'm going to say on unit tests
+   * For more info join ``#ansible-devel``
 
 Cloud Tests
 ===========
