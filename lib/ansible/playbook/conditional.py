@@ -29,8 +29,6 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
-from ansible.template import Templar
-from ansible.template.safe_eval import safe_eval
 
 try:
     from __main__ import display

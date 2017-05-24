@@ -351,7 +351,7 @@ class PlayContext(Base):
             # address, otherwise we default to connecting to it by name. This
             # may happen when users put an IP entry into their inventory, or if
             # they rely on DNS for a non-inventory hostname
-            for address_var in MAGIC_VARIABLE_MAPPING.get('remote_addr'):
+            for address_var in ('ansible_%s_host' % transport_var,) + MAGIC_VARIABLE_MAPPING.get('remote_addr'):
                 if address_var in delegated_vars:
                     break
             else:
@@ -360,7 +360,7 @@ class PlayContext(Base):
 
             # reset the port back to the default if none was specified, to prevent
             # the delegated host from inheriting the original host's setting
-            for port_var in MAGIC_VARIABLE_MAPPING.get('port'):
+            for port_var in ('ansible_%s_port' % transport_var,) + MAGIC_VARIABLE_MAPPING.get('port'):
                 if port_var in delegated_vars:
                     break
             else:
@@ -370,7 +370,7 @@ class PlayContext(Base):
                     delegated_vars['ansible_port'] = C.DEFAULT_REMOTE_PORT
 
             # and likewise for the remote user
-            for user_var in MAGIC_VARIABLE_MAPPING.get('remote_user'):
+            for user_var in ('ansible_%s_user' % transport_var,) + MAGIC_VARIABLE_MAPPING.get('remote_user'):
                 if user_var in delegated_vars and delegated_vars[user_var]:
                     break
             else:
@@ -586,6 +586,13 @@ class PlayContext(Base):
                     becomecmd = '%s -p %s -u %s %s' % (exe, shlex_quote(prompt), self.become_user, command)
                 else:
                     becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
+
+            elif self.become_method == 'pmrun':
+
+                exe = self.become_exe or 'pmrun'
+
+                prompt='Enter UPM user password:'
+                becomecmd = '%s %s %s' % (exe, flags, shlex_quote(command))
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)

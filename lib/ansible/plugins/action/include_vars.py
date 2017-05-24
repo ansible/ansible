@@ -30,25 +30,11 @@ from ansible.plugins.action import ActionBase
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
+
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
-
-    def _mutually_exclusive(self):
-        dir_arguments = [
-            self.source_dir, self.files_matching, self.ignore_files,
-            self.depth
-        ]
-        if self.source_file and None not in dir_arguments:
-            err_msg = (
-                "Can not include {0} with file argument"
-                .format(", ".join(self.VALID_DIR_ARGUMENTS))
-            )
-            raise AnsibleError(err_msg)
-
-        elif self.source_dir and self.source_file:
-            err_msg = (
-                "Need to pass either file or dir"
-            )
-            raise AnsibleError(err_msg)
+    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions']
+    VALID_FILE_ARGUMENTS = ['file', '_raw_params']
+    VALID_ALL = ['name']
 
     def _set_dir_defaults(self):
         if not self.depth:
@@ -72,22 +58,7 @@ class ActionModule(ActionBase):
             }
 
     def _set_args(self):
-        """ Set instance variables based on the arguments that were passed
-        """
-        self.VALID_DIR_ARGUMENTS = [
-            'dir', 'depth', 'files_matching', 'ignore_files', 'extensions',
-        ]
-        self.VALID_FILE_ARGUMENTS = ['file', '_raw_params']
-        self.GLOBAL_FILE_ARGUMENTS = ['name']
-
-        self.VALID_ARGUMENTS = (
-            self.VALID_DIR_ARGUMENTS + self.VALID_FILE_ARGUMENTS +
-            self.GLOBAL_FILE_ARGUMENTS
-        )
-        for arg in self._task.args:
-            if arg not in self.VALID_ARGUMENTS:
-                err_msg = '{0} is not a valid option in debug'.format(arg)
-                raise AnsibleError(err_msg)
+        """ Set instance variables based on the arguments that were passed """
 
         self.return_results_as_name = self._task.args.get('name', None)
         self.source_dir = self._task.args.get('dir', None)
@@ -99,22 +70,38 @@ class ActionModule(ActionBase):
         self.files_matching = self._task.args.get('files_matching', None)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
+
+        # convert/validate extensions list
         if isinstance(self.valid_extensions, string_types):
             self.valid_extensions = list(self.valid_extensions)
-
-        # validate
         if not isinstance(self.valid_extensions, list):
             raise AnsibleError('Invalid type for "extensions" option, it must be a list')
-
-        self._mutually_exclusive()
 
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
-        if not task_vars:
+        if task_vars is None:
             task_vars = dict()
 
         self.show_content = True
+
+        # Validate arguments
+        dirs = 0
+        files = 0
+        for arg in self._task.args:
+            if arg in self.VALID_DIR_ARGUMENTS:
+                dirs += 1
+            elif arg in self.VALID_FILE_ARGUMENTS:
+                files += 1
+            elif arg in self.VALID_ALL:
+                pass
+            else:
+                raise AnsibleError('{0} is not a valid option in debug'.format(arg))
+
+        if dirs and files:
+            raise AnsibleError("Your are mixing file only and dir only arguments, these are incompatible")
+
+        # set internal vars from args
         self._set_args()
 
         results = dict()
@@ -123,18 +110,13 @@ class ActionModule(ActionBase):
             self._set_root_dir()
             if path.exists(self.source_dir):
                 for root_dir, filenames in self._traverse_dir_depth():
-                    failed, err_msg, updated_results = (
-                        self._load_files_in_dir(root_dir, filenames)
-                    )
-                    if not failed:
-                        results.update(updated_results)
-                    else:
+                    failed, err_msg, updated_results = (self._load_files_in_dir(root_dir, filenames))
+                    if failed:
                         break
+                    results.update(updated_results)
             else:
                 failed = True
-                err_msg = (
-                    '{0} directory does not exist'.format(self.source_dir)
-                )
+                err_msg = ('{0} directory does not exist'.format(self.source_dir))
         else:
             try:
                 self.source_file = self._find_needle('vars', self.source_file)
@@ -222,17 +204,12 @@ class ActionModule(ActionBase):
         """ Verify if source file has a valid extension
         Args:
             source_file (str): The full path of source file or source file.
-
         Returns:
             Bool
         """
-        success = False
-        file_ext = source_file.split('.')
-        if len(file_ext) >= 1:
-            if file_ext[-1] in self.valid_extensions:
-                success = True
-                return success
-        return success
+        file_ext = path.splitext(source_file)
+        print(file_ext[-1][2:])
+        return bool(len(file_ext) > 1 and file_ext[-1][1:] in self.valid_extensions)
 
     def _load_files(self, filename, validate_extensions=False):
         """ Loads a file and converts the output into a valid Python dict.
@@ -247,27 +224,21 @@ class ActionModule(ActionBase):
         err_msg = ''
         if validate_extensions and not self._is_valid_file_ext(filename):
             failed = True
-            err_msg = (
-                '{0} does not have a valid extension: {1}'
-                .format(filename, ', '.join(self.valid_extensions))
-            )
-            return failed, err_msg, results
-
-        b_data, show_content = self._loader._get_file_contents(filename)
-        data = to_text(b_data, errors='surrogate_or_strict')
-
-        self.show_content = show_content
-        data = self._loader.load(data, show_content)
-        if not data:
-            data = dict()
-        if not isinstance(data, dict):
-            failed = True
-            err_msg = (
-                '{0} must be stored as a dictionary/hash'
-                .format(filename)
-            )
+            err_msg = ('{0} does not have a valid extension: {1}' .format(filename, ', '.join(self.valid_extensions)))
         else:
-            results.update(data)
+            b_data, show_content = self._loader._get_file_contents(filename)
+            data = to_text(b_data, errors='surrogate_or_strict')
+
+            self.show_content = show_content
+            data = self._loader.load(data, show_content)
+            if not data:
+                data = dict()
+            if not isinstance(data, dict):
+                failed = True
+                err_msg = ('{0} must be stored as a dictionary/hash' .format(filename))
+            else:
+                results.update(data)
+
         return failed, err_msg, results
 
     def _load_files_in_dir(self, root_dir, var_files):

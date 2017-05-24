@@ -719,7 +719,7 @@ class User(object):
             os.chown(path, uid, gid)
             for root, dirs, files in os.walk(path):
                 for d in dirs:
-                    os.chown(path, uid, gid)
+                    os.chown(os.path.join(root, d), uid, gid)
                 for f in files:
                     os.chown(os.path.join(root, f), uid, gid)
         except OSError:
@@ -1028,7 +1028,7 @@ class OpenBSDUser(User):
         if self.groups is not None:
             current_groups = self.user_group_membership()
             groups_need_mod = False
-            groups_option = '-G'
+            groups_option = '-S'
             groups = []
 
             if self.groups == '':
@@ -1042,7 +1042,7 @@ class OpenBSDUser(User):
                     if self.append:
                         for g in groups:
                             if g in group_diff:
-                                groups_option = '-S'
+                                groups_option = '-G'
                                 groups_need_mod = True
                                 break
                     else:

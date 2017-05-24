@@ -23,14 +23,22 @@ import collections
 
 from jinja2.runtime import Undefined
 
-from ansible import constants as C
 from ansible.template import Templar
 
 STATIC_VARS = [
-    'inventory_hostname', 'inventory_hostname_short',
-    'inventory_file', 'inventory_dir', 'playbook_dir',
-    'ansible_play_hosts', 'play_hosts', 'groups',
-    'ungrouped', 'group_names', 'ansible_version', 'omit', 'role_names'
+    'ansible_version',
+    'ansible_play_hosts',
+    'inventory_hostname',
+    'inventory_hostname_short',
+    'inventory_file',
+    'inventory_dir',
+    'groups',
+    'group_names',
+    'omit',
+    'playbook_dir',
+    'play_hosts',
+    'role_names',
+    'ungrouped',
 ]
 
 try:
@@ -61,11 +69,7 @@ class HostVars(collections.Mapping):
         self._inventory = inventory
 
     def _find_host(self, host_name):
-        if host_name in C.LOCALHOST and self._inventory.localhost:
-            host = self._inventory.localhost
-        else:
-            host = self._inventory.get_host(host_name)
-        return host
+        return self._inventory.get_host(host_name)
 
     def raw_get(self, host_name):
         '''
@@ -74,9 +78,9 @@ class HostVars(collections.Mapping):
         '''
         host = self._find_host(host_name)
         if host is None:
-            raise Undefined(name="hostvars['%s']" % host_name)
+            return Undefined(name="hostvars['%s']" % host_name)
 
-        return self._variable_manager.get_vars(loader=self._loader, host=host, include_hostvars=False)
+        return self._variable_manager.get_vars(host=host, include_hostvars=False)
 
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)

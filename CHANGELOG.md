@@ -8,10 +8,18 @@ Ansible Changes By Release
 * Added fact namespacing, from now on facts will be available under 'ansible_facts' namespace (i.e. `ansible_facts.ansible_os_distribution`), they will still also be added into the main namespace directly but now also having a configuration toggle to disable this. Eventually this will be on by default. This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
 * new 'order' play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
 * Users can now set group merge priority for groups of the same depth (parent child relationship), using the new `ansible_group_priority` variable, when values are the same or don't exist it will fallback to the previous 'sorting by name'.
-* Support for Python-2.4 and Python-2.5 on the managed system's side was
-  dropped.  If you need to manage a system that ships with Python-2.4 or
-  Python-2.5 you'll need to install Python-2.6 or better there or run
-  Ansible-2.3 until you can upgrade the system.
+* Support for Python-2.4 and Python-2.5 on the managed system's side was dropped. If you need to manage a system that ships with Python-2.4 or Python-2.5, you'll need to install Python-2.6 or better on the managed system or run Ansible-2.3 until you can upgrade the system.
+* Inventory has been revamped:
+	- Inventory classes have been split to allow for better management and deduplication
+	- Logic that each inventory source duplicated is now common and pushed up to reconciliation
+	- VariableManager has been updated for better interaction with inventory
+	- Updated CLI with helper method to initialize base objects for plays
+	- Inventory plugins are a new type of plugin (can generate and/or update inventory)
+    - Old inventory formats are still supported via plugins
+    - The vars_plugins have been eliminated in favor of inventory_plugins #TODO: repurpose/implement inv plugin that loads vars ones?
+	- Loading group_vars/host_vars is now a plugin and can be overridden (for inventory)
+	- It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)
+	- Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
 
 ### Deprecations
 * The behaviour when specifying --tags (or --skip-tags) multiple times on the command line
@@ -45,9 +53,9 @@ Ansible Changes By Release
 
   The new behaviour mirrors how the variables would appear if there was no hash
   mark in the string.
-- As of 2.4.0, the fetch module fails if there are errors reading the remote
-  file.  Use ignore_errors or failed_when in playbooks if you wish to ignore
-  errors.
+* As of 2.4.0, the fetch module fails if there are errors reading the remote file.
+  Use ignore_errors or failed_when in playbooks if you wish to ignore errors.
+* Experimentally added pmrun become method.
 
 #### New Inventory scripts:
 - lxd

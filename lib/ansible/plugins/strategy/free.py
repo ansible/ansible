@@ -115,7 +115,7 @@ class StrategyModule(StrategyBase):
                             action = None
 
                         display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
@@ -201,7 +201,7 @@ class StrategyModule(StrategyBase):
                         continue
 
                     for new_block in new_blocks:
-                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=included_file._task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=included_file._task)
                         final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:

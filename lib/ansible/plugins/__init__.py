@@ -378,6 +378,8 @@ class PluginLoader:
                     return None
                 raise
 
+        # set extra info on the module, in case we want it later
+        setattr(obj, '_original_path', path)
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -433,8 +435,7 @@ class PluginLoader:
                 if not issubclass(obj, plugin_class):
                     continue
 
-            self._display_plugin_load(self.class_name, name, self._searched_paths, path,
-                                      found_in_cache=found_in_cache, class_only=class_only)
+            self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
             if not class_only:
                 try:
                     obj = obj(*args, **kwargs)
@@ -505,13 +506,6 @@ lookup_loader = PluginLoader(
     required_base_class='LookupBase',
 )
 
-vars_loader = PluginLoader(
-    'VarsModule',
-    'ansible.plugins.vars',
-    C.DEFAULT_VARS_PLUGIN_PATH,
-    'vars_plugins',
-)
-
 filter_loader = PluginLoader(
     'FilterModule',
     'ansible.plugins.filter',
@@ -546,5 +540,12 @@ terminal_loader = PluginLoader(
     'ansible.plugins.terminal',
     'terminal_plugins',
     'terminal_plugins'
+)
+
+vars_loader = PluginLoader(
+    'VarsModule',
+    'ansible.plugins.vars',
+    C.DEFAULT_VARS_PLUGIN_PATH,
+    'vars_plugins',
 )
 
