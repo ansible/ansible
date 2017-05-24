@@ -42,6 +42,7 @@ from ansible.utils.vars import combine_vars
 
 FOUND = {}
 
+
 class VarsModule(BaseVarsPlugin):
 
     def get_vars(self, loader, path, entities, cache=True):
