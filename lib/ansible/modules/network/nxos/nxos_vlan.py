@@ -22,7 +22,6 @@ ANSIBLE_METADATA = {
     'supported_by': 'community',
 }
 
-
 DOCUMENTATION = '''
 ---
 module: nxos_vlan
@@ -75,8 +74,8 @@ options:
     required: false
     default: present
     choices: ['present','absent']
-
 '''
+
 EXAMPLES = '''
 - name: Ensure a range of VLANs are not present on the switch
   nxos_vlan:
@@ -105,10 +104,12 @@ commands:
     type: list
     sample: ["vlan 20", "vlan 55", "vn-segment 5000"]
 '''
+
 import re
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.nxos import nxos_argument_spec
+from ansible.module_utils.nxos import check_args as nxos_check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -170,7 +171,7 @@ def get_vlan_config_commands(vlan, vid):
         # value map has more than 1 key
         vlan = apply_value_map(reverse_value_map, vlan)
 
-    VLAN_ARGS = {
+    vlan_args = {
         'name': 'name {0}',
         'vlan_state': 'state {0}',
         'admin_state': '{0}',
@@ -184,7 +185,7 @@ def get_vlan_config_commands(vlan, vid):
         if param == 'mapped_vni' and value == 'default':
             command = 'no vn-segment'
         else:
-            command = VLAN_ARGS.get(param).format(vlan.get(param))
+            command = vlan_args.get(param).format(vlan.get(param))
         if command:
             commands.append(command)
 
@@ -195,9 +196,9 @@ def get_vlan_config_commands(vlan, vid):
 
 
 def get_list_of_vlans(module):
-    body = run_commands(module, ['show vlan | json'])
+    body = run_commands(module, ['show vlan | json'])[0]
     vlan_list = []
-    vlan_table = body[0].get('TABLE_vlanbrief')['ROW_vlanbrief']
+    vlan_table = body.get('TABLE_vlanbrief')['ROW_vlanbrief']
 
     if isinstance(vlan_table, list):
         for vlan in vlan_table:
@@ -224,11 +225,10 @@ def get_vlan(vlanid, module):
     """Get instance of VLAN as a dictionary
     """
     command = 'show vlan id %s | json' % vlanid
-    body = run_commands(module, [command])
-
     try:
-        vlan_table = body[0]['TABLE_vlanbriefid']['ROW_vlanbriefid']
-    except (TypeError, IndexError):
+        body = run_commands(module, [command])[0]
+        vlan_table = body['TABLE_vlanbriefid']['ROW_vlanbriefid']
+    except (TypeError, IndexError, KeyError):
         return {}
 
     key_map = {
@@ -267,6 +267,14 @@ def apply_value_map(value_map, resource):
     return resource
 
 
+def check_args(module, warnings):
+    nxos_check_args(module, warnings)
+
+    for key in ('include_defaults', 'config', 'save'):
+        if module.params[key] is not None:
+            warnings.append('argument %s is no longer supported, ignoring value' % key)
+
+
 def main():
     argument_spec = dict(
         vlan_id=dict(required=False, type='str'),
@@ -292,6 +300,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
+    results = dict(changed=False, warnings=warnings)
 
     vlan_range = module.params['vlan_range']
     vlan_id = module.params['vlan_id']
@@ -300,8 +309,6 @@ def main():
     admin_state = module.params['admin_state']
     mapped_vni = module.params['mapped_vni']
     state = module.params['state']
-
-    changed = False
 
     if vlan_id:
         if not vlan_id.isdigit():
@@ -348,18 +355,12 @@ def main():
                     existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
                 commands.insert(1, 'no vn-segment')
         if module.check_mode:
-            module.exit_json(changed=True,
-                             commands=commands)
+            module.exit_json(changed=True, commands=commands)
         else:
             load_config(module, commands)
-            changed = True
+            results['changed'] = True
 
-    results = {
-        'commands': commands,
-        'changed': changed,
-        'warnings': warnings
-    }
-
+    results['commands'] = commands
     module.exit_json(**results)
 
 
