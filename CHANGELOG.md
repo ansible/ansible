@@ -22,6 +22,7 @@ Ansible Changes By Release
 * Fix tracebacks in docker_network
 * Fixes to detection of updated docker images
 * Handle detection of docker image changes when published ports is changed
+* Fix for docker_container restarting images when links list is empty.
 
 ## 2.3 "Ramble On" - 2017-04-12
 
