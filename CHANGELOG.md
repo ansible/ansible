@@ -13,6 +13,7 @@ Ansible Changes By Release
 * Several places in which error handling was broken due to bad conversions or just typos
 * Fix to user module for appending/setting groups on OpenBSD (flags were reversed)
 * assemble fix to use safer os.join.path, avoids charset issues
+* fixed issue with solaris facts and i18n
 
 ## 2.3 "Ramble On" - 2017-04-12
 
