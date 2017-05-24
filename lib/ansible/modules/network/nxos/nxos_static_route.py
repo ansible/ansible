@@ -15,9 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community',
+}
 
 
 DOCUMENTATION = '''
@@ -27,47 +29,47 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages static route configuration
 description:
-    - Manages static route configuration
+  - Manages static route configuration
 author: Gabriele Gerbino (@GGabriele)
 notes:
-    - If no vrf is supplied, vrf is set to default.
-    - If C(state=absent), the route will be removed, regardless of the
-      non-required parameters.
+  - If no vrf is supplied, vrf is set to default.
+  - If C(state=absent), the route will be removed, regardless of the
+    non-required parameters.
 options:
-    prefix:
-        description:
-            - Destination prefix of static route.
-        required: true
-    next_hop:
-        description:
-            - Next hop address or interface of static route.
-              If interface, it must be the fully-qualified interface name.
-        required: true
-    vrf:
-        description:
-            - VRF for static route.
-        required: false
-        default: default
-    tag:
-        description:
-            - Route tag value (numeric).
-        required: false
-        default: null
-    route_name:
-        description:
-            - Name of the route. Used with the name parameter on the CLI.
-        required: false
-        default: null
-    pref:
-        description:
-            - Preference or administrative difference of route (range 1-255).
-        required: false
-        default: null
-    state:
-        description:
-            - Manage the state of the resource.
-        required: true
-        choices: ['present','absent']
+  prefix:
+    description:
+      - Destination prefix of static route.
+    required: true
+  next_hop:
+    description:
+      - Next hop address or interface of static route.
+        If interface, it must be the fully-qualified interface name.
+    required: true
+  vrf:
+    description:
+      - VRF for static route.
+    required: false
+    default: default
+  tag:
+    description:
+      - Route tag value (numeric).
+    required: false
+    default: null
+  route_name:
+    description:
+      - Name of the route. Used with the name parameter on the CLI.
+    required: false
+    default: null
+  pref:
+    description:
+      - Preference or administrative difference of route (range 1-255).
+    required: false
+    default: null
+  state:
+    description:
+      - Manage the state of the resource.
+    required: true
+    choices: ['present','absent']
 '''
 
 EXAMPLES = '''
@@ -76,53 +78,22 @@ EXAMPLES = '''
     next_hop: "3.3.3.3"
     route_name: testing
     pref: 100
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"next_hop": "3.3.3.3", "pref": "100",
-            "prefix": "192.168.20.64/24", "route_name": "testing",
-            "vrf": "default"}
-existing:
-    description: k/v pairs of existing configuration
-    returned: verbose mode
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"next_hop": "3.3.3.3", "pref": "100",
-            "prefix": "192.168.20.0/24", "route_name": "testing",
-            "tag": null}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["ip route 192.168.20.0/24 3.3.3.3 name testing 100"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
 
 
 def state_present(module, candidate, prefix):
@@ -155,7 +126,7 @@ def state_absent(module, candidate, prefix):
 
 
 def fix_prefix_to_regex(prefix):
-    prefix = prefix.replace('.', '\.').replace('/', '\/')
+    prefix = prefix.replace('.', r'\.').replace('/', r'\/')
     return prefix
 
 
@@ -165,8 +136,7 @@ def get_existing(module, prefix, warnings):
     parents = 'vrf context {0}'.format(module.params['vrf'])
     prefix_to_regex = fix_prefix_to_regex(prefix)
 
-    route_regex = ('.*ip\sroute\s{0}\s(?P<next_hop>\S+)(\sname\s(?P<route_name>\S+))?'
-                   '(\stag\s(?P<tag>\d+))?(\s(?P<pref>\d+)).*'.format(prefix_to_regex))
+    route_regex = r'.*ip\sroute\s{0}\s(?P<next_hop>\S+)(\sname\s(?P<route_name>\S+))?(\stag\s(?P<tag>\d+))?(\s(?P<pref>\d+))?.*'.format(prefix_to_regex)
 
     if module.params['vrf'] == 'default':
         config = str(netcfg)
@@ -207,15 +177,15 @@ def set_route(module, commands, prefix):
         route_cmd += ' tag {0}'.format(module.params['tag'])
     if module.params['pref']:
         route_cmd += ' {0}'.format(module.params['pref'])
-    commands.append(route_cmd)
+
+    return route_cmd
 
 
 def get_dotted_mask(mask):
     bits = 0
-    for i in xrange(32-mask,32):
+    for i in range(32-mask, 32):
         bits |= (1 << i)
-    mask = ("%d.%d.%d.%d" % ((bits & 0xff000000) >> 24,
-           (bits & 0xff0000) >> 16, (bits & 0xff00) >> 8 , (bits & 0xff)))
+    mask = ("%d.%d.%d.%d" % ((bits & 0xff000000) >> 24, (bits & 0xff0000) >> 16, (bits & 0xff00) >> 8, (bits & 0xff)))
     return mask
 
 
@@ -275,21 +245,19 @@ def main():
         tag=dict(type='str'),
         route_name=dict(type='str'),
         pref=dict(type='str'),
-        state=dict(choices=['absent', 'present'],
-                   default='present'),
-        include_defaults=dict(default=True),
-
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     warnings = list()
     check_args(module, warnings)
+    result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
 
@@ -308,20 +276,13 @@ def main():
         invoke('state_%s' % state, module, candidate, prefix)
 
         load_config(module, candidate)
+        result['commands'] = candidate
+        result['changed'] = True
     else:
-        result['updates'] = []
-
-    result['warnings'] = warnings
-
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, prefix, warnings)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed
+        result['commands'] = []
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-
