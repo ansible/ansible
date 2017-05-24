@@ -158,11 +158,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         running an Ansible command.
         """
 
-        if self.options.verbosity > 0:
-            if C.CONFIG_FILE:
-                display.display(u"Using %s as config file" % to_text(C.CONFIG_FILE))
-            else:
-                display.display(u"No config file found; using defaults")
+        display.vv(self.parser.get_version())
+
+        if C.CONFIG_FILE:
+            display.v(u"Using %s as config file" % to_text(C.CONFIG_FILE))
+        else:
+            display.v(u"No config file found; using defaults")
 
     @staticmethod
     def ask_vault_passwords():
