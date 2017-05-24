@@ -49,6 +49,7 @@ options:
       - If present, it adds a network static route.
         If absent, it removes a network static route.
     default: present
+notes: Works only with Windows 2012 R2 or latest.
 author: Daniele Lazzari
 '''
 
