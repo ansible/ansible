@@ -148,8 +148,6 @@ class TestConnectionClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = network_cli.Connection(pc, new_stdin)
-        #import pdb
-        #pdb.set_trace()
         mock__terminal = MagicMock()
         mock__terminal.terminal_stdout_re = [re.compile(b'device#')]
         mock__terminal.terminal_stderr_re = [re.compile(b'^ERROR')]
