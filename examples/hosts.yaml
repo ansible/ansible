@@ -32,7 +32,12 @@
 ##        192.168.1.110:
 
 # Ex 3: You can create hosts using ranges and add children groups and vars to a group
-# The child group can define anything you would normally add to a group
+# The child group can define anything you would normally add to a group.
+# webservers is added as a child group of testing. gamma.example.org is added
+# to the existing webservers group. All references to webservers will
+# get alpha.example.org, beta.example.org, gamma.example.org, 192.168.1.100
+# and 192.168.1.110. References to testing will get all of those hosts plus
+# any host matching www[001:006].example.com
 
 ##    testing:
 ##      hosts:
@@ -42,7 +47,7 @@
 ##      children:
 ##        webservers:
 ##            hosts:
-##                beta.example.org:
+##                gamma.example.org:
 
 # Ex 4: all vars
 # keeping within 'all' group you can define common 'all' vars here with lowest precedence
