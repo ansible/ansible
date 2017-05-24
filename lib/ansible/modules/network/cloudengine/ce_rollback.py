@@ -402,7 +402,7 @@ class RollBack(object):
                 self.module.fail_json(
                     msg='Error: Commit label which should not start with a number.')
             if len(self.label.replace(' ', '')) == 1:
-                if cmp(self.label, '-') == 0:
+                if self.label == '-':
                     self.module.fail_json(
                         msg='Error: Commit label which should not be "-"')
             if len(self.label.replace(' ', '')) < 1 or len(self.label) > 256:

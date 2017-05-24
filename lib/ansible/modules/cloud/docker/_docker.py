@@ -1755,7 +1755,8 @@ def present(manager, containers, count, name):
     if delta < 0:
         # If both running and stopped containers exist, remove
         # stopped containers first.
-        containers.deployed.sort(lambda cx, cy: cmp(is_running(cx), is_running(cy)))
+        # Use key param for python 2/3 compatibility.
+        containers.deployed.sort(key=is_running)
 
         to_stop = []
         to_remove = []
