@@ -692,11 +692,27 @@ class ElbManager(object):
 
     @_throttleable_operation(_THROTTLING_RETRIES)
     def _get_elb(self):
-        elbs = self.elb_conn.get_all_load_balancers()
-        for elb in elbs:
-            if self.name == elb.name:
-                self.status = 'ok'
-                return elb
+        token = None
+        while True:
+            elbs = self.elb_conn.get_all_load_balancers(marker=token)
+            # Boto docs call out next_token as the field for pagination, but it has actually
+            # been sending the token as next_marker. We'll check both and stop if we find a value
+            marker_types = ('next_token', 'next_marker')
+            for marker in marker_types:
+                try:
+                    token = getattr(elbs, marker)
+                except AttributeError:
+                    token = None
+                if token is not None:
+                    break
+
+            for elb in elbs:
+                if self.name == elb.name:
+                    self.status = 'ok'
+                    return elb
+
+            if token is None:
+                break
 
     def _get_elb_connection(self):
         try:

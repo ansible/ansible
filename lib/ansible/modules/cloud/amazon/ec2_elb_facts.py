@@ -214,7 +214,16 @@ class ElbInformation(object):
         get_elb_with_backoff = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)
         while True:
             all_elbs = get_elb_with_backoff(marker=token)
-            token = all_elbs.next_token
+            # Boto docs call out next_token as the field for pagination, but it has actually
+            # been sending the token as next_marker. We'll check both and stop if we find a value
+            marker_types = ('next_token', 'next_marker')
+            for marker in marker_types:
+                try:
+                    token = getattr(all_elbs, marker)
+                except AttributeError:
+                    token = None
+                if token is not None:
+                    break
 
             if all_elbs:
                 if self.names:
