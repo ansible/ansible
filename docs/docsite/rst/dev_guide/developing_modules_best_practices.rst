@@ -156,6 +156,13 @@ Ansible can find modules in several locations.
 The easiest way to include a module is by adding a ``library`` folder to your project 
 relative to your playbooks. Module files (.py, etc.) can be added there.
 
+The structure will look like this::
+
+    ├── playbook.yml
+    └── library
+        ├── my_module.py
+        └── my_other_module.py
+
 .. note::
 
     Currently Ansible does not support organizing modules into sub-folders under the ``library``
