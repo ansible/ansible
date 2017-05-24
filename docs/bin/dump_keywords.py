@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import optparse
+import argparse
 import yaml
 
 from jinja2 import Environment, FileSystemLoader
@@ -10,21 +10,28 @@ from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 
+try:
+    import argcomplete
+except ImportError:
+    argcomplete = None
+
 template_file = 'playbooks_keywords.rst.j2'
 oblist = {}
 clist = []
 class_list = [Play, Role, Block, Task]
 
-p = optparse.OptionParser(
-    version='%prog 1.0',
-    usage='usage: %prog [options]',
+p = argparse.ArgumentParser(
     description='Generate module documentation from metadata',
 )
-p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="../templates", help="directory containing Jinja2 templates")
-p.add_option("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/', help="Output directory for rst files")
-p.add_option("-d", "--docs-source", action="store", dest="docs", default=None, help="Source for attribute docs")
+p.add_argument('--version', action='version', version='%(prog)s 1.0')
+p.add_argument("-T", "--template-dir", action="store", dest="template_dir", default="../templates", help="directory containing Jinja2 templates")
+p.add_argument("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/', help="Output directory for rst files")
+p.add_argument("-d", "--docs-source", action="store", dest="docs", default=None, help="Source for attribute docs")
 
-(options, args) = p.parse_args()
+if argcomplete:
+    argcomplete.autocomplete(p, always_complete_options=False, validator=lambda i, k: True)
+
+options = p.parse_args()
 
 for aclass in class_list:
     aobj = aclass()
