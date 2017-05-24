@@ -1,6 +1,26 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # (c)Matthias Dellweg & Bernhard Hopfenmüller 2017
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -8,9 +28,10 @@ module: foreman_global_parameter
 short_description: Manage Foreman Global Parameter
 description:
     - Manage Foreman Global Parameter Entities
-author: "Matthias Dellweg (@mdellweg) & Bernhard Hopfenmueller(@Fobhep)"
+version_added: "2.4"
+author: "Matthias Dellweg (@mdellweg) and Bernhard Hopfenmueller(@Fobhep)"
 requirements:
-    - "nailgun >= 0.28.0"
+    - "nailgun >= 0.29.0"
     - "python >= 2.6"
 options:
     server_url:
@@ -74,21 +95,22 @@ try:
 except:
     HAS_NAILGUN_PACKAGE = False
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 '''CommonParameter needs to inherit functionalities
    for searching, updating and deleting'''
 
 
 class CommonParameter(
-                      nailgun.entities.CommonParameter,
-                      nailgun.entity_mixins.Entity,
-                      nailgun.entity_mixins.EntityCreateMixin,
-                      nailgun.entity_mixins.EntityDeleteMixin,
-                      nailgun.entity_mixins.EntityReadMixin,
-                      nailgun.entity_mixins.EntitySearchMixin,
-                      nailgun.entity_mixins.EntityUpdateMixin,
-                     ):
+    nailgun.entities.CommonParameter,
+    nailgun.entity_mixins.Entity,
+    nailgun.entity_mixins.EntityCreateMixin,
+    nailgun.entity_mixins.EntityDeleteMixin,
+    nailgun.entity_mixins.EntityReadMixin,
+    nailgun.entity_mixins.EntitySearchMixin,
+    nailgun.entity_mixins.EntityUpdateMixin
+):
+
     pass
 
 
@@ -112,7 +134,7 @@ def find_Entity(entity, **kwargs):
     instance = entity(**kwargs)
     return instance.search(
         set(),
-        {'search': '{}="{}"'.format(key, kwargs[key]) for key in kwargs}
+        {'search': '%s="%s"' % (key, kwargs[key]) for key in kwargs}
     )
 
 
