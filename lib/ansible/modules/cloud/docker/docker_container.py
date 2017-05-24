@@ -466,6 +466,12 @@ options:
       - List of container names or Ids to get volumes from.
     default: null
     required: false
+  working_dir:
+    description:
+      - Path to the working directory.
+    default: null
+    required: false
+    version_added: "2.4"
 extends_documentation_fragment:
     - docker
 
@@ -763,6 +769,7 @@ class TaskParameters(DockerBaseClass):
         self.volume_binds = dict()
         self.volumes_from = None
         self.volume_driver = None
+        self.working_dir = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -866,6 +873,7 @@ class TaskParameters(DockerBaseClass):
             labels='labels',
             stop_signal='stop_signal',
             volume_driver='volume_driver',
+            working_dir='working_dir',
         )
 
         result = dict(
@@ -1285,7 +1293,8 @@ class Container(DockerBaseClass):
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
-            volume_driver=host_config.get('VolumeDriver')
+            volume_driver=host_config.get('VolumeDriver'),
+            working_dir=host_config.get('WorkingDir')
         )
 
         differences = []
@@ -2039,6 +2048,7 @@ def main():
         volumes=dict(type='list'),
         volumes_from=dict(type='list'),
         volume_driver=dict(type='str'),
+        working_dir=dict(type='str'),
     )
 
     required_if = [
