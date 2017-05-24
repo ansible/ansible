@@ -25,7 +25,6 @@ import json
 import tempfile
 from yaml import YAMLError
 
-from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
