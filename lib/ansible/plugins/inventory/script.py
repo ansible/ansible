@@ -82,26 +82,34 @@ class InventoryModule(BaseInventoryPlugin):
         # directory when '.' is not in PATH.
         path = os.path.abspath(path)
         cmd = [ path, "--list" ]
+
         try:
-            try:
-                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            except OSError as e:
-                raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
-            (stdout, stderr) = sp.communicate()
+            cache_key = self.get_cache_prefix(path)
+            if cache and cache_key in inventory.cache:
+                data = inventory.cache[cache_key]
+            else:
+                try:
+                    sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                except OSError as e:
+                    raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+                (stdout, stderr) = sp.communicate()
 
-            path = to_native(path)
-            if stderr:
-                err =  to_native(stderr) + "\n"
+                path = to_native(path)
+                if stderr:
+                    err =  to_native(stderr) + "\n"
 
-            if sp.returncode != 0:
-                raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
+                if sp.returncode != 0:
+                    raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
 
-            # make sure script output is unicode so that json loader will output
-            # unicode strings itself
-            try:
-                data = to_text(stdout, errors="strict")
-            except Exception as e:
-                raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
+                # make sure script output is unicode so that json loader will output
+                # unicode strings itself
+                try:
+                    data = to_text(stdout, errors="strict")
+                except Exception as e:
+                    raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
+
+                if cache:
+                    inventory.cache[cache_key] = data
 
             try:
                 processed = self.loader.load(data)
