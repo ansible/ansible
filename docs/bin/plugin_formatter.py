@@ -255,13 +255,13 @@ def process_module(module, options, env, template, outputname, module_map, alias
 
     # crash if module is missing documentation and not explicitly hidden from docs index
     if doc is None:
-        sys.exit("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+        raise SystemExit("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
 
     if metadata is None:
-        sys.exit("*** ERROR: MODULE MISSING METADATA: %s, %s ***\n" % (fname, module))
+        raise SystemExit("*** ERROR: MODULE MISSING METADATA: %s, %s ***\n" % (fname, module))
 
     if deprecated and 'deprecated' not in doc:
-        sys.exit("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
+        raise SystemExit("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
 
     if module in aliases:
         doc['aliases'] = aliases[module]
@@ -269,7 +269,7 @@ def process_module(module, options, env, template, outputname, module_map, alias
     all_keys = []
 
     if 'version_added' not in doc:
-        sys.exit("*** ERROR: missing version_added in: %s ***\n" % module)
+        raise SystemExit("*** ERROR: missing version_added in: %s ***\n" % module)
 
     added = 0
     if doc['version_added'] == 'historical':
@@ -426,11 +426,11 @@ def validate_options(options):
     ''' validate option parser options '''
 
     if not options.module_dir:
-        sys.exit("--module-dir is required", file=sys.stderr)
+        raise SystemExit("--module-dir is required")
     if not os.path.exists(options.module_dir):
-        sys.exit("--module-dir does not exist: %s" % options.module_dir, file=sys.stderr)
+        raise SystemExit("--module-dir does not exist: %s" % options.module_dir)
     if not options.template_dir:
-        sys.exit("--template-dir must be specified")
+        raise SystemExit("--template-dir must be specified")
 
 
 def main():
