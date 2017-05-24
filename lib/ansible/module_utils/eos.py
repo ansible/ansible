@@ -345,7 +345,7 @@ class Eapi:
         for item in to_list(commands):
             if is_json(item['command']):
                 item['command'] = str(item['command']).replace('| json', '')
-                item['output'] == 'json'
+                item['output'] = 'json'
 
             if output and output != item['output']:
                 responses.extend(_send(queue, output))

@@ -30,6 +30,7 @@
 #
 import re
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
@@ -79,8 +80,8 @@ def get_config(module, flags=[]):
     except KeyError:
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=err)
-        cfg = str(out).strip()
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
+        cfg = to_text(out, errors='surrogate_or_strict').strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
@@ -110,7 +111,7 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, commands):
     rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', err=err)
+        module.fail_json(msg='unable to enter configuration mode', err=to_text(err, errors='surrogate_or_strict'))
 
     for command in to_list(commands):
         if command == 'end':
@@ -118,7 +119,7 @@ def load_config(module, commands):
         cmd = {'command': command, 'prompt': WARNING_PROMPTS_RE, 'answer': 'yes'}
         rc, out, err = exec_command(module, module.jsonify(cmd))
         if rc != 0:
-            module.fail_json(msg=err, command=command, rc=rc)
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), command=command, rc=rc)
     exec_command(module, 'end')
 
 
