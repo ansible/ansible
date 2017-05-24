@@ -1094,13 +1094,13 @@ class TaskParameters(DockerBaseClass):
         if links is None:
             return None
 
-        result = {}
+        result = []
         for link in links:
             parsed_link = link.split(':', 1)
             if len(parsed_link) == 2:
-                result[parsed_link[0]] = parsed_link[1]
+                result.append((parsed_link[0], parsed_link[1]))
             else:
-                result[parsed_link[0]] = parsed_link[0]
+                result.append((parsed_link[0], parsed_link[0]))
         return result
 
     def _parse_ulimits(self):
@@ -1451,7 +1451,7 @@ class Container(DockerBaseClass):
                     diff = True
                 if network.get('links') and connected_networks[network['name']].get('Links'):
                     expected_links = []
-                    for link, alias in network['links'].items():
+                    for link, alias in network['links']:
                         expected_links.append("%s:%s" % (link, alias))
                     for link in expected_links:
                         if link not in connected_networks[network['name']].get('Links', []):
@@ -1552,7 +1552,7 @@ class Container(DockerBaseClass):
         self.log('parameter links:')
         self.log(self.parameters.links, pretty_print=True)
         exp_links = []
-        for link, alias in self.parameters.links.items():
+        for link, alias in self.parameters.links:
             exp_links.append("/%s:%s/%s" % (link, ('/' + self.parameters.name), alias))
         return exp_links
 
