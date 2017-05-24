@@ -38,6 +38,7 @@ Ansible Testing
      * Q: Who's raised a PR, should be getting easier on each release, especially modules
 
    * ReStructured Text: Slides will be made available online, which include speakers notes
+   * All docs & module docs can be edited in GitHub UI, no knowledge of Git needed!
    * Questions welcome at any point - Will ask Mark to make a note
 
 
@@ -46,7 +47,10 @@ Requirements
 
 What do we want from testing Ansible:
 
-* Reduce bugs & speed up development
+* Prevent regressions & speed up development
+* Increase code quality
+* Better readable code, improve collaboration
+
 * Ability to run same tests locally as run by CI (Shippable)
 * Different OS, Python versions (2.4+, 3.5+)
 * Reasonable run time
@@ -56,7 +60,6 @@ What do we want from testing Ansible:
    * Local run - common request from the community
    * Increasing the matrix of Python & OS versions vs timely feedback
    * Main aim: Stable product, find issues sooner, speed up PR work flow
-
 
 Solution: ansible-test
 ======================
@@ -94,6 +97,14 @@ Solution: ansible-test
      * No need to run integration tests on RST changes
 
    * Code coverage is ~1.5 - 3x as slow (integration - Unit tests)
+
+   * Cost vs benefits
+
+     * Interrupts the workflow (wait until CI is finished, change, amend, push)
+     * Not everything can be tested locally
+     * Cosmetic failures can be frustrating
+     * Do the benefits outweigh the costs ? We sure hope so :-)
+
 
 Types of tests
 ==============
