@@ -1,3 +1,4 @@
+---
 # test code for the win_psmodule module when using winrm connection
 # (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 
@@ -17,11 +18,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-- name: get facts
-  setup:
+- name: get os info
+  script: ../files/Test-Os.ps1
+  register: os
 
 - name: Perform with os Windows 2012R2 or newer
-  when: ansible_distribution_major_version >= 6
+  when: os.stdout_lines[0] == "True"
   block:
     - name: run all tasks
       include: tests.yml
