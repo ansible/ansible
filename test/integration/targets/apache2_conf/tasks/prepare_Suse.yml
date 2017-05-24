@@ -3,8 +3,3 @@
   zypper: name={{ item }}
   with_items:
     - apache2
-
-- name: add example config files
-  copy: src={{ item.src }} dest={{ item.dest }}
-  with_items:
-    - { src: mod_example.load, dest: /etc/apache2/mods-available/mod_example.load }

@@ -117,8 +117,10 @@ stderr:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.facts import Distribution
 from os.path import basename, join, exists, islink, samefile, splitext
 import glob
+import shlex
 
 
 class ApacheFragmentException(Exception):
@@ -181,6 +183,34 @@ class ApacheFragment(object):
         return module.run_command([command_name, force, self.fragment_name], check_rc=True)
 
 
+class ApacheSuseVariable(object):
+    sysconf_file = '/etc/sysconfig/apache2'
+    command_names = dict(present=None, absent=None)
+
+    def __init__(self, name):
+        self.name = name
+
+    def state(self):
+        command_name = module.get_bin_path(self.command_names["present"])
+        if command_name is None:
+            raise ApacheFragmentUnsupported("command %s not found" % self.command_names["present"])
+        rc, stdout, stderr = module.run_command([command_name, '-q', self.name])
+        if rc == 0:
+            return "present"
+        elif rc == 1:
+            return "absent"
+        else:
+            raise ApacheFragmentException(
+                "Can't get state of Apache variable %s, command fail with rc=%s, stdout=%s, stderr=%s" % (
+                    self.name, rc, stdout, stderr))
+
+    def set(self, state=None):
+        command_name = module.get_bin_path(self.command_names[state])
+        if command_name is None:
+            raise ApacheFragmentUnsupported("command %s not found" % self.command_names[state])
+        return module.run_command([command_name, self.name], check_rc=True)
+
+
 class ApacheConfigFragment(ApacheFragment):
     available_dir = '/etc/apache2/conf-available'
     enabled_dir = '/etc/apache2/conf-enabled'
@@ -202,16 +232,52 @@ class ApacheModuleFragment(ApacheFragment):
     command_names = dict(present='a2enmod', absent='a2dismod')
 
 
+class ApacheSuseModuleVariable(ApacheSuseVariable):
+    command_names = dict(present='a2enmod', absent='a2dismod')
+
+
+class ApacheSuseFlagVariable(ApacheSuseVariable):
+    sysconf_variable = 'APACHE_SERVER_FLAGS'
+    command_names = dict(present='a2enflag', absent='a2disflag')
+
+    def state(self):
+        with open(self.sysconf_file, 'rt') as sysconf:
+            lexer = shlex.shlex(sysconf, infile=self.sysconf_file, posix=True)
+            for token in lexer:
+                if token == self.sysconf_variable:
+                    if lexer.get_token() == '=':
+                        sysconf_variable_values = lexer.get_token().split()
+                        if self.name in sysconf_variable_values:
+                            return "present"
+                        else:
+                            return "absent"
+            raise ApacheFragmentException('Can\'t parse variable %s in %s' % (self.sysconf_variable, self.sysconf_file))
+
+
 def _set_state(state):
     type = module.params['type']
     name = module.params['name']
 
-    if type == 'conf':
-        fragment = ApacheConfigFragment(name)
-    elif type == 'site':
-        fragment = ApacheSiteFragment(name)
-    elif type == 'mod':
-        fragment = ApacheModuleFragment(name)
+    distribution = Distribution(module)
+    distribution.populate()
+    os_family = distribution.facts['os_family']
+
+    fragment = None
+    if os_family == 'Debian':
+        if type == 'conf':
+            fragment = ApacheConfigFragment(name)
+        elif type == 'site':
+            fragment = ApacheSiteFragment(name)
+        elif type == 'mod':
+            fragment = ApacheModuleFragment(name)
+    elif os_family == 'Suse':
+        if type == 'mod':
+            fragment = ApacheSuseModuleVariable(name)
+        elif type == 'flag':
+            fragment = ApacheSuseFlagVariable(name)
+
+    if fragment is None:
+        raise ApacheFragmentUnsupported(os_family)
 
     if fragment.state() != state:
         if module.check_mode:
