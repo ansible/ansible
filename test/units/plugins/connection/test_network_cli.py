@@ -148,7 +148,8 @@ class TestConnectionClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = network_cli.Connection(pc, new_stdin)
-
+        #import pdb
+        #pdb.set_trace()
         mock__terminal = MagicMock()
         mock__terminal.terminal_stdout_re = [re.compile(b'device#')]
         mock__terminal.terminal_stderr_re = [re.compile(b'^ERROR')]
@@ -171,9 +172,8 @@ class TestConnectionClass(unittest.TestCase):
         self.assertEqual(output, b'command response')
 
         mock__shell.reset_mock()
-        mock__shell.recv.return_value = b"ERROR: error message"
+        mock__shell.recv.return_value = b"ERROR: error message device#"
 
         with self.assertRaises(AnsibleConnectionFailure) as exc:
             conn.send({'command': b'command'})
-        self.assertEqual(str(exc.exception), 'ERROR: error message')
-
+        self.assertEqual(str(exc.exception), 'ERROR: error message device#')
