@@ -99,10 +99,11 @@ class VarsModule(BaseVarsPlugin):
                 if os.path.isdir(full_path):
                     # matched dir name, so use all files included recursively
                     for spath in os.listdir(full_path):
-                        if os.path.isdir(spath):
-                            found.extend(self._find_vars_files(spath, name))
+                        full_spath = os.path.join(full_path, spath)
+                        if os.path.isdir(full_spath):
+                            found.extend(self._find_vars_files(full_spath, ''))
                         else:
-                            found.append(spath)
+                            found.append(full_spath)
                 else:
                     found.append(full_path)
         return found
