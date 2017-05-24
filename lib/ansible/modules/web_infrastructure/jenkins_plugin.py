@@ -18,10 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
@@ -330,12 +331,12 @@ class JenkinsPlugin(object):
         csrf_data = self._get_json_data(
             "%s/%s" % (self.url, "api/json"), 'CSRF')
 
-        try:
-            return csrf_data["useCrumbs"]
-        except:
+        if 'useCrumbs' not in csrf_data:
             self.module.fail_json(
-                msg="Required fields not found in the Crum response.",
+                msg="Required fields not found in the Crumbs response.",
                 details=csrf_data)
+
+        return csrf_data['useCrumbs']
 
     def _get_json_data(self, url, what, **kwargs):
         # Get the JSON data
