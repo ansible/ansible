@@ -170,6 +170,11 @@ EXAMPLES = '''
     state: latest
     install_recommends: no
 
+- name: Upgrade all packages to the latest version
+  apt:
+    name: "*"
+    state: latest
+
 - name: Update all packages to the latest version
   apt:
     upgrade: dist
@@ -919,8 +924,15 @@ def main():
                         allow_unauthenticated=allow_unauthenticated,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
-        packages = p['package']
+        packages = [package for package in p['package'] if package != '*']
+        all_installed = '*' in p['package']
         latest = p['state'] == 'latest'
+
+        if latest and all_installed:
+            if packages:
+                module.fail_json(msg='unable to install additional packages when ugrading all installed packages')
+            upgrade(module, 'yes', force_yes, p['default_release'], dpkg_options)
+
         if packages:
             for package in packages:
                 if package.count('=') > 1:
