@@ -31,9 +31,12 @@
 # enable CredSSP optionally.
 #
 # Use option -AuthTypes to specify a list of authentication types to enable. By
-# default, Basic is enabled. Acceptable values are 'Basic' and 'CredSSP'. If
+# default, Basic is enabled. Acceptable values are 'Basic', 'CredSSP', and 'Kerberos'. If
 # the legacy option EnableCredSSP is enabled, CredSSP will be added to the AuthTypes
-# array.
+# array. Note that enabling CredSSP, Basic, or Kerberos over HTTP is not recommended
+# for production scenarios. Use the `-EnsureSslOnly` switch to make sure you only run
+# these auth types over SSL. Additionally, only Kerberos is the most secure authentication
+# method. See: https://msdn.microsoft.com/en-us/powershell/scripting/setup/ps-remoting-second-hop
 #
 # Use option -EnsureSslOnly switch to ensure that only the HTTPS listener is
 # enabled. This will disable any HTTP listeners and remove any firewall rules
@@ -66,13 +69,19 @@ Param (
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert,
     [switch]$EnableCredSSP,
-    [ValidateSet('Basic', 'CredSSP')]
+    [ValidateSet('Basic', 'CredSSP', 'Kerberos')]
     [string[]]$AuthTypes = @('Basic'),
     [switch]$EnsureSslOnly
 )
 
+# WinRM Default Ports
 Set-Variable WinRmHttpPort -Option Constant -Value 5985
 Set-Variable WinRmHttpsPort -Option Constant -Value 5986
+
+# WinRM Authentication Types
+Set-Variable AuthBasic -Option Constant -Value "Basic"
+Set-Variable AuthCredSSP -Option Constant -Value "CredSSP"
+Set-Variable AuthKerberos -Option Constant -Value "Kerberos"
 
 Function Write-Log
 {
@@ -150,7 +159,7 @@ $ErrorActionPreference = "Stop"
 
 # Get the ID and security principal of the current user account
 $myWindowsID=[System.Security.Principal.WindowsIdentity]::GetCurrent()
-$myWindowsPrincipal=new-object System.Security.Principal.WindowsPrincipal($myWindowsID)
+$myWindowsPrincipal = new-object System.Security.Principal.WindowsPrincipal($myWindowsID)
 
 # Get the security principal for the Administrator role
 $adminRole=[System.Security.Principal.WindowsBuiltInRole]::Administrator
@@ -292,32 +301,28 @@ if ($EnsureSslOnly -and ($listeners | Where {$_.Keys -like "TRANSPORT=HTTP"})) {
     }
 }
 
-# Check for basic authentication.
-$basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "Basic"}
-If (($basicAuthSetting.Value) -eq $false -and $AuthTypes -contains 'Basic')
-{
-    Write-Verbose "Enabling basic auth support."
-    Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $true
-    Write-Log "Enabled basic auth support."
-}
-Else
-{
-    Write-Verbose "Basic auth is already enabled."
+# Support backwards-compatible switch
+If ($EnableCredSSP -and $AuthTypes -notcontains $AuthCredSSP) {
+    $AuthTypes = @($AuthTypes) + $AuthCredSSP
 }
 
-# Support backwards-compatible switch
-If ($EnableCredSSP -and $AuthTypes -notcontains 'CredSSP') {
-    $AuthTypes = @($AuthTypes) + 'CredSSP'
-}
-# Check for CredSSP authentication.
-$credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "CredSSP"}
-If (($credsspAuthSetting.Value) -eq $false -and $AuthTypes -contains 'CredSSP')
-{
-    Write-Verbose "Enabling CredSSP auth support."
-    Enable-WSManCredSSP -Role Server -Force
-    Write-Log "Enabled CredSSP auth support."
-} Else {
-    Write-Verbose "CredSSP auth is already enabled."
+# Enable requested auth types
+foreach ($authType in $AuthTypes) {
+  $authSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where { $_.Name -eq $authType }
+
+  if ($authSetting.Value -eq $false) {
+    Write-Verbose "Enabling authentication [$authType] support."
+
+    if ($authType -ne $AuthCredSSP) {
+      Set-Item -Path "WSMan:\localhost\Service\Auth\$authType" -Value $true
+    } else {
+      Enable-WSManCredSSP -Role Server -Force
+    }
+
+    Write-Log "Enabled authentication [$authType] support."
+  } else {
+    Write-Verbose "[$authType] authentication is already enabled."
+  }
 }
 
 # Configure firewall to allow WinRM HTTPS connections.
@@ -341,6 +346,13 @@ ElseIf (!$httpsfirewallanyprofilerule)
 Else
 {
     Write-Verbose "Firewall rule already exists to allow WinRM HTTPS."
+}
+
+# Warn when AllowUnencrypted is set to True
+$allowUnencrypted = (Get-Item WSMan:\localhost\Service\AllowUnencrypted).Value -eq $true
+
+if ($allowUnencrypted) {
+    Write-Warning "AllowUnencrypted is set to True which is EXTREMELY insecure and not recommended for production environments"
 }
 
 # Test a remoting connection to localhost, which should work.
