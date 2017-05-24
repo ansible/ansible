@@ -25,43 +25,49 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: foreman_global_parameter
-short_description: Manage Foreman Global Parameter
+short_description: Manage Foreman Global Parameters
 description:
-    - Manage Foreman Global Parameter Entities
+    - "Manage Foreman Global Parameter Entities"
+    - "Uses https://github.com/SatelliteQE/nailgun"
 version_added: "2.4"
-author: "Matthias Dellweg (@mdellweg) and Bernhard Hopfenmueller(@Fobhep)"
+author:
+- "Bernhard Hopfenmueller(@Fobhep)"
+- "Matthias Dellweg (@mdellweg)"
 requirements:
-    - "nailgun >= 0.29.0"
-    - "python >= 2.6"
+    - nailgun >= 0.29.0
 options:
     server_url:
         description:
-            - URL of Foreman server
+        - URL of Foreman server
         required: true
     username:
         description:
-            - Username on Foreman server
+        - Username on Foreman server
         required: true
+        default: true
     password:
         description:
-            - Password for user accessing Foreman server
+        - Password for user accessing Foreman server
         required: true
     verify_ssl:
         description:
-            - Verify SSL of the Foreman server
+        - Verify SSL of the Foreman server
         required: false
     name:
         description:
-            - Name of the Global Parameter
+        - Name of the Global Parameter
         required: true
     value:
         description:
-            - Value of the Global Parameter
+        - Value of the Global Parameter
         required: false
     state:
         description:
-            - State of the Global Parameter
+        - State of the Global Parameter
         required: false
+        choices:
+        - present
+        - absent
 '''
 
 EXAMPLES = '''
@@ -85,7 +91,7 @@ EXAMPLES = '''
       state: absent
 '''
 
-RETURN = '''# '''
+RETURN = ''' # '''
 
 try:
     from nailgun.config import ServerConfig
@@ -114,15 +120,15 @@ class CommonParameter(
     pass
 
 
-def create_CommonParameter(name, value):
+def createCommonParameter(name, value):
     CommonParameter(name=name, value=value).create()
 
 
-def update_CommonParameter(name, value):
+def updateCommonParameter(name, value):
     CommonParameter(name=name, value=value).update()
 
 
-def create_Server(server_url, auth, verify_ssl):
+def createServer(server_url, auth, verify_ssl):
     ServerConfig(
         url=server_url,
         auth=auth,
@@ -130,11 +136,11 @@ def create_Server(server_url, auth, verify_ssl):
     ).save()
 
 
-def find_Entity(entity, **kwargs):
+def findEntity(entity, **kwargs):
     instance = entity(**kwargs)
     return instance.search(
         set(),
-        {'search': '%s="%s"' % (key, kwargs[key]) for key in kwargs}
+        dict(('search', '{0}="{1}"'.format(key, kwargs[key])) for key in kwargs)
     )
 
 
@@ -142,18 +148,19 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             server_url=dict(required=True),
-            username=dict(required=True, no_log=True),
+            username=dict(required=True),
             password=dict(required=True, no_log=True),
-            verify_ssl=dict(required=False, type='bool', default=False),
-            name=dict(required=True, no_log=False),
-            value=dict(required=False, no_log=False),
-            state=dict(required=True, no_log=False),
+            verify_ssl=dict(required=False, type='bool', default=True),
+            name=dict(required=True),
+            value=dict(required=False),
+            state=dict(required=True, choices=['present', 'absent']),
         ),
+        required_if=(['state', 'present', ['value']],),
         supports_check_mode=True
     )
     if not HAS_NAILGUN_PACKAGE:
         module.fail_json(
-            msg="""Missing required nailgun module (check docs or install
+            msg="""Missing required nailgun module (check docs or install)
             with: pip install nailgun"""
         )
 
@@ -167,28 +174,24 @@ def main():
     auth = (username, password)
     changed = False
     try:
-        create_Server(server_url, auth, verify_ssl)
-        param = find_Entity(CommonParameter, name=name)
+        createServer(server_url, auth, verify_ssl)
+        param = findEntity(CommonParameter, name=name)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Foreman server: %s " % e)
     try:
         if state == 'present':
-            if not value:
-                module.fail_json(msg='value is required when state=present')
             if len(param) == 1:
                 if param[0].value != value:
                     param[0].value = value
                     param[0].update()
                     changed = True
             else:
-                create_CommonParameter(name, value)
+                createCommonParameter(name, value)
                 changed = True
         elif state == 'absent':
             if len(param) == 1:
                 param[0].delete()
                 changed = True
-        else:
-            module.fail_json(msg='state can only be present or absent')
     except Exception as e:
         module.fail_json(msg=e)
 
