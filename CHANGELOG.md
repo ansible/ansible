@@ -15,6 +15,7 @@ Ansible Changes By Release
 * assemble fix to use safer os.join.path, avoids charset issues
 * fixed issue with solaris facts and i18n
 * added python2.4 compatiblity fix to sysctl module
+* Fix comparison of exisiting container security opts in the docker_container module
 
 ## 2.3 "Ramble On" - 2017-04-12
 
