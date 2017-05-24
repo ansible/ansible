@@ -33,7 +33,7 @@ $result = @{
 
 Try {
 
-  ForEach($profile -in $profiles)
+  ForEach($profile in $profiles)
 
   {
 
@@ -44,7 +44,7 @@ Try {
         if ($currentstate -eq $false)
         {
             Set-NetFirewallProfile -name $profile -Enabled true
-            $result.enabled = [System.Convert]::ToBoolean($true)
+            $result.enabled = $true
             $result.changed = $true
         }
       }
@@ -53,7 +53,7 @@ Try {
         if ($currentstate -eq $true)
         {
            Set-NetFirewallProfile -name $profile -Enabled false
-           $result.enabled = [System.Convert]::ToBoolean($false)
+           $result.enabled = $false
            $result.changed = $true
         }
 
