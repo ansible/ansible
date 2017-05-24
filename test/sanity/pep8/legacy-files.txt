@@ -44,7 +44,6 @@ lib/ansible/module_utils/database.py
 lib/ansible/module_utils/docker_common.py
 lib/ansible/module_utils/ec2.py
 lib/ansible/module_utils/eos.py
-lib/ansible/module_utils/f5_utils.py
 lib/ansible/module_utils/facts.py
 lib/ansible/module_utils/fortios.py
 lib/ansible/module_utils/gcdns.py
