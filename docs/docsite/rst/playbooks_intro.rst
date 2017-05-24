@@ -232,7 +232,7 @@ Just `Control-C` to kill it and run it again adding the appropriate password.
 
 .. _version_added: 2.4
 .. _order:
-You can also control the order in which hosts are run, the default is to follow the order supplied by the inventory::
+You can also control the order in which hosts are run. The default is to follow the order supplied by the inventory::
 
     - hosts: all
       order: sorted
@@ -243,13 +243,13 @@ You can also control the order in which hosts are run, the default is to follow 
 Possible values for order are:
 
 inventory:
-    The default, the order is 'as provided' by the inventory
+    The default. The order is 'as provided' by the inventory
 reverse_inventory:
     As the name implies, this reverses the order 'as provided' by the inventory
 sorted:
-    Hosts are albhabetically sorted by name
+    Hosts are alphabetically sorted by name
 reverse_sorted:
-    Reverse alphabetic ordered
+    Hosts are sorted by name in reverse alphabetical order
 shuffle:
     Hosts are randomly ordered each run
 
