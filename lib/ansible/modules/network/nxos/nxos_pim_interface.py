@@ -175,7 +175,7 @@ end_state:
             "jp_policy_out": "1", "jp_type_in": "routemap",
             "jp_type_out": null, "neighbor_policy": "test",
             "neighbor_type": "routemap", "sparse": true}
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
@@ -711,7 +711,7 @@ def main():
 
     results['proposed'] = proposed
     results['existing'] = existing
-    results['updates'] = cmds
+    results['commands'] = cmds
     results['changed'] = changed
     results['warnings'] = warnings
     results['end_state'] = end_state
