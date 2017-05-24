@@ -37,7 +37,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import module_utils_loader
-from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec
+from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
@@ -582,7 +582,8 @@ def _is_binary(b_module_data):
     return bool(start.translate(None, textchars))
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression):
+def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression, async_timeout, become,
+                       become_method, become_user, become_password, environment):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -742,8 +743,55 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # Windows text editors
         shebang = u'#!powershell'
 
-        # powershell wrapper build is currently handled in build_windows_module_payload, called in action
-        # _configure_module after this function returns.
+        exec_manifest = dict(
+            module_entry=to_text(base64.b64encode(b_module_data)),
+            powershell_modules=dict(),
+            module_args=module_args,
+            actions=['exec'],
+            environment=environment
+        )
+
+        exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
+
+        if async_timeout > 0:
+            exec_manifest["actions"].insert(0, 'async_watchdog')
+            exec_manifest["async_watchdog"] = to_text(base64.b64encode(to_bytes(async_watchdog)))
+            exec_manifest["actions"].insert(0, 'async_wrapper')
+            exec_manifest["async_wrapper"] = to_text(base64.b64encode(to_bytes(async_wrapper)))
+            exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
+            exec_manifest["async_timeout_sec"] = async_timeout
+
+        if become and become_method == 'runas':
+            exec_manifest["actions"].insert(0, 'become')
+            exec_manifest["become_user"] = become_user
+            exec_manifest["become_password"] = become_password
+            exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
+
+        lines = b_module_data.split(b'\n')
+        module_names = set()
+
+        requires_module_list = re.compile(r'(?i)^#requires \-module(?:s?) (.+)')
+
+        for line in lines:
+            # legacy, equivalent to #Requires -Modules powershell
+            if REPLACER_WINDOWS in line:
+                module_names.add(b'powershell')
+                # TODO: add #Requires checks for Ansible.ModuleUtils.X
+
+        for m in module_names:
+            m = to_text(m)
+            exec_manifest["powershell_modules"][m] = to_text(
+                base64.b64encode(
+                    to_bytes(
+                        _slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))
+                    )
+                )
+            )
+
+        # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
+        module_json = json.dumps(exec_manifest)
+
+        b_module_data = exec_wrapper.replace(b"$json_raw = ''", b"$json_raw = @'\r\n%s\r\n'@" % to_bytes(module_json))
 
     elif module_substyle == 'jsonargs':
         module_args_json = to_bytes(json.dumps(module_args))
@@ -767,7 +815,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     return (b_module_data, module_style, shebang)
 
 
-def modify_module(module_name, module_path, module_args, task_vars=dict(), module_compression='ZIP_STORED'):
+def modify_module(module_name, module_path, module_args, task_vars=dict(), module_compression='ZIP_STORED', async_timeout=0, become=False,
+                  become_method=None, become_user=None, become_password=None, environment=dict()):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -793,7 +842,10 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
         # read in the module source
         b_module_data = f.read()
 
-    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression)
+    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression,
+                                                                async_timeout=async_timeout, become=become, become_method=become_method,
+                                                                become_user=become_user, become_password=become_password,
+                                                                environment=environment)
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
@@ -820,54 +872,3 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
         shebang = to_bytes(shebang, errors='surrogate_or_strict')
 
     return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
-
-def build_windows_module_payload(module_name, module_path, b_module_data, module_args, task_vars, task, play_context, environment):
-    exec_manifest = dict(
-        module_entry=to_text(base64.b64encode(b_module_data)),
-        powershell_modules=dict(),
-        module_args=module_args,
-        actions=['exec'],
-        environment=environment
-    )
-
-    exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
-
-    if task.async > 0:
-        exec_manifest["actions"].insert(0, 'async_watchdog')
-        exec_manifest["async_watchdog"] = to_text(base64.b64encode(to_bytes(async_watchdog)))
-        exec_manifest["actions"].insert(0, 'async_wrapper')
-        exec_manifest["async_wrapper"] = to_text(base64.b64encode(to_bytes(async_wrapper)))
-        exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
-        exec_manifest["async_timeout_sec"] = task.async
-
-    if play_context.become and play_context.become_method=='runas':
-        exec_manifest["actions"].insert(0, 'become')
-        exec_manifest["become_user"] = play_context.become_user
-        exec_manifest["become_password"] = play_context.become_pass
-        exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
-
-    lines = b_module_data.split(b'\n')
-    module_names = set()
-
-    requires_module_list = re.compile(r'(?i)^#requires \-module(?:s?) (.+)')
-
-    for line in lines:
-        # legacy, equivalent to #Requires -Modules powershell
-        if REPLACER_WINDOWS in line:
-            module_names.add(b'powershell')
-            # TODO: add #Requires checks for Ansible.ModuleUtils.X
-
-    for m in module_names:
-        m = to_text(m)
-        exec_manifest["powershell_modules"][m] = to_text(
-            base64.b64encode(
-                to_bytes(
-                    _slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))
-                )
-            )
-        )
-
-    # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
-    b_module_data = json.dumps(exec_manifest)
-
-    return b_module_data

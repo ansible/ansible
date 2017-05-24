@@ -326,17 +326,17 @@ class Connection(ConnectionBase):
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        cmd_parts = self._shell._encode_script(exec_wrapper, as_list=True, strict_mode=False, preserve_rc=False)
+        cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
 
         # TODO: display something meaningful here
         display.vvv("EXEC (via pipeline wrapper)")
 
-        if not in_data:
-            payload = self._create_raw_wrapper_payload(cmd)
-        else:
-            payload = in_data
+        stdin_iterator = None
 
-        result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True, stdin_iterator=self._wrapper_payload_stream(payload))
+        if in_data:
+            stdin_iterator = self._wrapper_payload_stream(in_data)
+
+        result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True, stdin_iterator=stdin_iterator)
 
         result.std_out = to_bytes(result.std_out)
         result.std_err = to_bytes(result.std_err)
