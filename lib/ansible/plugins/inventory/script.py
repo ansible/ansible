@@ -113,12 +113,12 @@ class InventoryModule(BaseInventoryPlugin):
 
             group = None
             data_from_meta = None
-            for (group, gdata) in data.items():
+            for (group, gdata) in processed.items():
                 if group == '_meta':
                     if 'hostvars' in data:
                         data_from_meta = data['hostvars']
                 else:
-                    self.parse_group(group, gdata)
+                    self._parse_group(group, gdata)
 
             # in Ansible 1.3 and later, a "_meta" subelement may contain
             # a variable "hostvars" which contains a hash for each host
