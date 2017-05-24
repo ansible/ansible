@@ -443,8 +443,10 @@ class Facts(object):
     def get_selinux_facts(self):
         if not HAVE_SELINUX:
             self.facts['selinux'] = False
+            self.facts['selinux_python_present'] = False
             return
         self.facts['selinux'] = {}
+        self.facts['selinux_python_present'] = True
         if not selinux.is_selinux_enabled():
             self.facts['selinux']['status'] = 'disabled'
         else:
