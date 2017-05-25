@@ -33,7 +33,6 @@ from ansible.compat.tests import unittest
 from ansible import errors
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.parsing.vault import VaultLib
 from ansible.parsing import vault
 
 
@@ -215,7 +214,7 @@ class TestVaultCipherAes256(unittest.TestCase):
 
 class TestVaultLib(unittest.TestCase):
     def setUp(self):
-        self.v = VaultLib('test-vault-password')
+        self.v = vault.VaultLib('test-vault-password')
 
     def test_encrypt(self):
         plaintext = u'Some text to encrypt in a café'
