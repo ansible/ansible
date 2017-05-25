@@ -779,17 +779,18 @@ class TaskExecutor:
         '''
 
         module_prefix = self._task.action.split('_')[0]
+        metadata = self._shared_loader_obj.module_loader._load_module_metadata(
+                self._task.action, self._shared_loader_obj.module_loader.find_plugin(self._task.action))
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
-        if self._task.action in self._shared_loader_obj.action_loader:
+        if 'action_handler' in metadata:
+            handler_name = metadata['action_handler']
+        elif self._task.action in self._shared_loader_obj.action_loader:
             handler_name = self._task.action
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
             handler_name = module_prefix
         else:
-            # handler_name = 'normal'
-            plugin = self._shared_loader_obj.module_loader.find_plugin(self._task.action)
-            module = self._shared_loader_obj.module_loader._load_module_source(self._task.action, plugin)
-            handler_name = getattr(module, 'ANSIBLE_ACTION_HANDLER', 'normal')
+            handler_name = 'normal'
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,

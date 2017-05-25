@@ -21,7 +21,8 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'core',
+                    'action_handler': 'net_platform_agnostic'}
 
 
 DOCUMENTATION = """
@@ -107,5 +108,3 @@ commands:
     - hostname ios01
     - ip domain name test.example.com
 """
-
-ANSIBLE_ACTION_HANDLER = 'net_platform_agnostic'

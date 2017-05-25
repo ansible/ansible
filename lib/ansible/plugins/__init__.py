@@ -338,6 +338,11 @@ class PluginLoader:
                 module = imp.load_source(name, path, module_file)
         return module
 
+    def _load_module_metadata(self, name, path):
+        module = self._load_module_source(name, path)
+
+        return(getattr(module, 'ANSIBLE_METADATA'))
+
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
