@@ -28,7 +28,7 @@ import random
 from subprocess import call
 
 from ansible.errors import AnsibleError, AnsibleVaultError
-from ansible.parsing.vault.ciphers.loader import CIPHER_MAPPING, get_decrypt_cipher, get_encrypt_cipher
+from ansible.parsing.vault.ciphers.loader import CIPHER_MAPPING, CIPHER_ENCRYPT_WHITELIST, get_decrypt_cipher, get_encrypt_cipher
 
 from ansible.module_utils._text import to_text, to_bytes
 
@@ -39,8 +39,6 @@ except ImportError:
     display = Display()
 
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
-CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
 
 
 def is_encrypted(data):
@@ -414,7 +412,7 @@ class VaultEditor:
         except AnsibleError as e:
             raise AnsibleVaultError("%s for %s" % (to_bytes(e), to_bytes(filename)))
 
-        if cipher_name not in CIPHER_WRITE_WHITELIST:
+        if cipher_name not in CIPHER_ENCRYPT_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
             self._edit_file_helper(filename, existing_data=plaintext, force_save=True)
         else:
