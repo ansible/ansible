@@ -160,3 +160,12 @@
     that:
         - "not apt_result.changed"
         - "apt_result.failed"
+
+- name: autoclean during install
+  apt: pkg=hello state=present autoclean=yes
+
+- name: autoclean
+  apt: autoclean=yes
+
+- name: autoremove
+  apt: autoremove=yes
