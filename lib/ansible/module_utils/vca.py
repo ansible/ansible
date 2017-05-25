@@ -306,7 +306,7 @@ def vca_login(module):
     if service_type == 'vchs':
         version = '5.6'
     elif service_type == 'vcd' and not version:
-        version == '5.6'
+        version = '5.6'
 
     vca = VCA(host=host, username=username,
               service_type=SERVICE_MAP[service_type],

@@ -338,7 +338,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
                 try:
                     server.get()
                 except:
-                    server.status == 'ERROR'
+                    server.status = 'ERROR'
 
             if not filter(lambda s: s.status not in FINAL_STATUSES,
                           servers):
@@ -352,7 +352,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
         try:
             server.get()
         except:
-            server.status == 'ERROR'
+            server.status = 'ERROR'
         instance = rax_to_dict(server, 'server')
         if server.status == 'ACTIVE' or not wait:
             success.append(instance)
