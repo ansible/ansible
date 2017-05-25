@@ -442,7 +442,7 @@ class Facts(object):
 
     def get_selinux_facts(self):
         if not HAVE_SELINUX:
-            self.facts['selinux'] = False
+            self.facts['selinux'] = 'Please install libselinux-python module to enable this fact'
             return
         self.facts['selinux'] = {}
         if not selinux.is_selinux_enabled():
