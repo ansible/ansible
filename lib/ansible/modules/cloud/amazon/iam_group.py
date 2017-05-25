@@ -33,7 +33,7 @@ options:
     required: true
   managed_policy:
     description:
-      - A list of managed policy ARNs (can't use friendly names due to AWS API limitation) to attach to the group.
+      - A list of managed policy ARNs or friendly names to attach to the role. To embed an inline policy, use M(iam_policy).
     required: false
   users:
     description:
@@ -158,16 +158,15 @@ users:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import HAS_BOTO3
+
 import json
 import traceback
 
 try:
-    import boto3
     from botocore.exceptions import ClientError, ParamValidationError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
-
+    pass  # caught by imported HAS_BOTO3
 
 def compare_attached_group_policies(current_attached_policies, new_attached_policies):
 
@@ -196,12 +195,27 @@ def compare_group_members(current_group_members, new_group_members):
     else:
         return False
 
+def convert_friendly_names_to_arns(connection, module, policies):
+    if not any([not policy.startswith('arn:') for policy in policies]):
+        return policies
+    allpolicies = {}
+    paginator = connection.get_paginator('list_policies')
+
+    for response in paginator.paginate(PaginationConfig=dict(MaxItems=1000)):
+        for policy in response['Policies']:
+            allpolicies[policy['PolicyName']] = policy['Arn']
+            allpolicies[policy['Arn']] = policy['Arn']
+    try:
+        return [allpolicies[policy] for policy in policies]
+    except KeyError as e:
+        module.fail_json(msg="Couldn't find policy: " + str(e))
+
 
 def create_or_update_group(connection, module):
 
     params = dict()
     params['GroupName'] = module.params.get('name')
-    managed_policies = module.params.get('managed_policy')
+    managed_policies = convert_friendly_names_to_arns(connection, module, module.params.get('managed_policy'))
     users = module.params.get('users')
     purge_users = module.params.get('purge_users')
     purge_policy = module.params.get('purge_policy')
