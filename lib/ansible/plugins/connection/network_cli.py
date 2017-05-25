@@ -84,6 +84,9 @@ class Connection(_Connection):
 
         display.display('ssh connection done, setting terminal', log_only=True)
 
+        self._shell = self.ssh.invoke_shell()
+        self._shell.settimeout(self._play_context.timeout)
+
         network_os = self._play_context.network_os
         if not network_os:
             raise AnsibleConnectionFailure(
@@ -95,44 +98,38 @@ class Connection(_Connection):
         if not self._terminal:
             raise AnsibleConnectionFailure('network os %s is not supported' % network_os)
 
-        self._connected = True
-        display.display('ssh connection has completed successfully', log_only=True)
-
-    @ensure_connect
-    def open_shell(self):
-        display.display('attempting to open shell to device', log_only=True)
-        self._shell = self.ssh.invoke_shell()
-        self._shell.settimeout(self._play_context.timeout)
+        display.display('loaded terminal plugin for network_os %s' % network_os, log_only=True)
 
         self.receive()
 
-        if self._shell:
-            self._terminal.on_open_shell()
+        display.display('firing event: on_open_shell()', log_only=True)
+        self._terminal.on_open_shell()
 
         if getattr(self._play_context, 'become', None):
+            display.display('firing event: on_authorize', log_only=True)
             auth_pass = self._play_context.become_pass
             self._terminal.on_authorize(passwd=auth_pass)
 
-        display.display('shell successfully opened', log_only=True)
-        return (0, b'ok', b'')
+        self._connected = True
+        display.display('ssh connection has completed successfully', log_only=True)
 
     def close(self):
-        display.display('closing connection', log_only=True)
-        self.close_shell()
-        super(Connection, self).close()
-        self._connected = False
-
-    def close_shell(self):
-        """Closes the vty shell if the device supports multiplexing"""
-        display.display('closing shell on device', log_only=True)
+        """Close the active connection to the device
+        """
+        display.display("closing ssh connection to device", log_only=True)
         if self._shell:
+            display.display("firing event: on_close_shell()", log_only=True)
             self._terminal.on_close_shell()
 
         if self._shell:
             self._shell.close()
             self._shell = None
+            display.display("cli session is now closed", log_only=True)
 
-        return (0, b'ok', b'')
+        super(Connection, self).close()
+
+        self._connected = False
+        display.display("ssh connection has been closed successfully", log_only=True)
 
     def receive(self, obj=None):
         """Handles receiving of output from command"""
@@ -275,19 +272,9 @@ class Connection(_Connection):
             else:
                 # Prompt was a Sequence of strings.  Make sure they're byte strings
                 obj['prompt'] = [to_bytes(p, errors='surrogate_or_strict') for p in obj['prompt'] if p is not None]
-        if obj['command'] == b'close_shell()':
-            return self.close_shell()
-        elif obj['command'] == b'open_shell()':
-            return self.open_shell()
-        elif obj['command'] == b'prompt()':
-            return (0, self._matched_prompt, b'')
 
-        try:
-            if self._shell is None:
-                self.open_shell()
-        except AnsibleConnectionFailure as exc:
-            # FIXME: Feels like we should raise this rather than return it
-            return (1, b'', to_bytes(exc))
+        if obj['command'] == b'prompt()':
+            return (0, self._matched_prompt, b'')
 
         try:
             if not signal.getsignal(signal.SIGALRM):

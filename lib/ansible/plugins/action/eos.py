@@ -23,6 +23,7 @@ import os
 import sys
 import copy
 
+from ansible import constants as C
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.eos import ARGS_DEFAULT_VALUE, eos_argument_spec
 from ansible.module_utils.six import iteritems
@@ -73,12 +74,13 @@ class ActionModule(_ActionModule):
 
             if not os.path.exists(socket_path):
                 # start the connection if it isn't started
-                rc, out, err = connection.exec_command('open_shell()')
-                display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
-                if not rc == 0:
+                socket_path = connection.run()
+                if not socket_path:
                     return {'failed': True,
                             'msg': 'unable to open shell. Please see: ' +
                                    'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+
+                    display.vvvv('connected to socket in %s' % socket_path, pc.remote_addr)
             else:
                 # make sure we are in the right cli context which should be
                 # enable mode and not config module
@@ -126,7 +128,7 @@ class ActionModule(_ActionModule):
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
         cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user)
-        path = unfrackpath("$HOME/.ansible/pc")
+        path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
         return cp % dict(directory=path)
 
     def load_provider(self):
