@@ -647,6 +647,16 @@ class CentOSLinuxHostname(Hostname):
     distribution = 'Centos linux'
     strategy_class = RedHatStrategy
 
+class CloudlinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinux'
+    strategy_class = RedHatStrategy
+
+class CloudlinuxServerHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinux server'
+    strategy_class = RedHatStrategy
+
 class ScientificHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific'
