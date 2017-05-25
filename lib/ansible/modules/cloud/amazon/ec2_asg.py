@@ -689,10 +689,8 @@ def create_autoscaling_group(connection, module):
                 module.fail_json(msg="Failed to update Autoscaling Group.",
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
         # Update target groups if they are specified and one or more already exists
-        elif target_group_arns and as_group['TargetGroupARNs']:
+        elif target_group_arns is not None and as_group['TargetGroupARNs']:
             # Get differences
-            if not target_group_arns:
-                target_group_arns = list()
             wanted_tgs = set(target_group_arns)
             has_tgs = set(as_group['TargetGroupARNs'])
             # check if all requested are already existing
