@@ -28,7 +28,7 @@ import random
 from subprocess import call
 
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleVaultError
 from ansible.module_utils._text import to_bytes, to_text
 
 
@@ -55,7 +55,7 @@ except ImportError as e:
         from ansible.parsing.vault.ciphers._pycrypto import VaultAES256
     except ImportError as e:
         display.warning('aw shucks, couldnt even find pycrypto... bless your heart, im out...: %s ' % to_text(e))
-        raise AnsibleError(CRYPTO_UPGRADE)
+        raise AnsibleVaultError(CRYPTO_UPGRADE)
 
 # but we usually dont need a VaultAES implementation, so its ok if we dont find one. If we need it later and
 # dont have it, we will throw an error then.
@@ -78,10 +78,6 @@ CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
 CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
-
-
-class AnsibleVaultError(AnsibleError):
-    pass
 
 
 def is_encrypted(data):
@@ -177,7 +173,7 @@ class VaultLib:
         b_plaintext = to_bytes(plaintext, errors='surrogate_or_strict')
 
         if is_encrypted(b_plaintext):
-            raise AnsibleError("input is already encrypted")
+            raise AnsibleVaultError("input is already encrypted")
 
         # use the default cipher
         cipher = CIPHER_MAPPING[self.default_cipher_name]()
@@ -186,7 +182,7 @@ class VaultLib:
         b_ciphertext = cipher.encrypt(b_plaintext, self.b_password)
 
         # format the data for output to the file
-        b_vaulttext = self._format_output(b_ciphertext, cipher.name)
+        b_vaulttext = self._format_output(b_ciphertext, cipher.name, self.b_version)
         return b_vaulttext
 
     def decrypt(self, vaulttext, filename=None):
@@ -202,34 +198,34 @@ class VaultLib:
         b_vaulttext = to_bytes(vaulttext, errors='strict', encoding='utf-8')
 
         if self.b_password is None:
-            raise AnsibleError("A vault password must be specified to decrypt data")
+            raise AnsibleVaultError("A vault password must be specified to decrypt data")
 
-        if not is_encrypted(b_vaulttext):
-            msg = "input is not vault encrypted data"
+        try:
+            b_ciphertext, cipher_name, b_version = self.parse_vault_envelope(b_vaulttext)
+            return self.decrypt_ciphertext(b_ciphertext, cipher_name, b_version)
+        except AnsibleVaultError as e:
             if filename:
-                msg += "%s is not a vault encrypted file" % filename
-            raise AnsibleError(msg)
+                msg = "%s for filename %s" % (e, filename)
+                raise AnsibleVaultError(msg)
+            raise
 
-        # clean out header
-        b_vaulttext, cipher_name = self._split_header(b_vaulttext)
+    def decrypt_ciphertext(self, b_ciphertext, cipher_name, b_version):
 
         # create the cipher object
         if cipher_name in CIPHER_WHITELIST:
             this_cipher = CIPHER_MAPPING[cipher_name]()
         else:
-            raise AnsibleError("{0} cipher could not be found".format(cipher_name))
+            raise AnsibleVaultError("{0} cipher could not be found".format(cipher_name))
 
         # try to unencrypt vaulttext
-        b_plaintext = this_cipher.decrypt(b_vaulttext, self.b_password)
+        b_plaintext = this_cipher.decrypt(b_ciphertext, self.b_password)
         if b_plaintext is None:
             msg = "Decryption failed"
-            if filename:
-                msg += " on %s" % filename
-            raise AnsibleError(msg)
+            raise AnsibleVaultError(msg)
 
         return b_plaintext
 
-    def _format_output(self, b_ciphertext, cipher_name):
+    def _format_output(self, b_ciphertext, cipher_name, b_version):
         """ Add header and format to 80 columns
 
             :arg b_vaulttext: the encrypted and hexlified data as a byte string
@@ -238,9 +234,9 @@ class VaultLib:
         """
 
         if not cipher_name:
-            raise AnsibleError("the cipher must be set before adding a header")
+            raise AnsibleVaultError("the cipher must be set before adding a header")
 
-        header = b';'.join([b_HEADER, self.b_version,
+        header = b';'.join([b_HEADER, b_version,
                            to_bytes(cipher_name, 'utf-8', errors='strict')])
         b_vaulttext = [header]
         b_vaulttext += [b_ciphertext[i:i + 80] for i in range(0, len(b_ciphertext), 80)]
@@ -249,7 +245,7 @@ class VaultLib:
 
         return b_vaulttext
 
-    def _split_header(self, b_vaulttext):
+    def parse_vault_envelope(self, b_vaulttext):
         """Retrieve information about the Vault and clean the data
 
         When data is saved, it has a header prepended and is formatted into 80
@@ -258,19 +254,23 @@ class VaultLib:
         is suitable for processing by the Cipher classes.
 
         :arg b_vaulttext: byte str containing the data from a save file
-        :returns: a byte str suitable for passing to a Cipher class's
+        :returns: a 3 item tuple of
+            a byte str suitable for passing to a Cipher class's
             decrypt() function.
         """
         # used by decrypt
+        if not is_encrypted(b_vaulttext):
+            msg = "input is not vault encrypted data"
+            raise AnsibleVaultError(msg)
 
         b_tmpdata = b_vaulttext.split(b'\n')
         b_tmpheader = b_tmpdata[0].strip().split(b';')
 
-        self.b_version = b_tmpheader[1].strip()
+        b_version = b_tmpheader[1].strip()
         cipher_name = to_text(b_tmpheader[2].strip())
         b_ciphertext = b''.join(b_tmpdata[1:])
 
-        return b_ciphertext, cipher_name
+        return b_ciphertext, cipher_name, b_version
 
 
 class VaultEditor:
@@ -423,7 +423,7 @@ class VaultEditor:
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
-            raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
+            raise AnsibleVaultError("%s for %s" % (to_bytes(e), to_bytes(filename)))
         self.write_data(plaintext, output_file or filename, shred=False)
 
     def create_file(self, filename):
@@ -434,7 +434,7 @@ class VaultEditor:
         # FIXME: If we can raise an error here, we can probably just make it
         # behave like edit instead.
         if os.path.isfile(filename):
-            raise AnsibleError("%s exists, please use 'edit' instead" % filename)
+            raise AnsibleVaultError("%s exists, please use 'edit' instead" % filename)
 
         self._edit_file_helper(filename)
 
@@ -445,14 +445,15 @@ class VaultEditor:
         # follow the symlink
         filename = self._real_path(filename)
 
-        ciphertext = self.read_data(filename)
+        vaulttext = self.read_data(filename)
 
         try:
-            plaintext = self.vault.decrypt(ciphertext)
+            b_ciphertext, cipher_name, b_version = self.vault.parse_vault_envelope(vaulttext)
+            plaintext = self.vault.decrypt_ciphertext(b_ciphertext, cipher_name, b_version)
         except AnsibleError as e:
-            raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
+            raise AnsibleVaultError("%s for %s" % (to_bytes(e), to_bytes(filename)))
 
-        if self.vault.cipher_name not in CIPHER_WRITE_WHITELIST:
+        if cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
             self._edit_file_helper(filename, existing_data=plaintext, force_save=True)
         else:
@@ -466,7 +467,7 @@ class VaultEditor:
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
-            raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
+            raise AnsibleVaultError("%s for %s" % (to_bytes(e), to_bytes(filename)))
 
         return plaintext
 
@@ -483,11 +484,11 @@ class VaultEditor:
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
-            raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
+            raise AnsibleVaultError("%s for %s" % (to_bytes(e), to_bytes(filename)))
 
         # This is more or less an assert, see #18247
         if b_new_password is None:
-            raise AnsibleError('The value for the new_password to rekey %s with is not valid' % filename)
+            raise AnsibleVaultError('The value for the new_password to rekey %s with is not valid' % filename)
 
         new_vault = VaultLib(b_new_password)
         new_ciphertext = new_vault.encrypt(plaintext)
@@ -507,7 +508,7 @@ class VaultEditor:
                 with open(filename, "rb") as fh:
                     data = fh.read()
         except Exception as e:
-            raise AnsibleError(str(e))
+            raise AnsibleVaultError(str(e))
 
         return data
 
