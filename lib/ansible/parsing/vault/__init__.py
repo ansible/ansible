@@ -201,7 +201,7 @@ class VaultLib:
             raise AnsibleVaultError("A vault password must be specified to decrypt data")
 
         try:
-            b_ciphertext, cipher_name, b_version = self.parse_vault_envelope(b_vaulttext)
+            b_ciphertext, cipher_name, b_version = self.parse_envelope(b_vaulttext)
             return self.decrypt_ciphertext(b_ciphertext, cipher_name, b_version)
         except AnsibleVaultError as e:
             if filename:
@@ -245,7 +245,7 @@ class VaultLib:
 
         return b_vaulttext
 
-    def parse_vault_envelope(self, b_vaulttext):
+    def parse_envelope(self, b_vaulttext):
         """Retrieve information about the Vault and clean the data
 
         When data is saved, it has a header prepended and is formatted into 80
@@ -448,7 +448,7 @@ class VaultEditor:
         vaulttext = self.read_data(filename)
 
         try:
-            b_ciphertext, cipher_name, b_version = self.vault.parse_vault_envelope(vaulttext)
+            b_ciphertext, cipher_name, b_version = self.vault.parse_envelope(vaulttext)
             plaintext = self.vault.decrypt_ciphertext(b_ciphertext, cipher_name, b_version)
         except AnsibleError as e:
             raise AnsibleVaultError("%s for %s" % (to_bytes(e), to_bytes(filename)))

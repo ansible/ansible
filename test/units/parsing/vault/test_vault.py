@@ -258,7 +258,7 @@ class TestVaultLib(unittest.TestCase):
 
     def test_parse_envelope(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
-        b_ciphertext, cipher_name, b_version = self.v.parse_vault_envelope(b_vaulttext)
+        b_ciphertext, cipher_name, b_version = self.v.parse_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
         self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
@@ -323,7 +323,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
 6233623062366136310a633866373936313238333730653739323461656662303864663666653563
 3138'''
         b_data = to_bytes(enc_data, errors='strict', encoding='utf-8')
-        b_data, cipher_name, b_version = self.v.parse_vaulttext(b_data)
+        b_data, cipher_name, b_version = self.v.parse_envelope(b_data)
         foo = binascii.unhexlify(b_data)
         lines = foo.splitlines()
         # line 0 is salt, line 1 is hmac, line 2+ is ciphertext
