@@ -267,7 +267,6 @@ class TestVaultLib(unittest.TestCase):
     def test_encrypt_decrypt_aes(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        # self.v.cipher_name = u'AES'
         self.v.b_password = b'ansible'
         # AES encryption code has been removed, so this is old output for
         # AES-encrypted 'foobar' with password 'ansible'.
@@ -282,7 +281,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
     def test_encrypt_decrypt_aes256(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        #self.v.cipher_name = u'AES256'
         plaintext = u"foobar"
         b_vaulttext = self.v.encrypt(plaintext)
         b_plaintext = self.v.decrypt(b_vaulttext)
@@ -292,7 +290,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
     def test_encrypt_decrypt_aes256_existing_vault(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        #self.v.cipher_name = u'AES256'
         b_orig_plaintext = b"Setec Astronomy"
         vaulttext = u'''$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
@@ -350,7 +347,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
     def test_encrypt_encrypted(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        #self.v.cipher_name = u'AES'
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
         vaulttext = to_text(b_vaulttext, errors='strict')
         self.assertRaises(errors.AnsibleError, self.v.encrypt, b_vaulttext)
@@ -372,4 +368,3 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         plaintext = u"ansible"
         b_vaulttext = self.v.encrypt(plaintext)
         self.assertIn(b'AES256', b_vaulttext.splitlines()[0])
-        #self.assertEquals(self.v.cipher_name, "AES256")
