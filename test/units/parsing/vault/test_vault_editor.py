@@ -513,7 +513,6 @@ class TestVaultEditor(unittest.TestCase):
 
         os.unlink(v10_file.name)
 
-        assert vl.cipher_name == "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name
         assert error_hit is False, "error decrypting migrated 1.0 file"
         assert dec_data.strip() == b"foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
 

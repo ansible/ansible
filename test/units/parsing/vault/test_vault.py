@@ -242,9 +242,8 @@ class TestVaultLib(unittest.TestCase):
         self.assertTrue(self.v.is_encrypted(b_data), msg="encryption check on headered text failed")
 
     def test_format_output(self):
-        self.v.cipher_name = "TEST"
         b_ciphertext = b"ansible"
-        b_vaulttext = self.v._format_output(b_ciphertext)
+        b_vaulttext = self.v._format_output(b_ciphertext, "TEST")
         b_lines = b_vaulttext.split(b'\n')
         self.assertGreater(len(b_lines), 1, msg="failed to properly add header")
 
@@ -259,16 +258,16 @@ class TestVaultLib(unittest.TestCase):
 
     def test_split_header(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
-        b_ciphertext = self.v._split_header(b_vaulttext)
+        b_ciphertext, cipher_name = self.v._split_header(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
-        self.assertEqual(self.v.cipher_name, u'TEST', msg="cipher name was not properly set")
+        self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
         self.assertEqual(self.v.b_version, b"9.9", msg="version was not properly set")
 
     def test_encrypt_decrypt_aes(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        self.v.cipher_name = u'AES'
+        # self.v.cipher_name = u'AES'
         self.v.b_password = b'ansible'
         # AES encryption code has been removed, so this is old output for
         # AES-encrypted 'foobar' with password 'ansible'.
@@ -283,7 +282,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
     def test_encrypt_decrypt_aes256(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        self.v.cipher_name = u'AES256'
+        #self.v.cipher_name = u'AES256'
         plaintext = u"foobar"
         b_vaulttext = self.v.encrypt(plaintext)
         b_plaintext = self.v.decrypt(b_vaulttext)
@@ -293,7 +292,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
     def test_encrypt_decrypt_aes256_existing_vault(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        self.v.cipher_name = u'AES256'
+        #self.v.cipher_name = u'AES256'
         b_orig_plaintext = b"Setec Astronomy"
         vaulttext = u'''$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
@@ -315,7 +314,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
 
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        self.v.cipher_name = 'AES256'
+        #self.v.cipher_name = 'AES256'
         # plaintext = "Setec Astronomy"
         enc_data = '''$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
@@ -351,7 +350,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
     def test_encrypt_encrypted(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        self.v.cipher_name = u'AES'
+        #self.v.cipher_name = u'AES'
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
         vaulttext = to_text(b_vaulttext, errors='strict')
         self.assertRaises(errors.AnsibleError, self.v.encrypt, b_vaulttext)
@@ -371,5 +370,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         plaintext = u"ansible"
-        self.v.encrypt(plaintext)
-        self.assertEquals(self.v.cipher_name, "AES256")
+        b_vaulttext = self.v.encrypt(plaintext)
+        self.assertIn(b'AES256', b_vaulttext.splitlines()[0])
+        #self.assertEquals(self.v.cipher_name, "AES256")

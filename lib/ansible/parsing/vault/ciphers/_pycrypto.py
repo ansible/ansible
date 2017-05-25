@@ -91,13 +91,13 @@ CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the on
     " You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 
-def check_prereqs(self):
+def check_prereqs():
     if not HAS_AES or not HAS_COUNTER or not HAS_ANY_PBKDF2HMAC or not HAS_HASH:
         raise AnsibleError(CRYPTO_UPGRADE)
 
 
 class VaultAES:
-    cipher_name = 'AES'
+    name = 'AES'
 
     # this version has been obsoleted by the VaultAES256 class
     # which uses encrypt-then-mac (fixing order) and also improving the KDF used
@@ -106,7 +106,8 @@ class VaultAES:
 
     # Note: strings in this class should be byte strings by default.
 
-    def _check_prereqs(self):
+    @staticmethod
+    def check_prereqs():
         return check_prereqs()
 
     def __init__(self):
@@ -147,7 +148,7 @@ class VaultAES:
                            'deprecated since Ansible-1.5.  Use vault rekey FILENAME to '
                            'switch to the newer VaultAES256 format', version='2.3')
         # http://stackoverflow.com/a/14989032
-        self._check_prereqs()
+        self.check_prereqs()
 
         b_ciphertext = unhexlify(b_vaulttext)
 
@@ -200,12 +201,13 @@ class VaultAES256:
     Keys are derived using PBKDF2
     """
 
-    cipher_name = 'AES256'
+    name = 'AES256'
     # http://www.daemonology.net/blog/2009-06-11-cryptographic-right-answers.html
 
     # Note: strings in this class should be byte strings by default.
 
-    def _check_prereqs(self):
+    @staticmethod
+    def check_prereqs():
         return check_prereqs()
 
     @staticmethod
@@ -247,7 +249,7 @@ class VaultAES256:
         return b_key1, b_key2, hexlify(b_iv)
 
     def encrypt(self, b_plaintext, b_password):
-        self._check_prereqs()
+        self.check_prereqs()
 
         b_salt = os.urandom(32)
         b_key1, b_key2, b_iv = self._gen_key_initctr(b_password, b_salt)
@@ -280,7 +282,7 @@ class VaultAES256:
         return b_vaulttext
 
     def decrypt(self, b_vaulttext, b_password):
-        self._check_prereqs()
+        self.check_prereqs()
 
         # SPLIT SALT, DIGEST, AND DATA
         b_vaulttext = unhexlify(b_vaulttext)
@@ -332,5 +334,3 @@ class VaultAES256:
             else:
                 result |= ord(b_x) ^ ord(b_y)
         return result == 0
-
-
