@@ -86,7 +86,10 @@ class TaskQueueManager:
         # make sure the module path (if specified) is parsed and
         # added to the module_loader object
         if options.module_path is not None:
-            for path in options.module_path.split(os.pathsep):
+            module_paths = options.module_path
+            if isinstance(module_paths, list):
+                module_paths = os.pathsep.join(module_paths)
+            for path in module_paths.split(os.pathsep):
                 module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly
