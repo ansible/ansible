@@ -26,8 +26,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-# FIXME: DRY
-CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform." \
+PYCRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform." \
     " You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 CIPHER_DECRYPT_WHITELIST = frozenset((u'AES', u'AES256'))
@@ -38,22 +37,28 @@ CIPHER_MAPPING = {}
 VaultAES256 = VaultAES = None
 
 # We have to find a VaultAES256 implementation, error if we do not
+
+# FIXME: remove this and turn it on when we have a cryptography impl
+WARN_CRYPTOGRAPHY = False
+
 try:
     from ansible.parsing.vault.ciphers._cryptography import VaultAES256
 except ImportError as e:
-    display.warning('yo, cryptography is better than pycrypto but we failed to import it: %s' % to_text(e))
+    if WARN_CRYPTOGRAPHY:
+        display.warning('yo, cryptography is better than pycrypto but we failed to import it: %s' % to_text(e))
     try:
         from ansible.parsing.vault.ciphers._pycrypto import VaultAES256
     except ImportError as e:
-        display.warning('aw shucks, couldnt even find pycrypto... bless your heart, im out...: %s ' % to_text(e))
-        raise AnsibleVaultError(CRYPTO_UPGRADE)
+        # If we want to support not having either (assuming no vault usage) we could let this pass with warning
+        raise AnsibleVaultError("ansible-vault needs either 'PyCrypto' or 'cryptography' python modules but neither was found: %s" % to_text(e))
 
 # but we usually dont need a VaultAES implementation, so its ok if we dont find one. If we need it later and
 # dont have it, we will throw an error then.
 try:
     from ansible.parsing.vault.ciphers._cryptography import VaultAES
 except ImportError as e:
-    display.warning('yo, cryptography is better than pycrypto but we failed to import it: %s' % to_text(e))
+    if WARN_CRYPTOGRAPHY:
+        display.warning('yo, cryptography is better than pycrypto but we failed to import it: %s' % to_text(e))
     try:
         from ansible.parsing.vault.ciphers._pycrypto import VaultAES
     except ImportError as e:

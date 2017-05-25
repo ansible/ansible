@@ -88,10 +88,7 @@ class VaultLib:
 
     # The prereqs can be different for each cipher impl
     def _check_prereqs(self):
-        print('CIPHER_MAPPING: %s' % CIPHER_MAPPING)
         default_cipher_class = CIPHER_MAPPING[self.default_cipher_name]
-        print('default_cipher_class: %s' % default_cipher_class)
-        print('default_cipher_class.check_prereqs: %s' % default_cipher_class.check_prereqs)
         return default_cipher_class.check_prereqs()
 
     def __init__(self, b_password):
