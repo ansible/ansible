@@ -115,11 +115,18 @@ options:
   autoremove:
     description:
       - If C(yes), remove unused dependency packages for all module states except I(build-dep). It can also be used as the only option.
+      - Previous to version 2.4, autoclean was also an alias for autoremove, now it is its own separate command. See documentation for further information.
     required: false
     default: no
     choices: [ "yes", "no" ]
-    aliases: [ 'autoclean']
     version_added: "2.1"
+  autoclean:
+    description:
+      - If C(yes), cleans the local repository of retrieved package files that can no longer be downloaded.
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
   only_upgrade:
     description:
       - Only upgrade a package if it is already installed.
@@ -206,6 +213,14 @@ EXAMPLES = '''
 - name: Install a .deb package from the internet.
   apt:
     deb: https://example.com/python-ppq_0.1-1_all.deb
+
+- name: Remove useless packages from the cache
+  apt:
+    autoclean: yes
+
+- name: Remove dependencies that are no longer required
+  apt:
+    autoremove: yes
 '''
 
 RETURN = '''
@@ -668,6 +683,35 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
 
 
+def cleanup(m, purge=False, force=False, operation=None,
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+    if force:
+        force_yes = '--force-yes'
+    else:
+        force_yes = ''
+
+    if purge:
+        purge = '--purge'
+    else:
+        purge = ''
+
+    if m.check_mode:
+        check_arg = '--simulate'
+    else:
+        check_arg = ''
+
+    cmd = "%s -y %s %s %s %s %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, operation, check_arg)
+
+    rc, out, err = m.run_command(cmd)
+    if m._diff:
+        diff = parse_diff(out)
+    else:
+        diff = {}
+    if rc:
+        m.fail_json(msg="'apt-get %s' failed: %s" % (operation, err), stdout=out, stderr=err, rc=rc)
+    m.exit_json(changed=bool(len(diff)), stdout=out, stderr=err, diff=diff)
+
+
 def upgrade(m, mode="yes", force=False, default_release=None,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
     if m.check_mode:
@@ -815,7 +859,8 @@ def main():
             force=dict(default='no', type='bool'),
             upgrade=dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
             dpkg_options=dict(default=DPKG_OPTIONS),
-            autoremove=dict(type='bool', aliases=['autoclean']),
+            autoremove=dict(type='bool', default='no'),
+            autoclean=dict(type='bool', default='no'),
             only_upgrade=dict(type='bool', default=False),
             allow_unauthenticated=dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
         ),
@@ -860,6 +905,7 @@ def main():
     allow_unauthenticated = p['allow_unauthenticated']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
+    autoclean = p['autoclean']
 
     # Deal with deprecated aliases
     if p['state'] == 'installed':
@@ -924,8 +970,9 @@ def main():
                         allow_unauthenticated=allow_unauthenticated,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
-        packages = [package for package in p['package'] if package != '*']
-        all_installed = '*' in p['package']
+        unfiltered_packages = p['package'] or ()
+        packages = [package for package in unfiltered_packages if package != '*']
+        all_installed = '*' in unfiltered_packages
         latest = p['state'] == 'latest'
 
         if latest and all_installed:
@@ -939,6 +986,12 @@ def main():
                     module.fail_json(msg="invalid package spec: %s" % package)
                 if latest and '=' in package:
                     module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
+
+        if not packages:
+            if autoclean:
+                cleanup(module, p['purge'], force=force_yes, operation='autoclean', dpkg_options=dpkg_options)
+            if autoremove:
+                cleanup(module, p['purge'], force=force_yes, operation='autoremove', dpkg_options=dpkg_options)
 
         if p['state'] in ('latest', 'present', 'build-dep'):
             state_upgrade = False
