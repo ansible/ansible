@@ -227,3 +227,8 @@ class AnsibleActionSkip(AnsibleRuntimeError):
 class AnsibleActionFail(AnsibleRuntimeError):
     ''' an action runtime failure'''
     pass
+
+
+class AnsibleVaultError(AnsibleRuntimeError):
+    ''' a vault failure '''
+    pass
