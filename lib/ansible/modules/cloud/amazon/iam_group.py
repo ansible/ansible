@@ -170,6 +170,7 @@ try:
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
+
 def compare_attached_group_policies(current_attached_policies, new_attached_policies):
 
     # If new_attached_policies is None it means we want to remove all policies
@@ -196,6 +197,7 @@ def compare_group_members(current_group_members, new_group_members):
         return True
     else:
         return False
+
 
 def convert_friendly_names_to_arns(connection, module, policies):
     if not any([not policy.startswith('arn:') for policy in policies]):
