@@ -82,7 +82,7 @@ class VaultCLI(CLI):
             if name in ('encrypt', 'decrypt', 'encrypt_string'):
                 subparser.add_argument('--output', default=None, dest='output_file',
                     help='output file name for encrypt or decrypt; use - for stdout',
-                    type=CLI.expand_tilde)
+                    type=CLI.unfrack_path)
 
             if name in ('encrypt_string',):
                 subparser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
@@ -100,7 +100,7 @@ class VaultCLI(CLI):
 
             if name in ('rekey',):
                 subparser.add_argument('--new-vault-password-file', dest='new_vault_password_file',
-                    help="new vault password file for rekey", type=CLI.expand_tilde)
+                    help="new vault password file for rekey", type=CLI.unfrack_path)
 
         super(VaultCLI, self).parse()
 
