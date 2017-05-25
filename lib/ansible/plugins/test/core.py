@@ -131,15 +131,20 @@ class TestModule(object):
 
     def tests(self):
         return {
+
             # failure testing
-            'failed': failed,
-            'succeeded': success,
+            'failed'    : failed,
+            'failure'   : failed,
+            'success'   : success,
+            'succeeded' : success,
 
             # changed testing
-            'changed': changed,
+            'changed' : changed,
+            'change'  : changed,
 
             # skip testing
-            'skipped': skipped,
+            'skipped' : skipped,
+            'skip'    : skipped,
 
             # regex
             'match': match,
