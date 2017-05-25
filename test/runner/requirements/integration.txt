@@ -6,4 +6,5 @@ paramiko
 passlib
 pexpect
 pycrypto
+pyOpenSSL
 pyyaml
