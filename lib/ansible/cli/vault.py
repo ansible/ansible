@@ -24,6 +24,7 @@ import os
 import sys
 
 from ansible.cli import CLI
+import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
@@ -76,6 +77,8 @@ class VaultCLI(CLI):
 
         for name in self.VALID_ACTIONS:
             subparser = subparsers.add_parser(name, parents=[vault_parent])
+            subparser.add_argument('-v','--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
+                help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
             if name in ('encrypt', 'decrypt', 'encrypt_string'):
                 subparser.add_argument('--output', default=None, dest='output_file',
                     help='output file name for encrypt or decrypt; use - for stdout',
@@ -91,9 +94,9 @@ class VaultCLI(CLI):
                 subparser.add_argument('--stdin-name', dest='encrypt_string_stdin_name',
                                        default=None,
                                        help="Specify the variable name for stdin")
-                subparser.add_argument('args', metavar='string_to_encrypt', help='String to encrypt')
+                subparser.add_argument('args', metavar='string_to_encrypt', help='String to encrypt', nargs='*')
             else:
-                subparser.add_argument('args', metavar='file_name', help='File name')
+                subparser.add_argument('args', metavar='file_name', help='File name', nargs='*')
 
             if name in ('rekey',):
                 subparser.add_argument('--new-vault-password-file', dest='new_vault_password_file',
@@ -111,8 +114,8 @@ class VaultCLI(CLI):
         can_output = ['encrypt', 'decrypt', 'encrypt_string']
 
         if self.action not in can_output:
-            if self.options.output_file:
-                raise AnsibleOptionsError("The --output option can be used only with ansible-vault %s" % '/'.join(can_output))
+            #if self.options.output_file:
+            #    raise AnsibleOptionsError("The --output option can be used only with ansible-vault %s" % '/'.join(can_output))
             if len(self.args) == 0:
                 raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
         else:
@@ -145,7 +148,7 @@ class VaultCLI(CLI):
             # read vault_pass from a file
             self.b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader)
 
-        if self.options.new_vault_password_file:
+        if self.action == 'rekey' and self.options.new_vault_password_file:
             # for rekey only
             self.b_new_vault_pass = CLI.read_vault_password_file(self.options.new_vault_password_file, loader)
 

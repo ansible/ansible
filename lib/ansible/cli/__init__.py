@@ -401,7 +401,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             argcomplete.autocomplete(self.parser, always_complete_options=False, validator=lambda i, k: True)
 
         self.options = self.parser.parse_args(self.args[1:])
-        self.args = getattr(self.options, 'args', [])
+        self.args = getattr(self.options, 'args', []) or []
 
         # process tags
         if hasattr(self.options, 'tags') and not self.options.tags:
