@@ -19,6 +19,20 @@
     that:
     - config|success
 
+- name: test update configuration string in check mode
+  cs_configuration:
+    name: network.loadbalancer.haproxy.stats.visibility
+    value: all
+  register: config
+  check_mode: true
+- name: verify test update configuration string in check mode
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "global"
+    - config.name == "network.loadbalancer.haproxy.stats.visibility"
+
 - name: test update configuration string
   cs_configuration:
     name: network.loadbalancer.haproxy.stats.visibility
@@ -68,6 +82,20 @@
     that:
     - config|success
 
+- name: test update configuration bool in check mode
+  cs_configuration:
+    name: vmware.recycle.hung.wokervm
+    value: true
+  register: config
+  check_mode: true
+- name: verify test update configuration bool in check mode
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "false"
+    - config.name == "vmware.recycle.hung.wokervm"
+
 - name: test update configuration bool
   cs_configuration:
     name: vmware.recycle.hung.wokervm
@@ -116,6 +144,20 @@
   assert:
     that:
     - config|success
+
+- name: test update configuration float in check mode
+  cs_configuration:
+    name: agent.load.threshold
+    value: 0.81
+  register: config
+  check_mode: true
+- name: verify update configuration float in check mode
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "0.7"
+    - config.name == "agent.load.threshold"
 
 - name: test update configuration float
   cs_configuration:
