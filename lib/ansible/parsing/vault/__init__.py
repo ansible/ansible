@@ -182,7 +182,7 @@ class VaultLib:
         b_ciphertext = cipher.encrypt(b_plaintext, self.b_password)
 
         # format the data for output to the file
-        b_vaulttext = self._format_output(b_ciphertext, cipher.name, self.b_version)
+        b_vaulttext = self.format_envelope(b_ciphertext, cipher.name, self.b_version)
         return b_vaulttext
 
     def decrypt(self, vaulttext, filename=None):
@@ -225,7 +225,7 @@ class VaultLib:
 
         return b_plaintext
 
-    def _format_output(self, b_ciphertext, cipher_name, b_version):
+    def format_envelope(self, b_ciphertext, cipher_name, b_version):
         """ Add header and format to 80 columns
 
             :arg b_vaulttext: the encrypted and hexlified data as a byte string

@@ -241,9 +241,9 @@ class TestVaultLib(unittest.TestCase):
         b_data = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
         self.assertTrue(self.v.is_encrypted(b_data), msg="encryption check on headered text failed")
 
-    def test_format_output(self):
+    def test_format_envelope(self):
         b_ciphertext = b"ansible"
-        b_vaulttext = self.v._format_output(b_ciphertext, "TEST", self.v.b_version)
+        b_vaulttext = self.v.format_envelope(b_ciphertext, "TEST", self.v.b_version)
         b_lines = b_vaulttext.split(b'\n')
         self.assertGreater(len(b_lines), 1, msg="failed to properly add header")
 
@@ -342,7 +342,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         b_ciphertext_data = binascii.hexlify(b_ciphertext)
         b_payload = b'\n'.join([b_salt, b_hmac, b_ciphertext_data])
         # reformat
-        b_invalid_ciphertext = self.v._format_output(b_payload, cipher_name, b_version)
+        b_invalid_ciphertext = self.v.format_envelope(b_payload, cipher_name, b_version)
 
         # assert we throw an error
         self.v.decrypt(b_invalid_ciphertext)
