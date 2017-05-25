@@ -66,13 +66,11 @@ from abc import ABCMeta, abstractmethod
 import os
 import os.path
 import re
-from subprocess import Popen, PIPE, call
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts import Distribution
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import with_metaclass
-from ansible.module_utils._text import to_native
 
 
 class Locale(object):
@@ -163,11 +161,9 @@ class Distrib(with_metaclass(ABCMeta, object)):
 
     def is_present(self, locale):
         """Check if the given locale is currently installed."""
+        _, stdout, _ = self.module.run_command(['locale', '--all'], use_unsafe_shell=True)
 
-        output = Popen(['locale', '--all'], stdout=PIPE).communicate()[0]
-        output = to_native(output)
-
-        return locale.normalized in output.splitlines()
+        return locale.normalized in stdout.splitlines()
 
     @abstractmethod
     def get_default_codeset(self, locale):
@@ -290,7 +286,7 @@ class Debian(Distrib):
             with open('/etc/locale.gen', 'a') as locale_gen:
                 locale_gen.write('%s %s\n' % (lang, locale.codeset))
 
-        localeGenExitValue = call("locale-gen")
+        localeGenExitValue, _, _ = self.module.run_command('locale-gen')
         if localeGenExitValue!=0:
             raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
@@ -353,7 +349,7 @@ class RedHat(Distrib):
 
         cmd.append(locale.name)
 
-        ret = call(cmd)
+        ret, _, _ = self.module.run_command(cmd)
 
         if ret != 0:
             raise EnvironmentError(ret, "'localedef' failed to execute, it returned {0}".format(ret))
@@ -362,7 +358,7 @@ class RedHat(Distrib):
         # Delete locale. 'localedef' exits with 0 when the locale isn't
         # defined.
 
-        ret = call(['localedef', '--delete-from-archive', locale.normalized])
+        ret, _, _ = self.module.run_command(['localedef', '--delete-from-archive', locale.normalized])
 
         if ret != 0:
             raise EnvironmentError(ret, "'localedef' failed to execute, it returned {0}".format(ret))
