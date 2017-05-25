@@ -243,7 +243,7 @@ class TestVaultLib(unittest.TestCase):
 
     def test_format_output(self):
         b_ciphertext = b"ansible"
-        b_vaulttext = self.v._format_output(b_ciphertext, "TEST")
+        b_vaulttext = self.v._format_output(b_ciphertext, "TEST", self.v.b_version)
         b_lines = b_vaulttext.split(b'\n')
         self.assertGreater(len(b_lines), 1, msg="failed to properly add header")
 
@@ -256,13 +256,13 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual(b_header_parts[1], self.v.b_version, msg="header version is incorrect")
         self.assertEqual(b_header_parts[2], b'TEST', msg="header does not end with cipher name")
 
-    def test_split_header(self):
+    def test_parse_envelope(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
-        b_ciphertext, cipher_name = self.v._split_header(b_vaulttext)
+        b_ciphertext, cipher_name, b_version = self.v.parse_vault_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
         self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
-        self.assertEqual(self.v.b_version, b"9.9", msg="version was not properly set")
+        self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
     def test_encrypt_decrypt_aes(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
@@ -314,7 +314,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
 
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
-        #self.v.cipher_name = 'AES256'
+        # self.v.cipher_name = 'AES256'
         # plaintext = "Setec Astronomy"
         enc_data = '''$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
@@ -323,7 +323,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
 6233623062366136310a633866373936313238333730653739323461656662303864663666653563
 3138'''
         b_data = to_bytes(enc_data, errors='strict', encoding='utf-8')
-        b_data = self.v._split_header(b_data)
+        b_data, cipher_name, b_version = self.v.parse_vaulttext(b_data)
         foo = binascii.unhexlify(b_data)
         lines = foo.splitlines()
         # line 0 is salt, line 1 is hmac, line 2+ is ciphertext
@@ -331,7 +331,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         b_hmac = lines[1]
         b_ciphertext_data = b'\n'.join(lines[2:])
 
-        b_ciphertext = binascii.unhexlify(b_ciphertext_data)
+        b_ciphertext = binascii.unhexlify(b_ciphertext_data, cipher_name, b_version)
         # b_orig_ciphertext = b_ciphertext[:]
 
         # now muck with the text
@@ -342,7 +342,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         b_ciphertext_data = binascii.hexlify(b_ciphertext)
         b_payload = b'\n'.join([b_salt, b_hmac, b_ciphertext_data])
         # reformat
-        b_invalid_ciphertext = self.v._format_output(b_payload)
+        b_invalid_ciphertext = self.v._format_output(b_payload, cipher_name, b_version)
 
         # assert we throw an error
         self.v.decrypt(b_invalid_ciphertext)
