@@ -983,6 +983,8 @@ class CloudFrontValidationManager(object):
                         'domain_name': default_origin_domain_name,
                         'origin_path': (default_origin_path or '')
                     }]
+                else:
+                    origins = []
             self.validate_is_list(origins, 'origins')
             quantity = len(origins)
             if(quantity == 0 and default_origin_domain_name is None and
