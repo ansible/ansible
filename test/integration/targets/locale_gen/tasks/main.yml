@@ -43,3 +43,26 @@
       normalized: 'nl_BE.iso885915@euro'
   loop_control:
     loop_var: 'locale'
+
+
+- block:
+    - name: Make sure a non existing locale can not be installed
+      locale_gen:
+        name: 'NON_EXISTING_LOCALE'
+        state: present
+      ignore_errors: True
+      register: install_non_existing
+
+    - assert:
+        that: ['{{ install_non_existing | failed }}']
+
+    - name: Make sure a non existing locale isn't removed
+      locale_gen:
+        name: 'NON_EXISTING_LOCALE'
+        state: absent
+      register: remove_non_existing
+
+    - assert:
+        that: ['{{ remove_non_existing | success }}']
+
+  when: ansible_distribution in ('Debian', 'RedHat',)
