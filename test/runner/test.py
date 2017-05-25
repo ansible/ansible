@@ -193,6 +193,14 @@ def parse_args():
                              metavar='TASK',
                              help='start at the specified task')
 
+    integration.add_argument('--tags',
+                             metavar='TAGS',
+                             help='only run plays and tasks tagged with these values')
+
+    integration.add_argument('--skip-tags',
+                             metavar='TAGS',
+                             help='only run plays and tasks whose tags do not match these values')
+
     integration.add_argument('--allow-destructive',
                              action='store_true',
                              help='allow destructive tests (--local and --tox only)')
