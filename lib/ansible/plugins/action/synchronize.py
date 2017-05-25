@@ -311,17 +311,10 @@ class ActionModule(ActionBase):
             return dict(failed=True,
                     msg="synchronize requires both src and dest parameters are set")
 
+        # Determine if we need a user@
+        user = None
         if not dest_is_local:
-            # Private key handling
-            private_key = self._play_context.private_key_file
-
-            if private_key is not None:
-                private_key = os.path.expanduser(private_key)
-                _tmp_args['private_key'] = private_key
-
             # Src and dest rsync "path" handling
-            # Determine if we need a user@
-            user = None
             if boolean(_tmp_args.get('set_remote_user', 'yes')):
                 if use_delegate:
                     user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_ssh_user', None)
@@ -330,6 +323,13 @@ class ActionModule(ActionBase):
 
                 else:
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+
+            # Private key handling
+            private_key = self._play_context.private_key_file
+
+            if private_key is not None:
+                private_key = os.path.expanduser(private_key)
+                _tmp_args['private_key'] = private_key
 
             # use the mode to define src and dest's url
             if _tmp_args.get('mode', 'push') == 'pull':
