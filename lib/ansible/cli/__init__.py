@@ -284,7 +284,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             CLI._vault_opts(parser)
 
         if subset_opts:
-            parser.add_argument('-t', '--tags', dest='tags', default=['all'], action='append',
+            parser.add_argument('-t', '--tags', dest='tags', default=[], action='append',
                 help="only run plays and tasks tagged with these values")
             parser.add_argument('--skip-tags', dest='skip_tags', default=[], action='append',
                 help="only run plays and tasks whose tags do not match these values")
@@ -402,6 +402,12 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         self.options = self.parser.parse_args(self.args[1:])
         self.args = getattr(self.options, 'args', [])
+
+        # process tags
+        if hasattr(self.options, 'tags') and not self.options.tags:
+            # parser defaults does not do what's expected
+            self.options.tags = ['all']
+
         if hasattr(self.options, 'tags') and self.options.tags:
             if not C.MERGE_MULTIPLE_CLI_TAGS:
                 if len(self.options.tags) > 1:
