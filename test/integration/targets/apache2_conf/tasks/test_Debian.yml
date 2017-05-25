@@ -1,0 +1,15 @@
+---
+- name: Test 'conf'
+  include: test_conf.yml
+
+- name: Test 'site'
+  include: test_site.yml
+
+- name: Test 'mod'
+  include: {{ item }}
+  with_items:
+    - case_mod.yml
+    - case_mod_enable_nonexistent.yml
+    - case_mod_disable_nonexistent.yml
+    - case_mod_enable_shortname.yml
+    - case_mod_disable_shortname.yml

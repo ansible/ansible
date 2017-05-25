@@ -1,0 +1,14 @@
+---
+- name: disable nonexistent mod
+  apache2_conf:
+    type: mod
+    name: mod_nonexistent.load
+    state: absent
+  register: disable_nonexistent
+  ignore_errors: True
+
+- name: ensure failed on nonexistent conf disable
+  assert:
+    that:
+      - 'disable_nonexistent|failed'
+      - 'not disable_nonexistent.changed'

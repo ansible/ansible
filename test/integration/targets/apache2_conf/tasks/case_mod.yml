@@ -1,0 +1,48 @@
+---
+- name: disable disabled mod
+  apache2_conf:
+    type: mod
+    name: mod_example.load
+    state: absent
+  register: disable_disabled
+
+- name: ensure apache2_conf is idempotent
+  assert:
+    that:
+      - 'not disable_disabled.changed'
+
+- name: enable mod
+  apache2_conf:
+    type: mod
+    name: mod_example.load
+    state: present
+  register: enable
+
+- name: ensure changed on successful enable
+  assert:
+    that:
+      - 'enable.changed'
+
+- name: enable enabled mod
+  apache2_conf:
+    type: mod
+    name: mod_example.load
+    state: present
+  register: enable_enabled
+
+- name: ensure apache2_conf is idempotent
+  assert:
+    that:
+      - 'not enable_enabled.changed'
+
+- name: disable mod
+  apache2_conf:
+    type: mod
+    name: mod_example.load
+    state: absent
+  register: disable
+
+- name: ensure changed on successful disable
+  assert:
+    that:
+      - 'disable.changed'
