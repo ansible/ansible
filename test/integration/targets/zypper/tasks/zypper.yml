@@ -211,10 +211,14 @@
 # test simultaneous remove and install using +- prefixes
 
 - name: install hello to prep next task
-  zypper: name=hello, state=present
+  zypper:
+    name: hello
+    state: present
 
 - name: remove metamail to prep next task
-  zypper: name=hello, state=absent
+  zypper:
+    name: metamail
+    state: absent
 
 - name: install and remove in the same run, with +- prefix
   zypper: 

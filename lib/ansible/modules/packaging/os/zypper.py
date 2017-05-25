@@ -180,9 +180,21 @@ EXAMPLES = '''
 '''
 
 import xml
-from ansible.module_utils.pycompat24 import get_exception
-from xml.dom.minidom import parseString as parseXML
 import re
+from xml.dom.minidom import parseString as parseXML
+from ansible.module_utils.six import iteritems
+
+
+class Package:
+    def __init__(self, name, prefix, version):
+        self.name = name
+        self.prefix = prefix
+        self.version = version
+        self.shouldinstall = (prefix == '+')
+
+    def __str__(self):
+        return self.prefix + self.name + self.version
+
 
 
 def split_name_version(name):
@@ -202,35 +214,35 @@ def split_name_version(name):
     if name[0] in ['-', '~', '+']:
         prefix = name[0]
         name = name[1:]
+    if prefix == '~':
+        prefix = '-'
 
     version_check = re.compile('^(.*?)((?:<|>|<=|>=|=)[0-9.-]*)?$')
     try:
         reres = version_check.match(name)
         name, version = reres.groups()
+        if version is None:
+            version = ''
         return prefix, name, version
     except:
-        return prefix, name, None
+        return prefix, name, ''
 
 
-def get_want_state(m, names, remove=False):
-    packages_install = {}
-    packages_remove = {}
+def get_want_state(names, remove=False):
+    packages = []
     urls = []
     for name in names:
         if '://' in name or name.endswith('.rpm'):
             urls.append(name)
         else:
             prefix, pname, version = split_name_version(name)
-            if prefix in ['-', '~']:
-                packages_remove[pname] = version
-            elif prefix == '+':
-                packages_install[pname] = version
-            else:
+            if prefix not in ['-', '+']:
                 if remove:
-                    packages_remove[pname] = version
+                    prefix = '-'
                 else:
-                    packages_install[pname] = version
-    return packages_install, packages_remove, urls
+                    prefix = '+'
+            packages.append(Package(pname, prefix, version))
+    return packages, urls
 
 
 def get_installed_state(m, packages):
@@ -238,7 +250,7 @@ def get_installed_state(m, packages):
 
     cmd = get_cmd(m, 'search')
     cmd.extend(['--match-exact', '--details', '--installed-only'])
-    cmd.extend(packages)
+    cmd.extend([p.name for p in packages])
     return parse_zypper_xml(m, cmd, fail_not_found=False)[0]
 
 
@@ -340,42 +352,35 @@ def set_diff(m, retvals, result):
 def package_present(m, name, want_latest):
     "install and update (if want_latest) the packages in name_install, while removing the packages in name_remove"
     retvals = {'rc': 0, 'stdout': '', 'stderr': ''}
-    name_install, name_remove, urls = get_want_state(m, name)
-
-    # if a version string is given, pass it to zypper
-    install_version = [p+name_install[p] for p in name_install if name_install[p]]
-    remove_version = [p+name_remove[p] for p in name_remove if name_remove[p]]
+    packages, urls = get_want_state(name)
 
     # add oldpackage flag when a version is given to allow downgrades
-    if install_version or remove_version:
+    if any(p.version for p in packages):
         m.params['oldpackage'] = True
 
     if not want_latest:
         # for state=present: filter out already installed packages
-        install_and_remove = name_install.copy()
-        install_and_remove.update(name_remove)
-        prerun_state = get_installed_state(m, install_and_remove)
+        # if a version is given leave the package in to let zypper handle the version
+        # resolution
+        packageswithoutversion = [p for p in packages if not p.version]
+        prerun_state = get_installed_state(m, packageswithoutversion)
         # generate lists of packages to install or remove
-        name_install = [p for p in name_install if p not in prerun_state]
-        name_remove = [p for p in name_remove if p in prerun_state]
-        if not any((name_install, name_remove, urls, install_version, remove_version)):
-            # nothing to install/remove and nothing to update
-            return None, retvals
+        packages = [p for p in packages if p.shouldinstall != (p.name in prerun_state)]
+
+    if not packages and not urls:
+        # nothing to install/remove and nothing to update
+        return None, retvals
 
     # zypper install also updates packages
     cmd = get_cmd(m, 'install')
     cmd.append('--')
     cmd.extend(urls)
-
-    # pass packages with version information
-    cmd.extend(install_version)
-    cmd.extend(['-%s' % p for p in remove_version])
-
+    # pass packages to zypper
     # allow for + or - prefixes in install/remove lists
+    # also add version specifier if given
     # do this in one zypper run to allow for dependency-resolution
     # for example "-exim postfix" runs without removing packages depending on mailserver
-    cmd.extend(name_install)
-    cmd.extend(['-%s' % p for p in name_remove])
+    cmd.extend([str(p) for p in packages])
 
     retvals['cmd'] = cmd
     result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
@@ -402,22 +407,21 @@ def package_absent(m, name):
     "remove the packages in name"
     retvals = {'rc': 0, 'stdout': '', 'stderr': ''}
     # Get package state
-    name_install, name_remove, urls = get_want_state(m, name, remove=True)
-    if name_install:
+    packages, urls = get_want_state(name, remove=True)
+    if any(p.prefix == '+' for p in packages):
         m.fail_json(msg="Can not combine '+' prefix with state=remove/absent.")
     if urls:
         m.fail_json(msg="Can not remove via URL.")
     if m.params['type'] == 'patch':
         m.fail_json(msg="Can not remove patches.")
-    prerun_state = get_installed_state(m, name_remove)
-    remove_version = [p+name_remove[p] for p in name_remove if name_remove[p]]
-    name_remove = [p for p in name_remove if p in prerun_state]
-    if not name_remove and not remove_version:
+    prerun_state = get_installed_state(m, packages)
+    packages = [p for p in packages if p.name in prerun_state]
+
+    if not packages:
         return None, retvals
 
     cmd = get_cmd(m, 'remove')
-    cmd.extend(name_remove)
-    cmd.extend(remove_version)
+    cmd.extend([p.name + p.version for p in packages])
 
     retvals['cmd'] = cmd
     result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
