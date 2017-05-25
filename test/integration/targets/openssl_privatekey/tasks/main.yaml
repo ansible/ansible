@@ -1,0 +1,39 @@
+# test code for the openssl_privatekey
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: record the output file
+  set_fact: output_file={{output_dir}}/foo.key
+
+- name: test openssl_privatekey
+  openssl_privatekey:
+    path: "{{output_file}}"
+  register: privatekey_result
+
+- name: assert openssl_privatekey works  
+  assert:
+    that:
+    - "privatekey_result.changed == true"
+
+- name: test openssl_privatekey already exists
+  openssl_privatekey:
+    path: "{{output_file}}"
+  register: privatekey_exists_result
+
+- name: assert openssl_privatekey does not overwrite existing keys
+  assert:
+    that:
+    - "privatekey_exists_result.changed == false"
