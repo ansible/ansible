@@ -71,11 +71,15 @@ options:
       required: false
       default: null
     instance_name:
-      description: Name of the instance to use.
+      description:
+        - The name of ECS instance, which is a string of 2 to 128 Chinese or English characters. It must begin with an
+          uppercase/lowercase letter or a Chinese character and can contain numerals, ".", "_", or "-".
+          It cannot begin with http:// or https://.
       required: false
       default: null
     description:
-      description: Description of the instance to use.
+      description:
+        - The description of ECS instance, which is a string of 2 to 256 characters. It cannot begin with http:// or https://.
       required: false
       default: null
     internet_data:
@@ -85,19 +89,19 @@ options:
       default: null
       suboptions:
          charge_type:
-           description: 
+           description:
              - Internet charge type, which can be PayByTraffic or PayByBandwidth.
            required: false
            default: "PayByBandwidth"
            choices: ["PayByBandwidth", "PayByTraffic"]
          max_bandwidth_in:
-           description: 
+           description:
              - Maximum incoming bandwidth from the public network, measured in Mbps (Mega bit per second).
            required: false
            default: 200
            choices: [1~200]
          max_bandwidth_out:
-           description: 
+           description:
              - Maximum outgoing bandwidth to the public network, measured in Mbps (Mega bit per second).
            required: false
            default: 0
@@ -117,27 +121,27 @@ options:
       default: null
       suboptions:
          disk_category:
-           description: 
-             - Category of the system disk
+           description:
+             - Category of the system disk.
            required: false
            default: "cloud"
            choices: ["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"]
          disk_size:
-           description: 
+           description:
              - Size of the system disk, in GB
            required: false
            default: max[40, ImageSize]
            choices: [40~500]
          disk_name:
-           description: 
-             - Name of a system disk
+           description:
+             - Name of a system disk.
            required: false
            default: null
          disk_description:
-           description: 
-             - Description of a system disk
+           description:
+             - Description of a system disk.
            required: false
-           default: null 
+           default: null
     count:
       description: The number of the new instance.
       required: false
@@ -212,27 +216,27 @@ options:
       default: null
       suboptions:
          id:
-           description: 
+           description:
              - ID of an ECS instance
            required: true
            default: null
          name:
-           description: 
+           description:
              - Name of the instance to modify
            required: false
            default: null
          description:
-           description: 
+           description:
              - Description of the instance to use
            required: false
            default: null
          password:
-           description: 
+           description:
              - The password to login instance
            required: false
            default: null
          host_name:
-           description: 
+           description:
              - Instance host name
            required: false
            default: null
@@ -834,7 +838,7 @@ def delete_instance(module, ecs, instance_id):
             module.fail_json(msg=result)
 
     except ECSResponseError as e:
-        module.fail_json(msg='Unable to delete instance, error: {0}'.format(e))
+        module.fail_json(msg='Unable to delete instance {0}, error: {1}'.format(instance_id, e))
 
     return result
 
@@ -943,7 +947,7 @@ def create_instance(module, ecs, image_id, instance_type, group_id, zone_id, ins
                                               instance_tags=instance_tags, ids=ids, wait=wait,
                                               wait_timeout=wait_timeout)
         if 'error' in (''.join(str(result))).lower():
-            module.fail_json(changed=changed, msg=result)
+            module.fail_json(msg="Creating instance got an error: {0}".format(result))
 
     except ECSResponseError as e:
         module.fail_json(msg='Unable to create instance, error: {0}'.format(e))
@@ -988,7 +992,7 @@ def modify_instance(module, ecs, attributes):
         changed = True
 
     except ECSResponseError as e:
-        module.fail_json(msg='Unable to modify instance, error: {0}'.format(e))
+        module.fail_json(msg='Unable to modify instance {0}, error: {1}'.format(instance_ids, e))
     return changed, instance_ids, result
 
 
@@ -1013,7 +1017,7 @@ def get_instance_status(module, ecs, zone_id=None, pagenumber=None, pagesize=Non
             module.fail_json(changed=changed, msg=result)
 
     except ECSResponseError as e:
-        module.fail_json(msg='Unable to get status of instance(s), error: {0}'.format(e))
+        module.fail_json(msg='Unable to get status of instance(s) from {0}, error: {1}'.format(zone_id, e))
 
     return changed, result
 
@@ -1066,7 +1070,8 @@ def joinleave_security_group(module, ecs, action, instance_ids, security_group_i
             module.fail_json(msg=result, group_id=security_group_id, instance_ids=success_instance_ids,
                              failed_instance_ids=failed_instance_ids)
     except ECSResponseError as e:
-        module.fail_json(msg='Unable to join instance in security group or remove from it, error: {0}'.format(e))
+        module.fail_json(msg='Unable to join instance {0} in security group {1} or remove from it, '
+                             'error: {2}'.format(instance_ids, security_group_id, e))
 
     return changed, result, success_instance_ids, failed_instance_ids, security_group_id
 
