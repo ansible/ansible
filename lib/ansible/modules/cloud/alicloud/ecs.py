@@ -27,8 +27,8 @@ module: ecs
 version_added: "2.4"
 short_description: Create, Start, Stop, Restart or Terminate an Instance in ECS. Add or Remove Instance to/from a Security Group.
 description:
-    - Creates, starts, stops, restarts or terminates ecs instances.
-    - Adds or removes ecs instances to/from security group.
+    - Create, start, stop, restart, retrieval, modify or terminate ecs instances.
+    - Add or remove ecs instances to/from security group.
 options:
     status:
       description:
@@ -36,10 +36,7 @@ options:
       required: false
       default: 'present'
       aliases: ['state']
-      choices:
-        - [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
-        - map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
-                        'describe_status']
+      choices: [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
     alicloud_zone:
       description: Aliyun availability zone ID in which to launch the instance
       required: false
@@ -84,14 +81,27 @@ options:
     internet_data:
       description:
         - A hash/dictionaries of internet to the new instance;
-        - >
-          '{"key":"value"}'; keys allowed:
-          - charge_type ( required:false;default: "PayByBandwidth", choices:["PayByBandwidth", "PayByTraffic"] )
-          - max_bandwidth_in(required:false, default:200)
-          - max_bandwidth_out(required:false, default:0).
-
       required: false
       default: null
+      suboptions:
+         charge_type:
+           description: 
+             - Internet charge type, which can be PayByTraffic or PayByBandwidth.
+           required: false
+           default: "PayByBandwidth"
+           choices: ["PayByBandwidth", "PayByTraffic"]
+         max_bandwidth_in:
+           description: 
+             - Maximum incoming bandwidth from the public network, measured in Mbps (Mega bit per second).
+           required: false
+           default: 200
+           choices: [1~200]
+         max_bandwidth_out:
+           description: 
+             - Maximum outgoing bandwidth to the public network, measured in Mbps (Mega bit per second).
+           required: false
+           default: 0
+           choices: [0~100]
     host_name:
       description: Instance host name.
       required: false
@@ -103,29 +113,31 @@ options:
     system_disk:
       description:
         - A hash/dictionaries of system disk to the new instance;
-        - >
-          '{"key":"value"}'; keys allowed:
-          - disk_category (required:false; default: "cloud"; choices:["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"] )
-          - disk_size (required: false, default: max[40, ImageSize], choice: [40-500])
-          - disk_name (required: false, default: Null)
-          - disk_description (required:false; default:null)
       required: false
       default: null
-    disks:
-      description:
-        - A list of hash/dictionaries of volumes to add to the new instance;
-        - >
-          '[{"key":"value", "key":"value"}]'; keys allowed:
-          - disk_category (required:false; default: "cloud"; choices:["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"] )
-          - disk_size (required:false; default:null; choices:depends on disk_category)
-          - disk_name (required: false; default:null)
-          - disk_description (required: false; default:null)
-          - delete_on_termination (required:false, default:"true")
-          - snapshot_id (required:false; default:null), volume_type (str), iops (int) - device_type is deprecated use
-                    volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
-      required: false
-      default: null
-      aliases: [ 'volumes' ]
+      suboptions:
+         disk_category:
+           description: 
+             - Category of the system disk
+           required: false
+           default: "cloud"
+           choices: ["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"]
+         disk_size:
+           description: 
+             - Size of the system disk, in GB
+           required: false
+           default: max[40, ImageSize]
+           choices: [40~500]
+         disk_name:
+           description: 
+             - Name of a system disk
+           required: false
+           default: null
+         disk_description:
+           description: 
+             - Description of a system disk
+           required: false
+           default: null 
     count:
       description: The number of the new instance.
       required: false
@@ -196,14 +208,34 @@ options:
     attributes:
       description:
         - A list of hash/dictionaries of instance attributes. If it's set, the specified instance's attributes would be modified.
-        - keys allowed are
-            - id (required=true; default=null; description=ID of an ECS instance )
-            - name (required=false; default=null; description=Name of the instance to modify)
-            - description (required=false; default=null; description=Description of the instance to use)
-            - password (required=false; default=null; description=The password to login instance)
-            - host_name (required=false; default=null; description=Instance host name)
       required: false
       default: null
+      suboptions:
+         id:
+           description: 
+             - ID of an ECS instance
+           required: true
+           default: null
+         name:
+           description: 
+             - Name of the instance to modify
+           required: false
+           default: null
+         description:
+           description: 
+             - Description of the instance to use
+           required: false
+           default: null
+         password:
+           description: 
+             - The password to login instance
+           required: false
+           default: null
+         host_name:
+           description: 
+             - Instance host name
+           required: false
+           default: null
     sg_action:
       description: The action of operating security group.
       required: true
@@ -341,31 +373,6 @@ EXAMPLES = '''
             max_bandwidth_in: 200
             max_bandwidth_out: 50
 
-
-# single instance with additional volume from snapshot and volume delete on termination
-- name: advanced provisioning example
-  hosts: localhost
-  vars:
-    alicloud_access_key: xxxxxxxxxx
-    alicloud_secret_key: xxxxxxxxxx
-    alicloud_region: cn-beijing
-    image: ubuntu1404_64_40G_cloudinit_20160727.raw
-    instance_type: ecs.n1.small
-  tasks:
-    - name: additional volume
-      ecs:
-        alicloud_access_key: '{{ alicloud_access_key }}'
-        alicloud_secret_key: '{{ alicloud_secret_key }}'
-        alicloud_region: '{{ alicloud_region }}'
-        image: '{{ image }}'
-        instance_type: '{{ instance_type }}'
-        assign_public_ip: yes
-        volumes:
-          - disk_name: /dev/sdb
-            snapshot_id: xxxxxxxxxx
-            disk_category: cloud_efficiency
-            disk_size: 100
-            delete_on_termination: true
 
 # example with system disk configuration and IO optimized
 - name: advanced provisioning example
@@ -1082,7 +1089,6 @@ def main():
             host_name=dict(),
             password=dict(),
             system_disk=dict(type='dict'),
-            disks=dict(type='list', aliases=['volumes']),
             force=dict(type='bool', default=False),
             instance_tags=dict(type='list', aliases=['tags']),
             status=dict(default='present', aliases=['state'], choices=['present', 'running', 'stopped', 'restarted',
@@ -1193,7 +1199,9 @@ def main():
                 host_name = module.params['host_name']
                 password = module.params['password']
                 system_disk = module.params['system_disk']
-                disks = module.params['disks']
+                # Using ecs_disk to add data disks for instance
+                # disks = module.params['disks']
+                disks = None
                 count = module.params['count']
                 allocate_public_ip = module.params['allocate_public_ip']
                 bind_eip = module.params['bind_eip']
