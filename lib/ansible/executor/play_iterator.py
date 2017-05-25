@@ -150,6 +150,7 @@ class PlayIterator:
     def __init__(self, inventory, play, play_context, variable_manager, all_vars, start_at_done=False):
         self._play = play
         self._blocks = []
+        self._variable_manager = variable_manager
 
         self._task_uuid_cache = dict()
 
@@ -303,7 +304,7 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
-                       (gathering == 'smart' and implied and not (variable_manager._fact_cache.get(host.name,{}).get('module_setup', False))):
+                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name,{}).get('module_setup', False))):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
