@@ -291,7 +291,7 @@ def sha256sum(filename):
 
     return hex_digest
 
-def set_tag(client, tags, function):
+def set_tag(client, module, tags, function):
     changed = False
     c = client
     arn = function['Configuration']['FunctionArn']
@@ -506,7 +506,7 @@ def main():
 
         # Tag Function
         if tags is not None and len(tags) >= 0:
-            if set_tag(client, tags, current_function):
+            if set_tag(client, module, tags, current_function):
                 changed = True
 
         # Upload new code if needed (e.g. code checksum has changed)
@@ -588,7 +588,7 @@ def main():
 
         # Tag Function
         if tags is not None and len(tags) >= 0:
-            if set_tag(client, tags, get_current_function(client, name)):
+            if set_tag(client, module, tags, get_current_function(client, name)):
                 changed = True
 
         response = get_current_function(client, name, qualifier=current_version)
