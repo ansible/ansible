@@ -357,6 +357,8 @@ EXAMPLES = '''
         volume_size: 8
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
+    count_tag:
+      Name: dbserver
     exact_count: 1
 
 # Multiple groups example
@@ -912,7 +914,7 @@ def await_spot_requests(module, ec2, spot_requests, count):
         if len(spot_req_inst_ids) < count:
             time.sleep(5)
         else:
-            return spot_req_inst_ids.values()
+            return list(spot_req_inst_ids.values())
     module.fail_json(msg="wait for spot requests timeout on %s" % time.asctime())
 
 

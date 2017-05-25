@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
                 return result
             # We will take the information from copy and store it in
             # the remote_src var to use later in this file.
-            remote_src = not boolean(self._task.args.get('copy'))
+            self._task.args['remote_src'] = remote_src = not boolean(self._task.args.pop('copy'))
 
         if source is None or dest is None:
             result['failed'] = True
@@ -128,7 +128,7 @@ class ActionModule(ActionBase):
             )
 
         # remove action plugin only key
-        for key in ('remote_src', 'decrypt'):
+        for key in ('decrypt',):
             if key in new_module_args:
                 del new_module_args[key]
 

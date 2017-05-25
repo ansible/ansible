@@ -30,12 +30,15 @@ import os.path
 import re
 import string
 import sys
+import time
 import uuid
+import yaml
+
+from collections import MutableMapping, MutableSequence
 from datetime import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
-import yaml
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 try:
@@ -108,18 +111,26 @@ def to_nice_json(a, indent=4, *args, **kw):
 
 def to_bool(a):
     ''' return a bool for the arg '''
-    if a is None or type(a) == bool:
+    if a is None or isinstance(a, bool):
         return a
     if isinstance(a, string_types):
         a = a.lower()
-    if a in ['yes', 'on', '1', 'true', 1]:
+    if a in ('yes', 'on', '1', 'true', 1):
         return True
-    else:
-        return False
+    return False
 
 def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
     return datetime.strptime(string, format)
 
+
+def strftime(string_format, second = None):
+    ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
+    if second is not None:
+        try:
+            second = int(second)
+        except:
+            raise errors.AnsibleFilterError('Invalid value for epoch value (%s)' % second)
+    return time.strftime(string_format, time.localtime(second))
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
@@ -256,7 +267,8 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
                 saltsize = 8
             else:
                 saltsize = 16
-            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(saltsize)])
+            saltcharset = string.ascii_letters + string.digits + '/.'
+            salt = ''.join([r.choice(saltcharset) for _ in range(saltsize)])
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
@@ -401,10 +413,10 @@ def extract(item, container, morekeys=None):
 def failed(*a, **kw):
     ''' Test if task result yields failed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc',0)
-    failed = item.get('failed',False)
+    rc = item.get('rc', 0)
+    failed = item.get('failed', False)
     if rc != 0 or failed:
         return True
     else:
@@ -417,13 +429,13 @@ def success(*a, **kw):
 def changed(*a, **kw):
     ''' Test if task result yields changed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|changed expects a dictionary")
     if not 'changed' in item:
         changed = False
         if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list
-                and type(item['results'][0]) == dict):
+                and isinstance(item['results'], MutableSequence)
+                and isinstance(item['results'][0], MutableMapping)):
             for result in item['results']:
                 changed = changed or result.get('changed', False)
     else:
@@ -433,7 +445,7 @@ def changed(*a, **kw):
 def skipped(*a, **kw):
     ''' Test if task result yields skipped '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|skipped expects a dictionary")
     skipped = item.get('skipped', False)
     return skipped
@@ -508,6 +520,9 @@ class FilterModule(object):
 
             # value as boolean
             'bool': to_bool,
+
+            # date formating
+            'strftime': strftime,
 
             # quote string for shell usage
             'quote': quote,

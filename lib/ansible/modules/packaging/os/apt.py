@@ -170,6 +170,11 @@ EXAMPLES = '''
     state: latest
     install_recommends: no
 
+- name: Upgrade all packages to the latest version
+  apt:
+    name: "*"
+    state: latest
+
 - name: Update all packages to the latest version
   apt:
     upgrade: dist
@@ -212,7 +217,7 @@ cache_updated:
 cache_update_time:
     description: time of the last cache update (0 if unknown)
     returned: success, in some cases
-    type: datetime
+    type: int
     sample: 1425828348000
 stdout:
     description: output from apt
@@ -245,14 +250,14 @@ from ansible.module_utils.urls import fetch_url
 
 # APT related constants
 APT_ENV_VARS = dict(
-    DEBIAN_FRONTEND = 'noninteractive',
-    DEBIAN_PRIORITY = 'critical',
+    DEBIAN_FRONTEND='noninteractive',
+    DEBIAN_PRIORITY='critical',
     # We screenscrape apt-get and aptitude output for information so we need
     # to make sure we use the C locale when running commands
-    LANG = 'C',
-    LC_ALL = 'C',
-    LC_MESSAGES = 'C',
-    LC_CTYPE = 'C',
+    LANG='C',
+    LC_ALL='C',
+    LC_MESSAGES='C',
+    LC_CTYPE='C',
 )
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
@@ -526,7 +531,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             diff = {}
         if rc:
-            return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err))
+            return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc))
         else:
             return (True, dict(changed=True, stdout=out, stderr=err, diff=diff))
     else:
@@ -543,7 +548,7 @@ def get_field_of_deb(m, deb_file, field="Version"):
 
 
 def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated, dpkg_options):
-    changed=False
+    changed = False
     deps_to_install = []
     pkgs_to_install = []
     for deb_file in debs.split(','):
@@ -614,7 +619,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
         else:
             m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
     else:
-        m.exit_json(changed=changed, stdout=retvals.get('stdout',''), stderr=retvals.get('stderr',''), diff=retvals.get('diff', ''))
+        m.exit_json(changed=changed, stdout=retvals.get('stdout', ''), stderr=retvals.get('stderr', ''), diff=retvals.get('diff', ''))
 
 
 def remove(m, pkgspec, cache, purge=False, force=False,
@@ -651,7 +656,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             check_arg = ''
 
-        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes ,autoremove, check_arg, packages)
+        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
 
         rc, out, err = m.run_command(cmd)
         if m._diff:
@@ -659,7 +664,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             diff = {}
         if rc:
-            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
+            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err, rc=rc)
         m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
 
 
@@ -697,7 +702,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
-                                    force_yes, check_arg, upgrade_command)
+                                 force_yes, check_arg, upgrade_command)
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
@@ -708,7 +713,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         diff = {}
     if rc:
-        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
+        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out, rc=rc)
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
@@ -722,7 +727,10 @@ def download(module, deb):
     BUFSIZE = 65536
 
     try:
-        rsp, info = fetch_url(module, deb)
+        rsp, info = fetch_url(module, deb, method='GET')
+        if info['status'] != 200:
+            module.fail_json(msg="Failed to download %s, %s" % (deb,
+                                                                info['msg']))
         # Ensure file is open in binary mode for Python 3
         f = open(package, 'wb')
         # Read 1kb at a time to save on ram
@@ -785,7 +793,7 @@ def get_cache(module):
                 if rc == 0:
                     break
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)))
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)), rc=rc)
             # try again
             cache = apt.Cache()
         else:
@@ -795,25 +803,25 @@ def get_cache(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present', 'build-dep']),
-            update_cache = dict(aliases=['update-cache'], type='bool'),
-            cache_valid_time = dict(type='int', default=0),
-            purge = dict(default=False, type='bool'),
-            package = dict(default=None, aliases=['pkg', 'name'], type='list'),
-            deb = dict(default=None, type='path'),
-            default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default=None, aliases=['install-recommends'], type='bool'),
-            force = dict(default='no', type='bool'),
-            upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
-            dpkg_options = dict(default=DPKG_OPTIONS),
-            autoremove = dict(type='bool', aliases=['autoclean']),
-            only_upgrade = dict(type='bool', default=False),
-            allow_unauthenticated = dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
+        argument_spec=dict(
+            state=dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present', 'build-dep']),
+            update_cache=dict(aliases=['update-cache'], type='bool'),
+            cache_valid_time=dict(type='int', default=0),
+            purge=dict(default=False, type='bool'),
+            package=dict(default=None, aliases=['pkg', 'name'], type='list'),
+            deb=dict(default=None, type='path'),
+            default_release=dict(default=None, aliases=['default-release']),
+            install_recommends=dict(default=None, aliases=['install-recommends'], type='bool'),
+            force=dict(default='no', type='bool'),
+            upgrade=dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
+            dpkg_options=dict(default=DPKG_OPTIONS),
+            autoremove=dict(type='bool', aliases=['autoclean']),
+            only_upgrade=dict(type='bool', default=False),
+            allow_unauthenticated=dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
         ),
-        mutually_exclusive = [['package', 'upgrade', 'deb']],
-        required_one_of = [['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
-        supports_check_mode = True
+        mutually_exclusive=[['package', 'upgrade', 'deb']],
+        required_one_of=[['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
+        supports_check_mode=True
     )
 
     module.run_command_environ_update = APT_ENV_VARS
@@ -843,7 +851,7 @@ def main():
     if p['upgrade'] == 'no':
         p['upgrade'] = None
 
-    if not APTITUDE_CMD and p.get('upgrade', None) in [ 'full', 'safe', 'yes' ]:
+    if not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
         module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
 
     updated_cache = False
@@ -916,8 +924,15 @@ def main():
                         allow_unauthenticated=allow_unauthenticated,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
-        packages = p['package']
+        packages = [package for package in p['package'] if package != '*']
+        all_installed = '*' in p['package']
         latest = p['state'] == 'latest'
+
+        if latest and all_installed:
+            if packages:
+                module.fail_json(msg='unable to install additional packages when ugrading all installed packages')
+            upgrade(module, 'yes', force_yes, p['default_release'], dpkg_options)
+
         if packages:
             for package in packages:
                 if package.count('=') > 1:

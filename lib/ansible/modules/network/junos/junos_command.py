@@ -90,6 +90,18 @@ options:
         trying the command again.
     required: false
     default: 1
+  display:
+    description:
+      - Encoding scheme to use when serializing output from the device.
+        This handles how to properly understand the output and apply the
+        conditionals path to the result set. For I(rpcs) argument default
+        display is C(xml) and for I(commands) argument default display
+        is C(text).
+    required: false
+    default: depends on input argument I(rpcs) or I(commands)
+    aliases: ['format', 'output']
+    choices: ['text', 'json', 'xml']
+    version_added: "2.3"
 """
 
 EXAMPLES = """
@@ -129,8 +141,18 @@ EXAMPLES = """
 """
 
 RETURN = """
+stdout:
+  description: The set of responses from the commands
+  returned: always apart from low level errors (such as action plugin)
+  type: list
+  sample: ['...', '...']
+stdout_lines:
+  description: The value of stdout split into a list
+  returned: always apart from low level errors (such as action plugin)
+  type: list
+  sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
-  description: the conditionals that failed
+  description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
@@ -246,7 +268,7 @@ def parse_rpcs(module):
 
     return items
 
-def parse_commands(module):
+def parse_commands(module, warnings):
     items = list()
 
     for command in (module.params['commands'] or list()):
@@ -301,7 +323,7 @@ def main():
     check_args(module, warnings)
 
     items = list()
-    items.extend(parse_commands(module))
+    items.extend(parse_commands(module, warnings))
     items.extend(parse_rpcs(module))
 
     wait_for = module.params['wait_for'] or list()

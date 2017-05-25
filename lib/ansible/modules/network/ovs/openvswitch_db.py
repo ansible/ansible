@@ -38,6 +38,16 @@ requirements: [ "ovs-vsctl >= 2.3.3" ]
 description:
     - Set column values in record in database table.
 options:
+    state:
+        required: false
+        description:
+            - Configures the state of the key. When set
+              to I(present), the I(key) and I(value) pair will be set
+              on the I(record) and when set to I(absent) the I(key)
+              will not be set.
+        default: present
+        choices: ['present', 'absent']
+        version_added: "2.4"
     table:
         required: true
         description:
@@ -82,58 +92,114 @@ EXAMPLES = '''
     col: other_config
     key: disable-in-band
     value: true
+
+# Remove in band key
+- openvswitch_db:
+    state: present
+    table: Bridge
+    record: br-int
+    col: other_config
+    key: disable-in-band
 '''
 
 
-def cmd_run(module, cmd, check_rc=True):
-    """ Log and run ovs-vsctl command. """
-    return module.run_command(cmd.split(" "), check_rc=check_rc)
+def map_obj_to_commands(want, have, module):
+    """ Define ovs-vsctl command to meet desired state """
+    commands = list()
+
+    if module.params['state'] == 'absent':
+        if 'key' in have.keys():
+            templatized_command = "%(ovs-vsctl)s -t %(timeout)s remove %(table)s %(record)s " \
+                                  "%(col)s %(key)s=%(value)s"
+            commands.append(templatized_command % module.params)
+    else:
+        if 'key' not in have.keys():
+            templatized_command = "%(ovs-vsctl)s -t %(timeout)s add %(table)s %(record)s " \
+                                  "%(col)s %(key)s=%(value)s"
+            commands.append(templatized_command % module.params)
+        elif want['value'] != have['value']:
+            templatized_command = "%(ovs-vsctl)s -t %(timeout)s set %(table)s %(record)s " \
+                                  "%(col)s:%(key)s=%(value)s"
+            commands.append(templatized_command % module.params)
+
+    return commands
 
 
-def params_set(module):
-    """ Implement the ovs-vsctl set commands. """
+def map_config_to_obj(module):
+    templatized_command = "%(ovs-vsctl)s -t %(timeout)s list %(table)s %(record)s"
+    command = templatized_command % module.params
+    rc, out, err = module.run_command(command, check_rc=True)
+    if rc != 0:
+        module.fail_json(msg=err)
 
-    changed = False
+    match = re.search(r'^' + module.params['col'] + r'(\s+):(\s+)(.*)$', out, re.M)
 
-    ##
-    # Place in params dictionary in order to support the string format below.
-    module.params["ovs-vsctl"] = module.get_bin_path("ovs-vsctl", True)
+    col_value = match.group(3)
+    col_value_to_dict = {}
+    if col_value and col_value != '{}':
+        for kv in col_value[1:-1].split(','):
+            k, v = kv.split('=')
+            col_value_to_dict[k.strip()] = v.strip()
 
-    fmt = "%(ovs-vsctl)s -t %(timeout)s get %(table)s %(record)s " \
-          "%(col)s:%(key)s"
+    obj = {
+        'table': module.params['table'],
+        'record': module.params['record'],
+        'col': module.params['col'],
+    }
 
-    cmd = fmt % module.params
+    if module.params['key'] in col_value_to_dict:
+        obj['key'] = module.params['key']
+        obj['value'] = col_value_to_dict[module.params['key']]
 
-    (_, output, _) = cmd_run(module, cmd, False)
-    if module.params['value'] not in output:
-        fmt = "%(ovs-vsctl)s -t %(timeout)s set %(table)s %(record)s " \
-              "%(col)s:%(key)s=%(value)s"
-        cmd = fmt % module.params
-        ##
-        # Check if flow exists and is the same.
-        (rtc, _, err) = cmd_run(module, cmd)
-        if rtc != 0:
-            module.fail_json(msg=err)
-        changed = True
-    module.exit_json(changed=changed)
+    return obj
+
+
+def map_params_to_obj(module):
+    obj = {
+        'table': module.params['table'],
+        'record': module.params['record'],
+        'col': module.params['col'],
+        'key': module.params['key'],
+        'value': module.params['value']
+    }
+
+    return obj
 
 
 # pylint: disable=E0602
 def main():
     """ Entry point for ansible module. """
-    module = AnsibleModule(
-        argument_spec={
-            'table': {'required': True},
-            'record': {'required': True},
-            'col': {'required': True},
-            'key': {'required': True},
-            'value': {'required': True},
-            'timeout': {'default': 5, 'type': 'int'},
-        },
-        supports_check_mode=True,
-    )
+    argument_spec = {
+        'state': {'default': 'present', 'choices': ['present', 'absent']},
+        'table': {'required': True},
+        'record': {'required': True},
+        'col': {'required': True},
+        'key': {'required': True},
+        'value': {'required': True},
+        'timeout': {'default': 5, 'type': 'int'},
+    }
 
-    params_set(module)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    result = {'changed': False}
+
+    # We add ovs-vsctl to module_params to later build up templatized commands
+    module.params["ovs-vsctl"] = module.get_bin_path("ovs-vsctl", True)
+
+    want = map_params_to_obj(module)
+    have = map_config_to_obj(module)
+
+    commands = map_obj_to_commands(want, have, module)
+    result['commands'] = commands
+
+    if commands:
+        if not module.check_mode:
+            for c in commands:
+                module.run_command(c, check_rc=True)
+        result['changed'] = True
+
+    module.exit_json(**result)
 
 
 # pylint: disable=W0614
@@ -142,6 +208,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+import re
 
 if __name__ == '__main__':
     main()

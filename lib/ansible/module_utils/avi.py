@@ -41,7 +41,7 @@ try:
     import avi.sdk
     sdk_version = getattr(avi.sdk, '__version__', None)
     if ((sdk_version is None) or (sdk_version and
-            (parse_version(sdk_version) < parse_version('16.3.5.post1')))):
+            (parse_version(sdk_version) < parse_version('17.1')))):
         # It allows the __version__ to be '' as that value is used in development builds
         raise ImportError
     from avi.sdk.utils.ansible_utils import avi_ansible_api
@@ -59,7 +59,8 @@ def avi_common_argument_spec():
         username=dict(default=os.environ.get('AVI_USERNAME', '')),
         password=dict(default=os.environ.get('AVI_PASSWORD', ''), no_log=True),
         tenant=dict(default='admin'),
-        tenant_uuid=dict(default=''))
+        tenant_uuid=dict(default=''),
+        api_version=dict(default='16.4'))
 
 
 def ansible_return(module, rsp, changed, req=None, existing_obj=None):

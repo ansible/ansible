@@ -93,11 +93,11 @@ name:
 policies:
     description: A list of one or more policy names of the server group.
     returned: success
-    type: list of strings
+    type: list
 members:
     description: A list of members in the server group.
     returned: success
-    type: list of strings
+    type: list
 metadata:
     description: Metadata key and value pairs.
     returned: success

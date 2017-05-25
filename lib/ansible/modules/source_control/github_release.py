@@ -27,21 +27,28 @@ DOCUMENTATION = '''
 module: github_release
 short_description: Interact with GitHub Releases
 description:
-    - Fetch metadata about Github Releases
+    - Fetch metadata about GitHub Releases
 version_added: 2.2
 options:
     token:
-        required: true
         description:
-            - Github Personal Access Token for authenticating
+            - GitHub Personal Access Token for authenticating
+        default: null
     user:
         required: true
         description:
             - The GitHub account that owns the repository
+        default: null
+    password:
+        description:
+            - The GitHub account password for the user
+        default: null
+        version_added: "2.4"
     repo:
         required: true
         description:
             - Repository name
+        default: null
     action:
         required: true
         description:
@@ -56,9 +63,16 @@ requirements:
 
 EXAMPLES = '''
 - name: Get latest release of test/test
-  github:
+  github_release:
     token: tokenabc1234567890
     user: testuser
+    repo: testrepo
+    action: latest_release
+
+- name: Get latest release of test repo using username and password. Ansible 2.4.
+  github_release:
+    user: testuser
+    password: secret123
     repo: testrepo
     action: latest_release
 '''
@@ -77,6 +91,7 @@ try:
     HAS_GITHUB_API = True
 except ImportError:
     HAS_GITHUB_API = False
+from ansible.module_utils.basic import AnsibleModule, get_exception
 
 
 def main():
@@ -84,30 +99,41 @@ def main():
         argument_spec=dict(
             repo=dict(required=True),
             user=dict(required=True),
-            token=dict(required=True, no_log=True),
+            password=dict(no_log=True),
+            token=dict(no_log=True),
             action=dict(required=True, choices=['latest_release']),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_one_of=(('password', 'token'),),
+        mutually_exclusive=(('password', 'token'),),
     )
 
     if not HAS_GITHUB_API:
-        module.fail_json(msg='Missing requried github3 module (check docs or install with: pip install github3)')
+        module.fail_json(msg='Missing required github3 module (check docs or '
+                             'install with: pip install github3.py==1.0.0a4)')
 
     repo = module.params['repo']
     user = module.params['user']
+    password = module.params['password']
     login_token = module.params['token']
     action = module.params['action']
 
     # login to github
     try:
-        gh = github3.login(token=str(login_token))
+        if user and password:
+            gh_obj = github3.login(user, password=password)
+        elif login_token:
+            gh_obj = github3.login(token=login_token)
+
         # test if we're actually logged in
-        gh.me()
+        gh_obj.me()
     except github3.AuthenticationFailed:
         e = get_exception()
-        module.fail_json(msg='Failed to connect to Github: %s' % e)
+        module.fail_json(msg='Failed to connect to GitHub: %s' % e,
+                         details="Please check username and password or token "
+                                 "for repository %s" % repo)
 
-    repository = gh.repository(str(user), str(repo))
+    repository = gh_obj.repository(user, repo)
 
     if not repository:
         module.fail_json(msg="Repository %s/%s doesn't exist" % (user, repo))
@@ -119,8 +145,6 @@ def main():
         else:
             module.exit_json(tag=None)
 
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

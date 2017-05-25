@@ -287,47 +287,51 @@ EXAMPLES = '''
 from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception
 
+
 class DeployHelper(object):
 
     def __init__(self, module):
-        self.module    = module
+        self.module = module
         self.file_args = module.load_file_common_arguments(module.params)
 
-        self.clean               = module.params['clean']
-        self.current_path        = module.params['current_path']
-        self.keep_releases       = module.params['keep_releases']
-        self.path                = module.params['path']
-        self.release             = module.params['release']
-        self.releases_path       = module.params['releases_path']
-        self.shared_path         = module.params['shared_path']
-        self.state               = module.params['state']
+        self.clean = module.params['clean']
+        self.current_path = module.params['current_path']
+        self.keep_releases = module.params['keep_releases']
+        self.path = module.params['path']
+        self.release = module.params['release']
+        self.releases_path = module.params['releases_path']
+        self.shared_path = module.params['shared_path']
+        self.state = module.params['state']
         self.unfinished_filename = module.params['unfinished_filename']
 
     def gather_facts(self):
-        current_path   = os.path.join(self.path, self.current_path)
-        releases_path  = os.path.join(self.path, self.releases_path)
+        current_path = os.path.join(self.path, self.current_path)
+        releases_path = os.path.join(self.path, self.releases_path)
         if self.shared_path:
-            shared_path    = os.path.join(self.path, self.shared_path)
+            shared_path = os.path.join(self.path, self.shared_path)
         else:
-            shared_path    = None
+            shared_path = None
 
         previous_release, previous_release_path = self._get_last_release(current_path)
 
         if not self.release and (self.state == 'query' or self.state == 'present'):
             self.release = time.strftime("%Y%m%d%H%M%S")
 
-        new_release_path = os.path.join(releases_path, self.release)
+        if self.release:
+            new_release_path = os.path.join(releases_path, self.release)
+        else:
+            new_release_path = None
 
         return {
-            'project_path':             self.path,
-            'current_path':             current_path,
-            'releases_path':            releases_path,
-            'shared_path':              shared_path,
-            'previous_release':         previous_release,
-            'previous_release_path':    previous_release_path,
-            'new_release':              self.release,
-            'new_release_path':         new_release_path,
-            'unfinished_filename':      self.unfinished_filename
+            'project_path': self.path,
+            'current_path': current_path,
+            'releases_path': releases_path,
+            'shared_path': shared_path,
+            'previous_release': previous_release,
+            'previous_release_path': previous_release_path,
+            'new_release': self.release,
+            'new_release_path': new_release_path,
+            'unfinished_filename': self.unfinished_filename
         }
 
     def delete_path(self, path):
@@ -393,7 +397,7 @@ class DeployHelper(object):
 
     def remove_unfinished_file(self, new_release_path):
         changed = False
-        unfinished_file_path  = os.path.join(new_release_path, self.unfinished_filename)
+        unfinished_file_path = os.path.join(new_release_path, self.unfinished_filename)
         if os.path.lexists(unfinished_file_path):
             changed = True
             if not self.module.check_mode:
@@ -427,14 +431,14 @@ class DeployHelper(object):
         changes = 0
 
         if os.path.lexists(releases_path):
-            releases = [ f for f in os.listdir(releases_path) if os.path.isdir(os.path.join(releases_path,f)) ]
+            releases = [f for f in os.listdir(releases_path) if os.path.isdir(os.path.join(releases_path, f))]
             try:
                 releases.remove(reserve_version)
             except ValueError:
                 pass
 
             if not self.module.check_mode:
-                releases.sort( key=lambda x: os.path.getctime(os.path.join(releases_path,x)), reverse=True)
+                releases.sort(key=lambda x: os.path.getctime(os.path.join(releases_path, x)), reverse=True)
                 for release in releases[self.keep_releases:]:
                     changes += self.delete_path(os.path.join(releases_path, release))
             elif len(releases) > self.keep_releases:
@@ -452,31 +456,32 @@ class DeployHelper(object):
         previous_release_path = None
 
         if os.path.lexists(current_path):
-            previous_release_path   = os.path.realpath(current_path)
-            previous_release        = os.path.basename(previous_release_path)
+            previous_release_path = os.path.realpath(current_path)
+            previous_release = os.path.basename(previous_release_path)
 
         return previous_release, previous_release_path
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            path                = dict(aliases=['dest'], required=True, type='path'),
-            release             = dict(required=False, type='str', default=None),
-            releases_path       = dict(required=False, type='str', default='releases'),
-            shared_path         = dict(required=False, type='path', default='shared'),
-            current_path        = dict(required=False, type='path', default='current'),
-            keep_releases       = dict(required=False, type='int', default=5),
-            clean               = dict(required=False, type='bool', default=True),
-            unfinished_filename = dict(required=False, type='str', default='DEPLOY_UNFINISHED'),
-            state               = dict(required=False, choices=['present', 'absent', 'clean', 'finalize', 'query'], default='present')
+        argument_spec=dict(
+            path=dict(aliases=['dest'], required=True, type='path'),
+            release=dict(required=False, type='str', default=None),
+            releases_path=dict(required=False, type='str', default='releases'),
+            shared_path=dict(required=False, type='path', default='shared'),
+            current_path=dict(required=False, type='path', default='current'),
+            keep_releases=dict(required=False, type='int', default=5),
+            clean=dict(required=False, type='bool', default=True),
+            unfinished_filename=dict(required=False, type='str', default='DEPLOY_UNFINISHED'),
+            state=dict(required=False, choices=['present', 'absent', 'clean', 'finalize', 'query'], default='present')
         ),
-        add_file_common_args = True,
-        supports_check_mode  = True
+        add_file_common_args=True,
+        supports_check_mode=True
     )
 
     deploy_helper = DeployHelper(module)
-    facts  = deploy_helper.gather_facts()
+    facts = deploy_helper.gather_facts()
 
     result = {
         'state': deploy_helper.state
@@ -485,7 +490,7 @@ def main():
     changes = 0
 
     if deploy_helper.state == 'query':
-        result['ansible_facts'] = { 'deploy_helper': facts }
+        result['ansible_facts'] = {'deploy_helper': facts}
 
     elif deploy_helper.state == 'present':
         deploy_helper.check_link(facts['current_path'])
@@ -494,7 +499,7 @@ def main():
         if deploy_helper.shared_path:
             changes += deploy_helper.create_path(facts['shared_path'])
 
-        result['ansible_facts'] = { 'deploy_helper': facts }
+        result['ansible_facts'] = {'deploy_helper': facts}
 
     elif deploy_helper.state == 'finalize':
         if not deploy_helper.release:
@@ -516,7 +521,7 @@ def main():
 
     elif deploy_helper.state == 'absent':
         # destroy the facts
-        result['ansible_facts'] = { 'deploy_helper': [] }
+        result['ansible_facts'] = {'deploy_helper': []}
         changes += deploy_helper.delete_path(facts['project_path'])
 
     if changes > 0:
@@ -525,8 +530,6 @@ def main():
         result['changed'] = False
 
     module.exit_json(**result)
-
-
 
 
 if __name__ == '__main__':

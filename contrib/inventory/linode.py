@@ -113,6 +113,7 @@ load_chube_config()
 # Imports for ansible
 import ConfigParser
 
+
 class LinodeInventory(object):
     def __init__(self):
         """Main execution path."""
@@ -171,11 +172,11 @@ class LinodeInventory(object):
         """Command line argument processing"""
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Linode')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List nodes (default: True)')
+                            help='List nodes (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all the variables about a specific node')
+                            help='Get all the variables about a specific node')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
-                           help='Force refresh of cache by making API requests to Linode (default: False - use cache files)')
+                            help='Force refresh of cache by making API requests to Linode (default: False - use cache files)')
         self.args = parser.parse_args()
 
     def do_api_calls_update_cache(self):
@@ -197,7 +198,7 @@ class LinodeInventory(object):
         try:
             return Linode.find(api_id=linode_id)
         except chube_api.linode_api.ApiError as e:
-            sys.exit("Looks like Linode's API is down:\n%" % e)
+            sys.exit("Looks like Linode's API is down:\n%s" % e)
 
     def populate_datacenter_cache(self):
         """Creates self._datacenter_cache, containing all Datacenters indexed by ID."""
@@ -245,10 +246,10 @@ class LinodeInventory(object):
             # Need to load index from cache
             self.load_index_from_cache()
 
-        if not self.args.host in self.index:
+        if self.args.host not in self.index:
             # try updating the cache
             self.do_api_calls_update_cache()
-            if not self.args.host in self.index:
+            if self.args.host not in self.index:
                 # host might not exist anymore
                 return self.json_format_dict({}, True)
 

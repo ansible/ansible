@@ -29,7 +29,7 @@ DOCUMENTATION = """
 module: fortios_config
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
-short_description: Manage fortios firewall config
+short_description: Manage config on Fortinet FortiOS firewall devices
 description:
   - This module provides management of FortiOS Devices configuration.
 extends_documentation_fragment: fortios
@@ -132,7 +132,7 @@ def main():
     f = FortiOS( module.params['host'],
         username=module.params['username'],
         password=module.params['password'],
-        timeout=module.params['username'],
+        timeout=module.params['timeout'],
         vdom=module.params['vdom'])
 
     #connect

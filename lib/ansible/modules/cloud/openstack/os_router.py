@@ -133,7 +133,7 @@ RETURN = '''
 router:
     description: Dictionary describing the router.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Router ID.

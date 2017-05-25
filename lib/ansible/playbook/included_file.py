@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleError
 from ansible.playbook.task_include import TaskInclude
 from ansible.template import Templar
 
@@ -77,7 +76,7 @@ class IncludedFile:
                     if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result:
                         continue
 
-                    task_vars = variable_manager.get_vars(loader=loader, play=iterator._play, host=original_host, task=original_task)
+                    task_vars = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
                     templar = Templar(loader=loader, variables=task_vars)
 
                     include_variables = include_result.get('include_variables', dict())

@@ -77,6 +77,7 @@ ansible_net_model:
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
+  type: str
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
@@ -201,6 +202,10 @@ class Hardware(FactsBase):
 
     def populate_filesystems(self):
         data = self.responses[0]
+
+        if isinstance(data, dict):
+            data = data['messages'][0]
+
         fs = re.findall(r'^Directory of (.+)/', data, re.M)
         return dict(filesystems=fs)
 
@@ -370,7 +375,7 @@ def main():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':

@@ -131,9 +131,10 @@ from os.path import isfile
 try:
     from taiga import TaigaAPI
     from taiga.exceptions import TaigaException
-    TAIGA_MODULE_IMPORTED=True
+    TAIGA_MODULE_IMPORTED = True
 except ImportError:
-    TAIGA_MODULE_IMPORTED=False
+    TAIGA_MODULE_IMPORTED = False
+
 
 def manage_issue(module, taiga_host, project_name, issue_subject, issue_priority,
                  issue_status, issue_type, issue_severity, issue_description,
@@ -202,7 +203,7 @@ def manage_issue(module, taiga_host, project_name, issue_subject, issue_priority
             "severity": issue_severity,
             "description": issue_description,
             "tags": issue_tags,
-            }
+        }
 
         # An issue is identified by the project_name, the issue_subject and the issue_type
         matching_issue_list = filter(lambda x: x.subject == issue_subject and x.type == type_id, project.list_issues())
@@ -245,8 +246,10 @@ def manage_issue(module, taiga_host, project_name, issue_subject, issue_priority
             return (False, changed, "More than one issue with subject %s in project %s" % (issue_subject, project_name), {})
 
     except TaigaException:
-        msg = "An exception happened: %s" % sys.exc_info()[1]
+        exc = get_exception()
+        msg = "An exception happened: %s" % exc
         return (False, changed, msg, {})
+
 
 def main():
     module = AnsibleModule(
@@ -262,7 +265,8 @@ def main():
             attachment=dict(required=False, default=None),
             attachment_description=dict(required=False, default=""),
             tags=dict(required=False, default=[], type='list'),
-            state=dict(required=False, choices=['present','absent'], default='present'),
+            state=dict(required=False, choices=['present', 'absent'],
+                       default='present'),
         ),
         supports_check_mode=True
     )
@@ -303,7 +307,7 @@ def main():
         issue_tags,
         state,
         check_mode=module.check_mode
-        )
+    )
     if return_status:
         if len(issue_attr_dict) > 0:
             module.exit_json(changed=changed, msg=msg, issue=issue_attr_dict)
@@ -313,6 +317,8 @@ def main():
         module.fail_json(msg=msg)
 
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
 if __name__ == '__main__':
     main()

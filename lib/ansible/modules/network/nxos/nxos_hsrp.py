@@ -17,10 +17,11 @@
 #
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
@@ -29,60 +30,60 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages HSRP configuration on NX-OS switches.
 description:
-    - Manages HSRP configuration on NX-OS switches.
+  - Manages HSRP configuration on NX-OS switches.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 notes:
-    - HSRP feature needs to be enabled first on the system.
-    - SVIs must exist before using this module.
-    - Interface must be a L3 port before using this module.
-    - HSRP cannot be configured on loopback interfaces.
-    - MD5 authentication is only possible with HSRPv2 while it is ignored if
-      HSRPv1 is used instead, while it will not raise any error. Here we allow
-      MD5 authentication only with HSRPv2 in order to enforce better practice.
+  - HSRP feature needs to be enabled first on the system.
+  - SVIs must exist before using this module.
+  - Interface must be a L3 port before using this module.
+  - HSRP cannot be configured on loopback interfaces.
+  - MD5 authentication is only possible with HSRPv2 while it is ignored if
+    HSRPv1 is used instead, while it will not raise any error. Here we allow
+    MD5 authentication only with HSRPv2 in order to enforce better practice.
 options:
-    group:
-        description:
-            - HSRP group number.
-        required: true
-    interface:
-        description:
-            - Full name of interface that is being managed for HSRP.
-        required: true
-    version:
-        description:
-            - HSRP version.
-        required: false
-        default: 2
-        choices: ['1','2']
-    priority:
-        description:
-            - HSRP priority.
-        required: false
-        default: null
-    vip:
-        description:
-            - HSRP virtual IP address.
-        required: false
-        default: null
-    auth_string:
-        description:
-            - Authentication string.
-        required: false
-        default: null
-    auth_type:
-        description:
-            - Authentication type.
-        required: false
-        default: null
-        choices: ['text','md5']
-    state:
-        description:
-            - Specify desired state of the resource.
-        required: false
-        choices: ['present','absent']
-        default: 'present'
+  group:
+    description:
+      - HSRP group number.
+    required: true
+  interface:
+    description:
+      - Full name of interface that is being managed for HSRP.
+    required: true
+  version:
+    description:
+      - HSRP version.
+    required: false
+    default: 2
+    choices: ['1','2']
+  priority:
+    description:
+      - HSRP priority.
+    required: false
+    default: null
+  vip:
+    description:
+      - HSRP virtual IP address.
+    required: false
+    default: null
+  auth_string:
+    description:
+      - Authentication string.
+    required: false
+    default: null
+  auth_type:
+    description:
+      - Authentication type.
+    required: false
+    default: null
+    choices: ['text','md5']
+  state:
+    description:
+      - Specify desired state of the resource.
+    required: false
+    choices: ['present','absent']
+    default: 'present'
 '''
 
 EXAMPLES = '''
@@ -116,42 +117,19 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"group": "30", "version": "2", "vip": "10.30.1.1"}
-existing:
-    description: k/v pairs of existing hsrp info on the interface
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of hsrp after module execution
-    returned: always
-    type: dict
-    sample: {"auth_string": "cisco", "auth_type": "text",
-            "group": "30", "interface": "vlan10", "preempt": "disabled",
-            "priority": "100", "version": "2", "vip": "10.30.1.1"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface vlan10", "hsrp version 2", "hsrp 30", "ip 10.30.1.1"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
-
-def execute_show_command(command, module, command_type='cli_show'):
+def execute_show_command(command, module):
     if module.params['transport'] == 'cli':
         command += ' | json'
         cmds = [command]
@@ -165,7 +143,7 @@ def execute_show_command(command, module, command_type='cli_show'):
 
 def apply_key_map(key_map, table):
     new_dict = {}
-    for key, value in table.items():
+    for key in table:
         new_key = key_map.get(key)
         if new_key:
             value = table.get(key)
@@ -197,9 +175,12 @@ def get_interface_mode(interface, intf_type, module):
     command = 'show interface {0}'.format(interface)
     interface = {}
     mode = 'unknown'
+    try:
+        body = execute_show_command(command, module)[0]
+    except IndexError:
+        return None
 
     if intf_type in ['ethernet', 'portchannel']:
-        body = execute_show_command(command, module)[0]
         interface_table = body['TABLE_interface']['ROW_interface']
         mode = str(interface_table.get('eth_mode', 'layer3'))
         if mode == 'access' or mode == 'trunk':
@@ -211,12 +192,12 @@ def get_interface_mode(interface, intf_type, module):
 
 def get_hsrp_groups_on_interfaces(device, module):
     command = 'show hsrp all'
-    body = execute_show_command(command, module)
     hsrp = {}
 
     try:
-        get_data = body[0]['TABLE_grp_detail']['ROW_grp_detail']
-    except (KeyError, AttributeError):
+        body = execute_show_command(command, module)[0]
+        get_data = body['TABLE_grp_detail']['ROW_grp_detail']
+    except (IndexError, KeyError, AttributeError):
         return {}
 
     for entry in get_data:
@@ -232,7 +213,6 @@ def get_hsrp_groups_on_interfaces(device, module):
 
 def get_hsrp_group(group, interface, module):
     command = 'show hsrp group {0}'.format(group)
-    body = execute_show_command(command, module)
     hsrp = {}
 
     hsrp_key = {
@@ -247,7 +227,8 @@ def get_hsrp_group(group, interface, module):
     }
 
     try:
-        hsrp_table = body[0]['TABLE_grp_detail']['ROW_grp_detail']
+        body = execute_show_command(command, module)[0]
+        hsrp_table = body['TABLE_grp_detail']['ROW_grp_detail']
     except (AttributeError, IndexError, TypeError):
         return {}
 
@@ -271,9 +252,7 @@ def get_hsrp_group(group, interface, module):
 
 
 def get_commands_remove_hsrp(group, interface):
-    commands = []
-    commands.append('interface {0}'.format(interface))
-    commands.append('no hsrp {0}'.format(group))
+    commands = ['interface {0}'.format(interface), 'no hsrp {0}'.format(group)]
     return commands
 
 
@@ -295,7 +274,7 @@ def get_commands_config_hsrp(delta, interface, args):
         elif preempt == 'disabled':
             delta['preempt'] = 'no preempt'
 
-    for key, value in delta.items():
+    for key in delta:
         command = config_args.get(key, 'DNE').format(**delta)
         if command and command != 'DNE':
             if key == 'group':
@@ -391,13 +370,11 @@ def main():
         interface=dict(required=True),
         version=dict(choices=['1', '2'], default='2', required=False),
         priority=dict(type='str', required=False),
-        preempt=dict(type='str', choices=['disabled', 'enabled'],
-                         required=False),
+        preempt=dict(type='str', choices=['disabled', 'enabled'], required=False),
         vip=dict(type='str', required=False),
         auth_type=dict(choices=['text', 'md5'], required=False),
         auth_string=dict(type='str', required=False),
-        state=dict(choices=['absent', 'present'], required=False,
-                       default='present'),
+        state=dict(choices=['absent', 'present'], required=False, default='present'),
         include_defaults=dict(default=True),
         config=dict(),
         save=dict(type='bool', default=False)
@@ -405,12 +382,11 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                            supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    results = dict(changed=False, warnings=warnings)
 
     interface = module.params['interface'].lower()
     group = module.params['group']
@@ -470,8 +446,6 @@ def main():
             module.fail_json(msg="Existing auth_type is md5. It's recommended "
                                  "to use HSRP v2 when using md5")
 
-    changed = False
-    end_state = existing
     commands = []
     if state == 'present':
         delta = dict(
@@ -487,27 +461,20 @@ def main():
 
     if commands:
         if module.check_mode:
-            module.exit_json(changed=True, commands=commands)
+            module.exit_json(**results)
         else:
             load_config(module, commands)
             if transport == 'cli':
+                body = run_commands(module, commands)
                 validate_config(body, vip, module)
-            changed = True
+            results['changed'] = True
             end_state = get_hsrp_group(group, interface, module)
             if 'configure' in commands:
                 commands.pop(0)
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = commands
-    results['changed'] = changed
-    results['warnings'] = warnings
-
+    results['commands'] = commands
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-

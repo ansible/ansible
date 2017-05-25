@@ -38,7 +38,7 @@ description:
 options:
   free_form:
     description:
-      - the win_command module takes a free form command to run.  There is no parameter actually named 'free form'.
+      - the C(win_command) module takes a free form command to run.  There is no parameter actually named 'free form'.
         See the examples!
     required: true
   creates:
@@ -122,6 +122,6 @@ rc:
 stdout_lines:
     description: The command standard output split in lines
     returned: always
-    type: list of strings
+    type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
 '''

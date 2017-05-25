@@ -135,11 +135,11 @@ def content_to_dict(module, content):
         content_dict = yaml.safe_load(content)
 
         if not isinstance(content_dict, dict):
-            raise
+            raise Exception()
 
         # Check if dict is empty and return an error if it's
         if not content_dict:
-            raise
+            raise Exception()
 
     except:
         module.fail_json(msg="Unable to convert 'content' to a dict, please check if valid")

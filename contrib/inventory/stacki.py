@@ -64,9 +64,9 @@ CONFIG_FILES = ['/etc/stacki/stacki.yml', '/etc/ansible/stacki.yml']
 
 
 def stack_auth(params):
-    endpoint    = params['stacki_endpoint']
-    auth_creds  = {'USERNAME': params['stacki_user'],
-                   'PASSWORD': params['stacki_password']}
+    endpoint = params['stacki_endpoint']
+    auth_creds = {'USERNAME': params['stacki_user'],
+                  'PASSWORD': params['stacki_password']}
 
     client = requests.session()
     client.get(endpoint)
@@ -99,16 +99,17 @@ def stack_build_header(auth_creds):
 
 def stack_host_list(endpoint, header, client):
 
-    stack_r = client.post(endpoint, data=json.dumps({ "cmd": "list host"}),
+    stack_r = client.post(endpoint, data=json.dumps({"cmd": "list host"}),
                           headers=header)
     return json.loads(stack_r.json())
 
 
 def stack_net_list(endpoint, header, client):
 
-    stack_r = client.post(endpoint, data=json.dumps({ "cmd": "list host interface"}),
+    stack_r = client.post(endpoint, data=json.dumps({"cmd": "list host interface"}),
                           headers=header)
     return json.loads(stack_r.json())
+
 
 def format_meta(hostdata, intfdata, config):
     use_hostnames = config['use_hostnames']
@@ -158,7 +159,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-
 
     if StrictVersion(requests.__version__) < StrictVersion("2.4.3"):
         sys.exit('requests>=2.4.3 is required for this inventory script')

@@ -152,7 +152,6 @@ except ImportError as e:
     sys.exit("failed=True msg='`dopy` library required for this script'")
 
 
-
 class DigitalOceanInventory(object):
 
     ###########################################################################
@@ -163,8 +162,8 @@ class DigitalOceanInventory(object):
         ''' Main execution path '''
 
         # DigitalOceanInventory data
-        self.data = {}      # All DigitalOcean data
-        self.inventory = {} # Ansible Inventory
+        self.data = {}  # All DigitalOcean data
+        self.inventory = {}  # Ansible Inventory
 
         # Define defaults
         self.cache_path = '.'
@@ -193,7 +192,7 @@ or environment variables (DO_API_TOKEN)\n''')
         self.cache_filename = self.cache_path + "/ansible-digital_ocean.cache"
         self.cache_refreshed = False
 
-        if self.is_cache_valid:
+        if self.is_cache_valid():
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
@@ -240,7 +239,6 @@ or environment variables (DO_API_TOKEN)\n''')
             print(json.dumps(json_data))
         # That's all she wrote...
 
-
     ###########################################################################
     # Script configuration
     ###########################################################################
@@ -276,7 +274,6 @@ or environment variables (DO_API_TOKEN)\n''')
         if os.getenv("DO_API_KEY"):
             self.api_token = os.getenv("DO_API_KEY")
 
-
     def read_cli_args(self):
         ''' Command line argument processing '''
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on DigitalOcean credentials')
@@ -285,23 +282,23 @@ or environment variables (DO_API_TOKEN)\n''')
         parser.add_argument('--host', action='store', help='Get all Ansible inventory variables about a specific Droplet')
 
         parser.add_argument('--all', action='store_true', help='List all DigitalOcean information as JSON')
-        parser.add_argument('--droplets','-d', action='store_true', help='List Droplets as JSON')
+        parser.add_argument('--droplets', '-d', action='store_true', help='List Droplets as JSON')
         parser.add_argument('--regions', action='store_true', help='List Regions as JSON')
         parser.add_argument('--images', action='store_true', help='List Images as JSON')
         parser.add_argument('--sizes', action='store_true', help='List Sizes as JSON')
         parser.add_argument('--ssh-keys', action='store_true', help='List SSH keys as JSON')
-        parser.add_argument('--domains', action='store_true',help='List Domains as JSON')
+        parser.add_argument('--domains', action='store_true', help='List Domains as JSON')
 
-        parser.add_argument('--pretty','-p', action='store_true', help='Pretty-print results')
+        parser.add_argument('--pretty', '-p', action='store_true', help='Pretty-print results')
 
         parser.add_argument('--cache-path', action='store', help='Path to the cache files (default: .)')
         parser.add_argument('--cache-max_age', action='store', help='Maximum age of the cached items (default: 0)')
         parser.add_argument('--force-cache', action='store_true', default=False, help='Only use data from the cache')
-        parser.add_argument('--refresh-cache','-r', action='store_true', default=False,
+        parser.add_argument('--refresh-cache', '-r', action='store_true', default=False,
                             help='Force refresh of cache by making API requests to DigitalOcean (default: False - use cache files)')
 
-        parser.add_argument('--env','-e', action='store_true', help='Display DO_API_TOKEN')
-        parser.add_argument('--api-token','-a', action='store', help='DigitalOcean API Token')
+        parser.add_argument('--env', '-e', action='store_true', help='Display DO_API_TOKEN')
+        parser.add_argument('--api-token', '-a', action='store', help='DigitalOcean API Token')
 
         self.args = parser.parse_args()
 
@@ -315,20 +312,19 @@ or environment variables (DO_API_TOKEN)\n''')
                 not self.args.all and not self.args.host):
             self.args.list = True
 
-
     ###########################################################################
     # Data Management
     ###########################################################################
 
     def load_from_digital_ocean(self, resource=None):
         '''Get JSON from DigitalOcean API'''
-        if self.args.force_cache:
+        if self.args.force_cache and os.path.isfile(self.cache_filename):
             return
         # We always get fresh droplets
-        if self.is_cache_valid() and not (resource=='droplets' or resource is None):
+        if self.is_cache_valid() and not (resource == 'droplets' or resource is None):
             return
         if self.args.refresh_cache:
-            resource=None
+            resource = None
 
         if resource == 'droplets' or resource is None:
             self.data['droplets'] = self.manager.all_active_droplets()
@@ -349,24 +345,23 @@ or environment variables (DO_API_TOKEN)\n''')
             self.data['domains'] = self.manager.all_domains()
             self.cache_refreshed = True
 
-
     def build_inventory(self):
         '''Build Ansible inventory of droplets'''
         self.inventory = {
             'all': {
                 'hosts': [],
                 'vars': self.group_variables
-                },
+            },
             '_meta': {'hostvars': {}}
-            }
+        }
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            #when using private_networking, the API reports the private one in "ip_address".
+            # when using private_networking, the API reports the private one in "ip_address".
             if 'private_networking' in droplet['features'] and not self.use_private_network:
                 for net in droplet['networks']['v4']:
-                    if net['type']=='public':
-                        dest=net['ip_address']
+                    if net['type'] == 'public':
+                        dest = net['ip_address']
                     else:
                         continue
             else:
@@ -384,7 +379,7 @@ or environment variables (DO_API_TOKEN)\n''')
                           'distro_' + self.to_safe(droplet['image']['distribution']),
                           'status_' + droplet['status']):
                 if group not in self.inventory:
-                    self.inventory[group] = { 'hosts': [ ], 'vars': {} }
+                    self.inventory[group] = {'hosts': [], 'vars': {}}
                 self.inventory[group]['hosts'].append(dest)
 
             # groups that are not always present
@@ -393,19 +388,18 @@ or environment variables (DO_API_TOKEN)\n''')
                 if group:
                     image = 'image_' + self.to_safe(group)
                     if image not in self.inventory:
-                        self.inventory[image] = { 'hosts': [ ], 'vars': {} }
+                        self.inventory[image] = {'hosts': [], 'vars': {}}
                     self.inventory[image]['hosts'].append(dest)
 
             if droplet['tags']:
                 for tag in droplet['tags']:
                     if tag not in self.inventory:
-                        self.inventory[tag] = { 'hosts': [ ], 'vars': {} }
+                        self.inventory[tag] = {'hosts': [], 'vars': {}}
                     self.inventory[tag]['hosts'].append(dest)
 
             # hostvars
             info = self.do_namespace(droplet)
             self.inventory['_meta']['hostvars'][dest] = info
-
 
     def load_droplet_variables_for_host(self):
         '''Generate a JSON response to a --host call'''
@@ -413,8 +407,6 @@ or environment variables (DO_API_TOKEN)\n''')
         droplet = self.manager.show_droplet(host)
         info = self.do_namespace(droplet)
         return {'droplet': info}
-
-
 
     ###########################################################################
     # Cache Management
@@ -429,7 +421,6 @@ or environment variables (DO_API_TOKEN)\n''')
                 return True
         return False
 
-
     def load_from_cache(self):
         ''' Reads the data from the cache file and assigns it to member variables as Python Objects'''
         try:
@@ -443,16 +434,14 @@ or environment variables (DO_API_TOKEN)\n''')
         self.data = data['data']
         self.inventory = data['inventory']
 
-
     def write_to_cache(self):
         ''' Writes data in JSON format to a file '''
-        data = { 'data': self.data, 'inventory': self.inventory }
+        data = {'data': self.data, 'inventory': self.inventory}
         json_data = json.dumps(data, sort_keys=True, indent=2)
 
         cache = open(self.cache_filename, 'w')
         cache.write(json_data)
         cache.close()
-
 
     ###########################################################################
     # Utilities
@@ -465,7 +454,6 @@ or environment variables (DO_API_TOKEN)\n''')
         else:
             my_dict[key] = [element]
 
-
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
         return re.sub("[^A-Za-z0-9\-\.]", "_", word)
@@ -474,9 +462,8 @@ or environment variables (DO_API_TOKEN)\n''')
         ''' Returns a copy of the dictionary with all the keys put in a 'do_' namespace '''
         info = {}
         for k, v in data.items():
-            info['do_'+k] = v
+            info['do_' + k] = v
         return info
-
 
 
 ###########################################################################

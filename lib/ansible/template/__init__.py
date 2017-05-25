@@ -21,8 +21,11 @@ __metaclass__ = type
 
 import ast
 import contextlib
+import datetime
 import os
+import pwd
 import re
+import time
 
 from io import StringIO
 from numbers import Number
@@ -35,17 +38,18 @@ except ImportError:
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
-from jinja2.utils import concat as j2_concat, missing
+from jinja2.utils import concat as j2_concat
 from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types, text_type
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.plugins import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
+from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
     from __main__ import display
@@ -54,7 +58,7 @@ except ImportError:
     display = Display()
 
 
-__all__ = ['Templar']
+__all__ = ['Templar', 'generate_ansible_template_vars']
 
 # A regex for checking to see if a variable we're trying to
 # expand is just a single variable name.
@@ -63,6 +67,33 @@ __all__ = ['Templar']
 NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
+
+
+def generate_ansible_template_vars(path):
+
+    b_path = to_bytes(path)
+    try:
+        template_uid = pwd.getpwuid(os.stat(b_path).st_uid).pw_name
+    except:
+        template_uid = os.stat(b_path).st_uid
+
+    temp_vars = {}
+    temp_vars['template_host']     = os.uname()[1]
+    temp_vars['template_path']     = b_path
+    temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(b_path))
+    temp_vars['template_uid']      = template_uid
+    temp_vars['template_fullpath'] = os.path.abspath(path)
+    temp_vars['template_run_date'] = datetime.datetime.now()
+
+    managed_default = C.DEFAULT_MANAGED_STR
+    managed_str = managed_default.format(
+        host = temp_vars['template_host'],
+        uid  = temp_vars['template_uid'],
+        file = temp_vars['template_path'],
+    )
+    temp_vars['ansible_managed'] = time.strftime( managed_str, time.localtime(os.path.getmtime(b_path)))
+
+    return temp_vars
 
 
 def _escape_backslashes(data, jinja_env):
@@ -221,6 +252,9 @@ class Templar:
             loader=FileSystemLoader(self._basedir),
         )
 
+        # the current rendering context under which the templar class is working
+        self.cur_context = None
+
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
 
         self._clean_regex   = re.compile(r'(?:%s|%s|%s|%s)' % (
@@ -281,45 +315,64 @@ class Templar:
         return jinja_exts
 
     def _clean_data(self, orig_data):
-        ''' remove jinja2 template tags from a string '''
+        ''' remove jinja2 template tags from data '''
 
-        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__'):
-            return orig_data
+        if hasattr(orig_data, '__ENCRYPTED__'):
+            ret = orig_data
 
-        with contextlib.closing(StringIO(orig_data)) as data:
-            # these variables keep track of opening block locations, as we only
-            # want to replace matched pairs of print/block tags
-            print_openings = []
-            block_openings = []
-            for mo in self._clean_regex.finditer(orig_data):
-                token = mo.group(0)
-                token_start = mo.start(0)
+        elif isinstance(orig_data, list):
+            clean_list = []
+            for list_item in orig_data:
+                clean_list.append(self._clean_data(list_item))
+            ret = clean_list
 
-                if token[0] == self.environment.variable_start_string[0]:
-                    if token == self.environment.block_start_string:
-                        block_openings.append(token_start)
-                    elif token == self.environment.variable_start_string:
-                        print_openings.append(token_start)
+        elif isinstance(orig_data, dict):
+            clean_dict = {}
+            for k in orig_data:
+                clean_dict[self._clean_data(k)] =  self._clean_data(orig_data[k])
+            ret = clean_dict
 
-                elif token[1] == self.environment.variable_end_string[1]:
-                    prev_idx = None
-                    if token == self.environment.block_end_string and block_openings:
-                        prev_idx = block_openings.pop()
-                    elif token == self.environment.variable_end_string and print_openings:
-                        prev_idx = print_openings.pop()
+        elif isinstance(orig_data, string_types):
+            # This will error with str data (needs unicode), but all strings should already be converted already.
+            # If you get exception, the problem is at the data origin, do not add to_text here.
+            with contextlib.closing(StringIO(orig_data)) as data:
+                # these variables keep track of opening block locations, as we only
+                # want to replace matched pairs of print/block tags
+                print_openings = []
+                block_openings = []
+                for mo in self._clean_regex.finditer(orig_data):
+                    token = mo.group(0)
+                    token_start = mo.start(0)
 
-                    if prev_idx is not None:
-                        # replace the opening
-                        data.seek(prev_idx, os.SEEK_SET)
-                        data.write(to_text(self.environment.comment_start_string))
-                        # replace the closing
-                        data.seek(token_start, os.SEEK_SET)
-                        data.write(to_text(self.environment.comment_end_string))
+                    if token[0] == self.environment.variable_start_string[0]:
+                        if token == self.environment.block_start_string:
+                            block_openings.append(token_start)
+                        elif token == self.environment.variable_start_string:
+                            print_openings.append(token_start)
 
-                else:
-                    raise AnsibleError("Error while cleaning data for safety: unhandled regex match")
+                    elif token[1] == self.environment.variable_end_string[1]:
+                        prev_idx = None
+                        if token == self.environment.block_end_string and block_openings:
+                            prev_idx = block_openings.pop()
+                        elif token == self.environment.variable_end_string and print_openings:
+                            prev_idx = print_openings.pop()
 
-            return data.getvalue()
+                        if prev_idx is not None:
+                            # replace the opening
+                            data.seek(prev_idx, os.SEEK_SET)
+                            data.write(to_text(self.environment.comment_start_string))
+                            # replace the closing
+                            data.seek(token_start, os.SEEK_SET)
+                            data.write(to_text(self.environment.comment_end_string))
+
+                    else:
+                        raise AnsibleError("Error while cleaning data for safety: unhandled regex match")
+
+                ret = data.getvalue()
+        else:
+            ret = orig_data
+
+        return ret
 
     def set_available_variables(self, variables):
         '''
@@ -341,14 +394,12 @@ class Templar:
         before being sent through the template engine.
         '''
 
+        # Don't template unsafe variables, just return them.
+        if hasattr(variable, '__UNSAFE__'):
+            return variable
+
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
-
-        # Don't template unsafe variables, instead drop them back down to their constituent type.
-        if hasattr(variable, '__UNSAFE__'):
-            if isinstance(variable, text_type):
-                rval = self._clean_data(variable)
-                return rval
 
         try:
             if convert_bare:
@@ -405,7 +456,6 @@ class Templar:
                                 if eval_results[1] is None:
                                     result = eval_results[0]
                                     if unsafe:
-                                        from ansible.vars.unsafe_proxy import wrap_var
                                         result = wrap_var(result)
                                 else:
                                     # FIXME: if the safe_eval raised an error, should we do something with it?
@@ -452,6 +502,26 @@ class Templar:
             else:
                 return variable
 
+    def is_template(self, data):
+        ''' lets us know if data has a template'''
+        if isinstance(data, string_types):
+            try:
+                new = self.do_template(data, fail_on_undefined=True)
+            except (AnsibleUndefinedVariable, UndefinedError):
+                return True
+            except:
+                return False
+            return (new != data)
+        elif isinstance(data, (list, tuple)):
+            for v in data:
+                if self.is_template(v):
+                    return True
+        elif isinstance(data, dict):
+            for k in data:
+                if self.is_template(k) or self.is_template(data[k]):
+                    return True
+        return False
+
     def templatable(self, data):
         '''
         returns True if the data can be templated w/o errors
@@ -486,7 +556,7 @@ class Templar:
                 if bare_deprecated:
                     display.deprecated("Using bare variables is deprecated."
                             " Update your playbooks so that the environment value uses the full variable syntax ('%s%s%s')" %
-                            (self.environment.variable_start_string, variable, self.environment.variable_end_string))
+                            (self.environment.variable_start_string, variable, self.environment.variable_end_string), version='2.7')
                 return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,
@@ -507,6 +577,7 @@ class Templar:
 
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)
+            allow_unsafe = kwargs.pop('allow_unsafe', C.DEFAULT_ALLOW_UNSAFE_LOOKUPS)
 
             from ansible.utils.listify import listify_lookup_plugin_terms
             loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
@@ -521,8 +592,7 @@ class Templar:
                                        "original message: %s" % (name, type(e), e))
                 ran = None
 
-            if ran:
-                from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
+            if ran and not allow_unsafe:
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
@@ -534,6 +604,8 @@ class Templar:
                         else:
                             ran = wrap_var(ran)
 
+                if self.cur_context:
+                    self.cur_context.unsafe = True
             return ran
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
@@ -563,13 +635,12 @@ class Templar:
                     key = key.strip()
                     setattr(myenv, key, ast.literal_eval(val.strip()))
 
-            #FIXME: add tests
+            # Adds Ansible custom filters and tests
             myenv.filters.update(self._get_filters())
             myenv.tests.update(self._get_tests())
 
             if escape_backslashes:
-                # Allow users to specify backslashes in playbooks as "\\"
-                # instead of as "\\\\".
+                # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
                 data = _escape_backslashes(data, myenv)
 
             try:
@@ -591,13 +662,12 @@ class Templar:
 
             jvars = AnsibleJ2Vars(self, t.globals)
 
-            new_context = t.new_context(jvars, shared=True)
+            self.cur_context = new_context = t.new_context(jvars, shared=True)
             rf = t.root_render_func(new_context)
 
             try:
                 res = j2_concat(rf)
                 if new_context.unsafe:
-                    from ansible.vars.unsafe_proxy import wrap_var
                     res = wrap_var(res)
             except TypeError as te:
                 if 'StrictUndefined' in to_native(te):

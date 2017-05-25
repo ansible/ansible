@@ -356,7 +356,7 @@ class GalaxyCLI(CLI):
                                     msg = "Unable to load data from the include requirements file: %s %s"
                                     raise AnsibleError(msg % (role_file, e))
                 else:
-                    display.deprecated("going forward only the yaml format will be supported")
+                    display.deprecated("going forward only the yaml format will be supported", version="2.6")
                     # roles listed in a file, one per line
                     for rline in f.readlines():
                         if rline.startswith("#") or rline.strip() == '':
@@ -389,8 +389,9 @@ class GalaxyCLI(CLI):
                                         (role.name, role.install_info['version'], role.version or "unspecified"))
                         continue
                 else:
-                    display.display('- %s is already installed, skipping.' % str(role))
-                    continue
+                    if not force:
+                        display.display('- %s is already installed, skipping.' % str(role))
+                        continue
 
             try:
                 installed = role.install()
@@ -676,3 +677,19 @@ class GalaxyCLI(CLI):
         display.display(resp['status'])
 
         return True
+
+    def get_opt(self, k, defval=""):
+        """
+        Returns an option from an Optparse values instance.
+        """
+        try:
+            data = getattr(self.options, k)
+        except:
+            return defval
+        # FIXME: Can this be removed if cli and/or constants ensures it's a
+        # list?
+        if k == "roles_path":
+            if os.pathsep in data:
+                data = data.split(os.pathsep)[0]
+        return data
+

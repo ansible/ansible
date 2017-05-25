@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError
 #from ansible.inventory.host import Host
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.handler import Handler

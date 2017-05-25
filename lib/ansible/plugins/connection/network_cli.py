@@ -18,17 +18,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
-import socket
 import json
-import signal
-import datetime
-import traceback
 import logging
+import re
+import signal
+import socket
+import traceback
+from collections import Sequence
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.six.moves import StringIO
+from ansible.module_utils.six import BytesIO, binary_type
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import terminal_loader
 from ansible.plugins.connection import ensure_connect
 from ansible.plugins.connection.paramiko_ssh import Connection as _Connection
@@ -113,7 +114,7 @@ class Connection(_Connection):
             self._terminal.on_authorize(passwd=auth_pass)
 
         display.display('shell successfully opened', log_only=True)
-        return (0, 'ok', '')
+        return (0, b'ok', b'')
 
     def close(self):
         display.display('closing connection', log_only=True)
@@ -131,11 +132,11 @@ class Connection(_Connection):
             self._shell.close()
             self._shell = None
 
-        return (0, 'ok', '')
+        return (0, b'ok', b'')
 
     def receive(self, obj=None):
         """Handles receiving of output from command"""
-        recv = StringIO()
+        recv = BytesIO()
         handled = False
 
         self._matched_prompt = None
@@ -150,7 +151,7 @@ class Connection(_Connection):
             window = self._strip(recv.read())
 
             if obj and (obj.get('prompt') and not handled):
-                handled = self._handle_prompt(window, obj)
+                handled = self._handle_prompt(window, obj['prompt'], obj['answer'])
 
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
@@ -162,31 +163,37 @@ class Connection(_Connection):
         try:
             command = obj['command']
             self._history.append(command)
-            self._shell.sendall('%s\r' % command)
+            self._shell.sendall(b'%s\r' % command)
             if obj.get('sendonly'):
                 return
             return self.receive(obj)
-        except (socket.timeout, AttributeError) as exc:
+        except (socket.timeout, AttributeError):
             display.display(traceback.format_exc(), log_only=True)
             raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
 
     def _strip(self, data):
         """Removes ANSI codes from device response"""
         for regex in self._terminal.ansi_re:
-            data = regex.sub('', data)
+            data = regex.sub(b'', data)
         return data
 
-    def _handle_prompt(self, resp, obj):
-        """Matches the command prompt and responds"""
-        if not isinstance(obj['prompt'], list):
-            obj['prompt'] = [obj['prompt']]
-        prompts = [re.compile(r, re.I) for r in obj['prompt']]
-        answer = obj['answer']
+    def _handle_prompt(self, resp, prompts, answer):
+        """
+        Matches the command prompt and responds
+
+        :arg resp: Byte string containing the raw response from the remote
+        :arg prompts: Sequence of byte strings that we consider prompts for input
+        :arg answer: Byte string to send back to the remote if we find a prompt.
+                A carriage return is automatically appended to this string.
+        :returns: True if a prompt was found in ``resp``.  False otherwise
+        """
+        prompts = [re.compile(r, re.I) for r in prompts]
         for regex in prompts:
             match = regex.search(resp)
             if match:
-                self._shell.sendall('%s\r' % answer)
+                self._shell.sendall(b'%s\r' % answer)
                 return True
+        return False
 
     def _sanitize(self, resp, obj=None):
         """Removes elements from the response before returning to the caller"""
@@ -196,26 +203,37 @@ class Connection(_Connection):
             if (command and line.startswith(command.strip())) or self._matched_prompt.strip() in line:
                 continue
             cleaned.append(line)
-        return str("\n".join(cleaned)).strip()
+        return b'\n'.join(cleaned).strip()
 
     def _find_prompt(self, response):
         """Searches the buffered response for a matching command prompt"""
         errored_response = None
+        is_error_message = False
         for regex in self._terminal.terminal_stderr_re:
             if regex.search(response):
-                errored_response = response
-                break
+                is_error_message = True
 
-        for regex in self._terminal.terminal_stdout_re:
-            match = regex.search(response)
-            if match:
-                self._matched_pattern = regex.pattern
-                self._matched_prompt = match.group()
-                if not errored_response:
-                    return True
+                # Check if error response ends with command prompt if not
+                # receive it buffered prompt
+                for regex in self._terminal.terminal_stdout_re:
+                    match = regex.search(response)
+                    if match:
+                        errored_response = response
+                        break
+
+        if not is_error_message:
+            for regex in self._terminal.terminal_stdout_re:
+                match = regex.search(response)
+                if match:
+                    self._matched_pattern = regex.pattern
+                    self._matched_prompt = match.group()
+                    if not errored_response:
+                        return True
 
         if errored_response:
             raise AnsibleConnectionFailure(errored_response)
+
+        return False
 
     def alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
@@ -225,38 +243,51 @@ class Connection(_Connection):
     def exec_command(self, cmd):
         """Executes the cmd on in the shell and returns the output
 
-        The method accepts two forms of cmd.  The first form is as a
+        The method accepts two forms of cmd.  The first form is as a byte
         string that represents the command to be executed in the shell.  The
-        second form is as a JSON string with additional keyword.
+        second form is as a utf8 JSON byte string with additional keywords.
 
         Keywords supported for cmd:
-            * command - the command string to execute
-            * prompt - the expected prompt generated by executing command
-            * answer - the string to respond to the prompt with
-            * sendonly - bool to disable waiting for response
-
-        :arg cmd: the string that represents the command to be executed
-            which can be a single command or a json encoded string
+            :command: the command string to execute
+            :prompt: the expected prompt generated by executing command.
+                This can be a string or a list of strings
+            :answer: the string to respond to the prompt with
+            :sendonly: bool to disable waiting for response
+        :arg cmd: the byte string that represents the command to be executed
+            which can be a single command or a json encoded string.
         :returns: a tuple of (return code, stdout, stderr).  The return
-            code is an integer and stdout and stderr are strings
+            code is an integer and stdout and stderr are byte strings
         """
         try:
-            obj = json.loads(cmd)
+            obj = json.loads(to_text(cmd, errors='surrogate_or_strict'))
         except (ValueError, TypeError):
-            obj = {'command': str(cmd).strip()}
+            obj = {'command': to_bytes(cmd.strip(), errors='surrogate_or_strict')}
 
-        if obj['command'] == 'close_shell()':
+        obj = dict((k, to_bytes(v, errors='surrogate_or_strict', nonstring='passthru')) for k, v in obj.items())
+        if 'prompt' in obj:
+            if isinstance(obj['prompt'], binary_type):
+                # Prompt was a string
+                obj['prompt'] = [obj['prompt']]
+            elif not isinstance(obj['prompt'], Sequence):
+                # Convert nonstrings into byte strings (to_bytes(5) => b'5')
+                if obj['prompt'] is not None:
+                    obj['prompt'] = [to_bytes(obj['prompt'], errors='surrogate_or_strict')]
+            else:
+                # Prompt was a Sequence of strings.  Make sure they're byte strings
+                obj['prompt'] = [to_bytes(p, errors='surrogate_or_strict') for p in obj['prompt'] if p is not None]
+        if obj['command'] == b'close_shell()':
             return self.close_shell()
-        elif obj['command'] == 'open_shell()':
+        elif obj['command'] == b'open_shell()':
             return self.open_shell()
-        elif obj['command'] == 'prompt()':
-            return (0, self._matched_prompt, '')
+        elif obj['command'] == b'prompt()':
+            return (0, self._matched_prompt, b'')
 
         try:
             if self._shell is None:
                 self.open_shell()
         except AnsibleConnectionFailure as exc:
-            return (1, '', str(exc))
+            # FIXME: Feels like we should raise this rather than return it
+            return (1, b'', to_bytes(exc))
 
         try:
             if not signal.getsignal(signal.SIGALRM):
@@ -264,6 +295,7 @@ class Connection(_Connection):
             signal.alarm(self._play_context.timeout)
             out = self.send(obj)
             signal.alarm(0)
-            return (0, out, '')
+            return (0, out, b'')
         except (AnsibleConnectionFailure, ValueError) as exc:
-            return (1, '', str(exc))
+            # FIXME: Feels like we should raise this rather than return it
+            return (1, b'', to_bytes(exc))

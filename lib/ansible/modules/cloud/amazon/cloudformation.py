@@ -204,6 +204,7 @@ log:
   sample: ["updating stack"]
 stack_resources:
   description: AWS stack resources and their status. List of dictionaries, one dict per resource.
+  returned: state == present
   type: list
   sample: [
           {
@@ -218,7 +219,7 @@ stack_resources:
 stack_outputs:
   type: dict
   description: A key:value dictionary of all the stack outputs currently defined. If there are no stack outputs, it is an empty dictionary.
-  returned: always
+  returned: state == present
   sample: {"MySg": "AnsibleModuleTestYAML-CFTestSg-C8UVS567B6NS"}
 '''  # NOQA
 
@@ -237,6 +238,8 @@ except ImportError:
 
 # import a class, otherwise we'll use a fully qualified path
 from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.basic import AnsibleModule
+import ansible.module_utils.ec2
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -248,17 +251,6 @@ def boto_exception(err):
         error = '%s: %s' % (Exception, err)
 
     return error
-
-
-def boto_version_required(version_tuple):
-    parts = boto3.__version__.split('.')
-    boto_version = []
-    try:
-        for part in parts:
-            boto_version.append(int(part))
-    except ValueError:
-        boto_version.append(-1)
-    return tuple(boto_version) >= tuple(version_tuple)
 
 
 def get_stack_events(cfn, stack_name):
@@ -351,8 +343,10 @@ def stack_operation(cfn, stack_name, operation):
             else:
                 ret.update({'changed': False, 'failed': True, 'output' : 'Stack not found.'})
                 return ret
-        elif stack['StackStatus'].endswith('_ROLLBACK_COMPLETE'):
-            ret.update({'changed': True, 'failed' :True, 'output': 'Problem with %s. Rollback complete' % operation})
+        # it covers ROLLBACK_COMPLETE and UPDATE_ROLLBACK_COMPLETE
+        # Possible states: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w1ab2c15c17c21c13
+        elif stack['StackStatus'].endswith('ROLLBACK_COMPLETE'):
+            ret.update({'changed': True, 'failed': True, 'output': 'Problem with %s. Rollback complete' % operation})
             return ret
         # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
         elif stack['StackStatus'].endswith('_COMPLETE'):
@@ -381,7 +375,7 @@ def get_stack_facts(cfn, stack_name):
     #except AmazonCloudFormationException as e:
     except (botocore.exceptions.ValidationError,botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
-        if 'does not exist'.format(stack_name) in error_msg:
+        if 'does not exist' in error_msg:
             # missing stack, don't bail.
             return None
 
@@ -441,7 +435,7 @@ def main():
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
     template_parameters = module.params['template_parameters']
-    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':v} for k, v in template_parameters.items()]
+    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]
 
     if isinstance(module.params.get('tags'), dict):
         stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])
@@ -506,10 +500,6 @@ def main():
             'since Ansible 2.3, JSON and YAML templates are now passed '
             'directly to the CloudFormation API.')]
     module.exit_json(**result)
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.ec2
 
 
 if __name__ == '__main__':

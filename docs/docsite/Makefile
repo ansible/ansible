@@ -22,7 +22,7 @@ clean:
 	-rm -rf htmlout
 	-rm -rf _build
 	-rm -f .buildinfo
-	-rm -f *.inv
+	-rm -f objects.inv
 	-rm -rf *.doctrees
 	@echo "Cleaning up minified css files"
 	find . -type f -name "*.min.css" -delete
@@ -48,3 +48,6 @@ modules: $(FORMATTER) ../templates/plugin.rst.j2
 
 staticmin:
 	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
+
+epub:
+	 (CPUS=$(CPUS) make -f Makefile.sphinx epub)

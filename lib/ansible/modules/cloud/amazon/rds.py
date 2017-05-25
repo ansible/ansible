@@ -340,7 +340,7 @@ try:
 except ImportError:
     has_rds2 = False
 
-DEFAULT_PORTS= {
+DEFAULT_PORTS = {
     'aurora': 3306,
     'mariadb': 3306,
     'mysql': 3306,
@@ -348,6 +348,7 @@ DEFAULT_PORTS= {
     'sqlserver': 1433,
     'postgres': 5432,
 }
+
 
 class RDSException(Exception):
     def __init__(self, exc):
@@ -365,7 +366,7 @@ class RDSException(Exception):
 class RDSConnection:
     def __init__(self, module, region, **aws_connect_params):
         try:
-            self.connection  = connect_to_aws(boto.rds, region, **aws_connect_params)
+            self.connection = connect_to_aws(boto.rds, region, **aws_connect_params)
         except boto.exception.BotoServerError as e:
             module.fail_json(msg=e.error_message)
 
@@ -382,11 +383,11 @@ class RDSConnection:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
-            username, password, **params):
+                           username, password, **params):
         params['engine'] = db_engine
         try:
             result = self.connection.create_dbinstance(instance_name, size, instance_class,
-                    username, password, **params)
+                                                       username, password, **params)
             return RDSDBInstance(result)
         except boto.exception.BotoServerError as e:
             raise RDSException(e)
@@ -451,7 +452,7 @@ class RDSConnection:
 class RDS2Connection:
     def __init__(self, module, region, **aws_connect_params):
         try:
-            self.connection  = connect_to_aws(boto.rds2, region, **aws_connect_params)
+            self.connection = connect_to_aws(boto.rds2, region, **aws_connect_params)
         except boto.exception.BotoServerError as e:
             module.fail_json(msg=e.error_message)
 
@@ -460,7 +461,7 @@ class RDS2Connection:
             dbinstances = self.connection.describe_db_instances(
                 db_instance_identifier=instancename
             )['DescribeDBInstancesResponse']['DescribeDBInstancesResult']['DBInstances']
-            result =  RDS2DBInstance(dbinstances[0])
+            result = RDS2DBInstance(dbinstances[0])
             return result
         except boto.rds2.exceptions.DBInstanceNotFound as e:
             return None
@@ -479,10 +480,10 @@ class RDS2Connection:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
-            username, password, **params):
+                           username, password, **params):
         try:
-            result = self.connection.create_db_instance(instance_name, size, instance_class,
-                db_engine, username, password, **params)['CreateDBInstanceResponse']['CreateDBInstanceResult']['DBInstance']
+            result = self.connection.create_db_instance(instance_name, size, instance_class, db_engine, username, password,
+                                                        **params)['CreateDBInstanceResponse']['CreateDBInstanceResult']['DBInstance']
             return RDS2DBInstance(result)
         except boto.exception.BotoServerError as e:
             raise RDSException(e)
@@ -560,18 +561,18 @@ class RDSDBInstance:
 
     def get_data(self):
         d = {
-            'id'                 : self.name,
-            'create_time'        : self.instance.create_time,
-            'status'             : self.status,
-            'availability_zone'  : self.instance.availability_zone,
-            'backup_retention'   : self.instance.backup_retention_period,
-            'backup_window'      : self.instance.preferred_backup_window,
-            'maintenance_window' : self.instance.preferred_maintenance_window,
-            'multi_zone'         : self.instance.multi_az,
-            'instance_type'      : self.instance.instance_class,
-            'username'           : self.instance.master_username,
-            'iops'               : self.instance.iops
-            }
+            'id': self.name,
+            'create_time': self.instance.create_time,
+            'status': self.status,
+            'availability_zone': self.instance.availability_zone,
+            'backup_retention': self.instance.backup_retention_period,
+            'backup_window': self.instance.preferred_backup_window,
+            'maintenance_window': self.instance.preferred_maintenance_window,
+            'multi_zone': self.instance.multi_az,
+            'instance_type': self.instance.instance_class,
+            'username': self.instance.master_username,
+            'iops': self.instance.iops
+        }
 
         # Only assign an Endpoint if one is available
         if hasattr(self.instance, 'endpoint'):
@@ -592,8 +593,6 @@ class RDSDBInstance:
         except Exception as e:
             d["replication_source"] = None
         return d
-
-
 
 
 class RDS2DBInstance:
@@ -639,12 +638,12 @@ class RDSSnapshot:
 
     def get_data(self):
         d = {
-            'id'                 : self.name,
-            'create_time'        : self.snapshot.snapshot_create_time,
-            'status'             : self.status,
-            'availability_zone'  : self.snapshot.availability_zone,
-            'instance_id'        : self.snapshot.instance_id,
-            'instance_created'   : self.snapshot.instance_create_time,
+            'id': self.name,
+            'create_time': self.snapshot.snapshot_create_time,
+            'status': self.status,
+            'availability_zone': self.snapshot.availability_zone,
+            'instance_id': self.snapshot.instance_id,
+            'instance_created': self.snapshot.instance_create_time,
         }
         # needs boto >= 2.21.0
         if hasattr(self.snapshot, 'snapshot_type'):
@@ -665,14 +664,14 @@ class RDS2Snapshot:
 
     def get_data(self):
         d = {
-            'id'                 : self.name,
-            'create_time'        : self.snapshot['SnapshotCreateTime'],
-            'status'             : self.status,
-            'availability_zone'  : self.snapshot['AvailabilityZone'],
-            'instance_id'        : self.snapshot['DBInstanceIdentifier'],
-            'instance_created'   : self.snapshot['InstanceCreateTime'],
-            'snapshot_type'      : self.snapshot['SnapshotType'],
-            'iops'               : self.snapshot['Iops'],
+            'id': self.name,
+            'create_time': self.snapshot['SnapshotCreateTime'],
+            'status': self.status,
+            'availability_zone': self.snapshot['AvailabilityZone'],
+            'instance_id': self.snapshot['DBInstanceIdentifier'],
+            'instance_created': self.snapshot['InstanceCreateTime'],
+            'snapshot_type': self.snapshot['SnapshotType'],
+            'iops': self.snapshot['Iops'],
         }
         return d
 
@@ -712,7 +711,7 @@ def create_db_instance(module, conn):
     valid_vars = ['backup_retention', 'backup_window',
                   'character_set_name', 'db_name', 'engine_version',
                   'instance_type', 'iops', 'license_model', 'maint_window',
-                  'multi_zone', 'option_group', 'parameter_group','port',
+                  'multi_zone', 'option_group', 'parameter_group', 'port',
                   'subnet', 'upgrade', 'zone']
     if module.params.get('subnet'):
         valid_vars.append('vpc_security_groups')
@@ -729,8 +728,8 @@ def create_db_instance(module, conn):
     else:
         try:
             result = conn.create_db_instance(instance_name, module.params.get('size'),
-                    module.params.get('instance_type'), module.params.get('db_engine'),
-                module.params.get('username'), module.params.get('password'), **params)
+                                             module.params.get('instance_type'), module.params.get('db_engine'),
+                                             module.params.get('username'), module.params.get('password'), **params)
             changed = True
         except RDSException as e:
             module.fail_json(msg="Failed to create instance: %s" % e.message)
@@ -1068,40 +1067,40 @@ def validate_parameters(required_vars, valid_vars, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
-        instance_name     = dict(required=False),
-        source_instance   = dict(required=False),
-        db_engine         = dict(choices=['mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex',
-                                          'sqlserver-web', 'postgres', 'aurora'], required=False),
-        size              = dict(required=False),
-        instance_type     = dict(aliases=['type'], required=False),
-        username          = dict(required=False),
-        password          = dict(no_log=True, required=False),
-        db_name           = dict(required=False),
-        engine_version    = dict(required=False),
-        parameter_group   = dict(required=False),
-        license_model     = dict(choices=['license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license'], required=False),
-        multi_zone        = dict(type='bool', default=False),
-        iops              = dict(required=False),
-        security_groups   = dict(required=False),
-        vpc_security_groups = dict(type='list', required=False),
-        port              = dict(required=False),
-        upgrade           = dict(type='bool', default=False),
-        option_group      = dict(required=False),
-        maint_window      = dict(required=False),
-        backup_window     = dict(required=False),
-        backup_retention  = dict(required=False),
-        zone              = dict(aliases=['aws_zone', 'ec2_zone'], required=False),
-        subnet            = dict(required=False),
-        wait              = dict(type='bool', default=False),
-        wait_timeout      = dict(type='int', default=300),
-        snapshot          = dict(required=False),
-        apply_immediately = dict(type='bool', default=False),
-        new_instance_name = dict(required=False),
-        tags              = dict(type='dict', required=False),
-        publicly_accessible = dict(required=False),
-        character_set_name = dict(required=False),
-        force_failover    = dict(type='bool', required=False, default=False)
+        command=dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
+        instance_name=dict(required=False),
+        source_instance=dict(required=False),
+        db_engine=dict(choices=['mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex',
+                                'sqlserver-web', 'postgres', 'aurora'], required=False),
+        size=dict(required=False),
+        instance_type=dict(aliases=['type'], required=False),
+        username=dict(required=False),
+        password=dict(no_log=True, required=False),
+        db_name=dict(required=False),
+        engine_version=dict(required=False),
+        parameter_group=dict(required=False),
+        license_model=dict(choices=['license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license'], required=False),
+        multi_zone=dict(type='bool', required=False),
+        iops=dict(required=False),
+        security_groups=dict(required=False),
+        vpc_security_groups=dict(type='list', required=False),
+        port=dict(required=False),
+        upgrade=dict(type='bool', default=False),
+        option_group=dict(required=False),
+        maint_window=dict(required=False),
+        backup_window=dict(required=False),
+        backup_retention=dict(required=False),
+        zone=dict(aliases=['aws_zone', 'ec2_zone'], required=False),
+        subnet=dict(required=False),
+        wait=dict(type='bool', default=False),
+        wait_timeout=dict(type='int', default=300),
+        snapshot=dict(required=False),
+        apply_immediately=dict(type='bool', default=False),
+        new_instance_name=dict(required=False),
+        tags=dict(type='dict', required=False),
+        publicly_accessible=dict(required=False),
+        character_set_name=dict(required=False),
+        force_failover=dict(type='bool', required=False, default=False)
     )
     )
 

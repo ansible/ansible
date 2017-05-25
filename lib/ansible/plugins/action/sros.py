@@ -70,12 +70,17 @@ class ActionModule(_ActionModule):
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
             rc, out, err = connection.exec_command('open_shell()')
+            display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
             if not rc == 0:
-                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
+                        'rc': rc}
 
         task_vars['ansible_socket'] = socket_path
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)

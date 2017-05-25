@@ -65,8 +65,9 @@ EXAMPLES = """
     state: present
 
 - name: remove the motd banner
-  banner: motd
-  state: absent
+  eos_banner:
+    banner: motd
+    state: absent
 """
 
 RETURN = """
@@ -95,7 +96,7 @@ def map_obj_to_commands(updates, module):
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' and have['text']:
+    if state == 'absent' and 'text' in have.keys() and have['text']:
         commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present':
@@ -121,7 +122,12 @@ def map_config_to_obj(module):
         else:
             # On EAPI we need to extract the banner text from dict key
             # 'loginBanner'
-            obj['text'] = output[0]['loginBanner'].strip('\n')
+            if module.params['banner'] == 'login':
+                banner_response_key = 'loginBanner'
+            else:
+                banner_response_key = 'motd'
+            if isinstance(output[0], dict) and banner_response_key in output[0].keys():
+                obj['text'] = output[0][banner_response_key].strip('\n')
         obj['state'] = 'present'
     return obj
 

@@ -82,11 +82,16 @@ class ActionModule(_ActionModule):
             # start the connection if it isn't started
             if pc.connection == 'netconf':
                 rc, out, err = connection.exec_command('open_session()')
+                display.vvvv('open_session() returned %s %s %s' % (rc, out, err))
             else:
                 rc, out, err = connection.exec_command('open_shell()')
+                display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
 
             if rc != 0:
-                return {'failed': True, 'msg': 'unable to connect to control socket'}
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
+                        'rc': rc}
 
         elif pc.connection == 'network_cli':
             # make sure we are in the right cli context which should be
@@ -99,7 +104,8 @@ class ActionModule(_ActionModule):
 
         task_vars['ansible_socket'] = socket_path
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)

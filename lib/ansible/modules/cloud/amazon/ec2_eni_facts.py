@@ -73,7 +73,7 @@ from ansible.module_utils.ec2 import (AnsibleAWSError,
         connect_to_aws, ec2_argument_spec, get_aws_connection_info)
 
 
-def list_ec2_snapshots_boto3(connection, module):
+def list_ec2_eni_boto3(connection, module):
 
     if module.params.get("filters") is None:
         filters = []
@@ -81,16 +81,17 @@ def list_ec2_snapshots_boto3(connection, module):
         filters = ansible_dict_to_boto3_filter_list(module.params.get("filters"))
 
     try:
-        network_interfaces_result = connection.describe_network_interfaces(Filters=filters)
+        network_interfaces_result = connection.describe_network_interfaces(Filters=filters)['NetworkInterfaces']
     except (ClientError, NoCredentialsError) as e:
         module.fail_json(msg=e.message)
 
-    # Turn the boto3 result in to ansible_friendly_snaked_names
-    snaked_network_interfaces_result = camel_dict_to_snake_dict(network_interfaces_result)
-    for network_interfaces in snaked_network_interfaces_result['network_interfaces']:
-        network_interfaces['tag_set'] = boto3_tag_list_to_ansible_dict(network_interfaces['tag_set'])
+    # Modify boto3 tags list to be ansible friendly dict and then camel_case
+    camel_network_interfaces = []
+    for network_interface in network_interfaces_result:
+        network_interface['TagSet'] = boto3_tag_list_to_ansible_dict(network_interface['TagSet'])
+        camel_network_interfaces.append(camel_dict_to_snake_dict(network_interface))
 
-    module.exit_json(**snaked_network_interfaces_result)
+    module.exit_json(network_interfaces=camel_network_interfaces)
 
 
 def get_eni_info(interface):
@@ -168,7 +169,7 @@ def main():
         else:
             module.fail_json(msg="region must be specified")
 
-        list_ec2_snapshots_boto3(connection, module)
+        list_ec2_eni_boto3(connection, module)
     else:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 

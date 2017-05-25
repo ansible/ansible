@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 module: nxos_mtu
 extends_documentation_fragment: nxos
 version_added: "2.2"
-deprecated: Deprecated in 2.2 use M(nxos_system)'s C(mtu) option.
+deprecated: Deprecated in 2.3 use M(nxos_system)'s C(mtu) option.
 short_description: Manages MTU settings on Nexus switch.
 description:
     - Manages MTU settings on Nexus switch.
@@ -42,12 +42,12 @@ options:
         default: null
     mtu:
         description:
-            - MTU for a specific interface.
+            - MTU for a specific interface. Must be an even number between 576 and 9216.
         required: false
         default: null
     sysmtu:
         description:
-            - System jumbo MTU.
+            - System jumbo MTU. Must be an even number between 576 and 9216.
         required: false
         default: null
     state:
@@ -101,6 +101,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing mtu/sysmtu on the interface/system
+    returned: always
     type: dict
     sample: {"mtu": "1600", "sysmtu": "9216"}
 end_state:

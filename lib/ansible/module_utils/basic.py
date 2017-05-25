@@ -64,7 +64,6 @@ FILE_ATTRIBUTES = {
 import locale
 import os
 import re
-import pipes
 import shlex
 import subprocess
 import sys
@@ -164,7 +163,7 @@ except ImportError:
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
         iteritems, text_type, string_types)
-from ansible.module_utils.six.moves import map, reduce
+from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
@@ -915,10 +914,18 @@ class AnsibleModule(object):
         return (uid, gid)
 
     def find_mount_point(self, path):
-        path = os.path.realpath(os.path.expanduser(os.path.expandvars(path)))
-        while not os.path.ismount(path):
-            path = os.path.dirname(path)
-        return path
+        path_is_bytes = False
+        if isinstance(path, binary_type):
+            path_is_bytes = True
+
+        b_path = os.path.realpath(to_bytes(os.path.expanduser(os.path.expandvars(path)), errors='surrogate_or_strict'))
+        while not os.path.ismount(b_path):
+            b_path = os.path.dirname(b_path)
+
+        if path_is_bytes:
+            return b_path
+
+        return to_text(b_path, errors='surrogate_or_strict')
 
     def is_special_selinux_path(self, path):
         """
@@ -1882,7 +1889,7 @@ class AnsibleModule(object):
         try:
             cwd = os.getcwd()
             if not os.access(cwd, os.F_OK|os.R_OK):
-                raise
+                raise Exception()
             return cwd
         except:
             # we don't have access to the cwd, probably because of sudo.
@@ -1992,7 +1999,7 @@ class AnsibleModule(object):
                     else:
                         self.deprecate(d)
             else:
-                self.deprecate(d)
+                self.deprecate(kwargs['deprecations'])
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations
@@ -2051,7 +2058,7 @@ class AnsibleModule(object):
                                    (filename, algorithm, ', '.join(AVAILABLE_HASH_ALGORITHMS)))
 
         blocksize = 64 * 1024
-        infile = open(filename, 'rb')
+        infile = open(os.path.realpath(filename), 'rb')
         block = infile.read(blocksize)
         while block:
             digest_method.update(block)
@@ -2306,24 +2313,33 @@ class AnsibleModule(object):
             strings on python3, use encoding=None to turn decoding to text off.
         '''
 
-        shell = False
         if isinstance(args, list):
             if use_unsafe_shell:
-                args = " ".join([pipes.quote(x) for x in args])
+                args = " ".join([shlex_quote(x) for x in args])
                 shell = True
         elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
             shell = True
         elif isinstance(args, (binary_type, text_type)):
-            # On python2.6 and below, shlex has problems with text type
-            # On python3, shlex needs a text type.
-            if PY2:
-                args = to_bytes(args, errors='surrogate_or_strict')
-            elif PY3:
-                args = to_text(args, errors='surrogateescape')
-            args = shlex.split(args)
+            if not use_unsafe_shell:
+                # On python2.6 and below, shlex has problems with text type
+                # On python3, shlex needs a text type.
+                if PY2:
+                    args = to_bytes(args, errors='surrogate_or_strict')
+                elif PY3:
+                    args = to_text(args, errors='surrogateescape')
+                args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
+        shell = False
+        if use_unsafe_shell:
+            if executable is None:
+                executable = os.environ.get('SHELL')
+            if executable:
+                args = [executable, '-c', args]
+            else:
+                shell = True
 
         prompt_re = None
         if prompt_regex:
@@ -2403,7 +2419,7 @@ class AnsibleModule(object):
                     is_passwd = True
             arg = heuristic_log_sanitize(arg, self.no_log_values)
             clean_args.append(arg)
-        clean_args = ' '.join(pipes.quote(arg) for arg in clean_args)
+        clean_args = ' '.join(shlex_quote(arg) for arg in clean_args)
 
         if data:
             st_in = subprocess.PIPE

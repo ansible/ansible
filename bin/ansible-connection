@@ -41,11 +41,10 @@ import syslog
 import datetime
 import logging
 
-from io import BytesIO
-
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.module_utils.six.moves import cPickle, StringIO
+from ansible.module_utils.six import PY3
+from ansible.module_utils.six.moves import cPickle
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
@@ -73,11 +72,11 @@ def do_fork():
                 sys.exit(0)
 
             if C.DEFAULT_LOG_PATH != '':
-                out_file = file(C.DEFAULT_LOG_PATH, 'a+')
-                err_file = file(C.DEFAULT_LOG_PATH, 'a+', 0)
+                out_file = open(C.DEFAULT_LOG_PATH, 'ab+')
+                err_file = open(C.DEFAULT_LOG_PATH, 'ab+', 0)
             else:
-                out_file = file('/dev/null', 'a+')
-                err_file = file('/dev/null', 'a+', 0)
+                out_file = open('/dev/null', 'ab+')
+                err_file = open('/dev/null', 'ab+', 0)
 
             os.dup2(out_file.fileno(), sys.stdout.fileno())
             os.dup2(err_file.fileno(), sys.stderr.fileno())
@@ -90,7 +89,7 @@ def do_fork():
         sys.exit(1)
 
 def send_data(s, data):
-    packed_len = struct.pack('!Q',len(data))
+    packed_len = struct.pack('!Q', len(data))
     return s.sendall(packed_len + data)
 
 def recv_data(s):
@@ -101,7 +100,7 @@ def recv_data(s):
         if not d:
             return None
         data += d
-    data_len = struct.unpack('!Q',data[:header_len])[0]
+    data_len = struct.unpack('!Q', data[:header_len])[0]
     data = data[header_len:]
     while len(data) < data_len:
         d = s.recv(data_len - len(data))
@@ -188,7 +187,7 @@ class Server():
                     if not data:
                         break
 
-                    signal.alarm(C.DEFAULT_TIMEOUT)
+                    signal.alarm(self.play_context.timeout)
 
                     rc = 255
                     try:
@@ -211,11 +210,12 @@ class Server():
                                 pass
                         elif data.startswith(b'CONTEXT: '):
                             display.display("socket operation is CONTEXT", log_only=True)
-                            pc_data = data.split(b'CONTEXT: ')[1]
+                            pc_data = data.split(b'CONTEXT: ', 1)[1]
 
-                            src = StringIO(pc_data)
-                            pc_data = cPickle.load(src)
-                            src.close()
+                            if PY3:
+                                pc_data = cPickle.loads(pc_data, encoding='bytes')
+                            else:
+                                pc_data = cPickle.loads(pc_data)
 
                             pc = PlayContext()
                             pc.deserialize(pc_data)
@@ -234,12 +234,12 @@ class Server():
 
                     display.display("socket operation completed with rc %s" % rc, log_only=True)
 
-                    send_data(s, to_bytes(str(rc)))
+                    send_data(s, to_bytes(rc))
                     send_data(s, to_bytes(stdout))
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            display.display(traceback.format_exec(), log_only=True)
+            display.display(traceback.format_exc(), log_only=True)
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
@@ -254,21 +254,28 @@ class Server():
             os.remove(self.path)
 
 def main():
+    # Need stdin as a byte stream
+    if PY3:
+        stdin = sys.stdin.buffer
+    else:
+        stdin = sys.stdin
 
     try:
         # read the play context data via stdin, which means depickling it
         # FIXME: as noted above, we will probably need to deserialize the
         #        connection loader here as well at some point, otherwise this
         #        won't find role- or playbook-based connection plugins
-        cur_line = sys.stdin.readline()
-        init_data = ''
-        while cur_line.strip() != '#END_INIT#':
-            if cur_line  == '':
-                raise Exception("EOL found before init data was complete")
+        cur_line = stdin.readline()
+        init_data = b''
+        while cur_line.strip() != b'#END_INIT#':
+            if cur_line == b'':
+                raise Exception("EOF found before init data was complete")
             init_data += cur_line
-            cur_line = sys.stdin.readline()
-        src = BytesIO(to_bytes(init_data))
-        pc_data = cPickle.load(src)
+            cur_line = stdin.readline()
+        if PY3:
+            pc_data = cPickle.loads(init_data, encoding='bytes')
+        else:
+            pc_data = cPickle.loads(init_data)
 
         pc = PlayContext()
         pc.deserialize(pc_data)
@@ -319,10 +326,10 @@ def main():
     #        the connection will timeout here. Need to make this more resilient.
     rc = 0
     while rc == 0:
-        data = sys.stdin.readline()
-        if data == '':
+        data = stdin.readline()
+        if data == b'':
             break
-        if data.strip() == '':
+        if data.strip() == b'':
             continue
         sf = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         attempts = 1
@@ -342,11 +349,10 @@ def main():
 
         # send the play_context back into the connection so the connection
         # can handle any privilege escalation activities
-        pc_data = 'CONTEXT: %s' % src.getvalue()
-        send_data(sf, to_bytes(pc_data))
-        src.close()
+        pc_data = b'CONTEXT: %s' % init_data
+        send_data(sf, pc_data)
 
-        send_data(sf, to_bytes(data.strip()))
+        send_data(sf, data.strip())
 
         rc = int(recv_data(sf), 10)
         stdout = recv_data(sf)

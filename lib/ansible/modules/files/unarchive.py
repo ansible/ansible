@@ -149,7 +149,7 @@ import time
 import binascii
 import codecs
 from zipfile import ZipFile, BadZipfile
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 
 try:  # python 3.3+
     from shlex import quote
@@ -172,7 +172,7 @@ BUFSIZE = 65536
 
 def crc32(path):
     ''' Return a CRC32 checksum of a file '''
-    return binascii.crc32(open(path).read()) & 0xffffffff
+    return binascii.crc32(open(path, 'rb').read()) & 0xffffffff
 
 def shell_escape(string):
     ''' Quote meta-characters in the args for the unix shell '''
@@ -221,7 +221,7 @@ class ZipArchive(object):
         for line in out.splitlines()[3:-2]:
             fields = line.split(None, 7)
             self._files_in_archive.append(fields[7])
-            self._infodict[fields[7]] = long(fields[6])
+            self._infodict[fields[7]] = int(fields[6])
 
     def _crc32(self, path):
         if self._infodict:
@@ -240,7 +240,7 @@ class ZipArchive(object):
         else:
             try:
                 for item in archive.infolist():
-                    self._infodict[item.filename] = long(item.CRC)
+                    self._infodict[item.filename] = int(item.CRC)
             except:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
@@ -770,7 +770,6 @@ def main():
             src               = dict(required=True, type='path'),
             original_basename = dict(required=False, type='str'), # used to handle 'dest is a directory' via template, a slight hack
             dest              = dict(required=True, type='path'),
-            copy              = dict(required=False, default=True, type='bool'),
             remote_src        = dict(required=False, default=False, type='bool'),
             creates           = dict(required=False, type='path'),
             list_files        = dict(required=False, default=False, type='bool'),
@@ -780,21 +779,19 @@ def main():
             validate_certs    = dict(required=False, default=True, type='bool'),
         ),
         add_file_common_args = True,
-        mutually_exclusive   = [("copy", "remote_src"),],
         # check-mode only works for zip files, we cover that later
         supports_check_mode = True,
     )
 
     src        = module.params['src']
     dest       = module.params['dest']
-    copy       = module.params['copy']
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
     # did tar file arrive?
     if not os.path.exists(src):
-        if not remote_src and copy:
+        if not remote_src:
             module.fail_json(msg="Source '%s' failed to transfer" % src)
-        # If copy=false, and src= contains ://, try and download the file to a temp directory.
+        # If remote_src=true, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
             tempdir = os.path.dirname(os.path.realpath(__file__))
             package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
@@ -803,12 +800,15 @@ def main():
                 # If download fails, raise a proper exception
                 if rsp is None:
                     raise Exception(info['msg'])
-                f = open(package, 'w')
+
+                # open in binary mode for python3
+                f = open(package, 'wb')
                 # Read 1kb at a time to save on ram
                 while True:
                     data = rsp.read(BUFSIZE)
+                    data = to_bytes(data, errors='surrogate_or_strict')
 
-                    if data == "":
+                    if len(data) < 1:
                         break # End of file, break while loop
 
                     f.write(data)

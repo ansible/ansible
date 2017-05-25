@@ -118,7 +118,7 @@ RETURN = '''
 user:
     description: Dictionary describing the user.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         default_project_id:
             description: User default project ID. Only present with Keystone >= v3.
@@ -177,7 +177,7 @@ def _get_domain_id(cloud, domain):
 
     return domain_id
 
-def _get_default_project_id(cloud, default_project):
+def _get_default_project_id(cloud, default_project, module):
     project = cloud.get_project(default_project)
     if not project:
         module.fail_json(msg='Default project %s is not valid' % default_project)
@@ -232,7 +232,7 @@ def main():
                     module.fail_json(msg=msg)
             default_project_id = None
             if default_project:
-                default_project_id = _get_default_project_id(cloud, default_project)
+                default_project_id = _get_default_project_id(cloud, default_project, module)
 
             if user is None:
                 user = cloud.create_user(

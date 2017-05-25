@@ -35,6 +35,11 @@ description:
 version_added: "2.1"
 
 options:
+  auto_remove:
+    description:
+      - enable auto-removal of the container on daemon side when the container's process exits
+    default: false
+    version_added: "2.4"
   blkio_weight:
     description:
       - Block IO (relative weight), between 10 and 1000.
@@ -54,6 +59,8 @@ options:
   command:
     description:
       - Command to execute when the container starts.
+        A command may be either a string or a list.
+        Prior to version 2.4, strings were split on commas.
     default: null
     required: false
   cpu_period:
@@ -421,7 +428,7 @@ options:
     required: false
   tty:
     description:
-      - Allocate a psuedo-TTY.
+      - Allocate a pseudo-TTY.
     default: false
     required: false
   ulimits:
@@ -459,6 +466,12 @@ options:
       - List of container names or Ids to get volumes from.
     default: null
     required: false
+  working_dir:
+    description:
+      - Path to the working directory.
+    default: null
+    required: false
+    version_added: "2.4"
 extends_documentation_fragment:
     - docker
 
@@ -688,6 +701,7 @@ class TaskParameters(DockerBaseClass):
         super(TaskParameters, self).__init__()
         self.client = client
 
+        self.auto_remove = None
         self.blkio_weight = None
         self.capabilities = None
         self.cleanup = None
@@ -755,6 +769,7 @@ class TaskParameters(DockerBaseClass):
         self.volume_binds = dict()
         self.volumes_from = None
         self.volume_driver = None
+        self.working_dir = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -808,7 +823,8 @@ class TaskParameters(DockerBaseClass):
 
         if self.command:
             # convert from list to str
-            self.command = ' '.join([str(x) for x in self.command])
+            if isinstance(self.command, list):
+                self.command = ' '.join([str(x) for x in self.command])
 
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
@@ -857,6 +873,7 @@ class TaskParameters(DockerBaseClass):
             labels='labels',
             stop_signal='stop_signal',
             volume_driver='volume_driver',
+            working_dir='working_dir',
         )
 
         result = dict(
@@ -942,6 +959,11 @@ class TaskParameters(DockerBaseClass):
             devices='devices',
             pid_mode='pid_mode'
         )
+
+        if HAS_DOCKER_PY_2:
+            # auto_remove is only supported in docker>=2
+            host_config_params['auto_remove'] = 'auto_remove'
+
         params = dict()
         for key, value in host_config_params.items():
             if getattr(self, value, None) is not None:
@@ -1072,13 +1094,13 @@ class TaskParameters(DockerBaseClass):
         if links is None:
             return None
 
-        result = {}
+        result = []
         for link in links:
             parsed_link = link.split(':', 1)
             if len(parsed_link) == 2:
-                result[parsed_link[0]] = parsed_link[1]
+                result.append((parsed_link[0], parsed_link[1]))
             else:
-                result[parsed_link[0]] = parsed_link[0]
+                result.append((parsed_link[0], parsed_link[0]))
         return result
 
     def _parse_ulimits(self):
@@ -1228,6 +1250,7 @@ class Container(DockerBaseClass):
 
         # Map parameters to container inspect results
         config_mapping = dict(
+            auto_remove=host_config.get('AutoRemove'),
             image=config.get('Image'),
             expected_cmd=config.get('Cmd'),
             hostname=config.get('Hostname'),
@@ -1262,7 +1285,7 @@ class Container(DockerBaseClass):
             restart_retries=restart_policy.get('MaximumRetryCount'),
             # Cannot test shm_size, as shm_size is not included in container inspection results.
             # shm_size=host_config.get('ShmSize'),
-            security_opts=host_config.get("SecuriytOpt"),
+            security_opts=host_config.get("SecurityOpt"),
             stop_signal=config.get("StopSignal"),
             tty=config.get('Tty'),
             expected_ulimits=host_config.get('Ulimits'),
@@ -1270,7 +1293,8 @@ class Container(DockerBaseClass):
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
-            volume_driver=host_config.get('VolumeDriver')
+            volume_driver=host_config.get('VolumeDriver'),
+            working_dir=host_config.get('WorkingDir')
         )
 
         differences = []
@@ -1287,7 +1311,7 @@ class Container(DockerBaseClass):
                         self.log("comparing lists: %s" % key)
                         set_a = set(getattr(self.parameters, key))
                         set_b = set(value)
-                        match = (set_a <= set_b)
+                        match = (set_a == set_b)
                 elif isinstance(getattr(self.parameters, key), list) and not len(getattr(self.parameters, key)) \
                         and value is None:
                     # an empty list and None are ==
@@ -1427,7 +1451,7 @@ class Container(DockerBaseClass):
                     diff = True
                 if network.get('links') and connected_networks[network['name']].get('Links'):
                     expected_links = []
-                    for link, alias in network['links'].items():
+                    for link, alias in network['links']:
                         expected_links.append("%s:%s" % (link, alias))
                     for link in expected_links:
                         if link not in connected_networks[network['name']].get('Links', []):
@@ -1513,7 +1537,10 @@ class Container(DockerBaseClass):
             if isinstance(container_port, int):
                 container_port = "%s/tcp" % container_port
             if len(config) == 1:
-                expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': ""}]
+                if isinstance(config[0], int):
+                    expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': config[0]}]
+                else:
+                    expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': ""}]
             elif isinstance(config[0], tuple):
                 expected_bound_ports[container_port] = []
                 for host_ip, host_port in config:
@@ -1528,7 +1555,7 @@ class Container(DockerBaseClass):
         self.log('parameter links:')
         self.log(self.parameters.links, pretty_print=True)
         exp_links = []
-        for link, alias in self.parameters.links.items():
+        for link, alias in self.parameters.links:
             exp_links.append("/%s:%s/%s" % (link, ('/' + self.parameters.name), alias))
         return exp_links
 
@@ -1954,10 +1981,11 @@ class ContainerManager(DockerBaseClass):
 
 def main():
     argument_spec = dict(
+        auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
         cleanup=dict(type='bool', default=False),
-        command=dict(type='list'),
+        command=dict(type='raw'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
@@ -2023,6 +2051,7 @@ def main():
         volumes=dict(type='list'),
         volumes_from=dict(type='list'),
         volume_driver=dict(type='str'),
+        working_dir=dict(type='str'),
     )
 
     required_if = [
@@ -2034,6 +2063,9 @@ def main():
         required_if=required_if,
         supports_check_mode=True
     )
+
+    if not HAS_DOCKER_PY_2 and client.module.params.get('auto_remove'):
+        client.module.fail_json(msg="'auto_remove' is not compatible with docker-py, and requires the docker python module")
 
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)

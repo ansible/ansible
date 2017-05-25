@@ -101,10 +101,14 @@ def _get_fs_size(fssize_cmd, dev, module):
         rc, size, err = module.run_command("%s %s" % (cmd, dev))
         if rc == 0:
             for line in size.splitlines():
-                #if 'data' in line:
-                if 'data ' in line:
-                    block_size = int(line.split('=')[2].split()[0])
-                    block_count = int(line.split('=')[3].split(',')[0])
+                col = line.split('=')
+                if col[0].strip() == 'data':
+                    if col[1].strip() != 'bsize':
+                        module.fail_json(msg='Unexpected output format from xfs_info (could not locate "bsize")')
+                    if col[2].split()[1] != 'blocks':
+                        module.fail_json(msg='Unexpected output format from xfs_info (could not locate "blocks")')
+                    block_size = int(col[2].split()[0])
+                    block_count = int(col[3].split(',')[0])
                     break
         else:
             module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err )

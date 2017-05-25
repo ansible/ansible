@@ -42,6 +42,10 @@ options:
     description:
       - The path to the root of the Serverless Service to be operated on.
     required: true
+  stage:
+    description:
+      - The name of the serverless framework project stage to deploy to. This uses the serverless framework default "dev".
+    required: false
   functions:
     description:
       - A list of specific functions to deploy. If this is not provided, all functions in the service will be deployed.

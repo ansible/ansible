@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017 Dag Wieers <dag@wieers.com>
 #
@@ -71,4 +71,3 @@ path:
   type: string
   sample: C:\Users\Administrator\AppData\Local\Temp\ansible.bMlvdk
 '''
-

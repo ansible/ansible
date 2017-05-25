@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_nics
-short_description: Module to manage network interfaces of Virtual Machines in oVirt
+short_description: Module to manage network interfaces of Virtual Machines in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage network interfaces of Virtual Machines in oVirt."
+    - "Module to manage network interfaces of Virtual Machines in oVirt/RHV."
 options:
     name:
         description:
@@ -104,9 +104,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 nic:
-    description: "Dictionary of all the network interface attributes. Network interface attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/nic."
+    description: "Dictionary of all the network interface attributes. Network interface attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/nic."
     returned: On success if network interface is found.
+    type: dict
 '''
 
 try:

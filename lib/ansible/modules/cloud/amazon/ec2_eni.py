@@ -47,8 +47,8 @@ options:
     default: null
   subnet_id:
     description:
-      - ID of subnet in which to create the ENI. Only required when state=present.
-    required: true
+      - ID of subnet in which to create the ENI.
+    required: false
   description:
     description:
       - Optional description of the ENI.
@@ -108,6 +108,9 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+notes:
+    - This module identifies and ENI based on either the eni_id, a combination of private_ip_address and subnet_id,
+      or a combination of instance_id and device_id. Any of these options will let you specify a particular ENI.
 '''
 
 EXAMPLES = '''
@@ -162,6 +165,12 @@ EXAMPLES = '''
     description: "My new description"
     state: present
 
+# Update an ENI identifying it by private_ip_address and subnet_id
+- ec2_eni:
+    subnet_id: subnet-xxxxxxx
+    private_ip_address: 172.16.1.1
+    description: "My new description"
+
 # Detach an ENI from an instance
 - ec2_eni:
     eni_id: eni-xxxxxxx
@@ -190,7 +199,7 @@ RETURN = '''
 interface:
   description: Network interface attributes
   returned: when state != absent
-  type: dictionary
+  type: complex
   contains:
     description:
       description: interface description
@@ -318,34 +327,32 @@ def create_eni(connection, vpc_id, module):
     changed = False
 
     try:
-        eni = find_eni(connection, module)
-        if eni is None:
-            eni = connection.create_network_interface(subnet_id, private_ip_address, description, security_groups)
-            if attached is True and instance_id is not None:
-                try:
-                    eni.attach(instance_id, device_index)
-                except BotoServerError:
-                    eni.delete()
-                    raise
-                # Wait to allow creation / attachment to finish
-                wait_for_eni(eni, "attached")
-                eni.update()
+        eni = connection.create_network_interface(subnet_id, private_ip_address, description, security_groups)
+        if attached and instance_id is not None:
+            try:
+                eni.attach(instance_id, device_index)
+            except BotoServerError:
+                eni.delete()
+                raise
+            # Wait to allow creation / attachment to finish
+            wait_for_eni(eni, "attached")
+            eni.update()
 
-            if secondary_private_ip_address_count is not None:
-                try:
-                    connection.assign_private_ip_addresses(network_interface_id=eni.id, secondary_private_ip_address_count=secondary_private_ip_address_count)
-                except BotoServerError:
-                    eni.delete()
-                    raise
+        if secondary_private_ip_address_count is not None:
+            try:
+                connection.assign_private_ip_addresses(network_interface_id=eni.id, secondary_private_ip_address_count=secondary_private_ip_address_count)
+            except BotoServerError:
+                eni.delete()
+                raise
 
-            if secondary_private_ip_addresses is not None:
-                try:
-                    connection.assign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=secondary_private_ip_addresses)
-                except BotoServerError:
-                    eni.delete()
-                    raise
+        if secondary_private_ip_addresses is not None:
+            try:
+                connection.assign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=secondary_private_ip_addresses)
+            except BotoServerError:
+                eni.delete()
+                raise
 
-            changed = True
+        changed = True
 
     except BotoServerError as e:
         module.fail_json(msg=e.message)
@@ -475,31 +482,34 @@ def detach_eni(eni, module):
         module.exit_json(changed=False, interface=get_eni_info(eni))
 
 
-def find_eni(connection, module):
+def uniquely_find_eni(connection, module):
 
     eni_id = module.params.get("eni_id")
-    subnet_id = module.params.get('subnet_id')
     private_ip_address = module.params.get('private_ip_address')
+    subnet_id = module.params.get('subnet_id')
     instance_id = module.params.get('instance_id')
     device_index = module.params.get('device_index')
 
-    if not eni_id:
-        return None
-
     try:
         filters = {}
-        if subnet_id:
-            filters['subnet-id'] = subnet_id
-        if private_ip_address:
+
+        # proceed only if we're univocally specifying an ENI
+        if eni_id is None and private_ip_address is None and (instance_id is None and device_index is None):
+            return None
+
+        if private_ip_address and subnet_id:
             filters['private-ip-address'] = private_ip_address
-        else:
-            if instance_id:
-                filters['attachment.instance-id'] = instance_id
-            if device_index:
-                filters['attachment.device-index'] = device_index
+            filters['subnet-id'] = subnet_id
+
+        if instance_id and device_index:
+            filters['attachment.instance-id'] = instance_id
+            filters['attachment.device-index'] = device_index
+
+        if eni_id is None and len(filters) == 0:
+            return None
 
         eni_result = connection.get_all_network_interfaces(eni_id, filters=filters)
-        if len(eni_result) > 0:
+        if len(eni_result) == 1:
             return eni_result[0]
         else:
             return None
@@ -554,7 +564,6 @@ def main():
                                ['secondary_private_ip_addresses', 'secondary_private_ip_address_count']
                                ],
                            required_if=([
-                               ('state', 'present', ['subnet_id']),
                                ('state', 'absent', ['eni_id']),
                                ('attached', True, ['instance_id'])
                                ])
@@ -577,13 +586,16 @@ def main():
     state = module.params.get("state")
 
     if state == 'present':
-        subnet_id = module.params.get("subnet_id")
-        vpc_id = _get_vpc_id(vpc_connection, module, subnet_id)
-
-        eni = find_eni(connection, module)
+        eni = uniquely_find_eni(connection, module)
         if eni is None:
+            subnet_id = module.params.get("subnet_id")
+            if subnet_id is None:
+                module.fail_json(msg="subnet_id is required when creating a new ENI")
+
+            vpc_id = _get_vpc_id(vpc_connection, module, subnet_id)
             create_eni(connection, vpc_id, module)
         else:
+            vpc_id = eni.vpc_id
             modify_eni(connection, vpc_id, module, eni)
 
     elif state == 'absent':

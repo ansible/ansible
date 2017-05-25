@@ -65,6 +65,28 @@
     that:
         - result.failed
 
+- name: test HTTP HEAD request for file in check mode
+  get_url: url="http://{{ httpbin_host }}/get" dest={{ output_dir }}/get_url_check.txt force=yes
+  check_mode: True
+  register: result
+
+- name: assert that the HEAD request was successful in check mode
+  assert:
+    that:
+    - result.changed
+    - '"OK" in result.msg'
+
+- name: test HTTP HEAD for nonexistent URL in check mode
+  get_url: url="http://{{ httpbin_host }}/DOESNOTEXIST" dest={{ output_dir }}/shouldnotexist.html force=yes
+  check_mode: True
+  register: result
+  ignore_errors: True
+
+- name: assert that HEAD request for nonexistent URL failed
+  assert:
+    that:
+    - result.failed
+
 - name: test https fetch
   get_url: url="https://{{ httpbin_host }}/get" dest={{output_dir}}/get_url.txt force=yes
   register: result
@@ -211,3 +233,18 @@
   get_url: 
     url: https://{{ httpbin_host }}
     dest: "{{ output_dir }}"
+
+
+- name: Test client cert auth, with certs
+  get_url:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    dest: "{{ output_dir }}/ssl_client_verify"
+  when: has_httptester
+
+- name: Assert that the ssl_client_verify file contains the correct content
+  assert:
+    that:
+      - 'lookup("file", "{{ output_dir }}/ssl_client_verify") == "ansible.http.tests:SUCCESS"'
+  when: has_httptester

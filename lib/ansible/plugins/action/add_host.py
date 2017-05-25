@@ -41,12 +41,9 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
 
-        self._supports_check_mode = False
+        self._supports_check_mode = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        if result.get('skipped', False):
-            return result
 
         # Parse out any hostname:port patterns
         new_name = self._task.args.get('name', self._task.args.get('hostname', None))

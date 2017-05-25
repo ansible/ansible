@@ -138,7 +138,7 @@ RETURN = '''
 api_response:
     description: Raw response from Kubernetes API, content varies with API.
     returned: success
-    type: dictionary
+    type: complex
     contains:
         apiVersion: "v1"
         kind: "Namespace"

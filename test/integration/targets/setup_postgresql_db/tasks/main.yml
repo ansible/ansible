@@ -44,26 +44,11 @@
   ignore_errors: True
   when: ansible_os_family == "Debian"
 
-- name: install rpm dependencies for postgresql test
-  package: name={{ postgresql_package_item }} state=latest
-  with_items: "{{postgresql_packages}}"
+- name: install dependencies for postgresql test
+  package: name={{ postgresql_package_item }} state=present
+  with_items: "{{ postgresql_packages }}"
   loop_control:
     loop_var: postgresql_package_item
-  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
-
-- name: install dpkg dependencies for postgresql test
-  apt: name={{ postgresql_package_item }} state=latest
-  with_items: "{{postgresql_packages}}"
-  loop_control:
-    loop_var: postgresql_package_item
-  when: ansible_pkg_mgr  ==  'apt'
-
-- name: install FreeBSD dependencies for postgresql test
-  pkgng: name={{ postgresql_package_item }} state=present
-  with_items: "{{postgresql_packages}}"
-  loop_control:
-    loop_var: postgresql_package_item
-  when: ansible_os_family == "FreeBSD"
 
 - name: initialize postgres (FreeBSD)
   command: /usr/local/etc/rc.d/postgresql oneinitdb
@@ -71,13 +56,13 @@
 
 - name: Initialize postgres (RedHat systemd)
   command: postgresql-setup initdb
-  when: ansible_distribution == "Fedora" or (ansible_os_family  == "RedHat" and ansible_distribution_major_version|int >= 7)
+  when: ansible_os_family == "RedHat" and ansible_service_mgr == "systemd"
 
 - name: Initialize postgres (RedHat sysv)
   command: /sbin/service postgresql initdb
-  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int <= 6
+  when: ansible_os_family == "RedHat" and ansible_service_mgr != "systemd"
 
-- name: Iniitalize postgres (Debian)
+- name: Initialize postgres (Debian)
   command: /usr/bin/pg_createcluster {{ pg_ver }} main
   # Sometimes package install creates the db cluster, sometimes this step is needed
   ignore_errors: True
@@ -95,25 +80,46 @@
     group: "{{ pg_group }}"
     mode: "0644"
 
-- name: Generate pt_BR locale (Debian)
-  command: locale-gen pt_BR
+- name: Generate locales (Debian)
+  locale_gen:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - pt_BR
+    - es_ES
   when: ansible_os_family == 'Debian'
 
-- name: Generate es_ES locale (Debian)
-  command: locale-gen es_ES
-  when: ansible_os_family == 'Debian'
+# Suse: locales are installed by default (glibc-locale package).
+# Fedora 23: locales are installed by default (glibc-common package)
+# CentOS: all locales are installed by default (glibc-common package) but some
+# RPM macros could prevent their installation (for example when using anaconda
+# instLangs parameter).
 
-- name: install i18ndata
-  zypper: name=glibc-i18ndata state=present
-  when: ansible_os_family == 'Suse'
+- block:
+  - name: Check if locales need to be generated (RedHat)
+    shell: "localedef --list-archive | grep -a -q '^{{ locale }}$'"
+    register: locale_present
+    ignore_errors: True
+    with_items:
+      - es_ES
+      - pt_BR
+    loop_control:
+      loop_var: locale
 
-- name: Generate pt_BR locale (Red Hat)
-  command: localedef -f ISO-8859-1 -i pt_BR pt_BR
-  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
+  - name: Generate locale (RedHat)
+    command: 'localedef -f ISO-8859-1 -i {{ item.locale }} {{ item.locale }}'
+    when: item|failed
+    with_items: '{{ locale_present.results }}'
+  when: ansible_os_family == 'RedHat' and ansible_distribution != 'Fedora'
 
-- name: Generate es_ES locale (Red Hat)
-  command: localedef -f ISO-8859-1 -i es_ES es_ES
-  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
+- name: Install glibc langpacks (Fedora >= 24)
+  package:
+    name: '{{ item }}'
+    state: 'latest'
+  with_items:
+    - glibc-langpack-es
+    - glibc-langpack-pt
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 24
 
 - name: enable postgresql service (FreeBSD)
   lineinfile:

@@ -160,11 +160,11 @@ Tasks : The following are examples of using the module cnos_backup. These are wr
 
 '''
 RETURN = '''
----
-  return value: |
-    On successful execution, the method returns a message in JSON format
-    [Config file tranferred to server]
-    Upon any failure, the method returns an error display string.
+msg:
+  description: Success or failure message
+  returned: always
+  type: string
+  sample: "Config file tranferred to server"
 '''
 
 import sys

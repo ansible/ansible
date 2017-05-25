@@ -22,11 +22,9 @@ __metaclass__ = type
 import fnmatch
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
 from ansible.module_utils.six import iteritems
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
-from ansible.playbook.role_include import IncludeRole
 
 
 boolean = C.mk_boolean
@@ -152,6 +150,7 @@ class PlayIterator:
     def __init__(self, inventory, play, play_context, variable_manager, all_vars, start_at_done=False):
         self._play = play
         self._blocks = []
+        self._variable_manager = variable_manager
 
         self._task_uuid_cache = dict()
 
@@ -205,10 +204,6 @@ class PlayIterator:
         start_at_matched = False
         for host in inventory.get_hosts(self._play.hosts):
             self._host_states[host.name] = HostState(blocks=self._blocks)
-            # if the host's name is in the variable manager's fact cache, then set
-            # its _gathered_facts flag to true for smart gathering tests later
-            if host.name in variable_manager._fact_cache and variable_manager._fact_cache.get(host.name).get('module_setup', False):
-                host._gathered_facts = True
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
             if play_context.start_at_task is not None and not start_at_done:
@@ -265,7 +260,6 @@ class PlayIterator:
             display.debug("host %s is done iterating, returning" % host.name)
             return (s, None)
 
-        old_s = s
         (s, task) = self._get_next_task_from_state(s, host=host, peek=peek)
 
         if not peek:
@@ -310,16 +304,12 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
-                       (gathering == 'smart' and implied and not host._gathered_facts):
+                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name,{}).get('module_setup', False))):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
                         if setup_block.has_tasks() and len(setup_block.block) > 0:
                             task = setup_block.block[0]
-                            if not peek:
-                                # mark the host as having gathered facts, because we're
-                                # returning the setup task to be executed
-                                host.set_gathered_facts(True)
                 else:
                     # This is the second trip through ITERATING_SETUP, so we clear
                     # the flag and move onto the next block in the list while setting

@@ -6,8 +6,8 @@ botocore = pytest.importorskip("botocore")
 
 from collections import namedtuple
 from ansible.parsing.dataloader import DataLoader
-from ansible.vars import VariableManager
-from ansible.inventory import Inventory
+from ansible.vars.manager import VariableManager
+from ansible.inventory.manager import InventoryManager
 from ansible.playbook.play import Play
 from ansible.executor.task_queue_manager import TaskQueueManager
 
@@ -24,8 +24,8 @@ Options = (
     )
 )
 # initialize needed objects
-variable_manager = VariableManager()
 loader = DataLoader()
+variable_manager = VariableManager(loader=loader)
 options = (
     Options(
         connection='local',
@@ -41,7 +41,7 @@ passwords = dict(vault_pass='')
 aws_region = 'us-west-2'
 
 # create inventory and pass to var manager
-inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list='localhost')
+inventory = InventoryManager(loader=loader)
 variable_manager.set_inventory(inventory)
 
 def run(play):
@@ -263,36 +263,6 @@ class AnsibleVpcNatGatewayTasks(unittest.TestCase):
         self.assertTrue('localhost' in tqm._stats.changed)
 
 class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
-
-    def test_convert_to_lower(self):
-        example = ng.DRY_RUN_GATEWAY_UNCONVERTED
-        converted_example = ng.convert_to_lower(example[0])
-        keys = list(converted_example.keys())
-        keys.sort()
-        for i in range(len(keys)):
-            if i == 0:
-                self.assertEqual(keys[i], 'create_time')
-            if i == 1:
-                self.assertEqual(keys[i], 'nat_gateway_addresses')
-                gw_addresses_keys = list(converted_example[keys[i]][0].keys())
-                gw_addresses_keys.sort()
-                for j in range(len(gw_addresses_keys)):
-                    if j == 0:
-                        self.assertEqual(gw_addresses_keys[j], 'allocation_id')
-                    if j == 1:
-                        self.assertEqual(gw_addresses_keys[j], 'network_interface_id')
-                    if j == 2:
-                        self.assertEqual(gw_addresses_keys[j], 'private_ip')
-                    if j == 3:
-                        self.assertEqual(gw_addresses_keys[j], 'public_ip')
-            if i == 2:
-                self.assertEqual(keys[i], 'nat_gateway_id')
-            if i == 3:
-                self.assertEqual(keys[i], 'state')
-            if i == 4:
-                self.assertEqual(keys[i], 'subnet_id')
-            if i == 5:
-                self.assertEqual(keys[i], 'vpc_id')
 
     def test_get_nat_gateways(self):
         client = boto3.client('ec2', region_name=aws_region)

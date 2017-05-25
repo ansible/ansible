@@ -118,6 +118,7 @@ proposed:
             "role_priority": "1000", "system_priority": "2000"}
 existing:
     description: k/v pairs of existing VPC configuration
+    returned: always
     type: dict
     sample: {"auto_recovery": true, "delay_restore": null,
             "domain": "100", "peer_gw": true,
@@ -149,7 +150,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':

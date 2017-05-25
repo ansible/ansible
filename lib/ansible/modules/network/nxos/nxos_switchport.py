@@ -130,6 +130,7 @@ proposed:
     sample: {"access_vlan": "10", "interface": "eth1/5", "mode": "access"}
 existing:
     description: k/v pairs of existing switchport
+    returned: always
     type: dict
     sample:  {"access_vlan": "10", "access_vlan_name": "VLAN0010",
               "interface": "Ethernet1/5", "mode": "access",
@@ -138,7 +139,7 @@ existing:
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
-    type: dict or null
+    type: dict
     sample:  {"access_vlan": "10", "access_vlan_name": "VLAN0010",
               "interface": "Ethernet1/5", "mode": "access",
               "native_vlan": "1", "native_vlan_name": "default",
@@ -158,7 +159,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 import re

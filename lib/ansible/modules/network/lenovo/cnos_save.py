@@ -58,10 +58,11 @@ Tasks : The following are examples of using the module cnos_save. These are writ
       outputfile: "./results/test_save_{{ inventory_hostname }}_output.txt"
 '''
 RETURN = '''
-  return value: |
-    On successful execution, the method returns a message in JSON format
-    [Switch Running Config is Saved to Startup Config]
-    Upon any failure, the method returns an error display string.
+msg:
+  description: Success or failure message
+  returned: always
+  type: string
+  sample: "Switch Running Config is Saved to Startup Config"
 '''
 
 import sys

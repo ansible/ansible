@@ -31,7 +31,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.vars import preprocess_vars
+from ansible.vars.manager import preprocess_vars
 
 try:
     from __main__ import display
@@ -204,7 +204,7 @@ class Play(Base, Taggable, Become):
         vars_prompts = []
         for prompt_data in new_ds:
             if 'name' not in prompt_data:
-                display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
+                display.deprecated("Using the 'short form' for vars_prompt has been deprecated", version="2.7")
                 for vname, prompt in prompt_data.items():
                     vars_prompts.append(dict(
                         name      = vname,

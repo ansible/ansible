@@ -91,20 +91,26 @@ endpoint:
   type: string
   sample: http://cloud.example.com
 gslb_service_enabled:
-  description: Whether the GSLB service is enabled or not
+  description: Whether the GSLB service is enabled or not.
   returned: success
   type: bool
   sample: true
 portable_ip_service_enabled:
-  description: Whether the portable IP service is enabled or not
+  description: Whether the portable IP service is enabled or not.
   returned: success
   type: bool
   sample: true
 '''
 
 
-from ansible.module_utils.cloudstack import *
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together
+)
+
 
 class AnsibleCloudStackRegion(AnsibleCloudStack):
 
@@ -175,8 +181,8 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         id=dict(required=True, type='int'),
-        name=dict(default=None),
-        endpoint=dict(default=None),
+        name=dict(),
+        endpoint=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 
@@ -204,6 +210,7 @@ def main():
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

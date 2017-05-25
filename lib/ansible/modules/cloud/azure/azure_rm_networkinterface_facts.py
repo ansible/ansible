@@ -211,7 +211,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         try:
             response = self.network_client.network_interfaces.list_all()
         except Exception as exc:
-            self.fail("Error listing all - {1}".format(self.resource_group, str(exc)))
+            self.fail("Error listing all - {0}".format(str(exc)))
 
         results = []
         for item in response:

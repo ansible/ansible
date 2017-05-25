@@ -117,21 +117,21 @@ class TestConnectionClass(unittest.TestCase):
         mock_open_shell = MagicMock()
         conn.open_shell = mock_open_shell
 
-        mock_send = MagicMock(return_value='command response')
+        mock_send = MagicMock(return_value=b'command response')
         conn.send = mock_send
 
         # test sending a single command and converting to dict
         rc, out, err = conn.exec_command('command')
-        self.assertEqual(out, 'command response')
+        self.assertEqual(out, b'command response')
         self.assertTrue(mock_open_shell.called)
-        mock_send.assert_called_with({'command': 'command'})
+        mock_send.assert_called_with({'command': b'command'})
 
         mock_open_shell.reset_mock()
 
         # test sending a json string
         rc, out, err = conn.exec_command(json.dumps({'command': 'command'}))
-        self.assertEqual(out, 'command response')
-        mock_send.assert_called_with({'command': 'command'})
+        self.assertEqual(out, b'command response')
+        mock_send.assert_called_with({'command': b'command'})
         self.assertTrue(mock_open_shell.called)
 
         mock_open_shell.reset_mock()
@@ -139,25 +139,24 @@ class TestConnectionClass(unittest.TestCase):
 
         # test _shell already open
         rc, out, err = conn.exec_command('command')
-        self.assertEqual(out, 'command response')
+        self.assertEqual(out, b'command response')
         self.assertFalse(mock_open_shell.called)
-        mock_send.assert_called_with({'command': 'command'})
+        mock_send.assert_called_with({'command': b'command'})
 
 
     def test_network_cli_send(self):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = network_cli.Connection(pc, new_stdin)
-
         mock__terminal = MagicMock()
-        mock__terminal.terminal_stdout_re = [re.compile('device#')]
-        mock__terminal.terminal_stderr_re = [re.compile('^ERROR')]
+        mock__terminal.terminal_stdout_re = [re.compile(b'device#')]
+        mock__terminal.terminal_stderr_re = [re.compile(b'^ERROR')]
         conn._terminal = mock__terminal
 
         mock__shell = MagicMock()
         conn._shell = mock__shell
 
-        response = """device#command
+        response = b"""device#command
         command response
 
         device#
@@ -165,15 +164,14 @@ class TestConnectionClass(unittest.TestCase):
 
         mock__shell.recv.return_value = response
 
-        output = conn.send({'command': 'command'})
+        output = conn.send({'command': b'command'})
 
-        mock__shell.sendall.assert_called_with('command\r')
-        self.assertEqual(output, 'command response')
+        mock__shell.sendall.assert_called_with(b'command\r')
+        self.assertEqual(output, b'command response')
 
         mock__shell.reset_mock()
-        mock__shell.recv.return_value = "ERROR: error message"
+        mock__shell.recv.return_value = b"ERROR: error message device#"
 
         with self.assertRaises(AnsibleConnectionFailure) as exc:
-            conn.send({'command': 'command'})
-        self.assertEqual(str(exc.exception), 'ERROR: error message')
-
+            conn.send({'command': b'command'})
+        self.assertEqual(str(exc.exception), 'ERROR: error message device#')

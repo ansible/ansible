@@ -124,6 +124,11 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
 
+.. seealso::
+
+    :doc:`playbooks_templating`
+        More information about Jinja2 templating
+
 .. _jinja2_filters:
 
 Jinja2 Filters
@@ -830,12 +835,12 @@ In 1.x, the precedence is as follows (with the last listed variables winning pri
 In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
 
   * role defaults [1]_
-  * inventory INI or script group vars [2]_
+  * inventory file or script group vars [2]_
   * inventory group_vars/all
   * playbook group_vars/all
   * inventory group_vars/*
   * playbook group_vars/*
-  * inventory INI or script host vars [2]_
+  * inventory file or script host vars [2]_
   * inventory host_vars/*
   * playbook host_vars/*
   * host facts
@@ -897,8 +902,8 @@ Variable Scopes
 Ansible has 3 main scopes:
 
  * Global: this is set by config, environment variables and the command line
- * Play: each play and contained structures, vars entries, include_vars, role defaults and vars.
- * Host: variables directly associated to a host, like inventory, facts or registered task outputs
+ * Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars.
+ * Host: variables directly associated to a host, like inventory, include_vars, facts or registered task outputs
 
 .. _variable_examples:
 

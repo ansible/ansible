@@ -31,10 +31,11 @@
 #
 import re
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.netcfg import NetworkConfig,ConfigLine
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
 
 _DEVICE_CONFIGS = {}
 
@@ -56,12 +57,18 @@ dellos10_argument_spec = {
     'provider': dict(type='dict'),
 }
 
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in dellos10_argument_spec:
         if key != 'provider' and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                             'removed in a future version' % key)
+
+    if provider:
+        for param in ('auth_pass', 'password'):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 
 def get_config(module, flags=[]):
@@ -74,8 +81,8 @@ def get_config(module, flags=[]):
     except KeyError:
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=err)
-        cfg = str(out).strip()
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
+        cfg = to_text(out, errors='surrogate_or_strict').strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
@@ -97,14 +104,15 @@ def run_commands(module, commands, check_rc=True):
         cmd = module.jsonify(cmd)
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
-            module.fail_json(msg=err, rc=rc)
-        responses.append(out)
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_or_strict'))
     return responses
+
 
 def load_config(module, commands):
     rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', err=err)
+        module.fail_json(msg='unable to enter configuration mode', err=to_text(err, errors='surrogate_or_strict'))
 
     commands.append('commit')
     for command in to_list(commands):
@@ -113,9 +121,10 @@ def load_config(module, commands):
         cmd = {'command': command, 'prompt': WARNING_PROMPTS_RE, 'answer': 'yes'}
         rc, out, err = exec_command(module, module.jsonify(cmd))
         if rc != 0:
-            module.fail_json(msg=err, command=command, rc=rc)
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), command=command, rc=rc)
 
     exec_command(module, 'end')
+
 
 def get_sublevel_config(running_config, module):
     contents = list()
@@ -136,4 +145,3 @@ def get_sublevel_config(running_config, module):
     sublevel_config = '\n'.join(current_config_contents)
 
     return sublevel_config
-

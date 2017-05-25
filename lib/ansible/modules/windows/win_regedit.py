@@ -45,7 +45,7 @@ options:
     description:
       - Name of registry entry in C(path).
       - This is an entry in the above C(key) parameter.
-      - If not provided, or empty we use the default name '(default)'
+      - If not provided, or empty we use the default name '(default)'.
     aliases: [ entry ]
   data:
     description:
@@ -73,9 +73,9 @@ options:
       - absent
     default: present
 notes:
-- Check-mode C(-C/--check) and diff output (-D/--diff) are supported, so that you can test every change against the active configuration before
+- Check-mode C(-C/--check) and diff output C(-D/--diff) are supported, so that you can test every change against the active configuration before
   applying changes.
-- Beware that some registry hives (HKEY_USERS in particular) do not allow to create new registry paths.
+- Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths.
 author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
 '''
 

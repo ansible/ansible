@@ -145,14 +145,26 @@ try:
 except ImportError:
     HAS_SSLCONTEXT = False
 
+# SNI Handling for python < 2.7.9 with urllib3 support
 try:
+    # urllib3>=1.15
+    HAS_URLLIB3_SSL_WRAP_SOCKET = False
     try:
-        from urllib3.contrib.pyopenssl import ssl_wrap_socket
+        from urllib3.contrib.pyopenssl import PyOpenSSLContext
     except ImportError:
-        from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
-    HAS_URLLIB3_SNI_SUPPORT = True
+        from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
+    HAS_URLLIB3_PYOPENSSLCONTEXT = True
 except ImportError:
-    HAS_URLLIB3_SNI_SUPPORT = False
+    # urllib3<1.15,>=1.6
+    HAS_URLLIB3_PYOPENSSLCONTEXT = False
+    try:
+        try:
+            from urllib3.contrib.pyopenssl import ssl_wrap_socket
+        except ImportError:
+            from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
+        HAS_URLLIB3_SSL_WRAP_SOCKET = True
+    except ImportError:
+        pass
 
 # Select a protocol that includes all secure tls protocols
 # Exclude insecure ssl protocols if possible
@@ -359,10 +371,13 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
             httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+            self.context = None
             if HAS_SSLCONTEXT:
                 self.context = create_default_context()
-                if self.cert_file:
-                    self.context.load_cert_chain(self.cert_file, self.key_file)
+            elif HAS_URLLIB3_PYOPENSSLCONTEXT:
+                self.context = PyOpenSSLContext(PROTOCOL)
+            if self.context and self.cert_file:
+                self.context.load_cert_chain(self.cert_file, self.key_file)
 
         def connect(self):
             "Connect to a host on a given (SSL) port."
@@ -380,9 +395,9 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
                 self._tunnel()
                 server_hostname = self._tunnel_host
 
-            if HAS_SSLCONTEXT:
+            if HAS_SSLCONTEXT or HAS_URLLIB3_PYOPENSSLCONTEXT:
                 self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
-            elif HAS_URLLIB3_SNI_SUPPORT:
+            elif HAS_URLLIB3_SSL_WRAP_SOCKET:
                 self.sock = ssl_wrap_socket(sock, keyfile=self.key_file, cert_reqs=ssl.CERT_NONE, certfile=self.cert_file, ssl_version=PROTOCOL,
                         server_hostname=server_hostname)
             else:
@@ -394,6 +409,33 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
             return self.do_open(CustomHTTPSConnection, req)
 
         https_request = AbstractHTTPHandler.do_request_
+
+
+class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
+    '''Handles client authentication via cert/key
+
+    This is a fairly lightweight extension on HTTPSHandler, and can be used
+    in place of HTTPSHandler
+    '''
+
+    def __init__(self, client_cert=None, client_key=None, **kwargs):
+        urllib_request.HTTPSHandler.__init__(self, **kwargs)
+        self.client_cert = client_cert
+        self.client_key = client_key
+
+    def https_open(self, req):
+        return self.do_open(self._build_https_connection, req)
+
+    def _build_https_connection(self, host, **kwargs):
+        kwargs.update({
+            'cert_file': self.client_cert,
+            'key_file': self.client_key,
+        })
+        try:
+            kwargs['context'] = self._context
+        except AttributeError:
+            pass
+        return httplib.HTTPSConnection(host, **kwargs)
 
 
 def generic_urlparse(parts):
@@ -541,8 +583,8 @@ def build_ssl_validation_error(hostname, port, paths, exc=None):
     if not HAS_SSLCONTEXT:
         msg.append('If the website serving the url uses SNI you need'
                    ' python >= 2.7.9 on your managed machine')
-        if not HAS_URLLIB3_SNI_SUPPORT:
-            msg.append('or you can install the `urllib3`, `pyopenssl`,'
+        if not HAS_URLLIB3_PYOPENSSLCONTEXT or not HAS_URLLIB3_SSL_WRAP_SOCKET:
+            msg.append('or you can install the `urllib3`, `pyOpenSSL`,'
                        ' `ndg-httpsclient`, and `pyasn1` python modules')
 
         msg.append('to perform SNI verification in python >= 2.6.')
@@ -665,7 +707,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         return True
 
     def _make_context(self, to_add_ca_cert_path):
-        context = create_default_context()
+        if HAS_URLLIB3_PYOPENSSLCONTEXT:
+            context = PyOpenSSLContext(PROTOCOL)
+        else:
+            context = create_default_context()
         if to_add_ca_cert_path:
             context.load_verify_locations(to_add_ca_cert_path)
         return context
@@ -674,7 +719,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
         context = None
-        if HAS_SSLCONTEXT:
+        if HAS_SSLCONTEXT or HAS_URLLIB3_PYOPENSSLCONTEXT:
             context = self._make_context(to_add_ca_cert_path)
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
@@ -705,7 +750,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     self.validate_proxy_response(connect_result)
                     if context:
                         ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
-                    elif HAS_URLLIB3_SNI_SUPPORT:
+                    elif HAS_URLLIB3_SSL_WRAP_SOCKET:
                         ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
                     else:
                         ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
@@ -716,7 +761,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 s.connect((self.hostname, self.port))
                 if context:
                     ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
-                elif HAS_URLLIB3_SNI_SUPPORT:
+                elif HAS_URLLIB3_SSL_WRAP_SOCKET:
                     ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
                 else:
                     ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
@@ -778,7 +823,8 @@ def maybe_add_ssl_handler(url, validate_certs):
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
              url_username=None, url_password=None, http_agent=None,
-             force_basic_auth=False, follow_redirects='urllib2'):
+             force_basic_auth=False, follow_redirects='urllib2',
+             client_cert=None, client_key=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -857,7 +903,12 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         context.options |= ssl.OP_NO_SSLv3
         context.verify_mode = ssl.CERT_NONE
         context.check_hostname = False
-        handlers.append(urllib_request.HTTPSHandler(context=context))
+        handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+                                               client_key=client_key,
+                                               context=context))
+    elif client_cert:
+        handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+                                               client_key=client_key))
 
     # pre-2.6 versions of python cannot use the custom https
     # handler, since the socket class is lacking create_connection.
@@ -934,13 +985,14 @@ def url_argument_spec():
         url_username=dict(required=False),
         url_password=dict(required=False, no_log=True),
         force_basic_auth=dict(required=False, type='bool', default='no'),
-
+        client_cert=dict(required=False, type='path', default=None),
+        client_key=dict(required=False, type='path', default=None),
     )
 
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
-    '''Sends a request via HTTP(S) or FTP (needs the module as parameter)
+    """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
     :arg url:             The url to use.
@@ -960,7 +1012,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     Example::
 
         data={...}
-        resp, info = fetch_url("http://example.com",
+        resp, info = fetch_url(module,
+                               "http://example.com",
                                data=module.jsonify(data)
                                header={Content-type': 'application/json'},
                                method="POST")
@@ -968,7 +1021,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         body = resp.read()
         if status_code >= 400 :
             body = info['body']
-'''
+    """
 
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
@@ -983,6 +1036,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     follow_redirects = module.params.get('follow_redirects', 'urllib2')
 
+    client_cert = module.params.get('client_cert')
+    client_key = module.params.get('client_key')
+
     r = None
     info = dict(url=url)
     try:
@@ -990,7 +1046,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
-                     follow_redirects=follow_redirects)
+                     follow_redirects=follow_redirects, client_cert=client_cert,
+                     client_key=client_key)
         info.update(r.info())
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
     except NoSSLError:

@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleParserError
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
@@ -280,7 +280,7 @@ class Block(Base, Become, Conditional, Taggable):
                 dep.set_loader(loader)
 
     def _get_attr_environment(self):
-        return self._get_parent_attribute('environment', extend=True)
+        return self._get_parent_attribute('environment', extend=True, prepend=True)
 
     def _get_parent_attribute(self, attr, extend=False, prepend=False):
         '''
@@ -331,7 +331,7 @@ class Block(Base, Become, Conditional, Taggable):
                         value = parent_value
                 except AttributeError:
                     pass
-        except KeyError as e:
+        except KeyError:
             pass
 
         return value

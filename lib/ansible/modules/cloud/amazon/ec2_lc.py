@@ -30,6 +30,7 @@ notes:
   - "Amazon ASG Autoscaling Launch Configurations are immutable once created, so modifying the configuration
     after it is changed will not modify the launch configuration on AWS. You must create a new config and assign
     it to the ASG instead."
+  - encrypted volumes are supported on versions >= 2.4
 version_added: "1.6"
 author: "Gareth Rushgrove (@garethr)"
 options:
@@ -58,8 +59,8 @@ options:
     required: false
   security_groups:
     description:
-      - A list of security groups to apply to the instances. For VPC instances, specify security group IDs. For EC2-Classic, specify either security
-        group names or IDs.
+      - A list of security groups to apply to the instances. Since version 2.4 you can specify either security group names or IDs or a mix.  Previous to 2.4,
+        for VPC instances, specify security group IDs and for EC2-Classic, specify either security group names or IDs.
     required: false
   volumes:
     description:
@@ -120,6 +121,11 @@ options:
       - A list of security group id's with which to associate the ClassicLink VPC instances.
     required: false
     version_added: "2.0"
+  vpc_id:
+    description:
+      - VPC ID, used when resolving security group names to IDs.
+    required: false
+    version_added: "2.4"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -128,7 +134,8 @@ requirements:
 """
 
 EXAMPLES = '''
-- ec2_lc:
+- name: note that encrypted volumes are only supported in >= Ansible 2.4
+  ec2_lc:
     name: special
     image_id: ami-XXX
     key_name: default
@@ -140,6 +147,7 @@ EXAMPLES = '''
       device_type: io1
       iops: 3000
       delete_on_termination: true
+      encrypted: true
     - device_name: /dev/sdb
       ephemeral: ephemeral0
 
@@ -147,7 +155,8 @@ EXAMPLES = '''
 import traceback
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.ec2 import ec2_argument_spec, ec2_connect, connect_to_aws, \
+    get_ec2_security_group_ids_from_names, get_aws_connection_info, AnsibleAWSError
 
 try:
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
@@ -177,14 +186,19 @@ def create_block_device(module, volume):
                            size=volume.get('volume_size'),
                            volume_type=volume.get('device_type'),
                            delete_on_termination=volume.get('delete_on_termination', False),
-                           iops=volume.get('iops'))
+                           iops=volume.get('iops'),
+                           encrypted=volume.get('encrypted',None))
 
 
 def create_launch_config(connection, module):
     name = module.params.get('name')
     image_id = module.params.get('image_id')
     key_name = module.params.get('key_name')
-    security_groups = module.params['security_groups']
+    vpc_id = module.params.get('vpc_id')
+    try:
+        security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), ec2_connect(module), vpc_id=vpc_id, boto3=False)
+    except ValueError as e:
+        module.fail_json(msg=str(e))
     user_data = module.params.get('user_data')
     user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']
@@ -311,7 +325,8 @@ def main():
             instance_monitoring=dict(default=False, type='bool'),
             assign_public_ip=dict(type='bool'),
             classic_link_vpc_security_groups=dict(type='list'),
-            classic_link_vpc_id=dict(type='str')
+            classic_link_vpc_id=dict(type='str'),
+            vpc_id=dict(type='str')
         )
     )
 

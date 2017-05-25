@@ -27,15 +27,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_networks
-short_description: Module to manage logical networks in oVirt
+short_description: Module to manage logical networks in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage logical networks in oVirt"
+    - "Module to manage logical networks in oVirt/RHV"
 options:
     name:
         description:
-            - "Name of the the network to manage."
+            - "Name of the network to manage."
         required: true
     state:
         description:
@@ -98,9 +98,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 network:
-    description: "Dictionary of all the network attributes. Network attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/network."
+    description: "Dictionary of all the network attributes. Network attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/network."
     returned: "On success if network is found."
+    type: dict
 '''
 
 import traceback

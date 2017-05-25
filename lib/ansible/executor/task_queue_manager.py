@@ -210,7 +210,7 @@ class TaskQueueManager:
         if not self._callbacks_loaded:
             self.load_callbacks()
 
-        all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+        all_vars = self._variable_manager.get_vars(play=play)
         warn_if_reserved(all_vars)
         templar = Templar(loader=self._loader, variables=all_vars)
 
@@ -334,7 +334,7 @@ class TaskQueueManager:
         defunct = False
         for idx,x in enumerate(self._workers):
             if hasattr(x[0], 'exitcode'):
-                if x[0].exitcode in [-9, -15]:
+                if x[0].exitcode in [-9, -11, -15]:
                     defunct = True
         return defunct
 
@@ -356,22 +356,7 @@ class TaskQueueManager:
 
             for method in methods:
                 try:
-                    # Previously, the `v2_playbook_on_start` callback API did not accept
-                    # any arguments. In recent versions of the v2 callback API, the play-
-                    # book that started execution is given. In order to support both of
-                    # these method signatures, we need to use this `inspect` hack to send
-                    # no arguments to the methods that don't accept them. This way, we can
-                    # not break backwards compatibility until that API is deprecated.
-                    # FIXME: target for removal and revert to the original code here after a year (2017-01-14)
-                    if method_name == 'v2_playbook_on_start':
-                        import inspect
-                        argspec = inspect.getargspec(method)
-                        if argspec.args == ['self']:
-                            method()
-                        else:
-                            method(*args, **kwargs)
-                    else:
-                        method(*args, **kwargs)
+                    method(*args, **kwargs)
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))

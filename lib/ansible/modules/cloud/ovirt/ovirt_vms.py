@@ -27,20 +27,20 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_vms
-short_description: "Module to manage Virtual Machines in oVirt"
+short_description: "Module to manage Virtual Machines in oVirt/RHV"
 version_added: "2.2"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "This module manages whole lifecycle of the Virtual Machine(VM) in oVirt. Since VM can hold many states in oVirt,
+    - "This module manages whole lifecycle of the Virtual Machine(VM) in oVirt/RHV. Since VM can hold many states in oVirt/RHV,
        this see notes to see how the states of the VM are handled."
 options:
     name:
         description:
-            - "Name of the the Virtual Machine to manage. If VM don't exists C(name) is required.
+            - "Name of the Virtual Machine to manage. If VM don't exists C(name) is required.
                Otherwise C(id) or C(name) can be used."
     id:
         description:
-            - "ID of the the Virtual Machine to manage."
+            - "ID of the Virtual Machine to manage."
     state:
         description:
             - "Should the Virtual Machine be running/stopped/present/absent/suspended/next_run."
@@ -77,20 +77,20 @@ options:
             - "C(memory_guaranteed) parameter can't be lower than C(memory) parameter. Default value is set by engine."
     cpu_shares:
         description:
-            - "Set a CPU shares for this Virtual Machine. Default value is set by oVirt engine."
+            - "Set a CPU shares for this Virtual Machine. Default value is set by oVirt/RHV engine."
     cpu_cores:
         description:
-            - "Number of virtual CPUs cores of the Virtual Machine. Default value is set by oVirt engine."
+            - "Number of virtual CPUs cores of the Virtual Machine. Default value is set by oVirt/RHV engine."
     cpu_sockets:
         description:
-            - "Number of virtual CPUs sockets of the Virtual Machine. Default value is set by oVirt engine."
+            - "Number of virtual CPUs sockets of the Virtual Machine. Default value is set by oVirt/RHV engine."
     type:
         description:
-            - "Type of the Virtual Machine. Default value is set by oVirt engine."
+            - "Type of the Virtual Machine. Default value is set by oVirt/RHV engine."
         choices: [server, desktop]
     operating_system:
         description:
-            - "Operating system of the Virtual Machine. Default value is set by oVirt engine."
+            - "Operating system of the Virtual Machine. Default value is set by oVirt/RHV engine."
         choices: [
             rhel_6_ppc64, other, freebsd, windows_2003x64, windows_10, rhel_6x64, rhel_4x64, windows_2008x64,
             windows_2008R2x64, debian_7, windows_2012x64, ubuntu_14_04, ubuntu_12_04, ubuntu_13_10, windows_8x64,
@@ -102,7 +102,7 @@ options:
     boot_devices:
         description:
             - "List of boot devices which should be used to boot. Choices I(network), I(hd) and I(cdrom)."
-            - "For example: ['cdrom', 'hd']. Default value is set by oVirt engine."
+            - "For example: ['cdrom', 'hd']. Default value is set by oVirt/RHV engine."
     host:
         description:
             - "Specify host where Virtual Machine should be running. By default the host is chosen by engine scheduler."
@@ -111,17 +111,17 @@ options:
         description:
             - "If I(True) Virtual Machine will be set as highly available."
             - "If I(False) Virtual Machine won't be set as highly available."
-            - "If no value is passed, default value is set by oVirt engine."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
     delete_protected:
         description:
             - "If I(True) Virtual Machine will be set as delete protected."
             - "If I(False) Virtual Machine won't be set as delete protected."
-            - "If no value is passed, default value is set by oVirt engine."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
     stateless:
         description:
             - "If I(True) Virtual Machine will be set as stateless."
             - "If I(False) Virtual Machine will be unset as stateless."
-            - "If no value is passed, default value is set by oVirt engine."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
     clone:
         description:
             - "If I(True) then the disks of the created virtual machine will be cloned and independent of the template."
@@ -255,6 +255,56 @@ options:
         description:
             - "Allows you to specify a custom serial number."
             - "This parameter is used only when C(serial_policy) is I(custom)."
+        version_added: "2.3"
+    vmware:
+        description:
+            - "Dictionary of values to be used to connect to VMware and import
+               a virtual machine to oVirt."
+            - "Dictionary can contain following values:"
+            - "C(username) - The username to authenticate against the VMware."
+            - "C(password) - The password to authenticate against the VMware."
+            - "C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
+               For example: I(vpx://wmware_user@vcenter-host/DataCenter/Cluster/esxi-host?no_verify=1)"
+            - "C(drivers_iso) - The name of the ISO containing drivers that can
+               be used during the I(virt-v2v) conversion process."
+            - "C(sparse) - Specifies the disk allocation policy of the resulting
+               virtual machine: I(true) for sparse, I(false) for preallocated.
+               Default value is I(true)."
+            - "C(storage_domain) - Specifies the target storage domain for
+               converted disks. This is required parameter."
+        version_added: "2.3"
+    xen:
+        description:
+            - "Dictionary of values to be used to connect to XEN and import
+               a virtual machine to oVirt."
+            - "Dictionary can contain following values:"
+            - "C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
+               For example: I(xen+ssh://root@zen.server). This is required paramater."
+            - "C(drivers_iso) - The name of the ISO containing drivers that can
+               be used during the I(virt-v2v) conversion process."
+            - "C(sparse) - Specifies the disk allocation policy of the resulting
+               virtual machine: I(true) for sparse, I(false) for preallocated.
+               Default value is I(true)."
+            - "C(storage_domain) - Specifies the target storage domain for
+               converted disks. This is required parameter."
+        version_added: "2.3"
+    kvm:
+        description:
+            - "Dictionary of values to be used to connect to kvm and import
+               a virtual machine to oVirt."
+            - "Dictionary can contain following values:"
+            - "C(name) - The name of the KVM virtual machine."
+            - "C(username) - The username to authenticate against the KVM."
+            - "C(password) - The password to authenticate against the KVM."
+            - "C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
+               For example: I(qemu:///system). This is required paramater."
+            - "C(drivers_iso) - The name of the ISO containing drivers that can
+               be used during the I(virt-v2v) conversion process."
+            - "C(sparse) - Specifies the disk allocation policy of the resulting
+               virtual machine: I(true) for sparse, I(false) for preallocated.
+               Default value is I(true)."
+            - "C(storage_domain) - Specifies the target storage domain for
+               converted disks. This is required parameter."
         version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
@@ -412,6 +462,20 @@ ovirt_vms:
     boot_devices:
       - network
 
+# Import virtual machine from VMware:
+ovirt_vms:
+    state: stopped
+    cluster: mycluster
+    name: vmware_win10
+    timeout: 1800
+    poll_interval: 30
+    vmware:
+      url: vpx://user@1.2.3.4/Folder1/Cluster1/2.3.4.5?no_verify=1
+      name: windows10
+      storage_domain: mynfs
+      username: user
+      password: password
+
 # Remove VM, if VM is running it will be stopped:
 ovirt_vms:
     state: absent
@@ -426,9 +490,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 vm:
-    description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm."
+    description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
     returned: On success if VM is found.
+    type: dict
 '''
 
 import traceback
@@ -459,7 +524,7 @@ class VmsModule(BaseModule):
 
     def __get_template_with_version(self):
         """
-        oVirt in version 4.1 doesn't support search by template+version_number,
+        oVirt/RHV in version 4.1 doesn't support search by template+version_number,
         so we need to list all templates with specific name and then iterate
         through it's version until we find the version we look for.
         """
@@ -559,7 +624,7 @@ class VmsModule(BaseModule):
             and equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
             and equal(self.param('description'), entity.description)
             and equal(self.param('comment'), entity.comment)
-            and equal(self.param('timezone'), entity.time_zone.name)
+            and equal(self.param('timezone'), getattr(entity.time_zone, 'name', None))
             and equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None)))
             and equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
         )
@@ -791,6 +856,62 @@ class VmsModule(BaseModule):
                 self.changed = True
 
 
+def import_vm(module, connection):
+    vms_service = connection.system_service().vms_service()
+    if search_by_name(vms_service, module.params['name']) is not None:
+        return False
+
+    events_service = connection.system_service().events_service()
+    last_event = events_service.list(max=1)[0]
+
+    external_type = [
+        tmp for tmp in ['kvm', 'xen', 'vmware']
+        if module.params[tmp] is not None
+    ][0]
+
+    external_vm = module.params[external_type]
+    imports_service = connection.system_service().external_vm_imports_service()
+    imported_vm = imports_service.add(
+        otypes.ExternalVmImport(
+            vm=otypes.Vm(
+                name=module.params['name']
+            ),
+            name=external_vm.get('name'),
+            username=external_vm.get('username', 'test'),
+            password=external_vm.get('password', 'test'),
+            provider=otypes.ExternalVmProviderType(external_type),
+            url=external_vm.get('url'),
+            cluster=otypes.Cluster(
+                name=module.params['cluster'],
+            ) if module.params['cluster'] else None,
+            storage_domain=otypes.StorageDomain(
+                name=external_vm.get('storage_domain'),
+            ) if external_vm.get('storage_domain') else None,
+            sparse=external_vm.get('sparse', True),
+            host=otypes.Host(
+                name=module.params['host'],
+            ) if module.params['host'] else None,
+        )
+    )
+
+    # Wait until event with code 1152 for our VM don't appear:
+    vms_service = connection.system_service().vms_service()
+    wait(
+        service=vms_service.vm_service(imported_vm.vm.id),
+        condition=lambda vm: len([
+            event
+            for event in events_service.list(
+                from_=int(last_event.id),
+                search='type=1152 and vm.id=%s' % vm.id,
+            )
+        ]) > 0 if vm is not None else False,
+        fail_condition=lambda vm: vm is None,
+        timeout=module.params['timeout'],
+        poll_interval=module.params['poll_interval'],
+    )
+    return True
+
+
 def _get_initialization(sysprep, cloud_init, cloud_init_nics):
     initialization = None
     if cloud_init or cloud_init_nics:
@@ -928,6 +1049,9 @@ def main():
         timezone=dict(default=None),
         serial_policy=dict(default=None, choices=['vm', 'host', 'custom']),
         serial_policy_value=dict(default=None),
+        vmware=dict(default=None, type='dict'),
+        xen=dict(default=None, type='dict'),
+        kvm=dict(default=None, type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -950,6 +1074,9 @@ def main():
 
         control_state(vm, vms_service, module)
         if state == 'present' or state == 'running' or state == 'next_run':
+            if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
+                vms_module.changed = import_vm(module, connection)
+
             sysprep = module.params['sysprep']
             cloud_init = module.params['cloud_init']
             cloud_init_nics = module.params['cloud_init_nics'] or []
@@ -958,7 +1085,7 @@ def main():
 
             # In case VM don't exist, wait for VM DOWN state,
             # otherwise don't wait for any state, just update VM:
-            vms_module.create(
+            ret = vms_module.create(
                 entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
@@ -1016,7 +1143,10 @@ def main():
                         wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     )
         elif state == 'stopped':
-            vms_module.create(
+            if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
+                vms_module.changed = import_vm(module, connection)
+
+            ret = vms_module.create(
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],

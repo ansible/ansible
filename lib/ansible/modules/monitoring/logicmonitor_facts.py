@@ -112,7 +112,7 @@ RETURN = '''
     ansible_facts:
         description: LogicMonitor properties set for the specified object
         returned: success
-        type: list of dicts containing name/value pairs
+        type: list
         example: >
             {
                 "name": "dc",
@@ -135,7 +135,8 @@ RETURN = '''
 
 import socket
 import types
-import urllib
+
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 HAS_LIB_JSON = True
 try:
@@ -179,8 +180,8 @@ class LogicMonitor(object):
         and return the response"""
         self.module.debug("Running LogicMonitor.rpc")
 
-        param_str = urllib.urlencode(params)
-        creds = urllib.urlencode(
+        param_str = urlencode(params)
+        creds = urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password})

@@ -3,9 +3,9 @@
 from __future__ import absolute_import, print_function
 
 import os
+import re
 import sys
 import tempfile
-import time
 
 import lib.pytar
 import lib.thread
@@ -13,9 +13,9 @@ import lib.thread
 from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
     IntegrationConfig,
-    SubprocessError,
     ShellConfig,
     SanityConfig,
+    UnitsConfig,
     create_shell_command,
 )
 
@@ -36,10 +36,21 @@ from lib.util import (
     EnvironmentConfig,
     run_command,
     common_environment,
-    display,
+    pass_vars,
 )
 
-BUFFER_SIZE = 256 * 256
+from lib.docker_util import (
+    docker_exec,
+    docker_get,
+    docker_pull,
+    docker_put,
+    docker_rm,
+    docker_run,
+)
+
+from lib.cloud import (
+    get_cloud_providers,
+)
 
 
 def delegate(args, exclude, require):
@@ -116,7 +127,22 @@ def delegate_tox(args, exclude, require):
         if not args.python:
             cmd += ['--python', version]
 
-        run_command(args, tox + cmd)
+        if isinstance(args, TestConfig):
+            if args.coverage and not args.coverage_label:
+                cmd += ['--coverage-label', 'tox-%s' % version]
+
+        env = common_environment()
+
+        # temporary solution to permit ansible-test delegated to tox to provision remote resources
+        optional = (
+            'SHIPPABLE',
+            'SHIPPABLE_BUILD_ID',
+            'SHIPPABLE_JOB_NUMBER',
+        )
+
+        env.update(pass_vars(required=[], optional=optional))
+
+        run_command(args, tox + cmd, env=env)
 
 
 def delegate_docker(args, exclude, require):
@@ -145,6 +171,12 @@ def delegate_docker(args, exclude, require):
 
     cmd = generate_command(args, '/root/ansible/test/runner/test.py', options, exclude, require)
 
+    if isinstance(args, TestConfig):
+        if args.coverage and not args.coverage_label:
+            image_label = re.sub('^ansible/ansible:', '', args.docker)
+            image_label = re.sub('[^a-zA-Z0-9]+', '-', image_label)
+            cmd += ['--coverage-label', 'docker-%s' % image_label]
+
     if isinstance(args, IntegrationConfig):
         if not args.allow_destructive:
             cmd.append('--allow-destructive')
@@ -154,179 +186,77 @@ def delegate_docker(args, exclude, require):
     if isinstance(args, ShellConfig):
         cmd_options.append('-it')
 
-    if not args.explain:
-        lib.pytar.create_tarfile('/tmp/ansible.tgz', '.', lib.pytar.ignore)
+    with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
+        try:
+            if not args.explain:
+                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.ignore)
 
-    try:
-        if util_image:
-            util_options = [
+            if util_image:
+                util_options = [
+                    '--detach',
+                ]
+
+                util_id, _ = docker_run(args, util_image, options=util_options)
+
+                if args.explain:
+                    util_id = 'util_id'
+                else:
+                    util_id = util_id.strip()
+            else:
+                util_id = None
+
+            test_options = [
                 '--detach',
+                '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
+                '--privileged=%s' % str(privileged).lower(),
             ]
 
-            util_id, _ = docker_run(args, util_image, options=util_options)
+            if util_id:
+                test_options += [
+                    '--link', '%s:ansible.http.tests' % util_id,
+                    '--link', '%s:sni1.ansible.http.tests' % util_id,
+                    '--link', '%s:sni2.ansible.http.tests' % util_id,
+                    '--link', '%s:fail.ansible.http.tests' % util_id,
+                    '--env', 'HTTPTESTER=1',
+                ]
+
+            if isinstance(args, TestConfig):
+                cloud_platforms = get_cloud_providers(args)
+
+                for cloud_platform in cloud_platforms:
+                    test_options += cloud_platform.get_docker_run_options()
+
+            test_id, _ = docker_run(args, test_image, options=test_options)
 
             if args.explain:
-                util_id = 'util_id'
+                test_id = 'test_id'
             else:
-                util_id = util_id.strip()
-        else:
-            util_id = None
+                test_id = test_id.strip()
 
-        test_options = [
-            '--detach',
-            '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
-            '--privileged=%s' % str(privileged).lower(),
-        ]
+            # write temporary files to /root since /tmp isn't ready immediately on container start
+            docker_put(args, test_id, 'test/runner/setup/docker.sh', '/root/docker.sh')
+            docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
+            docker_put(args, test_id, local_source_fd.name, '/root/ansible.tgz')
+            docker_exec(args, test_id, ['mkdir', '/root/ansible'])
+            docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
 
-        if util_id:
-            test_options += [
-                '--link', '%s:ansible.http.tests' % util_id,
-                '--link', '%s:sni1.ansible.http.tests' % util_id,
-                '--link', '%s:sni2.ansible.http.tests' % util_id,
-                '--link', '%s:fail.ansible.http.tests' % util_id,
-                '--env', 'HTTPTESTER=1',
-            ]
+            # docker images are only expected to have a single python version available
+            if isinstance(args, UnitsConfig) and not args.python:
+                cmd += ['--python', 'default']
 
-        test_id, _ = docker_run(args, test_image, options=test_options)
-
-        if args.explain:
-            test_id = 'test_id'
-        else:
-            test_id = test_id.strip()
-
-        # write temporary files to /root since /tmp isn't ready immediately on container start
-        docker_put(args, test_id, 'test/runner/setup/docker.sh', '/root/docker.sh')
-        docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
-        docker_put(args, test_id, '/tmp/ansible.tgz', '/root/ansible.tgz')
-        docker_exec(args, test_id, ['mkdir', '/root/ansible'])
-        docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
-
-        try:
-            docker_exec(args, test_id, cmd, options=cmd_options)
+            try:
+                docker_exec(args, test_id, cmd, options=cmd_options)
+            finally:
+                with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
+                    docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', '/root/ansible/test', 'results'])
+                    docker_get(args, test_id, '/root/results.tgz', local_result_fd.name)
+                    run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', 'test'])
         finally:
-            docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', '/root/ansible/test', 'results'])
-            docker_get(args, test_id, '/root/results.tgz', '/tmp/results.tgz')
-            run_command(args, ['tar', 'oxzf', '/tmp/results.tgz', '-C', 'test'])
-    finally:
-        if util_id:
-            docker_rm(args, util_id)
+            if util_id:
+                docker_rm(args, util_id)
 
-        if test_id:
-            docker_rm(args, test_id)
-
-
-def docker_pull(args, image):
-    """
-    :type args: EnvironmentConfig
-    :type image: str
-    """
-    if not args.docker_pull:
-        display.warning('Skipping docker pull for "%s". Image may be out-of-date.' % image)
-        return
-
-    for _ in range(1, 10):
-        try:
-            docker_command(args, ['pull', image])
-            return
-        except SubprocessError:
-            display.warning('Failed to pull docker image "%s". Waiting a few seconds before trying again.' % image)
-            time.sleep(3)
-
-    raise ApplicationError('Failed to pull docker image "%s".' % image)
-
-
-def docker_put(args, container_id, src, dst):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type src: str
-    :type dst: str
-    """
-    # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open(src, 'rb') as src_fd:
-        docker_exec(args, container_id, ['dd', 'of=%s' % dst, 'bs=%s' % BUFFER_SIZE],
-                    options=['-i'], stdin=src_fd, capture=True)
-
-
-def docker_get(args, container_id, src, dst):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type src: str
-    :type dst: str
-    """
-    # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open(dst, 'wb') as dst_fd:
-        docker_exec(args, container_id, ['dd', 'if=%s' % src, 'bs=%s' % BUFFER_SIZE],
-                    options=['-i'], stdout=dst_fd, capture=True)
-
-
-def docker_run(args, image, options):
-    """
-    :type args: EnvironmentConfig
-    :type image: str
-    :type options: list[str] | None
-    :rtype: str | None, str | None
-    """
-    if not options:
-        options = []
-
-    for _ in range(1, 3):
-        try:
-            return docker_command(args, ['run'] + options + [image], capture=True)
-        except SubprocessError as ex:
-            display.error(ex)
-            display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
-            time.sleep(3)
-
-    raise ApplicationError('Failed to run docker image "%s".' % image)
-
-
-def docker_rm(args, container_id):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    """
-    docker_command(args, ['rm', '-f', container_id], capture=True)
-
-
-def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type cmd: list[str]
-    :type options: list[str] | None
-    :type capture: bool
-    :type stdin: file | None
-    :type stdout: file | None
-    :rtype: str | None, str | None
-    """
-    if not options:
-        options = []
-
-    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout)
-
-
-def docker_command(args, cmd, capture=False, stdin=None, stdout=None):
-    """
-    :type args: EnvironmentConfig
-    :type cmd: list[str]
-    :type capture: bool
-    :type stdin: file | None
-    :type stdout: file | None
-    :rtype: str | None, str | None
-    """
-    env = docker_environment()
-    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout)
-
-
-def docker_environment():
-    """
-    :rtype: dict[str, str]
-    """
-    env = common_environment()
-    env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_')))
-    return env
+            if test_id:
+                docker_rm(args, test_id)
 
 
 def delegate_remote(args, exclude, require):
@@ -341,6 +271,7 @@ def delegate_remote(args, exclude, require):
     version = parts[1]
 
     core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
+    success = False
 
     try:
         core_ci.start()
@@ -352,20 +283,38 @@ def delegate_remote(args, exclude, require):
 
         cmd = generate_command(args, 'ansible/test/runner/test.py', options, exclude, require)
 
+        if isinstance(args, TestConfig):
+            if args.coverage and not args.coverage_label:
+                cmd += ['--coverage-label', 'remote-%s-%s' % (platform, version)]
+
         if isinstance(args, IntegrationConfig):
             if not args.allow_destructive:
                 cmd.append('--allow-destructive')
 
+        # remote instances are only expected to have a single python version available
+        if isinstance(args, UnitsConfig) and not args.python:
+            cmd += ['--python', 'default']
+
         manage = ManagePosixCI(core_ci)
         manage.setup()
 
+        ssh_options = []
+
+        if isinstance(args, TestConfig):
+            cloud_platforms = get_cloud_providers(args)
+
+            for cloud_platform in cloud_platforms:
+                ssh_options += cloud_platform.get_remote_ssh_options()
+
         try:
-            manage.ssh(cmd)
+            manage.ssh(cmd, ssh_options)
+            success = True
         finally:
             manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results')
             manage.download('/tmp/results', 'test')
     finally:
-        pass
+        if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
+            core_ci.stop()
 
 
 def generate_command(args, path, options, exclude, require):

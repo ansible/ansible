@@ -2,6 +2,8 @@ prune ticket_stubs
 prune hacking
 include README.md COPYING
 include requirements.txt
+include .coveragerc
+include .yamllint
 include examples/hosts
 include examples/ansible.cfg
 include lib/ansible/module_utils/powershell.ps1

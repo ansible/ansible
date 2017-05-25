@@ -154,9 +154,10 @@ EXAMPLES = '''
     path: /proc/3466/status
     state: absent
 
-# wait 300 seconds for port 22 to become open and contain "OpenSSH", don't assume the inventory_hostname is resolvable
-# and don't start checking for 10 seconds
-- local_action: wait_for port=22 host="{{ ansible_ssh_host | default(inventory_hostname) }}" search_regex=OpenSSH delay=10
+# wait 300 seconds for port 22 to become open and contain "OpenSSH",
+# don't assume the inventory_hostname is resolvable and don't start checking for 10 seconds
+- wait_for: port=22 host="{{ ansible_host|default(ansible_ssh_host|default(inventory_hostname)) }}" search_regex=OpenSSH delay=10
+  connection: local
 '''
 
 import binascii
@@ -442,7 +443,7 @@ def main():
         except:
             module.fail_json(msg="unknown active_connection_state ("+_connection_state+") defined")
 
-    start = datetime.datetime.now()
+    start = datetime.datetime.utcnow()
 
     if delay:
         time.sleep(delay)
@@ -453,7 +454,7 @@ def main():
         ### first wait for the stop condition
         end = start + datetime.timedelta(seconds=timeout)
 
-        while datetime.datetime.now() < end:
+        while datetime.datetime.utcnow() < end:
             if path:
                 try:
                     f = open(path)
@@ -470,7 +471,7 @@ def main():
             # Conditions not yet met, wait and try again
             time.sleep(params['sleep'])
         else:
-            elapsed = datetime.datetime.now() - start
+            elapsed = datetime.datetime.utcnow() - start
             if port:
                 module.fail_json(msg="Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
             elif path:
@@ -479,7 +480,7 @@ def main():
     elif state in ['started', 'present']:
         ### wait for start condition
         end = start + datetime.timedelta(seconds=timeout)
-        while datetime.datetime.now() < end:
+        while datetime.datetime.utcnow() < end:
             if path:
                 try:
                     os.stat(path)
@@ -487,7 +488,7 @@ def main():
                     e = get_exception()
                     # If anything except file not present, throw an error
                     if e.errno != 2:
-                        elapsed = datetime.datetime.now() - start
+                        elapsed = datetime.datetime.utcnow() - start
                         module.fail_json(msg="Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
                     # file doesn't exist yet, so continue
                 else:
@@ -506,7 +507,7 @@ def main():
                     except IOError:
                         pass
             elif port:
-                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.now()))
+                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
                     s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
                 except:
@@ -517,8 +518,8 @@ def main():
                     if compiled_search_re:
                         data = ''
                         matched = False
-                        while datetime.datetime.now() < end:
-                            max_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.now()))
+                        while datetime.datetime.utcnow() < end:
+                            max_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                             (readable, w, e) = select.select([s], [], [], max_timeout)
                             if not readable:
                                 # No new data.  Probably means our timeout
@@ -550,7 +551,7 @@ def main():
 
         else:   # while-else
             # Timeout expired
-            elapsed = datetime.datetime.now() - start
+            elapsed = datetime.datetime.utcnow() - start
             if port:
                 if search_regex:
                     module.fail_json(msg="Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
@@ -566,7 +567,7 @@ def main():
         ### wait until all active connections are gone
         end = start + datetime.timedelta(seconds=timeout)
         tcpconns = TCPConnectionInfo(module)
-        while datetime.datetime.now() < end:
+        while datetime.datetime.utcnow() < end:
             try:
                 if tcpconns.get_active_connections_count() == 0:
                     break
@@ -575,10 +576,10 @@ def main():
             # Conditions not yet met, wait and try again
             time.sleep(params['sleep'])
         else:
-            elapsed = datetime.datetime.now() - start
+            elapsed = datetime.datetime.utcnow() - start
             module.fail_json(msg="Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
 
-    elapsed = datetime.datetime.now() - start
+    elapsed = datetime.datetime.utcnow() - start
     module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
 
 # import module snippets

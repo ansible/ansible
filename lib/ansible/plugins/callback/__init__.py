@@ -28,7 +28,7 @@ from copy import deepcopy
 from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
-from ansible.vars import strip_internal_keys
+from ansible.vars.manager import strip_internal_keys
 
 try:
     from __main__ import display as global_display
@@ -208,8 +208,10 @@ class CallbackBase:
         del result._result['results']
 
     def _clean_results(self, result, task_name):
-        if 'invocation' in result and task_name in ['debug']:
-            del result['invocation']
+        if task_name in ['debug']:
+            for remove_key in ('changed', 'invocation'):
+                if remove_key in result:
+                    del result[remove_key]
 
 
     def set_play_context(self, play_context):

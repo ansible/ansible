@@ -44,7 +44,7 @@ options:
     description:
       - The banner text that should be
         present in the remote device running configuration.  This argument
-        accepts a multiline string. Requires I(state=present).
+        accepts a multiline string, with no empty lines. Requires I(state=present).
     default: null
   state:
     description:
@@ -68,6 +68,13 @@ EXAMPLES = """
   ios_banner:
     banner: motd
     state: absent
+
+- name: Configure banner from file
+  ios_banner:
+    banner:  motd
+    text: "{{ lookup('file', './config_partial/raw_banner.cfg') }}"
+    state: present
+
 """
 
 RETURN = """
@@ -92,7 +99,7 @@ def map_obj_to_commands(updates, module):
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' and have['text']:
+    if state == 'absent' and 'text' in have.keys() and have['text']:
         commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present':

@@ -112,7 +112,7 @@ changed:
 stat:
     description: dictionary containing all the stat data
     returned: success
-    type: dictionary
+    type: complex
     contains:
         attributes:
             description: attributes of the file at path in raw form
@@ -150,7 +150,7 @@ stat:
             returned: success, path exists
             type: boolean
             sample: True
-        islink:
+        islnk:
             description: if the path is a symbolic link or junction or not
             returned: success, path exists
             type: boolean

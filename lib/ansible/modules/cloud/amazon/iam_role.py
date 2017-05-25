@@ -92,26 +92,32 @@ RETURN = '''
 path:
     description: the path to the role
     type: string
+    returned: always
     sample: /
 role_name:
     description: the friendly name that identifies the role
     type: string
+    returned: always
     sample: myrole
 role_id:
     description: the stable and unique string identifying the role
     type: string
+    returned: always
     sample: ABCDEFF4EZ4ABCDEFV4ZC
 arn:
     description: the Amazon Resource Name (ARN) specifying the role
     type: string
+    returned: always
     sample: "arn:aws:iam::1234567890:role/mynewrole"
 create_date:
     description: the date and time, in ISO 8601 date-time format, when the role was created
     type: string
+    returned: always
     sample: "2016-08-14T04:36:28+00:00"
 assume_role_policy_document:
     description: the policy that grants an entity permission to assume the role
     type: string
+    returned: always
     sample: {
                 'statement': [
                     {
@@ -128,6 +134,7 @@ assume_role_policy_document:
 attached_policies:
     description: a list of dicts containing the name and ARN of the managed IAM policies attached to the role
     type: list
+    returned: always
     sample: [
         {
             'policy_arn': 'arn:aws:iam::aws:policy/PowerUserAccess',
@@ -136,11 +143,14 @@ attached_policies:
     ]
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, sort_json_policy_dict
 import json
+import traceback
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, ParamValidationError
+    from botocore.exceptions import ClientError, NoCredentialsError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -148,10 +158,7 @@ except ImportError:
 
 def compare_assume_role_policy_doc(current_policy_doc, new_policy_doc):
 
-    # Get proper JSON strings for both docs
-    current_policy_doc = json.dumps(current_policy_doc)
-
-    if current_policy_doc == new_policy_doc:
+    if sort_json_policy_dict(current_policy_doc) == sort_json_policy_dict(json.loads(new_policy_doc)):
         return True
     else:
         return False
@@ -183,60 +190,63 @@ def create_or_update_role(connection, module):
     changed = False
 
     # Get role
-    role = get_role(connection, params['RoleName'])
+    role = get_role(connection, module, params['RoleName'])
 
     # If role is None, create it
     if role is None:
         try:
             role = connection.create_role(**params)
             changed = True
-        except (ClientError, ParamValidationError) as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     else:
         # Check Assumed Policy document
         if not compare_assume_role_policy_doc(role['AssumeRolePolicyDocument'], params['AssumeRolePolicyDocument']):
             try:
                 connection.update_assume_role_policy(RoleName=params['RoleName'], PolicyDocument=json.dumps(json.loads(params['AssumeRolePolicyDocument'])))
                 changed = True
-            except (ClientError, ParamValidationError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            except ClientError as e:
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-    # Check attached managed policies
-    current_attached_policies = get_attached_policy_list(connection, params['RoleName'])
-    if not compare_attached_role_policies(current_attached_policies, managed_policies):
-        # If managed_policies has a single empty element we want to remove all attached policies
-        if len(managed_policies) == 1 and managed_policies[0] == "":
+    if managed_policies is not None:
+        # Get list of current attached managed policies
+        current_attached_policies = get_attached_policy_list(connection, module, params['RoleName'])
+
+        # If a single empty list item then all managed policies to be removed
+        if len(managed_policies) == 1 and not managed_policies[0]:
             for policy in current_attached_policies:
                 try:
                     connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
-                except (ClientError, ParamValidationError) as e:
-                    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                changed = True
+        else:
+            # Make a list of the ARNs from the attached policies
+            current_attached_policies_arn_list = []
+            for policy in current_attached_policies:
+                current_attached_policies_arn_list.append(policy['PolicyArn'])
 
-        # Detach policies not present
-        current_attached_policies_arn_list = []
-        for policy in current_attached_policies:
-            current_attached_policies_arn_list.append(policy['PolicyArn'])
+            # Detach roles not defined in task
+            for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
+                try:
+                    connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                changed = True
 
-        for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
-            try:
-                connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
-            except (ClientError, ParamValidationError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            # Attach roles not already attached
+            for policy_arn in list(set(managed_policies) - set(current_attached_policies_arn_list)):
+                try:
+                    connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                changed = True
 
-        # Attach each policy
-        for policy_arn in managed_policies:
-            try:
-                connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
-            except (ClientError, ParamValidationError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-
-        changed = True
-
-    # We need to remove any instance profiles from the role before we delete it
+    # Instance profile
     try:
         instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     if not any(p['InstanceProfileName'] == params['RoleName'] for p in instance_profiles):
         # Make sure an instance profile is attached
         try:
@@ -247,13 +257,13 @@ def create_or_update_role(connection, module):
             if e.response['Error']['Code'] == 'EntityAlreadyExists':
                 pass
             else:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
 
     # Get the role again
-    role = get_role(connection, params['RoleName'])
+    role = get_role(connection, module, params['RoleName'])
 
-    role['attached_policies'] = get_attached_policy_list(connection, params['RoleName'])
+    role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
     module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role))
 
 
@@ -262,53 +272,52 @@ def destroy_role(connection, module):
     params = dict()
     params['RoleName'] = module.params.get('name')
 
-    if get_role(connection, params['RoleName']):
+    if get_role(connection, module, params['RoleName']):
 
         # We need to remove any instance profiles from the role before we delete it
         try:
             instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
         except ClientError as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
         # Now remove the role from the instance profile(s)
         for profile in instance_profiles:
             try:
                 connection.remove_role_from_instance_profile(InstanceProfileName=profile['InstanceProfileName'], RoleName=params['RoleName'])
             except ClientError as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
         # Now remove any attached policies otherwise deletion fails
         try:
-            for policy in get_attached_policy_list(connection, params['RoleName']):
+            for policy in get_attached_policy_list(connection, module, params['RoleName']):
                 connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
-        except (ClientError, ParamValidationError) as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
         try:
             connection.delete_role(**params)
         except ClientError as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     else:
         module.exit_json(changed=False)
 
     module.exit_json(changed=True)
 
 
-def get_role(connection, name):
-
-    params = dict()
-    params['RoleName'] = name
+def get_role(connection, module, name):
 
     try:
-        return connection.get_role(**params)['Role']
+        return connection.get_role(RoleName=name)['Role']
     except ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
             return None
         else:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except NoCredentialsError as e:
+        module.fail_json(msg="AWS authentication problem. " + e.message, exception=traceback.format_exc())
 
 
-def get_attached_policy_list(connection, name):
+def get_attached_policy_list(connection, module, name):
 
     try:
         return connection.list_attached_role_policies(RoleName=name)['AttachedPolicies']
@@ -316,7 +325,7 @@ def get_attached_policy_list(connection, name):
         if e.response['Error']['Code'] == 'NoSuchEntity':
             return None
         else:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
 def main():
@@ -327,7 +336,7 @@ def main():
             name=dict(required=True, type='str'),
             path=dict(default="/", required=False, type='str'),
             assume_role_policy_document=dict(required=False, type='json'),
-            managed_policy=dict(default=[], required=False, type='list'),
+            managed_policy=dict(default=None, required=False, type='list'),
             state=dict(default=None, choices=['present', 'absent'], required=True)
         )
     )
@@ -351,9 +360,6 @@ def main():
         create_or_update_role(connection, module)
     else:
         destroy_role(connection, module)
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

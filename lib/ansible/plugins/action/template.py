@@ -17,17 +17,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import datetime
 import os
-import pwd
-import time
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
+from ansible.template import generate_ansible_template_vars
 
 boolean = C.mk_boolean
 
@@ -100,9 +97,14 @@ class ActionModule(ActionBase):
 
         directory_prepended = False
         if dest.endswith(os.sep):
+            # Optimization.  trailing slash means we know it's a directory
             directory_prepended = True
-            base = os.path.basename(source)
-            dest = os.path.join(dest, base)
+            dest = self._connection._shell.join_path(dest, os.path.basename(source))
+        else:
+            # Find out if it's a directory
+            dest_stat = self._execute_remote_stat(dest, task_vars, True, tmp=tmp)
+            if dest_stat['exists'] and dest_stat['isdir']:
+                dest = self._connection._shell.join_path(dest, os.path.basename(source))
 
         # template the source data locally & get ready to transfer
         b_source = to_bytes(source)
@@ -110,36 +112,8 @@ class ActionModule(ActionBase):
             with open(b_source, 'r') as f:
                 template_data = to_text(f.read())
 
-            try:
-                template_uid = pwd.getpwuid(os.stat(b_source).st_uid).pw_name
-            except:
-                template_uid = os.stat(b_source).st_uid
-
-            temp_vars = task_vars.copy()
-            temp_vars['template_host']     = os.uname()[1]
-            temp_vars['template_path']     = source
-            temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(b_source))
-            temp_vars['template_uid']      = template_uid
-            temp_vars['template_fullpath'] = os.path.abspath(source)
-            temp_vars['template_run_date'] = datetime.datetime.now()
-
-            managed_default = C.DEFAULT_MANAGED_STR
-            managed_str = managed_default.format(
-                host = temp_vars['template_host'],
-                uid  = temp_vars['template_uid'],
-                file = to_bytes(temp_vars['template_path'])
-            )
-            temp_vars['ansible_managed'] = time.strftime(
-                managed_str,
-                time.localtime(os.path.getmtime(b_source))
-            )
-
-            searchpath = []
             # set jinja2 internal search path for includes
-            if 'ansible_search_path' in task_vars:
-                searchpath = task_vars['ansible_search_path']
-                # our search paths aren't actually the proper ones for jinja includes.
-
+            searchpath = task_vars.get('ansible_search_path', [])
             searchpath.extend([self._loader._basedir, os.path.dirname(source)])
 
             # We want to search into the 'templates' subdir of each search path in
@@ -162,6 +136,10 @@ class ActionModule(ActionBase):
                 self._templar.environment.variable_end_string = variable_end_string
             if trim_blocks is not None:
                 self._templar.environment.trim_blocks = bool(trim_blocks)
+
+            # add ansible 'template' vars
+            temp_vars = task_vars.copy()
+            temp_vars.update(generate_ansible_template_vars(source))
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)

@@ -3,7 +3,7 @@
 Building A Simple Module
 ````````````````````````
 
-Let's build a very-basic module to get and set the system time.  For starters, let's build
+Let's build a very basic module to get and set the system time.  For starters, let's build
 a module that just outputs the current time.
 
 We are going to use Python here but any language is possible.  Only File I/O and outputting to standard
@@ -23,7 +23,7 @@ modules.   Keep in mind, though, that some modules in Ansible's source tree are 
 so look at :ref:`service` or :ref:`yum`, and don't stare too close into things like ``async_wrapper`` or
 you'll turn to stone.  Nobody ever executes ``async_wrapper`` directly.
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named :file:`timetest.py`
+Ok, let's get going with an example.  We're going to use Python.  For starters, save this as a file named :file:`timetest.py`
 
 .. code-block:: python
 
@@ -33,9 +33,9 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
     import json
 
     date = str(datetime.datetime.now())
-    print json.dumps({
+    print(json.dumps({
         "time" : date
-    })
+    }))
 
 .. _module_testing:
 
@@ -46,7 +46,7 @@ There's a useful test script in the source checkout for Ansible:
 
 .. code-block:: shell-session
 
-    git clone git://github.com/ansible/ansible.git --recursive
+    git clone git://github.com/ansible/ansible.git
     source ansible/hacking/env-setup
 
 For instructions on setting up Ansible from source, please see
@@ -71,7 +71,7 @@ If you did not, you might have a typo in your module, so recheck it and try agai
 Reading Input
 `````````````
 Let's modify the module to allow setting the current time.  We'll do this by seeing
-if a key value pair in the form `time=<string>` is passed in to the module.
+if a key value pair in the form `time=<string>` is passed into the module.
 
 Ansible internally saves arguments to an arguments file.  So we must read the file
 and parse it.  The arguments file is just a string, so any form of arguments are legal.
@@ -146,10 +146,10 @@ a lot shorter than this:
                 # can be added.
 
                 if rc != 0:
-                    print json.dumps({
+                    print(json.dumps({
                         "failed" : True,
                         "msg"    : "failed setting the time"
-                    })
+                    }))
                     sys.exit(1)
 
                 # when things do not fail, we do not
@@ -160,10 +160,10 @@ a lot shorter than this:
                 # notifiers to be used in playbooks.
 
                 date = str(datetime.datetime.now())
-                print json.dumps({
+                print(json.dumps({
                     "time" : date,
                     "changed" : True
-                })
+                }))
                 sys.exit(0)
 
     # if no parameters are sent, the module may or
@@ -171,9 +171,9 @@ a lot shorter than this:
     # return the time
 
     date = str(datetime.datetime.now())
-    print json.dumps({
+    print(json.dumps({
         "time" : date
-    })
+    }))
 
 Let's test that module::
 
@@ -230,7 +230,7 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
 These 'facts' will be available to all statements called after that module (but not before) in the playbook.
 A good idea might be to make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
- 
+
 Returning a new fact from a python module could be done like::
 
         module.exit_json(msg=message, ansible_facts=dict(leptons=5000, colors=my_colors))
@@ -311,7 +311,7 @@ Supporting Check Mode
 `````````````````````
 .. versionadded:: 1.1
 
-Modules may optionally support `check mode <http://docs.ansible.com/ansible/playbooks_checkmode.html>`. If the user runs Ansible in check mode, a module should try to predict and report whether changes will occur but not actually make any changes (modules that do not support check mode will also take no action, but just will not report what changes they might have made).
+Modules may optionally support `check mode <http://docs.ansible.com/ansible/playbooks_checkmode.html>`_. If the user runs Ansible in check mode, a module should try to predict and report whether changes will occur but not actually make any changes (modules that do not support check mode will also take no action, but just will not report what changes they might have made).
 
 For your module to support check mode, you must pass ``supports_check_mode=True`` when instantiating the AnsibleModule object. The AnsibleModule.check_mode attribute will evaluate to True when check mode is enabled. For example:
 
@@ -331,6 +331,3 @@ system state is altered when the user enables check mode.
 
 If your module does not support check mode, when the user runs Ansible in check
 mode, your module will simply be skipped.
-
-
-

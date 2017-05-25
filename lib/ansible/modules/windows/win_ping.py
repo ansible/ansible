@@ -52,4 +52,3 @@ EXAMPLES = r'''
 - win_ping:
     data: crash
 '''
-

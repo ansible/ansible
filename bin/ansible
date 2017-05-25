@@ -37,9 +37,6 @@ import shutil
 import sys
 import traceback
 
-# for debug
-from multiprocessing import Lock
-
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display

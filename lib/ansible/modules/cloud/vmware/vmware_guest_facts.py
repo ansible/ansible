@@ -63,20 +63,20 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Gather facts
-  - name: gather the VM facts
-    vmware_guest_facts:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      validate_certs: no
-      uuid: 421e4592-c069-924d-ce20-7e7533fab926
-    register: facts
+- name: Gather VM facts
+  vmware_guest_facts:
+    hostname: 192.168.1.209
+    username: administrator@vsphere.local
+    password: vmware
+    validate_certs: no
+    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+  delegate_to: localhost
+  register: facts
 '''
 
 RETURN = """
 instance:
-    descripton: metadata about the virtualmachine
+    description: metadata about the virtual machine
     returned: always
     type: dict
     sample: None

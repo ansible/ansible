@@ -39,7 +39,8 @@ options:
     default: no
   get_md5:
     description:
-      - Whether to return the md5 sum of the file.  Will return None if we're
+      - Whether to return the md5 sum of the file.
+      - Will return None if not a regular file or if we're
         unable to use md5 (Common for FIPS-140 compliant systems)
     required: false
     default: yes
@@ -139,7 +140,7 @@ RETURN = '''
 stat:
     description: dictionary containing all the stat data, some platforms might add additional fields
     returned: success
-    type: dictionary
+    type: complex
     contains:
         exists:
             description: if the destination path actually exists or not
@@ -476,11 +477,11 @@ def main():
 
     # resolved permissions
     for perm in [('readable', os.R_OK), ('writeable', os.W_OK), ('executable', os.X_OK)]:
-        output[perm[0]] = os.access(path, perm[1])
+        output[perm[0]] = os.access(b_path, perm[1])
 
     # symlink info
     if output.get('islnk'):
-        output['lnk_source'] = os.path.realpath(path)
+        output['lnk_source'] = os.path.realpath(b_path)
 
     try: # user data
         pw = pwd.getpwuid(st.st_uid)
@@ -499,19 +500,19 @@ def main():
         if get_md5:
             # Will fail on FIPS-140 compliant systems
             try:
-                output['md5'] = module.md5(path)
+                output['md5'] = module.md5(b_path)
             except ValueError:
                 output['md5'] = None
 
         if get_checksum:
-            output['checksum'] = module.digest_from_file(path, checksum_algorithm)
+            output['checksum'] = module.digest_from_file(b_path, checksum_algorithm)
 
     # try to get mime data if requested
     if get_mime:
         output['mimetype'] = output['charset'] = 'unknown'
         mimecmd = module.get_bin_path('file')
         if mimecmd:
-            mimecmd = [mimecmd, '-i', path]
+            mimecmd = [mimecmd, '-i', b_path]
             try:
                 rc, out, err = module.run_command(mimecmd)
                 if rc == 0:
@@ -526,7 +527,7 @@ def main():
         output['version'] = None
         output['attributes'] = []
         output['attr_flags'] = ''
-        out = module.get_file_attributes(path)
+        out = module.get_file_attributes(b_path)
         for x in ('version', 'attributes', 'attr_flags'):
             if x in out:
                 output[x] = out[x]

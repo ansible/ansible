@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: junos_facts
 version_added: "2.1"
 author: "Nathaniel Case (@qalthos)"
-short_description: Collect facts from remote devices running Junos
+short_description: Collect facts from remote devices running Juniper Junos
 description:
   - Collects fact information from a remote device running the Junos
     operating system.  By default, the module will collect basic fact
@@ -45,6 +45,15 @@ options:
         not be collected.
     required: false
     default: "!config"
+    version_added: "2.3"
+  config_format:
+    description:
+      - The I(config_format) argument specifies the format of the configuration
+         when serializing output from the device. This argument is applicable
+         only when C(config) value is present in I(gather_subset).
+    required: false
+    default: text
+    choices: ['xml', 'set', 'text', 'json']
     version_added: "2.3"
 """
 
@@ -65,7 +74,7 @@ ansible_facts:
 """
 
 import re
-from xml.etree.ElementTree import Element, SubElement
+from xml.etree.ElementTree import Element, SubElement, tostring
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
@@ -89,7 +98,7 @@ class FactsBase(object):
         reply = command(self.module, command)
         output = reply.find('.//output')
         if not output:
-            module.fail_json(msg='failed to retrieve facts for command %s' % command)
+            self.module.fail_json(msg='failed to retrieve facts for command %s' % command)
         return str(output.text).strip()
 
     def rpc(self, rpc):

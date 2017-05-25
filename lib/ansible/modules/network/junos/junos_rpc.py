@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: junos_rpc
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Runs an arbitrary RPC on the remote device over NetConf
+short_description: Runs an arbitrary RPC over NetConf on an Juniper JUNOS device
 description:
   - Sends a request to the remote device running JUNOS to execute the
     specified RPC using the NetConf transport.  The reply is then
@@ -62,7 +62,7 @@ EXAMPLES = """
   junos_rpc:
     rpc: get-interface-information
     args:
-      interface: em0
+      interface-name: em0
       media: True
 
 - name: get system information
@@ -72,21 +72,26 @@ EXAMPLES = """
 
 RETURN = """
 xml:
-  description: The xml return string from the rpc request
+  description: The xml return string from the rpc request.
   returned: always
+  type: string
 output:
-  description: The rpc rely converted to the output format
+  description: The rpc rely converted to the output format.
   returned: always
+  type: string
 output_lines:
-  description: The text output split into lines for readability
+  description: The text output split into lines for readability.
   returned: always
+  type: list
 """
-from ncclient.xml_ import new_ele, sub_ele, to_xml, to_ele
+from xml.etree.ElementTree import Element, SubElement, tostring
 
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import iteritems
 
+USE_PERSISTENT_CONNECTION = True
 
 
 def main():
@@ -98,10 +103,15 @@ def main():
         output=dict(default='xml', choices=['xml', 'json', 'text']),
     )
 
+    argument_spec.update(junos_argument_spec)
+
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False)
 
-    result = {'changed': False}
+    warnings = list()
+    check_args(module, warnings)
+
+    result = {'changed': False, 'warnings': warnings}
 
     rpc = str(module.params['rpc']).replace('_', '-')
 
@@ -112,37 +122,34 @@ def main():
 
     xattrs = {'format': module.params['output']}
 
-    element = new_ele(module.params['rpc'], xattrs)
+    element = Element(module.params['rpc'], xattrs)
 
     for key, value in iteritems(args):
         key = str(key).replace('_', '-')
         if isinstance(value, list):
             for item in value:
-                child = sub_ele(element, key)
+                child = SubElement(element, key)
                 if item is not True:
                     child.text = item
         else:
-            child = sub_ele(element, key)
+            child = SubElement(element, key)
             if value is not True:
                 child.text = value
 
     reply = send_request(module, element)
 
-    result['xml'] = str(to_xml(reply))
+    result['xml'] = str(tostring(reply))
 
     if module.params['output'] == 'text':
-        reply = to_ele(reply)
-        data = reply.xpath('//output')
-        result['output'] = data[0].text.strip()
+        data = reply.find('.//output')
+        result['output'] = data.text.strip()
         result['output_lines'] = result['output'].split('\n')
 
     elif module.params['output'] == 'json':
-        reply = to_ele(reply)
-        data = reply.xpath('//rpc-reply')
-        result['output'] = module.from_json(data[0].text.strip())
+        result['output'] = module.from_json(reply.text.strip())
 
     else:
-        result['output'] = str(to_xml(reply)).split('\n')
+        result['output'] = str(tostring(reply)).split('\n')
 
     module.exit_json(**result)
 

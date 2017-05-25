@@ -84,7 +84,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 import time
 import collections
@@ -175,12 +174,8 @@ def main():
 
     commands = get_commands(module, pkg, file_system)
     if not module.check_mode and commands:
-        try:
-            apply_patch(module, commands)
-            changed = True
-        except ShellError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        apply_patch(module, commands)
+        changed = True
 
     if 'configure' in commands:
         commands.pop(0)

@@ -29,18 +29,24 @@ DOCUMENTATION = """
 module: fortios_ipv4_policy
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
-short_description: Manage fortios firewall IPv4 policy objects
+short_description: Manage IPv4 policy objects on Fortinet FortiOS firewall devices
 description:
   - This module provides management of firewall IPv4 policies on FortiOS devices.
 extends_documentation_fragment: fortios
 options:
   id:
     description:
-      - Policy ID.
+      - "Policy ID.
+        Warning: policy ID number is different than Policy sequence number.
+        The policy ID is the number assigned at policy creation.
+        The sequence number represents the order in which the Fortigate will evaluate the rule for policy enforcement,
+        and also the order in which rules are listed in the GUI and CLI.
+        These two numbers do not necessarily correlate: this module is based off policy ID.
+        TIP: policy ID can be viewed in the GUI by adding 'ID' to the display columns"
     required: true
   state:
     description:
-      - Specifies if address need to be added or deleted.
+      - Specifies if policy I(id) need to be added or deleted.
     choices: ['present', 'absent']
     default: present
   src_intf:
@@ -53,8 +59,7 @@ options:
     default: any
   src_addr:
     description:
-      - Specifies source address (or group) object name(s).
-    required: true
+      - Specifies source address (or group) object name(s). Required when I(state=present).
   src_addr_negate:
     description:
       - Negate source address param.
@@ -62,8 +67,7 @@ options:
     choices: ["true", "false"]
   dst_addr:
     description:
-      - Specifies destination address (or group) object name(s).
-    required: true
+      - Specifies destination address (or group) object name(s). Required when I(state=present).
   dst_addr_negate:
     description:
       - Negate destination address param.
@@ -71,14 +75,12 @@ options:
     choices: ["true", "false"]
   policy_action:
     description:
-      - Specifies accept or deny action policy.
+      - Specifies accept or deny action policy. Required when I(state=present).
     choices: ['accept', 'deny']
-    required: true
     aliases: ['action']
   service:
     description:
-      - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS'])."
-    required: true
+      - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS']). Required when I(state=present)."
     aliases:
       - services
   service_negate:
@@ -115,6 +117,18 @@ options:
   application_list:
     description:
       - Specifies Application Control name.
+  logtraffic:
+    version_added: "2.4"
+    description:
+      - Logs sessions that matched policy.
+    default: utm
+    choices: ['disable', 'utm', 'all']
+  logtraffic_start:
+    version_added: "2.4"
+    description:
+      - Logs begining of session as well.
+    default: false
+    choices: ["true", "false"]
   comment:
     description:
       - free text to describe policy.
@@ -129,12 +143,13 @@ EXAMPLES = """
     username: admin
     password: password
     id: 42
-    srcaddr: internal_network
-    dstaddr: all
+    src_addr: internal_network
+    dst_addr: all
     service: dns
     nat: True
     state: present
     policy_action: accept
+    logtraffic: disable
 
 - name: Public Web
   fortios_ipv4_policy:
@@ -142,8 +157,8 @@ EXAMPLES = """
     username: admin
     password: password
     id: 42
-    srcaddr: all
-    dstaddr: webservers
+    src_addr: all
+    dst_addr: webservers
     services:
       - http
       - https
@@ -180,12 +195,12 @@ def main():
         src_intf                  = dict(default='any'),
         dst_intf                  = dict(default='any'),
         state                     = dict(choices=['present', 'absent'], default='present'),
-        src_addr                  = dict(required=True, type='list'),
-        dst_addr                  = dict(required=True, type='list'),
+        src_addr                  = dict(type='list'),
+        dst_addr                  = dict(type='list'),
         src_addr_negate           = dict(type='bool', default=False),
         dst_addr_negate           = dict(type='bool', default=False),
-        policy_action             = dict(choices=['accept','deny'], required=True, aliases=['action']),
-        service                   = dict(aliases=['services'], required=True, type='list'),
+        policy_action             = dict(choices=['accept','deny'], aliases=['action']),
+        service                   = dict(aliases=['services'], type='list'),
         service_negate            = dict(type='bool', default=False),
         schedule                  = dict(type='str', default='always'),
         nat                       = dict(type='bool', default=False),
@@ -195,19 +210,28 @@ def main():
         webfilter_profile         = dict(type='str'),
         ips_sensor                = dict(type='str'),
         application_list          = dict(type='str'),
+        logtraffic                = dict(choices=['disable','all','utm'], default='utm'),
+        logtraffic_start          = dict(type='bool', default=False),
     )
 
     #merge global required_if & argument_spec from module_utils/fortios.py
     argument_spec.update(fortios_argument_spec)
 
+    ipv4_policy_required_if = [
+        ['state', 'present', ['src_addr', 'dst_addr', 'policy_action', 'service']],
+    ]
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=fortios_required_if,
+        required_if=fortios_required_if + ipv4_policy_required_if ,
     )
 
     #init forti object
     fortigate = AnsibleFortios(module)
+
+    #Security policies root path
+    config_path = 'firewall policy'
 
     #test params
     #NAT related
@@ -217,15 +241,20 @@ def main():
         if module.params['fixedport']:
             module.fail_json(msg='Fixedport param requires NAT to be true.')
 
+    #log options
+    if module.params['logtraffic_start']:
+        if not module.params['logtraffic'] == 'all':
+            module.fail_json(msg='Logtraffic_start param requires logtraffic to be set to "all".')
+
     #id must be str(int) for pyFG to work
     policy_id = str(module.params['id'])
 
     #load config
-    fortigate.load_config('firewall policy')
+    fortigate.load_config(config_path)
 
     #Absent State
     if module.params['state'] == 'absent':
-        fortigate.candidate_config[path].del_block(policy_id)
+        fortigate.candidate_config[config_path].del_block(policy_id)
 
     #Present state
     elif module.params['state'] == 'present':
@@ -250,6 +279,14 @@ def main():
 
         # action
         new_policy.set_param('action', '%s' % (module.params['policy_action']))
+
+        #logging
+        new_policy.set_param('logtraffic', '%s' % (module.params['logtraffic']))
+        if module.params['logtraffic'] == 'all':
+            if module.params['logtraffic_start']:
+                new_policy.set_param('logtraffic-start', 'enable')
+            else:
+                new_policy.set_param('logtraffic-start', 'disable')
 
         # Schedule
         new_policy.set_param('schedule', '%s' % (module.params['schedule']))

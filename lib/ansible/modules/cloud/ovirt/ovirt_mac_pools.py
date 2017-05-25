@@ -27,15 +27,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_mac_pools
-short_description: Module to manage MAC pools in oVirt
+short_description: Module to manage MAC pools in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "This module manage MAC pools in oVirt."
+    - "This module manage MAC pools in oVirt/RHV."
 options:
     name:
         description:
-            - "Name of the the MAC pool to manage."
+            - "Name of the MAC pool to manage."
         required: true
     description:
         description:
@@ -48,7 +48,7 @@ options:
     allow_duplicates:
         description:
             - "If (true) allow a MAC address to be used multiple times in a pool."
-            - "Default value is set by oVirt engine to I(false)."
+            - "Default value is set by oVirt/RHV engine to I(false)."
     ranges:
         description:
             - "List of MAC ranges. The from and to should be splitted by comma."
@@ -81,9 +81,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 template:
-    description: "Dictionary of all the MAC pool attributes. MAC pool attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/mac_pool."
+    description: "Dictionary of all the MAC pool attributes. MAC pool attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/mac_pool."
     returned: On success if MAC pool is found.
+    type: dict
 '''
 
 import traceback

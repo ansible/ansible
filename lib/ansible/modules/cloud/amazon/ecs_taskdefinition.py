@@ -111,7 +111,8 @@ EXAMPLES = '''
 RETURN = '''
 taskdefinition:
     description: a reflection of the input parameters
-    type: dict inputs plus revision, status, taskDefinitionArn
+    type: dict
+    returned: always
 '''
 try:
     import boto
@@ -352,6 +353,10 @@ def main():
             if not module.check_mode:
                 # Doesn't exist. create it.
                 volumes = module.params.get('volumes', []) or []
+                for container in module.params['containers']:
+                    if 'environment' in container:
+                        for environment in container['environment']:
+                            environment['value'] = str(environment['value'])
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
                                                                    module.params['task_role_arn'],
                                                                    module.params['network_mode'],

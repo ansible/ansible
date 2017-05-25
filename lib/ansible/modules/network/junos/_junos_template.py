@@ -27,7 +27,7 @@ DOCUMENTATION = """
 module: junos_template
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage configuration on remote devices running Junos
+short_description: Manage configuration on remote devices running Juniper JUNOS
 description:
   - This module will load a candidate configuration
     from a template file onto a remote device running Junos.  The
@@ -157,7 +157,7 @@ def main():
             module.fail_json(msg='unable to retrieve device configuration')
         result['__backup__'] = str(match.text).strip()
 
-    diff = load_config(module, src, action=action, commit=commit, format=fmt)
+    diff = load_config(module, src, warnings, action=action, commit=commit, format=fmt)
     if diff:
         result['changed'] = True
         if module._diff:

@@ -142,7 +142,7 @@ def get_metadata(server):
         key = 'os_' + re.sub(r"[^A-Za-z0-9\-]", "_", key).lower()
 
         # Att value to instance result (exclude manager class)
-        #TODO: maybe use value.__class__ or similar inside of key_name
+        # TODO: maybe use value.__class__ or similar inside of key_name
         if key != 'os_manager':
             results[key] = value
     return results

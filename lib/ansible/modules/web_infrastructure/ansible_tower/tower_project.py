@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -159,25 +159,25 @@ except ImportError:
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(),
-            description = dict(),
-            organization = dict(),
-            scm_type = dict(choices=['manual', 'git', 'hg', 'svn'], default='manual'),
-            scm_url = dict(),
-            scm_branch = dict(),
-            scm_credential = dict(),
-            scm_clean = dict(type='bool', default=False),
-            scm_delete_on_update = dict(type='bool', default=False),
-            scm_update_on_launch = dict(type='bool', default=False),
-            local_path = dict(),
-            tower_host = dict(),
-            tower_username = dict(),
-            tower_password = dict(no_log=True),
-            tower_verify_ssl = dict(type='bool', default=True),
-            tower_config_file = dict(type='path'),
+        argument_spec=dict(
+            name=dict(),
+            description=dict(),
+            organization=dict(),
+            scm_type=dict(choices=['manual', 'git', 'hg', 'svn'], default='manual'),
+            scm_url=dict(),
+            scm_branch=dict(),
+            scm_credential=dict(),
+            scm_clean=dict(type='bool', default=False),
+            scm_delete_on_update=dict(type='bool', default=False),
+            scm_update_on_launch=dict(type='bool', default=False),
+            local_path=dict(),
+            tower_host=dict(),
+            tower_username=dict(),
+            tower_password=dict(no_log=True),
+            tower_verify_ssl=dict(type='bool', default=True),
+            tower_config_file=dict(type='path'),
 
-            state = dict(choices=['present', 'absent'], default='present'),
+            state=dict(choices=['present', 'absent'], default='present'),
         ),
         supports_check_mode=True
     )
@@ -208,21 +208,27 @@ def main():
         project = tower_cli.get_resource('project')
         try:
             if state == 'present':
-                org_res = tower_cli.get_resource('organization')
-                org = org_res.get(name=organization)
+                try:
+                    org_res = tower_cli.get_resource('organization')
+                    org = org_res.get(name=organization)
+                except (exc.NotFound) as excinfo:
+                    module.fail_json(msg='Failed to update project, organization not found: {0}'.format(organization), changed=False)
+                try:
+                    cred_res = tower_cli.get_resource('credential')
+                    cred = cred_res.get(name=scm_credential)
+                except (exc.NotFound) as excinfo:
+                    module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
 
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
                                         scm_type=scm_type, scm_url=scm_url, local_path=local_path,
-                                        scm_branch=scm_branch, scm_clean=scm_clean, scm_credential=scm_credential,
+                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=cred['id'],
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
                                         create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = project.delete(name=name)
-        except (exc.NotFound) as excinfo:
-            module.fail_json(msg='Failed to update project, organization not found: {0}'.format(excinfo), changed=False)
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to update project: {0}'.format(excinfo), changed=False)
 

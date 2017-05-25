@@ -123,7 +123,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     loader=loader
                 )
 
-                all_vars = variable_manager.get_vars(loader=loader, play=play, task=t)
+                all_vars = variable_manager.get_vars(play=play, task=t)
                 templar = Templar(loader=loader, variables=all_vars)
 
                 # check to see if this include is dynamic or static:
@@ -214,7 +214,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             "later. In the future, this will be an error unless 'static: no' is used " \
                             "on the include task. If you do not want missing includes to be considered " \
                             "dynamic, use 'static: yes' on the include or set the global ansible.cfg " \
-                            "options to make all inclues static for tasks and/or handlers" % include_file,
+                            "options to make all inclues static for tasks and/or handlers" % include_file, version="2.7"
                         )
                         task_list.append(t)
                         continue
@@ -247,7 +247,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 obj=task_ds,
                                 suppress_extended_error=True,
                             )
-                        display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
+                        display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option",
+                                           version="2.7")
                     else:
                         tags = ti_copy.tags[:]
 
@@ -284,12 +285,12 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 else:
                     display.debug('Determine if include_role is static')
                     # Check to see if this include is dynamic or static:
-                    all_vars = variable_manager.get_vars(loader=loader, play=play, task=ir)
+                    all_vars = variable_manager.get_vars(play=play, task=ir)
                     templar = Templar(loader=loader, variables=all_vars)
                     needs_templating = False
                     for param in ir.args:
                         if templar._contains_vars(ir.args[param]):
-                            if not templar.templatable(ir.args[param]):
+                            if not templar.is_template(ir.args[param]):
                                 needs_templating = True
                                 break
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \

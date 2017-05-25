@@ -104,14 +104,15 @@ class DataLoader:
 
         return new_data
 
-    def load_from_file(self, file_name):
+    def load_from_file(self, file_name, cache=True, unsafe=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
 
         file_name = self.path_dwim(file_name)
+        display.debug("Loading data from %s" % file_name)
 
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
-        if file_name in self._FILE_CACHE:
+        if cache and file_name in self._FILE_CACHE:
             parsed_data = self._FILE_CACHE[file_name]
         else:
             # read the file contents and load the data structure from them
@@ -123,8 +124,11 @@ class DataLoader:
             # cache the file contents for next time
             self._FILE_CACHE[file_name] = parsed_data
 
-        # return a deep copy here, so the cache is not affected
-        return copy.deepcopy(parsed_data)
+        if unsafe:
+            return parsed_data
+        else:
+            # return a deep copy here, so the cache is not affected
+            return copy.deepcopy(parsed_data)
 
     def path_exists(self, path):
         path = self.path_dwim(path)
@@ -169,7 +173,7 @@ class DataLoader:
 
         b_file_name = to_bytes(file_name)
         if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
-            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_name)
+            raise AnsibleFileNotFound("the file named '%s' does not exist, or is not readable" % file_name)
 
         show_content = True
         try:
@@ -237,14 +241,16 @@ class DataLoader:
             b_main = b'main%s' % (suffix)
             b_tasked = b'tasks/%s' % (b_main)
 
-            if b_path.endswith(b'tasks') and os.path.exists(os.path.join(b_path, b_main)) \
-              or os.path.exists(os.path.join(b_upath, b_tasked)) \
-              or os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked)):
+            if (
+                b_path.endswith(b'tasks') and
+                os.path.exists(os.path.join(b_path, b_main)) or
+                os.path.exists(os.path.join(b_upath, b_tasked)) or
+                os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked))
+            ):
                 isit = True
                 break
 
         return isit
-
 
     def path_dwim_relative(self, path, dirname, source, is_role=False):
         '''
@@ -283,7 +289,7 @@ class DataLoader:
                 search.append(self.path_dwim(os.path.join(basedir, 'tasks', source)))
 
             # try to create absolute path for loader basedir + templates/files/vars + filename
-            search.append(self.path_dwim(os.path.join(dirname,source)))
+            search.append(self.path_dwim(os.path.join(dirname, source)))
             search.append(self.path_dwim(os.path.join(basedir, source)))
 
             # try to create absolute path for loader basedir + filename
@@ -384,7 +390,7 @@ class DataLoader:
 
         b_file_path = to_bytes(file_path, errors='surrogate_or_strict')
         if not self.path_exists(b_file_path) or not self.is_file(b_file_path):
-            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % to_native(file_path))
+            raise AnsibleFileNotFound("the file named '%s' does not exist, or is not accessible" % to_native(file_path))
 
         if not self._vault:
             self._vault = VaultLib(b_password="")
@@ -429,5 +435,5 @@ class DataLoader:
         for f in self._tempfiles:
             try:
                 self.cleanup_tmp_file(f)
-            except:
-                pass  # TODO: this should at least warn
+            except Exception as e:
+                display.warning("Unable to cleanup temp files: %s" % to_native(e))

@@ -131,7 +131,7 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
     if crypt_scheme in apache_hashes:
         context = htpasswd_context
     else:
-        context = CryptContext(schemes = [ crypt_scheme ] + apache_hashes)
+        context = CryptContext(schemes=[crypt_scheme] + apache_hashes)
     if not os.path.exists(dest):
         if not create:
             raise ValueError('Destination %s does not exist' % dest)
@@ -254,7 +254,7 @@ def main():
                 path = temp.name
             f = open(path, "w")
             try:
-                [ f.write(line) for line in lines if line.strip() ]
+                [f.write(line) for line in lines if line.strip()]
             finally:
                 f.close()
 
@@ -264,7 +264,7 @@ def main():
         elif state == 'absent':
             if not os.path.exists(path):
                 module.exit_json(msg="%s not present" % username,
-                        warnings="%s does not exist" % path, changed=False)
+                                 warnings="%s does not exist" % path, changed=False)
             (msg, changed) = absent(path, username, check_mode)
         else:
             module.fail_json(msg="Invalid state: %s" % state)

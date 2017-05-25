@@ -103,7 +103,7 @@ RETURN = '''
 network:
     description: Dictionary describing the network.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Network ID.

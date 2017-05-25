@@ -28,8 +28,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
 from ansible.template import Templar, AnsibleContext, AnsibleEnvironment
-from ansible.vars.unsafe_proxy import AnsibleUnsafe, wrap_var
-#from ansible.unsafe_proxy import AnsibleUnsafe, wrap_var
+from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from units.mock.loader import DictDataLoader
 
 
@@ -178,12 +177,6 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         res = self.templar.template(unsafe_obj)
         self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
 
-    @patch('ansible.template.Templar._clean_data', side_effect=AnsibleError)
-    def test_template_unsafe_clean_data_exception(self, mock_clean_data):
-        self.assertRaises(AnsibleError,
-                          self.templar.template,
-                          wrap_var('blip bar'))
-
     # TODO: not sure what template is supposed to do it, but it currently throws attributeError
     @patch('ansible.template.Templar._clean_data')
     def test_template_unsafe_non_string_clean_data_exception(self, mock_clean_data):
@@ -234,16 +227,11 @@ class TestTemplarCleanData(BaseTemplar, unittest.TestCase):
         self.assertEqual(res, u'1 2 {#what#} 3 4 {#foo#} 5 6 7')
 
     def test_clean_data_object(self):
-        obj = {'foo': [1, 2, 3, 'bdasdf', '{what}', '{{foo}}', 5]}
+        obj = {u'foo': [1, 2, 3, u'bdasdf', u'{what}', u'{{foo}}', 5]}
+        clean_obj = {u'foo': [1, 2, 3, u'bdasdf', u'{what}', u'{#foo#}', 5]}
         res = self.templar._clean_data(obj)
-        self.assertEqual(res, obj)
-
-    def test_clean_data_object_unsafe(self):
-        rval = [1, 2, 3, wrap_var('bdasdf'), '{what}', wrap_var('{{unsafe_foo}}'), 5]
-        obj = {'foo': rval}
-        res = self.templar._clean_data(obj)
-        self.assertEqual(res, obj)
-        self.assertTrue(self.is_unsafe(res), 'returned value of _clean_data (%s) is not marked unsafe.' % res)
+        self.assertNotEqual(res, obj)
+        self.assertEqual(res, clean_obj)
 
     def test_clean_data_bad_dict(self):
         res = self.templar._clean_data(u'{{bad_dict}}')

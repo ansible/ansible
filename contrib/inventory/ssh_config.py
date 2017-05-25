@@ -43,21 +43,24 @@
 import argparse
 import os.path
 import sys
-import paramiko
+from collections import MutableSequence
 
 try:
     import json
 except ImportError:
     import simplejson as json
 
+import paramiko
+
+
 SSH_CONF = '~/.ssh/config'
 
 _key = 'ssh_config'
 
 _ssh_to_ansible = [('user', 'ansible_ssh_user'),
-                  ('hostname', 'ansible_ssh_host'),
-                  ('identityfile', 'ansible_ssh_private_key_file'),
-                  ('port', 'ansible_ssh_port')]
+                   ('hostname', 'ansible_ssh_host'),
+                   ('identityfile', 'ansible_ssh_private_key_file'),
+                   ('port', 'ansible_ssh_port')]
 
 
 def get_config():
@@ -68,7 +71,7 @@ def get_config():
         cfg.parse(f)
         ret_dict = {}
         for d in cfg._config:
-            if type(d['host']) is list:
+            if isinstance(d['host'], MutableSequence):
                 alias = d['host'][0]
             else:
                 alias = d['host']
@@ -93,7 +96,7 @@ def print_list():
                 # If the attribute is a list, just take the first element.
                 # Private key is returned in a list for some reason.
                 attr = attributes[ssh_opt]
-                if type(attr) is list:
+                if isinstance(attr, MutableSequence):
                     attr = attr[0]
                 tmp_dict[ans_opt] = attr
         if tmp_dict:

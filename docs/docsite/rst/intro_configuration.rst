@@ -86,6 +86,20 @@ different locations::
 Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details.
 
 
+.. _allow_unsafe_lookups:
+
+allow_unsafe_lookups
+====================
+
+.. versionadded:: 2.2.3, 2.3.1
+
+When enabled, this option allows lookup plugins (whether used in variables as `{{lookup('foo')}}` or as a loop as `with_foo`) to return data that is **not** marked "unsafe". By default, such data is marked as unsafe to prevent the templating engine from evaluating any jinja2 templating language, as this could represent a security risk.
+
+This option is provided to allow for backwards-compatibility, however users should first consider adding `allow_unsafe=True` to any lookups which may be expected to contain data which may be run through the templating engine later. For example::
+
+    {{lookup('pipe', '/path/to/some/command', allow_unsafe=True)}}
+
+
 .. _allow_world_readable_tmpfiles:
 
 allow_world_readable_tmpfiles
@@ -607,15 +621,16 @@ merge_multiple_cli_tags
 
 .. versionadded:: 2.3
 
-This allows changing how multiple --tags and --skip-tags arguments are handled
-on the command line.  In Ansible up to and including 2.3, specifying --tags
-more than once will only take the last value of --tags.  Setting this config
-value to True will mean that all of the --tags options will be merged
-together.  The same holds true for --skip-tags.
+This allows changing how multiple :option:`--tags` and :option:`--skip-tags`
+arguments are handled on the command line.  Specifying :option:`--tags` more
+than once merges all of the :option:`--tags` options together.  If you want
+the pre-2.4.x behaviour where only the last value of :option:`--tags` is used,
+then set this to False.  The same holds true for :option:`--skip-tags`.
 
 .. note:: The default value for this in 2.3 is False.  In 2.4, the
-    default value will be True.  After 2.4, the option is going away.
-    Multiple --tags and multiple --skip-tags will always be merged together.
+    default value is True.  After 2.8, the option will be removed.
+    Multiple :option:`--tags` and multiple :option:`--skip-tags` will always
+    be merged together.
 
 .. _module_lang:
 
@@ -1106,6 +1121,15 @@ It is the ``%(directory)s`` part of the ``control_path`` option.
 This defaults to::
 
     control_path_dir=~/.ansible/cp
+
+.. _retries:
+
+retries
+=======
+
+Adds the option to retry failed ssh executions if the failure is encountered in ssh itself, not the remote command. This can be helpful if there are transient network issues. Enabled by setting retries to an integer greater than 1. Defaults to::
+
+    retries = 0
 
 .. _scp_if_ssh:
 

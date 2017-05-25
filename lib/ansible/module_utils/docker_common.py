@@ -330,7 +330,7 @@ class AnsibleDockerClient(Client):
             msg = "You asked for verification that Docker host name matches %s. The actual hostname is %s. " \
                 "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. " \
                 "You may also use TLS without verification by setting the tls parameter to true." \
-                %  (self.auth_params['tls_hostname'], match.group(1))
+                %  (self.auth_params['tls_hostname'], match.group(1), match.group(1))
             self.fail(msg)
         self.fail("SSL Exception: %s" % (error))
 
@@ -430,13 +430,10 @@ class AnsibleDockerClient(Client):
         Pull an image
         '''
         self.log("Pulling image %s:%s" % (name, tag))
-        alreadyToLatest = False
+        old_tag = self.find_image(name, tag)
         try:
             for line in self.pull(name, tag=tag, stream=True, decode=True):
                 self.log(line, pretty_print=True)
-                if line.get('status'):
-                    if line.get('status').startswith('Status: Image is up to date for'):
-                        alreadyToLatest = True
                 if line.get('error'):
                     if line.get('errorDetail'):
                         error_detail = line.get('errorDetail')
@@ -448,6 +445,8 @@ class AnsibleDockerClient(Client):
         except Exception as exc:
             self.fail("Error pulling image %s:%s - %s" % (name, tag, str(exc)))
 
-        return self.find_image(name, tag), alreadyToLatest
+        new_tag = self.find_image(name, tag)
+
+        return new_tag, old_tag == new_tag
 
 

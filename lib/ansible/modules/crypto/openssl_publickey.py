@@ -78,16 +78,12 @@ EXAMPLES = '''
 RETURN = '''
 privatekey:
     description: Path to the TLS/SSL private key the public key was generated from
-    returned:
-        - changed
-        - success
+    returned: changed or success
     type: string
     sample: /etc/ssl/private/ansible.com.pem
 filename:
     description: Path to the generated TLS/SSL public key file
-    returned:
-        - changed
-        - success
+    returned: changed or success
     type: string
     sample: /etc/ssl/public/ansible.com.pem
 '''

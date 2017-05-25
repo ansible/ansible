@@ -28,8 +28,8 @@ import yaml
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import iteritems, string_types
-from ansible.plugins import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader
+from ansible.module_utils.six import string_types
+from ansible.plugins import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader, PluginLoader
 from ansible.utils import plugin_docs
 
 try:
@@ -56,7 +56,7 @@ class DocCLI(CLI):
             usage='usage: %prog [options] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
-            epilog="See man pages for Ansbile CLI options or website for tutorials https://docs.ansible.com"
+            epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
 
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
@@ -66,7 +66,7 @@ class DocCLI(CLI):
         self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
                 help='Show documentation for all plugins')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
-                help='Choose which plugin type', choices=['module','cache', 'connection', 'callback', 'lookup', 'strategy'])
+                help='Choose which plugin type', choices=['module','cache', 'connection', 'callback', 'lookup', 'strategy', 'inventory'])
 
         super(DocCLI, self).parse()
 
@@ -89,6 +89,8 @@ class DocCLI(CLI):
             loader = lookup_loader
         elif plugin_type == 'strategy':
             loader = strategy_loader
+        elif plugin_type == 'inventory':
+            loader = PluginLoader( 'InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
         else:
             loader = module_loader
 
@@ -262,23 +264,25 @@ class DocCLI(CLI):
         text = []
         desc = CLI.tty_ify(doc['short_description'])
         text.append("- name: %s" % (desc))
-        text.append("  action: %s" % (doc['module']))
+        text.append("  %s:" % (doc['module']))
         pad = 31
         subdent = " " * pad
         limit = display.columns - pad
 
         for o in sorted(doc['options'].keys()):
             opt = doc['options'][o]
-            desc = CLI.tty_ify(" ".join(opt['description']))
+            if isinstance(opt['description'], string_types):
+                desc = CLI.tty_ify(opt['description'])
+            else:
+                desc = CLI.tty_ify(" ".join(opt['description']))
 
             required = opt.get('required', False)
             if not isinstance(required, bool):
                 raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
             if required:
-                s = o + "="
-            else:
-                s = o
-            text.append("      %-20s   # %s" % (s, textwrap.fill(desc, limit, subsequent_indent=subdent)))
+                desc = "(required) %s" % desc
+            o = '%s:' % o
+            text.append("      %-20s   # %s" % (o, textwrap.fill(desc, limit, subsequent_indent=subdent)))
         text.append('')
 
         return "\n".join(text)

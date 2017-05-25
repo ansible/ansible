@@ -92,7 +92,7 @@ EXAMPLES = '''
     name: example
     description: an example EC2 group
     vpc_id: 12345
-    region: eu-west-1a
+    region: eu-west-1
     aws_secret_key: SECRET
     aws_access_key: ACCESS
     rules:
@@ -135,7 +135,47 @@ EXAMPLES = '''
         group_name: example-other
         # description to use if example-other needs to be created
         group_desc: other example EC2 group
+
+- name: example2 ec2 group
+  ec2_group:
+    name: example2
+    description: an example2 EC2 group
+    vpc_id: 12345
+    region: eu-west-1
+    rules:
+      # 'ports' rule keyword was introduced in version 2.4. It accepts a single port value or a list of values including ranges (from_port-to_port).
+      - proto: tcp
+        ports: 22
+        group_name: example-vpn
+      - proto: tcp
+        ports:
+          - 80
+          - 443
+          - 8080-8099
+        cidr_ip: 0.0.0.0/0
+      # Rule sources list support was added in version 2.4. This allows to define multiple sources per source type as well as multiple source types per rule.
+      - proto: tcp
+        ports:
+          - 6379
+          - 26379
+        group_name:
+          - example-vpn
+          - example-redis
+      - proto: tcp
+        ports: 5665
+        group_name: example-vpn
+        cidr_ip:
+          - 172.16.1.0/24
+          - 172.16.17.0/24
+        group_id:
+          - sg-edcd9784
 '''
+
+import json
+import re
+import time
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_connect, ec2_argument_spec
 
 try:
     import boto.ec2
@@ -146,6 +186,13 @@ except ImportError:
     HAS_BOTO = False
 
 import traceback
+
+
+def deduplicate_rules_args(rules):
+    """Returns unique rules"""
+    if rules is None:
+        return None
+    return list(dict(zip((json.dumps(r, sort_keys=True) for r in rules), rules)).values())
 
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
@@ -164,10 +211,10 @@ def make_rule_key(prefix, rule, group_id, cidr_ip):
     return key.lower().replace('-none', '-None')
 
 
-def addRulesToLookup(rules, prefix, dict):
+def addRulesToLookup(rules, prefix, rules_dict):
     for rule in rules:
         for grant in rule.grants:
-            dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
+            rules_dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
 
 
 def validate_rule(module, rule):
@@ -245,6 +292,79 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
     return group_id, ip, target_group_created
 
 
+def ports_expand(ports):
+    # takes a list of ports and returns a list of (port_from, port_to)
+    ports_expanded = []
+    for port in ports:
+        if not isinstance(port, str):
+            ports_expanded.append((port,) * 2)
+        elif '-' in port:
+            ports_expanded.append(tuple(p.strip() for p in port.split('-', 1)))
+        else:
+            ports_expanded.append((port.strip(),) * 2)
+
+    return ports_expanded
+
+
+def rule_expand_ports(rule):
+    # takes a rule dict and returns a list of expanded rule dicts
+    if 'ports' not in rule:
+        return [rule]
+
+    ports = rule['ports'] if isinstance(rule['ports'], list) else [rule['ports']]
+
+    rule_expanded = []
+    for from_to in ports_expand(ports):
+        temp_rule = rule.copy()
+        del temp_rule['ports']
+        temp_rule['from_port'], temp_rule['to_port'] = from_to
+        rule_expanded.append(temp_rule)
+
+    return rule_expanded
+
+
+def rules_expand_ports(rules):
+    # takes a list of rules and expands it based on 'ports'
+    if not rules:
+        return rules
+
+    return [rule for rule_complex in rules
+            for rule in rule_expand_ports(rule_complex)]
+
+
+def rule_expand_source(rule, source_type):
+    # takes a rule dict and returns a list of expanded rule dicts for specified source_type
+    sources = rule[source_type] if isinstance(rule[source_type], list) else [rule[source_type]]
+    source_types_all = ('cidr_ip', 'group_id', 'group_name')
+
+    rule_expanded = []
+    for source in sources:
+        temp_rule = rule.copy()
+        for s in source_types_all:
+            temp_rule.pop(s, None)
+        temp_rule[source_type] = source
+        rule_expanded.append(temp_rule)
+
+    return rule_expanded
+
+
+def rule_expand_sources(rule):
+    # takes a rule dict and returns a list of expanded rule discts
+    source_types = (stype for stype in ('cidr_ip', 'group_id', 'group_name') if stype in rule)
+
+    return [r for stype in source_types
+            for r in rule_expand_source(rule, stype)]
+
+
+def rules_expand_sources(rules):
+    # takes a list of rules and expands it based on 'cidr_ip', 'group_id', 'group_name'
+    if not rules:
+        return rules
+
+    return [rule for rule_complex in rules
+            for rule in rule_expand_sources(rule_complex)]
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -270,8 +390,8 @@ def main():
     name = module.params['name']
     description = module.params['description']
     vpc_id = module.params['vpc_id']
-    rules = module.params['rules']
-    rules_egress = module.params['rules_egress']
+    rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules'])))
+    rules_egress = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules_egress'])))
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
@@ -374,10 +494,7 @@ def main():
                 # If rule already exists, don't later delete it
                 for thisip in ip:
                     ruleId = make_rule_key('in', rule, group_id, thisip)
-                    if ruleId in groupRules:
-                        del groupRules[ruleId]
-                    # Otherwise, add new rule
-                    else:
+                    if ruleId not in groupRules:
                         grantGroup = None
                         if group_id:
                             grantGroup = groups[group_id]
@@ -385,6 +502,8 @@ def main():
                         if not module.check_mode:
                             group.authorize(rule['proto'], rule['from_port'], rule['to_port'], thisip, grantGroup)
                         changed = True
+                    else:
+                        del groupRules[ruleId]
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:
@@ -443,8 +562,8 @@ def main():
                                 src_group_id=grantGroup,
                                 cidr_ip=thisip)
                         changed = True
-        elif vpc_id:
-            # when using a vpc, but no egress rules are specified,
+        else:
+            # when no egress rules are specified,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             default_egress_rule = 'out--1-None-None-None-0.0.0.0/0'
@@ -484,9 +603,6 @@ def main():
     else:
         module.exit_json(changed=changed, group_id=None)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

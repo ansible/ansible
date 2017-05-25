@@ -26,14 +26,16 @@ import pwd
 import random
 import re
 import string
+import sys
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+from ansible.utils.ssh_functions import check_for_controlpersist
 
 
 boolean = C.mk_boolean
@@ -56,6 +58,7 @@ MAGIC_VARIABLE_MAPPING = dict(
     remote_addr      = ('ansible_ssh_host', 'ansible_host'),
     remote_user      = ('ansible_ssh_user', 'ansible_user'),
     port             = ('ansible_ssh_port', 'ansible_port'),
+    timeout          = ('ansible_ssh_timeout', 'ansible_timeout'),
     ssh_executable   = ('ansible_ssh_executable',),
     accelerate_port  = ('ansible_accelerate_port',),
     password         = ('ansible_ssh_pass', 'ansible_password'),
@@ -240,6 +243,7 @@ class PlayContext(Base):
         if play:
             self.set_play(play)
 
+
     def set_play(self, play):
         '''
         Configures this connection information instance with data from
@@ -347,7 +351,7 @@ class PlayContext(Base):
             # address, otherwise we default to connecting to it by name. This
             # may happen when users put an IP entry into their inventory, or if
             # they rely on DNS for a non-inventory hostname
-            for address_var in MAGIC_VARIABLE_MAPPING.get('remote_addr'):
+            for address_var in ('ansible_%s_host' % transport_var,) + MAGIC_VARIABLE_MAPPING.get('remote_addr'):
                 if address_var in delegated_vars:
                     break
             else:
@@ -356,7 +360,7 @@ class PlayContext(Base):
 
             # reset the port back to the default if none was specified, to prevent
             # the delegated host from inheriting the original host's setting
-            for port_var in MAGIC_VARIABLE_MAPPING.get('port'):
+            for port_var in ('ansible_%s_port' % transport_var,) + MAGIC_VARIABLE_MAPPING.get('port'):
                 if port_var in delegated_vars:
                     break
             else:
@@ -366,7 +370,7 @@ class PlayContext(Base):
                     delegated_vars['ansible_port'] = C.DEFAULT_REMOTE_PORT
 
             # and likewise for the remote user
-            for user_var in MAGIC_VARIABLE_MAPPING.get('remote_user'):
+            for user_var in ('ansible_%s_user' % transport_var,) + MAGIC_VARIABLE_MAPPING.get('remote_user'):
                 if user_var in delegated_vars and delegated_vars[user_var]:
                     break
             else:
@@ -438,11 +442,9 @@ class PlayContext(Base):
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
 
-        # if the final connection type is local, reset the remote_user value
-        # to that of the currently logged in user, to ensure any become settings
-        # are obeyed correctly
-        # additionally, we need to do this check after final connection has been
-        # correctly set above ...
+        # if the final connection type is local, reset the remote_user value to that of the currently logged in user
+        # this ensures any become settings are obeyed correctly
+        # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
         if new_info.connection == 'local':
             new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
@@ -552,6 +554,14 @@ class PlayContext(Base):
 
             elif self.become_method == 'runas':
                 # become is handled inside the WinRM connection plugin
+                display.warning("The Windows 'runas' become method is experimental, and may change significantly in future Ansible releases.")
+
+                if not self.become_user:
+                    raise AnsibleError(("The 'runas' become method requires a username "
+                                        "(specify with the '--become-user' CLI arg, the 'become_user' keyword, or the 'ansible_become_user' variable)"))
+                if not self.become_pass:
+                    raise AnsibleError(("The 'runas' become method requires a password "
+                                       "(specify with the '-K' CLI arg or the 'ansible_become_password' variable)"))
                 becomecmd = cmd
 
             elif self.become_method == 'doas':
@@ -577,6 +587,13 @@ class PlayContext(Base):
                 else:
                     becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
+            elif self.become_method == 'pmrun':
+
+                exe = self.become_exe or 'pmrun'
+
+                prompt='Enter UPM user password:'
+                becomecmd = '%s %s %s' % (exe, flags, shlex_quote(command))
+
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
@@ -598,13 +615,34 @@ class PlayContext(Base):
                 if 'become' in prop:
                     continue
 
-                # perserves the user var for local connections
-                if self.connection == 'local' and 'remote_user' in prop:
-                    continue
-
                 var_val = getattr(self, prop)
                 for var_opt in var_list:
                     if var_opt not in variables and var_val is not None:
                         variables[var_opt] = var_val
             except AttributeError:
                 continue
+
+    def _get_attr_connection(self):
+        ''' connections are special, this takes care of responding correctly '''
+        conn_type = None
+        if self._attributes['connection'] == 'smart':
+            conn_type = 'ssh'
+            if sys.platform.startswith('darwin') and self.password:
+                # due to a current bug in sshpass on OSX, which can trigger
+                # a kernel panic even for non-privileged users, we revert to
+                # paramiko on that OS when a SSH password is specified
+                conn_type = "paramiko"
+            else:
+                # see if SSH can support ControlPersist if not use paramiko
+                if not check_for_controlpersist(self.ssh_executable):
+                    conn_type = "paramiko"
+
+        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
+        elif self._attributes['connection'] == 'persistent':
+            conn_type = 'paramiko'
+
+        if conn_type:
+            self.connection = conn_type
+
+        return self._attributes['connection']
+

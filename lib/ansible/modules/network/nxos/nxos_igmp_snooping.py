@@ -105,6 +105,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {"group_timeout": "never", "link_local_grp_supp": false,
             "report_supp": true, "snooping": true, "v3_report_supp": true}
@@ -133,7 +134,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 import re
 

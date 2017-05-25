@@ -51,10 +51,7 @@ class Connection(ConnectionBase):
 
     transport = 'docker'
     has_pipelining = True
-    # su currently has an undiagnosed issue with calculating the file
-    # checksums (so copy, for instance, doesn't work right)
-    # Have to look into that before re-enabling this
-    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

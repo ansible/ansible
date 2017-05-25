@@ -186,7 +186,7 @@ network_id:
 security_groups:
     description: Security group(s) associated with this port.
     returned: success
-    type: list of strings
+    type: list
 status:
     description: Port's status.
     returned: success
@@ -194,7 +194,7 @@ status:
 fixed_ips:
     description: Fixed ip(s) associated with this port.
     returned: success
-    type: list of dicts
+    type: list
 tenant_id:
     description: Tenant id associated with this port.
     returned: success
@@ -202,7 +202,7 @@ tenant_id:
 allowed_address_pairs:
     description: Allowed address pairs with this port.
     returned: success
-    type: list of dicts
+    type: list
 admin_state_up:
     description: Admin state up flag for this port.
     returned: success
@@ -233,8 +233,7 @@ def _needs_update(module, port, cloud):
         if module.params[key] is not None and module.params[key] != port[key]:
             return True
     for key in compare_dict:
-        if module.params[key] is not None and cmp(module.params[key],
-                                                  port[key]) != 0:
+        if module.params[key] is not None and module.params[key] != port[key]:
             return True
     for key in compare_list:
         if module.params[key] is not None and (set(module.params[key]) !=

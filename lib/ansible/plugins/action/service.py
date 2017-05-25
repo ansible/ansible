@@ -37,9 +37,6 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if result.get('skipped', False):
-            return result
-
         module = self._task.args.get('use', 'auto').lower()
 
         if module == 'auto':

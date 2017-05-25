@@ -22,8 +22,9 @@
 
 $params = Parse-Args $args;
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$result = @{
+    changed = $false
+}
 
 $path = Get-Attr $params "path" -failifempty $true
 $state = Get-Attr $params "state" "absent" -validateSet "present","absent" -resultobj $result
@@ -66,7 +67,7 @@ Try {
         }
 
         Set-ACL $path $objACL
-        Set-Attr $result "changed" $true;
+        $result.changed = $true
     }
     Elseif (($state -eq "absent") -And $inheritanceEnabled) {
         If ($reorganize) {
@@ -76,7 +77,7 @@ Try {
         }
 
         Set-ACL $path $objACL
-        Set-Attr $result "changed" $true;
+        $result.changed = $true
     }
 }
 Catch {

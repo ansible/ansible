@@ -9,7 +9,7 @@
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
-#   make tests ---------------- run the tests (see test/README.md for requirements)
+#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/dev_guide/testing_units.html for requirements)
 #   make pyflakes, make pep8 -- source code checks
 
 ########################################################
@@ -22,7 +22,7 @@ OS = $(shell uname -s)
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
 
-MANPAGES := ./docs/man/man1/ansible*.1
+MANPAGES ?= $(patsubst %.asciidoc.in,%,$(wildcard ./docs/man/man1/ansible*.1.asciidoc.in))
 ifneq ($(shell which a2x 2>/dev/null),)
 ASCII2MAN = a2x -L -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -L -D docs/html/man/ -d manpage -f xhtml
@@ -121,6 +121,9 @@ tests:
 tests-py3:
 	$(ANSIBLE_TEST) units -v --python $(PYTHON3_VERSION) $(TEST_FLAGS)
 
+tests-nonet:
+	$(ANSIBLE_TEST) units -v --python $(PYTHON_VERSION) $(TEST_FLAGS)  --exclude test/units/modules/network/
+
 integration:
 	$(ANSIBLE_TEST) integration -v --docker $(IMAGE) $(TARGET) $(TEST_FLAGS)
 
@@ -179,6 +182,7 @@ clean:
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
 	$(MAKE) -C docs/api clean
+	find test/ -type f -name '*.retry' -delete
 
 python:
 	$(PYTHON) setup.py build
@@ -192,7 +196,7 @@ sdist: clean docs
 sdist_upload: clean docs
 	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
-rpmcommon: docs sdist
+rpmcommon: sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
 	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
@@ -297,14 +301,18 @@ deb-src-upload: deb-src
 	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
 	done
 
-# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
+epub:
+	(cd docs/docsite/; CPUS=$(CPUS) make epub)
 
+# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 
-docs: lib/ansible/cli/*.py
+generate_asciidoc: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/
 	PYTHONPATH=./lib ./docs/bin/generate_man.py
+
+docs: generate_asciidoc
 	make $(MANPAGES)
 
 alldocs: docs webdocs

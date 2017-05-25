@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -305,7 +305,7 @@ def _delete_disks_when_detached(azure, wait_timeout, disk_names):
                     azure.delete_disk(disk.name, True)
                     disk_names.remove(disk_name)
     except AzureException as e:
-        module.fail_json(msg="failed to get or delete disk, error was: %s" % (disk_name, str(e)))
+        module.fail_json(msg="failed to get or delete disk %s, error was: %s" % (disk_name, str(e)))
     finally:
         signal.alarm(0)
 

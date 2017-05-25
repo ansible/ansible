@@ -21,21 +21,28 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 ---
 module: atomic_image
 short_description: Manage the container images on the atomic host platform
 description:
     - Manage the container images on the atomic host platform
-    - Allows to execute the commands on the container images
+    - Allows to execute the commands specified by the RUN label in the container image when present
 version_added: "2.2"
 author: "Saravanan KR @krsacme"
 notes:
-    - Host should be support C(atomic) command
+    - Host should support C(atomic) command
 requirements:
   - atomic
   - "python >= 2.6"
 options:
+    backend:
+        description:
+          - Define the backend where the image is pulled.
+        required: False
+        choices: ["docker", "ostree"]
+        default: None
+        version_added: "2.4"
     name:
         description:
           - Name of the container image
@@ -63,6 +70,11 @@ EXAMPLES = '''
     name: rhel7/rsyslog
     state: latest
 
+# Pull busybox to the OSTree backend
+- atomic_image:
+    name: busybox
+    state: latest
+    backend: ostree
 '''
 
 RETURN = '''
@@ -72,6 +84,11 @@ msg:
     type: string
     sample: [u'Using default tag: latest ...']
 '''
+
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
 
 def do_upgrade(module, image):
     args = ['atomic', 'update', '--force', image]
@@ -88,9 +105,38 @@ def core(module):
     image = module.params['name']
     state = module.params['state']
     started = module.params['started']
+    backend = module.params['backend']
     is_upgraded = False
 
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    out = {}
+    err = {}
+    rc = 0
+
+    if backend:
+        if state == 'present' or state == 'latest':
+            args = ['atomic', 'pull', "--storage=%s" % backend, image]
+            rc, out, err = module.run_command(args, check_rc=False)
+            if rc < 0:
+                module.fail_json(rc=rc, msg=err)
+            else:
+                out_run = ""
+                if started:
+                    args = ['atomic', 'run', "--storage=%s" % backend, image]
+                    rc, out_run, err = module.run_command(args, check_rc=False)
+                    if rc < 0:
+                        module.fail_json(rc=rc, msg=err)
+
+                changed = "Extracting" in out or "Copying blob" in out
+                module.exit_json(msg=(out + out_run), changed=changed)
+        elif state == 'absent':
+            args = ['atomic', 'images', 'delete',  "--storage=%s" % backend, image]
+            if rc < 0:
+                module.fail_json(rc=rc, msg=err)
+            else:
+                changed = "Unable to find" not in out
+                module.exit_json(msg=out, changed=changed)
+        return
 
     if state == 'present' or state == 'latest':
         if state == 'latest':
@@ -103,9 +149,6 @@ def core(module):
     elif state == 'absent':
         args = ['atomic', 'uninstall', image]
 
-    out = {}
-    err = {}
-    rc = 0
     rc, out, err = module.run_command(args, check_rc=False)
 
     if rc < 0:
@@ -120,10 +163,11 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name    = dict(default=None, required=True),
-            state   = dict(default='latest', choices=['present', 'absent', 'latest']),
-            started = dict(default='yes', type='bool'),
+        argument_spec=dict(
+            backend=dict(default=None, choices=['docker', 'ostree']),
+            name=dict(default=None, required=True),
+            state=dict(default='latest', choices=['present', 'absent', 'latest']),
+            started=dict(default='yes', type='bool'),
             ),
         )
 
@@ -138,7 +182,5 @@ def main():
         module.fail_json(msg=str(e))
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

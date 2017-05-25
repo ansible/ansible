@@ -5,8 +5,10 @@ from __future__ import absolute_import, print_function
 import errno
 import os
 import pipes
+import pkgutil
 import shutil
 import subprocess
+import re
 import sys
 import time
 
@@ -206,7 +208,7 @@ def common_environment():
     return env
 
 
-def pass_vars(required=None, optional=None):
+def pass_vars(required, optional):
     """
     :type required: collections.Iterable[str]
     :type optional: collections.Iterable[str]
@@ -371,20 +373,12 @@ class Display(object):
 
 class ApplicationError(Exception):
     """General application error."""
-    def __init__(self, message=None):
-        """
-        :type message: str | None
-        """
-        super(ApplicationError, self).__init__(message)
+    pass
 
 
 class ApplicationWarning(Exception):
     """General application warning which interrupts normal program flow."""
-    def __init__(self, message=None):
-        """
-        :type message: str | None
-        """
-        super(ApplicationWarning, self).__init__(message)
+    pass
 
 
 class SubprocessError(ApplicationError):
@@ -473,8 +467,12 @@ class EnvironmentConfig(CommonConfig):
 
         self.remote_stage = args.remote_stage  # type: str
         self.remote_aws_region = args.remote_aws_region  # type: str
+        self.remote_terminate = args.remote_terminate  # type: str
 
         self.requirements = args.requirements  # type: bool
+
+        if self.python == 'default':
+            self.python = '.'.join(str(i) for i in sys.version_info[:2])
 
         self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
 
@@ -493,6 +491,61 @@ def docker_qualify_image(name):
         return name
 
     return 'ansible/ansible:%s' % name
+
+
+def parse_to_dict(pattern, value):
+    """
+    :type pattern: str
+    :type value: str
+    :return: dict[str, str]
+    """
+    match = re.search(pattern, value)
+
+    if match is None:
+        raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
+
+    return match.groupdict()
+
+
+def get_subclasses(class_type):
+    """
+    :type class_type: type
+    :rtype: set[str]
+    """
+    subclasses = set()
+    queue = [class_type]
+
+    while queue:
+        parent = queue.pop()
+
+        for child in parent.__subclasses__():
+            if child not in subclasses:
+                subclasses.add(child)
+                queue.append(child)
+
+    return subclasses
+
+
+def import_plugins(directory):
+    """
+    :type directory: str
+    """
+    path = os.path.join(os.path.dirname(__file__), directory)
+    prefix = 'lib.%s.' % directory
+
+    for (_, name, _) in pkgutil.iter_modules([path], prefix=prefix):
+        __import__(name)
+
+
+def load_plugins(base_type, database):
+    """
+    :type base_type: type
+    :type database: dict[str, type]
+    """
+    plugins = dict((sc.__module__.split('.')[2], sc) for sc in get_subclasses(base_type))  # type: dict [str, type]
+
+    for plugin in plugins:
+        database[plugin] = plugins[plugin]
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

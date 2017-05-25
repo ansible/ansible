@@ -543,12 +543,17 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                 if module_info[2][2] == imp.PKG_DIRECTORY:
                     # Read the __init__.py instead of the module file as this is
                     # a python package
-                    py_module_cache[py_module_name + ('__init__',)] = _slurp(os.path.join(os.path.join(module_info[1], '__init__.py')))
-                    normalized_modules.add(py_module_name + ('__init__',))
+                    normalized_name = py_module_name + ('__init__',)
+                    normalized_path = os.path.join(os.path.join(module_info[1], '__init__.py'))
+                    normalized_data = _slurp(normalized_path)
                 else:
-                    py_module_cache[py_module_name] = module_info[0].read()
+                    normalized_name = py_module_name
+                    normalized_path = module_info[1]
+                    normalized_data = module_info[0].read()
                     module_info[0].close()
-                    normalized_modules.add(py_module_name)
+
+                py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                normalized_modules.add(normalized_name)
 
             # Make sure that all the packages that this module is a part of
             # are also added
@@ -558,7 +563,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                     pkg_dir_info = imp.find_module(py_pkg_name[-1],
                             [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
                     normalized_modules.add(py_pkg_name)
-                    py_module_cache[py_pkg_name] = _slurp(pkg_dir_info[1])
+                    py_module_cache[py_pkg_name] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
 
     #
     # iterate through all of the ansible.module_utils* imports that we haven't
@@ -573,7 +578,8 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
         py_module_file_name = '%s.py' % py_module_path
 
         zf.writestr(os.path.join("ansible/module_utils",
-                py_module_file_name), py_module_cache[py_module_name])
+                py_module_file_name), py_module_cache[py_module_name][0])
+        display.vvv("Using module_utils file %s" % py_module_cache[py_module_name][1])
 
     # Add the names of the files we're scheduling to examine in the loop to
     # py_module_names so that we don't re-examine them in the next pass
@@ -581,7 +587,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     py_module_names.update(unprocessed_py_module_names)
 
     for py_module_file in unprocessed_py_module_names:
-        recursive_finder(py_module_file, py_module_cache[py_module_file], py_module_names, py_module_cache, zf)
+        recursive_finder(py_module_file, py_module_cache[py_module_file][0], py_module_names, py_module_cache, zf)
         # Save memory; the file won't have to be read again for this ansible module.
         del py_module_cache[py_module_file]
 
@@ -684,7 +690,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
                     zf.writestr('ansible_module_%s.py' % module_name, b_module_data)
 
-                    py_module_cache = { ('__init__',): b'' }
+                    py_module_cache = { ('__init__',): (b'', '[builtin]') }
                     recursive_finder(module_name, b_module_data, py_module_names, py_module_cache, zf)
                     zf.close()
                     zipdata = base64.b64encode(zipoutput.getvalue())
@@ -833,20 +839,20 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
 
 def build_windows_module_payload(module_name, module_path, b_module_data, module_args, task_vars, task, play_context, environment):
     exec_manifest = dict(
-        module_entry=base64.b64encode(b_module_data),
+        module_entry=to_text(base64.b64encode(b_module_data)),
         powershell_modules=dict(),
         module_args=module_args,
         actions=['exec'],
         environment=environment
     )
 
-    exec_manifest['exec'] = base64.b64encode(to_bytes(leaf_exec))
+    exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
 
     if task.async > 0:
         exec_manifest["actions"].insert(0, 'async_watchdog')
-        exec_manifest["async_watchdog"] = base64.b64encode(to_bytes(async_watchdog))
+        exec_manifest["async_watchdog"] = to_text(base64.b64encode(to_bytes(async_watchdog)))
         exec_manifest["actions"].insert(0, 'async_wrapper')
-        exec_manifest["async_wrapper"] = base64.b64encode(to_bytes(async_wrapper))
+        exec_manifest["async_wrapper"] = to_text(base64.b64encode(to_bytes(async_wrapper)))
         exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
         exec_manifest["async_timeout_sec"] = task.async
 
@@ -854,7 +860,7 @@ def build_windows_module_payload(module_name, module_path, b_module_data, module
         exec_manifest["actions"].insert(0, 'become')
         exec_manifest["become_user"] = play_context.become_user
         exec_manifest["become_password"] = play_context.become_pass
-        exec_manifest["become"] = base64.b64encode(to_bytes(become_wrapper))
+        exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
     lines = b_module_data.split(b'\n')
     module_names = set()
@@ -868,8 +874,14 @@ def build_windows_module_payload(module_name, module_path, b_module_data, module
             # TODO: add #Requires checks for Ansible.ModuleUtils.X
 
     for m in module_names:
-        exec_manifest["powershell_modules"][m] = base64.b64encode(
-            to_bytes(_slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))))
+        m = to_text(m)
+        exec_manifest["powershell_modules"][m] = to_text(
+            base64.b64encode(
+                to_bytes(
+                    _slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))
+                )
+            )
+        )
 
     # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
     b_module_data = json.dumps(exec_manifest)

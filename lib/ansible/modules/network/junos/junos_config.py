@@ -45,7 +45,7 @@ options:
   src:
     description:
       - The I(src) argument provides a path to the configuration file
-        to load into the remote system.  The path can either be a full
+        to load into the remote system. The path can either be a full
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) argument.
@@ -129,25 +129,35 @@ options:
         candidate configuration. If statements in the loaded configuration
         conflict with statements in the candidate configuration, the loaded
         statements replace the candidate ones.
-        C(overwrite) discards the entire candidate configuration and replaces
+        C(override) discards the entire candidate configuration and replaces
         it with the loaded configuration.
         C(replace) substitutes each hierarchy level in the loaded configuration
         for the corresponding level.
     required: false
     default: merge
-    choices: ['merge', 'overwrite', 'replace']
+    choices: ['merge', 'override', 'replace']
     version_added: "2.3"
 requirements:
   - junos-eznc
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Loading JSON-formatted configuration I(json) is supported
+    starting in Junos OS Release 16.1 onwards.
 """
 
 EXAMPLES = """
 - name: load configure file into device
   junos_config:
     src: srx.cfg
+    comment: update config
+    provider: "{{ netconf }}"
+
+- name: load configure lines into device
+  junos_config:
+    lines:
+      - set interfaces ge-0/0/1 unit 0 description "Test interface"
+      - set vlans vlan01 description "Test vlan"
     comment: update config
     provider: "{{ netconf }}"
 
@@ -170,11 +180,12 @@ RETURN = """
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 """
 import re
 import json
+import sys
 
 from xml.etree import ElementTree
 
@@ -184,6 +195,13 @@ from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text, to_native
+
+if sys.version_info < (2, 7):
+    from xml.parsers.expat import ExpatError
+    ParseError = ExpatError
+else:
+    ParseError = ElementTree.ParseError
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
@@ -194,7 +212,7 @@ def check_args(module, warnings):
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
 
-zeroize = lambda x: send_request(x, Element('request-system-zeroize'))
+zeroize = lambda x: send_request(x, ElementTree.Element('request-system-zeroize'))
 rollback = lambda x: get_diff(x)
 
 def guess_format(config):
@@ -207,7 +225,7 @@ def guess_format(config):
     try:
         ElementTree.fromstring(config)
         return 'xml'
-    except ElementTree.ParseError:
+    except ParseError:
         pass
 
     if config.startswith('set') or config.startswith('delete'):
@@ -219,11 +237,9 @@ def filter_delete_statements(module, candidate):
     reply = get_configuration(module, format='set')
     match = reply.find('.//configuration-set')
     if match is None:
-        module.fail_json(msg='unable to retrieve device configuration')
-    config = str(match.text)
-
-    #if 'delete interfaces lo0' in candidate:
-    #    raise ValueError(config)
+        # Could not find configuration-set in reply, perhaps device does not support it?
+        return candidate
+    config = to_native(match.text, encoding='latin1')
 
     modified_candidate = candidate[:]
     for index, line in enumerate(candidate):
@@ -234,10 +250,8 @@ def filter_delete_statements(module, candidate):
 
     return modified_candidate
 
-def configure_device(module):
+def configure_device(module, warnings):
     candidate = module.params['lines'] or module.params['src']
-    if isinstance(candidate, string_types):
-        candidate = candidate.split('\n')
 
     kwargs = {
         'comment': module.params['comment'],
@@ -259,6 +273,9 @@ def configure_device(module):
         else:
             kwargs.update({'format': config_format, 'action': module.params['update']})
 
+    if isinstance(candidate, string_types):
+        candidate = candidate.split('\n')
+
     # this is done to filter out `delete ...` statements which map to
     # nothing in the config as that will cause an exception to be raised
     if any((module.params['lines'], config_format == 'set')):
@@ -266,7 +283,7 @@ def configure_device(module):
         kwargs['format'] = 'text'
         kwargs['action'] = 'set'
 
-    return load_config(module, candidate, **kwargs)
+    return load_config(module, candidate, warnings, **kwargs)
 
 def main():
     """ main entry point for module execution
@@ -278,7 +295,7 @@ def main():
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
 
         # update operations
-        update=dict(default='merge', choices=['merge', 'overwrite', 'replace', 'update']),
+        update=dict(default='merge', choices=['merge', 'override', 'replace', 'update']),
 
         # deprecated replace in Ansible 2.3
         replace=dict(type='bool'),
@@ -307,11 +324,15 @@ def main():
     result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
-        reply = get_configuration(module, format='set')
-        match = reply.find('.//configuration-set')
-        if match is None:
+        for conf_format in ['set', 'text']:
+            reply = get_configuration(module, format=conf_format)
+            match = reply.find('.//configuration-%s' % conf_format)
+            if match is not None:
+                break
+        else:
             module.fail_json(msg='unable to retrieve device configuration')
-        result['__backup__'] = str(match.text).strip()
+
+        result['__backup__'] = match.text.strip()
 
     if module.params['rollback']:
         if not module.check_mode:
@@ -326,7 +347,7 @@ def main():
         result['changed'] = True
 
     else:
-        diff = configure_device(module)
+        diff = configure_device(module, warnings)
         if diff:
             if module._diff:
                 result['diff'] = {'prepared': diff}

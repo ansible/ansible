@@ -25,6 +25,13 @@
 
 - debug: var=fetched
 
+- name: Assert that we fetched correctly
+  assert:
+    that:
+      - 'fetched["changed"] == True'
+      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'fetched["remote_checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+
 # TODO: check the become and non-become forms of fetch because in one form we'll do
 # the get method of the connection plugin and in the become case we'll use the
 # fetch module.
@@ -38,8 +45,18 @@
     that:
       'diff.stdout == ""'
 
+- name: fetch a second time to show idempotence
+  fetch: src={{ output_dir }}/orig dest={{ output_dir }}/fetched
+  register: fetched
+
+- name: Assert that the file was not fetched the second time
+  assert:
+    that:
+      - 'fetched["changed"] == False'
+      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+
 - name: attempt to fetch a non-existent file - do not fail on missing
-  fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched
+  fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched fail_on_missing=False
   register: fetch_missing_nofail
 
 - name: check fetch missing no fail result
@@ -61,13 +78,24 @@
       - "not fetch_missing|changed"
 
 - name: attempt to fetch a directory - should not fail but return a message
-  fetch: src={{ output_dir }} dest={{ output_dir }}/somedir
+  fetch: src={{ output_dir }} dest={{ output_dir }}/somedir fail_on_missing=False
   register: fetch_dir
 
 - name: check fetch directory result
   assert:
     that:
       - "not fetch_dir|changed"
+      - "fetch_dir.msg"
+
+- name: attempt to fetch a directory - should fail
+  fetch: src={{ output_dir }} dest={{ output_dir }}/somedir fail_on_missing=True
+  register: failed_fetch_dir
+  ignore_errors: true
+
+- name: check fetch directory result
+  assert:
+    that:
+      - "failed_fetch_dir['failed']"
       - "fetch_dir.msg"
 
 - name: create symlink to a file that we can fetch

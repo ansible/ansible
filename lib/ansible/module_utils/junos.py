@@ -18,13 +18,13 @@
 #
 from contextlib import contextmanager
 
-from xml.etree.ElementTree import Element, SubElement, tostring
+from xml.etree.ElementTree import Element, SubElement, fromstring
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
-from ansible.module_utils.network_common import to_list
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
 JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
@@ -37,19 +37,36 @@ junos_argument_spec = {
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'timeout': dict(type='int', default=10),
-    'provider': dict(type='dict', no_log=True),
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict'),
     'transport': dict()
+}
+
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'timeout': 10
 }
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in junos_argument_spec:
-        if key in ('provider',) and module.params[key]:
+        if key not in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
 
-def _validate_rollback_id(value):
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
+
+def _validate_rollback_id(module, value):
     try:
         if not 0 <= int(value) <= 49:
             raise ValueError
@@ -75,7 +92,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
         module.fail_json(msg='format must be text when action is set')
 
     if rollback is not None:
-        _validate_rollback_id(rollback)
+        _validate_rollback_id(module, rollback)
         xattrs = {'rollback': str(rollback)}
     else:
         xattrs = {'action': action, 'format': format}
@@ -92,10 +109,12 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             cfg = SubElement(obj, lookup[format])
 
         if isinstance(candidate, string_types):
-            cfg.text = candidate
+            if format == 'xml':
+                cfg.append(fromstring(candidate))
+            else:
+                cfg.text = to_text(candidate, encoding='latin1')
         else:
             cfg.append(candidate)
-
     return send_request(module, obj)
 
 def get_configuration(module, compare=False, format='xml', rollback='0'):
@@ -103,7 +122,7 @@ def get_configuration(module, compare=False, format='xml', rollback='0'):
         module.fail_json(msg='invalid config format specified')
     xattrs = {'format': format}
     if compare:
-        _validate_rollback_id(rollback)
+        _validate_rollback_id(module, rollback)
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
     return send_request(module, Element('get-configuration', xattrs))
@@ -119,7 +138,7 @@ def commit_configuration(module, confirm=False, check=False, comment=None, confi
         subele.text = str(comment)
     if confirm_timeout:
         subele = SubElement(obj, 'confirm-timeout')
-        subele.text = int(confirm_timeout)
+        subele.text = str(confirm_timeout)
     return send_request(module, obj)
 
 def command(module, command, format='text', rpc_only=False):
@@ -145,9 +164,9 @@ def get_diff(module):
     reply = get_configuration(module, compare=True, format='text')
     output = reply.find('.//configuration-output')
     if output is not None:
-        return output.text
+        return to_text(output.text, encoding='latin1').strip()
 
-def load_config(module, candidate, action='merge', commit=False, format='xml',
+def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
 
     with locked_config(module):
@@ -155,12 +174,13 @@ def load_config(module, candidate, action='merge', commit=False, format='xml',
             candidate = '\n'.join(candidate)
 
         reply = load_configuration(module, candidate, action=action, format=format)
+        if isinstance(reply, list):
+            warnings.extend(reply)
 
         validate(module)
         diff = get_diff(module)
 
         if diff:
-            diff = str(diff).strip()
             if commit:
                 commit_configuration(module, confirm=confirm, comment=comment,
                                      confirm_timeout=confirm_timeout)
@@ -168,4 +188,3 @@ def load_config(module, candidate, action='merge', commit=False, format='xml',
                 discard_changes(module)
 
         return diff
-

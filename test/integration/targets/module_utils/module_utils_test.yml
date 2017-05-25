@@ -36,7 +36,7 @@
   - name: Make sure the we used the local facts.py, not the one shipped with ansible
     assert:
       that:
-        - 'result["data"] == "overridden facts.py"'
+        - result["data"] == "overridden facts.py"
 
   - name: Test that importing a module that only exists inside of a submodule does not work
     test_failure:
@@ -47,5 +47,5 @@
   - name: Make sure we failed in AnsiBallZ
     assert:
       that:
-        - 'result["failed"] == True'
-        - '"Could not find imported module support code for test_failure.  Looked for either foo.py or zebra.py" == result["msg"]'
+        - result|failed
+        - result['msg'] == "Could not find imported module support code for test_failure.  Looked for either foo.py or zebra.py"

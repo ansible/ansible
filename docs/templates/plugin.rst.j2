@@ -164,7 +164,7 @@ Common return values are documented here :doc:`common_return_values`, the follow
         <td align=center> @{ returndocs[entry].type }@ </td>
         <td align=center> @{ returndocs[entry].sample}@ </td>
     </tr>
-    {% if returndocs[entry].type == 'dictionary' %}
+    {% if returndocs[entry].type == 'complex' %}
     <tr><td>contains: </td>
     <td colspan=4>
         <table border=1 cellpadding=2>
@@ -234,5 +234,5 @@ For more information on what this means please read :doc:`modules_support`
 {% endif %}
 {% endif %}
 
-For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`dev_guide/developing_test_pr` and :doc:`dev_guide/developing_modules`.
+For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`dev_guide/testing` and :doc:`dev_guide/developing_modules`.
 

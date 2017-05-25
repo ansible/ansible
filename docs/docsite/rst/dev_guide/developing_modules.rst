@@ -13,14 +13,14 @@ This section discusses how to develop, debug, review, and test modules.
 Ansible modules are reusable, standalone scripts that can be used by the Ansible API,
 or by the :command:`ansible` or :command:`ansible-playbook` programs.  They
 return information to ansible by printing a JSON string to stdout before
-exiting.  They take arguments in in one of several ways which we'll go into
+exiting.  They take arguments in one of several ways which we'll go into
 as we work through this tutorial.
 
 See :doc:`../modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the path specified
 by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or
-in the `library section of the Ansible configration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
+in the `library section of the Ansible configuration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
 
 .. _module_dev_should_you:
 
@@ -41,7 +41,7 @@ For more information about action plugins, go `here <https://docs.ansible.com/an
 
 3. Should you use a role instead?
 
-Check out the roles documentation `here <http://docs.ansible.com/ansible/playbooks_roles.html#roles>`_.
+Check out the `roles documentation <http://docs.ansible.com/ansible/playbooks_roles.html#roles>`_.
 
 
 .. _developing_modules_all:
@@ -59,7 +59,9 @@ The following topics will discuss how to develop and work with modules:
     Best practices, recommendations, and things to avoid.
 :doc:`developing_modules_checklist`
      Checklist for contributing your module to Ansible.
-:doc:`developing_modules_python3`
+:doc:`testing`
+    Developing unit and integration tests.
+:doc:`developing_python3`
     Adding Python 3 support to modules (all new modules must be Python-2.6 and Python-3.5 compatible).
 :doc:`developing_modules_in_groups`
     A guide for partners wanting to submit multiple modules.
