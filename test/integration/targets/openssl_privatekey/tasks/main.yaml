@@ -23,10 +23,20 @@
     path: "{{output_file}}"
   register: privatekey_result
 
-- name: assert openssl_privatekey works  
+- name: assert openssl_privatekey works
   assert:
     that:
     - "privatekey_result.changed == true"
+
+- name: check privatekey file permissions
+  stat: path={{output_file}}
+  register: privatekey_stat
+
+- name: assert openssl_privatekey permissions
+  assert:
+    that:
+    - "privatekey_stat.stat.exists == true"
+    - "privatekey_stat.stat.mode == '0600'"
 
 - name: test openssl_privatekey already exists
   openssl_privatekey:
@@ -37,3 +47,53 @@
   assert:
     that:
     - "privatekey_exists_result.changed == false"
+
+- name: test openssl_privatekey force
+  openssl_privatekey:
+    path: "{{output_file}}"
+    force: true
+  register: privatekey_force_result
+
+- name: assert openssl_privatekey force overwrites existing keys
+  assert:
+    that:
+    - "privatekey_force_result.changed == true"
+
+- name: test openssl_privatekey state
+  openssl_privatekey:
+    path: "{{output_file}}"
+    state: "absent"
+  register: privatekey_state_result
+
+- name: check that privatekey file is absent
+  stat: path={{output_file}}
+  register: privatekey_absent_stat
+
+- name: assert openssl_privatekey absent state
+  assert:
+    that:
+    - "not privatekey_absent_stat.stat.exists"
+
+- name: test openssl_privatekey size
+  openssl_privatekey:
+    path: "{{output_file}}"
+    state: "absent"
+    size: 8192
+  register: privatekey_size_result
+
+- name: assert openssl_privatekey size
+  assert:
+    that:
+    - "privatekey_size_result.size == 8192"
+
+- name: test openssl_privatekey type
+  openssl_privatekey:
+    path: "{{output_file}}"
+    state: "absent"
+    type: "DSA"
+  register: privatekey_type_result
+
+- name: assert openssl_privatekey type
+  assert:
+    that:
+    - "privatekey_type_result.type == 'DSA'"
