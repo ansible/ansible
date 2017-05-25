@@ -278,7 +278,7 @@ class ZipArchive(object):
     def is_unarchived(self):
         cmd = [ self.cmd_path, '-ZT', '-s', self.src ]
         if self.excludes:
-            cmd.extend([ ' -x ', ] + self.excludes)
+            cmd.extend([ '-x' ] + self.excludes)
         rc, out, err = self.module.run_command(cmd)
 
         old_out = out
