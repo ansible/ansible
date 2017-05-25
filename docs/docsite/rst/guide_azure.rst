@@ -156,7 +156,7 @@ azure_rm_virtualmachine module at the end:
         name: publicip001
 
     - name: Create security group that allows SSH
-        azure_rm_securitygroup:
+      azure_rm_securitygroup:
         resource_group: Testing
         name: secgroup001
         rules:
