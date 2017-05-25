@@ -27,10 +27,10 @@ import tempfile
 import random
 from subprocess import call
 
-
 from ansible.errors import AnsibleError, AnsibleVaultError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.parsing.vault.ciphers.loader import CIPHER_MAPPING, get_decrypt_cipher, get_encrypt_cipher
 
+from ansible.module_utils._text import to_text, to_bytes
 
 try:
     from __main__ import display
@@ -38,46 +38,9 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-# FIXME: DRY
-CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform." \
-    " You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
-
-CIPHER_MAPPING = {}
-
-VaultAES256 = VaultAES = None
-
-# We have to find a VaultAES256 implementation, error if we do not
-try:
-    from ansible.parsing.vault.ciphers._cryptography import VaultAES256
-except ImportError as e:
-    display.warning('yo, cryptography is better than pycrypto but we failed to import it: %s' % to_text(e))
-    try:
-        from ansible.parsing.vault.ciphers._pycrypto import VaultAES256
-    except ImportError as e:
-        display.warning('aw shucks, couldnt even find pycrypto... bless your heart, im out...: %s ' % to_text(e))
-        raise AnsibleVaultError(CRYPTO_UPGRADE)
-
-# but we usually dont need a VaultAES implementation, so its ok if we dont find one. If we need it later and
-# dont have it, we will throw an error then.
-try:
-    from ansible.parsing.vault.ciphers._cryptography import VaultAES
-except ImportError as e:
-    display.warning('yo, cryptography is better than pycrypto but we failed to import it: %s' % to_text(e))
-    try:
-        from ansible.parsing.vault.ciphers._pycrypto import VaultAES
-    except ImportError as e:
-        display.warning('huh, we didnt find an implementation of VaultAES but we probably dont need it anyway: %s ' % to_text(e))
-
-CIPHER_MAPPING[u'AES256'] = VaultAES256
-if VaultAES:
-    CIPHER_MAPPING[u'AES'] = VaultAES
-
-
 b_HEADER = b'$ANSIBLE_VAULT'
 CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
 CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
-# See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
-# (used in VaultFile header) to a cipher class
 
 
 def is_encrypted(data):
@@ -176,7 +139,8 @@ class VaultLib:
             raise AnsibleVaultError("input is already encrypted")
 
         # use the default cipher
-        cipher = CIPHER_MAPPING[self.default_cipher_name]()
+        cipher_class = get_encrypt_cipher(self.default_cipher_name)
+        cipher = cipher_class()
 
         # encrypt data
         b_ciphertext = cipher.encrypt(b_plaintext, self.b_password)
@@ -211,14 +175,11 @@ class VaultLib:
 
     def decrypt_ciphertext(self, b_ciphertext, cipher_name, b_version):
 
-        # create the cipher object
-        if cipher_name in CIPHER_WHITELIST:
-            this_cipher = CIPHER_MAPPING[cipher_name]()
-        else:
-            raise AnsibleVaultError("{0} cipher could not be found".format(cipher_name))
+        cipher_class = get_decrypt_cipher(cipher_name)
+        cipher = cipher_class()
 
         # try to unencrypt vaulttext
-        b_plaintext = this_cipher.decrypt(b_ciphertext, self.b_password)
+        b_plaintext = cipher.decrypt(b_ciphertext, self.b_password)
         if b_plaintext is None:
             msg = "Decryption failed"
             raise AnsibleVaultError(msg)

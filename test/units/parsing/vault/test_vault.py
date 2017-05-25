@@ -33,8 +33,9 @@ from ansible.compat.tests import unittest
 from ansible import errors
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.parsing import vault
 
+from ansible.parsing import vault
+from ansible.parsing.vault.ciphers.loader import CIPHER_MAPPING
 
 # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
 try:
@@ -152,10 +153,11 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
 
 class TestVaultCipherAes256(unittest.TestCase):
     def setUp(self):
-        self.vault_cipher = vault.VaultAES256()
+        self.vault_cipher_class = CIPHER_MAPPING['AES256']
+        self.vault_cipher = self.vault_cipher_class()
 
     def test(self):
-        self.assertIsInstance(self.vault_cipher, vault.VaultAES256)
+        self.assertIsInstance(self.vault_cipher, self.vault_cipher_class)
 
     # TODO: tag these as slow tests
     def test_create_key(self):
