@@ -919,7 +919,6 @@ test/units/plugins/action/test_raw.py
 test/units/plugins/action/test_synchronize.py
 test/units/plugins/connection/test_connection.py
 test/units/plugins/connection/test_netconf.py
-test/units/plugins/connection/test_network_cli.py
 test/units/plugins/connection/test_ssh.py
 test/units/plugins/lookup/test_ini.py
 test/units/plugins/lookup/test_password.py
