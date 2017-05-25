@@ -71,7 +71,7 @@ options:
     description: Creates a new disk label.
     choices: [
        'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos', 'pc98',
-       'sun', ''
+       'sun'
     ]
     default: msdos
   part_type:
@@ -81,6 +81,7 @@ options:
        'gpt' partition table. Neither part-type nor name may be used with a
        'sun' partition table.
     choices: ['primary', 'extended', 'logical']
+    default: primary
   part_start:
     description:
      - Where the partition will start as offset from the beginning of the disk,
@@ -135,14 +136,16 @@ partition_info:
           "begin": 0.0,
           "end": 1.0,
           "flags": ["boot", "lvm"],
-          "fstype": null,
+          "fstype": "",
+          "name": "",
           "num": 1,
           "size": 1.0
         }, {
           "begin": 1.0,
           "end": 5.0,
           "flags": [],
-          "fstype": null,
+          "fstype": "",
+          "name": "",
           "num": 2,
           "size": 4.0
         }]
@@ -298,11 +301,13 @@ def parse_partition_info(parted_output, unit):
         if unit != 'chs':
             size = parse_unit(part_params[3])[0]
             fstype = part_params[4]
+            name = part_params[5]
             flags = part_params[6]
 
         else:
             size = ""
             fstype = part_params[3]
+            name = part_params[4]
             flags = part_params[5]
 
         parts.append({
@@ -311,6 +316,7 @@ def parse_partition_info(parted_output, unit):
             'end': parse_unit(part_params[2])[0],
             'size': size,
             'fstype': fstype,
+            'name': name,
             'flags': [f.strip() for f in flags.split(', ') if f != ''],
             'unit': unit.lower(),
         })
@@ -555,7 +561,7 @@ def main():
             'label': {
                 'choices': [
                     'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos',
-                    'pc98', 'sun', ''
+                    'pc98', 'sun'
                 ],
                 'type': 'str'
             },
@@ -623,13 +629,11 @@ def main():
 
     if state == 'present':
         # Default value for the label
-        if not current_device['generic']['table'] or \
-           current_device['generic']['table'] == 'unknown' and \
-           not label:
+        if not label:
             label = 'msdos'
 
         # Assign label if required
-        if label:
+        if current_device['generic'].get('table', None) != label:
             script += "mklabel %s " % label
 
         # Create partition if required
@@ -660,7 +664,7 @@ def main():
                 partition = [p for p in current_parts if p['num'] == number][0]
 
             # Assign name to the the partition
-            if name:
+            if name is not None and partition.get('name', None) != name:
                 script += "name %s %s " % (number, name)
 
             # Manage flags
