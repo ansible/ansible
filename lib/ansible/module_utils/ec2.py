@@ -47,12 +47,6 @@ try:
 except:
     HAS_BOTO3 = False
 
-try:
-    from distutils.version import LooseVersion
-    HAS_LOOSE_VERSION = True
-except:
-    HAS_LOOSE_VERSION = False
-
 from ansible.module_utils.six import string_types, binary_type, text_type
 
 
