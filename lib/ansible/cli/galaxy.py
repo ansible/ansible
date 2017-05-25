@@ -131,7 +131,7 @@ class GalaxyCLI(CLI):
                 subparser.add_argument('--list', dest="setup_list", action='store_true', default=False, help='List all of your integrations.')
 
             # options that apply to more than one action
-            if name in ('init', 'info'):
+            if name in ('init', 'info', 'install'):
                 subparser.add_argument('--offline', dest='offline', default=False, action='store_true', help="Don't query the galaxy API when creating roles")
 
             if name not in ("delete", "import", "init", "login", "setup"):
@@ -204,7 +204,7 @@ class GalaxyCLI(CLI):
         force = self.get_opt('force', False)
         role_skeleton = self.get_opt('role_skeleton', C.GALAXY_ROLE_SKELETON)
 
-        role_name = self.args.pop(0).strip() if self.args else None
+        role_name = self.args.strip() if self.args else None
         if not role_name:
             raise AnsibleOptionsError("- no role name specified for init")
         role_path = os.path.join(init_path, role_name)

@@ -51,7 +51,7 @@ class TestPlayContext(unittest.TestCase):
         pass
 
     def test_play_context(self):
-        (options, args) = self._parser.parse_args(['-vv', '--check'])
+        options = self._parser.parse_args(['-vv', '--check'])
         play_context = PlayContext(options=options)
         self.assertEqual(play_context._attributes['connection'], C.DEFAULT_TRANSPORT)
         self.assertEqual(play_context.remote_addr, None)
@@ -117,7 +117,7 @@ class TestPlayContext(unittest.TestCase):
         self.assertEqual(play_context.no_log, False)
 
     def test_play_context_make_become_cmd(self):
-        (options, args) = self._parser.parse_args([])
+        options = self._parser.parse_args([])
         play_context = PlayContext(options=options)
 
         default_cmd = "/bin/foo"
@@ -307,7 +307,7 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
             inventory_opts=True,
         )
 
-        (options, args) = parser.parse_args(['-vv', '--check'])
+        options = parser.parse_args(['-vv', '--check'])
 
         mock_play = MagicMock()
         mock_play.connection = 'mock'
