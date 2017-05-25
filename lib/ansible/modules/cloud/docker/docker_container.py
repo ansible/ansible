@@ -1671,10 +1671,7 @@ class Container(DockerBaseClass):
         self.log('_get_expected_sysctls')
         if config_sysctls is None:
             return None
-        result = dict()
-        for key, value in config_sysctls.items():
-            result[key] = str(value)
-        return result
+        return {key: str(value) for key, value in config_systctls.items()}
 
     def _get_expected_cmd(self):
         self.log('_get_expected_cmd')
