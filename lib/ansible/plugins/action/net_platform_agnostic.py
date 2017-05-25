@@ -28,7 +28,7 @@ from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_bytes
 
-from importlib import import_module
+from imp import find_module, load_module
 
 try:
     from __main__ import display
@@ -159,7 +159,10 @@ class ActionModule(ActionBase):
         # provider argument spec in module_utils/network_common.py or another
         # option is that there isn't a need to push provider into the module
         # since the connection is started in the action handler.
-        module = import_module('ansible.module_utils.' + network_os)
+        f, p, d = find_module('ansible')
+        f2, p2, d2 = find_module('module_utils', [p])
+        f3, p3, d3 = find_module(network_os, [p2])
+        module = load_module('ansible.module_utils.' + network_os, f3, p3, d3)
 
         provider = self._task.args.get('provider', {})
         for key, value in iteritems(module.get_argspec()):
