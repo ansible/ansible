@@ -128,7 +128,9 @@ group:
             type: string
             sample: testgroup1
         path:
-            description: the path def convert_friendly_names_to_arns(connection, module, policies):
+            description: the path to the group
+            type: string
+            sample: /
 users:
     description: list containing all the group members
     returned: success
