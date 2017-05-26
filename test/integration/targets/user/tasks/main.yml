@@ -91,118 +91,15 @@
           - "user_test1.results[4]['state'] == 'present'"
   when: "jinja2_version.stdout|version_compare('2.6', '<')"
 
-
-##
-## Create home and ssh keys for existing user
-##
-# Debug
-- block: 
-  - name: user cleanup
-    user:
-        name: dennis
-        state: absent
-
-  - name: try to create a second user (Mac)
-    user:
-        name: dennis
-        state: present
-        createhome: false
-        home: /Users/dennis
-  when: ansible_distribution == 'MacOSX'
-
-- name: try to create a second user
-  user:
-      name: dennis
-      state: present
-      createhome: false
-  when: ansible_distribution != 'MacOSX'
-
-- name: try to create home directory and ssh keys for existing user
-  user:
-      name: dennis
-      state: present
-      createhome: true
-      generate_ssh_key: yes
-  register: user_test3
-
-# Fedora defaults to mode 0700 for home dirs.
-- name: Verify existence, ownership and permissions on home and .ssh directories. (Fedora)
-  file:
-      name="{{item}}"
-      state=directory
-      mode=0700
-      owner=dennis
-  with_items:
-      - "{{user_test3.home}}"
-  register: homedircheck
-  when: ansible_distribution == 'Fedora'
-
-# Other OSs default to mode 0755 for home dirs.
-- name: Verify existence, ownership and permissions on home and .ssh directories. (Fedora)
-  file:
-      name="{{item}}"
-      state=directory
-      mode=0700
-      owner=dennis
-  with_items:
-      - "{{user_test3.home}}"
-  register: homedircheck
-  when: ansible_distribution != 'Fedora'
-
-- name: Verify existence, ownership, and permissions on SSH key
-  file:
-      name="{{user_test3.home}}/.ssh/id_rsa"
-      state=file
-      mode=0600
-      owner=dennis
-  register: sshkeycheck
-
-- name: Verify ssh directory settings on fresh user
-  file:
-      name="{{user_test0.home}}/.ssh"
-      state=directory
-      mode=0700
-      owner="{{user_test0.name}}"
-  register: sshdircheck 
-
-- name: Verify file checks
-  assert:
-      that:
-          - "not sshkeycheck.changed"
-          - "not homedircheck.changed"
-          - "not homedircheck.changed"
-
-###
-# SELinux checks only if Python bindings are installed, and SELinux is on.
-- block:
-      - name: get context for new directories
-        command: ls -lZd {{user_test3.home}} {{user_test3.home}}/.ssh
-        register: user_test3a
-
-      - name: validate ownership, permissions, and SELinux context
-        assert:
-            that:
-                - '"user_home_dir_t" in user_test3a.stdout_lines[0]'
-                - '"ssh_home_t" in user_test3a.stdout_lines[1]'
-  when: ansible_selinux != False and ansible_selinux.status != "disabled"
-###
-
-
 ##
 ## user remove
 ##
             
 - name: try to delete the user
   user:
-      name: "{{item}}"
+      name: ansibulluser
       state: absent
-      force: yes
-      remove: yes
   register: user_test2
-  with_item:
-      - dennis
-      - ansibulluser
-
 - name: make a new list of users
   script: userlist.sh "{{ ansible_distribution }}"
   register: user_names2
@@ -211,4 +108,3 @@
   assert:
       that:
           - '"ansibulluser" not in user_names2.stdout_lines'
-          - '"dennis" not in user_names2.stdout_lines'
