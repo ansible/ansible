@@ -759,7 +759,7 @@ class User(object):
             skeleumask = os.stat(self.skeleton).st_mode
         else:
             skeleumask = os.stat('/etc/skele').st_mode
-        os.chmod(path, skeleumask & ~self.newumask & 0777)
+        os.chmod(path, skeleumask & ~self.newumask & 0o777)
 
 # ===========================================
 
