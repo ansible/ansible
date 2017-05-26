@@ -783,7 +783,7 @@ class TaskExecutor:
                                                                                self._shared_loader_obj.module_loader.find_plugin(self._task.action))
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
-        if 'action_handler' in metadata:
+        if metadata and 'action_handler' in metadata:
             handler_name = metadata['action_handler']
         elif self._task.action in self._shared_loader_obj.action_loader:
             handler_name = self._task.action
