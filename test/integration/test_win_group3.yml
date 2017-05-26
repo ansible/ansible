@@ -9,4 +9,4 @@
     - { role: win_command, tags: test_win_command }
     - { role: win_reg_stat, tags: test_win_reg_stat }
     - { role: win_region, tags: test_win-region }
-    - { role: win_environment, tags: test_win_environment }
+    - { role: win_environment, tags: test_win-environment }
