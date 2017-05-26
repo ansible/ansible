@@ -781,12 +781,13 @@ class TaskExecutor:
         module = self._task.action
         module_path = self._shared_loader_obj.module_loader.find_plugin(self._task.action)
         module_prefix = self._task.action.split('_')[0]
+        is_python_module = module_path.endswith('.py')
 
-        if module_path.endswith('.py'):
+        if is_python_module:
             metadata = self._shared_loader_obj.module_loader._load_module_metadata(module, module_path)
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
-        if metadata and 'action_handler' in metadata:
+        if is_python_module and metadata and 'action_handler' in metadata:
             handler_name = metadata['action_handler']
         elif module in self._shared_loader_obj.action_loader:
             handler_name = module
