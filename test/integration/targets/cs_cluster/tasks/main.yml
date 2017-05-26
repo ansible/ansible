@@ -21,7 +21,7 @@
     that:
       - zone|success
 
-- name: setup pod is preset
+- name: setup pod is present
   cs_pod:
     name: "{{ cs_resource_prefix }}-pod"
     zone: "{{ cs_resource_prefix }}-zone"
@@ -29,7 +29,7 @@
     gateway: 10.100.10.1
     netmask: 255.255.255.0
   register: pod
-- name: verify setup pod is preset
+- name: verify setup pod is present
   assert:
     that:
       - pod|success
@@ -43,6 +43,20 @@
     that:
       - cluster|failed
       - "cluster.msg == 'missing required arguments: name'"
+
+- name: test create cluster in check mode
+  cs_cluster:
+    name: "{{ cs_resource_prefix }}-cluster"
+    zone: "{{ cs_resource_prefix }}-zone"
+    hypervisor: simulator
+    cluster_type: CloudManaged
+  register: cluster_origin
+  check_mode: true
+  tags: disable
+- name: verify test create cluster in check mode
+  assert:
+    that:
+      - cluster_origin|changed
 
 - name: test create cluster
   cs_cluster:
@@ -80,6 +94,25 @@
       - cluster_origin.hypervisor == "Simulator"
       - cluster.cluster_type == "CloudManaged"
 
+- name: test update cluster in check mode
+  cs_cluster:
+    name: "{{ cs_resource_prefix }}-cluster"
+    zone: "{{ cs_resource_prefix }}-zone"
+    hypervisor: simulator
+    cluster_type: ExternalManaged
+  register: cluster
+  check_mode: true
+- name: verify test update cluster in check mode
+  assert:
+    that:
+      - cluster|changed
+      - cluster.name == "{{ cs_resource_prefix }}-cluster"
+      - cluster.zone == "{{ cs_resource_prefix }}-zone"
+      - cluster.allocation_state == "Enabled"
+      - cluster.hypervisor == "Simulator"
+      - cluster.cluster_type == "CloudManaged"
+      - cluster.id == cluster_origin.id
+
 - name: test update cluster
   cs_cluster:
     name: "{{ cs_resource_prefix }}-cluster"
@@ -116,12 +149,28 @@
       - cluster.cluster_type == "ExternalManaged"
       - cluster.id == cluster_origin.id
 
+- name: test disable cluster in check mode
+  cs_cluster:
+    name: "{{ cs_resource_prefix }}-cluster"
+    state: disabled
+  register: cluster
+  check_mode: true
+- name: verify test disable cluster in check mode
+  assert:
+    that:
+      - cluster|changed
+      - cluster.name == "{{ cs_resource_prefix }}-cluster"
+      - cluster.zone == "{{ cs_resource_prefix }}-zone"
+      - cluster.allocation_state == "Enabled"
+      - cluster.hypervisor == "Simulator"
+      - cluster.cluster_type == "ExternalManaged"
+      - cluster.id == cluster_origin.id
+
 - name: test disable cluster
   cs_cluster:
     name: "{{ cs_resource_prefix }}-cluster"
     state: disabled
   register: cluster
-  tags: disable
 - name: verify test disable cluster
   assert:
     that:
@@ -132,14 +181,12 @@
       - cluster.hypervisor == "Simulator"
       - cluster.cluster_type == "ExternalManaged"
       - cluster.id == cluster_origin.id
-  tags: disable
 
 - name: test disable cluster idempotence
   cs_cluster:
     name: "{{ cs_resource_prefix }}-cluster"
     state: disabled
   register: cluster
-  tags: disable
 - name: verify test disable cluster idempotence
   assert:
     that:
@@ -149,7 +196,23 @@
       - cluster.allocation_state == "Disabled"
       - cluster.hypervisor == "Simulator"
       - cluster.cluster_type == "ExternalManaged"
-  tags: disable
+
+- name: test enable cluster in check mode
+  cs_cluster:
+    name: "{{ cs_resource_prefix }}-cluster"
+    state: enabled
+  register: cluster
+  check_mode: true
+- name: verify test enable cluster in check mode
+  assert:
+    that:
+      - cluster|changed
+      - cluster.name == "{{ cs_resource_prefix }}-cluster"
+      - cluster.zone == "{{ cs_resource_prefix }}-zone"
+      - cluster.allocation_state == "Disabled"
+      - cluster.hypervisor == "Simulator"
+      - cluster.cluster_type == "ExternalManaged"
+      - cluster.id == cluster_origin.id
 
 - name: test enable cluster
   cs_cluster:
@@ -182,6 +245,23 @@
       - cluster.hypervisor == "Simulator"
       - cluster.cluster_type == "ExternalManaged"
       - cluster.id == cluster_origin.id
+
+- name: test remove cluster in check mode
+  cs_cluster:
+    name: "{{ cs_resource_prefix }}-cluster"
+    zone: "{{ cs_resource_prefix }}-zone"
+    state: absent
+  register: cluster
+  check_mode: true
+- name: verify test remove cluster in check mode
+  assert:
+    that:
+      - cluster.id == cluster_origin.id
+      - cluster|changed
+      - cluster.name == "{{ cs_resource_prefix }}-cluster"
+      - cluster.zone == "{{ cs_resource_prefix }}-zone"
+      - cluster.allocation_state == "Enabled"
+      - cluster_origin.hypervisor == "Simulator"
 
 - name: test remove cluster
   cs_cluster:

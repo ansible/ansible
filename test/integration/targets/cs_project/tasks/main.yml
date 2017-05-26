@@ -9,6 +9,16 @@
     that:
     - prj|success
 
+- name: test create project in check mode
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+  register: prj
+  check_mode: true
+- name: verify test create project in check mode
+  assert:
+    that:
+    - prj|changed
+
 - name: test create project
   cs_project:
     name: "{{ cs_resource_prefix }}-prj"
@@ -28,6 +38,19 @@
     that:
     - not prj|changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
+
+- name: test suspend project in check mode
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: suspended
+  register: prj
+  check_mode: true
+- name: verify test suspend project in check mode
+  assert:
+    that:
+    - prj|changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state != "Suspended"
 
 - name: test suspend project
   cs_project:
@@ -53,6 +76,19 @@
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state == "Suspended"
 
+- name: test activate project in check mode
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: active
+  register: prj
+  check_mode: true
+- name: verify test activate project in check mode
+  assert:
+    that:
+    - prj|changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state != "Active"
+
 - name: test activate project
   cs_project:
     name: "{{ cs_resource_prefix }}-prj"
@@ -74,6 +110,19 @@
   assert:
     that:
     - not prj|changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state == "Active"
+
+- name: test delete project in check mode
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: prj
+  check_mode: true
+- name: verify test delete project in check mode
+  assert:
+    that:
+    - prj|changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state == "Active"
 

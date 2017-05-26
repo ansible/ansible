@@ -507,9 +507,17 @@ class AnsibleCloudStack(object):
                     return self._get_by_key(key, self.domain)
         self.fail_json(msg="Domain '%s' not found" % domain)
 
-    def get_tags(self, resource=None):
+    def query_tags(self, resource, resource_type):
+        args = {
+            'resourceids': resource['id'],
+            'resourcetype': resource_type,
+        }
+        tags = self.cs.listTags(**args)
+        return self.get_tags(resource=tags, key='tag')
+
+    def get_tags(self, resource=None, key='tags'):
         existing_tags = []
-        for tag in resource.get('tags', []):
+        for tag in resource.get(key) or []:
             existing_tags.append({'key': tag['key'], 'value': tag['value']})
         return existing_tags
 
@@ -545,7 +553,7 @@ class AnsibleCloudStack(object):
             if tags is not None:
                 self._process_tags(resource, resource_type, self._tags_that_should_not_exist(resource, tags), operation="delete")
                 self._process_tags(resource, resource_type, self._tags_that_should_exist_or_be_updated(resource, tags))
-                resource['tags'] = tags
+                resource['tags'] = self.query_tags(resource=resource, resource_type=resource_type)
         return resource
 
     def get_capabilities(self, key=None):

@@ -39,6 +39,18 @@
     - vol|failed
     - "vol.msg == 'missing required arguments: name'"
 
+- name: test create volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 20
+  register: vol
+  check_mode: true
+- name: verify results test create volume in check mode
+  assert:
+    that:
+    - vol|changed
+
 - name: test create volume
   cs_volume:
     name: "{{ cs_resource_prefix }}_vol"
@@ -62,6 +74,21 @@
   assert:
     that:
     - not vol|changed
+    - vol.size == 20 * 1024 ** 3
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test shrink volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 10
+    shrink_ok: yes
+  register: vol
+  check_mode: true
+- name: verify results test create volume in check mode
+  assert:
+    that:
+    - vol|changed
     - vol.size == 20 * 1024 ** 3
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
@@ -93,6 +120,20 @@
     - vol.size == 10 * 1024 ** 3
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
+- name: test attach volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    vm: "{{ test_cs_instance_1 }}"
+    state: attached
+  register: vol
+  check_mode: true
+- name: verify results test attach volume in check mode
+  assert:
+    that:
+    - vol|changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.attached is not defined
+
 - name: test attach volume
   cs_volume:
     name: "{{ cs_resource_prefix }}_vol"
@@ -117,6 +158,21 @@
   assert:
     that:
     - not vol|changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.vm == "{{ test_cs_instance_1 }}"
+    - vol.attached is defined
+
+- name: test attach attached volume to another vm in check mdoe
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    vm: "{{ test_cs_instance_2 }}"
+    state: attached
+  register: vol
+  check_mode: true
+- name: verify results test attach attached volume to another vm in check mode
+  assert:
+    that:
+    - vol|changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.vm == "{{ test_cs_instance_1 }}"
     - vol.attached is defined
@@ -149,6 +205,19 @@
     - vol.vm == "{{ test_cs_instance_2 }}"
     - vol.attached is defined
 
+- name: test detach volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    state: detached
+  register: vol
+  check_mode: true
+- name: verify results test detach volume in check mdoe
+  assert:
+    that:
+    - vol|changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.attached is defined
+
 - name: test detach volume
   cs_volume:
     name: "{{ cs_resource_prefix }}_vol"
@@ -172,6 +241,18 @@
     - not vol|changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.attached is undefined
+
+- name: test delete volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    state: absent
+  register: vol
+  check_mode: true
+- name: verify results test create volume in check mode
+  assert:
+    that:
+    - vol|changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
 
 - name: test delete volume
   cs_volume:

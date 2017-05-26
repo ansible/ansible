@@ -10,6 +10,23 @@
     that:
     - config|success
 
+- name: test update configuration account in check mode
+  cs_configuration:
+    name: allow.public.user.templates
+    account: "{{ test_cs_configuration_account }}"
+    value: false
+  register: config
+  check_mode: true
+- name: verify update configuration account in check mode
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "true"
+    - config.name == "allow.public.user.templates"
+    - config.scope == "account"
+    - config.account == "{{ test_cs_configuration_account }}"
+
 - name: test update configuration account
   cs_configuration:
     name: allow.public.user.templates
