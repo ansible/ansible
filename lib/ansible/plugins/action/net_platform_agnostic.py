@@ -47,10 +47,10 @@ class ActionModule(ActionBase):
                     'got %s' % self._play_context.connection
             )
 
-
         play_context = copy.deepcopy(self._play_context)
         play_context.network_os = play_context.network_os or self._get_network_os(task_vars)
-        play_context.connection = 'network_cli' # TODO this can be netconf
+        # TODO this can be netconf
+        play_context.connection = 'network_cli'
 
         self.provider = self._load_provider(play_context.network_os)
 
@@ -85,8 +85,8 @@ class ActionModule(ActionBase):
 
             display.vvvv('Running implementation module %s' % module)
             result.update(self._execute_module(module_name=module,
-                module_args=new_module_args, task_vars=task_vars,
-                wrap_async=self._task.async))
+                          module_args=new_module_args, task_vars=task_vars,
+                          wrap_async=self._task.async))
 
             display.vvvv('Caching network OS %s in facts' % play_context.network_os)
             result['ansible_facts'] = {'network_os': play_context.network_os}
@@ -97,7 +97,7 @@ class ActionModule(ActionBase):
 
         display.vvv('using connection plugin %s' % play_context.connection, play_context.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent',
-                play_context, sys.stdin)
+                                                                   play_context, sys.stdin)
 
         socket_path = self._get_socket_path(play_context)
         display.vvvv('socket_path: %s' % socket_path, play_context.remote_addr)

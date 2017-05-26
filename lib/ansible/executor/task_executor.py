@@ -779,8 +779,8 @@ class TaskExecutor:
         '''
 
         module_prefix = self._task.action.split('_')[0]
-        metadata = self._shared_loader_obj.module_loader._load_module_metadata(
-                self._task.action, self._shared_loader_obj.module_loader.find_plugin(self._task.action))
+        metadata = self._shared_loader_obj.module_loader._load_module_metadata(self._task.action,
+                                                                               self._shared_loader_obj.module_loader.find_plugin(self._task.action))
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if 'action_handler' in metadata:
