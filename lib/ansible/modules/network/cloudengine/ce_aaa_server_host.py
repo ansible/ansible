@@ -185,56 +185,56 @@ EXAMPLES = '''
 
   - name: "Config local user when use local scheme"
     ce_aaa_server_host:
-      state:  present
-      local_user_name:  user1
-      local_password:  123456
+      state: present
+      local_user_name: user1
+      local_password: 123456
       provider: "{{ cli }}"
 
   - name: "Undo local user when use local scheme"
     ce_aaa_server_host:
-      state:  absent
-      local_user_name:  user1
-      local_password:  123456
+      state: absent
+      local_user_name: user1
+      local_password: 123456
       provider: "{{ cli }}"
 
   - name: "Config radius server ip"
     ce_aaa_server_host:
-      state:  present
-      radius_group_name:  group1
-      raduis_server_type:  Authentication
-      radius_server_ip:  10.1.10.1
-      radius_server_port:  2000
-      radius_server_mode:  Primary-server
-      radius_vpn_name:  _public_
+      state: present
+      radius_group_name: group1
+      raduis_server_type: Authentication
+      radius_server_ip: 10.1.10.1
+      radius_server_port: 2000
+      radius_server_mode: Primary-server
+      radius_vpn_name: _public_
       provider: "{{ cli }}"
 
   - name: "Undo radius server ip"
     ce_aaa_server_host:
-      state:  absent
-      radius_group_name:  group1
-      raduis_server_type:  Authentication
-      radius_server_ip:  10.1.10.1
-      radius_server_port:  2000
-      radius_server_mode:  Primary-server
-      radius_vpn_name:  _public_
+      state: absent
+      radius_group_name: group1
+      raduis_server_type: Authentication
+      radius_server_ip: 10.1.10.1
+      radius_server_port: 2000
+      radius_server_mode: Primary-server
+      radius_vpn_name: _public_
       provider: "{{ cli }}"
 
   - name: "Config hwtacacs server ip"
     ce_aaa_server_host:
-      state:  present
-      hwtacacs_template:  template
-      hwtacacs_server_ip:  10.10.10.10
-      hwtacacs_server_type:  Authorization
-      hwtacacs_vpn_name:  _public_
+      state: present
+      hwtacacs_template: template
+      hwtacacs_server_ip: 10.10.10.10
+      hwtacacs_server_type: Authorization
+      hwtacacs_vpn_name: _public_
       provider: "{{ cli }}"
 
   - name: "Undo hwtacacs server ip"
     ce_aaa_server_host:
-      state:  absent
-      hwtacacs_template:  template
-      hwtacacs_server_ip:  10.10.10.10
-      hwtacacs_server_type:  Authorization
-      hwtacacs_vpn_name:  _public_
+      state: absent
+      hwtacacs_template: template
+      hwtacacs_server_ip: 10.10.10.10
+      hwtacacs_server_type: Authorization
+      hwtacacs_vpn_name: _public_
       provider: "{{ cli }}"
 '''
 

@@ -406,20 +406,20 @@ EXAMPLES = '''
 
   - name: "Config BGP peer Address_Family"
     ce_bgp_neighbor_af:
-      state:  present
-      vrf_name:  js
-      af_type:  ipv4uni
-      remote_address:  192.168.10.10
-      nexthop_configure:  local
+      state: present
+      vrf_name: js
+      af_type: ipv4uni
+      remote_address: 192.168.10.10
+      nexthop_configure: local
       provider: "{{ cli }}"
 
   - name: "Undo BGP peer Address_Family"
     ce_bgp_neighbor_af:
-      state:  absent
-      vrf_name:  js
-      af_type:  ipv4uni
-      remote_address:  192.168.10.10
-      nexthop_configure:  local
+      state: absent
+      vrf_name: js
+      af_type: ipv4uni
+      remote_address: 192.168.10.10
+      nexthop_configure: local
       provider: "{{ cli }}"
 '''
 

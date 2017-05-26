@@ -291,40 +291,40 @@ EXAMPLES = '''
 
   - name: "Config ACL"
     ce_acl_advance:
-      state:  present
-      acl_name:  3200
+      state: present
+      acl_name: 3200
       provider: "{{ cli }}"
 
   - name: "Undo ACL"
     ce_acl_advance:
-      state:  delete_acl
-      acl_name:  3200
+      state: delete_acl
+      acl_name: 3200
       provider: "{{ cli }}"
 
   - name: "Config ACL advance rule"
     ce_acl_advance:
-      state:  present
-      acl_name:  test
-      rule_name:  test_rule
-      rule_id:  111
-      rule_action:  permit
-      protocol:  tcp
-      source_ip:  10.10.10.10
-      src_mask:  24
-      frag_type:  fragment
+      state: present
+      acl_name: test
+      rule_name: test_rule
+      rule_id: 111
+      rule_action: permit
+      protocol: tcp
+      source_ip: 10.10.10.10
+      src_mask: 24
+      frag_type: fragment
       provider: "{{ cli }}"
 
   - name: "Undo ACL advance rule"
     ce_acl_advance:
-      state:  absent
-      acl_name:  test
-      rule_name:  test_rule
-      rule_id:  111
-      rule_action:  permit
-      protocol:  tcp
-      source_ip:  10.10.10.10
-      src_mask:  24
-      frag_type:  fragment
+      state: absent
+      acl_name: test
+      rule_name: test_rule
+      rule_id: 111
+      rule_action: permit
+      protocol: tcp
+      source_ip: 10.10.10.10
+      src_mask: 24
+      frag_type: fragment
       provider: "{{ cli }}"
 '''
 

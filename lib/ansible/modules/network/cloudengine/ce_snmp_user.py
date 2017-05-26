@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 ---
 module: ce_snmp_user
 version_added: "2.4"
-short_description: Manages SNMP user configuration.
+short_description: Manages SNMP user configuration on HUAWEI CloudEngine switches.
 description:
     - Manages SNMP user configurations on CloudEngine switches.
 author:
@@ -97,40 +97,40 @@ EXAMPLES = '''
 
   - name: "Config SNMP usm user"
     ce_snmp_user:
-      state:  present
-      usm_user_name:  wdz_snmp
-      remote_engine_id:  800007DB03389222111200
-      acl_number:  2000
-      user_group:  wdz_group
+      state: present
+      usm_user_name: wdz_snmp
+      remote_engine_id: 800007DB03389222111200
+      acl_number: 2000
+      user_group: wdz_group
       provider: "{{ cli }}"
 
   - name: "Undo SNMP usm user"
     ce_snmp_user:
-      state:  absent
-      usm_user_name:  wdz_snmp
-      remote_engine_id:  800007DB03389222111200
-      acl_number:  2000
-      user_group:  wdz_group
+      state: absent
+      usm_user_name: wdz_snmp
+      remote_engine_id: 800007DB03389222111200
+      acl_number: 2000
+      user_group: wdz_group
       provider: "{{ cli }}"
 
   - name: "Config SNMP local user"
     ce_snmp_user:
-      state:  present
-      aaa_local_user:  wdz_user
-      auth_protocol:  md5
-      auth_key:  huawei123
-      priv_protocol:  des56
-      priv_key:  huawei123
+      state: present
+      aaa_local_user: wdz_user
+      auth_protocol: md5
+      auth_key: huawei123
+      priv_protocol: des56
+      priv_key: huawei123
       provider: "{{ cli }}"
 
   - name: "Config SNMP local user"
     ce_snmp_user:
-      state:  absent
-      aaa_local_user:  wdz_user
-      auth_protocol:  md5
-      auth_key:  huawei123
-      priv_protocol:  des56
-      priv_key:  huawei123
+      state: absent
+      aaa_local_user: wdz_user
+      auth_protocol: md5
+      auth_key: huawei123
+      priv_protocol: des56
+      priv_key: huawei123
       provider: "{{ cli }}"
 '''
 

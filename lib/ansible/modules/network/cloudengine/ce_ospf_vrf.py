@@ -94,8 +94,8 @@ options:
     lsaointervalflag:
         description:
             - Specifies whether cancel the interval of LSA originate or not.
-              If set the parameter but noe specifies value ,the default will be used.
-              true:cancel the interval of LSA originate,the interval is 0.
+              If set the parameter but noe specifies value, the default will be used.
+              true:cancel the interval of LSA originate, the interval is 0.
               false:do not cancel the interval of LSA originate.
         required: false
         default: False

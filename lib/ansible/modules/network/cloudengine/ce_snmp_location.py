@@ -61,14 +61,14 @@ EXAMPLES = '''
 
   - name: "Config SNMP location"
     ce_snmp_location:
-      state:  present
-      location:  nanjing China
+      state: present
+      location: nanjing China
       provider: "{{ cli }}"
 
   - name: "Remove SNMP location"
     ce_snmp_location:
-      state:  absent
-      location:  nanjing China
+      state: absent
+      location: nanjing China
       provider: "{{ cli }}"
 '''
 
