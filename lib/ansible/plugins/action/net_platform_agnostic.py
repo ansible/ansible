@@ -73,7 +73,8 @@ class ActionModule(ActionBase):
 
         if not module:
             result['failed'] = True
-            result['msg'] = 'Could not find implementation module for %s' % play_context.network_os
+            result['msg'] = ('Could not find implementation module %s for %s' %
+                             (self._task.action, play_context.network_os))
         else:
             new_module_args = self._task.args.copy()
             # perhaps delete the provider argument here as well since the
