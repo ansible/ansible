@@ -29,7 +29,7 @@ DOCUMENTATION = """
 ---
 module: net_system
 version_added: 2.4
-author: "Ricardo Carrillo Cruz (@rcarrillocruz)
+author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 short_description: Manage the system attributes on network devices
 description:
   - This module provides declarative management of node system attributes
