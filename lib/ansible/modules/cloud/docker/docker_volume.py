@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 #
-# Copyright 2017 Red Hat | Ansible
+# Copyright 2017 Red Hat | Ansible, Alex Grönholm <alex.gronholm@nextday.fi>
 #
 # This file is part of Ansible
 #
