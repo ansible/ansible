@@ -29,16 +29,15 @@ from subprocess import call
 
 from ansible.errors import AnsibleError, AnsibleVaultError
 from ansible.parsing.vault.ciphers.loader import CIPHER_MAPPING, CIPHER_ENCRYPT_WHITELIST, get_decrypt_cipher, get_encrypt_cipher
+from ansible.parsing.vault import envelope
 
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_bytes
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
-
-b_HEADER = b'$ANSIBLE_VAULT'
 
 
 def is_encrypted(data):
@@ -48,19 +47,7 @@ def is_encrypted(data):
         encrypted data
     :returns: True if it is recognized.  Otherwise, False.
     """
-    try:
-        # Make sure we have a byte string and that it only contains ascii
-        # bytes.
-        b_data = to_bytes(to_text(data, encoding='ascii', errors='strict', nonstring='strict'), encoding='ascii', errors='strict')
-    except (UnicodeError, TypeError):
-        # The vault format is pure ascii so if we failed to encode to bytes
-        # via ascii we know that this is not vault data.
-        # Similarly, if it's not a string, it's not vault data
-        return False
-
-    if b_data.startswith(b_HEADER):
-        return True
-    return False
+    return envelope.is_vault_envelope(data)
 
 
 def is_encrypted_file(file_obj, start_pos=0, count=-1):
@@ -141,7 +128,7 @@ class VaultLib:
         b_ciphertext = cipher.encrypt(b_plaintext, self.b_password)
 
         # format the data for output to the file
-        b_vaulttext = self.format_envelope(b_ciphertext, cipher.name, self.b_version)
+        b_vaulttext = envelope.format_envelope(b_ciphertext, cipher.name, self.b_version)
         return b_vaulttext
 
     def decrypt(self, vaulttext, filename=None):
@@ -160,7 +147,7 @@ class VaultLib:
             raise AnsibleVaultError("A vault password must be specified to decrypt data")
 
         try:
-            b_ciphertext, cipher_name, b_version = self.parse_envelope(b_vaulttext)
+            b_ciphertext, cipher_name, b_version = envelope.parse_envelope(b_vaulttext)
             return self.decrypt_ciphertext(b_ciphertext, cipher_name, b_version)
         except AnsibleVaultError as e:
             if filename:
@@ -180,53 +167,6 @@ class VaultLib:
             raise AnsibleVaultError(msg)
 
         return b_plaintext
-
-    def format_envelope(self, b_ciphertext, cipher_name, b_version):
-        """ Add header and format to 80 columns
-
-            :arg b_vaulttext: the encrypted and hexlified data as a byte string
-            :returns: a byte str that should be dumped into a file.  It's
-                formatted to 80 char columns and has the header prepended
-        """
-
-        if not cipher_name:
-            raise AnsibleVaultError("the cipher must be set before adding a header")
-
-        header = b';'.join([b_HEADER, b_version,
-                           to_bytes(cipher_name, 'utf-8', errors='strict')])
-        b_vaulttext = [header]
-        b_vaulttext += [b_ciphertext[i:i + 80] for i in range(0, len(b_ciphertext), 80)]
-        b_vaulttext += [b'']
-        b_vaulttext = b'\n'.join(b_vaulttext)
-
-        return b_vaulttext
-
-    def parse_envelope(self, b_vaulttext):
-        """Retrieve information about the Vault and clean the data
-
-        When data is saved, it has a header prepended and is formatted into 80
-        character lines.  This method extracts the information from the header
-        and then removes the header and the inserted newlines.  The string returned
-        is suitable for processing by the Cipher classes.
-
-        :arg b_vaulttext: byte str containing the data from a save file
-        :returns: a 3 item tuple of
-            a byte str suitable for passing to a Cipher class's
-            decrypt() function.
-        """
-        # used by decrypt
-        if not is_encrypted(b_vaulttext):
-            msg = "input is not vault encrypted data"
-            raise AnsibleVaultError(msg)
-
-        b_tmpdata = b_vaulttext.split(b'\n')
-        b_tmpheader = b_tmpdata[0].strip().split(b';')
-
-        b_version = b_tmpheader[1].strip()
-        cipher_name = to_text(b_tmpheader[2].strip())
-        b_ciphertext = b''.join(b_tmpdata[1:])
-
-        return b_ciphertext, cipher_name, b_version
 
 
 class VaultEditor:
@@ -404,7 +344,7 @@ class VaultEditor:
         vaulttext = self.read_data(filename)
 
         try:
-            b_ciphertext, cipher_name, b_version = self.vault.parse_envelope(vaulttext)
+            b_ciphertext, cipher_name, b_version = envelope.parse_envelope(vaulttext)
             plaintext = self.vault.decrypt_ciphertext(b_ciphertext, cipher_name, b_version)
         except AnsibleError as e:
             raise AnsibleVaultError("%s for %s" % (to_bytes(e), to_bytes(filename)))

@@ -34,6 +34,7 @@ from ansible.module_utils._text import to_bytes, to_text
 
 from ansible.parsing import vault
 from ansible.parsing.vault.ciphers import loader
+from ansible.parsing.vault import envelope
 
 from units.mock.vault_helper import check_decrypt_prereqs, check_encrypt_prereqs
 
@@ -223,7 +224,7 @@ class TestVaultLib(unittest.TestCase):
 
     def test_format_envelope(self):
         b_ciphertext = b"ansible"
-        b_vaulttext = self.v.format_envelope(b_ciphertext, "TEST", self.v.b_version)
+        b_vaulttext = envelope.format_envelope(b_ciphertext, "TEST", self.v.b_version)
         b_lines = b_vaulttext.split(b'\n')
         self.assertGreater(len(b_lines), 1, msg="failed to properly add header")
 
@@ -238,7 +239,7 @@ class TestVaultLib(unittest.TestCase):
 
     def test_parse_envelope(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
-        b_ciphertext, cipher_name, b_version = self.v.parse_envelope(b_vaulttext)
+        b_ciphertext, cipher_name, b_version = envelope.parse_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
         self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
