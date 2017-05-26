@@ -81,22 +81,13 @@ class ActionModule(_ActionModule):
 
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
-            if pc.connection == 'netconf':
-                rc, out, err = connection.exec_command('open_session()')
-                display.vvvv('open_session() returned %s %s %s' % (rc, out, err))
-                if rc != 0:
-                    return {'failed': True,
-                            'msg': 'unable to open shell. Please see: ' +
-                                   'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
-                            'rc': rc}
-            else:
-                socket_path = connection.run()
-                if not socket_path:
-                    return {'failed': True,
-                            'msg': 'unable to open shell. Please see: ' +
-                                   'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+            socket_path = connection.run()
+            if not socket_path:
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
-                    display.vvvv('connected to socket in %s' % socket_path, pc.remote_addr)
+                display.vvvv('connected to socket in %s' % socket_path, pc.remote_addr)
         elif pc.connection == 'network_cli':
             # make sure we are in the right cli context which should be
             # enable mode and not config module

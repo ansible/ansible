@@ -107,9 +107,6 @@ class Connection(ConnectionBase):
     def exec_command(self, request):
         """Sends the request to the node and returns the reply
         """
-        if request == 'open_session()':
-            return (0, 'ok', '')
-
         req = to_ele(request)
         if req is None:
             return (1, '', 'unable to parse request')
