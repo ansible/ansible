@@ -35,7 +35,8 @@ from ansible.plugins.connection import network_cli
 
 class TestConnectionClass(unittest.TestCase):
 
-    def test_network_cli__connect_error(self):
+    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    def test_network_cli__connect_error(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
 
@@ -46,7 +47,8 @@ class TestConnectionClass(unittest.TestCase):
         pc.network_os = None
         self.assertRaises(AnsibleConnectionFailure, conn._connect)
 
-    def test_network_cli__invalid_os(self):
+    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    def test_network_cli__invalid_os(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
 
@@ -104,7 +106,8 @@ class TestConnectionClass(unittest.TestCase):
         conn.close()
         self.assertIsNone(conn._shell)
 
-    def test_network_cli_exec_command(self):
+    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    def test_network_cli_exec_command(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = network_cli.Connection(pc, new_stdin)
