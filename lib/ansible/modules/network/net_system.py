@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = """
 ---
 module: net_system
-version_added: 2.4
+version_added: "2.4"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 short_description: Manage the system attributes on network devices
 description:
@@ -36,6 +36,7 @@ description:
     on network devices.  It provides an option to configure host system
     parameters or remove those parameters from the device active
     configuration.
+options:
   hostname:
     description:
       - Configure the device hostname parameter. This option takes an ASCII string value.
