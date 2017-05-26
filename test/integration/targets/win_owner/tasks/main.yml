@@ -1,5 +1,8 @@
 ---
 # Setup tests
+- name: gather facts on host for use with later tests
+  setup:
+
 - name: remove test path to ensure baseline
   win_file:
     path: "{{test_win_owner_path}}"
