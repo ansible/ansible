@@ -34,7 +34,7 @@ short_description: Sets Windows machine timezone
 description:
   - Sets machine time to the specified timezone, the module will check if the provided timezone is supported on the machine.
 notes:
-  - If running on Server 2008 the hotfix 
+  - If running on Server 2008 the hotfix
     https://support.microsoft.com/en-us/help/2556308/tzutil-command-line-tool-is-added-to-windows-vista-and-to-windows-server-2008
     needs to be installed to be able to run this module.
 options:
