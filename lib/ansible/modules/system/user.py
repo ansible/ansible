@@ -252,6 +252,7 @@ try:
 except:
     HAVE_SPWD=False
 
+
 class User(object):
     """
     This is a generic User manipulation class that is subclassed
@@ -304,7 +305,6 @@ class User(object):
         self.home    = module.params['home']
         self.expires = None
         self.groups = None
-        self.newumask = None
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -624,12 +624,6 @@ class User(object):
             try:
                 os.mkdir(ssh_dir, int('0700', 8))
                 os.chown(ssh_dir, info[2], info[3])
-                cmd = [self.module.get_bin_path('chcon', False)]
-                if cmd[0] is not None:
-                    cmd.append('-t')
-                    cmd.append('ssh_home_t')
-                    cmd.append(ssh_dir) 
-                    self.execute_command(cmd)
             except OSError:
                 e = get_exception()
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
@@ -693,16 +687,15 @@ class User(object):
         return self.modify_user_usermod()
 
     def create_homedir(self, path):
-        self.parse_defaults()
         if not os.path.exists(path):
             if self.skeleton is not None:
                 skeleton = self.skeleton
             else:
-                self.skeleton = '/etc/skel'
+                skeleton = '/etc/skel'
 
-            if os.path.exists(self.skeleton):
+            if os.path.exists(skeleton):
                 try:
-                    shutil.copytree(self.skeleton, path, symlinks=True)
+                    shutil.copytree(skeleton, path, symlinks=True)
                 except OSError:
                     e = get_exception()
                     self.module.exit_json(failed=True, msg="%s" % e)
@@ -725,33 +718,6 @@ class User(object):
             e = get_exception()
             self.module.exit_json(failed=True, msg="%s" % e)
 
-    def parse_defaults(self):
-      try:
-        f = open('/etc/login.defs', 'r')
-        for line in f:
-            if 'UMASK' in line and '#' not in line.split()[0]:
-                maskvalue=line.split()[1]
-                self.newumask = int(maskvalue, 8)
-        f.close()
-      except:
-        pass
-      try:
-        if self.skeleton is None:
-            f = open('/etc/default/useradd', 'r')
-            if 'SKELE' in line and '#' not in line.split()[0]:
-               self.skeleton = line.split('=')[1]
-            f.close()
-      except:
-        pass
-
-    def chmod_homedir(self, path):
-        if self.newumask is None:
-            self.newumask = os.umask(0)
-        if self.skeleton is not None:
-            skeleumask = os.stat(self.skeleton).st_mode
-        else:
-            skeleumask = os.stat('/etc/skele').st_mode
-        os.chmod(path, skeleumask & ~self.newumask & 0777)
 
 # ===========================================
 
@@ -2242,6 +2208,7 @@ def main():
         result['uid'] = info[2]
         if user.groups is not None:
             result['groups'] = user.groups
+
         # handle missing homedirs
         info = user.user_info()
         if user.home is None:
@@ -2250,13 +2217,6 @@ def main():
             if not module.check_mode:
                 user.create_homedir(user.home)
                 user.chown_homedir(info[2], info[3], user.home)
-                user.chmod_homedir(user.home)
-                cmd = [module.get_bin_path('chcon', False)]
-                if cmd[0] is not None:
-                    cmd.append('-t')
-                    cmd.append('user_home_dir_t')
-                    cmd.append(user.home)
-                    user.execute_command(cmd)
             result['changed'] = True
 
         # deal with ssh key
