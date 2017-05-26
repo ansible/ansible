@@ -18,9 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 module: bearychat
@@ -28,7 +31,7 @@ short_description: Send BearyChat notifications
 description:
     - The M(bearychat) module sends notifications to U(https://bearychat.com)
       via the Incoming Robot integration.
-version_added: "2.3"
+version_added: "2.4"
 author: "Jiangge Zhang (@tonyseek)"
 options:
   url:
