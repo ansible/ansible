@@ -62,7 +62,7 @@ options:
         required: False
         choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, vlan ]
         description:
-            - This is the type of device or network connection that you wish to create.
+            - This is the type of device or network connection that you wish to create or modify.
     mode:
         required: False
         choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
@@ -87,7 +87,7 @@ options:
         required: False
         default: None
         description:
-            - 'A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: ["192.0.2.53", "198.51.100.53"]'
+            - 'A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: "192.0.2.53 198.51.100.53"'
     ip6:
         required: False
         default: None
@@ -101,7 +101,7 @@ options:
     dns6:
         required: False
         description:
-            - 'A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: ["2001:4860:4860::8888 2001:4860:4860::8844"]'
+            - 'A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: "2001:4860:4860::8888 2001:4860:4860::8844"'
     mtu:
         required: False
         default: 1500
@@ -424,7 +424,7 @@ EXAMPLES='''
       - conn_name: team-p2p2
 
 # To add an Ethernet connection with static IP configuration, issue a command as follows
-- nmcli:
+  - nmcli:
     conn_name: my-eth1
     ifname: eth1
     type: ethernet
@@ -433,7 +433,7 @@ EXAMPLES='''
     state: present
 
 # To add an Team connection with static IP configuration, issue a command as follows
-- nmcli:
+  - nmcli:
     conn_name: my-team1
     ifname: my-team1
     type: team
@@ -443,7 +443,7 @@ EXAMPLES='''
     autoconnect: yes
 
 # Optionally, at the same time specify IPv6 addresses for the device as follows:
-- nmcli:
+  - nmcli:
     conn_name: my-eth1
     ifname: eth1
     type: ethernet
@@ -454,22 +454,23 @@ EXAMPLES='''
     state: present
 
 # To add two IPv4 DNS server addresses:
-- nmcli:
+  - nmcli:
     conn_name: my-eth1
+    type: ethernet
     dns4:
       - 192.0.2.53
       - 198.51.100.53
     state: present
 
 # To make a profile usable for all compatible Ethernet interfaces, issue a command as follows
-- nmcli:
+  - nmcli:
     ctype: ethernet
     name: my-eth1
     ifname: '*'
     state: present
 
 # To change the property of a setting e.g. MTU, issue a command as follows:
-- nmcli:
+  - nmcli:
     conn_name: my-eth1
     mtu: 9000
     type: ethernet
