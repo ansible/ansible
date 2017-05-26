@@ -385,17 +385,6 @@ class NailGun(object):
             content_view.repository = repos
             content_view.update(['repository'])
 
-    def find_content_view(self, name, organization):
-        org = self.find_organization(organization)
-
-        content_view = self._entities.ContentView(self._server, name=name, organization=org)
-        response = content_view.search()
-
-        if len(response) == 1:
-            return response[0]
-        else:
-            self._module.fail_json(msg="No Content View found for %s" % name)
-
     def find_content_view_version(self, name, organization, environment):
         env = self.find_lifecycle_environment(environment, organization)
         content_view = self.find_content_view(name, organization)
