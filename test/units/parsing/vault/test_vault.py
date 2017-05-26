@@ -38,8 +38,6 @@ from ansible.parsing.vault import envelope
 
 from ansible.plugins import cipher_loader
 
-from units.mock.vault_helper import check_decrypt_prereqs, check_encrypt_prereqs
-
 
 class TestVaultIsEncrypted(unittest.TestCase):
     def test_bytes_not_encrypted(self):
@@ -136,7 +134,6 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
 # TODO: mv to plugin tests
 class TestVaultCipherAes256(unittest.TestCase):
     def setUp(self):
-#        self.vault_cipher_class = cipher_util.get_encrypt_cipher('AES256')
         cipher_mapping = vault.get_cipher_mapping()
         # self.vault_cipher_class = cipher_loader.get('AES256', class_only=True)
         # note this doesnt check whitelist etc
@@ -253,8 +250,6 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
     def test_encrypt_decrypt_aes(self):
-        check_decrypt_prereqs('AES')
-
         self.v.b_password = b'ansible'
         # AES encryption code has been removed, so this is old output for
         # AES-encrypted 'foobar' with password 'ansible'.
@@ -267,8 +262,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         self.assertEqual(b_plaintext, b"foobar", msg="decryption failed")
 
     def test_encrypt_decrypt_aes256(self):
-        check_encrypt_prereqs('AES256')
-
         plaintext = u"foobar"
         b_vaulttext = self.v.encrypt(plaintext)
         b_plaintext = self.v.decrypt(b_vaulttext)
@@ -276,8 +269,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         self.assertEqual(b_plaintext, b"foobar", msg="decryption failed")
 
     def test_encrypt_decrypt_aes256_existing_vault(self):
-        check_encrypt_prereqs('AES256')
-
         b_orig_plaintext = b"Setec Astronomy"
         vaulttext = u'''$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
@@ -294,16 +285,12 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         self.assertEqual(b_plaintext, b_orig_plaintext, msg="decryption failed")
 
     def test_encrypt_encrypted(self):
-        check_encrypt_prereqs('AES256')
-
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
         vaulttext = to_text(b_vaulttext, errors='strict')
         self.assertRaises(errors.AnsibleError, self.v.encrypt, b_vaulttext)
         self.assertRaises(errors.AnsibleError, self.v.encrypt, vaulttext)
 
     def test_decrypt_decrypted(self):
-        check_encrypt_prereqs('AES256')
-
         plaintext = u"ansible"
         self.assertRaises(errors.AnsibleError, self.v.decrypt, plaintext)
 
@@ -311,7 +298,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         self.assertRaises(errors.AnsibleError, self.v.decrypt, b_plaintext)
 
     def test_cipher_not_set(self):
-        check_encrypt_prereqs('AES256')
         # not setting the cipher should default to AES256
 
         plaintext = u"ansible"
