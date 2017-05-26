@@ -852,9 +852,10 @@ def main():
         state_absent(module, existing, proposed, candidate)
 
     if candidate:
+        candidate = candidate.items_text()
         load_config(module, candidate)
         result['changed'] = True
-        result['commands'] = candidate.items_text()
+        result['commands'] = candidate
     else:
         result['commands'] = []
 
