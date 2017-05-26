@@ -167,7 +167,6 @@ class Default(FactsBase):
     COMMANDS = [
         'show version | display-xml',
         'show system | display-xml',
-        'show running-configuration | grep hostname'
     ]
 
     def populate(self):
@@ -177,15 +176,13 @@ class Default(FactsBase):
 
         self.facts['name'] = self.parse_name(xml_data)
         self.facts['version'] = self.parse_version(xml_data)
+        self.facts['model'] = self.parse_model(xml_data)
+        self.facts['hostname'] = self.parse_hostname(xml_data)
 
         data = self.responses[1]
         xml_data = ET.fromstring(data)
 
-        self.facts['servicetag'] = self.parse_serialnum(xml_data)
-        self.facts['model'] = self.parse_model(xml_data)
-
-        data = self.responses[2]
-        self.facts['hostname'] = self.parse_hostname(data)
+        self.facts['servicetag'] = self.parse_servicetag(xml_data)
 
     def parse_name(self, data):
         sw_name = data.find('./data/system-sw-state/sw-version/sw-name')
@@ -202,18 +199,20 @@ class Default(FactsBase):
             return ""
 
     def parse_hostname(self, data):
-        match = re.search(r'hostname\s+(\S+)', data, re.M)
-        if match:
-            return match.group(1)
+        hostname = data.find('./data/system-state/system-status/hostname')
+        if hostname is not None:
+            return hostname.text
+        else:
+            return ""
 
     def parse_model(self, data):
-        prod_name = data.find('./data/system/node/mfg-info/product-name')
+        prod_name = data.find('./data/system-sw-state/sw-version/sw-platform')
         if prod_name is not None:
             return prod_name.text
         else:
             return ""
 
-    def parse_serialnum(self, data):
+    def parse_servicetag(self, data):
         svc_tag = data.find('./data/system/node/unit/mfg-info/service-tag')
         if svc_tag is not None:
             return svc_tag.text
@@ -225,7 +224,7 @@ class Hardware(FactsBase):
 
     COMMANDS = [
         'show version | display-xml',
-        'show processes memory | grep Total'
+        'show processes node-id 1 | grep "Mem:"'
     ]
 
     def populate(self):
@@ -251,7 +250,7 @@ class Hardware(FactsBase):
             return ""
 
     def parse_memory(self, data):
-        return re.findall(r'\:\s*(\d+)', data, re.M)
+        return re.findall(r'(\d+)', data, re.M)
 
 
 class Config(FactsBase):
@@ -267,22 +266,66 @@ class Interfaces(FactsBase):
 
     COMMANDS = [
         'show interface | display-xml',
+        'show lldp neighbors | display-xml'
     ]
+
+    def __init__(self, module):
+        self.intf_facts = dict()
+        self.lldp_facts = dict()
+        super(Interfaces, self).__init__(module)
 
     def populate(self):
         super(Interfaces, self).populate()
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.responses[0]
+        int_show_data = (self.responses[0]).splitlines()
+        pattern = '?xml version'
+        data = ''
+        skip = True
 
-        xml_data = ET.fromstring(data)
+        #The output returns multiple xml trees
+        #parse them before handling.
+        for line in int_show_data:
+            if pattern in line:
+                if skip is False:
+                    xml_data = ET.fromstring(data)
+                    self.populate_interfaces(xml_data)
+                    data = ''
+                else:
+                    skip = False
 
-        self.facts['interfaces'] = self.populate_interfaces(xml_data)
-        self.facts['neighbors'] = self.populate_neighbors(xml_data)
+            data += line
+
+        if skip is False:
+            xml_data = ET.fromstring(data)
+            self.populate_interfaces(xml_data)
+
+        self.facts['interfaces'] = self.intf_facts
+
+        lldp_data = (self.responses[1]).splitlines()
+        data = ''
+        skip = True
+        #The output returns multiple xml trees
+        #parse them before handling.
+        for line in lldp_data:
+            if pattern in line:
+                if skip is False:
+                    xml_data = ET.fromstring(data)
+                    self.populate_neighbors(xml_data)
+                    data = ''
+                else:
+                    skip = False
+
+            data += line
+
+        if skip is False:
+            xml_data = ET.fromstring(data)
+            self.populate_neighbors(xml_data)
+
+        self.facts['neighbors'] = self.lldp_facts
 
     def populate_interfaces(self, interfaces):
-        int_facts = dict()
 
         for interface in interfaces.findall('./data/interfaces/interface'):
             intf = dict()
@@ -296,15 +339,19 @@ class Interfaces(FactsBase):
             intf['mtu'] = self.parse_item(interface, 'mtu')
             intf['type'] = self.parse_item(interface, 'type')
 
-            int_facts[name] = intf
+            self.intf_facts[name] = intf
 
-        for interface in interfaces.findall('./data/interfaces-state/interface'):
+        for interface in interfaces.findall('./bulk/data/interface'):
             name = self.parse_item(interface, 'name')
-            intf = int_facts[name]
-            intf['bandwidth'] = self.parse_item(interface, 'speed')
-            intf['adminstatus'] = self.parse_item(interface, 'admin-status')
-            intf['operstatus'] = self.parse_item(interface, 'oper-status')
-            intf['macaddress'] = self.parse_item(interface, 'phys-address')
+            try:
+                intf = self.intf_facts[name]
+                intf['bandwidth'] = self.parse_item(interface, 'speed')
+                intf['adminstatus'] = self.parse_item(interface, 'admin-status')
+                intf['operstatus'] = self.parse_item(interface, 'oper-status')
+                intf['macaddress'] = self.parse_item(interface, 'phys-address')
+            except KeyError:
+                # skip the reserved interfaces
+                pass
 
         for interface in interfaces.findall('./data/ports/ports-state/port'):
             name = self.parse_item(interface, 'name')
@@ -314,19 +361,18 @@ class Interfaces(FactsBase):
             typ, sname = name.split('-eth')
             name = "ethernet" + sname
             try:
-                intf = int_facts[name]
+                intf = self.intf_facts[name]
                 intf['mediatype'] = mediatype
             except:
                 # fanout
                 for subport in xrange(1, 5):
                     name = "ethernet" + sname + ":" + str(subport)
                     try:
-                        intf = int_facts[name]
+                        intf = self.intf_facts[name]
                         intf['mediatype'] = mediatype
                     except:
+                        #valid case to handle 2x50G
                         pass
-
-        return int_facts
 
     def add_ip_address(self, address, family):
         if family == 'ipv4':
@@ -364,30 +410,31 @@ class Interfaces(FactsBase):
         return ip_address
 
     def parse_ipv6_address(self, interface):
-        ipv6 = interface.find('ipv6')
-        ip_address = ""
-        if ipv6 is not None:
-            ipv6_addr = ipv6.find('./address/ipv6-address')
+
+        ip_address = list()
+
+        for addr in interface.findall('./ipv6/ipv6-addresses/address'):
+
+            ipv6_addr = addr.find('./ipv6-address')
+
             if ipv6_addr is not None:
-                ip_address = ipv6_addr.text
-                self.add_ip_address(ip_address, 'ipv6')
+                ip_address.append(ipv6_addr.text)
+                self.add_ip_address(ipv6_addr.text, 'ipv6')
 
         return ip_address
 
     def populate_neighbors(self, interfaces):
-        lldp_facts = dict()
-        for interface in interfaces.findall('./data/interfaces-state/interface'):
+        for interface in interfaces.findall('./bulk/data/interface'):
             name = interface.find('name').text
             rem_sys_name = interface.find('./lldp-rem-neighbor-info/info/rem-system-name')
             if rem_sys_name is not None:
-                lldp_facts[name] = list()
+                self.lldp_facts[name] = list()
                 fact = dict()
                 fact['host'] = rem_sys_name.text
                 rem_sys_port = interface.find('./lldp-rem-neighbor-info/info/rem-lldp-port-id')
                 fact['port'] = rem_sys_port.text
-                lldp_facts[name].append(fact)
+                self.lldp_facts[name].append(fact)
 
-        return lldp_facts
 
 FACT_SUBSETS = dict(
     default=Default,
