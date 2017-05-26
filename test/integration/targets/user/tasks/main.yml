@@ -199,7 +199,7 @@
       force: yes
       remove: yes
   register: user_test2
-  with_item:
+  with_items:
       - dennis
       - ansibulluser
 
