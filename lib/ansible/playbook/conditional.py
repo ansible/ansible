@@ -138,7 +138,7 @@ class Conditional:
         if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
             conditional = all_vars[conditional]
 
-        if templar._clean_data(conditional) != conditional:
+        if templar.is_template(conditional):
             display.warning('when statements should not include jinja2 '
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)

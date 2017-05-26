@@ -115,7 +115,6 @@ lib/ansible/modules/database/postgresql/postgresql_ext.py
 lib/ansible/modules/database/postgresql/postgresql_privs.py
 lib/ansible/modules/database/postgresql/postgresql_schema.py
 lib/ansible/modules/database/postgresql/postgresql_user.py
-lib/ansible/modules/database/vertica/vertica_schema.py
 lib/ansible/modules/database/vertica/vertica_user.py
 lib/ansible/modules/files/acl.py
 lib/ansible/modules/files/archive.py
@@ -152,7 +151,6 @@ lib/ansible/modules/network/nxos/nxos_feature.py
 lib/ansible/modules/network/nxos/nxos_gir.py
 lib/ansible/modules/network/nxos/nxos_interface_ospf.py
 lib/ansible/modules/network/nxos/nxos_snapshot.py
-lib/ansible/modules/network/nxos/nxos_vlan.py
 lib/ansible/modules/network/panos/panos_nat_policy.py
 lib/ansible/modules/network/snmp_facts.py
 lib/ansible/modules/notification/hall.py

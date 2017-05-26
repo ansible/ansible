@@ -35,7 +35,7 @@ class TerminalModule(TerminalBase):
 
     terminal_stderr_re = [
         re.compile(r"% ?Error"),
-        re.compile(r"^% \w+", re.M),
+        #re.compile(r"^% \w+", re.M),
         re.compile(r"% ?Bad secret"),
         re.compile(r"invalid input", re.I),
         re.compile(r"(?:incomplete|ambiguous) command", re.I),
@@ -46,7 +46,8 @@ class TerminalModule(TerminalBase):
 
     def on_open_shell(self):
         try:
-            self._exec_cli_command('terminal length 0')
+            for cmd in ['terminal length 0', 'terminal width 512']:
+                self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 

@@ -146,10 +146,10 @@ class Connection(ConnectionBase):
         elif kinit_mode == "manual":
             self._kerb_managed = False
         else:
-            raise AnsibleError('Unknown ansible_winrm_kinit_mode value: %s' % kinit_mode)
+            raise AnsibleError('Unknown ansible_winrm_kinit_mode value: "%s" (must be "managed" or "manual")' % kinit_mode)
 
         # arg names we're going passing directly
-        internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path'])
+        internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path', 'kinit_mode', 'kinit_cmd'])
 
         self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass)
         argspec = inspect.getargspec(Protocol.__init__)
@@ -309,10 +309,10 @@ class Connection(ConnectionBase):
 
     def _create_raw_wrapper_payload(self, cmd, environment=dict()):
         payload = {
-            'module_entry': base64.b64encode(to_bytes(cmd)),
+            'module_entry': to_text(base64.b64encode(to_bytes(cmd))),
             'powershell_modules': {},
             'actions': ['exec'],
-            'exec': base64.b64encode(to_bytes(leaf_exec)),
+            'exec': to_text(base64.b64encode(to_bytes(leaf_exec))),
             'environment': environment
         }
 
@@ -394,11 +394,11 @@ class Connection(ConnectionBase):
         return (result.status_code, result.std_out, result.std_err)
 
     def is_clixml(self, value):
-        return value.startswith("#< CLIXML")
+        return value.startswith(b"#< CLIXML")
 
     # hacky way to get just stdout- not always sure of doc framing here, so use with care
     def parse_clixml_stream(self, clixml_doc, stream_name='Error'):
-        clear_xml = clixml_doc.replace('#< CLIXML\r\n', '')
+        clear_xml = clixml_doc.replace(b'#< CLIXML\r\n', b'')
         doc = xmltodict.parse(clear_xml)
         lines = [l.get('#text', '').replace('_x000D__x000A_', '') for l in doc.get('Objs', {}).get('S', {}) if l.get('@S') == stream_name]
         return '\r\n'.join(lines)

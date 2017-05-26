@@ -18,7 +18,7 @@
 #
 from contextlib import contextmanager
 
-from xml.etree.ElementTree import Element, SubElement
+from xml.etree.ElementTree import Element, SubElement, fromstring
 
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.netconf import send_request, children
@@ -36,17 +36,29 @@ junos_argument_spec = {
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'timeout': dict(type='int', default=10),
+    'timeout': dict(type='int'),
     'provider': dict(type='dict'),
     'transport': dict()
+}
+
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'timeout': 10
 }
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in junos_argument_spec:
-        if key in ('provider',) and module.params[key]:
+        if key not in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
 
     if provider:
         for param in ('password',):
@@ -96,10 +108,12 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             cfg = SubElement(obj, lookup[format])
 
         if isinstance(candidate, string_types):
-            cfg.text = candidate
+            if format == 'xml':
+                cfg.append(fromstring(candidate))
+            else:
+                cfg.text = candidate
         else:
             cfg.append(candidate)
-
     return send_request(module, obj)
 
 def get_configuration(module, compare=False, format='xml', rollback='0'):
@@ -123,7 +137,7 @@ def commit_configuration(module, confirm=False, check=False, comment=None, confi
         subele.text = str(comment)
     if confirm_timeout:
         subele = SubElement(obj, 'confirm-timeout')
-        subele.text = int(confirm_timeout)
+        subele.text = str(confirm_timeout)
     return send_request(module, obj)
 
 def command(module, command, format='text', rpc_only=False):

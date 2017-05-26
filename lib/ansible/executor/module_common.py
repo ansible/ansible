@@ -823,20 +823,20 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
 
 def build_windows_module_payload(module_name, module_path, b_module_data, module_args, task_vars, task, play_context, environment):
     exec_manifest = dict(
-        module_entry=base64.b64encode(b_module_data),
+        module_entry=to_text(base64.b64encode(b_module_data)),
         powershell_modules=dict(),
         module_args=module_args,
         actions=['exec'],
         environment=environment
     )
 
-    exec_manifest['exec'] = base64.b64encode(to_bytes(leaf_exec))
+    exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
 
     if task.async > 0:
         exec_manifest["actions"].insert(0, 'async_watchdog')
-        exec_manifest["async_watchdog"] = base64.b64encode(to_bytes(async_watchdog))
+        exec_manifest["async_watchdog"] = to_text(base64.b64encode(to_bytes(async_watchdog)))
         exec_manifest["actions"].insert(0, 'async_wrapper')
-        exec_manifest["async_wrapper"] = base64.b64encode(to_bytes(async_wrapper))
+        exec_manifest["async_wrapper"] = to_text(base64.b64encode(to_bytes(async_wrapper)))
         exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
         exec_manifest["async_timeout_sec"] = task.async
 
@@ -844,7 +844,7 @@ def build_windows_module_payload(module_name, module_path, b_module_data, module
         exec_manifest["actions"].insert(0, 'become')
         exec_manifest["become_user"] = play_context.become_user
         exec_manifest["become_password"] = play_context.become_pass
-        exec_manifest["become"] = base64.b64encode(to_bytes(become_wrapper))
+        exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
     lines = b_module_data.split(b'\n')
     module_names = set()
@@ -858,8 +858,14 @@ def build_windows_module_payload(module_name, module_path, b_module_data, module
             # TODO: add #Requires checks for Ansible.ModuleUtils.X
 
     for m in module_names:
-        exec_manifest["powershell_modules"][m] = base64.b64encode(
-            to_bytes(_slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))))
+        m = to_text(m)
+        exec_manifest["powershell_modules"][m] = to_text(
+            base64.b64encode(
+                to_bytes(
+                    _slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))
+                )
+            )
+        )
 
     # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
     b_module_data = json.dumps(exec_manifest)

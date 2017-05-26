@@ -173,7 +173,7 @@ from datetime import datetime
 def nopad_b64(data):
     return base64.urlsafe_b64encode(data).decode('utf8').replace("=", "")
 
-def simple_get(module,url):
+def simple_get(module, url):
     resp, info = fetch_url(module, url, method='GET')
 
     result = None
@@ -458,7 +458,7 @@ class ACMEAccount(object):
             # ...and check if update is necessary
             do_update = False
             if 'contact' in result:
-                if cmp(contact,result['contact']) != 0:
+                if contact != result['contact']:
                     do_update = True
             elif len(contact) > 0:
                 do_update = True

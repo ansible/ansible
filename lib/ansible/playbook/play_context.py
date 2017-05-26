@@ -26,6 +26,7 @@ import pwd
 import random
 import re
 import string
+import sys
 
 from ansible.compat.six import iteritems, string_types
 from ansible.compat.six.moves import shlex_quote
@@ -34,6 +35,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+from ansible.utils.ssh_functions import check_for_controlpersist
 
 boolean = C.mk_boolean
 
@@ -239,6 +241,7 @@ class PlayContext(Base):
         if play:
             self.set_play(play)
 
+
     def set_play(self, play):
         '''
         Configures this connection information instance with data from
@@ -437,11 +440,9 @@ class PlayContext(Base):
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
 
-        # if the final connection type is local, reset the remote_user value
-        # to that of the currently logged in user, to ensure any become settings
-        # are obeyed correctly
-        # additionally, we need to do this check after final connection has been
-        # correctly set above ...
+        # if the final connection type is local, reset the remote_user value to that of the currently logged in user
+        # this ensures any become settings are obeyed correctly
+        # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
         if new_info.connection == 'local':
             new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
@@ -605,13 +606,34 @@ class PlayContext(Base):
                 if 'become' in prop:
                     continue
 
-                # perserves the user var for local connections
-                if self.connection == 'local' and 'remote_user' in prop:
-                    continue
-
                 var_val = getattr(self, prop)
                 for var_opt in var_list:
                     if var_opt not in variables and var_val is not None:
                         variables[var_opt] = var_val
             except AttributeError:
                 continue
+
+    def _get_attr_connection(self):
+        ''' connections are special, this takes care of responding correctly '''
+        conn_type = None
+        if self._attributes['connection'] == 'smart':
+            conn_type = 'ssh'
+            if sys.platform.startswith('darwin') and self.password:
+                # due to a current bug in sshpass on OSX, which can trigger
+                # a kernel panic even for non-privileged users, we revert to
+                # paramiko on that OS when a SSH password is specified
+                conn_type = "paramiko"
+            else:
+                # see if SSH can support ControlPersist if not use paramiko
+                if not check_for_controlpersist(self.ssh_executable):
+                    conn_type = "paramiko"
+
+        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
+        elif self._attributes['connection'] == 'persistent':
+            conn_type = 'paramiko'
+
+        if conn_type:
+            self.connection = conn_type
+
+        return self._attributes['connection']
+

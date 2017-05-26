@@ -201,3 +201,9 @@ class AnsibleModuleExit(Exception):
     ''' local module exit '''
     def __init__(self, result):
         self.result = result
+class AnsibleActionSkip(AnsibleRuntimeError):
+    ''' an action runtime skip'''
+    pass
+class AnsibleActionFail(AnsibleRuntimeError):
+    ''' an action runtime failure'''
+    pass

@@ -1262,7 +1262,7 @@ class Container(DockerBaseClass):
             restart_retries=restart_policy.get('MaximumRetryCount'),
             # Cannot test shm_size, as shm_size is not included in container inspection results.
             # shm_size=host_config.get('ShmSize'),
-            security_opts=host_config.get("SecuriytOpt"),
+            security_opts=host_config.get("SecurityOpt"),
             stop_signal=config.get("StopSignal"),
             tty=config.get('Tty'),
             expected_ulimits=host_config.get('Ulimits'),
@@ -1287,7 +1287,7 @@ class Container(DockerBaseClass):
                         self.log("comparing lists: %s" % key)
                         set_a = set(getattr(self.parameters, key))
                         set_b = set(value)
-                        match = (set_a <= set_b)
+                        match = (set_a == set_b)
                 elif isinstance(getattr(self.parameters, key), dict) and isinstance(value, dict):
                     # compare two dicts
                     self.log("comparing two dicts: %s" % key)
@@ -1504,7 +1504,10 @@ class Container(DockerBaseClass):
             if isinstance(container_port, int):
                 container_port = "%s/tcp" % container_port
             if len(config) == 1:
-                expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': ""}]
+                if isinstance(config[0], int):
+                    expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': config[0]}]
+                else:
+                    expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': ""}]
             elif isinstance(config[0], tuple):
                 expected_bound_ports[container_port] = []
                 for host_ip, host_port in config:

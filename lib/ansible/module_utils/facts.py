@@ -77,22 +77,24 @@ if platform.system() != 'SunOS':
 # steps do not exceed a time limit
 
 GATHER_TIMEOUT=None
+DEFAULT_GATHER_TIMEOUT = 10
 
 class TimeoutError(Exception):
     pass
 
 def timeout(seconds=None, error_message="Timer expired"):
 
-    if seconds is None:
-        seconds = globals().get('GATHER_TIMEOUT') or 10
-
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
 
         def wrapper(*args, **kwargs):
+            local_seconds = seconds  # Make local var as we modify this every time it's invoked
+            if local_seconds is None:
+                local_seconds = globals().get('GATHER_TIMEOUT') or DEFAULT_GATHER_TIMEOUT
+
             signal.signal(signal.SIGALRM, _handle_timeout)
-            signal.alarm(seconds)
+            signal.alarm(local_seconds)
             try:
                 result = func(*args, **kwargs)
             finally:
@@ -103,11 +105,11 @@ def timeout(seconds=None, error_message="Timer expired"):
 
     # If we were called as @timeout, then the first parameter will be the
     # function we are to wrap instead of the number of seconds.  Detect this
-    # and correct it by setting seconds to our default value and return the
+    # and correct it by setting seconds to our sentinel value and return the
     # inner decorator function manually wrapped around the function
     if callable(seconds):
         func = seconds
-        seconds = 10
+        seconds = None
         return decorator(func)
 
     # If we were called as @timeout([...]) then python itself will take
@@ -330,7 +332,7 @@ class Facts(object):
         else:
             self.facts['pkg_mgr'] = 'unknown'
             for pkg in Facts.PKG_MGRS:
-                if os.path.exists(pkg['path']):
+                if os.path.isfile(pkg['path']):
                     self.facts['pkg_mgr'] = pkg['name']
 
     def get_service_mgr_facts(self):
@@ -667,7 +669,7 @@ class Distribution(object):
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
-        'ClearLinux': 'Clear Linux Software for Intel Architecture',
+        'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
@@ -1562,6 +1564,7 @@ class SunOSHardware(Hardware):
     platform = 'SunOS'
 
     def populate(self):
+        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()

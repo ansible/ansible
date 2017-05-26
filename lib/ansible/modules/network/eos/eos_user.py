@@ -46,6 +46,7 @@ options:
       - The username to be configured on the remote Arista EOS
         device.  This argument accepts a stringv value and is mutually
         exclusive with the C(users) argument.
+        Please note that this option is not same as C(provider username).
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
@@ -107,11 +108,12 @@ EXAMPLES = """
     purge: yes
 
 - name: set multiple users to privilege level 15
-  users:
-    - username: netop
-    - username: netend
-  privilege: 15
-  state: present
+  eos_user:
+    users:
+      - username: netop
+      - username: netend
+    privilege: 15
+    state: present
 """
 
 RETURN = """

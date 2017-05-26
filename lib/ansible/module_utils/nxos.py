@@ -54,12 +54,28 @@ nxos_argument_spec = {
     'transport': dict(choices=['cli', 'nxapi'])
 }
 
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'transport': 'cli',
+    'timeout': 10
+}
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in nxos_argument_spec:
-        if key not in ['provider', 'transport'] and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+        if module._name == 'nxos_user':
+            if key not in ['password', 'provider', 'transport'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key not in ['provider', 'transport'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
 
     if provider:
         for param in ('password',):
@@ -240,7 +256,7 @@ class Nxapi:
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        timeout = self._module.params['timeout'] or 10
+        timeout = self._module.params['timeout']
 
         for req in requests:
             if self._nxapi_auth:

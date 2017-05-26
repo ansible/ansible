@@ -1,6 +1,29 @@
 Ansible Changes By Release
 ==========================
 
+## 2.3.1 "Ramble On" - TBD
+
+
+### Bugfixes
+* Fix default value of fetch module's validate_checksum to be True
+* Added fix for "meta: refresh_connection" not working with default 'smart' connection.
+* Fix template so that the --diff command line option works when the destination is a directory
+* Fix python3 bugs in pam_limits
+* Fix unbound error when using module deprecation as a single string
+* Several places in which error handling was broken due to bad conversions or just typos
+* Fix to user module for appending/setting groups on OpenBSD (flags were reversed)
+* assemble fix to use safer os.join.path, avoids charset issues
+* fixed issue with solaris facts and i18n
+* added python2.4 compatiblity fix to sysctl module
+* Fix comparison of exisiting container security opts in the docker_container module
+* fixed service module invocation of insserv on certain platforms
+* Fix traceback in os_user in an error case.
+* Fix docker container to restart a container when changing to fewer exposed ports
+* Fix tracebacks in docker_network
+* Fixes to detection of updated docker images
+* Handle detection of docker image changes when published ports is changed
+* Fix for docker_container restarting images when links list is empty.
+
 ## 2.3 "Ramble On" - 2017-04-12
 
 ### Major Changes

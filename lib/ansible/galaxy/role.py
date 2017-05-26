@@ -316,7 +316,7 @@ class GalaxyRole(object):
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
                             if member.isreg() or member.issym():
-                                parts = member.name.replace(archive_parent_dir, "").split(os.sep)
+                                parts = member.name.replace(archive_parent_dir, "", 1).split(os.sep)
                                 final_parts = []
                                 for part in parts:
                                     if part != '..' and '~' not in part and '$' not in part:

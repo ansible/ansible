@@ -1965,7 +1965,7 @@ class AnsibleModule(object):
                     else:
                        self.deprecate(d)
             else:
-                self.deprecate(d)
+                self.deprecate(kwargs['deprecations'])
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations
@@ -2024,7 +2024,7 @@ class AnsibleModule(object):
                                    (filename, algorithm, ', '.join(AVAILABLE_HASH_ALGORITHMS)))
 
         blocksize = 64 * 1024
-        infile = open(filename, 'rb')
+        infile = open(os.path.realpath(filename), 'rb')
         block = infile.read(blocksize)
         while block:
             digest_method.update(block)

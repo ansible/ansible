@@ -40,9 +40,6 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if result.get('skipped'):
-            return result
-
         source  = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
         dest    = self._task.args.get('dest', None)
@@ -273,6 +270,14 @@ class ActionModule(ActionBase):
                     # Continue to next iteration if raw is defined.
                     self._remove_tmp_path(tmp)
                     continue
+
+                # Fix for https://github.com/ansible/ansible-modules-core/issues/1568.
+                # If checksums match, and follow = True, find out if 'dest' is a link. If so,
+                # change it to point to the source of the link.
+                if follow:
+                    dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=False)
+                    if dest_status_nofollow['islnk'] and 'lnk_source' in dest_status_nofollow.keys():
+                        dest = dest_status_nofollow['lnk_source']
 
                 # Build temporary module_args.
                 new_module_args = self._task.args.copy()

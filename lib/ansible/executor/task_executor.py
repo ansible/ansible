@@ -20,18 +20,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import sys
 import time
 import traceback
 
 from ansible.compat.six import iteritems, string_types, binary_type
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
+from ansible.plugins.connection import ConnectionBase
 from ansible.template import Templar
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
@@ -471,16 +471,17 @@ class TaskExecutor:
         if not self._connection or not getattr(self._connection, 'connected', False) or self._play_context.remote_addr != self._connection._play_context.remote_addr:
             self._connection = self._get_connection(variables=variables, templar=templar)
             hostvars = variables.get('hostvars', None)
-            if hostvars:
+            # only template the vars if the connection actually implements set_host_overrides
+            # NB: this is expensive, and should be removed once connection-specific vars are being handled by play_context
+            sho_impl = getattr(type(self._connection), 'set_host_overrides', None)
+            if hostvars and sho_impl and sho_impl != ConnectionBase.set_host_overrides:
                 try:
-                    target_hostvars = hostvars.raw_get(self._host.name)
+                    target_hostvars = hostvars.get(self._host.name)
                 except:
                     # FIXME: this should catch the j2undefined error here
                     #        specifically instead of all exceptions
                     target_hostvars = dict()
-            else:
-                target_hostvars = dict()
-            self._connection.set_host_overrides(host=self._host, hostvars=target_hostvars)
+                self._connection.set_host_overrides(host=self._host, hostvars=target_hostvars)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
@@ -519,6 +520,10 @@ class TaskExecutor:
             display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
+            except AnsibleActionSkip as e:
+                return dict(skipped=True, msg=to_text(e))
+            except AnsibleActionFail as e:
+                return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
             display.debug("handler run complete")
@@ -532,7 +537,7 @@ class TaskExecutor:
                 vars_copy[self._task.register] = wrap_var(result.copy())
 
             if self._task.async > 0:
-                if self._task.poll > 0 and not result.get('skipped'):
+                if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
                     #FIXME callback 'v2_runner_on_async_poll' here
 
@@ -704,27 +709,12 @@ class TaskExecutor:
                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
-        conn_type = self._play_context.connection
-        if conn_type == 'smart':
-            conn_type = 'ssh'
-            if sys.platform.startswith('darwin') and self._play_context.password:
-                # due to a current bug in sshpass on OSX, which can trigger
-                # a kernel panic even for non-privileged users, we revert to
-                # paramiko on that OS when a SSH password is specified
-                conn_type = "paramiko"
-            else:
-                # see if SSH can support ControlPersist if not use paramiko
-                if not check_for_controlpersist(self._play_context.ssh_executable):
-                    conn_type = "paramiko"
-
-        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
-        if conn_type == 'persistent':
-            self._play_context.connection = 'paramiko'
-
-        # if using persistent connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
+        # if using persistent paramiko connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
         # then we use the persistent connection plugion. Otherwise load the requested connection plugin
-        elif C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
+        if C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
             conn_type == 'persistent'
+        else:
+            conn_type = self._play_context.connection
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
 

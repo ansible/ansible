@@ -885,7 +885,7 @@ def parse_check_update(check_update_output):
     # ceph.x86_64                               1:11.2.0-0.el7                    ceph
 
     # preprocess string and filter out empty lines so the regex below works
-    out = re.sub('\n[^\w]\W+(.*)', ' \1',
+    out = re.sub(r'\n[^\w]\W+(.*)', r' \1',
                  check_update_output)
 
     available_updates = out.split('\n')

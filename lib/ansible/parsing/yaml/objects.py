@@ -111,7 +111,7 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleUnicode):
         self._ciphertext = value
 
     def __repr__(self):
-        return 'AnsibleVaultEncryptedUnicode(%s)' % self._ciphertext
+        return repr(self.data)
 
     # Compare a regular str/text_type with the decrypted hypertext
     def __eq__(self, other):

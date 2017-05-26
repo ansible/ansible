@@ -139,7 +139,7 @@ def map_params_to_obj(module):
     for key, value in iteritems(obj):
         # validate the param value (if validator func exists)
         validator = globals().get('validate_%s' % key)
-        if all((value, validator)):
+        if callable(validator):
             validator(value, module)
 
     return obj

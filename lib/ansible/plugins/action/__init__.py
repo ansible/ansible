@@ -32,7 +32,7 @@ from abc import ABCMeta, abstractmethod
 from ansible import constants as C
 from ansible.compat.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.compat.six.moves import shlex_quote
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
 from ansible.executor.module_common import modify_module, build_windows_module_payload
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.json_utils import _filter_non_json_lines
@@ -90,17 +90,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         * Module parameters.  These are stored in self._task.args
         """
 
-        result = {'skipped': True}
+        result = {}
 
         if self._task.async and not self._supports_async:
-            result['msg'] = 'async is not supported for this task.'
+            raise AnsibleActionFail('async is not supported for this task.')
         elif self._play_context.check_mode and not self._supports_check_mode:
-            result['msg'] = 'check mode is not supported for this task.'
+            raise AnsibleActionSkip('check mode is not supported for this task.')
         elif self._task.async and self._play_context.check_mode:
-            result['msg'] = 'check mode and async cannot be used on same task.'
-        else:
-            # we run!
-            del result['skipped']
+            raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         return result
 

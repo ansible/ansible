@@ -194,8 +194,7 @@ class TaskParameters(DockerBaseClass):
 
 
 def container_names_in_network(network):
-    return [c['Name'] for c in network['Containers'].values()]
-
+    return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
 
 class DockerNetworkManager(object):
 
@@ -247,7 +246,7 @@ class DockerNetworkManager(object):
                 differences.append('driver_options')
             else:
                 for key, value in self.parameters.driver_options.items():
-                    if not net['Options'].get(key) or value != net['Options'][key]:
+                    if not (key in net['Options']) or value != net['Options'][key]:
                         different = True
                         differences.append('driver_options.%s' % key)
         if self.parameters.ipam_driver:
@@ -286,10 +285,10 @@ class DockerNetworkManager(object):
 
             if HAS_DOCKER_PY_2:
                 ipam_config = IPAMConfig(driver=self.parameters.ipam_driver,
-                                                   pool_configs=ipam_pools)
+                                         pool_configs=ipam_pools)
             else:
                 ipam_config = utils.create_ipam_config(driver=self.parameters.ipam_driver,
-                                                   pool_configs=ipam_pools)
+                                                       pool_configs=ipam_pools)
 
             if not self.check_mode:
                 resp = self.client.create_network(self.parameters.network_name,
@@ -321,13 +320,18 @@ class DockerNetworkManager(object):
                 self.results['changed'] = True
 
     def disconnect_missing(self):
-        for c in self.existing_network['Containers'].values():
+        containers = self.existing_network['Containers']
+        if not containers:
+            return
+        for c in containers.values():
             name = c['Name']
             if name not in self.parameters.connected:
                 self.disconnect_container(name)
 
     def disconnect_all_containers(self):
         containers = self.client.inspect_network(self.parameters.network_name)['Containers']
+        if not containers:
+            return
         for cont in containers.values():
             self.disconnect_container(cont['Name'])
 
@@ -358,7 +362,7 @@ class DockerNetworkManager(object):
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
 
-        self.results['ansible_facts'] = {u'ansible_docker_network': self.get_existing_network()}
+        self.results['ansible_facts'] = {u'docker_network': self.get_existing_network()}
 
     def absent(self):
         self.remove_network()
