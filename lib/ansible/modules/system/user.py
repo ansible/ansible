@@ -747,7 +747,7 @@ class User(object):
             if self.skeleton is None:
                 f = open('/etc/default/useradd', 'r')
                 if 'SKELE' in line and '#' not in line.split()[0]:
-                   self.skeleton = line.split('=')[1]
+                    self.skeleton = line.split('=')[1]
                 f.close()
         except:
             pass
