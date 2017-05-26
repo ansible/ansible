@@ -778,15 +778,18 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
+        module = self._task.action
+        module_path = self._shared_loader_obj.module_loader.find_plugin(self._task.action)
         module_prefix = self._task.action.split('_')[0]
-        metadata = self._shared_loader_obj.module_loader._load_module_metadata(self._task.action,
-                                                                               self._shared_loader_obj.module_loader.find_plugin(self._task.action))
+
+        if module_path.endswith('.py'):
+            metadata = self._shared_loader_obj.module_loader._load_module_metadata(module, module_path)
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if metadata and 'action_handler' in metadata:
             handler_name = metadata['action_handler']
-        elif self._task.action in self._shared_loader_obj.action_loader:
-            handler_name = self._task.action
+        elif module in self._shared_loader_obj.action_loader:
+            handler_name = module
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
             handler_name = module_prefix
         else:
