@@ -102,34 +102,34 @@ EXAMPLES = '''
 
   - name: "Config trap buffer"
     ce_info_center_trap:
-      state:  present
-      trap_buff_enable:  true
-      trap_buff_size:  768
+      state: present
+      trap_buff_enable: true
+      trap_buff_size: 768
       provider: "{{ cli }}"
 
   - name: "Undo trap buffer"
     ce_info_center_trap:
-      state:  absent
-      trap_buff_enable:  true
-      trap_buff_size:  768
+      state: absent
+      trap_buff_enable: true
+      trap_buff_size: 768
       provider: "{{ cli }}"
 
   - name: "Config trap module log level"
     ce_info_center_trap:
-      state:  present
-      module_name:  aaa
-      channel_id:  1
-      trap_enable:  true
-      trap_level:  error
+      state: present
+      module_name: aaa
+      channel_id: 1
+      trap_enable: true
+      trap_level: error
       provider: "{{ cli }}"
 
   - name: "Undo trap module log level"
     ce_info_center_trap:
-      state:  absent
-      module_name:  aaa
-      channel_id:  1
-      trap_enable:  true
-      trap_level:  error
+      state: absent
+      module_name: aaa
+      channel_id: 1
+      trap_enable: true
+      trap_level: error
       provider: "{{ cli }}"
 '''
 

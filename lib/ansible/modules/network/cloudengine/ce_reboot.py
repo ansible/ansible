@@ -33,7 +33,6 @@ options:
     confirm:
         description:
             - Safeguard boolean. Set to true if you're sure you want to reboot.
-        required: true
         type: bool
         default: false
     save_config:

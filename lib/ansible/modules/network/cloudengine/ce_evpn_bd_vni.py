@@ -57,18 +57,18 @@ options:
         description:
             - Configures a route distinguisher (RD) for a BD EVPN instance.
               The format of an RD can be as follows
-               1) 2-byte AS number:4-byte user-defined number, for example, 1:3. An AS number is an integer ranging from
-               0 to 65535, and a user-defined number is an integer ranging from 0 to 4294967295. The AS and user-defined
+            - 1) 2-byte AS number:4-byte user-defined number, for example, 1:3. An AS number is an integer ranging from
+              0 to 65535, and a user-defined number is an integer ranging from 0 to 4294967295. The AS and user-defined
                numbers cannot be both 0s. This means that an RD cannot be 0:0.
-               2) Integral 4-byte AS number:2-byte user-defined number, for example, 65537:3. An AS number is an integer
-               ranging from 65536 to 4294967295, and a user-defined number is an integer ranging from 0 to 65535.
-               3) 4-byte AS number in dotted notation:2-byte user-defined number, for example, 0.0:3 or 0.1:0. A 4-byte
-               AS number in dotted notation is in the format of x.y, where x and y are integers ranging from 0 to 65535.
-               4) A user-defined number is an integer ranging from 0 to 65535. The AS and user-defined numbers cannot be
-               both 0s. This means that an RD cannot be 0.0:0.
-               5) 32-bit IP address:2-byte user-defined number. For example, 192.168.122.15:1. An IP address ranges from
-               0.0.0.0 to 255.255.255.255, and a user-defined number is an integer ranging from 0 to 65535.
-               6) 'auto' specifies the RD that is automatically generated.
+            - 2) Integral 4-byte AS number:2-byte user-defined number, for example, 65537:3. An AS number is an integer
+              ranging from 65536 to 4294967295, and a user-defined number is an integer ranging from 0 to 65535.
+            - 3) 4-byte AS number in dotted notation:2-byte user-defined number, for example, 0.0:3 or 0.1:0. A 4-byte
+              AS number in dotted notation is in the format of x.y, where x and y are integers ranging from 0 to 65535.
+            - 4) A user-defined number is an integer ranging from 0 to 65535. The AS and user-defined numbers cannot be
+              both 0s. This means that an RD cannot be 0.0:0.
+            - 5) 32-bit IP address:2-byte user-defined number. For example, 192.168.122.15:1. An IP address ranges from
+              0.0.0.0 to 255.255.255.255, and a user-defined number is an integer ranging from 0 to 65535.
+            - 6) 'auto' specifies the RD that is automatically generated.
         required: false
         default: null
     vpn_target_both:

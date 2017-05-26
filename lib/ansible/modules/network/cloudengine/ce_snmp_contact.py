@@ -61,14 +61,14 @@ EXAMPLES = '''
 
   - name: "Config SNMP contact"
     ce_snmp_contact:
-      state:  present
-      contact:  call Operator at 010-99999999
+      state: present
+      contact: call Operator at 010-99999999
       provider: "{{ cli }}"
 
   - name: "Undo SNMP contact"
     ce_snmp_contact:
-      state:  absent
-      contact:  call Operator at 010-99999999
+      state: absent
+      contact: call Operator at 010-99999999
       provider: "{{ cli }}"
 '''
 

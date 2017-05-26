@@ -120,19 +120,19 @@ EXAMPLES = '''
 
   - name: "Config SNMP version"
     ce_snmp_target_host:
-      state:  present
-      version:  v2cv3
+      state: present
+      version: v2cv3
       provider: "{{ cli }}"
 
   - name: "Config SNMP target host"
     ce_snmp_target_host:
-      state:  present
-      host_name:  test1
-      address:  1.1.1.1
-      notify_type:  trap
-      vpn_name:  js
-      security_model:  v2c
-      security_name:  wdz
+      state: present
+      host_name: test1
+      address: 1.1.1.1
+      notify_type: trap
+      vpn_name: js
+      security_model: v2c
+      security_name: wdz
       provider: "{{ cli }}"
 '''
 
