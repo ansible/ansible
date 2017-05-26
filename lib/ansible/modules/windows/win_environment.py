@@ -95,24 +95,24 @@ EXAMPLES = r'''
 
 RETURN = r'''
 before_value:
-  decription:
+  description:
   - the value of the environment key before a change, this is null if it didn't
     exist
   returned: always
   type: string
   sample: C:\Windows\System32
 level:
-  decription: the level set when calling the module
+  description: the level set when calling the module
   returned: always
   type: string
   sample: machine
 name:
-  decription: the name of the environment key the module checked
+  description: the name of the environment key the module checked
   returned: always
   type: string
   sample: JAVA_HOME
 value:
-  decription: the value the environment key has been set to
+  description: the value the environment key has been set to
   returned: always
   type: string
   sample: C:\Program Files\jdk1.8
