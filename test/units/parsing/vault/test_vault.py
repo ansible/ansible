@@ -133,11 +133,14 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
         self.assertTrue(vault.is_encrypted_file(b_data_fo, start_pos=4, count=vault_length))
 
 
+# TODO: mv to plugin tests
 class TestVaultCipherAes256(unittest.TestCase):
     def setUp(self):
 #        self.vault_cipher_class = cipher_util.get_encrypt_cipher('AES256')
-        cipher_loader.aliases['AES256'] = 'pycrypto_aes256'
-        self.vault_cipher_class = cipher_loader.get('AES256', class_only=True)
+        cipher_mapping = vault.get_cipher_mapping()
+        # self.vault_cipher_class = cipher_loader.get('AES256', class_only=True)
+        # note this doesnt check whitelist etc
+        self.vault_cipher_class = cipher_mapping['AES256']
         self.vault_cipher = self.vault_cipher_class()
 
     def test(self):

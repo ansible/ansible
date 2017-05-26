@@ -49,6 +49,7 @@ class TestVaultEditor(unittest.TestCase):
 
     def setUp(self):
         self._test_dir = None
+        self.cipher_mapping = vault.get_cipher_mapping()
 
     def tearDown(self):
         if self._test_dir:
@@ -399,7 +400,7 @@ class TestVaultEditor(unittest.TestCase):
 
     def test_decrypt_1_0(self):
         # Skip testing decrypting 1.0 files if we don't have access to AES, KDF or Counter.
-        check_decrypt_prereqs('AES')
+        #check_decrypt_prereqs('AES')
 
         v10_file = tempfile.NamedTemporaryFile(delete=False)
         with v10_file as f:
@@ -426,7 +427,7 @@ class TestVaultEditor(unittest.TestCase):
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
     def test_decrypt_1_1(self):
-        check_decrypt_prereqs('AES256')
+        #check_decrypt_prereqs('AES256')
 
         v11_file = tempfile.NamedTemporaryFile(delete=False)
         with v11_file as f:
@@ -452,8 +453,8 @@ class TestVaultEditor(unittest.TestCase):
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
     def test_rekey_migration(self):
-        check_decrypt_prereqs('AES')
-        check_encrypt_prereqs('AES256')
+        #check_decrypt_prereqs('AES')
+        #check_encrypt_prereqs('AES256')
 
         v10_file = tempfile.NamedTemporaryFile(delete=False)
         with v10_file as f:

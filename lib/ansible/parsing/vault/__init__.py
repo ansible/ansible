@@ -91,6 +91,23 @@ def get_impl_score(cph_class):
     return score
 
 
+def get_cipher_mapping():
+    cipher_class_gen = cipher_loader.all(class_only=True)
+
+    # map cipher_name -> list of classes that provide it
+    mapping = defaultdict(list)
+    for cc in cipher_class_gen:
+        mapping[cc.name].append(cc)
+
+    cipher_mapping = {}
+
+    # set our prefered cipher to be the class with the highest score (last in the list when sorted via get_score())
+    for c_name, c_classes in mapping.items():
+        cipher_mapping[c_name] = sorted(c_classes, key=get_impl_score).pop()
+
+    return cipher_mapping
+
+
 class VaultLib:
 
     # The prereqs can be different for each cipher impl
@@ -103,23 +120,8 @@ class VaultLib:
         self.default_cipher_name = 'AES256'
         self.b_version = b'1.1'
 
-        cipher_class_gen = cipher_loader.all(class_only=True)
-        cipher_classes = list(cipher_class_gen)
-
-        # map cipher_name -> list of classes that provide it
-        mapping = defaultdict(list)
-        for cc in cipher_classes:
-            mapping[cc.name].append(cc)
-
-        self.cipher_mapping = {}
-
-        # set our prefered cipher to be the class with the highest score (last in the list when sorted via get_score())
-        for c_name, c_classes in mapping.items():
-            self.cipher_mapping[c_name] = sorted(c_classes, key=get_impl_score).pop()
-
-        p_dict = dict(self.cipher_mapping)
-        import pprint
-        pprint.pprint(p_dict)
+        # TODO: could do this later? lazily?
+        self.cipher_mapping = get_cipher_mapping()
 
     @staticmethod
     def is_encrypted(data):
