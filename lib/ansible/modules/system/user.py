@@ -636,7 +636,7 @@ class User(object):
                 if cmd[0] is not None:
                     cmd.append('-t')
                     cmd.append('ssh_home_t')
-                    cmd.append(ssh_dir) 
+                    cmd.append(ssh_dir)
                     self.execute_command(cmd)
             except OSError:
                 e = get_exception()
@@ -734,23 +734,23 @@ class User(object):
             self.module.exit_json(failed=True, msg="%s" % e)
 
     def parse_defaults(self):
-      try:
-        f = open('/etc/login.defs', 'r')
-        for line in f:
-            if 'UMASK' in line and '#' not in line.split()[0]:
-                maskvalue=line.split()[1]
-                self.newumask = int(maskvalue, 8)
-        f.close()
-      except:
-        pass
-      try:
-        if self.skeleton is None:
-            f = open('/etc/default/useradd', 'r')
-            if 'SKELE' in line and '#' not in line.split()[0]:
-               self.skeleton = line.split('=')[1]
+        try:
+            f = open('/etc/login.defs', 'r')
+            for line in f:
+                if 'UMASK' in line and '#' not in line.split()[0]:
+                    maskvalue=line.split()[1]
+                    self.newumask = int(maskvalue, 8)
             f.close()
-      except:
-        pass
+        except:
+            pass
+        try:
+            if self.skeleton is None:
+                f = open('/etc/default/useradd', 'r')
+                if 'SKELE' in line and '#' not in line.split()[0]:
+                   self.skeleton = line.split('=')[1]
+                f.close()
+        except:
+            pass
 
     def chmod_homedir(self, path):
         if self.newumask is None:
@@ -758,7 +758,7 @@ class User(object):
         if self.skeleton is not None:
             skeleumask = os.stat(self.skeleton).st_mode
         else:
-            skeleumask = os.stat('/etc/skele').st_mode
+            skeleumask = os.stat('/etc/skel').st_mode
         os.chmod(path, skeleumask & ~self.newumask & 0o777)
 
 # ===========================================
