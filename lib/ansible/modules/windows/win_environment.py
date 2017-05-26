@@ -100,20 +100,20 @@ before_value:
     exist
   returned: always
   type: string
-  smaple: C:\Windows\System32
+  sample: C:\Windows\System32
 level:
   decription: the level set when calling the module
   returned: always
   type: string
-  smaple: machine
+  sample: machine
 name:
   decription: the name of the environment key the module checked
   returned: always
   type: string
-  smaple: 
+  sample: JAVA_HOME
 value:
   decription: the value the environment key has been set to
   returned: always
   type: string
-  smaple: %SystemRoot%\System32
+  sample: C:\Program Files\jdk1.8
 '''
