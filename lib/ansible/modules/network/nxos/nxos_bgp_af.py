@@ -375,6 +375,8 @@ def get_value(arg, config, module):
     elif command == 'distance':
         distance_re = r'.*distance\s(?P<d_ebgp>\w+)\s(?P<d_ibgp>\w+)\s(?P<d_local>\w+)'
         match_distance = re.match(distance_re, config, re.DOTALL)
+
+        value = ''
         if match_distance:
             distance_group = match_distance.groupdict()
 
@@ -386,8 +388,8 @@ def get_value(arg, config, module):
                 value = distance_group['d_local']
 
     elif command.split()[0] == 'dampening':
+        value = ''
         if arg == 'dampen_igp_metric' or arg == 'dampening_routemap':
-            value = ''
             if command in config:
                 value = has_command_val.group('value')
         else:
@@ -682,7 +684,7 @@ def state_present(module, existing, proposed, candidate):
             candidate.add(commands, parents=parents)
 
 
-def state_absent(module, existing, proposed, candidate):
+def state_absent(module, candidate):
     commands = []
     parents = ["router bgp {0}".format(module.params['asn'])]
     if module.params['vrf'] != 'default':
@@ -771,12 +773,10 @@ def main():
     proposed_args = dict((k, v) for k, v in module.params.items()
                          if v is not None and k in args)
 
-    if proposed_args.get('networks'):
-        if proposed_args['networks'][0] == 'default':
-            proposed_args['networks'] = 'default'
-    if proposed_args.get('inject_map'):
-        if proposed_args['inject_map'][0] == 'default':
-            proposed_args['inject_map'] = 'default'
+    for arg in ['networks', 'inject_map']:
+        if proposed_args.get(arg):
+            if proposed_args[arg][0] == 'default':
+                proposed_args[arg] = 'default'
 
     proposed = {}
     for key, value in proposed_args.items():
@@ -790,7 +790,7 @@ def main():
     if state == 'present':
         state_present(module, existing, proposed, candidate)
     elif state == 'absent' and existing:
-        state_absent(module, existing, proposed, candidate)
+        state_absent(module, candidate)
 
     if candidate:
         candidate = candidate.items_text()
