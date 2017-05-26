@@ -6,7 +6,7 @@
   include: test_site.yml
 
 - name: Test 'mod'
-  include: {{ item }}
+  include: "{{ item }}"
   with_items:
     - case_mod.yml
     - case_mod_enable_nonexistent.yml
