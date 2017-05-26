@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import defaultdict
 import os
 import shlex
 import shutil
@@ -31,7 +32,7 @@ from ansible.errors import AnsibleError, AnsibleVaultError
 from ansible.parsing.vault import envelope
 
 from ansible.plugins import cipher_loader
-from ansible.parsing.vault.cipher_util import CIPHER_MAPPING, CIPHER_ENCRYPT_WHITELIST, get_decrypt_cipher, get_encrypt_cipher
+from ansible.parsing.vault.cipher_util import CIPHER_ENCRYPT_WHITELIST, get_decrypt_cipher, get_encrypt_cipher
 
 from ansible.module_utils._text import to_bytes
 
@@ -73,11 +74,28 @@ def is_encrypted_file(file_obj, start_pos=0, count=-1):
         file_obj.seek(current_position)
 
 
+# Which is better is a judgement call, and here is how we rank our crypto children
+cipher_impl_preference = {'cryptography': 100,
+                          'PyCrypto': 50,
+                          'other': 10,
+                          'no_impl': 0,
+                          "Larry's Original Crypto Shack and Shoe Repair": -1}
+
+
+def get_impl_score(cph_class):
+    # if plugin doesnt provide implementation attr, then it gets 0 points. But
+    # we can still rank something lower...
+    impl = getattr(cph_class, 'implementation', 'no_impl')
+    # and default to 0 for unknown impl as well
+    score = cipher_impl_preference.get(impl, 0)
+    return score
+
+
 class VaultLib:
 
     # The prereqs can be different for each cipher impl
     def _check_prereqs(self):
-        default_cipher_class = CIPHER_MAPPING[self.default_cipher_name]
+        default_cipher_class = self.cipher_mapping[self.default_cipher_name]
         return default_cipher_class.check_prereqs()
 
     def __init__(self, b_password):
@@ -85,8 +103,23 @@ class VaultLib:
         self.default_cipher_name = 'AES256'
         self.b_version = b'1.1'
 
-        cipher_class = cipher_loader.get('AES256', class_only=True)
-        print('CIPHER_CLASS: %s' % cipher_class)
+        cipher_class_gen = cipher_loader.all(class_only=True)
+        cipher_classes = list(cipher_class_gen)
+
+        # map cipher_name -> list of classes that provide it
+        mapping = defaultdict(list)
+        for cc in cipher_classes:
+            mapping[cc.name].append(cc)
+
+        self.cipher_mapping = {}
+
+        # set our prefered cipher to be the class with the highest score (last in the list when sorted via get_score())
+        for c_name, c_classes in mapping.items():
+            self.cipher_mapping[c_name] = sorted(c_classes, key=get_impl_score).pop()
+
+        p_dict = dict(self.cipher_mapping)
+        import pprint
+        pprint.pprint(p_dict)
 
     @staticmethod
     def is_encrypted(data):
@@ -126,7 +159,7 @@ class VaultLib:
             raise AnsibleVaultError("input is already encrypted")
 
         # use the default cipher
-        cipher_class = get_encrypt_cipher(self.default_cipher_name)
+        cipher_class = get_encrypt_cipher(self.default_cipher_name, self.cipher_mapping)
         cipher = cipher_class()
 
         # encrypt data
@@ -162,7 +195,7 @@ class VaultLib:
 
     def decrypt_ciphertext(self, b_ciphertext, cipher_name, b_version):
 
-        cipher_class = get_decrypt_cipher(cipher_name)
+        cipher_class = get_decrypt_cipher(cipher_name, self.cipher_mapping)
         cipher = cipher_class()
 
         # try to unencrypt vaulttext

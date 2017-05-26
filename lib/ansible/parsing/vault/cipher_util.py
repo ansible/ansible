@@ -70,28 +70,28 @@ if VaultAES:
     CIPHER_MAPPING[u'AES'] = VaultAES
 
 
-def get_decrypt_cipher(cipher_name):
+def get_decrypt_cipher(cipher_name, cipher_mapping):
     cipher_class = None
     if cipher_name not in CIPHER_DECRYPT_WHITELIST:
         msg = "{0} is not a valid decryption cipher_name. The valid names are: {1}".format(cipher_name,
                                                                                            ','.join(CIPHER_DECRYPT_WHITELIST))
         raise AnsibleVaultError(msg)
 
-    cipher_class = CIPHER_MAPPING.get(cipher_name, None)
+    cipher_class = cipher_mapping.get(cipher_name, None)
     if not cipher_class:
         raise AnsibleVaultError("{0} decryption cipher could not be found".format(cipher_name))
 
     return cipher_class
 
 
-def get_encrypt_cipher(cipher_name):
+def get_encrypt_cipher(cipher_name, cipher_mapping):
     cipher_class = None
     if cipher_name not in CIPHER_ENCRYPT_WHITELIST:
         msg = "{0} is not a valid encryption cipher_name. The valid names are: {1}".format(cipher_name,
                                                                                            ','.join(CIPHER_ENCRYPT_WHITELIST))
         raise AnsibleVaultError(msg)
 
-    cipher_class = CIPHER_MAPPING.get(cipher_name, None)
+    cipher_class = cipher_mapping.get(cipher_name, None)
     if not cipher_class:
         raise AnsibleVaultError("{0} encryption cipher could not be found".format(cipher_name))
 

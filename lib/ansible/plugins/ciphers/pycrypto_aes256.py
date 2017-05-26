@@ -111,7 +111,7 @@ class VaultCipher(VaultCipherBase):
     Vault implementation using AES-CTR with an HMAC-SHA256 authentication code.
     Keys are derived using PBKDF2
     """
-
+    implementation = "PyCrypto"
     name = 'AES256'
     # http://www.daemonology.net/blog/2009-06-11-cryptographic-right-answers.html
 

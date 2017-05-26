@@ -27,6 +27,8 @@ except ImportError:
 # TODO: vault_envelope to plugin
 # TODO: decide where envelope starts/stops
 class VaultCipherBase:
+    implementation = None
+
     # TODO: add a 'cipher_options' arg for cipher specific info?
     def encrypt(self, b_plaintext, b_password):
         # return b_ciphertext (as bytes) (not the entire envelope, but the encrypted ciphertext and signatures/hmacs/salts/etc

@@ -338,13 +338,10 @@ class PluginLoader:
                 module = imp.load_source(name, path, module_file)
         return module
 
-    def get(self, name, *args, **kwargs):
-        ''' instantiates a plugin of the given name using arguments '''
-
+    def _get(self, name, *args, **kwargs):
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
-        if name in self.aliases:
-            name = self.aliases[name]
+
         path = self.find_plugin(name)
         if path is None:
             return None
@@ -383,6 +380,22 @@ class PluginLoader:
         setattr(obj, '_load_name', name)
         return obj
 
+    def get(self, name, *args, **kwargs):
+        ''' instantiates a plugin of the given name using arguments '''
+
+        if name in self.aliases:
+            name = self.aliases[name]
+
+        alt_names = kwargs.pop('alt_names', [name])
+
+        for alt_name in alt_names:
+            print('alt_name: %s name: %s' % (alt_name, name))
+            plugin = self._get(alt_name, *args, **kwargs)
+            if plugin:
+                return plugin
+
+        return None
+
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
         msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
 
@@ -415,8 +428,12 @@ class PluginLoader:
                 continue
 
             if path not in self._module_cache:
-                self._module_cache[path] = self._load_module_source(name, path)
-                found_in_cache = False
+                try:
+                    self._module_cache[path] = self._load_module_source(name, path)
+                    found_in_cache = False
+                except ImportError as e:
+                    display.warning("Skipping plugin (%s) as it failed to import: %s" % (path, to_text(e)))
+                    continue
 
             try:
                 obj = getattr(self._module_cache[path], self.class_name)
