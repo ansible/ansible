@@ -28,7 +28,7 @@ import random
 from subprocess import call
 
 from ansible.errors import AnsibleError, AnsibleVaultError
-from ansible.parsing.vault.ciphers.loader import CIPHER_MAPPING, CIPHER_ENCRYPT_WHITELIST, get_decrypt_cipher, get_encrypt_cipher
+from ansible.parsing.vault.ciphers.cipher import CIPHER_MAPPING, CIPHER_ENCRYPT_WHITELIST, get_decrypt_cipher, get_encrypt_cipher
 from ansible.parsing.vault import envelope
 
 from ansible.module_utils._text import to_bytes
