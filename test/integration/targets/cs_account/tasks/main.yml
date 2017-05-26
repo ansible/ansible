@@ -28,6 +28,23 @@
     - acc|failed
     - 'acc.msg == "missing required arguments: email,username,password,first_name,last_name"'
 
+- name: test create user account in check mode
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    username: "{{ cs_resource_prefix }}_username"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    network_domain: "example.com"
+  register: acc
+  check_mode: true
+- name: verify results of create account in check mode
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+
 - name: test create user account
   cs_account:
     name: "{{ cs_resource_prefix }}_user"
@@ -70,6 +87,23 @@
     - acc.state == "enabled"
     - acc.domain == "ROOT"
 
+- name: test lock user account in check mode
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    state: locked
+  register: acc
+  check_mode: true
+- name: verify results of lock user account in check mode
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "example.com"
+    - acc.account_type == "user"
+    - acc.state == "enabled"
+    - acc.domain == "ROOT"
+
 - name: test lock user account
   cs_account:
     name: "{{ cs_resource_prefix }}_user"
@@ -96,6 +130,23 @@
     that:
     - acc|success
     - not acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "example.com"
+    - acc.account_type == "user"
+    - acc.state == "locked"
+    - acc.domain == "ROOT"
+
+- name: test disable user account in check mode
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    state: disabled
+  register: acc
+  check_mode: true
+- name: verify results of disable user account in check mode
+  assert:
+    that:
+    - acc|success
+    - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
     - acc.network_domain == "example.com"
     - acc.account_type == "user"
@@ -134,6 +185,23 @@
     - acc.state == "disabled"
     - acc.domain == "ROOT"
 
+- name: test lock disabled user account in check mode
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    state: locked
+  register: acc
+  check_mode: true
+- name: verify results of lock disabled user account in check mode
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "example.com"
+    - acc.account_type == "user"
+    - acc.state == "disabled"
+    - acc.domain == "ROOT"
+
 - name: test lock disabled user account
   cs_account:
     name: "{{ cs_resource_prefix }}_user"
@@ -166,6 +234,23 @@
     - acc.state == "locked"
     - acc.domain == "ROOT"
 
+- name: test enable user account in check mode
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    state: enabled
+  register: acc
+  check_mode: true
+- name: verify results of enable user account in check mode
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "example.com"
+    - acc.account_type == "user"
+    - acc.state == "locked"
+    - acc.domain == "ROOT"
+
 - name: test enable user account
   cs_account:
     name: "{{ cs_resource_prefix }}_user"
@@ -192,6 +277,23 @@
     that:
     - acc|success
     - not acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "example.com"
+    - acc.account_type == "user"
+    - acc.state == "enabled"
+    - acc.domain == "ROOT"
+
+- name: test remove user account in check mode
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: acc
+  check_mode: true
+- name: verify results of remove user account in check mode
+  assert:
+    that:
+    - acc|success
+    - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
     - acc.network_domain == "example.com"
     - acc.account_type == "user"

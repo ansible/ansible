@@ -5,7 +5,6 @@
 - name: setup cleanup
   cs_sshkeypair: name=second-sshkey state=absent
 
-
 - name: test fail on missing name
   action: cs_sshkeypair
   ignore_errors: true
@@ -15,6 +14,17 @@
     that:
     - sshkey|failed
     - "sshkey.msg == 'missing required arguments: name'"
+
+- name: test ssh key creation in check mode
+  cs_sshkeypair:
+    name: "first-sshkey"
+  register: sshkey
+  check_mode: true
+- name: verify results of ssh key creation in check mode
+  assert:
+    that:
+    - sshkey|success
+    - sshkey|changed
 
 - name: test ssh key creation
   cs_sshkeypair:
@@ -38,6 +48,21 @@
     that:
     - sshkey2|success
     - not sshkey2|changed
+    - sshkey2.fingerprint is defined and sshkey2.fingerprint == sshkey.fingerprint
+    - sshkey2.private_key is not defined
+    - sshkey2.name == "first-sshkey"
+
+- name: test replace ssh public key in check mode
+  cs_sshkeypair:
+    name: "first-sshkey"
+    public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDsTI7KJZ8tz/CwQIrSol41c6s3vzkGYCMI8o7P9Et48UG9eRoGaMaGYaTvBTj/VQrD7cfurI6Bn0HTT3FLK3OHOweyelm9rIiQ2hjkSl+2lIKWHu992GO58E5Gcy9yYW4sHGgGLNZkPBKrrj0w7lhmiHjPtVnf+2+7Ix1WOO2/HXPcAHhsX/AlyItDewIL4mr/BT83vq0202sPCiM2cFQJl+5WGwS1wYYK8d167cspsmdyX7OyAFCUB0vueuqjE8MFqJvyIJR9y8Lj9Ny71pSV5/QWrXUgELxMYOKSby3gHkxcIXgYBMFLl4DipRTO74OWQlRRaOlqXlOOQbikcY4T rene.moser@swisstxt.ch"
+  register: sshkey2
+  check_mode: true
+- name: verify results of replace ssh public key in check mode
+  assert:
+    that:
+    - sshkey2|success
+    - sshkey2|changed
     - sshkey2.fingerprint is defined and sshkey2.fingerprint == sshkey.fingerprint
     - sshkey2.private_key is not defined
     - sshkey2.name == "first-sshkey"
@@ -87,6 +112,19 @@
     - sshkey.fingerprint is defined and sshkey.fingerprint == sshkey4.fingerprint
     - sshkey.private_key is not defined
     - sshkey.name == "second-sshkey"
+
+- name: test ssh key absent in check mode
+  cs_sshkeypair: name=second-sshkey state=absent
+  register: sshkey5
+  check_mode: true
+- name: verify result of key absent in check mode
+  assert:
+    that:
+    - sshkey5|success
+    - sshkey5|changed
+    - sshkey5.fingerprint is defined and sshkey5.fingerprint == sshkey3.fingerprint
+    - sshkey5.private_key is not defined
+    - sshkey5.name == "second-sshkey"
 
 - name: test ssh key absent
   cs_sshkeypair: name=second-sshkey state=absent

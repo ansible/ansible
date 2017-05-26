@@ -17,6 +17,16 @@
     - ag|failed
     - "ag.msg == 'missing required arguments: name'"
 
+- name: test present affinity group in check mode
+  cs_affinitygroup: name={{ cs_resource_prefix }}_ag
+  register: ag
+  check_mode: true
+- name: verify results of create affinity group in check mode
+  assert:
+    that:
+    - ag|success
+    - ag|changed
+
 - name: test present affinity group
   cs_affinitygroup: name={{ cs_resource_prefix }}_ag
   register: ag
@@ -35,6 +45,17 @@
     that:
     - ag|success
     - not ag|changed
+    - ag.name == "{{ cs_resource_prefix }}_ag"
+
+- name: test absent affinity group in check mode
+  cs_affinitygroup: name={{ cs_resource_prefix }}_ag state=absent
+  register: ag
+  check_mode: true
+- name: verify results of absent affinity group in check mode
+  assert:
+    that:
+    - ag|success
+    - ag|changed
     - ag.name == "{{ cs_resource_prefix }}_ag"
 
 - name: test absent affinity group

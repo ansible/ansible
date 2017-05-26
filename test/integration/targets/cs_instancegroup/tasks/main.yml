@@ -17,6 +17,16 @@
     - ig|failed
     - "ig.msg == 'missing required arguments: name'"
 
+- name: test present instance group in check mode
+  cs_instancegroup: name={{ cs_resource_prefix }}_ig
+  register: ig
+  check_mode: true
+- name: verify results of create instance group in check mode
+  assert:
+    that:
+    - ig|success
+    - ig|changed
+
 - name: test present instance group
   cs_instancegroup: name={{ cs_resource_prefix }}_ig
   register: ig
@@ -35,6 +45,17 @@
     that:
     - ig|success
     - not ig|changed
+    - ig.name == "{{ cs_resource_prefix }}_ig"
+
+- name: test absent instance group in check mode
+  cs_instancegroup: name={{ cs_resource_prefix }}_ig state=absent
+  register: ig
+  check_mode: true
+- name: verify results of absent instance group in check mode
+  assert:
+    that:
+    - ig|success
+    - ig|changed
     - ig.name == "{{ cs_resource_prefix }}_ig"
 
 - name: test absent instance group
