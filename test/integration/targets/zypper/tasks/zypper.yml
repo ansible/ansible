@@ -5,6 +5,8 @@
 
 - name: check hello with rpm
   shell: rpm -q hello
+  args:
+    warn: no
   failed_when: False
   register: rpm_result
 
@@ -34,6 +36,8 @@
 
 - name: check hello with rpm
   shell: rpm -q hello
+  args:
+    warn: no
   failed_when: False
   register: rpm_result
 
@@ -68,11 +72,15 @@
 
 - name: check hello with rpm
   shell: rpm -q hello
+  args:
+    warn: no
   failed_when: False
   register: rpm_hello_result
 
 - name: check metamail with rpm
   shell: rpm -q metamail
+  args:
+    warn: no
   failed_when: False
   register: rpm_metamail_result
 
@@ -92,11 +100,15 @@
 
 - name: check hello with rpm
   shell: rpm -q hello
+  args:
+    warn: no
   failed_when: False
   register: rpm_hello_result
 
 - name: check metamail with rpm
   shell: rpm -q metamail
+  args:
+    warn: no
   failed_when: False
   register: rpm_metamail_result
 
@@ -193,6 +205,8 @@
 
 - name: check empty with rpm
   shell: rpm -q empty
+  args:
+    warn: no
   failed_when: False
   register: rpm_result
 

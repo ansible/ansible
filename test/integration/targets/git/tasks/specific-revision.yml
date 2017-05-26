@@ -16,7 +16,8 @@
 - name: check HEAD after clone to revision
   command: git rev-parse HEAD
   args:
-    chdir: "{{ checkout_dir }}"
+    chdir: '{{ checkout_dir }}'
+    warn: no
   register: git_result
 
 - assert:
@@ -37,7 +38,8 @@
 - name: check HEAD after update to revision
   command: git rev-parse HEAD
   args:
-    chdir: "{{ checkout_dir }}"
+    chdir: '{{ checkout_dir }}'
+    warn: no
   register: git_result
 
 - assert:
@@ -70,7 +72,8 @@
 - name: check HEAD after update with refspec
   command: git rev-parse HEAD
   args:
-    chdir: "{{ checkout_dir }}"
+    chdir: '{{ checkout_dir }}'
+    warn: no
   register: git_result
 
 - assert:
@@ -94,7 +97,8 @@
 - name: check HEAD after update with refspec
   command: git rev-parse HEAD
   args:
-    chdir: "{{ checkout_dir }}"
+    chdir: '{{ checkout_dir }}'
+    warn: no
   register: git_result
 
 - assert:
@@ -103,17 +107,18 @@
 
 - name: try to access other commit
   shell: git checkout 0ce1096
-  register: checkout_shallow
-  failed_when: False
   args:
     chdir: '{{ checkout_dir }}'
+    warn: no
+  register: checkout_shallow
+  failed_when: False
 
 - name: "make sure the old commit was not fetched, task is 'forced success'"
   assert:
     that:
       - 'checkout_shallow.rc != 0'
       - checkout_shallow|success
-  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
+  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
 
 - name: clear checkout_dir
   file:
@@ -130,7 +135,8 @@
 - name: check HEAD after update with refspec
   command: git rev-parse HEAD
   args:
-    chdir: "{{ checkout_dir }}"
+    chdir: '{{ checkout_dir }}'
+    warn: no
   register: git_result
 
 - assert:
@@ -151,7 +157,8 @@
 - name: prepare origina repo
   shell: git init; echo "1" > a; git add a; git commit -m "1"
   args:
-    chdir: "{{checkout_dir}}"
+    chdir: '{{ checkout_dir }}'
+    warn: no
 
 - name: clone example repo locally
   git: 
@@ -159,31 +166,44 @@
     dest: "{{checkout_dir}}.copy"
 
 - name: create branch in original
-  command: git checkout -b test/branch chdir="{{checkout_dir}}"
+  command: git checkout -b test/branch
+  args:
+    chdir: '{{ checkout_dir }}'
+    warn: no
 
 - name: get commit for HEAD on new branch
-  command: git rev-parse HEAD chdir="{{checkout_dir}}.copy"
+  command: git rev-parse HEAD
+  args:
+    chdir: '{{ checkout_dir }}.copy'
+    warn: no
   register: originaltip0
 
 - name: shallow force checkout new branch in copy
   git: 
-    repo: "{{checkout_dir}}" 
+    repo: "{{checkout_dir}}"
     dest: "{{checkout_dir}}.copy"
     version: test/branch 
-    depth: 1 
+    depth: 1
     force: yes
 
 - name: create new commit in original
   shell: git init; echo "2" > b; git add b; git commit -m "2"
   args:
-    chdir: "{{checkout_dir}}"
+    chdir: '{{ checkout_dir }}'
+    warn: no
 
 - name: get commit for new HEAD on original branch
-  command: git rev-parse HEAD chdir="{{checkout_dir}}"
+  command: git rev-parse HEAD
+  args:
+    chdir: '{{ checkout_dir }}'
+    warn: no
   register: originaltip1
 
 - name: get commit for HEAD on new branch
-  command: git rev-parse HEAD chdir="{{checkout_dir}}.copy"
+  command: git rev-parse HEAD
+  args:
+    chdir: '{{ checkout_dir }}.copy'
+    warn: no
   register: newtip
 
 - name: assert that copy is still pointing at previous tip
@@ -194,18 +214,22 @@
 - name: create a local modification in the copy
   shell: echo "3" > c
   args:
-    chdir: "{{ checkout_dir }}.copy"
+    chdir: '{{ checkout_dir }}.copy'
+    warn: no
 
 - name: shallow force checkout new branch in copy (again)
   git: 
     repo: "{{checkout_dir}}"
-    dest: "{{checkout_dir}}.copy" 
+    dest: "{{checkout_dir}}.copy"
     version: test/branch
-    depth: 1 
+    depth: 1
     force: yes
 
 - name: get commit for HEAD on new branch
-  command: git rev-parse HEAD chdir="{{checkout_dir}}.copy"
+  command: git rev-parse HEAD
+  args:
+    chdir: '{{ checkout_dir }}.copy'
+    warn: no
   register: newtip
 
 - name: make sure copy tip is not pointing at previous sha and that new tips match

@@ -8,7 +8,10 @@
     dest: '{{ checkout_dir }}'
 
 - name: rename remote to be ambiguous
-  command: git remote rename origin v0.1 chdir="{{ checkout_dir }}"
+  command: git remote rename origin v0.1
+  args:
+    chdir: '{{ checkout_dir }}'
+    warn: no
 
 - name: switch to HEAD
   git:
@@ -17,11 +20,17 @@
     remote: v0.1
 
 - name: rev-parse remote HEAD
-  command: git rev-parse v0.1/HEAD chdir="{{ checkout_dir }}"
+  command: git rev-parse v0.1/HEAD
+  args:
+    chdir: '{{ checkout_dir }}'
+    warn: no
   register: git_remote_head
 
 - name: rev-parse local HEAD
-  command: git rev-parse HEAD chdir="{{ checkout_dir }}"
+  command: git rev-parse HEAD
+  args:
+    chdir: '{{ checkout_dir }}'
+    warn: no
   register: git_local_head
 
 - assert:

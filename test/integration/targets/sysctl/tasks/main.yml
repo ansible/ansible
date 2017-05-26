@@ -81,6 +81,8 @@
 
 - name: check with sysctl command
   shell: sysctl net.ipv4.ip_forward
+  args:
+    warn: no
   register: sysctl_check2
 
 - name: validate results for test 2

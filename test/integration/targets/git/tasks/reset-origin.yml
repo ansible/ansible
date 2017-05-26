@@ -17,6 +17,7 @@
   shell: git init; echo "PR 22502" > origin; git add origin; git commit -m "PR 22502"
   args:
     chdir: "{{ repo_dir }}/origin"
+    warn: no
 
 - name: Clone a git repo with file named origin
   git:
