@@ -90,14 +90,41 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def check_command(module, commandline):
-    arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
-                 'ln': 'state=link', 'mkdir': 'state=directory',
-                 'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch'}
-    commands = {'hg': 'hg', 'curl': 'get_url or uri', 'wget': 'get_url or uri',
-                'svn': 'subversion', 'service': 'service',
-                'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
-                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
-                'dnf': 'dnf', 'zypper': 'zypper'}
+    arguments = {
+        'chgrp': 'group',
+        'chmod': 'mode',
+        'chown': 'owner',
+        'ln': 'state=link',
+        'mkdir': 'state=directory',
+        'rm': 'state=absent',
+        'rmdir': 'state=absent',
+        'touch': 'state=touch',
+    }
+    commands = {
+        'apt-get': 'apt',
+        'curl': 'get_url or uri',
+        'dnf': 'dnf',
+        'dpkg': 'apt',
+        'gem': 'gem',
+        'getent': 'getent',
+        'git': 'git',
+        'gtar': 'archive or unarchive',
+        'hg': 'hg',
+        'mktemp': 'tempfile',
+        'mount': 'mount',
+        'rpm': 'yum, dnf or zypper',
+        'sed': 'template or lineinfile',
+        'service': 'service',
+        'svn': 'subversion',
+        'sysctl': 'sysctl',
+        'systemctl': 'service or systemd',
+        'tar': 'archive or unarchive',
+        'unzip': 'unarchive',
+        'wget': 'get_url or uri',
+        'yum': 'yum',
+        'zip': 'archive',
+        'zypper': 'zypper',
+    }
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
     command = os.path.basename(commandline.split()[0])
     if command in arguments:
