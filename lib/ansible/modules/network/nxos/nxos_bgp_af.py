@@ -334,85 +334,50 @@ DAMPENING_PARAMS = [
 ]
 
 
-def get_custom_list_value(config, arg, module):
-    value_list = []
-    splitted_config = config.splitlines()
-    if arg == 'inject_map':
-        REGEX_INJECT = r'.*inject-map\s(?P<inject_map>\S+)\sexist-map\s(?P<exist_map>\S+)-*'
+def get_value(arg, config, module):
+    command = PARAM_TO_COMMAND_KEYMAP[arg]
+    command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
+    has_command_val = command_val_re.search(config)
 
-        for line in splitted_config:
-            value = []
-            inject_group = {}
-            try:
-                match_inject = re.match(REGEX_INJECT, line, re.DOTALL)
-                inject_group = match_inject.groupdict()
-                inject_map = inject_group['inject_map']
-                exist_map = inject_group['exist_map']
-                value.append(inject_map)
-                value.append(exist_map)
-            except AttributeError:
-                value = []
+    if arg == 'inject_map':
+        inject_re = r'.*inject-map\s(?P<inject_map>\S+)\sexist-map\s(?P<exist_map>\S+)-*'
+
+        value = []
+        match_inject = re.match(inject_re, config, re.DOTALL)
+        if match_inject:
+            inject_group = match_inject.groupdict()
+            inject_map = inject_group['inject_map']
+            exist_map = inject_group['exist_map']
+            value.append(inject_map)
+            value.append(exist_map)
+
+            inject_map_command = ('inject-map {0} exist-map {1} '
+                                  'copy-attributes'.format(
+                                      inject_group['inject_map'],
+                                      inject_group['exist_map']))
+
+            inject_re = re.compile(r'\s+{0}\s*$'.format(inject_map_command), re.M)
+            if inject_re.search(config):
+                value.append('copy_attributes')
+
+    elif arg in ['networks', 'redistribute']:
+        value = []
+        if has_command_val:
+            value = has_command_val.group('value').split()
 
             if value:
-                copy_attributes = False
-                inject_map_command = ('inject-map {0} exist-map {1} '
-                                      'copy-attributes'.format(
-                                          inject_group['inject_map'],
-                                          inject_group['exist_map']))
+                if len(value) == 3:
+                    value.pop(1)
+                elif arg == 'redistribute' and len(value) == 4:
+                    value = ['{0} {1}'.format(
+                        value[0], value[1]), value[3]]
 
-                REGEX = re.compile(r'\s+{0}\s*$'.format(inject_map_command), re.M)
-                try:
-                    if REGEX.search(config):
-                        copy_attributes = True
-                except TypeError:
-                    copy_attributes = False
-
-                if copy_attributes:
-                    value.append('copy_attributes')
-                value_list.append(value)
-
-    elif arg == 'networks':
-        REGEX_NETWORK = re.compile(r'(?:network\s)(?P<value>.*)$')
-
-        for line in splitted_config:
-            value = []
-            if 'network' in line:
-                value = REGEX_NETWORK.search(line).group('value').split()
-
-                if value:
-                    if len(value) == 3:
-                        value.pop(1)
-                    value_list.append(value)
-
-    elif arg == 'redistribute':
-        RED_REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(
-            PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-        for line in splitted_config:
-            value = []
-            if 'redistribute' in line:
-                value = RED_REGEX.search(line).group('value').split()
-                if value:
-                    if len(value) == 3:
-                        value.pop(1)
-                    elif len(value) == 4:
-                        value = ['{0} {1}'.format(
-                            value[0], value[1]), value[3]]
-                    value_list.append(value)
-    return value_list
-
-
-def get_custom_string_value(config, arg, module):
-    value = ''
-    if arg.startswith('distance'):
-        REGEX_DISTANCE = ('.*distance\s(?P<d_ebgp>\w+)\s(?P<d_ibgp>\w+)'
-                          '\s(?P<d_local>\w+)')
-        try:
-            match_distance = re.match(REGEX_DISTANCE, config, re.DOTALL)
+    elif command == 'distance':
+        distance_re = r'.*distance\s(?P<d_ebgp>\w+)\s(?P<d_ibgp>\w+)\s(?P<d_local>\w+)'
+        match_distance = re.match(distance_re, config, re.DOTALL)
+        if match_distance:
             distance_group = match_distance.groupdict()
-        except AttributeError:
-            distance_group = {}
 
-        if distance_group:
             if arg == 'distance_ebgp':
                 value = distance_group['d_ebgp']
             elif arg == 'distance_ibgp':
@@ -420,22 +385,17 @@ def get_custom_string_value(config, arg, module):
             elif arg == 'distance_local':
                 value = distance_group['d_local']
 
-    elif arg.startswith('dampening'):
-        REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(
-            PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+    elif command.split()[0] == 'dampening':
         if arg == 'dampen_igp_metric' or arg == 'dampening_routemap':
             value = ''
-            if PARAM_TO_COMMAND_KEYMAP[arg] in config:
-                value = REGEX.search(config).group('value')
+            if command in config:
+                value = has_command_val.group('value')
         else:
-            REGEX_DAMPENING = r'.*dampening\s(?P<half>\w+)\s(?P<reuse>\w+)\s(?P<suppress>\w+)\s(?P<max_suppress>\w+)'
-            try:
-                match_dampening = re.match(REGEX_DAMPENING, config, re.DOTALL)
+            dampening_re = r'.*dampening\s(?P<half>\w+)\s(?P<reuse>\w+)\s(?P<suppress>\w+)\s(?P<max_suppress>\w+)'
+            match_dampening = re.match(dampening_re, config, re.DOTALL)
+            if match_dampening:
                 dampening_group = match_dampening.groupdict()
-            except AttributeError:
-                dampening_group = {}
 
-            if dampening_group:
                 if arg == 'dampening_half_time':
                     value = dampening_group['half']
                 elif arg == 'dampening_reuse_time':
@@ -446,34 +406,17 @@ def get_custom_string_value(config, arg, module):
                     value = dampening_group['max_suppress']
 
     elif arg == 'table_map_filter':
-        TMF_REGEX = re.compile(r'\s+table-map.*filter$', re.M)
+        tmf_regex = re.compile(r'\s+table-map.*filter$', re.M)
         value = False
-        try:
-            if TMF_REGEX.search(config):
-                value = True
-        except TypeError:
-            value = False
+        if tmf_regex.search(config):
+            value = True
+
     elif arg == 'table_map':
-        TM_REGEX = re.compile(r'(?:table-map\s)(?P<value>\S+)(\sfilter)?$', re.M)
+        tm_regex = re.compile(r'(?:table-map\s)(?P<value>\S+)(\sfilter)?$', re.M)
+        has_tablemap = tm_regex.search(config)
         value = ''
-        if PARAM_TO_COMMAND_KEYMAP[arg] in config:
-            value = TM_REGEX.search(config).group('value')
-    return value
-
-
-def get_value(arg, config, module):
-    custom = [
-        'inject_map',
-        'networks',
-        'redistribute'
-    ]
-
-    if arg in custom:
-        value = get_custom_list_value(config, arg, module)
-
-    elif (arg.startswith('distance') or arg.startswith('dampening') or
-          arg.startswith('table_map')):
-        value = get_custom_string_value(config, arg, module)
+        if has_tablemap:
+            value = has_tablemap.group('value')
 
     elif arg in BOOL_PARAMS:
         command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
@@ -483,12 +426,10 @@ def get_value(arg, config, module):
             value = True
 
     else:
-        command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
         value = ''
 
-        has_command = command_val_re.search(config)
-        if has_command:
-            value = has_command.group('value')
+        if has_command_val:
+            value = has_command_val.group('value')
 
     return value
 
