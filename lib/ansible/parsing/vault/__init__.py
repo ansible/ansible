@@ -28,8 +28,10 @@ import random
 from subprocess import call
 
 from ansible.errors import AnsibleError, AnsibleVaultError
-from ansible.parsing.vault.cipher_loader import CIPHER_MAPPING, CIPHER_ENCRYPT_WHITELIST, get_decrypt_cipher, get_encrypt_cipher
 from ansible.parsing.vault import envelope
+
+from ansible.plugins import cipher_loader
+from ansible.parsing.vault.cipher_util import CIPHER_MAPPING, CIPHER_ENCRYPT_WHITELIST, get_decrypt_cipher, get_encrypt_cipher
 
 from ansible.module_utils._text import to_bytes
 
@@ -82,6 +84,9 @@ class VaultLib:
         self.b_password = to_bytes(b_password, errors='strict', encoding='utf-8')
         self.default_cipher_name = 'AES256'
         self.b_version = b'1.1'
+
+        cipher_class = cipher_loader.get('AES256', class_only=True)
+        print('CIPHER_CLASS: %s' % cipher_class)
 
     @staticmethod
     def is_encrypted(data):

@@ -566,3 +566,10 @@ netconf_loader = PluginLoader(
     'netconf_plugins',
     required_base_class='NetconfBase'
 )
+
+cipher_loader = PluginLoader(
+    class_name='VaultCipher',
+    package='ansible.plugins.ciphers',
+    config=C.DEFAULT_CIPHERS_PLUGIN_PATH,
+    subdir='cipher_plugins')
+
