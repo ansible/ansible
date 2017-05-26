@@ -19,12 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import urllib2
-import base64
-import json
-
-from ansible.module_utils.basic import AnsibleModule
-
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -34,6 +28,7 @@ DOCUMENTATION = '''
 ---
 module: ambari_facts
 short_description: Module to gather facts about Ambari components.
+description: This module gathers facts from Apache Ambari. The current version registers all component versions for a deployed cluster as facts.
 author: Thomas Hamm (thms.hmm@gmail.com)
 version_added: "2.4"
 options:
@@ -41,19 +36,16 @@ options:
     description:
       - Host where Ambari is running on.
     required: false
-    type: str
     default: localhost
   ambari_port:
     description:
       - Port to connect to Ambari.
     required: false
-    type: str
     default: 8080
   ambari_protocol:
     description:
       - Enable or disable secure connections.
     required: false
-    type: str
     default: http
     choices:
       - http -- Enable unsecured connection
@@ -62,19 +54,16 @@ options:
     description:
       - Username to connect to Ambari.
     required: false
-    type: str
     default: admin
   ambari_password:
     description:
       - Password to connect to Ambari.
     required: false
-    type: str
     default: admin
   cluster_name:
     description:
       - Name of the cluster to get the component versions from.
     required: true
-    type: str
 '''
 
 EXAMPLES = '''
@@ -94,12 +83,18 @@ ambari_cluster_component_versions:
     description: Contains component versions of all components installed for the cluster.
     returned: success
     type: complex
-    sample:
-      HBASE:
-        version: "1.2.5"
+    contains:
+      component_name:
+        version: "1.2.3"
         major_version: "1"
         minor_version: "2"
 '''
+
+
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.url import url_open
 
 
 class AmbariAPI:
@@ -109,25 +104,21 @@ class AmbariAPI:
         self._port = port
         self._user = user
         self._password = password
-        self._credentials = base64.b64encode('%s:%s' % (user, password))
         self._version = 'v1'
         self._protocol = protocol
 
     def get(self, url):
-        request = urllib2.Request(url)
-        request.add_header("Authorization", "Basic %s" % self._credentials)
-
-        response = ""
+        response = None
 
         try:
-            response = urllib2.urlopen(request)
+            response = open_url(url, url_username=self._user, url_password=self._password, force_basic_auth=True)
         except Exception as err:
             self._module.fail_json(msg="An exception occurred: %s" % err)
 
-        response_body = dict()
+        response_body = None
 
         try:
-            response_body = json.loads(response.read())
+            response_body = json.loads(response)
         except Exception as err:
             self._module.fail_json(msg="An exception occured while parsing the json response: %s" % err)
 
@@ -173,12 +164,12 @@ class AmbariAPI:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            ambari_host=dict(required=False, default='localhost', type='str', aliases=['host']),
-            ambari_port=dict(required=False, default='8080', type='str', aliases=['port']),
-            ambari_protocol=dict(required=False, default='http', type='str', aliases=['protocol'], choices=['http', 'https']),
-            ambari_user=dict(required=False, default='admin', type='str', aliases=['user']),
-            ambari_password=dict(required=False, default='admin', type='str', no_log=True, aliases=['password']),
-            cluster_name=dict(required=True, type='str', aliases=['cluster'])
+            ambari_host=dict(required=False, default='localhost', aliases=['host']),
+            ambari_port=dict(required=False, default='8080', aliases=['port']),
+            ambari_protocol=dict(required=False, default='http', aliases=['protocol'], choices=['http', 'https']),
+            ambari_user=dict(required=False, default='admin', aliases=['user']),
+            ambari_password=dict(required=False, default='admin', no_log=True, aliases=['password']),
+            cluster_name=dict(required=True, aliases=['cluster'])
         ),
         supports_check_mode=True
     )
@@ -192,7 +183,8 @@ def main():
 
     api = AmbariAPI(module, ambari_host, ambari_port, ambari_protocol, ambari_user, ambari_password)
 
-    module.exit_json(msg='Registered cluster component versions as fact "ambari_cluster_component_versions".', ansible_facts=dict(ambari_cluster_component_versions=api.get_cluster_component_versions(cluster_name)))
+    module.exit_json(msg='Registered cluster component versions as fact "ambari_cluster_component_versions".',
+                     ansible_facts=dict(ambari_cluster_component_versions=api.get_cluster_component_versions(cluster_name)))
 
 
 if __name__ == '__main__':
