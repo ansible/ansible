@@ -112,7 +112,8 @@ def metadata_schema(deprecated):
         {
             Required('status'): [valid_status],
             Required('metadata_version'): '1.0',
-            Required('supported_by'): Any('core', 'community', 'curated')
+            Required('supported_by'): Any('core', 'community', 'curated'),
+            'action_handler': Any(*string_types)
         }
     )
 
