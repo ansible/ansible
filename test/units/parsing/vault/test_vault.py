@@ -33,7 +33,7 @@ from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_text
 
 from ansible.parsing import vault
-from ansible.parsing.vault.ciphers.cipher import CIPHER_MAPPING
+from ansible.parsing.vault import cipher_loader
 from ansible.parsing.vault import envelope
 
 from units.mock.vault_helper import check_decrypt_prereqs, check_encrypt_prereqs
@@ -133,7 +133,7 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
 
 class TestVaultCipherAes256(unittest.TestCase):
     def setUp(self):
-        self.vault_cipher_class = CIPHER_MAPPING['AES256']
+        self.vault_cipher_class = cipher_loader.get_encrypt_cipher('AES256')
         self.vault_cipher = self.vault_cipher_class()
 
     def test(self):
