@@ -95,10 +95,135 @@ options:
     choices: ['yes', 'no']
     version_added: 1.5.1
 
+  monitor:
+    description:
+      - If C(yes), add or change the monitor.  This is applicable only for A records.
+    required: true
+    default: 'no'
+    choices: ['yes', 'no']
+    version_added: 2.4
+
+  systemDescription:
+    description:
+      - Description used by the monitor.
+    required: true
+    default: ''
+    version_added: 2.4
+
+  maxEmails:
+    description:
+      - Number of emails sent to the contact list by the monitor.
+    required: true
+    default: 1
+    version_added: 2.4
+
+  protocol:
+    description:
+      - Protocol used by the monitor.
+    required: true
+    default: 'HTTP'
+    choices: ['TCP', 'UDP', 'HTTP', 'DNS', 'SMTP', 'HTTPS']
+    version_added: 2.4
+
+  port:
+    description:
+      - Port used by the monitor.
+    required: true
+    default: 80
+    version_added: 2.4
+
+  sensitivity:
+    description:
+      - Number of checks the monitor performs before a failover occurs where Low = 8, Medium = 5,and High = 3.
+    required: true
+    default: 'Medium'
+    choices: ['Low', 'Medium', 'High']
+    version_added: 2.4
+
+  contactList:
+    description:
+      - Name or id of the contact list that the monitor will notify.
+      - The default C('') means the Account Owner.
+    required: true
+    default: ''
+    version_added: 2.4
+
+  httpFqdn:
+    description:
+      - The fully qualified domain name used by the monitor.
+    required: false
+    version_added: 2.4
+
+  httpFile:
+    description:
+      - The file at the Fqdn that the monitor queries for HTTP or HTTPS.
+    required: false
+    version_added: 2.4
+
+  httpQueryString:
+    description:
+      - The string in the httpFile that the monitor queries for HTTP or HTTPS.
+    required: False
+    version_added: 2.4
+
+  failover:
+    description:
+      - If C(yes), add or change the failover.  This is applicable only for A records.
+    required: true
+    default: 'no'
+    choices: ['yes', 'no']
+    version_added: 2.4
+
+  autoFailover:
+    description:
+      - If true, fallback to the primary IP address is manual after a failover.
+      - If false, fallback to the primary IP address is automatic after a failover.
+    required: true
+    default: 'no'
+    choices: ['yes', 'no']
+    version_added: 2.4
+
+  ip1:
+    description:
+      - Primary IP address for the failover.
+      - Required if adding or changing the monitor or failover.
+    required: false
+    version_added: 2.4
+
+  ip2:
+    description:
+      - Secondary IP address for the failover.
+      - Required if adding or changing the failover.
+    required: false
+    version_added: 2.4
+
+  ip3:
+    description:
+      - Tertiary IP address for the failover.
+    required: false
+    version_added: 2.4
+
+  ip4:
+    description:
+      - Quaternary IP address for the failover.
+    required: false
+    version_added: 2.4
+
+  ip5:
+    description:
+      - Quinary IP address for the failover.
+    required: false
+    version_added: 2.4
+
 notes:
   - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few
     seconds of actual time by using NTP.
-  - This module returns record(s) in the "result" element when 'state' is set to 'present'. This value can be be registered and used in your playbooks.
+  - This module returns record(s) and monitor(s) in the "result" element when 'state' is set to 'present'.
+    These values can be be registered and used in your playbooks.
+  - Only A records can have a monitor or failover.
+  - To add failover, the 'failover', 'autoFailover', 'port', 'protocol', 'ip1', and 'ip2' options are required.
+  - To add monitor, the 'monitor', 'port', 'protocol', 'maxEmails', 'systemDescription', and 'ip1' options are required.
+  - The monitor and the failover will share 'port', 'protocol', and 'ip1' options.
 
 requirements: [ hashlib, hmac ]
 author: "Brice Burgess (@briceburg)"
@@ -148,6 +273,112 @@ EXAMPLES = '''
     domain: my.com
     state: absent
     record_name: test
+
+# Add a failover
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
+    record_type: A
+    record_value: 127.0.0.1
+    failover: True
+    ip1: 127.0.0.2
+    ip2: 127.0.0.3
+
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
+    record_type: A
+    record_value: 127.0.0.1
+    failover: True
+    ip1: 127.0.0.2
+    ip2: 127.0.0.3
+    ip3: 127.0.0.4
+    ip4: 127.0.0.5
+    ip5: 127.0.0.6
+
+# Add a monitor
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
+    record_type: A
+    record_value: 127.0.0.1
+    monitor: yes
+    ip1: 127.0.0.2
+    protocol: HTTP  # default
+    port: 80  # default
+    maxEmails: 1
+    systemDescription: Monitor Test A record
+    contactList: my contact list
+
+# Add a monitor with http options
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
+    record_type: A
+    record_value: 127.0.0.1
+    monitor: yes
+    ip1: 127.0.0.2
+    protocol: HTTP  # default
+    port: 80  # default
+    maxEmails: 1
+    systemDescription: Monitor Test A record
+    contactList: 1174  # contact list id
+    httpFqdn: http://my.com
+    httpFile: example
+    httpQueryString: some string
+
+# Add a monitor and a failover
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
+    record_type: A
+    record_value: 127.0.0.1
+    failover: True
+    ip1: 127.0.0.2
+    ip2: 127.0.0.3
+    monitor: yes
+    protocol: HTTPS
+    port: 443
+    maxEmails: 1
+    systemDescription: monitoring my.com status
+    contactList: emergencycontacts
+
+# Remove a failover
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
+    record_type: A
+    record_value: 127.0.0.1
+    failover: no
+
+# Remove a monitor
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
+    record_type: A
+    record_value: 127.0.0.1
+    monitor: no
 '''
 
 # ============================================
@@ -179,12 +410,15 @@ class DME2:
         self.record_map = None      # ["record_name"] => ID
         self.records = None         # ["record_ID"] => <record>
         self.all_records = None
+        self.contactList_map = None # ["contactList_name"] => ID
 
         # Lookup the domain ID if passed as a domain name vs. ID
         if not self.domain.isdigit():
             self.domain = self.getDomainByName(self.domain)['id']
 
         self.record_url = 'dns/managed/' + str(self.domain) + '/records'
+        self.monitor_url = 'monitor'
+        self.contactList_url = 'contactList'
 
     def _headers(self):
         currTime = self._get_date()
@@ -298,6 +532,29 @@ class DME2:
         #@TODO remove record from the cache when impleneted
         return self.query(self.record_url + '/' + str(record_id), 'DELETE')
 
+    def getMonitor(self, record_id):
+        return self.query(self.monitor_url + '/' + str(record_id), 'GET')
+
+    def updateMonitor(self, record_id, data):
+        return self.query(self.monitor_url + '/' + str(record_id), 'PUT', data)
+
+    def prepareMonitor(self, data):
+        return json.dumps(data, separators=(',', ':'))
+
+    def getContactList(self, contact_list_id):
+        if not self.contactList_map:
+            self._instMap('contactList')
+
+        return self.contactLists.get(contact_list_id, False)
+
+    def getContactlists(self):
+        return self.query(self.contactList_url, 'GET')['data']
+
+    def getContactListByName(self, name):
+        if not self.contactList_map:
+            self._instMap('contactList')
+
+        return self.getContactList(self.contactList_map.get(name, 0))
 
 # ===========================================
 # Module execution.
@@ -316,15 +573,39 @@ def main():
                              'A', 'AAAA', 'CNAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT']),
             record_value=dict(required=False),
             record_ttl=dict(required=False, default=1800, type='int'),
+            monitor=dict(default='no', type='bool'),
+            systemDescription=dict(default=''),
+            maxEmails=dict(default=1, type='int'),
+            protocol=dict(default='HTTP', choices=['TCP', 'UDP', 'HTTP', 'DNS', 'SMTP', 'HTTPS']),
+            port=dict(default=80, type='int'),
+            sensitivity=dict(default='Medium', choices=['Low', 'Medium', 'High']),
+            contactList=dict(default=None),
+            httpFqdn=dict(required=False),
+            httpFile=dict(required=False),
+            httpQueryString=dict(required=False),
+            failover=dict(default='no', type='bool'),
+            autoFailover=dict(default='no', type='bool'),
+            ip1=dict(required=False),
+            ip2=dict(required=False),
+            ip3=dict(required=False),
+            ip4=dict(required=False),
+            ip5=dict(required=False),
             validate_certs = dict(default='yes', type='bool'),
         ),
         required_together=(
             ['record_value', 'record_ttl', 'record_type']
-        )
+        ),
+        required_if=[
+            ['failover', True, ['autoFailover', 'port', 'protocol', 'ip1', 'ip2']],
+            ['monitor', True, ['port', 'protocol', 'maxEmails', 'systemDescription', 'ip1']]
+        ]
     )
 
     if IMPORT_ERROR:
         module.fail_json(msg="Import Error: " + IMPORT_ERROR)
+
+    protocols = dict(TCP=1, UDP=2, HTTP=3, DNS=4, SMTP=5, HTTPS=6)
+    sensitivities = dict(Low=8, Medium=5, High=3)
 
     DME = DME2(module.params["account_key"], module.params[
                "account_secret"], module.params["domain"], module)
@@ -359,13 +640,49 @@ def main():
         new_record["port"] = new_record["value"].split(" ")[2]
         new_record["value"] = new_record["value"].split(" ")[3]
 
+    # Fetch existing monitor if the A record indicates it should exist and build the new monitor
+    current_monitor = dict()
+    new_monitor = dict()
+    if current_record and current_record['type'] == 'A':
+        current_monitor = DME.getMonitor(current_record['id'])
+
+    # Build the new monitor
+    for i in ['monitor', 'systemDescription', 'protocol', 'port', 'sensitivity', 'maxEmails',
+              'contactList', 'httpFqdn', 'httpFile', 'httpQueryString',
+              'failover', 'autoFailover', 'ip1', 'ip2', 'ip3', 'ip4', 'ip5']:
+        if module.params[i] is not None:
+            if i == 'protocol':
+                # The API requires protocol to be a numeric in the range 1-6
+                new_monitor['protocolId'] = protocols[module.params[i]]
+            elif i == 'sensitivity':
+                # The API requires sensitivity to be a numeric of 8, 5, or 3
+                new_monitor[i] = sensitivities[module.params[i]]
+            elif i == 'contactList':
+                # The module accepts either the name or the id of the contact list
+                contact_list_id = module.params[i]
+                if not contact_list_id.isdigit() and contact_list_id != '':
+                    contact_list = DME.getContactListByName(contact_list_id)
+                    if not contact_list:
+                        module.fail_json(msg="Contact list {} does not exist".format(contact_list_id))
+                    contact_list_id = contact_list.get('id', '')
+                new_monitor['contactListId'] = contact_list_id
+            else:
+                # The module option names match the API field names
+                new_monitor[i] = module.params[i]
+
     # Compare new record against existing one
-    changed = False
+    record_changed = False
     if current_record:
         for i in new_record:
             if str(current_record[i]) != str(new_record[i]):
-                changed = True
+                record_changed = True
         new_record['id'] = str(current_record['id'])
+
+    monitor_changed = False
+    if current_monitor:
+        for i in new_monitor:
+            if str(current_monitor.get(i)) != str(new_monitor[i]):
+                monitor_changed = True
 
     # Follow Keyword Controlled Behavior
     if state == 'present':
@@ -374,24 +691,31 @@ def main():
             if not current_record:
                 module.fail_json(
                     msg="A record with name '%s' does not exist for domain '%s.'" % (record_name, module.params['domain']))
-            module.exit_json(changed=False, result=current_record)
+            module.exit_json(changed=False, result=dict(record=current_record, monitor=current_monitor))
 
-        # create record as it does not exist
+        # create record and monitor as the record does not exist
         if not current_record:
             record = DME.createRecord(DME.prepareRecord(new_record))
-            module.exit_json(changed=True, result=record)
+            monitor = DME.updateMonitor(record['id'], DME.prepareMonitor(new_monitor))
+            module.exit_json(changed=True, result=dict(record=record, monitor=monitor))
 
         # update the record
-        if changed:
-            DME.updateRecord(
-                current_record['id'], DME.prepareRecord(new_record))
-            module.exit_json(changed=True, result=new_record)
+        updated = False
+        if record_changed:
+            DME.updateRecord(current_record['id'], DME.prepareRecord(new_record))
+            updated = True
+        if monitor_changed:
+            DME.updateMonitor(current_monitor['recordId'], DME.prepareMonitor(new_monitor))
+            updated = True
+        if updated:
+            module.exit_json(changed=True, result=dict(record=new_record, monitor=new_monitor))
 
         # return the record (no changes)
-        module.exit_json(changed=False, result=current_record)
+        module.exit_json(changed=False, result=dict(record=current_record, monitor=current_monitor))
 
     elif state == 'absent':
-        # delete the record if it exists
+        changed = False
+        # delete the record (and the monitor/failover) if it exists
         if current_record:
             DME.deleteRecord(current_record['id'])
             module.exit_json(changed=True)
