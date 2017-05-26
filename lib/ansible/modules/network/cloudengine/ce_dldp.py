@@ -32,8 +32,8 @@ author:
     - Zhijin Zhou (@CloudEngine-Ansible)
 notes:
     - The relevant configurations will be deleted if DLDP is disabled using enable=disable.
-    - When using auth_mode=none, it will restore the default DLDP authentication mode(By default,
-      DLDP packets are not authenticated.).
+    - When using auth_mode=none, it will restore the default DLDP authentication mode. By default,
+      DLDP packets are not authenticated.
     - By default, the working mode of DLDP is enhance, so you are advised to use work_mode=enhance to restore defualt
       DLDP working mode.
     - The default interval for sending Advertisement packets is 5 seconds, so you are advised to use time_interval=5 to

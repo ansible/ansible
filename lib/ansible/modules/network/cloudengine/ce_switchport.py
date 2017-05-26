@@ -63,15 +63,13 @@ options:
         description:
             - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
               from the trunk, such as 2-10 or 2,5,10-15, etc.
-        aliases:
-          - trunk_add_vlans
         required: false
         default: null
     state:
         description:
             - Manage the state of the resource.
         required: false
-        default:  present
+        default: present
         choices: ['present', 'absent', 'unconfigured']
 '''
 
@@ -137,14 +135,14 @@ existing:
     description: k/v pairs of existing switchport
     returned: always
     type: dict
-    sample:  {"access_vlan": "10", "interface": "10GE1/0/22",
-              "mode": "access", "switchport": "enable"}
+    sample: {"access_vlan": "10", "interface": "10GE1/0/22",
+             "mode": "access", "switchport": "enable"}
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
     type: dict
-    sample:  {"access_vlan": "20", "interface": "10GE1/0/22",
-              "mode": "access", "switchport": "enable"}
+    sample: {"access_vlan": "20", "interface": "10GE1/0/22",
+             "mode": "access", "switchport": "enable"}
 updates:
     description: command string sent to the device
     returned: always

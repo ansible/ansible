@@ -205,22 +205,22 @@ EXAMPLES = '''
 
   - name: "Enable BGP"
     ce_bgp:
-      state:  present
-      as_number:  100
-      confed_id_number:  250
+      state: present
+      as_number: 100
+      confed_id_number: 250
       provider: "{{ cli }}"
 
   - name: "Disable BGP"
     ce_bgp:
-      state:  absent
-      as_number:  100
-      confed_id_number:  250
+      state: absent
+      as_number: 100
+      confed_id_number: 250
       provider: "{{ cli }}"
 
   - name: "Create confederation peer AS num"
     ce_bgp:
-      state:  present
-      confed_peer_as_num:  260
+      state: present
+      confed_peer_as_num: 260
       provider: "{{ cli }}"
 '''
 

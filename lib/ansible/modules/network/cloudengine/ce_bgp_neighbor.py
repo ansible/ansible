@@ -250,17 +250,17 @@ EXAMPLES = '''
 
   - name: "Config bgp peer"
     ce_bgp_neighbor:
-      state:  present
-      vrf_name:  js
-      peer_addr:  192.168.10.10
-      remote_as:  500
+      state: present
+      vrf_name: js
+      peer_addr: 192.168.10.10
+      remote_as: 500
       provider: "{{ cli }}"
 
   - name: "Config bgp route id"
     ce_bgp_neighbor:
-      state:  absent
-      vrf_name:  js
-      peer_addr:  192.168.10.10
+      state: absent
+      vrf_name: js
+      peer_addr: 192.168.10.10
       provider: "{{ cli }}"
 '''
 

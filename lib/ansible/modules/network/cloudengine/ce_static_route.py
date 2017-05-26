@@ -157,12 +157,12 @@ existing:
     description: k/v pairs of existing switchport
     returned: always
     type: dict
-    sample:  {}
+    sample: {}
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
     type: dict
-    sample:  {"next_hop": "3.3.3.3", "pref": "100",
+    sample: {"next_hop": "3.3.3.3", "pref": "100",
             "prefix": "192.168.20.0", "mask": "24", "description": "testing",
             "tag" : "null"}
 updates:

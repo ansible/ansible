@@ -72,12 +72,12 @@ EXAMPLES = """
 
   - name: "Collect only the config facts"
     ce_facts:
-      gather_subset:  config
+      gather_subset: config
       provider: "{{ cli }}"
 
   - name: "Do not collect hardware facts"
     ce_facts:
-      gather_subset:  "!hardware"
+      gather_subset: "!hardware"
       provider: "{{ cli }}"
 """
 

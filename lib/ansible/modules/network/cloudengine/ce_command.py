@@ -52,7 +52,6 @@ options:
         by the configured retries, the task fails.  See examples.
     required: false
     default: null
-    aliases: ['waitfor']
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -201,7 +200,7 @@ def main():
         # { command: <str>, output: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
-        wait_for=dict(type='list', aliases=['waitfor']),
+        wait_for=dict(type='list'),
         match=dict(default='all', choices=['any', 'all']),
 
         retries=dict(default=10, type='int'),

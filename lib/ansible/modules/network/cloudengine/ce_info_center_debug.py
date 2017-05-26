@@ -90,32 +90,32 @@ EXAMPLES = '''
 
   - name: "Config debug time stamp"
     ce_info_center_debug:
-      state:  present
-      debug_time_stamp:  date_boot
+      state: present
+      debug_time_stamp: date_boot
       provider: "{{ cli }}"
 
   - name: "Undo debug time stamp"
     ce_info_center_debug:
-      state:  absent
-      debug_time_stamp:  date_boot
+      state: absent
+      debug_time_stamp: date_boot
       provider: "{{ cli }}"
 
   - name: "Config debug module log level"
     ce_info_center_debug:
-      state:  present
-      module_name:  aaa
-      channel_id:  1
-      debug_enable:  true
-      debug_level:  error
+      state: present
+      module_name: aaa
+      channel_id: 1
+      debug_enable: true
+      debug_level: error
       provider: "{{ cli }}"
 
   - name: "Undo debug module log level"
     ce_info_center_debug:
-      state:  absent
-      module_name:  aaa
-      channel_id:  1
-      debug_enable:  true
-      debug_level:  error
+      state: absent
+      module_name: aaa
+      channel_id: 1
+      debug_enable: true
+      debug_level: error
       provider: "{{ cli }}"
 '''
 

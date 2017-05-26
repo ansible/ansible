@@ -73,18 +73,18 @@ EXAMPLES = '''
 
   - name: "Apply acl to interface"
     ce_acl_interface:
-      state:  present
-      acl_name:  2000
-      interface:  40GE1/0/1
-      direction:  outbound
+      state: present
+      acl_name: 2000
+      interface: 40GE1/0/1
+      direction: outbound
       provider: "{{ cli }}"
 
   - name: "Undo acl from interface"
     ce_acl_interface:
-      state:  absent
-      acl_name:  2000
-      interface:  40GE1/0/1
-      direction:  outbound
+      state: absent
+      acl_name: 2000
+      interface: 40GE1/0/1
+      direction: outbound
       provider: "{{ cli }}"
 '''
 
