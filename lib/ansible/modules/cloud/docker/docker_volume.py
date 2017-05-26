@@ -45,7 +45,8 @@ options:
 
   driver_options:
     description:
-      - Dictionary of volume settings. Consult docker docs for valid options and values:
+      - >
+        Dictionary of volume settings. Consult docker docs for valid options and values:
         U(https://docs.docker.com/engine/reference/commandline/volume_create/#driver-specific-options)
     default: null
 
