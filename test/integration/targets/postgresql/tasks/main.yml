@@ -268,92 +268,27 @@
     that:
       - "result.changed == False"
 
-- name: Create a user with all role attributes
+# BYPASSRLS role attribute was introduced in Postgres 9.5, so 
+# we want to test atrribute management differently depending
+# on the version. See https://github.com/ansible/ansible/pull/24625
+# for more details.
+- name: Get Postgres version 
   become_user: "{{ pg_user }}"
   become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    state: "present"
-    role_attr_flags: "SUPERUSER,CREATEROLE,CREATEDB,INHERIT,login"
-    login_user: "{{ pg_user }}"
-    db: postgres
+  shell: echo 'SHOW SERVER_VERSION' | psql -d postgres
+  register: postgres_version_resp
 
-- name: Check that the user has the requested role attributes
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin from pg_roles where rolname='{{ db_user1 }}';" | psql -d postgres
-  register: result
+- name: Print Postgres server version
+  debug:
+    msg: "{{ postgres_version_resp.stdout_lines[-2] | trim }}"
 
-- assert:
-    that:
-      - "result.stdout_lines[-1] == '(1 row)'"
-      - "'super:t' in result.stdout_lines[-2]"
-      - "'createrole:t' in result.stdout_lines[-2]"
-      - "'create:t' in result.stdout_lines[-2]"
-      - "'inherit:t' in result.stdout_lines[-2]"
-      - "'login:t' in result.stdout_lines[-2]"
+- name: Role attribute testing for Postgres 9.5+
+  include: postgresql_user_9.5_or_greater.yml
+  when: (postgres_version_resp.stdout_lines[-2] | trim) | version_compare('9.5.0', '>=')
 
-- name: Modify a user to have no role attributes
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    state: "present"
-    role_attr_flags: "NOSUPERUSER,NOCREATEROLE,NOCREATEDB,noinherit,NOLOGIN"
-    login_user: "{{ pg_user }}"
-    db: postgres
-  register: result
-
-- name: Check that ansible reports it modified the role
-  assert:
-    that:
-      - "result.changed == True"
-
-- name: Check that the user has the requested role attributes
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin from pg_roles where rolname='{{ db_user1 }}';" | psql -d postgres
-  register: result
-
-- assert:
-    that:
-      - "result.stdout_lines[-1] == '(1 row)'"
-      - "'super:f' in result.stdout_lines[-2]"
-      - "'createrole:f' in result.stdout_lines[-2]"
-      - "'create:f' in result.stdout_lines[-2]"
-      - "'inherit:f' in result.stdout_lines[-2]"
-      - "'login:f' in result.stdout_lines[-2]"
-
-- name: Modify a single role attribute on a user
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    state: "present"
-    role_attr_flags: "LOGIN"
-    login_user: "{{ pg_user }}"
-    db: postgres
-  register: result
-
-- name: Check that ansible reports it modified the role
-  assert:
-    that:
-      - "result.changed == True"
-
-- name: Check that the user has the requested role attributes
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin  from pg_roles where rolname='{{ db_user1 }}';" | psql -d postgres
-  register: result
-
-- assert:
-    that:
-      - "result.stdout_lines[-1] == '(1 row)'"
-      - "'super:f' in result.stdout_lines[-2]"
-      - "'createrole:f' in result.stdout_lines[-2]"
-      - "'create:f' in result.stdout_lines[-2]"
-      - "'inherit:f' in result.stdout_lines[-2]"
-      - "'login:t' in result.stdout_lines[-2]"
+- name: Role attribute testing for Postgres versions below 9.5 
+  include: postgresql_user_less_than_9.5.yml
+  when: (postgres_version_resp.stdout_lines[-2] | trim) | version_compare('9.5.0', '<')
 
 - name: Cleanup the user
   become_user: "{{ pg_user }}"
