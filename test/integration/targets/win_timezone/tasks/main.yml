@@ -1,0 +1,8 @@
+---
+- name: determine if server has tzutil.exe installed
+  win_command: tzutil.exe /g
+  register: tzutil_output
+  ignore_errors: True
+
+- include: test.yml
+  when: tzutil_output.rc == 0
