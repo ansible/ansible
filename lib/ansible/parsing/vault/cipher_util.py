@@ -17,8 +17,6 @@ __metaclass__ = type
 
 
 from ansible.errors import AnsibleVaultError
-from ansible.module_utils._text import to_text
-
 
 try:
     from __main__ import display
@@ -32,42 +30,9 @@ PYCRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the 
 CIPHER_DECRYPT_WHITELIST = frozenset((u'AES', u'AES256'))
 CIPHER_ENCRYPT_WHITELIST = frozenset((u'AES256',))
 
-CIPHER_MAPPING = {}
-
 VaultAES256 = VaultAES = None
 
 # We have to find a VaultAES256 implementation, error if we do not
-
-# FIXME: remove this and turn it on when we have a cryptography impl
-WARN_CRYPTOGRAPHY = False
-
-try:
-    from ansible.parsing.vault.ciphers._cryptography import VaultAES256
-except ImportError as e:
-    if WARN_CRYPTOGRAPHY:
-        display.warning('yo, cryptography is better than pycrypto but we failed to import it: %s' % to_text(e))
-    try:
-        from ansible.parsing.vault.ciphers._pycrypto import VaultAES256
-    except ImportError as e:
-        # If we want to support not having either (assuming no vault usage) we could let this pass with warning
-        raise AnsibleVaultError("ansible-vault needs either 'PyCrypto' or 'cryptography' python modules but neither was found: %s" % to_text(e))
-
-# but we usually dont need a VaultAES implementation, so its ok if we dont find one. If we need it later and
-# dont have it, we will throw an error then.
-try:
-    from ansible.parsing.vault.ciphers._cryptography import VaultAES
-except ImportError as e:
-    if WARN_CRYPTOGRAPHY:
-        display.warning('yo, cryptography is better than pycrypto but we failed to import it: %s' % to_text(e))
-    try:
-        from ansible.parsing.vault.ciphers._pycrypto import VaultAES
-    except ImportError as e:
-        display.warning('huh, we didnt find an implementation of VaultAES but we probably dont need it anyway: %s ' % to_text(e))
-
-if VaultAES256:
-    CIPHER_MAPPING[u'AES256'] = VaultAES256
-if VaultAES:
-    CIPHER_MAPPING[u'AES'] = VaultAES
 
 
 def get_decrypt_cipher(cipher_name, cipher_mapping):
