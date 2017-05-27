@@ -140,7 +140,7 @@
   with_items:
       - "{{user_test3.home}}"
   register: homedircheck
-  when: ansible_distribution == 'Fedora'
+  when: ansible_distribution == 'Fedora' or ansible_distribution == 'CentOS'
 
 # Other OSs default to mode 0755 for home dirs.
 - name: Verify existence, ownership and permissions on home directories. (non-Fedora)
@@ -152,22 +152,22 @@
   with_items:
       - "{{user_test3.home}}"
   register: homedircheck
-  when: ansible_distribution != 'Fedora'
+  when: ansible_distribution != 'Fedora' and ansible_distribution != 'CentOS'
 
 - name: Verify existence, ownership, and permissions on SSH key
   file:
       name="{{user_test3.home}}/.ssh/id_rsa"
       state=file
       mode=0600
-      owner=dennis
+      owner="{{user_test3.name}}"
   register: sshkeycheck
 
 - name: Verify ssh directory settings on fresh user
   file:
-      name="{{user_test0.home}}/.ssh"
+      name="{{user_test3.home}}/.ssh"
       state=directory
       mode=0700
-      owner="{{user_test0.name}}"
+      owner="{{user_test3.name}}"
   register: sshdircheck 
 
 - name: Verify file checks
