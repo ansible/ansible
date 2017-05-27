@@ -2053,9 +2053,9 @@ class AnsibleModule(object):
             response=None
 
         if response is None:
-            self.fail_json(msg=message, traceback=last_traceback)
+            self.fail_json(msg=message, exception=last_traceback)
         else:
-            self.fail_json(msg=message, traceback=last_traceback,
+            self.fail_json(msg=message, exception=last_traceback,
                        **camel_dict_to_snake_dict(response))
 
 
