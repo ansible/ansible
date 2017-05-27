@@ -28,7 +28,7 @@ try:
 except ImportError:
     cli = None
 
-from ansible.constants import mk_boolean
+from ansible.config import mk_boolean
 from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
 

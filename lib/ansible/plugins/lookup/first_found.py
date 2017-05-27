@@ -122,7 +122,7 @@ import os
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.constants import mk_boolean as boolean
+from ansible.config import mk_boolean as boolean
 from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase

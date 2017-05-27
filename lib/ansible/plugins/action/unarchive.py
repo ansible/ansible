@@ -20,11 +20,11 @@ __metaclass__ = type
 
 import os
 
+from ansible.config import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
-from ansible.constants import mk_boolean as boolean
 
 
 class ActionModule(ActionBase):

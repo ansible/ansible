@@ -109,6 +109,7 @@ import time
 
 from functools import wraps
 from ansible import constants as C
+from ansible.config import mk_boolean as boolean
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.basic import BOOLEANS
@@ -119,7 +120,6 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.path import unfrackpath, makedirs_safe
 
-boolean = C.mk_boolean
 
 try:
     from __main__ import display

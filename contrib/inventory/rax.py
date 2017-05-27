@@ -168,7 +168,7 @@ except ImportError:
 
 from time import time
 
-from ansible.constants import get_config, mk_boolean
+from ansible.config import get_config, mk_boolean
 
 
 NON_CALLABLES = (basestring, bool, dict, int, list, type(None))

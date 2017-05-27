@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
+from ansible.config import shell_expand
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
 from ansible.playbook import Playbook
@@ -192,7 +193,7 @@ class PlaybookExecutor:
                         retries = sorted(retries)
                         if len(retries) > 0:
                             if C.RETRY_FILES_SAVE_PATH:
-                                basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH, C.CFGDIR)
+                                basedir = shell_expand(C.RETRY_FILES_SAVE_PATH, C.CFGDIR)
                             elif playbook_path:
                                 basedir = os.path.dirname(os.path.abspath(playbook_path))
                             else:

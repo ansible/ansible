@@ -17,7 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.constants import mk_boolean as boolean
+from ansible.config import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
