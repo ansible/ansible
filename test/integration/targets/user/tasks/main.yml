@@ -138,11 +138,11 @@
   when: ansible_distribution == 'Fedora'
 
 # Other OSs default to mode 0755 for home dirs.
-- name: Verify existence, ownership and permissions on home and .ssh directories. (Fedora)
+- name: Verify existence, ownership and permissions on home and .ssh directories. (non-Fedora)
   file:
       name="{{item}}"
       state=directory
-      mode=0700
+      mode=0755
       owner=dennis
   with_items:
       - "{{user_test3.home}}"
