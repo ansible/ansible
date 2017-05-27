@@ -55,11 +55,12 @@ def get_cipher_mapping():
 
     # map cipher_name -> list of classes that provide it
     mapping = defaultdict(list)
+
     for cc in cipher_class_gen:
         print('cc: %s' % cc)
         # a VaultCipher without a 'name' attribute isnt useful
         if not hasattr(cc, 'name'):
-            print('cc: %s has no name attribute' % cc)
+            # print('cc: %s has no name attribute' % cc)
             continue
         mapping[cc.name].append(cc)
 
@@ -72,7 +73,10 @@ def get_cipher_mapping():
     return cipher_mapping
 
 
-def get_decrypt_cipher(cipher_name, cipher_mapping):
+cipher_mapping = get_cipher_mapping()
+
+
+def get_decrypt_cipher(cipher_name):
     cipher_class = None
     if cipher_name not in CIPHER_DECRYPT_WHITELIST:
         msg = "{0} is not a valid decryption cipher_name. The valid names are: {1}".format(cipher_name,
@@ -86,7 +90,7 @@ def get_decrypt_cipher(cipher_name, cipher_mapping):
     return cipher_class
 
 
-def get_encrypt_cipher(cipher_name, cipher_mapping):
+def get_encrypt_cipher(cipher_name):
     cipher_class = None
     if cipher_name not in CIPHER_ENCRYPT_WHITELIST:
         msg = "{0} is not a valid encryption cipher_name. The valid names are: {1}".format(cipher_name,

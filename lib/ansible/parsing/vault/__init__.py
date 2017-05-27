@@ -76,16 +76,13 @@ class VaultLib:
 
     # The prereqs can be different for each cipher impl
     def _check_prereqs(self):
-        default_cipher_class = self.cipher_mapping[self.default_cipher_name]
+        default_cipher_class = cipher_util.cipher_mapping[self.default_cipher_name]
         return default_cipher_class.check_prereqs()
 
     def __init__(self, b_password):
         self.b_password = to_bytes(b_password, errors='strict', encoding='utf-8')
         self.default_cipher_name = 'AES256'
         self.b_version = b'1.1'
-
-        # TODO: could do this later? lazily?
-        self.cipher_mapping = cipher_util.get_cipher_mapping()
 
     @staticmethod
     def is_encrypted(data):
@@ -125,7 +122,7 @@ class VaultLib:
             raise AnsibleVaultError("input is already encrypted")
 
         # use the default cipher
-        cipher_class = cipher_util.get_encrypt_cipher(self.default_cipher_name, self.cipher_mapping)
+        cipher_class = cipher_util.get_encrypt_cipher(self.default_cipher_name)
         cipher = cipher_class()
 
         # encrypt data
@@ -161,7 +158,7 @@ class VaultLib:
 
     def decrypt_ciphertext(self, b_ciphertext, cipher_name, b_version):
 
-        cipher_class = cipher_util.get_decrypt_cipher(cipher_name, self.cipher_mapping)
+        cipher_class = cipher_util.get_decrypt_cipher(cipher_name)
         cipher = cipher_class()
 
         # try to unencrypt vaulttext
