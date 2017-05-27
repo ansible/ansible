@@ -27,7 +27,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ansible.module_utils import six
+from ansible.compat import six
 from ansible.module_utils.urls import generic_urlparse
 from six.moves.urllib.parse import urlparse
 
