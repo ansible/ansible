@@ -29,7 +29,7 @@
 
 from ansible.module_utils import six
 from ansible.module_utils.urls import generic_urlparse
-from six.moves.urllib import parse as urlparse
+from six.moves.urllib.parse import urlparse
 
 try:
     import json
