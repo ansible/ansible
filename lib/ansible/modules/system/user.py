@@ -637,7 +637,10 @@ class User(object):
                     cmd.append('-t')
                     cmd.append('ssh_home_t')
                     cmd.append(ssh_dir)
-                    self.execute_command(cmd)
+                    try:
+                        self.execute_command(cmd)
+                    except:
+                        pass
             except OSError:
                 e = get_exception()
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
@@ -2264,7 +2267,10 @@ def main():
                     cmd.append('-t')
                     cmd.append('user_home_dir_t')
                     cmd.append(user.home)
-                    user.execute_command(cmd)
+                    try:
+                        user.execute_command(cmd)
+                    except:
+                        pass
             result['changed'] = True
 
         # deal with ssh key
