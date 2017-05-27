@@ -231,8 +231,14 @@ pod:
   sample: pod01
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+    CS_HYPERVISORS
+)
 
 
 class AnsibleCloudStackCluster(AnsibleCloudStack):
@@ -240,14 +246,14 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackCluster, self).__init__(module)
         self.returns = {
-            'allocationstate':       'allocation_state',
-            'hypervisortype':        'hypervisor',
-            'clustertype':           'cluster_type',
-            'podname':               'pod',
-            'managedstate':          'managed_state',
+            'allocationstate': 'allocation_state',
+            'hypervisortype': 'hypervisor',
+            'clustertype': 'cluster_type',
+            'podname': 'pod',
+            'managedstate': 'managed_state',
             'memoryovercommitratio': 'memory_overcommit_ratio',
-            'cpuovercommitratio':    'cpu_overcommit_ratio',
-            'ovm3vip':               'ovm3_vip',
+            'cpuovercommitratio': 'cpu_overcommit_ratio',
+            'ovm3vip': 'ovm3_vip',
         }
         self.cluster = None
 
@@ -270,7 +276,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         pods = self.cs.listPods(**args)
         if pods:
             return self._get_by_key(key, pods['pod'][0])
-        self.module.fail_json(msg="Pod %s not found in zone %s." % (self.module.params.get('pod'), self.get_zone(key='name')))
+        self.module.fail_json(msg="Pod %s not found in zone %s" % (self.module.params.get('pod'), self.get_zone(key='name')))
 
     def get_cluster(self):
         if not self.cluster:
@@ -374,24 +380,24 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        zone=dict(default=None),
-        pod=dict(default=None),
-        cluster_type=dict(choices=['CloudManaged', 'ExternalManaged'], default=None),
-        hypervisor=dict(choices=CS_HYPERVISORS, default=None),
+        zone=dict(),
+        pod=dict(),
+        cluster_type=dict(choices=['CloudManaged', 'ExternalManaged']),
+        hypervisor=dict(choices=CS_HYPERVISORS),
         state=dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
-        url=dict(default=None),
-        username=dict(default=None),
-        password=dict(default=None, no_log=True),
-        guest_vswitch_name=dict(default=None),
-        guest_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs'], default=None),
-        public_vswitch_name=dict(default=None),
-        public_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs'], default=None),
-        vms_ip_address=dict(default=None),
-        vms_username=dict(default=None),
-        vms_password=dict(default=None, no_log=True),
-        ovm3_cluster=dict(default=None),
-        ovm3_pool=dict(default=None),
-        ovm3_vip=dict(default=None),
+        url=dict(),
+        username=dict(),
+        password=dict(no_log=True),
+        guest_vswitch_name=dict(),
+        guest_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs']),
+        public_vswitch_name=dict(),
+        public_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs']),
+        vms_ip_address=dict(),
+        vms_username=dict(),
+        vms_password=dict(no_log=True),
+        ovm3_cluster=dict(),
+        ovm3_pool=dict(),
+        ovm3_vip=dict(),
     ))
 
     module = AnsibleModule(
@@ -416,7 +422,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
