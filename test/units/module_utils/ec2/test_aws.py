@@ -27,7 +27,7 @@ except:
     HAS_BOTO3 = False
 
 from nose.plugins.skip import SkipTest
-from ansible.compat.tests.mock import MagicMock, Mock, patch
+from ansible.compat.tests.mock import Mock, patch
 from ansible.module_utils import basic
 from ansible.compat.tests import unittest
 from ansible.module_utils.ec2 import AWSRetry
@@ -35,8 +35,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 import botocore.exceptions
 import json
-
-#from ansible.module_utils.basic import fail_json
 
 if not HAS_BOTO3:
     raise SkipTest("test_aws.py requires the python modules 'boto3' and 'botocore'")
@@ -51,7 +49,7 @@ class RetryTestCase(unittest.TestCase):
         def no_failures():
             self.counter += 1
 
-        r = no_failures()
+        no_failures()
         self.assertEqual(self.counter, 1)
 
     def test_retry_once(self):
@@ -79,7 +77,6 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'toooo fast!!')
 
-        #with self.assertRaises(botocore.exceptions.ClientError):
         try:
             fail()
         except Exception as e:
@@ -95,7 +92,6 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'unexpected error')
 
-        #with self.assertRaises(botocore.exceptions.ClientError):
         try:
             raise_unexpected_error()
         except Exception as e:
@@ -108,12 +104,12 @@ class ErrorReportingTestcase(unittest.TestCase):
 
     def test_botocore_exception_reports_nicely_via_fail_json_aws(self):
 
-        basic._ANSIBLE_ARGS=to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
-        module = AnsibleModule(argument_spec = dict(
-            fail_mode = dict(type='list', default=['success'])
+        basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
+        module = AnsibleModule(argument_spec=dict(
+            fail_mode=dict(type='list', default=['success'])
         ))
 
-        fail_json_double=Mock()
+        fail_json_double = Mock()
         err_msg = {'Error': {'Code': 'FakeClass.FakeError'}}
         with patch.object(basic.AnsibleModule, 'fail_json', fail_json_double):
             try:
@@ -126,8 +122,8 @@ class ErrorReportingTestcase(unittest.TestCase):
         assert(len(fail_json_double.mock_calls) < 2), "called fail_json multiple times when once would do"
         assert("test_botocore_exception_reports_nicely"
                in fail_json_double.mock_calls[0][2]["exception"]), \
-               "exception traceback doesn't include correct function, fail call was actually: " \
-                + str(fail_json_double.mock_calls[0])
+            "exception traceback doesn't include correct function, fail call was actually: " \
+            + str(fail_json_double.mock_calls[0])
 
         assert("Fake failure for testing boto exception messages:" in fail_json_double.mock_calls[0][2]["msg"]), \
             "error message doesn't include the local message; was: " \
@@ -143,15 +139,14 @@ class ErrorReportingTestcase(unittest.TestCase):
             "Failed to find error/code; was: " + str(fail_json_double.mock_calls[0])
 
 
-
     def test_botocore_exception_without_response_reports_nicely_via_fail_json_aws(self):
 
-        basic._ANSIBLE_ARGS=to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
-        module = AnsibleModule(argument_spec = dict(
-            fail_mode = dict(type='list', default=['success'])
+        basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
+        module = AnsibleModule(argument_spec=dict(
+            fail_mode=dict(type='list', default=['success'])
         ))
 
-        fail_json_double=Mock()
+        fail_json_double = Mock()
         err_msg = None
         with patch.object(basic.AnsibleModule, 'fail_json', fail_json_double):
             try:
@@ -166,8 +161,8 @@ class ErrorReportingTestcase(unittest.TestCase):
 
         assert("test_botocore_exception_without_response_reports_nicely_via_fail_json_aws"
                in fail_json_double.mock_calls[0][2]["exception"]), \
-               "exception traceback doesn't include correct function, fail call was actually: " \
-               + str(fail_json_double.mock_calls[0])
+            "exception traceback doesn't include correct function, fail call was actually: " \
+            + str(fail_json_double.mock_calls[0])
 
         assert("Fake failure for testing boto exception messages again:" in fail_json_double.mock_calls[0][2]["msg"]), \
             "error message doesn't include the local message; was: " \
