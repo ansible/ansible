@@ -24,9 +24,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 module: pex
 author: "Matt Martz (@sivel)"
-short_description: Builds and optionally executes pex files
+short_description: Builds and optionally executes PEX files
 description:
-    - Builds and optionally executes pex files
+    - Builds and optionally executes PEX files
 version_added: "2.4"
 options:
     always_write_cache:
@@ -166,6 +166,7 @@ EXAMPLES = '''
   pex:
     packages:
       - pex
+      - requests
     args:
       - '-h'
     script: pex
@@ -179,7 +180,7 @@ EXAMPLES = '''
 
 RETURN = '''
 pex_name:
-description: The path of the generated .pex file
+    description: The path of the generated .pex file
     returned: when successful and pex_name initially supplied
     type: str
     sample: /tmp/docker.pex
@@ -340,7 +341,7 @@ def main():
     )
 
     if not HAS_PEX:
-        module.fail_json(msg="The pex python module is required for this module")
+        module.fail_json(msg="The pex python package is required for this module")
 
     options = Options(copy.deepcopy(module.params))
     ENV.set('PEX_VERBOSE', str(options.verbosity))
