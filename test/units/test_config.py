@@ -59,22 +59,8 @@ def user():
 
 
 @pytest.fixture
-def cfg_file():
-    data = '/ansible/test/cfg/path'
-    old_cfg_file = constants.CONFIG_FILE
-    constants.CONFIG_FILE = os.path.join(data, 'ansible.cfg')
-    yield data
-
-    constants.CONFIG_FILE = old_cfg_file
-
-
-@pytest.fixture
-def null_cfg_file():
-    old_cfg_file = constants.CONFIG_FILE
-    del constants.CONFIG_FILE
-    yield
-
-    constants.CONFIG_FILE = old_cfg_file
+def topdir():
+    yield '/ansible/test/cfg/path'
 
 
 @pytest.fixture
@@ -125,35 +111,35 @@ class TestMkBoolean:
 
 class TestShellExpand:
     def test_shell_expand_none(self):
-        assert config.shell_expand(None, config_file=constants.CONFIG_FILE) is None
+        assert config.shell_expand(None, topdir=constants.CFGDIR) is None
 
     def test_shell_expand_static_path(self):
-        assert config.shell_expand(u'/usr/local', config_file=constants.CONFIG_FILE) == u'/usr/local'
+        assert config.shell_expand(u'/usr/local', topdir=constants.CFGDIR) == u'/usr/local'
 
     def test_shell_expand_tilde(self, user):
-        assert config.shell_expand(u'~/local', config_file=constants.CONFIG_FILE) == os.path.join(user['home'], 'local')
-        assert config.shell_expand(u'~%s/local' % user['username'], config_file=constants.CONFIG_FILE) == os.path.join(user['home'], 'local')
+        assert config.shell_expand(u'~/local', topdir=constants.CFGDIR) == os.path.join(user['home'], 'local')
+        assert config.shell_expand(u'~%s/local' % user['username'], topdir=constants.CFGDIR) == os.path.join(user['home'], 'local')
 
     def test_shell_expand_vars(self, user):
-        assert config.shell_expand(u'$HOME/local', config_file=constants.CONFIG_FILE) == os.path.join(user['home'], 'local')
+        assert config.shell_expand(u'$HOME/local', topdir=constants.CFGDIR) == os.path.join(user['home'], 'local')
 
         os.environ['ANSIBLE_TEST_VAR'] = '/srv/ansible'
-        assert config.shell_expand(u'$ANSIBLE_TEST_VAR/local', config_file=constants.CONFIG_FILE) == os.path.join('/srv/ansible', 'local')
+        assert config.shell_expand(u'$ANSIBLE_TEST_VAR/local', topdir=constants.CFGDIR) == os.path.join('/srv/ansible', 'local')
 
         os.environ['ANSIBLE_TEST_VAR'] = '~'
-        assert config.shell_expand(u'$ANSIBLE_TEST_VAR/local', config_file=constants.CONFIG_FILE) == os.path.join(user['home'], 'local')
+        assert config.shell_expand(u'$ANSIBLE_TEST_VAR/local', topdir=constants.CFGDIR) == os.path.join(user['home'], 'local')
 
         del os.environ['ANSIBLE_TEST_VAR']
-        assert config.shell_expand(u'$ANSIBLE_TEST_VAR/local', config_file=constants.CONFIG_FILE) == u'$ANSIBLE_TEST_VAR/local'
+        assert config.shell_expand(u'$ANSIBLE_TEST_VAR/local', topdir=constants.CFGDIR) == u'$ANSIBLE_TEST_VAR/local'
 
     def test_expand_relative_abs_path(self):
-        assert config.shell_expand('/absolute/path', expand_relative_paths=True, config_file=constants.CONFIG_FILE) == '/absolute/path'
+        assert config.shell_expand('/absolute/path', expand_relative_paths=True, topdir=constants.CFGDIR) == '/absolute/path'
 
-    def test_expand_relative_path_relative_cfg_file(self, cfg_file):
-        assert config.shell_expand(u'relative/path', expand_relative_paths=True, config_file=constants.CONFIG_FILE) == os.path.join(cfg_file, 'relative/path')
+    def test_expand_relative_path_relative_cfg_file(self, topdir):
+        assert config.shell_expand(u'relative/path', expand_relative_paths=True, topdir=topdir) == os.path.join(topdir, 'relative/path')
 
-    def test_expand_relative_path_relative_cwd(self, cwd, null_cfg_file):
-        assert config.shell_expand(u'relative/path', expand_relative_paths=True, config_file=constants.CONFIG_FILE) == os.path.join(cwd, 'relative/path')
+    def test_expand_relative_path_relative_cwd(self, cwd):
+        assert config.shell_expand(u'relative/path', expand_relative_paths=True, topdir=None) == os.path.join(cwd, 'relative/path')
 
 
 # configparser object
