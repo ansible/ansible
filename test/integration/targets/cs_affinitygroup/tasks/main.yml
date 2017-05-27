@@ -1,6 +1,8 @@
 ---
 - name: setup
-  cs_affinitygroup: name={{ cs_resource_prefix }}_ag state=absent
+  cs_affinitygroup:
+    name: "{{ cs_resource_prefix }}_ag"
+    state: absent
   register: ag
 - name: verify setup
   assert:
@@ -8,7 +10,7 @@
     - ag|success
 
 - name: test fail if missing name
-  action: cs_affinitygroup
+  cs_affinitygroup:
   register: ag
   ignore_errors: true
 - name: verify results of fail if missing name
@@ -16,6 +18,18 @@
     that:
     - ag|failed
     - "ag.msg == 'missing required arguments: name'"
+
+- name: test fail unknown affinity type
+  cs_affinitygroup:
+    name: "{{ cs_resource_prefix }}_ag"
+    affinty_type: unexistent affinity type
+  register: ag
+  ignore_errors: true
+- name: verify test fail unknown affinity type
+  assert:
+    that:
+    - ag|failed
+    - "ag.msg == 'affinity group type not found: unexistent affinity type'"
 
 - name: test present affinity group in check mode
   cs_affinitygroup: name={{ cs_resource_prefix }}_ag
