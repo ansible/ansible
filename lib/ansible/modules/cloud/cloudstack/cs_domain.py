@@ -111,8 +111,13 @@ network_domain:
   sample: example.local
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackDomain(AnsibleCloudStack):
@@ -120,12 +125,11 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackDomain, self).__init__(module)
         self.returns = {
-            'path':             'path',
-            'networkdomain':    'network_domain',
+            'path': 'path',
+            'networkdomain': 'network_domain',
             'parentdomainname': 'parent_domain',
         }
         self.domain = None
-
 
     def _get_domain_internal(self, path=None):
         if not path:
@@ -141,8 +145,9 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
         elif not path.startswith('root/'):
             path = "root/" + path
 
-        args            = {}
-        args['listall'] = True
+        args = {
+            'listall': True
+        }
 
         domains = self.cs.listDomains(**args)
         if domains:
@@ -151,18 +156,15 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
                     return d
         return None
 
-
     def get_name(self):
         # last part of the path is the name
         name = self.module.params.get('path').split('/')[-1:]
         return name
 
-
     def get_domain(self, key=None):
         if not self.domain:
             self.domain = self._get_domain_internal()
         return self._get_by_key(key, self.domain)
-
 
     def get_parent_domain(self, key=None):
         path = self.module.params.get('path')
@@ -175,7 +177,6 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
             self.module.fail_json(msg="Parent domain path %s does not exist" % path)
         return self._get_by_key(key, parent_domain)
 
-
     def present_domain(self):
         domain = self.get_domain()
         if not domain:
@@ -184,15 +185,14 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
             domain = self.update_domain(domain)
         return domain
 
-
     def create_domain(self, domain):
         self.result['changed'] = True
 
-        args                    = {}
-        args['name']            = self.get_name()
-        args['parentdomainid']  = self.get_parent_domain(key='id')
-        args['networkdomain']   = self.module.params.get('network_domain')
-
+        args = {
+            'name': self.get_name(),
+            'parentdomainid': self.get_parent_domain(key='id'),
+            'networkdomain': self.module.params.get('network_domain')
+        }
         if not self.module.check_mode:
             res = self.cs.createDomain(**args)
             if 'errortext' in res:
@@ -200,12 +200,11 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
             domain = res['domain']
         return domain
 
-
     def update_domain(self, domain):
-        args                    = {}
-        args['id']              = domain['id']
-        args['networkdomain']   = self.module.params.get('network_domain')
-
+        args = {
+            'id': domain['id'],
+            'networkdomain': self.module.params.get('network_domain')
+        }
         if self.has_changed(args, domain):
             self.result['changed'] = True
             if not self.module.check_mode:
@@ -215,16 +214,16 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
                 domain = res['domain']
         return domain
 
-
     def absent_domain(self):
         domain = self.get_domain()
         if domain:
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                args            = {}
-                args['id']      = domain['id']
-                args['cleanup'] = self.module.params.get('clean_up')
+                args = {
+                    'id': domain['id'],
+                    'cleanup': self.module.params.get('clean_up')
+                }
                 res = self.cs.deleteDomain(**args)
 
                 if 'errortext' in res:
@@ -236,15 +235,14 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
         return domain
 
 
-
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        path = dict(required=True),
-        state = dict(choices=['present', 'absent'], default='present'),
-        network_domain = dict(default=None),
-        clean_up = dict(type='bool', default=False),
-        poll_async = dict(type='bool', default=True),
+        path=dict(required=True),
+        state=dict(choices=['present', 'absent'], default='present'),
+        network_domain=dict(),
+        clean_up=dict(type='bool', default=False),
+        poll_async=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -269,7 +267,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
