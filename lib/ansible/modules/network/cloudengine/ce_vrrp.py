@@ -256,8 +256,8 @@ proposed:
                 "vrid": "1"
             }
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {
                 "auth_mode": "none",
