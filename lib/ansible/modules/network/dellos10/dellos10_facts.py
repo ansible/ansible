@@ -284,8 +284,8 @@ class Interfaces(FactsBase):
         data = ''
         skip = True
 
-        #The output returns multiple xml trees
-        #parse them before handling.
+        # The output returns multiple xml trees
+        # parse them before handling.
         for line in int_show_data:
             if pattern in line:
                 if skip is False:
@@ -306,8 +306,8 @@ class Interfaces(FactsBase):
         lldp_data = (self.responses[1]).splitlines()
         data = ''
         skip = True
-        #The output returns multiple xml trees
-        #parse them before handling.
+        # The output returns multiple xml trees
+        # parse them before handling.
         for line in lldp_data:
             if pattern in line:
                 if skip is False:
@@ -371,7 +371,7 @@ class Interfaces(FactsBase):
                         intf = self.intf_facts[name]
                         intf['mediatype'] = mediatype
                     except:
-                        #valid case to handle 2x50G
+                        # valid case to handle 2x50G
                         pass
 
     def add_ip_address(self, address, family):
