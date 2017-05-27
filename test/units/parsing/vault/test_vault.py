@@ -134,7 +134,7 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
 # TODO: mv to plugin tests
 class TestVaultCipherAes256(unittest.TestCase):
     def setUp(self):
-        cipher_mapping = vault.get_cipher_mapping()
+        cipher_mapping = cipher_util.get_cipher_mapping()
         # self.vault_cipher_class = cipher_loader.get('AES256', class_only=True)
         # note this doesnt check whitelist etc
         self.vault_cipher_class = cipher_mapping['AES256']

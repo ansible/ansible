@@ -15,8 +15,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import defaultdict
 
 from ansible.errors import AnsibleVaultError
+
+from ansible.plugins import cipher_loader
 
 try:
     from __main__ import display
@@ -30,9 +33,43 @@ PYCRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the 
 CIPHER_DECRYPT_WHITELIST = frozenset((u'AES', u'AES256'))
 CIPHER_ENCRYPT_WHITELIST = frozenset((u'AES256',))
 
-VaultAES256 = VaultAES = None
+# Which is better is a judgement call, and here is how we rank our crypto children
+cipher_impl_preference = {'cryptography': 100,
+                          'PyCrypto': 50,
+                          'other': 10,
+                          'no_impl': 0,
+                          "Larry's Original Crypto Shack and Shoe Repair": -1}
 
-# We have to find a VaultAES256 implementation, error if we do not
+
+def get_impl_score(cph_class):
+    # if plugin doesnt provide implementation attr, then it gets 0 points. But
+    # we can still rank something lower...
+    impl = getattr(cph_class, 'implementation', 'no_impl')
+    # and default to 0 for unknown impl as well
+    score = cipher_impl_preference.get(impl, 0)
+    return score
+
+
+def get_cipher_mapping():
+    cipher_class_gen = cipher_loader.all(class_only=True)
+
+    # map cipher_name -> list of classes that provide it
+    mapping = defaultdict(list)
+    for cc in cipher_class_gen:
+        print('cc: %s' % cc)
+        # a VaultCipher without a 'name' attribute isnt useful
+        if not hasattr(cc, 'name'):
+            print('cc: %s has no name attribute' % cc)
+            continue
+        mapping[cc.name].append(cc)
+
+    cipher_mapping = {}
+
+    # set our prefered cipher to be the class with the highest score (last in the list when sorted via get_score())
+    for c_name, c_classes in mapping.items():
+        cipher_mapping[c_name] = sorted(c_classes, key=get_impl_score).pop()
+
+    return cipher_mapping
 
 
 def get_decrypt_cipher(cipher_name, cipher_mapping):

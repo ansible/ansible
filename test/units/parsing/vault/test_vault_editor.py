@@ -27,10 +27,12 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
 from ansible import errors
-from ansible.parsing import vault
 from ansible.module_utils._text import to_bytes, to_text
 
 from units.mock.vault_helper import check_decrypt_prereqs, check_encrypt_prereqs
+
+from ansible.parsing import vault
+from ansible.parsing.vault import cipher_util
 
 v10_data = """$ANSIBLE_VAULT;1.0;AES
 53616c7465645f5fd0026926a2d415a28a2622116273fbc90e377225c12a347e1daf4456d36a77f9
@@ -49,7 +51,8 @@ class TestVaultEditor(unittest.TestCase):
 
     def setUp(self):
         self._test_dir = None
-        self.cipher_mapping = vault.get_cipher_mapping()
+        # print('cipher_util: %s' % cipher_util)
+        self.cipher_mapping = cipher_util.get_cipher_mapping()
 
     def tearDown(self):
         if self._test_dir:
