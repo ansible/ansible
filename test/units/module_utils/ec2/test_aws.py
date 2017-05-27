@@ -124,10 +124,9 @@ class ErrorReportingTestcase(unittest.TestCase):
 
         assert(len(fail_json_double.mock_calls) > 0), "failed to call fail_json when should have"
         assert(len(fail_json_double.mock_calls) < 2), "called fail_json multiple times when once would do"
-
         assert("test_botocore_exception_reports_nicely"
-               in fail_json_double.mock_calls[0][2]["traceback"]), \
-               "traceback doesn't include correct function, fail call was actually: " \
+               in fail_json_double.mock_calls[0][2]["exception"]), \
+               "exception traceback doesn't include correct function, fail call was actually: " \
                 + str(fail_json_double.mock_calls[0])
 
         assert("Fake failure for testing boto exception messages:" in fail_json_double.mock_calls[0][2]["msg"]), \
@@ -166,8 +165,8 @@ class ErrorReportingTestcase(unittest.TestCase):
             "called fail_json multiple times when once would do"
 
         assert("test_botocore_exception_without_response_reports_nicely_via_fail_json_aws"
-               in fail_json_double.mock_calls[0][2]["traceback"]), \
-               "traceback doesn't include correct function, fail call was actually: " \
+               in fail_json_double.mock_calls[0][2]["exception"]), \
+               "exception traceback doesn't include correct function, fail call was actually: " \
                + str(fail_json_double.mock_calls[0])
 
         assert("Fake failure for testing boto exception messages again:" in fail_json_double.mock_calls[0][2]["msg"]), \
