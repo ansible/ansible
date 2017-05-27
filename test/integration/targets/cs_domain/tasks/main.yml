@@ -56,6 +56,17 @@
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
     - dom.name == "{{ cs_resource_prefix }}_domain"
 
+- name: test fail to create a subdomain for inexistent domain
+  cs_domain:
+    path: ROOT/inexistent/{{ cs_resource_prefix }}_subdomain
+  register: dom
+  ignore_errors: true
+- name: test fail to create a subdomain for inexistent domain
+  assert:
+    that:
+    - dom|failed
+    - dom.msg == "Parent domain path ROOT/inexistent does not exist"
+
 - name: test create a subdomain in check mode
   cs_domain: path=ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
   register: dom
