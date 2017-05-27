@@ -179,10 +179,25 @@ EXAMPLES = '''
 
 RETURN = '''
 pex_name:
-    description: Path of the saved pex file
+description: The path of the generated .pex file
     returned: when successful and pex_name initially supplied
     type: str
     sample: /tmp/docker.pex
+platform:
+    description: The platform the PEX was built for
+    returned: always
+    type: str
+    sample: macosx-10.12-x86_64
+python:
+    description: Python interpreter used to build the PEX
+    returned: always
+    type: str
+    sample: /usr/bin/python
+python_shebang:
+    description: Shebang used in the PEX
+    returned: always
+    type: str
+    sample: #!/usr/bin/env python3.6
 build_log:
     description: Verbose log output
     returned: always
@@ -393,8 +408,16 @@ def main():
 
     build_log_out = build_log.getvalue()
 
+    if options.python_shebang:
+        shebang = '#!%s' % options.python_shebang
+    else:
+        shebang = pex_builder.interpreter.identity.hashbang()
+
     module.exit_json(
         pex_name=options.pex_name,
+        platform=options.platform,
+        python=pex_builder.interpreter.binary,
+        python_shebang=shebang,
         rc=rc,
         stdout=stdout,
         stderr=stderr,
