@@ -27,6 +27,10 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from ansible.module_utils import six
+from ansible.module_utils.urls import generic_urlparse
+from six.moves.urllib import parse as urlparse
+
 try:
     import json
 except ImportError:
@@ -50,13 +54,6 @@ class UnixHTTPConnection(HTTPConnection):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(self.path)
         self.sock = sock
-
-from ansible.module_utils.urls import generic_urlparse
-try:
-    from urlparse import urlparse
-except ImportError:
-    # Python 3
-    from urllib.parse import urlparse
 
 class LXDClientException(Exception):
     def __init__(self, msg, **kwargs):
