@@ -56,7 +56,7 @@ try:
     from urlparse import urlparse
 except ImportError:
     # Python 3
-    from url.parse import urlparse
+    from urllib.parse import urlparse
 
 class LXDClientException(Exception):
     def __init__(self, msg, **kwargs):
