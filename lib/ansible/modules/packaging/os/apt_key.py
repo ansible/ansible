@@ -26,6 +26,7 @@ notes:
     - Doesn't download the key unless it really needs it.
     - As a sanity check, downloaded key id must match the one specified.
     - Best practice is to specify the key id and the URL.
+    - Adding a new key requires an apt cache update (e.g. `apt-get update`)
 options:
     id:
         description:
