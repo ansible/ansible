@@ -348,11 +348,19 @@ class PathMapper(object):
                 'network-integration': target.name if 'network/' in target.aliases else None,
             }
 
+        if path.startswith('test/integration/network-'):
+            return {
+                'network-integration': 'all',
+            }
+
+        if path.startswith('test/integration/windows-'):
+            return {
+                'windows-integration': 'all',
+            }
+
         if path.startswith('test/integration/'):
             return {
                 'integration': 'all',
-                'windows-integration': 'all',
-                'network-integration': 'all',
             }
 
         if path.startswith('test/sanity/'):
