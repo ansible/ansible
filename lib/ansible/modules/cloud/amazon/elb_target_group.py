@@ -30,8 +30,8 @@ author: "Rob White (@wimnat)"
 options:
   deregistration_delay_timeout:
     description:
-      - "The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused. 
-        The range is 0-3600 seconds."
+      - The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused.
+        The range is 0-3600 seconds.
   health_check_protocol:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
@@ -69,8 +69,8 @@ options:
     required: true
   port:
     description:
-      - "The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if 
-        I(state) is C(present)."
+      - The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if
+        I(state) is C(present).
     required: false
   protocol:
     description:
@@ -79,8 +79,8 @@ options:
     choices: [ 'http', 'https' ]
   purge_tags:
     description:
-      - "If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the tag parameter is not set then 
-        tags will not be modified."
+      - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the tag parameter is not set then
+        tags will not be modified.
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
@@ -95,8 +95,8 @@ options:
     choices: [ 'yes', 'no' ]
   stickiness_lb_cookie_duration:
     description:
-      - "The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load 
-        balancer-generated cookie is considered stale. The range is 1 second to 1 week (604800 seconds)."
+      - The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load
+        balancer-generated cookie is considered stale. The range is 1 second to 1 week (604800 seconds).
   stickiness_type:
     description:
       - The type of sticky sessions. The possible value is lb_cookie.
@@ -113,8 +113,8 @@ options:
     required: false
   targets:
     description:
-      - "A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then 
-        all existing targets will be removed from the group. The list should be an Id and a Port parameter. See the Examples for detail."
+      - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then
+        all existing targets will be removed from the group. The list should be an Id and a Port parameter. See the Examples for detail.
     required: false
   unhealthy_threshold_count:
     description:
@@ -630,28 +630,28 @@ def main():
     argument_spec.update(
         dict(
             deregistration_delay_timeout=dict(type='int'),
-            health_check_protocol=dict(required=False, choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
-            health_check_port=dict(required=False, type='int'),
-            health_check_path=dict(required=False, default=None, type='str'),
-            health_check_interval=dict(required=False, type='int'),
-            health_check_timeout=dict(required=False, type='int'),
-            healthy_threshold_count=dict(required=False, type='int'),
-            modify_targets=dict(required=False, default=True, type='bool'),
+            health_check_protocol=dict(choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
+            health_check_port=dict(type='int'),
+            health_check_path=dict(default=None, type='str'),
+            health_check_interval=dict(type='int'),
+            health_check_timeout=dict(type='int'),
+            healthy_threshold_count=dict(type='int'),
+            modify_targets=dict(default=True, type='bool'),
             name=dict(required=True, type='str'),
-            port=dict(required=False, type='int'),
-            protocol=dict(required=False, choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
-            purge_tags=dict(required=False, default=True, type='bool'),
+            port=dict(type='int'),
+            protocol=dict(choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
+            purge_tags=dict(default=True, type='bool'),
             stickiness_enabled=dict(type='bool'),
             stickiness_type=dict(default='lb_cookie', type='str'),
             stickiness_lb_cookie_duration=dict(type='int'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
-            successful_response_codes=dict(required=False, type='str'),
-            tags=dict(required=False, default={}, type='dict'),
-            targets=dict(required=False, type='list'),
-            unhealthy_threshold_count=dict(required=False, type='int'),
-            vpc_id=dict(required=False, type='str'),
-            wait_timeout=dict(required=False, type='int'),
-            wait=dict(required=False, type='bool')
+            successful_response_codes=dict(type='str'),
+            tags=dict(default={}, type='dict'),
+            targets=dict(type='list'),
+            unhealthy_threshold_count=dict(type='int'),
+            vpc_id=dict(type='str'),
+            wait_timeout=dict(type='int'),
+            wait=dict(type='bool')
         )
     )
 
