@@ -260,6 +260,16 @@ options:
       - Ignores all other parameters.
     choices: [ ACCEPT, DROP, QUEUE, RETURN ]
     version_added: "2.2"
+  log_prefix:
+    version_added: "2.4"
+    description:
+      - "Prefix log messages with the specified prefix; up to 29 letters 
+      long, and useful for distinguishing messages in the logs."
+  log_level:
+    version_added: "2.4"
+    description:
+      - "Logging level according to the syslogd-defined priorities. These
+      can be strings or numbers from 1-8."
 '''
 
 EXAMPLES = '''
@@ -327,6 +337,16 @@ EXAMPLES = '''
     protocol: tcp
     reject_with: tcp-reset
     ip_version: ipv4
+    
+# Log packets arriving into an user-defined chain
+- iptables:
+    chain: LOGGING
+    action: append
+    state: present
+    limit: 2/second
+    limit_burst: 20
+    log_prefix: "IPTABLES:INFO: "
+    log_level: info
 '''
 
 import re
@@ -433,6 +453,8 @@ def construct_rule(params):
         params['icmp_type'],
         ICMP_TYPE_OPTIONS[params['ip_version']],
         False)
+    append_param(rule, params['log_prefix'], '--log-prefix', False)
+    append_param(rule, params['log_level'], '--log-level', False)
     return rule
 
 
@@ -525,6 +547,8 @@ def main():
             syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
             flush=dict(type='bool', default=False),
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
+            log_prefix=dict(required=False, default=None, type='str'),
+            log_level=dict(required=False, default=None, type='str'),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
@@ -548,6 +572,13 @@ def main():
     # Check if chain option is required
     if args['flush'] is False and args['chain'] is None:
         module.fail_json(msg="Either chain or flush parameter must be specified.")
+
+    # The log_prefix and log_level options can only be used if the jump target is LOG
+    if module.params['log_prefix'] or module.params['log_level']:
+        if module.params['jump'] is None:
+            module.params['jump'] = 'LOG'
+        elif module.params['jump'] != 'LOG':
+            module.fail_json(msg="Logging options can only be used with the LOG jump target.")
 
     # Flush the table
     if args['flush'] is True:
