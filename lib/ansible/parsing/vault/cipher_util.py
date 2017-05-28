@@ -57,10 +57,8 @@ def get_cipher_mapping():
     mapping = defaultdict(list)
 
     for cc in cipher_class_gen:
-        print('cc: %s' % cc)
         # a VaultCipher without a 'name' attribute isnt useful
         if not hasattr(cc, 'name'):
-            # print('cc: %s has no name attribute' % cc)
             continue
         mapping[cc.name].append(cc)
 
