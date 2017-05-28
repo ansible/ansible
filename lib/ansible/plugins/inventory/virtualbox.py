@@ -27,20 +27,29 @@ DOCUMENTATION:
     options:
         running_only:
             description: toggles showing all vms vs only those currently running
+            type: boolean
             default: False
         settings_password_file:
             description: provide a file containing the settings password (equivalent to --settingspwfile)
         network_info_path:
             description: property path to query for network information (ansible_host)
             default: "/VirtualBox/GuestInfo/Net/0/V4/IP"
+        query:
+            description: create vars from virtualbox properties
+            type: dictionary
+            default: {}
+        compose:
+            description: create vars from jinja2 expressions, these are created AFTER the query block
+            type: dictionary
+            default: {}
 EXAMPLES:
 # file must be named vbox.yaml or vbox.yml
 simple_config_file:
     plugin: virtualbox
     settings_password_file: /etc/virtulbox/secrets
-    query: # create vars from virtualbox properties
+    query:
       logged_in_users: /VirtualBox/GuestInfo/OS/LoggedInUsersList
-    compose: # compose vars from jinja2 expressions
+    compose:
       ansible_connection: ('indows' in vbox_Guest_OS)|ternary('winrm', 'ssh')
 '''
 from __future__ import (absolute_import, division, print_function)
