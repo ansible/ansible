@@ -38,7 +38,9 @@ EXAMPLES:
 simple_config_file:
     plugin: virtualbox
     settings_password_file: /etc/virtulbox/secrets
-    compose:
+    query: # create vars from virtualbox properties
+      logged_in_users: /VirtualBox/GuestInfo/OS/LoggedInUsersList
+    compose: # compose vars from jinja2 expressions
       ansible_connection: ('indows' in vbox_Guest_OS)|ternary('winrm', 'ssh')
 '''
 from __future__ import (absolute_import, division, print_function)
@@ -57,6 +59,20 @@ class InventoryModule(BaseInventoryPlugin):
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
     NAME = 'virtualbox'
+    VBOX = "VBoxManage"
+
+    def query_vbox_data(self, host, property_path):
+        ret = None
+        try:
+            cmd = [self.VBOX, 'guestproperty', 'get', host, property_path]
+            x = Popen(cmd, stdout=PIPE)
+            ipinfo = x.stdout.read()
+            if 'Value' in ipinfo:
+                a, ip = ipinfo.split(':', 1)
+                ret = ip.strip()
+        except:
+            pass
+        return ret
 
     def verify_file(self, path):
 
@@ -71,7 +87,6 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        VBOX = "VBoxManage"
         cache_key = self.get_cache_prefix(path)
 
         # file is config file
@@ -91,7 +106,7 @@ class InventoryModule(BaseInventoryPlugin):
             running = data.get('running_only', False)
 
             # start getting data
-            cmd = [VBOX, 'list', '-l']
+            cmd = [self.VBOX, 'list', '-l']
             if running:
                 cmd.append('runningvms')
             else:
@@ -134,15 +149,7 @@ class InventoryModule(BaseInventoryPlugin):
                     hostvars[current_host] = {}
                     self.inventory.add_host(current_host)
                 # try to get network info
-                try:
-                    cmd = [VBOX, 'guestproperty', 'get', current_host, netinfo]
-                    x = Popen(cmd, stdout=PIPE)
-                    ipinfo = x.stdout.read()
-                    if 'Value' in ipinfo:
-                        a, ip = ipinfo.split(':', 1)
-                        self.inventory.set_variable(current_host, 'ansible_host', ip.strip())
-                except:
-                    pass
+                self.inventory.set_variable(current_host, 'ansible_host', self.query_vbox_data(current_host, netinfo))
 
             # found groups
             elif k == 'Groups':
@@ -167,6 +174,11 @@ class InventoryModule(BaseInventoryPlugin):
 
         # set vars in inventory from hostvars
         for host in hostvars:
+
+            # create vars from vbox properties
+            if data.get('query') and isinstance(data['query'], dict):
+                for varname in data['query']:
+                    hostvars[host][varname] = self.query_vbox_data(host, data['query'][varname])
 
             # create composite vars
             if data.get('compose') and isinstance(data['compose'], dict):
