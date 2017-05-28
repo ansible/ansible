@@ -118,19 +118,19 @@ class TestConnectionClass(unittest.TestCase):
         # test sending a single command and converting to dict
         rc, out, err = conn.exec_command('command')
         self.assertEqual(out, b'command response')
-        mock_send.assert_called_with('command', None, None, None)
+        mock_send.assert_called_with(b'command', None, None, None)
 
         # test sending a json string
         rc, out, err = conn.exec_command(json.dumps({'command': 'command'}))
         self.assertEqual(out, b'command response')
-        mock_send.assert_called_with('command', None, None, None)
+        mock_send.assert_called_with(b'command', None, None, None)
 
         conn._shell = MagicMock()
 
         # test _shell already open
         rc, out, err = conn.exec_command('command')
         self.assertEqual(out, b'command response')
-        mock_send.assert_called_with('command', None, None, None)
+        mock_send.assert_called_with(b'command', None, None, None)
 
     def test_network_cli_send(self):
         pc = PlayContext()
@@ -152,7 +152,7 @@ class TestConnectionClass(unittest.TestCase):
 
         mock__shell.recv.return_value = response
 
-        output = conn.send('command', None, None, None)
+        output = conn.send(b'command', None, None, None)
 
         mock__shell.sendall.assert_called_with(b'command\r')
         self.assertEqual(output, b'command response')
@@ -161,5 +161,5 @@ class TestConnectionClass(unittest.TestCase):
         mock__shell.recv.return_value = b"ERROR: error message device#"
 
         with self.assertRaises(AnsibleConnectionFailure) as exc:
-            conn.send('command', None, None, None)
+            conn.send(b'command', None, None, None)
         self.assertEqual(str(exc.exception), 'ERROR: error message device#')
