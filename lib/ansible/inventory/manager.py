@@ -129,7 +129,7 @@ class InventoryManager(object):
 
         # caches
         self._pattern_cache = {}      # resolved host patterns
-        self._inventory_plugins = {}  # for generating inventory
+        self._inventory_plugins = []  # for generating inventory
 
         # the inventory dirs, files, script paths or lists of hosts
         if sources is None:
@@ -181,7 +181,7 @@ class InventoryManager(object):
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
             name = os.path.splitext(os.path.basename(plugin._original_path))[0]
-            self._inventory_plugins[name] = plugin
+            self._inventory_plugins.append(plugin)
 
         if not self._inventory_plugins:
             raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
@@ -208,7 +208,7 @@ class InventoryManager(object):
         else:
             display.warning("No inventory was parsed, only implicit localhost is available")
 
-        self._inventory_plugins = {}
+        self._inventory_plugins = []
 
     def parse_source(self, source, cache=True):
         ''' Generate or update inventory for the source provided '''
@@ -249,10 +249,9 @@ class InventoryManager(object):
                 display.debug(u'Attempting to use plugin %s' % plugin)
 
                 # initialize
-                inv = self._inventory_plugins[plugin]
-                if inv.verify_file(source):
+                if plugin.verify_file(source):
                     try:
-                        inv.parse(self._inventory, self._loader, source, cache=cache)
+                        plugin.parse(self._inventory, self._loader, source, cache=cache)
                         parsed = True
                         display.vvv(u'Parsed %s inventory source with %s plugin' % (to_text(source), plugin))
                         break
