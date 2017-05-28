@@ -84,8 +84,8 @@ class BaseInventoryPlugin(object):
 
     def _compose(self, template, variables):
         ''' helper method for pluigns to compose variables for Ansible based on jinja2 expression and inventory vars'''
-        t = Templar(loader=self.loader, variables=variables, disable_lookups=True)
-        return t.do_template(template)
+        t = Templar(loader=self.loader, variables=variables)
+        return t.do_template('%s%s%s' % (t.environment.variable_start_string,template,t.environment.variable_end_string), disable_lookups=True)
 
 
 
