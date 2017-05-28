@@ -358,10 +358,8 @@ class PathMapper(object):
                 'windows-integration': 'all',
             }
 
-        if path.startswith('test/integration/'):
-            return {
-                'integration': 'all',
-            }
+        if os.path.dirname(path) == 'test/integration' and path.endswith('.template'):
+            return minimal
 
         if path.startswith('test/sanity/'):
             return {
