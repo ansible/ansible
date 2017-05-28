@@ -23,7 +23,7 @@ DOCUMENTATION:
     short_description: virtualbox inventory source
     description:
         - Get inventory hosts from the local virtualbox installation.
-        - Uses a <name>.vbox.conf YAML configuration file.
+        - Uses a <name>.vbox.yaml (or .vbox.yml) YAML configuration file.
     options:
         running_only:
             description: toggles showing all vms vs only those currently running
@@ -33,9 +33,18 @@ DOCUMENTATION:
         network_info_path:
             description: property path to query for network information (ansible_host)
             default: "/VirtualBox/GuestInfo/Net/0/V4/IP"
+EXAMPLES:
+# file must be named vbox.yaml or vbox.yml
+simple_config_file:
+    plugin: virtualbox
+    settings_password_file: /etc/virtulbox/secrets
+    compose:
+      ansible_connection: ('indows' in vbox_Guest_OS)|ternary('winrm', 'ssh')
 '''
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+import os
 
 from subprocess import Popen, PIPE
 
@@ -53,7 +62,8 @@ class InventoryModule(BaseInventoryPlugin):
 
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith('.vbox.conf'):
+            print(path)
+            if path.endswith('.vbox.yaml') or path.endswith('.vbox.yml'):
                 valid = True
         return valid
 
@@ -64,20 +74,20 @@ class InventoryModule(BaseInventoryPlugin):
         VBOX = "VBoxManage"
         cache_key = self.get_cache_prefix(path)
 
-        if cache and cache_key not in inventory.cache:
+        # file is config file
+        try:
+            data = self.loader.load_from_file(path)
+        except Exception as e:
+            raise AnsibleParserError(e)
+
+        if not data or data.get('plugin') != self.NAME:
+            # this is not my config file
+            return False
+
+        if cache and cache_key in inventory.cache:
             source_data = inventory.cache[cache_key]
         else:
-            # file is config file
-            try:
-                data = self.loader.load_from_file(path)
-            except Exception as e:
-                raise AnsibleParserError(e)
-
-            if not data or data.get('plugin') != self.NAME:
-                return False
-
             pwfile = to_bytes(data.get('settings_password_file'))
-            netinfo = data.get('network_info_path', "/VirtualBox/GuestInfo/Net/0/V4/IP")
             running = data.get('running_only', False)
 
             # start getting data
@@ -96,15 +106,16 @@ class InventoryModule(BaseInventoryPlugin):
             except Exception as e:
                 AnsibleParserError(e)
 
-            hostvars = {}
-            prevkey = pref_k = ''
-            current_host = None
-
             source_data = p.stdout.readlines()
             inventory.cache[cache_key] = source_data
 
-        for line in source_data:
+        hostvars = {}
+        prevkey = pref_k = ''
+        current_host = None
 
+        netinfo = data.get('network_info_path', "/VirtualBox/GuestInfo/Net/0/V4/IP")
+
+        for line in source_data:
             try:
                 k, v = line.split(':', 1)
             except:
@@ -125,8 +136,6 @@ class InventoryModule(BaseInventoryPlugin):
                 # try to get network info
                 try:
                     cmd = [VBOX, 'guestproperty', 'get', current_host, netinfo]
-                    if args:
-                        cmd.append(args)
                     x = Popen(cmd, stdout=PIPE)
                     ipinfo = x.stdout.read()
                     if 'Value' in ipinfo:
