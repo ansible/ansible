@@ -345,8 +345,8 @@ class HAProxy(object):
 
     def drained(self, host, backend):
         """
-        Drained action, sets the server to DRAIN mode. 
-        In this mode mode, the server will not accept any new connections 
+        Drained action, sets the server to DRAIN mode.
+        In this mode mode, the server will not accept any new connections
         other than those that are accepted via persistence.
         """
         cmd = "set server $pxname/$svname state drain"
