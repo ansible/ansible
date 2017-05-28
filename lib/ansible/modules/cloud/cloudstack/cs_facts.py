@@ -104,15 +104,19 @@ cloudstack_user_data:
 '''
 
 import os
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.facts import ansible_facts, module
 
 try:
     import yaml
-    has_lib_yaml = True
+    HAS_LIB_YAML = True
 except ImportError:
-    has_lib_yaml = False
+    HAS_LIB_YAML = False
 
 CS_METADATA_BASE_URL = "http://%s/latest/meta-data"
 CS_USERDATA_BASE_URL = "http://%s/latest/user-data"
+
 
 class CloudStackFacts(object):
 
@@ -120,20 +124,20 @@ class CloudStackFacts(object):
         self.facts = ansible_facts(module)
         self.api_ip = None
         self.fact_paths = {
-            'cloudstack_service_offering':  'service-offering',
+            'cloudstack_service_offering': 'service-offering',
             'cloudstack_availability_zone': 'availability-zone',
-            'cloudstack_public_hostname':   'public-hostname',
-            'cloudstack_public_ipv4':       'public-ipv4',
-            'cloudstack_local_hostname':    'local-hostname',
-            'cloudstack_local_ipv4':        'local-ipv4',
-            'cloudstack_instance_id':       'instance-id'
+            'cloudstack_public_hostname': 'public-hostname',
+            'cloudstack_public_ipv4': 'public-ipv4',
+            'cloudstack_local_hostname': 'local-hostname',
+            'cloudstack_local_ipv4': 'local-ipv4',
+            'cloudstack_instance_id': 'instance-id'
         }
 
     def run(self):
         result = {}
         filter = module.params.get('filter')
         if not filter:
-            for key,path in self.fact_paths.items():
+            for key, path in self.fact_paths.items():
                 result[key] = self._fetch(CS_METADATA_BASE_URL + "/" + path)
             result['cloudstack_user_data'] = self._get_user_data_json()
         else:
@@ -143,14 +147,12 @@ class CloudStackFacts(object):
                 result[filter] = self._fetch(CS_METADATA_BASE_URL + "/" + self.fact_paths[filter])
         return result
 
-
     def _get_user_data_json(self):
         try:
             # this data come form users, we try what we can to parse it...
             return yaml.safe_load(self._fetch(CS_USERDATA_BASE_URL))
         except:
             return None
-
 
     def _fetch(self, path):
         api_ip = self._get_api_ip()
@@ -164,21 +166,19 @@ class CloudStackFacts(object):
             data = None
         return data
 
-
     def _get_dhcp_lease_file(self):
         """Return the path of the lease file."""
         default_iface = self.facts['default_ipv4']['interface']
         dhcp_lease_file_locations = [
-            '/var/lib/dhcp/dhclient.%s.leases' % default_iface, # debian / ubuntu
-            '/var/lib/dhclient/dhclient-%s.leases' % default_iface, # centos 6
-            '/var/lib/dhclient/dhclient--%s.lease' % default_iface, # centos 7
-            '/var/db/dhclient.leases.%s' % default_iface, # openbsd
+            '/var/lib/dhcp/dhclient.%s.leases' % default_iface,  # debian / ubuntu
+            '/var/lib/dhclient/dhclient-%s.leases' % default_iface,  # centos 6
+            '/var/lib/dhclient/dhclient--%s.lease' % default_iface,  # centos 7
+            '/var/db/dhclient.leases.%s' % default_iface,  # openbsd
         ]
         for file_path in dhcp_lease_file_locations:
             if os.path.exists(file_path):
                 return file_path
         module.fail_json(msg="Could not find dhclient leases file.")
-
 
     def _get_api_ip(self):
         """Return the IP of the DHCP server."""
@@ -198,8 +198,8 @@ class CloudStackFacts(object):
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(
-            filter = dict(default=None, choices=[
+        argument_spec=dict(
+            filter=dict(default=None, choices=[
                 'cloudstack_service_offering',
                 'cloudstack_availability_zone',
                 'cloudstack_public_hostname',
@@ -213,15 +213,13 @@ def main():
         supports_check_mode=False
     )
 
-    if not has_lib_yaml:
+    if not HAS_LIB_YAML:
         module.fail_json(msg="missing python library: yaml")
 
     cs_facts = CloudStackFacts().run()
     cs_facts_result = dict(changed=False, ansible_facts=cs_facts)
     module.exit_json(**cs_facts_result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.facts import *
+
 if __name__ == '__main__':
     main()
