@@ -155,36 +155,41 @@ zone:
   sample: ch-gva-2
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together
+)
+
 
 class AnsibleCloudStackPod(AnsibleCloudStack):
 
     def __init__(self, module):
         super(AnsibleCloudStackPod, self).__init__(module)
         self.returns = {
-            'endip':            'end_ip',
-            'startip':          'start_ip',
-            'gateway':          'gateway',
-            'netmask':          'netmask',
-            'allocationstate':  'allocation_state',
+            'endip': 'end_ip',
+            'startip': 'start_ip',
+            'gateway': 'gateway',
+            'netmask': 'netmask',
+            'allocationstate': 'allocation_state',
         }
         self.pod = None
 
-
     def _get_common_pod_args(self):
-        args = {}
-        args['name'] = self.module.params.get('name')
-        args['zoneid'] = self.get_zone(key='id')
-        args['startip'] = self.module.params.get('start_ip')
-        args['endip'] = self.module.params.get('end_ip')
-        args['netmask'] = self.module.params.get('netmask')
-        args['gateway'] = self.module.params.get('gateway')
+        args = {
+            'name': self.module.params.get('name'),
+            'zoneid': self.get_zone(key='id'),
+            'startip': self.module.params.get('start_ip'),
+            'endip': self.module.params.get('end_ip'),
+            'netmask': self.module.params.get('netmask'),
+            'gateway': self.module.params.get('gateway')
+        }
         state = self.module.params.get('state')
-        if state in [ 'enabled', 'disabled']:
+        if state in ['enabled', 'disabled']:
             args['allocationstate'] = state.capitalize()
         return args
-
 
     def get_pod(self):
         if not self.pod:
@@ -206,7 +211,6 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
                 self.pod = pods['pod'][0]
         return self.pod
 
-
     def present_pod(self):
         pod = self.get_pod()
         if pod:
@@ -214,7 +218,6 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
         else:
             pod = self._create_pod()
         return pod
-
 
     def _create_pod(self):
         required_params = [
@@ -234,7 +237,6 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
             pod = res['pod']
         return pod
 
-
     def _update_pod(self):
         pod = self.get_pod()
         args = self._get_common_pod_args()
@@ -250,15 +252,14 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
                 pod = res['pod']
         return pod
 
-
     def absent_pod(self):
         pod = self.get_pod()
         if pod:
             self.result['changed'] = True
 
-            args = {}
-            args['id'] = pod['id']
-
+            args = {
+                'id': pod['id']
+            }
             if not self.module.check_mode:
                 res = self.cs.deletePod(**args)
                 if 'errortext' in res:
@@ -269,14 +270,14 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        id = dict(default=None),
-        name = dict(required=True),
-        gateway = dict(default=None),
-        netmask = dict(default=None),
-        start_ip = dict(default=None),
-        end_ip = dict(default=None),
-        zone = dict(default=None),
-        state = dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
+        id=dict(),
+        name=dict(required=True),
+        gateway=dict(),
+        netmask=dict(),
+        start_ip=dict(),
+        end_ip=dict(),
+        zone=dict(),
+        state=dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
     ))
 
     module = AnsibleModule(
@@ -300,7 +301,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
