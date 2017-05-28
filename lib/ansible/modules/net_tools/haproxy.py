@@ -76,7 +76,7 @@ options:
     version_added: "2.2"
   wait:
     description:
-      - Wait until the server reports a status of 'UP' when `state=enabled`, 
+      - Wait until the server reports a status of 'UP' when `state=enabled`,
         status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=drained`
     required: false
     default: false
