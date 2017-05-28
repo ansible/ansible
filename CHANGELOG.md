@@ -76,15 +76,121 @@ Ansible Changes By Release
 
 ### New Modules
 
+- aix_lvol
+- amazon
+  * ec2_vpc_endpoint
+  * iam_cert_facts
+  * lightsail
+- atomic
+  * atomic_container
 - avi
   * avi_cloud
-  * avi_cloudproperties.
+  * avi_cloudconnectoruser
+  * avi_cloudproperties
+  * avi_controllerproperties
+  * avi_dnspolicy
   * avi_gslb
+  * avi_gslbapplicationpersistenceprofile
+  * avi_gslbgeodbprofile
   * avi_gslbhealthmonitor
   * avi_gslbservice
+  * avi_httppolicyset
   * avi_ipaddrgroup
   * avi_network
+  * avi_networksecuritypolicy
+  * avi_seproperties
   * avi_serviceenginegroup
+  * avi_stringgroup
+  * avi_useraccountprofile
+  * avi_vsdatascriptset
+  * avi_vsvip
+- awall
+- catapult
+- cloudengine
+  * ce_aaa_server
+  * ce_aaa_server_host
+  * ce_acl
+  * ce_acl_advance
+  * ce_acl_interface
+  * ce_bgp
+  * ce_bgp_af
+  * ce_bgp_neighbor
+  * ce_bgp_neighbor_af
+  * ce_config
+  * ce_dldp
+  * ce_dldp_interface
+  * ce_eth_trunk
+  * ce_evpn_bd_vni
+  * ce_evpn_bgp
+  * ce_evpn_bgp_rr
+  * ce_facts
+  * ce_file_copy
+  * ce_info_center_debug
+  * ce_info_center_global
+  * ce_info_center_log
+  * ce_info_center_trap
+  * ce_interface
+  * ce_interface_ospf
+  * ce_ip_interface
+  * ce_link_status
+  * ce_mlag_config
+  * ce_mlag_interface
+  * ce_mtu
+  * ce_netconf
+  * ce_netstream_aging
+  * ce_netstream_export
+  * ce_netstream_global
+  * ce_netstream_template
+  * ce_ntp
+  * ce_ntp_auth
+  * ce_ospf
+  * ce_ospf_vrf
+  * ce_reboot
+  * ce_rollback
+  * ce_sflow
+  * ce_snmp_community
+  * ce_snmp_contact
+  * ce_snmp_location
+  * ce_snmp_target_host
+  * ce_snmp_traps
+  * ce_snmp_user
+  * ce_startup
+  * ce_static_route
+  * ce_stp
+  * ce_switchport
+  * ce_vlan
+  * ce_vrf
+  * ce_vrf_af
+  * ce_vrf_interface
+  * ce_vxlan_arp
+  * ce_vxlan_gateway
+  * ce_vxlan_global
+  * ce_vxlan_tunnel
+  * ce_vxlan_vap
+- cloudstack
+  * cs_network_acl
+  * cs_vpn_gateway
+- crypto
+  * openssl_csr
+- f5
+  * bigip_command
+  * bigip_switchport
+  * bigip_user
+- github_issue
+- google
+  * gcp_backend_service
+  * gcp_forwarding_rule
+  * gcp_healthcheck
+  * gcp_target_proxy
+  * gcp_url_map
+- rundeck
+  * rundeck_acl_policy
+  * rundeck_project
+- sensu_silence
+- vmware
+  * vmware_guest_find
+- windows
+  * win_firewall
 
 
 ## 2.3 "Ramble On" - 2017-04-12
