@@ -137,6 +137,7 @@ class InventoryModule(BaseInventoryPlugin):
         prevkey = pref_k = ''
         current_host = None
 
+        # needed to possibly set ansible_host
         netinfo = data.get('network_info_path', "/VirtualBox/GuestInfo/Net/0/V4/IP")
 
         for line in source_data:
@@ -157,8 +158,11 @@ class InventoryModule(BaseInventoryPlugin):
                 if current_host not in hostvars:
                     hostvars[current_host] = {}
                     self.inventory.add_host(current_host)
+
                 # try to get network info
-                self.inventory.set_variable(current_host, 'ansible_host', self.query_vbox_data(current_host, netinfo))
+                netdata = self.query_vbox_data(current_host, netinfo)
+                if netdata:
+                    self.inventory.set_variable(current_host, 'ansible_host', netdata)
 
             # found groups
             elif k == 'Groups':
