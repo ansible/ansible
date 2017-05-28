@@ -27,9 +27,6 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from ansible.module_utils.gcp import gcp_connect
-from ansible.module_utils.gcp import unexpected_error_msg as gcp_error
-
 try:
     from libcloud.dns.types import Provider
     from libcloud.dns.providers import get_driver
@@ -37,8 +34,12 @@ try:
 except ImportError:
     HAS_LIBCLOUD_BASE = False
 
+from ansible.module_utils.gcp import gcp_connect
+from ansible.module_utils.gcp import unexpected_error_msg as gcp_error
+
 USER_AGENT_PRODUCT = "Ansible-gcdns"
 USER_AGENT_VERSION = "v1"
+
 
 def gcdns_connect(module, provider=None):
     """Return a GCP connection for Google Cloud DNS."""
@@ -47,6 +48,7 @@ def gcdns_connect(module, provider=None):
 
     provider = provider or Provider.GOOGLE
     return gcp_connect(module, provider, get_driver, USER_AGENT_PRODUCT, USER_AGENT_VERSION)
+
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""

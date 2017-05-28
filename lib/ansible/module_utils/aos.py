@@ -37,8 +37,8 @@ from ansible.module_utils.aos import *
 """
 import json
 
-from distutils.version import LooseVersion
 from ansible.module_utils.pycompat24 import get_exception
+from distutils.version import LooseVersion
 
 try:
     import yaml
@@ -52,6 +52,7 @@ try:
     HAS_AOS_PYEZ = True
 except ImportError:
     HAS_AOS_PYEZ = False
+
 
 def check_aos_version(module, min=False):
     """
@@ -70,6 +71,7 @@ def check_aos_version(module, min=False):
             module.fail_json(msg='aos-pyez >= %s is required for this module' % min)
 
     return True
+
 
 def get_aos_session(module, auth):
     """
@@ -94,6 +96,7 @@ def get_aos_session(module, auth):
 
     return aos
 
+
 def find_collection_item(collection, item_name=False, item_id=False):
     """
     Find collection_item based on name or id from a collection object
@@ -113,6 +116,7 @@ def find_collection_item(collection, item_name=False, item_id=False):
         return collection['']
     else:
         return my_dict
+
 
 def content_to_dict(module, content):
     """
@@ -144,11 +148,11 @@ def content_to_dict(module, content):
     except:
         module.fail_json(msg="Unable to convert 'content' to a dict, please check if valid")
 
-
     # replace the string with the dict
     module.params['content'] = content_dict
 
     return content_dict
+
 
 def do_load_resource(module, collection, name):
     """
@@ -161,10 +165,7 @@ def do_load_resource(module, collection, name):
         module.fail_json(msg="Ans error occured while running 'find_collection_item'")
 
     if item.exists:
-        module.exit_json( changed=False,
-                          name=item.name,
-                          id=item.id,
-                          value=item.value )
+        module.exit_json(changed=False, name=item.name, id=item.id, value=item.value)
 
     # If not in check mode, apply the changes
     if not module.check_mode:
@@ -175,7 +176,4 @@ def do_load_resource(module, collection, name):
             e = get_exception()
             module.fail_json(msg="Unable to write item content : %r" % e)
 
-    module.exit_json( changed=True,
-                      name=item.name,
-                      id=item.id,
-                      value=item.value )
+    module.exit_json(changed=True, name=item.name, id=item.id, value=item.value)

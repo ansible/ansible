@@ -79,9 +79,9 @@ def tower_check_mode(module):
 
 def tower_argument_spec():
     return dict(
-        tower_host = dict(),
-        tower_username = dict(),
-        tower_password = dict(no_log=True),
-        tower_verify_ssl = dict(type='bool', default=True),
-        tower_config_file = dict(type='path'),
+        tower_host=dict(),
+        tower_username=dict(),
+        tower_password=dict(no_log=True),
+        tower_verify_ssl=dict(type='bool', default=True),
+        tower_config_file=dict(type='path'),
     )

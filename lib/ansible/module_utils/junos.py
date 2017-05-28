@@ -47,12 +47,13 @@ ARGS_DEFAULT_VALUE = {
     'timeout': 10
 }
 
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in junos_argument_spec:
         if key not in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+                            'removed in a future version' % key)
 
     # set argument's default value if not provided in input
     # This is done to avoid unwanted argument deprecation warning
@@ -66,12 +67,14 @@ def check_args(module, warnings):
             if provider.get(param):
                 module.no_log_values.update(return_values(provider[param]))
 
+
 def _validate_rollback_id(module, value):
     try:
         if not 0 <= int(value) <= 49:
             raise ValueError
     except ValueError:
         module.fail_json(msg='rollback must be between 0 and 49')
+
 
 def load_configuration(module, candidate=None, action='merge', rollback=None, format='xml'):
 
@@ -117,6 +120,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             cfg.append(candidate)
     return send_request(module, obj)
 
+
 def get_configuration(module, compare=False, format='xml', rollback='0'):
     if format not in CONFIG_FORMATS:
         module.fail_json(msg='invalid config format specified')
@@ -126,6 +130,7 @@ def get_configuration(module, compare=False, format='xml', rollback='0'):
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
     return send_request(module, Element('get-configuration', xattrs))
+
 
 def commit_configuration(module, confirm=False, check=False, comment=None, confirm_timeout=None):
     obj = Element('commit-configuration')
@@ -141,6 +146,7 @@ def commit_configuration(module, confirm=False, check=False, comment=None, confi
         subele.text = str(confirm_timeout)
     return send_request(module, obj)
 
+
 def command(module, command, format='text', rpc_only=False):
     xattrs = {'format': format}
     if rpc_only:
@@ -148,8 +154,14 @@ def command(module, command, format='text', rpc_only=False):
         xattrs['format'] = 'text'
     return send_request(module, Element('command', xattrs, text=command))
 
-lock_configuration = lambda x: send_request(x, Element('lock-configuration'))
-unlock_configuration = lambda x: send_request(x, Element('unlock-configuration'))
+
+def lock_configuration(x):
+    return send_request(x, Element('lock-configuration'))
+
+
+def unlock_configuration(x):
+    return send_request(x, Element('unlock-configuration'))
+
 
 @contextmanager
 def locked_config(module):
@@ -159,12 +171,14 @@ def locked_config(module):
     finally:
         unlock_configuration(module)
 
+
 def get_diff(module):
 
     reply = get_configuration(module, compare=True, format='text')
     output = reply.find('.//configuration-output')
     if output is not None:
         return to_text(output.text, encoding='latin1').strip()
+
 
 def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
