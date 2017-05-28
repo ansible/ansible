@@ -158,7 +158,10 @@ options:
         type: bool
 requirements:
     - pex
-notes: []
+notes:
+    - When not supplying I(pex_name) the module will always report a change,
+      as the pex will be built and destroyed in a single execution. Supplying
+      I(pex_name) is idempotent.
 '''
 
 EXAMPLES = '''
