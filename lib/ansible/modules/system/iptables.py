@@ -263,7 +263,7 @@ options:
   log_prefix:
     version_added: "2.4"
     description:
-      - "Prefix log messages with the specified prefix; up to 29 letters 
+      - "Prefix log messages with the specified prefix; up to 29 letters
       long, and useful for distinguishing messages in the logs."
   log_level:
     version_added: "2.4"
@@ -337,7 +337,7 @@ EXAMPLES = '''
     protocol: tcp
     reject_with: tcp-reset
     ip_version: ipv4
-    
+
 # Log packets arriving into an user-defined chain
 - iptables:
     chain: LOGGING
