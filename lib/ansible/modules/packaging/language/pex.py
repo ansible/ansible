@@ -210,6 +210,7 @@ build_log_lines:
 '''
 
 import copy
+import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -222,6 +223,7 @@ except ImportError:
 try:
     from pex.bin.pex import build_pex
     from pex.fetcher import Fetcher, PyPIFetcher
+    from pex.pex_info import PexInfo
     from pex.platforms import Platform
     from pex.pex import PEX
     from pex.resolver_options import ResolverOptionsBuilder
@@ -236,6 +238,44 @@ class Options(dict):
     def __init__(self, *args, **kwargs):
         super(Options, self).__init__(*args, **kwargs)
         self.__dict__ = self
+
+
+def setup_options(params):
+    options = Options(copy.deepcopy(params))
+
+    if options.platform is None:
+        options.platform = Platform.current()
+
+    packages = options.pop('packages')
+    use_pypi = options.pop('use_pypi')
+    args = options.pop('args')
+
+    builder = ResolverOptionsBuilder()
+
+    for i, repo in enumerate(options.repos):
+        options.repos[i] = Fetcher([repo])
+
+    if not use_pypi:
+        builder.clear_indices()
+    else:
+        builder.add_index(PyPIFetcher.PYPI_BASE)
+        options.repos.append(PyPIFetcher())
+
+    return options, packages, args
+
+
+def pex_info_dict(pex_info):
+    pex_info_copy = json.loads(pex_info.dump())
+    pex_info_copy['requirements'] = sorted(list(pex_info.requirements))
+    pex_info_copy['distributions'] = dict(
+        sorted(pex_info.distributions.copy().items(), key=lambda t: t[0])
+    )
+    pex_info_copy.pop('code_hash', None)
+    return pex_info_copy
+
+
+def are_pex_equal(old, new):
+    return pex_info_dict(old) == pex_info_dict(new)
 
 
 def main():
@@ -343,28 +383,11 @@ def main():
     if not HAS_PEX:
         module.fail_json(msg="The pex python package is required for this module")
 
-    options = Options(copy.deepcopy(module.params))
-    ENV.set('PEX_VERBOSE', str(options.verbosity))
+    options, packages, args = setup_options(module.params)
+
     build_log = StringIO()
     TRACER._output = build_log
-
-    if options.platform is None:
-        options.platform = Platform.current()
-
-    packages = options.pop('packages')
-    use_pypi = options.pop('use_pypi')
-    args = options.pop('args')
-
-    builder = ResolverOptionsBuilder()
-
-    for i, repo in enumerate(options.repos):
-        options.repos[i] = Fetcher([repo])
-
-    if not use_pypi:
-        builder.clear_indices()
-    else:
-        builder.add_index(PyPIFetcher.PYPI_BASE)
-        options.repos.append(PyPIFetcher())
+    ENV.set('PEX_VERBOSE', str(options.verbosity))
 
     try:
         pex_builder = build_pex(packages, options, None)
@@ -374,6 +397,34 @@ def main():
             exception=traceback.format_exc()
         )
 
+    if options.python_shebang:
+        shebang = '#!%s' % options.python_shebang
+    else:
+        shebang = pex_builder.interpreter.identity.hashbang()
+
+    response = {
+        'pex_name': options.pex_name,
+        'platform': options.platform,
+        'python': pex_builder.interpreter.binary,
+        'python_shebang': shebang,
+        'stdout': '',
+        'stderr': '',
+        'rc': 0,
+        'build_log': '',
+        'build_log_lines': [],
+    }
+
+    changed = False
+    try:
+        current_info = PexInfo.from_pex(options.pex_name)
+    except IOError:
+        changed = True
+    else:
+        if are_pex_equal(current_info, pex_builder.info):
+            module.exit_json(changed=False, **response)
+        else:
+            changed = True
+
     rc = 0
     stdout = ''
     stderr = ''
@@ -381,10 +432,12 @@ def main():
         tmp_name = options.pex_name + '~'
         try:
             module.cleanup(tmp_name)
+            module.cleanup(pex_builder.path())
             pex_builder.build(tmp_name)
             module.atomic_move(tmp_name, options.pex_name)
         except Exception:
             module.cleanup(tmp_name)
+            module.cleanup(pex_builder.path())
             module.fail_json(
                 msg='Failed to build pex file at %s' % options.pex_name,
                 exception=traceback.format_exc(),
@@ -409,22 +462,16 @@ def main():
 
     build_log_out = build_log.getvalue()
 
-    if options.python_shebang:
-        shebang = '#!%s' % options.python_shebang
-    else:
-        shebang = pex_builder.interpreter.identity.hashbang()
+    response.update({
+        'rc': rc,
+        'stdout': stdout,
+        'stderr': stderr,
+        'build_log': build_log_out,
+        'build_log_lines': build_log_out.splitlines(),
+        'changed': changed,
+    })
 
-    module.exit_json(
-        pex_name=options.pex_name,
-        platform=options.platform,
-        python=pex_builder.interpreter.binary,
-        python_shebang=shebang,
-        rc=rc,
-        stdout=stdout,
-        stderr=stderr,
-        build_log=build_log_out,
-        build_log_lines=build_log_out.splitlines()
-    )
+    module.exit_json(**response)
 
 
 if __name__ == '__main__':
