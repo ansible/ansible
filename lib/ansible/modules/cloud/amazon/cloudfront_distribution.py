@@ -1712,7 +1712,8 @@ def main():
         default_s3_origin_domain_name=dict(required=False, default=None,
                                            type='str'),
         default_streaming_s3_origin_access_identity=dict(required=False,
-                                                      default=None, type='str')
+                                                         default=None,
+                                                         type='str')
     ))
 
     result = {}
