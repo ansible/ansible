@@ -32,8 +32,9 @@ version_added: "2.4"
 short_description: Invokes a PowerShell DSC configuration
 description: |
      Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer).
-     Note that most of the parameters are dynamic and will vary depending on the DSC Resource.
-     If the DSC resource takes a parameter named "Name", use the parameter "item_name" in Ansible to represent it.
+     Most of the parameters for this module are dynamic and will vary depending on the DSC Resource. 
+     In order to find the required parameters for a given DSC resource, you can use the following on-liner:
+     'Get-DscResource <dsc_resource> | select -ExpandProperty properties'
      Also note that credentials are handled as follows: If the resource accepts a credential type property called "cred",
      the ansible parameters would be cred_username and cred_password.
      These will be used to inject a credential object on the fly for the DSC resource.
@@ -45,7 +46,8 @@ options:
   module_version:
     description: |
       Can be used to configure the exact version of the dsc resource to be invoked.
-      Useful if the target node has multiple versions installed of the module containing the DSC resource
+      Useful if the target node has multiple versions installed of the module containing the DSC resource.
+      If not specified, the module will follow standard Powershell convention and use the highest version available.
     default: latest
 author: Trond Hindenes
 '''

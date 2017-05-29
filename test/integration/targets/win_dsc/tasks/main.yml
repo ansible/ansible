@@ -41,7 +41,7 @@
   assert:
     that:
       - "win_dsc_checkmode_result|changed"
-      - "win_dsc_checkmode_result.success"
+      - "win_dsc_checkmode_result|success"
   when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
 
 - name: Make sure the feature is still absent
@@ -56,7 +56,7 @@
   assert:
     that:
       - "not win_dsc_1_result|changed"
-      - "win_dsc_1_result.success"
+      - "win_dsc_1_result|success"
   when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
 
 - name: Install feature for realz
@@ -70,7 +70,7 @@
   assert:
     that:
       - "win_dsc_2_result|changed"
-      - "win_dsc_2_result.success"
+      - "win_dsc_2_result|success"
   when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
 
 - name: Ensure clean failure
@@ -85,7 +85,7 @@
   assert:
     that:
       - "not win_dsc_3_result|changed"
-      - "not win_dsc_3_result.success"
+      - "not win_dsc_3_result|success"
   when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
 
 - name: Make sure the feature is absent
@@ -100,7 +100,7 @@
   assert:
     that:
       - "win_dsc_4_result|changed"
-      - "win_dsc_4_result.success"
+      - "win_dsc_4_result|success"
   when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
 
 - name: Make sure the feature is still absent with no changes
@@ -115,5 +115,5 @@
   assert:
     that:
       - "not win_dsc_5_result|changed"
-      - "win_dsc_5_result.success"
+      - "win_dsc_5_result|success"
   when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
