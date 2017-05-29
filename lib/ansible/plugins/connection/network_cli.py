@@ -131,8 +131,6 @@ class Connection(Rpc, _Connection):
         if self._shell:
             display.display("firing event: on_close_shell()", log_only=True)
             self._terminal.on_close_shell()
-
-        if self._shell:
             self._shell.close()
             self._shell = None
             display.display("cli session is now closed", log_only=True)

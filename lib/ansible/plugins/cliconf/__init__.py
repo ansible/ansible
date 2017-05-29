@@ -49,7 +49,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
     A base class for implementing cli connections
 
     .. note:: Unlike most of Ansible, nearly all strings in
-        :class:`TerminalBase` plugins are byte strings.  This is because of
+        :class:`CliconfBase` plugins are byte strings.  This is because of
         how close to the underlying platform these plugins operate.  Remember
         to mark literal strings as byte string (``b"string"``) and to use
         :func:`~ansible.module_utils._text.to_bytes` and
