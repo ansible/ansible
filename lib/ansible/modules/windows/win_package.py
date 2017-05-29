@@ -66,11 +66,9 @@ options:
       - >
         Performs argument normalization of the arguments string, replacing json-escaped double backslashes with single ones.
         This makes it easier to pass in complex argument strings in a way that the installer will understand.
-    default: false
-    choices:
-      - true
-      - false
-    version_added: 2.4
+    type: bool
+    default: 'no'
+    version_added: "2.4"
   state:
     description:
       - Install or Uninstall
