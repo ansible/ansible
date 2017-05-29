@@ -850,7 +850,7 @@ function Set-TargetResource
                     if($process)
                     {
                         $exitCode = $process.ExitCode
-                        $result.exit_code = $exitCode
+                        $result["exit_code"] = $exitCode
                     }
                 }
             }
@@ -1259,24 +1259,15 @@ $result = @{
     changed = $false
 }
 
-$path = Get-Attr -obj $params -name path -failifempty $true -resultobj $result
-$name = Get-Attr -obj $params -name name -default $path
-$productid = Get-Attr -obj $params -name productid
-if ($productid -eq $null)
-{
-    #Alias added for backwards compat.
-    $productid = Get-Attr -obj $params -name product_id -failifempty $true -resultobj $result
-}
-$arguments = Get-Attr -obj $params -name arguments
-$normalizeargs = Get-Attr -obj $params -name normalize_arguments -type "bool" 
-$ensure = Get-Attr -obj $params -name state -default "present"
-if ($ensure -eq $null)
-{
-    $ensure = Get-Attr -obj $params -name ensure -default "present"
-}
-$username = Get-Attr -obj $params -name user_name
-$password = Get-Attr -obj $params -name user_password
-$return_code = Get-Attr -obj $params -name expected_return_code -default 0
+$path = Get-AnsibleParam -obj $params -name "path" -failifempty $true -resultobj $result
+$name = Get-AnsibleParam -obj $params -name "name" -default $path
+$productid = Get-AnsibleParam -obj $params -name "productid" -aliases "product_id"
+$arguments = Get-AnsibleParam -obj $params -name "arguments"
+$normalizeargs = Get-AnsibleParam -obj $params -name "normalize_arguments" -type "bool" -aliases "parse_arguments"
+$ensure = Get-AnsibleParam -obj $params -name "state" -default "present" -aliases "ensure"
+$username = Get-AnsibleParam -obj $params -name "user_name"
+$password = Get-AnsibleParam -obj $params -name "user_password"
+$return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "int" -default 0
 
 
 if ($normalizeargs -eq $true -and ($arguments -ne $null))
@@ -1306,7 +1297,7 @@ if ($normalizeargs -eq $true -and ($arguments -ne $null))
         }
         $arguments = $NewArgs -join $SplitChar
     }
-    $result.normalized_args = $ReplacedArgs
+    $result["normalized_args"] = $ReplacedArgs
 }
 
 #Construct the DSC param hashtable
@@ -1328,7 +1319,7 @@ if (($username -ne $null) -and ($password -ne $null))
 }
 
 #Always return the name
-$result.name = $name
+$result["name"] = $name
 
 $testdscresult = Test-TargetResource @dscparams
 if ($testdscresult -eq $true)
@@ -1350,11 +1341,11 @@ Else
     #Check if DSC thinks the computer needs a reboot:
     if ((get-variable DSCMachinestatus -Scope Global -ea 0) -and ($global:DSCMachineStatus -eq 1))
     {
-        $result.restart_required = $true
+        $result["restart_required"] = $true
     }
 
     #Set-TargetResource did its job. We can assume a change has happened
-    $result.changed = $true
+    $result["changed"] = $true
     Exit-Json -obj $result
 
 }
