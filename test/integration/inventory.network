@@ -33,4 +33,12 @@ ops01
 [asa]
 asa01
 
+[platform_agnostic:children]
+ios
+iosxr
+eos
+junos
+vyos
+nxos
+
 # vim: nospell filetype=dosini
