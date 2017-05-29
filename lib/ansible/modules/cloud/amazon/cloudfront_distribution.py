@@ -234,7 +234,7 @@ options:
           Used with C(streaming_distribution=no)
       required: false
 
-    default_s3_origin_origin_access_identity:
+    default_streaming_s3_origin_access_identity:
       description:
         - The default origin access identity to use for an s3 bucket used for
           a streaming distribution. If the s3 bucket is public, can be omitted.
@@ -437,7 +437,7 @@ options:
             C(domain_name) (defaults to C(default_s3_origin_domain_name) if not
               specified)
             C(origin_access_identity) (defaults to
-              C(default_s3_origin_origin_access_identity) if not specified)
+              C(default_streaming_s3_origin_access_identity) if not specified)
       required: false
 
     web_acl_id:
@@ -1281,7 +1281,7 @@ class CloudFrontValidationManager(object):
                 "\n" + traceback.format_exc())
 
     def validate_s3_origin(self, s3_origin, default_s3_origin_domain_name,
-                           default_s3_origin_origin_access_identity):
+                           default_streaming_s3_origin_access_identity):
         try:
             if s3_origin is not None:
                 if 'domain_name' not in s3_origin:
@@ -1300,7 +1300,7 @@ class CloudFrontValidationManager(object):
                     msg="s3_origin and default_s3_origin_domain_name not " +
                     "specified. please specify one.")
             s3_origin['origin_access_identity'] = (
-                default_s3_origin_origin_access_identity or '')
+                default_streaming_s3_origin_access_identity or '')
             return s3_origin
         except Exception as e:
             self.module.fail_json(
@@ -1521,13 +1521,13 @@ class CloudFrontValidationManager(object):
     def validate_streaming_distribution_config_parameters(
             self, config, comment, trusted_signers, s3_origin,
             default_s3_origin_domain_name,
-            default_s3_origin_origin_access_identity):
+            default_streaming_s3_origin_access_identity):
         try:
             if s3_origin is None:
                 s3_origin = config.get('s3_origin')
             config['s3_origin'] = self.validate_s3_origin(
                 s3_origin, default_s3_origin_domain_name,
-                default_s3_origin_origin_access_identity)
+                default_streaming_s3_origin_access_identity)
             config['trusted_signers'] = self.validate_trusted_signers(
                 trusted_signers)
             return config
@@ -1711,7 +1711,7 @@ def main():
                                                type='str'),
         default_s3_origin_domain_name=dict(required=False, default=None,
                                            type='str'),
-        default_s3_origin_origin_access_identity=dict(required=False,
+        default_streaming_s3_origin_access_identity=dict(required=False,
                                                       default=None, type='str')
     ))
 
@@ -1791,8 +1791,8 @@ def main():
         'default_s3_origin_access_identity')
     default_s3_origin_domain_name = module.params.get(
         'default_s3_origin_domain_name')
-    default_s3_origin_origin_access_identity = module.params.get(
-        'default_s3_origin_origin_access_identity')
+    default_streaming_s3_origin_access_identity = module.params.get(
+        'default_streaming_s3_origin_access_identity')
 
     if caller_reference is not None:
         if streaming_distribution:
@@ -1903,7 +1903,7 @@ def main():
         config = validation_mgr.validate_streaming_distribution_config_parameters(
             config, comment, trusted_signers, s3_origin,
             default_s3_origin_domain_name,
-            default_s3_origin_origin_access_identity)
+            default_streaming_s3_origin_access_identity)
 
     if create:
         config = validation_mgr.validate_caller_reference_for_distribution(
