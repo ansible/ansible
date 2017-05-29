@@ -20,7 +20,7 @@ Hosts and Groups
 ++++++++++++++++
 
 The inventory file can be in one of many formats, depending on the inventory plugins you have.
-For this example, the format for ``/etc/ansible/hosts`` is an INI-like (one of Ansible's defaults) and looks like this::
+For this example, the format for ``/etc/ansible/hosts`` is an INI-like (one of Ansible's defaults) and looks like this:
 
 .. code-block:: ini
 
