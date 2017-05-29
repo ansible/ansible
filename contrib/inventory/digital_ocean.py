@@ -138,8 +138,12 @@ import sys
 import re
 import argparse
 from time import time
-import ConfigParser
 import ast
+
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 try:
     import json
