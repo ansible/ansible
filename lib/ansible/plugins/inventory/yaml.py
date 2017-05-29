@@ -137,7 +137,11 @@ class InventoryModule(BaseFileInventoryPlugin):
                 if 'hosts' in group_data:
                     for host_pattern in group_data['hosts']:
                         hosts, port = self._parse_host(host_pattern)
-                        self.populate_host_vars(hosts, group_data['hosts'][host_pattern], group, port)
+                        # If hosts-list is a dictionary, add variables to hostvars, otherwise skip
+                        if isinstance(group_data['hosts'], dict):
+                            self.populate_host_vars(hosts, group_data['hosts'][host_pattern], group, port)
+                        else:
+                            self.populate_host_vars(hosts, None, group, port)
         else:
             self.display.warning("Skipping '%s' as this is not a valid group name" % group)
 
