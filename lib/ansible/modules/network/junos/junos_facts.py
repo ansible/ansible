@@ -51,10 +51,15 @@ options:
       - The I(config_format) argument specifies the format of the configuration
          when serializing output from the device. This argument is applicable
          only when C(config) value is present in I(gather_subset).
+         The I(config_format) should be supported by the junos version running on
+         device.
     required: false
     default: text
     choices: ['xml', 'set', 'text', 'json']
     version_added: "2.3"
+notes:
+  - Ensure I(config_format) used to retrieve configuration from device
+    is supported by junos version running on device.
 """
 
 EXAMPLES = """
