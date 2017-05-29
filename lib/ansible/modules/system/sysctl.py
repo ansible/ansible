@@ -374,6 +374,11 @@ class SysctlModule(object):
 # main
 
 def main():
+    conf_file = '/etc/sysctl.conf'
+    if not os.path.isfile(conf_file) and os.path.isdir('/etc/sysctl.d'):
+        # Arch Linux and Manjaro system requires sysctl conf file
+        # inside /etc/sysctl.d directory
+        conf_file = '/etc/sysctl.d/99-ansible-sysctl.conf'
 
     # defining module
     module = AnsibleModule(
@@ -384,7 +389,7 @@ def main():
             reload = dict(default=True, type='bool'),
             sysctl_set = dict(default=False, type='bool'),
             ignoreerrors = dict(default=False, type='bool'),
-            sysctl_file = dict(default='/etc/sysctl.conf', type='path')
+            sysctl_file = dict(default=conf_file, type='path')
         ),
         supports_check_mode=True,
         required_if=[('state', 'present', ['value'])],
