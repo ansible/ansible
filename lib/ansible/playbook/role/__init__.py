@@ -188,6 +188,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         current_tags = getattr(self, 'tags')[:]
         current_tags.extend(role_include.tags)
+        current_tags.append(self._role_name)
         setattr(self, 'tags', current_tags)
 
         # dynamically load any plugins from the role directory
