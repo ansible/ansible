@@ -242,7 +242,7 @@ def filter_delete_statements(module, candidate):
     config = to_native(match.text, encoding='latin1')
 
     modified_candidate = candidate[:]
-    for index, line in enumerate(candidate):
+    for index, line in reversed(list(enumerate(candidate))):
         if line.startswith('delete'):
             newline = re.sub('^delete', 'set', line)
             if newline not in config:
