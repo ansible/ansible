@@ -32,7 +32,7 @@ version_added: "2.4"
 short_description: Invokes a PowerShell DSC configuration
 description: |
      Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer).
-     Most of the parameters for this module are dynamic and will vary depending on the DSC Resource. 
+     Most of the parameters for this module are dynamic and will vary depending on the DSC Resource.
      In order to find the required parameters for a given DSC resource, you can use the following on-liner:
      'Get-DscResource <dsc_resource> | select -ExpandProperty properties'
      Also note that credentials are handled as follows: If the resource accepts a credential type property called "cred",
