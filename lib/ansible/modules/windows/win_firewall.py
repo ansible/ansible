@@ -28,55 +28,60 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: win_firewall
-version_added: "2.4"
-short_description: Manages Windows Firewall
+version_added: '2.4'
+short_description: Enable or disable the Windows Firewall
 description:
-    - Manages Windows Firewall
+- Enable or Disable Windows Firewall profiles.
 options:
-  profile:
+  profiles:
     description:
-    - specify the profile to change
+    - Specify one or more profiles to change.
     choices:
-    - Public
     - Domain
     - Private
+    - Public
+    default: [Domain, Private, Public]
   state:
     description:
-    - set state of firewall for given profile
+    - Set state of firewall for given profile.
     choices:
     - enabled
     - disabled
-
-author: "Michael Eaton (@MichaelEaton83)"
+author: Michael Eaton (@MichaelEaton83)
 '''
 
 EXAMPLES = r'''
-- name: Enable all firewalls
+- name: Enable firewall for Domain, Public and Private profiles
   win_firewall:
-      state: enabled
-      profiles:
-      - Domain
-      - Public
-      - Private
+    state: enabled
+    profiles:
+    - Domain
+    - Private
+    - Public
   tags: enable_firewall
 
 - name: Disable Domain firewall
   win_firewall:
-     state: disabled
-     profiles:
-     - Domain
+    state: disabled
+    profiles:
+    - Domain
   tags: disable_firewall
 '''
 
 RETURN = r'''
-profile:
-    description: chosen profile
-    returned: always
-    type: string
-    sample: Domain
 enabled:
     description: current firewall status for chosen profile (after any potential change)
     returned: always
     type: bool
     sample: true
+profiles:
+    description: chosen profile
+    returned: always
+    type: string
+    sample: Domain
+state:
+    description: desired state of the given firewall profile(s)
+    returned: always
+    type: list
+    sample: enabled
 '''
