@@ -51,8 +51,8 @@ options:
     distribution_id:
       description:
         - The id of the cloudfront distribution.
-          This parameter can be exchanged with C(alias) and is used in
-          conjunction with C(e_tag).
+          This parameter can be exchanged with C(alias) or C(caller_reference)
+          and is used in conjunction with C(e_tag).
           Used with C(streaming_distribution=no)
       required: false
 
@@ -85,7 +85,7 @@ options:
         - A unique identifier for creating and updating cloudfront
           distributions.
           This can be used instead of C(distribution_id) or
-          C(streaming_distribution_id) so that the distribution is idempotent.
+          C(streaming_distribution_id).
       required: false
 
     pem_key_path:
@@ -116,37 +116,40 @@ options:
           type as a dictionary that represents the config of the distribution.
           When used for creating a distribution, it must contain at least one
           origin in C(origins) or the parameter C(default_domain_name_origin)
-          should be used instead.
+          as a minimum.
+          When used for creating a streaming distribution, it must contain
+          either C(s3_origin) or C(default_s3_origin_domain_name) as a
+          minimum.
           Components of C(config) can be specified entirely in
           C(config) or as separate elements outside of the config.
           This parameter applies to both distributions and streaming
           distributions.
           Elements of a distribution are
-            caller_reference
-            aliases[]
-            default_root_object
-            origins[]
-            default_cache_behavior
-            cache_behaviors[]
-            custom_error_responses[]
-            comment
-            logging
-            price_class
-            enabled
-            viewer_certificate
-            restrictions
-            web_acl_id
-            http_version
-            is_ipv6_enabled
+            C(caller_reference)
+            C(aliases[])
+            C(default_root_object)
+            C(origins[])
+            C(default_cache_behavior)
+            C(cache_behaviors[])
+            C(custom_error_responses[])
+            C(comment)
+            C(logging)
+            C(price_class)
+            C(enabled)
+            C(viewer_certificate)
+            C(restrictions)
+            C(web_acl_id)
+            C(http_version)
+            C(is_ipv6_enabled)
           Elements of a streaming distribution are
-            caller_reference
-            s3_origin
-            aliases[]
-            comment
-            logging
-            trusted_signers
-            http_version
-            is_ipv6_enabled
+            C(caller_reference)
+            C(s3_origin)
+            C(aliases[])
+            C(comment)
+            C(logging)
+            C(trusted_signers)
+            C(http_version)
+            C(is_ipv6_enabled)
           Most of these elements have sub-elements that can be seen in their
           entirety in the boto3 documentation at
             U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution)
@@ -167,29 +170,32 @@ options:
       description:
         - Specifies whether existing tags will be removed before adding
           new tags.
-          Used in conjunction with the C(tags) parameter.
-          If no tags are specified, it removes all existing tags for the
-          distribution.
+          When C(purge_tags=yes), existing tags are removed and C(tags) are
+          added, if specified. If no tags are specified, it removes all
+          existing tags for the distribution.
+          When C(purge_tags=no), existing tags are kept and C(tags) are added,
+          if specified.
       required: false
       default: 'no'
       choices: ['yes', 'no']
 
     alias:
       description:
-        - The name of an alias that is used in a distribution. This is used to
-          effectively reference a distribution by its alias as an alias can
-          only be used by one distribution per AWS account. This variable
+        - The name of an alias (CNAME) that is used in a distribution. This is
+          used to effectively reference a distribution by its alias as an alias
+          can only be used by one distribution per AWS account. This variable
           avoids having to provide the C(distribution_id) or
-          C(streaming_distribution_id) as well as the C(e_tag) or
-          C(caller_reference) to reference a distribution. This variable is
-          used for both distributions and streaming distributions.
+          C(streaming_distribution_id) as well as the C(e_tag), or
+          C(caller_reference) of an existing distribution.
+          This variable is used for both distributions and streaming
+          distributions.
       required: false
 
     aliases:
       description:
-        - A I(list[]) of domain name aliases as strings to be used for the
-          distribution. Each alias must be unique across all distributions for
-          the AWS account. Applies to both distributions and streaming
+        - A I(list[]) of domain name aliases (CNAMEs) as strings to be used for
+          the distribution. Each alias must be unique across all distributions
+          for the AWS account. Applies to both distributions and streaming
           distributions.
       required: false
 
@@ -250,21 +256,22 @@ options:
           specified for the distribution. Used for creating and updating
           distributions. Only valid for C(streaming_distribution=no).
           Each origin item comprises the attributes
-            id
-            domain_name (defaults to default_origin_domain_name if not specified)
-            origin_path (defaults to default_origin_path if not specified)
-            custom_headers[]
-              header_name
-              header_value
-            s3_origin_config
-              origin_access_identity
-            custom_origin_config
-              http_port
-              https_port
-              origin_protocol_policy
-              origin_ssl_protocols[]
-              origin_read_timeout
-              origin_keepalive_timeout
+            C(id)
+            C(domain_name) (defaults to default_origin_domain_name if not
+              specified)
+            C(origin_path) (defaults to default_origin_path if not specified)
+            C(custom_headers[])
+              C(header_name)
+              C(header_value)
+            C(s3_origin_config)
+              C(origin_access_identity)
+            C(custom_origin_config)
+              C(http_port)
+              C(https_port)
+              C(origin_protocol_policy)
+              C(origin_ssl_protocols[])
+              C(origin_read_timeout)
+              C(origin_keepalive_timeout)
       required: false
 
     default_cache_behavior:
@@ -274,71 +281,74 @@ options:
           C(target_origin_id) is defined as the C(target_origin_id) of the
           first valid C(cache_behavior) in C(cache_behaviors) with defaults.
           The default cache behavior comprises the attributes
-            target_origin_id
-            forwarded_values
-              query_string
-              cookies
-                forward
-                whitelisted_names
-              headers[]
-              query_string_cache_keys[]
-              trusted_signers
-                enabled
-                items[]
-              viewer_protocol_policy
-              min_ttl
-              allowed_methods
-                items[]
-                cached_methods[]
-              smooth_streaming
-              default_ttl
-              max_ttl
-              compress
-              lambda_function_associations[]
-                lambda_function_arn
-                event_type
+            C(target_origin_id)
+            C(forwarded_values)
+              C(query_string)
+              C(cookies)
+                C(forward)
+                C(whitelisted_names)
+              C(headers[])
+              C(query_string_cache_keys[])
+              C(trusted_signers)
+                C(enabled)
+                C(items[])
+              C(viewer_protocol_policy)
+              C(min_ttl)
+              C(allowed_methods)
+                C(items[])
+                C(cached_methods[])
+              C(smooth_streaming)
+              C(default_ttl)
+              C(max_ttl)
+              C(compress)
+              C(lambda_function_associations[])
+                C(lambda_function_arn)
+                C(event_type)
           Only valid for C(streaming_distribution=no).
       required: false
+
     cache_behaviors:
       description:
         - A config element that is a I(list[]) of complex cache behavior objects
           to be specified for the distribution.
           Each cache behavior comprises the attributes
-            path_pattern
-            target_origin_id
-            forwarded_values
-              query_string
-              cookies
-              forward
-              whitelisted_names
-              headers[]
-              query_string_cache_keys[]
-            trusted_signers
-              enabled
-              items[]
-            viewer_protocol_policy
-            min_ttl
-            allowed_methods
-              items[]
-              cached_methods[]
-            smooth_streaming
-            default_ttl
-            max_ttl
-            compress
-            lambda_function_associations[]
+            C(path_pattern)
+            C(target_origin_id)
+            C(forwarded_values)
+              C(query_string)
+              C(cookies)
+              C(forward)
+              C(whitelisted_names)
+              C(headers[])
+              C(query_string_cache_keys[])
+            C(trusted_signers)
+              C(enabled)
+              C(items[])
+            C(viewer_protocol_policy)
+            C(min_ttl)
+            C(allowed_methods)
+              C(items[])
+              C(cached_methods[])
+            C(smooth_streaming)
+            C(default_ttl)
+            C(max_ttl)
+            C(compress)
+            C(lambda_function_associations[])
           Only valid for C(streaming_distribution=no).
       required: false
+
     custom_error_responses:
       description:
         - A config element that is a I(list[]) of complex custom error responses
           to be specified for the distribution. This attribute configures
           custom http error messages returned to the user.
-          Each custom error response comprises the attributes
-            error_code
-            reponse_page_path
-            response_code error_caching_min_ttl
+          Each custom error response object comprises the attributes
+            C(error_code)
+            C(reponse_page_path)
+            C(response_code error_caching_min_ttl)
           Only valid for C(streaming_distribution=no).
       required: false
+
     comment:
       description:
         - A unique comment to describe the cloudfront distribution.
@@ -346,33 +356,36 @@ options:
           If not specified, it defaults to a generic message that it has been
           created with Ansible, and a datetime stamp.
       required: false
+
     logging:
       description:
         - A config element that is a complex object that defines logging for
           the distribution. Applies to both distributions and streaming
-          distributions. The logging object comprises the attributes
-            enabled
-            include_cookies
-            bucket
-            prefix
+          distributions.
+          The logging object comprises the attributes
+            C(enabled)
+            C(include_cookies)
+            C(bucket)
+            C(prefix)
       required: false
+
     price_class:
       description:
         - A string that specifies the pricing class of the distribution.
           Applies to both distributions and streaming distributions.
           As per U(https://aws.amazon.com/cloudfront/pricing/)
-            PriceClass_100 is
+            C(price_class=PriceClass_100) consists of the areas
               United States
               Canada
               Europe
-            PriceClass_200 is
+            C(price_class=PriceClass_200) consists of the areas
               United States
               Canada
               Europe
               Hong Kong, Philippines, S. Korea, Singapore & Taiwan
               Japan
               India
-            PriceClass_All is
+            C(price_class=PriceClass_All) consists of the areas
               United States
               Canada
               Europe
@@ -398,12 +411,12 @@ options:
           encryption details of the distribution. Only valid for
           C(streaming_distribution=no).
           Comprises the following attributes
-            cloudfront_default_certificate
-            iam_certificate_id
-            acm_certificate_arn
-            ssl_support_method
-            minimum_protocol_version
-            certificate certificate_source
+            C(cloudfront_default_certificate)
+            C(iam_certificate_id)
+            C(acm_certificate_arn)
+            C(ssl_support_method)
+            C(minimum_protocol_version)
+            C(certificate certificate_source)
       required: false
 
     restrictions:
@@ -412,30 +425,30 @@ options:
           distribution should restrict it's content.
           Only valid for C(streaming_distribution=no).
           The restriction object comprises the following attributes
-            geo_restriction
-              restriction_type
-              items[]
+            C(geo_restriction)
+              C(restriction_type)
+              C(items[])
       required: false
 
     s3_origin:
       description:
-        - A config elemrnt that is used to describe the origin of a streaming
+        - A config element that is used to describe the origin of a streaming
           distribution. The s3 origin object comprises the attributes
-            domain_name (defaults to default_s3_origin_domain_name if not
+            C(domain_name) (defaults to C(default_s3_origin_domain_name) if not
               specified)
-            origin_access_identity (defaults to
-              default_s3_origin_origin_access_identity if not specified)
+            C(origin_access_identity) (defaults to
+              C(default_s3_origin_origin_access_identity) if not specified)
       required: false
 
     web_acl_id:
       description:
-        - The id of a Web Application Firewall access control list.
+        - The id of a Web Application Firewall (WAF) Access Control List (ACL).
           Only valid for C(streaming_distribution=no).
       required: false
 
     http_version:
       description:
-        - The version of http to use for the distribution.
+        - The version of the http protocol to use for the distribution.
           Valid for both distributions and streaming distributions.
       choices: [ 'http1.1', 'http2' ]
       required: false
@@ -444,6 +457,7 @@ options:
     is_ipv6_enabled:
       description:
         - Determines whether IPv6 support is enabled or not.
+          Valid for both distributions and streaming distributions.
       choices: ['yes', 'no']
       default: 'no'
 
