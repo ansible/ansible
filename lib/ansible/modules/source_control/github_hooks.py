@@ -67,6 +67,13 @@ options:
     required: false
     default: 'json'
     choices: ['json', 'form']
+  events:
+    description:
+      - When creating a webhook you can choose which events you would like to receive.
+    required: false
+    default: 'push'
+    version_added: "2.4"
+
 
 author: "Phillip Gentry, CX Inc (@pcgentry)"
 '''
@@ -88,6 +95,18 @@ EXAMPLES = '''
     oauthkey: '{{ oauthkey }}'
     repo: '{{ repo }}'
   delegate_to: localhost
+
+# Example creating a new hook and subscribing to specific events.
+- github_hooks:
+    action: create
+    hookurl: http://11.111.111.111:2222
+    user: '{{ gituser }}'
+    oauthkey: '{{ oauthkey }}'
+    repo: https://api.github.com/repos/pcgentry/Github-Auto-Deploy
+    events:
+       - fork
+       - push
+       - pull_request
 '''
 
 try:
@@ -138,11 +157,13 @@ def _cleanall(module, hookurl, oauthkey, repo, user):
 
     return 0, current_hooks
 
-def _create(module, hookurl, oauthkey, repo, user, content_type):
+def _create(module, hookurl, oauthkey, repo, user, content_type, events):
     url = "%s/hooks" % repo
+
     values = {
         "active": True,
         "name": "web",
+        "events": events,
         "config": {
             "url": "%s" % hookurl,
             "content_type": "%s" % content_type
@@ -178,6 +199,7 @@ def main():
             user=dict(required=True),
             validate_certs=dict(default='yes', type='bool'),
             content_type=dict(default='json', choices=['json', 'form']),
+            events=dict(required=False, default='push', type='list')
         )
     )
 
@@ -187,6 +209,7 @@ def main():
     repo = module.params['repo']
     user = module.params['user']
     content_type = module.params['content_type']
+    events = module.params['events']
 
     if action == "list":
         (rc, out) = _list(module, hookurl, oauthkey, repo, user)
@@ -198,7 +221,7 @@ def main():
         (rc, out) = _cleanall(module, hookurl, oauthkey, repo, user)
 
     if action == "create":
-        (rc, out) = _create(module, hookurl, oauthkey, repo, user, content_type)
+        (rc, out) = _create(module, hookurl, oauthkey, repo, user, content_type, events)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
