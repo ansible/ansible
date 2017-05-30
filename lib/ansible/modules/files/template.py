@@ -30,13 +30,14 @@ description:
        (U(http://jinja.pocoo.org/docs/)) - documentation on the template
        formatting can be found in the Template Designer Documentation
        (U(http://jinja.pocoo.org/docs/templates/)).
-     - "Six additional variables can be used in templates:
+     - "Seven additional variables can be used in templates:
        C(ansible_managed) (configurable via the C(defaults) section of C(ansible.cfg)) contains a string which can be used to
           describe the template name, host, modification time of the template file and the owner uid.
        C(template_host) contains the node name of the template's machine.
        C(template_uid) the numeric user id of the owner.
        C(template_path) the path of the template.
        C(template_fullpath) is the absolute path of the template.
+       C(template_destpath) is the path of the template on the remote system (added in 2.4)
        C(template_run_date) is the date that the template was rendered."
 options:
   src:

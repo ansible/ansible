@@ -69,7 +69,7 @@ NON_TEMPLATED_TYPES = ( bool, Number )
 JINJA2_OVERRIDE = '#jinja2:'
 
 
-def generate_ansible_template_vars(path):
+def generate_ansible_template_vars(path, destpath=None):
 
     b_path = to_bytes(path)
     try:
@@ -84,6 +84,9 @@ def generate_ansible_template_vars(path):
     temp_vars['template_uid']      = template_uid
     temp_vars['template_fullpath'] = os.path.abspath(path)
     temp_vars['template_run_date'] = datetime.datetime.now()
+
+    if destpath is not None:
+        temp_vars['template_destpath'] = to_bytes(destpath)
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
