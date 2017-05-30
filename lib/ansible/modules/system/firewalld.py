@@ -95,6 +95,18 @@ options:
     required: false
     default: null
     version_added: "2.1"
+  chain:
+    description:
+      - 'The chain yout would like to add/remove to/from firewalld'
+    required: false
+    default: null
+    version_added: "2.3"
+  direct:
+    description:
+      - 'The direct rule you would like to add/remove to/from firewalld'
+    required: false
+    default: null
+    version_added: "2.3"
 notes:
   - Not tested on any Debian based system.
   - Requires the python2 bindings of firewalld, which may not be installed by default if the distribution switched to python 3
@@ -145,6 +157,16 @@ EXAMPLES = '''
     state: enabled
     permanent: true
     zone: dmz
+
+- firewalld:
+    chain: ipv4 filter Trusted_Hosts
+    state: enabled
+    immediate: true
+
+- firewalld:
+    direct: ipv4 filter INPUT 0 -s 192.168.0.2 -j ACCEPT
+    state: enabled
+    permanent: true
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -159,6 +181,7 @@ module = None
 fw_offline = False
 Rich_Rule = None
 FirewallClientZoneSettings = None
+FirewallClientDirect = None
 
 
 #####################
@@ -210,6 +233,24 @@ def update_fw_settings(fw_zone, fw_settings):
         fw.config.set_zone_config(fw_zone, fw_settings.settings)
     else:
         fw_zone.update(fw_settings)
+
+def get_fw_direct_settings():
+    if fw_offline:
+        fw_direct = fw.config.get_direct()
+        fw_settings = FirewallClientDirect(fw_direct.export_config())
+        pass
+    else:
+        fw_direct = fw.config().direct()
+        fw_settings = fw_direct.getSettings()
+
+    return (fw_direct, fw_settings)
+
+def update_fw_direct_settings(fw_direct, fw_settings):
+    if fw_offline:
+        fw_direct.import_config(fw_settings.settings)
+        fw_direct.write()
+    else:
+        fw_direct.update(fw_settings)
 
 #####################
 # masquerade handling
@@ -439,6 +480,77 @@ def set_rich_rule_disabled_permanent(zone, rule):
     fw_settings.removeRichRule(rule)
     update_fw_settings(fw_zone, fw_settings)
 
+
+############
+# direct
+#
+def get_direct_rule_enabled(proto, table, chain, priority, args):
+    rules = fw.getRules(proto, table, chain)
+
+    if (priority, args) in rules:
+        return True
+    else:
+        return False
+
+def set_direct_rule_enabled(proto, table, chain, priority, args):
+    fw.addRule(proto, table, chain, priority, args)
+
+def set_direct_rule_disabled(proto, table, chain, priority, args):
+    fw.removeRule(proto, table, chain, priority, args)
+
+def get_direct_rule_enabled_permanent(proto, table, chain, priority, args):
+    fw_direct, fw_settings = get_fw_direct_settings()
+
+    if (priority, args) in fw_settings.getRules(proto, table, chain):
+        return True
+    else:
+        return False
+
+def set_direct_rule_enabled_permanent(proto, table, chain, priority, args):
+    fw_direct, fw_settings = get_fw_direct_settings()
+    fw_settings.addRule(proto, table, chain, priority, args)
+    update_fw_direct_settings(fw_direct, fw_settings)
+
+def set_direct_rule_disabled_permanent(proto, table, chain, priority, args):
+    fw_direct, fw_settings = get_fw_direct_settings()
+    fw_settings.removeRule(proto, table, chain, priority, args)
+    update_fw_direct_settings(fw_direct, fw_settings)
+
+###########
+# chains
+#
+def get_chain_enabled(proto, table, chain):
+    chains = fw.getChains(proto, table)
+
+    if chain in chains:
+        return True
+    else:
+        return False
+
+def set_chain_enabled(proto, table, chain):
+    fw.addChain(proto, table, chain)
+
+def set_chain_disabled(proto, table, chain):
+    fw.removeChain(proto, table, chain)
+
+def get_chain_enabled_permanent(proto, table, chain):
+    fw_direct, fw_settings = get_fw_direct_settings()
+
+    if chain in fw_settings.getChains(proto, table):
+        return True
+    else:
+        return False
+
+def set_chain_enabled_permanent(proto, table, chain):
+    fw_direct, fw_settings = get_fw_direct_settings()
+    fw_settings.addChain(proto, table, chain)
+    update_fw_direct_settings(fw_direct, fw_settings)
+
+def set_chain_disabled_permenent(proto, table, chain):
+    fw_direct, fw_settings = get_fw_direct_settings()
+    fw_settings.removeChain(proto, table, chain)
+    update_fw_direct_settings(fw_direct, fw_settings)
+
 def main():
     global module
 
@@ -459,6 +571,8 @@ def main():
             interface=dict(required=False,default=None),
             masquerade=dict(required=False,default=None),
             offline=dict(type='bool',required=False,default=None),
+            direct=dict(required=False,default=None),
+            chain=dict(required=False,default=None)
         ),
         supports_check_mode=True
     )
@@ -468,6 +582,7 @@ def main():
     global fw_offline
     global Rich_Rule
     global FirewallClientZoneSettings
+    global FirewallClientDirect
 
     ## Imports
     try:
@@ -490,7 +605,7 @@ def main():
             ## NOTE:
             ##  online and offline operations do not share a common firewalld API
             from firewall.core.fw_test import Firewall_test
-            from firewall.client import FirewallClientZoneSettings
+            from firewall.client import FirewallClientZoneSettings, FirewallClientDirect
             fw = Firewall_test()
             fw.start()
             fw_offline = True
@@ -527,7 +642,7 @@ def main():
         module.fail(msg='zone is a required parameter')
 
     if module.params['immediate'] and fw_offline:
-        module.fail(msg='firewall is not currently running, unable to perform immediate actions without a running firewall daemon')
+        module.fail_json(msg='firewall is not currently running, unable to perform immediate actions without a running firewall daemon')
 
     ## Global Vars
     changed=False
@@ -535,6 +650,8 @@ def main():
     service = module.params['service']
     rich_rule = module.params['rich_rule']
     source = module.params['source']
+    direct = module.params['direct']
+    chain = module.params['chain']
 
     if module.params['port'] is not None:
         port, protocol = module.params['port'].split('/')
@@ -569,9 +686,13 @@ def main():
         modification_count += 1
     if masquerade is not None:
         modification_count += 1
+    if direct is not None:
+        modification_count += 1
+    if chain is not None:
+        modification_count += 1
 
     if modification_count > 1:
-        module.fail_json(msg='can only operate on port, service, rich_rule or interface at once')
+        module.fail_json(msg='can only operate on port, service, rich_rule, interface, direct or chain at once')
 
     if service is not None:
         if immediate and permanent:
@@ -1067,6 +1188,225 @@ def main():
                     action_handler(set_masquerade_disabled, (zone))
                     changed=True
                     msgs.append("Removed masquerade from zone %s" % (zone))
+
+    if direct is not None:
+        args = direct.split(' ')
+        proto = args.pop(0)
+        table = args.pop(0)
+        chain_name = args.pop(0)
+        priority = int(args.pop(0))
+
+
+        if immediate and permanent:
+            is_enabled_permanent = action_handler(
+                get_direct_rule_enabled_permanent,
+                (proto, table, chain_name, priority, args)
+            )
+            is_enabled_immediate = action_handler(
+                get_direct_rule_enabled,
+                (proto, table, chain_name, priority, args)
+            )
+            msgs.append('Permanent and Non-Permanent(immediate) operation')
+
+            if desired_state == "enabled":
+                if not is_enabled_permanent or not is_enabled_immediate:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+                if not is_enabled_permanent:
+                    action_handler(
+                        set_direct_rule_enabled_permanent,
+                        (proto, table, chain_name, priority, args)
+                    )
+                    changed=True
+                if not is_enabled_immediate:
+                    action_handler(
+                        set_direct_rule_enabled,
+                        (proto, table, chain_name, priority, args)
+                    )
+                    changed=True
+
+
+            elif desired_state == "disabled":
+                if is_enabled_permanent or is_enabled_immediate:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+                if is_enabled_permanent:
+                    action_handler(
+                        set_direct_rule_disabled_permanent,
+                        (proto, table, chain_name, priority, args)
+                    )
+                    changed=True
+                if is_enabled_immediate:
+                    action_handler(
+                        set_direct_rule_disabled,
+                        (proto, table, chain_name, priority, args)
+                    )
+                    changed=True
+        elif permanent and not immediate:
+            is_enabled = action_handler(
+                get_direct_rule_enabled_permanent,
+                (proto, table, chain_name, priority, args)
+            )
+            msgs.append('Permanent operation')
+
+            if desired_state == "enabled":
+                if is_enabled == False:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    action_handler(
+                        set_direct_rule_enabled_permanent,
+                        (proto, table, chain_name, priority, args)
+                    )
+                    changed=True
+            elif desired_state == "disabled":
+                if is_enabled == True:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    action_handler(
+                        set_direct_rule_disabled_permanent,
+                        (proto, table, chain_name, priority, args)
+                    )
+                    changed=True
+        elif immediate and not permanent:
+            is_enabled = action_handler(
+                get_direct_rule_enabled,
+                (proto, table, chain_name, priority, args)
+            )
+            msgs.append('Non-permanent operation')
+
+
+            if desired_state == "enabled":
+                if is_enabled == False:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    action_handler(
+                        set_direct_rule_enabled,
+                        (proto, table, chain_name, priority, args)
+                    )
+                    changed=True
+            elif desired_state == "disabled":
+                if is_enabled == True:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    action_handler(
+                        set_direct_rule_disabled,
+                        (proto, table, chain_name, priority, args)
+                    )
+                    changed=True
+
+        if changed == True:
+            msgs.append("Changed direct rule %s to %s" % (direct, desired_state))
+
+    if chain is not None:
+        proto, table, chain_name = chain.split(' ')
+
+        if immediate and permanent:
+            is_enabled_permanent = action_handler(
+                get_chain_enabled_permanent,
+                (proto, table, chain_name)
+            )
+            is_enabled_immediate = action_handler(
+                get_chain_enabled,
+                (proto, table, chain_name)
+            )
+            msgs.append('Permanent and Non-Permanent(immediate) operation')
+
+            if desired_state == "enabled":
+                if not is_enabled_permanent or not is_enabled_immediate:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+                if not is_enabled_permanent:
+                    action_handler(
+                        set_chain_enabled_permanent,
+                        (proto, table, chain_name)
+                    )
+                    changed=True
+                if not is_enabled_immediate:
+                    action_handler(
+                        set_chain_enabled,
+                        (proto, table, chain_name)
+                    )
+                    changed=True
+
+
+            elif desired_state == "disabled":
+                if is_enabled_permanent or is_enabled_immediate:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+                if is_enabled_permanent:
+                    action_handler(
+                        set_chain_disabled_permenent,
+                        (proto, table, chain_name)
+                    )
+                    changed=True
+                if is_enabled_immediate:
+                    action_handler(
+                        set_chain_disabled,
+                        (proto, table, chain_name)
+                    )
+                    changed=True
+        elif permanent and not immediate:
+            is_enabled = action_handler(
+                get_chain_enabled_permanent,
+                (proto, table, chain_name)
+            )
+            msgs.append('Permanent operation')
+
+            if desired_state == "enabled":
+                if is_enabled == False:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    action_handler(
+                        set_chain_enabled_permanent,
+                        (proto, table, chain_name)
+                    )
+                    changed=True
+            elif desired_state == "disabled":
+                if is_enabled == True:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    action_handler(
+                        set_chain_disabled_permenent,
+                        (proto, table, chain_name)
+                    )
+                    changed=True
+        elif immediate and not permanent:
+            is_enabled = action_handler(
+                get_chain_enabled,
+                (proto, table, chain_name)
+            )
+            msgs.append('Non-permanent operation')
+
+
+            if desired_state == "enabled":
+                if is_enabled == False:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    action_handler(
+                        set_chain_enabled,
+                        (proto, table, chain_name)
+                    )
+                    changed=True
+            elif desired_state == "disabled":
+                if is_enabled == True:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    action_handler(
+                        set_chain_disabled,
+                        (proto, table, chain_name)
+                    )
+                    changed=True
+
+        if changed == True:
+            msgs.append("Changed chain %s to %s" % (chain, desired_state))
 
     if fw_offline:
         msgs.append("(offline operation: only on-disk configs were altered)")
