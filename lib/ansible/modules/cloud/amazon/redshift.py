@@ -80,6 +80,17 @@ options:
       - VPC security group
     aliases: ['vpc_security_groups']
     default: null
+  skip_final_cluster_snapshot:
+    description:
+      - skip a final snapshot before deleting the cluster. Used only when command=delete.
+    aliases: ['skip_snapshot']
+    default: false
+  final_cluster_snapshot_identifier:
+    description:
+      - identifier of the final snapshot to be created before deleting the cluster. If this parameter is provided, 
+        final_cluster_snapshot_identifier must be false. Used only when command=delete.
+    aliases: ['snapshot_identifier']
+    default: null    
   preferred_maintenance_window:
     description:
       - maintenance window
@@ -327,12 +338,23 @@ def delete_cluster(module, redshift):
     redshift: authenticated redshift connection object
     """
 
-    identifier   = module.params.get('identifier')
-    wait         = module.params.get('wait')
-    wait_timeout = module.params.get('wait_timeout')
+    identifier                        = module.params.get('identifier')
+    wait                              = module.params.get('wait')
+    wait_timeout                      = module.params.get('wait_timeout')
+    skip_final_cluster_snapshot       = module.params.get('skip_final_cluster_snapshot')
+    final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
+
+    if skip_final_cluster_snapshot and final_cluster_snapshot_identifier is not None:
+        module.fail_json(msg="Final snapshot is skipped but a snapshot id was specified")
+    if not skip_final_cluster_snapshot and final_cluster_snapshot_identifier is None:
+        module.fail_json(msg="Snapshot identifier (final_cluster_snapshot_identifier) must be provided if skip_final_cluster_snapshot is false.")
 
     try:
-        redshift.delete_cluster( identifier )
+        redshift.delete_cluster(
+            identifier,
+            skip_final_cluster_snapshot,
+            final_cluster_snapshot_identifier
+        )
     except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
@@ -422,6 +444,8 @@ def main():
         cluster_type                        = dict(choices=['multi-node', 'single-node', ], default='single-node'),
         cluster_security_groups             = dict(aliases=['security_groups'], type='list'),
         vpc_security_group_ids              = dict(aliases=['vpc_security_groups'], type='list'),
+        skip_final_cluster_snapshot         = dict(aliases=['skip_snapshot'], type='bool', default=False),
+        final_cluster_snapshot_identifier   = dict(aliases=['snapshot_identifier'], required=False),
         cluster_subnet_group_name           = dict(aliases=['subnet']),
         availability_zone                   = dict(aliases=['aws_zone', 'zone']),
         preferred_maintenance_window        = dict(aliases=['maintance_window', 'maint_window']),
