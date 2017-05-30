@@ -235,6 +235,8 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
+        if self._display.verbosity < 2:
+            return
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
         self._display.display(msg, color=C.COLOR_SKIP)
 
