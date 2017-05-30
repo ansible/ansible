@@ -106,6 +106,18 @@
     path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
   register: stat_file
 
+- name: debug actual for file
+  debug:
+    var: actual
+
+- name: debug expected for file
+  debug:
+    var: expected
+
+- name: debug actual/expected for file
+  debug:
+    msg: "actual: {{ actual }} expected: {{ expected }}"
+
 - name: check actual for file
   assert:
     that:
