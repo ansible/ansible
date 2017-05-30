@@ -18,5 +18,8 @@
 - include: 'apt.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')
 
+- include: 'apt-multiarch.yml'
+  when: ansible_distribution in ('Ubuntu', 'Debian') and ansible_userspace_architecture != apt_foreign_arch
+
 - include: 'apt-builddep.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')
