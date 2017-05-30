@@ -10,6 +10,32 @@ Prior to 2.0, modules may have been written in boto or boto3. The effort to port
 
 Bug fixes to code that relies on boto will still be accepted. When possible, the code should be ported to use boto3. 
 
+## Coding standards
+
+All new modules are expected to meet the Ansible project's flake8 standards.
+This is basically normal flake8, but with a 120 line length.
+
+To test flake8 compatibility, use
+
+```
+pip install flake8
+flake8 your_module
+```
+
+The section below on module imports will help meet most flake8 complaints such
+as this anonymized flake8 result:
+
+```
+F401 'boto3' imported but unused
+F999 ec2_argument_spec may be undefined, or defined from star imports: ansible.module_utils.basic, ansible.module_utils.ec2
+F999 AnsibleModule may be undefined, or defined from star imports: ansible.module_utils.basic, ansible.module_utils.ec2
+E402 module level import not at top of file
+F403 'from ansible.module_utils.basic import *' used; unable to detect undefined names
+E402 module level import not at top of file
+F403 'from ansible.module_utils.ec2 import *' used; unable to detect undefined names
+```
+
+
 ## Naming your module
 
 Base the name of the module on the part of AWS that
@@ -41,21 +67,33 @@ else:
         module.fail_json(msg="instance_profile_name parameter requires boto version 2.5.0 or higher")
 ```
 
-## Using boto and boto3
+## Module imports
 
-### Importing
+Now that Ansible 2.2 is released, all modules should Use the modern module import style.
+
+```python
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list
+```
+
+You will need to vary the imports depending on what methods from
+`module_utils.ec2` you actually use.
+
+### boto and boto3
 
 Wrap import statements in a try block and fail the module later if the import fails
 
 #### boto
 
 ```python
+from ansible.module_utils.ec2 import HAS_BOTO
+
 try:
     import boto.ec2
     from boto.exception import BotoServerError
-    HAS_BOTO = True
 except ImportError:
-    HAS_BOTO = False
+    pass  # caught by imported HAS_BOTO
 
 def main():
 
@@ -66,11 +104,12 @@ def main():
 #### boto3
 
 ```python
+from ansible.module_utils.ec2 import HAS_BOTO3
+
 try:
-    import boto3
-    HAS_BOTO3 = True
+    from botocore.exceptions import ClientError
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by imported HAS_BOTO3
 
 def main():
 
@@ -78,12 +117,17 @@ def main():
         module.fail_json(msg='boto3 required for this module')
 ```
 
+Note that you almost never need to import boto3 directly,
+the `boto3_conn` routine takes care of that.
+
 #### boto and boto3 combined
 
 Ensure that you clearly document if a new parameter requires requires a specific version. Import boto3 at the top of the
 module as normal and then use the HAS_BOTO3 bool when necessary, before the new feature.
 
 ```python
+from ansible.module_utils.ec2 import HAS_BOTO3
+
 try:
     import boto
     HAS_BOTO = True
@@ -91,12 +135,11 @@ except ImportError:
     HAS_BOTO = False
 
 try:
-    import boto3
-    HAS_BOTO3 = True
+    from botocore.exceptions import ClientError
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # captured by imported HAS_BOTO3
 
-if my_new_feauture_Parameter_is_set:
+if my_new_feature_parameter_is_set:
     if HAS_BOTO3:
         # do feature
     else:
@@ -176,9 +219,8 @@ Boto3 provides lots of useful info when an exception is thrown so pass this to t
 # Import ClientError from botocore
 try:
     from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # importing HAS_BOTO3 will catch this
 
 # Connect to AWS
 ...
