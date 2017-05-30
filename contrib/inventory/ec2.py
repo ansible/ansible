@@ -1328,10 +1328,13 @@ class Ec2Inventory(object):
         ''' Get and store the map of resource records to domain names that
         point to them. '''
 
+        # connect with AWS profile name (boto_profile) if it is in use
+        connect_args = {}
         if self.boto_profile:
-            r53_conn = route53.Route53Connection(profile_name=self.boto_profile)
-        else:
-            r53_conn = route53.Route53Connection()
+            connect_args['profile_name'] = self.boto_profile
+
+        r53_conn = route53.Route53Connection(**connect_args)
+
         all_zones = r53_conn.get_zones()
 
         route53_zones = [zone for zone in all_zones if zone.name[:-1] not in self.route53_excluded_zones]
