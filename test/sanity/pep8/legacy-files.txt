@@ -474,7 +474,6 @@ lib/ansible/modules/network/nxos/nxos_pim.py
 lib/ansible/modules/network/nxos/nxos_pim_interface.py
 lib/ansible/modules/network/nxos/nxos_pim_rp_address.py
 lib/ansible/modules/network/nxos/nxos_ping.py
-lib/ansible/modules/network/nxos/nxos_portchannel.py
 lib/ansible/modules/network/nxos/nxos_smu.py
 lib/ansible/modules/network/nxos/nxos_snapshot.py
 lib/ansible/modules/network/nxos/nxos_snmp_community.py
