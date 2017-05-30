@@ -968,7 +968,7 @@ def basic_auth_header(username, password):
     """Takes a username and password and returns a byte string suitable for
     using as value of an Authorization header to do basic auth.
     """
-    return b("Basic %s") % base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
+    return b("Basic ") + base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
 
 
 def url_argument_spec():
