@@ -1602,6 +1602,7 @@ allowed in future versions:
     ```
     - debug: msg="The error message was: {{error_code |default('') }}"
     ```
+* Version 3.11 of PyYAML is now required.
 
 ## 1.9.7 "Dancing in the Street" - TBD
 
