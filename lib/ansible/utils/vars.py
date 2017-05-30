@@ -131,9 +131,9 @@ import traceback
 class Watcher(object):
     def notify(self, observable, key, old, new):
         pid = os.getpid()
-        if key == 'ansible_connection':
-            print('\npid: %s' % pid)
-            traceback.print_stack()
+#        if key == 'ansible_connection':
+#            print('\npid: %s' % pid)
+#            traceback.print_stack()
         if old is Unset:
             return
         if old != new:
