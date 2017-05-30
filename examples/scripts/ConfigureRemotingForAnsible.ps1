@@ -54,6 +54,7 @@ Param (
     [switch]$ForceNewSSLCert,
     [switch]$EnableCredSSP
 )
+#requires -Version 3
 
 Function Write-Log
 {
@@ -153,13 +154,6 @@ If (-Not $EventSource)
 If ([System.Diagnostics.EventLog]::Exists('Application') -eq $False -or [System.Diagnostics.EventLog]::SourceExists($EventSource) -eq $False)
 {
     New-EventLog -LogName Application -Source $EventSource
-}
-
-# Detect PowerShell version.
-If ($PSVersionTable.PSVersion.Major -lt 3)
-{
-    Write-Log "PowerShell version 3 or higher is required."
-    Throw "PowerShell version 3 or higher is required."
 }
 
 # Find and start the WinRM service.
