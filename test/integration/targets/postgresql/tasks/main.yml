@@ -194,27 +194,24 @@
     - user_creation_encrypted_value: 'yes'
     - user_creation_encrypted_value: 'no'
 
-# BYPASSRLS role attribute was introduced in Postgres 9.5, so 
+# BYPASSRLS role attribute was introduced in PostgreSQL 9.5, so
 # we want to test atrribute management differently depending
-# on the version. See https://github.com/ansible/ansible/pull/24625
-# for more details.
-- name: Get Postgres version 
+# on the version.
+- name: Get PostgreSQL version
   become_user: "{{ pg_user }}"
   become: True
-  shell: echo 'SHOW SERVER_VERSION' | psql -d postgres
+  shell: "echo 'SHOW SERVER_VERSION' | psql --tuples-only --no-align --dbname postgres"
   register: postgres_version_resp
 
-- name: Print Postgres server version
+- name: Print PostgreSQL server version
   debug:
-    msg: "{{ postgres_version_resp.stdout_lines[-2] | trim }}"
+    msg: "{{ postgres_version_resp.stdout }}"
 
-- name: Role attribute testing for Postgres 9.5+
-  include: postgresql_user_9.5_or_greater.yml
-  when: (postgres_version_resp.stdout_lines[-2] | trim) | version_compare('9.5.0', '>=')
+- set_fact:
+    bypassrls_supported: "{{ postgres_version_resp.stdout | version_compare('9.5.0', '>=') }}"
 
-- name: Role attribute testing for Postgres versions below 9.5 
-  include: postgresql_user_less_than_9.5.yml
-  when: (postgres_version_resp.stdout_lines[-2] | trim) | version_compare('9.5.0', '<')
+- name: Role attribute testing
+  include: check_role_attributes.yml
 
 - name: Cleanup the user
   become_user: "{{ pg_user }}"
