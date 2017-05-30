@@ -76,16 +76,12 @@ key:
 '''
 
 EXAMPLES = '''
-- name: Read SSH public key to authorize
-  shell: cat /home/foo/.ssh/id_rsa.pub
-  register: ssh_pub_key
-
 - name: Authorize key with GitHub
-  local_action:
-    module: github_key
+  github_key:
     name: Access Key for Some Machine
     token: '{{ github_access_token }}'
-    pubkey: '{{ ssh_pub_key.stdout }}'
+    pubkey: '{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}'
+  delegate_to: localhost
 '''
 
 
