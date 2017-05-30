@@ -84,7 +84,7 @@ class VarsModule(BaseVarsPlugin):
                 for found in found_files:
                     new_data = loader.load_from_file(found, cache=True, unsafe=True)
                     if new_data:  # ignore empty files
-                        data = combine_vars(data, new_data, name_b='host_group_vars_new_data')
+                        data = combine_vars(data, new_data, name_b='_host_group_vars_new_data')
 
             except Exception as e:
                 raise AnsibleParserError(to_text(e))
