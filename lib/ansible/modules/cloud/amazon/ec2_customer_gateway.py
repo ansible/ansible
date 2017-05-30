@@ -122,9 +122,11 @@ gateway.customer_gateway:
 changed:
   description: whether or not the customer gateway has been modified
   type: bool
+  returned: always
 name:
   description: the name of the customer gateway determined by C(name)
   type: str
+  returned: success
 '''
 
 try:
