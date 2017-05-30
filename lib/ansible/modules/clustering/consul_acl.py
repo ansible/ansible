@@ -28,7 +28,7 @@ short_description: "manipulate consul acl keys and rules"
 description:
  - allows the addition, modification and deletion of ACL keys and associated
    rules in a consul cluster via the agent. For more details on using and
-   configuring ACLs, see https://www.consul.io/docs/internals/acl.html.
+   configuring ACLs, see https://www.consul.io/docs/guides/acl.html.
 requirements:
   - "python >= 2.6"
   - python-consul
@@ -245,8 +245,14 @@ def yml_to_rules(module, yml_rules):
                 rules.add_rule('event', Rule(rule['event'], rule['policy']))
             elif ('query' in rule and 'policy' in rule):
                 rules.add_rule('query', Rule(rule['query'], rule['policy']))
+            elif ('agent' in rule and 'policy' in rule):
+                rules.add_rule('agent', Rule(rule['agent'], rule['policy']))
+            elif ('node' in rule and 'policy' in rule):
+                rules.add_rule('node', Rule(rule['node'], rule['policy']))
+            elif ('session' in rule and 'policy' in rule):
+                rules.add_rule('session', Rule(rule['session'], rule['policy']))
             else:
-                module.fail_json(msg="a rule requires a key/service/event or query and a policy.")
+                module.fail_json(msg="a rule requires a key/service/event/query/agent/node or session and a policy.")
     return rules
 
 template = '''%s "%s" {
@@ -254,7 +260,7 @@ template = '''%s "%s" {
 }
 '''
 
-RULE_TYPES = ['key', 'service', 'event', 'query']
+RULE_TYPES = ['key', 'service', 'event', 'query', 'agent', 'node', 'session']
 
 class Rules:
 
