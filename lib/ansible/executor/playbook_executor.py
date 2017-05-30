@@ -44,7 +44,7 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
-    def __init__(self, playbooks, inventory, variable_manager, loader, options, passwords):
+    def __init__(self, playbooks, inventory, variable_manager, loader, options, passwords, callback=None):
         self._playbooks        = playbooks
         self._inventory        = inventory
         self._variable_manager = variable_manager
@@ -52,11 +52,13 @@ class PlaybookExecutor:
         self._options          = options
         self.passwords         = passwords
         self._unreachable_hosts = dict()
+        self._callback         = callback
 
         if options.listhosts or options.listtasks or options.listtags or options.syntax:
             self._tqm = None
         else:
-            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords=self.passwords)
+            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader,
+                                         options=options, passwords=self.passwords, stdout_callback=callback)
 
         # Note: We run this here to cache whether the default ansible ssh
         # executable supports control persist.  Sometime in the future we may
