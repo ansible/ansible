@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Ansible module to manage Big Monitoring Fabric service chains
-# (c) 2016, Ted Elhourani <ted@bigswitch.com>
+# Ansible module to manage Big Cloud Fabric switches
+# (c) 2017, Ted Elhourani <ted@bigswitch.com>
 #
 # This file is part of Ansible
 #
@@ -19,27 +19,38 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
-module: bigmon_chain
-author: "Ted (@tedelhourani)"
-short_description: Create and remove a bigmon inline service chain.
+module: bcf_switch
+short_description: Create and remove a bcf switch.
 description:
-    - Create and remove a bigmon inline service chain.
+    - Create and remove a bcf switch.
 version_added: "2.3"
 options:
   name:
     description:
-     - The name of the chain.
+     - The name of the switch.
+    required: true
+  fabric_role:
+    description:
+     - Fabric role of the switch.
+    choices: ['spine', 'leaf']
+    required: true
+  leaf_group:
+    description:
+     - The leaf group of the switch if the switch is a leaf.
+    required: false
+  mac:
+    description:
+     - The MAC address of the switch.
     required: true
   state:
     description:
-     - Whether the service chain should be present or absent.
+     - Whether the switch should be present or absent.
     default: present
     choices: ['present', 'absent']
   controller:
@@ -55,28 +66,47 @@ options:
     choices: [true, false]
   access_token:
     description:
-     - Bigmon access token. If this isn't set the the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
+     - Big Cloud Fabric access token. If this isn't set then the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
 '''
 
 
 EXAMPLES = '''
-- name: bigmon inline service chain
-      bigmon_chain:
-        name: MyChain
+- name: bcf leaf switch
+      bcf_switch:
+        name: Rack1Leaf1
+        fabric_role: leaf
+        leaf_group: R1
+        mac: 00:00:00:02:00:02
         controller: '{{ inventory_hostname }}'
         state: present
         validate_certs: false
 '''
 
 
-RETURN = ''' # '''
+RETURN = '''
+{
+    "changed": true,
+    "invocation": {
+        "module_args": {
+            "access_token": null,
+            "controller": "192.168.86.230",
+            "fabric_role": "leaf",
+            "leaf_group": "R1",
+            "mac": "00:00:00:02:00:02",
+            "name": "Rack1Leaf1",
+            "state": "present",
+            "validate_certs": false
+        }
+    }
+}
+'''
 
 import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.bigswitch_utils import Rest, Response
 from ansible.module_utils.pycompat24 import get_exception
 
-def chain(module):
+def leaf_switch(module):
     try:
         access_token = module.params['access_token'] or os.environ['BIGSWITCH_ACCESS_TOKEN']
     except KeyError:
@@ -84,22 +114,26 @@ def chain(module):
         module.fail_json(msg='Unable to load %s' % e.message )
 
     name = module.params['name']
+    fabric_role = module.params['fabric_role']
+    leaf_group = module.params['leaf_group']
+    dpid = '00:00:' + module.params['mac']
     state = module.params['state']
     controller = module.params['controller']
 
     rest = Rest(module,
                 {'content-type': 'application/json', 'Cookie': 'session_cookie='+access_token},
-                'https://'+controller+':8443/api/v1/data/controller/applications/bigchain')
+                'https://'+controller+':8443/api/v1/data/controller/core')
 
-    if None in (name, state, controller):
-        module.fail_json(msg='parameter `name` is missing')
-
-    response = rest.get('chain?config=true', data={})
+    response = rest.get('switch-config', data={})
     if response.status_code != 200:
-        module.fail_json(msg="failed to obtain existing chain config: {}".format(response.json['description']))
+        module.fail_json(msg="failed to obtain existing switch config: {}".format(response.json['description']))
 
     config_present = False
-    matching = [chain for chain in response.json if chain['name'] == name]
+    matching = [switch for switch in response.json if all((switch['name'] == name,
+                                                           switch['fabric-role'] == fabric_role,
+                                                           switch.get('leaf-group', '') == leaf_group if leaf_group else True,
+                                                           switch['dpid'] == dpid))]
+
     if matching:
         config_present = True
 
@@ -110,23 +144,27 @@ def chain(module):
         module.exit_json(changed=False)
 
     if state in ('present'):
-        response = rest.put('chain[name="%s"]' % name, data={'name': name})
+        data = {'name': name, 'fabric-role': fabric_role, 'leaf-group': leaf_group, 'dpid': dpid}
+        response = rest.put('switch-config[name="%s"]' % name, data)
         if response.status_code == 204:
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg="error creating chain '{}': {}".format(name, response.json['description']))
+            module.fail_json(msg="error configuring switch '{}': {}".format(name, response.json['description']))
 
     if state in ('absent'):
-        response = rest.delete('chain[name="%s"]' % name, data={})
+        response = rest.delete('switch-config[name="%s"]' % name, data={})
         if response.status_code == 204:
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg="error deleting chain '{}': {}".format(name, response.json['description']))
+            module.fail_json(msg="error deleting switch '{}': {}".format(name, response.json['description']))
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
+            fabric_role=dict(choices=['spine', 'leaf'], required=True),
+            leaf_group=dict(type='str', required=False),
+            mac=dict(type='str', required=True),
             controller=dict(type='str', required=True),
             state=dict(choices=['present', 'absent'], default='present'),
             validate_certs=dict(type='bool', default='True'),
@@ -135,7 +173,7 @@ def main():
     )
 
     try:
-        chain(module)
+        leaf_switch(module)
     except Exception:
         e = get_exception()
         module.fail_json(msg=str(e))
