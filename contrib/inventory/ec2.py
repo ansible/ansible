@@ -153,6 +153,8 @@ except ImportError:
     import simplejson as json
 
 
+connect_args ={}
+
 class Ec2Inventory(object):
 
     def _empty_inventory(self):
@@ -538,21 +540,68 @@ class Ec2Inventory(object):
             conn = self.connect_to_aws(ec2, region)
         return conn
 
-    def boto_fix_security_token_in_profile(self, connect_args):
-        ''' monkey patch for boto issue boto/boto#2100 '''
-        profile = 'profile ' + self.boto_profile
-        if boto.config.has_option(profile, 'aws_security_token'):
-            connect_args['security_token'] = boto.config.get(profile, 'aws_security_token')
-        return connect_args
+    def get_option(self, config, section, option):
+        try:
+            opt = config.get('%s' % section, option)
+        except (NoOptionError, NoSectionError):
+            print("Couldn't find %s in profile %s" % (option, section))
+            sys.exit(1)
+
+        return opt
+
+    def assume_role(self, region, profile):
+        # assume role
+
+        global connect_args
+
+        if six.PY3:
+            aws_creds  = configparser.ConfigParser()
+            aws_config = configparser.ConfigParser()
+        else:
+            aws_creds  = configparser.SafeConfigParser()
+            aws_config = configparser.SafeConfigParser()
+
+        aws_creds.read(os.path.expanduser("~/.aws/credentials"))
+        aws_config.read(os.path.expanduser("~/.aws/config"))
+
+        source_profile = self.get_option(aws_config, profile, 'source_profile')
+        arn            = self.get_option(aws_config, profile, 'role_arn')
+        aws_access_key = self.get_option(aws_creds, source_profile, 'aws_access_key_id')
+        aws_secret_key = self.get_option(aws_creds, source_profile, 'aws_secret_access_key')
+        session_name   = "role_session_name_" + self.boto_profile
+
+        sts_conn = sts.STSConnection(aws_access_key, aws_secret_key)
+        assume_role = sts_conn.assume_role(role_arn=arn, role_session_name=session_name)
+        connect_args['aws_access_key_id']     = assume_role.credentials.access_key
+        connect_args['aws_secret_access_key'] = assume_role.credentials.secret_key
+        connect_args['security_token']        = assume_role.credentials.session_token
 
     def connect_to_aws(self, module, region):
-        connect_args = self.credentials
+
+        global connect_args = self.credentials
 
         # only pass the profile name if it's set (as it is not supported by older boto versions)
         if self.boto_profile:
+          profile = 'profile ' + self.boto_profile
+          if boto.config.has_option(profile, 'aws_security_token'):
             connect_args['profile_name'] = self.boto_profile
-            self.boto_fix_security_token_in_profile(connect_args)
+            connect_args['security_token'] = boto.config.get(profile, 'aws_security_token')
+          elif os.path.isfile(os.path.expanduser('~/.aws/config')):
+            self.assume_role(region, profile)
+          else:
+            self.fail_with_error('Not get profile properly\n')
+        else:
+          if ( 'AWS_SECRET_ACCESS_KEY' in os.environ and 'AWS_ACCESS_KEY_ID' in os.environ ):
+            connect_args['aws_secret_access_key']=os.environ['AWS_SECRET_ACCESS_KEY']
+            connect_args['aws_access_key_id']=os.environ['AWS_ACCESS_KEY_ID']
+            if 'AWS_SESSION_TOKEN' in os.environ :
+               connect_args['security_token']=os.environ['AWS_SESSION_TOKEN']
 
+        if not connect_args:
+          conn = module.connect_to_region(region)
+        else:
+          conn = module.connect_to_region(region, **connect_args)
+          
         if self.iam_role:
             sts_conn = sts.connect_to_region(region, **connect_args)
             role = sts_conn.assume_role(self.iam_role, 'ansible_dynamic_inventory')
