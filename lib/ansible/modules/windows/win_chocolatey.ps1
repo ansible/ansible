@@ -100,6 +100,11 @@ Function Choco-IsInstalled
         [string]$package
     )
 
+   if ($package -like "all")
+   {
+     return $true
+   } 
+
     $cmd = "$executable list --local-only --exact $package"
     $output = invoke-expression $cmd
 
