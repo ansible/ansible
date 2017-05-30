@@ -373,7 +373,7 @@ RETRY_FILES_ENABLED = get_config(p, DEFAULTS, 'retry_files_enabled', 'ANSIBLE_RE
 RETRY_FILES_SAVE_PATH = get_config(p, DEFAULTS, 'retry_files_save_path', 'ANSIBLE_RETRY_FILES_SAVE_PATH', None, value_type='path')
 DEFAULT_NULL_REPRESENTATION = get_config(p, DEFAULTS, 'null_representation', 'ANSIBLE_NULL_REPRESENTATION', None, value_type='none')
 DISPLAY_ARGS_TO_STDOUT = get_config(p, DEFAULTS, 'display_args_to_stdout', 'ANSIBLE_DISPLAY_ARGS_TO_STDOUT', False, value_type='boolean')
-MAAX_FILE_SIZE_FOR_DIFF = get_config(p, DEFAULTS, 'max_diff_size', 'ANSIBLE_MAX_DIFF_SIZE', 1024 * 1024, value_type='integer')
+MAX_FILE_SIZE_FOR_DIFF = get_config(p, DEFAULTS, 'max_diff_size', 'ANSIBLE_MAX_DIFF_SIZE', 1024 * 1024, value_type='integer')
 
 # CONNECTION RELATED
 USE_PERSISTENT_CONNECTIONS = get_config(p, DEFAULTS, 'use_persistent_connections', 'ANSIBLE_USE_PERSISTENT_CONNECTIONS', False, value_type='boolean')
