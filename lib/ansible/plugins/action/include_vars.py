@@ -78,7 +78,7 @@ class ActionModule(ActionBase):
             raise AnsibleError('Invalid type for "extensions" option, it must be a list')
 
     def run(self, tmp=None, task_vars=None):
-        """ Load yml files recursively from a directory.
+        """ Load yml files recursively from a directory. The filenames must have a yaml, yml, or json extension. 
         """
         if task_vars is None:
             task_vars = dict()
@@ -248,7 +248,7 @@ class ActionModule(ActionBase):
             var_files: (list): List of files to iterate over and load into a dictionary.
 
         Returns:
-            Tuple (bool, str, dict)
+            Tuple (bool, str, dict) 
         """
         results = dict()
         failed = False
