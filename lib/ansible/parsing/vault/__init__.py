@@ -460,6 +460,9 @@ class VaultEditor:
 
     def edit_file(self, filename):
 
+        if os.path.isfile(filename):
+            raise AnsibleError("%s is a symlink, please edit the Target" % filename)
+
         check_prereqs()
 
         # follow the symlink
