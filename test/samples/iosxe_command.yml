@@ -1,0 +1,36 @@
+---
+- hosts: myswitches
+  gather_facts: no
+  connection: local
+
+  tasks:
+  - name: OBTAIN LOGIN CREDENTIALS
+    include_vars: /home/cisco/secrets.yml
+
+  - name: DEFINE PROVIDER
+    set_fact:
+      provider:
+        host: "{{ inventory_hostname }}"
+        username: "{{ creds['username'] }}"
+        password: "{{ creds['password'] }}"
+        auth_pass: "{{ creds['auth_pass'] }}"
+
+  - name: RUN SHOW INTERFACES COMMANDS
+    iosxe_command:
+      provider: "{{ provider }}"
+      commands:
+        - show ip interface brief
+        - show interfaces
+    register: myoutput
+
+  - debug: var=myoutput.stdout_lines
+
+  - name: RUN 'SHOW VERSION'
+    iosxe_command:
+      provider: "{{ provider }}"
+      commands:
+        - show version
+    register: myoutput
+
+  - debug: var=myoutput.stdout_lines
+
