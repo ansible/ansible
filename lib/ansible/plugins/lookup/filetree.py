@@ -22,10 +22,10 @@ import pwd
 import grp
 import stat
 
-HAVE_SELINUX=False
+HAVE_SELINUX = False
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
     pass
 
@@ -103,6 +103,22 @@ def file_props(root, path):
 
     return ret
 
+def walk(path, topdown=None):
+    topdown = topdown or False
+
+    ret = []
+    for root, dirs, files in os.walk(path, topdown=True):
+        for entry in dirs + files:
+            relpath = os.path.relpath(os.path.join(root, entry), path)
+
+            # Skip if relpath was already processed (from another root)
+            if relpath in [entry['path'] for entry in ret]:
+                continue
+
+            props = file_props(path, relpath)
+            if props is not None:
+                ret.append(props)
+    return ret
 
 class LookupModule(LookupBase):
 
@@ -114,14 +130,5 @@ class LookupModule(LookupBase):
             term_file = os.path.basename(term)
             dwimmed_path = self._loader.path_dwim_relative(basedir, 'files', os.path.dirname(term))
             path = os.path.join(dwimmed_path, term_file)
-            for root, dirs, files in os.walk(path, topdown=True):
-                for entry in dirs + files:
-                    relpath = os.path.relpath(os.path.join(root, entry), path)
-
-                    # Skip if relpath was already processed (from another root)
-                    if relpath not in [ entry['path'] for entry in ret ]:
-                        props = file_props(path, relpath)
-                        if props is not None:
-                            ret.append(props)
-
+            ret = walk(path, topdown=True)
         return ret
