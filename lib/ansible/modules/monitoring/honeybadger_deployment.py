@@ -136,7 +136,7 @@ def main():
         e = get_exception()
         module.fail_json(msg='Unable to notify Honeybadger: %s' % e)
     else:
-        if info['status'] == 200:
+        if info['status'] == 201:
             module.exit_json(changed=True)
         else:
             module.fail_json(msg="HTTP result code: %d connecting to %s" % (info['status'], url))
