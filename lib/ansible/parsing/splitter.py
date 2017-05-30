@@ -23,7 +23,7 @@ import codecs
 import re
 
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.parsing.quoting import unquote
 
 
@@ -91,8 +91,10 @@ def parse_kv(args, check_raw=False):
                     raw_params.append(orig_x)
                 else:
                     options[k.strip()] = unquote(v.strip())
-            else:
+            elif check_raw:
                 raw_params.append(orig_x)
+            else:
+                raise AnsibleParserError("Incorrectly formatted data, not valid KEY=VALUE pairs: '%s'" % to_native(args))
 
         # recombine the free-form params, if any were found, and assign
         # them to a special option for use later by the shell/command module
