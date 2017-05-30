@@ -262,12 +262,9 @@ class ForemanInventory(object):
 
             # Ansible groups by parameters in host groups and Foreman host
             # attributes.
-            groupby = copy.copy(params)
-            for k, v in host.items():
-                if isinstance(v, str):
-                    groupby[k] = self.to_safe(v)
-                elif isinstance(v, int):
-                    groupby[k] = v
+            groupby = dict()
+            for k, v in params.items():
+	        groupby[k] = self.to_safe(str(v))
 
             # The name of the ansible groups is given by group_patterns:
             for pattern in self.group_patterns:
