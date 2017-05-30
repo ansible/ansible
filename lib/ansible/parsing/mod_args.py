@@ -36,6 +36,10 @@ RAW_PARAM_MODULES = ([
     'script',
     'include',
     'include_vars',
+    'include_tasks',
+    'include_role',
+    'import_tasks',
+    'import_role',
     'add_host',
     'group_by',
     'set_fact',
@@ -281,7 +285,7 @@ class ModuleArgsParser:
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item in module_loader or item in ['meta', 'include', 'include_role']:
+            if item in module_loader or item in ['meta', 'include', 'include_tasks', 'include_role', 'import_tasks', 'import_role']:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)

@@ -63,7 +63,7 @@ class IncludedFile:
             original_host = res._host
             original_task = res._task
 
-            if original_task.action == 'include':
+            if original_task.action in ('include', 'include_tasks'):
                 if original_task.loop:
                     if 'results' not in res._result:
                         continue
