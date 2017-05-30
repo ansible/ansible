@@ -163,14 +163,13 @@ def show_changes(old, new, old_object_label=None, new_object_label=None, update_
         display.vvv('format_stack (pid=%s) \n: %s' % (pid, ''.join(traceback.format_stack())))
         #traceback.print_stack()
     dd = DeepDiff(old, new, ignore_order=True,
-                  verbose_level=2,
+#                  verbose_level=2,
                   exclude_paths=exclude_paths)
     #print('old: %s' % pprint.pformat(old))
     #print('new: %s' % pprint.pformat(new))
-    display.vvv('\npid=%s old_label=%s new_lable=%s update_label=%s changed.\ndiff:\n%s' % (pid, old_object_label,
-                                                                                            new_object_label,
-                                                                                            update_label,
-                                                                                            pprint.pformat(dd)))
+    display.vvv('%s has been updated via %s. The changes are:\n%s' % (old_object_label,
+                                                                      update_label,
+                                                                      pprint.pformat(dd)))
 
 
 def combine_vars(a, b, name_b=None):
