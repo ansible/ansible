@@ -174,6 +174,84 @@ from ansible.constants import get_config, mk_boolean
 NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
 
 
+# from constants.py
+#from ansible.compat.six import string_types
+# Useful for very coarse version differentiation.
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
+if PY3:
+    string_types = str,
+else:
+    string_types = basestring,
+
+
+# from constants.py
+# from ansible.parsing.quoting import unquote
+def is_quoted(data):
+    return len(data) > 1 and data[0] == data[-1] and data[0] in ('"', "'") and data[-2] != '\\'
+def unquote(data):
+    ''' removes first and last quotes from a string, if the string starts and ends with the same quotes '''
+    if is_quoted(data):
+        return data[1:-1]
+    return data
+
+# from constants.py
+def mk_boolean(value):
+    if value is None:
+        return False
+    val = str(value)
+    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
+        return True
+    else:
+        return False
+
+# from constants.py
+def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False, isnone=False, ispath=False, ispathlist=False, istmppath=False, expand_relative_paths=False):
+    ''' return a configuration variable with casting '''
+    value = _get_config(p, section, key, env_var, default)
+    if boolean:
+        value = mk_boolean(value)
+    if value:
+        if integer:
+            value = int(value)
+        elif floating:
+            value = float(value)
+        elif islist:
+            if isinstance(value, string_types):
+                value = [x.strip() for x in value.split(',')]
+        elif isnone:
+            if value == "None":
+                value = None
+        elif ispath:
+            value = shell_expand(value)
+        elif istmppath:
+            value = shell_expand(value)
+            if not os.path.exists(value):
+                os.makedirs(value, 0o700)
+            value = tempfile.mkdtemp(prefix='ansible-local-tmp', dir=value)
+        elif ispathlist:
+            if isinstance(value, string_types):
+                value = [shell_expand(x, expand_relative_paths=expand_relative_paths) \
+                         for x in value.split(os.pathsep)]
+        elif isinstance(value, string_types):
+            value = unquote(value)
+    return value
+
+# from constants.py
+def _get_config(p, section, key, env_var, default):
+    ''' helper function for get_config '''
+    if env_var is not None:
+        value = os.environ.get(env_var, None)
+        if value is not None:
+            return value
+    if p is not None:
+        try:
+            return p.get(section, key, raw=True)
+        except:
+            return default
+    return default
+
+
 def load_config_file():
     p = ConfigParser.ConfigParser()
     config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
