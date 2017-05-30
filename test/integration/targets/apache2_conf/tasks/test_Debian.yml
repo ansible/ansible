@@ -1,9 +1,9 @@
 ---
 - name: Test 'conf'
-  include: test_conf.yml
+  include: case_conf.yml
 
 - name: Test 'site'
-  include: test_site.yml
+  include: case_site.yml
 
 - name: Test 'mod'
   include: "{{ item }}"
