@@ -19,9 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import multiprocessing
+import threading
 import os
 import tempfile
+
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -100,18 +102,21 @@ class TaskQueueManager:
         self._failed_hosts = dict()
         self._unreachable_hosts = dict()
 
-        self._final_q = multiprocessing.Queue()
-
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
+        self._executor = None
+
     def _initialize_processes(self, num):
+        # FIXME: be safe about creating this
+        self._executor = PoolExecutor(max_workers=num)
+        # FIXME: do we need a global lock for workers here instead of a per-worker?
         self._workers = []
 
         for i in range(num):
-            rslt_q = multiprocessing.Queue()
-            self._workers.append([None, rslt_q])
+            w_lock = threading.Lock()
+            self._workers.append([None, w_lock])
 
     def _initialize_notified_handlers(self, play):
         '''
@@ -312,18 +317,13 @@ class TaskQueueManager:
     def cleanup(self):
         display.debug("RUNNING CLEANUP")
         self.terminate()
-        self._final_q.close()
         self._cleanup_processes()
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
-            for (worker_prc, rslt_q) in self._workers:
-                rslt_q.close()
-                if worker_prc and worker_prc.is_alive():
-                    try:
-                        worker_prc.terminate()
-                    except AttributeError:
-                        pass
+            for (w_thread, w_lock) in self._workers:
+                if w_thread and w_thread.is_running():
+                    w_thread.cancel()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
