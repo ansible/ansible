@@ -546,7 +546,7 @@ Ansible Changes By Release
 * Major performance improvements.
 * Added support for binary modules
 * Added the ability to specify serial batches as a list (`serial: [1, 5, 10]`), which allows for so-called "canary" actions in one play.
-* Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks.
+* Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks. Further the path for reading config files in modules, such as `cloudstack.ini` for CloudStack modules, will change to the path relative to your playbooks.
 * `meta` tasks can now use conditionals.
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * New privilege escalation become method `ksu`
