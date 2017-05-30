@@ -475,10 +475,9 @@ def main():
         'stderr': stderr,
         'build_log': build_log_out,
         'build_log_lines': build_log_out.splitlines(),
-        'changed': changed,
     })
 
-    module.exit_json(**response)
+    module.exit_json(changed=changed, **response)
 
 
 if __name__ == '__main__':
