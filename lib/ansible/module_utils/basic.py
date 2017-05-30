@@ -2101,6 +2101,11 @@ class AnsibleModule(object):
             ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
             backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
 
+            # Don't overwrite existing backup-files, as these were created in a previous call
+            # when ansible is running 'with_*', and this would clobber our just-created backup
+            if os.path.exists(backupdest):
+                return backupdest
+
             try:
                 shutil.copy2(fn, backupdest)
             except (shutil.Error, IOError):
