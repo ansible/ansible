@@ -380,7 +380,8 @@ def main():
         ],
         required_one_of=[
             ['packages', 'requirement_files']
-        ]
+        ],
+        supports_check_mode=True,
     )
 
     if not HAS_PEX:
@@ -427,6 +428,9 @@ def main():
             module.exit_json(changed=False, **response)
         else:
             changed = True
+
+    if module.check_mode:
+        module.exit_json(changed=changed, **response)
 
     rc = 0
     stdout = ''
