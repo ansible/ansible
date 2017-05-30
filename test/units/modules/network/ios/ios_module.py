@@ -35,6 +35,7 @@ def set_module_args(args):
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
+
 def load_fixture(name):
     path = os.path.join(fixture_path, name)
 
@@ -56,13 +57,14 @@ def load_fixture(name):
 class AnsibleExitJson(Exception):
     pass
 
+
 class AnsibleFailJson(Exception):
     pass
 
+
 class TestIosModule(unittest.TestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None,
-            sort=True, defaults=False):
+    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
 
         self.load_fixtures(commands)
 
@@ -110,4 +112,3 @@ class TestIosModule(unittest.TestCase):
 
     def load_fixtures(self, commands=None):
         pass
-

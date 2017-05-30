@@ -21,12 +21,12 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
-
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook import Playbook
 from ansible.vars.manager import VariableManager
 
 from units.mock.loader import DictDataLoader
+
 
 class TestPlaybook(unittest.TestCase):
 
@@ -42,7 +42,7 @@ class TestPlaybook(unittest.TestCase):
 
     def test_basic_playbook(self):
         fake_loader = DictDataLoader({
-            "test_file.yml":"""
+            "test_file.yml": """
             - hosts: all
             """,
         })

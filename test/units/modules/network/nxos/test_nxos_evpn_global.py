@@ -61,4 +61,3 @@ class TestNxosEvpnGlobalModule(TestNxosModule):
         set_module_args(dict(nv_overlay_evpn=False))
         commands = ['no nv overlay evpn']
         self.start_configured(changed=True, commands=commands)
-

@@ -24,6 +24,7 @@ from ansible.compat.tests.mock import patch, MagicMock, Mock
 from ansible.plugins.action.raw import ActionModule
 from ansible.playbook.task import Task
 
+
 class TestCopyResultExclude(unittest.TestCase):
 
     def setUp(self):
@@ -38,7 +39,6 @@ class TestCopyResultExclude(unittest.TestCase):
     # Issue: https://github.com/ansible/ansible/issues/16054
     # PR: https://github.com/ansible/ansible/pull/16085
 
-
     def test_raw_executable_is_not_empty_string(self):
 
         play_context = Mock()
@@ -50,7 +50,7 @@ class TestCopyResultExclude(unittest.TestCase):
         play_context.check_mode = False
 
         self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
-        self.mock_am._low_level_execute_command = Mock(return_value = {})
+        self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
 
         self.mock_am.run()
@@ -83,7 +83,7 @@ class TestCopyResultExclude(unittest.TestCase):
         play_context.check_mode = False
 
         self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
-        self.mock_am._low_level_execute_command = Mock(return_value = {})
+        self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
 
         self.assertEqual(task.environment, None)
@@ -100,10 +100,8 @@ class TestCopyResultExclude(unittest.TestCase):
         play_context.check_mode = False
 
         self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
-        self.mock_am._low_level_execute_command = Mock(return_value = {})
+        self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
 
         self.mock_am.run(task_vars={'a': 'b'})
         self.assertEqual(task.environment, None)
-
-

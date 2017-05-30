@@ -29,6 +29,7 @@ from ansible.vars.manager import VariableManager
 
 from units.mock.loader import DictDataLoader
 
+
 class TestInventory(unittest.TestCase):
 
     patterns = {
@@ -38,7 +39,7 @@ class TestInventory(unittest.TestCase):
         ' a,b ,c[1:2] ': ['a', 'b', 'c[1:2]'],
         '9a01:7f8:191:7701::9': ['9a01:7f8:191:7701::9'],
         '9a01:7f8:191:7701::9,9a01:7f8:191:7701::9': ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9'],
-        '9a01:7f8:191:7701::9,9a01:7f8:191:7701::9,foo': ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9','foo'],
+        '9a01:7f8:191:7701::9,9a01:7f8:191:7701::9,foo': ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9', 'foo'],
         'foo[1:2]': ['foo[1:2]'],
         'a::b': ['a::b'],
         'a:b': ['a', 'b'],
@@ -51,7 +52,7 @@ class TestInventory(unittest.TestCase):
         [['a', 'b'], ['a', 'b']],
         [['a, b'], ['a', 'b']],
         [['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9,foo'],
-         ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9','foo']]
+         ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9', 'foo']]
     ]
 
     # pattern_string: [ ('base_pattern', (a,b)), ['x','y','z'] ]
@@ -59,7 +60,7 @@ class TestInventory(unittest.TestCase):
     # when applied to string.ascii_letters.
 
     subscripts = {
-        'a': [('a',None), list(string.ascii_letters)],
+        'a': [('a', None), list(string.ascii_letters)],
         'a[0]': [('a', (0, None)), ['a']],
         'a[1]': [('a', (1, None)), ['b']],
         'a[2:3]': [('a', (2, 3)), ['c', 'd']],
@@ -143,9 +144,9 @@ class InventoryDefaultGroup(unittest.TestCase):
 
     def _get_inventory(self, inventory_content):
 
-        fake_loader = DictDataLoader({ __file__: inventory_content})
+        fake_loader = DictDataLoader({__file__: inventory_content})
 
-        return InventoryManager(loader=fake_loader,  sources=[__file__])
+        return InventoryManager(loader=fake_loader, sources=[__file__])
 
     def _test_default_groups(self, inventory_content):
         inventory = self._get_inventory(inventory_content)

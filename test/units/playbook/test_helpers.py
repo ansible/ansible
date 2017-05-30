@@ -222,7 +222,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     # TODO/FIXME: do this non deprecated way
     def test_one_parent_include_tags(self):
         ds = [{'include': '/dev/null/includes/test_include.yml',
-               #'vars': {'tags': ['test_one_parent_include_tags_tag1', 'and_another_tag2']}
+               # 'vars': {'tags': ['test_one_parent_include_tags_tag1', 'and_another_tag2']}
                'tags': ['test_one_parent_include_tags_tag1', 'and_another_tag2']
                }
               ]
@@ -281,7 +281,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
             'include': '/dev/null/includes/static_test_include.yml',
             'static': False
         }]
-        #a_block = Block()
+        # a_block = Block()
         ti_ds = {'include': '/dev/null/includes/ssdftatic_test_include.yml'}
         a_task_include = TaskInclude()
         ti = a_task_include.load(ti_ds)

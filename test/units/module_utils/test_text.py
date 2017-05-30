@@ -37,15 +37,18 @@ VALID_STRINGS = (
     # u'くらとみ'
     (b'\xe3\x81\x8f\xe3\x82\x89\xe3\x81\xa8\xe3\x81\xbf', u'\u304f\u3089\u3068\u307f', 'utf-8'),
     (b'\x82\xad\x82\xe7\x82\xc6\x82\xdd', u'\u304f\u3089\u3068\u307f', 'shift-jis'),
-    )
+)
+
 
 def _check_to_text(self, in_string, encoding, expected):
     """test happy path of decoding to text"""
     self.assertEqual(to_text(in_string, encoding), expected)
 
+
 def _check_to_bytes(self, in_string, encoding, expected):
     """test happy path of encoding to bytes"""
     self.assertEqual(to_bytes(in_string, encoding), expected)
+
 
 def _check_to_native(self, in_string, encoding, py2_expected, py3_expected):
     """test happy path of encoding to native strings"""

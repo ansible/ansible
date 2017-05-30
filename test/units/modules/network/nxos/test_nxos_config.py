@@ -73,7 +73,7 @@ class TestNxosConfigModule(TestNxosModule):
 
     def test_nxos_config_before(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
-                     before=['before command'])
+                    before=['before command'])
 
         set_module_args(args)
 
@@ -85,7 +85,7 @@ class TestNxosConfigModule(TestNxosModule):
 
     def test_nxos_config_after(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
-                     after=['after command'])
+                    after=['after command'])
 
         set_module_args(args)
 
@@ -134,6 +134,3 @@ class TestNxosConfigModule(TestNxosModule):
         set_module_args(args)
         result = self.execute_module()
         self.assertIn('__backup__', result)
-
-
-

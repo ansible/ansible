@@ -28,7 +28,6 @@ from io import StringIO
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
 
@@ -37,6 +36,7 @@ PY3 = sys.version_info[0] == 3
 builtin_import = __import__
 
 mock_ncclient = MagicMock(name='ncclient')
+
 
 def import_mock(name, *args):
     if name.startswith('ncclient'):
@@ -49,6 +49,7 @@ if PY3:
 else:
     with patch('__builtin__.__import__', side_effect=import_mock):
         from ansible.plugins.connection import netconf
+
 
 class TestNetconfConnectionClass(unittest.TestCase):
 
@@ -117,5 +118,3 @@ class TestNetconfConnectionClass(unittest.TestCase):
         self.assertEqual(1, rc)
         self.assertEqual('', out)
         self.assertEqual('unable to parse request', err)
-
-

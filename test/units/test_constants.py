@@ -56,6 +56,7 @@ def user():
 
     return user
 
+
 @pytest.fixture
 def cfg_file():
     data = '/ansible/test/cfg/path'
@@ -79,12 +80,12 @@ def null_cfg_file():
 def cwd():
     data = '/ansible/test/cwd/'
     old_cwd = os.getcwd
-    os.getcwd = lambda : data
+    os.getcwd = lambda: data
 
     old_cwdu = None
     if hasattr(os, 'getcwdu'):
         old_cwdu = os.getcwdu
-        os.getcwdu = lambda : to_text(data)
+        os.getcwdu = lambda: to_text(data)
 
     yield data
 
@@ -199,7 +200,7 @@ class TestGetConfig:
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', '~/local', value_type='path') == os.path.join(user['home'], 'local')
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 'local', value_type='path') == 'local'
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 'local', value_type='path', expand_relative_paths=True) \
-                == os.path.join(cfg_file, 'local')
+            == os.path.join(cfg_file, 'local')
 
 # Need to implement tests for these
 #    def test_value_type_pathlist(self, cfgparser):
@@ -213,6 +214,5 @@ class TestGetConfig:
 
 
 # Need to test this
-#def test_load_config_file():
-#    pass
-
+# def test_load_config_file():
+#     pass
