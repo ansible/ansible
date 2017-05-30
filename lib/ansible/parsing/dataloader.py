@@ -295,6 +295,9 @@ class DataLoader:
             # try to create absolute path for loader basedir + filename
             search.append(self.path_dwim(source))
 
+            # working dir + relative filename
+            search.append(os.path.join(os.getcwd(), source))
+
         for candidate in search:
             if os.path.exists(to_bytes(candidate, errors='surrogate_or_strict')):
                 break
