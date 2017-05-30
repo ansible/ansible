@@ -29,6 +29,7 @@
 import os
 import re
 from time import sleep
+from boto import ec2
 
 from ansible.module_utils.cloud import CloudRetry
 
