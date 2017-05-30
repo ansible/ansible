@@ -112,6 +112,8 @@ class Connection(_Connection):
         if getattr(self._play_context, 'become', None):
             auth_pass = self._play_context.become_pass
             self._terminal.on_authorize(passwd=auth_pass)
+        else:
+            self._terminal.on_deauthorize()
 
         display.display('shell successfully opened', log_only=True)
         return (0, b'ok', b'')
