@@ -87,10 +87,10 @@ options:
     default: false
   final_cluster_snapshot_identifier:
     description:
-      - identifier of the final snapshot to be created before deleting the cluster. If this parameter is provided, 
+      - identifier of the final snapshot to be created before deleting the cluster. If this parameter is provided,
         final_cluster_snapshot_identifier must be false. Used only when command=delete.
     aliases: ['snapshot_identifier']
-    default: null    
+    default: null
   preferred_maintenance_window:
     description:
       - maintenance window
