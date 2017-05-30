@@ -80,7 +80,6 @@ class InventoryModule(BaseInventoryPlugin):
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
         # directory when '.' is not in PATH.
-        path = os.path.abspath(path)
         cmd = [ path, "--list" ]
 
         try:
@@ -90,8 +89,9 @@ class InventoryModule(BaseInventoryPlugin):
             else:
                 try:
                     sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    print('yo')
                 except OSError as e:
-                    raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+                    raise AnsibleParserError("problem running %s (%s)" % (' '.join(cmd), to_native(e)))
                 (stdout, stderr) = sp.communicate()
 
                 path = to_native(path)
@@ -123,8 +123,8 @@ class InventoryModule(BaseInventoryPlugin):
             data_from_meta = None
             for (group, gdata) in processed.items():
                 if group == '_meta':
-                    if 'hostvars' in data:
-                        data_from_meta = data['hostvars']
+                    if 'hostvars' in processed:
+                        data_from_meta = processed['hostvars']
                 else:
                     self._parse_group(group, gdata)
 
@@ -136,17 +136,17 @@ class InventoryModule(BaseInventoryPlugin):
             for host in self._hosts:
                 got = {}
                 if data_from_meta is None:
-                    got = self.get_host_variables(path, host, data_from_meta)
+                    got = self.get_host_variables(path, host)
                 else:
                     try:
-                        got = data.get(host, {})
+                        got = processed.get(host, {})
                     except AttributeError as e:
                         raise AnsibleError("Improperly formatted host information for %s: %s" % (host,to_native(e)))
 
                     self.populate_host_vars(host, got, group)
 
         except Exception as e:
-            raise AnsibleParserError(e)
+            raise AnsibleParserError(to_native(e))
 
 
     def _parse_group(self, group, data):
