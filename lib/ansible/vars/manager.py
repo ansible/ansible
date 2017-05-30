@@ -50,27 +50,6 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-from deepdiff import DeepDiff
-import pprint
-
-
-class Unset(object):
-    pass
-
-
-class NotWatcher(object):
-    def notify(self, observable, key, old, new):
-        if old is Unset:
-            return
-        if old != new:
-            dd = DeepDiff(old, new, ignore_order=True)
-            # print('value of key=%s changed from %s to %s' % (key, old, new))
-            pid = os.getpid()
-            display.display('\npid=%s name=%s update_name=%s key=%s changed.\ndiff:\n%s' % (pid, observable._name,
-                                                                                            observable._update_name,
-                                                                                            key, pprint.pformat(dd)))
-
-
 
 def preprocess_vars(a):
     '''
@@ -229,10 +208,11 @@ class VariableManager:
         #pprint.pprint(locals())
 
         # all_vars = dict()
-        all_vars = ObservableDict()
-        all_vars._name = 'all_vars'
-        watcher = Watcher()
-        all_vars.observe(watcher)
+        #all_vars = ObservableDict()
+        #all_vars._name = 'all_vars'
+        all_vars = dict()
+        #watcher = Watcher()
+        #all_vars.observe(watcher)
         magic_variables = self._get_magic_variables(
             play=play,
             host=host,

@@ -136,12 +136,33 @@ class Watcher(object):
         if old is Unset:
             return
         if old != new:
-            dd = DeepDiff(old, new, ignore_order=True)
+            dd = DeepDiff(old, new, ignore_order=True,
+                          verbose_level=2, view='tree')
             # print('value of key=%s changed from %s to %s' % (key, old, new))
             display.vvv('\npid=%s name=%s update_name=%s key=%s changed.\ndiff:\n%s' % (pid, observable._name,
                                                                                         observable._update_name,
                                                                                         key, pprint.pformat(dd)))
             # print('\nvalue of key=%s changed.\ndiff:\n%s' % (key, self.show(dd)))
+
+
+def show_changes(old, new, old_object_label=None, new_object_label=None, update_label=None):
+    if old is new:
+        return
+
+    if old == new:
+        return
+
+    pid = os.getpid()
+    exclude_paths = {"root['hostvars']"}
+    dd = DeepDiff(old, new, ignore_order=True,
+                  verbose_level=2)
+    #               exclude_paths=exclude_paths)
+    #print('old: %s' % pprint.pformat(old))
+    #print('new: %s' % pprint.pformat(new))
+    display.vvv('\npid=%s old_label=%s new_lable=%s update_label=%s changed.\ndiff:\n%s' % (pid, old_object_label,
+                                                                                            new_object_label,
+                                                                                            update_label,
+                                                                                            pprint.pformat(dd)))
 
 
 def combine_vars(a, b, name_b=None):
@@ -161,7 +182,8 @@ def combine_vars(a, b, name_b=None):
         # w = Watcher()
         # _result.observe(w)
         # setattr(_result, '_update_name', name_b)
-        _result.update(b, update_name=name_b)
+        _result.update(b)
+        show_changes(a, _result, old_object_label='all_vars', new_object_label='b', update_label=name_b)
         return _result
 
 
