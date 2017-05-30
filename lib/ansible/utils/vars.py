@@ -144,6 +144,7 @@ class Watcher(object):
                                                                                         key, pprint.pformat(dd)))
             # print('\nvalue of key=%s changed.\ndiff:\n%s' % (key, self.show(dd)))
 
+import traceback
 
 def show_changes(old, new, old_object_label=None, new_object_label=None, update_label=None):
     if old is new:
@@ -154,9 +155,16 @@ def show_changes(old, new, old_object_label=None, new_object_label=None, update_
 
     pid = os.getpid()
     exclude_paths = {"root['hostvars']"}
+    exclude_paths = ["root['hostvars']", "root['ansible_facts']"]
+    if update_label == 'ignore' or update_label.startswith('_'):
+        return
+
+    if update_label is None:
+        display.vvv('format_stack (pid=%s) \n: %s' % (pid, ''.join(traceback.format_stack())))
+        #traceback.print_stack()
     dd = DeepDiff(old, new, ignore_order=True,
-                  verbose_level=2)
-    #               exclude_paths=exclude_paths)
+                  verbose_level=2,
+                  exclude_paths=exclude_paths)
     #print('old: %s' % pprint.pformat(old))
     #print('new: %s' % pprint.pformat(new))
     display.vvv('\npid=%s old_label=%s new_lable=%s update_label=%s changed.\ndiff:\n%s' % (pid, old_object_label,
@@ -183,7 +191,8 @@ def combine_vars(a, b, name_b=None):
         # _result.observe(w)
         # setattr(_result, '_update_name', name_b)
         _result.update(b)
-        show_changes(a, _result, old_object_label='all_vars', new_object_label='b', update_label=name_b)
+        if display.verbosity > 2:
+            show_changes(a, _result, old_object_label='all_vars', new_object_label='b', update_label=name_b)
         return _result
 
 
@@ -217,24 +226,26 @@ def merge_hash(a, b):
 
 def load_extra_vars(loader, options):
     extra_vars = {}
-    if hasattr(options, 'extra_vars'):
-        for extra_vars_opt in options.extra_vars:
-            data = None
-            extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
-            if extra_vars_opt.startswith(u"@"):
-                # Argument is a YAML file (JSON is a subset of YAML)
-                data = loader.load_from_file(extra_vars_opt[1:])
-            elif extra_vars_opt and extra_vars_opt[0] in u'[{':
-                # Arguments as YAML
-                data = loader.load(extra_vars_opt)
-            else:
-                # Arguments as Key-value
-                data = parse_kv(extra_vars_opt)
+    if not hasattr(options, 'extra_vars'):
+        return extra_vars
+        
+    for extra_vars_opt in options.extra_vars:
+        data = None
+        extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
+        if extra_vars_opt.startswith(u"@"):
+            # Argument is a YAML file (JSON is a subset of YAML)
+            data = loader.load_from_file(extra_vars_opt[1:])
+        elif extra_vars_opt and extra_vars_opt[0] in u'[{':
+            # Arguments as YAML
+            data = loader.load(extra_vars_opt)
+        else:
+            # Arguments as Key-value
+            data = parse_kv(extra_vars_opt)
 
-            if isinstance(data, MutableMapping):
-                extra_vars = combine_vars(extra_vars, data)
-            else:
-                raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
+        if isinstance(data, MutableMapping):
+            extra_vars = combine_vars(extra_vars, data, name_b='_load_extra_vars')
+        else:
+            raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
 
     return extra_vars
 

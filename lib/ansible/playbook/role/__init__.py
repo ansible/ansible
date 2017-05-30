@@ -304,11 +304,11 @@ class Role(Base, Become, Conditional, Taggable):
     def get_default_vars(self, dep_chain=[]):
         default_vars = dict()
         for dep in self.get_all_dependencies():
-            default_vars = combine_vars(default_vars, dep.get_default_vars())
+            default_vars = combine_vars(default_vars, dep.get_default_vars(), name_b='role_default_vars')
         if dep_chain:
             for parent in dep_chain:
-                default_vars = combine_vars(default_vars, parent._default_vars)
-        default_vars = combine_vars(default_vars, self._default_vars)
+                default_vars = combine_vars(default_vars, parent._default_vars, name_b='role_default_vars_parent')
+        default_vars = combine_vars(default_vars, self._default_vars, name_b='role_self_default_vars')
         return default_vars
 
     def get_inherited_vars(self, dep_chain=[]):
@@ -316,27 +316,28 @@ class Role(Base, Become, Conditional, Taggable):
 
         if dep_chain:
             for parent in dep_chain:
-                inherited_vars = combine_vars(inherited_vars, parent._role_vars)
+                inherited_vars = combine_vars(inherited_vars, parent._role_vars, name_b='role_inherited_vars_parent')
         return inherited_vars
 
     def get_role_params(self, dep_chain=[]):
         params = {}
         if dep_chain:
             for parent in dep_chain:
-                params = combine_vars(params, parent._role_params)
-        params = combine_vars(params, self._role_params)
+                params = combine_vars(params, parent._role_params, name_b='role_params_parent')
+        params = combine_vars(params, self._role_params, name_b='role_params')
         return params
 
     def get_vars(self, dep_chain=[], include_params=True):
         all_vars = self.get_inherited_vars(dep_chain)
 
         for dep in self.get_all_dependencies():
-            all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
+            all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params), name_b='role_dep_vars')
 
-        all_vars = combine_vars(all_vars, self.vars)
-        all_vars = combine_vars(all_vars, self._role_vars)
+        # FIXME: yeah, weird name_b names
+        all_vars = combine_vars(all_vars, self.vars, name_b='role_get_vars_self_vars')
+        all_vars = combine_vars(all_vars, self._role_vars, name_b='role_get_vars_self_role_vars')
         if include_params:
-            all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
+            all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain), name_v='role_get_vars_role_params')
 
         return all_vars
 

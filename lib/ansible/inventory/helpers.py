@@ -30,6 +30,6 @@ def get_group_vars(groups):
 
     results = {}
     for group in sort_groups(groups):
-        results = combine_vars(results, group.get_vars())
+        results = combine_vars(results, group.get_vars(), name_b='ignore')
 
     return results

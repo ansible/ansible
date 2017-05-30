@@ -343,8 +343,8 @@ class VariableManager:
             for vars_file_item in play.get_vars_files():
                 # create a set of temporary vars here, which incorporate the extra
                 # and magic vars so we can properly template the vars_files entries
-                temp_vars = combine_vars(all_vars, self._extra_vars)
-                temp_vars = combine_vars(temp_vars, magic_variables, name_b='magic_variables2')
+                temp_vars = combine_vars(all_vars, self._extra_vars, name_b='_temp_extra_vars')
+                temp_vars = combine_vars(temp_vars, magic_variables, name_b='_temp_magic_variables')
                 templar = Templar(loader=self._loader, variables=temp_vars)
 
                 # we assume each item in the list is itself a list, as we
