@@ -137,8 +137,6 @@ options:
     default: merge
     choices: ['merge', 'override', 'replace']
     version_added: "2.3"
-requirements:
-  - junos-eznc
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.

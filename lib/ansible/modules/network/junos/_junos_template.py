@@ -87,8 +87,6 @@ options:
     required: false
     default: null
     choices: ['text', 'xml', 'set']
-requirements:
-  - junos-eznc
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed
