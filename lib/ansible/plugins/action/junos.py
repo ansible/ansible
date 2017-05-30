@@ -23,6 +23,7 @@ import os
 import sys
 import copy
 
+from ansible import constants as C
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.six import iteritems
@@ -80,19 +81,13 @@ class ActionModule(_ActionModule):
 
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
-            if pc.connection == 'netconf':
-                rc, out, err = connection.exec_command('open_session()')
-                display.vvvv('open_session() returned %s %s %s' % (rc, out, err))
-            else:
-                rc, out, err = connection.exec_command('open_shell()')
-                display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
-
-            if rc != 0:
+            socket_path = connection.run()
+            if not socket_path:
                 return {'failed': True,
                         'msg': 'unable to open shell. Please see: ' +
-                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
-                        'rc': rc}
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
+                display.vvvv('connected to socket in %s' % socket_path, pc.remote_addr)
         elif pc.connection == 'network_cli':
             # make sure we are in the right cli context which should be
             # enable mode and not config module
@@ -109,7 +104,7 @@ class ActionModule(_ActionModule):
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
-        path = unfrackpath("$HOME/.ansible/pc")
+        path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
         # use play_context.connection instea of play_context.port to avoid
         # collision if netconf is listening on port 22
         #cp = ssh._create_control_path(play_context.remote_addr, play_context.connection, play_context.remote_user)
