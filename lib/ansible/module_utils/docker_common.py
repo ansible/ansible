@@ -33,7 +33,7 @@ HAS_DOCKER_ERROR = None
 try:
     from requests.exceptions import SSLError
     from docker import __version__ as docker_version
-    from docker.errors import APIError, TLSParameterError, NotFound
+    from docker.errors import APIError, TLSParameterError
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
     from docker import auth
