@@ -28,6 +28,9 @@ from ansible.plugins import PluginLoader
 
 from ansible.parsing.dataloader import DataLoader
 
+# FIXME
+dir(PluginLoader)
+
 
 class TestDataLoader(unittest.TestCase):
 
@@ -107,12 +110,11 @@ class TestDataLoaderWithVault(unittest.TestCase):
             builtins_name = 'builtins'
         else:
             builtins_name = '__builtin__'
-        #mock_def.return_value = (vaulted_data.encode('utf-8'), False)
 
         with patch.object(self._loader._vault, 'decrypt', return_value=(vaulted_data.encode('utf-8'), False)):
             with patch.object(self._loader, 'path_exists', return_value=True):
                 with patch.object(self._loader, 'is_file', return_value=True):
-                    with patch.object(self._loader._get_file_contents, 'open',  mock_open(read_data=vaulted_data.encode('utf-8'))):
+                    with patch.object(self._loader._get_file_contents, 'open', mock_open(read_data=vaulted_data.encode('utf-8'))):
                         output = self._loader.load_from_file('dummy_vault.txt')
                         self.assertEqual(output, dict(foo='bar'))
 
