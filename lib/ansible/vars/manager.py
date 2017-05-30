@@ -319,7 +319,8 @@ class VariableManager:
                 if entry.startswith('_') or '.' in entry:
                     continue
                 display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                all_vars = combine_vars(all_vars, locals()[entry](), name_b=entry)
+                # FIXME: better name for the var_source/name_b
+                all_vars = combine_vars(all_vars, locals()[entry](), name_b='precedence_config_%s' % entry)
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
             all_vars = combine_vars(all_vars, host.get_vars(), name_b='host_vars')
