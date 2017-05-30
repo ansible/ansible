@@ -5,7 +5,6 @@
   command: bash -c 'echo ansible_test_$RANDOM'
   register: bucket
 # ============================================================
-#- include_vars: "credentials.yml"
 # ============================================================
 - name: test create bucket
   s3:
@@ -18,7 +17,7 @@
 - name: assert changed is True
   assert:
     that:
-      - "result['changed'] == True"
+      - result.changed == True
 # ============================================================
 - name: trying to create a bucket name that already exists
   s3:
@@ -31,7 +30,7 @@
 - name: assert changed is False since the bucket already exists
   assert:
     that:
-      - "result['changed'] == False"
+      - result.changed == False
 # ============================================================
 - name: create temporary file object to put in a bucket
   tempfile:
@@ -65,7 +64,8 @@
 - name: assert object exists
   assert:
     that:
-       "result['changed'] == True"
+      - result.changed == True
+      - result.msg == "PUT operation complete"
 # ============================================================
 - name: wait a few seconds before continuing
   pause:
@@ -94,7 +94,7 @@
 - name: assert checksums are the same
   assert:
     that:
-      - "file1stat['stat']['checksum'] == file2stat['stat']['checksum']"
+      - file1stat.stat.checksum == file2stat.stat.checksum
 # ============================================================
 - name: wait a few seconds before continuing
   pause:
@@ -114,7 +114,8 @@
 - name: assert we have the object's url
   assert:
     that:
-      - "result['changed'] == True"
+      - "'Download url:' in result.msg"
+      - result.changed == True
 # ============================================================
 - name: test getstr of the object
   s3:
@@ -130,7 +131,8 @@
 - name: assert that we have the object's contents
   assert:
     that:
-      - "result['contents'] == content"
+      - result.msg == "GET operation complete"
+      - result.contents == content
 # ============================================================
 - name: test list to get all objects in the bucket
   s3:
@@ -145,7 +147,8 @@
 - name: assert that the keys are correct
   assert:
     that:
-      - "result['s3_keys'] == ['delete.txt']"
+      - "'delete.txt' in result.s3_keys"
+      - result.msg == "LIST operation complete"
 # ============================================================
 - name: test delobj to just delete an object in the bucket
   s3:
@@ -161,7 +164,8 @@
 - name: assert that delete.txt is no longer an object in the bucket deleteme
   assert:
     that:
-      - "result['changed'] == True"
+      - "'Object deleted from bucket' in result.msg"
+      - result.changed == True
 # ============================================================
 - name: test delete bucket
   s3:
@@ -174,7 +178,7 @@
 - name: assert that changed is True
   assert:
     that:
-      - "result['changed'] == True"
+      - result.changed == True
 # ============================================================
 - name: delete temporary file 1
   file:
@@ -184,3 +188,30 @@
   file:
     state: absent
     path: "{{ tmp2.path }}"
+# ============================================================
+- name: test create a bucket with a dot in the name
+  s3:
+    bucket: "{{ bucket.stdout + '.bucket' }}"
+    mode: create
+    security_token: "{{security_token}}"
+    aws_access_key: "{{ ec2_access_key }}"
+    aws_secret_key: "{{ ec2_secret_key }}"
+  register: result
+- name: assert that changed is True
+  assert:
+    that:
+      - result.changed == True
+# ============================================================
+- name: test delete a bucket with a dot in the name
+  s3:
+    bucket: "{{ bucket.stdout + '.bucket' }}"
+    mode: delete
+    security_token: "{{security_token}}"
+    aws_access_key: "{{ ec2_access_key }}"
+    aws_secret_key: "{{ ec2_secret_key }}"
+  register: result
+- name: assert that changed is True
+  assert:
+    that:
+      - result.changed == True
+# ============================================================
