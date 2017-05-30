@@ -84,8 +84,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-gateway.customer_gateways:
-    description: details about the gateway that was created.
+gateway.customer_gateway:
+    description: details about the gateway that is present/created/modified.
     returned: success
     type: complex
     contains:
@@ -119,6 +119,12 @@ gateway.customer_gateways:
             returned: when gateway exists and is available.
             sample: ipsec.1
             type: string
+changed:
+  description: whether or not the customer gateway has been modified
+  type: bool
+name:
+  description: the name of the customer gateway determined by C(name)
+  type: str
 '''
 
 try:
@@ -170,7 +176,7 @@ class Ec2CustomerGatewayManager:
         return response
 
     def tag_cgw_name(self, gw_id, name):
-        response = self.ec2.create_tags(
+        self.ec2.create_tags(
             DryRun=False,
             Resources=[
                 gw_id,
@@ -182,7 +188,7 @@ class Ec2CustomerGatewayManager:
                 },
             ]
         )
-        return response
+        return name
 
     def describe_gateways(self, ip_address):
         response = self.ec2.describe_customer_gateways(
@@ -203,6 +209,15 @@ class Ec2CustomerGatewayManager:
             ]
         )
         return response
+
+    def clean_results(self, results):
+        if 'ResponseMetadata' in results['gateway']:
+            del results['gateway']['ResponseMetadata']
+
+        if 'CustomerGateways' in results['gateway']:
+            del results['gateway']['CustomerGateways']
+
+        return results
 
 
 def main():
@@ -252,6 +267,8 @@ def main():
                                 module.params['name'],
                             )
                             results['changed'] = True
+                        else:
+                            results['name'] = current_name
         else:
             if not module.check_mode:
                 results['gateway'] = gw_mgr.ensure_cgw_present(
@@ -262,6 +279,9 @@ def main():
                     results['gateway']['CustomerGateway']['CustomerGatewayId'],
                     module.params['name'],
                 )
+                created = gw_mgr.describe_gateways(module.params['ip_address'])
+                tag_array = created['CustomerGateways'][0]['Tags']
+                results['gateway']['CustomerGateway']['Tags'] = tag_array
             results['changed'] = True
 
     elif module.params['state'] == 'absent':
@@ -274,6 +294,7 @@ def main():
                 )
             results['changed'] = True
 
+    results = gw_mgr.clean_results(results)
     pretty_results = camel_dict_to_snake_dict(results)
     module.exit_json(**pretty_results)
 
