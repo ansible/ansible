@@ -28,6 +28,7 @@
 #
 
 import sys
+import traceback
 
 def get_exception():
     """Get the current exception.
@@ -41,7 +42,16 @@ def get_exception():
             e = get_exception()
 
     """
-    return sys.exc_info()[1]
+    e, tb = sys.exc_info()[1:]
+
+    # remove original traceback obj (avoid circular refs in python < 3)
+    tb_list = traceback.format_tb(tb)
+    del tb
+
+    if any(e):
+        return e
+    else:
+        return Exception(tb_list)
 
 try:
     # Python 2.6+
