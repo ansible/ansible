@@ -48,12 +48,12 @@ Ansible Changes By Release
   hash mark was included as part of the string.  Now it is treated as
   a trailing comment::
 
-    # Before:
-    var1="string#comment"   ===>  var1: "\"string#comment\""
-    var1="string" #comment  ===>  var1: "\"string\" #comment"
-    # After:
-    var1="string#comment"   ===>  var1: "string#comment"
-    var1="string" #comment  ===>  var1: "string"
+      # Before:
+      var1="string#comment"   ===>  var1: "\"string#comment\""
+      var1="string" #comment  ===>  var1: "\"string\" #comment"
+      # After:
+      var1="string#comment"   ===>  var1: "string#comment"
+      var1="string" #comment  ===>  var1: "string"
 
   The new behaviour mirrors how the variables would appear if there was no hash
   mark in the string.
@@ -1242,7 +1242,7 @@ Module fixes:
 * Backslashes used when specifying parameters in jinja2 expressions in YAML dicts sometimes needed to be escaped twice.
   This has been fixed so that escaping once works. Here's an example of how playbooks need to be modified:
 
-    ```
+    ```yaml
     # Syntax in 1.9.x
     - debug:
         msg: "{{ 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') }}"
@@ -1260,7 +1260,7 @@ format the trailing newlines were kept. In v2, both methods of specifying the
 string will keep the trailing newlines. If you relied on the trailing
 newline being stripped you can change your playbook like this:
 
-    ```
+    ```yaml
     # Syntax in 1.9.2
     vars:
       message: >
@@ -1287,7 +1287,7 @@ variable syntax ('{{var_name}}') - bare variable names there are no longer accep
 In fact, even specifying args with variables has been deprecated, and will not be
 allowed in future versions:
 
-    ```
+    ```yaml
     ---
     - hosts: localhost
       connection: local
