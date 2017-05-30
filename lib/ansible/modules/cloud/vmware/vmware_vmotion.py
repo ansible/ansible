@@ -26,12 +26,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: vmware_vmotion
-short_description: Move a virtual machine using vMotion
+short_description: Move a virtual machine using vMotion, and/or its vmdks using storage vMotion.
 description:
     - Using VMware vCenter, move a virtual machine using vMotion to a different
-      host.
+      host, and/or its vmdks to another datastore using storage vMotion.
 version_added: 2.2
-author: "Bede Carroll (@bedecarroll)"
+author: "Bede Carroll (@bedecarroll) / Olivier Boukili (@oboukili)"
 notes:
     - Tested on vSphere 6.0
 requirements:
@@ -45,9 +45,15 @@ options:
         aliases: ['vm']
     destination_host:
         description:
-            - Name of the end host the VM should be running on
-        required: True
+            - Name of the end host the VM should be running on (at least one of destination_host or destination_datastore is required)
+        required: False
         aliases: ['destination']
+    destination_datastore:
+        description:
+            - Name of the end datastore the VM's vmdk should be moved on (at least one of destination_host or destination_datastore is required)
+        required: False
+        aliases: ['datastore']
+
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -63,6 +69,28 @@ EXAMPLES = '''
         validate_certs: False
         vm_name: 'vm_name_as_per_vcenter'
         destination_host: 'destination_host_as_per_vcenter'
+
+    - name: Perform storage vMotion of of VM
+      local_action:
+        module: vmware_vmotion
+        hostname: 'vcenter_hostname'
+        username: 'vcenter_username'
+        password: 'vcenter_password'
+        validate_certs: False
+        vm_name: 'vm_name_as_per_vcenter'
+        destination_datastore: 'destination_datastore_as_per_vcenter'
+
+    - name: Perform storage vMotion and host vMotion of VM
+      local_action:
+        module: vmware_vmotion
+        hostname: 'vcenter_hostname'
+        username: 'vcenter_username'
+        password: 'vcenter_password'
+        validate_certs: False
+        vm_name: 'vm_name_as_per_vcenter'
+        destination_host: 'destination_host_as_per_vcenter'
+        destination_datastore: 'destination_datastore_as_per_vcenter'
+
 '''
 
 RETURN = '''
@@ -71,6 +99,14 @@ running_host:
     returned: changed or success
     type: string
     sample: 'host1.example.com'
+datastores:
+    description: List the datastores the virtual machine uses
+    returned:
+        - changed
+        - success
+    type: list
+    sample: '[datastore1]'
+
 '''
 
 try:
@@ -79,14 +115,14 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
-
-def migrate_vm(vm_object, host_object):
+def migrate_vm(vm_object, host_object=None, datastore_object=None):
     """
     Migrate virtual machine and return the task.
     """
-    relocate_spec = vim.vm.RelocateSpec(host=host_object)
+    relocate_spec = vim.vm.RelocateSpec(host=host_object, datastore=datastore_object)
     task_object = vm_object.Relocate(relocate_spec)
     return task_object
+
 
 def main():
 
@@ -94,10 +130,11 @@ def main():
     argument_spec.update(
         dict(
             vm_name=dict(required=True, aliases=['vm'], type='str'),
-            destination_host=dict(required=True, aliases=['destination'], type='str'),
+            destination_host=dict(required=False, aliases=['destination'], type='str'),
+            destination_datastore=dict(required=False, aliases=['datastore'], type='str')
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_one_of=[['destination_host', 'destination_datastore']])
 
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyVmomi is required for this module')
@@ -105,7 +142,14 @@ def main():
     content = connect_to_api(module=module)
 
     vm_object = find_vm_by_name(content=content, vm_name=module.params['vm_name'])
-    host_object = find_hostsystem_by_name(content=content, hostname=module.params['destination_host'])
+    if module.params['destination_host'] != None:
+        host_object = find_hostsystem_by_name(content=content, hostname=module.params['destination_host'])
+    else:
+        host_object = None
+    if module.params['destination_datastore'] != None:
+        datastore_object = find_datastore_by_name(content=content, datastore_name=module.params['destination_datastore'])
+    else:
+        datastore_object = None
 
     # Setup result
     result = {
@@ -115,36 +159,72 @@ def main():
     # Check if we could find the VM or Host
     if not vm_object:
         module.fail_json(msg='Cannot find virtual machine')
-    if not host_object:
+    if not host_object and module.params['destination_host'] != None:
         module.fail_json(msg='Cannot find host')
+    if not datastore_object and module.params['destination_datastore'] != None:
+        module.fail_json(msg='Cannot find datastore')
+    elif not datastore_object.summary.accessible:
+        module.fail_json(msg='Datastore is not accessible')
 
-    # Make sure VM isn't already at the destination
-    if vm_object.runtime.host.name == module.params['destination_host']:
-        module.exit_json(**result)
+    # Make sure VM isn't already at the destination host
+    if module.params['destination_host'] == None:
+        hostVMotionNeeded = False
+    elif module.params['destination_host'] != None and vm_object.runtime.host.name == module.params['destination_host']:
+        hostVMotionNeeded = False
+    else:
+        hostVMotionNeeded = True
+
+    # Make sure VMDKs destination datastore is available on destination esx host (or on the current esx host if not specified)
+    if module.params['destination_datastore'] == None:
+        storageVMotionNeeded = False
+    else:
+        if module.params['destination_host'] != None:
+            if not datastore_object in host_object.datastore:
+                module.fail_json(msg="Datastore is not accessible on host")
+        # Check whether VMDKs are already on the destination datastore
+        if datastore_object in list(element.datastore for element in vm_object.storage.perDatastoreUsage):
+            storageVMotionNeeded = False
+        else:
+            storageVMotionNeeded = True
 
     if not module.check_mode:
-        # Migrate VM and get Task object back
-        task_object = migrate_vm(vm_object=vm_object, host_object=host_object)
-
-        # Wait for task to complete
-        wait_for_task(task_object)
-
-        # If task was a success the VM has moved, update running_host and complete module
-        if task_object.info.state == vim.TaskInfo.State.success:
-            vm_object = find_vm_by_name(content=content, vm_name=module.params['vm_name'])
-            result['running_host'] = vm_object.runtime.host.name
-            result['changed'] = True
-            module.exit_json(**result)
-        else:
-            if task_object.info.error is None:
-                module.fail_json(msg='Unable to migrate VM due to an error, please check vCenter')
+        if hostVMotionNeeded or storageVMotionNeeded:
+            # Migrate VM and get Task object back
+            task_object = migrate_vm(vm_object=vm_object, host_object=host_object, datastore_object=datastore_object)
+            # Wait for task to complete
+            wait_for_task(task_object)
+            # If task was a success the VM has moved, update running_host and complete module
+            if task_object.info.state == vim.TaskInfo.State.success:
+                vm_object = find_vm_by_name(content=content, vm_name=module.params['vm_name'])
+                # The storage layout is not automatically refreshed, so we trigger it to get coherent module return values
+                if storageVMotionNeeded:
+                    vm_object.RefreshStorageInfo()
+                result['changed'] = True
             else:
-                module.fail_json(msg='Unable to migrate VM due to an error: %s' % task_object.info.error)
+                if task_object.info.error is None:
+                    module.fail_json(msg='Unable to migrate VM due to an error, please check vCenter')
+                else:
+                    module.fail_json(msg='Unable to migrate VM due to an error: %s' % task_object.info.error)
+
+        result['running_host'] = vm_object.runtime.host.name
+        result['datastores'] = list(outerelement.summary.name for outerelement in
+                                list(innerelement.datastore for innerelement in vm_object.storage.perDatastoreUsage))
+
     else:
         # If we are in check mode return a result as if move was performed
-        result['running_host'] = module.params['destination_host']
-        result['changed'] = True
-        module.exit_json(**result)
+        if hostVMotionNeeded:
+            result['running_host'] = module.params['destination_host']
+            result['changed'] = True
+        else:
+            result['running_host'] = vm_object.runtime.host.name
+        if storageVMotionNeeded:
+            result['datastores'] = module.params['destination_datastore']
+            result['changed'] = True
+        else:
+            result['datastores'] = list(outerelement.summary.name for outerelement in
+                                   list(innerelement.datastore for innerelement in vm_object.storage.perDatastoreUsage))
+
+    module.exit_json(**result)
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import *
