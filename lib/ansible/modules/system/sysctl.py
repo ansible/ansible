@@ -318,23 +318,23 @@ class SysctlModule(object):
             self.file_lines.append(line)
 
             # don't split empty lines or comments
-            if not line or line.startswith(("#", ";")):
+            if not line or line[0] in ("#", ";"):
                 continue
 
             k, v = line.split('=',1)
             k = k.strip()
             v = v.strip()
-            self.file_values[k] = v.strip()
+            self.file_values[k] = v
 
     # Fix the value in the sysctl file content
     def fix_lines(self):
         checked = []
         self.fixed_lines = []
         for line in self.file_lines:
-            if not line.strip() or line.strip().startswith(("#", ";")):
+            tmpline = line.strip()
+            if not tmpline or tmpline[0] in ("#", ";"):
                 self.fixed_lines.append(line)
                 continue
-            tmpline = line.strip()
             k, v = line.split('=',1)
             k = k.strip()
             v = v.strip()
