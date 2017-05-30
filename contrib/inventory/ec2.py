@@ -415,6 +415,12 @@ class Ec2Inventory(object):
         else:
             self.nested_groups = False
 
+        # Replace dot or not in group names
+        if config.has_option('ec2', 'replace_dot_in_groups'):
+            self.replace_dot_in_groups = config.getboolean('ec2', 'replace_dot_in_groups')
+        else:
+            self.replace_dot_in_groups = True
+
         # Replace dash or not in group names
         if config.has_option('ec2', 'replace_dash_in_groups'):
             self.replace_dash_in_groups = config.getboolean('ec2', 'replace_dash_in_groups')
@@ -1576,6 +1582,8 @@ class Ec2Inventory(object):
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
         regex = "[^A-Za-z0-9\_"
+        if not self.replace_dash_in_groups:
+            regex += "\."
         if not self.replace_dash_in_groups:
             regex += "\-"
         return re.sub(regex + "]", "_", word)
