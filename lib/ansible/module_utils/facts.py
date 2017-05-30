@@ -537,15 +537,28 @@ class Facts(object):
         self.facts['date_time']['tz_offset'] = time.strftime("%z")
 
     def is_systemd_managed(self):
-        # tools must be installed
-        if self.module.get_bin_path('systemctl'):
-
-            # this should show if systemd is the boot init system, if checking init faild to mark as systemd
-            # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
-            for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
-                if os.path.exists(canary):
-                    return True
-        return False
+        try:
+            _pid1 = open('/proc/1/comm', 'rb')
+            pid1 = _pid1.read()
+            pid1 = pid1.strip()
+            _pid1.close()
+        except IOError:
+            return False  # If comm doesn't exist, old kernel, no systemd.
+        else:
+            if pid1 == 'systemd':
+                return True
+            elif pid1 == 'init':
+                return False
+            else:
+                # this should show if systemd is the boot init system these mirror
+                #  systemd's own sd_boot test.
+                #  http://www.freedesktop.org/software/systemd/man/sd_booted.html
+                for canary in ["/run/systemd/system/",
+                               "/dev/.run/systemd/", "/dev/.systemd/"]:
+                    if os.path.exists(canary):
+                        return True
+                else:
+                    return False  # Return False if SystemD is not detected.
 
     # User
     def get_user_facts(self):
