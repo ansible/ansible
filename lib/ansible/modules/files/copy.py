@@ -82,9 +82,9 @@ options:
     version_added: "1.5"
   remote_src:
     description:
-      - If False, it will search for src at originating/master machine, if True it will go to the remote/target machine for the src. Default is False.
+      - If C(no), it will search for src at originating/master machine, if C(yes) it will go to the remote/target machine for the src. Default is False.
       - Currently remote_src does not support recursive copying.
-    choices: [ "True", "False" ]
+    choices: [ "yes", "no" ]
     required: false
     default: "False"
     version_added: "2.0"
