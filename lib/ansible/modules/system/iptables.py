@@ -456,6 +456,11 @@ def flush_table(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-F', params, make_rule=False)
     module.run_command(cmd, check_rc=True)
 
+def get_chain_policy(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-S', params, make_rule=False)
+    _, output, __ = module.run_command(cmd, check_rc=True)
+    policy_line = filter(lambda line: line.startswith('-P'), output.splitlines())[0]
+    return policy_line.split(' ')[2]
 
 def set_chain_policy(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-P', params, make_rule=False)
@@ -547,9 +552,10 @@ def main():
 
     # Set the policy
     elif module.params['policy']:
-        args['changed'] = True
-        if not module.check_mode:
-            set_chain_policy(iptables_path, module, module.params)
+        if get_chain_policy(iptables_path, module, module.params) != module.params['policy']:
+            args['changed'] = True
+            if not module.check_mode:
+                set_chain_policy(iptables_path, module, module.params)
 
     # Chain
     else:
