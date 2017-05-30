@@ -53,3 +53,14 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
             'router bgp 65535', 'neighbor 3.3.3.3', 'address-family ipv4 unicast',
             'route-reflector-client'
         ])
+
+    def test_nxos_bgp_neighbor_af_exists(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4', safi='unicast'))
+        self.execute_module(changed=False, commands=[])
+
+    def test_nxos_bgp_neighbor_af_absent(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4', safi='unicast', state='absent'))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'no address-family ipv4 unicast']
+        )

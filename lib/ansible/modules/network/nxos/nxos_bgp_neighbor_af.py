@@ -352,7 +352,8 @@ def get_value(arg, config, module):
     ]
     command = PARAM_TO_COMMAND_KEYMAP[arg]
     has_command = re.search(r'\s+{0}\s*'.format(command), config, re.M)
-    has_command_val = command_val_re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+    has_command_val = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+    value = ''
 
     if arg in custom:
         value = get_custom_value(arg, config, module)
@@ -363,7 +364,6 @@ def get_value(arg, config, module):
             value = True
 
     elif command.split()[0] in ['filter-list', 'prefix-list', 'route-map']:
-        value = ''
         direction = arg.rsplit('_', 1)[1]
         if has_command_val:
             params = has_command_val.group('value').split()
@@ -376,11 +376,8 @@ def get_value(arg, config, module):
             if has_command_val:
                 value = has_command_val.group('value')
 
-    else:
-        value = ''
-
-        if has_command_val:
-            value = has_command_val.group('value')
+    elif has_command_val:
+        value = has_command_val.group('value')
 
     return value
 
@@ -747,7 +744,7 @@ def main():
     if state == 'present':
         state_present(module, existing, proposed, candidate)
     elif state == 'absent' and existing:
-        state_absent(module, existing, proposed, candidate)
+        state_absent(module, existing, candidate)
 
     if candidate:
         candidate = candidate.items_text()
