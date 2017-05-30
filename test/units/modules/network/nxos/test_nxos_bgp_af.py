@@ -48,16 +48,20 @@ class TestNxosBgpAfModule(TestNxosModule):
     def test_nxos_bgp_af(self):
         set_module_args(dict(asn=65535, afi='ipv4', safi='unicast'))
         self.execute_module(
-            changed=True,
+            changed=True, sort=False,
             commands=['router bgp 65535', 'address-family ipv4 unicast']
         )
 
     def test_nxos_bgp_af_vrf(self):
         set_module_args(dict(asn=65535, vrf='test', afi='ipv4', safi='unicast'))
         self.execute_module(
-            changed=True,
+            changed=True, sort=False,
             commands=['router bgp 65535', 'vrf test', 'address-family ipv4 unicast']
         )
+
+    def test_nxos_bgp_af_vrf_exists(self):
+        set_module_args(dict(asn=65535, vrf='test2', afi='ipv4', safi='unicast'))
+        self.execute_module(changed=False, commands=[])
 
     def test_nxos_bgp_af_dampening_routemap(self):
         set_module_args(dict(asn=65535, afi='ipv4', safi='unicast',
