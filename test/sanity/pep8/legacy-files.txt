@@ -1,11 +1,6 @@
 contrib/inventory/freeipa.py
 contrib/inventory/rackhd.py
 contrib/inventory/vmware_inventory.py
-docs/api/conf.py
-docs/bin/dump_keywords.py
-docs/bin/plugin_formatter.py
-docs/docsite/rst/conf.py
-docs/docsite/rst/intro_inventory.rst
 lib/ansible/cli/__init__.py
 lib/ansible/cli/adhoc.py
 lib/ansible/cli/console.py
