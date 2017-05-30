@@ -246,19 +246,20 @@ class InventoryManager(object):
             # try source with each plugin
             failures = []
             for plugin in self._inventory_plugins:
-                display.debug(u'Attempting to use plugin %s' % plugin)
+                plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
+                display.debug(u'Attempting to use plugin %s' % plugin_name)
 
                 # initialize
                 if plugin.verify_file(source):
                     try:
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
                         parsed = True
-                        display.vvv(u'Parsed %s inventory source with %s plugin' % (to_text(source), plugin))
+                        display.vvv(u'Parsed %s inventory source with %s plugin' % (to_text(source), plugin_name))
                         break
                     except AnsibleParserError as e:
-                        failures.append(u'\n* Failed to parse %s with %s inventory plugin: %s\n' %(to_text(source), plugin, to_text(e)))
+                        failures.append(u'\n* Failed to parse %s with %s inventory plugin: %s\n' %(to_text(source), plugin_name, to_text(e)))
                 else:
-                    display.debug(u'%s did not meet %s requirements' % (to_text(source), plugin))
+                    display.debug(u'%s did not meet %s requirements' % (to_text(source), plugin_name))
             else:
                 if failures:
                     # only if no plugin processed files should we show errors.

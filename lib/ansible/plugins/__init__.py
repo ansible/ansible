@@ -380,6 +380,7 @@ class PluginLoader:
 
         # set extra info on the module, in case we want it later
         setattr(obj, '_original_path', path)
+        setattr(obj, '_load_name', name)
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -444,6 +445,7 @@ class PluginLoader:
 
             # set extra info on the module, in case we want it later
             setattr(obj, '_original_path', path)
+            setattr(obj, '_load_name', name)
             yield obj
 
 action_loader = PluginLoader(
