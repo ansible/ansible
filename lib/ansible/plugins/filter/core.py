@@ -410,6 +410,29 @@ def extract(item, container, morekeys=None):
 
     return value
 
+def dict_with_attr(d, attr, val=None):
+    if isinstance(d, dict):
+        res = {}
+        for (k, v) in six.iteritems(d):
+            if attr in v and (val is None or v[attr] == val):
+                res[k] = v
+        return res
+    else:
+        raise errors.AnsibleFilterError('|dict_with_attr expects a dictionnary, got ' + repr(d))
+
+
+def dictlist_with_attr(l, attr, val=None):
+    if isinstance(l, list):
+        res = []
+        for d in l:
+            if not isinstance(d, dict):
+                raise errors.AnsibleFilterError('|dictlist_with_attr list element expects a dictionnary, got ' + repr(d))
+            if attr in d and (val is None or d[attr] == val):
+                res += [d, ]
+        return res
+    else:
+        raise errors.AnsibleFilterError('|dictlist_with_attr expects a list, got ' + repr(l))
+
 def failed(*a, **kw):
     ''' Test if task result yields failed '''
     item = a[0]
@@ -559,6 +582,12 @@ class FilterModule(object):
 
             # merge dicts
             'combine': combine,
+
+            # dict filtering
+            'dict_with_attr': dict_with_attr,
+
+            # dict list filtering
+            'dictlist_with_attr': dictlist_with_attr,
 
             # comment-style decoration
             'comment': comment,

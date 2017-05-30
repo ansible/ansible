@@ -46,6 +46,14 @@ files to exist and are passthrus to the python os.path functions
 /etc/motd with basename = {{ '/etc/motd' | basename }}
 /etc/motd with dirname  = {{ '/etc/motd' | dirname }}
 
+We can also filter list of dicts
+
+User object for steve name = {{ users | dictlist_with_attr('name', 'steve') | to_nice_yaml }}
+
+And a dict of dicts
+
+Object for age 20 = {{ some_dict_structure | dict_with_attr('age', 20) | to_nice_yaml }}
+
 TODO: realpath follows symlinks.  There isn't a test for this just now.
 
 TODO: add tests for set theory operations like union
