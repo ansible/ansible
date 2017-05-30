@@ -231,7 +231,7 @@ def filter_delete_statements(module, candidate):
     config = str(match.text)
 
     modified_candidate = candidate[:]
-    for index, line in enumerate(candidate):
+    for index, line in reversed(list(enumerate(candidate))):
         if line.startswith('delete'):
             newline = re.sub('^delete', 'set', line)
             if newline not in config:

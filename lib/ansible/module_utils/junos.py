@@ -168,6 +168,9 @@ def get_diff(module):
 def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
 
+    if not candidate:
+        return
+
     with locked_config(module):
         if isinstance(candidate, list):
             candidate = '\n'.join(candidate)
