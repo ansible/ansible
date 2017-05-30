@@ -20,12 +20,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
+import os
 import random
 import uuid
 
 from collections import MutableMapping
 from json import dumps
 
+from deepdiff import DeepDiff
+import pprint
+
+# import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -99,9 +104,8 @@ class ObservableDict(dict):
     def __setitem__(self, key, value):
         for o in self.observers:
             # pprint.pprint(locals())
-            #import traceback
-            #traceback.print_stack()
-            #print('\n')
+            # traceback.print_stack()
+            # print('\n')
             o.notify(observable=self,
                      key=key,
                      old=self.get(key, Unset),
@@ -109,7 +113,7 @@ class ObservableDict(dict):
         super(ObservableDict, self).__setitem__(key, value)
 
     def update(self, anotherDict, update_name=None):
-        #self._update_name = blip_update_name
+        # self._update_name = blip_update_name
         for k in anotherDict:
             if k == 'update_name':
                 continue
@@ -121,11 +125,6 @@ class ObservableDict(dict):
         d._name = self._name
         d.observe(Watcher())
         return d
-
-from deepdiff import DeepDiff
-import pprint
-import os
-import traceback
 
 
 class Watcher(object):
@@ -139,10 +138,10 @@ class Watcher(object):
         if old != new:
             dd = DeepDiff(old, new, ignore_order=True)
             # print('value of key=%s changed from %s to %s' % (key, old, new))
-            display.display('\npid=%s name=%s update_name=%s key=%s changed.\ndiff:\n%s' % (pid, observable._name,
-                                                                                            observable._update_name,
-                                                                                            key, pprint.pformat(dd)))
-            #print('\nvalue of key=%s changed.\ndiff:\n%s' % (key, self.show(dd)))
+            display.vvv('\npid=%s name=%s update_name=%s key=%s changed.\ndiff:\n%s' % (pid, observable._name,
+                                                                                        observable._update_name,
+                                                                                        key, pprint.pformat(dd)))
+            # print('\nvalue of key=%s changed.\ndiff:\n%s' % (key, self.show(dd)))
 
 
 def combine_vars(a, b, name_b=None):
@@ -161,7 +160,7 @@ def combine_vars(a, b, name_b=None):
         _result = result
         # w = Watcher()
         # _result.observe(w)
-        #setattr(_result, '_update_name', name_b)
+        # setattr(_result, '_update_name', name_b)
         _result.update(b, update_name=name_b)
         return _result
 

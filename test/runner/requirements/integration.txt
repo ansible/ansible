@@ -8,3 +8,5 @@ passlib
 pexpect
 pycrypto
 pyyaml
+
+deepdiff
