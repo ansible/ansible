@@ -110,6 +110,7 @@ Else {
 $result.return_code = $rc
 $result.output = $robocopy_output
 
+$changed = $false
 $cmd_msg = "Success"
 $changed = $false
 switch ($rc)
