@@ -40,6 +40,16 @@ class Handler(Task):
         t = Handler(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
+    def get_name(self):
+        ''' return the name of the handler '''
+
+        if self._role and self.name and ("%s : " % self._role._role_name) not in self.name:
+            return "%s : %s" % (self._role.get_name(), self.name)
+        elif self.name:
+            return self.name
+        else:
+            raise AnsibleError("Handler must have a name specified!")
+
     def flag_for_host(self, host):
         #assert instanceof(host, Host)
         if host not in self._flagged_hosts:
