@@ -178,8 +178,8 @@ class DataLoader:
         show_content = True
         try:
             with open(b_file_name, 'rb') as f:
-                data = f.read()
-                if is_encrypted(data):
+                if is_encrypted(f):
+                    data = f.read()
                     data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False
 
