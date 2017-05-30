@@ -40,21 +40,21 @@ except ImportError:
 
 class HostState:
     def __init__(self, blocks):
-        self._blocks          = blocks[:]
+        self._blocks = blocks[:]
 
-        self.cur_block          = 0
-        self.cur_regular_task   = 0
-        self.cur_rescue_task    = 0
-        self.cur_always_task    = 0
-        self.cur_dep_chain      = None
-        self.run_state          = PlayIterator.ITERATING_SETUP
-        self.fail_state         = PlayIterator.FAILED_NONE
-        self.pending_setup      = False
-        self.tasks_child_state  = None
+        self.cur_block = 0
+        self.cur_regular_task = 0
+        self.cur_rescue_task = 0
+        self.cur_always_task = 0
+        self.cur_dep_chain = None
+        self.run_state = PlayIterator.ITERATING_SETUP
+        self.fail_state = PlayIterator.FAILED_NONE
+        self.pending_setup = False
+        self.tasks_child_state = None
         self.rescue_child_state = None
         self.always_child_state = None
-        self.did_rescue         = False
-        self.did_start_at_task  = False
+        self.did_rescue = False
+        self.did_start_at_task = False
 
     def __repr__(self):
         return "HostState(%r)" % self._blocks
@@ -68,7 +68,7 @@ class HostState:
                 return "UNKNOWN STATE"
 
         def _failed_state_to_string(n):
-            states = {1:"FAILED_SETUP", 2:"FAILED_TASKS", 4:"FAILED_RESCUE", 8:"FAILED_ALWAYS"}
+            states = {1: "FAILED_SETUP", 2: "FAILED_TASKS", 4: "FAILED_RESCUE", 8: "FAILED_ALWAYS"}
             if n == 0:
                 return "FAILED_NONE"
             else:
@@ -130,22 +130,23 @@ class HostState:
             new_state.always_child_state = self.always_child_state.copy()
         return new_state
 
+
 class PlayIterator:
 
     # the primary running states for the play iteration
-    ITERATING_SETUP    = 0
-    ITERATING_TASKS    = 1
-    ITERATING_RESCUE   = 2
-    ITERATING_ALWAYS   = 3
+    ITERATING_SETUP = 0
+    ITERATING_TASKS = 1
+    ITERATING_RESCUE = 2
+    ITERATING_ALWAYS = 3
     ITERATING_COMPLETE = 4
 
     # the failure states for the play iteration, which are powers
     # of 2 as they may be or'ed together in certain circumstances
-    FAILED_NONE        = 0
-    FAILED_SETUP       = 1
-    FAILED_TASKS       = 2
-    FAILED_RESCUE      = 4
-    FAILED_ALWAYS      = 8
+    FAILED_NONE = 0
+    FAILED_SETUP = 1
+    FAILED_TASKS = 2
+    FAILED_RESCUE = 4
+    FAILED_ALWAYS = 8
 
     def __init__(self, inventory, play, play_context, variable_manager, all_vars, start_at_done=False):
         self._play = play
@@ -173,8 +174,8 @@ class PlayIterator:
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
-        setup_task.tags   = ['always']
-        setup_task.args   = {
+        setup_task.tags = ['always']
+        setup_task.args = {
             'gather_subset': gather_subset,
         }
         if gather_timeout:
@@ -270,7 +271,6 @@ class PlayIterator:
         display.debug(" ^ state is: %s" % s)
         return (s, task)
 
-
     def _get_next_task_from_state(self, state, host, peek, in_child=False):
 
         task = None
@@ -304,7 +304,7 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name,{}).get('module_setup', False))):
+                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('module_setup', False))):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
@@ -320,8 +320,8 @@ class PlayIterator:
                     if not state.did_start_at_task:
                         state.cur_block += 1
                         state.cur_regular_task = 0
-                        state.cur_rescue_task  = 0
-                        state.cur_always_task  = 0
+                        state.cur_rescue_task = 0
+                        state.cur_always_task = 0
                         state.child_state = None
 
             elif state.run_state == self.ITERATING_TASKS:
@@ -416,8 +416,8 @@ class PlayIterator:
                         else:
                             state.cur_block += 1
                             state.cur_regular_task = 0
-                            state.cur_rescue_task  = 0
-                            state.cur_always_task  = 0
+                            state.cur_rescue_task = 0
+                            state.cur_always_task = 0
                             state.run_state = self.ITERATING_TASKS
                             state.tasks_child_state = None
                             state.rescue_child_state = None
@@ -496,9 +496,9 @@ class PlayIterator:
         elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):
             return True
         elif state.fail_state != self.FAILED_NONE:
-            if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0:
+            if state.run_state == self.ITERATING_RESCUE and state.fail_state & self.FAILED_RESCUE == 0:
                 return False
-            elif state.run_state == self.ITERATING_ALWAYS and state.fail_state&self.FAILED_ALWAYS == 0:
+            elif state.run_state == self.ITERATING_ALWAYS and state.fail_state & self.FAILED_ALWAYS == 0:
                 return False
             else:
                 return not state.did_rescue
@@ -540,7 +540,7 @@ class PlayIterator:
             else:
                 target_block = state._blocks[state.cur_block].copy(exclude_parent=True)
                 before = target_block.block[:state.cur_regular_task]
-                after  = target_block.block[state.cur_regular_task:]
+                after = target_block.block[state.cur_regular_task:]
                 target_block.block = before + task_list + after
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == self.ITERATING_RESCUE:
@@ -549,7 +549,7 @@ class PlayIterator:
             else:
                 target_block = state._blocks[state.cur_block].copy(exclude_parent=True)
                 before = target_block.rescue[:state.cur_rescue_task]
-                after  = target_block.rescue[state.cur_rescue_task:]
+                after = target_block.rescue[state.cur_rescue_task:]
                 target_block.rescue = before + task_list + after
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == self.ITERATING_ALWAYS:
@@ -558,7 +558,7 @@ class PlayIterator:
             else:
                 target_block = state._blocks[state.cur_block].copy(exclude_parent=True)
                 before = target_block.always[:state.cur_always_task]
-                after  = target_block.always[state.cur_always_task:]
+                after = target_block.always[state.cur_always_task:]
                 target_block.always = before + task_list + after
                 state._blocks[state.cur_block] = target_block
         return state
@@ -567,4 +567,3 @@ class PlayIterator:
         for b in task_list:
             self.cache_block_tasks(b)
         self._host_states[host.name] = self._insert_tasks_into_state(self.get_host_state(host), task_list)
-

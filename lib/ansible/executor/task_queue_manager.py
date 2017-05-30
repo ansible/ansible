@@ -60,28 +60,28 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    RUN_OK                = 0
-    RUN_ERROR             = 1
-    RUN_FAILED_HOSTS      = 2
+    RUN_OK = 0
+    RUN_ERROR = 1
+    RUN_FAILED_HOSTS = 2
     RUN_UNREACHABLE_HOSTS = 4
     RUN_FAILED_BREAK_PLAY = 8
-    RUN_UNKNOWN_ERROR     = 255
+    RUN_UNKNOWN_ERROR = 255
 
     def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
 
-        self._inventory        = inventory
+        self._inventory = inventory
         self._variable_manager = variable_manager
-        self._loader           = loader
-        self._options          = options
-        self._stats            = AggregateStats()
-        self.passwords         = passwords
-        self._stdout_callback  = stdout_callback
+        self._loader = loader
+        self._options = options
+        self._stats = AggregateStats()
+        self.passwords = passwords
+        self._stdout_callback = stdout_callback
         self._run_additional_callbacks = run_additional_callbacks
-        self._run_tree         = run_tree
+        self._run_tree = run_tree
 
         self._callbacks_loaded = False
         self._callback_plugins = []
-        self._start_at_done    = False
+        self._start_at_done = False
 
         # make sure the module path (if specified) is parsed and
         # added to the module_loader object
@@ -97,7 +97,7 @@ class TaskQueueManager:
         self._listening_handlers = dict()
 
         # dictionaries to keep track of failed/unreachable hosts
-        self._failed_hosts      = dict()
+        self._failed_hosts = dict()
         self._unreachable_hosts = dict()
 
         self._final_q = multiprocessing.Queue()
@@ -145,7 +145,7 @@ class TaskQueueManager:
             if handler.listen:
                 listeners = handler.listen
                 if not isinstance(listeners, list):
-                    listeners = [ listeners ]
+                    listeners = [listeners]
                 for listener in listeners:
                     if listener not in self._listening_handlers:
                         self._listening_handlers[listener] = []
@@ -182,7 +182,7 @@ class TaskQueueManager:
                 # the name of the current plugin and type to see if we need to skip
                 # loading this callback plugin
                 callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
-                callback_needs_whitelist  = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
+                callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
                 (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
                 if callback_type == 'stdout':
                     if callback_name != self._stdout_callback or stdout_callback_loaded:
@@ -262,7 +262,7 @@ class TaskQueueManager:
             play_context=play_context,
             variable_manager=self._variable_manager,
             all_vars=all_vars,
-            start_at_done = self._start_at_done,
+            start_at_done=self._start_at_done,
         )
 
         # Because the TQM may survive multiple play runs, we start by marking
@@ -332,7 +332,7 @@ class TaskQueueManager:
         # <WorkerProcess(WorkerProcess-2, stopped[SIGTERM])>
 
         defunct = False
-        for idx,x in enumerate(self._workers):
+        for (idx, x) in enumerate(self._workers):
             if hasattr(x[0], 'exitcode'):
                 if x[0].exitcode in [-9, -11, -15]:
                     defunct = True
@@ -350,7 +350,7 @@ class TaskQueueManager:
             for possible in [method_name, 'v2_on_any']:
                 gotit = getattr(callback_plugin, possible, None)
                 if gotit is None:
-                    gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
+                    gotit = getattr(callback_plugin, possible.replace('v2_', ''), None)
                 if gotit is not None:
                     methods.append(gotit)
 

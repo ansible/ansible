@@ -45,12 +45,12 @@ class PlaybookExecutor:
     '''
 
     def __init__(self, playbooks, inventory, variable_manager, loader, options, passwords):
-        self._playbooks        = playbooks
-        self._inventory        = inventory
+        self._playbooks = playbooks
+        self._inventory = inventory
         self._variable_manager = variable_manager
-        self._loader           = loader
-        self._options          = options
-        self.passwords         = passwords
+        self._loader = loader
+        self._options = options
+        self.passwords = passwords
         self._unreachable_hosts = dict()
 
         if options.listhosts or options.listtasks or options.listtags or options.syntax:
@@ -79,7 +79,7 @@ class PlaybookExecutor:
         try:
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
-                #FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
+                # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
                 if self._tqm is None:  # we are doing a listing
                     entry = {'playbook': playbook_path}
@@ -104,14 +104,14 @@ class PlaybookExecutor:
 
                     if play.vars_prompt:
                         for var in play.vars_prompt:
-                            vname     = var['name']
-                            prompt    = var.get("prompt", vname)
-                            default   = var.get("default", None)
-                            private   = var.get("private", True)
-                            confirm   = var.get("confirm", False)
-                            encrypt   = var.get("encrypt", None)
+                            vname = var['name']
+                            prompt = var.get("prompt", vname)
+                            default = var.get("default", None)
+                            private = var.get("private", True)
+                            confirm = var.get("confirm", False)
+                            encrypt = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
-                            salt      = var.get("salt", None)
+                            salt = var.get("salt", None)
 
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
