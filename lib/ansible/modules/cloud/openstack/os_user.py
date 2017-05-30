@@ -184,6 +184,9 @@ def _get_default_project_id(cloud, default_project, module):
 
     return project['id']
 
+def _without_keys(d, keys):
+    return dict((k, v) for k, v in d.items() if k not in keys)
+
 def main():
 
     argument_spec = openstack_full_argument_spec(
@@ -216,7 +219,8 @@ def main():
     update_password = module.params['update_password']
 
     try:
-        cloud = shade.openstack_cloud(**module.params)
+        cloud = shade.openstack_cloud(**_without_keys(module.params,
+                                                      ['password']))
         user = cloud.get_user(name)
 
         domain_id = None
