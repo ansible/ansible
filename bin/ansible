@@ -42,6 +42,12 @@ from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
 from ansible.module_utils._text import to_text
 
+import signal
+def signal_handler(signum, frame):
+	sys.exit(0)
+
+signal.signal(signal.SIGTERM, signal_handler)
+
 
 ########################################
 ### OUTPUT OF LAST RESORT ###
