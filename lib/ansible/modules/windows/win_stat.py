@@ -130,6 +130,11 @@ stat:
             returned: success, path exists
             type: float
             sample: 1477984205.15
+        exists:
+            description: if the path exists or not
+            returned: success
+            type: boolean
+            sample: True
         extension:
             description: the extension of the file at path
             returned: success, path exists, path is a file
