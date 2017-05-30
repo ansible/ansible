@@ -61,7 +61,7 @@ options:
       - Verify that the source and destination checksums match after the files are fetched.
     required: false
     choices: [ "yes", "no" ]
-    default: "yes"
+    default: "no"
     aliases: [ "validate_md5" ]
   flat:
     version_added: "1.2"
