@@ -332,7 +332,7 @@ def delete_cluster(module, redshift):
     wait_timeout = module.params.get('wait_timeout')
 
     try:
-        redshift.delete_custer( identifier )
+        redshift.delete_cluster( identifier )
     except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
