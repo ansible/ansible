@@ -18,66 +18,62 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: stat
 version_added: "1.3"
-short_description: retrieve file or file system status
+short_description: Retrieve file or file system status
 description:
      - Retrieves facts for a file similar to the linux/unix 'stat' command.
 options:
   path:
     description:
-      - The full path of the file/object to get the facts of
+      - The full path of the file/object to get the facts of.
     required: true
-    default: null
   follow:
     description:
-      - Whether to follow symlinks
-    required: false
-    default: no
+      - Whether to follow symlinks.
+    choices: [ 'no', 'yes' ]
+    default: 'no'
   get_md5:
     description:
       - Whether to return the md5 sum of the file.
       - Will return None if not a regular file or if we're
-        unable to use md5 (Common for FIPS-140 compliant systems)
-    required: false
-    default: yes
+        unable to use md5 (Common for FIPS-140 compliant systems).
+    choices: [ 'no', 'yes' ]
+    default: 'yes'
   get_checksum:
     description:
-      - Whether to return a checksum of the file (default sha1)
-    required: false
-    default: yes
+      - Whether to return a checksum of the file (default sha1).
+    choices: [ 'no', 'yes' ]
+    default: 'yes'
     version_added: "1.8"
   checksum_algorithm:
     description:
       - Algorithm to determine checksum of file. Will throw an error if the
         host is unable to use specified algorithm.
-    required: false
-    choices: [ 'sha1', 'sha224', 'sha256', 'sha384', 'sha512' ]
+    choices: [ sha1, sha224, sha256, sha384, sha512 ]
     default: sha1
-    aliases: [ 'checksum_algo', 'checksum' ]
+    aliases: [ checksum, checksum_algo ]
     version_added: "2.0"
   get_mime:
     description:
       - Use file magic and return data about the nature of the file. this uses
         the 'file' utility found on most Linux/Unix systems.
       - This will add both `mime_type` and 'charset' fields to the return, if possible.
-      - In 2.3 this option changed from 'mime' to 'get_mime' and the default changed to 'Yes'
-    required: false
-    choices: [ Yes, No ]
-    default: Yes
+      - In 2.3 this option changed from 'mime' to 'get_mime' and the default changed to 'Yes'.
+    choices: [ 'no', 'yes' ]
+    default: 'yes'
     version_added: "2.1"
-    aliases: [ 'mime', 'mime_type', 'mime-type' ]
+    aliases: [ mime, mime_type, mime-type ]
   get_attributes:
     description:
       - Get file attributes using lsattr tool if present.
-    required: false
-    default: True
+    choices: [ 'no', 'yes' ]
+    default: 'yes'
     version_added: "2.3"
-    aliases: [ 'attributes', 'attr' ]
-author: "Bruce Pennypacker (@bpennypacker)"
+    aliases: [ attr, attributes ]
+author: Bruce Pennypacker (@bpennypacker)
 '''
 
 EXAMPLES = '''
@@ -136,7 +132,7 @@ EXAMPLES = '''
     checksum_algorithm: sha256
 '''
 
-RETURN = '''
+RETURN = r'''
 stat:
     description: dictionary containing all the stat data, some platforms might add additional fields
     returned: success
@@ -366,9 +362,10 @@ import pwd
 import stat
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule, format_attributes
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes
+
 
 def format_output(module, path, st):
     mode = st.st_mode
@@ -410,9 +407,9 @@ def format_output(module, path, st):
     # Platform dependant flags:
     for other in [
             # Some Linux
-            ('st_blocks','blocks'),
+            ('st_blocks', 'blocks'),
             ('st_blksize', 'block_size'),
-            ('st_rdev','device_type'),
+            ('st_rdev', 'device_type'),
             ('st_flags', 'flags'),
             # Some Berkley based
             ('st_gen', 'generation'),
@@ -429,7 +426,6 @@ def format_output(module, path, st):
         if hasattr(st, other[0]):
             output[other[1]] = getattr(st, other[0])
 
-
     return output
 
 
@@ -437,16 +433,16 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             path=dict(required=True, type='path'),
-            follow=dict(default='no', type='bool'),
-            get_md5=dict(default='yes', type='bool'),
-            get_checksum=dict(default='yes', type='bool'),
-            get_mime=dict(default=True, type='bool', aliases=['mime', 'mime_type', 'mime-type']),
-            get_attributes=dict(default=True, type='bool', aliases=['attributes', 'attr']),
-            checksum_algorithm=dict(default='sha1', type='str',
+            follow=dict(type='bool', default='no'),
+            get_md5=dict(type='bool', default='yes'),
+            get_checksum=dict(type='bool', default='yes'),
+            get_mime=dict(type='bool', default='yes', aliases=['mime', 'mime_type', 'mime-type']),
+            get_attributes=dict(type='bool', default='yes', aliases=['attr', 'attributes']),
+            checksum_algorithm=dict(type='str', default='sha1',
                                     choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
-                                    aliases=['checksum_algo', 'checksum']),
+                                    aliases=['checksum', 'checksum_algo']),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     path = module.params.get('path')
@@ -483,13 +479,13 @@ def main():
     if output.get('islnk'):
         output['lnk_source'] = os.path.realpath(b_path)
 
-    try: # user data
+    try:  # user data
         pw = pwd.getpwuid(st.st_uid)
         output['pw_name'] = pw.pw_name
     except:
         pass
 
-    try: # group data
+    try:  # group data
         grp_info = grp.getgrgid(st.st_gid)
         output['gr_name'] = grp_info.gr_name
     except:
@@ -533,6 +529,7 @@ def main():
                 output[x] = out[x]
 
     module.exit_json(changed=False, stat=output)
+
 
 if __name__ == '__main__':
     main()

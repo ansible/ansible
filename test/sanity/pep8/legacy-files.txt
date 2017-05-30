@@ -316,7 +316,6 @@ lib/ansible/modules/files/ini_file.py
 lib/ansible/modules/files/iso_extract.py
 lib/ansible/modules/files/patch.py
 lib/ansible/modules/files/replace.py
-lib/ansible/modules/files/stat.py
 lib/ansible/modules/files/synchronize.py
 lib/ansible/modules/files/tempfile.py
 lib/ansible/modules/files/unarchive.py
