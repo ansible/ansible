@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+
 from errno import EEXIST
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -49,6 +50,7 @@ def unfrackpath(path, follow=True):
 
     return to_text(final_path, errors='surrogate_or_strict')
 
+
 def makedirs_safe(path, mode=None):
     '''Safe way to create dirs in muliprocess/thread environments.
 
@@ -70,13 +72,14 @@ def makedirs_safe(path, mode=None):
             if e.errno != EEXIST:
                 raise AnsibleError("Unable to create local directories(%s): %s" % (to_native(rpath), to_native(e)))
 
+
 def basedir(source):
     """ returns directory for inventory or playbook """
 
     dname = None
     if os.path.isdir(source):
         dname = source
-    elif source in [None, '',  '.']:
+    elif source in [None, '', '.']:
         dname = os.getcwd()
     elif os.path.isfile(source):
         dname = os.path.dirname(source)
@@ -86,4 +89,3 @@ def basedir(source):
         dname = os.path.abspath(dname)
 
     return dname
-
