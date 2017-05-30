@@ -94,7 +94,6 @@ elif options.host:
     if len(details) > 0:
         #pass through the port, in case it's non standard.
         result = details[0]
-        result
 
     print(json.dumps(result))
     sys.exit(1)
