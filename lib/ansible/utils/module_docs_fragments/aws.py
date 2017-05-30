@@ -65,7 +65,7 @@ options:
     version_added: "1.6"
 requirements:
   - "python >= 2.6"
-  - boto
+  - "boto (>= 2.28.0 for Ansible 2's route53 module)"
 notes:
   - If parameters are not set within the module, the following
     environment variables can be used in decreasing order of precedence
