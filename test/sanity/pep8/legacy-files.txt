@@ -1,6 +1,3 @@
-contrib/inventory/freeipa.py
-contrib/inventory/rackhd.py
-contrib/inventory/vmware_inventory.py
 lib/ansible/cli/__init__.py
 lib/ansible/cli/adhoc.py
 lib/ansible/cli/console.py
