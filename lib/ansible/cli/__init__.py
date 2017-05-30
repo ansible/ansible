@@ -658,7 +658,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         if loader.is_executable(this_path):
             try:
                 # STDERR not captured to make it easier for users to prompt for input in their scripts
-                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
+                p = subprocess.Popen(this_path, stdout=subprocess.PIPE, universal_newlines=True)
             except OSError as e:
                 raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, "
                                    "remove the executable bit from the file." % (' '.join(this_path), e))
