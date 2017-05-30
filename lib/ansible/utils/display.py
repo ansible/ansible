@@ -108,6 +108,9 @@ class Display:
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
+        # no reason to go futher as there is nothing to print to
+        if not sys.stdout.isatty() or not sys.stderr.isatty():
+            return
 
         nocolor = msg
         if color:
