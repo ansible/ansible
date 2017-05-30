@@ -124,6 +124,14 @@ class ActionModule(ActionBase):
                 newsearchpath.append(p)
             searchpath = newsearchpath
 
+            # add same with 'templates' if missing
+            b = []
+            for path in searchpath:
+                if not (path.endswith('templates/') or path.endswith('templates')):
+                    b.add(os.path.join(path, 'templates'))
+                b.add(path)
+            searchpath = b
+
             self._templar.environment.loader.searchpath = searchpath
             self._templar.environment.newline_sequence = newline_sequence
             if block_start_string is not None:
