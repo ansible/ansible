@@ -102,6 +102,8 @@ options:
     aliases: ['format', 'output']
     choices: ['text', 'json', 'xml']
     version_added: "2.3"
+requirements:
+  - jxmlease
 """
 
 EXAMPLES = """
