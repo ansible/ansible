@@ -806,13 +806,4 @@ lib/ansible/template/__init__.py
 lib/ansible/template/safe_eval.py
 lib/ansible/template/template.py
 lib/ansible/template/vars.py
-lib/ansible/utils/cmd_functions.py
-lib/ansible/utils/color.py
-lib/ansible/utils/display.py
-lib/ansible/utils/encrypt.py
-lib/ansible/utils/helpers.py
-lib/ansible/utils/listify.py
-lib/ansible/utils/path.py
-lib/ansible/utils/ssh_functions.py
-lib/ansible/utils/vars.py
 lib/ansible/vars/manager.py
