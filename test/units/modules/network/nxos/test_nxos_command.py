@@ -25,6 +25,7 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_command
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
+
 class TestNxosCommandModule(TestNxosModule):
 
     module = nxos_command

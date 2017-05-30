@@ -71,7 +71,7 @@ class TestEosConfigModule(TestEosModule):
 
     def test_eos_config_before(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
-                     before=['before command'])
+                    before=['before command'])
 
         set_module_args(args)
 
@@ -83,7 +83,7 @@ class TestEosConfigModule(TestEosModule):
 
     def test_eos_config_after(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
-                     after=['after command'])
+                    after=['after command'])
 
         set_module_args(args)
 

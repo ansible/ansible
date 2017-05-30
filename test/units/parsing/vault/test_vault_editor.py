@@ -74,7 +74,7 @@ class TestVaultEditor(unittest.TestCase):
     def tearDown(self):
         if self._test_dir:
             pass
-            #shutil.rmtree(self._test_dir)
+            # shutil.rmtree(self._test_dir)
         self._test_dir = None
 
     def test_methods_exist(self):
@@ -361,7 +361,7 @@ class TestVaultEditor(unittest.TestCase):
 
         self.assertEqual(src_file_plaintext, new_src_contents)
 
-        #self.assertEqual(src_file_plaintext, new_src_contents,
+        # self.assertEqual(src_file_plaintext, new_src_contents,
         #                 'The decrypted plaintext of the editted file is not the expected contents.')
 
     @patch('ansible.parsing.vault.call')

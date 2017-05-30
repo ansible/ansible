@@ -70,7 +70,7 @@ class DictDataLoader(DataLoader):
             self._known_directories.append(directory)
 
     def _build_known_directories(self):
-        self._known_directories  = []
+        self._known_directories = []
         for path in self._file_mapping:
             dirname = os.path.dirname(path)
             while dirname not in ('/', ''):

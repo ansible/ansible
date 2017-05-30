@@ -25,6 +25,7 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.ios import ios_command
 from .ios_module import TestIosModule, load_fixture, set_module_args
 
+
 class TestIosCommandModule(TestIosModule):
 
     module = ios_command

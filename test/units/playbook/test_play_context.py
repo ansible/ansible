@@ -21,30 +21,30 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-
 from ansible import constants as C
 from ansible.cli import CLI
+from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.playbook.play_context import PlayContext
 
 from units.mock.loader import DictDataLoader
 
+
 class TestPlayContext(unittest.TestCase):
 
     def setUp(self):
         self._parser = CLI.base_parser(
-            runas_opts   = True,
-            meta_opts    = True,
-            runtask_opts = True,
-            vault_opts   = True,
-            async_opts   = True,
-            connect_opts = True,
-            subset_opts  = True,
-            check_opts   = True,
-            inventory_opts = True,
+            runas_opts=True,
+            meta_opts=True,
+            runtask_opts=True,
+            vault_opts=True,
+            async_opts=True,
+            connect_opts=True,
+            subset_opts=True,
+            check_opts=True,
+            inventory_opts=True,
         )
 
     def tearDown(self):
@@ -66,13 +66,13 @@ class TestPlayContext(unittest.TestCase):
         self.assertEqual(play_context.no_log, None)
 
         mock_play = MagicMock()
-        mock_play.connection    = 'mock'
-        mock_play.remote_user   = 'mock'
-        mock_play.port          = 1234
-        mock_play.become        = True
+        mock_play.connection = 'mock'
+        mock_play.remote_user = 'mock'
+        mock_play.port = 1234
+        mock_play.become = True
         mock_play.become_method = 'mock'
-        mock_play.become_user   = 'mockroot'
-        mock_play.no_log        = True
+        mock_play.become_user = 'mockroot'
+        mock_play.no_log = True
 
         play_context = PlayContext(play=mock_play, options=options)
         self.assertEqual(play_context.connection, 'mock')
@@ -84,19 +84,19 @@ class TestPlayContext(unittest.TestCase):
         self.assertEqual(play_context.become_user, "mockroot")
 
         mock_task = MagicMock()
-        mock_task.connection    = 'mocktask'
-        mock_task.remote_user   = 'mocktask'
-        mock_task.no_log        =  mock_play.no_log
-        mock_task.become        = True
+        mock_task.connection = 'mocktask'
+        mock_task.remote_user = 'mocktask'
+        mock_task.no_log = mock_play.no_log
+        mock_task.become = True
         mock_task.become_method = 'mocktask'
-        mock_task.become_user   = 'mocktaskroot'
-        mock_task.become_pass   = 'mocktaskpass'
+        mock_task.become_user = 'mocktaskroot'
+        mock_task.become_pass = 'mocktaskpass'
         mock_task._local_action = False
-        mock_task.delegate_to   = None
+        mock_task.delegate_to = None
 
         all_vars = dict(
-            ansible_connection = 'mock_inventory',
-            ansible_ssh_port = 4321,
+            ansible_connection='mock_inventory',
+            ansible_ssh_port=4321,
         )
 
         mock_templar = MagicMock()
@@ -112,7 +112,7 @@ class TestPlayContext(unittest.TestCase):
         self.assertEqual(play_context.become_user, "mocktaskroot")
         self.assertEqual(play_context.become_pass, "mocktaskpass")
 
-        mock_task.no_log        = False
+        mock_task.no_log = False
         play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
         self.assertEqual(play_context.no_log, False)
 
@@ -122,19 +122,19 @@ class TestPlayContext(unittest.TestCase):
 
         default_cmd = "/bin/foo"
         default_exe = "/bin/bash"
-        sudo_exe    = C.DEFAULT_SUDO_EXE or 'sudo'
-        sudo_flags  = C.DEFAULT_SUDO_FLAGS
-        su_exe      = C.DEFAULT_SU_EXE or 'su'
-        su_flags    = C.DEFAULT_SU_FLAGS or ''
-        pbrun_exe   = 'pbrun'
+        sudo_exe = C.DEFAULT_SUDO_EXE or 'sudo'
+        sudo_flags = C.DEFAULT_SUDO_FLAGS
+        su_exe = C.DEFAULT_SU_EXE or 'su'
+        su_flags = C.DEFAULT_SU_FLAGS or ''
+        pbrun_exe = 'pbrun'
         pbrun_flags = ''
-        pfexec_exe   = 'pfexec'
+        pfexec_exe = 'pfexec'
         pfexec_flags = ''
-        doas_exe    = 'doas'
-        doas_flags  = ' -n  -u foo '
+        doas_exe = 'doas'
+        doas_flags = ' -n  -u foo '
         ksu_exe = 'ksu'
         ksu_flags = ''
-        dzdo_exe   = 'dzdo'
+        dzdo_exe = 'dzdo'
 
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
         self.assertEqual(cmd, default_cmd)
@@ -152,7 +152,7 @@ class TestPlayContext(unittest.TestCase):
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
         self.assertEqual(
             cmd,
-            """%s %s -p "%s" -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags.replace('-n',''), play_context.prompt, play_context.become_user, default_exe,
+            """%s %s -p "%s" -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags.replace('-n', ''), play_context.prompt, play_context.become_user, default_exe,
                                                              play_context.success_key, default_cmd)
         )
 
@@ -207,103 +207,129 @@ class TestPlayContext(unittest.TestCase):
 class TestTaskAndVariableOverrride(unittest.TestCase):
 
     inventory_vars = (
-        ('preferred_names',
-                dict(ansible_connection='local',
-                    ansible_user='ansibull',
-                    ansible_become_user='ansibull',
-                    ansible_become_method='su',
-                    ansible_become_pass='ansibullwuzhere',),
-                dict(connection='local',
-                    remote_user='ansibull',
-                    become_user='ansibull',
-                    become_method='su',
-                    become_pass='ansibullwuzhere',)
+        (
+            'preferred_names',
+            dict(
+                ansible_connection='local',
+                ansible_user='ansibull',
+                ansible_become_user='ansibull',
+                ansible_become_method='su',
+                ansible_become_pass='ansibullwuzhere',
             ),
-        ('alternate_names',
-                dict(ansible_become_password='ansibullwuzhere',),
-                dict(become_pass='ansibullwuzhere',)
+            dict(
+                connection='local',
+                remote_user='ansibull',
+                become_user='ansibull',
+                become_method='su',
+                become_pass='ansibullwuzhere',
+            )
+        ),
+        (
+            'alternate_names',
+            dict(ansible_become_password='ansibullwuzhere',),
+            dict(become_pass='ansibullwuzhere',)
+        ),
+        (
+            'deprecated_names',
+            dict(
+                ansible_ssh_user='ansibull',
+                ansible_sudo_user='ansibull',
+                ansible_sudo_pass='ansibullwuzhere',
             ),
-        ('deprecated_names',
-                dict(ansible_ssh_user='ansibull',
-                    ansible_sudo_user='ansibull',
-                    ansible_sudo_pass='ansibullwuzhere',),
-                dict(remote_user='ansibull',
-                    become_method='sudo',
-                    become_user='ansibull',
-                    become_pass='ansibullwuzhere',)
+            dict(
+                remote_user='ansibull',
+                become_method='sudo',
+                become_user='ansibull',
+                become_pass='ansibullwuzhere',
+            )
+        ),
+        (
+            'deprecated_names2',
+            dict(
+                ansible_ssh_user='ansibull',
+                ansible_su_user='ansibull',
+                ansible_su_pass='ansibullwuzhere',
             ),
-        ('deprecated_names2',
-                dict(ansible_ssh_user='ansibull',
-                    ansible_su_user='ansibull',
-                    ansible_su_pass='ansibullwuzhere',),
-                dict(remote_user='ansibull',
-                    become_method='su',
-                    become_user='ansibull',
-                    become_pass='ansibullwuzhere',)
+            dict(
+                remote_user='ansibull',
+                become_method='su',
+                become_user='ansibull',
+                become_pass='ansibullwuzhere',
+            )
+        ),
+        (
+            'deprecated_alt_names',
+            dict(ansible_sudo_password='ansibullwuzhere',),
+            dict(
+                become_method='sudo',
+                become_pass='ansibullwuzhere',
+            )
+        ),
+        (
+            'deprecated_alt_names2',
+            dict(ansible_su_password='ansibullwuzhere',),
+            dict(
+                become_method='su',
+                become_pass='ansibullwuzhere',
+            )
+        ),
+        (
+            'deprecated_and_preferred_names',
+            dict(
+                ansible_user='ansibull',
+                ansible_ssh_user='badbull',
+                ansible_become_user='ansibull',
+                ansible_sudo_user='badbull',
+                ansible_become_method='su',
+                ansible_become_pass='ansibullwuzhere',
+                ansible_sudo_pass='badbull',
             ),
-        ('deprecated_alt_names',
-                dict(ansible_sudo_password='ansibullwuzhere',),
-                dict(become_method='sudo',
-                    become_pass='ansibullwuzhere',)
-            ),
-        ('deprecated_alt_names2',
-                dict(ansible_su_password='ansibullwuzhere',),
-                dict(become_method='su',
-                    become_pass='ansibullwuzhere',)
-            ),
-        ('deprecated_and_preferred_names',
-                dict(ansible_user='ansibull',
-                    ansible_ssh_user='badbull',
-                    ansible_become_user='ansibull',
-                    ansible_sudo_user='badbull',
-                    ansible_become_method='su',
-                    ansible_become_pass='ansibullwuzhere',
-                    ansible_sudo_pass='badbull',
-                    ),
-                dict(connection='local',
-                    remote_user='ansibull',
-                    become_user='ansibull',
-                    become_method='su',
-                    become_pass='ansibullwuzhere',)
-            ),
+            dict(
+                connection='local',
+                remote_user='ansibull',
+                become_user='ansibull',
+                become_method='su',
+                become_pass='ansibullwuzhere',
+            )
+        ),
     )
 
     def setUp(self):
         parser = CLI.base_parser(
-            runas_opts   = True,
-            meta_opts    = True,
-            runtask_opts = True,
-            vault_opts   = True,
-            async_opts   = True,
-            connect_opts = True,
-            subset_opts  = True,
-            check_opts   = True,
-            inventory_opts = True,
+            runas_opts=True,
+            meta_opts=True,
+            runtask_opts=True,
+            vault_opts=True,
+            async_opts=True,
+            connect_opts=True,
+            subset_opts=True,
+            check_opts=True,
+            inventory_opts=True,
         )
 
         (options, args) = parser.parse_args(['-vv', '--check'])
 
         mock_play = MagicMock()
-        mock_play.connection    = 'mock'
-        mock_play.remote_user   = 'mock'
-        mock_play.port          = 1234
-        mock_play.become        = True
+        mock_play.connection = 'mock'
+        mock_play.remote_user = 'mock'
+        mock_play.port = 1234
+        mock_play.become = True
         mock_play.become_method = 'mock'
-        mock_play.become_user   = 'mockroot'
-        mock_play.no_log        = True
+        mock_play.become_user = 'mockroot'
+        mock_play.no_log = True
 
         self.play_context = PlayContext(play=mock_play, options=options)
 
         mock_task = MagicMock()
-        mock_task.connection    = mock_play.connection
-        mock_task.remote_user   = mock_play.remote_user
-        mock_task.no_log        = mock_play.no_log
-        mock_task.become        = mock_play.become
+        mock_task.connection = mock_play.connection
+        mock_task.remote_user = mock_play.remote_user
+        mock_task.no_log = mock_play.no_log
+        mock_task.become = mock_play.become
         mock_task.become_method = mock_play.becom_method
-        mock_task.become_user   = mock_play.become_user
-        mock_task.become_pass   = 'mocktaskpass'
+        mock_task.become_user = mock_play.become_user
+        mock_task.become_pass = 'mocktaskpass'
         mock_task._local_action = False
-        mock_task.delegate_to   = None
+        mock_task.delegate_to = None
 
         self.mock_task = mock_task
 
@@ -322,19 +348,19 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
         self.assertEqual(play_context.become_user, "mocktaskroot")
         self.assertEqual(play_context.become_pass, "mocktaskpass")
 
-        mock_task.no_log        = False
+        mock_task.no_log = False
         play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
         self.assertEqual(play_context.no_log, False)
 
     def test_override_magic_variables(self):
         play_context = play_context.set_task_and_variable_override(task=self.mock_task, variables=all_vars, templar=self.mock_templar)
 
-        mock_play.connection    = 'mock'
-        mock_play.remote_user   = 'mock'
-        mock_play.port          = 1234
+        mock_play.connection = 'mock'
+        mock_play.remote_user = 'mock'
+        mock_play.port = 1234
         mock_play.become_method = 'mock'
-        mock_play.become_user   = 'mockroot'
-        mock_task.become_pass   = 'mocktaskpass'
+        mock_play.become_user = 'mockroot'
+        mock_task.become_pass = 'mocktaskpass'
         # Inventory vars override things set from cli vars (--become, -user,
         # etc... [notably, not --extravars])
         for test_name, all_vars, expected in self.inventory_vars:

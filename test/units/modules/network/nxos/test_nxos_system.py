@@ -126,5 +126,3 @@ class TestNxosSystemModule(TestNxosModule):
                     'vrf context management', 'no ip name-server 172.26.1.1', 'exit',
                     'no system jumbomtu']
         self.execute_module(changed=True, commands=commands)
-
-

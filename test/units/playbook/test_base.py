@@ -114,7 +114,7 @@ class TestBase(unittest.TestCase):
         data = {'no_log': False,
                 'remote_user': None,
                 'vars': self.assorted_vars,
-                #'check_mode': False,
+                # 'check_mode': False,
                 'always_run': False,
                 'environment': [],
                 'run_once': False,
@@ -340,8 +340,7 @@ class BaseSubClass(base.Base):
     _test_attr_unknown_isa = FieldAttribute(isa='not_a_real_isa', always_post_validate=True)
     _test_attr_example = FieldAttribute(isa='string', default='the_default',
                                         always_post_validate=True)
-    _test_attr_none = FieldAttribute(isa='string',
-                                    always_post_validate=True)
+    _test_attr_none = FieldAttribute(isa='string', always_post_validate=True)
     _test_attr_preprocess = FieldAttribute(isa='string', default='the default for preprocess')
     _test_attr_method = FieldAttribute(isa='string', default='some attr with a getter',
                                        always_post_validate=True)

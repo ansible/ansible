@@ -81,6 +81,7 @@ class Role(object):
                 for dep in self.dependencies:
                     f.write('- { role: %s }\n' % dep)
 
+
 class DynamicInventory(object):
     BASESCRIPT = '''#!/usr/bin/python
 import json
@@ -140,13 +141,12 @@ print(json.dumps(data, indent=2, sort_keys=True))
                 'hosts': [xhost],
             }
 
-
     def write_script(self):
         fdir = os.path.join(TESTDIR, 'inventory')
         if not os.path.isdir(fdir):
             os.makedirs(fdir)
         fpath = os.path.join(fdir, 'hosts')
-        #fpath = os.path.join(TESTDIR, 'inventory')
+        # fpath = os.path.join(TESTDIR, 'inventory')
         self.fpath = fpath
 
         data = json.dumps(self.inventory)
@@ -414,22 +414,22 @@ def main():
     features = [
         'extra_vars',
         'include_params',
-        #'role_params', # FIXME: we don't yet validate tasks within a role
+        # 'role_params',  # FIXME: we don't yet validate tasks within a role
         'set_fact',
-        #'registered_vars', # FIXME: hard to simulate
+        # 'registered_vars',  # FIXME: hard to simulate
         'include_vars',
-        #'role_dep_params',
+        # 'role_dep_params',
         'task_vars',
         'block_vars',
         'role_var',
         'vars_file',
         'play_var',
-        #'host_facts', # FIXME: hard to simulate
+        # 'host_facts',  # FIXME: hard to simulate
         'pb_host_vars_file',
         'ini_host_vars_file',
         'ini_host',
         'pb_group_vars_file_child',
-        #'ini_group_vars_file_child', #FIXME: this contradicts documented precedence pb group vars files should override inventory ones
+        # 'ini_group_vars_file_child', #FIXME: this contradicts documented precedence pb group vars files should override inventory ones
         'pb_group_vars_file_parent',
         'ini_group_vars_file_parent',
         'pb_group_vars_file_all',
@@ -489,7 +489,7 @@ def main():
     dinv = options.use_dynamic_inventory
     if dinv:
         # some features are specific to ini, so swap those
-        for idx,x in enumerate(features):
+        for (idx, x) in enumerate(features):
             if x.startswith('ini_') and 'vars_file' not in x:
                 features[idx] = x.replace('ini_', 'script_')
 

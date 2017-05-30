@@ -77,11 +77,11 @@ class TestVaultIsEncrypted(unittest.TestCase):
         self.assertTrue(vault.is_encrypted(b_data))
 
     def test_invalid_text_not_ascii(self):
-        data = u"$ANSIBLE_VAULT;9.9;TEST\n%s"% u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
+        data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
         self.assertFalse(vault.is_encrypted(data))
 
     def test_invalid_bytes_not_ascii(self):
-        data = u"$ANSIBLE_VAULT;9.9;TEST\n%s"% u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
+        data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
         b_data = to_bytes(data, encoding='utf-8')
         self.assertFalse(vault.is_encrypted(b_data))
 

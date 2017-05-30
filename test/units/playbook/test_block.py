@@ -19,9 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.compat.tests import unittest
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
-from ansible.compat.tests import unittest
+
 
 class TestBlock(unittest.TestCase):
 
@@ -39,24 +40,24 @@ class TestBlock(unittest.TestCase):
 
     def test_load_block_simple(self):
         ds = dict(
-            block = [],
-            rescue = [],
-            always = [],
-            #otherwise = [],
+            block=[],
+            rescue=[],
+            always=[],
+            # otherwise=[],
         )
         b = Block.load(ds)
         self.assertEqual(b.block, [])
         self.assertEqual(b.rescue, [])
         self.assertEqual(b.always, [])
         # not currently used
-        #self.assertEqual(b.otherwise, [])
+        # self.assertEqual(b.otherwise, [])
 
     def test_load_block_with_tasks(self):
         ds = dict(
-            block = [dict(action='block')],
-            rescue = [dict(action='rescue')],
-            always = [dict(action='always')],
-            #otherwise = [dict(action='otherwise')],
+            block=[dict(action='block')],
+            rescue=[dict(action='rescue')],
+            always=[dict(action='always')],
+            # otherwise=[dict(action='otherwise')],
         )
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
@@ -66,8 +67,8 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(len(b.always), 1)
         self.assertIsInstance(b.always[0], Task)
         # not currently used
-        #self.assertEqual(len(b.otherwise), 1)
-        #self.assertIsInstance(b.otherwise[0], Task)
+        # self.assertEqual(len(b.otherwise), 1)
+        # self.assertIsInstance(b.otherwise[0], Task)
 
     def test_load_implicit_block(self):
         ds = [dict(action='foo')]
@@ -77,12 +78,11 @@ class TestBlock(unittest.TestCase):
 
     def test_deserialize(self):
         ds = dict(
-            block = [dict(action='block')],
-            rescue = [dict(action='rescue')],
-            always = [dict(action='always')],
+            block=[dict(action='block')],
+            rescue=[dict(action='rescue')],
+            always=[dict(action='always')],
         )
         b = Block.load(ds)
-        data = dict(parent = ds, parent_type = 'Block')
+        data = dict(parent=ds, parent_type='Block')
         b.deserialize(data)
         self.assertIsInstance(b._parent, Block)
-

@@ -25,6 +25,7 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.eos import eos_command
 from .eos_module import TestEosModule, load_fixture, set_module_args
 
+
 class TestEosCommandModule(TestEosModule):
 
     module = eos_command

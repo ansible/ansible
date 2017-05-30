@@ -52,7 +52,7 @@ class TestVariableManager(unittest.TestCase):
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
         vars = v.get_vars(use_cache=False)
 
-        #FIXME: not sure why we remove all and only test playbook_dir
+        # FIXME: not sure why we remove all and only test playbook_dir
         for remove in ['omit', 'vars', 'ansible_version', 'ansible_check_mode', 'ansible_playbook_python']:
             if remove in vars:
                 del vars[remove]
@@ -103,7 +103,7 @@ class TestVariableManager(unittest.TestCase):
         self.assertEqual(v.get_vars(play=mock_play, use_cache=False).get("foo"), "bar")
 
     def test_variable_manager_task_vars(self):
-        #FIXME: BCS make this work
+        # FIXME: BCS make this work
         return
 
         fake_loader = DictDataLoader({})
@@ -134,14 +134,14 @@ class TestVariableManager(unittest.TestCase):
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_precedence(self):
-        #FIXME: this needs to be redone as dataloader is not the automatic source of data anymore
+        # FIXME: this needs to be redone as dataloader is not the automatic source of data anymore
         return
         '''
         Tests complex variations and combinations of get_vars() with different
         objects to modify the context under which variables are merged.
         '''
-        #FIXME: BCS makethiswork
-        #return True
+        # FIXME: BCS makethiswork
+        # return True
 
         mock_inventory = MagicMock()
 
@@ -236,11 +236,11 @@ class TestVariableManager(unittest.TestCase):
         """)
 
         res = v.get_vars(play=play1, host=h1)
-        #self.assertEqual(res['group_var'], 'group_var_from_group_vars_group1')
-        #self.assertEqual(res['group_var_all'], 'group_var_all_from_group_vars_all')
-        #self.assertEqual(res['playbook_group_var'], 'playbook_group_var')
-        #self.assertEqual(res['host_var'], 'host_var_from_host_vars_host1')
-        #self.assertEqual(res['playbook_host_var'], 'playbook_host_var')
+        # self.assertEqual(res['group_var'], 'group_var_from_group_vars_group1')
+        # self.assertEqual(res['group_var_all'], 'group_var_all_from_group_vars_all')
+        # self.assertEqual(res['playbook_group_var'], 'playbook_group_var')
+        # self.assertEqual(res['host_var'], 'host_var_from_host_vars_host1')
+        # self.assertEqual(res['playbook_host_var'], 'playbook_host_var')
 
         # add in the fact cache
         v._fact_cache['host1'] = dict(fact_cache_var="fact_cache_var_from_fact_cache")

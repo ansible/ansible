@@ -52,4 +52,3 @@ class TestAttribute(unittest.TestCase):
         self.assertTrue(self.one >= self.one)
         self.assertFalse(self.one >= self.two)
         self.assertTrue(self.two >= self.one)
-

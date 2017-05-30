@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import json
+import os
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
@@ -34,6 +34,7 @@ def set_module_args(args):
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
+
 
 def load_fixture(name):
     path = os.path.join(fixture_path, name)
@@ -56,13 +57,14 @@ def load_fixture(name):
 class AnsibleExitJson(Exception):
     pass
 
+
 class AnsibleFailJson(Exception):
     pass
 
+
 class TestEosModule(unittest.TestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None,
-            sort=True, defaults=False, transport='cli'):
+    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False, transport='cli'):
 
         self.load_fixtures(commands, transport=transport)
 
@@ -110,4 +112,3 @@ class TestEosModule(unittest.TestCase):
 
     def load_fixtures(self, commands=None, transport='cli'):
         pass
-

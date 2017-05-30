@@ -57,7 +57,7 @@ class TestIosxrSystemModule(TestIosxrModule):
 
     def test_iosxr_system_domain_search(self):
         set_module_args(dict(domain_search=['ansible.com', 'redhat.com']))
-        commands=['domain list ansible.com', 'no domain list cisco.com']
+        commands = ['domain list ansible.com', 'no domain list cisco.com']
         self.execute_module(changed=True, commands=commands)
 
     def test_iosxr_system_lookup_source(self):
@@ -78,14 +78,18 @@ class TestIosxrSystemModule(TestIosxrModule):
 
     def test_iosxr_system_state_absent(self):
         set_module_args(dict(state='absent'))
-        commands = ['no hostname', 'no domain name',
-                             'no domain lookup disable',
-                             'no domain lookup source-interface MgmtEth0/0/CPU0/0',
-                             'no domain list redhat.com', 'no domain list cisco.com',
-                             'no domain name-server 8.8.8.8', 'no domain name-server 8.8.4.4']
+        commands = [
+            'no hostname',
+            'no domain name',
+            'no domain lookup disable',
+            'no domain lookup source-interface MgmtEth0/0/CPU0/0',
+            'no domain list redhat.com',
+            'no domain list cisco.com',
+            'no domain name-server 8.8.8.8',
+            'no domain name-server 8.8.4.4'
+        ]
         self.execute_module(changed=True, commands=commands)
 
     def test_iosxr_system_no_change(self):
         set_module_args(dict(hostname='iosxr01', domain_name='eng.ansible.com'))
         self.execute_module()
-

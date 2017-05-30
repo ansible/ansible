@@ -21,11 +21,10 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, mock_open
-from ansible.errors import AnsibleParserError
-from ansible.errors import yaml_strings
+from ansible.errors import AnsibleParserError, yaml_strings
 from ansible.module_utils.six import PY3
-
 from ansible.parsing.dataloader import DataLoader
+
 
 class TestDataLoader(unittest.TestCase):
 
@@ -39,7 +38,7 @@ class TestDataLoader(unittest.TestCase):
     def test_parse_json_from_file(self, mock_def):
         mock_def.return_value = (b"""{"a": 1, "b": 2, "c": 3}""", True)
         output = self._loader.load_from_file('dummy_json.txt')
-        self.assertEqual(output, dict(a=1,b=2,c=3))
+        self.assertEqual(output, dict(a=1, b=2, c=3))
 
     @patch.object(DataLoader, '_get_file_contents')
     def test_parse_yaml_from_file(self, mock_def):
@@ -49,7 +48,7 @@ class TestDataLoader(unittest.TestCase):
         c: 3
         """, True)
         output = self._loader.load_from_file('dummy_yaml.txt')
-        self.assertEqual(output, dict(a=1,b=2,c=3))
+        self.assertEqual(output, dict(a=1, b=2, c=3))
 
     @patch.object(DataLoader, '_get_file_contents')
     def test_parse_fail_from_file(self, mock_def):

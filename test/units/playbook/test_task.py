@@ -19,17 +19,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.playbook.task import Task
 from ansible.compat.tests import unittest
+from ansible.playbook.task import Task
+
 
 basic_shell_task = dict(
-    name  = 'Test Task',
-    shell = 'echo hi'
+    name='Test Task',
+    shell='echo hi'
 )
 
 kv_shell_task = dict(
-    action = 'shell echo hi'
+    action='shell echo hi'
 )
+
 
 class TestTask(unittest.TestCase):
 
@@ -66,7 +68,7 @@ class TestTask(unittest.TestCase):
     def test_task_auto_name(self):
         assert 'name' not in kv_shell_task
         t = Task.load(kv_shell_task)
-        #self.assertEqual(t.name, 'shell echo hi')
+        # self.assertEqual(t.name, 'shell echo hi')
 
     def test_task_auto_name_with_role(self):
         pass

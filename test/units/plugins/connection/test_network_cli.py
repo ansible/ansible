@@ -143,7 +143,6 @@ class TestConnectionClass(unittest.TestCase):
         self.assertFalse(mock_open_shell.called)
         mock_send.assert_called_with({'command': b'command'})
 
-
     def test_network_cli_send(self):
         pc = PlayContext()
         new_stdin = StringIO()

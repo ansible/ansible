@@ -4,6 +4,7 @@ import unittest
 
 from ansible.parsing.utils.addresses import parse_address
 
+
 class TestParseAddress(unittest.TestCase):
 
     tests = {

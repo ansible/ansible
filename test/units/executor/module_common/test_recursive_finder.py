@@ -20,12 +20,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import imp
+import pytest
 import zipfile
+
 from collections import namedtuple
 from functools import partial
 from io import BytesIO, StringIO
-
-import pytest
 
 import ansible.errors
 
@@ -42,12 +42,12 @@ def finder_containers():
     FinderContainers = namedtuple('FinderContainers', ['py_module_names', 'py_module_cache', 'zf'])
 
     py_module_names = set()
-    #py_module_cache = {('__init__',): b''}
+    # py_module_cache = {('__init__',): b''}
     py_module_cache = {}
 
     zipoutput = BytesIO()
     zf = zipfile.ZipFile(zipoutput, mode='w', compression=zipfile.ZIP_STORED)
-    #zf.writestr('ansible/__init__.py', b'')
+    # zf.writestr('ansible/__init__.py', b'')
 
     return FinderContainers(py_module_names, py_module_cache, zf)
 
@@ -79,7 +79,7 @@ class TestRecursiveFinder(object):
         else:
             module_utils_data = StringIO(u'# License\ndef do_something():\n    pass\n')
         mocker.patch('imp.find_module', side_effect=partial(find_package_foo, module_utils_data))
-        mocker.patch('ansible.executor.module_common._slurp', side_effect= lambda x: b'# License\ndef do_something():\n    pass\n')
+        mocker.patch('ansible.executor.module_common._slurp', side_effect=lambda x: b'# License\ndef do_something():\n    pass\n')
 
         name = 'ping'
         data = b'#!/usr/bin/python\nfrom ansible.module_utils import foo'
