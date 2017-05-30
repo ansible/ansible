@@ -259,6 +259,42 @@
     that:
     - replace_follow_result.checksum == target_file_result.stdout
 
+- name: ensure test dir is absent
+  file:
+    path: /tmp/10834_test
+    state: absent
+
+- name: create test dir
+  file:
+    path: /tmp/10834_test
+    state: directory
+
+- name: copy test file to system 1
+  copy:
+    src: foo.txt
+    dest: /tmp/10834_test/test_file
+
+- name: copy test file to system 2
+  copy:
+    src: foo.txt
+    dest: /tmp/10834_test/test_file
+
+- name: make hard link
+  file:
+    src: /tmp/10834_test/test_file
+    dest: /tmp/10834_test/test_file_hardlink
+    state: hard
+
+- name: copy test file to system 3
+  copy:
+    src: foo.txt
+    dest: /tmp/10834_test/test_file
+
+- name: cleanup
+  file:
+    path: /tmp/10834_test
+    state: absent
+
 - name: create a test dir to copy
   file:
     path: '{{ output_dir }}/top_dir'

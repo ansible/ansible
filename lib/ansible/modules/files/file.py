@@ -151,8 +151,6 @@ def get_state(b_path):
             return 'link'
         elif os.path.isdir(b_path):
             return 'directory'
-        elif os.stat(b_path).st_nlink > 1:
-            return 'hard'
         else:
             # could be many other things, but defaulting to file
             return 'file'
@@ -396,15 +394,14 @@ def main():
                 diff['before']['src'] = to_native(b_old_src, errors='strict')
                 diff['after']['src'] = src
                 changed = True
-        elif prev_state == 'hard':
-            if not (state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino):
+        elif prev_state in ('file', 'directory'):
+            # continue if the file is a hard link and already correct
+            if os.stat(b_path).st_ino == os.stat(b_src).st_ino:
+                pass
+            else:
                 changed = True
                 if not force:
-                    module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
-        elif prev_state == 'file':
-            changed = True
-            if not force:
-                module.fail_json(dest=path, src=src, msg='Cannot link, %s exists at destination' % prev_state)
+                    module.fail_json(dest=path, src=src, msg='Cannot link, %s exists at destination' % prev_state)
         elif prev_state == 'directory':
             changed = True
             if os.path.exists(b_path):

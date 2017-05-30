@@ -252,6 +252,42 @@
     that:
     - "template_result|changed"
 
+- name: ensure test dir is absent
+  file:
+    path: /tmp/10834.2_test
+    state: absent
+
+- name: create test dir
+  file:
+    path: /tmp/10834.2_test
+    state: directory
+
+- name: template out test file to system 1
+  template:
+    src: foo.j2
+    dest: /tmp/10834.2_test/test_file
+
+- name: template out test file to system 2
+  template:
+    src: foo.j2
+    dest: /tmp/10834.2_test/test_file
+
+- name: make hard link
+  file:
+    src: /tmp/10834.2_test/test_file
+    dest: /tmp/10834.2_test/test_file_hardlink
+    state: hard
+
+- name: template out test file to system 3
+  template:
+    src: foo.j2
+    dest: /tmp/10834.2_test/test_file
+
+- name: cleanup
+  file:
+    path: /tmp/10834.2_test
+    state: absent
+
 - name: change var for the template
   set_fact:
     templated_var: "templated_var_loaded"
