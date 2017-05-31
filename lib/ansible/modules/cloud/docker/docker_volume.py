@@ -48,19 +48,19 @@ options:
       - >
         Dictionary of volume settings. Consult docker docs for valid options and values:
         U(https://docs.docker.com/engine/reference/commandline/volume_create/#driver-specific-options)
-    default: null
 
   force:
     description:
-      - With state I(present) causes the volume to be deleted and recreated if the volume already
+      - With state C(present) causes the volume to be deleted and recreated if the volume already
         exist and the driver, driver options or labels differ.
         This will cause any data in the existing volume to be lost.
-    default: false
+    type: bool
+    default: 'no'
 
   state:
     description:
-      - I(absent) deletes the volume.
-      - I(present) creates the volume, if it does not already exist.
+      - C(absent) deletes the volume.
+      - C(present) creates the volume, if it does not already exist.
     default: present
     choices:
       - absent
@@ -70,7 +70,7 @@ extends_documentation_fragment:
     - docker
 
 author:
-    - "Alex Grönholm (@agronholm)"
+    - Alex Grönholm (@agronholm)
 
 requirements:
     - "python >= 2.6"
