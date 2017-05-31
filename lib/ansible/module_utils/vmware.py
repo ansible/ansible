@@ -348,7 +348,7 @@ def gather_vm_facts(content, vm):
         'annotation': 'vm.config.annotation',
     }
 
-    for k,v in facts_map.items():
+    for k, v in facts_map.items():
         try:
             facts[k] = ast.literal_eval(v)
         except:
