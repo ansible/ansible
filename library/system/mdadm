@@ -1,0 +1,209 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Nicholas DeClario <nick@declario.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: mdadm
+author: Nicholas DeClario
+short_description: Module to create, stop and destroy software RAID devices.
+description:
+    - A module designed to create, stop and destroy Linux software RAID
+      arrays via the mdadm utility.
+options:
+  chunk:
+    description:
+    - Set the chunk size for a new RAID device
+    required: False
+    default: 64
+  device_name:
+    description:
+    - the device's system name, eg: /dev/md0
+    required: True
+  devices:
+    description:
+    - the physical devices to use when creating a RAID device
+    required: True
+  force:
+    description:
+    - Force mdadm to create a raid array with a questionable layout
+    required: False
+    default: False
+  level:
+    description:
+    - The RAID level for a new array
+    required: True
+  metadata:
+    description:
+    - The style of the RAID metadata (superblock) to be used.
+    required: False
+    default: 1.2
+  state:
+    description:
+    - The state of the array, present, stopped, removed.
+    required: True
+notes:
+  - requires mdadm
+'''
+
+EXAMPLES = '''
+  tasks:
+    - name: Create mdadm raid device
+      mdadm: >
+        level=0
+        chunk=256
+        metadata="1.0"
+        devices="/dev/xvdb,/dev/xvdc"
+        device_name="/dev/md0"
+        state=present
+      tags:
+      - present
+    - name: Stop mdadm raid device
+      mdadm: >
+        device_name="/dev/md0"
+        state=stopped
+      tags:
+      - stop
+    - name: Removing mdadm raid device
+      mdadm: >
+        device_name="/dev/md0"
+        state=absent
+      tags:
+      - remove
+'''
+
+
+def remove_stop_array(module, remove=False):
+    devices = list()
+    mdadm = module.get_bin_path('mdadm', required=True)
+
+    # check first if the array exists
+    cmd = "%s %s" % (mdadm, module.params.get('device_name'))
+    rc, _, err = module.run_command(cmd)
+    if rc == 1:
+        return False
+
+    # Fetch the drives in the array for later
+    cmd = "%s --detail %s" % (mdadm, module.params.get('device_name'))
+    rc, _, err = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg="Failed to fetch array details for %s" % \
+            module.params.get('device_name'), rc=rc, err=err)
+    else:
+        lines = _.rstrip().split('\n')
+        for line in lines:
+            if line.count("/dev/xvd") or line.count("/dev/sd"):
+                device = "/dev/" + line.split("/dev/")[1]
+                devices.append(device)
+
+    # stop the array
+    cmd = "%s --stop %s" % (mdadm, module.params.get('device_name'))
+    rc, _, err = module.run_command(cmd)
+    if rc == 0 and not remove:
+        return True
+    elif not remove:
+        module.fail_json(msg="Stopping RAID array %s failed" % \
+            module.params.get('device_name'), rc=rc, err=err)
+
+    # And wipe the superblock on the disks if requested
+    if remove:
+        cmd = "%s --zero-superblock %s" % (mdadm, " ".join(devices))
+        rc, _, err = module.run_command(cmd)
+        if rc == 0:
+            return True
+        else:
+            module.fail_json(msg="Removing RAID array %s failed" % \
+                module.params.get('device_name'), rc=rc, err=err)
+
+    return False
+
+
+def create_array(module):
+    mdadm = module.get_bin_path('mdadm', required=True)
+
+    # check first if the array exists
+    cmd = "%s %s" % (mdadm, module.params.get('device_name'))
+    rc, _, err = module.run_command(cmd)
+    if rc == 0:
+        return False
+
+    # setup some paramaters
+    force = "--force" if module.params.get('force') == True else " "
+    metadata = "--metadata " + module.params.get('metadata') \
+        if module.params.get('metadata') != None else " "
+
+    # create the array here
+    devices = module.params.get('devices')
+    cmd = "%s --create %s %s %s --chunk=%s --level=%s --raid-devices=%s %s" % \
+                  (mdadm, module.params.get('device_name'),
+                   force, metadata, module.params.get('chunk'),
+                   module.params.get('level'), len(devices), " ".join(devices))
+    rc, _, err = module.run_command(cmd)
+    if rc == 0:
+        return True
+    else:
+        module.fail_json(msg="Creating RAID array %s on devices %s failed" % \
+                (module.params.get('device_name'),
+                 " ".join(devices)), rc=rc, err=err)
+
+    return False
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            chunk = dict(default=64),
+            device_name = dict(),
+            devices = dict(type='list'),
+            force = dict(type='bool', default='False'),
+            level = dict(aliases=['raid_level']),
+            metadata = dict(),
+            state = dict(default='present'),
+        ),
+        supports_check_mode = True
+    )
+
+    changed = False
+
+    if module.params.get('state') == 'absent':
+        if not module.params.get('device_name'):
+            module.fail_json(msg='device_name paramater is required for removing RAID device')
+        changed = remove_stop_array(module, True)
+    elif module.params.get('state') == 'stopped':
+        if not module.params.get('device_name'):
+            module.fail_json(msg='device_name paramater is required for removing RAID device')
+        changed = remove_stop_array(module)
+    elif module.params.get('state') == 'present' or module.params.get('state') == 'running':
+        if not module.params.get('device_name'):
+            module.fail_json(msg='device_name paramater is required for creating RAID device')
+        if not module.params.get('level'):
+            module.fail_json(msg='level paramater is required for creating RAID device')
+        if not module.params.get('devices'):
+            module.fail_json(msg='devices paramater is required for creating RAID device')
+        changed = create_array(module)
+    else:
+        module.fail_json(msg="Invalid state '%s' requested" % module.params.get('state'))
+
+    module.exit_json(changed=changed)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
