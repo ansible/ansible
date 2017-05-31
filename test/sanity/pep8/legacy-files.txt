@@ -689,13 +689,6 @@ lib/ansible/plugins/action/sros_config.py
 lib/ansible/plugins/action/synchronize.py
 lib/ansible/plugins/action/template.py
 lib/ansible/plugins/action/unarchive.py
-lib/ansible/plugins/cache/__init__.py
-lib/ansible/plugins/cache/base.py
-lib/ansible/plugins/cache/jsonfile.py
-lib/ansible/plugins/cache/memory.py
-lib/ansible/plugins/cache/pickle.py
-lib/ansible/plugins/cache/redis.py
-lib/ansible/plugins/cache/yaml.py
 lib/ansible/plugins/callback/__init__.py
 lib/ansible/plugins/callback/actionable.py
 lib/ansible/plugins/callback/context_demo.py
