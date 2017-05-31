@@ -1,0 +1,171 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+DOCUMENTATION = """
+---
+module: postgresql_ext
+short-description: Add or remove extensions from a PostgreSQL database.
+description:
+    - Add or remove extensions from a PostgreSQL database.
+    - The function of this module is to allow the installation and removal
+      of extensions from a PostgreSQL database. This requires superuser
+      privileges within the database.
+version_added: "1.6"
+options:
+  db:
+    description:
+      - Name of database to alter
+    required: true
+    default: null
+  extension:
+    description:
+      - Name of extension to add or remove
+    required: true
+    default: null
+  login_host:
+    description:
+      - Host running the database
+    required: false
+    default: localhost
+  login_password:
+    description:
+      - The password to authenticate with
+    required: false
+    default: null
+  login_user:
+    description:
+      - The username to authenticate with
+    required: false
+    default: postgres
+  port:
+    description:
+      - Database port to connect to
+    required: false
+    default: 5432
+  state:
+    description:
+      - Extension state
+    required: false
+    default: present
+notes:
+   - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
+   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
+     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
+requirements: [ psycopg2 ]
+author: Simon Belluzzo
+"""
+
+EXAMPLES = """
+# Add hstore extension to acme database
+- postgresql_ext: name=hstore
+                  db=acme
+
+# Remove hstore extension to acme database
+- postgresql_ext: name=hstore
+                  db=acme
+                  state=absent
+"""
+
+try:
+    import psycopg2
+    import psycopg2.extras
+except ImportError:
+    psycopg2_present = False
+else:
+    psycopg2_present = True
+
+class NotAvailableError(Exception):
+    pass
+
+
+def ext_present(cursor, ext):
+    """Check if extension is installed in the database."""
+    cursor.execute("""SELECT extname
+                        FROM pg_catalog.pg_extension
+                        WHERE extname = %s;""", (ext,))
+    return cursor.fetchone() is not None
+
+def ext_available(cursor, ext):
+    """Check if extension is available to be installed."""
+    cursor.execute("""SELECT name
+                        FROM pg_catalog.pg_available_extensions
+                        WHERE name = %s;""", (ext,))
+    return cursor.fetchone() is not None
+
+def uninstall_ext(cursor, ext):
+    """Uninstall extension from database."""
+    if ext_present(cursor, ext):
+        cursor.execute("DROP EXTENSION %s;" % ext)
+        return True
+    else:
+        return False
+
+def install_ext(cursor, ext):
+    """Install extension in database."""
+    if not ext_present(cursor, ext):
+        if not ext_available(cursor, ext):
+            raise NotAvailableError("Extension '%s' is not available for installation." % ext)
+        cursor.execute("CREATE EXTENSION %s;" % ext)
+        return True
+    else:
+        return False
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            db              = dict(required=True),
+            extension       = dict(required=True, aliases=['name', 'ext']),
+            login_host      = dict(default=""),
+            login_password  = dict(default=""),
+            login_user      = dict(default="postgres"),
+            port            = dict(default="5432"),
+            state           = dict(default='present',
+                                    choices=['present', 'absent']),
+        ),
+        supports_check_mode=True,
+    )
+
+    if not psycopg2_present:
+        module.fail_json(msg="The python psycopg2 module is required")
+
+    db        = module.params["db"]
+    extension = module.params["extension"]
+    state     = module.params["state"]
+    changed   = False
+
+    params_map = dict(
+        login_host     = "host",
+        login_user     = "user",
+        login_password = "password",
+        port           = "port"
+    )
+
+    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
+                if k in params_map and v != '' )
+
+    try:
+        conn   = psycopg2.connect(database=db, **kw)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    except Exception, e:
+        module.fail_json(msg="Unable to connect to database: %s" % e)
+
+    try:
+        if state == "absent":
+            changed = uninstall_ext(cursor, extension)
+
+        elif state == "present":
+            changed = install_ext(cursor, extension)
+
+    except Exception, e:
+        conn.rollback()
+        module.fail_json(db=db, extension=extension, msg="Database operation failed: %s" % e)
+
+    if module.check_mode:
+        conn.rollback()
+    else:
+        conn.commit()
+
+    module.exit_json(changed=changed, db=db, extension=extension)
+
+from ansible.module_utils.basic import *
+main()
