@@ -1926,7 +1926,7 @@ Some other notable changes:
 * can set ansible_sudo_exe as an inventory variable which allows specifying
   a different sudo (or equivalent) command
 * git module: Submodule handling has changed.  Previously if you used the
-  ``recursive`` parameter to handle submodules, ansible would track the
+  `recursive` parameter to handle submodules, ansible would track the
   submodule upstream's head revision.  This has been changed to checkout the
   version of the submodule specified in the superproject's git repository.
   This is inline with what git submodule update does.  If you want the old
