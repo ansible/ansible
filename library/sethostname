@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+# os, subprocess, sys loaded by `ansible-common`
+
+DOCUMENTATION = '''
+---
+module: sethostname
+short_description: Sets machine hostname
+description:
+     - Sets hostname three different ways: by calling 'hostname NAME', by writing to /etc/hostname and by calling 'sysctl kernel.hostname=NAME'.  Checks current hostname by running 'hostname' alone.
+version_added: "after 0.9"
+options:
+  hostname:
+    description:
+      - Name the hosts is going to take
+    required: true
+    default: null
+examples:
+   - code: "sethostname: hostname=load_balancer_001"
+     description: Set hostname to 'load_balancer_001'
+requirements: [ ]
+author: Alexandre Bourget
+'''
+
+def run(cmd):
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    return p.communicate()
+
+def main():
+    module = AnsibleModule(argument_spec={
+        "hostname": dict(required=True),
+    })
+
+    current_hostname = run("hostname")[0].strip()
+    wanted_hostname = module.params['hostname']
+
+    if current_hostname == wanted_hostname:
+        module.exit_json(changed=False)
+        sys.exit()
+
+    run("hostname {0}".format(wanted_hostname))
+    run("echo {0} > /etc/hostname".format(wanted_hostname))
+    run("sysctl kernel.hostname={0}".format(wanted_hostname))
+
+    module.exit_json(changed=True, msg="hostname changed to %s" % wanted_hostname)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
