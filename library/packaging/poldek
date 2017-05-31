@@ -1,0 +1,145 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Elan Ruusamäe <glen@pld-linux.org>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
+import traceback
+import os
+
+DOCUMENTATION = '''
+---
+module: poldek
+short_description: Manages packages with the I(poldek) package manager
+description:
+     - Will install, upgrade, remove, and list packages with the I(poldek) package manager.
+version_added: "1.1"
+options:
+  name:
+    description:
+      - package name, or package specifier with version, like C(name-1.0).
+    required: true
+    default: null
+    aliases: []
+  state:
+    description:
+      - whether to install (C(present), C(latest)), or remove (C(absent)) a package.
+    required: false
+    choices: [ "present", "latest", "absent" ]
+    default: "present"
+  update_cache:
+    description:
+      - update the package database first
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+
+examples:
+   - code: poldek name=apache state=installed
+   - code: poldek name=apache state=absent
+   - code: poldek name=apache state=installed, update_cache=yes"
+      description: update the package database and install apache (apache will be the updated if a newer version exists) 
+notes: []
+# informational: requirements for nodes
+requirements: [ poldek , rpm ]
+author: Elan Ruusamäe
+'''
+
+RPM_PATH = "/bin/rpm"
+POLDEK_PATH = "/usr/bin/poldek"
+
+def query_package(module, name, state="installed"):
+    # rpm -q returns 0 if the package is installed,
+    # 1 if it is not installed
+    if state == "installed":
+        rc = os.system("%s -q %s" % (RPM_PATH, name))
+        if rc == 0:
+            return True
+
+        return False
+
+def update_package_db(module):
+    rc = os.system("%s --up -q" % POLDEK_PATH)
+    if rc != 0:
+        module.fail_json(msg="could not update package db")
+
+def remove_packages(module, packages):
+    remove_c = 0
+    # Using a for loop in case of error, we can report the package that failed
+    for package in packages:
+        # Query the package first, to see if we even need to remove
+        if not query_package(module, package):
+            continue
+
+        rc = os.system("%s -e %s --noask > /dev/null" % (POLDEK_PATH, package))
+        if rc != 0:
+            module.fail_json(msg="failed to remove %s" % (package))
+
+        remove_c += 1
+
+    if remove_c > 0:
+        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c)
+
+    module.exit_json(changed=False, msg="package(s) already absent")
+
+def install_packages(module, packages):
+    install_c = 0
+    for package in packages:
+        if query_package(module, package):
+            continue
+
+        rc = os.system("%s -u %s --noask > /dev/null" % (POLDEK_PATH, package))
+        if rc != 0:
+            module.fail_json(msg="failed to install %s" % (package))
+
+        install_c += 1
+
+    if install_c > 0:
+        module.exit_json(changed=True, msg="installed %s package(s)" % (install_c))
+
+    module.exit_json(changed=False, msg="package(s) already installed")
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+        state = dict(default="installed", choices=["installed", "absent"]),
+        update_cache = dict(default="yes", aliases=["update-cache"], type='bool'),
+        name = dict(aliases=["pkg"], required=True))
+    )
+
+    if not os.path.exists(POLDEK_PATH):
+        module.fail_json(msg="cannot find poldek, looked for %s" % (POLDEK_PATH))
+
+    p = module.params
+
+    if p["update_cache"] == "yes":
+        update_package_db(module)
+
+    pkgs = p["name"].split(",")
+
+    if p["state"] == "installed":
+        install_packages(module, pkgs)
+
+    elif p["state"] == "absent":
+        remove_packages(module, pkgs)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
