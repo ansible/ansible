@@ -1,0 +1,70 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2013 Dag Wieers <dag@wieers.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+author: Steve Gargan
+module: add_facts
+short_description: Add host facts from a task to an aggregate variable. 
+description:
+     - This module allows setting new variables. Variables are set on a host-by-host basis
+       just like facts discovered by the setup module. They are grouped by an aggregate key
+       and also by the role in which they were added. 
+     - the intention is that values be added to the aggregate during a number of roles and 
+       interated over in a final role to create a config using all the aggregated values.
+     - Variables can be key value pairs or a key with a JSON blob
+     - Variables are retrieved using the aggregate_key[role_key][variable_name]
+     - These variables will survive between plays.
+options:
+  aggregate_key:
+    description:
+      - A key used to group the newly added facts across roles
+    required: true
+  role_key:
+    description:
+      - A key used to group facts added by a particular role
+    required: true
+  key_value:
+    description:
+      - like the C(set_fact) module C(add_fact) takes key=value pairs as variables to set
+        in the playbook scope, values can be JSON objects.
+    required: true
+    default: null
+version_added: "1.4"
+'''
+
+EXAMPLES = '''
+# Example adding host facts using key=value pairs in a cassandra role to an 
+# aggregate_key 'exposed ports'. This aggregate and its contents will be available
+# in templates as exposed_ports['cassandra']['ports']
+- name: Add cassandra ports to the exposed ports list
+    add_facts: aggregate_key="exposed_ports" role_key="cassandra" ports="{{item}}"
+    with_items: 
+      - 9160
+      - 7001
+
+# in different role
+- name: Add jetty ports to the exposed list
+  add_facts: aggregate_key="exposed_ports" role_key="jetty" ports="{{item}}"
+  with_items:
+    - 8080
+    - 1099
+
+'''
