@@ -1,0 +1,110 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2_tag_search
+short_description: search for EC2 resources by tag
+version_added: 1.6.2
+description:
+    - Search EC2 for resources that match the specified tags and returns their resource-specific IDs.  If no explicit resource type is specified, results are returned in a dictionary where results are mapped to their particular resource type.  Otherwise, just the list of resource IDs is returned.  If results are found, found_items is to True.  This module has a dependency on python-boto.
+options:
+  resource_type:
+    description:
+      - If specified, searches are constrained to only resources of this specific type.  The valid options for type are listed under "resource-type" in the I(Supported Filters) section at U(http://docs.aws.amazon.com/AWSEC2/latest/CommandLineReference/ApiReference-cmd-DescribeTags.html).
+    required: false
+    default: null
+    aliases: []
+  region:
+    description:
+      - region within which to search.
+    required: false
+    default: null
+    aliases: ['aws_region', 'ec2_region']
+
+author: Herby Gillot
+extends_documentation_fragment: aws
+'''
+
+EXAMPLES = '''
+# Example to find and list EBS volumes with specific tags
+tasks:
+- name: find registry volumes in prod
+  ec2_tag_search: resource_type='volume' region='us-west-2'
+  register: registry_vols
+  args:
+    tags:
+      env:      prod
+      registry: ''
+
+- name: list volumes
+  debug: var=registry_vols.results
+  when:  registry_vols.found_items
+'''
+
+import sys
+import time
+
+try:
+    import boto.ec2
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+            resource_type = dict(),
+            tags = dict(required=True),
+        )
+    )
+    module = AnsibleModule(argument_spec=argument_spec)
+
+    resource_type = module.params.get('resource_type')
+    tags = module.params.get('tags')
+
+    ec2 = ec2_connect(module)
+
+    all_matches = []
+
+    sfilters = [ {'key': i[0], 'value': i[1]} for i in tags.items() ]
+
+    if resource_type:
+        sfilters.append( {'resource-type': resource_type} )
+
+    for fltr in sfilters:
+        all_matches.append(
+            [ (r.res_id, r.res_type) for r in ec2.get_all_tags(fltr) ])
+    resources = list(frozenset.intersection(*map(frozenset, all_matches)))
+
+    if not resources:
+        module.exit_json(results=[], found_items=False, changed=False)
+
+    if resource_type:
+        results = [ i[0] for i in resources ]
+    else:
+        results = { e:[] for e in set(map(lambda r: r[1], resources)) }
+        map(lambda r: results[r[1]].append(r[0]), resources)
+
+    module.exit_json(results=results, found_items=True, changed=False)
+
+    sys.exit(0)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
