@@ -1736,7 +1736,7 @@ class AnsibleModule(object):
                     continue
                 wanted = 'str'
 
-            value = self.params[k]
+            value = param[k]
             if value is None:
                 continue
 
