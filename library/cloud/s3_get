@@ -1,0 +1,176 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: s3_get
+short_description: S3 only get module.
+description:
+    - This module allows the user to get a file on S3 bucket. This module has a dependency on python-boto.
+version_added: "1.0"
+options:
+  bucket:
+    description:
+      - Bucket name.
+    required: true
+    default: null
+    aliases: []
+  src:
+    description:
+      - Key of the object in the bucket.
+    required: true
+    default: null
+    aliases: []
+  dest:
+    description:
+      - The destination file path when downloading an object/key.
+    required: true
+    aliases: []
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value which boto find from boto config (~/.boto) or IAM roles.
+    required: false
+    default: null
+    aliases: ['ec2_secret_key']
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value which boto find from boto config (~/.boto) or IAM roles.
+    required: false
+    default: null
+    aliases: ['ec2_access_key']
+  others:
+    description:
+      - all arguments accepted by the M(file) module also work here
+    required: false
+requirements: [ "boto" ]
+author: Ryuzo Yamamoto
+'''
+
+EXAMPLES = '''
+- s3_get: bucket=mybucket src=/my/desired/key.txt dest=/usr/local/myfile.txt owner=root group=root mode=0600
+'''
+
+import sys
+import os
+import tempfile
+
+try:
+    import boto
+except ImportError:
+    module.fail_json(msg="boto required for this module")
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            bucket         = dict(required=True),
+            src            = dict(required=True),
+            dest           = dict(required=True),
+            aws_secret_key = dict(aliases=['ec2_secret_key'], no_log=True, required=False),
+            aws_access_key = dict(aliases=['ec2_access_key'], required=False),
+        ),
+        supports_check_mode=True,
+        add_file_common_args=True,
+    )
+
+    bucket = module.params.get('bucket')
+    src = os.path.expanduser(module.params['src'])
+    dest = os.path.expanduser(module.params.get('dest'))
+
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+
+    try:
+        s3 = boto.connect_s3(aws_access_key, aws_secret_key)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg = str(e))
+
+    # check bucket exists
+    try:
+        s3_bucket = s3.lookup(bucket)
+    except s3.provider.storage_response_error, e:
+        module.fail_json(msg= str(e))
+
+    if not s3_bucket:
+        module.fail_json(msg="Target bucket cannot be found: %s" % bucket, failed=True)
+
+    # check key exists
+    try:
+        s3_key = s3_bucket.get_key(src)
+    except s3.provider.storage_response_error, e:
+        module.fail_json(msg= str(e))
+
+    if not s3_key:
+        module.fail_json(msg="Target key cannot be found: %s" % s3_key, failed=True)
+
+    # get checksum if dest exists
+    local_md5 = None
+    if os.path.exists(dest):
+        local_md5 = module.md5(dest)
+
+    # get file
+    try:
+        if local_md5:
+            remote_md5 = s3_key.etag[1:-1]
+            etag_multipart = remote_md5.find('-')!=-1
+            tmp = None
+
+            # get real file from s3 and get checksum when s3 object is multipart
+            if etag_multipart is True:
+                tmp = tempfile.mktemp()
+                s3_key.get_contents_to_filename(tmp)
+                remote_md5 = module.md5(tmp)
+
+            if local_md5 != remote_md5:
+                if not tmp:
+                    s3_key.get_contents_to_filename(tmp)
+
+                if not module.check_mode:
+                    os.rename(tmp, dest)
+                else:
+                    os.unlink(tmp)
+                changed = True
+            else:
+                if tmp:
+                    os.unlink(tmp)
+                changed = False
+        else:
+            if not module.check_mode:
+                s3_key.get_contents_to_filename(dest)
+            changed = True
+
+    except s3.provider.storage_copy_error, e:
+        module.fail_json(msg= str(e))
+
+    res_args = dict(
+        dest = dest, src = src, changed = changed
+    )
+
+    if os.path.exists(dest):
+        module.params['dest'] = dest
+        file_args = module.load_file_common_arguments(module.params)
+        res_args['changed'] = module.set_file_attributes_if_different(file_args, res_args['changed'])
+
+    module.exit_json(**res_args)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
