@@ -322,6 +322,17 @@ def find_host_portgroup_by_name(host, portgroup_name):
     return None
 
 
+def safe_eval_vm_property(vm, prop):
+    '''Operate like an eval on a nested property path'''
+    subattrs = prop.split('.')
+    val = vm
+    for subattr in subattrs:
+        if hasattr(val, subattr):
+            val = getattr(val, subattr)
+        else:
+            return None
+    return val
+
 def gather_vm_facts(content, vm):
     """ Gather facts from vim.VirtualMachine object. """
 
@@ -336,23 +347,20 @@ def gather_vm_facts(content, vm):
     }
 
     facts_map = {
-        'hw_name': 'vm.config.name',
-        'hw_power_status': 'vm.summary.runtime.powerState',
-        'hw_guest_full_name': 'vm.summary.guest.guestFullName',
-        'hw_guest_id': 'vm.summary.guest.guestId',
-        'hw_product_uuid': 'vm.config.uuid',
-        'hw_processor_count': 'vm.config.hardware.numCPU',
-        'hw_memtotal_mb': 'vm.config.hardware.memoryMB',
-        'guest_tools_status': 'vm.guest.toolsRunningStatus',
-        'guest_tools_version': 'vm.guest.toolsVersion',
-        'annotation': 'vm.config.annotation',
+        'hw_name': 'config.name',
+        'hw_power_status': 'summary.runtime.powerState',
+        'hw_guest_full_name': 'summary.guest.guestFullName',
+        'hw_guest_id': 'summary.guest.guestId',
+        'hw_product_uuid': 'config.uuid',
+        'hw_processor_count': 'config.hardware.numCPU',
+        'hw_memtotal_mb': 'config.hardware.memoryMB',
+        'guest_tools_status': 'guest.toolsRunningStatus',
+        'guest_tools_version': 'guest.toolsVersion',
+        'annotation': 'config.annotation',
     }
 
     for k, v in facts_map.items():
-        try:
-            facts[k] = ast.literal_eval(v)
-        except:
-            facts[k] = None
+        facts[k] = safe_eval_vm_property(vm, v)
 
     try:
         cfm = content.customFieldsManager
