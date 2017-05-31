@@ -1,0 +1,229 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Miguel Fonseca <miguel.cnf () gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import os
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+DOCUMENTATION = '''
+---
+module: json
+author: Miguel Fonseca
+short_description: Manage a json file
+description:
+  - This module will add, update or delete a specific key on a given json file. \
+    It can also be used to simply validate a json file.
+version_added: "1.7"
+options:
+  json_file:
+    description:
+      - json file to be updated/validated
+    required: true
+    aliases: [ name, file ]
+  key:
+    description:
+      - key to add/update/delete
+      - should represent the full json path separating keys by a dot ie. I(key1.key2.key3)
+    required: false
+  value:
+    description:
+      - new key value
+    required: false
+    default: ''
+  delete:
+    description:
+      - when this option is set the chosen key will be deleted
+    required: false
+    default: false
+  validate:
+    description:
+      - when this option is set the json file will only be validated
+    required: false
+    default: false
+requirements: []
+notes:
+  - options value, delete and validate are mutually exclusive as they dont make sense together
+  - key is not required if validate is used but it is required and validated for any other action
+  - value is optional and if not set will have an empty string as the default value
+'''
+
+EXAMPLES='''
+---
+- name: update key with a new string value
+  json: json_file="/path/to/file.json" key="key1.key2" value="1337"
+
+- name: update key with new json struct
+  json: name="/path/to/file.json" key="key1.key2" value='{"key3": "1337"}'
+
+- name: delete key
+  json: name="/path/to/file.json" key="key1.key2" delete="yes"
+
+- name: validate json
+  json: name="/path/to/file.json" validate="yes"
+'''
+
+def get_key(my_dict, key):
+    return reduce(lambda d, k: d.get(k, {}), key.split('.'), my_dict)
+
+
+def add_key(my_dict, key, value):
+    key = key.split(".")
+    my_dict = reduce(lambda d, k: d.setdefault(k, {}), key[:-1], my_dict)
+    my_dict[key[-1]] = value
+
+
+def set_key(my_dict, key, value):
+    key = key.split(".")
+    my_dict = reduce(dict.get, key[:-1], my_dict)
+    my_dict[key[-1]] = value
+
+
+def del_key(my_dict, key):
+    key = key.split(".")
+    my_dict = reduce(dict.get, key[:-1], my_dict)
+    del my_dict[key[-1]]
+
+
+def read_json_file(json_file):
+    f = open(json_file, 'r')
+    json_obj = json.load(f)
+    f.close()
+    return json_obj
+
+
+def write_json_file(json_file, json_obj):
+    f = open(json_file, 'w')
+    f.write(json.dumps(json_obj, indent=4, sort_keys=True))
+    f.close()
+
+
+def validate_json_file(module, json_file):
+    try:
+        f = open(json_file, 'r')
+        json.load(f)
+    except IOError, e:
+        module.fail_json(msg="%s" % e, changed=False, rc=1)
+    except ValueError, e:
+        f.close()
+        module.fail_json(msg="%s" % e, changed=False, rc=1)
+    else:
+        f.close()
+        module.exit_json(msg="json file is valid", changed=False, rc=0)
+
+
+def update_key(module, json_file, key, value):
+    try:
+        json_obj = read_json_file(json_file)
+
+        # Check for json values
+        try:
+            value = json.loads(value)
+        except Exception:
+            pass
+
+        current_value = get_key(json_obj, key)
+        # Not changing it
+        if current_value == value:
+            module.exit_json(msg="json file up to date", changed=False, rc=0)
+
+        # Do the magic
+        if not current_value:
+            add_key(json_obj, key, value)
+        else:
+            set_key(json_obj, key, value)
+
+        write_json_file(json_file, json_obj)
+        module.exit_json(msg="json file updated", changed=True, rc=0)
+    except Exception, e:
+        raise e
+
+
+def delete_key(module, json_file, key):
+    try:
+        json_obj = read_json_file(json_file)
+
+        if not get_key(json_obj, key):
+            module.exit_json(msg="json file up to date", changed=False, rc=0)
+
+        # Do the magic
+        del_key(json_obj, key)
+
+        write_json_file(json_file, json_obj)
+        module.exit_json(msg="json file updated", changed=True, rc=0)
+    except Exception, e:
+        raise e
+
+
+def validate_key(module, key):
+    if key is None:
+        module.fail_json(msg="missing key argument", changed=False, rc=1)
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            json_file = dict(required=True, aliases=['name', 'file']),
+            key = dict(required=False, type='str', default=None),
+            value = dict(required=False, type='str', default=''),
+            delete = dict(required=False, choices=BOOLEANS, default=False),
+            validate = dict(required=False, choices=BOOLEANS, default=False)
+        ),
+        supports_check_mode=False,
+        mutually_exclusive=[
+            ['value', 'delete'],
+            ['value', 'validate'],
+            ['delete', 'validate'],
+            ['key', 'validate']
+        ]
+    )
+
+    json_file  = os.path.expanduser(module.params['json_file'])
+    key  = module.params['key']
+    value  = module.params['value']
+    delete = module.boolean(module.params['delete'])
+    validate = module.boolean(module.params['validate'])
+
+    if os.path.isdir(json_file):
+        module.fail_json(msg='%s is a directory !' % json_file, changed=False, rc=256)
+
+    if not os.path.exists(json_file):
+        module.fail_json(msg='%s does not exist !' % json_file, changed=False, rc=257)
+
+    if validate:
+        validate_json_file(module, json_file)
+
+    # validate key for remaining actions
+    validate_key(module, key)
+
+    try:
+        if delete:
+            delete_key(module, json_file, key)
+        else:
+            update_key(module, json_file, key, value)
+    except Exception, e:
+        module.fail_json(msg="failed to update json file with exception: %s" % e, changed=False, rc=1)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
