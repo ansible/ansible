@@ -97,14 +97,14 @@ options:
     type: dict
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Create a CodeDeploy application with a deployment group and an IN_PLACE deployment style.
 - aws_codedeploy_application:
   application_name: TestApplication
   deployment_group: test_application_group
-  deployment_style: 
+  deployment_style:
     deploymentType: "IN_PLACE"
     deploymentOption: "WITHOUT_TRAFFIC_CONTROL"
   service_role_arn: "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
@@ -180,7 +180,7 @@ def get_codedeploy_application(client, name, module):
 def get_codedeploy_application_deployment_group(client, name, dg, module):
     """Get the details of the CodeDeploy deployment group."""
     try:
-       return client.get_deployment_group(applicationName=name, deploymentGroupName=dg)    
+        return client.get_deployment_group(applicationName=name, deploymentGroupName=dg)
     except (ClientError, NoCredentialsError) as e:
         if e.response['Error']['Code'] == 'ApplicationDoesNotExistException':
             return None
@@ -278,7 +278,7 @@ def update_codedeploy_deployment_group(client, name, cdg, ndg, dc, ec2_tf, opf, 
             dg_params['blueGreenDeploymentConfiguration'] = bgdc
         if lbi is not None:
             dg_params['loadBalancerInfo'] = lbi
- 
+
         response = client.update_deployment_group(
             applicationName=name,
             currentDeploymentGroupName=cdg,
@@ -288,7 +288,6 @@ def update_codedeploy_deployment_group(client, name, cdg, ndg, dc, ec2_tf, opf, 
     except ClientError as e:
         changed = False
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-
     return changed
 
 
@@ -302,8 +301,7 @@ def update_codedeploy_application(client, name, new_name, module):
         changed = True
     except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-
-   return changed
+    return changed
 
 
 def delete_codedeploy_application(client, name):
