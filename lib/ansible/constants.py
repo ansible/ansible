@@ -161,6 +161,8 @@ def load_config_file():
     for path in [path0, path1, path2, path3]:
         if path is not None and os.path.exists(path):
             try:
+                if '-v' in sys.argv:
+                    print('Reading config file: {0}'.format(path))
                 p.read(path)
             except configparser.Error as e:
                 raise AnsibleOptionsError("Error reading config file: \n{0}".format(e))
