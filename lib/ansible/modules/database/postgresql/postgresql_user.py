@@ -287,7 +287,6 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
     # Handle passwords.
     if not no_password_changes and (password is not None or role_attr_flags != '' or expires is not None):
         # Select password and all flag-like columns in order to verify changes.
-        query_password_data = dict(password=password, expires=expires)
         select = "SELECT * FROM pg_authid where rolname=%(user)s"
         cursor.execute(select, {"user": user})
         # Grab current role attributes.
@@ -336,6 +335,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         if expires is not None:
             alter.append("VALID UNTIL %(expires)s")
 
+        query_password_data = dict(password=password, expires=expires)
         try:
             cursor.execute(' '.join(alter), query_password_data)
             changed = True
