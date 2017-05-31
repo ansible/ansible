@@ -1,0 +1,199 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Miguel Fonseca <miguel.cnf () gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+# TODO:
+#   - support setting downtime for single hosts as well
+#   - receive start and end time as options
+
+import urllib
+import urllib2
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+DOCUMENTATION = '''
+---
+module: opsview
+author: Miguel Fonseca
+short_description: Interact with the opsview api
+description:
+  - This module will interact with the opsview api allowing to set and remove scheduled downtimes
+version_added: "1.7.0"
+options:
+  url:
+    description:
+      - opsview api url
+    required: true
+    aliases: [ api_url ]
+  user:
+    description:
+      - api user
+    default: 'ansible'
+  password:
+    description:
+      - api password
+    required: true
+  hostgroup:
+    description:
+      - hostgroup name to modify
+    required: true
+  downtime:
+    description:
+      - set or remove action
+    required: true
+    choices: [ 'set', 'remove' ]
+requirements: []
+'''
+
+EXAMPLES='''
+---
+- name: set downtime for hostgroup
+  opsview: url='http://opsview.foo.bar' user='ansbile' password='foo' hostgroup='bar' downtime='set'
+
+- name: remove downtime for hostgroup
+  opsview: url='http://opsview.foo.bar' user='ansbile' password='foo' hostgroup='bar' downtime='remove'
+'''
+
+class Opsview(object):
+    def __init__(self, url, user, password, api_async_timeout=60):
+        self.url = url
+        self.user = user
+        self.password = password
+        self.api_token = None
+        self.api_async_timeout = api_async_timeout
+
+
+def get_hg_downtime(module, opsview, hostgroup):
+    try:
+        url = "%s/rest/downtime?hostgroupname=%s" % (opsview.url, urllib.quote_plus(hostgroup))
+        request = create_api_request(module, opsview, url, "GET")
+        connection = urllib2.build_opener(urllib2.HTTPCookieProcessor()).open(request)
+    except urllib2.URLError as e:
+        raise Exception('failed to get downtime info: %s: %s' % (e.code, e.read()))
+
+    return json.loads(connection.read())['summary']
+
+
+def post_hg_downtime(module, opsview, hostgroup):
+    try:
+        url = "%s/rest/downtime?hostgroupname=%s" % (opsview.url, urllib.quote_plus(hostgroup))
+        data = json.dumps({
+            "starttime": "now",
+            "endtime": "+2h",
+            "comment": "Automated downtime created by Ansible",
+        })
+        request = create_api_request(module, opsview, url, "POST", data)
+        connection = urllib2.build_opener(urllib2.HTTPCookieProcessor()).open(request)
+    except urllib2.URLError as e:
+        raise Exception('failed to set downtime: %s: %s' % (e.code, e.read()))
+
+    if 'summary' not in json.loads(connection.read()):
+        raise Exception('failed to set downtime: unexpected api behaviour')
+
+    module.exit_json(msg="posted downtime for hostgroup %s" % hostgroup, changed=True, rc=0)
+
+
+def delete_hg_downtime(module, opsview, hostgroup):
+    try:
+        url = "%s/rest/downtime?hostgroupname=%s" % (opsview.url, urllib.quote_plus(hostgroup))
+        request = create_api_request(module, opsview, url, "DELETE")
+        connection = urllib2.build_opener(urllib2.HTTPCookieProcessor()).open(request)
+    except urllib2.URLError as e:
+        raise Exception('failed to delete downtime: %s: %s' % (e.code, e.read()))
+
+    if 'summary' not in json.loads(connection.read()):
+        raise Exception('failed to delete downtime: unexpected api behaviour')
+
+    module.exit_json(msg="deleted downtime for hostgroup %s" % hostgroup, changed=True, rc=0)
+
+
+def create_api_auth(module, opsview):
+    try:
+        connection = urllib2.build_opener(urllib2.HTTPCookieProcessor()).open(
+            urllib2.Request("%s/rest/login" % opsview.url,
+                            urllib.urlencode(dict({
+                                'username': opsview.user,
+                                'password': opsview.password,
+                            })))
+        )
+
+        json_resp = json.loads(connection.read())
+        if not json_resp:
+            raise Exception('failed to connect to opsview')
+
+        if "token" in json_resp:
+            opsview.token = json_resp["token"]
+        else:
+            raise Exception('failed to authenticate to opsview')
+    except Exception, e:
+        module.fail_json(msg='failed to create api auth: %s' % e, changed=False, rc=1)
+
+
+def create_api_request(module, opsview, query, http_type, data=None):
+    try:
+        headers = {
+            "Content-Type": "application/json",
+            "X-Opsview-Username": opsview.user,
+            "X-Opsview-Token": opsview.token,
+        }
+        request = urllib2.Request(query, data, headers)
+        request.get_method = lambda: http_type
+    except Exception, e:
+        module.fail_json(msg='failed to create api request: %s' % e, changed=False, rc=1)
+
+    return request
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            url = dict(required=True, type='str', aliases=['api_url']),
+            user = dict(required=False, type='str', default='ansible'),
+            password = dict(required=True, type='str'),
+            hostgroup = dict(required=True, type='str'),
+            downtime = dict(required=True, type='str', choices=['set', 'remove'])
+        ),
+        supports_check_mode=False
+    )
+
+    url = module.params['url']
+    user = module.params['user']
+    password = module.params['password']
+    hostgroup = module.params['hostgroup']
+    downtime = module.params['downtime']
+
+    try:
+        opsview = Opsview(url, user, password)
+        create_api_auth(module, opsview)
+
+        if downtime == 'set':
+            post_hg_downtime(module, opsview, hostgroup)
+        elif downtime == 'remove':
+            delete_hg_downtime(module, opsview, hostgroup)
+        else:
+            raise Exception('%s is not a valid downtime action' % downtime)
+    except Exception, e:
+        module.fail_json(msg="%s" % e, changed=False, rc=1)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
