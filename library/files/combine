@@ -1,0 +1,31 @@
+# this is a virtual module that is entirely implemented server side
+
+DOCUMENTATION = '''
+---
+module: combine
+version_added: "1.5"
+short_description: Combines local files into a single file
+description:
+     - Combines a collection of local files from a directory into a single file
+       on the local system. Th
+options:
+  src:
+    description:
+      - Local path to the source directory
+    required: true
+    default: null
+    aliases: []
+  dest:
+    description:
+      - Local file name to combine the files into
+    required: true
+    default: null
+    aliases: []
+requirements: []
+author: Andrew Smith
+'''
+
+EXAMPLES = '''
+# Example from Ansible Playbooks
+- combine: src=/mytemplates/ssh/public_keys/ dest=/tmp/combined_ssh_keys
+'''
