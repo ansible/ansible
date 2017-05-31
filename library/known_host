@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to add host keys to ssh known_hosts.
+
+Modified from the authorized_keys module.
+
+(c) 2012, Jonathan Rudenberg <jonathan@titanous.com>
+(c) 2012, Brad Olson <brado@movedbylight.com>
+
+This file is part of Ansible.
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+# Makes sure the known_hosts line is present or absent in the user's .ssh/known_hosts.
+#
+# Arguments
+# =========
+#    user = username
+#    host = line to add to known_hosts for user
+#    state = absent|present (default: present)
+
+import sys
+import os
+import pwd
+import os.path
+
+def hostfile(user, write=False):
+    """
+    Calculate name of known hosts file, optionally creating the
+    directories and file, properly setting permissions.
+
+    :param str user: name of user in passwd file
+    :param bool write: if True, write changes to known_hosts file (creating directories if needed)
+    :return: full path string to known_hosts for user
+    """
+
+    user_entry = pwd.getpwnam(user)
+    homedir    = user_entry.pw_dir
+    sshdir     = os.path.join(homedir, ".ssh")
+    hostsfile   = os.path.join(sshdir, "known_hosts")
+
+    if not write:
+        return hostsfile
+
+    uid = user_entry.pw_uid
+    gid = user_entry.pw_gid
+
+    if not os.path.exists(sshdir):
+        os.mkdir(sshdir, 0700)
+    os.chown(sshdir, uid, gid)
+    os.chmod(sshdir, 0700)
+
+    if not os.path.exists( hostsfile):
+        try:
+            f = open(hostsfile, "w") #touches file so we can set ownership and perms
+        finally:
+            f.close()
+
+    os.chown(hostsfile, uid, gid)
+    os.chmod(hostsfile, 0600)
+    return hostsfile
+
+def readhosts(filename):
+
+    if not os.path.isfile(filename):
+        return []
+    f = open(filename)
+    hosts = [line.rstrip() for line in f.readlines()]
+    f.close()
+    return hosts
+
+def writehosts(filename, hosts):
+
+    f = open(filename,"w")
+    f.writelines( (host + "\n" for host in hosts) )
+    f.close()
+
+def enforce_state(module, params):
+    """
+    Add or remove host.
+    """
+
+    user  = params["user"]
+    host   = params["host"]
+    state = params.get("state", "present")
+
+    # check current state -- just get the filename, don't create file
+    params["hostfile"] = hostfile(user, write=False)
+    hosts = readhosts(params["hostfile"])
+    present = host in hosts
+
+    # handle idempotent state=present
+    if state=="present":
+        if present:
+            module.exit_json(changed=False)
+        hosts.append(host)
+        writehosts(hostfile(user,write=True), hosts)
+
+    elif state=="absent":
+        if not present:
+            module.exit_json(changed=False)
+        hosts.remove(host)
+        writehosts(hostfile(user,write=True), hosts)
+
+    params['changed'] = True
+    return params
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+           user  = dict(required=True),
+           host  = dict(required=True),
+           state = dict(default='present', choices=['absent','present'])
+        )
+    )
+
+    params = module.params
+    results = enforce_state(module, module.params)
+    module.exit_json(**results)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
