@@ -302,6 +302,9 @@ class NetboxAsInventory(object):
 
         inventory_dict = dict()
         netbox_hosts_list = self.get_hosts_list(self.api_url, self.host)
+        if isinstance(netbox_hosts_list, dict) and netbox_hosts_list.get("results"):
+            netbox_hosts_list = netbox_hosts_list["results"]
+
         if netbox_hosts_list:
             inventory_dict.update({"_meta": {"hostvars": {}}})
             for current_host in netbox_hosts_list:
