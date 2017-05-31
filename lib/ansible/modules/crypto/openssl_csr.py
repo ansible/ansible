@@ -198,8 +198,10 @@ class CertificateSigningRequest(object):
             'emailAddress': module.params['emailAddress'],
         }
 
-        if self.subjectAltName is None:
-            self.subjectAltName = 'DNS:%s' % self.subject['CN']
+        if self.subjectAltName:
+            self.subjectAltName = self.subjectAltName.replace(' ','').split(',')
+            if 'DNS:%s' % self.subject['CN'] not in self.subjectAltName:
+                self.subjectAltName.insert(0, 'DNS:%s' % self.subject['CN'])
 
         for (key, value) in self.subject.items():
             if value is None:
@@ -216,8 +218,8 @@ class CertificateSigningRequest(object):
                 if value is not None:
                     setattr(subject, key, value)
 
-            if self.subjectAltName is not None:
-                req.add_extensions([crypto.X509Extension("subjectAltName", False, self.subjectAltName)])
+            if self.subjectAltName:
+                req.add_extensions([crypto.X509Extension("subjectAltName", False, ','.join(self.subjectAltName))])
 
             privatekey_content = open(self.privatekey_path).read()
             self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
@@ -258,7 +260,7 @@ class CertificateSigningRequest(object):
         result = {
             'csr': self.path,
             'subject': self.subject,
-            'subjectAltName': self.subjectAltName,
+            'subjectAltName': ','.join(self.subjectAltName),
             'changed': self.changed
         }
 
