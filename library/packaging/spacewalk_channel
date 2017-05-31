@@ -1,0 +1,152 @@
+#!/usr/bin/python
+# encoding: utf-8
+
+# (c) 2014, Jens Depuydt <http://www.jensd.be>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: spacewalk_channel
+short_description: Subscribes or unsubscribes systems to Spacewalk child channels.
+description:
+   - Subscribes or unsubscribes a system from a given child channel
+   - The system needs to be registered with a base Spacewalk-channel before you can
+     subscribe to one or more child-channels.
+version_added: "1.7"
+options:
+  name:
+    description:
+      - Name of the child-channel to subscribe to or the be unsubscibed from
+    required: true
+    default: null
+  state:
+    description:
+      - The state of the child-channel on the involved system
+    required: false
+    default: present
+    choices: [ "present", "absent" ]
+  _user:
+    description:
+      - User used to authenticate with the Spacewalk-server
+    required: true
+    default: null
+  password:
+    description:
+      - Password used to authenticate with the Spacewalk-server (must match C(_user))
+    required: true
+    default: null
+notes:
+requirements: [ spacewalk-channel ]
+author: Jens Depuydt
+'''
+
+EXAMPLES = '''
+# Subscribe to child-channel centos-7-x86_64-base if not yet subscribed:
+- spacewalk-channel: name=centos-7-x86_64-base user=spacewalkuser password=spacepw
+
+#Ubsubscribe from child-channel centos-7-x86_64-updates if subscribed:
+- spacewalk-channel: name=centos-7-x86_64-updates user=spacewalkuser password=spacepw state=absent
+'''
+
+def spacewalk_channel_found(module):
+    """Checks if spacewalk-channel is installed"""
+    cmd = ['which', 'spacewalk-channel']
+    rc, stdout, stderr = module.run_command(cmd)
+    if "spacewalk-channel" not in stdout:
+        return False    
+    else:
+        return True
+
+def base_channel(module):
+    """Checks if this system is registered with a base-channel"""
+    cmd = ["spacewalk-channel", "-b"]
+    rc, stdout, stderr = module.run_command(cmd)
+    return stdout    
+
+def child_channel_exists(module, name):
+    """Checks if this system is subscribed to a given child-channel"""
+    cmd = ["spacewalk-channel", "-l"]
+    rc, stdout, stderr = module.run_command(cmd)
+    if name in stdout:
+        return True
+    return False
+
+def child_channel_add(module, name, user, password):
+    """Subscribe to child-channel"""
+    cmd= ["spacewalk-channel", "--add", "-c", name, "--user", user, "--password", password]
+    rc, stdout, stderr = module.run_command(cmd)
+    return stderr
+
+def child_channel_remove(module, name, user, password):
+    """Remove subscription from a given child-channel"""
+    cmd= ["spacewalk-channel", "--remove", "-c", name, "--user", user, "--password", password]
+    rc, stdout, stderr = module.run_command(cmd)
+    return stderr
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(choices=['present', 'absent'], default='present'),
+            user=dict(required=True),
+            password=dict(required=True),
+        ),
+        supports_check_mode=True,
+    )
+
+    name = module.params['name']
+    state = module.params['state']
+    user = module.params['user']
+    password = module.params['password']
+
+    #check if spacewalk-channel is installed
+    if not spacewalk_channel_found(module):
+        module.fail_json(msg="executable spacewalk-channel is not installed or not in $PATH")
+    
+    #check if system is already registered with a base channel
+    base_channel_name=base_channel(module)    
+    if  not base_channel_name:
+        module.fail_json(msg="system is not registered with a base-channel" +  base_channel_name)
+
+    changed = False
+
+    if state == "present":
+        if not child_channel_exists(module, name):
+            if module.check_mode:
+                changed = True
+            else:
+                error_add=child_channel_add(module, name, user, password)
+                if error_add:
+                    module.fail_json(msg="Could not subscribe to channel, error was:\n" + error_add)
+                else: 
+                    changed = True
+    else:
+        if child_channel_exists(module, name):
+            if module.check_mode:
+                changed = True
+            else:
+                error_remove=child_channel_remove(module, name, user, password)
+                if error_remove:
+                    module.fail_json(msg="Could not unsubscribe from  channel, error was:\n" + error_remove)
+                else: 
+                    changed = True
+
+    module.exit_json(changed=changed, base_channel=base_channel_name, name=name, state=state)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
