@@ -226,13 +226,13 @@ class VariableManager:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
-                all_vars = combine_vars(all_vars, role.get_default_vars(), name_b='play_roles_%s' % role.get_name())
+                all_vars = combine_vars(all_vars, role.get_default_vars(), name_b='play_roles_%s' % role.get_name(), scope_info=role._role_path)
 
         # if we have a task in this context, and that task has a role, make
         # sure it sees its defaults above any other roles, as we previously
         # (v1) made sure each task had a copy of its roles default vars
         if task and task._role is not None and (play or task.action == 'include_role'):
-            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), name_b='task_role')
+            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), name_b='task_role', scope_info=task._role._role_path)
 
         if host:
             # INIT WORK (use unsafe as we are going to copy/merge vars, no need to x2 copy)
@@ -270,7 +270,7 @@ class VariableManager:
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
-                        data = combine_vars(data, _get_plugin_vars(plugin, self._loader, inventory_dir, entities), name_b='inventory_plugin_dir_%s_%s' % (plugin, inventory_dir))
+                        data = combine_vars(data, _get_plugin_vars(plugin, self._loader, inventory_dir, entities), name_b='inventory_plugin_dir_%s' % plugin, scope_info=inventory_dir)
 
                 return data
 
@@ -278,7 +278,7 @@ class VariableManager:
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
-                    data = combine_vars(data, _get_plugin_vars(plugin, self._loader, basedir, entities), name_b='plugins_play_%s' % plugin)
+                    data = combine_vars(data, _get_plugin_vars(plugin, self._loader, basedir, entities), name_b='plugins_play_%s' % plugin, scope_info=plugin._original_path)
                 return data
 
             # configurable functions that are sortable via config
@@ -399,7 +399,7 @@ class VariableManager:
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False), name_b='task_roles_vars')
+                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False), name_b='task_roles_vars', scope_info=task._role._role_path)
             all_vars = combine_vars(all_vars, task.get_vars(), name_b='task_vars')
 
         # next, we merge in the vars cache (include vars) and nonpersistent
