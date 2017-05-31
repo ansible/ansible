@@ -396,9 +396,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         new_role_attrs = cursor.fetchone()
 
         # Detect any differences between current_ and new_role_attrs.
-        for i in range(len(current_role_attrs)):
-            if current_role_attrs[i] != new_role_attrs[i]:
-                changed = True
+        changed = current_role_attrs != new_role_attrs
 
     return changed
 
