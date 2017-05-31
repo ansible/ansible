@@ -1636,14 +1636,16 @@ class CloudFrontValidationManager(object):
         try:
             if streaming:
                 distributions = (
-                    self.__cloudfront_facts_mgr.list_streaming_distributions())
+                    self.__cloudfront_facts_mgr.list_streaming_distributions(
+                        False))
                 distribution_name = 'StreamingDistribution'
                 distribution_config_name = 'StreamingDistributionConfig'
             else:
-                distributions = self.__cloudfront_facts_mgr.list_distributions()
+                distributions = self.__cloudfront_facts_mgr.list_distributions(
+                    False)
                 distribution_name = 'Distribution'
                 distribution_config_name = 'DistributionConfig'
-            distribution_ids = list(distributions.keys())
+            distribution_ids = [dist.get('Id') for dist in distributions]
             for distribution_id in distribution_ids:
                 if streaming:
                     config = (
