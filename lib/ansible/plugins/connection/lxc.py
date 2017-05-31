@@ -68,7 +68,7 @@ class Connection(ConnectionBase):
             raise errors.AnsibleError("%s is not running" % self.container_name)
 
     def _communicate(self, pid, in_data, stdin, stdout, stderr):
-        buf = { stdout: [], stderr: [] }
+        buf = {stdout: [], stderr: []}
         read_fds = [stdout, stderr]
         if in_data:
             write_fds = [stdin]
@@ -109,7 +109,7 @@ class Connection(ConnectionBase):
 
         read_stdout, write_stdout = None, None
         read_stderr, write_stderr = None, None
-        read_stdin, write_stdin   = None, None
+        read_stdin, write_stdin = None, None
 
         try:
             read_stdout, write_stdout = os.pipe()
