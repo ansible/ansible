@@ -105,6 +105,12 @@ options:
     default: 1
     description:
       - Number of seconds to sleep between checks, before 2.3 this was hardcoded to 1 second.
+  msg:
+    version_added: "2.4"
+    required: false
+    default: null
+    description:
+      - The error message when module failed or timeout.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
 requirements: []
@@ -153,6 +159,12 @@ EXAMPLES = '''
 - wait_for:
     path: /proc/3466/status
     state: absent
+
+# output customized message when failed
+- wait_for:
+    path: /tmp/foo
+    state: present
+    msg: Timeout to find file /tmp/foo
 
 # wait 300 seconds for port 22 to become open and contain "OpenSSH",
 # don't assume the inventory_hostname is resolvable and don't start checking for 10 seconds
@@ -410,7 +422,8 @@ def main():
             search_regex=dict(default=None),
             state=dict(default='started', choices=['started', 'stopped', 'present', 'absent', 'drained']),
             exclude_hosts=dict(default=None, type='list'),
-            sleep=dict(default=1, type='int')
+            sleep=dict(default=1, type='int'),
+            msg=dict(default=None, type='str')
         ),
     )
 
@@ -443,6 +456,8 @@ def main():
         except:
             module.fail_json(msg="unknown active_connection_state ("+_connection_state+") defined")
 
+    msg = params['msg']
+
     start = datetime.datetime.utcnow()
 
     if delay:
@@ -473,9 +488,9 @@ def main():
         else:
             elapsed = datetime.datetime.utcnow() - start
             if port:
-                module.fail_json(msg="Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
+                module.fail_json(msg=msg or "Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
             elif path:
-                module.fail_json(msg="Timeout when waiting for %s to be absent." % (path), elapsed=elapsed.seconds)
+                module.fail_json(msg=msg or "Timeout when waiting for %s to be absent." % (path), elapsed=elapsed.seconds)
 
     elif state in ['started', 'present']:
         ### wait for start condition
@@ -489,7 +504,7 @@ def main():
                     # If anything except file not present, throw an error
                     if e.errno != 2:
                         elapsed = datetime.datetime.utcnow() - start
-                        module.fail_json(msg="Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
+                        module.fail_json(msg=msg or "Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
                     # file doesn't exist yet, so continue
                 else:
                     # File exists.  Are there additional things to check?
@@ -554,14 +569,14 @@ def main():
             elapsed = datetime.datetime.utcnow() - start
             if port:
                 if search_regex:
-                    module.fail_json(msg="Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
+                    module.fail_json(msg=msg or "Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
                 else:
-                    module.fail_json(msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
+                    module.fail_json(msg= msg or "Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
             elif path:
                 if search_regex:
-                    module.fail_json(msg="Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)
+                    module.fail_json(msg=msg or "Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)
                 else:
-                    module.fail_json(msg="Timeout when waiting for file %s" % (path), elapsed=elapsed.seconds)
+                    module.fail_json(msg=msg or "Timeout when waiting for file %s" % (path), elapsed=elapsed.seconds)
 
     elif state == 'drained':
         ### wait until all active connections are gone
@@ -577,7 +592,7 @@ def main():
             time.sleep(params['sleep'])
         else:
             elapsed = datetime.datetime.utcnow() - start
-            module.fail_json(msg="Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
+            module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
 
     elapsed = datetime.datetime.utcnow() - start
     module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
