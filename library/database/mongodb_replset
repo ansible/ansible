@@ -1,0 +1,218 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Jakub Jirutka <jakub@jirutka.cz>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: mongodb_replset
+author: Jakub Jirutka
+version_added: "1.7"
+short_description: Initiate or extend replica set.
+description:
+  - This module allows to initiate a new replica set or add new members to an
+    existing one. It can't remove members from a replica set, this should be
+    always done with caution by hand.
+options:
+  login_user:
+    description:
+      - The username used to authenticate with.
+    aliases: [ "user" ]
+    required: false
+  login_password:
+    description:
+      - The password used to authenticate with.
+    aliases: [ "password" ]
+    required: false
+  login_host:
+    description:
+      - The first host to connect when initiating the replica set.
+    aliases: [ "host" ]
+    required: false
+    default: localhost
+  login_port:
+    description:
+      - Port of the first host to connect when initiating the replica set.
+    aliases: [ "port" ]
+    required: false
+    default: "27017"
+  hosts:
+    description:
+      - A comma delimited list of replica set members.
+    aliases: [ "members" ]
+    required: true
+    example: mongo0,mango1:27011,mango2:27012
+  replica_set:
+    description:
+      - Name of the replica set to create or connect to.
+    aliases: [ "replset" ]
+    required: true
+    default: "rs0"
+'''
+
+import ConfigParser
+try:
+    from pymongo.errors import ConnectionFailure, OperationFailure, ConfigurationError
+    from pymongo import MongoClient
+    from pymongo.mongo_replica_set_client import MongoReplicaSetClient
+    from pymongo.read_preferences import ReadPreference
+    from pymongo.uri_parser import split_hosts
+except ImportError:
+    pymongo = None
+
+
+def load_mongocnf_creds():
+    ''' Reads credentials from ~/.mongodb.cnf file, when exists. '''
+    config = ConfigParser.RawConfigParser()
+    mongocnf = os.path.expanduser('~/.mongodb.cnf')
+
+    try:
+        config.readfp(open(mongocnf))
+        creds = {
+            'user': config.get('client', 'user'),
+            'password': config.get('client', 'pass')
+        }
+    except (ConfigParser.NoOptionError, IOError):
+        return False
+
+    return creds
+
+
+def replset_conf(client):
+    ''' Returns replica set configuration; the same as rs.conf() in shell.
+
+    :param client: initialized Mongo client
+    :return: replica set config
+    '''
+    return client['local'].system.replset.find_one()
+
+
+def add_members(client, members):
+    ''' Adds new members to the replica set.
+
+    :param client: initialized Mongo client
+    :param members: list of tuples that defines hostnames and ports of the
+                    replica set members;
+                    example: `[(mango0, 27017), (mango1, 27018)]`
+    '''
+    conf = replset_conf(client)
+    curr_hosts = [m['host'] for m in conf['members']]
+    new_hosts = [join_colon(x) for x in members]
+
+    new_id = max([int(x['_id']) for x in conf['members']]) + 1
+    for host in (set(new_hosts) - set(curr_hosts)):
+        conf['members'] += [{'_id': new_id, 'host': host}]
+        new_id += 1
+
+    conf['version'] += 1
+    client.admin.command('replSetReconfig', conf)
+
+
+def replset_initiate(client, name, members):
+    ''' Initiate replica set with the specified members.
+
+    :param client: initialized Mongo client
+    :param name: name of the replica set to initiate
+    :param members: list of tuples that defines hostnames and ports of the
+                    replica set members;
+                    example: `[(mango0, 27017), (mango1, 27018)]`
+    '''
+    hosts = [{'_id': idx, 'host': join_colon(val)} for idx, val in enumerate(members)]
+    conf = {'_id': name, 'members': hosts}
+    client.admin.command('replSetInitiate', conf)
+
+
+def join_colon(iterable):
+    return ':'.join(str(s) for s in iterable)
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec={
+            'login_user':     {'aliases': ['user']},
+            'login_password': {'aliases': ['password']},
+            'login_host':     {'aliases': ['host'], 'default': 'localhost'},
+            'login_port':     {'aliases': ['port'], 'default': 27017},
+            'hosts':          {'aliases': ['members'], 'required': True},
+            'replica_set':    {'aliases': ['replset'], 'required': True}
+        }
+    )
+
+    if not pymongo:
+        module.fail_json(msg='Python module "pymongo" must be installed.')
+
+    user, password, host, port, hosts, replset = (
+        module.params[k] for k in ['login_user', 'login_password', 'login_host',
+                                   'login_port', 'hosts', 'replica_set'])
+    nodes = split_hosts(hosts)
+
+    initiated = False
+    try:
+        try:
+            client = MongoReplicaSetClient(hosts, replicaSet=replset,
+                                           read_preference=ReadPreference.PRIMARY)
+            initiated = True
+        except ConfigurationError, e:
+            if 'is not a member of replica set' in e.message:
+                client = MongoClient(host, int(port), read_preference=ReadPreference.SECONDARY)
+            else:
+                module.fail_json(msg="Unable to connect: %s" % str(e))
+
+        if not user and not password:
+            credentials = load_mongocnf_creds()
+            if credentials is not False:
+                user = credentials['user']
+                password = credentials['password']
+        elif not password and user:
+            module.fail_json(msg='When supplying login arguments, both login_user and login_password must be provided')
+
+        if user and password:
+            try:
+                client.admin.authenticate(user, password)
+            except OperationFailure, e:
+                pass  # try to continue, maybe admin account is not set yet
+
+    except ConnectionFailure, e:
+        module.fail_json(msg='unable to connect to database: %s' % str(e))
+
+    changed = True
+    if initiated:
+        removed_hosts = client.hosts - set(nodes)
+        added_hosts = set(nodes) - client.hosts
+        if removed_hosts:
+            module.fail_json(msg="This module doesn't support members removing",
+                             members="'%s'" % removed_hosts)
+        elif added_hosts:
+            try:
+                add_members(client, nodes)
+            except OperationFailure, e:
+                module.fail_json(msg='Unable to add new members: %s' % str(e),
+                                 members="'%s'" % added_hosts)
+        else:
+            changed = False
+    else:
+        try:
+            replset_initiate(client, replset, nodes)
+        except OperationFailure, e:
+            module.fail_json(msg='Unable to initiate replica set: %s' % str(e))
+
+    module.exit_json(changed=changed)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
