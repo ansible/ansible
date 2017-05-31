@@ -43,9 +43,10 @@ options:
     required: false
   managed_policy:
     description:
-      - A list of managed policy ARNs (can't use friendly names due to AWS API limitation) to attach to the role. To embed an inline policy,
-        use M(iam_policy). To remove existing policies, use an empty list item.
+      - A list of managed policy ARNs or, since Ansible 2.4, a list of either managed policy ARNs or friendly names.
+        To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
     required: true
+    aliases: ['managed_policies']
   state:
     description:
       - Create or remove the IAM role
@@ -145,15 +146,15 @@ attached_policies:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, sort_json_policy_dict
+from ansible.module_utils.ec2 import HAS_BOTO3
+
 import json
 import traceback
 
 try:
-    import boto3
     from botocore.exceptions import ClientError, NoCredentialsError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by imported HAS_BOTO3
 
 
 def compare_assume_role_policy_doc(current_policy_doc, new_policy_doc):
@@ -180,6 +181,22 @@ def compare_attached_role_policies(current_attached_policies, new_attached_polic
         return False
 
 
+def convert_friendly_names_to_arns(connection, module, policy_names):
+    if not any([not policy.startswith('arn:') for policy in policy_names]):
+        return policy_names
+    allpolicies = {}
+    paginator = connection.get_paginator('list_policies')
+    policies = paginator.paginate().build_full_result()['Policies']
+
+    for policy in policies:
+        allpolicies[policy['PolicyName']] = policy['Arn']
+        allpolicies[policy['Arn']] = policy['Arn']
+    try:
+        return [allpolicies[policy] for policy in policy_names]
+    except KeyError as e:
+        module.fail_json(msg="Couldn't find policy: " + str(e))
+
+
 def create_or_update_role(connection, module):
 
     params = dict()
@@ -187,6 +204,8 @@ def create_or_update_role(connection, module):
     params['RoleName'] = module.params.get('name')
     params['AssumeRolePolicyDocument'] = module.params.get('assume_role_policy_document')
     managed_policies = module.params.get('managed_policy')
+    if managed_policies:
+        managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
     changed = False
 
     # Get role
@@ -305,7 +324,6 @@ def destroy_role(connection, module):
 
 
 def get_role(connection, module, name):
-
     try:
         return connection.get_role(RoleName=name)['Role']
     except ClientError as e:
@@ -334,18 +352,15 @@ def main():
     argument_spec.update(
         dict(
             name=dict(required=True, type='str'),
-            path=dict(default="/", required=False, type='str'),
-            assume_role_policy_document=dict(required=False, type='json'),
-            managed_policy=dict(default=None, required=False, type='list'),
-            state=dict(default=None, choices=['present', 'absent'], required=True)
+            path=dict(default="/", type='str'),
+            assume_role_policy_document=dict(type='json'),
+            managed_policy=dict(type='list', aliases=['managed_policies']),
+            state=dict(choices=['present', 'absent'], required=True)
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_if=[
-                               ('state', 'present', ['assume_role_policy_document'])
-                           ]
-                           )
+                           required_if=[('state', 'present', ['assume_role_policy_document'])])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
