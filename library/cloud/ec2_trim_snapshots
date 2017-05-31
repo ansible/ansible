@@ -1,0 +1,115 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2_trim_snapshots
+short_description: trim excess snapshots, based on when they were taken.
+description:
+    - trim EC2 snapshots using boto's trim_snapshots.
+version_added: "FIXME"
+options:
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the \
+              EC2_REGION environment variable, if any, is used.
+    required: false
+    aliases: ['aws_region', 'ec2_region']
+  hourly_backups:
+    description:
+      - How many recent hourly backups should be saved. default value is 8.
+    required: false
+  daily_backups:
+    description:
+      - How many recent daily backups should be saved. default value is 7.
+    required: false
+  weekly_backups:
+    description:
+      - How many recent weekly backups should be saved. default value is 4.
+    required: false
+  monthly_backups:
+    description:
+      - How many monthly backups should be saved. Use True for no limit. \
+              default value is True.
+    required: false
+author: Kosei Kitahara
+extends_documentation_fragment: aws
+'''
+
+EXAMPLES = '''
+# Simple trim old snapshots with default values.
+- local_action:
+    module: ec2_trim_snapshots
+
+# Trim old houly backups after 24 hours.
+- local_action:
+    module: ec2_trim_snapshots
+    hourly_backups: 24
+
+# Assign same 'Name' tag when snapshots are created.
+# See: http://boto.readthedocs.org/en/latest/ref/ec2.html#boto.ec2.connection.EC2Connection.trim_snapshots
+- local_action:
+    module: ec2_snapshot
+    volume_id: vol-abcdef12
+    snapshot_tags:
+      Name: abcdef12  # Assign same name to each volume
+'''
+
+import sys
+
+try:
+    import boto.ec2
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(
+        dict(
+            hourly_backups=dict(type='int', default=8),
+            daily_backups=dict(type='int', default=7),
+            weekly_backups=dict(type='int', default=4),
+            monthly_backups=dict(type='int'),
+        )
+    )
+    module = AnsibleModule(argument_spec=argument_spec)
+
+    hourly_backups = module.params.get('hourly_backups')
+    daily_backups = module.params.get('daily_backups')
+    weekly_backups = module.params.get('weekly_backups')
+    monthly_backups = module.params.get('monthly_backups') or True
+
+    ec2 = ec2_connect(module)
+
+    try:
+        ec2.trim_snapshots(hourly_backups=hourly_backups,
+                           daily_backups=daily_backups,
+                           weekly_backups=weekly_backups,
+                           monthly_backups=monthly_backups)
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
+
+    module.exit_json(changed=True)
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+
+main()
