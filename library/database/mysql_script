@@ -1,0 +1,175 @@
+#!/usr/bin/python
+
+DOCUMENTATION = '''
+---
+module: mysql_db
+short_description: Execute SQL statements on a MySql Database.
+description:
+    - Execute SQL statements on a MySql Database.
+    version_added: "0.0"
+    options:
+        user:
+            description:
+                - The username used to authenticate with
+            required: false
+            default: null
+        password:
+            description:
+                - The password used to authenticate with
+            required: false
+            default: null
+        db:
+            description:
+                - The database to select
+            required: false
+            default: null
+        host:
+            description:
+                - Host running MySQL
+            required: false
+            default: localhost
+        port:
+            description:
+                - The port to connect on
+            required: false
+            default: 3306
+        unix_socket:
+            description:
+                The path to a Unix domain socket for local connections
+            required: false
+            default: null
+        sql_statement:
+            description:
+                - The SQL statement to execute on the host
+            required: false
+            default: null
+        sql_file:
+            description:
+                - A file containing sql statements to load and execute
+           required: false
+            default: null
+        rollback_sql_statement:
+            description:
+                - The SQL statement to execute on the host if an error occurs
+                  during execution of I(sql_statement) or I(sql_file)
+            required: false
+            default: null
+        rollback_sql_file:
+            description:
+                - A file containing sql statements to load and execute on the
+                  host if an error occurs during execution of I(sql_statement)
+                  or I(sql_file)
+            required: false
+            default: null
+notes:
+    - Either I(sql_statement) or I(sql_file) must be set else an error will
+      be raised and no work will be done.
+    - If both I(sql_statement) and I(sql_file) are specified an error will
+      be raised and no work will be done.
+    - If both I(rollback_sql_statement) and I(rollback_sql_file) are specified
+      an error will be raised and no work will be done.
+    - The sql files being executed must be on the target machine. You can use
+      M(copy) with a I(dest) of C(.), then you only have to specify the
+      filename without the path and the file will be deleted by Ansible after
+      the script has run.
+requirements: [ mysql-connector-python ]
+author: RightShift
+'''
+
+import os
+import mysql.connector
+
+
+def read_sql_file(module, src):
+    if not os.path.exists(src):
+        module.fail_json(msg='Source %s does not exist' % (src))
+    if not os.access(src, os.R_OK):
+        module.fail_json(msg='Source %s not readable' % (src))
+
+    return open(src, 'r').read()
+
+
+def execute_sql(module, statement, rollback_statement, **kwargs):
+    try:
+        cnx = mysql.connector.connect(**kwargs)
+
+        # loop through the statements to execute them
+        for result in cnx.cmd_query_iter(statement):
+            pass
+
+        # commit is required
+        cnx.commit()
+    except mysql.connector.Error as err:
+        # if thing go wrong, execute the rollback statement
+        if rollback_statement is not None:
+            execute_sql(module, rollback_statement, None, **kwargs)
+        module.fail_json(msg=str(err))
+    except:
+        module.fail_json(msg=str(sys.exc_info()))
+    else:
+        cnx.close()
+
+
+def main():
+    # Parse the parameters
+    module = AnsibleModule(
+        argument_spec=dict(
+            user=dict(default=None),
+            password=dict(default=None),
+            db=dict(default=None),
+            host=dict(default='localhost'),
+            port=dict(default=3306),
+            unix_socket=dict(default=None),
+            sql_statement=dict(default=None),
+            sql_file=dict(default=None),
+            rollback_sql_statement=dict(default=None),
+            rollback_sql_file=dict(default=None)
+        ),
+        add_file_common_args=True,
+        supports_check_mode=True
+    )
+
+    user = module.params['user']
+    password = module.params['password']
+    db = module.params['db']
+    host = module.params['host']
+    port = module.params['port']
+    unix_socket = module.params['unix_socket']
+    sql_statement = module.params['sql_statement']
+    sql_file = os.path.expanduser(module.params['sql_file'])
+    rollback_sql_statement = module.params['rollback_sql_statement']
+    rollback_sql_file = os.path.expanduser(module.params['rollback_sql_file'])
+
+    if sql_statement is None and sql_file is None:
+        module.fail_json(msg='sql_statement or sql_file must be specified.')
+    elif sql_statement is not None and sql_file is not None:
+        module.fail_json(msg='Either sql_statement or sql_file must be set, '
+                             'not both.')
+
+    if rollback_sql_statement is not None and rollback_sql_file is not None:
+        module.fail_json(msg='Either rollback_sql_statement or '
+                             'rollback_sql_file must be set, not both.')
+
+    # load the sql statement from file
+    if sql_file is not None:
+        sql_statement = read_sql_file(module, sql_file)
+
+    if rollback_sql_file is not None:
+        rollback_sql_statement = read_sql_file(module, rollback_sql_file)
+
+    if not module.check_mode:
+        # Execute the sql statement
+        execute_sql(module, sql_statement, rollback_sql_statement, user=user,
+                    password=password, host=host, port=port, db=db,
+                    unix_socket=unix_socket)
+
+    res_args = dict(
+        sql_statment=sql_statement,
+        changed=True
+    )
+
+    module.exit_json(**res_args)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
