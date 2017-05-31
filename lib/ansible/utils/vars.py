@@ -127,6 +127,58 @@ class ObservableDict(dict):
         return d
 
 
+from collections import defaultdict
+
+
+class TrackingDict(dict):
+    def __init__(self, *args, **kw):
+        self._initial = True
+        super(TrackingDict, self).__init__(*args, **kw)
+        self._inital = False
+        self.meta = defaultdict(list)
+
+    def __setitem__(self, key, value):
+        super(TrackingDict, self).__setitem__(key, value)
+        #if self._initial:
+        #    self.meta[key].append(('unknown-si', value))
+
+    def update(self, other, update_name=None):
+        for key in other:
+            if key == 'update_name':
+                continue
+            self.meta[key].append((update_name, other[key]))
+            self[key] = other[key]
+
+    def copy(self):
+        d = TrackingDict(super(TrackingDict, self).copy())
+        d.meta = self.meta.copy()
+        return d
+
+    def __repr__(self):
+        lines = []
+        for key in self:
+            lines.append('%s: ' % key)
+            lines.append('  scopes:')
+            for idx, level in enumerate(reversed(self.meta[key])):
+                # lines.append('  level %s: %s' % (idx, repr(level)))
+                lines.append('    %s: %s: %s' % (idx, level[0], level[1]))
+            lines.append('  final: %s' % self[key])
+        return '\n'.join(lines)
+
+    def as_dict(self):
+        data = {}
+        for key in self:
+            scopes = []
+            for idx, level in enumerate(self.meta[key]):
+                # lines.append('  level %s: %s' % (idx, repr(level)))
+                # l.append('    %s: %s' % (level[0], level[1]))
+                scopes.append((idx, {'level': level[0],
+                                     'value': level[1]}))
+            data[key] = {'scopes': scopes,
+                         'final': self[key]}
+        return data
+
+
 class Watcher(object):
     def notify(self, observable, key, old, new):
         pid = os.getpid()
@@ -189,9 +241,12 @@ def combine_vars(a, b, name_b=None):
         # w = Watcher()
         # _result.observe(w)
         # setattr(_result, '_update_name', name_b)
-        _result.update(b)
-        if display.verbosity > 2:
-            show_changes(a, _result, old_object_label='all_vars', new_object_label='b', update_label=name_b)
+        _result.update(b, update_name=name_b)
+        #if display.verbosity > 2:
+            #if isinstance(a, TrackingDict):
+                #pprint.pprint(dict(_result.meta))
+            #    print(repr(a))
+            #show_changes(a, _result, old_object_label='all_vars', new_object_label='b', update_label=name_b)
         return _result
 
 

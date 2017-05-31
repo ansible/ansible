@@ -41,7 +41,7 @@ from ansible.plugins import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.vars import combine_vars, ObservableDict, Watcher
+from ansible.utils.vars import combine_vars, TrackingDict, ObservableDict, Watcher
 from ansible.utils.unsafe_proxy import wrap_var
 
 try:
@@ -211,6 +211,7 @@ class VariableManager:
         #all_vars = ObservableDict()
         #all_vars._name = 'all_vars'
         all_vars = dict()
+        all_vars = TrackingDict()
         #watcher = Watcher()
         #all_vars.observe(watcher)
         magic_variables = self._get_magic_variables(
@@ -225,7 +226,7 @@ class VariableManager:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
-                all_vars = combine_vars(all_vars, role.get_default_vars(), name_b='play_roles')
+                all_vars = combine_vars(all_vars, role.get_default_vars(), name_b='play_roles_%s' % role.get_name())
 
         # if we have a task in this context, and that task has a role, make
         # sure it sees its defaults above any other roles, as we previously
@@ -269,7 +270,7 @@ class VariableManager:
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
-                        data = combine_vars(data, _get_plugin_vars(plugin, self._loader, inventory_dir, entities), name_b='inventory_plugin_dir')
+                        data = combine_vars(data, _get_plugin_vars(plugin, self._loader, inventory_dir, entities), name_b='inventory_plugin_dir_%s_%s' % (plugin, inventory_dir))
 
                 return data
 
@@ -277,7 +278,7 @@ class VariableManager:
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
-                    data = combine_vars(data, _get_plugin_vars(plugin, self._loader, basedir, entities), name_b='plugins_play')
+                    data = combine_vars(data, _get_plugin_vars(plugin, self._loader, basedir, entities), name_b='plugins_play_%s' % plugin)
                 return data
 
             # configurable functions that are sortable via config
@@ -309,8 +310,8 @@ class VariableManager:
                 '''
                 data = {}
                 for group in host_groups:
-                    data[group] = combine_vars(data[group], _plugins_inventory(group), name_b='group_inventory_plugin')
-                    data[group] = combine_vars(data[group], _plugins_play(group), name_b='group_inventory_play_plugin')
+                    data[group] = combine_vars(data[group], _plugins_inventory(group), name_b='group_inventory_plugin_%s' % group)
+                    data[group] = combine_vars(data[group], _plugins_play(group), name_b='group_inventory_play_plugin_%s' % group)
                 return data
 
             # Merge as per precedence config
@@ -391,14 +392,14 @@ class VariableManager:
             # unless the user has disabled this via a config option
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
-                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False), name_b='role_play_vars')
+                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False), name_b='role_play_vars_%s' % (role.get_name()))
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False), name_b='roles_vars')
+                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False), name_b='task_roles_vars')
             all_vars = combine_vars(all_vars, task.get_vars(), name_b='task_vars')
 
         # next, we merge in the vars cache (include vars) and nonpersistent
@@ -438,6 +439,12 @@ class VariableManager:
             # has to be copy, otherwise recursive ref
             all_vars['vars'] = all_vars.copy()
 
+        #print('ALL_VARS:\n%s' % repr(all_vars))
+        #import pprint
+        #print('ALL_VARS:')
+        #pprint.pprint(all_vars.as_dict())
+        #import traceback
+        #traceback.print_stack()
         display.debug("done with get_vars()")
         return all_vars
 
