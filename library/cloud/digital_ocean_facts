@@ -1,0 +1,89 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+DOCUMENTATION = '''
+---
+module: digital_ocean_facts
+short_description: Gather facts about DigitalOcean
+options: {}
+notes:
+  - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
+'''
+
+
+EXAMPLES = '''
+# Print regions example
+- name: DigitalOcean Facts
+  digital_ocean_facts: client_id=<id> api_key=<key>
+
+- debug: msg="{{ item.name }}"
+  with_items: digital_ocean_facts_regions
+
+# Find the id of a specific region
+- name: DigitalOcean Facts
+  digital_ocean_facts: client_id=<id> api_key=<key>
+
+- debug: msg="{{ item.id }}"
+  with_items: digital_ocean_facts_regions
+  when: item.slug == 'nyc1'
+'''
+
+import sys
+import os
+import time
+
+try:
+    from dopy.manager import DoError, DoManager
+except ImportError as e:
+    print "failed=True msg='dopy required for this module'"
+    sys.exit(1)
+
+class TimeoutError(DoError):
+    def __init__(self, msg, id):
+        super(TimeoutError, self).__init__(msg)
+        self.id = id
+
+class DOMetadata(object):
+   
+  def __init__(self, client_id, api_key):
+    self._prefix = 'digital_ocean_facts_%s'
+    self.manager = DoManager(client_id, api_key)
+
+  def run(self):
+    return {
+      self._prefix % 'droplets': self.manager.all_active_droplets(),
+      self._prefix % 'domains': self.manager.all_domains(),
+      self._prefix % 'images': self.manager.all_images(),
+      self._prefix % 'regions': self.manager.all_regions(),
+      self._prefix % 'sizes': self.manager.sizes(),
+      self._prefix % 'ssh': self.manager.all_ssh_keys()
+    }
+
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
+            api_key = dict(aliases=['API_KEY'], no_log=True),
+        )
+    )
+
+    try:
+        # params['client_id'] will be None even if client_id is not passed in
+        client_id = module.params['client_id'] or os.environ['DO_CLIENT_ID']
+        api_key = module.params['api_key'] or os.environ['DO_API_KEY']
+
+        do_facts = DOMetadata(client_id, api_key).run()
+        module.exit_json(changed=False, ansible_facts=do_facts)
+    except KeyError, e:
+        module.fail_json(msg='Unable to load %s' % e.message)
+    except TimeoutError as e:
+        module.fail_json(msg=str(e), id=e.id)
+    except (DoError, Exception) as e:
+        module.fail_json(msg=str(e))
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
