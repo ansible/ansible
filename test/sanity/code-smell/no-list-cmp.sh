@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CMP_USERS=$(grep -rI ' cmp[^a-zA-Z0-9_]' . \
+CMP_USERS=$(grep -rI ' cmp[^a-zA-Z0-9_:=]' . \
 	--exclude-dir .tox \
 	| grep -v \
 	-e lib/ansible/module_utils/six/_six.py \
