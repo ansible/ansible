@@ -1,0 +1,251 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Jarno Keskikangas <jarno.keskikangas@gmail.com>
+# (c) 2013, Aleksey Ovcharenko <aleksey.ovcharenko@gmail.com>
+# (c) 2013, James Martin <jmartin@basho.com>
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+DOCUMENTATION = '''
+---
+module: ufw
+short_description: This module handles Ubuntu UFW operations
+description:
+     - This module handles Ubuntu UFW operations
+options:
+  state:
+    description: |
+        I(enable) reloads firewall and enables firewall on boot.
+        I(disable) unloads firewall and disables firewall on boot.
+        I(reload) reloads firewall.
+        I(reset) disables and resets firewall to installation defaults.
+    required: false
+    choices: ['enable', 'disable', 'reload', 'reset']
+    default: None
+  policy:
+    description:
+      - Change the default policy for incoming or outgoing traffic.
+    required: false
+    alias: default
+    choices: ['allow', 'deny', 'reject']
+    default: None
+  direction:
+    description:
+      - Select direction for default policy command.
+    required: false
+    default: incoming
+    choises: ['incoming', 'outgoing']
+  rule:
+    description:
+      - Add firewall rule
+    required: false
+    choises: ['allow', 'deny', 'reject', 'limit']
+    default: None
+  delete:
+    description:
+      - Delete rule instead of creation.
+    required: false
+    choices: ['yes', 'no']
+    default: 'no'
+  name:
+    description:
+      - Use profile located in /etc/ufw/applications.d
+    required: false
+    default: None
+    aliases: ['app']
+    version_added: "2.1"
+  from_ip:
+    description:
+      - Source IP address.
+    required: false
+    aliases: ['from', 'src']
+    default: 'any'
+  from_port:
+    description:
+      - Source port.
+    required: false
+    default: None
+  to_ip:
+    description:
+      - Destination IP address.
+    required: false
+    aliases: ['to', 'dest']
+    default: 'any'
+  to_port:
+    description:
+      - Destination port.
+    required: false
+    default: None
+    aliases: ['port']
+  proto:
+    description:
+      - TCP/IP protocol.
+    choices: ['any', 'tcp', 'udp', 'ipv6']
+    default: 'any'
+    required: false
+  logging:
+    description:
+      - Toggles logging. Logged packets use the LOG_KERN syslog facility.
+    choices: ['on', 'off', 'low', 'medium', 'high', 'full']
+    required: false
+    default: 'on'
+version_added: 2.0
+notes:
+   -  See C(man 8 ufw) for more example.
+requirements: [ ]
+authors: Aleksey Ovcharenko, Jarno Keskikangas
+'''
+
+EXAMPLES = '''
+# Allow everything and enable UFW
+ufw: state=enable policy=allow
+
+# Sometimes it is desirable to let the sender know when traffic is
+# being denied, rather than simply ignoring it. In these cases, use
+# reject instead of deny.  For example:
+ufw: rule=reject port=auth
+
+# ufw supports connection rate limiting, which is useful for protecting
+# against brute-force login attacks. ufw will deny connections if an IP
+# address has attempted to initiate 6 or more connections in the last
+# 30 seconds. See  http://www.debian-administration.org/articles/187
+# for details. Typical usage is:
+ufw: rule=limit port=ssh proto=tcp
+
+# Allow OpenSSH
+ufw: rule=allow name=OpenSSH
+
+# Deny all access to port 53:
+ufw: rule=deny port=53
+
+# Allow all access to tcp port 80:
+ufw: rule=allow port=80 proto=tcp
+
+# Allow all access from RFC1918 networks to this host:
+ufw: rule=allow src={{ item }}
+with_items:
+- 10.0.0.0/8
+- 172.16.0.0/12
+- 192.168.0.0/16
+
+# Deny access to udp port 514 from host 1.2.3.4:
+ufw: rule=deny proto=udp src=1.2.3.4 port=514
+
+# Allow access to udp 1.2.3.4 port 5469 from 1.2.3.5 port 5469:
+ufw: rule=allow proto=udp src=1.2.3.5 from_port=5469 dest=1.2.3.4 to_port=5469
+
+# Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host.
+# Note that IPv6 must be enabled in /etc/default/ufw for IPv6 firewalling to work.
+ufw: rule=deny proto=tcp src=2001:db8::/32 port=25
+'''
+
+import platform
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            state     = dict(default=None,  choices=['enable', 'disable', 'reload', 'reset']),
+            default   = dict(default=None,  aliases=['policy'], choices=['allow', 'deny', 'reject']),
+            logging   = dict(default=None,  choises=['on', 'off', 'low', 'medium', 'high', 'full']),
+            direction = dict(default=None,    choises=['in', 'incoming', 'out', 'outgoing']),
+            delete    = dict(default=False,    choices=BOOLEANS),
+            rule      = dict(default=None,  choices=['allow', 'deny', 'reject', 'limit']),
+            interface = dict(default=None,    aliases=['if']),
+            log       = dict(default=False,    choices=BOOLEANS),
+            from_ip   = dict(default='any', aliases=['src', 'from']),
+            from_port = dict(default=None),
+            to_ip     = dict(default='any', aliases=['dest', 'to']),
+            to_port   = dict(default=None,    aliases=['port']),
+            proto     = dict(default=None,    aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6']),
+            app       = dict(default=None,    aliases=['name'])
+        ),
+        supports_check_mode = True,
+        mutually_exclusive = [['app', 'proto']]
+    )
+
+    cmds = []
+    def execute(cmd):
+        cmds.append(cmd)
+        (rc, out, err) = module.run_command(cmd)
+        if rc != 0: module.fail_json(msg=cmd or err or out)
+
+    p = module.params
+
+    # Ensure at least one of the command arguments are given
+    commands = ['state', 'default', 'rule', 'logging']
+    command_args = [(k, p[k]) for k in commands if p[k]]
+
+    if len(command_args) < 1:
+        module.fail_json(msg="Not any of the command arguments %s given" % commands)
+
+    # Ensure ufw is available
+    ufw_bin = module.get_bin_path('ufw', True)
+
+    # Save the pre state in order to recognize changes reliably
+    (_, pre_state, _) = module.run_command(ufw_bin + ' status verbose')
+
+    # Execute commands
+    for command_arg in command_args:
+        command = command_arg[0]
+        arg = command_arg[1]
+
+        # Check for dry run
+        dry_run = {True: '--dry-run', False: ''}[module.check_mode]
+
+        cmd = "%s %s " % (ufw_bin, dry_run)
+
+        if command == 'state':
+            execute(cmd + "-f %s" % (arg))
+
+        elif command == 'logging':
+            execute(cmd + "%s %s" % (command, arg))
+
+        elif command == 'default':
+            execute(cmd + "%s %s %s" % (command, arg, p['direction']))
+
+        elif command == 'rule':
+            opts = dict(zip(p.keys(), ['']*len(p.keys())))
+
+            if module.boolean(p['delete']): opts['delete'] = " delete "
+            if module.boolean(p['log']):    opts['log']    = " log "
+
+            if p['direction']: opts['direction'] = " %s "      % (p['direction'])
+            if p['interface']: opts['interface'] = " on %s "   % (p['interface'])
+            if p['from_ip']:   opts['from_ip']   = " from %s " % (p['from_ip'])
+            if p['from_port']: opts['from_port'] = " port %s " % (p['from_port'])
+            if p['to_ip']:     opts['to_ip']     = " to %s "   % (p['to_ip'])
+            if p['to_port']:   opts['to_port']   = " port %s " % (p['to_port'])
+            if p['proto']:     opts['proto']     = " proto %s" % (p['proto'])
+            if p['app']:       opts['app']       = " app '%s'" % (p['app'])
+
+            execute(cmd + opts['delete'] + arg + opts['direction'] + opts['interface'] + opts['log'] +
+                opts['from_ip'] + opts['from_port'] +
+                opts['to_ip']   + opts['to_port'] +
+                opts['proto']   + opts['app'])
+
+    # Get the new state
+    (_, post_state, _) = module.run_command(ufw_bin + ' status verbose')
+
+    result             = {}
+    result['state']    = post_state
+    result['commands'] = cmds
+    result['msg']      = post_state.rstrip()
+    result['changed']  = pre_state != post_state
+
+    return module.exit_json(**result)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
