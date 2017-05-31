@@ -133,22 +133,26 @@ EXAMPLES = '''
 
 RETURN = '''
 application:
-  application_id:
-    description: The application ID.
-    type: string
-    sample: "81293494"
-  application_name:
-    description: The application name.
-    type: string
-    sample: "TestApplication"
-  create_time:
-    description: The time at which the application was created.
-    type: datetime
-    sample: 2017-05-30 010:00:00-05:00
-  linked_to_github:
-    description: True if the user has authenticated with GitHub for the specified application; otherwise, false.
-    type: boolean
-    sample: false
+  description: Information regarding the CodeDeploy application.
+  type: complex
+  returned: success
+  contains:
+    application_id:
+      description: The application ID.
+      type: string
+      sample: "81293494"
+    application_name:
+      description: The application name.
+      type: string
+      sample: "TestApplication"
+    create_time:
+      description: The time at which the application was created.
+      type: datetime
+      sample: 2017-05-30 010:00:00-05:00
+    linked_to_github:
+      description: True if the user has authenticated with GitHub for the specified application; otherwise, false.
+      type: boolean
+      sample: false
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -246,7 +250,7 @@ def create_codedeploy_application(client, name, dg, ndg, dc, ec2_tf, opf, asg, s
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     cda = get_codedeploy_application(client, name, module)
-    module.exit_json(changed=changed, codedeploy_application=camel_dict_to_snake_dict(cda))
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
 
 
 def update_codedeploy_deployment_group(client, name, cdg, ndg, dc, ec2_tf, opf, asg, sra, tc, ac, arc, ds, bgdc, lbi, module):
@@ -423,7 +427,8 @@ def main():
         changed = delete_codedeploy_application(connection, name)
         module.exit_json(changed=changed)
     cda = get_codedeploy_application(connection, name, module)
-    module.exit_json(changed=changed, codedeploy_application=camel_dict_to_snake_dict(cda))
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
 
 if __name__ == '__main__':
     main()
+
