@@ -140,6 +140,11 @@ stat:
             returned: success, path exists, path is a file
             type: string
             sample: ".ps1"
+        filename:
+            description: the name of the file (without path)
+            returned: success, path exists, path is a file
+            type: string
+            sammple: foo.ini
         isarchive:
             description: if the path is ready for archiving or not
             returned: success, path exists
@@ -197,9 +202,9 @@ stat:
             sample: BUILTIN\Administrators
         path:
             description: the full absolute path to the file
-            returned: success, path exists
+            returned: success, path exists, file exists
             type: string
-            sample: BUILTIN\Administrators
+            sample: C:\foo.ini
         sharename:
             description: the name of share if folder is shared
             returned: success, path exists, file is a directory and isshared == True
