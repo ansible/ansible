@@ -1,0 +1,160 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013-2014, Raphael Randschau <nicolai86@me.com>
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
+DOCUMENTATION = '''
+---
+module: bundler
+short_description: install ruby application dependencies
+version_added: "1.0"
+author: Raphael Randschau
+options:
+  executable:
+    description:
+      - Bundler executable
+    required: no
+    default: $GEM_HOME/bin/bundle
+  deployment:
+    description:
+      - Run for deployment
+    required: false
+    default: yes
+  binstubs:
+    description:
+      - generate binstubs
+    required: false
+    default: no
+  gem_file:
+    description:
+      - Path of Gemfile to run against
+    required: false
+  path:
+    description:
+      - Path to install dependencies into
+    required: false
+'''
+
+EXAMPLES = '''
+# installs application dependencies
+- bundle: path=shared/vendor deployment=yes
+'''
+
+
+import re
+import os
+import sys
+import subprocess
+
+class BundlerModule(object):
+    module = None
+    def __init__(self, module):
+        self.module = module
+
+    def load_env(self):
+        home_path = os.getenv('HOME')
+        env_command = ['/bin/bash', '-c', 'source ' + home_path + '/.bashrc && env']
+
+        proc = subprocess.Popen(env_command, stdout = subprocess.PIPE)
+        env = {}
+        for line in proc.stdout:
+          (key, _, value) = line.decode("utf-8").strip().partition("=")
+          env[key] = value
+
+        proc.communicate()
+
+        return dict(env)
+
+    def get_bundle_path(self):
+        if self.module.params.get('executable', None):
+            return self.module.params['executable']
+        else:
+            extra_paths = []
+
+            gem_home = self.load_env().get('GEM_HOME')
+            if gem_home:
+                extra_paths.append(gem_home + '/bin')
+
+            return self.module.get_bin_path('bundle', True, extra_paths)
+
+    def gems_were_changed(self, stdout):
+        installed = True
+        try:
+            stdout.index("Installing")
+        except ValueError:
+            installed = False
+
+        updated = True
+        try:
+            stdout.index("Updating")
+        except ValueError:
+            updated = False
+
+        upgrade = True
+        try:
+            stdout.index("upgrade")
+        except ValueError:
+            upgrade = False
+
+        return updated or installed or upgrade
+
+    def run_bundle(self):
+        if self.module.check_mode:
+            return False, '', ''
+
+        cmd = self.get_bundle_path() + ' install --without=deployment:test'
+        if self.module.params.get('path', None):
+            cmd = cmd + ' --path=' + self.module.params.get('path')
+        if self.module.params.get('gem_file', None):
+            cmd = cmd + ' --gemfile=' + self.module.params.get('gem_file')
+        if self.module.params.get('binstubs', None):
+            cmd = cmd + ' --binstubs=bin/'
+        if self.module.params.get('deployment', None):
+            cmd = cmd + ' --deployment'
+
+        (rc, stdout, stderr) = self.module.run_command(cmd, check_rc=True)
+
+        return self.gems_were_changed(stdout), stdout, stderr
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            path             = dict(required=True, type='str'),
+            executable       = dict(required=False, type='str'),
+            gem_file         = dict(required=True, type='str'),
+            deployment       = dict(required=False, type='bool'),
+            binstubs         = dict(required=False, type='bool'),
+        ),
+        supports_check_mode = True,
+        mutually_exclusive = [],
+    )
+
+    bundler = BundlerModule(module)
+    changed, stdout, stderr = bundler.run_bundle()
+
+    result = {}
+    result['path'] = module.params['path']
+    result['executable'] = module.params['executable']
+    result['changed'] = changed
+    result['stdout'] = stdout
+    result['stderr'] = stderr
+
+    module.exit_json(**result)
+
+from ansible.module_utils.basic import *
+
+main()
