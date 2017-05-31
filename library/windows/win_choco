@@ -1,0 +1,79 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, Trond Hindenes <trond@hindenes.com> and others
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# this is a windows documentation stub.  actual code lives in the .ps1
+# file of the same name
+
+DOCUMENTATION = '''
+---
+module: win_choco
+version_added: "1.7"
+short_description: Installs and uninstalls packages via chocolatey package manager
+description:
+     - Installs or uninstalls packages via chocolatey package manager
+     - See http://chocolatey.org
+     - Note - oneget will replace this, see https://github.com/OneGet/oneget
+options:
+  name:
+    description:
+      - Name of package to install
+    required: true
+    default: null
+    aliases: []
+  state:
+    description:
+      - State of the package on the system
+    required: false
+    choices:
+      - present
+      - absent
+    default: present
+    aliases: []
+  source:
+    description:
+      - Which source to install from.
+      - * webpi requires that you install webpicmd first.  `choco install webpicmd`
+    required: false
+    choices:
+      - https://chocolatey.org/api/v2/
+      - webpi
+      - windowsfeatures
+author: Peter Mounce
+'''
+
+EXAMPLES = '''
+# This installs notepad2-mod (http://xhmikosr.github.io/notepad2-mod/).
+# The names of packages available for install can be run by running the following Powershell Command:
+# PS C:\Users\Administrator> choco list
+# See also https://github.com/chocolatey/chocolatey/wiki/CommandsReference
+$ ansible -i hosts -m win_choco -a "name=notepad2-mod" all
+
+
+# Playbook example
+---
+- name: Install notepad2-mod
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Install notepad2-mod
+      win_choco:
+        name: "notepad2-mod"
+        state: present
+'''
