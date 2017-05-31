@@ -1,0 +1,12 @@
+---
+- hosts: ruby-boxes
+  vars:
+    user: roger
+  tasks:
+  - name: install multi-user rvm
+    action: rvm state=absent                        # Cleans out all traces of RVM
+    action: rvm state=present install_type=multi
+    action: user name=${user} groups=rvm append=yes # Adds the user to the rvm group
+  - name: install single-user rvm
+    action: rvm state=absent                        # Cleans out all traces of RVM
+    action: rvm state=present install_type=single
