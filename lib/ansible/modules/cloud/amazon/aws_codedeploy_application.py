@@ -69,32 +69,26 @@ options:
     description:
       - The on-premise instance tags to filter for.
     required: false
-    type: list
   trigger_configs:
     description:
       - Information about the triggers to create when the deployment group is created.
     required: false
-    type: list
   alarm_configuration:
     description:
       - Information to add about Amazon CloudWatch alarms when the deployment group is created.
     required: false
-    type: dict
   auto_rollback_config:
     description:
       - Configuration information for an automatic rollback that is added when a deployment group is created.
     required: false
-    type: dict
   bg_deployment_config:
     description:
       - Information about blue/green deployment options for a deployment group.
     required: false
-    type: dict
   load_balance_info:
     description:
       - Information about the load balancer used in a deployment.
     required: false
-    type: dict
 '''
 
 EXAMPLES = '''
@@ -248,7 +242,7 @@ def create_codedeploy_application(client, name, dg, ndg, dc, ec2_tf, opf, asg, s
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     cda = get_codedeploy_application(client, name, module)
-    module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
+    module.exit_json(changed=changed, codedeploy_application=camel_dict_to_snake_dict(cda))
 
 
 def update_codedeploy_deployment_group(client, name, cdg, ndg, dc, ec2_tf, opf, asg, sra, tc, ac, arc, ds, bgdc, lbi, module):
@@ -425,7 +419,7 @@ def main():
         changed = delete_codedeploy_application(connection, name)
         module.exit_json(changed=changed)
     cda = get_codedeploy_application(connection, name, module)
-    module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
+    module.exit_json(changed=changed, codedeploy_application=camel_dict_to_snake_dict(cda))
 
 if __name__ == '__main__':
     main()
