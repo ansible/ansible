@@ -45,6 +45,42 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         :func:`~ansible.module_utils._text.to_bytes` and
         :func:`~ansible.module_utils._text.to_text` to avoid unexpected
         problems.
+
+        List of supported rpc's:
+            :get_config: Retrieves the specified configuration from the device
+            :edit_config: Loads the specified commands into the remote device
+            :get: Execute specified command on remote device
+            :get_capabilities: Retrieves device information and supported rpc methods
+            :commit: Load configuration from candidate to running
+            :discard_changes: Discard changes to candidate datastore
+            :validate: Validate the contents of the specified configuration.
+            :lock: Allows the client to lock the configuration system of a device.
+            :unlock: Release a configuration lock, previously obtained with the lock operation.
+            :copy_config: create or replace an entire configuration datastore with the contents of another complete
+                          configuration datastore.
+            For JUNOS:
+            :execute_rpc: RPC to be execute on remote device
+            :load_configuration: Loads given configuration on device
+
+        Note: rpc support depends on the capabilites of remote device.
+
+        :returns: Returns output received from remote device as byte string
+        Note: the 'result' or 'error' from response should to be converted to object
+              of ElementTree using 'fromstring' to parse output as xml doc
+
+              'get_capabilities()' returns 'result' as a json string.
+
+            Usage:
+            from ansible.module_utils.connection import Connection
+
+            conn = Connection()
+            data = conn.execute_rpc(rpc)
+            reply = fromstring(reply)
+
+            data = conn.get_capabilities()
+            json.loads(data)
+
+            conn.load_configuration(config=[''set system ntp server 1.1.1.1''], action='set', format='text')
     """
 
     def __init__(self, connection):

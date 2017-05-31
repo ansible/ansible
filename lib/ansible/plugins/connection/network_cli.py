@@ -298,5 +298,4 @@ class Connection(Rpc, _Connection):
             signal.alarm(0)
             return 0, out, b''
         except (AnsibleConnectionFailure, ValueError) as exc:
-            # FIXME: Feels like we should raise this rather than return it
             return 1, b'', to_bytes(exc)

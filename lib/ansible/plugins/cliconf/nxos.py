@@ -24,7 +24,7 @@ import json
 from itertools import chain
 
 from ansible.module_utils.network_common import to_list
-from ansible.plugins.cliconf import CliconfBase, enable_mode
+from ansible.plugins.cliconf import CliconfBase
 
 
 class Cliconf(CliconfBase):
@@ -43,12 +43,10 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    @enable_mode
     def get_config(self, source='running'):
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
         return self.send_command(b'show %s' % lookup[source])
 
-    @enable_mode
     def edit_config(self, command):
         for cmd in chain([b'configure'], to_list(command), [b'end']):
             self.send_command(cmd)
