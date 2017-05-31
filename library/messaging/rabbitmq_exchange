@@ -1,0 +1,273 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: rabbitmq_exchange
+short_description: Adds or removes exchange to/from RabbitMQ
+description:
+  - Add or remove exchanges to/from the RabbitMQ server using the HTTP api provided by the management plugin.
+version_added: "1.7"
+author: Jaco Nel
+options:
+  host:
+    description:
+      - The RabbitMQ management api endpoint.
+    required: true
+    default: null
+    aliases: ["api", "url"]
+  port:
+    description:
+      - The port on which RabbitMQ management api is listening.
+    required: false
+    default: 15672
+  ssl:
+    description:
+      - Whether or not the RabbitMQ management api is running over SSL or not.
+    required: false
+    default: "no"
+    choices: ["yes", "no"]
+  user:
+    description:
+      - The username to use for basic authentication with the RabbitMQ server.
+    required: false
+    default: 'guest'
+    aliases: ["username"]
+  password:
+    description:
+      - Password of the user to use for basic authentication against the RabbitMQ server.
+    required: false
+    default: 'guest'
+  vhost:
+    description:
+      - Vhost to create exchange under.
+    required: false
+    default: "/"
+  name:
+    description:
+      - The exchange name.
+    required: true
+    default: null
+  type:
+    description:
+      - The exchange type.
+    required: true
+    default: "direct"
+    choices: ["direct", "topic", "fanout", "headers"]
+  auto_delete:
+    description:
+      - Whether to delete the exchange when no more connections are opened to it.
+    require: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  durable:
+    description:
+      - Marks the exhange as durable.
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+  internal:
+    description:
+      - Marks the exchange as internal.
+  arguments:
+    description:
+      - Additional arguments to supply with creation of the exchange.
+    required: false
+    default: null
+  force:
+    description:
+      - Deletes and recreates the exchange.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  state:
+    description:
+      - Specify if exchange is to be added or removed.
+    required: false
+    default: present
+    choices: [present, absent]
+'''
+
+EXAMPLES = '''
+# Add exchange to server with no arguments
+- rabbitmq_exchange: host='localhost'
+                     user=guest
+                     password=guest
+                     vhost=/
+                     name=test_exchange
+                     type=direct
+                     durable=no
+                     internal=no
+                     auto_delete=no
+
+# Add to the server with arguments
+- name: Create Exchanges
+    action: rabbitmq_exchange
+    args: 
+        name: 'test_exchange_single'
+        type: 'direct'
+        durable: true
+        auto_delete: true
+        arguments:
+            x-arg-test: 'World'
+            x-another-arg: 'World'
+
+# Add to multipe exchanges to the server using vars
+  vars:
+    exchanges: 
+        - { name: "test_exchange_a", durable: true, auto_delete: true, arguments: {'x-arg-test': 'test_a'}}
+        - { name: "test_exchange_b", durable: true, auto_delete: false, arguments: {'x-arg-test': 'test_b'}}
+        - { name: "test_exchange_c", durable: false, auto_delete: true, arguments: {'x-arg-test': 'test_c'}}
+        - { name: "test_exchange_d", durable: false, auto_delete: false, arguments: {'x-arg-test': 'test_d'}}
+
+    tasks:
+    - name: Create Exchanges
+      action: rabbitmq_exchange
+      args: "{{ item }}"
+      with_items: exchanges
+
+# Remove exchange from server by name
+- rabbitmq_exchange: host='localhost' 
+                     user=guest
+                     password=guest
+                     name=test_exchange
+                     state=absent
+'''
+
+from urllib import quote_plus
+
+import base64
+import httplib2
+import json
+
+class RabbitMQExchange(object):
+    def __init__(self, module, host, port, ssl, username, password, vhost, name, type, auto_delete, durable, internal, arguments):
+        self.module      = module
+        self.host        = host
+        self.port        = port
+        self.ssl         = ssl
+        self.username    = username
+        self.password    = password
+        self.vhost       = vhost
+        self.name        = name
+        self.type        = type
+        self.auto_delete = auto_delete
+        self.durable     = durable
+        self.internal    = internal
+        self.arguments   = arguments
+
+    def _exec(self, **kwargs):
+        """Execute a request to the RabbitMQ Management API"""
+        url = 'https' if self.ssl else 'http' + '://' + self.host + ':' + str(self.port) + '/api/exchanges/' + quote_plus(self.vhost) + '/' + self.name
+        auth = base64.encodestring(self.username + ':' + self.password)
+
+        headers = {'Content-type': 'application/json', 'Authorization': 'Basic ' + auth}
+        http = httplib2.Http(disable_ssl_certificate_validation=True)
+        headers, content = http.request(url, kwargs['method'], body=json.dumps(kwargs['body']), headers=headers)
+
+        return headers['status'], content
+
+    def get(self):
+        """Used to determine whether an exchange already exists on the RabbitMQ server."""
+        return self._exec(**{'method': 'GET', 'body': None})
+
+    def add(self):
+        """Adds a new exchange to the RabbitMQ server."""
+        request = dict(
+            method = 'PUT',
+            body = {
+                'type': self.type,
+                'auto_delete': self.auto_delete,
+                'durable': self.durable,
+                'internal': self.internal,
+            }
+        )
+        if self.arguments is not None:
+            request['body']['arguments'] = self.arguments
+
+        return self._exec(**request)
+
+    def delete(self):
+        """Deletes an exchange from the RabbitMQ server."""
+        return self._exec(**{'method': 'DELETE', 'body': None})
+
+def main():
+    arg_spec = dict(
+        host = dict(required = False, default = 'localhost', aliases = ['host', 'url']),
+        port = dict(required = False, default = 15672),
+        ssl = dict(required = False, default = False),
+        user = dict(required = False, default = 'guest', aliases = ['username']),
+        password = dict(required = False, default = 'guest', aliases = ['pwd']),
+        vhost = dict(required = False, default = '/'),
+        name = dict(required = True, default = None),
+        auto_delete = dict(required = False, default = 'no', type = 'bool'),
+        durable = dict(required = False, default = 'yes', type = 'bool'),
+        internal = dict(required = False, default = 'no', type = 'bool'),
+        type = dict(required = False, default = 'direct', choices = ['direct', 'topic', 'fanout', 'headers']),
+        arguments = dict(required = False, default = None),
+        force = dict(required = False, default = 'no', type = 'bool'),
+        state = dict(required = False, default = 'present', choices = ['present', 'absent']))
+
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
+
+    host        = module.params['host']
+    port        = module.params['port']
+    ssl         = module.params['ssl']
+    username    = module.params['user']
+    password    = module.params['password']
+    vhost       = module.params['vhost']
+    name        = module.params['name']
+    auto_delete = module.params['auto_delete']
+    durable     = module.params['durable']
+    internal    = module.params['internal']
+    type        = module.params['type']
+    arguments   = module.params['arguments']
+
+    force       = module.params['force']
+    state       = module.params['state']
+
+    rabbitmq_exchange = RabbitMQExchange(module, host, port, ssl, username, password, vhost, name, type, auto_delete, durable, internal, arguments)
+
+    changed     = False
+    response    = rabbitmq_exchange.get()
+
+    if response[0] == '401':
+        return module.fail_json(msg="Unable to authenticate. Possibly invalid username or password.")
+
+    if response[0] != '404':
+        if state == 'absent':
+            if not module.check_mode:
+                rabbitmq_exchange.delete()
+            changed = True
+        else:
+            if force:
+                if not module.check_mode:
+                    rabbitmq_exchange.delete()
+                    rabbitmq_exchange.add()
+                changed = True
+
+    elif state == 'present':
+        if not module.check_mode:
+            status, content = rabbitmq_exchange.add()
+        changed = True
+
+    module.exit_json(changed=changed, name=name, state=state)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

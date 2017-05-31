@@ -1,0 +1,321 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: rabbitmq_binding
+short_description: Adds or removes binding to/from RabbitMQ
+description:
+  - Add or remove binding to/from the RabbitMQ server using the HTTP api provided by the management plugin.
+version_added: "1.7"
+author: Jaco Nel
+options:
+  host:
+    description:
+      - The RabbitMQ management api endpoint.
+    required: true
+    default: null
+    aliases: [ "api", "url" ]
+  port:
+    description:
+      - The port on which RabbitMQ management api is listening.
+    required: false
+    default: 15672
+  ssl:
+    description:
+      - Whether or not the RabbitMQ management api is running over SSL or not.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  user:
+    description:
+      - The username to use for basic authentication with the RabbitMQ server.
+    required: true
+    default: null
+    aliases: [ "username" ]
+  password:
+    description:
+      - Password of the user to use for basic authentication against the RabbitMQ server.
+    required: true
+    default: null
+  vhost:
+    description:
+      - Vhost to create binding under.
+    required: false
+    default: "/"
+  source:
+    description:
+      - The name of the exchange to create/delete the binding for/from.
+    required: true
+    default: null
+  destination:
+    description:
+      - The name of the exchange or queue to create/delete the binding for/from.
+    required: true
+    default: null
+  binding_type:
+    description:
+      - Exchange-to-exchange binding or exchange-to-queue binding.
+    require: true
+    default: null
+    choices: [ "exchange", "queue" ]
+  routing_key:
+    description:
+      - The routing key.
+    required: false
+    default: null
+  arguments:
+    description:
+      - Additional arguments to supply with creation of the binding. Complex argument type.
+    required: false
+    default: null
+  force:
+    description:
+      - Deletes and recreates the binding.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  state:
+    description:
+      - Specify if binding is to be added or removed.
+    required: false
+    default: "present"
+    choices: [ "present", "absent" ]
+'''
+
+EXAMPLES = '''
+# Creation of a single binding (exchange bound to a queue) that uses arguments
+- name: Create Binding
+    action: rabbitmq_binding
+    args: 
+        source: 'test_exchange_single' 
+        destination: 'test_queue_single'
+        binding_type: 'queue'
+        routing_key: 'single'
+        arguments:
+            x-arg-test: 'Hello'
+            x-arg-another: 'World'
+
+# Creating multiple bindings (exchange bound to a queue), with arguments, using ansible vars
+  vars:
+    bindings: 
+        - { source: "test_exchange_a", destination: 'test_queue_a', binding_type: 'queue', routing_key: 'a', arguments: {'x-arg-test': 'test_a'}}
+        - { source: "test_exchange_b", destination: 'test_queue_b', binding_type: 'queue', routing_key: 'b', arguments: {'x-arg-test': 'test_b'}}
+        - { source: "test_exchange_c", destination: 'test_queue_c', binding_type: 'queue', routing_key: 'c', arguments: {'x-arg-test': 'test_c'}}
+        - { source: "test_exchange_d", destination: 'test_queue_d', binding_type: 'queue', arguments: {'x-arg-test': 'test_d'}}
+
+  tasks:
+    - name: Create binding
+      action: rabbitmq_binding
+      args: "{{ item }}"
+      with_items: bindings
+
+# Creation of a single binding (exchange bound to a queue) that does not use arguments
+- rabbitmq_binding: host='localhost'
+                    user='guest'
+                    password='guest'
+                    vhost='/'
+                    source='test_exchange'
+                    destination='test_queue'
+                    binding_type='queue'
+                    routing_key='test'
+
+# Creation of a single binding (exchange bound to an exchange) that does not use arguments
+- rabbitmq_binding: host='localhost'
+                    user='guest'
+                    password='guest'
+                    vhost='/'
+                    source='test_exchange'
+                    destination='test_exchange'
+                    binding_type='exchange'
+                    routing_key='test'
+
+# To delete a binding between an exchange and a queue
+- rabbitmq_binding: host='localhost'
+                    user='guest'
+                    password='guest'
+                    vhost='/'
+                    source='test_exchange'
+                    destination='test_queue'
+                    binding_type='queue'
+                    routing_key='test'
+                    state='absent'
+
+# To delete a binding between an exhange and another exchange
+- rabbitmq_binding: host='localhost'
+                    user='guest'
+                    password='guest'
+                    vhost='/'
+                    source='test_exchange'
+                    destination='test_exchange'
+                    binding_type='exchange'
+                    routing_key='test'
+                    state='absent'
+'''
+
+from urllib import quote_plus
+
+import base64
+import httplib2
+import json
+
+class RabbitMQExchange(object):
+    def __init__(self, module, host, port, ssl, username, password, vhost, source, destination, binding_type, routing_key, arguments):
+        self.module         = module
+        self.host           = host
+        self.port           = port
+        self.ssl            = ssl
+        self.username       = username
+        self.password       = password
+        self.vhost          = vhost
+        self.source         = source
+        self.destination    = destination
+        self.binding_type   = binding_type
+        self.routing_key    = routing_key
+        self.arguments      = arguments
+
+    def _exec(self, url, **kwargs):
+        """Executes a request to the RabbitMQ api"""
+        auth    = base64.encodestring(self.username + ':' + self.password)
+        http    = httplib2.Http(disable_ssl_certificate_validation=True)
+        headers = {'Content-type': 'application/json', 'Authorization': 'Basic ' + auth}
+
+        headers, content = http.request(url, kwargs['method'], body=json.dumps(kwargs['body']), headers=headers)
+        return headers['status'], content
+
+    def build_url(self, property_key = None):
+        """Builds up the correct api endpoint based on the properties supplied."""
+        url = 'https' if self.ssl else 'http' + '://' + self.host + ':' + str(self.port) + '/api/bindings/' + quote_plus(self.vhost) + '/e/' + self.source 
+        if self.binding_type == 'queue': 
+            url = url + '/q/' + self.destination
+        else:
+            url = url + '/e/' + self.destination
+
+        if property_key is not None:
+            url = url + '/' + property_key
+
+        return url
+
+    def get(self):
+        """Performs a GET request to the RabbitMQ to retrieve all bindings for a specified source and distination combination. It 
+        the filters through this list of bindings to determine if any of them exactly match the binding properties supplied."""
+        status, content = self._exec(self.build_url(), **{'method': 'GET', 'body': None})
+        if status == 404:
+            return None
+
+        list_bindings = json.loads(content)
+        for binding in list_bindings:
+            # does the routing keys match?
+            routing_key_match = ('routing_key' in binding) and (self.routing_key == binding['routing_key']) if self.routing_key is not None else True
+
+            # same amount of arguments?
+            args_length_match = (len(self.arguments) == len(binding['arguments']))
+
+            # Ok, check that the arguments match
+            args_match = True
+            for key, val in self.arguments.iteritems():
+                if key not in binding['arguments'] or val != binding['arguments'][key]:
+                    args_match = False
+
+            if routing_key_match and args_length_match and args_match:
+                return binding
+
+        return None
+
+    def add(self):
+        """Adds a new binding to via the RabbitMQ api."""
+        body = {}
+        if self.routing_key is not None:
+            body['routing_key'] = self.routing_key
+
+        if self.arguments is not None:
+            body['arguments'] = self.arguments
+
+        request = dict(
+            method='POST',
+            body=body
+        )
+
+        return self._exec(self.build_url(), **request)
+
+    def delete(self, property_key):
+        """Deletes a binding via the RabbitMQ api."""
+        return self._exec(self.build_url(property_key), **{'method': 'DELETE', 'body': None})
+
+
+def main():
+    """The module's main method."""
+
+    arg_spec = dict(
+        host = dict(required = False, default = 'localhost', aliases = ['host', 'url']),
+        port = dict(required = False, default = 15672),
+        ssl = dict(required = False, default = False),
+        user = dict(required = False, default = 'guest', aliases = ['username']),
+        password = dict(required = False, default = 'guest', aliases = ['pwd']),
+        vhost = dict(required = False, default = '/'),
+        source = dict(required = True),
+        destination = dict(required = True),
+        binding_type = dict(required = True),
+        routing_key = dict(required = False, default = None),
+        arguments = dict(required = False, default = None),
+        force = dict(required = False, default = 'no', type = 'bool'),
+        state = dict(required = False, default = 'present', choices = ['present', 'absent']))
+
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
+
+    host         = module.params['host']
+    port         = module.params['port']
+    ssl          = module.params['ssl']
+    username     = module.params['user']
+    password     = module.params['password']
+    vhost        = module.params['vhost']
+    source       = module.params['source']
+    destination  = module.params['destination']
+    binding_type = module.params['binding_type']
+    routing_key  = module.params['routing_key']
+    arguments    = module.params['arguments']
+
+    force = module.params['force']
+    state = module.params['state']
+
+    rabbitmq_exchange = RabbitMQExchange(module, host, port, ssl, username, password, vhost, source, destination, binding_type, routing_key, arguments)
+
+    changed = False
+    binding = rabbitmq_exchange.get()
+    if binding is not None:
+        if state == 'absent':
+            if not module.check_mode:
+                status, content = rabbitmq_exchange.delete(binding['properties_key'])
+            changed = True
+        else:
+            if force:
+                if not module.check_mode:
+                    rabbitmq_exchange.delete(binding['properties_key'])
+                    rabbitmq_exchange.add()
+                changed = True
+
+    elif state == 'present':
+        if not module.check_mode:
+            rabbitmq_exchange.add()
+        changed = True
+
+    module.exit_json(changed=changed, state=state)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
