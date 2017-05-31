@@ -1,0 +1,201 @@
+#!/usr/bin/python
+DOCUMENTATION = '''
+---
+module: ec2_host_key
+short_decription: Add host keys from EC2 instances
+description:
+    - This module adds the host keys from AWS EC2 instances to the known_hosts file.
+    - It retrieves the host key from the console output of the instance.
+    - It will add the public IP and EC2 hostname to known hosts, as well as an optional specified hostname.
+    - Note: The EC2 image must be configured to print the host key to the console.
+options:
+  instance_id:
+    description:
+      - The EC2 instance id
+    required: true
+  known_hosts_file:
+    description:
+      - The file that contains the public keys of the known hosts
+    required: false
+    default: C(~/.ssh/known_hosts)
+  hostname:
+    description:
+      - An additional optional hostname to be added to the known hosts file with this key.
+    required: false
+  ec2_url:
+    description:
+      - URL to use to connect to EC2-compatible cloud (by default the module will use EC2 endpoints)
+    required: false
+    default: null
+    aliases: [ EC2_URL ]
+  ec2_access_key:
+    description:
+      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_ACCESS_KEY ]
+  ec2_secret_key:
+    description:
+      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_SECRET_KEY ]
+  region:
+    description:
+      - the EC2 region to use
+    required: false
+    default: null
+    aliases: [ ec2_region ]
+requirements: [ "boto", "ssh-keygen" ]
+author: Lorin Hochstein <lorin@nimbisservices.com>
+'''
+
+EXAMPLES = '''
+- ec2_host_key: instance_id=i-5ab0a728
+
+- ec2_host_key: instance_id=i-5ab0a728 hostname=www.example.com known_hosts_file=/home/alice/.ssh/known_hosts
+'''
+
+import os.path
+import re
+
+try:
+    import boto.ec2
+except ImportError:
+    boto_found = False
+else:
+    boto_found = True
+
+
+def connect(ec2_url, ec2_secret_key, ec2_access_key, region):
+    """ Return an ec2 connection"""
+    # allow environment variables to be used if ansible vars aren't set
+    if not ec2_url and 'EC2_URL' in os.environ:
+        ec2_url = os.environ['EC2_URL']
+    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
+        ec2_secret_key = os.environ['EC2_SECRET_KEY']
+    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
+        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+
+    # If we have a region specified, connect to its endpoint.
+    if region:
+        try:
+            ec2 = boto.ec2.connect_to_region(region,
+                                        aws_access_key_id=ec2_access_key,
+                                        aws_secret_access_key=ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(" %s %s %s " % (region, ec2_access_key,
+                                                       ec2_secret_key)))
+    # Otherwise, no region so we fallback to the old connection method
+    else:
+        try:
+            if ec2_url: # if we have an URL set, connect to the specified endpoint
+                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+            else: # otherwise it's Amazon.
+                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    return ec2
+
+
+def get_host_key(console_output):
+    """ Get the host key from the console output
+
+    Raises an exception if it can't find the host key """
+    match = re.search(r'^ssh-rsa (\S*) ', console_output, flags=re.MULTILINE)
+    return match.group(1)
+
+def replace_key(host, host_key, known_hosts_file, module):
+    remove_key(host, known_hosts_file, module)
+    add_key(host, host_key, known_hosts_file)
+
+
+def remove_key(host, known_hosts_file, module):
+    """ Remove a key from the known hosts file """
+    rc, out, err = module.run_command("ssh-keygen -R %s -f %s" %
+                                     (host, known_hosts_file))
+    if rc != 0:
+        module.fail_json(msg="ssh-keygen -R failed:\n%s\n%s" % (out, err))
+
+def add_key(host, host_key, known_hosts_file):
+    """ Add a key to the known hosts file """
+    f = open(known_hosts_file, 'a')
+    f.write(host)
+    f.write(' ssh-rsa ')
+    f.write(host_key)
+    f.write('\n')
+    f.close()
+
+def is_key_present(host, host_key, known_hosts_file, module):
+    """ Check if the host and corresponding key are present in the hosts file """
+    rc, out, err = module.run_command("ssh-keygen -F %s -f %s" %
+                                      (host, known_hosts_file))
+    if rc != 0:
+        module.fail_json(msg="ssh-keygen -F failed:\n%s\n%s" % (out, err))
+
+    if "found" not in out:
+        return False
+
+    # Parse for the key and compare it
+    match = re.search(r'ssh-rsa (\S*)', out, flags=re.MULTILINE)
+    return match.group(1) == host_key
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            instance_id = dict(required=True),
+            known_hosts_file = dict(required=False,
+                                    default=os.path.expanduser('~/.ssh/known_hosts')),
+            hostname = dict(required=False),
+            ec2_url = dict(required=False, aliases=['EC2_URL']),
+            ec2_secret_key = dict(required=False, aliases=['EC2_SECRET_KEY'], no_log=True),
+            ec2_access_key = dict(required=False, aliases=['EC2_ACCESS_KEY']),
+            region = dict(required=False, aliases=['ec2_region'])
+        ),
+        supports_check_mode=True
+    )
+
+    if not boto_found:
+        module.fail_json(msg="boto is required")
+
+    ec2 = connect(ec2_url=module.params.get('ec2_url'),
+                  ec2_secret_key=module.params.get('ec2_secret_key'),
+                  ec2_access_key=module.params.get('ec2_access_key'),
+                  region=module.params.get('region'))
+
+    instance_id = module.params.get('instance_id')
+    hostname = module.params.get('hostname')
+
+    console = ec2.get_console_output(instance_id)
+    if console.output is None:
+        module.fail_json(msg="console output is blank")
+
+    host_key = get_host_key(console.output)
+
+    # Get the public ip of the instance
+    instance = ec2.get_all_instances([instance_id])[0].instances[0]
+
+    known_hosts_file = module.params.get('known_hosts_file')
+
+    changed = False
+    for host in [instance.ip_address, instance.public_dns_name, hostname]:
+        if not host:
+            continue
+        if not is_key_present(host, host_key,
+                              known_hosts_file, module):
+            changed = True
+            if module.check_mode:
+                module.exit_json(changed=True)
+
+            replace_key(host, host_key, known_hosts_file, module)
+
+    module.exit_json(changed=changed, host_key=host_key)
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+
+if __name__ == '__main__':
+    main()
