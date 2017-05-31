@@ -1,0 +1,232 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2_keypair
+short_description: creates a keypair in EC2
+description:
+    - creates an EC2 keypair
+version_added: "1.5"
+options:
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+    required: false
+    default: None
+    aliases: ['ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: None
+    aliases: ['ec2_access_key', 'access_key' ]
+  ec2_url:
+    description:
+      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
+    required: false
+    default: null
+    aliases: []
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    default: null
+    aliases: ['aws_region', 'ec2_region']
+  name:
+    description:
+      - name of the keypair
+    required: true
+    default: null
+    aliases: []
+  src:
+    description:
+      - path to the public key to upload for keypair imports
+    required: false
+    default: null
+    aliases: []
+  dest:
+    description:
+      - directory in which to store the keypair when generating a new keypair
+    required: false
+    default: null
+    aliases: []
+  state: 
+    description:
+      - whether to ensure the keypair is present or absent. Absent also deletes the associated keypair in dest
+    default: present
+    required: false
+    choices: [ 'present', 'absent' ]
+  force:
+    description: 
+    - whether to regenerate a keypair if it exists in the destination but not on EC2 or if it exists in EC2 but not in the destination
+    required: false
+    default: False
+    aliases: []
+requirements: [ "boto" ]
+author: Will Thames
+'''
+
+EXAMPLES = '''
+# Create a keypair in ~/.ansible/ec2_key.pem
+- local_action: 
+    module: ec2_keypair 
+    name: ec2_key
+    dest: ~/.ansible
+# Upload a new keypair from ~/.ssh/id_rsa.pub
+
+- local_action: 
+    module: ec2_keypair 
+    name: ec2_key
+    src: ~/.ssh/id_rsa.pub
+'''    
+
+import sys
+import os
+
+try:
+    import boto.ec2
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name = dict(),
+            dest = dict(),
+            src = dict(),
+            force = dict(type='bool', default=False),
+            state = dict(default='present', choices=['present', 'absent']),
+            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            ec2_url = dict(),
+            aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
+            aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
+        )
+    )
+
+    # def get_ec2_creds(module):
+    #   return ec2_url, ec2_access_key, ec2_secret_key, region
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+
+    name = module.params.get('name')
+    dest = module.params.get('dest')
+    if dest:
+        dest = os.path.expanduser(dest)
+    src = module.params.get('src')
+    if src:
+        src = os.path.expanduser(src)
+    force = module.params.get('force')
+    state = module.params.get('state')
+
+    if src and dest:
+        module.fail_json(msg='At most one of src and dest should be set')
+
+    if src and force:
+        module.fail_json(msg="Force should not be used when importing a keypair")
+
+    # If we have a region specified, connect to its endpoint.
+    if region: 
+        try:
+            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    # Otherwise, no region so we fallback to the old connection method
+    elif ec2_url:
+        try:
+            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    else:
+        module.fail_json(msg="Either region or ec2_url must be specified")
+
+    try: 
+        keypairs = [ keypair.name for keypair in ec2.get_all_key_pairs() ]
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+    if state == 'absent': 
+        changed = False
+        if name in keypairs:
+            try:
+                ec2.delete_key_pair(name)
+                changed = True
+            except boto.exception.BotoServerError, e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        
+        if dest:
+            fullpath = os.path.join(dest, '%s.pem' % name)
+            if os.path.exists(fullpath):
+                os.remove(fullpath)
+                changed = True
+        module.exit_json(changed=changed, name=name, state=state)
+    else:
+        fullpath = src or os.path.join(dest, '%s.pem' % name)
+        if name in keypairs:
+            if os.path.exists(fullpath):
+                module.exit_json(changed=False, name=name, state=state, keyfile=fullpath)
+            else:
+                if force:
+                    try:
+                        ec2.delete_key_pair(name)
+                    except boto.exception.BotoServerError, e:
+                        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+                else:
+                    module.fail_json(msg="Key %s exists in EC2 but does not exist at %s. Use force to override" % (name, fullpath))
+        else:
+            if dest and os.path.exists(fullpath):
+                if force:
+                    os.remove(fullpath)
+                else:
+                    module.fail_json(msg="Key %s exists at %s but does not exist in EC2. Use force to override" % (name, fullpath))
+          
+        if dest: 
+            try: 
+                key = ec2.create_key_pair(name)
+                key.save(dest)
+                module.exit_json(changed=True, name=name, state=state, keyfile=dest)
+            except boto.exception.BotoServerError, e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        if src:
+            try: 
+                fd = open(src)
+                key = fd.read()
+            except OSError, e:
+                module.fail_json(msg="Could not read public key file %s: %s" % (src, e.message))
+            finally:
+                fd.close()
+            try:
+                ec2.import_key_pair(name, key)
+                module.exit_json(changed=True, name=name, state=state, keyfile=src)
+            except boto.exception.BotoServerError, e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+        module.fail_json(msg="Should not have got here!")
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
