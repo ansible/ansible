@@ -170,9 +170,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         ''' prompt for vault password and/or password change '''
 
         vault_pass = None
-        try:
-            vault_pass = getpass.getpass(prompt="Vault password: ")
 
+        try:
+            try:
+                vault_pass = os.environ['ANSIBLE_VAULT_PASSWORD']
+            except KeyError:
+                vault_pass = getpass.getpass(prompt="Vault password: ")
         except EOFError:
             pass
 
