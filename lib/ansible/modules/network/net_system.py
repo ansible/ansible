@@ -21,8 +21,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
-                    'supported_by': 'core',
-                    'action_handler': 'net_platform_agnostic'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = """
