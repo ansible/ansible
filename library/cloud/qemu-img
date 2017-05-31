@@ -1,0 +1,130 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be> - Toshaan Bharvani <toshaan@vantosh.com
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+author: Jeroen Hoekx & Toshaan Bharvani
+module: qemu_img
+short_description: Create qemu images
+description:
+  - "This module creates images for qemu."
+version_added: "1.1"
+options:
+  dest:
+    description: The image file to create or remove
+    required: true
+  format:
+    description: The image format
+    default: qcow2
+    required: false
+  options:
+    description: The disk format options
+    required: false
+  size:
+    description: The size of the image
+    required: false
+  state:
+    choices: [ "absent", "present", "resize" ]
+    description: If the image should be present or absent
+    default: present
+    required: false
+  force:
+    choices: [ "false", "true" ]
+    description: Force the creation of a new file
+    even if once already exists
+    required: false
+examples:
+  - description: Create a raw image of 5M.
+    code: qemu_img dest=/tmp/testimg size=5 format=raw
+  - description: Enlarge the image to 6M.
+    code: qemu_img dest=/tmp/testimg size=6 format=raw
+  - description: Remove the image
+    code: qemu_img dest=/tmp/testimg state=absent
+notes:
+  - This module does not change the type of the image.
+'''
+
+import os
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            dest=dict(type='str', required=True),
+            format=dict(type='str', default='qcow2'),
+            options=dict(type='str', default='preallocation=metadata'),
+            size=dict(type='str'),
+            state=dict(type='str', choices=['absent', 'present', 'resize'], default='present'),
+            force=dict(type='str', choices=['false', 'true'], default='false'),
+        ),
+    )
+
+    changed = False
+    qemu_img = module.get_bin_path('qemu-img', True)
+
+    dest = module.params['dest']
+    img_options = module.params['options']
+    img_format = module.params['format']
+    if(module.params['size']):
+        if(module.params['size'][:-1].upper == 'G'):
+            size = module.params['size'][:-1] * 1024 * 1024 * 1024
+        elif(module.params['size'][:-1].upper == 'M'):
+            size = module.params['size'][:-1] * 1024 * 1024
+        elif(module.params['size'][:-1].upper == 'K'):
+            size = module.params['size'][:-1] * 1024
+        else:
+            size = module.params['size']
+    img_force = module.params['force']
+
+    if module.params['state'] == 'present':
+        if not size:
+            module.fail_json(msg='No size defined, creating a disk image requires a size')
+        if not os.path.exists(dest) or img_force == 'true':
+            if img_options:
+                module.run_command('%s create -f %s -o "%s" "%s" %s'%(qemu_img, img_format, img_options, dest, size), check_rc=True)
+            else:
+                module.run_command('%s create -f %s "%s" %s'%(qemu_img, img_format, dest, size), check_rc=True)
+            changed = True
+
+    if module.params['state'] == 'resize':
+        if not size:
+            module.fail_json(msg='No size defined, resizing a disk image requires a size')
+        rc, stdout, _ = module.run_command('%s info "%s"'%(qemu_img, dest), check_rc=True)
+        current_size = None
+        for line in stdout.splitlines():
+            if 'virtual size' in line:
+                ### virtual size: 5.0M (5242880 bytes)
+                current_size = int(line.split('(')[1].split()[0])
+        if not current_size:
+            module.fail_json(msg='Unable to read virtual disk size of %s'%(dest))
+        if current_size != size:
+            module.run_command('%s resize "%s" %s'%(qemu_img, dest, size), check_rc=True)
+            changed = True
+
+    if module.params['state'] == 'absent':
+        if os.path.exists(dest):
+            os.remove(dest)
+            changed = True
+
+    module.exit_json(changed=changed)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
