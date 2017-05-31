@@ -136,17 +136,18 @@ class TrackingDict(dict):
         super(TrackingDict, self).__init__(*args, **kw)
         self._inital = False
         self.meta = defaultdict(list)
+        self.ignore_internal = True
 
     def __setitem__(self, key, value):
         super(TrackingDict, self).__setitem__(key, value)
         #if self._initial:
         #    self.meta[key].append(('unknown-si', value))
 
-    def update(self, other, update_name=None):
+    def update(self, other, update_name=None, scope_info=None):
         for key in other:
-            if key == 'update_name':
+            if key == 'update_name' or key == 'scope_info':
                 continue
-            self.meta[key].append((update_name, other[key]))
+            self.meta[key].append((update_name, other[key], scope_info))
             self[key] = other[key]
 
     def copy(self):
@@ -157,12 +158,22 @@ class TrackingDict(dict):
     def __repr__(self):
         lines = []
         for key in self:
-            lines.append('%s: ' % key)
-            lines.append('  scopes:')
+            if self.ignore_internal and key.startswith('ansible_') or key in ['hostvars', 'groups', 'vars', 'omit', 'inventory_hostname']:
+                continue
+            lines.append('var: %s' % key)
+            lines.append('    scopes:')
             for idx, level in enumerate(reversed(self.meta[key])):
                 # lines.append('  level %s: %s' % (idx, repr(level)))
-                lines.append('    %s: %s: %s' % (idx, level[0], level[1]))
-            lines.append('  final: %s' % self[key])
+                scope_info_blurb = ''
+                scope_info = level[2]
+                if scope_info is not None:
+                    scope_info_blurb = scope_info
+                lines.append('        %s:' % idx)
+                lines.append('            source: %s' % level[0])
+                lines.append('              info: %s' % scope_info_blurb)
+                lines.append('             value: %s' % level[1])
+            lines.append('    final:')
+            lines.append('           %s' % self[key])
         return '\n'.join(lines)
 
     def as_dict(self):
@@ -224,7 +235,7 @@ def show_changes(old, new, old_object_label=None, new_object_label=None, update_
                                                                       pprint.pformat(dd)))
 
 
-def combine_vars(a, b, name_b=None):
+def combine_vars(a, b, name_b=None, scope_info=None):
     """
     Return a copy of dictionaries of variables based on configured hash behavior
     """
@@ -241,7 +252,7 @@ def combine_vars(a, b, name_b=None):
         # w = Watcher()
         # _result.observe(w)
         # setattr(_result, '_update_name', name_b)
-        _result.update(b, update_name=name_b)
+        _result.update(b, update_name=name_b, scope_info=scope_info)
         #if display.verbosity > 2:
             #if isinstance(a, TrackingDict):
                 #pprint.pprint(dict(_result.meta))

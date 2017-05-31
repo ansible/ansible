@@ -366,7 +366,7 @@ class VariableManager:
                             data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                             if data is not None:
                                 for item in data:
-                                    all_vars = combine_vars(all_vars, item, name_b='vars_file')
+                                    all_vars = combine_vars(all_vars, item, name_b='vars_file', scope_info=vars_file)
                             break
                         except AnsibleFileNotFound:
                             # we continue on loader failures
@@ -392,7 +392,7 @@ class VariableManager:
             # unless the user has disabled this via a config option
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
-                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False), name_b='role_play_vars_%s' % (role.get_name()))
+                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False), name_b='role_play_vars_%s' % role.get_name(), scope_info=role._role_path)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
