@@ -1,0 +1,1587 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Kevin Carter <kevin.carter@rackspace.com>
+# (c) 2014, Hugh Saunders <hugh.saunders@rackspace.co.uk>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+import ast
+import os
+import shutil
+import tempfile
+import time
+
+
+DOCUMENTATION = """
+---
+module: lxc
+version_added: "1.6.2"
+short_description: Manage LXC Containers
+description:
+  - Management of LXC containers
+options:
+    name:
+        description:
+          - Name of a container.
+        required: false
+    return_code:
+        description: 
+          - Allow for return Codes other than 0 when executing commands. 
+            This is a comma separated list of acceptable return codes.
+        default: 0
+    backingstore:
+        description: 
+          - Options 'dir', 'lvm', 'loop', 'btrfs', 'best'. The default is
+            'none'
+        required: false
+    template:
+        description:
+          - Name of the template to use within an LXC create.
+        required: false
+        default: ubuntu
+    template_options:
+        description:
+          - Template options when building the container
+        required: false
+    config:
+        description:
+          - Path to the LXC configuration file.
+        required: false
+        default: /etc/lxc/default.conf
+    bdev:
+        description:
+          - Backend device for use with an LXC container.
+        required: false
+    lvname:
+        description:
+          - Backend store for lvm.
+        required: false
+    vgname:
+        description:
+          - If Backend store is lvm, specify the name of the volume group.
+        required: false
+    thinpool:
+        description:
+          - Use LVM thin pool called TP (Default lxc)
+        required: false
+    fstype:
+        description:
+          - Create fstype TYPE (Default ext3)
+        required: false
+    fssize:
+        description:
+          - Filesystem Size (Default 1G, default unit 1M)
+        required: false
+    dir:
+        description:
+          - Place rootfs directory under DIR
+        required: false
+    zfsroot:
+        description:
+          - Create zfs under given zfsroot (Default tank/lxc)
+        required: false
+    container_command:
+        description: 
+          - Run a command in a container. Only used in the "attach" operation.
+        required: false
+    return_facts:
+        description: 
+          - Return stdout after an attach command. Only used in the "attach"
+            operation.
+        required: false
+        default: false
+    lxcpath:
+        description:
+          - Place container under PATH
+        required: false
+    snapshot:
+        description:
+          - The new container's rootfs should be a LVM or btrfs snapshot of
+            the original.  Only used in "clone" operation.
+        required: false
+    keepname:
+        description:
+          - Do not change the hostname of the container (in the root
+            filesystem). Only used in "clone" operation.
+        required: false
+    newpath:
+        description:
+          - The lxcpath for the new container. Only used in "clone" operation.
+        required: false
+    orig:
+        description:
+          - The name of the original container to clone. Only used in "clone"
+            operation.
+        required: false
+    new:
+        description:
+          - The name of the new container to create. Only used in "clone"
+            operation.
+        required: false
+    state:
+        choices:
+          - running
+          - stopped
+        description:
+          - Start a container right after it's created.
+        required: false
+        default: 'running'
+    options:
+        description:
+          - Dictionary of options to use in a containers configuration. Only
+            used in "config" operation.
+        required: false
+    command:
+        choices:
+          - list
+          - create
+          - destroy
+          - info
+          - attach
+          - start
+          - stop
+          - restart
+          - config
+          - createtar
+          - clone
+        description:
+          - Type of command to run, see Examples.
+        required: true
+author: Kevin Carter, Hugh Saunders
+requirements: ['lxc >= 1.0']
+"""
+
+EXAMPLES = """
+# Create a new LXC container.
+- lxc: name=test-container
+       template=ubuntu
+       config=/etc/lxc/lxc-rpc.conf
+       command=create
+       state=running
+
+# Create tar archive from Container this is a bzip2 compressed archive
+- lxc: name="{{ container_name }}"
+       command=createtar
+       tarpath="/tmp/{{ container_name }}"
+
+# Run a command within a built and started container.
+- lxc: name=test-container
+       container_command="git clone https://github.com/cloudnull/lxc_defiant"
+       command=attach
+
+# List all containers and return a dict of all found information
+- lxc: command=list
+
+# Get information on a given container.
+- lxc: name=test-container
+       command=info
+
+# Stop a container.
+- lxc: name=test-container
+       command=stop
+
+# Start a container.
+- lxc: name=test-container
+       command=start
+
+# Restart a container.
+- lxc: name=test-container
+       command=restart
+
+# Update the configuration for a container.
+# Uses a list of "key=value" pairs.
+container_config_options:
+  - 'cpuset.cpus="0,3"'
+  - 'lxc.cgroup.devices.allow="a rmw"'
+
+- lxc: name=test-container
+       command=config
+       options="{{ container_config_options }}"
+
+# Clone a container.
+- lxc: orig=test-container
+       new=test-container-new
+       command=clone
+       state=started
+
+# Destroy a container.
+- lxc: name=test-container
+       command=destroy
+"""
+
+
+COMMAND_MAP = {
+    'list': {
+        'command': 'container_list',
+        'variables': [
+            'lxcpath'
+        ],
+    },
+    'create': {
+        'command': 'container_create',
+        'variables': [
+            'name',
+            'config',
+            'template',
+            'bdev',
+            'template',
+            'lxcpath',
+            'lvname',
+            'vgname',
+            'thinpool',
+            'fstype',
+            'fssize',
+            'dir',
+            'zfsroot',
+            'template_options',
+            'state'
+        ]
+    },
+    'destroy': {
+        'command': 'container_destroy',
+        'variables': [
+            'name',
+            'lxcpath'
+        ],
+    },
+    'clone': {
+        'command': 'container_clone',
+        'variables': [
+            'keepname',
+            'snapshot',
+            'fssize',
+            'lxcpath',
+            'newpath',
+            'backingstore',
+            'orig',
+            'new',
+            'state'
+        ]
+    },
+    'info': {
+        'command': 'container_info',
+        'variables': [
+            'name',
+            'lxcpath'
+        ],
+    },
+    'attach': {
+        'command': 'container_attach',
+        'variables': [
+            'name',
+            'lxcpath',
+            'container_command',
+            'return_facts'
+        ],
+    },
+    'start': {
+        'command': 'container_start',
+        'variables': [
+            'name',
+            'lxcpath'
+        ],
+    },
+    'stop': {
+        'command': 'container_stop',
+        'variables': [
+            'name',
+            'lxcpath'
+        ],
+    },
+    'restart': {
+        'command': 'container_restart',
+        'variables': [
+            'name',
+            'lxcpath'
+        ],
+    },
+    'config': {
+        'command': 'container_config',
+        'variables': [
+            'name',
+            'lxcpath',
+            'options',
+            'state'
+        ],
+    },
+    'createtar': {
+        'command': 'container_create_tar',
+        'variables': [
+            'name',
+            'lxcpath',
+            'tarpath'
+        ],
+    }
+}
+
+
+# This is used to attach to a running container and execute commands from
+# within the container on the host.  This will provide local access to a
+# container without using SSH.  The template will attempt to work within the
+# home directory of the user that was attached to the conatiner and source
+# that users environment variables by default.
+ATTACH_TEMPLATE = """
+%(command)s <<EOL
+  pushd \$(grep \$(whoami) /etc/passwd | awk -F':' '{print \$6}')
+  if [[ -f ".bashrc" ]];then
+    source .bashrc
+  fi
+  %(container_command)s
+  popd
+EOL
+"""
+
+
+class LxcManagement(object):
+    """Manage LXC containers with ansible."""
+
+    def __init__(self, module):
+        """Management of LXC containers via Ansible.
+
+        :param module: ``object``  Processed Ansible Module.
+        """
+        self.module = module
+        self.rc = [int(i) for i in self.module.params.get('return_code')]
+        self.state_change = False
+        self.lxc_vg = None
+
+    def failure(self, error, rc, msg):
+        """Return a Failure when running an Ansible command.
+
+        :param error: ``str``  Error that occurred.
+        :param rc: ``int``     Return code while executing an Ansible command.
+        :param msg: ``str``    Message to report.
+        """
+        self.module.fail_json(msg=msg, rc=rc, err=error)
+
+    @staticmethod
+    def _lxc_facts(facts):
+        """Return a dict for our Ansible facts.
+
+        :param facts: ``dict``  Dict with data to return
+        """
+        return {'lxc_facts': facts}
+
+    def _ensure_state(self, state, name, variables_dict,
+                      tries=0, max_tries=10, sleep_time=5):
+        """Ensure that the container is within a defined state.
+
+        :param state: ``str``  The desired state of the container.
+        :param name: ``str``  Name of the container.
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        :param tries: ``int``  The number of attempts before quiting.
+        """
+        container_data = self._get_container_info(
+            name=name, variables_dict=variables_dict
+        )
+        current_state = container_data['state']
+
+        state_map = {
+            'running': {
+                'frozen': self._freezer,
+                'stopped': self._stopper
+            },
+            'stopped': {
+                'running': self._starter,
+                'frozen': self._starter
+            },
+            'frozen': {
+                'running': self._unfreezer,
+                'stopped': self._stopper
+            }
+        }
+
+        if state != current_state:
+            if tries <= max_tries:
+                state_map[current_state][state](
+                    name=name, variables_dict=variables_dict
+                )
+                self.state_change = True
+                time.sleep(sleep_time)
+                self._ensure_state(
+                    state=state, name=name,
+                    variables_dict=variables_dict, tries=tries + 1
+                )
+
+            else:
+                message = (
+                    'State failed to change for container [ %s ] --'
+                    ' [ %s ] != [ %s ]' % (name, state, current_state)
+                )
+                self.failure(
+                    error='Failed to change the state of the container.',
+                    rc=2,
+                    msg=message
+                )
+
+    def command_router(self):
+        """Run the command as its provided to the module."""
+        command_name = self.module.params['command']
+
+        if command_name in COMMAND_MAP:
+            action_command = COMMAND_MAP[command_name]
+            action_name = action_command['command']
+            if hasattr(self, '_%s' % action_name):
+                action = getattr(self, '_%s' % action_name)
+                facts = action(variables=action_command['variables'])
+                if facts is None:
+                    self.module.exit_json(changed=self.state_change)
+                else:
+                    self.module.exit_json(
+                        changed=self.state_change,
+                        ansible_facts=facts
+                    )
+            else:
+                self.failure(
+                    error='Command not in LxcManagement class',
+                    rc=2,
+                    msg='Method [ %s ] was not found.' % action_name
+                )
+        else:
+            self.failure(
+                error='No Command Found',
+                rc=2,
+                msg='Command [ %s ] was not found.' % command_name
+            )
+
+    def _get_vars(self, variables, required=None):
+        """Return a dict of all variables as found within the module.
+
+        :param variables: ``list``  List of all variables to find.
+        :param required: ``list``  Name of variables that are required.
+        """
+        return_dict = {}
+        for variable in variables:
+            _var = self.module.params.get(variable)
+            if _var not in [None, '', False]:
+                return_dict[variable] = self.module.params[variable]
+        else:
+            if isinstance(required, list):
+                for var_name in required:
+                    if var_name not in return_dict:
+                        self.failure(
+                            error='Missing [ %s ] from Task' % var_name,
+                            rc=000,
+                            msg='known variables %s - available params %s'
+                                % (variables, self.module.params)
+                        )
+            return return_dict
+
+    def _run_command(self, build_command, unsafe_shell=False, timeout=120):
+        """Return information from running an Ansible Command.
+
+        This will squash the build command list into a string and then
+        execute the command via Ansible. The output is returned to the method.
+        This output is returned as `return_code`, `stdout`, `stderr`.
+
+        Prior to running the command the method will look to see if the LXC
+        lockfile is present. If the lockfile "/var/locksubsys/lxc" the method
+        will wait upto 10 minutes for it to be gone; polling every 5 seconds.
+
+        :param build_command: ``list``  Used for the command and all options.
+        """
+        lockfile = '/var/locksubsys/lxc'
+        command = self._construct_command(build_list=build_command)
+
+        for _ in xrange(timeout):
+            if os.path.exists(lockfile):
+                time.sleep(5)
+            else:
+                return self.module.run_command(
+                    command, use_unsafe_shell=unsafe_shell
+                )
+        else:
+            message = (
+                'The LXC subsystem is locked and after 5 minutes it never'
+                ' became unlocked. Lockfile [ %s ]' % lockfile
+            )
+            self.failure(
+                error='LXC subsystem locked',
+                rc=0,
+                msg=message
+            )
+
+    def _get_container_info(self, name, cstate=None, variables_dict=None):
+        """Return a dict of information pertaining to a known container.
+
+        :param name: ``str``     name of the container.
+        :param cstate: ``dict``  dict to build within while gathering
+                                 information. If `None` an empty dict will be
+                                 created.
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        """
+        if cstate is None:
+            cstate = {}
+
+        build_command = [
+            self.module.get_bin_path('lxc-info', True),
+            '--name %s' % name
+        ]
+
+        if isinstance(variables_dict, dict):
+            self._add_variables(
+                variables_dict=variables_dict,
+                build_command=build_command,
+                allowed_variables=COMMAND_MAP['info']['variables']
+            )
+
+        rc, return_data, err = self._run_command(build_command)
+        if rc not in self.rc:
+            msg = 'Failed to get container Information.'
+            self.failure(err, rc, msg)
+
+        ip_count = 0
+        for state in return_data.splitlines():
+            key, value = state.split(':')
+            if not key.startswith(' '):
+                if key.lower() == 'ip':
+                    cstate['ip_%s' % ip_count] = value.lower().strip()
+                    ip_count += 1
+                else:
+                    cstate[key.lower().strip()] = value.lower().strip()
+        else:
+            return cstate
+
+    @staticmethod
+    def _construct_command(build_list):
+        """Return a string from a command and build list.
+
+        :param build_list: ``list``  List containing a command with options
+        """
+        return ' '.join(build_list)
+
+    @staticmethod
+    def _add_variables(variables_dict, build_command, allowed_variables):
+        """Return a command list with all found options.
+
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        :param build_command: ``list``   Command to run.
+        :param allowed_variables: ``list``  Variables that are allowed for use.
+        """
+        for key, value in variables_dict.items():
+            if key in allowed_variables:
+                if isinstance(value, bool):
+                    build_command.append('--%s' % value)
+                else:
+                    build_command.append(
+                        '--%s %s' % (key, value)
+                    )
+        else:
+            return build_command
+
+    def _list(self, variables_dict):
+        """Return a list of containers.
+
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        """
+        build_command = [self.module.get_bin_path('lxc-ls', True)]
+        self._add_variables(
+            variables_dict=variables_dict,
+            build_command=build_command,
+            allowed_variables=COMMAND_MAP['list']['variables']
+        )
+        rc, return_data, err = self._run_command(build_command)
+        if rc not in self.rc:
+            msg = "Failed executing lxc-ls."
+            self.failure(err, rc, msg)
+        else:
+            return return_data
+
+    def _container_list(self, variables):
+        """Return a dict of all containers.
+
+        :param variables: ``list``  List of all variables used in this command
+        """
+        variables_dict = self._get_vars(variables)
+        containers = self._list(variables_dict=variables_dict)
+
+        all_containers = {}
+        for container in containers.splitlines():
+            cstate = all_containers[container] = {}
+            self._get_container_info(name=container, cstate=cstate)
+        else:
+            return self._lxc_facts(facts=all_containers)
+
+    def _create(self, name, state, variables_dict):
+        """Create a new LXC container.
+
+        :param name: ``str``  Name of the container.
+        :param state: ``str``  State of the container once its been built
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        """
+        if 'template_options' in variables_dict:
+            template_options = '-- %s' % variables_dict.pop('template_options')
+        else:
+            template_options = None
+
+        build_command = [
+            self.module.get_bin_path('lxc-create', True),
+            '--logfile /tmp/lxc-ansible-%s-create.log' % name,
+            '--logpriority INFO',
+            '--name %s' % name
+        ]
+
+        self._add_variables(
+            variables_dict=variables_dict,
+            build_command=build_command,
+            allowed_variables=COMMAND_MAP['create']['variables']
+        )
+
+        if template_options is not None:
+            build_command.append(template_options)
+
+        rc, return_data, err = self._run_command(build_command)
+
+        if rc not in self.rc:
+            msg = "Failed executing lxc-create."
+            self.failure(err, rc, msg)
+        else:
+            self._ensure_state(
+                state=state,
+                name=name,
+                variables_dict=variables_dict
+            )
+            container_info = self._get_container_info(
+                name=name, variables_dict=variables_dict
+            )
+            self.state_change = True
+            return container_info
+
+    def _container_create(self, variables):
+        """Create an LXC container.
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command
+        """
+        variables_dict = self._get_vars(variables, required=['name'])
+        name = variables_dict.pop('name')
+        state = variables_dict.pop('state', 'running')
+
+        containers = self._list(variables_dict=variables_dict)
+        for container in containers.splitlines():
+            if container == name:
+                container_info = self._get_container_info(
+                    name=name, variables_dict=variables_dict
+                )
+                return self._lxc_facts(facts={name: container_info})
+        else:
+            created_container_info = self._create(name, state, variables_dict)
+            return self._lxc_facts(facts={name: created_container_info})
+
+    def _destroy(self, name):
+        """Destroy an LXC container.
+
+        :param name: ``str`  Name of the container to destroy
+        """
+        build_command = [
+            self.module.get_bin_path('lxc-destroy', True),
+            '--logfile /tmp/lxc-ansible-%s-destroy.log' % name,
+            '--logpriority INFO',
+            '--force',
+            '--name %s' % name
+        ]
+
+        rc, return_data, err = self._run_command(build_command)
+
+        if rc not in self.rc:
+            msg = "Failed executing lxc-destroy."
+            self.failure(err, rc, msg)
+        else:
+            self.state_change = True
+
+    def _container_destroy(self, variables):
+        """Destroy an LXC container.
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command.
+        """
+        variables_dict = self._get_vars(variables, required=['name'])
+        name = variables_dict.pop('name')
+
+        containers = self._list(variables_dict=variables_dict)
+        for container in containers.splitlines():
+            if container == name:
+                self._destroy(name=name)
+
+    def _local_clone(self, orig, new, variables_dict):
+        """Clone a local container.
+
+        :param orig: ``str``  Original container name
+        :param new: ``str``  New container name
+        :param variables_dict: ``dict``  Dictionary of options
+        """
+        state = variables_dict.pop('state', 'running')
+
+        build_command = [
+            self.module.get_bin_path('lxc-clone', True),
+            '--orig %s' % orig,
+            '--new %s' % new,
+        ]
+
+        # The next set of if statements are special cases because the lxc-clone
+        # API is a bit different than the rest of the LXC commands line clients
+        # TODO(cloudnull) When the CLI gets better this should be updated.
+        if variables_dict.pop('keepname', 'false') in BOOLEANS_TRUE:
+            build_command.append('-K')
+
+        if variables_dict.pop('snapshot', 'false') in BOOLEANS_TRUE:
+            build_command.append('-s')
+
+        if variables_dict.pop('copyhooks', 'false') in BOOLEANS_TRUE:
+            build_command.append('-H')
+
+        if 'fssize' in variables_dict:
+            build_command.append('-L %s' % variables_dict.pop('fssize'))
+
+        self._add_variables(
+            variables_dict=variables_dict,
+            build_command=build_command,
+            allowed_variables=COMMAND_MAP['clone']['variables']
+        )
+
+        rc, return_data, err = self._run_command(build_command)
+
+        if rc not in self.rc:
+            msg = "Failed executing lxc-clone."
+            self.failure(err, rc, msg)
+        else:
+            self._ensure_state(
+                state=state,
+                name=new,
+                variables_dict=variables_dict
+            )
+            self.state_change = True
+            container_info = self._get_container_info(
+                name=new, variables_dict=variables_dict
+            )
+            return container_info
+
+    def _container_clone(self, variables):
+        """Clone an LXC container.
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command
+        """
+        variables_dict = self._get_vars(variables, required=['orig', 'new'])
+        orig = variables_dict.pop('orig')
+        new = variables_dict.pop('new')
+
+        container_data = self._get_container_info(
+            name=orig, variables_dict=variables_dict
+        )
+
+        # Stop the original container
+        if container_data.get('state') != 'stopped':
+            self._stopper(name=orig, variables_dict=variables_dict)
+
+        # Clone the container
+        container_info = self._local_clone(orig, new, variables_dict)
+
+        # Restart the original container
+        self._starter(name=orig, variables_dict=variables_dict)
+
+        return self._lxc_facts(facts={new: container_info})
+
+    def _container_info(self, variables):
+        """Return Ansible facts on an LXC container.
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command.
+        """
+        variables_dict = self._get_vars(variables, required=['name'])
+        name = variables_dict.pop('name')
+        self._get_container_info(name=name, variables_dict=variables_dict)
+
+        container_info = self._get_container_info(
+            name=name, variables_dict=variables_dict
+        )
+        return self._lxc_facts(facts={name: container_info})
+
+    @staticmethod
+    def _get_kernel_version():
+        """Return the Kernel version number as a float."""
+        os_data = os.uname()
+        kernel_info = os_data[2].split('-')
+        kernel_release = kernel_info[0]
+        return [int(i) for i in kernel_release.split('.')]
+
+    def _run_attach(self, name, inner_command, variables_dict):
+        """Return the results of executing an LXC Attach command.
+
+        :param name: ``str``  Name of the container.
+        :param inner_command: ``str``  Command to run within a container.
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        """
+        def kernel_fail():
+            self.failure(
+                error='Unsupportable Kernel Version found.',
+                rc=2,
+                msg='The kernel version installed [ %s ] does not support'
+                    ' LXC attach. Please upgrade to at least Kernel 3.8'
+                    % kernel_version
+            )
+
+        kernel_version = self._get_kernel_version()
+        if kernel_version[0] < 3:
+            kernel_fail()
+        elif kernel_version[1] < 6:
+            kernel_fail()
+
+        build_command = [
+            self.module.get_bin_path('lxc-attach', True),
+            '--logfile /tmp/lxc-ansible-%s-attach.log' % name,
+            '--logpriority INFO',
+            '--name %s' % name,
+        ]
+
+        self._add_variables(
+            variables_dict=variables_dict,
+            build_command=build_command,
+            allowed_variables=COMMAND_MAP['attach']['variables']
+        )
+
+        command = self._construct_command(build_list=build_command)
+
+        attach_vars = {
+            'command': command,
+            'container_command': inner_command
+        }
+
+        rc, return_data, err = self._run_command(
+            [ATTACH_TEMPLATE % attach_vars], unsafe_shell=True
+        )
+
+        if rc not in self.rc:
+            msg = "Failed executing lxc-attach."
+            self.failure(err, rc, msg)
+        else:
+            self.state_change = True
+            return return_data
+
+    def _container_attach(self, variables):
+        """Attach to an LXC container and execute a command.
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command
+        """
+        required_vars = ['name', 'container_command']
+        variables_dict = self._get_vars(variables, required=required_vars)
+        name = variables_dict.pop('name')
+        container_command = variables_dict.pop('container_command')
+        return_facts = variables_dict.pop('return_facts', 'false')
+
+        self._ensure_state(
+            state='running',
+            name=name,
+            variables_dict=variables_dict
+        )
+
+        attach_results = self._run_attach(
+            name=name,
+            inner_command=container_command,
+            variables_dict=variables_dict
+        )
+
+        if return_facts in BOOLEANS_TRUE:
+            if attach_results:
+                return self._lxc_facts(facts=attach_results.splitlines())
+
+    def _starter(self, name, variables_dict):
+        """Start an LXC Container.
+
+        :param name: ``str``  Name of the container.
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        """
+        build_command = [
+            self.module.get_bin_path('lxc-start', True),
+            '--logfile /tmp/lxc-ansible-%s-start.log' % name,
+            '--logpriority INFO',
+            '--daemon',
+            '--name %s' % name
+        ]
+
+        self._add_variables(
+            variables_dict=variables_dict,
+            build_command=build_command,
+            allowed_variables=COMMAND_MAP['start']['variables']
+        )
+
+        rc, return_data, err = self._run_command(build_command)
+
+        if rc not in self.rc:
+            msg = "Failed executing lxc-start."
+            self.failure(err, rc, msg)
+        else:
+            self.state_change = True
+
+    def _stopper(self, name, variables_dict):
+        """Stop an LXC Container.
+
+        :param name: ``str``  Name of the container.
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        """
+        build_command = [
+            self.module.get_bin_path('lxc-stop', True),
+            '--logfile /tmp/lxc-ansible-%s-stop.log' % name,
+            '--logpriority INFO',
+            '--timeout 10',
+            '--name %s' % name
+        ]
+
+        if variables_dict is not None:
+            self._add_variables(
+                variables_dict=variables_dict,
+                build_command=build_command,
+                allowed_variables=COMMAND_MAP['stop']['variables']
+            )
+
+        rc, return_data, err = self._run_command(build_command)
+
+        if rc not in self.rc:
+            msg = "Failed executing lxc-stop."
+            self.failure(err, rc, msg)
+        else:
+            self.state_change = True
+
+    def _container_restart(self, variables):
+        """Restart an LXC container.
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command
+        """
+        variables_dict = self._get_vars(variables, required=['name'])
+        name = variables_dict.pop('name')
+        self._ensure_state(name=name, state='stopped',
+                           variables_dict=variables_dict)
+        self._ensure_state(name=name, state='running',
+                           variables_dict=variables_dict)
+
+    def _freezer(self, name, variables_dict):
+        """Freeze an LXC Container.
+
+        :param name: ``str``  Name of the container.
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        """
+        build_command = [
+            self.module.get_bin_path('lxc-freeze', True),
+            '--logfile /tmp/lxc-ansible-%s-freeze.log' % name,
+            '--logpriority INFO',
+            '--name %s' % name
+        ]
+
+        if variables_dict is not None:
+            self._add_variables(
+                variables_dict=variables_dict,
+                build_command=build_command,
+                allowed_variables=['lxcpath']
+            )
+
+        rc, return_data, err = self._run_command(build_command)
+
+        if rc not in self.rc:
+            msg = "Failed executing lxc-freeze."
+            self.failure(err, rc, msg)
+        else:
+            self.state_change = True
+
+    def _unfreezer(self, name, variables_dict):
+        """unfreeze an LXC Container.
+
+        :param name: ``str``  Name of the container.
+        :param variables_dict: ``dict``  Preparsed optional variables used from
+                                         a seed command.
+        """
+        build_command = [
+            self.module.get_bin_path('lxc-unfreeze', True),
+            '--logfile /tmp/lxc-ansible-%s-unfreeze.log' % name,
+            '--logpriority INFO',
+            '--name %s' % name
+        ]
+
+        if variables_dict is not None:
+            self._add_variables(
+                variables_dict=variables_dict,
+                build_command=build_command,
+                allowed_variables=['lxcpath']
+            )
+
+        rc, return_data, err = self._run_command(build_command)
+
+        if rc not in self.rc:
+            msg = "Failed executing lxc-freeze."
+            self.failure(err, rc, msg)
+        else:
+            self.state_change = True
+
+    def _container_start(self, variables):
+        """Start an LXC container.
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command
+        """
+        variables_dict = self._get_vars(variables, required=['name'])
+        name = variables_dict.pop('name')
+        self._ensure_state(
+            name=name, state='running', variables_dict=variables_dict
+        )
+
+    def _container_stop(self, variables):
+        """Stop an LXC container.
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command
+        """
+        variables_dict = self._get_vars(variables, required=['name'])
+        name = variables_dict.pop('name')
+        self._ensure_state(name=name, state='stopped',
+                           variables_dict=variables_dict)
+
+    @staticmethod
+    def _load_config(lxcpath, name):
+        """Return a list of lines from an LXC config file.
+
+        :param lxcpath: ``str``  path to lxc container directory
+        :param name: ``str``  name of LXC container
+        """
+        container_config_file = os.path.join(lxcpath, name, 'config')
+        with open(container_config_file, 'rb') as f:
+            return container_config_file, f.readlines()
+
+    def _load_lxcpath(self, variables_dict, pop=False):
+        if 'lxcpath' not in variables_dict:
+            build_command = [
+                self.module.get_bin_path('lxc-config', True),
+                'lxc.lxcpath'
+            ]
+            rc, return_data, err = self._run_command(build_command)
+            if rc not in self.rc:
+                msg = "Failed executing lxc-config."
+                self.failure(err, rc, msg)
+
+            lxcpath = return_data
+
+        else:
+            if pop is True:
+                lxcpath = variables_dict.pop('lxcpath')
+            else:
+                lxcpath = variables_dict.get('lxcpath')
+
+        return lxcpath.strip()
+
+    def _container_config(self, variables):
+        """Configure an LXC container.
+
+        Write new configuration values to the lxc config file. This will
+        stop the container if its running write the new options and then
+        restart the container upon completion if the state is set to running,
+        which is the default.
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command
+        """
+        required_vars = ['name', 'options']
+        variables_dict = self._get_vars(variables, required=required_vars)
+        name = variables_dict.pop('name')
+
+        lxcpath = self._load_lxcpath(variables_dict, pop=True)
+        container_config_file, container_config = self._load_config(
+            lxcpath, name
+        )
+
+        # Note used ast literal_eval because AnsibleModule does not provide for
+        # adequate dictionary parsing.
+        # Issue: https://github.com/ansible/ansible/issues/7679
+        # TODO(cloudnull) adjust import when issue has been resolved.
+        options_dict = variables_dict.pop('options')
+        options_dict = ast.literal_eval(options_dict)
+        parsed_options = [i.split('=') for i in options_dict]
+
+        for key, value in parsed_options:
+            new_entry = '%s = %s\n' % (key, value)
+            for option_line in container_config:
+                # Look for key in config
+                if option_line.startswith(key):
+                    _, _value = option_line.split('=')
+                    config_value = ' '.join(_value.split())
+                    line_index = container_config.index(option_line)
+                    # If the sanitized values don't match replace them
+                    if value != config_value:
+                        line_index += 1
+                        if new_entry not in container_config:
+                            self.state_change = True
+                            container_config.insert(line_index, new_entry)
+                    # Break the flow as values are written or not at this point
+                    break
+            else:
+                self.state_change = True
+                container_config.append(new_entry)
+
+        # If the state changed restart the container.
+        if self.state_change is True:
+            self._ensure_state(
+                name=name, state='stopped', variables_dict=variables_dict
+            )
+
+            with open(container_config_file, 'wb') as f:
+                f.writelines(container_config)
+
+            self._ensure_state(
+                name=name, state='running', variables_dict=variables_dict
+            )
+
+    def _get_lxc_vg(self):
+        """Return the name of the Volume Group used in LXC."""
+        build_command = [
+            self.module.get_bin_path('lxc-config', True),
+            "lxc.bdev.lvm.vg"
+        ]
+        rc, vg, err = self._run_command(build_command)
+        if rc not in self.rc:
+            msg = " Failed to read LVM VG from LXC config"
+            self.failure(err, rc, msg)
+        else:
+            return vg.strip()
+
+    def _lvm_lv_list(self):
+        """Return a list of all lv in a current vg."""
+        vg = self._get_lxc_vg()
+        build_command = [
+            self.module.get_bin_path('lvs', True),
+        ]
+        rc, stdout, err = self._run_command(build_command)
+        if rc not in self.rc:
+            msg = "Failed to get list of LVs"
+            self.failure(err, rc, msg)
+
+        all_lvms = [i.split() for i in stdout.splitlines()][1:]
+        return [lv_entry[0] for lv_entry in all_lvms if lv_entry[1] == vg]
+
+    def _get_vg_free_pe(self, name):
+        """Return the available size of a given VG.
+
+        Returns ``size``, ``measurement``
+
+        :param name: ``str``  Name of volume group.
+        """
+        build_command = [
+            'vgdisplay',
+            name
+        ]
+        rc, stdout, err = self._run_command(build_command)
+        if rc not in self.rc:
+            self.failure(err, rc, msg='failed to read vg %s' % name)
+
+        vg_info = [i.strip() for i in stdout.splitlines()][1:]
+        free_pe = [i for i in vg_info if i.startswith('Free')]
+        _free_pe = free_pe[0].split()
+        return float(_free_pe[-2]), _free_pe[-1]
+
+    def _get_lv_size(self, name):
+        """Return the available size of a given LV.
+
+        Returns ``size``, ``measurement``
+
+        :param name: ``str``  Name of volume.
+        """
+        vg = self._get_lxc_vg()
+        lv = os.path.join(vg, name)
+        build_command = [
+            'lvdisplay',
+            lv
+        ]
+        rc, stdout, err = self._run_command(build_command)
+        if rc not in self.rc:
+            self.failure(err, rc, msg='failed to read lv %s' % lv)
+
+        lv_info = [i.strip() for i in stdout.splitlines()][1:]
+        free_pe = [i for i in lv_info if i.startswith('LV Size')]
+        _free_pe = free_pe[0].split()
+        return float(_free_pe[-2]), _free_pe[-1]
+
+    def _lvm_snapshot_create(self, source_lv, snapshot_name,
+                             snapshot_size_gb=5):
+        """Create an LVM snapshot.
+
+        :param source_lv: ``str``  Name of lv to snapshot
+        :param snapshot_name: ``str``  Name of lv snapshot
+        :param snapshot_size_gb: ``int`` Size of snapshot to create
+        """
+        vg = self._get_lxc_vg()
+        free_space, messurement = self._get_vg_free_pe(name=vg)
+
+        if free_space < float(snapshot_size_gb):
+            message = (
+                'Snapshot size [ %s ] is > greater than [ %s ] on volume group'
+                ' [ %s ]' % (snapshot_size_gb, free_space, vg)
+            )
+            self.failure(
+                error='Not enough space to create snapshot',
+                rc=2,
+                msg=message
+            )
+
+        # Create LVM Snapshot
+        build_command = [
+            self.module.get_bin_path('lvcreate', True),
+            "-n",
+            snapshot_name,
+            "-s",
+            os.path.join(vg, source_lv),
+            "-L%sg" % snapshot_size_gb
+        ]
+        rc, stdout, err = self._run_command(build_command)
+        if rc not in self.rc:
+            msg = (
+                'Failed to Create LVM snapshot %(vg)s/%(source_lv)s'
+                ' --> %(snapshot_name)s'
+                % {'vg': vg,
+                   'source_lv': source_lv,
+                   'snapshot_name': snapshot_name}
+            )
+            self.failure(err, rc, msg)
+
+    def _lvm_lv_remove(self, name):
+        vg = self._get_lxc_vg()
+        # Create LVM Snapshot
+        build_command = [
+            self.module.get_bin_path('lvremove', True),
+            "-f",
+            "%(vg)s/%(name)s" % dict(vg=vg, name=name),
+        ]
+        rc, stdout, err = self._run_command(build_command)
+        if rc not in self.rc:
+            msg = ("Failed to remove LVM LV %(vg)s/%(name)s "
+                   % {'vg': vg,
+                      'name': name})
+            self.failure(err, rc, msg)
+
+    def _lvm_lv_mount(self, lv_name, mount_point):
+        # mount an lv
+        vg = self._get_lxc_vg()
+        build_command = [
+            self.module.get_bin_path('mount', True),
+            "/dev/%(vg)s/%(lv_name)s" % dict(vg=vg, lv_name=lv_name),
+            mount_point,
+        ]
+        rc, stdout, err = self._run_command(build_command)
+        if rc not in self.rc:
+            msg = ("failed to mountlvm lv %(vg)s/%(lv_name)s to %(mp)s"
+                   % {'vg': vg,
+                      'lv_name': lv_name,
+                      'mp': mount_point})
+            self.failure(err, rc, msg)
+
+    def _unmount(self, mount_point):
+        # Unmount a file system
+        build_command = [
+            self.module.get_bin_path('umount', True),
+            mount_point,
+        ]
+        rc, stdout, err = self._run_command(build_command)
+        if rc not in self.rc:
+            msg = ("failed to unmount %(mp)s" % {'mp': mount_point})
+            self.failure(err, rc, msg)
+
+    def _create_tar(self, source_dir, archive_name):
+        """Create an archive of a given ``source_dir`` to ``output_path``.
+
+        :param source_dir: ``str``  Path to the directory to be archived.
+        :param archive_name: ``str``  Name of the archive file.
+        """
+        # remove trailing / if present.
+        output_path = archive_name.rstrip(os.sep)
+        if not output_path.endswith('tar.bz2'):
+            output_path = '%s.tar.bz2' % output_path
+
+        source_path = os.path.expanduser(source_dir)
+        build_command = [
+            self.module.get_bin_path('tar', True),
+            '--directory=%s' % source_path,
+            '-cjf',
+            output_path,
+            '.'
+        ]
+
+        rc, stdout, err = self._run_command(
+            build_command=build_command, unsafe_shell=True
+        )
+
+        if rc not in self.rc:
+            msg = "failed to create tar archive [ %s ]" % build_command
+            self.failure(err, rc, msg)
+
+        return output_path
+
+    @staticmethod
+    def _roundup(num):
+        """Return a rounded floating point number.
+
+        :param num: ``float``  Number to round up.
+        """
+        num, part = str(num).split('.')
+        num = int(num)
+        if int(part) != 0:
+            num += 1
+        return num
+
+    def _container_create_tar(self, variables):
+        """Create a tar archive from an LXC container.
+
+        The process is as follows:
+            * Freeze the container (pause processes)
+            * Create temporary dir
+            * Copy container config to tmpdir/
+            * Unfreeze the container
+            * If LVM backed:
+                * Create LVM snapshot of LV backing the container
+                * Mount the snapshot to tmpdir/rootfs
+            * Create tar of tmpdir
+            * Clean up
+
+        :param variables: ``list``  List of all variables that are available to
+                                    use within the LXC Command
+        """
+        required_vars = ['name', 'tarpath']
+        variables_dict = self._get_vars(variables, required=required_vars)
+        name = variables_dict.pop('name')
+
+        lxc_config_path = self._load_lxcpath(variables_dict)
+
+        config_file, options = self._load_config(lxc_config_path, name)
+        lxc_rootfs = [i for i in options if i.startswith('lxc.rootfs')]
+        if lxc_rootfs:
+            root_path = [i.strip() for i in lxc_rootfs[0].split('=')][1]
+        else:
+            message = (
+                'Check the config file for container [ %s ] @ [ %s ]'
+                % (name, config_file)
+            )
+            return self.failure(
+                error='No rootfs entry found in config.',
+                rc=2,
+                msg=message
+            )
+
+        # Create a temp dir
+        temp_dir = tempfile.mkdtemp()
+
+        # Set the name of the working dir, temp + container_name
+        work_dir = os.path.join(temp_dir, name)
+
+        # Set the path to the container data
+        container_path = os.path.join(lxc_config_path, name)
+
+        # Get current container info
+        container_data = self._get_container_info(
+            name=name, variables_dict=variables_dict
+        )
+
+        # set current state
+        state = container_data.get('state')
+
+        # Ensure the original container is stopped or frozen
+        if state not in ['stopped', 'frozen']:
+            # Freeze Container
+            self._ensure_state(
+                state='frozen', name=name, variables_dict=variables_dict
+            )
+
+        # Prepare tmp dir
+        build_command = [
+            self.module.get_bin_path('rsync', True),
+            '-aHAX',
+            container_path,
+            temp_dir
+        ]
+        rc, stdout, err = self._run_command(build_command, unsafe_shell=True)
+        if rc not in self.rc:
+            self.failure(err, rc, msg='failed to perform backup')
+
+        mount_point = os.path.join(work_dir, 'rootfs')
+        if not os.path.exists(mount_point):
+            os.makedirs(mount_point)
+
+        # Restore original state of container
+        self._ensure_state(
+            state=state, name=name,  variables_dict=variables_dict
+        )
+
+        # Test if the containers rootfs is a block device
+        block_backed = root_path.startswith(os.path.join(os.sep, 'dev'))
+        snapshot_name = '%s_rpc_ansible_snapshot' % name
+
+        if block_backed:
+            if snapshot_name not in self._lvm_lv_list():
+                # Take snapshot
+                size, measurement = self._get_lv_size(name=name)
+                self._lvm_snapshot_create(
+                    source_lv=name,
+                    snapshot_name=snapshot_name,
+                    snapshot_size_gb=self._roundup(num=size)
+                )
+
+                # Mount snapshot
+                self._lvm_lv_mount(
+                    lv_name=snapshot_name, mount_point=mount_point
+                )
+
+        try:
+            # Create Tar
+            archive_file = self._create_tar(
+                source_dir=work_dir, archive_name=variables_dict['tarpath']
+            )
+        except Exception as exp:
+            self.failure(error=exp, rc=2, msg='Failed to create the archive')
+        else:
+            # Set the state as changed and set a new fact
+            self.state_change = True
+            archive_fact = {
+                name: {
+                    'archive': archive_file
+                }
+            }
+            return self._lxc_facts(facts=archive_fact)
+        finally:
+            if block_backed:
+                # unmount snapshot
+                self._unmount(mount_point)
+
+                # Remove snapshot
+                self._lvm_lv_remove(snapshot_name)
+
+            # Remove tmpdir
+            shutil.rmtree(os.path.dirname(work_dir))
+
+
+def main():
+    """Ansible Main module."""
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(
+                type='str'
+            ),
+            return_code=dict(
+                type='str',
+                default='0'
+            ),
+            template=dict(
+                type='str',
+                default='ubuntu'
+            ),
+            backingstore=dict(
+                type='str'
+            ),
+            template_options=dict(
+                type='str'
+            ),
+            config=dict(
+                type='str',
+                default='/etc/lxc/default.conf'
+            ),
+            bdev=dict(
+                type='str'
+            ),
+            lvname=dict(
+                type='str'
+            ),
+            vgname=dict(
+                type='str'
+            ),
+            thinpool=dict(
+                type='str'
+            ),
+            fstype=dict(
+                type='str'
+            ),
+            fssize=dict(
+                type='str'
+            ),
+            dir=dict(
+                type='str'
+            ),
+            zfsroot=dict(
+                type='str'
+            ),
+            lxcpath=dict(
+                type='str'
+            ),
+            keepname=dict(
+                choices=BOOLEANS,
+                default='false'
+            ),
+            snapshot=dict(
+                choices=BOOLEANS,
+                default='false'
+            ),
+            newpath=dict(
+                type='str'
+            ),
+            orig=dict(
+                type='str'
+            ),
+            new=dict(
+                type='str'
+            ),
+            state=dict(
+                choices=[
+                    'running',
+                    'stopped'
+                ],
+                default='running'
+            ),
+            command=dict(
+                required=True,
+                choices=COMMAND_MAP.keys()
+            ),
+            container_command=dict(
+                type='str'
+            ),
+            options=dict(
+                type='str'
+            ),
+            return_facts=dict(
+                choices=BOOLEANS,
+                default=False
+            ),
+            tarpath=dict(
+                type='str'
+            )
+        ),
+        supports_check_mode=False,
+    )
+
+    return_code = module.params.get('return_code', '').split(',')
+    module.params['return_code'] = return_code
+
+    lm = LxcManagement(module=module)
+    lm.command_router()
+
+
+# import module bits
+from ansible.module_utils.basic import *
+main()
+
