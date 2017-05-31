@@ -13,6 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -129,19 +132,20 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-application_id:
+application:
+  application_id:
     description: The application ID.
     type: string
     sample: "81293494"
-application_name:
+  application_name:
     description: The application name.
     type: string
     sample: "TestApplication"
-create_time:
+  create_time:
     description: The time at which the application was created.
     type: datetime
     sample: 2017-05-30 010:00:00-05:00
-linked_to_github:
+  linked_to_github:
     description: True if the user has authenticated with GitHub for the specified application; otherwise, false.
     type: boolean
     sample: false
