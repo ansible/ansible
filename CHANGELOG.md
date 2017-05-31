@@ -2027,34 +2027,6 @@ Other notable changes:
 
 - Security updates related to evaluation of untrusted remote inputs
 
-## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
-
-- Corrects a regression where handlers were run across all hosts, not just those that triggered the handler.
-- Fixed a bug in which modules did not support properly moving a file atomically when su was in use.
-- Fixed two bugs related to symlinks with directories when using the file module.
-- Fixed a bug related to MySQL master replication syntax.
-- Corrects a regression in the order of variable merging done by the internal runner code.
-- Various other minor bug fixes.
-
-## 1.6.2 "And the Cradle Will Rock" - May 23, 2014
-
-- If an improper locale is specified, core modules will now automatically revert to using the 'C' locale.
-- Modules using the fetch_url utility will now obey proxy environment variables.
-- The SSL validation step in fetch_url will likewise obey proxy settings, however only proxies using the http protocol are supported.
-- Fixed multiple bugs in docker module related to version changes upstream.
-- Fixed a bug in the ec2_group module where egress rules were lost when a VPC was specified.
-- Fixed two bugs in the synchronize module:
-  * a trailing slash might be lost when calculating relative paths, resulting in an incorrect destination.
-  * the sync might use the inventory directory incorrectly instead of the playbook or role directory.
-- Files will now only be chown'd on an atomic move if the src/dest uid/gid do not match.
-
-## 1.6.1 "And the Cradle Will Rock" - May 7, 2014
-
-- Fixed a bug in group_by, where systems were being grouped incorrectly.
-- Fixed a bug where file descriptors may leak to a child process when using accelerate.
-- Fixed a bug in apt_repository triggered when python-apt not being installed/available.
-- Fixed a bug in the apache2_module module, where modules were not being disabled correctly.
-
 ## 1.6 "And the Cradle Will Rock" - May 5, 2014
 
 Major features/changes:
