@@ -23,8 +23,8 @@ DOCUMENTATION = '''
 module: elb_target_group
 short_description: Manage a target group for an Application load balancer
 description:
-    - "Manage an AWS Application Elastic Load Balancer target group. See 
-      U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details."
+    - Manage an AWS Application Elastic Load Balancer target group. See
+      U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
 version_added: "2.4"
 author: "Rob White (@wimnat)"
 options:
