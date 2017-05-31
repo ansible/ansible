@@ -87,7 +87,6 @@ class InventoryModule(BaseInventoryPlugin):
 
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            print(path)
             if path.endswith('.vbox.yaml') or path.endswith('.vbox.yml'):
                 valid = True
         return valid

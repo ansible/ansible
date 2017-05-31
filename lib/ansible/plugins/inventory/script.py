@@ -89,7 +89,6 @@ class InventoryModule(BaseInventoryPlugin):
             else:
                 try:
                     sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    print('yo')
                 except OSError as e:
                     raise AnsibleParserError("problem running %s (%s)" % (' '.join(cmd), to_native(e)))
                 (stdout, stderr) = sp.communicate()
