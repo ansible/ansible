@@ -1,0 +1,156 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Jimmy Tang <jcftang@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import fnmatch
+
+DOCUMENTATION = '''
+---
+module: ceph_facts
+short_description: Runs the I(ceph) monitoring programs on the remote system
+description:
+     - Runs the I(ceph) program to discover the filesystem status
+       returning JSON data that can be useful for inventory purposes.
+version_added: "1.1"
+options:
+     filter:
+        description:
+            - if supplied, only return facts that match this shell-style (fnmatch) wildcard.
+        required: false
+        default: '*' 
+examples:
+   - code: ansible monitor-ceph01.cluster -m ceph_facts
+     description: "Get all the possible known information from ceph cluster"
+   - code: ansible monitor-ceph01.cluster -m ceph_facts -a 'filter=quorum*'
+     description: "Get all the information related to quorum status"
+notes:
+   - The facts are not very structured right now and requires more work.
+requirements: [ "ceph" ]
+author: Jimmy Tang
+'''
+
+try:                                                                            
+    import json                                                                 
+except ImportError:                                                             
+    import simplejson as json
+
+def run_ceph_facts(module):
+    setup_options = {}
+    facts = {}
+
+    # check for quorum of cluster, monmap
+    cmd = ["/usr/bin/env", "ceph", "quorum_status"]
+    rc, out, err = module.run_command(cmd, check_rc=True)
+    quorum = True
+    try:
+        quorum_ds = json.loads(out)
+    except:
+        quorum = False
+    if quorum:
+        for (k,v) in quorum_ds.items():
+            setup_options["quorum_status_%s" % k] = v
+
+    # check for status of osd's
+    cmd = ["/usr/bin/env", "ceph", "osd", "dump", "--format=json"]
+    rc, out, err = module.run_command(cmd, check_rc=True)
+    osd = True
+    try:
+        osd_ds = json.loads(out)
+    except:
+        osd = False
+    if osd:
+        for (k,v) in osd_ds.items():
+            setup_options["osd_status_%s" % k] = v
+
+    # check for status of mds's
+    cmd = ["/usr/bin/env", "ceph", "mds", "dump", "--format=json"]
+    rc, out, err = module.run_command(cmd, check_rc=True)
+    mds = True
+    try:
+        mds_ds = json.loads(out)
+    except:
+        mds = False
+    if mds:
+        for (k,v) in mds_ds.items():
+            setup_options["mds_status_%s" % k] = v
+
+#    # check for status of placement groups
+#    cmd = ["/usr/bin/env", "ceph", "pg", "dump", "--format=json"]
+#    rc, out, err = module.run_command(cmd, check_rc=True)
+#    pg = True
+#    try:
+#        pg_ds = json.loads(out)
+#    except:
+#        pg = False
+#    if pg:
+#        for (k,v) in pg_ds.items():
+#            setup_options["pg_%s" % k] = v
+
+    # show osd tree
+    cmd = ["/usr/bin/env", "ceph", "osd", "tree", "--format=json"]
+    rc, out, err = module.run_command(cmd, check_rc=True)
+    osd_tree = True
+    try:
+        osd_tree_ds = json.loads(out)
+    except:
+        osd_tree = False
+    if osd_tree:
+        for (k,v) in osd_tree_ds.items():
+            setup_options["osd_tree_%s" % k] = v
+
+    # show rados df
+    cmd = ["/usr/bin/env", "rados", "df", "--format=json"]
+    rc, out, err = module.run_command(cmd, check_rc=True)
+    rados_df = True
+    try:
+        rados_df_ds = json.loads(out)
+    except:
+        rados_df = False
+    if rados_df:
+        for (k,v) in rados_df_ds.items():
+            setup_options["rados_df_%s" % k] = v
+
+    for (k, v) in facts.items():                                                
+        setup_options["ceph_%s" % k.replace('-', '_')] = v
+
+    ceph_facts_result = { 'ceph_facts': {} }
+
+    for (k,v) in setup_options.items():
+        if module.params['filter'] == '*' or fnmatch.fnmatch(k, module.params['filter']):
+            ceph_facts_result['ceph_facts'][k] = v
+
+    return ceph_facts_result
+
+def main():
+    global module
+    module = AnsibleModule(
+        argument_spec = dict(
+            filter=dict(default="*", required=False),
+        )
+    )
+
+    data = run_ceph_facts(module)
+    module.exit_json(**data)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
+
