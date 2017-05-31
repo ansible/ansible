@@ -1,0 +1,140 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Affolter Engineering
+# Written by Fabian Affolter <fabian@affolter-engineering.ch>
+#
+# This file is part of Ansible
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# 
+# Based on the work of Afterburn <http://github.com/afterburn> for pacman.
+
+DOCUMENTATION = '''
+---
+module: apk
+short_description: Package manager for Alpine Linux
+description:
+    - Manages I(apk) packages (such as for Alpine Linux).
+version_added: "0"
+options:
+  name:
+    description:
+      - Name of package to install/remove
+    required: true
+  state:
+    description:
+      - Indicates the desired package state 
+    required: false
+  update_cache:
+    description:
+      - Update the package database first (C(apk update))
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+author: Fabian Affolter
+notes:  []
+examples:
+    - code: "apk: name=foo state=installed"
+      description: Install package C(foo)
+    - code: "apk: name=foo state=removed"
+      description: Remove C(foo) package
+    - code: "apk: name=foo,bar state=removed"
+      description: Remove package C(foo) and C(bar) 
+    - code: "apk: name=bar state=installed update_cache=yes"
+      description: Update the package daatabase (C(apk update)) then install C(bar) (C(bar) will be the updated if a newer version exists)
+'''
+
+import json
+import os
+
+APK_PATH = "/sbin/apk"
+
+def package_status(module, name, state="installed"):
+    if state == "installed":
+        rc = os.system("apk info -e %s > /dev/null" % (name))
+        if rc == 0:
+            return True
+        else:
+            return False
+
+def update_package_db(module):
+    rc = os.system("apk update")
+    if rc != 0:
+        module.fail_json(msg="could not update package database")
+
+def remove(module, packages):
+    remove_c = 0
+    # Using a for loop incase of error, we can report the package that failed
+    for package in packages:
+        if not package_status(module, package):
+            continue
+        rc = os.system("apk del %s" % (package))
+
+        if rc != 0:
+            module.fail_json(msg="failed to remove %s" % (package))
+        remove_c += 1
+
+    if remove_c > 0:
+        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c)
+
+    module.exit_json(changed=False, msg="package(s) already absent")
+
+
+def install(module, packages):
+    install_c = 0
+    # Using a for loop incase of error, we can report the package that failed
+    for package in packages:
+        if package_status(module, package):
+            continue
+        rc = os.system("apk add %s" % (package))
+
+        if rc != 0:
+            module.fail_json(msg="failed to install %s" % (package))
+        install_c += 1
+    
+    if install_c > 0:
+        module.exit_json(changed=True, msg="installed %s package(s)" % (install_c))
+
+    module.exit_json(changed=False, msg="package(s) already installed")
+
+
+def main():
+    module = AnsibleModule(
+            argument_spec    = dict(
+                state        = dict(default="installed", choices=["installed", "removed"]),
+                update_cache = dict(default="no", choices=["yes", "no"], aliases=["update-cache"]),
+                name         = dict(aliases=["pkg"], required=True)
+            ))
+
+    if not os.path.exists(APK_PATH):
+        module.fail_json(msg="cannot find apk")
+
+    p = module.params
+
+    if module.boolean(p["update_cache"]):
+        update_package_db(module)
+
+    pkgs = p["name"].split(",")
+
+    if p["state"] == "installed":
+        install(module, pkgs)
+
+    elif p["state"] == "removed":
+        remove(module, pkgs)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
