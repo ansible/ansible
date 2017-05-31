@@ -143,7 +143,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info)
+                                      ec2_argument_spec, get_aws_connection_info, boto3_tag_list_to_ansible_dict)
 
 
 class Ec2CustomerGatewayManager:
@@ -213,11 +213,16 @@ class Ec2CustomerGatewayManager:
         return response
 
     def clean_results(self, results):
-        if 'ResponseMetadata' in results['gateway']:
-            del results['gateway']['ResponseMetadata']
+        results = camel_dict_to_snake_dict(results)
 
-        if 'CustomerGateways' in results['gateway']:
-            del results['gateway']['CustomerGateways']
+        if 'response_metadata' in results['gateway']:
+            del results['gateway']['response_metadata']
+
+        if 'customer_gateways' in results['gateway']:
+            del results['gateway']['customer_gateways']
+
+        if 'tags' in results['gateway']['customer_gateway']:
+            results['gateway']['customer_gateway']['tags'] = boto3_tag_list_to_ansible_dict(results['gateway']['customer_gateway']['tags'], 'key', 'value')
 
         return results
 
@@ -296,8 +301,7 @@ def main():
                 )
             results['changed'] = True
 
-    results = gw_mgr.clean_results(results)
-    pretty_results = camel_dict_to_snake_dict(results)
+    pretty_results = gw_mgr.clean_results(results)
     module.exit_json(**pretty_results)
 
 
