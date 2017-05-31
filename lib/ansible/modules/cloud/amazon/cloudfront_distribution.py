@@ -575,7 +575,7 @@ EXAMPLES = '''
 - cloudfront_distribution:
      streaming_distribution: yes
      state: present
-     default_s3_origin_domain_name: example-bucket.s3.amazonaws.com
+     default_s3_origin_domain_name: my-example-bucket.s3.amazonaws.com
      comment: example streaming distribution
 
 # create a streaming distribution with tags
