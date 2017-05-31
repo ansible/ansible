@@ -136,7 +136,7 @@ class CallbackModule(CallbackBase):
 
         # Print the timings
         for uuid, result in results:
-            msg=u"{0:-<70}{1:->9}".format(result['name'] + u' ',u' {0:.02f}s'.format(result['time']))
+            msg=u"{0:-<{2}}{1:->9}".format(result['name'] + u' ',u' {0:.02f}s'.format(result['time']), self.columns - 9)
             if 'path' in result:
-                msg += u"\n{0:-<79}".format(result['path'] + u' ')
+                msg += u"\n{0:-<{1}}".format(result['path'] + u' '.format(self.columns))
             self._display.display(msg)
