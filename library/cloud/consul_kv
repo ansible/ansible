@@ -1,0 +1,146 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# -*- mode: python -*-
+
+DOCUMENTATION = '''
+---
+module: consul_kv
+author: Matthew Finlayson
+short_description: Set and delete key/value pairs in consul through the local agent
+version_added: None
+requirements: [ consulate ]
+description:
+    - This module wraps the Consul API making calls to the Agent end points to set or delete variables.
+options:
+    state:
+        required: true
+        choices: [ "present", "absent" ]
+        description:
+            - Optionally when used with the -u option, this option allows to
+              change the user ID to a non-unique value.
+    key:
+        required: true
+        description:
+            - Name of the key to create, remove or modify.
+    value:
+        required: false
+        default: "None"
+        description:
+            - Optionally value to set for key, only used for present.
+    append:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        description:
+            - Will append value to current key value
+    host:
+        required: false
+        default: "localhost"
+        description:
+            - Optionally specify a consul host to address.
+    port:
+        required: false
+        default: "8500"
+        description:
+            - Optionally specify a consul port to address.
+    dc:
+        required: false
+        default: "None"
+        description:
+            - Optionally specify a datacenter to address.
+'''
+
+EXAMPLES = '''
+# Add the key leonardo with value leader
+- consul_kv: key=leonardo value=leader state=present
+
+# Remove the key raphael
+- consul_kv: key=raphael state=absent
+
+# Add value party_dude to the key michelangelo
+- consul_kv: key=michelangelo values=party_dude,pizza,nunchucku state=present
+
+# Add the key donatello with value science to a custom host and datacenter for consul
+- consul_kv: key=donatello value=science state=present host=consul.sewers.com dc=subway
+'''
+
+import consulate
+
+
+class ConsulKV(object):
+    def __init__(self, module):
+        self.module   = module
+        self.state    = module.params['state']
+        self.key      = module.params['key']
+        self.value    = module.params['value']
+        self.values   = module.params['values']
+        self.host     = module.params['host']
+        self.port     = module.params['port']
+        self.dc       = module.params['dc']
+        self.session  = consulate.Consulate(host=self.host, port=self.port, dc=self.dc)
+
+    def set_kv(self):
+        try:
+            self.session.kv.set(self.key, self.value)
+        except AttributeError, e:
+            self.module.fail_json(failed=True, msg=e)
+        except KeyError, e:
+            self.module.fail_json(failed=True, msg=e)
+        self.module.exit_json(changed=True, msg="consulKV[%s] = %s" % (self.key, self.value))
+
+    def set_kvs(self):
+        try:
+            for item in self.values.split(','):
+                new_key = "%s/%s" % (self.key, item)
+                self.session.kv.set(new_key, None)
+        except AttributeError, e:
+            self.module.fail_json(failed=True, msg=e)
+        except KeyError, e:
+            self.module.fail_json(failed=True, msg=e)
+        self.module.exit_json(changed=True, msg="consulKV[%s] = %s" % (self.key, self.value))
+
+    def delete_kv(self):
+        try:
+            del self.session.kv[self.key]
+        except AttributeError, e:
+            self.module.fail_json(failed=True, msg=e)
+        except KeyError, e:
+            self.module.fail_json(failed=True, msg=e)
+        self.module.exit_json(changed=True, msg="deleted consulKV[%s]" % self.key)
+
+    def evaluate(self):
+        if self.state == 'present':
+            if self.values != '':
+                self.set_kvs()
+            else:
+                self.set_kv()
+        elif self.state == 'absent':
+            self.delete_kv()
+
+
+def main():
+    consul_defaults = {
+        'host': 'localhost',
+        'port': '8500',
+        'dc': None
+    }
+    module = AnsibleModule(
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            key=dict(required=True, type='str'),
+            value=dict(default='', type='str'),
+            values=dict(default='', type='str'),
+            host=dict(default=consul_defaults['host'], type='str'),
+            port=dict(default=consul_defaults['port'], type='str'),
+            dc=dict(default=consul_defaults['dc'], type='str')
+        ),
+        supports_check_mode=False
+    )
+
+    ConsulKV(module).evaluate()
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
