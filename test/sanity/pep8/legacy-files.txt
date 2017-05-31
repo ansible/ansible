@@ -770,11 +770,6 @@ lib/ansible/plugins/lookup/shelvefile.py
 lib/ansible/plugins/lookup/subelements.py
 lib/ansible/plugins/lookup/template.py
 lib/ansible/plugins/lookup/together.py
-lib/ansible/plugins/shell/__init__.py
-lib/ansible/plugins/shell/csh.py
-lib/ansible/plugins/shell/fish.py
-lib/ansible/plugins/shell/powershell.py
-lib/ansible/plugins/shell/sh.py
 lib/ansible/plugins/strategy/__init__.py
 lib/ansible/plugins/strategy/debug.py
 lib/ansible/plugins/strategy/free.py
