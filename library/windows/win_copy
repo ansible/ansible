@@ -1,0 +1,180 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import os
+import time
+import smbc
+import uuid
+
+DOCUMENTATION = '''
+---
+module: win_copy
+version_added: "0.1"
+short_description: Copies files to remote locations.
+description:
+     - The M(win_copy) module copies a file on the local box to remote Windows locations.
+options:
+  src:
+    description:
+      - Local path to a file to copy to the remote Windows server; can be absolute or relative.
+    required: false
+    default: null
+  content:
+    description:
+      - When used instead of 'src', sets the contents of a file directly to the specified value.
+    required: false
+    default: null
+  dest:
+    description:
+      - Remote absolute path where the file should be copied to.
+    required: true
+    default: null
+  force:
+    description:
+      - Overwrites the existing file.
+    required: false
+    default: null
+  validate:
+    description:
+      - Checks if the uploaded file is identical to its source.
+    required: false
+    default: null
+'''
+
+EXAMPLES = '''
+# Example from Ansible Playbooks
+- copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf
+
+# Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
+- copy: src=/mine/ntp.conf dest=/etc/ntp.conf
+
+# Copy a new "sudoers" file into place, after passing validation with visudo
+- copy: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
+'''
+
+def setUp():
+    global ctx
+    ctx = smbc.Context()
+    ctx.optionNoAutoAnonymousLogin = True
+    ctx.functionAuthData = auth_fn
+
+def tearDown():
+    global ctx
+    del ctx
+
+
+def auth_fn(ansible_hostname, share, ansible_workgroup, ansible_ssh_user, ansible_ssh_pass):
+    return (workgroup, ansible_ssh_user, ansible_ssh_pass)
+
+def upload(src, ctx, rfile)
+    sfile = open(src, 'rb')
+    dfile = ctx.open(rfile, os.O_CREAT | os.O_TRUNC | os.O_WRONLY)
+    for buf in sfile:
+        ret = dfile.write(buf)
+        if ret < 0:
+            raise IOError("smbc write error")
+    sfile.close()
+    dfile.close()
+    return True
+
+def download(ctx, rfile, src):
+    sfile = ctx.open(rfile, os.O_RDONLY)
+    dfile = open(src, 'wb')
+    for buf in sfile:
+        dfile.write(buf)
+    dfile.flush()
+    sfile.close()
+    dfile.close()
+    return True
+
+def read_file(rfile):
+    sfile=ctx.open(rfile)
+    fcont = sfile.read()
+    sfile.close()
+    return fcont
+    
+def check_file(rfile):
+    try:
+      read_file(rfile)
+      return True
+    except:
+      return False
+
+def validating(src, rfile, content):
+    tempfile = str(uuid.uuid4().get_hex()[0:32])
+    download(ctx, rfile, tempfile)
+    if (len(content) > 0):
+      result = (read_file(rfile) == content)
+    else:
+      download(ctx, rfile, tempfile)
+      result = (module.md5(src) == module.md5(tempfile))
+      os.remove(tempfile)
+    return result
+
+def main():
+
+    module = AnsibleModule(
+        # not checking because of daisy chain to file module
+        argument_spec = dict(
+            src               = dict(required=False),
+            content           = dict(required=False, no_log=True),
+            dest              = dict(required=True),
+            force             = dict(default=True, aliases=['thirsty'], type='bool'),
+            validate          = dict(required=False, type='str'),
+        ),
+        add_file_common_args=True,
+    )
+
+    src      = os.path.expanduser(module.params['src'])
+    dest     = os.path.expanduser(module.params['dest'])
+    share    = (src.split(':')[0]+'$').lower()
+    loc      = (src.split(':')[1]
+    rfile    = 'smb://' + ansible_hostname + '/' + share + '/' + loc
+    content  = os.path.expanduser(module.params['content'])
+    force    = os.path.expanduser(module.params['force'])
+    validate = os.path.expanduser(module.params['validate'])
+
+    if not os.path.exists(src):
+        module.fail_json(msg="Source %s failed to transfer" % (src))
+    if not os.access(src, os.R_OK):
+        module.fail_json(msg="Source %s not readable" % (src))
+
+    md5sum_src = module.md5(src)
+    md5sum_dest = None
+
+    changed = False
+    tempfile = str(uuid.uuid4().get_hex()[0:32])
+
+    if (check_file(rfile)):
+      md5sum_dest = module.md5(dest)
+      if not ( not (md5sum_src == md5sum_dest) and not force):
+        module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
+    else:
+      if ( len(content) > 0 ):
+        src = tempfile
+        dfile = open(src, 'wb')
+        dfile.write(content)
+        dfile.flush()
+        dfile.close()
+
+      try:
+        upload(src, ctx, rfile)
+        changed = True
+      except:
+        module.fail_json(msg="Failed to copy file.")
+
+      if ( len(content) > 0 ):
+        os.remove(src)
+
+      if not ( not validating(src, rfile, content) and validate):
+        module.fail_json(msg="The validation has failed for the uploaded file.")
+      
+    res_args = dict(
+        dest = dest, src = src, md5sum = md5sum_src, changed = changed
+    )
+
+    module.exit_json(**res_args)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
