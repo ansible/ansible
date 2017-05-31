@@ -1,0 +1,131 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# Author: Rohit Gupta - @rohit01 <rohit.kgec@gmail.com>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+version_added: "1.7"
+module: plivo
+short_description: Send SMS notification globally using Plivo
+description:
+  - Send SMS notification globally using the Plivo SMS service
+options:
+  auth_id:
+    description:
+      Plivo API credential - Main account AUTH_ID or sub-account AUTH_ID
+    required: true
+  auth_token:
+    description:
+      Plivo API credential - Main account AUTH_TOKEN or sub-account AUTH_TOKEN
+    required: true
+  text:
+    description:
+      Notification message or body of text message
+    required: true
+  dest:
+    description:
+      Mobile number of the person to be notified. Format should be phone number
+      with country code without the '+' sign. Example - 14150001111
+    required: true
+  src:
+    description:
+      A valid Plivo number in your account. Format should be phone number with
+      country code without the '+' sign. Example - 17601112222
+    required: true
+notes:
+  - This notification module has an external dependency. It needs a working
+    Plivo API credential viz. AUTH_ID and AUTH_TOKEN. Login to your Plivo
+    account to get the same. Website - http://plivo.com
+requirements: [ urllib2 ]
+author: Rohit Gupta - @rohit01
+'''
+
+EXAMPLES = '''
+# Send notification using Plivo
+- name: "Notify that Ansible completed the server setup"
+  plivo:
+    dest="{{ contact_number }}"
+    src="{{ plivo_number }}"
+    text="Ansible successfully completed your server setup"
+    auth_id="{{ plivo_auth_id }}"
+    auth_token="{{ plivo_auth_token }}"
+
+# A use case when setup failed. Here, 'setup_task' is a register variable
+# of previous task.
+- name: "Notify if server setup failed"
+  plivo:
+    dest="{{ contact_number }}"
+    src="{{ plivo_number }}"
+    text="Server setup failed"
+    auth_id="{{ plivo_auth_id }}"
+    auth_token="{{ plivo_auth_token }}"
+  when: setup_task.rc != 0
+'''
+
+#----------------------------------------------------------------------------#
+import base64
+import json
+import urllib2
+
+
+def send_message(auth_id, auth_token, text, src, dest):
+    URI = "https://api.plivo.com/v1/Account/%s/Message/" % auth_id
+    AGENT = "Ansible/1.7"
+    params = {'src': src, 'dst': dest, 'text': text, 'type': 'sms'}
+    request = urllib2.Request(URI)
+    base64string = base64.encodestring('%s:%s' 
+        % (auth_id, auth_token)).replace('\n', '')
+    request.add_header('User-Agent', AGENT)
+    request.add_header('content-type', 'application/json')
+    request.add_header('Authorization', 'Basic %s' % base64string)
+    return urllib2.urlopen(request, json.dumps(params))
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            auth_id=dict(required=True),
+            auth_token=dict(required=True),
+            text=dict(required=True),
+            src=dict(required=True),
+            dest=dict(required=True),
+        ),
+        supports_check_mode=True
+    )
+    auth_id = module.params['auth_id']
+    auth_token = module.params['auth_token']
+    text = module.params['text']
+    src = module.params['src']
+    dest = module.params['dest']
+    try:
+        response = send_message(auth_id, auth_token, text, src, dest)
+    except Exception as e:
+        module.fail_json(msg="Plivo API Error. Unable to send SMS to %s" % dest)
+    message = json.loads(response.read())
+    if not (200 <= response.code < 300):
+        module.fail_json(plivo_response=message,
+                         response_code=str(response.code))
+    module.exit_json(text=text,
+                     plivo_response=message,
+                     response_code=str(response.code),
+                     changed=True)
+
+
+### ------------------------------- EXECUTE ------------------------------- ###
+from ansible.module_utils.basic import *
+main()
