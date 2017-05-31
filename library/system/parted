@@ -1,0 +1,303 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import traceback
+
+DOCUMENTATION = '''
+---
+module: parted
+short_description: Simple partition creator, geared towards fresh disk init
+description:
+     - This module can be used to create partitions of needed size on physical disks.
+     - The main idea is to initialize machines with lots of disks.
+     - Can be also used to quickly init new disk added to machine.
+options:
+  size:
+    description:
+      - Ensure that partition of this exact size is created, will update facts if successful
+    required: false
+    default: null
+    aliases: []
+  minsize:
+    description:
+      - Ensure that partition of at least this size is created, will update facts if successful
+    required: false
+    default: null
+    aliases: []
+  minfree:
+    description:
+      - Ensure this amount of free space will be left after creating the partition
+    required: false
+    default: null
+    aliases: []
+  count:
+    description:
+      - How many partitions of this geometry to create
+    required: false
+    default: 1
+    aliases: []
+  repeated:
+    description:
+      - Will try to repeat the operation for each disk on the machine
+      - Otherwise stops on first "count" of successes (on first success by default)
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+    aliases: []
+  filesystem:
+    description:
+      - What filesystem to use when searching for existing, or creating new partitions
+    required: false
+    default: null
+    choices: [ "ext3", "ext4", "xfs" ]
+    aliases: []
+  label:
+    description:
+      - What label (partition table type) to use for NEW disks only
+      - Although default is "msdos",  "gpt" will be used automatically for disks over 1TB in size
+    required: false
+    default: "msdos"
+    choices: [ "msdos", "gpt" ]
+    aliases: []
+notes:
+    - All parameters are in MiB
+      If partitions were not created facts will not contain the C(parted_created) attribute
+    - The result is returned as json dictionary:
+
+        {
+            "parted_created": [
+                {
+                    "number": 1,
+                    "path": "/dev/sda1",
+                    "name": "sda1",
+                    "start": 0, # in sectors
+                    "end": 2097152, # in sectors
+                    "size": 1073741824, # in bytes
+                    "fs": "ext4"
+                }
+            ],
+            "parted_existing": [],
+            "parted_missing": 0
+        }
+
+        "parted_created" is a list of created (new) partitions
+        "parted_existing" is a list of existing partitions
+        "parted_missing" is a count of partitions we were not able to create
+requirements: [ "python-parted" ]
+author: Constantine Peresypkin
+'''
+
+EXAMPLES = '''
+# Create a partition of exactly 1GiB in size
+- parted: size=1024
+
+# Create a partition of exactly 1GiB in size and leave at least 1GiB more as a free space
+- parted: size=1024 minfree=1024
+
+# Create a partition of at least 1GiB and leave at least 1GiB more as a free space
+- parted: minsize=1024 minfree=1024
+
+
+# Full flow for the new disk init
+# Create xfs partition of 20GB or more on each HDD that has enough free space
+- name: Create partitions
+  parted: minsize=20000 repeated=yes filesystem=xfs
+
+# Create xfs filesystem on all "new" partitions
+- name: Create filesystems
+  filesystem: dev={{ item.path }} fstype=xfs
+  with_items: parted_created
+
+# Ensure that xfs is used on all existing partitions that satisfy fs=xfs parted output
+- name: Test existing filesystems
+  filesystem: dev={{ item.path }} fstype=xfs
+  with_items: parted_existing
+
+# Rerun the parted to prepare for remount
+- name: Recheck partitions
+  parted: minsize=20000 repeated=yes filesystem=xfs
+
+# Remount everything
+- name: Remount all
+  mount: src={{ item.path }} state=mounted name=/srv/node/{{ item.name }} fstype=xfs opts='noatime,nodiratime,nobarrier,logbufs=8'
+  with_items: parted_existing
+'''
+
+MBYTE = 1024 * 1024
+MAX_MSDOS_SIZE = 1024 * 1024 * MBYTE
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+
+def get_all_disks():
+    disks = []
+    for dev in parted.getAllDevices():
+        try:
+            disk = parted.Disk(dev)
+        except parted.DiskLabelException:  # will be raised if the disk has no partition table (new disk)
+            device_size = dev.sectorSize * dev.length
+            if device_size > MAX_MSDOS_SIZE and 'msdos' in label:
+                disk = parted.freshDisk(dev, 'gpt')
+            else:
+                disk = parted.freshDisk(dev, label)
+        disks.append(disk)
+    return disks
+
+
+def create_result(disk, part):
+    name = part.path.replace('/dev/', '', 1)
+    created = {'number': part.number,
+               'path': part.path,
+               'name': name,
+               'start': part.geometry.start,
+               'end': part.geometry.end,
+               'size': part.geometry.length * disk.device.sectorSize,
+               'fs': part.fileSystem.type if part.fileSystem else None}
+    return created
+
+
+def create(disk, size=None, minsize=None, minfree=None, part_type=None, fs_type=None):
+    if not part_type:
+        part_type = parted.PARTITION_NORMAL
+    if size:
+        size = int(size)
+        size *= MBYTE / disk.device.sectorSize
+    elif minsize:
+        minsize = int(minsize)
+        minsize *= MBYTE / disk.device.sectorSize
+    if minfree:
+        minfree = int(minfree)
+        minfree *= MBYTE / disk.device.sectorSize
+    else:
+        minfree = 0
+    max_length = 0
+    space = None
+    for f in disk.getFreeSpaceRegions():
+        length = f.length - minfree
+        if size:
+            if size < length:
+                max_length = size
+                space = f
+                break
+        elif minsize:
+            if max_length < length and length > minsize:
+                max_length = length
+                space = f
+        elif minfree:
+            if max_length < length:
+                max_length = length
+                space = f
+    if not space:
+        return None
+    max_geom = parted.Geometry(device=disk.device, start=space.start, length=max_length)
+    const = parted.Constraint(maxGeom=max_geom)
+    fs = None
+    if fs_type:
+        fs = parted.FileSystem(type=fs_type, geometry=const.solveMax())
+        if fs.type != fs_type:
+            return None
+    try:
+        part = parted.Partition(disk=disk, type=part_type, geometry=const.solveMax(), fs=fs)
+    except ArithmeticError:
+        return None
+    try:
+        if not disk.addPartition(partition=part, constraint=const):
+            return None
+        if not disk.commit():
+            return None
+        return create_result(disk, part)
+    except parted.PartitionException:
+        return None
+
+
+def create_space(size=None, minsize=None, minfree=None, fs_type=None, part_count=1):
+    created = []
+    if part_count < 1:
+        return []
+    disks = get_all_disks()
+    for d in disks:
+        result = create(d, size=size, minsize=minsize, minfree=minfree, fs_type=fs_type)
+        if result:
+            created.append(result)
+            part_count -= 1
+            if part_count == 0:
+                break
+    return created
+
+
+def ensure_space(count=1, size=None, minsize=None, fs_type=None, repeated=False):
+    part_list = []
+    if minsize:
+        size = minsize
+    size = int(size)
+    size *= MBYTE
+    disks = get_all_disks()
+    for d in disks:
+        if count == 0 and not repeated:
+            break
+        for p in d.getPrimaryPartitions():
+            if fs_type:
+                if p.fileSystem and p.fileSystem.type != fs_type:
+                    continue
+            length = p.getLength() * d.device.sectorSize
+            if length >= size:
+                count -= 1
+                part_list.append(create_result(d, p))
+                if count == 0 and not repeated:
+                    break
+    if repeated:
+        count = 0  # count of missing is ignored for repeated operation
+        for d in disks:
+            for f in d.getFreeSpacePartitions():
+                length = f.getLength() * d.device.sectorSize
+                if length >= size:
+                    count += 1
+    return {'missing': count, 'existing': part_list}
+
+
+def main():
+    global module, parted, label
+    module = AnsibleModule(
+        argument_spec=dict(
+            size=dict(default=None),
+            minsize=dict(default=None),
+            minfree=dict(default=None),
+            repeated=dict(default='no', choices=['yes', 'no']),
+            count=dict(default=1, type='int'),
+            filesystem=dict(default=None, choices=['ext3', 'ext4', 'xfs']),
+            label=dict(default='msdos', choices=['msdos', 'gpt'])
+        )
+    )
+    size = module.params['size']
+    minsize = module.params['minsize']
+    minfree = module.params['minfree']
+    part_count = module.params['count']
+    filesystem = module.params['filesystem']
+    repeated = 'yes' in module.params['repeated']
+    label = module.params['label']
+    try:
+        import parted
+    except ImportError:
+        module.fail_json(msg="Could not import python module: parted. Please install python-parted package.")
+    if not size and not minsize:
+        module.fail_json(msg="One of the following must be supplied: size=, minsize=")
+    data = {'ansible_facts': {}, 'changed': False}
+    result = ensure_space(count=part_count, size=size, minsize=minsize,
+                          fs_type=filesystem, repeated=repeated)
+    data['ansible_facts']['parted_existing'] = result['existing']
+    missing = result['missing']
+    created = create_space(size=size, minsize=minsize, minfree=minfree,
+                           fs_type=filesystem, part_count=missing)
+    data['ansible_facts']['parted_created'] = created
+    missing -= len(created)
+    if len(created) > 0:
+        data['changed'] = True
+    data['ansible_facts']['parted_missing'] = missing
+    module.exit_json(**data)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+
