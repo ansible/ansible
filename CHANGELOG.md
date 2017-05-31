@@ -1692,6 +1692,9 @@ allowed in future versions:
 * Fix bug disabling repositories in the yum module.
 * Fix giving yum module a url to install a package from on RHEL/CENTOS5
 * Fix bug in dnf module preventing it from working when yum-utils was not already installed
+* Speed optimizations of the yum module:
+  - module uses yum API instead of repoquery whenever possible
+  - packages passed by with_* are executed all at once (before packages were installed one after each other)
 
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
