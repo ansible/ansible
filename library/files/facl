@@ -1,0 +1,496 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: acl
+version_added: "1.4"
+short_description: Sets and retrieves file ACL information.
+description:
+     - Sets and retrieves file ACL information.
+options:
+  name:
+    required: true
+    default: None
+    description:
+      - The full path of the file or object.
+    aliases: ['path']
+  entry:
+    required: false
+    default: None
+    description:
+      - Comma separated list of ACL entries to set or remove. This List must
+        always be quoted in the form of "entry[, entry ...]" with "entry" being
+        in one fo the following forms (taken from setfacl manpage, blanks
+        optional):
+      - "[d[efault]:] [u[ser]:]uid [:perms] - Permissions of a named user.
+        Permissions of the file owner if uid is empty."
+      - "[d[efault]:] g[roup]:gid [:perms] - Permissions of a named group.
+        Permissions of the owning group if gid is empty."
+      - "[d[efault]:] m[ask][:] [:perms] - Effective rights mask"
+      - "[d[efault]:] o[ther][:] [:perms] - Permissions of others."
+      - Whitespace between delimiter characters and non-delimiter characters is
+        ignored.
+    aliases: ['entries']
+  state:
+    required: false
+    choices: ['query', 'present', 'absent', 'empty']
+    default: query
+    description:
+      - Defines whether the ACL entries should be present or not.
+      - The C(query) state gets the current ACL C(present) without changing it,
+        for use in 'register' operations.
+      - State C(emtpy) completely purges the ACL of C(path)
+  follow:
+    required: false
+    choices: ['yes', 'no']
+    default: yes
+    description:
+      - Whether to follow symlinks on the path if a symlink is encountered.
+  remove_unspecified:
+    version_added: "1.5"
+    required: false
+    choices: ['yes', 'no']
+    default: no
+    description:
+      - Only for state C(present): whether to remove ACL entries that are not
+        explicitly specified (including mask entries).
+author: Brian Coca
+notes:
+    - The "acl" module requires that ACLs are enabled on the target filesystem
+      and that the setfacl and getfacl binaries are installed.
+    - Some ACL-entries cannot be removed via setfacl -x ("d:u::" for example)
+      or not at all (Base entries like "u::"). Specifying such entries with
+      state "absent" is not allowed.
+'''
+
+EXAMPLES = '''
+# Grant user Joe read access to a file
+- acl: name=/etc/somefile.conf entry="user:joe:r" state=present
+
+# Grant groups "foo" and "bar" read access to a file
+- acl: name=/etc/somefile.conf entries="group:foo:r, group:bar:r" state=present
+
+# Set default ACL entry (read access for group "foo") for directory "somedir"
+- acl: name=/somedir/ entry="default:group:foo:r" state=present
+
+# Same as above using shorter ACL entry specification
+- acl: name=/somedir/ entry="d:g:foo:r" state=present
+
+# Remove the ACL entry for Joe on a specific file
+- acl: name=/etc/somefile.conf entry="user:joe" state=absent
+
+# Completely purge ACL of a file
+- acl: name=/etc/somefile.conf state=empty
+
+# Obtain the ACL for a file
+- acl: name=/etc/somefile.conf
+  register: acl_info
+'''
+
+import re
+
+
+# no "any" in Python < 2.5
+def any(iterable):
+    """
+    Return True if any element of the iterable is true, else False.
+    """
+    for element in iterable:
+        if element:
+            return True
+    return False
+
+
+# In the following, ACL entries are split up into a "key"-part (type of ACL
+# entry and in some cases information for whom the entry applies) and a
+# "permissions" part.
+
+class Key:
+    """
+    A Key object represents the "key"-part of an ACL entry.
+    """
+
+    def __init__(self, is_default, type_, qualifier=None):
+        self.is_default = is_default
+        self.type_ = type_
+        self.qualifier = qualifier
+
+    @property
+    def is_base(self):
+        """
+        Return True if Key object specifies a base ACL entry, else False.
+
+        Base entries in this context are non-default unqualified entries of
+        type "user", "group" or "other".
+
+        """
+        if not self.is_default and self.type_ in 'ugo' and not self.qualifier:
+            return True
+        return False
+
+    @property
+    def names_entity(self):
+        """
+        Return True if uid or gid is specified for type user/group else False.
+        """
+        if self.type_ in 'ug' and self.qualifier:
+            return True
+        return False
+
+    @property
+    def is_mask(self):
+        """
+        Return True if Key object specifies an effective rights mask entry.
+        """
+        return self.type_ == 'm'
+
+    def __eq__(self, other):
+        """
+        Return True if self and other identify the same acl entry, else False.
+        """
+        return (self.is_default == other.is_default and
+                self.type_ == other.type_ and
+                self.qualifier == other.qualifier)
+
+    def __hash__(self):
+        """
+        Return hash value
+
+        This method allows Key objects to be used in sets and dicts
+
+        """
+        return hash((self.is_default, self.type_, self.qualifier))
+
+    def __str__(self):
+        """
+        Return String representation of self.
+
+        Joined by ':' with the String representation of a Perms object, this is
+        guaranteed to return an ACL entry usable with setfacl.
+
+        """
+        parts = []
+        if self.is_default:
+            parts.append('d')
+        parts.append(self.type_)
+        parts.append(self.qualifier or '')
+        return ':'.join(parts)
+
+
+class Perms:
+    """
+    A Perms object represents the "permissions"-part of an ACL entry.
+    """
+
+    @classmethod
+    def from_str(cls, s):
+        """
+        Return Perms object from a permissions string as supplied by getfacl.
+        """
+        return cls('r' in s, 'w' in s, 'x' in s)
+
+    def __init__(self, read=False, write=False, execute=False):
+        self.read = read
+        self.write = write
+        self.execute = execute
+
+    def __str__(self):
+        """
+        Return string representation of self.
+
+        Joined by ':' with the String representation of a Keys object, this is
+        guaranteed to return an ACL entry usable with setfacl.
+
+        """
+        return ''.join((self.read and 'r' or '-',
+                        self.write and 'w' or '-',
+                        self.execute and 'x' or '-'))
+
+
+def _run_cmd(module, cmd):
+    """
+    Run a list of args as command, return stdout as string
+    """
+    try:
+        rc, out, err = module.run_command(' '.join(cmd), check_rc=True)
+    except RuntimeError, e:
+        module.fail_json(msg=e.message)
+    return out
+
+
+def _parse_entry(entry):
+    """
+    Parse a string representing an ACL entry, return (Key, Perms)-tuple
+    """
+    parse_re = re.compile(
+        r'''^
+            (                                        # optional:
+                (?P<default> d)(efault)? \s*:\s*     #   "default", delimiter
+            )?
+            (
+                (                                    # either:
+                    (?P<group> g)(roup)? \s*:\s*     #   "group", delimiter
+                    (?P<gid>[\w.-]*)                 #   gid (empty ok)
+                ) |
+                (                                    # or:
+                    (?P<mask> m)(ask)? (\s*:\s*)?    #   "mask", opt. delim
+                ) |
+                (                                    # or:
+                    (?P<other> o)(ther)? (\s*:\s*)?  #   "other", opt. delim
+                ) |
+                (                                    # or (has to come last):
+                    ((?P<user> u)(ser)? \s*:\s*)?    #   opt. ("user", delim)
+                    (?P<uid>[\w.-]*)                 #   uid (empty ok)
+                )
+            )
+            (                                        # optional:
+                \s*:\s* (?P<perms> [rwxX-]{1,3}?)    #   delim, permissions
+            )?
+            $
+        ''',
+        re.VERBOSE
+    )
+    match = parse_re.match(entry)
+    if not match:
+        raise ValueError('Not a valid ACL entry string: "%s"' % entry)
+
+    g = match.groupdict()
+
+    is_default = bool(g['default'])
+
+    # type "user" may be omitted, so assume 'u' if no type was specified
+    type_ = g['group'] or g['other'] or g['mask'] or g['user'] or 'u'
+
+    # qualifier is None if no qualifier was specified (avoid empty String)
+    qualifier = g['uid'] or g['gid'] or None
+
+    key = Key(is_default, type_, qualifier)
+    perms = Perms.from_str(g['perms'] or '')
+
+    return key, perms
+
+
+def parse_entries(entries):
+    """
+    Parse ACL entries into dict, return the dict.
+
+    dict keys are of type Key, values of type Perms.
+
+    """
+    return dict(_parse_entry(entry) for entry in entries)
+
+
+def get_acl_entries(module, path, follow):
+    """
+    Return current ACL entries as list of strings
+    """
+    cmd = [module.get_bin_path('getfacl', True)]
+    if not follow:
+        cmd.append('--physical')
+
+    # omit effective rights comments, absolute path warnings and header
+    cmd.append('--no-effective')
+    cmd.append('--absolute-names')
+    cmd.append('--omit-header')
+
+    cmd.append('--')
+    cmd.append(path)
+
+    lines = _run_cmd(module, cmd).splitlines()
+    return [line for line in lines if line and not line.isspace()]
+
+
+def set_acl(module, path, acl, follow, test=False):
+    """
+    If test evaluates True, apply ACL dict to path, return None.
+
+    If test evaluates False, don' change anything but return whether changes
+    would be made if test were False.
+
+    """
+    cmd = [module.get_bin_path('setfacl', True)]
+    if test:
+        cmd.append('--test')
+    if not follow:
+        cmd.append('--physical')
+    for key, perms in acl.iteritems():
+        cmd.append('-m "%s:%s"' % (key, perms))
+    cmd.append('--')
+    cmd.append(path)
+    out = _run_cmd(module, cmd)
+    if test:
+        return not out.rstrip().endswith('*,*')
+
+
+def rm_acl(module, path, keys, follow, test=False):
+    """
+    If test evaluates True, remove ACL entries specified via keys, return None.
+
+    If test evaluates False, don' change anything but return whether changes
+    would be made if test were False.
+
+    """
+    cmd = [module.get_bin_path('setfacl', True)]
+    if test:
+        cmd.append('--test')
+    if not follow:
+        cmd.append('--physical')
+    for key in keys:
+        cmd.append('-x "%s"' % key)
+    cmd.append('--')
+    cmd.append(path)
+    out = _run_cmd(module, cmd)
+    if test:
+        return not out.rstrip().endswith('*,*')
+
+
+def purge_acl(module, path, follow, test=False):
+    """
+    If test evaluates True, purge ACL (only base entries remain), return None.
+
+    If test evaluates False, don' change anything but return whether changes
+    would be made if test were False.
+
+    """
+    cmd = [module.get_bin_path('setfacl', True)]
+    if test:
+        cmd.append('--test')
+    if not follow:
+        cmd.append('--physical')
+    cmd.append('--remove-all')
+    cmd.append('--')
+    cmd.append(path)
+    out = _run_cmd(module, cmd)
+    if test:
+        return not out.rstrip().endswith('*,*')
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(
+                required=True,
+                aliases=['path']
+            ),
+            entries=dict(
+                required=False,
+                aliases=['entry']
+            ),
+            state=dict(
+                required=False,
+                default='query',
+                choices=['query', 'present', 'absent', 'empty'],
+                type='str'
+            ),
+            follow=dict(
+                required=False,
+                type='bool',
+                default=True
+            ),
+            remove_unspecified=dict(
+                required=False,
+                type='bool',
+                default=False
+            )
+        ),
+        supports_check_mode=True,
+    )
+
+    # params
+    path = module.params.get('name')
+    state = module.params.get('state')
+    follow = module.params.get('follow')
+    remove_unspecified = module.params.get('remove_unspecified')
+
+    # preliminary checks
+    if not os.path.exists(path):
+        module.fail_json(msg='path "%s" not found or not accessible!' % path)
+    if remove_unspecified and state != 'present':
+        module.fail_json(msg='remove_unspecified forbidden for "%s"' % state)
+
+    # determine target ACL entries (if necessary)
+    if state in ('present', 'absent'):
+        if not module.params.get('entries'):
+            module.fail_json(msg='entry needs to be set for "%s"' % state)
+        entries = [e.strip() for e in module.params.get('entries').split(',')]
+        try:
+            target = parse_entries(entries)
+        except ValueError as e:
+            module.fail_json(msg=e.message)
+
+    msg = ''
+    changed = False
+    initial_acl = parse_entries(get_acl_entries(module, path, follow))
+
+    if state == 'present':
+        msg = 'Present entries: %s' % ', '.join(entries)
+
+        rm_changed = False
+        if remove_unspecified:
+            msg += ' (unspecified entries removed)'
+            unspecified = set(initial_acl) - set(target)
+            remaining = set(initial_acl) & set(target)
+
+            # never remove base entries
+            remove = [k for k in unspecified if not k.is_base]
+
+            # don't remove mask entries if they are still needed
+            if any(k.names_entity and not k.is_default for k in remaining):
+                remove = [k for k in remove
+                            if not (k.is_mask and not k.is_default)]
+
+            # don't remove default mask entries if they are still needed
+            if any(k.names_entity and k.is_default for k in remaining):
+                remove = [k for k in remove
+                            if not (k.is_mask and k.is_default)]
+
+            # if entries remain to be removed, do so
+            if remove:
+                rm_changed = rm_acl(module, path, remove, follow, test=True)
+                if rm_changed and not module.check_mode:
+                    rm_acl(module, path, remove, follow)
+
+        set_changed = set_acl(module, path, target, follow, test=True)
+        if set_changed and not module.check_mode:
+            set_acl(module, path, target, follow)
+
+        changed = rm_changed or set_changed
+
+    elif state == 'absent':
+        msg = 'Absent entries: %s' % ', '.join(entries)
+        changed = rm_acl(module, path, target, follow, test=True)
+        if changed and not module.check_mode:
+            rm_acl(module, path, target, follow)
+
+    elif state == 'empty':
+        msg = 'Empty ACL'
+        changed = purge_acl(module, path, follow, test=True)
+        if changed and not module.check_mode:
+            purge_acl(module, path, follow)
+
+    else:
+        msg = 'Current ACL:'
+
+    module.exit_json(changed=changed,
+                     msg=msg,
+                     acl=get_acl_entries(module, path, follow))
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
