@@ -316,22 +316,22 @@ def delete_codedeploy_application(client, name):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        application_name = dict(required=True, type='str'),
-        deployment_group = dict(required=True, type='str'),
-        deployment_style = dict(required=True, type="dict"),
-        service_role_arn = dict(required=True, type='str'),
-        state = dict(required=False, default='present', choices=['present', 'absent'], type='str'),
-        deployment_config = dict(required=False, default='CodeDeployDefault.OneAtATime', type='str'),
-        new_application_name = dict(required=False, type='str', default=None),
-        new_deployment_group = dict(required=False, type='str', default=None),
-        ec2_tag_filters = dict(required=False, type='list', default=None),
-        on_premise_filters = dict(required=False, type='list', default=None),
-        auto_scaling_groups = dict(required=False, type='list', default=None),
-        trigger_configs = dict(required=False, type='list', default=None),
-        alarm_configuration = dict(required=False, type='dict', default=None),
-        auto_rollback_config = dict(required=False, type='dict', default=None),
-        bg_deployment_config = dict(required=False, type='dict', default=None),
-        load_balance_info = dict(required=False, type='dict', default=None)
+        application_name=dict(required=True, type='str'),
+        deployment_group=dict(required=True, type='str'),
+        deployment_style=dict(required=True, type="dict"),
+        service_role_arn=dict(required=True, type='str'),
+        state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
+        deployment_config=dict(required=False, default='CodeDeployDefault.OneAtATime', type='str'),
+        new_application_name=dict(required=False, type='str', default=None),
+        new_deployment_group=dict(required=False, type='str', default=None),
+        ec2_tag_filters=dict(required=False, type='list', default=None),
+        on_premise_filters=dict(required=False, type='list', default=None),
+        auto_scaling_groups=dict(required=False, type='list', default=None),
+        trigger_configs=dict(required=False, type='list', default=None),
+        alarm_configuration=dict(required=False, type='dict', default=None),
+        auto_rollback_config=dict(required=False, type='dict', default=None),
+        bg_deployment_config=dict(required=False, type='dict', default=None),
+        load_balance_info=dict(required=False, type='dict', default=None)
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -356,7 +356,7 @@ def main():
         module.fail_json(msg='boto required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='codedeploy',region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = boto3_conn(module, conn_type='client', resource='codedeploy', region=region, endpoint=ec2_url, **aws_connect_params)
 
     changed = False
     if state == 'present':
@@ -365,7 +365,7 @@ def main():
         # Check if the deployment group already exists, if it does, update it.
         has_deployment_group = get_codedeploy_application_deployment_group(connection, name, deployment_group, module)
         if not has_application:
-            cd_properties=create_codedeploy_application(
+            cd_properties = create_codedeploy_application(
                 connection,
                 name,
                 deployment_group,
@@ -385,18 +385,18 @@ def main():
         else:
             # Update the application name if a new name was given.
             if new_application_name:
-                cd_properties=update_codedeploy_application(connection, name, new_application_name, module)
+                cd_properties = update_codedeploy_application(connection, name, new_application_name, module)
         if has_deployment_group:
-            cd_properties=update_codedeploy_deployment_group(
+            cd_properties = update_codedeploy_deployment_group(
                 connection,
                 name,
                 deployment_group,
                 new_deployment_group,
                 deployment_config,
-                ec2_tag_filters, 
+                ec2_tag_filters,
                 on_premise_filters,
                 auto_scaling_groups,
-                service_role_arn,   
+                service_role_arn,
                 trigger_configs,
                 alarm_configuration,
                 auto_rollback_config,
@@ -405,7 +405,7 @@ def main():
                 load_balance_info,
                 module)
         else:
-            cd_properties=create_codedeploy_deployment_group(
+            cd_properties = create_codedeploy_deployment_group(
                 connection,
                 name,
                 deployment_group,
@@ -423,7 +423,7 @@ def main():
                 module)
     elif state == 'absent':
         changed = delete_codedeploy_application(connection, name)
-        module.exit_json(changed = changed)
+        module.exit_json(changed=changed)
     cda = get_codedeploy_application(connection, name, module)
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
 
