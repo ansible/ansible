@@ -37,11 +37,11 @@ def openstack_argument_spec():
     # Consume standard OpenStack environment variables.
     # This is mainly only useful for ad-hoc command line operation as
     # in playbooks one would assume variables would be used appropriately
-    OS_AUTH_URL=os.environ.get('OS_AUTH_URL', 'http://127.0.0.1:35357/v2.0/')
-    OS_PASSWORD=os.environ.get('OS_PASSWORD', None)
-    OS_REGION_NAME=os.environ.get('OS_REGION_NAME', None)
-    OS_USERNAME=os.environ.get('OS_USERNAME', 'admin')
-    OS_TENANT_NAME=os.environ.get('OS_TENANT_NAME', OS_USERNAME)
+    OS_AUTH_URL=os.environ.get('OS_AUTH_URL', 'http://127.0.0.1:5000/v2.0/')
+    OS_PASSWORD=os.environ.get('OS_PASSWORD')
+    OS_REGION_NAME=os.environ.get('OS_REGION_NAME')
+    OS_USERNAME=os.environ.get('OS_USERNAME')
+    OS_TENANT_NAME=os.environ.get('OS_TENANT_NAME')
 
     spec = dict(
         login_username                  = dict(default=OS_USERNAME),
@@ -57,6 +57,10 @@ def openstack_argument_spec():
         spec['login_tenant_name'] = dict(default=OS_TENANT_NAME)
     else:
         spec['login_tenant_name'] = dict(required=True)
+    if OS_USERNAME:
+        spec['login_username'] = dict(default=OS_USERNAME)
+    else:
+        spec['login_username'] = dict(required=True)
     return spec
 
 def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
