@@ -1,0 +1,212 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Ray Myers <ray.myers@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: known_host
+short_description: Adds or removes an SSH known host
+description:
+     - Adds or removes a host from an SSH known_hosts file. 
+       Uses commands I(ssh-keyscan) and I(ssh-keygen).
+version_added: ""
+options:
+  user:
+    description:
+      - The username on the remote host whose known_hosts file will be modified
+    required: true
+    default: null
+    aliases: []
+  host:
+    description:
+      - The host to add/remove
+    required: true
+    default: null
+    aliases: []
+  state:
+    description:
+      - Whether the given host should or should not be in the file
+    required: false
+    choices: [ "present", "absent" ]
+    default: "present"
+  path:
+    description:
+      - Alternate path to the known_hosts file
+    required: false
+    default: "(homedir)+/.ssh/known_hosts"
+  mode:
+    description:
+      - mode the file should be kept in as would be fed to I(chmod)
+    required: false
+    default: "0600"
+  manage_dir:
+    description:
+      - Whether this module should manage the directory of the known_hosts file. 
+        If managed, the directory will be created when missing, have mode 0700, 
+        and be owned by I(user).
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+author: Ray Myers
+'''
+
+EXAMPLES = '''
+# Example adding host
+- known_host: user=charlie host=github.com
+
+# Example removing host
+- known_host: user=charlie host=github.com state=absent
+
+# Using alternate directory location and mode to configure system-level known hosts
+- known_host: user=root
+              path='/etc/ssh/ssh_known_hosts'
+              mode=0644
+              manage_dir=no
+'''
+
+import os
+
+def add_host(module, host, ssh_file):
+    keyscan_cmd = module.get_bin_path('ssh-keyscan', True)
+    _, new_entry, _ = module.run_command([keyscan_cmd, "-H", host], check_rc=True)
+    try:
+        with open(ssh_file, "a") as f:
+            f.write(new_entry)
+    except Exception, e:
+        module.fail_json(msg="Failed write host key to file: %s " % e.message)
+
+def check_host(module, host, ssh_file):
+    """
+    Determine if host is in known hosts file.
+    """
+    keygen_cmd = module.get_bin_path('ssh-keygen', True)
+    _, out, _ = module.run_command([keygen_cmd, "-F", host, "-f", ssh_file], check_rc=True)
+    return len(out.strip()) > 0
+
+def remove_host(module, host, ssh_file):
+    keygen_cmd = module.get_bin_path('ssh-keygen', True)
+    module.run_command([keygen_cmd, "-R", host, "-f", ssh_file], check_rc=True)
+
+def host_file(module, params, user_entry, path, manage_dir):
+    """
+    Determine name of known hosts file, optionally creating the
+    directory and file, properly setting permissions of directory.
+
+    :param obj user_entry: password database entry for the user as returned by getpwnam.
+    :param str path: if not None, use provided path rather than default of '~user/.ssh/known_hosts'
+    :param bool manage_dir: if True, create and set ownership of the parent dir of the known hosts file
+    :return: full path string to known_hosts file for user (or the file given by 'path')
+    """ 
+    if path is None:
+        homedir    = user_entry.pw_dir
+        sshdir     = os.path.join(homedir, ".ssh")
+        hostsfile   = os.path.join(sshdir, "known_hosts")
+    else:
+        path       = os.path.expanduser(path)
+        sshdir     = os.path.dirname(path)
+        hostsfile   = path
+    uid = user_entry.pw_uid
+    gid = user_entry.pw_gid
+
+    if manage_dir:
+        if not os.path.exists(sshdir):
+            params['changed'] = True
+            os.mkdir(sshdir, 0700)
+        dir_args = dict(path=sshdir, owner=uid, group=gid, mode=0700, 
+                        secontext=module.selinux_default_context(sshdir))
+        params['changed'] = module.set_directory_attributes_if_different(dir_args, params['changed'])
+
+    if not os.path.exists(hostsfile):
+        if not os.path.exists(sshdir):
+            module.fail_json(msg="Parent dir of '%s' does not exist" % hostsfile)
+        params['changed'] = True
+        if module.check_mode:
+            # hosts file is missing and we're in check mode. Nothing else we can do here.
+            module.exit_json(**params)
+        create_file(module, hostsfile)
+
+    return hostsfile
+
+
+def create_file(module, file):
+    try:
+        open(file, "w").close()
+    except Exception, e:
+        module.fail_json(msg="Failed to create hosts file %s: %s" % (file, str(e)))
+
+def get_user_entry(user):
+    try:
+        return pwd.getpwnam(user)
+    except KeyError, e:
+        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
+    
+
+def enforce_file_attributes(module, params, file, user_entry, mode):
+    """
+    Enforce that 'file' has 'mode' and is owned by user and group given by 'user_entry'.
+    """
+    uid = user_entry.pw_uid
+    gid = user_entry.pw_gid
+    file_args = dict(path=file, owner=uid, group=gid, mode=mode, 
+                    secontext=module.selinux_default_context(file))
+    params['changed'] = module.set_file_attributes_if_different(file_args, params['changed'])     
+
+def enforce_state(module, params):
+    """
+    Add or remove known host.
+    """
+    user_entry = get_user_entry(params["user"])
+    host_desired = params["state"] == "present"
+    host        = params["host"]
+    path        = params.get("path", None)
+    manage_dir = module.boolean(params["manage_dir"])
+    params['changed'] = False
+    ssh_file = host_file(module, params, user_entry, path, manage_dir)
+
+    host_present = check_host(module, host, ssh_file)
+    
+    if (not host_present and host_desired):
+        if not module.check_mode:
+            add_host(module, host, ssh_file)
+        params['changed'] = True
+    elif (host_present and not host_desired):
+        if not module.check_mode:
+            remove_host(module, host, ssh_file)
+        params['changed'] = True
+    enforce_file_attributes(module, params, ssh_file, user_entry, params["mode"])
+       
+    return params
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            user = dict(required=True, type='str'),
+            host = dict(required=True, type='str'),
+            state = dict(default='present', choices=['absent', 'present']),
+            manage_dir = dict(required=False, type='bool', default=True),
+            mode = dict(required=False, type='str', default="0600"),
+            path = dict(required=False, type='str')
+            ),
+        supports_check_mode=True
+        )
+    results = enforce_state(module, module.params)
+    module.exit_json(**results)
+
+from ansible.module_utils.basic import *
+main()
