@@ -1,0 +1,268 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Brian Shumate <brian@couchbase.com>
+
+DOCUMENTATION = '''
+---
+module: couchbase-server
+short_description: Couchbase Server administration module
+description:
+     - This module can execute Couchbase Server administrative commands,
+       change cluster configuration, and query various operational statistics
+version_added: '2.2.0'
+options:
+  command:
+    description:
+      - Command to execute on node or cluster
+    required: false
+    default: null
+    aliases: []
+    choices: ['cluster-init', 'create-bucket', 'rebalance', 'rebalance-add', 'rebalance-remove', 'server-info', 'server-add', 'server-list']
+  admin_connection:
+    description:
+      - Cluster node address and port
+    required: false
+    default: localhost:8091
+    aliases: []
+  admin_user:
+    description:
+      - Cluster administrator account user name
+    required: false
+    default: Administrator
+    aliases: []
+  admin_pass:
+    description:
+      - Cluster administrator account password
+    required: false
+    default: null
+    aliases: []
+  cluster_node:
+    description:
+      - Target cluster node
+    required: false
+    default: localhost
+    aliases: []
+  cluster_port:
+    description:
+      - Cluster node administration TCP port
+    required: false
+    default: 8091
+    aliases: []
+  cluster_ram_size:
+    description:
+      - RAM amount to allocate to cluster in megabytes
+    default: null
+    aliases: []
+  additional_node:
+    description:
+      - Additional cluster node being added to primary node
+    default: null
+    aliases: []
+  additional_node_user:
+    description:
+      - Additional cluster node Administrator user name
+    default: null
+    aliases: []
+  additional_node_pass:
+    description:
+      - Additional cluster node Administrator password
+    default: null
+    aliases: []
+  bucket_name:
+    description:
+      - New bucket name
+    default: null
+    aliases: []
+  bucket_type:
+    description:
+      - New bucket type
+    default: null
+    aliases: []
+  bucket_port:
+    description:
+      - New bucket port number
+    default: null
+    aliases: []
+  bucket_ramsize:
+    description:
+      - New bucket RAM size
+    default: null
+    aliases: []
+  bucket_replica:
+    description:
+      - New bucket replica number
+    default: null
+    aliases: []
+  node_add:
+    description:
+      - Node to add and rebalance
+    default: null
+    aliases: []
+  node_remove:
+    description:
+      - Node to remove and rebalance
+    default: null
+    aliases: []
+
+'''
+
+EXAMPLES = '''
+# Initialize a cluster node
+- couchbase-server: 'command=cluster-init admin_connection=example.com:8091 cluster_ram_size=2048'
+# Get Couchbase Server information
+- couchbase-server: 'command=server-info admin_connection=example.com:8091'
+'''
+
+import json
+import sys
+
+
+def main():
+
+    ansible_facts = {}
+    arg_spec = dict (
+        command=dict(required=False, default=None, choices=[
+                    'cluster-init', 'create-bucket', 'rebalance',
+                    'server-add', 'server-info', 'server-list']),
+        admin_user=dict(default='Administrator', required=False),
+        admin_pass=dict(default='couchbase', required=False),
+        admin_connection=dict(default='127.0.0.1:8091', required=False),
+        cluster_node=dict(default='127.0.0.1', required=False),
+        additional_node=dict(default=False, required=False),
+        additional_node_user=dict(default='Administrator', required=False),
+        additional_node_pass=dict(default='couchbase', required=False),
+        cluster_port=dict(default=8091, required=False),
+        cluster_ram_size=dict(default=False, required=False),
+        stats_port=dict(default=11210, required=False),
+        stats_level=dict(default='all', required=False),
+        bucket_name=dict(default="makura", required=False),
+        bucket_type=dict(defalt="couchbase", required=False),
+        bucket_port=dict(default="11222", required=False),
+        bucket_ramsize=dict(default="256", required=False),
+        bucket_replica=dict(default="1", required=False),
+        node_add=dict(default=False, required=False),
+        node_remove=dict(default=False, required=False)
+    )
+    global module
+    module = AnsibleModule(argument_spec=arg_spec)
+    command = module.params.get('command')
+    admin_user = module.params.get('admin_user')
+    admin_pass = module.params.get('admin_pass')
+    admin_connection = module.params.get('admin_connection')
+    cluster_node = module.params.get('cluster_node')
+    cluster_port = module.params.get('cluster_port')
+    cluster_ram_size = module.params.get('cluster_ram_size')
+    additional_node = module.params.get('additional_node')
+    additional_node_user = module.params.get('additional_node_user')
+    additional_node_pass = module.params.get('additional_node_pass')
+    bucket_name = module.params.get('bucket_name')
+    bucket_type = module.params.get('bucket_type')
+    bucket_port = module.params.get('bucket_port')
+    bucket_ramsize = module.params.get('bucket_ramsize')
+    bucket_replica = module.params.get('bucket_replica')
+    node_add = module.params.get('node_add')
+    node_remove = module.params.get('node_remove')
+    cb_cli_bin = '/opt/couchbase/bin/couchbase-cli'
+    rc = 0
+    err = ''
+    out = ''
+
+    # cluster-init command
+    if command == 'cluster-init':
+
+        command_line = '%s cluster-init -c %s --cluster-init-username=%s --cluster-init-password=%s --cluster-init-port=%s --cluster-init-ramsize=%s' % (cb_cli_bin, admin_connection, admin_user, admin_pass, cluster_port, cluster_ram_size)
+
+        rc, out, err = module.run_command(command_line)
+        if rc == 0:
+            # cb_version = out.strip()
+            module.exit_json(changed=True, msg=out)
+        else:
+            module.fail_json(msg=err)
+
+    # rebalance command
+    elif command == 'rebalance':
+
+        command_line = '%s rebalance -c %s --user=%s --password=%s' % (cb_cli_bin, admin_connection, admin_user, admin_pass,)
+
+        rc, out, err = module.run_command(command_line)
+        if rc == 0:
+            module.exit_json(changed=True, msg=out)
+        else:
+            module.fail_json(msg=err)
+
+    # rebalance-add command
+    elif command == 'rebalance-add':
+
+        command_line = '%s rebalance -c %s --user=%s --password=%s --server-add=%s' % (cb_cli_bin, admin_connection, admin_user, admin_pass, node_add)
+
+        rc, out, err = module.run_command(command_line)
+        if rc == 0:
+            module.exit_json(changed=True, msg=out)
+        else:
+            module.fail_json(msg=err)
+
+    # rebalance-remove command
+    elif command == 'rebalance-remove':
+
+        command_line = '%s rebalance -c %s --user=%s --password=%s --server-remove=%s' % (cb_cli_bin, admin_connection, admin_user, admin_pass, node_remove)
+
+        rc, out, err = module.run_command(command_line)
+        if rc == 0:
+            module.exit_json(changed=True, msg=out)
+        else:
+            module.fail_json(msg=err)
+
+    # server-add command
+    elif command == 'server-add':
+
+        command_line = '%s server-add -c %s --user=%s --password=%s --server-add=%s --server-add-username=%s --server-add-password=%s' % (cb_cli_bin, admin_connection, admin_user, admin_pass, additional_node, additional_node_user, additional_node_pass)
+
+        rc, out, err = module.run_command(command_line)
+        if rc == 0:
+            module.exit_json(changed=True, msg=out)
+        else:
+            module.fail_json(msg=err)
+
+    # server-info command
+    elif command == 'server-info':
+
+        command_line = '%s server-info -c %s' % (cb_cli_bin, admin_connection)
+
+        rc, out, err = module.run_command(command_line)
+        if rc == 0:
+            module.exit_json(changed=False, msg=json.loads(out))
+        else:
+            module.fail_json(msg=err)
+
+    # server-list command
+    elif command == 'server-list':
+
+        command_line = '%s server-list -c %s' % (cb_cli_bin, admin_connection)
+
+        rc, out, err = module.run_command(command_line)
+        if rc == 0:
+            # server-list does not return JSON
+            module.exit_json(changed=False, msg=out)
+        else:
+            module.fail_json(msg=err)
+
+    # create-bucket command
+    elif command == 'create-bucket':
+
+        command_line = '%s bucket-create -c %s --user=%s --password=%s --bucket=%s --bucket-type=%s --bucket-port=%s --bucket-ramsize=%s --bucket-replica=%s' % (cb_cli_bin, admin_connection, admin_user, admin_pass, bucket_name, bucket_type, bucket_port, bucket_ramsize, bucket_replica)
+
+        rc, out, err = module.run_command(command_line)
+        if rc == 0:
+            # server-list does not return JSON
+            module.exit_json(changed=False, msg=out)
+        else:
+            module.fail_json(msg=err)
+
+    else:
+        module.fail_json(msg='Please provide a valid command.')
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+
