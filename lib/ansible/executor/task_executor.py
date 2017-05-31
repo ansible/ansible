@@ -25,6 +25,7 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
+from ansible.executor.module_common import get_module_metadata
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils._text import to_text
@@ -780,7 +781,7 @@ class TaskExecutor:
         module_prefix = self._task.action.split('_')[0]
 
         try:
-            metadata = get_docstring(module_path)[3]
+            metadata = get_module_metadata(module_path)
         except:
             metadata = None
 
