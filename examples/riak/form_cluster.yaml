@@ -1,0 +1,27 @@
+- hosts: riakcluster_primary
+  sudo: True
+  tasks:
+  - name: collect riak facts
+    riak: action=ping
+    register: riak_outputs
+
+- hosts: riakcluster_middle:riakcluster_last
+  vars:
+    primary_node:  ${hostvars.${groups.riakcluster_primary[0]}.riak_outputs.node_name}
+  sudo: True
+  tasks:
+  - name: join riak cluster
+    riak: action=join target_node=$primary_node
+
+- hosts: riakcluster_last
+  sudo: True
+  tasks:
+  - name: plan cluster changes
+    riak: action=plan
+    notify: commit cluster changes
+
+  handlers:
+  - name: commit cluster changes
+    riak: action=commit wait_for_handoffs=true
+    async: 600
+    poll: 10

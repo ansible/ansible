@@ -1,0 +1,33 @@
+---
+- hosts: riakcluster
+  serial: 1
+  vars:
+    ip_addr: ${ansible_eth0.ipv4.address}
+  sudo: True
+  tasks:
+
+  - name: configure app.config
+    copy: src=files/rr-etc_riak_app.config dest=/etc/riak/app.config
+    tags: configfiles
+
+  - name: check state of riak ring
+    riak: ring_ready=true
+
+  - name: make sure there are no transfers happening
+    riak: wait_for_handoffs=true
+    async: 600
+    poll: 10
+
+  - name: stop riak
+    service: name=riak state=stopped
+
+  - name: start riak
+    service: name=riak state=started
+
+  - name: wait for riak_kv service to start
+    riak: wait_for_service=riak_kv
+    async: 30
+    poll: 1
+
+  - name: performs a test of the riak backend
+    riak: action=kv_test

@@ -1,0 +1,15 @@
+[riakcluster_primary]
+10.0.8.133
+
+[riakcluster_middle]
+10.0.8.228
+10.0.8.230
+10.0.8.231
+
+[riakcluster_last]
+10.0.8.233
+
+[riakcluster:children]
+riakcluster_primary
+riakcluster_middle
+riakcluster_last

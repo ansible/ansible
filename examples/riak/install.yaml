@@ -1,0 +1,63 @@
+---
+- hosts: riakcluster
+  vars:
+    ip_addr: ${ansible_eth0.ipv4.address}
+    riak_partition: /dev/mapper/${ansible_hostname}-root
+    riak_physical_disk: sda
+    scheduler: noop
+  sudo: True
+  tasks:
+
+  - name: mount the riak volume with optmized settings
+    mount: name=/ src=${riak_partition} opts="noatime,barrier=0,errors=remount-ro" fstype=ext4 state=present
+
+  - name: create sysctl.d
+    file: dest=/etc/sysctl.d state=directory
+  - name: configure sysctl
+    copy: src=files/etc_sysctl.d_riak.conf dest=/etc/sysctl.d/riak.conf owner=root group=root mode=0644
+    notify: update sysctl
+
+  - name: update system ulimit settings
+    copy: src=files/etc_security_limits.d_riak.conf dest=/etc/security/limits.d/riak.conf owner=root group=root mode=0644
+  - name: set the riak ulimit
+    copy: src=files/etc_default_riak_ulimit dest=/etc/default/riak
+  - lineinfile: line="session    required   pam_limits.so" dest=$item regexp="session    required   pam_limits.so" insertafter="^# end of pam-auth-update config"
+    with_items:
+      - /etc/pam.d/common-session
+      - /etc/pam.d/common-session-noninteractive
+
+  - name: confgure rc.local
+    template: src=templates/etc_rc.local.j2 dest=/etc/rc.local owner=root group=root mode=0755
+    notify: source rclocal
+
+  - name: get the basho apt key
+    apt_key: url=http://apt.basho.com/gpg/basho.apt.key state=present
+
+  - name: configure the basho repository
+    template: src=templates/etc_apt_sources.list.d_basho.list.j2 dest=/etc/apt/sources.list.d/basho.list
+
+  - name: install riak
+    apt: pkg=riak update_cache=yes
+
+  - name: configure app.config
+    copy: src=files/etc_riak_app.config dest=/etc/riak/app.config
+    tags: configfiles
+
+  - name: configure vm.args
+    template: src=templates/etc_riak_vm.args.j2 dest=/etc/riak/vm.args
+    tags: configfiles
+
+  - name: start riak
+    service: name=riak state=started
+
+  - name: wait for riak_kv service to start
+    riak: wait_for_service=riak_kv
+
+  - name: performs a test of the riak backend
+    riak: action=kv_test
+
+  handlers:
+  - name: update sysctl
+    command: sysctl -e -p /etc/sysctl.d/riak.conf
+  - name: source rclocal
+    command: /bin/bash /etc/rc.local
