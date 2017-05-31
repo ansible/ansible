@@ -51,7 +51,7 @@ Once WSL is enabled, you can open the Bash terminal. The first time you so this,
 At the prompt you can quickly start using the Ansible devel branch by running the following commands::
 
     sudo apt-get install python-pip
-    pip install pywinrm
+    pip install pywinrm jinja2 pyyaml
     git clone https://github.com/ansible/ansible.git
     source ansible/hacking/env-setup
 
