@@ -1,0 +1,338 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Original ZFS module code (c) 2013, Johan Wiren <johan.wiren.se@gmail.com>
+# Zpool-specific portions (c) 2014, Stanley Hiller <stan@consultingsysadmin.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: zpool
+short_description: Manage ZFS zpools
+description:
+  - Manages ZFS zpools on Solaris, FreeBSD, and Linux. Manages only zpools. See zpool(1M) for more information about the properties.
+version_added: "1.1sjh"
+options:
+  name:
+    description:
+      - zpool e.g. C(rpool, tank)
+    required: true
+  state:
+    description:
+      - Whether to create (C(present)) or remove (C(absent)) a zpool
+    required: true
+    choices: [present, absent]
+  altroot:
+    description:
+      - The altroot property. If set, this directory is prepended to any mount points within the pool. 
+    required: False
+  ashift:
+    description:
+      - The ashift property. Set to 12 if using disks with 4k sector sizes
+    required: False
+  autoexpand:
+    description:
+      - Controls automatic pool expansion when the underlying LUN is grown.
+    required: False
+    choices: ['on','off']
+  autoreplace:
+    description:
+      - Controls automatic device replacement.
+    required: False
+    choices: ['on','off']
+  bootfs:
+    description:
+      - Identifies the default bootable dataset for the root pool.
+    required: False
+  cachefile:
+    description:
+      - Sets the path to where the pool configuration is cached.
+    required: False
+  comment:
+    description:
+      - The comment property.
+    required: False
+  dedupditto:
+    description:
+      - Sets a threshold for number of copies. If the reference count for a deduplicated block goes above this threshold, another ditto copy of the block is stored automatically.
+    required: False
+  devices:
+    description:
+      - A list of storage devices to include in the zpool
+    required: False
+  failmode:
+    description:
+      - The failmode property.
+    required: False
+    choices: ['wait','continue','panic']
+  feature@async_destroy:
+    description:
+      - Enable or disable asynchronous filesystem and volume destruction 
+    required: False
+    choices: ['enabled,'disabled']
+  feature@empty_bpobj:
+    description:
+      - Enable or disable the empty_bpobj feature 
+    required: False
+    choices: ['enabled,'disabled']
+  feature@lz4:
+    description:
+      - Enable or disable the lz4_compress feature 
+    required: False
+    choices: ['enabled,'disabled']
+  force:
+    description:
+      - Supply -f flag, forcing creation of the zpool
+  freeing:
+    description:
+      - The freeing property
+    required: False
+  guid:
+    description:
+      - The guid property.
+    required: False
+  l2arc_dev:
+    description:
+      - The device to use as the l2arc
+    required: False
+  listsnapshots:
+    description:
+      - The listsnapshots property.
+    required: False
+  raid_type:
+    description:
+      - ZFS RAID type to use for zpool
+    choices: ['mirror','raidz','raidz2','raidz3','mirror']
+  readonly:
+    description:
+      - The readonly property.
+    required: False
+    choices: ['on','off']
+  spare:
+    description:
+      - The spare device definition
+    required: False
+  version:
+    description:
+      - Specify zpool version
+    required: False
+  zpool_devs:
+    description:
+      - The devices to use for the zpool
+    required: False
+    required: False
+author: Stan Hiller, based on ZFS module from Johan Wiren
+'''
+
+EXAMPLES = '''
+# Create a new RAIDZ zpool called rpool using sdc, sdd, and sdc
+- zpool: name=rpool state=present raid_type=raidz zpool_devs='sdc sdd sde'
+
+# Create a new RAIDZ2 zpool called rpool using sdc, sdd, and sdc, ashift=12, l2arc on sda7, and zil on sdb7
+- zpool: name=rpool raid_type=raidz2 state=present zpool_devs='sdc sdd sde' l2arc_dev=sda7 zil_dev=sdb7 ashift=12
+
+# Create a new RAIDZ zpool called rpool with a mirrored ZIL 
+- zpool: name=rpool raid_type=raidz state=present zpool_devs='sdc sdd sde' zil_dev='mirror sdb7 sda7'
+
+# Destroy a zpool named rpool
+- zpool: name=rpool state=absent
+'''
+
+
+import os
+
+class Zpool(object):
+    def __init__(self, module, name, properties):
+        self.module = module
+        self.name = name
+        self.properties = properties
+        self.changed = False
+
+        self.immutable_properties = [ 'casesensitivity', 'normalization', 'utf8only' ]
+
+    def exists(self):
+        cmd = [self.module.get_bin_path('zpool', True)]
+        cmd.append('list')
+        cmd.append(self.name)
+        (rc, out, err) = self.module.run_command(' '.join(cmd))
+        if rc == 0:
+            return True
+        else:
+            return False
+
+    def create(self):
+        if self.module.check_mode:
+            self.changed = True
+            return
+        properties=self.properties
+        raid_type = properties.pop('raid_type', None)
+        zil_dev = properties.pop('zil_dev', None)
+        l2arc_dev = properties.pop('l2arc_dev', None)
+        zpool_devs = properties.pop('zpool_devs', None)
+        spare = properties.pop('spare', None)
+        force = properties.pop('force', None)
+        action = 'create'
+
+        cmd = [self.module.get_bin_path('zpool', True)]
+        cmd.append(action)
+        if properties:
+            for prop, value in properties.iteritems():
+                cmd.append('-o %s="%s"' % (prop, value))
+        if force:
+            cmd.append("-f")
+        cmd.append(self.name)
+        if raid_type:
+            cmd.append('%s' % raid_type)
+        cmd.append('%s' % zpool_devs)
+        if l2arc_dev:
+            cmd.append('cache %s' % l2arc_dev)
+        if zil_dev:
+            cmd.append('log %s' % zil_dev)
+        if spare:
+            cmd.append('spare %s' % spare)
+        (rc, err, out) = self.module.run_command(' '.join(cmd))
+        if rc == 0:
+            self.changed=True
+        else:
+            self.module.fail_json(msg=out)
+
+    def destroy(self):
+        if self.module.check_mode:
+            self.changed = True
+            return
+        cmd = [self.module.get_bin_path('zpool', True)]
+        cmd.append('destroy')
+        cmd.append(self.name)
+        (rc, err, out) = self.module.run_command(' '.join(cmd))
+        if rc == 0:
+            self.changed = True
+        else:
+            self.module.fail_json(msg=out)
+
+    def set_property(self, prop, value):
+        if self.module.check_mode:
+            self.changed = True
+            return
+        cmd = self.module.get_bin_path('zpool', True)
+        args = [cmd, 'set', prop + '=' + value, self.name]
+        (rc, err, out) = self.module.run_command(args)
+        if rc == 0:
+            self.changed = True
+        else:
+            self.module.fail_json(msg=out)
+
+    def set_properties_if_changed(self):
+        current_properties = self.get_current_properties()
+        for prop, value in self.properties.iteritems():
+            if current_properties[prop] != value:
+                if prop in self.immutable_properties:
+                    self.module.fail_json(msg='Cannot change property %s after creation.' % prop)
+                else:
+                    self.set_property(prop, value) 
+
+    def get_current_properties(self):
+        def get_properties_by_name(propname):
+            cmd = [self.module.get_bin_path('zpool', True)]
+            cmd += ['get', '-H', propname, self.name]
+            rc, out, err = self.module.run_command(cmd)
+            return [l.split('\t')[1:3] for l in out.splitlines()]
+        properties = dict(get_properties_by_name('all'))
+        if 'share.*' in properties:
+            # Some ZFS pools list the sharenfs and sharesmb properties
+            # hierarchically as share.nfs and share.smb respectively.
+            del properties['share.*']
+            for p, v in get_properties_by_name('share.all'):
+                alias = p.replace('.', '')  # share.nfs -> sharenfs (etc)
+                properties[alias] = v
+        return properties
+
+    def run_command(self, cmd):
+        progname = cmd[0]
+        cmd[0] = module.get_bin_path(progname, True)
+        return module.run_command(cmd)
+
+def main():
+
+    # FIXME: should use dict() constructor like other modules, required=False is default
+    module = AnsibleModule(
+        argument_spec = {
+            'altroot':         {'required': False},
+            'ashift':          {'required': False},
+            'autoexpand':      {'required': False},
+            'autoreplace':     {'required': False},
+            'bootfs':          {'required': False},
+            'cachefile':       {'required': False},
+            'comment':         {'required': False},
+            'dedupditto':      {'required': False},
+            'delegation':      {'required': False},
+            'devices':         {'required': False, 'choices':['on', 'off']},
+            'failmode':        {'required': False},
+            'feature@async_destroy':    {'required': False},
+            'feature@empty_bpobj':      {'required': False},
+            'feature@lz4_zompress':     {'required': False},
+            'freeing':         {'required': False},
+            'guid':            {'required': False},
+            'listsnapshots':   {'required': False},
+            'force':           {'required': False, 'choices':['yes', 'no']},
+            'l2arc_dev':       {'required': False},
+            'name':            {'required': True},
+            'raid_type':       {'required': False},
+            'readonly':        {'required': False, 'choices':['on', 'off']},
+            'spare':           {'required': False},
+            'state':           {'required': True,  'choices':['present', 'absent']},
+            'version':         {'required': False},
+            'zil_dev':         {'required': False},
+            'zpool_devs':      {'required': False},
+            },
+        supports_check_mode=True
+        )
+
+    state = module.params.pop('state')
+    name = module.params.pop('name')
+
+    # Get all valid zpool-properties
+    properties = dict()
+    for prop, value in module.params.iteritems():
+        if prop in ['CHECKMODE']:
+            continue
+        if value:
+            properties[prop] = value
+
+    result = {}
+    result['name'] = name
+    result['state'] = state
+
+    zpool=Zpool(module, name, properties)
+
+    if state == 'present':
+        if zpool.exists():
+            zpool.set_properties_if_changed()
+        else:
+            zpool.create()
+
+    elif state == 'absent':
+        if zpool.exists():
+            zpool.destroy()
+
+    result.update(zpool.properties)
+    result['changed'] = zpool.changed
+    module.exit_json(**result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
