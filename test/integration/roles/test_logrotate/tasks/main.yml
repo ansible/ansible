@@ -1,0 +1,67 @@
+# Test code for the file module.
+# (c) 2014, John Dewey <john@dewey.ws>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+---
+- shell: stat -c %a /etc/logrotate.d/test_log
+  register: stat_result
+- name: ensure logrotate config modes
+  assert:
+    that:
+      - "stat_result.stdout == '644'"
+
+- shell: stat -c %U /etc/logrotate.d/test_log
+  register: stat_result
+- name: ensure logrotate config owner
+  assert:
+    that:
+      - "stat_result.stdout == 'root'"
+
+- shell: stat -c %G /etc/logrotate.d/test_log
+  register: stat_result
+- name: ensure logrotate config group
+  assert:
+    that:
+      - "stat_result.stdout == 'root'"
+
+- shell: grep -F '/var/log/test.log' /etc/logrotate.d/test_log
+  register: grep_result
+- name: ensure logrotate config rotates the proper log
+  assert:
+    that:
+      - "grep_result.rc == 0"
+
+- shell: grep daily /etc/logrotate.d/test_log
+  register: grep_result
+- name: ensure logrotate config has proper frequency directive
+  assert:
+    that:
+      - "grep_result.rc == 0"
+
+- shell: grep -F 'rotate 8' /etc/logrotate.d/test_log
+  register: grep_result
+- name: ensure logrotate config has proper rotate directive
+  assert:
+    that:
+      - "grep_result.rc == 0"
+
+- shell: awk '/postrotate/, /endscript/' /etc/logrotate.d/test_log | grep -F 'exec script'
+  register: grep_result
+- name: ensure logrotate config has proper postrotate directive
+  assert:
+    that:
+      - "grep_result.rc == 0"
