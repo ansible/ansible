@@ -18,7 +18,6 @@ lib/ansible/module_utils/aos.py
 lib/ansible/module_utils/api.py
 lib/ansible/module_utils/avi.py
 lib/ansible/module_utils/azure_rm_common.py
-lib/ansible/module_utils/basic.py
 lib/ansible/module_utils/bigswitch_utils.py
 lib/ansible/module_utils/connection.py
 lib/ansible/module_utils/database.py
