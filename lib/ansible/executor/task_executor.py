@@ -34,6 +34,7 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.template import Templar
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.utils.plugin_docs import get_docstring
 from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 
@@ -775,9 +776,17 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
+        module_path = self._shared_loader_obj.module_loader.find_plugin(self._task.action)
         module_prefix = self._task.action.split('_')[0]
 
+        try:
+            metadata = get_docstring(module_path)[3]
+        except:
+            metadata = None
+
         # let action plugin override module, fallback to 'normal' action plugin otherwise
+        if metadata and 'action_handler' in metadata:
+            handler_name = self._task.action
         if self._task.action in self._shared_loader_obj.action_loader:
             handler_name = self._task.action
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
