@@ -1,0 +1,231 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Tomasz Rybarczyk <paluho@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: augeas
+author: Tomasz Rybarczyk
+short_description: Augeas support
+description:
+  - Augeas module which exposes simple API for "match", "set" and "rm"
+version_added: "1.1"
+requirements:
+  - augeas + lenses (augeas-lenses on Debian)
+  - augeas python bindings (python-augeas on Debian)
+options:
+  path:
+    required: true
+    description:
+      - 'Variable path.'
+  value:
+    required: false
+    description:
+      - 'Variable value (required for "set" command).'
+  root:
+    required: false
+    description:
+      - 'The filesystem root - config files are searched realtively to this path (fallbacks to AUGEAS_ROOT or /).'
+  loadpath:
+    required: false
+    description:
+      - 'Colon-spearated list of directories that modules should be searched in.'
+  command:
+    required: false
+    default: "set"
+    choices: [ set, rm, match ]
+    description:
+      - 'Whether given path should be modified, removed or matched. Command "match" passes results through "matches" attribute. Every item on this list is an object with "label" and "value" (check third example below).'
+  validate_filepath:
+    required: false
+    default: True
+    description:
+      - 'Check if given path matches any file in filesystem.'
+examples:
+  - code: 'augeas: path=/files/etc/sudoers/spec[user=admin]/host_group/command/tag value=PASSWD'
+    description: 'Simple value change'
+
+  - code: |
+      -action: augeas command="set" path="/files/etc/ssh/sshd_config/${item.path}" value="${item.value}"
+       with_items:
+         - path: 'PermitRootLogin'
+           value: 'no'
+         - path: 'PasswordAuthentication'
+           value: 'no'
+    description: 'Multiple values change with loop'
+
+  - code: |
+      - name: Check wether given user is listed in sshd_config
+        action: augeas command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[. = \"${user}\"]"
+        register: user_entry
+      - name: Allow user to login through ssh
+        action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="${user}"
+        only_if: "not ${user_entry.matches}"
+    description: "Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config"
+'''
+
+try:
+    import augeas
+except ImportError:
+    augeas = None
+import ctypes
+import re
+
+if augeas:
+    # Augeas C API `aug_span` function was introduced on the begining of 2011
+    # but python-augeas 0.4 was released month before and doesn't contain bindings for it
+    # This code is copied from current devel branch of python-augeas
+
+    # check whether augeas library supports span
+    if augeas.Augeas().match('/augeas/span'):
+        if not hasattr(augeas.Augeas, 'span'):
+            class Augeas(augeas.Augeas):
+
+                ENABLE_SPAN = 128
+
+                def span(self, path):
+                    """Get the span according to input file of the node associated with
+                    PATH. If the node is associated with a file, un tuple of 5 elements is
+                    returned: (filename, label_start, label_end, value_start, value_end,
+                    span_start, span_end). If the node associated with PATH doesn't
+                    belong to a file or is doesn't exists, ValueError is raised."""
+
+                    if not isinstance(path, basestring):
+                        raise TypeError("path MUST be a string!")
+                    if not self.__handle:
+                        raise RuntimeError("The Augeas object has already been closed!")
+
+                    filename = ctypes.c_char_p()
+                    label_start = ctypes.c_uint()
+                    label_end = ctypes.c_uint()
+                    value_start = ctypes.c_uint()
+                    value_end = ctypes.c_uint()
+                    span_start = ctypes.c_uint()
+                    span_end = ctypes.c_uint()
+
+                    r = ctypes.byref
+
+                    ret = Augeas._libaugeas.aug_span(self.__handle, path, r(filename),
+                                                     r(label_start), r(label_end),
+                                                     r(value_start), r(value_end),
+                                                     r(span_start), r(span_end))
+                    if (ret < 0):
+                        raise ValueError("Error during span procedure")
+
+                    return (filename.value, label_start.value, label_end.value,
+                            value_start.value, value_end.value,
+                            span_start.value, span_end.value)
+        else:
+            Augeas = augeas.Augeas
+
+
+class PathNotFound(Exception):
+
+    def __init__(self, correct_subpath):
+        self.correct_subpath = correct_subpath
+        super(PathNotFound, self).__init__(correct_subpath)
+
+
+class FileNotFound(PathNotFound):
+
+    pass
+
+
+def validate_path(augeas_instance, path):
+    correct_subpath = ''
+    filename = None
+    filepath = None
+    for part in filter(None, path.split('/')):
+        subpath = correct_subpath + '/' + part
+        if augeas_instance.match(subpath):
+            correct_subpath = subpath
+            if not filename:
+                try:
+                    filename = augeas_instance.span(correct_subpath)[0]
+                    filepath = correct_subpath
+                except ValueError:
+                    pass
+    if not filename:
+        raise FileNotFound(correct_subpath)
+    elif not correct_subpath == path:
+        raise PathNotFound(correct_subpath)
+    return {'filename': filename, 'filepath': filepath,
+            'configpath': path.replace(filepath, '', 1)}
+
+_missing = object()
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            loadpath=dict(default=None),
+            root=dict(default=None),
+            validate_filepath=dict(default=_missing, type='bool'),
+            command=dict(default='set', choices=['set', 'rm', 'match']),
+            path=dict(required=True, aliases=['name']),
+            value=dict(default=_missing),
+        )
+    )
+    if augeas is None:
+        module.fail_json(msg='Could not import python augeas module.'
+                             ' Please install augeas related packages and '
+                             'augeas python bindings.')
+    if module.params['validate_filepath'] and not augeas.Augeas().match('/augeas/span'):
+        module.fail_json(msg='Installed augeas library version doesn\'t support `span` functionality.'
+                             ' You have to switch of filepath validation if you want to proceed.')
+
+    augeas_instance = Augeas(root=module.params['root'], loadpath=module.params['loadpath'],
+                             flags=getattr(Augeas, 'ENABLE_SPAN', 0))
+    command = module.params['command']
+    value = module.params['value']
+    if (command == 'set') != (value is not _missing):
+        module.fail_json(msg='You should use \'value\' argument with \'set\' command.')
+
+    path = module.params['path']
+    validate_filepath = module.params['validate_filepath']
+    # by default skip filepath validation for match
+    validate_filepath = validate_filepath if validate_filepath is not _missing else command != 'match'
+    if validate_filepath:
+        try:
+            validate_path(augeas_instance, path)
+        except FileNotFound, e:
+            module.fail_json(msg='It seems that augeas was not able to match any file for given path. '
+                                 'Prefix which is matched: \'%s\'. You can explore which files where '
+                                 'parsed through \'mach\' calls - start with: "augeas command=match path=/files/*" '
+                                 'and use recursive calls for subdirectories.' % e.correct_subpath)
+        except PathNotFound:
+            pass
+
+    if augeas_instance.get(path) == value:
+        module.exit_json(changed=False)
+    if command == 'rm':
+        augeas_instance.remove(path)
+    elif command == 'match':
+        matches = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(path)]
+        module.exit_json(changed=False, matches=matches)
+    else:
+        augeas_instance.set(path, value)
+    augeas_instance.save()
+
+    module.exit_json(changed=True)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
