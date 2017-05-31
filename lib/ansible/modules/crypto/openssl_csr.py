@@ -29,11 +29,11 @@ version_added: "2.4"
 short_description: Generate OpenSSL Certificate Signing Request (CSR)
 description:
     - "This module allows one to (re)generates OpenSSL certificate signing requests.
-       It uses the pyOpenSSL python library to interact with openssl. This module support
+       It uses the pyOpenSSL (>= 0.15) python library to interact with openssl. This module support
        the subjectAltName extension. Note: At least one of commonName or subjectAltName must
        be specified."
 requirements:
-    - "python-pyOpenSSL"
+    - "python-pyOpenSSL (>= 0.15)"
 options:
     state:
         required: false
@@ -161,6 +161,7 @@ import os
 
 try:
     from OpenSSL import crypto
+    from OpenSSL.crypto import load_certificate_request, FILETYPE_PEM
 except ImportError:
     pyopenssl_found = False
 else:
@@ -207,10 +208,40 @@ class CertificateSigningRequest(object):
             if value is None:
                 del self.subject[key]
 
+    def check_diff(self):
+        if os.path.exists(self.path) and not self.force:
+            current_csr_content = open(self.path).read()
+            current_csr_req = load_certificate_request(FILETYPE_PEM, current_csr_content)
+            current_csr_subject = current_csr_req.get_subject()
+            current_csr_components = dict(current_csr_subject.get_components())
+            current_csr_extensions = current_csr_req.get_extensions()
+            for (element_name, element_value) in self.subject.items():
+                if element_name in current_csr_components and element_value != current_csr_components[element_name]:
+                    return True
+
+            if not current_csr_extensions:
+                if self.subjectAltName:
+                    return True
+                return False
+
+            current_subject_alt_name = next(extension for extension in current_csr_extensions if extension.get_short_name() == 'subjectAltName')
+            current_subject_alt_name = current_subject_alt_name.__str__().replace(' ','').split(',')
+            subject_alt_name = self.subjectAltName
+            if len(current_subject_alt_name) != len(subject_alt_name):
+                return True
+
+            for alt_name in subject_alt_name:
+                if alt_name not in current_subject_alt_name:
+                    return True
+
+        return False
+
     def generate(self, module):
         '''Generate the certificate signing request.'''
 
-        if not os.path.exists(self.path) or self.force:
+        diff_found = self.check_diff()
+        
+        if not os.path.exists(self.path) or self.force or diff_found:
             req = crypto.X509Req()
             req.set_version(self.version)
             subject = req.get_subject()
@@ -302,7 +333,8 @@ def main():
 
         if module.check_mode:
             result = csr.dump()
-            result['changed'] = module.params['force'] or not os.path.exists(path)
+            diff_found = csr.check_diff()
+            result['changed'] = module.params['force'] or not os.path.exists(path) or diff_found
             module.exit_json(**result)
 
         try:
