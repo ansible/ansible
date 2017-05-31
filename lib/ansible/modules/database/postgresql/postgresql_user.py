@@ -207,11 +207,11 @@ EXAMPLES = '''
     password: NULL
 '''
 
+from distutils.version import StrictVersion
 from hashlib import md5
 import itertools
 import re
 
-from distutils.version import StrictVersion
 
 try:
     import psycopg2
@@ -223,8 +223,8 @@ else:
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems
 
-_flags = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
-_flags_by_version = {'BYPASSRLS': '9.5.0'}
+FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
+FLAGS_BY_VERSION = {'BYPASSRLS': '9.5.0'}
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
         database=frozenset(('CREATE', 'CONNECT', 'TEMPORARY', 'TEMP', 'ALL')),
@@ -565,20 +565,16 @@ def parse_role_attrs(cursor, role_attr_flags):
     Note: "[NO]BYPASSRLS" role attribute introduced in 9.5
 
     """
-    flags = frozenset(itertools.chain(_flags, get_valid_flags_by_version(cursor)))
-    valid_flags = frozenset(itertools.chain(flags, ('NO%s' % f for f in flags)))
+    flags = frozenset(role.upper() for role in role_attr_flags.split(',') if role)
 
-    if ',' in role_attr_flags:
-        flag_set = frozenset(r.upper() for r in role_attr_flags.split(","))
-    elif role_attr_flags:
-        flag_set = frozenset((role_attr_flags.upper(),))
-    else:
-        flag_set = frozenset()
-    if not flag_set.issubset(valid_flags):
+    valid_flags = frozenset(itertools.chain(FLAGS, get_valid_flags_by_version(cursor)))
+    valid_flags = frozenset(itertools.chain(valid_flags, ('NO%s' % flag for flag in valid_flags)))
+
+    if not flags.issubset(valid_flags):
         raise InvalidFlagsError('Invalid role_attr_flags specified: %s' %
-                ' '.join(flag_set.difference(valid_flags)))
-    o_flags = ' '.join(flag_set)
-    return o_flags
+                ' '.join(flags.difference(valid_flags)))
+
+    return ' '.join(flags)
 
 def normalize_privileges(privs, type_):
     new_privs = set(privs)
@@ -653,7 +649,7 @@ def get_valid_flags_by_version(cursor):
 
     return [
         flag
-        for flag, version_introduced in _flags_by_version.items()
+        for flag, version_introduced in FLAGS_BY_VERSION.items()
         if current_version >= StrictVersion(version_introduced)
     ]
 
