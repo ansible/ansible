@@ -214,7 +214,7 @@ def dict_diff(base, comparable):
                     updates[key] = comparable_value
 
 
-    for key in set(iterkeys(comparable)).difference(iterkeys(base)):
+    for key in set(comparable.keys()).difference(base.keys()):
         updates[key] = comparable.get(key)
 
     return updates

@@ -26,16 +26,17 @@ from ansible.compat.tests import unittest
 from ansible.module_utils.network_common import to_list, sort_list
 from ansible.module_utils.network_common import dict_diff, dict_combine
 
+
 class TestModuleUtilsNetworkCommon(unittest.TestCase):
 
     def test_to_list(self):
         for scalar in ('string', 1, True, False, None):
             self.assertTrue(isinstance(to_list(scalar), list))
 
-        for container in ([1,2,3], {'one': 1}):
+        for container in ([1, 2, 3], {'one': 1}):
             self.assertTrue(isinstance(to_list(container), list))
 
-        test_list = [1,2,3]
+        test_list = [1, 2, 3]
         self.assertNotEqual(id(test_list), id(to_list(test_list)))
 
     def test_sort(self):
@@ -46,8 +47,15 @@ class TestModuleUtilsNetworkCommon(unittest.TestCase):
         self.assertEqual(string_data, sort_list(string_data))
 
     def test_dict_diff(self):
-        base = dict(obj2=dict(), b1=True, b2=False, b3=False, one=1, two=2, three=3, obj1=dict(key1=1, key2=2), l1=[1,3], l2=[1,2,3], l4=[4], nested=dict(n1=dict(n2=2)))
-        other = dict(b1=True, b2=False, b3=True, b4=True, one=1, three=4, four=4, obj1=dict(key1=2), l1=[2,1], l2=[3,2,1], l3=[1], nested=dict(n1=dict(n2=2, n3=3)))
+        base = dict(obj2=dict(), b1=True, b2=False, b3=False,
+                    one=1, two=2, three=3, obj1=dict(key1=1, key2=2),
+                    l1=[1, 3], l2=[1, 2, 3], l4=[4],
+                    nested=dict(n1=dict(n2=2)))
+
+        other = dict(b1=True, b2=False, b3=True, b4=True,
+                     one=1, three=4, four=4, obj1=dict(key1=2),
+                     l1=[2, 1], l2=[3, 2, 1], l3=[1],
+                     nested=dict(n1=dict(n2=2, n3=3)))
 
         result = dict_diff(base, other)
 
@@ -80,8 +88,15 @@ class TestModuleUtilsNetworkCommon(unittest.TestCase):
         self.assertTrue(result['b4'])
 
     def test_dict_combine(self):
-        base = dict(obj2=dict(), b1=True, b2=False, b3=False, one=1, two=2, three=3, obj1=dict(key1=1, key2=2), l1=[1,3], l2=[1,2,3], l4=[4], nested=dict(n1=dict(n2=2)))
-        other = dict(b1=True, b2=False, b3=True, b4=True, one=1, three=4, four=4, obj1=dict(key1=2), l1=[2,1], l2=[3,2,1], l3=[1], nested=dict(n1=dict(n2=2, n3=3)))
+        base = dict(obj2=dict(), b1=True, b2=False, b3=False,
+                    one=1, two=2, three=3, obj1=dict(key1=1, key2=2),
+                    l1=[1, 3], l2=[1, 2, 3], l4=[4],
+                    nested=dict(n1=dict(n2=2)))
+
+        other = dict(b1=True, b2=False, b3=True, b4=True,
+                     one=1, three=4, four=4, obj1=dict(key1=2),
+                     l1=[2, 1], l2=[3, 2, 1], l3=[1],
+                     nested=dict(n1=dict(n2=2, n3=3)))
 
         result = dict_combine(base, other)
 
@@ -112,5 +127,3 @@ class TestModuleUtilsNetworkCommon(unittest.TestCase):
         self.assertIn('b2', result)
         self.assertTrue(result['b3'])
         self.assertTrue(result['b4'])
-
-
