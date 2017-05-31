@@ -42,10 +42,10 @@ class ActionModule(ActionBase):
             result['msg'] = 'check mode not (yet) supported for this module'
             return result
 
-        source            = self._task.args.get('src', None)
-        dest              = self._task.args.get('dest', None)
-        flat              = boolean(self._task.args.get('flat'))
-        fail_on_missing   = boolean(self._task.args.get('fail_on_missing'))
+        source = self._task.args.get('src', None)
+        dest = self._task.args.get('dest', None)
+        flat = boolean(self._task.args.get('flat'))
+        fail_on_missing = boolean(self._task.args.get('fail_on_missing'))
         validate_checksum = boolean(self._task.args.get('validate_checksum', self._task.args.get('validate_md5', True)))
 
         # validate_md5 is the deprecated way to specify validate_checksum
@@ -120,7 +120,7 @@ class ActionModule(ActionBase):
                 target_name = self._play_context.remote_addr
             dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
-        dest = dest.replace("//","/")
+        dest = dest.replace("//", "/")
 
         if remote_checksum in ('0', '1', '2', '3', '4', '5'):
             result['changed'] = False
@@ -175,8 +175,8 @@ class ActionModule(ActionBase):
 
             if validate_checksum and new_checksum != remote_checksum:
                 result.update(dict(failed=True, md5sum=new_md5,
-                    msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
-                    checksum=new_checksum, remote_checksum=remote_checksum))
+                                   msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
+                                   checksum=new_checksum, remote_checksum=remote_checksum))
             else:
                 result.update({'changed': True, 'md5sum': new_md5, 'dest': dest,
                                'remote_md5sum': None, 'checksum': new_checksum,

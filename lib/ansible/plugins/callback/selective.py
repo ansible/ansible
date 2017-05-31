@@ -236,7 +236,7 @@ class CallbackModule(CallbackBase):
             self.last_skipped = False
 
             line_length = 120
-            spaces = ' ' * (31-len(result._host.name)-4)
+            spaces = ' ' * (31-len(result._host.name) - 4)
 
             line = "  * {}{}- {}".format(colorize(result._host.name, 'not_so_bold'),
                                          spaces,

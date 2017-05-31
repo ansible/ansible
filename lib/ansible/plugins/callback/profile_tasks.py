@@ -127,7 +127,7 @@ class CallbackModule(CallbackBase):
         if self.sort_order != 'none':
             results = sorted(
                 self.stats.items(),
-                key=lambda x:x[1]['time'],
+                key=lambda x: x[1]['time'],
                 reverse=self.sort_order,
             )
 
