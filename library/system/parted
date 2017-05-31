@@ -1,0 +1,243 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import traceback
+try:
+    import json
+except ImportError:
+    import simplejson as json
+try:
+    import parted
+except ImportError:
+    module.fail_json(msg="Could not import python module: parted. Please install python-parted package.")
+
+DOCUMENTATION = '''
+---
+module: parted
+short_description: Simple partition creator.
+description:
+      This module can be used to create partitions of needed size on a specified physical disk.
+      If no disk is specified the partition is created on all the disks that doesnt have a valid partition table.
+      Can be also used to quickly init new disk added to machine.
+      Note The idempotency is checked by the size of partition, so currently we cant have two partitions of same size.
+options:
+  size:
+    description:
+      - Ensure that partition of this exact size is created, will update facts if successful
+    required: false
+    default: null
+    aliases: []
+  label:
+    description:
+      - What label (partition table type) to use for NEW disks only
+      - Although default is "msdos",  "gpt" will be used automatically for disks over 1TB in size
+    required: false
+    default: "msdos"
+    choices: [ "msdos", "gpt" ]
+    aliases: []
+  dev:
+    description:
+      - The device in which the partition needs to be created.
+    required: false
+    aliases: []
+  new_disks:
+    description:
+      - When this variable is set all the disks which does not have a valid partition table would have the partition created..
+    required: false
+    aliases: []
+
+requirements: [ "python-parted" ]
+author: Constantine Peresypkin, Benno Joy (benno@ansibleworks.com)
+'''
+
+EXAMPLES = '''
+
+# Create a partition of exactly 1GiB in size
+- parted: size=1024 dev="/dev/sdb"
+
+# Create a partition of exactly 1GiB in size in a newly attached disk whose device name we are not aware. 
+- parted: size=1024 new_disks=yes
+
+# Create a GPT partition of  8GB  
+- parted: size=8000 label=gpt dev="/dev/sdb"
+
+'''
+
+MBYTE = 1024 * 1024
+MAX_MSDOS_SIZE = 1024 * 1024 * MBYTE
+
+
+def init_disk(device=None, label=None, module=None):
+    dev = parted.Device(device)
+    device_size = dev.sectorSize * dev.length
+    if device_size > MAX_MSDOS_SIZE and 'msdos' in label:
+        try:
+            disk = parted.freshDisk(dev, 'gpt')
+        except Exception as e:
+            module.fail_json(msg = "Error initializing partition table: %s" %e.message)
+    else:
+        try:
+            disk = parted.freshDisk(dev, label)
+        except Exception as e:
+            module.fail_json(msg = "Error initializing partition table: %s" %e.message)
+    try:
+        disk = parted.Disk(dev)
+    except Exception as e:
+        return disk
+    return disk
+    
+    
+def get_disk(device=None, label=None, module=None):
+    try:
+        dev = parted.Device(device)
+    except Exception as e:
+        module.fail_json(msg = "Error finding the device specified: %s" %e.message)
+    try:
+        disk = parted.Disk(dev)
+    except Exception as e:  # will be raised if the disk has no partition table (new disk)
+        return None
+    return disk
+
+def get_all_disks(label=None):
+    disks = []
+    for dev in parted.getAllDevices():
+        try:
+            disk = parted.Disk(dev)
+        except Exception as e:  # will be raised if the disk has no partition table (new disk)
+            device_size = dev.sectorSize * dev.length
+            if device_size > MAX_MSDOS_SIZE and 'msdos' in label:
+                disk = parted.freshDisk(dev, 'gpt')
+            else:
+                disk = parted.freshDisk(dev, label)
+            disks.append(disk)
+    return disks
+
+
+def create_result(disk, part):
+    name = part.path.replace('/dev/', '', 1)
+    created = {'number': part.number,
+               'path': part.path,
+               'name': name,
+               'start': part.geometry.start,
+               'end': part.geometry.end,
+               'size': part.geometry.length * disk.device.sectorSize,
+               'fs': part.fileSystem.type if part.fileSystem else None}
+    return created
+
+
+def create(disk=None, size=None, type=None, module=None):
+    if not type:
+        type = parted.PARTITION_NORMAL
+    if size:
+        size = int(size)
+        size *= MBYTE / disk.device.sectorSize
+    minfree = 0
+    max_length = 0
+    space = None
+    for f in disk.getFreeSpaceRegions():
+        length = f.length - minfree
+        if size:
+            if size < length:
+                max_length = size
+                space = f
+                break
+    if not space:
+        module.fail_json(msg="Not enough space in Disk.")
+    max_geom = parted.Geometry(device=disk.device, start=space.start, length=max_length)
+    const = parted.Constraint(maxGeom=max_geom)
+    const.minSize=size
+    fs = None
+    try:
+        part = parted.Partition(disk=disk, type=type, geometry=const.solveMax(), fs=fs)
+    except ArithmeticError:
+            module.fail_json(msg="Arthematic error in partition creation.")
+    try:
+        if not disk.addPartition(partition=part, constraint=const):
+            module.fail_json(msg="Error in partition creation.")
+        if not disk.commit():
+            module.fail_json(msg="Error in commiting to disk")
+        return create_result(disk, part)
+    except Exception as e:
+            module.fail_json(msg = "Error in creating  partition : %s" %e.message)
+    return None
+
+
+def create_part(size=None, dev=None, result=None, label=None, module=None):
+    created = []
+    if result == 1:
+        disk = init_disk(dev, label, module)
+        result = create(disk, size, None, module)
+        if result:
+            created.append(result)
+    if result == 2:
+        disk = get_disk(dev, label)
+        result = create(disk, size, None, module)
+        if result:
+            created.append(result)
+    return created
+
+
+def ensure_disk(dev=None, size=None, label=None, module=None):
+    disk = get_disk(dev, label, module)
+    size = int(size)
+    if not disk:
+        return 1
+    size *= MBYTE / disk.device.sectorSize
+    part = disk.getPrimaryPartitions()
+    if not part:
+        return 2
+    for p in part:
+        length = p.geometry.length 
+        if length == size:
+            created = create_result(disk, p)
+            data = dict(changed=False, result=created)
+            module.exit_json(**data)
+    return 2
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            size          = dict(default=None),
+            dev           = dict(default=None),
+            label         = dict(default='msdos', choices=['msdos', 'gpt']),
+            new_disks     = dict(default='no', type='bool'),
+        )
+    )
+
+    size        = module.params['size']
+    dev         = module.params['dev']
+    label       = module.params['label']
+    new_disks   = module.params['new_disks']
+    data        = {'ansible_facts': {}, 'changed': False}
+
+    if not size:
+        module.fail_json(msg="size= is a mandatory paramter in this module")
+    if not dev and not new_disks:
+        module.fail_json(msg="Either dev= or new_disks=yes should be specified")
+    
+    if not dev and new_disks:  #If no device is specified the partition is created on all  free disks.
+        created = []
+        disks   = get_all_disks(label)
+        if not disks:
+            data = dict(changed=False, result="No Disks found to create partition, Assuming already configured")
+            module.exit_json(**data)
+        for d in disks:
+            result = create(d, size, None, module)
+            if result:
+                created.append(result)
+        data['ansible_facts']['parted_created'] = created
+        if len(created) > 0:
+            data['changed'] = True
+        module.exit_json(**data)
+
+    result  = ensure_disk(dev=dev, size=size, label=label, module=module)
+    created = create_part(size=size, dev=dev, result=result, label=label, module=module)
+    data['ansible_facts']['parted_created'] = created
+    if len(created) > 0:
+        data['changed'] = True
+    module.exit_json(**data)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+
