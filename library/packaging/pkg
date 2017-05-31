@@ -1,0 +1,172 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Alexander Winkler <mail () winkler-alexander.de>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: pkg
+short_description: Manage packages for Solaris 11 with its default package manager I(pkg).
+description:
+    - Needs Solaris 11 or newer.
+    - For the native package manager I(pkg).
+version_added: "1.5"
+author: Alexander Winkler
+options:
+  name:
+    description:
+      - Package name, e.g. (C(editor/vim))
+    required: true
+  state:
+    description:
+      - Whether to install (C(present)), or remove (C(absent)) a package.
+      - The upgrade (C(latest)) operation will update/install the package to the latest version available.
+    required: true
+    choices: ["present", "absent", "latest"]
+'''
+
+EXAMPLES = '''
+# Install a package
+pkg: name=editor/vim state=present
+
+# Install a package from a specific repository
+pkg: name=diagnostic/latencytop state=absent
+'''
+
+
+def package_installed(module, name):
+    cmd = [ 'pkg', 'info' ]
+    cmd.append(name)
+    rc, out, err = module.run_command(' '.join(cmd))
+    if rc == 0:
+        return True
+    else:
+        return False
+
+
+def package_latest(module, name):
+    cmd = [ 'pkg', 'info' ]
+    cmd.append(name)
+    rc, out, err = module.run_command(' '.join(cmd))
+    cmd = [ 'pkg', 'info', '-r' ]
+    cmd.append(name)
+    rcr, outr, errr = module.run_command(' '.join(cmd))
+    if rc == 1 or out != outr:
+        return False
+    else:
+        return True
+
+
+def run_command(module, cmd):
+    progname = cmd[0]
+    cmd[0] = module.get_bin_path(progname, True)
+    return module.run_command(cmd)
+
+
+def package_install(module, state, name):
+    cmd = [ 'pkg', 'install' ]
+    if state != 'latest':
+        cmd.append('--no-refresh')
+    cmd.append(name)
+    (rc, out, err) = run_command(module, cmd)
+    return (rc, out, err)
+
+
+def package_upgrade(module, name):
+    cmd = [ 'pkg', 'update', '--accept' ]
+    cmd.append(name)
+    (rc, out, err) = run_command(module, cmd)
+    return (rc, out, err)
+
+
+def package_uninstall(module, name):
+    cmd = [ 'pkg', 'uninstall' ]
+    cmd.append(name)
+    (rc, out, err) = run_command(module, cmd)
+    return (rc, out, err)
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name = dict(required = True),
+            state = dict(required = True, choices=['present', 'absent', 'latest']),
+        ),
+        supports_check_mode=True
+    )
+    name = module.params['name']
+    state = module.params['state']
+    rc = None
+    out = ''
+    err = ''
+    result = {}
+    result['name'] = name
+    result['state'] = state
+
+
+    if state == 'present':
+        if not package_installed(module, name):
+            if module.check_mode:
+                module.exit_json(changed=True)
+            (rc, out, err) = package_install(module, state, name)
+            out = out[:75]
+            if rc != 0:
+                module.fail_json(msg=err if err else out)
+
+    elif state == 'latest':
+        if not package_installed(module, name):
+            if module.check_mode:
+                module.exit_json(changed=True)
+            (rc, out, err) = package_install(module, state, name)
+            out = out[:75]
+            if rc != 0:
+                module.fail_json(msg=err if err else out)
+        else:
+            if not package_latest(module, name):
+                if module.check_mode:
+                    module.exit_json(changed=True)
+                (rc, out, err) = package_upgrade(module, name)
+                out = out[:75]
+                if rc != 0:
+                    module.fail_json(msg=err if err else out)
+
+    elif state == 'absent':
+        if package_installed(module, name):
+            if module.check_mode:
+                module.exit_json(changed=True)
+            (rc, out, err) = package_uninstall(module, name)
+            out = out[:75]
+            if rc != 0:
+                module.fail_json(msg=err if err else out)
+
+    if rc is None:
+        result['changed'] = False
+    else:
+        result['changed'] = True
+
+    if out:
+        result['stdout'] = out
+    if err:
+        result['stderr'] = err
+
+    module.exit_json(**result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
