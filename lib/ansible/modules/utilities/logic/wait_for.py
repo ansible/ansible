@@ -110,7 +110,7 @@ options:
     required: false
     default: null
     description:
-      - The error message when module failed or timeout.
+      - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
 requirements: []
