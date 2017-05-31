@@ -61,6 +61,7 @@ Ansible Changes By Release
   Use ignore_errors or failed_when in playbooks if you wish to ignore errors.
 * Experimentally added pmrun become method.
 * Enable the docker connection plugin to use su as a become method
+* Added 'prefix' attribute to all the RabbitMQ modules that can support it.
 
 #### New Inventory scripts:
 - lxd
@@ -225,7 +226,6 @@ Ansible Changes By Release
 * made any_errors_fatal inheritable from play to task and all other objects in between.
 * many small performance improvements in inventory and variable handling and in task execution.
 * The AWS Lambda module previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
-* Added 'prefix' attribute to all the RabbitMQ modules that can support it.
 
 ### Deprecations
 * Specifying --tags (or --skip-tags) multiple times on the command line
