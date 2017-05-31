@@ -1,0 +1,16 @@
+#!/bin/bash
+
+SCRIPT_PATH=`dirname $0`
+pushd "${SCRIPT_PATH}" > /dev/null
+if [ ! -d venv ] ; then
+	virtualenv venv
+	venv/bin/pip install paramiko PyYAML Jinja2 httplib2
+fi
+source venv/bin/activate
+source env-setup > /dev/null
+popd > /dev/null
+
+#echo "$@"
+ansible "$@"
+exit
+
