@@ -957,6 +957,7 @@ class PyVmomiGuestHelper(PyVmomiHelper):
             # TODO: really use the datastore for newly created disks
             if 'autoselect_datastore' in self.params['disk'][0] and self.params['disk'][0]['autoselect_datastore']:
                 datastores = get_all_objs(self.content, [vim.Datastore])
+                import q; q(datastores)
                 if datastores is None or len(datastores) == 0:
                     self.module.fail_json(msg="Unable to find a datastore list when autoselecting")
 
@@ -1050,12 +1051,30 @@ class PyVmomiGuestHelper(PyVmomiHelper):
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
 
         destfolder = None
-        if not self.params['folder'].startswith('/'):
-            self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
+        f_obj = self.content.searchIndex.FindByInventoryPath('%(folder)s' % self.params)
 
-        f_obj = self.content.searchIndex.FindByInventoryPath('/%(datacenter)s%(folder)s' % self.params)
         if f_obj is None:
-            self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
+            # return a list of possible folder paths so that the user
+            # can make a better input without having to guess.
+            folder_paths = []
+            folders = get_all_objs(self.content, [vim.Folder])
+            for f in folders:
+                fpaths = []
+                parent = f
+                while hasattr(parent, 'parent'):
+                    try:
+                        fpaths.insert(0, parent.name)
+                        if parent.parent == parent:
+                            break
+                        else:
+                            parent = parent.parent
+                    except:
+                        break
+                folder_paths.append('/' + '/'.join(fpaths))
+
+            msg = 'No folder matched the path: %(folder)s' % self.params
+            msg += ' possible choices: %s' % ', '.join(folder_paths)
+            self.module.fail_json(msg=msg)
         destfolder = f_obj
 
         hostsystem = self.select_host()
