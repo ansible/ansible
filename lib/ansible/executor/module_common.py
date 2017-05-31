@@ -889,6 +889,7 @@ def build_windows_module_payload(module_name, module_path, b_module_data, module
 
     return b_module_data
 
+
 def get_module_metadata(filename):
     """
     Return module metadata if it is defined
@@ -896,8 +897,10 @@ def get_module_metadata(filename):
     try:
         m = ast.parse(''.join(open(filename)))
         for child in m.body:
-            if (isinstance(child, ast.Assign) and isinstance(child.value, ast.Dict)
-                and child.targets[0].id == 'ANSIBLE_METADATA'):
+            if (isinstance(child, ast.Assign) and isinstance(child.value, ast.Dict) and
+                    child.targets[0].id == 'ANSIBLE_METADATA'):
+
                 return ast.literal_eval(child.value)
+
     except Exception as e:
         raise AnsibleError("Unable to parse metadata on module %s: %s" % (filename, str(e)))
