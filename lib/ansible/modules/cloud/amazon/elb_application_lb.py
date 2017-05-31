@@ -34,7 +34,7 @@ options:
     choices: [ 'yes', 'no' ]
   access_logs_s3_bucket:
     description:
-      - The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same 
+      - The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same
         region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
     required: false
   access_logs_s3_prefix:
@@ -59,19 +59,19 @@ options:
     required: false
   name:
     description:
-      - The name of the load balancer. This name must be unique within your AWS account, can have a maximum of 32 characters, must contain only alphanumeric 
+      - The name of the load balancer. This name must be unique within your AWS account, can have a maximum of 32 characters, must contain only alphanumeric
         characters or hyphens, and must not begin or end with a hyphen.
     required: true
   purge_tags:
     description:
-      - If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tag parameter is not set then tags 
+      - If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tag parameter is not set then tags
         will not be modified.
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
   subnets:
     description:
-      - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from 
+      - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from
         at least two Availability Zones. Required if state=present.
     required: false
   security_groups:
