@@ -1,0 +1,149 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# -*- mode: python -*-
+
+DOCUMENTATION = '''
+---
+module: consul_facts
+author: Matthew Finlayson
+short_description: Gather facts from consul
+version_added: 1.6.11
+requirements: [ consulate ]
+description:
+     - Gather facts from consul for kv, nodes, and services
+options:
+  host:
+        required: false
+        default: "localhost"
+        description:
+            - Optionally specify a consul host to address.
+    port:
+        required: false
+        default: "8500"
+        description:
+            - Optionally specify a consul port to address.
+    dc:
+        required: false
+        default: "None"
+        description:
+            - Optionally specify a datacenter to address.
+'''
+
+EXAMPLES = '''
+- name: Gather info from consul
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: Get facts from consul
+      local_action:
+        module: consul_facts
+        host: consul.dev.amazon.com
+
+'''
+
+import consulate
+
+
+class Consul(object):
+    def __init__(self, module):
+        self.module = module
+        self.host = module.params['host']
+        self.port = module.params['port']
+        self.dc = module.params['dc']
+        self.session = consulate.Consulate(host=self.host, port=self.port, dc=self.dc)
+        self.params = {
+            'host': self.host,
+            'port': self.port,
+            'dc': self.dc
+        }
+
+    def consul_facts(self):
+        facts = {'kv': self.get_keys(), 'consul': self.host, 'nodes': self.get_nodes(),
+                 'services': self.get_services()}
+        self.module.exit_json(changed=False, ansible_facts={'consul_facts': facts})
+
+    def get_keys(self):
+        root = {}
+        items = self.session.kv.items()
+        for key, value in items.iteritems():
+            self._items_to_dict(root, key, value)
+        return root
+
+    def _items_to_dict(self, root, key, value):
+        if not '/' in key:
+            if value is None:
+                if isinstance(root, dict):
+                    root = []
+                root.extend([key])
+            else:
+                root[key] = value
+            return root
+        else:
+            atoms = key.split('/')
+            if value is None and len(atoms) == 2:
+                if not atoms[0] in root:
+                    root[atoms[0]] = []
+            if isinstance(root, dict) and not root.has_key(atoms[0]):
+                root[atoms[0]] = {}
+            return self._items_to_dict(root[atoms[0]], "/".join(atoms[1:len(atoms)]), value)
+
+
+    def get_roles(self):
+        output = {}
+        for keys in self.session.kv.find('/roles/', '/'):
+            for it in self.session.kv.find(keys, '/'):
+                value = self.session.kv[it]
+                if value is None:
+                    output[it] = []
+                    for _list in self.session.kv.find(it, '/'):
+                        if it != _list:
+                            sanitized_value = _list.replace(it, '')
+                            if sanitized_value.endswith('/'):
+                                sanitized_value = sanitized_value[:-1]
+                            output[it].append(sanitized_value)
+                else:
+                    output[it] = self.session.kv[it]
+        return output
+
+
+    def get_nodes(self):
+        output = {}
+        for node in self.session.catalog.nodes():
+            output[node['Node']] = self.session.catalog.node(node['Node'])
+        return output
+
+    def get_services(self):
+        output = {}
+        for service in self.session.catalog.services():
+            for service_name in service.iterkeys():
+                output[service_name] = self.session.catalog.service(service_name)
+        return output
+
+
+def main():
+    consul_defaults = {
+        'host': 'localhost',
+        'port': '8500',
+        'dc': None
+    }
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            host=dict(default=consul_defaults['host'], type='str'),
+            port=dict(default=consul_defaults['port'], type='str'),
+            dc=dict(default=consul_defaults['dc'], type='str')
+        ),
+        bypass_checks=True,
+        check_invalid_arguments=False,
+        supports_check_mode=False
+    )
+
+    consul = Consul(module)
+
+    consul.consul_facts()
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+# ## invoke the module
+main()
