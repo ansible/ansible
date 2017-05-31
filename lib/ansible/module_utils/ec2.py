@@ -565,7 +565,9 @@ def sort_json_policy_dict(policy_dict):
             else:
                 checked_list.append(item)
 
-        checked_list.sort()
+        # Sort list. If it's a list of dictionaries, sort by tuple of key-value
+        # pairs, since Python 3 doesn't allow comparisons such as `<` between dictionaries.
+        checked_list.sort(key=lambda x: sorted(x.items()) if isinstance(x, dict) else x)
         return checked_list
 
     ordered_policy_dict = {}
