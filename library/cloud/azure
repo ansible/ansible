@@ -1,0 +1,580 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: azure
+short_description: create and start or terminate one or more (cluster) virtual machines (roles) in azure, returns list of roles and deployment
+
+description:
+     - Creates and starts or terminates azure instances. When created optionally waits for it to be 'running'.
+       Not supported yet
+       - Adding roles to a cloud service with running roles in an active deployment is currently not supported.
+       - booting, starting and stopping roles.
+       - creating virtual network on the fly.
+       This module has a dependency on python-azure >= 0.8.0
+version_added: "1.7"
+options:
+  subscription_id:
+    description:
+      - azure subscription id. Overrides the AZURE_SUBSCRIPTION_ID environement variable.
+    required: true when environment variable is empty
+    default: null
+  certificate_path:
+    description:
+      - path to an azure management certificate, e.g. ~/.azure/azure, associated with the subscription id. Overrides the AZURE_MANAGEMENT_CERTIFICATE environement variable.
+    required: true when environment variable is empty
+    default: null
+  cloud_service_name:
+    description:
+      - name of the cloud service.
+    required: true
+    default: null
+  deployment_name:
+    description:
+      - name of the deployment. when empty the cloud_service_name will be used
+    required: false
+    default: cloud_service_name
+  role_name_prefix:
+    description:
+      - name prefix for role instances. since we must provide a role_name for each role in azure the prefix will be used to create
+        role names ('[role_name_prefix]-[instance_number]'). instance number is just an autoimcrement and based on the clustersize.
+    required: false
+    default: cloud_service_name_role_
+  role_names:
+    description:
+      - list of role names. Must be provided when state=absent
+    required: false
+    default: null
+  image:
+    description:
+      - system image for creating the virtual machine (e.g., image_name=b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_4-LTS-amd64-server-20140519-en-us-30GB). Must
+        be provided when state=present
+    required: true
+    default: null
+  storage_name:
+    description:
+      - storage account name of storage in which to store vhd blobs for the os image. will be created out of
+        'storage[cloud_service_name]egarots' and cut to a length of 24 chars when not provided.
+    required: false
+    default: storage[cloud_service_name]egarots[0:24]
+  state:
+    description:
+      - create (present) or terminate (absent) instances
+    required: false
+    choices: [ "present", "absent" ]
+    default: 'present'
+  cluster_size:
+    description:
+      - number of instance which should be created
+    required: false
+    default: 1
+  role_size:
+    description:
+      - azure role size for the new virtual machine (e.g., Small, ExtraLarge)
+    required: false
+    choices: ['ExtraSmall', 'Small', 'Medium', 'Large', 'ExtraLarge']
+    default: ExtraSmall
+  virtual_network_name:
+    description:
+      - virtual network name. must be defined for same given affinity_group or location when provided.
+    required: false
+  location:
+    description:
+      - the azure location to use (e.g. 'West Europe'). Must be set when creating an affinity group should be created
+    required: false
+    default: null
+  affinity_group:
+    description:
+      - the azure affinity_group to use. Will be created when it does not exist. Therefore location must be set.
+    required: false
+    default: null
+  endpoints:
+    description:
+      - 'A dictionary array of endpoints to add of the form: { name: ... , protocol: ... , public_port: ... , local_port: ... }.
+        ssh will always be provided and must not be defined here.'
+    required: false
+    default: null
+    aliases: []
+  container_name:
+    description:
+      - container_name which is used to store vhd os blobs.
+    required: false
+    default: deployment_name
+  user_name:
+    description:
+      - the unix username for the new virtual machine.
+    required: false
+    default: azureuser
+  password:
+    description:
+      - the unix password for the new virtual machine.
+    required: false
+    default: null
+  cloud_service_cert:
+    description:
+      path to an X509 certificate (e.g. ~/.azure/azure.pfx) containing the public ssh key to install in the virtual machine. See http://www.windowsazure.com/en-us/manage/linux/tutorials/intro-to-linux/ for more details.
+      if this option is specified, password-based ssh authentication will be disabled.
+      command = openssl pkcs12 -in ~/.azure/azure.pem -inkey ~/.azure/azure.pem -export -out ~/.azure/azure.pfx
+    required: false
+    default: null
+  cert_thumbprint:
+    description:
+      - thumbprint of [certificate_path].
+        command = openssl x509 -in ~/.azure/azure.pem -fingerprint -noout
+    required: false
+    default: null
+
+
+requirements: [ "azure" ]
+author: Martin Joehren
+'''
+
+EXAMPLES = '''
+# Note: None of these examples set subscription_id or management_cert_path
+# It is assumed that their matching environment variables are set.
+
+- name: delete cluster
+  local_action:
+    module: azure
+    cloud_service_name: matlockx_vpn
+    role_names: ['matlockx_vpn_role_0', 'matlockx_vpn_role_1']
+    state: absent
+- name: start azure cluster
+  local_action:
+    module: azure
+    image_name: b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_4-LTS-amd64-server-20140519-en-us-30GB
+    cloud_service_name: matlockx_vpn
+    virtual_network_name: matlockx_network
+    affinity_group: affinity-group-eu-west
+    cluster_size: 2
+  register: azure
+
+'''
+import base64
+from ansible.module_utils.azure import *
+try:
+    import azure
+    from azure.servicemanagement import ServiceManagementService, ConfigurationSetInputEndpoint, LinuxConfigurationSet, PublicKey, OSVirtualHardDisk, \
+        ConfigurationSet
+    from azure import _USER_AGENT_STRING, _update_request_uri_query
+    from azure.http import HTTPResponse
+    from azure.http import HTTPError
+except ImportError as e:
+    print("failed=True msg='`azure` library required for this script'")
+    sys.exit(1)
+
+import time, re, string, sys
+from datetime import datetime
+if sys.version_info < (3,):
+    from urlparse import urlparse
+else:
+    from urllib.parse import urlparse
+
+
+# monkey patch for temporary redirects until https://github.com/Azure/azure-sdk-for-python/issues/129 is fixed
+def perform_request_new(self, request):
+    connection = self.get_connection(request)
+    try:
+        connection.putrequest(request.method, request.path)
+
+        if not self.use_httplib:
+            if self.proxy_host and self.proxy_user:
+                connection.set_proxy_credentials(
+                    self.proxy_user, self.proxy_password)
+
+        self.send_request_headers(connection, request.headers)
+        self.send_request_body(connection, request.body)
+
+        resp = connection.getresponse()
+        self.status = int(resp.status)
+        self.message = resp.reason
+        self.respheader = headers = resp.getheaders()
+
+        # for consistency across platforms, make header names lowercase
+        for i, value in enumerate(headers):
+            headers[i] = (value[0].lower(), value[1])
+
+        respbody = None
+        if resp.length is None:
+            respbody = resp.read()
+        elif resp.length > 0:
+            respbody = resp.read(resp.length)
+        response = HTTPResponse(
+            int(resp.status), resp.reason, headers, respbody)
+        if self.status == 307:
+            print("Temporary redirect detected...")
+            new_url = urlparse(dict(headers)['location'])
+            request.host = new_url.hostname
+            request.path = new_url.path
+            if new_url.query:
+                request.path += '?' + new_url.query
+            request.path, request.query = _update_request_uri_query(request)
+            return self.perform_request(request)
+        if self.status >= 300:
+            raise HTTPError(self.status, self.message,
+                            self.respheader, respbody)
+
+        return response
+    finally:
+        connection.close()
+
+
+azure.http.httpclient._HTTPClient.perform_request = perform_request_new
+
+def azure_props_to_dict(x):
+    return json.loads(json.dumps(x, default=lambda o: o.__dict__))
+
+class AzureVm:
+    STARTING_SSH_PORT = 60022
+
+    def _wait_for_completion(self, promise, msg):
+        if not promise: return
+        count = 0
+        while True:
+            count += 1
+            if count > 120:
+                raise azure.WindowsAzureError('Timed out waiting for async operation to complete.')
+            operation_result = self.sms.get_operation_status(promise.request_id)
+            self._log('Operation ' + msg + ' : ' + operation_result.status)
+            time.sleep(5)
+            if operation_result.status == "Succeeded":
+                return
+
+    def _create_media_link(self, storage_name, container_name, blob_name):
+        return create_azure_conform_name("http://{storage_name}{blob_service_host_base}/{container}/{blob}.vhd".format(
+            storage_name=storage_name,
+            blob_service_host_base=azure.BLOB_SERVICE_HOST_BASE,
+            container=container_name,
+            blob=blob_name))
+
+    def _log(self, msg):
+        noop = msg
+        #print("*  " + msg)
+
+    def _create_cloud_service_if_not_exists(self, force_affinity_group=True):
+        self._log("Create cloud service it not exists.")
+        cloud_service_name_available = self.sms.check_hosted_service_name_availability(self.cloud_service_name)
+        if cloud_service_name_available.result:
+            self._log('Cloud service name available. Creating it now.')
+            if not (self.location or self.affinity_group):
+                locations = azure_props_to_dict(self.sms.list_locations())
+                affinity_groups = azure_props_to_dict(self.sms.list_affinity_groups())
+                self.module.fail_json(msg='location or affinity_group must be specified.', available_locations=locations,
+                                      available_affinity_groups=affinity_groups)
+            location = None if force_affinity_group else self.location
+            result = self.sms.create_hosted_service(service_name=self.cloud_service_name,
+                                                    label=self.cloud_service_name,
+                                                    location=location,
+                                                    affinity_group=self.affinity_group)
+            self._wait_for_completion(result, 'create_hosted_service')
+        else:
+            self._log('Cloud service exists. Using it.')
+
+    def _get_ssh_endpoint(self, port):
+        return ConfigurationSetInputEndpoint('ssh', 'tcp', port, '22')
+
+    def _get_linux_config(self, role_name):
+        linux_config = LinuxConfigurationSet(role_name, self.user_name, self.password, True)
+        if self.config.cert_thumbprint:
+            linux_config = LinuxConfigurationSet(role_name, self.user_name, self.password, False)
+            linux_config.ssh.public_keys = [PublicKey(fingerprint=self.config.cert_thumbprint,
+                                                      path='/home/' + self.user_name + '/.ssh/authorized_keys')]
+        return linux_config
+
+    def _create_affinity_group_if_not_exists(self):
+        self._log("Create affinity group if not exists")
+        if not self.affinity_group in [affinity_group.name for affinity_group in self.sms.list_affinity_groups()]:
+            if not self.location:
+                self.module.fail_json(msg="Affinity group (" + self.affinity_group + ") not available: Location is missing for creation.")
+            result = self.sms.create_affinity_group(self.affinity_group, self.affinity_group, self.location,
+                                                    "Affinity group for " + self.cloud_service_name)
+            self._wait_for_completion(result, "create_affinity_group")
+
+    def create_vm(self, instance_number, wait=True):
+
+        role_name = self.role_name_prefix + "-" + str(instance_number)
+        blob_name = u"os-" + role_name
+
+        linux_config = self._get_linux_config(role_name)
+
+        media_link = self._create_media_link(self.storage_name, self.container_name, blob_name)
+        os_hd = OSVirtualHardDisk(self.image_name, media_link)
+        network = ConfigurationSet()
+        for endpoint in self.endpoints:
+            network.input_endpoints.append(ConfigurationSetInputEndpoint(name=u'%s-%s' % endpoint['protocol'] % endpoint['local_port'],
+                                                                         protocol=u'%s' % endpoint['protocol'],
+                                                                         port=endpoint['public_port'],
+                                                                         local_port=endpoint['local_port'],
+                                                                         load_balanced_endpoint_set_name=self.deployment_name))
+
+        if instance_number == 0:
+
+            self._create_affinity_group_if_not_exists()
+            self._create_cloud_service_if_not_exists(force_affinity_group=True)
+            self._set_service_certs()
+            self._create_storage_account_if_not_exists()
+
+            self._log("Create virtual machine deployment.")
+            network.input_endpoints.input_endpoints.append(self._get_ssh_endpoint(22))
+            network.subnet_names.append('Subnet-1')
+            result = self.sms.create_virtual_machine_deployment(service_name=self.cloud_service_name,
+                                                                deployment_name=self.deployment_name,
+                                                                deployment_slot='production',
+                                                                label=role_name,
+                                                                network_config=network,
+                                                                availability_set_name=role_name,
+                                                                role_name=role_name,
+                                                                system_config=linux_config,
+                                                                os_virtual_hard_disk=os_hd,
+                                                                role_size=self.role_size,
+                                                                virtual_network_name=self.virtual_network_name)
+            self._wait_for_completion(result, 'create_virtual_machine_deployment')
+
+        else:
+            self._log("Add role for deployment.")
+            network.input_endpoints.input_endpoints.append(self._get_ssh_endpoint(self.STARTING_SSH_PORT + instance_number))
+            network.subnet_names.append('Subnet-1')
+            result = self.sms.add_role(service_name=self.cloud_service_name,
+                                       deployment_name=self.deployment_name,
+                                       role_name=role_name,
+                                       system_config=linux_config,
+                                       os_virtual_hard_disk=os_hd,
+                                       role_size=self.role_size,
+                                       network_config=network)
+
+            if wait:
+                self._wait_for_completion(result, 'add_role')
+
+        return role_name
+
+    def _create_storage_account_if_not_exists(self):
+
+        self._log("Create storage account if not exists.")
+        if not self.storage_name in [storage.service_name for storage in self.sms.list_storage_accounts()]:
+            is_storage_name_available = self.sms.check_storage_account_name_availability(self.storage_name)
+            if is_storage_name_available.result:
+                result = self.sms.create_storage_account(self.storage_name,
+                                                         "Created for " + self.cloud_service_name + " by ansible.",
+                                                         label=self.storage_name,
+                                                         affinity_group=self.affinity_group,
+                                                         location=self.location)
+                self._wait_for_completion(result, "create_storage_account")
+
+    def delete_role(self, role_name):
+        self._log("Delete role " + str(role_name))
+        deleted = False
+        props = []
+        try:
+            props = self.sms.get_hosted_service_properties(self.cloud_service_name, True)
+        except azure.WindowsAzureError:    #not found
+            pass
+        if props:
+            if len(props.deployments) == 1 and len(props.deployments[0].role_list) == 1:
+                return self.delete_cloud_service()
+
+            for deployment in props.deployments:
+                if deployment.name == self.deployment_name:
+                    for role in deployment.role_list:
+                        if role_name == role.role_name:
+                            role_props = self.sms.get_role(self.cloud_service_name, deployment.name, role.role_name)
+
+                            result = self.sms.delete_role(self.cloud_service_name, deployment.name, role.role_name)
+                            self._wait_for_completion(result, "delete_role")
+                            result = self.sms.delete_disk(role_props.os_virtual_hard_disk.disk_name, True)
+                            self._wait_for_completion(result, "delete_disk")
+                            deleted = True
+                            break
+        return deleted
+
+    def delete_cloud_service(self):
+        self._log("Delete cloud service " + self.cloud_service_name)
+        disk_names = []
+        roles = []
+        props = []
+        try:
+            props = self.sms.get_hosted_service_properties(self.cloud_service_name, True)
+        except azure.WindowsAzureError:    #not found
+            pass
+        if props:
+            for deployment in props.deployments:
+                for role in deployment.role_list:
+
+                    role_props = self.sms.get_role(
+                        self.cloud_service_name,
+                        deployment.name,
+                        role.role_name)
+                    roles.append(role.role_name)
+                    if role_props.os_virtual_hard_disk.disk_name not in disk_names:
+                        disk_names.append(role_props.os_virtual_hard_disk.disk_name)
+
+                result = self.sms.delete_deployment(
+                    self.cloud_service_name, deployment.name)
+                self._wait_for_completion(result, 'delete_deployment')
+
+            for disk_name in disk_names:
+                self.sms.delete_disk(disk_name, True)
+
+            result = self.sms.delete_hosted_service(self.cloud_service_name)
+            self._wait_for_completion(result, "delete_hosted_service")
+
+        return roles
+
+    def _set_service_certs(self):
+        if self.config.cloud_service_cert:
+            self._log("Set service cert.")
+            cert_data_path = self.config.cloud_service_cert
+
+            with open(cert_data_path, "rb") as bfile:
+                cert_data = base64.b64encode(bfile.read())
+
+            cert_format = 'pfx'
+            cert_password = ''
+            cert_res = self.sms.add_service_certificate(service_name=self.cloud_service_name,
+                                                        data=cert_data,
+                                                        certificate_format=cert_format,
+                                                        password=cert_password)
+            self._wait_for_completion(cert_res, "add_service_certificate")
+
+    def get_roles(self):
+        deployment_info = None
+        try:
+            deployment_info = self.sms.get_deployment_by_name(self.cloud_service_name, self.deployment_name)
+        except azure.WindowsAzureError:    #not  found
+            pass
+        roles = []
+        if deployment_info:
+            for role in deployment_info.role_instance_list:
+                role_dict = dict(role_name=role.role_name)
+                endpoints = []
+                for endpoint in role.instance_endpoints:
+                    if endpoint.name.lower() == "ssh":
+                        role_dict['ssh'] = endpoint
+                    endpoints.append(endpoint)
+                role_dict['endpoints'] = endpoints
+                role_dict['public_dns_name'] = urlparse(deployment_info.url).hostname
+                roles.append(role_dict)
+        return azure_props_to_dict(roles)
+
+    def get_deployment_info(self):
+        roles = []
+        deployment_info = None
+        try:
+            deployment_info = self.sms.get_deployment_by_name(self.cloud_service_name, self.deployment_name)
+        except azure.WindowsAzureError:  # not found
+            pass
+
+        return azure_props_to_dict(deployment_info)
+
+    def __init__(self, module):
+        self.config = AzureConfig(module)
+        self.sms = ServiceManagementService(self.config.subscription_id, self.config.certificate_path)
+
+        self.module = module
+        params = module.params
+
+        self.cloud_service_name = create_azure_conform_name(params.get('cloud_service_name'))
+        self.deployment_name = create_azure_conform_name(params.get('deployment_name'))
+        self.role_name_prefix = create_azure_conform_name(params.get('role_name_prefix'))
+        self.storage_name = params.get('storage_name')
+        self.image_name = params.get('image_name')
+        self.role_size = params.get('role_size')
+        self.cluster_size = params.get('cluster_size')
+        self.endpoints = params.get('endpoints')
+        self.affinity_group = params.get('affinity_group')
+        self.location = params.get('location')
+        self.container_name = params.get('container_name')
+        self.user_name = params.get('user_name')
+        self.password = params.get('password')
+        self.virtual_network_name = params.get('virtual_network_name')
+        self.role_names = params.get('role_names')
+
+        if not self.deployment_name:
+            self.deployment_name = self.cloud_service_name
+
+        if not self.role_name_prefix:
+            self.role_name_prefix = self.cloud_service_name + "_role"
+
+        if not self.container_name:
+            self.container_name = self.deployment_name
+
+        if not self.storage_name:
+            pre_suffix = "storage"
+            pattern = re.compile('[\W_]+')
+            self.storage_name = pre_suffix + self.cloud_service_name + pre_suffix[::-1]
+            self.storage_name = pattern.sub('', self.storage_name)
+            self.storage_name = self.storage_name[0:24].lower()
+
+
+def main():
+    argument_spec = azure_common_argument_spec()
+    argument_spec.update(dict(
+        cloud_service_name=dict(required=True, type='str'),
+        deployment_name=dict(type='str'),
+        role_name_prefix=dict(type='str'),
+        role_names=dict(type='list'),
+        image_name=dict(type='str'),
+        storage_name=dict(type='str'),
+        state=dict(choices=['present', 'absent'], default='present', ),
+        cluster_size=dict(type='int', default=1),
+        role_size=dict(choices=['ExtraSmall', 'Small', 'Medium', 'Large', 'ExtraLarge'], default='ExtraSmall'),
+        virtual_network_name=dict(type='str'),
+        endpoints=dict(type='list', default=[]),
+        location=dict(type='str', default=None),
+        affinity_group=dict(type='str', default=None),
+        container_name=dict(type='str'),
+        user_name=dict(type='str', default='azureuser'),
+        password=dict(type='str'),
+        sshcert=dict(type='str')))
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           #required_together = (['subscription_id', 'certificate_path', 'username', 'password'],),
+                           mutually_exclusive=(['location', 'affinity_group']))
+    azure_vm = AzureVm(module)
+    state = module.params['state']
+    try:
+        if state == 'present':
+            cluster_size = module.params.get('cluster_size')
+            if not cluster_size:
+                cluster_size = 1
+            roles = []
+            for cluster_num in range(0, cluster_size):
+                roles.append(azure_vm.create_vm(cluster_num))
+
+            deployment = azure_vm.get_deployment_info()
+
+        elif state == 'absent':
+            role_names = module.params.get('role_names')
+            if not role_names:
+                module.fail_json(msg='role_names needs to be a list of roles to terminate')
+            roles = []
+            if len(role_names) == 1 and role_names[0] == "*":
+                roles = azure_vm.delete_cloud_service()
+            else:
+                for role_name in role_names:
+                    if azure_vm.delete_role(role_name):
+                        roles.append(role_name)
+            deployment = azure_vm.get_deployment_info()
+
+        module.exit_json(changed=len(roles) > 0, roles=azure_vm.get_roles(), deployment=deployment)
+
+    except azure.WindowsAzureError as e:
+        module.fail_json(msg=unicode(e))
+
+
+from ansible.module_utils.basic import *
+
+main()
