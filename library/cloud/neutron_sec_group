@@ -1,0 +1,323 @@
+#!/usr/bin/python
+#
+# (c) Cisco Systems, 2014
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software. If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    import neutronclient.v2_0.client
+    import keystoneclient.v2_0.client
+except ImportError:
+    print "failed=True msg='neutronclient and keystoneclient are required'"
+
+DOCUMENTATION = '''
+---
+module: neutron_sec_group
+short_description: Create, Remove or Update Openstack security groups
+description:
+   - Create, Remove or Update Openstack security groups
+options:
+   login_username:
+     description:
+        - login username to authenticate to keystone
+     required: true
+   login_password:
+     description:
+        - Password of login user
+     required: true
+   login_tenant_name:
+     description:
+        - The tenant name of the login user
+     required: true
+   auth_url:
+     description:
+        - The keystone url for authentication
+     required: false
+     default: 'http://127.0.0.1:5000/v2.0/'
+   region_name:
+     description:
+        - Name of the region
+     required: false
+     default: None
+   state:
+     description:
+        - Indicate desired state of the security group
+     choices: ['present', 'absent']
+     default: present
+   name:
+     description:
+        - Name to be given to the security group
+     required: true
+     default: None
+   tenant_name:
+     description:
+        - Name of the tenant for which the security group has to be created,
+          if none, the security group would be created for the login tenant.
+     required: false
+     default: None
+   rules:
+      description:
+         - "List of security group rules. Available parameters of a rule:
+         direction, port_range_min, port_range_max, ethertype, protocol,
+         remote_ip_prefix/remote_ip_group"
+      required: false
+      default: none
+requirements: ["neutronclient", "keystoneclient"]
+'''
+
+EXAMPLES = '''
+# Creates a security group with a number of rules
+neutron_sec_group:
+  login_username: "demo"
+  login_password: "password"
+  login_tenant_name: "demo"
+  auth_url: "http://127.0.0.1:5000/v2.0"
+  name: "sg-test"
+  description: "Description of the security group"
+  state: "present"
+  rules:
+    - { direction: "ingress",
+        port_range_min: "80",
+        port_range_max: "80",
+        ethertype: "IPv4",
+        protocol: "tcp",
+        remote_ip_prefix: "10.0.0.1/24"
+      }
+    - { direction: "ingress",
+        port_range_min: "22",
+        port_range_max: "22",
+        ethertype: "IPv4",
+        protocol: "tcp",
+        remote_ip_prefix: "10.0.0.1/24"
+      }
+'''
+
+
+def main():
+    """
+    Main function - entry point. The magic starts here ;-)
+    """
+    module = AnsibleModule(
+        argument_spec=dict(
+            auth_url=dict(default="http://127.0.0.1:5000/v2.0/"),
+            login_username=dict(required=True),
+            login_password=dict(required=True),
+            login_tenant_name=dict(required=True),
+            name=dict(required=True),
+            description=dict(default=None),
+            region_name=dict(default=None),
+            rules=dict(default=None),
+            tenant_name=dict(required=False),
+            state=dict(default="present", choices=['present', 'absent'])
+        )
+    )
+    network_client = _get_network_client(module.params)
+    identity_client = _get_identity_client(module.params)
+    try:
+        # Get id of security group (as a result check whether it exists)
+        sec_groups = network_client.list_security_groups()["security_groups"]
+        sec_group = next((sg for sg in sec_groups
+                          if sg["name"] == module.params['name']), None)
+        sec_group_exists = True if sec_group else False
+
+        # state=present -> create or update depending on whether sg exists.
+        if module.params['state'] == "present":
+            # UPDATE
+            if sec_group_exists:
+                sg = _update_sg(module, network_client, sec_group)
+                module.exit_json(sec_group=sg, updated=True, changed=True)
+            # CREATE
+            else:
+                sg = _create_sg(module, network_client, identity_client)
+                module.exit_json(sec_group=sg, created=True, changed=True)
+        # DELETE
+        elif module.params['state'] == "absent" and sec_group_exists:
+            _delete_sg(module, network_client, sec_group)
+            module.exit_json(changed=True)
+
+        module.exit_json(changed=False)
+
+    except Exception, e:
+        _handle_exception(module, e)
+
+
+def _delete_sg(module, network_client, sec_group):
+    """
+    Deletes a security group.
+    :param module: module to get security group params from.
+    :param network_client: network client to use.
+    :param sec_group: security group to delete.
+    """
+    network_client.delete_security_group(sec_group['id'])
+
+
+def _create_sg(module, network_client, identity_client):
+    """
+    Creates a security group.
+    :param module: module to get security group params from.
+    :param network_client: network client to use.
+    :param: identity_client: identity_client used if an admin performs the
+    operation for a different tenant.
+    :return: newly created security group.
+    """
+    # NOTE: we don't do explicit rule validation, the API server will take
+    # care of that for us :-)
+    rules = module.params['rules']
+
+    data = {
+        "security_group": {
+            "name": module.params['name'],
+            "description": module.params['description'],
+        }
+    }
+    _add_tenant_id(identity_client, module.params, data['security_group'])
+
+    sg = network_client.create_security_group(data)
+    sg = sg["security_group"]
+
+    sg = _create_sg_rules(network_client, sg, rules)
+    return sg
+
+
+def _update_sg(module, network_client, sg):
+    """
+    Updates a security group.
+    :param module: module to get updated security group param from.
+    :param network_client: network client to use.
+    :param sg: security group that needs to be updated.
+    :return: the updated security group.
+    """
+    # We only allow description updating, no name updating
+    if module.params["description"]:
+        body = {
+            "security_group": {
+                "description": module.params["description"]
+            }
+        }
+        sg = network_client.update_security_group(sg['id'], body)
+        sg = sg['security_group']
+
+    # Security rules group update
+    # We keep things simple: first remove all rules, then insert the new
+    # rules. Not terribly efficient, but easy to implement.
+    existing_rules = network_client.list_security_group_rules(sg['id'])
+    existing_rules = existing_rules['security_group_rules']
+
+    for rule in existing_rules:
+        network_client.delete_security_group_rule(rule['id'])
+
+    sg = _create_sg_rules(network_client, sg, module.params['rules'])
+
+    return sg
+
+
+def _create_sg_rules(network_client, sg, rules):
+    """
+    Creates a set of security group rules in a given security group.
+    :param network_client: network client to use to create rules.
+    :param sg: security group to create rules in.
+    :param rules: rules to create.
+    :return: the updated security group.
+    """
+    if rules:
+        for rule in rules:
+            rule['security_group_id'] = sg['id']
+            data = {
+                "security_group_rule": rule
+            }
+            network_client.create_security_group_rule(data)
+
+        # fetch security group again to show end result
+        return network_client.show_security_group(sg['id'])['security_group']
+    return sg
+
+
+def _handle_exception(module, e):
+    """
+    Convenience method to deal with exceptions.
+    :param module: module object
+    :param e: exception to deal with
+    """
+    if type(e) is neutronclient.common.exceptions.Unauthorized:
+        module.fail_json(msg="Authenticated error: %s" % str(e))
+    else:
+        module.fail_json(msg="An error occured: %s" % str(e))
+
+
+def _add_tenant_id(identity_client, module_params, data):
+    """
+    Adds the tenant_id to the given data dictionary if tenant_name
+    is specified in the module params.
+    :param: identity_client: identity_client used to get the tenant_id from its
+    name.
+    :param module_params: module parameters.
+    :param data: data dictionary to add tenant id to.
+    """
+    tenant_name = module_params.get('tenant_name')
+    if tenant_name:
+        tenant = _get_tenant(identity_client, tenant_name)
+        data['tenant_id'] = tenant.id
+
+
+def _get_tenant(identity_client, tenant_name):
+    """
+    Returns the tenant, given the tenant_name.
+    :param: identity_client: identity client to use to do the required requests.
+    :param: tenant_name: name of the tenant.
+    :return: tenant for which the name was given.
+    """
+    tenants = identity_client.tenants.list()
+    tenant = next((t for t in tenants if t.name == tenant_name), None)
+    if not tenant:
+        raise Exception("Tenant with name '%s' not found." % tenant_name)
+
+    return tenant
+
+
+def _get_network_client(module_params):
+    """
+    :param module_params: module params containing the openstack credentials
+    used to authenticate.
+    :return: a neutron client.
+    """
+    client = neutronclient.v2_0.client.Client(
+        username=module_params.get('login_username'),
+        password=module_params.get('login_password'),
+        tenant_name=module_params.get('login_tenant_name'),
+        auth_url=module_params.get('auth_url'),
+        region_name=module_params.get('region_name'))
+
+    return client
+
+
+def _get_identity_client(module_params):
+    """
+    :param module_params: module params containing the openstack credentials
+    used to authenticate.
+    :return: a keystone client.
+    """
+    client = keystoneclient.v2_0.client.Client(
+        username=module_params.get('login_username'),
+        password=module_params.get('login_password'),
+        tenant_name=module_params.get('login_tenant_name'),
+        auth_url=module_params.get('auth_url'),
+        region_name=module_params.get('region_name'))
+
+    return client
+
+
+# Let's get the party started!
+from ansible.module_utils.basic import *
+
+main()
