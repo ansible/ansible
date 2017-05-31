@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+#
+
+# (c) 2014, Joshua Conner
+#
+# This file is part of Ansible,
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+######################################################################
+DOCUMENTATION = '''
+---
+module: module-skeleton
+version_added: "1.5"
+short_description: skeleton for hacking on new modules
+description:
+     - Boilerplate code for building new Ansible modules. Add a new module to the `./library` folder of your playbook and it will be accessible just like any other Ansible module would be.
+# Document your module options here
+options:
+author: Your Name
+'''
+
+EXAMPLES = '''
+Put examples of how to use your module here.
+'''
+try:
+  # Put any initial imports here - we can't use module.fail_json b/c we haven't
+  # imported stuff from ansible.module_utils.basic yet
+except ImportError, e:
+    print "failed=True msg='failed to import python module: %s'" % e
+    sys.exit(1)
+
+
+def main():
+    changed = False
+    message = ''
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            # Specify possible arguments to be passed to your module here.
+            #
+            #
+            # You can specify possible choices for an argument...
+            # state     = dict(default='present', choices=['present', 'absent']),
+            # enabled   = dict(required=True, choices=BOOLEANS),
+            #
+            # ...required arguments...
+            # name      = dict(required=True),
+            #
+            # ...argument type coercion...
+            # count     = dict(default=1, type='int'),
+            #
+            # ...or argument name aliases
+            # something = dict(aliases=['whatever'])
+        )
+    )
+
+
+
+    #################################################################
+    # This is where the actual stuff your module does goes.
+    #################################################################
+
+
+
+
+    # Fill this with info that you want added to the ansible environment, see:
+    # http://docs.ansible.com/developing_modules.html#module-provided-facts
+    facts = dict()
+
+    # If success...
+    module.exit_json(changed=changed, msg=message, ansible_facts=facts)
+    # ...otherwise, if failure...
+    # module.fail_json(msg="explain why the module failed here")
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
