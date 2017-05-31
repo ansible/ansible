@@ -1,0 +1,238 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2014, Janez Troha <dz0ny@ubuntu.si>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+from urllib import quote
+from urllib import urlretrieve
+import hashlib
+import json
+import os
+import shutil
+import tempfile
+
+DOCUMENTATION = '''
+---
+module: wordpress
+short_description: Manages WordPress, it's themes and plugins.
+description:
+     - "Downloads and installs WordPress, it's themes and plugins"
+version_added: "1.6"
+options:
+  plugin:
+    description:
+      - Name of the plugin you wish to install.
+    required: false
+    default: null
+  theme:
+    description:
+      - Name of the theme you wish to install.
+    required: false
+    default: null
+  core:
+    description:
+      - Version of WordPress you wish to install (latest, 4.0...).
+    required: false
+    default: null
+  dest:
+    description:
+      - path to a install directory (you need full path for plugins and themes)
+    required: true
+    default: null
+  cache:
+    description:
+      - Use download cache for themes, plugins and core
+    required: false
+    default: true
+author: Janez Troha
+requirements: [ "urllib3" ]
+'''
+
+EXAMPLES = '''
+# Install latest Wordpress into.
+- wordpress: core=latest path=/var/www
+
+# Install latest Theme Editor.
+- wordpress: theme=editor path=/var/www/wp-content/themes
+
+# Install multiple themes
+- wordpress: >
+    theme={{item }}
+    path=/var/www/wp-content/themes
+  with_items:
+    - editor
+    - silk
+    - soul
+# Install Plugin SEO and skip cache.
+- wordpress: theme=yarp-seo path=/var/www/wp-content/plugins cache=False
+'''
+
+
+def theme_zip_url(slug, httplib, module):
+    yql = quote('select * from html where url="https://wordpress.org/themes/{}"'
+                ' and xpath=\'//*[@id="pagebody"]/div/div[2]/div/div[2]/p[1]/a\''
+                ' and compat="html5"'.format(slug))
+    # limit is 10k req per hour per ip
+    url = 'http://query.yahooapis.com/v1/public/yql?q={}&format=json'.format(yql)
+    r = httplib.request('GET', url)
+    if r.status == 200:
+        try:
+            return 'https:{}'.format(json.loads(r.data)['query']['results']['a']['href'])
+        except Exception as msg:
+            module.fail_json(msg=msg, url=url, theme=slug)
+    else:
+        module.fail_json(msg="Request failed for theme {}".format(slug), status_code=r.status, url=url, theme=slug)
+
+
+def plugin_zip_url(slug, httplib, module):
+    url = 'https://api.wordpress.org/plugins/info/1.0/{}.json'.format(slug)
+    r = httplib.request('GET', url)
+    if r.status == 200:
+        try:
+           return json.loads(r.data)['download_link']
+        except Exception as msg:
+            module.fail_json(msg=msg, url=url, plugin=slug)
+    else:
+        module.fail_json(msg="Request failed for theme {}".format(slug), status_code=r.status, url=url, theme=slug)
+
+
+def file_size(url, httplib):
+    # Soon MD5 see https://meta.trac.wordpress.org/ticket/619
+    r = httplib.request('HEAD', url)
+    return r.headers['content-length']
+
+
+def download_file(zip_file, httplib, module, cache):
+    size = int(file_size(zip_file, httplib))
+    name = hashlib.md5('{}.{}'.format(zip_file, size)).hexdigest()
+    tmpfile = os.path.join(tempfile.gettempdir(), '{}.zip'.format(name))
+
+    # overwrite on failed download
+    if not (os.path.isfile(tmpfile) and os.path.getsize(tmpfile) == size) or not cache:
+        urlretrieve(zip_file, tmpfile)
+        if os.path.getsize(tmpfile) != size:
+            module.fail_json(msg="File {} failed to download, size mismatch.".format(zip_file))
+    return tmpfile
+
+
+def unzip_file(src, dest, module):
+    cmd_path = module.get_bin_path('unzip')
+    cmd = '%s -o "%s" -d "%s"' % (cmd_path, src, dest)
+    rc, out, err = module.run_command(cmd)
+    return dict(cmd=cmd, rc=rc, out=out, err=err)
+
+
+def install_core(version, dest, httplib, module, cache):
+    if not os.path.exists(os.path.join(dest, 'wp-admin')):
+        http_zip = 'https://wordpress.org/wordpress-{}.zip'.format(version)
+        tmp_file = download_file(http_zip, httplib, module, cache)
+        tmp_dir = tempfile.mkdtemp()
+        unzip_file(tmp_file, tmp_dir, module)
+        shutil.move(os.path.join(tmp_dir, 'wordpress'), dest)
+        shutil.rmtree(tmp_dir)
+        module.exit_json(name=version, dest=dest, changed=True, msg='Installed WordPress({})'.format(version))
+    else:
+        module.exit_json(name=version, dest=dest, changed=False, msg='WordPress is already installed.')
+
+
+def install_theme(name, dest, httplib, module, cache):
+    if not os.path.exists(os.path.join(dest, name)):
+        http_zip = theme_zip_url(name, httplib, module)
+        tmp_file = download_file(http_zip, httplib, module, cache)
+        unzip_file(tmp_file, dest, module)
+        module.exit_json(name=name, dest=dest, changed=True, msg='Installed theme {}'.format(name))
+    else:
+        module.exit_json(name=name, dest=dest, changed=False, msg='Theme {} is already installed.'.format(name))
+
+
+def install_plugin(name, dest, httplib, module, cache):
+    if not os.path.exists(os.path.join(dest, name)):
+        http_zip = plugin_zip_url(name, httplib, module)
+        tmp_file = download_file(http_zip, httplib, module, cache)
+        unzip_file(tmp_file, dest, module)
+        module.exit_json(name=name, dest=dest, changed=True, msg='Installed plugin {}'.format(name))
+    else:
+        module.exit_json(name=name, dest=dest, changed=False, msg='Plugin {} is already installed.'.format(name))
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            cache=dict(default=True, type='bool'),
+            dest=dict(required=True, type='str'),
+            core=dict(required=False, default=False),
+            plugin=dict(required=False, default=False),
+            theme=dict(required=False, default=False),
+            timeout=dict(required=False, type='int', default=30),
+        )
+    )
+    try:
+        import urllib3
+    except ImportError:
+        module.fail_json(msg="Please install urllib3 in order to use this module")
+
+    dest = module.params['dest']
+    core = module.params['core']
+    theme = module.params['theme']
+    plugin = module.params['plugin']
+    timeout = module.params['timeout']
+    cache = module.params['cache']
+
+    if not (plugin or core or theme):
+        module.fail_json(msg="Missing target(core, theme or plugin)")
+
+    httplib = urllib3.PoolManager(timeout)
+    if core:
+        install_core(core, dest, httplib, module, cache)
+    if theme:
+        install_theme(theme, dest, httplib, module, cache)
+    if plugin:
+        install_plugin(plugin, dest, httplib, module, cache)
+
+# To unit test this module run $ bash -c "TEST_ME=1 library/web_infrastructure/wordpress"
+if 'TEST_ME' in os.environ:
+    import urllib3
+    import sys
+    from mock import Mock, patch
+
+    http = urllib3.PoolManager(10)
+    assert 'https://downloads.wordpress.org/theme/editor.' in theme_zip_url('editor', http, Mock())
+    assert 'https://downloads.wordpress.org/plugin/buddypress.' in plugin_zip_url('BuddyPress', http, Mock())
+
+    def ansible_mock():
+        ansible_module_mock = Mock()
+        ansible_module_mock.exit_json = Mock()
+        ansible_module_mock.get_bin_path = Mock(return_value='unzip')
+        ansible_module_mock.fail_json = Mock()
+        ansible_module_mock.run_command = Mock(return_value=(0, 0, 0))
+        return ansible_module_mock
+
+    tmp = tempfile.mkdtemp()
+    ansible_module_mock = ansible_mock()
+    with patch('shutil.move') as move:
+        move.return_value = True
+        install_core('4.0', tmp, http, ansible_module_mock, False)
+        ansible_module_mock.exit_json.assert_called_with(
+            msg='Installed WordPress(4.0)',
+            dest=tmp,
+            changed=True,
+            name='4.0'
+        )
+    sys.exit(0)
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
