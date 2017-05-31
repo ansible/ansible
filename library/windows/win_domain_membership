@@ -1,0 +1,84 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# this is a windows documentation stub.  actual code lives in the .ps1
+# file of the same name
+
+DOCUMENTATION = '''
+---
+module: win_domain_membership
+version_added: "1.7"
+short_description: Adds a computer to an Active Directory domain
+description:
+     - Adds a computer to an Active Directory domain
+options:
+  domain_name:
+    description:
+      - Names of the domain to add the computer to
+    required: true
+    default: null
+    aliases: []
+  domain_username:
+    description:
+      - username of an account with permissions to add a computer to the specified domain. Use the UPN syntax (username@domain) as NetBios-style usernames (DOMAIN\username) don't get passed correctly to the winrm host.
+    required: true
+    default: null
+    aliases: []
+  domain_password:
+    description:
+      - password for the domainusername account    
+	required: true
+    default: null
+    aliases: []
+  ou_path:
+    description:
+      - The OU in which to place the computer
+    default: null
+    aliases: []
+  restart:
+    description:
+	  - Performs the required restart automatically after the computer has been successfully joined to the domain
+	choices:
+      - yes
+      - no
+    default: null
+    aliases: []
+author: Trond Hindenes
+'''
+
+EXAMPLES = '''
+# This adds the computer to the domain mytestdomain.com.
+$ ansible -i hosts -m win_domain_membership -a "domain_name=mytestdomain.com domain_username=administrator@mytestdomain.com domain_password=Hello123" all
+$ ansible -i hosts -m win_domain_membership -a "domain_name=mytestdomain.com domain_username=administrator@mytestdomain.com domain_password=Hello123 ou_path='OU=Servers,DC=mytestdomain,DC=com'" all
+
+
+# Playbook example
+---
+- name: Join Domain
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Join Domain
+      win_domain_membership:
+        domain_name: "mytestdomain.com"
+        domain_username: "administrator@mytestdomain.com"
+        domain_password: "Hello123"
+        ou_path: "OU=Servers,DC=mytestdomain,DC=com"
+'''
