@@ -34,35 +34,38 @@ class TestNxosFeatureModule(TestNxosModule):
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_feature.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
-        self.mock_get_config = patch('ansible.modules.network.nxos.nxos_feature.get_config')
-        self.get_config = self.mock_get_config.start()
-
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_feature.load_config')
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
         self.mock_run_commands.stop()
-        self.mock_get_config.stop()
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None):
-        self.get_config.return_value = load_fixture('nxos_feature.cfg')
+        def load_from_file(*args, **kwargs):
+            module, commands = args
+            output = list()
+
+            for item in commands:
+                try:
+                    obj = json.loads(item['command'])
+                    command = obj['command']
+                except ValueError:
+                    command = item['command']
+            filename = str(command).replace(' ', '_')
+            filename = 'nxos_feature/%s.txt' % filename
+            output.append(load_fixture(filename))
+            return output
+
+        self.run_commands.side_effect = load_from_file
         self.load_config.return_value = None
 
-    #def start_configured(self, *args, **kwargs):
-    #    self.get_config.return_value = load_fixture('nxos_feature/configured.cfg')
-    #    return self.execute_module(*args, **kwargs)
-
-    #def start_unconfigured(self, *args, **kwargs):
-    #    self.get_config.return_value = load_fixture('nxos_feature/unconfigured.cfg')
-    #    return self.execute_module(*args, **kwargs)
-
     def test_nxos_feature_enable(self):
-        set_module_args(dict(feature='evpn', state='enabled'))
+        set_module_args(dict(feature='nve', state='enabled'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], [])
+        self.assertEqual(result['commands'], ['feature nv overlay'])
 
-    #def test_nxos_feature_disable(self):
-    #    set_module_args(dict(feature='evpn', state='disabled'))
-    #    result = self.execute_module(changed=True)
-    #    self.assertEqual(result['commands'], [])
+    def test_nxos_feature_disable(self):
+        set_module_args(dict(feature='ospf', state='disabled'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['no feature ospf'])

@@ -51,20 +51,16 @@ EXAMPLES = '''
   nxos_feature:
     feature: lacp
     state: enabled
-    host: "{{ inventory_hostname }}"
 
 - name: Ensure ospf is disabled
   nxos_feature:
     feature: ospf
     state: disabled
-    host: "{{ inventory_hostname }}"
 
 - name: Ensure vpc is enabled
   nxos_feature:
     feature: vpc
     state: enabled
-    host: "{{ inventory_hostname }}"
-
 '''
 
 RETURN = '''
