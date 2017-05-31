@@ -2457,6 +2457,9 @@ class AnsibleModule(object):
             if self._debug:
                 self.log('Executing: ' + clean_args)
             cmd = subprocess.Popen(args, **kwargs)
+            do_log_commands = os.getenv('ANSIBLE_LOG_COMMANDS')
+            if do_log_commands == 'TRUE':
+                syslog.syslog(syslog.LOG_NOTICE, clean_args)
 
             # the communication logic here is essentially taken from that
             # of the _communicate() function in ssh.py
