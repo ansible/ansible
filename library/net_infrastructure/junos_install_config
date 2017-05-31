@@ -1,0 +1,326 @@
+#!/usr/bin/env python2.7
+
+# Copyright (c) 1999-2014, Juniper Networks Inc.
+#               2014, Jeremy Schulman
+#
+# All rights reserved.
+#
+# License: Apache 2.0
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+# * Neither the name of the Juniper Networks nor the
+#   names of its contributors may be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY Juniper Networks, Inc. ''AS IS'' AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL Juniper Networks, Inc. BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+DOCUMENTATION = '''
+---
+module: junos_install_config
+author: Jeremy Schulman, Juniper Networks
+version_added: "1.7"
+short_description: Load a configuration file or snippet onto a device running Junos OS.
+description:
+    - Load a complete Junos OS configuration (overwrite) or merge a configuration
+      snippet onto a device running Junos OS and commit it. The default behavior
+      is to perform a B(load merge) operation (overwrite='no'). This module
+      performs an atomic lock/edit/unlock. If the process fails at any step, then
+      all configuration changes are discarded. You can load the configuration using
+      either NETCONF or the CONSOLE port. Specify the I(console) option to use the
+      CONSOLE port.
+
+      You provide the configuration data in a file. Supported formats when using
+      NETCONF include ASCII text, Junos XML elements, and Junos OS B(set) commands.
+      Configurations performed through the console must only use ASCII text formatting.
+requirements:
+    - junos-eznc >= 1.0.0
+    - junos-netconify >= 0.1.1, when using the I(console) option
+options:
+    host:
+        description:
+            - Set to {{ inventory_hostname }}
+        required: true
+    user:
+        description:
+            - Login username
+        required: false
+        default: $USER
+    passwd:
+        description:
+            - Login password
+        required: false
+        default: assumes ssh-key active
+    file:
+        description:
+            - Path to the file containing the Junos OS configuration data.
+              If the file has a C(*.conf) extension, the content is treated
+              as text format. If the file has a C(*.xml) extension, the
+              content is treated as XML format. If the file has a C(*.set)
+              extension, the content is treated as Junos OS B(set)
+              commands.
+        required: true
+    overwrite:
+        description:
+            - Specify whether the configuration I(file) completely replaces
+              the existing configuration.
+        required: false
+        default: no
+        choices: ['true','false','yes','no']
+    timeout:
+        description:
+            - Extend the NETCONF RPC timeout beyond the default value of
+              30 seconds. Set this value to accommodate configuration
+              changes (commits) that might take longer than the default
+              timeout interval.
+        required: false
+        default: "0"
+    logfile:
+        description:
+            - Path on the local server where the progress status is logged
+              for debugging purposes
+        required: false
+        default: None
+    console:
+        description:
+            - Port configuration, per the B(netconify) utility
+        required: false
+        default: None
+    savedir:
+        description:
+            - Path to the local server directory where device facts and
+              inventory files will be stored. This option is used only
+              with the I(console) option.
+              Refer to the B(netconify) utility for details.
+        required: false
+        default: None
+'''
+
+EXAMPLES = '''
+# load merge a change to the Junos OS configuration using NETCONF
+
+- junos_install_config:
+    host={{ inventory_hostname }}
+    file=banner.conf
+
+# load overwrite a new Junos OS configuration using the CONSOLE port
+
+- junos_install_config:
+    host={{ inventory_hostname }}
+    console="--telnet={{TERMSERV}},{{TERMSERV_PORT}}"
+    file=default_new_switch.conf
+    overwrite=yes
+'''
+
+import logging
+from os.path import isfile
+
+import os
+try:
+    from jnpr.junos import Device
+    from jnpr.junos.exception import *
+    from jnpr.junos.utils.config import Config
+    HAS_PYEZ = True
+except ImportError:
+    HAS_PYEZ = False
+
+
+def junos_install_config(module, dev):
+    args = module.params
+    cu = Config(dev)
+
+    results = {}
+
+    file_path = module.params['file']
+    file_path = os.path.abspath(file_path)
+
+    results['file'] = file_path
+    results['changed'] = False
+
+    logging.info("pushing file: {0}".format(file_path))
+    try:
+        logging.info("taking lock")
+        cu.lock()
+
+        try:
+            # load the config.  the cu.load will raise
+            # an exception if there is even a warning.
+            # so we want to avoid that condition.
+            logging.info("loading config")
+            load_args = {'path': file_path}
+            overwrite = module.boolean(module.params['overwrite'])
+            if True == overwrite:
+                load_args['overwrite'] = True
+            cu.load(**load_args)
+        except ValueError as err:
+            logging.error("unable to load config:{0}".format(err.message))
+            raise err
+        except Exception as err:
+            if err.rsp.find('.//ok') is None:
+                rpc_msg = err.rsp.findtext('.//error-message')
+                logging.error("unable to load config:{0}".format(rpc_msg))
+            raise err
+        else:
+            pass
+
+        diff = cu.diff()
+        if diff is not None:
+            logging.info("committing change, please be patient")
+            cu.commit()
+            results['changed'] = True
+
+        logging.info("unlocking")
+        cu.unlock()
+        logging.info("change completed")
+
+    except LockError:
+        results['failed'] = True
+        msg = "Unable to lock configuration"
+        results['msg'] = msg
+        logging.error(msg)
+
+    except CommitError:
+        results['failed'] = True
+        msg = "Unable to commit configuration"
+        results['msg'] = msg
+        logging.error(msg)
+
+    except Exception as err:
+        results['failed'] = True
+        msg = "Unable to make changes"
+        results['msg'] = msg
+        logging.error(msg)
+
+    return results
+
+
+def _load_via_netconf(module):
+    args = module.params
+
+    logfile = args['logfile']
+    if logfile is not None:
+        logging.basicConfig(filename=logfile, level=logging.INFO,
+                            format='%(asctime)s:%(name)s:%(message)s')
+        logging.getLogger().name = 'CONFIG:' + args['host']
+
+    logging.info("connecting to host: {0}@{1}".format(args['user'], args['host']))
+
+    try:
+        dev = Device(args['host'], user=args['user'], password=args['passwd'])
+        dev.open()
+    except Exception as err:
+        msg = 'unable to connect to {0}: {1}'.format(args['host'], str(err))
+        module.fail_json(msg=msg)
+        return
+
+    timeout = int(args['timeout'])
+    if timeout > 0:
+        dev.timeout = timeout
+    results = junos_install_config(module, dev)
+    dev.close()
+    module.exit_json(**results)
+
+
+def _load_via_console(module):
+    try:
+        from netconify.cmdo import netconifyCmdo
+    except ImportError:
+        module.fail_json(msg='junos-netconify is required for this module')
+
+    m_args = module.params
+
+    c_args = []
+    c_args.append(m_args['console'])
+    c_args.append('--file=' + m_args['file'])
+    if m_args['savedir'] is not None:
+        c_args.append('--savedir=' + m_args['savedir'])
+    c_args.append('--user=' + m_args['user'])
+    if m_args['passwd'] is not None:
+        c_args.append('--passwd=' + m_args['passwd'])
+
+    # the default mode for loading a config via the console
+    # is to load-overwrite.  So we need to check the module
+    # option and set the "--merge" option if overwrite is False
+
+    overwrite = module.boolean(module.params['overwrite'])
+    if overwrite is False:
+        c_args.append('--merge')
+
+    c_args.append(m_args['host'])
+
+    logfile = m_args['logfile']
+    if logfile is not None:
+        logging.basicConfig(filename=logfile, level=logging.INFO,
+                            format='%(asctime)s:%(name)s:%(message)s')
+        logging.getLogger().name = 'NETCONIFY:' + m_args['host']
+
+        def log_notify(event, message):
+            logging.info("%s:%s" % (event, message))
+        use_notifier = log_notify
+    else:
+        def silent_notify(event, message):
+            pass
+        use_notifier = silent_notify
+
+    nc = netconifyCmdo(notify=use_notifier)
+    c_results = nc.run(c_args)
+    m_results = dict(changed=c_results['changed'])
+    if c_results['failed'] is True:
+        module.fail_json(msg=c_results['errmsg'])
+    else:
+        module.exit_json(**m_results)
+
+# ---------------------------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------------------------
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            host=dict(required=True),
+            user=dict(required=False, default=os.getenv('USER')),
+            passwd=dict(required=False, default=None),
+            console=dict(required=False, default=None),
+            file=dict(required=True),
+            overwrite=dict(required=False, choices=BOOLEANS, default=False),
+            logfile=dict(required=False, default=None),
+            savedir=dict(required=False),
+            timeout=dict(required=False, default=0)),
+        supports_check_mode=False)
+
+    if not HAS_PYEZ:
+        module.fail_json(msg='junos-eznc is required for this module')
+
+    args = module.params
+
+    # ------------------------------
+    # make sure file actually exists
+    # ------------------------------
+
+    if not isfile(args['file']):
+        module.fail_json(msg="file not found: {0}".format(args['file']))
+        return
+
+    _ldr = _load_via_netconf if args['console'] is None else _load_via_console
+    _ldr(module)
+
+from ansible.module_utils.basic import *
+main()

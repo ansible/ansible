@@ -1,0 +1,252 @@
+#!/usr/bin/env python2.7
+
+# Copyright (c) 1999-2014, Juniper Networks Inc.
+#               2014, Jeremy Schulman
+#
+# All rights reserved.
+#
+# License: Apache 2.0
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+# * Neither the name of the Juniper Networks nor the
+#   names of its contributors may be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY Juniper Networks, Inc. ''AS IS'' AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL Juniper Networks, Inc. BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+DOCUMENTATION = '''
+---
+module: junos_install_os
+author: Jeremy Schulman, Juniper Networks
+version_added: "1.7"
+short_description: Install a Junos OS image.
+description:
+   - Install a Junos OS image on one or more Routing Engines.
+     This module supports installations on single Routing Engine devices,
+     MX Series routers with dual Routing Engines, and EX Series switches in
+     a non-mixed Virtual Chassis. This action is equivalent to performing the
+     Junos OS B(request system software add) operational command.
+
+     If the existing Junos OS version matches the desired version,
+     no action is performed, and the "changed" attribute reports False.
+     If the existing version does not match, then the module performs the
+     following actions
+
+     (1) Computes the MD5 checksum of the package located on the server.
+     (2) Copies the Junos OS software package to the device running Junos OS.
+     (3) Computes the MD5 checksum on the device running Junos OS and compares the two.
+     (4) Installs the Junos OS software package.
+     (5) Reboots the device (default).
+
+     Running the module in check mode reports whether the current Junos OS
+     version matches the desired version.
+
+requirements:
+   - py-junos-eznc >= 1.0.0
+options:
+   host:
+        description:
+            - Set to {{ inventory_hostname }}
+        required: true
+   user:
+      description:
+         - Login username
+      required: false
+      default: $USER
+   passwd:
+      description:
+         - Login password
+      required: false
+      default: assumes ssh-key active
+   reboot:
+      description:
+         - If set to B(yes), the device reboots
+           after the installation completes.
+      required: false
+      default: yes
+      choices: ['yes','no']
+   reboot_pause:
+      description:
+         - Amount of time in seconds to wait after the reboot is issued
+      required: false
+      default: "10"
+   version:
+      description:
+         - Junos OS version string as it would be reported by the
+           B(show version) command
+      required: true
+   package:
+      description:
+         - Absolute path on the local server to the Junos OS software package
+      required: true
+   logfile:
+      description:
+         - Path on the local server where the progress status is logged
+           for debugging purposes
+      required: false
+      default: None
+'''
+
+EXAMPLES = '''
+- junos_install_os:
+   host={{ inventory_hostname }}
+   version=12.1X46-D10.2
+   package=/usr/local/junos/images/junos-vsrx-12.1X46-D10.2-domestic.tgz
+   logfile=/usr/local/junos/log/software.log
+'''
+
+import logging
+import re
+import os
+try:
+    from jnpr.junos import Device
+    HAS_PYEZ = True
+except ImportError:
+    HAS_PYEZ = False
+
+
+def junos_install_os(module, dev):
+    args = module.params
+
+    # -------------------------------------------------------------------------
+    # logging
+    # -------------------------------------------------------------------------
+
+    logfile = args['logfile']
+    if logfile is not None:
+        logging.basicConfig(filename=logfile, level=logging.INFO,
+                            format='%(asctime)s:%(name)s:%(message)s')
+        logging.getLogger().name = args['host']
+
+        def do_log(msg, level='info'):
+            getattr(logging, level)(msg)
+    else:
+        def do_log(msg):
+            pass
+
+    # -------------------------------------------------------------------------
+    # check installed version against desired version
+    # -------------------------------------------------------------------------
+
+    if args['version'] is None:
+        # extract version string from package file
+        m = re.search('-([^\\-]*)-domestic.*', args['package'])
+        args['version'] = m.group(1)
+
+    has_ver = dev.facts['version']
+    should_ver = args['version']
+    need_upgrade = bool(has_ver != should_ver)
+
+    results = dict(changed=need_upgrade, ver=dict(has=has_ver, should=should_ver))
+
+    if need_upgrade is False:
+        do_log("No need to perform upgrade: {0}".format(has_ver))
+        return results
+    if module.check_mode is True:
+        do_log("upgrade REQUIRED has: {0}, shoud: {1}".format(has_ver, should_ver))
+        return results
+
+    # -------------------------------------------------------------------------
+    # proceeed with software install
+    # -------------------------------------------------------------------------
+
+    from jnpr.junos.utils.sw import SW
+    sw = SW(dev)
+
+    package = args['package']
+    do_log("Starting the software upgrade process: {0}".format(package))
+
+    def update_my_progress(dev, report):
+        # log the progress of the installing process
+        do_log(report)
+
+    sw_args = dict(progress=update_my_progress)
+    sw_args['no_copy'] = module.boolean(args['no_copy'])
+    ok = sw.install(package, **sw_args)
+
+    if ok is not True:
+        results['failed'] = True
+        results['msg'] = "Unable to install the software"
+        do_log(results['msg'], level='error')
+        return results
+
+    # -------------------------------------------------------------------------
+    # reboot the box if desired
+    # -------------------------------------------------------------------------
+
+    if module.boolean(args['reboot']) is True:
+        do_log("<REBOOT>")
+        rsp = sw.reboot()
+
+    # -------------------------------------------------------------------------
+    # all done.
+    # -------------------------------------------------------------------------
+    do_log("upgrade pending reboot cycle, please be patient.")
+    return results
+
+
+def main():
+    #
+    module = AnsibleModule(
+        argument_spec=dict(
+            host=dict(required=True),
+            package=dict(required=True),
+            user=dict(required=False, default=os.getenv('USER')),
+            passwd=dict(required=False, default=None),
+            version=dict(required=False, default=None),
+            logfile=dict(required=False, default=None),
+            no_copy=dict(required=False, choices=BOOLEANS, default=False),
+            reboot=dict(required=False, choices=BOOLEANS, default=True),
+            reboot_pause=dict(required=False, type='int', default=10)
+        ),
+        supports_check_mode=True
+    )
+
+    if not HAS_PYEZ:
+        module.fail_json(msg='junos-eznc is required for this module')
+
+    args = module.params
+
+    # @@@ need to verify that the package file actually exists
+    # @@@ before proceeding.
+
+    dev = Device(args['host'], user=args['user'], password=args['passwd'])
+    try:
+        dev.open()
+    except Exception as err:
+        msg = 'unable to connect to {0}: {1}'.format(args['host'], str(err))
+        module.fail_json(msg=msg)
+        return
+
+    results = junos_install_os(module, dev)
+    results['check_mode'] = module.check_mode
+    dev.close()
+
+    if not module.check_mode and results['changed'] is True:
+        logging.info('pausing: {0}'.format(args['reboot_pause']))
+        import time
+        time.sleep(args['reboot_pause'])
+        logging.info('process completed OK.')
+
+    module.exit_json(**results)
+
+from ansible.module_utils.basic import *
+main()

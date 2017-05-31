@@ -1,0 +1,131 @@
+#!/usr/bin/env python2.7
+
+# Copyright (c) 1999-2014, Juniper Networks Inc.
+#               2014, Jeremy Schulman
+#
+# All rights reserved.
+#
+# License: Apache 2.0
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+# * Neither the name of the Juniper Networks nor the
+#   names of its contributors may be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY Juniper Networks, Inc. ''AS IS'' AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL Juniper Networks, Inc. BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+DOCUMENTATION = '''
+---
+module: junos_shutdown
+author: Jeremy Schulman, Juniper Networks
+version_added: "1.7"
+short_description: Shut down or reboot a device running Junos OS.
+description:
+    - Shut down (power off) or reboot a device running Junos OS. This includes
+      all Routing Engines in a Virtual Chassis or a dual Routing Engine system.
+      This is equivalent to executing either the Junos OS B(request system power-off)
+      or B(request system reboot) operational command.
+requirements:
+    - junos-eznc >= 1.0.0
+options:
+    host:
+        description:
+            - Set to {{ inventory_hostname }}
+        required: true
+    user:
+        description:
+            - Login username
+        required: false
+        default: $USER
+    passwd:
+        description:
+            - Login password
+        required: false
+        default: assumes ssh-key active
+    reboot:
+        description:
+            - If set to B(yes), then the device is rebooted rather than powered off.
+        required: false
+        default: no
+        choices: ['yes','no']
+    shutdown:
+        description:
+            - Safety mechanism. You B(MUST) set this to 'shutdown'.
+        required: yes
+        default: None
+'''
+
+EXAMPLES = '''
+- junos_shutdown:
+    host={{ inventory_hostname }}
+    shutdown="shutdown"
+    reboot=yes
+'''
+
+try:
+    from jnpr.junos import Device
+    from jnpr.junos.utils.sw import SW
+    HAS_PYEZ = True
+except ImportError:
+    HAS_PYEZ = False
+
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            shutdown=dict(required=True, default=None),   # must be set to 'shutdown'
+            host=dict(required=True, default=None),       # host or ipaddr
+            user=dict(required=False, default=os.getenv('USER')),
+            passwd=dict(required=False, default=None),
+            reboot=dict(required=False, choices=BOOLEANS, default=False)),
+        supports_check_mode=False)
+
+    if not HAS_PYEZ:
+        module.fail_json(msg='junos-eznc is required for this module')
+
+    args = module.params
+    if args['shutdown'] != 'shutdown':
+        module.fail_json(msg='Say "shutdown" to proceed')
+
+    restart_mode = module.boolean(args['reboot'])
+
+    try:
+        dev = Device(args['host'], user=args['user'], password=args['passwd']).open()
+    except Exception as err:
+        msg = 'unable to connect to {0}: {1}'.format(args['host'], str(err))
+        module.fail_json(msg=msg)
+        # --- UNREACHABLE ---
+
+    results = {'changed': True, 'reboot': restart_mode}
+
+    sw = SW(dev)
+    do_it = sw.reboot if restart_mode is True else sw.poweroff
+    do_it(0)
+
+    # dev.close isn't performed since the device will
+    # be in the process of shutting down and we'll
+    # lose connectivity anyways ...
+
+    module.exit_json(**results)
+
+from ansible.module_utils.basic import *
+main()

@@ -1,0 +1,185 @@
+#!/usr/bin/env python2.7
+
+# Copyright (c) 1999-2014, Juniper Networks Inc.
+#               2014, Jeremy Schulman
+#
+# All rights reserved.
+#
+# License: Apache 2.0
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+# * Neither the name of the Juniper Networks nor the
+#   names of its contributors may be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY Juniper Networks, Inc. ''AS IS'' AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL Juniper Networks, Inc. BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+DOCUMENTATION = '''
+---
+module: junos_zeroize
+author: Jeremy Schulman, Juniper Networks
+version_added: "1.7"
+short_description: Erase all data, including configuration and log files, on a device running Junos OS.
+description:
+    - Execute the Junos OS B(request system zeroize) command to remove all
+      configuration information on the Routing Engines and reset all key
+      values on a device running Junos OS. The command removes all data files,
+      including customized configuration and log files, by unlinking the files
+      from their directories. The command also removes all user-created files
+      from the system including all plain-text passwords, secrets, and
+      private keys for SSH, local encryption, local authentication, IPsec,
+      RADIUS, TACACS+, and SNMP.
+
+      This command reboots the device and sets it to the factory default
+      configuration. After the reboot, you must log in through the console
+      as root in order to access the device.
+requirements:
+    - junos-eznc >= 1.0.0
+    - junos-netconify >= 0.1.1, when using the I(console) option
+options:
+    host:
+        description:
+            - Set to {{ inventory_hostname }}
+        required: false
+    user:
+        description:
+            - Login username
+        required: false
+        default: $USER
+    passwd:
+        description:
+            - Login password
+        required: false
+        default: assumes ssh-key active
+    console:
+        description:
+            - SERIAL or TERMINAL-SERVER port setting, per use with
+              the B(netconify) utility
+        required: false
+        default: None
+        notes:
+            - ex: "--telnet=termserv101,2000"
+    zeroize:
+        description:
+            - Safety mechanism. You B(MUST) set this to 'zeroize'.
+        required: yes
+        default: None
+    logfile:
+        description:
+            - Path on the local server where the progress status is logged
+              for debugging purposes
+        required: false
+        default: None
+notes:
+    - You B(MUST) either use the I(host) option or the I(console) option to designate
+      how the device is accessed.
+'''
+
+EXAMPLES = '''
+- junos_zeroize:
+    host={{ inventory_hostname }}
+    zeroize="zeroize"
+'''
+
+import os
+import logging
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            zeroize=dict(required=True, default=None),  # must be set to 'zeroize'
+            host=dict(required=False, default=None),    # host or ipaddr
+            console=dict(required=False, default=None),     # param to netconify
+            user=dict(required=False, default=os.getenv('USER')),
+            passwd=dict(required=False, default=None),
+            logfile=dict(required=False, default=None)),
+        supports_check_mode=False)
+
+    args = module.params
+
+    if args['zeroize'] != 'zeroize':
+        results = dict(changed=False, failed=True)
+        results['msg'] = "You must set 'zeroize=zeroize' ({0})".format(args['zeroize'])
+        module.exit_json(**results)
+        #
+        # ! UNREACHABLE
+
+    results = {}
+
+    logfile = module.params['logfile']
+    if logfile is not None:
+        logging.basicConfig(filename=logfile, level=logging.INFO,
+            format='%(asctime)s:%(name)s:%(message)s')
+        logging.getLogger().name = 'NETCONIFY:' + module.params['host']
+
+        def log_notify(event, message):
+            logging.info("%s:%s" % (event, message))
+        use_notifier = log_notify
+    else:
+        def silent_notify(event, message):
+            pass
+        use_notifier = silent_notify
+
+    if args.get('console') is None:
+        # via NETCONF
+        try:
+            from jnpr.junos import Device
+        except ImportError:
+            module.fail_json(msg='junos-eznc is required for this module')
+
+        dev = Device(args['host'], user=args['user'], password=args['passwd'])
+        try:
+            use_notifier('LOGIN', 'host={0}'.format(args['host']))
+            dev.open()
+            use_notifier('LOGIN', 'OK')
+        except Exception as err:
+            msg = 'unable to connect to {0}: {1}'.format(args['host'], str(err))
+            module.fail_json(msg=msg)
+            # --- UNREACHABLE ---
+
+        use_notifier('ZEROIZE', 'invoking command')
+        dev.cli('request system zeroize')
+        results['changed'] = True
+        # no close, we're done after this point.
+    else:
+        try:
+            from netconify.cmdo import netconifyCmdo
+        except ImportError:
+            module.fail_json(msg='junos-netconify is required for this module')
+        nc_args = []
+        nc_args.append(args['console'])
+        nc_args.append('--zeroize')
+        if args['user'] is not None:
+            nc_args.append('--user=' + args['user'])
+        if args['passwd'] is not None:
+            nc_args.append('--passwd=' + args['passwd'])
+
+        nc = netconifyCmdo(notify=use_notifier)
+        nc.run(nc_args)
+        results['changed'] = True
+
+    # indicate done in the logfile and return results
+    use_notifier('DONE', 'OK')
+    module.exit_json(**results)
+
+from ansible.module_utils.basic import *
+main()
