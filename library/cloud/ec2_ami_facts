@@ -1,0 +1,199 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2_ami_facts
+version_added: "1.5"
+short_description: Return a list of AMI images, possibly filtered by attributes or tags.
+description:
+     - Return a list of defined AMI images, possibly filtered by attributes or tags. 
+options:
+  ec2_url:
+    description:
+      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
+    required: false
+    default: null
+    aliases: []
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+    required: false
+    default: null
+    aliases: [ 'ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: ['ec2_access_key', 'access_key' ]
+  name:
+    description:
+      - Filter returned AMIs by this name.
+    required: false
+    default: null
+    aliases: []
+  description:
+    description:
+      - Filter returned AMIs by this description.
+    required: false
+    default: null
+    aliases: []
+  image_ids:
+    description:
+      - Filter returned AMIs by membership in a list of ids.
+    required: false
+    default: null
+    aliases: []
+  tags:
+    description:
+      - Filter returned AMIs by existence of the given tags.
+    required: false
+    default: null
+    aliases: []
+  sorts:
+    description:
+      - Sort returned AMIs by the given parameters. Sorts can be performed by id, name, description, state, or a tag. If the sort directive starts with '-' the sort will be performed in descending order. Tag sorts should be specified as 'tag:tagName'.
+    required: false
+    default: null
+    aliases: []
+  region:
+    description:
+      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    default: null
+    aliases: [ 'aws_region', 'ec2_region' ]
+
+requirements: [ "boto" ]
+author: Scott Anderson <scottanderson42@gmail.com>
+'''
+
+EXAMPLES = '''
+- name: Obtain list of existing AMIs filtered by name and environment, sorted by name then descending parrot-count.
+  local_action:
+    module: ec2_ami_facts
+    description: some-ami-description
+    tags:
+      environment: "{{ my_environment_tag_value }}"
+    sorts:
+      - "name"
+      - "-tag:parrot-count"
+    region: us-west-1
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  register: ami_facts
+
+Returns a list of dictionaries, one for each AMI that matches the given search parameters:
+{
+    "id": AMI AWS id, such as ami-1234abcd
+    "name": The AMI name given when the AMI was created
+    "description": The AMI description given when the AMI was created or modified
+    "region": The region in which the AMI is located
+    "state": The image's current state: available, pending, or failed
+    "tags": A dictionary of the tags attached to the image
+}
+'''
+import sys
+import time
+
+from operator import itemgetter
+
+try:
+    import boto
+    import boto.ec2
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+SORT_FIELDS = (
+    "id",
+    "name",
+    "description",
+    "state",
+)
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+            name = dict(),
+            description = dict(),
+            sorts = dict(default='name'),
+            image_ids = dict(),
+            tags = dict(type='dict'),
+        )
+    )
+    module = AnsibleModule(argument_spec=argument_spec)
+
+    image_ids = module.params.get('image_ids')
+    tags = module.params.get('tags')
+    name = module.params.get('name')
+    sorts = module.params.get('sorts')
+    description = module.params.get('description')
+
+    ec2 = ec2_connect(module)
+
+    try:
+        filters = {}
+        if name:
+            filters['name'] = name
+        if description:
+            filters['description'] = description
+        if tags:
+            for key in tags.keys():
+                filters['tag:' + key] = tags[key]
+        images = ec2.get_all_images(image_ids=image_ids, filters=filters)
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+    images = [
+        {
+            "id": i.id,
+            "name": i.name,
+            "description": i.description,
+            "region": i.region.name,
+            "state": i.state,
+            "tags": i.tags,
+        } for i in images]
+
+    if len(images):
+        if type(sorts) != list:
+            sorts = [sorts]
+
+        # Apply them in reverse order to preserve the list order; ie. sorted by name then description
+        # means we need to sort first by description, then finally by name.
+        sorts.reverse()
+
+        for sort in sorts:
+            reverse = False
+            if sort[0] == '-':
+                sort = sort[1:]
+                reverse = True
+
+            if sort in SORT_FIELDS:
+                images.sort(key=itemgetter(sort), reverse=reverse)
+            elif sort.startswith('tag:'):
+                tag = sort[4:]
+                images.sort(key=lambda item: item['tags'].get(tag), reverse=reverse)
+
+    module.exit_json(images=images, changed=False)
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
+
