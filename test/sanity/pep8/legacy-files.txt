@@ -779,8 +779,6 @@ lib/ansible/plugins/strategy/__init__.py
 lib/ansible/plugins/strategy/debug.py
 lib/ansible/plugins/strategy/free.py
 lib/ansible/plugins/strategy/linear.py
-lib/ansible/plugins/terminal/asa.py
-lib/ansible/plugins/terminal/junos.py
 lib/ansible/plugins/test/core.py
 lib/ansible/plugins/test/files.py
 lib/ansible/plugins/test/mathstuff.py
