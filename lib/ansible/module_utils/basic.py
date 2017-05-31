@@ -2239,6 +2239,11 @@ class AnsibleModule(object):
                 # root (or old Unices) they won't be able to chown.
                 pass
 
+        if creating:
+            umask = os.umask(0)
+            os.umask(umask)
+            os.chmod(dest, 0666 ^ umask)
+
         if self.selinux_enabled():
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
