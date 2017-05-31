@@ -43,7 +43,11 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
     from ansible.playbook.task_include import TaskInclude
     from ansible.playbook.role_include import IncludeRole
 
-    assert isinstance(ds, (list, type(None)))
+    try:
+        assert isinstance(ds, (list, type(None)))
+    except AssertionError:
+        assert isinstance(ds['tasks'], (list, type(None)))
+        ds = ds['tasks']
 
     block_list = []
     if ds:
