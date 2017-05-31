@@ -19,6 +19,7 @@
 
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
+import ast
 import atexit
 import os
 import ssl
@@ -323,42 +324,57 @@ def find_host_portgroup_by_name(host, portgroup_name):
 
 def gather_vm_facts(content, vm):
     """ Gather facts from vim.VirtualMachine object. """
+
     facts = {
         'module_hw': True,
-        'hw_name': vm.config.name,
-        'hw_power_status': vm.summary.runtime.powerState,
-        'hw_guest_full_name': vm.summary.guest.guestFullName,
-        'hw_guest_id': vm.summary.guest.guestId,
-        'hw_product_uuid': vm.config.uuid,
-        'hw_processor_count': vm.config.hardware.numCPU,
-        'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
-        'guest_tools_status': vm.guest.toolsRunningStatus,
-        'guest_tools_version': vm.guest.toolsVersion,
         'ipv4': None,
         'ipv6': None,
-        'annotation': vm.config.annotation,
         'customvalues': {},
         'snapshots': [],
         'current_snapshot': None,
     }
 
-    cfm = content.customFieldsManager
-    # Resolve custom values
-    for value_obj in vm.summary.customValue:
-        kn = value_obj.key
-        if cfm is not None and cfm.field:
-            for f in cfm.field:
-                if f.key == value_obj.key:
-                    kn = f.name
-                    # Exit the loop immediately, we found it
-                    break
+    facts_map = {
+        'hw_name': 'vm.config.name',
+        'hw_power_status': 'vm.summary.runtime.powerState',
+        'hw_guest_full_name': 'vm.summary.guest.guestFullName',
+        'hw_guest_id': 'vm.summary.guest.guestId',
+        'hw_product_uuid': 'vm.config.uuid',
+        'hw_processor_count': 'vm.config.hardware.numCPU',
+        'hw_memtotal_mb': 'vm.config.hardware.memoryMB',
+        'guest_tools_status': 'vm.guest.toolsRunningStatus',
+        'guest_tools_version': 'vm.guest.toolsVersion',
+        'annotation': 'vm.config.annotation',
+    }
 
-        facts['customvalues'][kn] = value_obj.value
+    for k,v in facts_map.items():
+        try:
+            facts[k] = ast.literal_eval(v)
+        except:
+            facts[k] = None
+
+    try:
+        cfm = content.customFieldsManager
+        # Resolve custom values
+        for value_obj in vm.summary.customValue:
+            kn = value_obj.key
+            if cfm is not None and cfm.field:
+                for f in cfm.field:
+                    if f.key == value_obj.key:
+                        kn = f.name
+                        # Exit the loop immediately, we found it
+                        break
+            facts['customvalues'][kn] = value_obj.value
+    except:
+        pass
 
     net_dict = {}
-    for device in vm.guest.net:
-        net_dict[device.macAddress] = list(device.ipAddress)
+    try:
+        for device in vm.guest.net:
+            net_dict[device.macAddress] = list(device.ipAddress)
+    except:
+        pass
 
     for k, v in iteritems(net_dict):
         for ipaddress in v:
@@ -368,33 +384,40 @@ def gather_vm_facts(content, vm):
                 else:
                     facts['ipv4'] = ipaddress
 
-    ethernet_idx = 0
-    for idx, entry in enumerate(vm.config.hardware.device):
-        if not hasattr(entry, 'macAddress'):
-            continue
+    try:
+        ethernet_idx = 0
+        for idx, entry in enumerate(vm.config.hardware.device):
+            if not hasattr(entry, 'macAddress'):
+                continue
 
-        if entry.macAddress:
-            mac_addr = entry.macAddress
-            mac_addr_dash = mac_addr.replace(':', '-')
-        else:
-            mac_addr = mac_addr_dash = None
+            if entry.macAddress:
+                mac_addr = entry.macAddress
+                mac_addr_dash = mac_addr.replace(':', '-')
+            else:
+                mac_addr = mac_addr_dash = None
 
-        factname = 'hw_eth' + str(ethernet_idx)
-        facts[factname] = {
-            'addresstype': entry.addressType,
-            'label': entry.deviceInfo.label,
-            'macaddress': mac_addr,
-            'ipaddresses': net_dict.get(entry.macAddress, None),
-            'macaddress_dash': mac_addr_dash,
-            'summary': entry.deviceInfo.summary,
-        }
-        facts['hw_interfaces'].append('eth' + str(ethernet_idx))
-        ethernet_idx += 1
+            factname = 'hw_eth' + str(ethernet_idx)
+            facts[factname] = {
+                'addresstype': entry.addressType,
+                'label': entry.deviceInfo.label,
+                'macaddress': mac_addr,
+                'ipaddresses': net_dict.get(entry.macAddress, None),
+                'macaddress_dash': mac_addr_dash,
+                'summary': entry.deviceInfo.summary,
+            }
+            facts['hw_interfaces'].append('eth' + str(ethernet_idx))
+            ethernet_idx += 1
+    except:
+        pass
 
-    snapshot_facts = list_snapshots(vm)
-    if 'snapshots' in snapshot_facts:
-        facts['snapshots'] = snapshot_facts['snapshots']
-        facts['current_snapshot'] = snapshot_facts['current_snapshot']
+    try:
+        snapshot_facts = list_snapshots(vm)
+        if 'snapshots' in snapshot_facts:
+            facts['snapshots'] = snapshot_facts['snapshots']
+            facts['current_snapshot'] = snapshot_facts['current_snapshot']
+    except:
+        pass
+
     return facts
 
 
