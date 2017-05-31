@@ -1,0 +1,19 @@
+---
+# ansible-pull sample local.yml file
+#
+# assuming you installed using the ansible-pull_install.yml playbook,
+# ansible-pull does the following:
+#
+# 1. ansible all -c local -m git -a "repo=... dest=/var/lib/ansible version=HEAD"
+# 2. cd /var/lib/ansible
+# 3. ansible-playbook -c local local.yml
+
+- name: ansible-pull sample playbook
+  hosts: 127.0.0.1
+  tasks:
+  - name: output.1
+    action: shell echo "playbook = local.yml" > /var/log/ansible/output.1
+  - name: output.2
+    action: shell echo "ansible_hostname=${ansible_hostname} ansible_fqdn=${ansible_fqdn}" > /var/log/ansible/output.2
+  - name: output.3
+    action: shell pwd > /var/log/ansible/output.3
