@@ -1,0 +1,255 @@
+#!/usr/bin/python -tt
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: rax_cbs_attachments
+short_description: Manipulate Rackspace Cloud Block Storage Volume Attachments
+description:
+     - Manipulate Rackspace Cloud Block Storage Volume Attachments
+version_added: "1.5"
+options:
+  api_key:
+    description:
+      - Rackspace API key (overrides C(credentials))
+  credentials:
+    description:
+      - File to find the Rackspace credentials in (ignored if C(api_key) and
+        C(username) are provided)
+    default: null
+    aliases: ['creds_file']
+  mountpoint:
+    description:
+      - The mount point to attach the volume to
+    default: null
+    required: true
+  name:
+    description:
+      - Name or id of the volume to attach/detach
+    default: null
+    required: true
+  region:
+    description:
+      - Region the volume and server are located in
+    default: DFW
+  server:
+    description:
+      - Name or id of the server to attach/detach
+    default: null
+    required: true
+  state:
+    description:
+      - Indicate desired state of the resource
+    choices: ['present', 'absent']
+    default: present
+    required: true
+  username:
+    description:
+      - Rackspace username (overrides C(credentials))
+  wait:
+    description:
+      - wait for the volume to be in 'in-use'/'available' state before returning
+    default: "no"
+    choices: [ "yes", "no" ]
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+    default: 300
+requirements: [ "pyrax" ]
+author: Christopher H. Laco, Matt Martz
+notes:
+  - The following environment variables can be used, C(RAX_USERNAME),
+    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
+  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
+    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
+  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
+  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+'''
+
+EXAMPLES = '''
+- name: Attach a Block Storage Volume
+  gather_facts: False
+  hosts: local
+  connection: local
+  tasks:
+    - name: Storage volume attach request
+      local_action:
+        module: rax_cbs_attachments
+        credentials: ~/.raxpub
+        name: my-volume
+        server: my-server
+        mountpoint: /dev/xvdd
+        region: DFW
+        wait: yes
+        state: present
+      register: my_volume
+'''
+
+import sys
+
+from types import NoneType
+
+try:
+    import pyrax
+except ImportError:
+    print("failed=True msg='pyrax required for this module'")
+    sys.exit(1)
+
+NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
+VOLUME_STATUS = ('available', 'attaching', 'creating', 'deleting', 'in-use',
+                 'error', 'error_deleting')
+
+
+def cloud_block_storage_attachments(module, state, name, server, mountpoint,
+                                    wait, wait_timeout):
+    for arg in (state, name, server, mountpoint):
+        if not arg:
+            module.fail_json(msg='%s is required for rax_clb_attachments' % arg)
+
+    cbs = pyrax.cloud_blockstorage
+    cs = pyrax.cloudservers
+    changed = False
+    volumes = []
+    instance = {}
+
+    for volume in cbs.list():
+        if name == volume.display_name or name == volume.id:
+            volumes.append(volume)
+
+    if len(volumes) > 1:
+        module.fail_json(msg='Multiple Storage Volumes were matched by name, '
+                             'try using the Volume ID instead')
+    elif not volumes:
+        module.fail_json(msg='No Storage Volumes were matched by name, '
+                             'try using the Volume ID instead')
+
+    volume = volumes[0]
+    if state == 'present':
+        server = cs.servers.get(server)
+
+        if not server:
+            module.fail_json(msg='No Server was matched by name, '
+                                 'try using the Server ID instead')
+        else:
+            if volume.attachments and volume.attachments[0]['server_id'] == server.id:
+                changed = False
+            elif volume.attachments:
+                module.fail_json(msg='Volume is attached to another server')
+            else:
+                try:
+                    volume.attach_to_instance(server, mountpoint=mountpoint)
+                    changed = True
+                except Exception, e:
+                    module.fail_json(msg='%s' % e.message)
+
+                volume.get()
+
+        for key, value in vars(volume).iteritems():
+            if (isinstance(value, NON_CALLABLES) and
+                    not key.startswith('_')):
+                instance[key] = value
+
+        result = dict(changed=changed, volume=instance)
+
+        if volume.status == 'error':
+            result['msg'] = '%s failed to build' % volume.id
+        elif wait:
+            pyrax.utils.wait_until(volume, 'status', 'in-use',
+                                   interval=3, attempts=0,
+                                   verbose=False)
+
+        if 'msg' in result:
+            module.fail_json(**result)
+        else:
+            module.exit_json(**result)
+
+    elif state == 'absent':
+        server = cs.servers.get(server)
+
+        if not server:
+            module.fail_json(msg='No Server was matched by name, '
+                                 'try using the Server ID instead')
+        else:
+            if volume.attachments and volume.attachments[0]['server_id'] == server.id:
+                try:
+                    volume.detach()
+                    if wait:
+                        pyrax.utils.wait_until(volume, 'status', 'available',
+                                               interval=3, attempts=0,
+                                               verbose=False)
+                    changed = True
+                except Exception, e:
+                    module.fail_json(msg='%s' % e.message)
+
+                volume.get()
+                changed = True
+            elif volume.attachments:
+                module.fail_json(msg='Volume is attached to another server')
+
+        for key, value in vars(volume).iteritems():
+            if (isinstance(value, NON_CALLABLES) and
+                    not key.startswith('_')):
+                instance[key] = value
+
+        result = dict(changed=changed, volume=instance)
+
+        if volume.status == 'error':
+            result['msg'] = '%s failed to build' % volume.id
+
+        if 'msg' in result:
+            module.fail_json(**result)
+        else:
+            module.exit_json(**result)
+
+    module.exit_json(changed=changed, volume=instance)
+
+
+def main():
+    argument_spec = rax_argument_spec()
+    argument_spec.update(
+        dict(
+            mountpoint=dict(),
+            name=dict(),
+            server=dict(),
+            state=dict(default='present', choices=['present', 'absent']),
+            wait=dict(type='bool'),
+            wait_timeout=dict(type='int', default=300)
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=rax_required_together()
+    )
+
+    mountpoint = module.params.get('mountpoint')
+    name = module.params.get('name')
+    server = module.params.get('server')
+    state = module.params.get('state')
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
+
+    setup_rax_module(module, pyrax)
+
+    cloud_block_storage_attachments(module, state, name, server, mountpoint,
+                                    wait, wait_timeout)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.rax import *
+
+### invoke the module
+main()
