@@ -2,12 +2,14 @@
 #
 # It should live in /etc/ansible/hosts
 #
-#   - Comments begin with the '#' character
-#   - Blank lines are ignored
-#   - Groups of hosts are delimited by [header] elements
-#   - You can enter hostnames or ip addresses
-#   - A hostname/ip can be a member of multiple groups
-
+#   - Comments begin with the '#' character.
+#   - Blank lines are ignored.
+#   - Groups of hosts are delimited by [header] elements.
+#   - You can enter hostnames or ip addresses.
+#   - A hostname/ip can be a member of multiple groups.
+#   - If ssh is listening on a non-standard port, you can
+#     put the port number after the hostname/ip with a colon.
+#
 # Ex 1: Ungrouped hosts, specify before any group headers.
 
 ## green.example.com
