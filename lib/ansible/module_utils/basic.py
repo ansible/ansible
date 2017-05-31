@@ -1723,7 +1723,8 @@ class AnsibleModule(object):
         if spec is None:
             spec = self.argument_spec
         if param is None:
-            param= self.params
+            param = self.params
+
         for (k, v) in spec.items():
             wanted = v.get('type', None)
             if k not in param:
@@ -1732,7 +1733,7 @@ class AnsibleModule(object):
                 # Mostly we want to default to str.
                 # For values set to None explicitly, return None instead as
                 # that allows a user to unset a parameter
-                if self.params[k] is None:
+                if param[k] is None:
                     continue
                 wanted = 'str'
 
@@ -1745,7 +1746,7 @@ class AnsibleModule(object):
             except KeyError:
                 self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
             try:
-                self.params[k] = type_checker(value)
+                param[k] = type_checker(value)
             except (TypeError, ValueError):
                 e = get_exception()
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
