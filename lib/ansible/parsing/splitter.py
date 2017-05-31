@@ -94,9 +94,14 @@ def parse_kv(args, check_raw=False):
             else:
                 raw_params.append(orig_x)
 
-        # recombine the free-form params, if any were found, and assign
-        # them to a special option for use later by the shell/command module
-        if len(raw_params) > 0:
+        if len(options) == 0:
+            # if there were no keyword arguments, simply return the raw
+            # arguments verbatim in the _raw_params parameter for use by
+            # the shell/command modules.
+            options[u'_raw_params'] = args
+        elif len(raw_params) > 0:
+            # if there were keyword arguments, then recombine the remaining
+            # raw parameters into the _raw_params parameter.
             options[u'_raw_params'] = ' '.join(raw_params)
 
     return options
