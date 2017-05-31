@@ -218,7 +218,7 @@
     - 'yes'
     - 'no'
 
-### TODO: test expires, fail_on_user
+### TODO: fail_on_user
 
 #
 # Test db ownership
