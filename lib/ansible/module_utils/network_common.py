@@ -27,7 +27,7 @@
 #
 from itertools import chain
 
-from ansible.module_utils.six import iteritems, iterkeys
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.six import iteritems
 
@@ -73,7 +73,6 @@ class Entity(object):
         * fallback - implements fallback function
         * choices - set of valid options
         * default - default value
-
     """
 
     def __init__(self, module, attrs=None, args=[], keys=None, from_argspec=False):
@@ -269,7 +268,7 @@ def dict_combine(base, other):
             else:
                 combined[key] = value
 
-    for key in set(iterkeys(other)).difference(iterkeys(base)):
+    for key in set(other.keys()).difference(base.keys()):
         combined[key] = other.get(key)
 
     return combined

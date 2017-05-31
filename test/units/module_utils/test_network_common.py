@@ -71,7 +71,7 @@ class TestModuleUtilsNetworkCommon(unittest.TestCase):
         self.assertNotIn('key2', result['obj1'])
 
         # list assertions
-        self.assertEqual(result['l1'], [2,1])
+        self.assertEqual(result['l1'], [2, 1])
         self.assertNotIn('l2', result)
         self.assertEqual(result['l3'], [1])
         self.assertNotIn('l4', result)
