@@ -232,6 +232,62 @@ class PluginLoader:
                 self._extra_dirs.append(directory)
                 self._paths = None
 
+
+    def _split_full_path(self, full_path):
+        full_name = os.path.basename(full_path)
+
+
+        splitname = os.path.splitext(full_name)
+        base_name = splitname[0]
+        try:
+            extension = splitname[1]
+        except IndexError:
+            extension = ''
+
+        return full_name, base_name, extension
+
+
+    def _cache_plugin(self, full_path, full_name, base_name, extension):
+        # HACK: We have no way of executing python byte
+        # compiled files as ansible modules so specifically exclude them
+        ### FIXME: I believe this is only correct for modules and
+        # module_utils.  For all other plugins we want .pyc and .pyo should
+        # bew valid
+        if full_path.endswith(('.pyc', '.pyo')):
+            return
+
+        # Module found, now enter it into the caches that match
+        # this file
+        if base_name not in self._plugin_path_cache['']:
+            self._plugin_path_cache[''][base_name] = full_path
+
+        if full_name not in self._plugin_path_cache['']:
+            self._plugin_path_cache[''][full_name] = full_path
+
+        if base_name not in self._plugin_path_cache[extension]:
+            self._plugin_path_cache[extension][base_name] = full_path
+
+        if full_name not in self._plugin_path_cache[extension]:
+                    self._plugin_path_cache[extension][full_name] = full_path
+
+
+    def find_plugins(self, name):
+        plugins = []
+        for path in (p for p in self._get_paths() if os.path.isdir(p)):
+            try:
+                full_paths = (os.path.join(path, f) for f in os.listdir(path))
+            except OSError as e:
+                display.warning("Error accessing plugin paths: %s" % to_text(e))
+
+            for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
+                full_name, base_name, extension = self._split_full_path(full_path)
+                if base_name == name:
+                    self._cache_plugin(full_path, full_name, base_name, extension)
+                    plugins.append(full_path)
+
+        return plugins
+
+
     def find_plugin(self, name, mod_type='', ignore_deprecated=False):
         ''' Find a plugin named name '''
 
@@ -267,36 +323,8 @@ class PluginLoader:
                 display.warning("Error accessing plugin paths: %s" % to_text(e))
 
             for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
-                full_name = os.path.basename(full_path)
-
-                # HACK: We have no way of executing python byte
-                # compiled files as ansible modules so specifically exclude them
-                ### FIXME: I believe this is only correct for modules and
-                # module_utils.  For all other plugins we want .pyc and .pyo should
-                # bew valid
-                if full_path.endswith(('.pyc', '.pyo')):
-                    continue
-
-                splitname = os.path.splitext(full_name)
-                base_name = splitname[0]
-                try:
-                    extension = splitname[1]
-                except IndexError:
-                    extension = ''
-
-                # Module found, now enter it into the caches that match
-                # this file
-                if base_name not in self._plugin_path_cache['']:
-                    self._plugin_path_cache[''][base_name] = full_path
-
-                if full_name not in self._plugin_path_cache['']:
-                    self._plugin_path_cache[''][full_name] = full_path
-
-                if base_name not in self._plugin_path_cache[extension]:
-                    self._plugin_path_cache[extension][base_name] = full_path
-
-                if full_name not in self._plugin_path_cache[extension]:
-                    self._plugin_path_cache[extension][full_name] = full_path
+                full_name , base_name, extension = self._split_full_path(full_path)
+                self._cache_plugin(full_path, full_name, base_name, extension)
 
             self._searched_paths.add(path)
             try:
