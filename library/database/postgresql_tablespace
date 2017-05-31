@@ -1,0 +1,208 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: postgresql_tablespace
+short_description: Add or remove PostgreSQL tablespaces from a remote host.
+description:
+   - Add or remove PostgreSQL tablespaces from a remote host.
+version_added: "1.4"
+options:
+  name:
+    description:
+      - name of the tablespace to add or remove
+    required: true
+    default: null
+  login_user:
+    description:
+      - The username used to authenticate with
+    required: false
+    default: null
+  login_password:
+    description:
+      - The password used to authenticate with
+    required: false
+    default: null
+  login_host:
+    description:
+      - Host running the database
+    required: false
+    default: localhost
+  owner:
+    description:
+      - Name of the role to set as owner of the tablespace
+    required: false
+    default: null
+  directory:
+    description:
+      - The directory that will be used for the tablespace.
+    required: true
+    default: null
+  state:
+    description:
+      - The tablespace state.
+    required: false
+    default: present
+    choices: [ "present", "absent" ]
+notes:
+   - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
+   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
+     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
+requirements: [ psycopg2 ]
+author: Giorgio Valoti
+'''
+
+EXAMPLES = '''
+# Create a new tablespace with name "dbspace" at "/data/dbs"
+- postgresql_tablespace: name=dbspace location=/data/dbs
+'''
+
+try:
+    import psycopg2
+    import psycopg2.extras
+except ImportError:
+    postgresqldb_found = False
+else:
+    postgresqldb_found = True
+
+class NotSupportedError(Exception):
+    pass
+
+
+# ===========================================
+# PostgreSQL module specific support methods.
+#
+
+def set_owner(cursor, tspace, owner):
+    query = "ALTER TABLESPACE \"%s\" OWNER TO \"%s\"" % (tspace, owner)
+    cursor.execute(query)
+    return True
+
+def get_tspace_info(cursor, tspace):
+    query = """
+    SELECT spcname AS name,
+    rolname AS owner
+    FROM pg_tablespace JOIN pg_roles ON pg_roles.oid = pg_tablespace.spcowner
+    WHERE spcname = %(tspace)s
+    """
+    cursor.execute(query, {'tspace':tspace})
+    return cursor.fetchone()
+
+def tspace_exists(cursor, tspace):
+    query = "SELECT * FROM pg_tablespace WHERE spcname=%(tspace)s"
+    cursor.execute(query, {'tspace': tspace})
+    return cursor.rowcount == 1
+
+def tspace_delete(cursor, tspace):
+    if tspace_exists(cursor, tspace):
+        query = "DROP TABLESPACE \"%s\"" % tspace
+        cursor.execute(query)
+        return True
+    else:
+        return False
+
+def tspace_create(cursor, tspace, location, owner):
+    if not tspace_exists(cursor, tspace):
+        if owner:
+            owner = " OWNER \"%s\"" % owner
+        query = 'CREATE TABLESPACE "%s" LOCATION \'%s\'%s' % (tspace,
+                                                              location,
+                                                              owner)
+        cursor.execute(query)
+        return True
+    else:
+        tspace_info = get_tspace_info(cursor, tspace)
+        if owner and owner != tspace_info['owner']:
+            return set_owner(cursor, tspace, owner)
+        else:
+            return False
+
+# ===========================================
+# Module execution.
+#
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            login_user=dict(default="postgres"),
+            login_password=dict(default=""),
+            login_host=dict(default=""),
+            port=dict(default="5432"),
+            tablespace=dict(required=True, aliases=['name']),
+            location=dict(required=True),
+            owner=dict(default=""),
+            state=dict(default="present", choices=["absent", "present"]),
+        ),
+        supports_check_mode = True
+    )
+
+    if not postgresqldb_found:
+        module.fail_json(msg="the python psycopg2 module is required")
+
+    tablespace = module.params["tablespace"]
+    location = module.params["location"]
+    port = module.params["port"]
+    owner = module.params["owner"]
+    state = module.params["state"]
+    changed = False
+
+    # To use defaults values, keyword arguments must be absent, so
+    # check which values are empty and don't include in the **kw
+    # dictionary
+    params_map = {
+        "login_host":"host",
+        "login_user":"user",
+        "login_password":"password",
+        "port":"port"
+    }
+    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
+              if k in params_map and v != '' )
+    try:
+        db_connection = psycopg2.connect(database="template1", **kw)
+        # Enable autocommit so we can create databases
+        if psycopg2.__version__ >= '2.4.2':
+            db_connection.autocommit = True
+        else:
+            db_connection.set_isolation_level(psycopg2
+                                              .extensions
+                                              .ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = db_connection.cursor(
+                cursor_factory=psycopg2.extras.DictCursor)
+    except Exception, e:
+        module.fail_json(msg="unable to connect to database: %s" % e)
+
+    try:
+        if module.check_mode:
+            module.exit_json(changed=True,db=db)
+
+        if state == "absent":
+            changed = tspace_delete(cursor, tablespace)
+
+        elif state == "present":
+            changed = tspace_create(cursor, tablespace, location, owner)
+    except NotSupportedError, e:
+        module.fail_json(msg=str(e))
+    except Exception, e:
+        module.fail_json(msg="Database query failed: %s" % e)
+
+    module.exit_json(changed=changed, tablespace=tablespace)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
