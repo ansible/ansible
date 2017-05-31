@@ -154,6 +154,7 @@ options:
       - path to the JSON file associated with the service account email
     default: null
   subnetwork_region:
+    version_added: "2.4"
     description:
       - Region that subnetwork resides in. (Required for subnetwork to successfully complete)
     default: null
