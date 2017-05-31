@@ -264,7 +264,7 @@ class ForemanInventory(object):
             # attributes.
             groupby = dict()
             for k, v in params.items():
-	        groupby[k] = self.to_safe(str(v))
+                groupby[k] = self.to_safe(str(v))
 
             # The name of the ansible groups is given by group_patterns:
             for pattern in self.group_patterns:
