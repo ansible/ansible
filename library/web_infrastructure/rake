@@ -1,0 +1,181 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# (c) 2013-2014, Raphael Randschau <nicolai86@me.com>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: rake
+short_description: run rake commands
+description:
+  - run arbitrary rake related commands
+
+options:
+  path:
+    description:
+      - path which should cd'd into to run commands
+    required: yes
+  command:
+    description:
+      - an arbitrary rake command to be executed
+    required: yes
+    default: no
+  executable:
+    description:
+      - Bundler executable
+    required: no
+    default: $GEM_HOME/bin/bundle
+  bundled:
+    description:
+      - use `bundle exec rake` instead of plan `rake`
+    required: no
+    default: no
+  force:
+    description:
+      - force command in question
+    required: no
+    default: no
+  diff_paths:
+    description:
+      - paths which must be different for the command to be executed
+    default: []
+'''
+
+EXAMPLES = '''
+# migrate database in a Rails project
+rake: path=/path command="db:migrate"
+
+# compile assets in a Rails project
+rake: path=/path command="assets:precompile" bundled=yes
+'''
+
+import re
+import os
+import sys
+import subprocess
+from subprocess import check_output
+
+class BaseModule(object):
+    module = None
+    def __init__(self, module):
+        self.module = module
+
+    def load_env(self):
+        """load the environment from a users bashrc. Usefull to pick up custom $PATH"""
+        home_path = os.getenv('HOME')
+        env_command = ['/bin/bash', '-c', 'source ' + home_path + '/.bashrc && env']
+
+        proc = subprocess.Popen(env_command, stdout = subprocess.PIPE)
+        env = {}
+        for line in proc.stdout:
+          (key, _, value) = line.decode("utf-8").strip().partition("=")
+          env[key] = value
+
+        proc.communicate()
+
+        return dict(env)
+
+    def get_bundle_path(self):
+        """locate the bundle binary"""
+        extra_paths = []
+
+        gem_home = self.load_env().get('GEM_HOME', None)
+        if gem_home:
+            extra_paths.append(gem_home + '/bin')
+
+        return self.module.get_bin_path('bundle', True, extra_paths)
+
+    def diff(self, path_a, path_b):
+        """returns False if both paths are the same, otherwise True"""
+        try:
+          check_output(['diff', '-r', '-q', path_a, path_b])
+          return False
+        except subprocess.CalledProcessError, error:
+          # when a file/ dir is missing - diff!
+          return True
+
+class RakeModule(BaseModule):
+    def get_rake_path(self):
+        """locate the rake binary"""
+        if self.module.params.get('executable', None):
+            return self.module.params['executable']
+        else:
+            extra_paths = []
+
+            gem_home = self.load_env().get('GEM_HOME')
+            if gem_home:
+                extra_paths.append(gem_home + '/bin')
+
+            return self.module.get_bin_path('rake', True, extra_paths)
+
+    def run_command(self, command):
+        """run artibrary rake command"""
+        if self.module.check_mode:
+            return { 'changed': False, 'check_mode': true }
+
+        os.chdir(self.module.params['path'])
+
+        force = self.module.params.get('force', False)
+        if not force:
+           has_diffs = False
+           diff_paths = self.module.params.get('diff_paths', [])
+           if diff_paths != None and len(diff_paths) > 0:
+             for path in diff_paths:
+                 has_diffs = has_diffs or self.diff(path['current'], path['next'])
+                 has_diffs = has_diffs or not os.path.exists(path['current'])
+
+             if not has_diffs:
+                 return { 'changed': False, 'has_diffs': False }
+
+        cmd = ''
+        if self.module.params.get('bundled', None):
+            cmd = self.get_bundle_path() + ' exec rake'
+        else:
+            cmd = self.get_rake_path()
+
+        cmd = "{0} {1}".format(cmd, command)
+
+        rc, stdout, stderr = self.module.run_command(cmd, check_rc=True)
+        return { 'changed': True, 'stdout': stdout, 'stderr': stderr, 'rc': rc, 'command': cmd, 'has_diffs': True }
+
+def main():
+    global module
+    module = AnsibleModule(
+        argument_spec = dict(
+            command        = dict(required=True, type='str'),
+            executable     = dict(required=False, type='str'),
+            path           = dict(required=True, type='str'),
+            bundled        = dict(required=False, type='bool'),
+            force          = dict(required=False, type='bool'),
+            diff_paths     = dict(required=False, type='list')
+        ),
+        supports_check_mode = True,
+        mutually_exclusive = [ ],
+    )
+
+    rake_module = RakeModule(module)
+
+    result = {}
+    if module.params.get('command', None):
+        command = module.params['command']
+        result = rake_module.run_command(command)
+
+    module.exit_json(**result)
+
+from ansible.module_utils.basic import *
+
+main()
