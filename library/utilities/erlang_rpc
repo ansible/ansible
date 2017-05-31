@@ -1,0 +1,130 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Dmitry Fedorov <gmajere@gmail.com>
+#
+# 
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: erlang_rpc
+author: Dmitry Fedorov
+version: "-"
+short_description: Communicate with The Erlang nodes via rpc:call/4
+description:
+    - Evaluates apply(Module, Function, Args) on the remote erlang node and returns the corresponding value Res, or {badrpc, Reason} if the call fails.
+options:
+    node:
+        required: true
+        aliases: [ name ]
+        description:
+            - The Erlang node name to communicate with.
+    cookie:
+        required: false
+        aliases: [ security ]
+        description:
+            - The Erlang node cookie. If not specified default ~/.erlang_cookie will be used.
+    module:
+        required: true
+        description:
+            - Erlang module - module().
+    method:
+        required: true
+        description:
+            - Erlang function - atom()
+    args:
+        required: false
+        default: ''
+        description:
+            - Called function arguments - [term()]. Must be comma separated
+'''
+
+EXAMPLES = '''
+# Example get cookie from remote erlang node
+- erlang_rpc: node=erlang_node@127.0.0.1 
+              module=erlang
+              method=get_cookie
+
+#Example set cookie on remote erlang node
+- erlang_rpc: node=erlang_node@localhost
+              module=erlang
+              method=set_cookie
+              args=\'erlang_node@localhost\',cookie
+'''
+
+import socket
+import random
+
+def is_valid_ip(address):
+    try:
+        socket.inet_aton(address)
+        return True
+    except socket.error:
+        return False
+
+# ===========================================
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            node=dict(required=True, aliases=['name']),
+            cookie=dict(required=False, aliases=['security']),
+            module=dict(required=True,),
+            method=dict(required=True,),
+            args=dict(required=False, default=''),
+
+        ),
+    )
+
+    node   = module.params['node']
+    cookie = module.params['cookie']
+    erlang_module = module.params['module']
+    method = module.params['method']
+    args   = module.params['args']
+    cmd    = 'erl -noshell'
+
+    try:
+       _, address = node.split('@') 
+    except ValueError:
+        module.fail_json(msg="Invalid Erlang Node Name Passed - %s" % node)
+
+    tmp_name = "ansible_%s@%s" % (random.randint(1, 100), address)
+
+    if is_valid_ip(address):
+        cmd = "%s -name '%s'" % (cmd, tmp_name)
+    else:
+        cmd = "%s -sname '%s'" % (cmd, tmp_name)
+
+    if cookie:
+        cmd = "%s -setcookie '%s'" % (cmd, cookie)
+    
+	if '"' in args:
+        args = args.replace('"', '\\\"')
+
+    cmd = "%s -eval \"io:format(\\\"~p~n\\\", [rpc:call('%s', '%s', '%s', [%s])]).\" -s erlang halt " % (cmd, node, erlang_module, method, args)
+    print cmd
+    rc, out, err = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg=err)
+
+    module.exit_json(changed=True, out=out, cmd=cmd,)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()

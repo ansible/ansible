@@ -1,0 +1,259 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Dmitry Fedorov <gmajere@gmail.com>
+#
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: erlang_rebar
+short_description: Erlang Rebar Wrapper.
+description:
+     - Rebar provides support for the most commonly encountered development activities
+version_added: "-"
+options:
+  command:
+    choices: [ 'compile','eunit','doc','clean','check_deps','create','create_app','create_node','ct','delete_deps','escriptize','generate','generate_upgrade','get_deps','list_deps','update_deps','xref' ]
+    description:
+      - The name of the Erlang rebar command to run.
+        Allowed commands are
+        compile,
+        eunit,
+        doc,
+        clean,
+        check_deps,
+        create,
+        create_app,
+        create_node,
+        ct,
+        delete_deps,
+        escriptize,
+        generate,
+        generate_upgrade,
+        get_deps,
+        list_deps,
+        update_deps,
+        xref.
+    required: true
+  app_path:
+    description:
+      - The path to the root of the Erlang application where rebar could do things.
+    required: true
+  config:
+    description:
+      - The path to rebar.config to use.
+    required: false
+  jobs:
+    description:
+      - Number of concurrent workers a rebar command may use.
+    required: false
+  force:
+    description:
+      - Force.
+    required: false
+  profile:
+    description:
+      - Profile this run of rebar.
+    required: false
+  template:
+    description:
+      - Specified erlang template for create command.
+    required: false
+  appid:
+    description:
+      - Specified app id for create-app command.
+    required: false
+  nodeid:
+    description:
+      - Specified node id for create-node command.
+    required: false
+  dump_spec:
+    description:
+      - Write reltool target spec to reltool.spec.
+    required: false
+  previous_release:
+    description:
+      - Path to previous release code dir.
+    required: false
+  suites:
+    description:
+      - foo,bar - run <test>/foo_SUITE and <test>/bar_SUITE.
+    required: false
+  tests:
+    description:
+      - bar - For every existing suite, run the first test
+        whose name starts with bar and, if no such test exists, run the test
+        whose name starts with bar in the suite's _tests module
+    required: false
+  case:
+    description:
+      - case=<mycase> - run individual test case foo_SUITE:mycase.
+    required: false
+notes:
+   - The Erlang (http://www.erlang.org/) and rebar (U(https://github.com/rebar/rebar)) must be installed on the remote host.
+   - This module can operate only with one rebar command at once.
+requirements: [ "erlang", "rebar" ]
+author: Dmitry Fedorov
+'''
+
+EXAMPLES = """
+# Example build erlang release from Ansible Cookbook
+- erlang_rebar: app_path=/path/to/application
+                command=get_deps
+- erlang_rebar: app_path=/path/to/application
+                command=compile
+- erlang_rebar: app_path=/path/to/application
+                command=generate
+
+# Example build updated erlang release
+- erlang_rebar: app_path=/path/to/application
+                command=update_deps
+- erlang_rebar: app_path=/path/to/application
+                command=compile
+- erlang_rebar: app_path=/path/to/application
+                command=generate
+- erlang_rebar: app_path=/path/to/application
+                command=generate_appups
+                previous_release=/path/to/previous/release
+- erlang_rebar: app_path=/path/to/application
+                command=generate_upgrade
+                previous_release=/path/to/previous/release
+"""
+
+
+import os
+
+def main():
+
+    command_allowed_param_map = dict(
+        clean=(),
+        compile=(),
+        escriptize=(),
+        create=('template',),
+        create_app=('appid',),
+        create_node=('nodeid'),
+        list_templates=(),
+        doc=(),
+        check_deps=(),
+        get_deps=(),
+        update_deps=(),
+        up_deps=(),
+        delete_deps=(),
+        list_deps=(),
+        generate=('dump_spec'),
+        overlay=(),
+        generate_upgrade=('previous_release'),
+        generate_appups=('previous_release'),
+        eunit=('suites', 'tests',),
+        ct=('suites', 'case',),
+        qc=(),
+        xref=(),
+    )
+
+    command_required_param_map = dict(
+        create=('template',),
+        generate_upgrade=('previous_release', ),
+        generate_appups=('previous_release', ),
+    )
+
+    command_normalized_map = dict(
+        create_app=('create-app'),
+        create_node=('create-node'),
+        list_templates=('list-templates'),
+        check_deps=('check-deps'),
+        get_deps=('get-deps'),
+        update_deps=('update-deps'),
+        up_deps=('update-deps'),
+        delete_deps=('delete-deps'),
+        list_deps=('list-deps'),
+        generate_upgrade=('generate-upgrade'),
+        generate_appups=('generate-appups'),
+    )
+
+    general_params = ('config', 'jobs')
+    general_boolen_params = ('force', 'profile')
+    specific_params = ('template', 'appid', 'nodeid', 'dump_spec', 'previous_release', 'tests', 'suites', 'case')
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            command          = dict(default=None, required=True, choices=command_allowed_param_map.keys()),
+            app_path         = dict(default=None, required=True),
+
+            config           = dict(default=None, required=False),
+            jobs             = dict(default=None, required=False),
+            force            = dict(default=None, required=False),
+            profile          = dict(default=None, required=False),
+
+            template         = dict(default=None, required=False),
+            appid            = dict(default=None, required=False),
+            nodeid           = dict(default=None, required=False),
+            dump_spec        = dict(default=None, required=False),
+            previous_release = dict(default=None, required=False),
+            suites           = dict(default=None, required=False),
+            tests            = dict(default=None, required=False),
+            case             = dict(default=None, required=False),
+        ),
+        supports_check_mode=True
+    )
+    command = module.params['command']
+    app_path = module.params['app_path']
+
+    for param in specific_params:
+        value = module.params[param]
+        if value and param not in command_allowed_param_map[command]:
+            module.fail_json(msg='%s param is incompatible with command=%s' % (param, command))
+
+    for param in command_required_param_map.get(command, ()):
+        if not module.params[param]:
+            module.fail_json(msg='%s param is required for command=%s' % (param, command))
+
+    os.chdir(app_path)
+    rebar_path = module.get_bin_path('rebar', True, opt_dirs=[app_path,])
+
+    cmd = rebar_path
+
+    for param in general_params:
+        if module.params[param]:
+            cmd = '%s --%s=%s' % (cmd, param, module.params[param])
+    for param in general_boolen_params:
+        if module.params[param]:
+            cmd = '%s --%s' % (cmd, param)
+
+    if command in command_normalized_map:
+        command = command_normalized_map[command]
+
+    cmd = "%s %s" % (cmd, command)
+
+    for param in specific_params:
+        if module.params[param]:
+            cmd = '%s %s=%s' %(cmd, param, module.params[param])
+
+    if module.check_mode:
+        module.exit_json(changed=True, cmd=cmd)
+
+    rc, out, err = module.run_command(cmd)
+
+    if rc != 0:
+        module.fail_json(msg=err)
+
+    module.exit_json(changed=True, out=out, cmd=cmd, app_path=app_path,
+                     settings=module.params['config'])
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
