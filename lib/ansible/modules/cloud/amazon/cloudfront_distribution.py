@@ -351,7 +351,7 @@ options:
 
     comment:
       description:
-        - A unique comment to describe the cloudfront distribution.
+        - A comment that describes the cloudfront distribution.
           Applies to both distributions and streaming distributions.
           If not specified, it defaults to a generic message that it has been
           created with Ansible, and a datetime stamp.
@@ -1397,8 +1397,8 @@ class CloudFrontValidationManager(object):
         try:
             if distribution_id is None and alias is None:
                 self.module.fail_json(
-                    msg="distribution_id or alias must be specified " +
-                    "for updating or deleting a distribution.")
+                    msg="distribution_id, alias or caller_reference must be " +
+                    "specified for updating or deleting a distribution.")
             if distribution_id is None:
                 distribution_id = (
                     self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(
