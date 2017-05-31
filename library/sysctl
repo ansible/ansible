@@ -1,0 +1,171 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, David "DaviXX" CHANIAL <david.chanial@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: sysctl
+short_description: Permit to handle sysctl.conf entries
+description:
+    - This module handle the entries in C(/etc/sysctl.conf)
+version_added: "0.1"
+options:
+    key:
+        description:
+            - "short path, point separated to the sysctl entry eg: C(vm.swappiness)"
+        required: true
+        default: null
+        aliases: []
+    value:
+        description:
+            - "value to affect to the sysctl entry, to not provide if state=absent"
+        required: false
+        default: null
+        aliases: []
+    state:
+        description:
+            - state=present the entry is added if not exist, or updated if exist
+              state=absent the entry is removed if exist
+        required: true
+        choices: [ "present", "absent" ]
+        default: present
+examples:
+    - code: "sysctl: key=vm.swappiness val=5 state=present"
+      description: "Add vm.swappiness=5 to /etc/sysctl.conf"
+notes: []
+requirements: []
+author: David "DaviXX" CHANIAL <david.chanial@gmail.com>
+'''
+
+# ==============================================================
+
+def reload_sysctl():
+    cmd = [ '/sbin/sysctl', '-p' ]
+    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = call.communicate()
+    if call.returncode == 0:
+        return 0, ''
+    else:
+        return call.returncode, out+err
+
+def write_sysctl(lines, dest):
+    fs_w = open(dest, 'w')
+    for l in lines:
+        fs_w.write(l)
+
+    fs_w.flush()
+    fs_w.close()
+
+# ==============================================================
+# main
+
+def main():
+
+    # defining module
+    module = AnsibleModule(
+        argument_spec = dict(
+            key = dict(required=True),
+            value = dict(required=False),
+            state = dict(default='present', choices=['present', 'absent'])
+        )
+    )
+    
+    # parameters
+    sysctl_key = module.params["key"]
+    sysctl_value = module.params["value"]
+    sysctl_state = module.params["state"]
+    
+    # checking if value is supplied when state is absent
+    if sysctl_state == 'absent' and sysctl_value is not None:
+        module.fail_json(msg="value=x must not be supplied when state=absent")
+    
+    # be sure that value is supplied with state=present
+    if sysctl_state == 'present' and sysctl_value is None:
+        module.fail_json(msg="value=x must be supplied when state=present")
+
+    # prepare vars
+    new_line = "{} = {}\n".format(sysctl_key, sysctl_value)
+    to_write = []
+    changed = False
+    founded = False
+    
+    # reading the file
+    for line in open('/etc/sysctl.conf', 'r').readlines():
+        if not line.strip():
+            to_write.append(line)
+            continue
+        if line.strip().startswith('#'):
+            to_write.append(line)
+            continue
+        if len(line.split('=')) != 2:
+            # not sure what this is or why it is here
+            # but it is not our fault so leave it be
+            to_write.append(line)
+            continue
+
+        # write line if not the one searched
+        ld = {}
+        ld['key'], ld['val'] = line.split('=')
+        ld['key'] = ld['key'].strip()
+
+        if ld['key'] != sysctl_key:
+            to_write.append(line)
+            continue
+
+        # should be absent ?
+        if sysctl_state == 'absent':
+            # not writing the founded line
+            # mark as changed
+            changed = True
+                
+        # should be present
+        if sysctl_state == 'present':
+            # is the founded line equal to the wanted one ?
+            ld['val'] = ld['val'].strip()
+            if ld['val'] == sysctl_value:
+                # line is equal, writing it without update (but cancel repeats)
+                if changed == False and founded == False:
+                    to_write.append(line)
+                    founded = True
+            else:
+                # update the line (but cancel repeats)
+                if changed == False and founded == False:
+                    to_write.append(new_line)
+                    changed = True
+                continue
+
+    # if not changed, but should be present, so we have to add it
+    if sysctl_state == 'present' and changed == False and founded == False:
+        to_write.append(new_line)
+        changed = True
+
+    # has changed ?
+    res = 0
+    if changed == True:
+        write_sysctl(to_write, '/etc/sysctl.conf')
+        res,msg = reload_sysctl()
+
+    module.exit_json(changed=changed, state=sysctl_state, key=sysctl_key)
+    module.fail_json(msg='Unexpected position reached')
+    sys.exit(0)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
