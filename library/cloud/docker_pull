@@ -1,0 +1,288 @@
+#!/usr/bin/python
+#
+
+# (c) 2014, Pavel Antonov <antonov@adwz.ru>
+# (c) 2014, Joshua Conner <joshua.conner@gmail.com>
+# (c) 2014, Victor Lin <hello@victorlin.me>
+#
+# This file is part of Ansible
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+######################################################################
+
+DOCUMENTATION = '''
+---
+module: docker_pull
+author: Victor Lin
+version_added: "1.6"
+short_description: pull docker image
+description:
+     - Pull docker image from a public or private repository
+options:
+  name:
+    description:
+       - Image name to pull from repository, e.g. "paintedfox/postgresql"
+    required: true
+    default: null
+    aliases: []
+  tag:
+    description:
+       - Image tag to pull from repository
+    required: false
+    default: "latest"
+    aliases: []
+  docker_url:
+    description:
+      - URL of docker host to issue commands to
+    required: false
+    default: unix://var/run/docker.sock
+    aliases: []
+  timeout:
+    description:
+      - Set image pulling operation timeout
+    required: false
+    default: 600
+    aliases: []
+  repository:
+    description:
+      - The URL to repository
+    required: false
+    default: "https://index.docker.io/v1/"
+    aliases: []
+  username:
+    description:
+      - Registry username (if pulling from a private registry)
+    required: false
+    default: null
+    aliases: []
+  password:
+    description:
+      - Registry password (if pulling from a private registry)
+    required: false
+    default: null
+    aliases: []
+  email:
+    description:
+      - Registry email (if pulling from a private registry)
+    required: false
+    default: null
+    aliases: []
+requirements: [ "docker-py" ]
+'''
+
+EXAMPLES = '''
+Pull an image from the default public repository
+
+- hosts: db
+  sudo: yes
+  tasks:
+  - name: pull postgresql docker image
+    docker_pull: name="paintedfox/postgresq"
+
+Pull an image from a private repository
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: pull my web app image
+    docker_pull: >
+        name="my/app"
+        tag=v1.0.0
+        repository="https://example.com/v1/"
+        username=eggs
+        password=spams
+        email=eggs@example.com
+
+'''
+
+try:
+    import sys
+    import json
+    import docker.client
+    from requests.exceptions import RequestException
+    from urlparse import urlparse
+except ImportError, e:
+    print "failed=True msg='failed to import python module: %s'" % e
+    sys.exit(1)
+
+try:
+    from docker.errors import APIError as DockerAPIError
+except ImportError:
+    from docker.client import APIError as DockerAPIError
+
+
+def iterate_jsons(text):
+    """Try to iterate json chunks from a givn text input.
+
+    docker-py somehow (maybe a bug or what) returns a big chunk of
+    concatenated json chunks in stream mode. Looks like this
+
+        {"chunk": 1}{"chunk": 2}{"chunk": 3} ...
+
+    This method will try to parse json chunks by chunks and yield them back
+
+    """
+    # feed char by char and parse, see does it works
+    json_buffer = []
+    for char in text:
+        json_buffer.append(char)
+        whole_chunk = ''.join(json_buffer)
+        try:
+            json_chunk = json.loads(whole_chunk)
+        except ValueError:
+            continue
+        json_buffer = []
+        yield json_chunk
+
+
+class DockerPuller(object):
+
+    def __init__(self, module):
+        self.module = module
+        self.name = self.module.params.get('name')
+        self.tag = self.module.params.get('tag')
+        self.repository = self.module.params.get('repository')
+
+        docker_url = urlparse(module.params.get('docker_url'))
+        self.client = docker.Client(
+            base_url=docker_url.geturl(),
+            timeout=module.params.get('timeout'),
+        )
+
+        self.changed = False
+        self.pulling_logs = []
+        self.error_msg = None
+
+    def pull(self):
+        """Pull an image from index.docker.io or a hosted private registry
+
+        """
+        name = self.module.params.get('name')
+        tag = self.module.params.get('tag')
+        username = self.module.params.get('username')
+        email = self.module.params.get('email')
+        password = self.module.params.get('password')
+        repository = self.module.params.get('repository')
+
+        # get existing matched images
+        old_images = self.get_images()
+
+        if username:
+            # TODO: should we return error when email and password
+            # is not present?
+            self.client.login(
+                username,
+                email=email,
+                password=password,
+                registry=repository,
+            )
+
+        stream = self.client.pull(name, tag=tag, stream=True)
+
+        last_update = None
+        for chunk in stream:
+            for json_chunk in iterate_jsons(chunk):
+                if 'error' in json_chunk:
+                    self.error_msg = json_chunk['error']
+                    return None
+                # The stream from client.pull() is SUPER noisy.
+                #
+                # Rather than returning hundreds of lines where, for many, the
+                # only change from the previous line is a slight difference in
+                # an ASCII progress bar, we just keep a log of each line where
+                # either the id or status changed from the previous line. This
+                # should give the user a good idea of what's going on without
+                # overwhelming them with unnecessary informa    tion.
+                current_update = (
+                    json_chunk.get('id'),
+                    json_chunk.get('status'),
+                )
+                if current_update != last_update:
+                    self.pulling_logs.append(
+                        '[%s] %s' % current_update,
+                    )
+                    last_update = current_update
+
+        new_images = self.get_images()
+
+        if not old_images or old_images[0]['Id'] != new_images[0]['Id']:
+            self.changed = True
+        return new_images[0]
+
+    def get_images(self):
+        filtered_images = []
+        images = self.client.images()
+        for img in images:
+            # Docker-py version >= 0.3 (Docker API >= 1.8)
+            if 'RepoTags' in img:
+                repotag = '%s:%s' % (
+                    getattr(self, 'name', ''),
+                    getattr(self, 'tag', 'latest'),
+                )
+                if not self.name or repotag in img['RepoTags']:
+                    filtered_images.append(img)
+            # Docker-py version < 0.3 (Docker API < 1.8)
+            elif (
+                (not self.name or self.name == img['Repository']) and
+                (not self.tag or self.tag == img['Tag'])
+            ):
+                filtered_images.append(img)
+        return filtered_images
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name            = dict(required=True),
+            tag             = dict(required=False, default="latest"),
+            docker_url      = dict(default='unix://var/run/docker.sock'),
+            timeout         = dict(default=600, type='int'),
+            repository      = dict(default='https://index.docker.io/v1/'),
+            username        = dict(required=False, default=None),
+            password        = dict(required=False, default=None),
+            email           = dict(required=False, default=None),
+        ),
+    )
+
+    try:
+        failed = False
+        extra_result = {}
+        puller = DockerPuller(module)
+        result = puller.pull()
+        if not result:
+            failed = True
+            msg = 'Error: %s' % puller.error_msg
+        else:
+            msg = 'Image %s pulled' % result['Id']
+            extra_result['image'] = result
+    except DockerAPIError as e:
+        failed = True
+        msg = 'Docker API error: %s' % e.explanation
+    except RequestException as e:
+        failed = True
+        msg = repr(e)
+
+    module.exit_json(
+        failed=failed,
+        changed=puller.changed,
+        msg=msg,
+        log=puller.pulling_logs,
+        **extra_result
+    )
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
