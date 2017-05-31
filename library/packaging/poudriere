@@ -1,0 +1,223 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Scott Sturdivant
+# Written by Scott Sturdivant <scott.sturdivant@gmail.com>
+# Base on the apt module written by bleader <bleader@ratonland.org>
+# that was based on pkgin module written by Shaun Zinck
+# <shaun.zinck at gmail.com>
+#  that was based on pacman module written by Afterburn
+#  <http://github.com/afterburn> 
+#   that was based on apt module written by Matthew Williams
+#   <matthew@flowroute.com>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: poudriere
+short_description: Manages poudriere
+description:
+  - Manages (I)poudriere jails and ports trees for FreeBSD.
+version_added: "1.3"
+options:
+  jail:
+    description:
+      - A jail name.
+    required: false
+    default: null
+  state:
+    description:
+      - Indicates the desired C(jail) or C(port) state.
+    required: false
+    default: present
+    choices: ['present', 'absent', 'latest', 'running', 'stopped']
+  tree:
+    description:
+      - A ports tree name.
+    required: false
+    default: null
+  arch:
+    description:
+      - If C(jail) and C(state=='present') then the jail will be created with this arch.
+    required: false
+    default: null
+  version:
+    description:
+      - If C(jail) and C(state=='present') then the jail will be created with  this version.
+author: Scott Sturdivant
+'''
+
+EXAMPLES = '''
+# Create a ports tree.
+poudriere: tree=default
+
+# Update a ports tree.
+poudriere: tree=default state=latest
+
+# Create a jail
+poudriere: jail=91amd64 arch=amd64 version=9.1-RELEASE
+
+# Start the jail, using the already created jail
+poudriere: jail=91amd64 tree=default state=running
+
+# Update the jail
+poudriere: jail=91amd64 state=latest
+
+# Stop the jail
+poudriere: jail=91amd64 tree=default state=stopped
+
+# Remove the jail
+poudriere: jail=91amd64 state=absent
+'''
+
+
+def jail_exists(m, jail):
+    rc, out, err = m.run_command('%s jail -l' % POUDRIERE_CMD)
+    existing_jails = [line.split()[0] for line in out.splitlines()]
+    return jail in existing_jails
+
+def tree_exists(m, tree):
+    rc, out, err = m.run_command('%s ports -l' % POUDRIERE_CMD)
+    existing_trees = [line.split()[0] for line in out.splitlines()]
+    return tree in existing_trees
+
+def create_tree(m, jail, tree, arch, version):
+    if tree_exists(m, tree):
+        m.exit_json(changed=False)
+
+    rc, out, err = m.run_command('%s ports -c -p %s' % (POUDRIERE_CMD, tree))
+    if rc:
+        m.fail_json(msg='Failed to create %s ports tree.' % tree)
+    else:
+        m.exit_json(changed=True, msg='Created %s ports tree.' % tree)
+
+def create_jail(m, jail, tree, arch, version):
+    if jail_exists(m, jail):
+        m.exit_json(changed=False)
+
+    rc, out, err = m.run_command('%s jail -c -j %s -a %s -v %s' % (POUDRIERE_CMD, jail, arch, version))
+    if rc:
+        m.fail_json(msg='Failed to create %s jail: %s' % (jail, err))
+    else:
+        m.exit_json(changed=True, msg='Created %s.' % jail)
+
+def update_tree(m, jail, tree, arch, version):
+    if not tree_exists(m, tree):
+        create_tree(m, tree, None, None)
+
+    rc, out, err = m.run_command('%s ports -u -p %s' % (POUDRIERE_CMD, tree))
+    if rc:
+        m.fail_json(msg='Failed to update %s ports tree: %s' % (tree, err))
+    elif 'No updates needed' in out:
+        m.exit_json(changed=False)
+    else:
+        m.exit_json(changed=True, msg='Updated %s.' % tree)
+
+def update_jail(m, jail, tree, arch, version):
+    rc, out, err = m.run_command('%s jail -u -j %s' % (POUDRIERE_CMD, jail))
+    if 'No updates needed' in out:
+        m.exit_json(changed=False)
+    elif rc:
+        m.fail_json(msg='Failed to update %s jail: %s' % (jail, err))
+    else:
+        m.exit_json(changed=True, msg='Updated %s.' % jail)
+
+def start_jail(m, jail, tree, arch, version):
+    cmd = '%s jail -s -j %s' % (POUDRIERE_CMD, jail)
+    if tree:
+        cmd += ' -p %s' % tree
+
+    rc, out, err = m.run_command(cmd)
+    if 'already running' in err:
+        m.exit_json(changed=False)
+    elif rc:
+        m.fail_json(msg='Failed to start %s jail: %s' % (jail, err))
+    else:
+        m.exit_json(changed=True, msg='Started %s.' % jail)
+
+def stop_jail(m, jail, tree, arch, version):
+    cmd = '%s jail -k -j %s' % (POUDRIERE_CMD, jail)
+    if tree:
+        cmd +=' -p %s' % tree
+    rc, out, err = m.run_command(cmd)
+    if 'No such jail running' in err:
+        m.exit_json(changed=False)
+    elif rc:
+        m.fail_json(msg='Failed to stop %s jail: %s' % (jail, err))
+    else:
+        m.exit_json(changed=True, msg='Stopped %s.' % jail)
+
+def remove_jail(m, jail, tree, arch, version):
+    if not jail_exists(m, jail):
+        m.exit_json(changed=False)
+
+    rc, out, err = m.run_command('%s jail -d -j %s' % (POUDRIERE_CMD, jail))
+    if rc:
+        m.fail_json(msg='Failed to remove %s jail: %s' % (jail, err))
+    else:
+        m.exit_json(changed=True, msg='Removed %s.' % jail)
+
+def remove_tree(m, jail, tree, arch, version):
+    if not tree_exists(m, tree):
+        m.exit_json(changed=False)
+
+    rc, out, err = m.run_command('%s ports -d -p %s' % (POUDRIERE_CMD, tree))
+    if rc:
+        m.fail_json(msg='Failed to remove %s tree: %s' % (tree, err))
+    else:
+        m.exit_json(changed=True, msg='Removed %s.' % tree)
+
+def main():
+    module = AnsibleModule(
+             argument_spec = dict(
+                 jail     = dict(required=False),
+                 state    = dict(default='present', choices=['present', 'absent', 'latest', 'running', 'stopped']),
+                 tree     = dict(required=False),
+                 arch     = dict(required=False),
+                 version  = dict(required=False),
+                 ),
+             required_one_of = [['jail', 'tree']],
+             )
+
+    global POUDRIERE_CMD
+    POUDRIERE_CMD = module.get_bin_path('poudriere')
+
+    p = module.params
+
+    dispatch = { 'jail' : { 'present' : create_jail,
+                            'absent'  : remove_jail,
+                            'latest'  : update_jail,
+                            'running' : start_jail,  
+                            'stopped' : stop_jail,   },
+                 'tree' : { 'present' : create_tree,
+                            'absent'  : remove_tree,
+                            'latest'  : update_tree, },
+               }
+
+    if p['tree'] and p['jail'] is None:
+        action = 'tree'
+    else:
+        action = 'jail'
+    state = p['state']
+
+    if action == 'jail' and state == 'present' and (p['arch'] is None or p['version'] is None):
+        module.fail_json(msg='Need to specify arch and version if creating a jail.')
+
+    dispatch[action][state](module, p['jail'], p['tree'], p['arch'], p['version'])
+
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
