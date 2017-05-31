@@ -1,0 +1,143 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: sosreport
+short_description: Gather system state data into an archive.
+description:
+ - Allows you to gather the current system state information into an archive returning the path to the archive and MD5 file.
+version_added: "1.5"
+options:
+    name:
+        description:
+             - Specify a name to be included in the archive name.
+        required: false
+        default: null
+    ticket_number:
+        description:
+             - Put in a ticket number.
+        required: false
+        default: null
+    skip_plugins:
+        description:
+             - Disable the specified plugin(s). Multiple plug-ins may be specified as a comma-separated list.
+        required: false
+        default: null
+    enable_plugins:
+        description:
+             - Enable the specified plugin(s). Multiple plug-ins may be specified as a comma-separated list.
+        required: false
+        default: null
+    only_plugins:
+        description:
+             - Only enable the specified plugin(s). Multiple plug-ins may be specified as a comma-separated list.
+        required: false
+        default: null
+    config_file:
+        description:
+             - Specify an alternate configuration file.
+        required: false
+        default: null
+    temp_dir
+        description:
+             - Specify an alternate temporary directory.
+        required: false
+        default: null
+requirements:
+ - sos
+author: Richard Isaacson
+'''
+
+EXAMPLES = '''
+# Basic execution creating an archive.
+- sosreport:
+
+# Execution skippint the system plugin.
+- sosreport: skip_plugins:system
+'''
+
+from cStringIO import StringIO
+
+#================================================
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(required=False, type='str'),
+            ticket_number=dict(required=False, type='int'),
+            skip_plugins=dict(required=False, type='str'),
+            enable_plugins=dict(required=False, type='str'),
+            only_plugins=dict(required=False, type='str'),
+            config_file=dict(required=False, type='str'),
+            tmp_dir=dict(required=False, type='str')
+        ),
+        supports_check_mode=False
+    )
+
+    sosreport_path = module.get_bin_path('sosreport', True)
+
+    name           = module.params['name']
+    ticket_number  = module.params['ticket_number']
+    skip_plugins   = module.params['skip_plugins']
+    enable_plugins = module.params['enable_plugins']
+    only_plugins   = module.params['only_plugins']
+    config_file    = module.params['config_file']
+    tmp_dir        = module.params['tmp_dir']
+
+    if (skip_plugins or enable_plugins) and only_plugins:
+        module.fail_json(msg="skip_plugins or enable_plugins and only_plugins are mutually exclusive")
+
+    result = {'changed': False}
+
+    sosreport_command = "%s --batch" % sosreport_path
+    if skip_plugins:
+        sosreport_command = "%s --skip-plugins %s" % (sosreport_command, skip_plugins)
+    if enable_plugins:
+        sosreport_command = "%s --enable-plugins %s" % (sosreport_command, enable_plugins)
+    if only_plugins:
+        sosreport_command = "%s --only-plugins %s" % (sosreport_command, only_plugins)
+    if config_file:
+        sosreport_command = "%s --config-file %s" % (sosreport_command, config_file)
+    if name:
+        sosreport_command = "%s --name %s" % (sosreport_command, name)
+    if ticket_number:
+        sosreport_command = "%s --ticket-number %s" % (sosreport_command, ticket_number)
+    if tmp_dir:
+        sosreport_command = "%s --tmp-dir %s" % (sosreport_command, tmp_dir)
+
+    # result['command'] = sosreport_command
+
+    rc, out, err = module.run_command(sosreport_command, check_rc=True)
+    result['changed'] = True
+    in_string = StringIO(out)
+    while True:
+        in_line = in_string.readline()
+        if in_line == '': break
+        if 'Your sosreport has been generated and saved in:' in in_line:
+            result['sosreport_archive'] = in_string.readline().strip()
+            result['sosreport_md5'] = "%s.md5" % result['sosreport_archive']
+
+    module.exit_json(**result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
