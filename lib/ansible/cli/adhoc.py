@@ -153,7 +153,7 @@ class AdHocCLI(CLI):
         elif self.options.one_line:
             cb = 'oneline'
         else:
-            cb = 'minimal'
+            cb = C.DEFAULT_STDOUT_CALLBACK
 
         run_tree=False
         if self.options.tree:
