@@ -897,6 +897,9 @@ class Connection(ConnectionBase):
             display.vvv(u'sending stop: %s' % cmd)
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
+            status_code = p.wait()
+            if status_code != 0:
+                raise AnsibleError("Cannot reset connection:\n%s" % stderr)
 
         self.close()
 
