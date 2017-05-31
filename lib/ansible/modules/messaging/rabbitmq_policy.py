@@ -79,7 +79,7 @@ options:
     description:
       - Specify a custom install prefix to a RabbitMQ installation
     required: false
-    version_added: "2.3"
+    version_added: "2.4"
     default: null
 '''
 
