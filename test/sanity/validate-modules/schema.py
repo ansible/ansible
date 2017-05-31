@@ -47,6 +47,7 @@ option_schema = Schema(
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         'suboptions': Any(None, *list_dict_suboption_schema),
+        'deprecated': Any(*string_types),
         # Note: Types are strings, not literal bools, such as True or False
         'type': Any(None, "bool")
     },
