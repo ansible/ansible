@@ -314,7 +314,12 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
                 if current_role_attrs[PRIV_TO_AUTHID_COLUMN[role_attr_name]] != role_attr_value:
                     role_attr_flags_changing = True
 
-        expires_changing = (expires is not None and expires != current_role_attrs.get('rolvaliduntil'))
+        if expires is not None:
+            cursor.execute("SELECT %s::timestamptz;", (expires,))
+            expires_with_tz = cursor.fetchone()[0]
+            expires_changing = expires_with_tz != current_role_attrs.get('rolvaliduntil')
+        else:
+            expires_changing = False
 
         if not pwchanging and not role_attr_flags_changing and not expires_changing:
             return False
