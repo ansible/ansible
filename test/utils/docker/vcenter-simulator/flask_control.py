@@ -36,7 +36,7 @@ def kill_one(number):
     except Exception as e:
         pass
 
-    return jsonify({'success': success, 'e': str(e)})        
+    return jsonify({'success': success, 'e': str(e)})
 
 
 @app.route('/killall')
@@ -56,7 +56,8 @@ def kill_all():
             except Exception as e:
                 pass
             results.append(
-                {'pid': x, 'cmdline': p.cmdline(), 'success': success, 'e': str(e)}
+                {'pid': x, 'cmdline': p.cmdline(),
+                 'success': success, 'e': str(e)}
             )
 
     return jsonify(results)
@@ -75,7 +76,7 @@ def spawn_vcsim():
     port = request.args.get('port') or '443'
     port = int(port)
 
-    # enable tracing
+    # FIXME - enable tracing
     if request.args.get('trace'):
         trace = True
     else:
@@ -93,7 +94,7 @@ def spawn_vcsim():
         ['pod', 1],
         ['pool', 1],
         ['vm', 2]
-    ] 
+    ]
 
     # useful for client govc commands
     govc_url = 'https://%s:%s@%s:%s' % (username, password, hostname, port)
@@ -129,7 +130,7 @@ def spawn_vcsim():
     )
 
     # return the relevant data
-    pid = p.pid 
+    pid = p.pid
     rdata = {
         'cmd': cmd,
         'pid': pid,
