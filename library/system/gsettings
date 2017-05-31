@@ -1,0 +1,97 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, ToBeReplaced <ToBeReplaced@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: gsettings
+short_description: Manages GNOME 3 settings.
+description:
+     - "Manage GNOME 3 settings. To use this module, the following keys are required: C(schema), C(key), C(value)."
+version_added: "TBD"
+options:
+  schema:
+    description:
+      - The name of the schema.
+    required: true
+    default: null
+  key:
+    description:
+      - The key within the schema.
+    required: true
+    default: null
+  value:
+    description:
+      - The value to set.
+    required: true
+    default: null
+requirements: [ "gsettings" ]
+author: ToBeReplaced
+'''
+
+EXAMPLES = '''
+# Show the date in the top bar
+- gsettings: schema=org.gnome.desktop.interface key=clock-show-date value=true
+
+# Set the Caps Lock key to be an extra Escape key:
+- gsettings: schema=org.gnome.desktop.input-sources key=xkb-options value="\"['caps:escape']\""
+'''
+
+def _fail(module, cmd, out, err):
+    msg = ''
+    if out:
+        msg += "stdout: %s" % (out, )
+    if err:
+        msg += "\n:stderr: %s" % (err, )
+    module.fail_json(cmd=cmd, msg=msg)
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            schema=dict(default=None, required=True),
+            key=dict(default=None, required=True),
+            value=dict(default=None, required=True)),
+        supports_check_mode=True)
+
+    schema = module.params['schema']
+    key = module.params['key']
+    value = module.params['value']
+
+    cmd = 'gsettings get %s %s' % (schema, key)
+    rc, out, err = module.run_command(cmd)
+    if rc != 0:
+        _fail(module, cmd, out, err)
+    changed = (value.strip('"\'') != out.strip('"\'\n'))
+    if module.check_mode:
+        module.exit_json(changed=changed)
+    if changed:
+        cmd = 'gsettings set %s %s %s' % (schema, key, value)
+        rc, out, err = module.run_command(cmd)
+        if rc != 0:
+            _fail(module, cmd, out, err)
+    module.exit_json(
+        changed=changed, cmd=cmd, schema=schema, key=key, value=value,
+        stdout=out, stderr=err)
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
