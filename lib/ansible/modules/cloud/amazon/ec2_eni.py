@@ -570,11 +570,11 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=[
                                ['secondary_private_ip_addresses', 'secondary_private_ip_address_count']
-                               ],
+                           ],
                            required_if=([
                                ('state', 'absent', ['eni_id']),
                                ('attached', True, ['instance_id'])
-                               ])
+                           ])
                            )
 
     if not HAS_BOTO:
