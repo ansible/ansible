@@ -1,0 +1,302 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, René Moser <mail@renemoser.net>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+module: zabbix_host
+short_description: Add or remove a host to Zabbix.
+description:
+    - This module uses the Zabbix API to add and remove hosts. It only configures
+      the default interface. Updating values is currently not supported.
+version_added: "1.8"
+requirements: [ 'zabbix-api' ]
+options:
+    state:
+        description:
+            - Whether the host should be added or removed.
+        required: false
+        default: present
+        choices: [ "present", "absent" ]
+    host_name:
+        description:
+            - Host to be added or removed. This value will also be used for DNS
+              if C(dns: '') and C(use_ip: no), in most cases this should be a FQDN.
+        required: true
+        default: null
+        aliases: [ ]
+    host_groups:
+        description:
+            - To which groups the host should be added. e.g. C(host_groups:'Linux servers').
+              This can be a comma separated list.
+        required: true
+        default: None
+        aliases: [ host_group ]
+    dns:
+        description:
+            - DNS to be used instead of C(host_name) if C(use_ip: no).
+        required: false
+        default: ''
+        aliases: [ ]
+    ip:
+        description:
+            - IP to be used if C(use_ip: yes).
+        required: false
+        default: '127.0.0.1'
+        aliases: [ ]
+    use_ip:
+        description:
+            - Whether IP should be used instead of C(dns).
+        required: false
+        default: no
+        aliases: [ ]
+    port:
+        description:
+            - Which port should be used to contact the host's zabbix agent'.
+        required: false
+        default: 10050
+        aliases: [ ]
+    server_url:
+        description:
+            - Url of Zabbix server, with protocol (http or https) e.g.
+              https://monitoring.example.com/zabbix. C(url) is an alias
+              for C(server_url). If not set environment variable
+              C(ZABBIX_SERVER_URL) is used.
+        required: true
+        default: null
+        aliases: [ "url" ]
+    login_user:
+        description:
+            - Zabbix user name. If not set environment variable
+              C(ZABBIX_LOGIN_USER) is used.
+        required: true
+        default: null
+    login_password:
+        description:
+            - Zabbix user password. If not set environment variable
+              C(ZABBIX_LOGIN_PASSWORD) is used.
+        required: true
+notes:
+    - The module has been tested with Zabbix 2.2.
+author: René Moser
+'''
+
+EXAMPLES = '''
+# Add a new host www.example.com to Zabbix and to existing groups 'Linux servers'
+# and Webservers
+- zabbix_host: host_name=www1.example.com
+               host_groups='Linux servers','Webservers'
+               server_url=https://monitoring.example.com/zabbix
+               login_user=ansible
+               login_password=secure
+
+# Add a new host, login data is provided by environment variables:
+# ZABBIX_LOGIN_USER, ZABBIX_LOGIN_PASSWORD, ZABBIX_SERVER_URL:
+- zabbix_host: host_name=www2.example.com 
+               host_groups='Linux servers','Webservers'
+
+# Remove a host from Zabbix
+- zabbix_host: host_name=www3.example.com
+               state=absent
+               server_url=https://monitoring.example.com/zabbix
+               login_user=ansible
+               login_password=secure
+'''
+
+try:
+    from zabbix_api import ZabbixAPI
+    HAS_ZABBIX_API = True
+except ImportError:
+    HAS_ZABBIX_API = False
+
+
+def create_host(zbx, host_name, ip, dns, useip, port, group_ids):
+    try:
+        result = zbx.host.create(
+            {
+                "host": host_name,
+                "interfaces": [{
+                        "type": 1,
+                        "main": 1,
+                        "ip": ip,
+                        "dns": dns,
+                        "useip": useip,
+                        "port": port,
+                    }],
+                "groups": group_ids
+            }
+        )
+    except BaseException as e:
+        return 1, None, str(e)
+    return 0, result['hostids'], None
+
+
+def get_host(zbx, host_name):
+    try:
+        result = zbx.host.get(
+            {
+                "filter":
+                {
+                    "host": host_name,
+                }
+            }
+        )
+    except BaseException as e:
+        return 1, None, str(e)
+
+    return 0, result[0], None
+
+
+def delete_host(zbx, host_id):
+    try:
+        zbx.host.delete(host_id)
+    except BaseException as e:
+        return 1, None, str(e)
+    return 0, None, None
+
+
+def check_host(zbx, host_name):
+    try:
+        result = zbx.host.exists(
+            {
+                "host": host_name
+            }
+        )
+    except BaseException as e:
+        return 1, None, str(e)
+    return 0, result, None
+
+
+def get_group_ids(zbx, host_groups):
+    group_ids = []
+    for group in host_groups:
+        try:
+            result = zbx.hostgroup.get(
+                {
+                    "filter":
+                    {
+                        "name": group
+                    }
+                }
+            )
+        except BaseException as e:
+            return 1, None, str(e)
+
+        if not result:
+            return 1, None, "Group id for group %s not found" % group
+
+        group_ids.append(result[0])
+
+    return 0, group_ids, None
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent']),
+            host_name=dict(required=True, default=None),
+            host_groups=dict(type='list', required=True, default=None, aliases=['host_group']),
+            dns=dict(default=''),
+            ip=dict(default='127.0.0.1'),
+            use_ip=dict(choices=BOOLEANS, default=False),
+            port=dict(type='int', default=10050),
+            server_url=dict(default=None, aliases=['url']),
+            login_user=dict(default=None),
+            login_password=dict(default=None),
+        ),
+        supports_check_mode=True,
+    )
+
+    if not HAS_ZABBIX_API:
+        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+
+    try:
+        login_user = module.params['login_user'] or os.environ['ZABBIX_LOGIN_USER']
+        login_password = module.params['login_password'] or os.environ['ZABBIX_LOGIN_PASSWORD']
+        server_url = module.params['server_url'] or os.environ['ZABBIX_SERVER_URL']
+    except KeyError, e:
+        module.fail_json(msg='Missing login data: %s is not set.' % e.message)
+
+    host_name = module.params['host_name']
+    host_groups = module.params['host_groups']
+    dns = module.params['dns']
+    ip = module.params['ip']
+    use_ip = module.params['use_ip']
+    port = module.params['port']
+    state = module.params['state']
+
+    useip = 0
+    if use_ip:
+        useip = 1
+
+    if dns == '' and not use_ip:
+        dns = host_name
+
+    try:
+        zbx = ZabbixAPI(server_url)
+        zbx.login(login_user, login_password)
+    except BaseException as e:
+        module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
+
+    changed = False
+    msg = ""
+
+    if state == "present":
+        (rc, exists, error) = check_host(zbx, host_name)
+        if rc != 0:
+            module.fail_json(msg="Failed to check host %s existance: %s" % (host_name, error))
+        if not exists:
+            if module.check_mode:
+                changed = True
+            else:
+                if not host_groups:
+                    module.fail_json(msg="At least one host_groups item must be defined.")
+
+                (rc, group_ids, error) = get_group_ids(zbx, host_groups)
+                if rc != 0:
+                    module.fail_json(msg="Failed to get group_ids: %s" % error)
+
+                (rc, host, error) = create_host(zbx, host_name, ip, dns, useip, port, group_ids)
+                if rc == 0:
+                    changed = True
+                else:
+                    module.fail_json(msg="Failed to get host: %s" % error)
+
+    if state == "absent":
+        (rc, exists, error) = check_host(zbx, host_name)
+        if rc != 0:
+            module.fail_json(msg="Failed to check host %s existance: %s" % (host_name, error))
+        if exists:
+            if module.check_mode:
+                changed = True
+            else:
+                (rc, host, error) = get_host(zbx, host_name)
+                if rc != 0:
+                    module.fail_json(msg="Failed to get host: %s" % error)
+
+                (rc, _, error) = delete_host(zbx, host)
+                if rc == 0:
+                    changed = True
+                else:
+                    module.fail_json(msg="Failed to remove host: %s" % error)
+
+    module.exit_json(changed=changed)
+
+from ansible.module_utils.basic import *
+main()
