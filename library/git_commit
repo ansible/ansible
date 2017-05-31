@@ -1,0 +1,190 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013 Copyright VanTosh
+# Author : Toshaan Bharvani <toshaan@vantosh.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: git_commit
+author: Toshaan Bharvani
+version_added: "1.1"
+short_description: Commit software (or files) from git repository
+description:
+    - Manage I(git) commits of repositories to push files or software.
+options:
+    repo:
+        required: true
+        description:
+            - repo folder on the file system
+    message:
+        required: false
+        description:
+            - Message to use when commit
+    remote:
+        required: false
+        description:
+            - Name of the remote repo to push
+    version:
+        required: false
+        default: "HEAD"
+        description:
+            - Version to push to the remote repo
+    add:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        description:
+          - Add new files to the repo
+    push:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        description:
+           - Push commits to remote repo
+    stash:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        description:
+           - Should the repo stash before pulling
+    pull:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        description:
+           - Pull new changes before pushing
+examples:
+    - code: "git_commit: repo=/path/to/repo message=new-release"
+      description: Example git commit and push to default remote repo
+    - code: "git_commit: repo=/path/to/repo message add=yes push=no"
+      description: Example git commit and add new files, however withou pushing to remote repo
+'''
+
+import re
+
+def get_version(repo):
+    ''' samples the version of the git repo '''
+    os.chdir(repo)
+    cmd = "git show --abbrev-commit"
+    sha = os.popen(cmd).read().split("\n")
+    sha = sha[0].split()[1]
+    return sha
+
+def has_local_mods(repo):
+    os.chdir(repo)
+    cmd = "git status -s"
+    lines = os.popen(cmd).read().splitlines()
+    #lines = filter(lambda c: re.search('^\\?\\?.*$', c), lines)
+    return len(lines) > 0
+
+def get_local_mods(repo):
+    os.chdir(repo)
+    cmd = "git status -s"
+    lines = os.popen(cmd).read().splitlines()
+    #lines = filter(lambda c: re.search('^\\?\\?.*$', c), lines)
+    result = []
+    for line in lines:
+        result.append(line[3:])
+    return result
+
+def repo_pull(module, repo):
+    os.chdir(repo)
+    cmd = [ module.get_bin_path('git', True), 'pull' ]
+    return module.run_command(cmd, check_rc=True)
+
+def repo_push(module, repo):
+    os.chdir(repo)
+    cmd = [ module.get_bin_path('git', True), 'push' ]
+    return module.run_command(cmd, check_rc=True)
+
+def repo_stash(module, repo):
+    os.chdir(repo)
+    cmd = [ module.get_bin_path('git', True), 'stash' ]
+    return module.run_command(cmd, check_rc=True)
+
+def repo_add(module, repo, files):
+    os.chdir(repo)
+    cmd = [ module.get_bin_path('git', True), 'add' ]
+    for file in files:
+        cmd.append(file)
+    return module.run_command(cmd, check_rc=True)
+
+def repo_commit(module, repo, message):
+    os.chdir(repo)
+    cmd = [ module.get_bin_path('git', True), 'commit', '-a', '-m', message ]
+    return module.run_command(cmd, check_rc=True)
+
+# ===========================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            repo=dict(required=True),
+            message=dict(default=None),
+            version=dict(default='HEAD'),
+            remote=dict(default='origin'),
+            stash=dict(default='no', type='bool'),
+            add=dict(default='no', type='bool'),
+            pull=dict(default='no', type='bool'),
+            push=dict(default='yes', type='bool'),
+        ),
+    )
+
+    repo    = os.path.abspath(os.path.expanduser(module.params['repo']))
+    message = module.params['message']
+    remote  = module.params['remote']
+    version = module.params['version']
+    stash   = module.params['stash']
+    add     = module.params['add']
+    pull    = module.params['pull']
+    push    = module.params['push']
+
+    gitconfig = os.path.join(repo, '.git', 'config')
+
+    rc, out, err, status = (0, None, None, None)
+
+    before = None
+    local_mods = False
+    if not os.path.exists(gitconfig):
+        module.fail_json(msg=err)
+    else:
+        before = get_version(repo)
+        local_mods = has_local_mods(repo)
+        if local_mods:
+            if add:
+                addfiles = get_local_mods(repo)
+                (rc, out, err) = repo_add(module,repo,addfiles)
+            if stash and not pull:
+                (rc, out, err) = repo_stash(module,repo)
+            if pull and not stash:
+                (rc, out, err) = repo_pull(module,repo)
+            (rc, out, err) = repo_commit(module,repo,message)
+        if rc != 0:
+            module.fail_json(msg=err)
+        if push:
+            (rc, out, err) = repo_push(module, repo)
+        after = get_version(repo)
+        changed = False
+        if before != after or local_mods:
+            changed = True
+        module.exit_json(changed=changed, before=before, after=after)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
