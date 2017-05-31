@@ -1,0 +1,341 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: couchbase_bucket
+short_description: Idempotently creates or deletes Couchbase buckets.
+description:
+    - Creates or removes buckets on the Couchbase server using the Couchbase
+            REST API.
+        'state' = 'present' and 'force' = 'no', the bucket will be created
+            if it does not exist.
+        'state' = 'present' and 'force' = 'yes', the bucket will be deleted
+            and recreated if it does exist.
+        'state' = 'absent' and 'force' = 'no', the bucket will be deleted.
+        'state' = 'absent' and 'force' = 'yes', the bucket will be deleted.
+version _added: "1.7"
+author: Renault Hess
+options:
+    authType:
+        description:
+            - Type of authorization to be enabled for the new bucket as a
+                    string. Defaults to blank password if not specified.
+                    “sasl” enables authentication. “none” disables
+                    authentication.
+        required: true
+        default: null
+    bucketType:
+        description:
+            - Type of bucket to be created. String value. “memcached”
+                    configures as Memcached bucket. “couchbase” configures
+                    as Couchbase bucket.
+        required: true
+        default: null
+    flushEnabled:
+        description:
+            - Enables the ‘flush all’ functionality on the specified
+                bucket. Boolean. 1 enables flush all support, 0 disables
+                flush all support.
+        required: false
+        default: 0
+    name:
+        description:
+            - Name for new bucket.
+        required: true
+        default: null
+    parallelDBAndViewCompaction:
+        description:
+            - String value. Indicates whether database and view files on
+                disk can be compacted simultaneously.
+        required: false
+        default: 'false'
+    proxyPort:
+        description:
+            - Proxy port on which the bucket communicates. Must be a valid
+                network port which is not already in use. You must provide
+                a valid port number if the authorization type is not SASL.
+                Numeric value.
+        required: true
+        default: null
+    ramQuotaMB:
+        description:
+            - RAM Quota for new bucket in MB. Numeric. The minimum you can
+                specify is 100, and the maximum can only be as great as the
+                memory quota established for the node. If other buckets are
+                associated with a node, RAM Quota can only be as large as
+                the amount memory remaining for the node, accounting for
+                the other bucket memory quota.
+        required: true
+        default: null
+    replicaIndex:
+        description:
+            - 1 enable replica indexes for replica bucket data while 0
+                disables. Boolean value.
+        required: false
+        default: 1
+    replicaNumber:
+        description:
+            - Number of replicas to be configured for this bucket.
+                Required parameter when creating a Couchbase bucket.
+                Numeric, minimum 0, maximum 3
+        required: false
+        default: 1
+    saslPassword:
+        description:
+            - Password for SASL authentication. Required if SASL
+                authentication has been enabled. String.
+        required: false
+        default: ''
+    threadsNumber:
+        description:
+            - Change the number of concurrent readers and writers
+                for the data bucket. Integer from 2 to 8.
+        required: false
+        default: 3
+    force:
+        description:
+            - Deletes and recreates the bucket.
+        required: false
+        default: 'no'
+        options: ['yes', 'no']
+    state:
+        description:
+            - Specify whether a bucket is to be created or deleted.
+        required: false
+        default: 'present'
+        options: ['present':'absent']
+'''
+
+EXAMPLES = '''
+# Create a 100MB  bucket named 'test' that does not exist
+- couchbase_bucket: address='127.0.0.1:8091'
+                    authType='none'
+                    bucketType='couchbase'
+                    name='test'
+                    proxyPort=11215
+                    ramQuotaMB=100
+                    replicaNumber=0
+                    username='username'
+                    password='password'
+                    force='no'
+                    state='present'
+
+# Recreate a 100MB  bucket named'test' that does exist
+- couchbase_bucket: address='127.0.0.1:8091'
+                    authType='none'
+                    bucketType='couchbase'
+                    name='test'
+                    proxyPort=11215
+                    ramQuotaMB=100
+                    replicaNumber=0
+                    username='username'
+                    password='password'
+                    force='yes'
+                    state='present'
+
+# Delete a bucket named 'test'
+- couchbase_bucket: address='127.0.0.1:8091'
+                    authType='none'
+                    bucketType='couchbase'
+                    name='test'
+                    proxyPort=11215
+                    ramQuotaMB=100
+                    replicaNumber=0
+                    username='username'
+                    password='password'
+                    force='no'
+                    state='absent'
+'''
+
+import base64
+import httplib2
+import urllib
+import json
+
+
+class CouchbaseBucketCreate(object):
+    def __init__(self, address, authType, bucketType, flushEnabled,
+                 name, parallelDBAndViewCompaction, proxyPort, ramQuotaMB,
+                 replicaIndex, replicaNumber, saslPassword, threadsNumber,
+                 username, password):
+        self.address                        = address
+        self.authType                       = authType
+        self.bucketType                     = bucketType
+        self.flushEnabled                   = flushEnabled
+        self.name                           = name
+        self.parallelDBAndViewCompaction    = parallelDBAndViewCompaction
+        self.proxyPort                      = proxyPort
+        self.ramQuotaMB                     = ramQuotaMB
+        self.replicaIndex                   = replicaIndex
+        self.replicaNumber                  = replicaNumber
+        self.saslPassword                   = saslPassword
+        self.threadsNumber                  = threadsNumber
+        self.username                       = username
+        self.password                       = password
+
+    def _do_http_request(self, url, **kwargs):
+        """Makes an HTTP request with the url and arguments"""
+        auth = base64.encodestring(self.username  + ':' + self.password)
+        http = httplib2.Http()
+
+        headers = {'Authorization': 'Basic ' + auth}
+        body = None
+        if kwargs['method'] == 'POST':
+            body = urllib.urlencode(kwargs['body'])
+            headers['Content-Type'] = 'application/x-www-form-urlencoded'
+
+        headers, content = http.request(url,
+                                        kwargs['method'],
+                                        body=body,
+                                        headers=headers)
+
+        return headers['status'], content
+
+    def _build_url(self, bucket_name=None):
+        """Builds up the correct api based on the properties supplied"""
+        url = 'http://' + self.address + '/pools/default/buckets'
+        if bucket_name is not None:
+            url = url + '/' + bucket_name
+        return url
+
+    def bucket_exists(self):
+        """Performs a HTTP GET request for a bucket name. Returns True
+            if the bucket exists, False if not"""
+        status, content = self._do_http_request(self._build_url(self.name),
+                                                **{'method': 'GET',
+                                                'body': None})
+        if status == '404':
+            return False
+        else:
+            return True
+
+    def create(self):
+        """Adds a bucket using the Couchbase REST API"""
+        request = dict(
+            method='POST',
+            body={
+                'authType': self.authType,
+                'bucketType': self.bucketType,
+                'flushEnabled': self.flushEnabled,
+                'name': self.name,
+                'parallelDBAndViewCompaction':
+                self.parallelDBAndViewCompaction,
+                'proxyPort': self.proxyPort,
+                'ramQuotaMB': self.ramQuotaMB,
+                'replicaIndex': self.replicaIndex,
+                'replicaNumber': self.replicaNumber,
+                'saslPassword': self.saslPassword,
+                'threadsNumber': self.threadsNumber
+            }
+        )
+
+        return self._do_http_request(self._build_url(), **request)
+
+    def delete(self):
+        """Deletes a bucket using the Couchbase REST API"""
+        return self._do_http_request(self._build_url(self.name),
+                                     **{'method': 'DELETE',
+                                     'body': None})
+
+
+def main():
+    """The module's main method"""
+
+    arg_spec = dict(
+        address                     = dict(required=True),
+        authType                    = dict(required=True),
+        bucketType                  = dict(required=True),
+        flushEnabled                = dict(required=False, default=0),
+        name                        = dict(required=True),
+        parallelDBAndViewCompaction = dict(required=False,
+                                           default="false"),
+        proxyPort                   = dict(required=True),
+        ramQuotaMB                  = dict(required=True),
+        replicaIndex                = dict(required=False, default=1),
+        replicaNumber               = dict(required=True),
+        saslPassword                = dict(required=False, default=''),
+        threadsNumber               = dict(required=False, default=4),
+        username                    = dict(required=True),
+        password                    = dict(required=True),
+        force                       = dict(required=False,
+                                           default='no',
+                                           type='bool'),
+        state                       = dict(required= False,
+                                           default='present',
+                                           choices=['present', 'absent'])
+    )
+
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
+
+    address                     = module.params['address']
+    authType                    = module.params['authType']
+    bucketType                  = module.params['bucketType']
+    flushEnabled                = module.params['flushEnabled']
+    name                        = module.params['name']
+    parallelDBAndViewCompaction = module.params['parallelDBAndViewCompaction']
+    proxyPort                   = module.params['proxyPort']
+    ramQuotaMB                  = module.params['ramQuotaMB']
+    replicaIndex                = module.params['replicaIndex']
+    replicaNumber               = module.params['replicaNumber']
+    saslPassword                = module.params['saslPassword']
+    threadsNumber               = module.params['threadsNumber']
+    username                    = module.params['username']
+    password                    = module.params['password']
+
+    force                       = module.params['force']
+    state                       = module.params['state']
+
+    couchbase_bucket_create = CouchbaseBucketCreate(
+        address,
+        authType,
+        bucketType,
+        flushEnabled,
+        name,
+        parallelDBAndViewCompaction,
+        proxyPort,
+        ramQuotaMB,
+        replicaIndex,
+        replicaNumber,
+        saslPassword,
+        threadsNumber,
+        username,
+        password)
+
+    changed = False
+
+    if couchbase_bucket_create.bucket_exists():
+        if state == 'absent':
+            if not module.check_mode:
+                couchbase_bucket_create.delete()
+            changed = True
+        else:
+            if force:
+                if not module.check_mode:
+                    couchbase_bucket_create.delete()
+                    couchbase_bucket_create.create()
+                changed = True
+    elif state == 'present':
+        if not module.check_mode:
+            couchbase_bucket_create.create()
+        changed = True
+
+    module.exit_json(changed=changed, name=name, state=state)
+
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
