@@ -167,6 +167,21 @@ The structure will look like this::
 
     Currently Ansible does not support organizing modules into sub-folders under the ``library``
     folder.
+    
+**Inside a Role**
+
+The library folder can also exist within a role following the same layout above.
+
+The structure would look like this for a "webservers" role::
+
+    └── roles
+        └── webservers
+            ├── tasks
+            ├── vars
+            ├── ...
+            └── library
+                ├── my_module.py
+                └── my_other_module.py
 
 **Ansible Configuration File**
 
