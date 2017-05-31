@@ -1,0 +1,99 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# (c) 2014, Christian Berendt <berendt@b1-systems.de>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: apache2_site
+version_added: 1.6
+short_description: enables/disables a site on a Apache2 webserver
+description:
+   - Enables or disables a specified site on a Apache2 webserver.
+options:
+   name:
+     description:
+        - name of the site to enable/disable
+     required: true
+   state:
+     description:
+        - indicate the desired state of the resource
+     choices: ['present', 'absent']
+     default: present
+
+'''
+
+EXAMPLES = '''
+# enables the site "default"
+- apache2_site: state=present name=default
+
+# disables the site "default"
+- apache2_site: state=absent name=default
+'''
+
+def _site_is_enabled(module):
+    name = module.params['name']
+    a2query_binary = module.get_bin_path("a2query")
+    result, stdout, stderr = module.run_command("%s -s %s" % (a2query_binary, name))
+    return result == 0
+
+def _site_is_disabled(module):
+    return _site_is_enabled(module) == False
+
+def _disable_site(module):
+    name = module.params['name']
+
+    if _site_is_disabled(module):
+        module.exit_json(changed = False, result = "Success")
+
+    a2dissite_binary = module.get_bin_path("a2dissite")
+    result, stdout, stderr  = module.run_command("%s %s" % (a2dissite_binary, name))
+    if result != 0: 
+        module.fail_json(msg="Failed to disable site %s: %s" % (name, stdout))
+
+    module.exit_json(changed = True, result = "Disabled")
+
+def _enable_site(module):
+    name = module.params['name']
+
+    if _site_is_enabled(module):
+        module.exit_json(changed = False, result = "Success")
+
+    a2ensite_binary = module.get_bin_path("a2ensite")
+    result, stdout, stderr = module.run_command("%s %s" % (a2ensite_binary, name))
+    if result != 0: 
+        module.fail_json(msg="Failed to enable site %s: %s" % (name, stdout))
+
+    module.exit_json(changed = True, result = "Enabled")
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name  = dict(required=True),
+            state = dict(default='present', choices=['absent', 'present'])
+        ),
+    )
+
+    if module.params['state'] == 'present':
+        _enable_site(module)
+
+    if module.params['state'] == 'absent':
+        _disable_site(module)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
+
