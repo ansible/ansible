@@ -33,7 +33,7 @@ from ansible.module_utils._text import to_native
 __all__ = ['RoleInclude']
 
 
-class RoleInclude(RoleDefinition):
+class RoleInclude(RoleRequirement):
 
     """
     A derivative of RoleDefinition, used by playbook code when a role
