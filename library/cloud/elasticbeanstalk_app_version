@@ -1,0 +1,196 @@
+#!/usr/bin/python
+
+DOCUMENTATION = '''
+module: elasticbeanstalk_app_version
+short_description: Maintain an Elastic Beanstalk application's versions.
+description:
+    - Create an Elastic Beanstalk application's version from given S3 bucket and key;
+    - Delete an Elastic Beanstalk application's version;
+version_added: "1.7"
+requirements: [ "boto" ]
+author: Anislav Atanasov
+options:
+  application_name:
+    description:
+      - The name of the Elastic Beanstalk application.
+    required: true
+  description:
+    version_label:
+      - The label of the Elastic Beanstalk application's version.
+    required: true
+  description:
+    description:
+      - The description of the Elastic Beanstalk application's version.
+    required: false
+  description:
+    s3_bucket:
+      - The Amazon S3 bucket where the application's source bundle is located.
+    required: false
+  description:
+    s3_key:
+      - The Amazon S3 key where the application's source bundle is located. Both s3_bucket and s3_key must be specified.
+    required: false
+  state:
+    description:
+        - Create or delete Elastic Beanstalk application's version.
+    choices: ['present', 'absent']
+    default: 'present'
+    required: false
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ 'ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ 'ec2_access_key', 'access_key' ]
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    default: null
+    aliases: [ 'aws_region', 'ec2_region' ]
+'''
+
+EXAMPLES = '''
+# Note: None of these examples set aws_access_key, aws_secret_key, or region.
+# It is assumed that their matching environment variables are set.
+
+# Basic examples
+- name: create an Elastic Beanstalk application's version
+  local_action:
+    module: elasticbeanstalk_app_version
+    application_name: app-name
+    version_label: git-sha
+    description: commit's comment
+    s3_bucket: application-versions
+    s3_key: git-sha
+
+- name: delete an Elastic Beanstalk application's version
+  local_action:
+    module: elasticbeanstalk_app_version
+    application_name: app-name
+    version_label: git-sha
+    state: absent
+'''
+
+import sys
+
+try:
+    import boto
+    import boto.beanstalk
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+
+class ElasticBeanstalkAppVersionManager(object):
+    """Maintain an ElasticBeanstalk application's versions."""
+
+    def __init__(self, module):
+        self.module = module
+        self.application_name = module.params['application_name']
+        self.version_label = module.params['version_label']
+        self.description = module.params.get('description')
+
+        self.s3_bucket = module.params.get('s3_bucket')
+        self.s3_key = module.params.get('s3_key')
+
+        self.region, _, aws_connect_params = get_aws_connection_info(module)
+        if not self.region:
+            self.module.fail_json(msg=str("Either region or EC2_REGION environment variable must be set."))
+        try:
+            self.conn = connect_to_aws(boto.beanstalk, self.region, **aws_connect_params)
+        except boto.exception.NoAuthHandlerFound, e:
+            self.module.fail_json(msg=str(e))
+
+        self.changed = False
+        self.data = self._describe()
+        self.exists = self.data is not None
+
+    def ensure_present(self):
+        """Ensure ElasticBeanstalk application's version exists or create it if not"""
+        if self.exists:
+            self.delete()
+
+        self.create()
+
+    def ensure_absent(self):
+        """Ensure ElasticBeanstalk application's version is not presented or delete it if not"""
+        if self.exists:
+            self.delete()
+
+    def _describe(self):
+        response = self.conn.describe_application_versions(application_name=self.application_name,
+                                                           version_labels=self.version_label)
+        versions = (response['DescribeApplicationVersionsResponse']
+                            ['DescribeApplicationVersionsResult']
+                            ['ApplicationVersions'])
+        if versions:
+            return versions[0]
+
+    def create(self):
+        """Create an ElasticBeanstalk application's version"""
+        try:
+            response = self.conn.create_application_version(application_name=self.application_name,
+                                                            version_label=self.version_label,
+                                                            description=self.description,
+                                                            s3_bucket=self.s3_bucket,
+                                                            s3_key=self.s3_key)
+            self.data = (response['CreateApplicationVersionResponse']
+                                    ['CreateApplicationVersionResult']
+                                    ['ApplicationVersion'])
+        except boto.exception.BotoServerError, e:
+            self.module.fail_json(msg=e.message)
+        else:
+            self.changed = True
+
+    def delete(self):
+        """Delete an ElasticBeanstalk application's version"""
+        try:
+            response = self.conn.delete_application_version(application_name=self.application_name,
+                                                            version_label=self.version_label)
+            self.data = response['DeleteApplicationVersionResponse']['ResponseMetadata']
+        except boto.exception.BotoServerError, e:
+            self.module.fail_json(msg=e.message)
+
+        self.changed = True
+
+
+def main():
+
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+            application_name=dict(required=True),
+            version_label=dict(required=True),
+            description=dict(required=False),
+            s3_bucket=dict(required=True),
+            s3_key=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+        )
+    )
+    # validate_certs is not supported
+    del argument_spec['validate_certs']
+
+    module = AnsibleModule(argument_spec=argument_spec)
+    state = module.params.get('state')
+    app_version_manager = ElasticBeanstalkAppVersionManager(module)
+
+    if state == 'present':
+        app_version_manager.ensure_present()
+    elif state == 'absent':
+        app_version_manager.ensure_absent()
+
+    facts_result = dict(changed=app_version_manager.changed,
+                        data=app_version_manager.data)
+    module.exit_json(**facts_result)
+
+
+main()
