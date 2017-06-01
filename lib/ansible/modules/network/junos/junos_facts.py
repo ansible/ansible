@@ -91,7 +91,6 @@ from ansible.module_utils.netconf import send_request
 
 try:
     from jnpr.junos import Device
-    from jnpr.junos.utils.sw import SW
     from jnpr.junos.exception import ConnectError
     HAS_PYEZ = True
 except ImportError:
