@@ -450,6 +450,12 @@ def skipped(*a, **kw):
     skipped = item.get('skipped', False)
     return skipped
 
+def assert_filter(value, msg=''):
+    ''' Fail if value is falsy, else return empty string i.e. continue evaluation of remaining template '''
+    if not value:
+        raise errors.AnsibleFilterError('assertion failed: %s' % (msg or '<no message given>',))
+    return ''
+
 
 @environmentfilter
 def do_groupby(environment, value, attribute):
@@ -579,6 +585,9 @@ class FilterModule(object):
             # skip testing
             'skipped' : skipped,
             'skip'    : skipped,
+
+            # assertions
+            'assert': assert_filter,
 
             # debug
             'type_debug': lambda o: o.__class__.__name__,
