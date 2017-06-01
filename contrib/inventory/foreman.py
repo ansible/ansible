@@ -182,7 +182,7 @@ class ForemanInventory(object):
                 return json['results']
             # List of all hosts is returned paginaged
             results = results + json['results']
-            if len(results) >= json['total']:
+            if len(results) >= json['subtotal']:
                 break
             page += 1
             if len(json['results']) == 0:
