@@ -298,7 +298,7 @@ class Facts(object):
         if data:
             self.facts['cmdline'] = {}
             try:
-                for piece in shlex.split(data):
+                for piece in shlex.split(data, posix=False):
                     item = piece.split('=', 1)
                     if len(item) == 1:
                         self.facts['cmdline'][item[0]] = True
