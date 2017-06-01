@@ -126,7 +126,7 @@ EXAMPLES = '''
         graph_width: 200
         graph_height: 100
 
-# Limit the Zabbix screen creations to one host since Zabbix can return an error when doing concurent updates
+# Limit the Zabbix screen creations to one host since Zabbix can return an error when doing concurrent updates
 - name: Create a new screen or update an existing screen's items
   local_action:
     module: zabbix_screen
@@ -345,7 +345,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
