@@ -364,7 +364,8 @@ class VariableManager:
                             data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                             if data is not None:
                                 for item in data:
-                                    all_vars = combine_vars(all_vars, item, scope_name='vars_file', scope_info=vars_file)
+                                    all_vars = combine_vars(all_vars, item, scope_name='vars_file', scope_info={'vars_file': vars_file,
+                                                                                                                'vars_item': vars_file_item})
                             break
                         except AnsibleFileNotFound:
                             # we continue on loader failures
