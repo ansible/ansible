@@ -419,18 +419,18 @@ class AnsibleDockerClient(Client):
         self.log("Image %s:%s not found." % (name, tag))
         return None
 
-    def _image_lookup(self, name, tag): 
+    def _image_lookup(self, name, tag):
         '''
-        Including a tag in the name parameter sent to the docker-py images method does not 
+        Including a tag in the name parameter sent to the docker-py images method does not
         work consistently. Instead, get the result set for name and manually check if the tag
         exists.
         '''
+        images = []
         try:
             response = self.images(name=name)
         except Exception as exc:
             self.fail("Error searching for image %s - %s" % (name, str(exc)))
-        images = response
-        if tag: 
+        if tag:
             lookup = "%s:%s" % (name, tag)
             images = []
             for image in response:
@@ -438,6 +438,8 @@ class AnsibleDockerClient(Client):
                 if tags and lookup in tags:
                     images = [image]
                     break
+        else:
+            images = response
         return images
 
     def pull_image(self, name, tag="latest"):
