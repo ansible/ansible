@@ -153,6 +153,11 @@ options:
     description:
       - path to the JSON file associated with the service account email
     default: null
+  subnetwork_region:
+    version_added: "2.4"
+    description:
+      - Region that subnetwork resides in. (Required for subnetwork to successfully complete)
+    default: null
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,
@@ -254,6 +259,7 @@ def create_instance_template(module, gce):
     disk_auto_delete = module.params.get('disk_auto_delete')
     network = module.params.get('network')
     subnetwork = module.params.get('subnetwork')
+    subnetwork_region = module.params.get('subnetwork_region')
     can_ip_forward = module.params.get('can_ip_forward')
     external_ip = module.params.get('external_ip')
     service_account_email = module.params.get('service_account_email')
@@ -266,7 +272,6 @@ def create_instance_template(module, gce):
     metadata = module.params.get('metadata')
     description = module.params.get('description')
     disks = module.params.get('disks')
-
     changed = False
 
     # args of ex_create_instancetemplate
@@ -314,7 +319,7 @@ def create_instance_template(module, gce):
     gce_args['network'] = gce_network
 
     if subnetwork is not None:
-        gce_args['subnetwork'] = subnetwork
+        gce_args['subnetwork'] = gce.ex_get_subnetwork(subnetwork, region=subnetwork_region)
 
     if can_ip_forward is not None:
         gce_args['can_ip_forward'] = can_ip_forward
@@ -529,6 +534,7 @@ def main():
             project_id=dict(),
             pem_file=dict(type='path'),
             credentials_file=dict(type='path'),
+            subnetwork_region=dict()
         ),
         mutually_exclusive=[['source', 'image']],
         required_one_of=[['image', 'image_family']],
