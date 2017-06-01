@@ -6,23 +6,7 @@ env:
 
 matrix:
   include:
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py24
-      python: 2.7
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py26
-      python: 2.6
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py27
-      python: 2.7
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py34
-      python: 3.4
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py35
-      python: 3.5
     - env: TEST=integration IMAGE=ansible/ansible:centos6
-    - env: TEST=integration IMAGE=ansible/ansible:centos7
-    - env: TEST=integration IMAGE=ansible/ansible:fedora24
-    - env: TEST=integration IMAGE=ansible/ansible:fedora25
-    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
-    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
-    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604
 build:
   pre_ci:
     - docker images drydock/u16pytall
