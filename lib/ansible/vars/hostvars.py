@@ -69,6 +69,7 @@ class HostVars(collections.Mapping):
         self._inventory = inventory
 
     def _find_host(self, host_name):
+        # does not use inventory.hosts so it can create localhost on demand
         return self._inventory.get_host(host_name)
 
     def raw_get(self, host_name):
@@ -100,18 +101,19 @@ class HostVars(collections.Mapping):
         self._variable_manager.set_host_facts(host, facts)
 
     def __contains__(self, host_name):
+        # does not use inventory.hosts so it can create localhost on demand
         return self._find_host(host_name) is not None
 
     def __iter__(self):
-        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
+        for host in self._inventory.hosts:
             yield host.name
 
     def __len__(self):
-        return len(self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True))
+        return len(self._inventory.hosts)
 
     def __repr__(self):
         out = {}
-        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
+        for host in self._inventory.hosts:
             name = host.name
             out[name] = self.get(name)
         return repr(out)
