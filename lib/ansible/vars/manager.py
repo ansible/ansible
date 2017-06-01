@@ -407,8 +407,16 @@ class VariableManager:
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False), scope_name='task_roles_vars', scope_info=task._role._role_path)
-            all_vars = combine_vars(all_vars, task.get_vars(), scope_name='task_vars')
+                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False),
+                                        scope_name='task_roles_vars',
+                                        scope_info={'role_path': task._role._role_path,
+                                                    'role_name': task._role.get_name(),
+                                                    'task_name': task.name,
+                                                    'task_path': task.get_path()})
+            all_vars = combine_vars(all_vars, task.get_vars(),
+                                    scope_name='task_vars',
+                                    scope_info={'task_name': task.name,
+                                                'task_path': task.get_path()})
 
         # next, we merge in the vars cache (include vars) and nonpersistent
         # facts cache (set_fact/register), in that order
