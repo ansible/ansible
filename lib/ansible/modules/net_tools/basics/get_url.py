@@ -148,9 +148,19 @@ options:
         client authentication. If C(client_cert) contains both the certificate
         and key, this option is not required.
     version_added: '2.4'
+  autocreate_directories:
+    description:
+      - When specified as 'directory' specifies a directory for the file to
+        be placed in, creating the parent tree as required. When 'file'
+        specifies the destination file for the downloaded item.
+    default: 'no'
+    version_added: '2.7'
+    type: bool
   others:
     description:
-      - all arguments accepted by the M(file) module also work here
+      - The src, mode, owner, group, se* and follow argument from the M(file)
+        module are accepted by this module
+
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
@@ -391,6 +401,7 @@ def main():
         timeout=dict(type='int', default=10),
         headers=dict(type='raw'),
         tmp_dest=dict(type='path'),
+        autocreate_directories=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(
@@ -410,6 +421,7 @@ def main():
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
     tmp_dest = module.params['tmp_dest']
+    autocreate_directories = module.params['autocreate_directories']
 
     # Parse headers to dict
     if isinstance(module.params['headers'], dict):
@@ -483,7 +495,14 @@ def main():
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
 
-    if dest_is_dir:
+    if dest_is_dir or autocreate_directories:
+        if autocreate_directories and not os.path.exists(dest):
+            try:
+                os.makedirs(dest)
+            except OSError:
+                e = traceback.format_exc()
+                module.fail_json(msg="create a destination directory failure %s: %s" % (dest, e))
+
         filename = extract_filename_from_headers(info)
         if not filename:
             # Fall back to extracting the filename from the URL.
