@@ -89,6 +89,9 @@ class TrackingDict(dict):
         for key in other:
             if key == 'update_name' or key == 'scope_info':
                 continue
+            other_meta = getattr(other, 'meta', {'_nothing': '_nada'})
+            if other_meta:
+                self.meta.update(other_meta)
             self.meta[key].append((update_name, other[key], scope_info))
             self[key] = other[key]
 
@@ -150,6 +153,12 @@ def combine_vars(a, b, name_b=None, scope_info=None):
         # HASH_BEHAVIOUR == 'replace'
         _validate_mutable_mappings(a, b)
         result = a.copy()
+
+        # TODO: need to only add the extra args for update if we are using a TrackingDict
+        #       but would like avoid doing an isinstance or duck type check for the normal
+        #       path. (to avoid non tracking dicts getting bogus keys from the kwargs to update())
+        # maybe switch out combine_vars based on verbosity?  (means import display here)
+        # pass verbosity to combine_vars
         result.update(b, update_name=name_b, scope_info=scope_info)
         return result
 

@@ -373,7 +373,7 @@ class StrategyBase:
                     del clean_copy['invocation']
 
                 for target_host in host_list:
-                    self._variable_manager.set_nonpersistent_facts(target_host, {original_task.register: clean_copy})
+                    self._variable_manager.set_nonpersistent_facts(target_host, {original_task.register: clean_copy}, scope_info=original_task.get_name())
 
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False
@@ -410,6 +410,7 @@ class StrategyBase:
                                 ansible_failed_task=original_task.serialize(),
                                 ansible_failed_result=task_result._result,
                             ),
+                            scope_info=original_task.get_name(),
                         )
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
@@ -511,7 +512,8 @@ class StrategyBase:
                         else:
                             for target_host in host_list:
                                 if original_task.action == 'set_fact':
-                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
+                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy(),
+                                                                                   scope_info=original_task.get_name())
                                 else:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
 

@@ -90,7 +90,6 @@ class VariableManager:
 
     def __init__(self, loader=None, inventory=None):
 
-        self._nonpersistent_fact_cache = defaultdict(dict)
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
         self._host_vars_files = defaultdict(dict)
@@ -115,6 +114,8 @@ class VariableManager:
             self._vars_dict_class = TrackingDict
         else:
             self._vars_dict_class = dict
+
+        self._nonpersistent_fact_cache = defaultdict(self._vars_dict_class)
 
     def __getstate__(self):
         data = dict(
@@ -402,7 +403,8 @@ class VariableManager:
         # facts cache (set_fact/register), in that order
         if host:
             all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()), name_b='vars_cache')
-            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()), name_b='register')
+            registered_vars = self._nonpersistent_fact_cache.get(host.name, self._vars_dict_class())
+            all_vars = combine_vars(all_vars, registered_vars, name_b='registered_vars')
 
         # next, we merge in role params and task include params
         if task:
@@ -598,12 +600,18 @@ class VariableManager:
             except KeyError:
                 self._fact_cache[host.name] = facts
 
-    def set_nonpersistent_facts(self, host, facts):
+    def set_nonpersistent_facts(self, host, facts, scope_info=None):
         '''
         Sets or updates the given facts for a host in the fact cache.
         '''
 
         assert isinstance(facts, dict), "the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts)
+
+        self._nonpersistent_fact_cache[host.name] = combine_vars(self._nonpersistent_fact_cache[host.name],
+                                                                 facts,
+                                                                 name_b='non_persistent',
+                                                                 scope_info=scope_info)
+        return
 
         if host.name not in self._nonpersistent_fact_cache:
             self._nonpersistent_fact_cache[host.name] = facts
