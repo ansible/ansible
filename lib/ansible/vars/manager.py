@@ -41,7 +41,7 @@ from ansible.plugins import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.vars import combine_vars, TrackingDict, ObservableDict, Watcher
+from ansible.utils.vars import combine_vars, TrackingDict
 from ansible.utils.unsafe_proxy import wrap_var
 
 try:
@@ -108,6 +108,13 @@ class VariableManager:
             display.warning(to_native(e))
             # fallback to a dict as in memory cache
             self._fact_cache = {}
+
+        # At high verbosity, use TrackingDict for all_vars so we keep track of where
+        # the items come from
+        if display.verbosity > 4:
+            self._vars_dict_class = TrackingDict
+        else:
+            self._vars_dict_class = dict
 
     def __getstate__(self):
         data = dict(
@@ -200,20 +207,9 @@ class VariableManager:
         '''
 
         display.debug("in VariableManager get_vars()")
-        import traceback
-        #print('\n%s' % os.getpid())
-        #traceback.print_stack()
-        #print('\nplay=%s host=%s task=%s include_hostvars=%s
-        #import pprint
-        #pprint.pprint(locals())
 
-        # all_vars = dict()
-        #all_vars = ObservableDict()
-        #all_vars._name = 'all_vars'
-        all_vars = dict()
-        all_vars = TrackingDict()
-        #watcher = Watcher()
-        #all_vars.observe(watcher)
+        all_vars = self._vars_dict_class()
+
         magic_variables = self._get_magic_variables(
             play=play,
             host=host,
@@ -439,12 +435,6 @@ class VariableManager:
             # has to be copy, otherwise recursive ref
             all_vars['vars'] = all_vars.copy()
 
-        #print('ALL_VARS:\n%s' % repr(all_vars))
-        #import pprint
-        #print('ALL_VARS:')
-        #pprint.pprint(all_vars.as_dict())
-        #import traceback
-        #traceback.print_stack()
         display.debug("done with get_vars()")
         return all_vars
 
