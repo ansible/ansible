@@ -38,8 +38,6 @@ options:
     description:
       - Timezone to set to.  Example Central Standard Time
     required: true
-    default: null
-    aliases: []
 
 author: Phil Schwartz
 '''
