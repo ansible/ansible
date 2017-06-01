@@ -638,17 +638,19 @@ def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
     :param new_tags_dict:
     :param purge_tags:
     :return: tag_key_value_pairs_to_set: a dict of key value pairs that need to be set in AWS. If all tags are identical this dict will be empty
-    :return: tag_keys_to_unset: a list of key names that need to be unset in AWS. If no tags need to be unset this list will be empty
+    :return: tag_keys_to_unset: a list of key names (in the boto3 form of [{'Key': key}]) that need to be unset in AWS. If no tags need to be unset this list will be empty
     """
 
     tag_key_value_pairs_to_set = {}
     tag_keys_to_unset = []
+    list_tag_keys_to_unset = []
 
     for key in current_tags_dict.keys():
         if key not in new_tags_dict and purge_tags:
-            tag_keys_to_unset.append(key)
+            list_tag_keys_to_unset.append(key)
+            tag_keys_to_unset.append({'Key': key})
 
-    for key in set(new_tags_dict.keys()) - set(tag_keys_to_unset):
+    for key in set(new_tags_dict.keys()) - set(list_tag_keys_to_unset):
         if new_tags_dict[key] != current_tags_dict.get(key):
             tag_key_value_pairs_to_set[key] = new_tags_dict[key]
 
