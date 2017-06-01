@@ -37,7 +37,7 @@ description:
       allow the module to create these for you. If you choose not to provide a network interface, the resource group
       must contain a virtual network with at least one subnet.
     - Currently requires an image found in the Azure Marketplace. Use azure_rm_virtualmachineimage_facts module
-      to discover the publisher, offer, sku and version of a particular image.
+      to discover the publisher, offer, sku and version of a particular image or an Azure VHD image URI.
 
 options:
     resource_group:
@@ -121,7 +121,7 @@ options:
         description:
             - "A dictionary describing the Marketplace image used to build the VM. Will contain keys: publisher,
               offer, sku and version. NOTE: set image.version to 'latest' to get the most recent version of a given
-              image."
+              image. alternatively you may specify just the key uri, with the uri of an azure VHD image"
         required: true
     storage_account_name:
         description:
@@ -215,6 +215,22 @@ options:
             - Any other input will be ignored
         default: ['all']
         required: false
+    win_rm:
+        description:
+            - "A Dictionary describing win rm config, Will contain keys: ssl, certificate, vault and store.
+              where ssl is boolean to enable HTTPS, certificate is a string specifying the URL of the certificate in Azure,
+              Vault is a string containing the ID of the Vault containing the SSL, key and secret
+              and store a string with the name of the Certificate store on the VM, Default: 'My'"
+        default: null
+    auto_logon:
+        description:
+            - "A dictionary to set an account that will automatically be logged onto the local machine upon boot, user is a string denoting the username
+            and password is a string denoting the password"
+        default: null
+    security_group:
+        description:
+            - "the name of a network security group to add the newly created NIC to, must be in the same region as the server and NIC"
+        default: null
 
 extends_documentation_fragment:
     - azure
@@ -448,13 +464,17 @@ from ansible.module_utils.azure_rm_common import *
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.compute.models import NetworkInterfaceReference, \
-                                          VirtualMachine, HardwareProfile, \
-                                          StorageProfile, OSProfile, OSDisk, \
-                                          VirtualHardDisk, ImageReference,\
-                                          NetworkProfile, LinuxConfiguration, \
-                                          SshConfiguration, SshPublicKey
+        VirtualMachine, HardwareProfile, \
+        StorageProfile, OSProfile, OSDisk, \
+        VirtualHardDisk, ImageReference, \
+        NetworkProfile, LinuxConfiguration, \
+        SshConfiguration, SshPublicKey, \
+        WindowsConfiguration, WinRMConfiguration, \
+        WinRMListener, VaultSecretGroup, \
+        SubResource, VaultCertificate, \
+        VirtualHardDisk, AdditionalUnattendContent
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
-                                          NetworkInterfaceIPConfiguration, Subnet
+        NetworkInterfaceIPConfiguration, Subnet
     from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
     from azure.mgmt.storage.models.storage_management_client_enums import Kind, SkuTier, SkuName
     from azure.mgmt.compute.models.compute_management_client_enums import VirtualMachineSizeTypes, DiskCreateOptionTypes
@@ -509,6 +529,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             allocated=dict(type='bool', default=True),
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
+            win_rm=dict(type='dict'),
+            auto_logon=dict(type='dict'),
+            security_group=dict(type='str')
         )
 
         for key in VirtualMachineSizeTypes:
@@ -542,6 +565,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.restarted = None
         self.started = None
         self.differences = None
+        self.win_rm = None
+        self.auto_logon = None
+        self.security_group = None
 
         self.results = dict(
             changed=False,
@@ -598,13 +624,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         self.fail(msg)
 
             if self.image:
-                if not self.image.get('publisher') or not self.image.get('offer') or not self.image.get('sku') \
-                   or not self.image.get('version'):
-                    self.error("parameter error: expecting image to contain publisher, offer, sku and version keys.")
-                image_version = self.get_image_version()
-                if self.image['version'] == 'latest':
-                    self.image['version'] = image_version.name
-                    self.log("Using image version {0}".format(self.image['version']))
+                if (not self.image.get('publisher') or not self.image.get('offer') or not self.image.get('sku') \
+                            or not self.image.get('version')) and not self.image.get('uri'):
+                    self.error("parameter error: expecting image to contain publisher, offer, sku and version keys, or only the uri key")
+                if not self.image.get('uri'):
+                    image_version = self.get_image_version()
+                    if self.image['version'] == 'latest':
+                        self.image['version'] = image_version.name
+                        self.log("Using image version {0}".format(self.image['version']))
 
             if not self.storage_blob_name:
                 self.storage_blob_name = self.name + '.vhd'
@@ -747,7 +774,30 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         hardware_profile=HardwareProfile(
                             vm_size=self.vm_size
                         ),
-                        storage_profile=StorageProfile(
+                        network_profile=NetworkProfile(
+                            network_interfaces=nics
+                        ),
+                    )
+
+                    if self.image.get('uri'):
+                        if self.image.get('publisher') or self.image.get('offer') or self.image.get('sku') or self.image.get('version'):
+                            self.fail("Image parameter 'url' cant not be set with any other image parameters")
+                        if not self.os_type:
+                            self.fail("os type must be specified when depploying from an image")
+                        vm_resource.storage_profile = StorageProfile(
+                            os_disk=OSDisk(
+                                self.storage_blob_name,
+                                vhd,
+                                DiskCreateOptionTypes.from_image,
+                                caching=self.os_disk_caching,
+                                image=VirtualHardDisk(
+                                    uri = self.image['uri']
+                                ),
+                                os_type=self.os_type,
+                            )
+                        )
+                    else:
+                        vm_resource.storage_profile = StorageProfile(
                             os_disk=OSDisk(
                                 self.storage_blob_name,
                                 vhd,
@@ -759,12 +809,59 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 offer=self.image['offer'],
                                 sku=self.image['sku'],
                                 version=self.image['version'],
-                            ),
-                        ),
-                        network_profile=NetworkProfile(
-                            network_interfaces=nics
-                        ),
-                    )
+                            )
+                        )
+
+                    if self.win_rm:
+                        if self.win_rm["ssl"]:
+                            cert_store = "My"
+                            if "store" in self.win_rm:
+                                cert_store = self.win_rm["store"]
+
+                            vm_resource.os_profile.secrets = [VaultSecretGroup(
+                                source_vault=SubResource(
+                                    id=self.win_rm["vault"]
+                                ),
+                                vault_certificates=[VaultCertificate(
+                                    certificate_url=self.win_rm["certificate"],
+                                    certificate_store=cert_store
+                                )]
+                            )]
+
+                            vm_resource.os_profile.windows_configuration = WindowsConfiguration(
+                                win_rm = WinRMConfiguration(
+                                    listeners = [WinRMListener(
+                                        protocol="Http",
+                                        certificate_url=None
+                                    ),
+                                        WinRMListener(
+                                            protocol="Https",
+                                            certificate_url=self.win_rm["certificate"]
+                                        )]
+                                )
+                            )
+                        else:
+                            vm_resource.os_profile.windows_configuration = WindowsConfiguration(
+                                win_rm = WinRMConfiguration(
+                                    listeners = [WinRMListener(
+                                        protocol="Http",
+                                        certificate_url=None
+                                    )]
+                                )
+                            )
+
+                    if self.auto_logon:
+                        if self.os_type != 'Windows':
+                            self.fail("auto logon can only be enabled on windows servers")
+
+                        if not self.auto_logon.get("user") or not self.auto_logon.get("password"):
+                            self.fail("Parameter error: user and password keys required when enabling autologon.")
+                        vm_resource.os_profile.windows_configuration.additional_unattend_content = [AdditionalUnattendContent(
+                            pass_name="oobesystem",
+                            component_name="Microsoft-Windows-Shell-Setup",
+                            setting_name="AutoLogon",
+                            content="<AutoLogon><Domain>"+self.name+"</Domain><Username>"+self.auto_logon["user"]+"</Username><Password><Value>"+self.auto_logon["password"]+"</Value></Password><LogonCount>9999</LogonCount><Enabled>true</Enabled></AutoLogon>",
+                        )]
 
                     if self.admin_password:
                         vm_resource.os_profile.admin_password = self.admin_password
@@ -1189,6 +1286,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.fail("Error checking storage account name availability for {0} - {1}".format(name, str(exc)))
         return response.name_available
 
+    def get_security_group(self, name):
+        self.log("Fetching security group {0}".format(name))
+        try:
+            nsg = self.network_client.network_security_groups.get(self.resource_group, name)
+        except Exception as exc:
+            self.fail("Error: fetching network security group {0} - {1}.".format(name, str(exc)))
+        return nsg
+
     def create_default_nic(self):
         '''
         Create a default Network Interface <vm name>01. Requires an existing virtual network
@@ -1269,9 +1374,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
         pip = self.create_default_pip(self.resource_group, self.location, self.name, self.public_ip_allocation_method)
 
-        self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
-        group = self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type,
-                                                  self.open_ports)
+        if self.security_group:
+            try:
+                group = self.get_security_group(self.security_group)
+            except Exception as exc:
+                self.fail("Error: fetching security group {0} - {1}".format(self.security_group, str(exc)))
+        else:
+            self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
+            group = self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type,
+                                                      self.open_ports)
 
         parameters = NetworkInterface(
             location=self.location,
