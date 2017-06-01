@@ -459,7 +459,9 @@ def get_properties(autoscaling_group, module):
                                       region=region,
                                       endpoint=ec2_url,
                                       **aws_connect_params)
-        target_groups = elbv2_connection.describe_target_groups(TargetGroupArns=properties['target_group_arns'])['TargetGroups']
+        tg_paginator = elbv2_connection.get_paginator('describe_target_groups')
+        tg_result = tg_paginator.paginate(TargetGroupArns=properties['target_group_arns']).build_full_result()
+        target_groups = tg_result['TargetGroups']
     else:
         target_groups = []
     properties['target_group_names'] = [tg['TargetGroupName'] for tg in target_groups]
