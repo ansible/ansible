@@ -20,17 +20,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-import os
 import random
 import uuid
 
-from collections import MutableMapping
+from collections import MutableMapping, defaultdict
 from json import dumps
-
-from deepdiff import DeepDiff
-import pprint
-
-# import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -87,61 +81,15 @@ def _validate_mutable_mappings(a, b):
         )
 
 
-class Unset(object):
-    pass
-
-
-class ObservableDict(dict):
-    def __init__(self, *args, **kw):
-        self.observers = []
-        super(ObservableDict, self).__init__(*args, **kw)
-        self._name = None
-        self._update_name = None
-
-    def observe(self, observer):
-        self.observers.append(observer)
-
-    def __setitem__(self, key, value):
-        for o in self.observers:
-            # pprint.pprint(locals())
-            # traceback.print_stack()
-            # print('\n')
-            o.notify(observable=self,
-                     key=key,
-                     old=self.get(key, Unset),
-                     new=value)
-        super(ObservableDict, self).__setitem__(key, value)
-
-    def update(self, anotherDict, update_name=None):
-        # self._update_name = blip_update_name
-        for k in anotherDict:
-            if k == 'update_name':
-                continue
-            self._update_name = update_name
-            self[k] = anotherDict[k]
-
-    def copy(self):
-        d = ObservableDict(super(ObservableDict, self).copy())
-        d._name = self._name
-        d.observe(Watcher())
-        return d
-
-
-from collections import defaultdict
-
-
 class TrackingDict(dict):
     def __init__(self, *args, **kw):
-        self._initial = True
         super(TrackingDict, self).__init__(*args, **kw)
-        self._inital = False
+
         self.meta = defaultdict(list)
         self.ignore_internal = True
 
     def __setitem__(self, key, value):
         super(TrackingDict, self).__setitem__(key, value)
-        #if self._initial:
-        #    self.meta[key].append(('unknown-si', value))
 
     def update(self, other, update_name=None, scope_info=None):
         for key in other:
@@ -190,51 +138,6 @@ class TrackingDict(dict):
         return data
 
 
-class Watcher(object):
-    def notify(self, observable, key, old, new):
-        pid = os.getpid()
-#        if key == 'ansible_connection':
-#            print('\npid: %s' % pid)
-#            traceback.print_stack()
-        if old is Unset:
-            return
-        if old != new:
-            dd = DeepDiff(old, new, ignore_order=True,
-                          verbose_level=2, view='tree')
-            # print('value of key=%s changed from %s to %s' % (key, old, new))
-            display.vvv('\npid=%s name=%s update_name=%s key=%s changed.\ndiff:\n%s' % (pid, observable._name,
-                                                                                        observable._update_name,
-                                                                                        key, pprint.pformat(dd)))
-            # print('\nvalue of key=%s changed.\ndiff:\n%s' % (key, self.show(dd)))
-
-import traceback
-
-def show_changes(old, new, old_object_label=None, new_object_label=None, update_label=None):
-    if old is new:
-        return
-
-    if old == new:
-        return
-
-    pid = os.getpid()
-    exclude_paths = {"root['hostvars']"}
-    exclude_paths = ["root['hostvars']", "root['ansible_facts']"]
-    if update_label == 'ignore' or update_label.startswith('_'):
-        return
-
-    if update_label is None:
-        display.vvv('format_stack (pid=%s) \n: %s' % (pid, ''.join(traceback.format_stack())))
-        #traceback.print_stack()
-    dd = DeepDiff(old, new, ignore_order=True,
-#                  verbose_level=2,
-                  exclude_paths=exclude_paths)
-    #print('old: %s' % pprint.pformat(old))
-    #print('new: %s' % pprint.pformat(new))
-    display.vvv('%s has been updated via %s. The changes are:\n%s' % (old_object_label,
-                                                                      update_label,
-                                                                      pprint.pformat(dd)))
-
-
 def combine_vars(a, b, name_b=None, scope_info=None):
     """
     Return a copy of dictionaries of variables based on configured hash behavior
@@ -246,19 +149,8 @@ def combine_vars(a, b, name_b=None, scope_info=None):
         # HASH_BEHAVIOUR == 'replace'
         _validate_mutable_mappings(a, b)
         result = a.copy()
-        # print(type(result))
-        # _result = ObservableDict(result)
-        _result = result
-        # w = Watcher()
-        # _result.observe(w)
-        # setattr(_result, '_update_name', name_b)
-        _result.update(b, update_name=name_b, scope_info=scope_info)
-        #if display.verbosity > 2:
-            #if isinstance(a, TrackingDict):
-                #pprint.pprint(dict(_result.meta))
-            #    print(repr(a))
-            #show_changes(a, _result, old_object_label='all_vars', new_object_label='b', update_label=name_b)
-        return _result
+        result.update(b, update_name=name_b, scope_info=scope_info)
+        return result
 
 
 def merge_hash(a, b):

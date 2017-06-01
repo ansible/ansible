@@ -246,10 +246,10 @@ class StrategyModule(StrategyBase):
 
                         display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
-                        import pprint
-                        print('\n\n\nTASK_VARS:')
-                        print(repr(task_vars))
-                        #pprint.pprint(task_vars.as_dict())
+
+                        # display the details of which vars came from where at vvvvv (where we use TrackingDict for all_vars)
+                        display.vvvvv(repr(task_vars))
+
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
