@@ -40,6 +40,9 @@ options:
   description:
     description:
       - Description for the VLAN.
+  vlan_id:
+    description:
+      - ID of the VLAN.
   interfaces:
     description:
       - List of interfaces the VLAN should be configured on.
