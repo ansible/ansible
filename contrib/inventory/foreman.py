@@ -37,6 +37,7 @@ import sys
 from time import time
 from collections import defaultdict
 from distutils.version import LooseVersion, StrictVersion
+import urllib
 
 # 3rd party imports
 import requests
@@ -64,6 +65,7 @@ class ForemanInventory(object):
         self.params = dict()  # Params of each host
         self.facts = dict()   # Facts of each host
         self.hostgroups = dict()  # host groups
+        self.hostcollections = dict()  # host collections
         self.session = None   # Requests session
         self.config_paths = [
             "/etc/ansible/foreman.ini",
@@ -107,6 +109,11 @@ class ForemanInventory(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_facts = True
 
+        try:
+            self.want_hostcollections = config.getboolean('ansible', 'want_hostcollections')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.want_hostcollections = False
+
         # Cache related
         try:
             cache_path = os.path.expanduser(config.get('cache', 'path'))
@@ -117,10 +124,27 @@ class ForemanInventory(object):
         self.cache_path_inventory = cache_path + "/%s.index" % script
         self.cache_path_params = cache_path + "/%s.params" % script
         self.cache_path_facts = cache_path + "/%s.facts" % script
+        self.cache_path_hostcollections = cache_path + "/%s.hostcollections" % script
         try:
             self.cache_max_age = config.getint('cache', 'max_age')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.cache_max_age = 60
+
+        # If the FOREMAN_ORGANIZATION environment variable is set to the
+        # label of a Satellite organization, only hosts from that
+        # organization will be listed. This can be used in Ansible Tower
+        # inventories.
+        foreman_organization_label = os.environ.get('FOREMAN_ORGANIZATION')
+        self.foreman_organization_id = None
+        if foreman_organization_label:
+            self.foreman_organization_id = self._get_organization_id(foreman_organization_label)
+
+        # If the FOREMAN_HOSTCOLLECTION environment variable is set to the
+        # name of a Satellite host collection, only hosts from that
+        # collection will be listed. This can be used in Ansible Tower
+        # inventories.
+        self.foreman_hostcollection_name = os.environ.get('FOREMAN_HOSTCOLLECTION')
+
         return True
 
     def parse_cli_args(self):
@@ -168,21 +192,40 @@ class ForemanInventory(object):
                 break
         return results
 
+    def _get_organization_id(self, organization_label):
+        url = "%s/katello/api/v2/organizations?search=label=%s" % (self.foreman_url, urllib.quote_plus(organization_label))
+        json = self._get_json(url)
+
+        if json:
+            return json[0]['id']
+        else:
+            raise ValueError("Cannot find Foreman organization \"%s\"" % organization_name)
+
     def _get_hosts(self):
-        return self._get_json("%s/api/v2/hosts" % self.foreman_url)
+        search_query = ""
+        if self.foreman_hostcollection_name:
+            search_query = "?search=host_collection=%s" % urllib.quote_plus(self.foreman_hostcollection_name)
 
-    def _get_all_params_by_id(self, hid):
+        if self.foreman_organization_id:
+            hosts = self._get_json("%s/api/v2/organizations/%s/hosts%s" % (self.foreman_url, self.foreman_organization_id, search_query))
+        else:
+            hosts = self._get_json("%s/api/v2/hosts%s" % (self.foreman_url, search_query))
+
+        return hosts
+
+    def _get_host_data_by_id(self, hid):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
-        ret = self._get_json(url, [404])
-        if ret == []:
-            ret = {}
-        return ret.get('all_parameters', {})
+        return self._get_json(url)
 
-    def _resolve_params(self, host):
-        """Fetch host params and convert to dict"""
+    def _get_facts_by_id(self, hid):
+        url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
+        return self._get_json(url)
+
+    def _resolve_params(self, host_params):
+        """Convert host params to dict"""
         params = {}
 
-        for param in self._get_all_params_by_id(host['id']):
+        for param in host_params:
             name = param['name']
             params[name] = param['value']
 
@@ -218,6 +261,7 @@ class ForemanInventory(object):
         self.write_to_cache(self.inventory, self.cache_path_inventory)
         self.write_to_cache(self.params, self.cache_path_params)
         self.write_to_cache(self.facts, self.cache_path_facts)
+        self.write_to_cache(self.hostcollections, self.cache_path_hostcollections)
 
     def to_safe(self, word):
         '''Converts 'bad' characters in a string to underscores
@@ -237,6 +281,9 @@ class ForemanInventory(object):
 
         for host in self._get_hosts():
             dns_name = host['name']
+
+            host_data = self._get_host_data_by_id(host['id'])
+            host_params = host_data.get('all_parameters', {})
 
             # Create ansible groups for hostgroup
             group = 'hostgroup'
@@ -258,7 +305,7 @@ class ForemanInventory(object):
                     safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
                     self.inventory[safe_key].append(dns_name)
 
-            params = self._resolve_params(host)
+            params = self._resolve_params(host_params)
 
             # Ansible groups by parameters in host groups and Foreman host
             # attributes.
@@ -273,6 +320,17 @@ class ForemanInventory(object):
                     self.inventory[key].append(dns_name)
                 except KeyError:
                     pass  # Host not part of this group
+
+            if self.want_hostcollections:
+                hostcollections = host_data.get('host_collections')
+
+                if hostcollections:
+                    # Create Ansible groups for host collections
+                    for hostcollection in hostcollections:
+                        safe_key = self.to_safe('%shostcollection_%s' % (self.group_prefix, hostcollection['name'].lower()))
+                        self.inventory[safe_key].append(dns_name)
+
+                self.hostcollections[dns_name] = hostcollections
 
             self.cache[dns_name] = host
             self.params[dns_name] = params
@@ -314,6 +372,14 @@ class ForemanInventory(object):
         json_facts = cache.read()
         self.facts = json.loads(json_facts)
 
+    def load_hostcollections_from_cache(self):
+        """Read the index from the cache file sets self.hostcollections"""
+        if not self.want_hostcollections:
+            return
+        cache = open(self.cache_path_hostcollections, 'r')
+        json_hostcollections = cache.read()
+        self.hostcollections = json.loads(json_hostcollections)
+
     def load_cache_from_cache(self):
         """Read the cache from the cache file sets self.cache"""
 
@@ -328,6 +394,7 @@ class ForemanInventory(object):
             self.load_inventory_from_cache()
             self.load_params_from_cache()
             self.load_facts_from_cache()
+            self.load_hostcollections_from_cache()
             self.load_cache_from_cache()
 
     def get_host_info(self):
