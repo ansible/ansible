@@ -428,12 +428,20 @@ class VariableManager:
         # next, we merge in role params and task include params
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_role_params(task.get_dep_chain()), scope_name='role_params')
+                all_vars = combine_vars(all_vars, task._role.get_role_params(task.get_dep_chain()),
+                                        scope_name='role_params',
+                                        scope_info={'role_name': task._role.get_name(),
+                                                    'role_path': task._role._role_path,
+                                                    'task_name': task.name,
+                                                    'task_path': task.get_path()})
 
             # special case for include tasks, where the include params
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
-            all_vars = combine_vars(all_vars, task.get_include_params(), scope_name='task_include_params')
+            all_vars = combine_vars(all_vars, task.get_include_params(),
+                                    scope_name='task_include_params',
+                                    scope_info={'task_name': task.name,
+                                                'task_path': task.get_path()})
 
         # extra vars
         all_vars = combine_vars(all_vars, self._extra_vars, scope_name='extra_vars')
