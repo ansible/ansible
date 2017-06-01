@@ -156,6 +156,11 @@ def check_args(module, warnings):
         if module.params[key]:
             warnings.append('argument %s is deprecated and will be ignored' % key)
 
+    for key in ['http_port', 'https_port']:
+        if module.params[key] is not None:
+            if not 1 <= module.params[key] <= 65535:
+                module.fail_json(msg='%s must be between 1 and 65535' % key)
+
     return warnings
 
 def map_obj_to_commands(want, have, module):
@@ -225,14 +230,6 @@ def map_config_to_obj(module):
 
     return obj
 
-def validate_http_port(value, module):
-    if not 1 <= module.params['http_port'] <= 65535:
-        module.fail_json(msg='http_port must be between 1 and 65535')
-
-def validate_https_port(value, module):
-    if not 1 <= module.params['https_port'] <= 65535:
-        module.fail_json(msg='https_port must be between 1 and 65535')
-
 def map_params_to_obj(module):
     obj = {
         'http': module.params['http'],
@@ -242,12 +239,6 @@ def map_params_to_obj(module):
         'sandbox': module.params['sandbox'],
         'state': module.params['state']
     }
-
-    for key, value in iteritems(obj):
-        if value:
-            validator = globals().get('validate_%s' % key)
-            if validator:
-                validator(value, module)
 
     return obj
 
