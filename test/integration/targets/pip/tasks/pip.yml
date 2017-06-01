@@ -83,6 +83,9 @@
 - name: make sure the test env doesn't exist
   file: state=absent name={{ output_dir }}/pipenv
 
+- name: install a working version of setuptools in the virtualenv
+  pip: name=setuptools virtualenv={{ output_dir }}/pipenv state=present version=33.1.1
+
 - name: create a requirement file with an vcs url
   copy: dest={{ output_dir }}/pipreq.txt
     content="-e git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
