@@ -114,7 +114,7 @@ class VcenterProvider(CloudProvider):
             display.info('Using the existing Vcenter simulator docker container.', verbosity=1)
         else:
             display.info('Starting a new Vcenter simulator docker container.', verbosity=1)
-            #docker_pull(self.args, self.image)
+            # docker_pull(self.args, self.image)
             docker_run(
                 self.args,
                 self.image,
