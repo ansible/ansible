@@ -86,12 +86,15 @@ class TrackingDict(dict):
         super(TrackingDict, self).__setitem__(key, value)
 
     def update(self, other, update_name=None, scope_info=None):
+        # If we are updating where other is a TrackingDict, try to merge its meta
+        # info into ours so we preserve the origin update_name/scope_info
+        other_meta = getattr(other, 'meta', None)
+        if other_meta:
+            self.meta.update(other_meta)
+
         for key in other:
             if key == 'update_name' or key == 'scope_info':
                 continue
-            other_meta = getattr(other, 'meta', {'_nothing': '_nada'})
-            if other_meta:
-                self.meta.update(other_meta)
             self.meta[key].append((update_name, other[key], scope_info))
             self[key] = other[key]
 
