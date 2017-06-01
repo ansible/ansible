@@ -85,17 +85,17 @@ class TrackingDict(dict):
     def __setitem__(self, key, value):
         super(TrackingDict, self).__setitem__(key, value)
 
-    def update(self, other, update_name=None, scope_info=None):
+    def update(self, other, scope_name=None, scope_info=None):
         # If we are updating where other is a TrackingDict, try to merge its meta
-        # info into ours so we preserve the origin update_name/scope_info
+        # info into ours so we preserve the origin scope_name/scope_info
         #other_meta = getattr(other, 'meta', None)
         #if other_meta:
         #    self.meta.update(other_meta)
 
         for key in other:
-            if key == 'update_name' or key == 'scope_info':
+            if key == 'scope_name' or key == 'scope_info':
                 continue
-            self.meta[key].append((update_name, other[key], scope_info))
+            self.meta[key].append((scope_name, other[key], scope_info))
             self[key] = other[key]
 
     def copy(self):
@@ -162,7 +162,7 @@ def combine_vars(a, b, scope_name=None, scope_info=None):
         #       path. (to avoid non tracking dicts getting bogus keys from the kwargs to update())
         # maybe switch out combine_vars based on verbosity?  (means import display here)
         # pass verbosity to combine_vars
-        result.update(b, update_name=scope_name, scope_info=scope_info)
+        result.update(b, scope_name=scope_name, scope_info=scope_info)
         return result
 
 
