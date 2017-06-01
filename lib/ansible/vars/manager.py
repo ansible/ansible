@@ -337,7 +337,8 @@ class VariableManager:
                 pass
 
         if play:
-            all_vars = combine_vars(all_vars, play.get_vars(), scope_name='play_get_vars')
+            all_vars = combine_vars(all_vars, play.get_vars(), scope_name='play_get_vars',
+                                    scope_info={'play_name': play.get_name()})
 
             for vars_file_item in play.get_vars_files():
                 # create a set of temporary vars here, which incorporate the extra
@@ -389,7 +390,10 @@ class VariableManager:
             # unless the user has disabled this via a config option
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
-                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False), scope_name='role_play_vars_%s' % role.get_name(), scope_info=role._role_path)
+                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False),
+                                            scope_name='role_play_vars_%s' % role.get_name(),
+                                            scope_info={'role_path': role._role_path,
+                                                        'role_name': role.get_name()})
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
