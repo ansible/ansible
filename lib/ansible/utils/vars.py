@@ -81,6 +81,7 @@ class TrackingDict(dict):
 
         self.meta = defaultdict(list)
         self.ignore_internal = True
+        self.verbosity = 5
 
     def __setitem__(self, key, value):
         super(TrackingDict, self).__setitem__(key, value)
@@ -136,12 +137,15 @@ class TrackingDict(dict):
                 continue
             scopes = []
             for idx, level in enumerate(self.meta[key]):
-                scopes.append({'rank': idx,
-                               'scope': level[0],
-                               'info': level[2],
-                               'value': level[1]})
-            data[key] = {'scopes': scopes,
-                         'final': self[key]}
+                scope = {'rank': idx,
+                         'scope': level[0],
+                         'info': level[2]}
+                if self.verbosity >= 5:
+                    scope['value'] = level[1]
+                scopes.append(scope)
+            data[key] = {'scopes': scopes}
+            if self.verbosity >= 5:
+                data[key]['final'] = self[key]
         return data
 
 
