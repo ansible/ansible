@@ -821,9 +821,24 @@ class ModuleValidator(Validator):
             data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                               doc_info['RETURN']['lineno'],
                                               self.name, 'RETURN')
+
             if data:
                 for ret_key in data:
                     self._validate_docs_schema(data[ret_key], return_schema(data[ret_key]), 'RETURN.%s' % ret_key, 319)
+            elif self._is_new_module():
+                self.reporter.error(
+                    path=self.object_path,
+                    code=320,
+                    msg='Empty RETURN provided',
+                    line=doc_info['RETURN']['lineno'],
+                )
+            else:
+                self.reporter.warning(
+                    path=self.object_path,
+                    code=320,
+                    msg='Empty RETURN provided',
+                    line=doc_info['RETURN']['lineno'],
+                )
 
             for error in errors:
                 self.reporter.error(
