@@ -222,15 +222,18 @@ options:
               Vault is a string containing the ID of the Vault containing the SSL, key and secret
               and store a string with the name of the Certificate store on the VM, Default: 'My'"
         default: null
+        version_added: "2.4"
     auto_logon:
         description:
             - "A dictionary to set an account that will automatically be logged onto the local machine upon boot, user is a string denoting the username
             and password is a string denoting the password"
         default: null
+        version_added: "2.4"
     security_group:
         description:
             - "the name of a network security group to add the newly created NIC to, must be in the same region as the server and NIC"
         default: null
+        version_added: "2.4"
 
 extends_documentation_fragment:
     - azure
@@ -860,7 +863,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             pass_name="oobesystem",
                             component_name="Microsoft-Windows-Shell-Setup",
                             setting_name="AutoLogon",
-                            content="<AutoLogon><Domain>"+self.name+"</Domain><Username>"+self.auto_logon["user"]+"</Username><Password><Value>"+self.auto_logon["password"]+"</Value></Password><LogonCount>9999</LogonCount><Enabled>true</Enabled></AutoLogon>",
+                            content="<AutoLogon>"
+                                    "<Domain>"+self.name+"</Domain>"
+                                    "<Username>"+self.auto_logon["user"]+"</Username>"
+                                    "<Password><Value>"+self.auto_logon["password"]+"</Value></Password>"
+                                    "<LogonCount>9999</LogonCount>"
+                                    "<Enabled>true</Enabled>"
+                                    "</AutoLogon>",
                         )]
 
                     if self.admin_password:
