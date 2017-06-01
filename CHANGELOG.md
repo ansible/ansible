@@ -1,10 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-## 2.3.1 "Ramble On" - TBD
+## 2.3.1 "Ramble On" - 2017-06-01
 
 
 ### Bugfixes
+* Security fix for CVE-2017-7481 - data for lookup plugins used as variables was not being correctly marked as "unsafe".
 * Fix default value of fetch module's validate_checksum to be True
 * Added fix for "meta: refresh_connection" not working with default 'smart' connection.
 * Fix template so that the --diff command line option works when the destination is a directory
