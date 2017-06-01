@@ -471,7 +471,7 @@ class Base(with_metaclass(BaseMeta, object)):
                     if not isinstance(item, dict):
                         raise ValueError
                     _validate_variable_keys(item)
-                    all_vars = combine_vars(all_vars, item, name_b='base_load_vars')
+                    all_vars = combine_vars(all_vars, item, scope_name='base_load_vars')
                 return all_vars
             elif ds is None:
                 return {}

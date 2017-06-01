@@ -145,7 +145,7 @@ class TrackingDict(dict):
         return data
 
 
-def combine_vars(a, b, name_b=None, scope_info=None):
+def combine_vars(a, b, scope_name=None, scope_info=None):
     """
     Return a copy of dictionaries of variables based on configured hash behavior
     """
@@ -162,7 +162,7 @@ def combine_vars(a, b, name_b=None, scope_info=None):
         #       path. (to avoid non tracking dicts getting bogus keys from the kwargs to update())
         # maybe switch out combine_vars based on verbosity?  (means import display here)
         # pass verbosity to combine_vars
-        result.update(b, update_name=name_b, scope_info=scope_info)
+        result.update(b, update_name=scope_name, scope_info=scope_info)
         return result
 
 
@@ -213,7 +213,7 @@ def load_extra_vars(loader, options):
             data = parse_kv(extra_vars_opt)
 
         if isinstance(data, MutableMapping):
-            extra_vars = combine_vars(extra_vars, data, name_b='_load_extra_vars')
+            extra_vars = combine_vars(extra_vars, data, scope_name='_load_extra_vars')
         else:
             raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
 

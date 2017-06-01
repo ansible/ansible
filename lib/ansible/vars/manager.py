@@ -223,13 +223,13 @@ class VariableManager:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
-                all_vars = combine_vars(all_vars, role.get_default_vars(), name_b='play_roles_%s' % role.get_name(), scope_info=role._role_path)
+                all_vars = combine_vars(all_vars, role.get_default_vars(), scope_name='play_roles_%s' % role.get_name(), scope_info=role._role_path)
 
         # if we have a task in this context, and that task has a role, make
         # sure it sees its defaults above any other roles, as we previously
         # (v1) made sure each task had a copy of its roles default vars
         if task and task._role is not None and (play or task.action == 'include_role'):
-            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), name_b='task_role', scope_info=task._role._role_path)
+            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), scope_name='task_role', scope_info=task._role._role_path)
 
         if host:
             # INIT WORK (use unsafe as we are going to copy/merge vars, no need to x2 copy)
@@ -267,7 +267,7 @@ class VariableManager:
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
-                        data = combine_vars(data, _get_plugin_vars(plugin, self._loader, inventory_dir, entities), name_b='inventory_plugin_dir_%s' % plugin, scope_info=inventory_dir)
+                        data = combine_vars(data, _get_plugin_vars(plugin, self._loader, inventory_dir, entities), scope_name='inventory_plugin_dir_%s' % plugin, scope_info=inventory_dir)
 
                 return data
 
@@ -275,7 +275,7 @@ class VariableManager:
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
-                    data = combine_vars(data, _get_plugin_vars(plugin, self._loader, basedir, entities), name_b='plugins_play_%s' % plugin, scope_info=plugin._original_path)
+                    data = combine_vars(data, _get_plugin_vars(plugin, self._loader, basedir, entities), scope_name='plugins_play_%s' % plugin, scope_info=plugin._original_path)
                 return data
 
             # configurable functions that are sortable via config
@@ -307,8 +307,8 @@ class VariableManager:
                 '''
                 data = {}
                 for group in host_groups:
-                    data[group] = combine_vars(data[group], _plugins_inventory(group), name_b='group_inventory_plugin_%s' % group)
-                    data[group] = combine_vars(data[group], _plugins_play(group), name_b='group_inventory_play_plugin_%s' % group)
+                    data[group] = combine_vars(data[group], _plugins_inventory(group), scope_name='group_inventory_plugin_%s' % group)
+                    data[group] = combine_vars(data[group], _plugins_play(group), scope_name='group_inventory_play_plugin_%s' % group)
                 return data
 
             # Merge as per precedence config
@@ -317,33 +317,33 @@ class VariableManager:
                 if entry.startswith('_') or '.' in entry:
                     continue
                 display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                # FIXME: better name for the var_source/name_b
-                all_vars = combine_vars(all_vars, locals()[entry](), name_b='precedence_config_%s' % entry)
+                # FIXME: better name for the var_source/scope_name
+                all_vars = combine_vars(all_vars, locals()[entry](), scope_name='precedence_config_%s' % entry)
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
-            all_vars = combine_vars(all_vars, host.get_vars(), name_b='host_vars')
-            all_vars = combine_vars(all_vars, _plugins_inventory([host]), name_b='inventory_plugins')
-            all_vars = combine_vars(all_vars, _plugins_play([host]), name_b='play_plugins')
+            all_vars = combine_vars(all_vars, host.get_vars(), scope_name='host_vars')
+            all_vars = combine_vars(all_vars, _plugins_inventory([host]), scope_name='inventory_plugins')
+            all_vars = combine_vars(all_vars, _plugins_play([host]), scope_name='play_plugins')
 
             # finally, the facts caches for this host, if it exists
             try:
                 host_facts = wrap_var(self._fact_cache.get(host.name, dict()))
                 if not C.NAMESPACE_FACTS:
                     # allow facts to polute main namespace
-                    all_vars = combine_vars(all_vars, host_facts, name_b='facts_cache')
+                    all_vars = combine_vars(all_vars, host_facts, scope_name='facts_cache')
                 # always return namespaced facts
-                all_vars = combine_vars(all_vars, {'ansible_facts': host_facts}, name_b='namespaced_facts_cache')
+                all_vars = combine_vars(all_vars, {'ansible_facts': host_facts}, scope_name='namespaced_facts_cache')
             except KeyError:
                 pass
 
         if play:
-            all_vars = combine_vars(all_vars, play.get_vars(), name_b='play_get_vars')
+            all_vars = combine_vars(all_vars, play.get_vars(), scope_name='play_get_vars')
 
             for vars_file_item in play.get_vars_files():
                 # create a set of temporary vars here, which incorporate the extra
                 # and magic vars so we can properly template the vars_files entries
-                temp_vars = combine_vars(all_vars, self._extra_vars, name_b='_temp_extra_vars')
-                temp_vars = combine_vars(temp_vars, magic_variables, name_b='_temp_magic_variables')
+                temp_vars = combine_vars(all_vars, self._extra_vars, scope_name='_temp_extra_vars')
+                temp_vars = combine_vars(temp_vars, magic_variables, scope_name='_temp_magic_variables')
                 templar = Templar(loader=self._loader, variables=temp_vars)
 
                 # we assume each item in the list is itself a list, as we
@@ -363,7 +363,7 @@ class VariableManager:
                             data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                             if data is not None:
                                 for item in data:
-                                    all_vars = combine_vars(all_vars, item, name_b='vars_file', scope_info=vars_file)
+                                    all_vars = combine_vars(all_vars, item, scope_name='vars_file', scope_info=vars_file)
                             break
                         except AnsibleFileNotFound:
                             # we continue on loader failures
@@ -389,38 +389,38 @@ class VariableManager:
             # unless the user has disabled this via a config option
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
-                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False), name_b='role_play_vars_%s' % role.get_name(), scope_info=role._role_path)
+                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False), scope_name='role_play_vars_%s' % role.get_name(), scope_info=role._role_path)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False), name_b='task_roles_vars', scope_info=task._role._role_path)
-            all_vars = combine_vars(all_vars, task.get_vars(), name_b='task_vars')
+                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False), scope_name='task_roles_vars', scope_info=task._role._role_path)
+            all_vars = combine_vars(all_vars, task.get_vars(), scope_name='task_vars')
 
         # next, we merge in the vars cache (include vars) and nonpersistent
         # facts cache (set_fact/register), in that order
         if host:
-            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()), name_b='vars_cache')
+            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()), scope_name='vars_cache')
             registered_vars = self._nonpersistent_fact_cache.get(host.name, self._vars_dict_class())
-            all_vars = combine_vars(all_vars, registered_vars, name_b='registered_vars')
+            all_vars = combine_vars(all_vars, registered_vars, scope_name='registered_vars')
 
         # next, we merge in role params and task include params
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_role_params(task.get_dep_chain()), name_b='role_params')
+                all_vars = combine_vars(all_vars, task._role.get_role_params(task.get_dep_chain()), scope_name='role_params')
 
             # special case for include tasks, where the include params
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
-            all_vars = combine_vars(all_vars, task.get_include_params(), name_b='task_include_params')
+            all_vars = combine_vars(all_vars, task.get_include_params(), scope_name='task_include_params')
 
         # extra vars
-        all_vars = combine_vars(all_vars, self._extra_vars, name_b='extra_vars')
+        all_vars = combine_vars(all_vars, self._extra_vars, scope_name='extra_vars')
 
         # magic variables
-        all_vars = combine_vars(all_vars, magic_variables, name_b='magic_variables')
+        all_vars = combine_vars(all_vars, magic_variables, scope_name='magic_variables')
 
         # special case for the 'environment' magic variable, as someone
         # may have set it as a variable and we don't want to stomp on it
@@ -562,10 +562,10 @@ class VariableManager:
                                 break
                         else:
                             delegated_host = Host(name=delegated_host_name)
-                            delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars, name_b='delegated_vars')
+                            delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars, scope_name='delegated_vars')
             else:
                 delegated_host = Host(name=delegated_host_name)
-                delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars, name_b='delegated_host_vars')
+                delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars, scope_name='delegated_host_vars')
 
             # now we go fetch the vars for the delegated-to host and save them in our
             # master dictionary of variables to be used later in the TaskExecutor/PlayContext
@@ -609,7 +609,7 @@ class VariableManager:
 
         self._nonpersistent_fact_cache[host.name] = combine_vars(self._nonpersistent_fact_cache[host.name],
                                                                  facts,
-                                                                 name_b='non_persistent',
+                                                                 scope_name='non_persistent',
                                                                  scope_info=scope_info)
         return
 

@@ -157,7 +157,7 @@ class InventoryData(object):
 
             # special case for implicit hosts
             if host.implicit:
-                host.vars = combine_vars(self.groups['all'].get_vars(), host.vars, name_b='inventory_data_host_vars_implicit')
+                host.vars = combine_vars(self.groups['all'].get_vars(), host.vars, scope_name='inventory_data_host_vars_implicit')
 
         # warn if overloading identifier as both group and host
         for conflict in group_names.intersection(host_names):

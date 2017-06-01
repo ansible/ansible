@@ -144,8 +144,8 @@ class Host:
         results['group_names'] = sorted([g.name for g in self.get_groups() if g.name != 'all'])
 
         # FIXME: add a 'target' param to specify what it is we are updating, where it is not all_vars
-        return combine_vars(self.vars, results, name_b='Host_get_magic_vars')
+        return combine_vars(self.vars, results, scope_name='Host_get_magic_vars')
 
     def get_vars(self):
-        return combine_vars(self.vars, self.get_magic_vars(), name_b='Host_get_vars')
+        return combine_vars(self.vars, self.get_magic_vars(), scope_name='Host_get_vars')
 
