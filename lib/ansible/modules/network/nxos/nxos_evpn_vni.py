@@ -220,9 +220,8 @@ def state_present(module, existing, proposed):
             command = '{0} {1}'.format(key, value)
             commands.append(command)
 
-    else:
-        commands = ['vni {0} l2'.format(module.params['vni'])]
-        parents = ['evpn']
+    if commands:
+        parents = ['evpn', 'vni {0} l2'.format(module.params['vni'])]
 
     return commands, parents
 
