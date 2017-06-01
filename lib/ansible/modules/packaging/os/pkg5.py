@@ -128,7 +128,9 @@ def ensure(module, state, packages, params):
             'subcommand': 'install',
         },
         'latest': {
-            'filter': lambda p: not is_latest(module, p),
+            'filter': lambda p: (
+                not is_installed(module, p) or not is_latest(module, p)
+            ),
             'subcommand': 'install',
         },
         'absent': {
