@@ -223,13 +223,19 @@ class VariableManager:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
-                all_vars = combine_vars(all_vars, role.get_default_vars(), scope_name='play_roles_%s' % role.get_name(), scope_info=role._role_path)
+                all_vars = combine_vars(all_vars, role.get_default_vars(),
+                                        scope_name='play_roles_defaults',
+                                        scope_info={'role_path': role._role_path,
+                                                    'role_name': role.get_name()})
 
         # if we have a task in this context, and that task has a role, make
         # sure it sees its defaults above any other roles, as we previously
         # (v1) made sure each task had a copy of its roles default vars
         if task and task._role is not None and (play or task.action == 'include_role'):
-            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), scope_name='task_role', scope_info=task._role._role_path)
+            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()),
+                                    scope_name='task_roles_defaults',
+                                    scope_info={'role_path': task._role._role_path,
+                                                'role_name': task._role.get_name()})
 
         if host:
             # INIT WORK (use unsafe as we are going to copy/merge vars, no need to x2 copy)
