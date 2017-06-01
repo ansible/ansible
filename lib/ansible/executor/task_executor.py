@@ -34,7 +34,6 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.template import Templar
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
@@ -96,27 +95,28 @@ class TaskExecutor:
                 if len(items) > 0:
                     item_results = self._run_loop(items)
 
-                    # loop through the item results, and remember the changed/failed
-                    # result flags based on any item there.
-                    changed = False
-                    failed = False
-                    for item in item_results:
-                        if 'changed' in item and item['changed']:
-                            changed = True
-                        if 'failed' in item and item['failed']:
-                            failed = True
-
-                    # create the overall result item, and set the changed/failed
-                    # flags there to reflect the overall result of the loop
+                    # create the overall result item
                     res = dict(results=item_results)
 
-                    if changed:
-                        res['changed'] = True
+                    # loop through the item results, and set the global changed/failed result flags based on any item.
+                    for item in item_results:
+                        if 'changed' in item and item['changed'] and not res.get('changed'):
+                            res['changed'] = True
+                        if 'failed' in item and item['failed'] and not res.get('failed'):
+                            res['failed'] = True
+                            res['msg'] = 'One or more items failed'
 
-                    if failed:
-                        res['failed'] = True
-                        res['msg'] = 'One or more items failed'
-                    else:
+                        # ensure to accumulate these
+                        for array in ['warnings', 'deprecations']:
+                            if array in item and item[array]:
+                                if array not in res:
+                                    res[array] = []
+                                if not isinstance(item[array], list):
+                                    item[array] = [item[array]]
+                                res[array] = res[array] + item[array]
+                                del item[array]
+
+                    if not res.get('Failed', False):
                         res['msg'] = 'All items completed'
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
