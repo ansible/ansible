@@ -533,9 +533,9 @@ class User(object):
             cmd.append('--expiredate')
             try:
                 if self.clearexpires < 0:
-                   cmd.append('')
+                    cmd.append('')
                 else:
-                   cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
             except ValueError:
                 raise
 
