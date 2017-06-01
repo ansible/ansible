@@ -1214,16 +1214,20 @@ class AnsibleModule(object):
             return True
 
         existing = self.get_file_attributes(b_path, include_version=False)
+        existing_flags = set(existing.get('attr_flags', ''))
+        delta_flags = set(attr for attr in attributes if attr in FILE_ATTRIBUTES)
 
-        attr_mod = '='
-        if attributes.startswith(('-', '+')):
-            attr_mod = attributes[0]
-            attributes = attributes[1:]
+        if attributes.startswith('+'):
+            new_flags = existing_flags | delta_flags
+        elif attributes.startswith('-'):
+            new_flags = existing_flags - delta_flags
+        else:
+            new_flags = delta_flags.copy()
 
-        if existing.get('attr_flags', '') != attributes or attr_mod == '-':
+        if existing_flags != new_flags:
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
-                attrcmd = [attrcmd, '%s%s' % (attr_mod, attributes), b_path]
+                attrcmd = [attrcmd, '=%s' % ''.join(new_flags), b_path]
                 changed = True
 
                 if diff is not None:
@@ -1232,7 +1236,7 @@ class AnsibleModule(object):
                     diff['before']['attributes'] = existing.get('attr_flags')
                     if 'after' not in diff:
                         diff['after'] = {}
-                    diff['after']['attributes'] = '%s%s' % (attr_mod, attributes)
+                    diff['after']['attributes'] = ''.join(new_flags)
 
                 if not self.check_mode:
                     try:

@@ -72,8 +72,7 @@ options:
     description:
     - The attributes the resulting file or directory should have.
     - To get supported flags look at the man page for I(chattr) on the target system.
-    - This string should contain the attributes in the same order as the one displayed by I(lsattr).
-    - The C(=) operator is assumed as default, otherwise C(+) or C(-) operators need to be included in the string.
+    - The C(=) operator is assumed as default, otherwise C(+) or C(-) operators need to be prepended to the string.
     type: str
     aliases: [ attr ]
     version_added: '2.3'
