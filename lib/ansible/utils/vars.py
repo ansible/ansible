@@ -97,10 +97,15 @@ class TrackingDict(dict):
         d.meta = self.meta.copy()
         return d
 
+    def _is_ignored(self, key):
+        if self.ignore_internal and key.startswith('ansible_') or key in ['hostvars', 'groups', 'vars', 'omit', 'inventory_hostname']:
+            return True
+        return False
+
     def __repr__(self):
         lines = []
         for key in self:
-            if self.ignore_internal and key.startswith('ansible_') or key in ['hostvars', 'groups', 'vars', 'omit', 'inventory_hostname']:
+            if self._is_ignored(key):
                 continue
             lines.append('var: %s' % key)
             lines.append('    scopes:')
@@ -121,12 +126,14 @@ class TrackingDict(dict):
     def as_dict(self):
         data = {}
         for key in self:
+            if self._is_ignored(key):
+                continue
             scopes = []
             for idx, level in enumerate(self.meta[key]):
-                # lines.append('  level %s: %s' % (idx, repr(level)))
-                # l.append('    %s: %s' % (level[0], level[1]))
-                scopes.append((idx, {'level': level[0],
-                                     'value': level[1]}))
+                scopes.append({'rank': idx,
+                               'scope': level[0],
+                               'info': level[2],
+                               'value': level[1]})
             data[key] = {'scopes': scopes,
                          'final': self[key]}
         return data
