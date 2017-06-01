@@ -191,7 +191,7 @@ def get_nitro_client(module):
     client = nitro_service(module.params['nsip'], module.params['nitro_protocol'])
     client.set_credential(module.params['nitro_user'], module.params['nitro_pass'])
     client.timeout = float(module.params['nitro_timeout'])
-    client.certvalidation = module.params['ssl_cert_validation']
+    client.certvalidation = module.params['validate_certs']
     return client
 
 
@@ -215,8 +215,8 @@ netscaler_common_arguments = dict(
         fallback=(env_fallback, ['NETSCALER_NITRO_PROTOCOL']),
         default='http'
     ),
-    ssl_cert_validation=dict(
-        default=False,
+    validate_certs=dict(
+        default=True,
         type='bool'
     ),
     nitro_timeout=dict(default=310, type='float'),

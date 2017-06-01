@@ -43,9 +43,9 @@ options:
     name:
         description:
             - >-
-                Name for the service. Must begin with an ASCII alphabetic or underscore (_) character, and must
-                contain only ASCII alphanumeric, underscore, hash (#), period (.), space, colon (:), at (@), equals
-                (=), and hyphen (-) characters. Cannot be changed after the service has been created.
+                Name for the service. Must begin with an ASCII alphabetic or underscore C(_) character, and must
+                contain only ASCII alphanumeric, underscore C(_), hash C(#), period C(.), space C( ), colon C(:), at C(@), equals
+                C(=), and hyphen C(-) characters. Cannot be changed after the service has been created.
             - "Minimum length = 1"
 
     ip:
@@ -130,7 +130,7 @@ options:
     healthmonitor:
         description:
             - "Monitor the health of this service"
-            - "Default value: YES"
+        default: yes
 
     maxreq:
         description:
@@ -143,7 +143,7 @@ options:
         description:
             - "Use the transparent cache redirection virtual server to forward requests to the cache server."
             - "Note: Do not specify this parameter if you set the Cache Type parameter."
-            - "Default value: NO"
+        default: no
 
     cip:
         choices:
@@ -194,7 +194,7 @@ options:
     sc:
         description:
             - "State of SureConnect for the service."
-            - "Default value: OFF"
+        default: off
 
     sp:
         description:
@@ -203,7 +203,7 @@ options:
     rtspsessionidremap:
         description:
             - "Enable RTSP session ID mapping for the service."
-            - "Default value: OFF"
+        default: off
 
     clttimeout:
         description:
@@ -222,7 +222,7 @@ options:
             - >-
                 Unique identifier for the service. Used when the persistency type for the virtual server is set to
                 Custom Server ID.
-            - "Default value: \\"None\\""
+        default: 'None'
 
     serverid:
         description:
@@ -251,7 +251,7 @@ options:
             - >-
                 Use Layer 2 mode to bridge the packets sent to this service if it is marked as DOWN. If the service
                 is DOWN, and this parameter is disabled, the packets are dropped.
-            - "Default value: NO"
+        default: no
 
     monthreshold:
         description:
@@ -269,7 +269,7 @@ options:
             - >-
                 Flush all active transactions associated with a service whose state transitions from UP to DOWN. Do
                 not enable this option for applications that must complete their transactions.
-            - "Default value: ENABLED"
+        default: ENABLED
 
     tcpprofilename:
         description:
@@ -300,7 +300,7 @@ options:
             - 'DISABLED'
         description:
             - "Enable logging of AppFlow information."
-            - "Default value: ENABLED"
+        default: ENABLED
 
     netprofile:
         description:
@@ -326,7 +326,7 @@ options:
                 By turning on this option packets destined to a service in a cluster will not under go any steering.
                 Turn this option for single packet request response mode or when the upstream device is performing a
                 proper RSS for connection based distribution.
-            - "Default value: DISABLED"
+        default: DISABLED
 
     dnsprofilename:
         description:
@@ -345,7 +345,7 @@ options:
             - >-
                 Shut down gracefully, not accepting any new connections, and disabling the service when all of its
                 connections are closed.
-            - "Default value: NO"
+        default: no
 
     monitor_bindings:
         description:
@@ -388,7 +388,6 @@ EXAMPLES = '''
     nitro_user: nsroot
     nitro_pass: nsroot
 
-    module: netscaler_service
     operation: present
 
     name: service-http-1
@@ -417,7 +416,6 @@ diff:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netscaler import (ConfigProxy, get_nitro_client, netscaler_common_arguments, log, loglines, get_immutables_intersection)
 import copy
-import requests
 
 try:
     from nssrc.com.citrix.netscaler.nitro.resource.config.basic.service import service
@@ -613,9 +611,15 @@ def main():
             ]
         ),
         maxclient=dict(type='float'),
-        healthmonitor=dict(type='bool'),
+        healthmonitor=dict(
+            type='bool',
+            default=True,
+        ),
         maxreq=dict(type='float'),
-        cacheable=dict(type='bool'),
+        cacheable=dict(
+            type='bool',
+            default=False,
+        ),
         cip=dict(
             type='str',
             choices=[
@@ -626,24 +630,37 @@ def main():
         cipheader=dict(type='str'),
         usip=dict(type='bool'),
         useproxyport=dict(type='bool'),
-        sc=dict(type='bool'),
+        sc=dict(
+            type='bool',
+            default=False,
+        ),
         sp=dict(type='bool'),
-        rtspsessionidremap=dict(type='bool'),
+        rtspsessionidremap=dict(
+            type='bool',
+            default=False,
+        ),
         clttimeout=dict(type='float'),
         svrtimeout=dict(type='float'),
-        customserverid=dict(type='str'),
+        customserverid=dict(
+            type='str',
+            default='None',
+        ),
         cka=dict(type='bool'),
         tcpb=dict(type='bool'),
         cmp=dict(type='bool'),
         maxbandwidth=dict(type='float'),
-        accessdown=dict(type='bool'),
+        accessdown=dict(
+            type='bool',
+            default=False
+        ),
         monthreshold=dict(type='float'),
         downstateflush=dict(
             type='str',
             choices=[
                 'ENABLED',
                 'DISABLED',
-            ]
+            ],
+            default='ENABLED',
         ),
         tcpprofilename=dict(type='str'),
         httpprofilename=dict(type='str'),
@@ -654,7 +671,8 @@ def main():
             choices=[
                 'ENABLED',
                 'DISABLED',
-            ]
+            ],
+            default='ENABLED',
         ),
         netprofile=dict(type='str'),
         processlocal=dict(
@@ -662,11 +680,15 @@ def main():
             choices=[
                 'ENABLED',
                 'DISABLED',
-            ]
+            ],
+            default='DISABLED',
         ),
         dnsprofilename=dict(type='str'),
         ipaddress=dict(type='str'),
-        graceful=dict(type='bool'),
+        graceful=dict(
+            type='bool',
+            default=False,
+        ),
     )
 
     hand_inserted_arguments = dict(
@@ -702,10 +724,13 @@ def main():
     except nitro_exception as e:
         msg = "nitro exception during login. errorcode=%s, message=%s" % (str(e.errorcode), e.message)
         module.fail_json(msg=msg)
-    except requests.exceptions.SSLError as e:
-        module.fail_json(msg='SSL Error %s' % str(e))
-    except requests.exceptions.ConnectionError as e:
-        module.fail_json(msg='Connection error %s' % str(e))
+    except Exception as e:
+        if str(type(e)) == "<class 'requests.exceptions.ConnectionError'>":
+            module.fail_json(msg='Connection error %s' % str(e))
+        elif str(type(e)) == "<class 'requests.exceptions.SSLError'>":
+            module.fail_json(msg='SSL Error %s' % str(e))
+        else:
+            raise
 
     # Fallthrough to rest of execution
 

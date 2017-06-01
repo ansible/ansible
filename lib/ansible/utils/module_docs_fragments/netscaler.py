@@ -20,14 +20,20 @@ options:
 
     nitro_protocol:
         choices: [ 'http', 'https' ]
-        default: https
+        default: http
         description:
             - Which protocol to use when accessing the nitro API objects.
 
-    ssl_cert_validation:
+    validate_certs:
         description:
-            - Whether to check the ssl certificate validity when using https to communicate with the netsaler node.
-        required: True
+            - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+
+    nitro_timeout:
+        description:
+            - Time in seconds until a timeout error is thrown when establishing a new session with Netscaler
+        default: 310
 
     operation:
         choices: ['present', 'absent']
