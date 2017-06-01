@@ -31,6 +31,8 @@ DOCUMENTATION:
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
+
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.module_utils.six import iteritems
@@ -247,8 +249,10 @@ class StrategyModule(StrategyBase):
                         display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
 
+                        # NOTE: add callback hook?
                         # display the details of which vars came from where at vvvvv (where we use TrackingDict for all_vars)
                         display.vvvvv(repr(task_vars))
+                        display.vvvvv('TASK VARS:\n%s' % json.dumps(task_vars.as_dict(), indent=4, ensure_ascii=False, sort_keys=True))
 
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
