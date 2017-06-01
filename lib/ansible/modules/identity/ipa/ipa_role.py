@@ -66,6 +66,7 @@ options:
     - If option is passed all assigned privileges that are not passed will be removed.
     required: false
     default: None
+    version_added: "2.4"
   service:
     description:
     - List of service names to assign.

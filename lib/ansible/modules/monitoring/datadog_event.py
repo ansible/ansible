@@ -72,7 +72,7 @@ options:
         description: ["Host name to associate with the event."]
         required: false
         default: "{{ ansible_hostname }}"
-        version_added: "2.3"
+        version_added: "2.4"
     tags:
         description: ["Comma separated list of tags to apply to the event."]
         required: false
