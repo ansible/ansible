@@ -88,9 +88,9 @@ class TrackingDict(dict):
     def update(self, other, update_name=None, scope_info=None):
         # If we are updating where other is a TrackingDict, try to merge its meta
         # info into ours so we preserve the origin update_name/scope_info
-        other_meta = getattr(other, 'meta', None)
-        if other_meta:
-            self.meta.update(other_meta)
+        #other_meta = getattr(other, 'meta', None)
+        #if other_meta:
+        #    self.meta.update(other_meta)
 
         for key in other:
             if key == 'update_name' or key == 'scope_info':
@@ -127,7 +127,7 @@ class TrackingDict(dict):
                 lines.append('             value: %s' % level[1])
             lines.append('    final:')
             lines.append('           %s' % self[key])
-        return '\n'.join(lines)
+        return to_text('\n'.join(lines))
 
     def as_dict(self):
         data = {}
