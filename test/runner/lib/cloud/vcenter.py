@@ -54,6 +54,7 @@ class VcenterProvider(CloudProvider):
         self.image = 'jctanner:vcenter-simulator'
         self.container_name = ''
         self.endpoint = ''
+        self.vcenter_host = None
         self.host = ''
         self.port = 0
 
@@ -102,7 +103,6 @@ class VcenterProvider(CloudProvider):
 
     def _setup_dynamic(self):
         """Create a vcenter simulator using docker."""
-        config = self._read_config_template()
         self.container_name = self.DOCKER_SIMULATOR_NAME
         results = docker_inspect(self.args, self.container_name)
 
@@ -147,5 +147,5 @@ class VcenterEnvironment(CloudEnvironment):
         :type cmd: list[str]
         """
 
-        # FIXME - how do i get the IP of the container here?
+        # Send the container IP down to the integration test(s)
         env['vcenter_host'] = self._get_cloud_config('vcenter_host')
