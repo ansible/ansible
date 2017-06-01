@@ -1,0 +1,54 @@
+---
+- name: set the timezone to a default before the tests are run
+  win_timezone:
+    timezone: E. Australia Standard Time
+
+- name: change the timezone check
+  win_timezone:
+    timezone: "{{test_timezone}}"
+  register: change_timezone_check
+  check_mode: True
+
+- name: get stat on current time zone check
+  win_command: tzutil.exe /g
+  register: actual_timezone_check
+
+- name: assert change the timezone check
+  assert:
+    that:
+    - change_timezone_check|changed
+    - actual_timezone_check.stdout == 'E. Australia Standard Time'
+
+- name: change the timezone
+  win_timezone:
+    timezone: "{{test_timezone}}"
+  register: change_timezone
+
+- name: get stat on current time zone
+  win_command: tzutil.exe /g
+  register: actual_timezone
+
+- name: assert change the timezone check
+  assert:
+    that:
+    - change_timezone|changed
+    - actual_timezone.stdout == test_timezone
+
+- name: change the timezone again
+  win_timezone:
+    timezone: "{{test_timezone}}"
+  register: change_timezone_again
+
+- name: get stat on current time zone again
+  win_command: tzutil.exe /g
+  register: actual_timezone_again
+
+- name: assert change the timezone check again
+  assert:
+    that:
+    - not change_timezone_again|changed
+    - actual_timezone_again.stdout == test_timezone
+
+- name: reset test back to normal
+  win_timezone:
+    timezone: E. Australia Standard Time
