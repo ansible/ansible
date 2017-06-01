@@ -412,6 +412,15 @@ class AnsibleDockerClient(Client):
         '''
         try:
             response = self.images(name=name)
+            # check if user is trying to find an image by Id.
+            if not response:
+                images_list = self.images()
+                matched = []
+                for image in images_list:
+                    if name in image['Id']:
+                        matched = [image]
+                        break
+                return matched
         except Exception as exc:
             self.fail("Error searching for image %s - %s" % (name, str(exc)))
         images = response
