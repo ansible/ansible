@@ -19,7 +19,7 @@ as we work through this tutorial.
 See :doc:`../modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the ``./library`` directory relative to 
-the executing playbook or inside a ``role`` directory, the path specified by :envvar:`ANSIBLE_LIBRARY`, the ``--module-path`` 
+the executing playbook or inside a role, the path specified by :envvar:`ANSIBLE_LIBRARY`, the ``--module-path`` 
 command line option or in the `library section of the Ansible configuration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
 For more information about where Ansible discovers modules, see `Module Paths <http://docs.ansible.com/ansible/dev_guide/developing_modules_best_practices.html#module-paths>`_
 
