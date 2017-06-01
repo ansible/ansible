@@ -19,6 +19,16 @@ with open('requirements.txt') as requirements_file:
               "That indicates this copy of the source code is incomplete.")
         sys.exit(2)
 
+# pycrypto or cryptography.   We choose a default but allow the user to
+# override it.  This translates into pip install of the sdist deciding what
+# package to install and also the runtime dependencies that pkg_resources
+# knows about
+crypto_backend = os.environ.get('ANSIBLE_CRYPTO_BACKEND', None)
+if crypto_backend:
+    install_requirements = [r for r in install_requirements if not (r.lower().startswith('pycrypto') or r.lower().startswith('cryptography'))]
+    install_requirements.append(crypto_backend)
+
+
 SYMLINKS = {'ansible': frozenset(('ansible-console',
                                   'ansible-doc',
                                   'ansible-galaxy',
