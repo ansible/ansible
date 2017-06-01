@@ -398,7 +398,7 @@ class VariableManager:
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False),
-                                            scope_name='role_play_vars_%s' % role.get_name(),
+                                            scope_name='role_play_vars',
                                             scope_info={'role_path': role._role_path,
                                                         'role_name': role.get_name()})
 
