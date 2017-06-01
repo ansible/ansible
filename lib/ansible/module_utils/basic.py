@@ -808,7 +808,7 @@ class AnsibleModule(object):
             b_path = os.path.realpath(b_path)
             path = to_native(b_path)
 
-        mode   = params.get('mode', None)
+        mode   = str(params.get('mode', None))
         owner  = params.get('owner', None)
         group  = params.get('group', None)
 
