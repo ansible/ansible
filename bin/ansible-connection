@@ -125,12 +125,11 @@ class Server():
         try:
             while True:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
-                signal.signal(signal.SIGTERM, self.shutdown)
+                signal.signal(signal.SIGTERM, self.handler)
                 signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
 
                 (s, addr) = self.socket.accept()
                 display.display('incoming request accepted on persistent socket', log_only=True)
-
                 signal.alarm(0)
 
                 while True:
@@ -138,6 +137,7 @@ class Server():
                     if not data:
                         break
 
+                    signal.signal(signal.SIGALRM, self.command_timeout)
                     signal.alarm(self.play_context.timeout)
 
                     op = data.split(':')[0]
@@ -152,6 +152,8 @@ class Server():
                         stderr = 'Invalid action specified'
                     else:
                         rc, stdout, stderr = method(data)
+
+                    signal.alarm(0)
 
                     display.display('socket operation completed with rc %s' % rc, log_only=True)
 
@@ -175,6 +177,15 @@ class Server():
             display.display('shutdown local socket, connection was active for %s secs' % delta, log_only=True)
 
     def connect_timeout(self, signum, frame):
+        display.display('connect timeout triggered, timeout value is %s secs' % C.PERSISTENT_CONNECT_TIMEOUT, log_only=True)
+        self.shutdown()
+
+    def command_timeout(self, signum, frame):
+        display.display('commnad timeout triggered, timeout value is %s secs' % self.play_context.timeout, log_only=True)
+        self.shutdown()
+
+    def handler(self, signum, frame):
+        display.display('signal handler called with signal %s' % signum, log_only=True)
         self.shutdown()
 
     def shutdown(self):
