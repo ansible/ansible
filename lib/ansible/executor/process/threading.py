@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 import sys
+import time
 import traceback
 
 from jinja2.exceptions import TemplateNotFound
@@ -39,7 +40,7 @@ except ImportError:
 __all__ = ['WorkerProcess']
 
 
-def run_worker(task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
+def run_worker(tqm, shared_loader_obj):
     '''
     The worker thread class, which uses TaskExecutor to run tasks
     read from a job queue and pushes results into a results queue
@@ -50,51 +51,59 @@ def run_worker(task_vars, host, task, play_context, loader, variable_manager, sh
     # pr = cProfile.Profile()
     # pr.enable()
 
-    try:
-        # execute the task and build a TaskResult from the result
-        display.debug("running TaskExecutor() for %s/%s" % (host, task))
-        executor_result = TaskExecutor(
-            host,
-            task,
-            task_vars,
-            play_context,
-            None, #new_stdin
-            loader,
-            shared_loader_obj,
-            None, #rslt_q
-        ).run()
+    display.debug("STARTING WORKER")
+    while not tqm._terminated:
+        job = tqm.get_job()
+        if job is None:
+            time.sleep(0.0001)
+            continue
 
-        display.debug("done running TaskExecutor() for %s/%s" % (host, task))
-        task_result = TaskResult(
-            host,
-            task,
-            executor_result,
-        )
+        display.debug("WORKER GOT A JOB")
+        (host, task, play_context, task_vars) = job
 
-        # put the result on the result queue
-        display.debug("sending task result")
-        return task_result
+        try:
+            # execute the task and build a TaskResult from the result
+            display.debug("running TaskExecutor() for %s/%s" % (host, task))
+            executor_result = TaskExecutor(
+                host,
+                task,
+                task_vars,
+                play_context,
+                None, #new_stdin
+                tqm._loader,
+                shared_loader_obj,
+                tqm, #rslt_q
+            ).run()
 
-    except AnsibleConnectionFailure:
-        return TaskResult(
-            host,
-            task,
-            dict(unreachable=True),
-        )
+            display.debug("done running TaskExecutor() for %s/%s" % (host, task))
 
-    except Exception as e:
-        if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
-            try:
-                return TaskResult(
-                    host,
-                    task,
-                    dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
-                )
-            except:
-                display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
-                display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
+            # put the result on the result queue
+            display.debug("sending task result")
+            tqm.put_result(TaskResult(
+                host,
+                task,
+                executor_result,
+            ))
+            display.debug("done task result")
 
-    display.debug("WORKER PROCESS EXITING")
+        except AnsibleConnectionFailure:
+            tqm.put_result(TaskResult(
+                host,
+                task,
+                dict(unreachable=True),
+            ))
+
+        except Exception as e:
+            if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
+                try:
+                    tqm.put_result(TaskResult(
+                        host,
+                        task,
+                        dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
+                    ))
+                except:
+                    display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
+                    display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
 
     # pr.disable()
     # s = StringIO.StringIO()
@@ -103,3 +112,5 @@ def run_worker(task_vars, host, task, play_context, loader, variable_manager, sh
     # ps.print_stats()
     # with open('worker_%06d.stats' % os.getpid(), 'w') as f:
     #     f.write(s.getvalue())
+
+    display.debug("WORKER PROCESS EXITING")

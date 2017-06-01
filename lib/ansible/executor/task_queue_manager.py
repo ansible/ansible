@@ -23,17 +23,19 @@ import threading
 import os
 import tempfile
 
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
+from ansible.executor.process.threading import run_worker
 from ansible.executor.stats import AggregateStats
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
+from ansible.plugins.loader import action_loader, connection_loader, filter_loader, test_loader, lookup_loader, callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
@@ -48,6 +50,23 @@ except ImportError:
 
 
 __all__ = ['TaskQueueManager']
+
+
+# TODO: this should probably be in the plugins/__init__.py, with
+#       a smarter mechanism to set all of the attributes based on
+#       the loaders created there
+class SharedPluginLoaderObj:
+    '''
+    A simple object to make pass the various plugin loaders to
+    the forked processes over the queue easier
+    '''
+    def __init__(self):
+        self.action_loader = action_loader
+        self.connection_loader = connection_loader
+        self.filter_loader = filter_loader
+        self.test_loader   = test_loader
+        self.lookup_loader = lookup_loader
+        self.module_loader = module_loader
 
 
 class TaskQueueManager:
@@ -107,6 +126,39 @@ class TaskQueueManager:
         self._connection_lockfile = tempfile.TemporaryFile()
 
         self._executor = None
+        self._job_queue = deque()
+        self._job_queue_lock = threading.Lock()
+
+        self._res_queue = deque()
+        self._res_queue_lock = threading.Lock()
+
+    def _put_in_queue(self, data, queue, lock):
+        lock.acquire()
+        queue.appendleft(data)
+        lock.release()
+
+    def _pop_off_queue(self, queue, lock):
+        try:
+            data = None
+            lock.acquire()
+            data = queue.pop()
+        except:
+            pass
+        finally:
+            lock.release()
+        return data
+
+    def put_job(self, data):
+        self._put_in_queue(data, self._job_queue, self._job_queue_lock)
+
+    def get_job(self):
+        return self._pop_off_queue(self._job_queue, self._job_queue_lock)
+
+    def put_result(self, data):
+        self._put_in_queue(data, self._res_queue, self._res_queue_lock)
+
+    def get_result(self):
+        return self._pop_off_queue(self._res_queue, self._res_queue_lock)
 
     def _initialize_processes(self, num):
         # FIXME: be safe about creating this
@@ -114,9 +166,18 @@ class TaskQueueManager:
         # FIXME: do we need a global lock for workers here instead of a per-worker?
         self._workers = []
 
+        # create a dummy object with plugin loaders set as an easier
+        # way to share them with the forked processes
+        shared_loader_obj = SharedPluginLoaderObj()
+
         for i in range(num):
+            w_thread = self._executor.submit(
+                run_worker,
+                self,
+                shared_loader_obj
+            )
             w_lock = threading.Lock()
-            self._workers.append([None, w_lock])
+            self._workers.append([w_thread, w_lock])
 
     def _initialize_notified_handlers(self, play):
         '''
@@ -322,7 +383,7 @@ class TaskQueueManager:
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
             for (w_thread, w_lock) in self._workers:
-                if w_thread and w_thread.is_running():
+                if w_thread and not w_thread.running():
                     w_thread.cancel()
 
     def clear_failed_hosts(self):

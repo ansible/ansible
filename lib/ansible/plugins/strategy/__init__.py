@@ -29,8 +29,6 @@ from jinja2.exceptions import UndefinedError
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
-#from ansible.executor.process.worker import WorkerProcess
-from ansible.executor.process.threading import run_worker
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
@@ -53,47 +51,6 @@ except ImportError:
     display = Display()
 
 __all__ = ['StrategyBase']
-
-# TODO: this should probably be in the plugins/__init__.py, with
-#       a smarter mechanism to set all of the attributes based on
-#       the loaders created there
-class SharedPluginLoaderObj:
-    '''
-    A simple object to make pass the various plugin loaders to
-    the forked processes over the queue easier
-    '''
-    def __init__(self):
-        self.action_loader = action_loader
-        self.connection_loader = connection_loader
-        self.filter_loader = filter_loader
-        self.test_loader = test_loader
-        self.lookup_loader = lookup_loader
-        self.module_loader = module_loader
-
-def results_thread_main(strategy):
-    while not strategy._tqm._terminated:
-        try:
-            did_work = False
-            for idx, slot in enumerate(strategy._tqm._workers):
-                (w_thread, w_lock) = slot
-                try:
-                    w_lock.acquire()
-                    if w_thread and w_thread.done():
-                        result = w_thread.result()
-                        try:
-                            strategy._results_lock.acquire()
-                            strategy._results.append(result)
-                        finally:
-                            strategy._results_lock.release()
-                        strategy._tqm._workers[idx] = [None, w_lock]
-                        did_work = True
-                finally:
-                    w_lock.release()
-            if not did_work:
-                time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
-        except Exception as e:
-            pass
-    print("RESULTS THREAD EXITED!!!")
 
 
 class StrategyBase:
@@ -125,17 +82,8 @@ class StrategyBase:
         # outstanding tasks still in queue
         self._blocked_hosts = dict()
 
-        self._results = deque()
-        self._results_lock = threading.Condition(threading.Lock())
-
-        # create the result processing thread for reading results in the background
-        self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
-        self._results_thread.daemon = True
-        self._results_thread.start()
-
     def cleanup(self):
         self._tqm.terminate()
-        self._results_thread.join()
 
     def run(self, iterator, play_context, result=0):
         # execute one more pass through the iterator without peeking, to
@@ -206,43 +154,9 @@ class StrategyBase:
             display.debug('Creating lock for %s' % task.action)
             action_write_locks.action_write_locks[task.action] = threading.Lock()
 
-        # and then queue the new task
-        try:
-            # create a dummy object with plugin loaders set as an easier
-            # way to share them with the forked processes
-            shared_loader_obj = SharedPluginLoaderObj()
+        self._tqm.put_job((host, task, play_context, task_vars))
+        self._pending_results += 1
 
-            queued = False
-            starting_worker = self._cur_worker
-            while True:
-                (w_thread, w_lock) = self._workers[self._cur_worker]
-                if w_thread is None:
-                    w_thread = self._tqm._executor.submit(
-                        run_worker,
-                        task_vars,
-                        host,
-                        task,
-                        play_context,
-                        self._loader,
-                        self._variable_manager,
-                        shared_loader_obj
-                    )
-                    self._workers[self._cur_worker][0] = w_thread
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
-                    queued = True
-                self._cur_worker += 1
-                if self._cur_worker >= len(self._workers):
-                    self._cur_worker = 0
-                if queued:
-                    break
-                elif self._cur_worker == starting_worker:
-                    time.sleep(0.0001)
-
-            self._pending_results += 1
-        except (EOFError, IOError, AssertionError) as e:
-            # most likely an abort
-            display.debug("got an error while queuing: %s" % e)
-            return
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
     def get_task_hosts(self, iterator, task_host, task):
@@ -333,23 +247,21 @@ class StrategyBase:
 
         cur_pass = 0
         while True:
-            try:
-                self._results_lock.acquire()
-                task_result = self._results.popleft()
-            except IndexError:
+            task_result = self._tqm.get_result()
+            if task_result is None:
                 break
-            finally:
-                self._results_lock.release()
 
             # get the original host and task. We then assign them to the TaskResult for use in callbacks/etc.
-            original_host = get_original_host(task_result._host)
-            found_task = iterator.get_original_task(original_host, task_result._task)
-            original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
-            original_task._parent = found_task._parent
-            original_task.from_attrs(task_result._task_fields)
+            #original_host = get_original_host(task_result._host)
+            #found_task = iterator.get_original_task(original_host, task_result._task)
+            #original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
+            #original_task._parent = found_task._parent
+            #original_task.from_attrs(task_result._task_fields)
 
-            task_result._host = original_host
-            task_result._task = original_task
+            #task_result._host = original_host
+            #task_result._task = original_task
+            original_host = task_result._host
+            original_task = task_result._task
 
             # get the correct loop var for use later
             if original_task.loop_control:

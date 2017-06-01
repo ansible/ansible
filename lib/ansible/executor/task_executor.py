@@ -299,14 +299,13 @@ class TaskExecutor:
                 templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
                 res['_ansible_item_label'] = templar.template(label)
 
-            self._rslt_q.put(
+            self._rslt_q.put_result(
                 TaskResult(
-                    self._host.name,
-                    self._task._uuid,
+                    self._host,
+                    self._task,
                     res,
                     task_fields=self._task.dump_attrs(),
                 ),
-                block=False,
             )
             results.append(res)
             del task_vars[loop_var]
@@ -591,7 +590,7 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
+                        self._rslt_q.put_result(TaskResult(self._host, self._task, result, task_fields=self._task.dump_attrs()))
                         time.sleep(delay)
         else:
             if retries > 1:
