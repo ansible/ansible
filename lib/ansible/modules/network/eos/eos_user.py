@@ -143,6 +143,7 @@ session_name:
   type: str
   sample: ansible_1479315771
 """
+
 import re
 
 from functools import partial
@@ -266,7 +267,7 @@ def map_params_to_obj(module):
         for item in users:
             if not isinstance(item, dict):
                 collection.append({'username': item})
-            elif 'username' not in item:
+            elif all(u not in item for u in ['username', 'name']):
                 module.fail_json(msg='username is required')
             else:
                 collection.append(item)
@@ -301,8 +302,8 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list'),
-        username=dict(),
+        users=dict(type='list', aliases=['collection']),
+        username=dict(aliases=['name']),
 
         password=dict(no_log=True),
         nopassword=dict(type='bool'),

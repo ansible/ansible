@@ -220,7 +220,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list'),
+        users=dict(type='list', aliases=['collection']),
         name=dict(),
 
         full_name=dict(),
