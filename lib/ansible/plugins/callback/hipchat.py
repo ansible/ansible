@@ -82,24 +82,18 @@ class CallbackModule(CallbackBase):
         params['message_format'] = msg_format
         params['color'] = color
         params['notify'] = int(self.allow_notify and notify)
-
-      
         url = ('%s?auth_token=%s' % (self.msg_uri, self.token))
         try:
             response = open_url(url, data=urlencode(params))
             return response.read()
         except:
             self._display.warning('Could not submit message to hipchat')
-
-    
     
     def v2_playbook_on_start(self, playbook):
         """Display playbook start messages"""
         self.playbook_name = os.path.basename(playbook._file_name)
         self.send_msg("Starting playbook: %s" %
                       (self.playbook_name))
-
-
 
     def v2_playbook_on_play_start(self, play):
         """Display play start messages"""
@@ -110,16 +104,11 @@ class CallbackModule(CallbackBase):
         self.send_msg("Starting play: %s" % 
                       (name))
 
-
-
-
     def playbook_on_stats(self, stats):
         """Display info about playbook statistics"""
         hosts = sorted(stats.processed.keys())
-
         t = prettytable.PrettyTable(['Host', 'Ok', 'Changed', 'Unreachable',
                                      'Failures'])
-
         failures = False
         unreachable = False
 
