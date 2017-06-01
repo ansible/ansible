@@ -407,6 +407,9 @@ def main():
         if not rhn.is_registered:
             return module.exit_json(changed=False, msg="System already unregistered.")
 
+        if not (rhn.username and rhn.password):
+            module.fail_json(msg="Missing arguments, the system is currently registered and unregistration requires a username and password")
+
         try:
             rhn.unregister()
         except Exception:
