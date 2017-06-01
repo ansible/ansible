@@ -171,7 +171,7 @@ options:
     expires:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
-              Currently supported on Linux, FreeBSD, and DragonFlyBSD.
+              Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
         version_added: "1.9"
     local:
         description:
