@@ -459,9 +459,15 @@ def main():
                     if '--no-site-packages' in cmd_opts:
                         cmd += ' --no-site-packages'
 
+<<<<<<< HEAD
                 # -p is a virtualenv option, not compatible with pyenv or venv
                 # this if validates if the command being used is not any of them
                 if not any(ex in module.params['virtualenv_command'] for ex in ('pyvenv', '-m venv')):
+=======
+                # -p is a virtualenv option, not compatible with pyenv, therefore, this if validates
+                # the type of command, whether it is pyenv or not
+                if 'pyvenv' not in module.params['virtualenv_command']:
+>>>>>>> Fix proposal for bug 25151 - pip module, pyvenv validation
                     if virtualenv_python:
                         cmd += ' -p%s' % virtualenv_python
                     elif PY3:
