@@ -60,7 +60,6 @@ options:
    folder:
         description:
             - Define instance folder location.
-        required: True
    datacenter:
         description:
             - Destination datacenter for the deploy operation
