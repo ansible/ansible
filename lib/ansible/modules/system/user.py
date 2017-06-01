@@ -171,7 +171,7 @@ options:
     expires:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
-              Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
+              Currently supported on Linux, FreeBSD, and DragonFlyBSD.
         version_added: "1.9"
     local:
         description:
@@ -182,6 +182,8 @@ options:
         type: bool
         default: 'no'
         version_added: "2.4"
+            - To remove the expiry time specify a negative value.
+              Currently supported on GNU/Linux and FreeBSD.
 '''
 
 EXAMPLES = '''
@@ -295,7 +297,6 @@ class User(object):
         self.update_password = module.params['update_password']
         self.home = module.params['home']
         self.expires = None
-        self.clearexpires = None
         self.groups = None
         self.local = module.params['local']
 
@@ -303,10 +304,6 @@ class User(object):
             self.groups = ','.join(module.params['groups'])
 
         if module.params['expires']:
-            try:
-                self.clearexpires = float(module.params['expires'])
-            except:
-                pass
             try:
                 self.expires = time.gmtime(module.params['expires'])
             except Exception as e:
@@ -528,11 +525,8 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-            cmd.append('--expiredate')
-            if self.clearexpires < 0:
-                cmd.append('')
-            else:
-                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            cmd.append('-e')
+            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
@@ -921,10 +915,7 @@ class FreeBsdUser(User):
         if self.expires:
             days = (time.mktime(self.expires) - time.time()) // 86400
             cmd.append('-e')
-            if self.clearexpires < 0:
-                cmd.append('0')
-            else:
-                cmd.append(str(int(days)))
+            cmd.append(str(int(days)))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
