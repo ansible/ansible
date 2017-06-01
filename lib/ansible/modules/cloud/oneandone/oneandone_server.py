@@ -22,15 +22,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: oneandone_server
-short_description: Create, destroy, start, stop, and reboot a 1&1 Host machine.
+short_description: Create, destroy, start, stop, and reboot a 1&1 Host server.
 description:
-     - Create, destroy, update, start, stop, and reboot a 1&1 Host machine.
-       When the machine is created it can optionally wait for it to be 'running' before returning.
+     - Create, destroy, update, start, stop, and reboot a 1&1 Host server.
+       When the server is created it can optionally wait for it to be 'running' before returning.
 version_added: "2.4"
 options:
   state:
     description:
-      - Define a machine's state to create, remove, start or stop it.
+      - Define a server's state to create, remove, start or stop it.
     required: false
     default: present
     choices: [ "present", "absent", "running", "stopped" ]
@@ -47,20 +47,20 @@ options:
     choices: [ "US", "ES", "DE", "GB" ]
   hostname:
     description:
-      - The hostname or ID of the machine. Only used when state is 'present'.
-    required: true
+      - The hostname or ID of the server. Only used when state is 'present'.
+    required: false
   description:
     description:
-      - The description of the machine.
+      - The description of the server.
     required: false
   appliance:
     description:
-      - The operating system name or ID for the machine.
+      - The operating system name or ID for the server.
         It is required only for 'present' state.
-    required: true
+    required: false
   fixed_instance_size:
     description:
-      - The instance size name or ID of the machine.
+      - The instance size name or ID of the server.
         It is required only for 'present' state, and it is mutually exclusive with
         vcore, cores_per_processor, ram, and hdds parameters.
     required: true
@@ -69,22 +69,22 @@ options:
     description:
       - The total number of processors.
         It must be provided with cores_per_processor, ram, and hdds parameters.
-    required: true
+    required: false
   cores_per_processor:
     description:
       - The number of cores per processor.
         It must be provided with vcore, ram, and hdds parameters.
-    required: true
+    required: false
   ram:
     description:
       - The amount of RAM memory.
         It must be provided with with vcore, cores_per_processor, and hdds parameters.
-    required: true
+    required: false
   hdds:
     description:
       - A list of hard disks with nested "size" and "is_main" properties.
         It must be provided with vcore, cores_per_processor, and ram parameters.
-    required: true
+    required: false
   private_network:
     description:
       - The private network name or ID.
@@ -101,13 +101,13 @@ options:
     description:
       - The monitoring policy name or ID.
     required: false
-  instance_ids:
+  server:
     description:
-      - List of machine IDs or hostnames. It is required for all states except 'running'.
-    required: true
+      - Server identifier (ID or hostname). It is required for all states except 'running' and 'present'.
+    required: false
   count:
     description:
-      - The number of machines to create.
+      - The number of servers to create.
     required: false
     default: 1
   ssh_key:
@@ -117,7 +117,7 @@ options:
     default: None
   wait:
     description:
-      - Wait for the instance to be in state 'running' before returning.
+      - Wait for the server to be in state 'running' before returning.
         Also used for delete operation (set to 'false' if you don't want to wait
         for each individual server to be deleted before moving on with
         other tasks.)
@@ -130,7 +130,7 @@ options:
     default: 600
   auto_increment:
     description:
-      - When creating multiple machines at once, whether to differentiate
+      - When creating multiple servers at once, whether to differentiate
         hostnames by appending a count after them or substituting the count
         where there is a %02d or %03d in the hostname string.
     default: "yes"
@@ -139,7 +139,11 @@ options:
 requirements:
   - "1and1"
   - "python >= 2.6"
-author: "Amel Ajdinovic (@aajdinov), Ethan Devenport (@edevenport)"
+
+author:
+  -  "Amel Ajdinovic (@aajdinov)"
+  -  "Ethan Devenport (@edevenport)"
+
 '''
 
 EXAMPLES = '''
@@ -155,7 +159,7 @@ EXAMPLES = '''
     auto_increment: true
     count: 3
 
-# Create three machines, passing in an ssh_key.
+# Create three servers, passing in an ssh_key.
 
 - oneandone_server:
     auth_token: oneandone_private_api_key
@@ -173,43 +177,29 @@ EXAMPLES = '''
     wait_timeout: 600
     ssh_key: SSH_PUBLIC_KEY
 
-# Removing machines
+# Removing server
 
 - oneandone_server:
     auth_token: oneandone_private_api_key
     state: absent
-    instance_ids:
-      - 'node01'
-      - 'node02'
-      - 'node03'
+    server: 'node01'
 
-# Starting Machines.
+# Starting server.
 
 - oneandone_server:
     auth_token: oneandone_private_api_key
     state: running
-    instance_ids:
-      - 'node01'
-      - 'node02'
-      - 'node03'
+    server: 'node01'
 
-# Stopping Machines
+# Stopping server
 
 - oneandone_server:
     auth_token: oneandone_private_api_key
     state: stopped
-    instance_ids:
-      - 'node01'
-      - 'node02'
-      - 'node03'
+    server: 'node01'
 '''
 
 RETURN = '''
-changed:
-    description: True if a machine created, modified or removed
-    type: bool
-    sample: True
-    returned: always
 machines:
     description: Information about each machine that was processed
     type: list
@@ -243,7 +233,7 @@ except ImportError:
 
 DATACENTERS = ['US', 'ES', 'DE', 'GB']
 
-ONEANDONE_MACHINE_STATES = (
+ONEANDONE_SERVER_STATES = (
     'DEPLOYING',
     'POWERED_OFF',
     'POWERED_ON',
@@ -252,14 +242,19 @@ ONEANDONE_MACHINE_STATES = (
 )
 
 
-def _create_machine(module, oneandone_conn, hostname, description,
-                    fixed_instance_size_id, vcore, cores_per_processor, ram,
-                    hdds, datacenter_id, appliance_id, ssh_key,
-                    private_network_id, firewall_policy_id, load_balancer_id,
-                    monitoring_policy_id, wait, wait_timeout):
+def _create_server(module, oneandone_conn, hostname, description,
+                   fixed_instance_size_id, vcore, cores_per_processor, ram,
+                   hdds, datacenter_id, appliance_id, ssh_key,
+                   private_network_id, firewall_policy_id, load_balancer_id,
+                   monitoring_policy_id, wait, wait_timeout):
 
     try:
-        machine = oneandone_conn.create_server(
+        existing_server = get_server(oneandone_conn, hostname)
+
+        if existing_server:
+            return None
+
+        server = oneandone_conn.create_server(
             oneandone.client.Server(
                 name=hostname,
                 description=description,
@@ -279,34 +274,34 @@ def _create_machine(module, oneandone_conn, hostname, description,
             wait_for_resource_creation_completion(
                 oneandone_conn,
                 OneAndOneResources.server,
-                machine['id'],
+                server['id'],
                 wait_timeout)
-            machine = oneandone_conn.get_server(machine['id'])  # refresh
+            server = oneandone_conn.get_server(server['id'])  # refresh
 
-        return machine
+        return server
     except Exception as ex:
         module.fail_json(msg=str(ex))
 
 
-def _insert_network_data(machine):
-    for addr_data in machine['ips']:
+def _insert_network_data(server):
+    for addr_data in server['ips']:
         if addr_data['type'] == 'IPV6':
-            machine['public_ipv6'] = addr_data['ip']
+            server['public_ipv6'] = addr_data['ip']
         elif addr_data['type'] == 'IPV4':
-            machine['public_ipv4'] = addr_data['ip']
-    return machine
+            server['public_ipv4'] = addr_data['ip']
+    return server
 
 
-def create_machine(module, oneandone_conn):
+def create_server(module, oneandone_conn):
     """
-    Create new machine
+    Create new server
 
     module : AnsibleModule object
     oneandone_conn: authenticated oneandone object
 
     Returns a dictionary containing a 'changed' attribute indicating whether
-    any machine was added, and a 'machines' attribute with the list of the
-    created machines's hostname, id and ip addresses.
+    any server was added, and a 'servers' attribute with the list of the
+    created servers' hostname, id and ip addresses.
     """
     hostname = module.params.get('hostname')
     description = module.params.get('description')
@@ -397,156 +392,142 @@ def create_machine(module, oneandone_conn):
                 is_main=hdd['is_main']
             ))
 
-    machines = []
+    servers = []
     for index, name in enumerate(hostnames):
-        machines.append(
-            _create_machine(
-                module=module,
-                oneandone_conn=oneandone_conn,
-                hostname=name,
-                description=descriptions[index],
-                fixed_instance_size_id=fixed_instance_size_id,
-                vcore=vcore,
-                cores_per_processor=cores_per_processor,
-                ram=ram,
-                hdds=hdd_objs,
-                datacenter_id=datacenter_id,
-                appliance_id=appliance_id,
-                ssh_key=ssh_key,
-                private_network_id=private_network_id,
-                monitoring_policy_id=monitoring_policy_id,
-                firewall_policy_id=firewall_policy_id,
-                load_balancer_id=load_balancer_id,
-                wait=wait,
-                wait_timeout=wait_timeout))
+        server = _create_server(
+            module=module,
+            oneandone_conn=oneandone_conn,
+            hostname=name,
+            description=descriptions[index],
+            fixed_instance_size_id=fixed_instance_size_id,
+            vcore=vcore,
+            cores_per_processor=cores_per_processor,
+            ram=ram,
+            hdds=hdd_objs,
+            datacenter_id=datacenter_id,
+            appliance_id=appliance_id,
+            ssh_key=ssh_key,
+            private_network_id=private_network_id,
+            monitoring_policy_id=monitoring_policy_id,
+            firewall_policy_id=firewall_policy_id,
+            load_balancer_id=load_balancer_id,
+            wait=wait,
+            wait_timeout=wait_timeout)
+        if server:
+            servers.append(server)
 
-    changed = True if machines else False
-    machines = [_insert_network_data(machine) for machine in machines]
+    changed = False
 
-    return (changed, machines)
+    if servers:
+        servers = [_insert_network_data(_server) for _server in servers]
+        changed = True
+
+    return (changed, servers)
 
 
-def remove_machine(module, oneandone_conn):
+def remove_server(module, oneandone_conn):
     """
-    Remove machines.
+    Removes a server.
 
     module : AnsibleModule object
     oneandone_conn: authenticated oneandone object.
 
     Returns a dictionary containing a 'changed' attribute indicating whether
-    any machines were removed, and a 'machines' attribute with the list of the
-    removed machines's hostname and id.
+    the server was removed, and a 'removed_server' attribute with
+    the removed server's hostname and id.
     """
-    instance_ids = module.params.get('instance_ids')
+    server_id = module.params.get('server')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
-    if not isinstance(instance_ids, list) or len(instance_ids) < 1:
-        module.fail_json(
-            msg='instance_ids should be a list of machine ids or names.')
+    changed = False
+    removed_server = None
 
-    removed_machines = []
-    for instance in instance_ids:
-        machine = get_server(oneandone_conn, instance, True)
-        if machine is None:
-            continue
-
+    server = get_server(oneandone_conn, server_id, True)
+    if server:
         try:
-            oneandone_conn.delete_server(server_id=machine['id'])
+            oneandone_conn.delete_server(server_id=server['id'])
             if wait:
-                wait_for_resource_deletion_completion(oneandone_conn, OneAndOneResources.server, machine['id'], wait_timeout)
-            removed_machines.append(machine)
+                wait_for_resource_deletion_completion(oneandone_conn,
+                                                      OneAndOneResources.server,
+                                                      server['id'],
+                                                      wait_timeout)
+            changed = True
         except Exception as ex:
             module.fail_json(
-                msg="failed to terminate the machine: %s" % str(ex))
+                msg="failed to terminate the server: %s" % str(ex))
 
-    changed = True if removed_machines else False
-    machines = [{
-        'id': removed_machine['id'],
-        'hostname': removed_machine['name'],
-    } for removed_machine in removed_machines]
+        removed_server = {
+            'id': server['id'],
+            'hostname': server['name']
+        }
 
-    return (changed, machines)
+    return (changed, removed_server)
 
 
-def startstop_machine(module, oneandone_conn):
+def startstop_server(module, oneandone_conn):
     """
-    Starts or Stops a machine.
+    Starts or Stops a server.
 
     module : AnsibleModule object
     oneandone_conn: authenticated oneandone object.
 
     Returns a dictionary with a 'changed' attribute indicating whether
-    anything has changed for any of the machines as a result of this function
-    being run, and a 'machines' attribute with basic information for
-    each machine.
+    anything has changed for the server as a result of this function
+    being run, and a 'server' attribute with basic information for
+    the server.
     """
     state = module.params.get('state')
-    instance_ids = module.params.get('instance_ids')
+    server_id = module.params.get('server')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
-    if not isinstance(instance_ids, list) or len(instance_ids) < 1:
-        module.fail_json(msg='instance_ids should be a list of virtual machine ids or names.')
-
-    machines = []
     changed = False
-    for instance_id in instance_ids:
 
-        # Resolve machine
-        machine = get_server(oneandone_conn, instance_id, True)
-        if machine is None:
-            continue
-
-        # Attempt to change the machine state, only if it's not already there
+    # Resolve server
+    server = get_server(oneandone_conn, server_id, True)
+    if server:
+        # Attempt to change the server state, only if it's not already there
         # or on its way.
         try:
-            if state == 'stopped':
-                if machine['status']['state'] == 'POWERED_OFF':
-                    machines.append(machine)
-                    continue
+            if state == 'stopped' and server['status']['state'] == 'POWERED_ON':
                 oneandone_conn.modify_server_status(
-                    server_id=machine['id'],
+                    server_id=server['id'],
                     action='POWER_OFF',
                     method='SOFTWARE')
-            elif state == 'running':
-                if machine['status']['state'] == 'POWERED_ON':
-                    machines.append(machine)
-                    continue
+            elif state == 'running' and server['status']['state'] == 'POWERED_OFF':
                 oneandone_conn.modify_server_status(
-                    server_id=machine['id'],
+                    server_id=server['id'],
                     action='POWER_ON',
                     method='SOFTWARE')
         except Exception as ex:
             module.fail_json(
-                msg="failed to set machine %s to state %s: %s" % (
-                    instance_id, state, str(ex)))
+                msg="failed to set server %s to state %s: %s" % (
+                    server_id, state, str(ex)))
 
-        # Make sure the machine has reached the desired state
+        # Make sure the server has reached the desired state
         if wait:
             operation_completed = False
             wait_timeout = time.time() + wait_timeout
             while wait_timeout > time.time():
                 time.sleep(5)
-                machine = oneandone_conn.get_server(machine['id'])  # refresh
-                machine_state = machine['status']['state']
-                if state == 'stopped' and machine_state == 'POWERED_OFF':
+                server = oneandone_conn.get_server(server['id'])  # refresh
+                server_state = server['status']['state']
+                if state == 'stopped' and server_state == 'POWERED_OFF':
                     operation_completed = True
                     break
-                if state == 'running' and machine_state == 'POWERED_ON':
+                if state == 'running' and server_state == 'POWERED_ON':
                     operation_completed = True
                     break
             if not operation_completed:
                 module.fail_json(
-                    msg="Timeout waiting for machine %s to get to state %s" % (
-                        instance_id, state))
+                    msg="Timeout waiting for server %s to get to state %s" % (
+                        server_id, state))
 
         changed = True
-        machines.append(machine)
+        server = _insert_network_data(server)
 
-    machines = [_insert_network_data(_machine) for _machine in machines]
-
-    return (changed, machines)
+    return (changed, server)
 
 
 def _auto_increment_hostname(count, hostname):
@@ -596,7 +577,7 @@ def main():
             count=dict(type='int', default=1),
             ssh_key=dict(type='raw', default=None),
             auto_increment=dict(type='bool', default=True),
-            instance_ids=dict(type='list'),
+            server=dict(type='str'),
             datacenter=dict(
                 choices=DATACENTERS,
                 default='US'),
@@ -627,14 +608,20 @@ def main():
     state = module.params.get('state')
 
     if state == 'absent':
+        if not module.params.get('server'):
+            module.fail_json(
+                msg="'server' parameter is required for deleting a server.")
         try:
-            (changed, machines) = remove_machine(module, oneandone_conn)
+            (changed, servers) = remove_server(module, oneandone_conn)
         except Exception as ex:
             module.fail_json(msg=str(ex))
 
     elif state in ('running', 'stopped'):
+        if not module.params.get('server'):
+            module.fail_json(
+                msg="'server' parameter is required for starting/stopping a server.")
         try:
-            (changed, machines) = startstop_machine(module, oneandone_conn)
+            (changed, servers) = startstop_server(module, oneandone_conn)
         except Exception as ex:
             module.fail_json(msg=str(ex))
 
@@ -644,13 +631,13 @@ def main():
                       'datacenter'):
             if not module.params.get(param):
                 module.fail_json(
-                    msg="%s parameter is required for new instance." % param)
+                    msg="%s parameter is required for new server." % param)
         try:
-            (changed, machines) = create_machine(module, oneandone_conn)
+            (changed, servers) = create_server(module, oneandone_conn)
         except Exception as ex:
             module.fail_json(msg=str(ex))
 
-    module.exit_json(changed=changed, machines=machines)
+    module.exit_json(changed=changed, servers=servers)
 
 
 if __name__ == '__main__':
