@@ -394,7 +394,7 @@ class ZipArchive(object):
                 else:
                     permstr = 'rw-rw-rw-'
                 file_umask=umask
-            elif 'bsd' in 'bsd' in systemtype.lower():
+            elif 'bsd' in systemtype.lower():
                 file_umask=umask
             else:
                 file_umask=0
