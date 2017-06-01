@@ -252,7 +252,7 @@ class StrategyModule(StrategyBase):
                         # NOTE: add callback hook?
                         # display the details of which vars came from where at vvvvv (where we use TrackingDict for all_vars)
                         if display.verbosity > 4:
-                            display.vvvvv(repr(task_vars))
+                            # display.vvvvv(repr(task_vars))
                             display.vvvvv('TASK VARS:\n%s' % json.dumps(task_vars.as_dict(), indent=4, ensure_ascii=False, sort_keys=True))
 
                         self.add_tqm_variables(task_vars, play=iterator._play)
