@@ -325,6 +325,7 @@ def main():
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
     tmp_dest = module.params['tmp_dest']
+    state = module.params['state']
 
     # Parse headers to dict
     if module.params['headers']:
@@ -334,8 +335,13 @@ def main():
             module.fail_json(msg="The header parameter requires a key:value,key:value syntax to be properly parsed.")
     else:
         headers = None
-
-    dest_is_dir = os.path.isdir(dest)
+        
+    if not state:
+        state = 'file'
+    elif state in ['link','absent','hard']:
+        module.fail_json(msg="The state parameter can be only one of 'file' and 'directory' if specified.")
+    
+    dest_is_dir = os.path.isdir(dest) or state == 'directory'
     last_mod_time = None
 
     # workaround for usage of deprecated sha256sum parameter
@@ -396,6 +402,13 @@ def main():
     # destination file name from the info dict.
 
     if dest_is_dir:
+        if state == 'directory':
+            try:
+                os.makedirs(dest)
+            except OSError:
+                e = get_exception()
+                module.fail_json(msg="create a destination directory failure %s: %s" % (dest, e))
+        
         filename = extract_filename_from_headers(info)
         if not filename:
             # Fall back to extracting the filename from the URL.
