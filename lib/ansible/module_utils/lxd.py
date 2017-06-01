@@ -38,11 +38,13 @@ except ImportError:
 # httplib/http.client connection using unix domain socket
 import socket
 import ssl
+
 try:
     from httplib import HTTPConnection, HTTPSConnection
 except ImportError:
     # Python 3
     from http.client import HTTPConnection, HTTPSConnection
+
 
 class UnixHTTPConnection(HTTPConnection):
     def __init__(self, path):
@@ -54,10 +56,12 @@ class UnixHTTPConnection(HTTPConnection):
         sock.connect(self.path)
         self.sock = sock
 
+
 class LXDClientException(Exception):
     def __init__(self, msg, **kwargs):
         self.msg = msg
         self.kwargs = kwargs
+
 
 class LXDClient(object):
     def __init__(self, url, key_file=None, cert_file=None, debug=False):

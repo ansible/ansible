@@ -34,7 +34,7 @@ from ansible.module_utils.cloud import CloudRetry
 
 try:
     import boto
-    import boto.ec2 #boto does weird import stuff
+    import boto.ec2  # boto does weird import stuff
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -53,6 +53,7 @@ except:
     HAS_LOOSE_VERSION = False
 
 from ansible.module_utils.six import string_types, binary_type, text_type
+
 
 class AnsibleAWSError(Exception):
     pass
@@ -98,6 +99,7 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type '
                              'parameter in the boto3_conn function call')
 
+
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
 
@@ -119,6 +121,7 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
         return client, resource
 
 boto3_inventory_conn = _boto3_conn
+
 
 def aws_common_argument_spec():
     return dict(
@@ -291,6 +294,7 @@ def ec2_connect(module):
 
     return ec2
 
+
 def paging(pause=0, marker_property='marker'):
     """ Adds paging to boto retrieval functions that support a 'marker'
         this is configurable as not all boto functions seem to use the
@@ -330,7 +334,6 @@ def camel_dict_to_snake_dict(camel_dict):
 
         return all_cap_re.sub(r'\1_\2', s1).lower()
 
-
     def value_is_list(camel_list):
 
         checked_list = []
@@ -343,7 +346,6 @@ def camel_dict_to_snake_dict(camel_dict):
                 checked_list.append(item)
 
         return checked_list
-
 
     snake_dict = {}
     for k, v in camel_dict.items():
@@ -403,7 +405,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     """
 
     filters_list = []
-    for k,v in filters_dict.items():
+    for k, v in filters_dict.items():
         filter_dict = {'Name': k}
         if isinstance(v, string_types):
             filter_dict['Values'] = [v]
@@ -470,7 +472,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value
     """
 
     tags_list = []
-    for k,v in tags_dict.items():
+    for k, v in tags_dict.items():
         tags_list.append({tag_name_key_name: k, tag_value_key_name: v})
 
     return tags_list
@@ -490,7 +492,6 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
             return sg['GroupName']
         else:
             return sg.name
-
 
     def get_sg_id(sg, boto3):
 
@@ -520,7 +521,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
             all_sec_groups = ec2_connection.describe_security_groups()['SecurityGroups']
     else:
         if vpc_id:
-            filters = { 'vpc-id': vpc_id }
+            filters = {'vpc-id': vpc_id}
             all_sec_groups = ec2_connection.get_all_security_groups(filters=filters)
         else:
             all_sec_groups = ec2_connection.get_all_security_groups()
@@ -536,7 +537,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
         if len(still_unmatched) > 0:
             raise ValueError("The following group names are not valid: %s" % ', '.join(still_unmatched))
 
-    sec_group_id_list += [ str(get_sg_id(all_sg, boto3)) for all_sg in all_sec_groups if str(get_sg_name(all_sg, boto3)) in sec_group_name_list ]
+    sec_group_id_list += [str(get_sg_id(all_sg, boto3)) for all_sg in all_sec_groups if str(get_sg_name(all_sg, boto3)) in sec_group_name_list]
 
     return sec_group_id_list
 
