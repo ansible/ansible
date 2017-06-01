@@ -204,7 +204,8 @@ options:
         default: "None"
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
-              Currently supported on Linux and FreeBSD.
+            - To remove the expiry time specify a negative value.
+              Currently supported on GNU/Linux and FreeBSD.
 '''
 
 EXAMPLES = '''
@@ -241,6 +242,12 @@ EXAMPLES = '''
     shell: /bin/zsh
     groups: developers
     expires: 1422403387
+
+# modify user, remove expiry time
+- user:
+    name: james18
+    expires: -1
+
 '''
 
 import os
@@ -312,12 +319,17 @@ class User(object):
         self.update_password = module.params['update_password']
         self.home    = module.params['home']
         self.expires = None
+        self.clearexpires = None
         self.groups = None
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
 
         if module.params['expires']:
+            try:
+                self.clearexpires = float(module.params['expires'])
+            except:
+                pass
             try:
                 self.expires = time.gmtime(module.params['expires'])
             except Exception:
@@ -514,7 +526,13 @@ class User(object):
 
         if self.expires:
             cmd.append('--expiredate')
-            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            try:
+                if self.clearexpires < 0:
+                   cmd.append('')
+                else:
+                   cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            except ValueError:
+                raise
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
