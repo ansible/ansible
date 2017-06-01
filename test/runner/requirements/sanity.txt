@@ -1,5 +1,6 @@
 jinja2
 mock
+flake8
 pep8
 pylint
 pytest
