@@ -55,7 +55,6 @@ options:
       - Note that, as of ansible 2, short form tasks should have any escape
         sequences backslash-escaped in order to prevent them being parsed
         as string literal escapes. See the examples.
-
   replace:
     required: false
     description:
