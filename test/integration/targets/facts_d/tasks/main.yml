@@ -33,6 +33,8 @@
     that:
         - "'ansible_facts' in setup_result"
         - "'ansible_local' in setup_result.ansible_facts"
+        - "'ansible_env' not in setup_result.ansible_facts"
+        - "'ansible_user_id' not in setup_result.ansible_facts"
         - "'preferences' in setup_result.ansible_facts['ansible_local']"
         - "'general' in setup_result.ansible_facts['ansible_local']['preferences']"
         - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"

@@ -18,7 +18,6 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-import sys
 
 # to work around basic.py reading stdin
 import json
@@ -27,12 +26,10 @@ import pytest
 from units.mock.procenv import swap_stdin_and_argv
 
 # for testing
-from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
-# the module we are actually testing
-import ansible.module_utils.facts as facts
-
+# the module we are actually testing (sort of
+from ansible.module_utils.facts.system.distribution import DistributionFactCollector
 
 # to generate the testcase data, you can use the script gen_distribution_version_testcase.py in hacking/tests
 TESTSETS = [
@@ -485,7 +482,7 @@ VERSION_ID="12.04"
         "name": "KDE neon 16.04",
         "result": {
             "distribution_release": "xenial",
-            "distribution": "Neon",
+            "distribution": "KDE neon",
             "distribution_major_version": "16",
             "os_family": "Debian",
             "distribution_version": "16.04"
@@ -512,6 +509,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
 """,
         },
         'platform.dist': ('', '', ''),
+        'platform.release': '',
         'result': {
             "distribution": "CoreOS",
             "distribution_major_version": "NA",
@@ -613,6 +611,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        #        "platform.release": 'OmniOS',
         "input": {
             "/etc/release": (
                 "  OmniOS v11 r151012\n  Copyright 2014 OmniTI Computer Consulting, Inc. All rights reserved.\n  Use is subject to license terms.\n\n"
@@ -634,6 +633,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        "platform.release:": "",
         "input": {
             "/etc/release": ("                         Open Storage Appliance v3.1.6\n           Copyright (c) 2014 Nexenta Systems, Inc.  "
                              "All Rights Reserved.\n           Copyright (c) 2011 Oracle.  All Rights Reserved.\n                         "
@@ -838,10 +838,10 @@ def test_distribution_version(testcase):
         basic._ANSIBLE_ARGS = None
         module = basic.AnsibleModule(argument_spec=dict())
 
-        _test_one_distribution(facts, module, testcase)
+        _test_one_distribution(module, testcase)
 
 
-def _test_one_distribution(facts, module, testcase):
+def _test_one_distribution(module, testcase):
     """run the test on one distribution testcase
 
     * prepare some mock functions to get the testdata in
@@ -863,27 +863,34 @@ def _test_one_distribution(facts, module, testcase):
     def mock_get_uname_version(module):
         return testcase.get('uname_v', None)
 
-    def mock_path_exists(fname):
-        return fname in testcase['input']
+    def mock_file_exists(fname, allow_empty=False):
+        if fname not in testcase['input']:
+            return False
 
-    def mock_path_getsize(fname):
-        if fname in testcase['input']:
-            # the len is not used, but why not be honest if you can be?
-            return len(testcase['input'][fname])
-        else:
-            return 0
+        if allow_empty:
+            return True
+        return bool(len(testcase['input'][fname]))
 
     def mock_platform_system():
         return testcase.get('platform.system', 'Linux')
 
-    @patch('ansible.module_utils.facts.get_file_content', mock_get_file_content)
-    @patch('ansible.module_utils.facts.get_uname_version', mock_get_uname_version)
-    @patch('os.path.exists', mock_path_exists)
-    @patch('os.path.getsize', mock_path_getsize)
+    def mock_platform_release():
+        return testcase.get('platform.release', '')
+
+    def mock_platform_version():
+        return testcase.get('platform.version', '')
+
+    @patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
+    @patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
+    @patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
     @patch('platform.dist', lambda: testcase['platform.dist'])
     @patch('platform.system', mock_platform_system)
+    @patch('platform.release', mock_platform_release)
+    @patch('platform.version', mock_platform_version)
     def get_facts(testcase):
-        return facts.Facts(module).populate()
+        distro_collector = DistributionFactCollector()
+        res = distro_collector.collect(module)
+        return res
 
     generated_facts = get_facts(testcase)
 

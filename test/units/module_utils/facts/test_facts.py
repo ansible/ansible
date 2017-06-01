@@ -1,4 +1,6 @@
 # This file is part of Ansible
+# -*- coding: utf-8 -*-
+#
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division)
@@ -19,26 +22,36 @@ __metaclass__ = type
 
 import os
 
+import pytest
+
 # for testing
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock, patch
 
 from ansible.module_utils import facts
+from ansible.module_utils.facts import hardware
+from ansible.module_utils.facts import network
+from ansible.module_utils.facts import virtual
 
 
 class BaseTestFactsPlatform(unittest.TestCase):
     platform_id = 'Generic'
-    fact_class = facts.Hardware
+    fact_class = hardware.base.Hardware
+    collector_class = None
 
     """Verify that the automagic in Hardware.__new__ selects the right subclass."""
     @patch('platform.system')
     def test_new(self, mock_platform):
+        if not self.fact_class:
+            pytest.skip('This platform (%s) does not have a fact_class.' % self.platform_id)
         mock_platform.return_value = self.platform_id
         inst = self.fact_class(module=Mock(), load_on_init=False)
         self.assertIsInstance(inst, self.fact_class)
         self.assertEqual(inst.platform, self.platform_id)
 
     def test_subclass(self):
+        if not self.fact_class:
+            pytest.skip('This platform (%s) does not have a fact_class.' % self.platform_id)
         # 'Generic' will try to map to platform.system() that we are not mocking here
         if self.platform_id == 'Generic':
             return
@@ -46,130 +59,179 @@ class BaseTestFactsPlatform(unittest.TestCase):
         self.assertIsInstance(inst, self.fact_class)
         self.assertEqual(inst.platform, self.platform_id)
 
+    def test_collector(self):
+        if not self.collector_class:
+            pytest.skip('This test class needs to be updated to specify collector_class')
+        inst = self.collector_class()
+        self.assertIsInstance(inst, self.collector_class)
+        self.assertEqual(inst._platform, self.platform_id)
+
 
 class TestLinuxFactsPlatform(BaseTestFactsPlatform):
     platform_id = 'Linux'
-    fact_class = facts.LinuxHardware
+    fact_class = hardware.linux.LinuxHardware
+    collector_class = hardware.linux.LinuxHardwareCollector
+
+
+class TestHurdFactsPlatform(BaseTestFactsPlatform):
+    platform_id = 'GNU'
+    fact_class = hardware.hurd.HurdHardware
+    collector_class = hardware.hurd.HurdHardwareCollector
 
 
 class TestSunOSHardware(BaseTestFactsPlatform):
     platform_id = 'SunOS'
-    fact_class = facts.SunOSHardware
+    fact_class = hardware.sunos.SunOSHardware
+    collector_class = hardware.sunos.SunOSHardwareCollector
 
 
 class TestOpenBSDHardware(BaseTestFactsPlatform):
     platform_id = 'OpenBSD'
-    fact_class = facts.OpenBSDHardware
+    fact_class = hardware.openbsd.OpenBSDHardware
+    collector_class = hardware.openbsd.OpenBSDHardwareCollector
 
 
 class TestFreeBSDHardware(BaseTestFactsPlatform):
     platform_id = 'FreeBSD'
-    fact_class = facts.FreeBSDHardware
+    fact_class = hardware.freebsd.FreeBSDHardware
+    collector_class = hardware.freebsd.FreeBSDHardwareCollector
 
 
 class TestDragonFlyHardware(BaseTestFactsPlatform):
     platform_id = 'DragonFly'
-    fact_class = facts.DragonFlyHardware
+    fact_class = None
+    collector_class = hardware.dragonfly.DragonFlyHardwareCollector
 
 
 class TestNetBSDHardware(BaseTestFactsPlatform):
     platform_id = 'NetBSD'
-    fact_class = facts.NetBSDHardware
+    fact_class = hardware.netbsd.NetBSDHardware
+    collector_class = hardware.netbsd.NetBSDHardwareCollector
 
 
 class TestAIXHardware(BaseTestFactsPlatform):
     platform_id = 'AIX'
-    fact_class = facts.AIX
+    fact_class = hardware.aix.AIXHardware
+    collector_class = hardware.aix.AIXHardwareCollector
 
 
 class TestHPUXHardware(BaseTestFactsPlatform):
     platform_id = 'HP-UX'
-    fact_class = facts.HPUX
+    fact_class = hardware.hpux.HPUXHardware
+    collector_class = hardware.hpux.HPUXHardwareCollector
 
 
 class TestDarwinHardware(BaseTestFactsPlatform):
     platform_id = 'Darwin'
-    fact_class = facts.Darwin
+    fact_class = hardware.darwin.DarwinHardware
+    collector_class = hardware.darwin.DarwinHardwareCollector
 
 
 class TestGenericNetwork(BaseTestFactsPlatform):
     platform_id = 'Generic'
-    fact_class = facts.Network
+    fact_class = network.base.Network
+
+
+class TestHurdPfinetNetwork(BaseTestFactsPlatform):
+    platform_id = 'GNU'
+    fact_class = network.hurd.HurdPfinetNetwork
+    collector_class = network.hurd.HurdNetworkCollector
 
 
 class TestLinuxNetwork(BaseTestFactsPlatform):
-    platform_id = 'Generic'
-    fact_class = facts.Network
+    platform_id = 'Linux'
+    fact_class = network.linux.LinuxNetwork
+    collector_class = network.linux.LinuxNetworkCollector
 
 
 class TestGenericBsdIfconfigNetwork(BaseTestFactsPlatform):
     platform_id = 'Generic_BSD_Ifconfig'
-    fact_class = facts.GenericBsdIfconfigNetwork
+    fact_class = network.generic_bsd.GenericBsdIfconfigNetwork
+    collector_class = None
 
 
 class TestHPUXNetwork(BaseTestFactsPlatform):
     platform_id = 'HP-UX'
-    fact_class = facts.HPUXNetwork
+    fact_class = network.hpux.HPUXNetwork
+    collector_class = network.hpux.HPUXNetworkCollector
 
 
 class TestDarwinNetwork(BaseTestFactsPlatform):
     platform_id = 'Darwin'
-    fact_class = facts.DarwinNetwork
+    fact_class = network.darwin.DarwinNetwork
+    collector_class = network.darwin.DarwinNetworkCollector
 
 
 class TestFreeBSDNetwork(BaseTestFactsPlatform):
     platform_id = 'FreeBSD'
-    fact_class = facts.FreeBSDNetwork
+    fact_class = network.freebsd.FreeBSDNetwork
+    collector_class = network.freebsd.FreeBSDNetworkCollector
 
 
 class TestDragonFlyNetwork(BaseTestFactsPlatform):
     platform_id = 'DragonFly'
-    fact_class = facts.DragonFlyNetwork
+    fact_class = network.dragonfly.DragonFlyNetwork
+    collector_class = network.dragonfly.DragonFlyNetworkCollector
 
 
 class TestAIXNetwork(BaseTestFactsPlatform):
     platform_id = 'AIX'
-    fact_class = facts.AIXNetwork
+    fact_class = network.aix.AIXNetwork
+    collector_class = network.aix.AIXNetworkCollector
+
+
+class TestNetBSDNetwork(BaseTestFactsPlatform):
+    platform_id = 'NetBSD'
+    fact_class = network.netbsd.NetBSDNetwork
+    collector_class = network.netbsd.NetBSDNetworkCollector
 
 
 class TestOpenBSDNetwork(BaseTestFactsPlatform):
     platform_id = 'OpenBSD'
-    fact_class = facts.OpenBSDNetwork
+    fact_class = network.openbsd.OpenBSDNetwork
+    collector_class = network.openbsd.OpenBSDNetworkCollector
 
 
 class TestSunOSNetwork(BaseTestFactsPlatform):
     platform_id = 'SunOS'
-    fact_class = facts.SunOSNetwork
+    fact_class = network.sunos.SunOSNetwork
+    collector_class = network.sunos.SunOSNetworkCollector
 
 
 class TestLinuxVirtual(BaseTestFactsPlatform):
     platform_id = 'Linux'
-    fact_class = facts.LinuxVirtual
+    fact_class = virtual.linux.LinuxVirtual
+    collector_class = virtual.linux.LinuxVirtualCollector
 
 
 class TestFreeBSDVirtual(BaseTestFactsPlatform):
     platform_id = 'FreeBSD'
-    fact_class = facts.FreeBSDNetwork
+    fact_class = virtual.freebsd.FreeBSDVirtual
+    collector_class = virtual.freebsd.FreeBSDVirtualCollector
 
 
-class TestDragonFlyVirtual(BaseTestFactsPlatform):
-    platform_id = 'DragonFly'
-    fact_class = facts.DragonFlyNetwork
+class TestNetBSDVirtual(BaseTestFactsPlatform):
+    platform_id = 'NetBSD'
+    fact_class = virtual.netbsd.NetBSDVirtual
+    collector_class = virtual.netbsd.NetBSDVirtualCollector
 
 
 class TestOpenBSDVirtual(BaseTestFactsPlatform):
     platform_id = 'OpenBSD'
-    fact_class = facts.OpenBSDVirtual
+    fact_class = virtual.openbsd.OpenBSDVirtual
+    collector_class = virtual.openbsd.OpenBSDVirtualCollector
 
 
 class TestHPUXVirtual(BaseTestFactsPlatform):
     platform_id = 'HP-UX'
-    fact_class = facts.HPUXVirtual
+    fact_class = virtual.hpux.HPUXVirtual
+    collector_class = virtual.hpux.HPUXVirtualCollector
 
 
 class TestSunOSVirtual(BaseTestFactsPlatform):
     platform_id = 'SunOS'
-    fact_class = facts.SunOSVirtual
+    fact_class = virtual.sunos.SunOSVirtual
+    collector_class = virtual.sunos.SunOSVirtualCollector
 
 
 LSBLK_OUTPUT = b"""
@@ -471,38 +533,38 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
     # The Hardware subclasses freakout if instaniated directly, so
     # mock platform.system and inst Hardware() so we get a LinuxHardware()
     # we can test.
-    @patch('ansible.module_utils.facts.LinuxHardware._mtab_entries', return_value=MTAB_ENTRIES)
-    @patch('ansible.module_utils.facts.LinuxHardware._find_bind_mounts', return_value=BIND_MOUNTS)
-    @patch('ansible.module_utils.facts.LinuxHardware._lsblk_uuid', return_value=LSBLK_UUIDS)
+    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._mtab_entries', return_value=MTAB_ENTRIES)
+    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._find_bind_mounts', return_value=BIND_MOUNTS)
+    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._lsblk_uuid', return_value=LSBLK_UUIDS)
     def test_get_mount_facts(self,
                              mock_lsblk_uuid,
                              mock_find_bind_mounts,
                              mock_mtab_entries):
         module = Mock()
         # Returns a LinuxHardware-ish
-        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh = hardware.linux.LinuxHardware(module=module, load_on_init=False)
 
         # Nothing returned, just self.facts modified as a side effect
-        lh.get_mount_facts()
-        self.assertIsInstance(lh.facts, dict)
-        self.assertIn('mounts', lh.facts)
-        self.assertIsInstance(lh.facts['mounts'], list)
-        self.assertIsInstance(lh.facts['mounts'][0], dict)
+        mount_facts = lh.get_mount_facts()
+        self.assertIsInstance(mount_facts, dict)
+        self.assertIn('mounts', mount_facts)
+        self.assertIsInstance(mount_facts['mounts'], list)
+        self.assertIsInstance(mount_facts['mounts'][0], dict)
 
-    @patch('ansible.module_utils.facts.get_file_content', return_value=MTAB)
+    @patch('ansible.module_utils.facts.hardware.linux.get_file_content', return_value=MTAB)
     def test_get_mtab_entries(self, mock_get_file_content):
 
         module = Mock()
-        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh = hardware.linux.LinuxHardware(module=module, load_on_init=False)
         mtab_entries = lh._mtab_entries()
         self.assertIsInstance(mtab_entries, list)
         self.assertIsInstance(mtab_entries[0], list)
         self.assertEqual(len(mtab_entries), 38)
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_findmnt', return_value=(0, FINDMNT_OUTPUT, ''))
+    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_findmnt', return_value=(0, FINDMNT_OUTPUT, ''))
     def test_find_bind_mounts(self, mock_run_findmnt):
         module = Mock()
-        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh = hardware.linux.LinuxHardware(module=module, load_on_init=False)
         bind_mounts = lh._find_bind_mounts()
 
         # If bind_mounts becomes another seq type, feel free to change
@@ -510,10 +572,10 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertEqual(len(bind_mounts), 1)
         self.assertIn('/not/a/real/bind_mount', bind_mounts)
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_findmnt', return_value=(37, '', ''))
+    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_findmnt', return_value=(37, '', ''))
     def test_find_bind_mounts_non_zero(self, mock_run_findmnt):
         module = Mock()
-        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh = hardware.linux.LinuxHardware(module=module, load_on_init=False)
         bind_mounts = lh._find_bind_mounts()
 
         self.assertIsInstance(bind_mounts, set)
@@ -522,48 +584,48 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
     def test_find_bind_mounts_no_findmnts(self):
         module = Mock()
         module.get_bin_path = Mock(return_value=None)
-        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh = hardware.linux.LinuxHardware(module=module, load_on_init=False)
         bind_mounts = lh._find_bind_mounts()
 
         self.assertIsInstance(bind_mounts, set)
         self.assertEqual(len(bind_mounts), 0)
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT, ''))
+    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT, ''))
     def test_lsblk_uuid(self, mock_run_lsblk):
         module = Mock()
-        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh = hardware.linux.LinuxHardware(module=module, load_on_init=False)
         lsblk_uuids = lh._lsblk_uuid()
 
         self.assertIsInstance(lsblk_uuids, dict)
         self.assertIn(b'/dev/loop9', lsblk_uuids)
         self.assertIn(b'/dev/sda1', lsblk_uuids)
-        self.assertEquals(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
+        self.assertEqual(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(37, LSBLK_OUTPUT, ''))
+    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk', return_value=(37, LSBLK_OUTPUT, ''))
     def test_lsblk_uuid_non_zero(self, mock_run_lsblk):
         module = Mock()
-        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh = hardware.linux.LinuxHardware(module=module, load_on_init=False)
         lsblk_uuids = lh._lsblk_uuid()
 
         self.assertIsInstance(lsblk_uuids, dict)
-        self.assertEquals(len(lsblk_uuids), 0)
+        self.assertEqual(len(lsblk_uuids), 0)
 
     def test_lsblk_uuid_no_lsblk(self):
         module = Mock()
         module.get_bin_path = Mock(return_value=None)
-        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh = hardware.linux.LinuxHardware(module=module, load_on_init=False)
         lsblk_uuids = lh._lsblk_uuid()
 
         self.assertIsInstance(lsblk_uuids, dict)
-        self.assertEquals(len(lsblk_uuids), 0)
+        self.assertEqual(len(lsblk_uuids), 0)
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT_2, ''))
+    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT_2, ''))
     def test_lsblk_uuid_dev_with_space_in_name(self, mock_run_lsblk):
         module = Mock()
-        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh = hardware.linux.LinuxHardware(module=module, load_on_init=False)
         lsblk_uuids = lh._lsblk_uuid()
         self.assertIsInstance(lsblk_uuids, dict)
         self.assertIn(b'/dev/loop0', lsblk_uuids)
         self.assertIn(b'/dev/sda1', lsblk_uuids)
-        self.assertEquals(lsblk_uuids[b'/dev/mapper/an-example-mapper with a space in the name'], b'84639acb-013f-4d2f-9392-526a572b4373')
-        self.assertEquals(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
+        self.assertEqual(lsblk_uuids[b'/dev/mapper/an-example-mapper with a space in the name'], b'84639acb-013f-4d2f-9392-526a572b4373')
+        self.assertEqual(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
