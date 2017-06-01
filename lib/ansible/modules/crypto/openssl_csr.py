@@ -200,7 +200,7 @@ class CertificateSigningRequest(object):
         }
 
         if self.subjectAltName:
-            self.subjectAltName = self.subjectAltName.replace(' ','').split(',')
+            self.subjectAltName = self.subjectAltName.replace(' ', '').split(',')
             if 'DNS:%s' % self.subject['CN'] not in self.subjectAltName:
                 self.subjectAltName.insert(0, 'DNS:%s' % self.subject['CN'])
 
@@ -225,7 +225,7 @@ class CertificateSigningRequest(object):
                 return False
 
             current_subject_alt_name = next(extension for extension in current_csr_extensions if extension.get_short_name() == 'subjectAltName')
-            current_subject_alt_name = current_subject_alt_name.__str__().replace(' ','').split(',')
+            current_subject_alt_name = current_subject_alt_name.__str__().replace(' ', '').split(',')
             subject_alt_name = self.subjectAltName
             if len(current_subject_alt_name) != len(subject_alt_name):
                 return True
@@ -240,7 +240,7 @@ class CertificateSigningRequest(object):
         '''Generate the certificate signing request.'''
 
         diff_found = self.check_diff()
-        
+
         if not os.path.exists(self.path) or self.force or diff_found:
             req = crypto.X509Req()
             req.set_version(self.version)
