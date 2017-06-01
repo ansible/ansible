@@ -173,14 +173,14 @@ def map_obj_to_commands(want, have, module):
             return ['no feature nxapi']
         commands.append('feature nxapi')
 
-    if any((needs_update('http'), needs_update('http_port'))):
+    if needs_update('http') or (have.get('http') and needs_update('http_port')):
         if want['http'] is True or (want['http'] is None and have['http'] is True):
             port = want['http_port'] or 80
             commands.append('nxapi http port %s' % port)
         elif want['http'] is False:
             commands.append('no nxapi http')
 
-    if any((needs_update('https'), needs_update('https_port'))):
+    if needs_update('https') or (have.get('https') and needs_update('https_port')):
         if want['https'] is True or (want['https'] is None and have['https'] is True):
             port = want['https_port'] or 443
             commands.append('nxapi https port %s' % port)
