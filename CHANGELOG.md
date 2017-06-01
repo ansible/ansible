@@ -1,6 +1,11 @@
 Ansible Changes By Release
 ==========================
 
+## 2.3.2 "Ramble On" - TBD
+
+### Bugfixes
+* Fix sorting of ec2 policies on python3
+
 ## 2.3.1 "Ramble On" - 2017-06-01
 
 
