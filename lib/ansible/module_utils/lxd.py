@@ -107,7 +107,10 @@ class LXDClient(object):
             body = json.dumps(body_json)
             self.connection.request(method, url, body=body)
             resp = self.connection.getresponse()
-            resp_json = json.loads(resp.read())
+            resp_data = resp.read()
+            if not PY2:
+                resp_data = resp_data.decode('utf-8')
+            resp_json = json.loads(resp_data)
             self.logs.append({
                 'type': 'sent request',
                 'request': {'method': method, 'url': url, 'json': body_json, 'timeout': timeout},
