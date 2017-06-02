@@ -19,14 +19,13 @@ __metaclass__ = type
 
 import os
 
-from ansible import constants as C
+from ansible.config import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 from ansible.template import generate_ansible_template_vars
 
-boolean = C.mk_boolean
 
 class ActionModule(ActionBase):
 

@@ -22,12 +22,11 @@ __metaclass__ = type
 import fnmatch
 
 from ansible import constants as C
+from ansible.config import mk_boolean as boolean
 from ansible.module_utils.six import iteritems
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 
-
-boolean = C.mk_boolean
 
 __all__ = ['PlayIterator']
 

@@ -21,13 +21,12 @@ import os.path
 from collections import MutableSequence
 
 from ansible import constants as C
+from ansible.config import mk_boolean as boolean
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
 from ansible.plugins import connection_loader
-
-boolean = C.mk_boolean
 
 
 class ActionModule(ActionBase):

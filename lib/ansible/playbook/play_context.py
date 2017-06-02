@@ -29,6 +29,7 @@ import string
 import sys
 
 from ansible import constants as C
+from ansible.config import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import shlex_quote
@@ -37,8 +38,6 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.utils.ssh_functions import check_for_controlpersist
 
-
-boolean = C.mk_boolean
 
 __all__ = ['PlayContext']
 
