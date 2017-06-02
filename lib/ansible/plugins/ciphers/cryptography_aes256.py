@@ -108,7 +108,6 @@ class VaultCipher(VaultCipherBase):
         return b_key1, b_key2, b_iv
 
     def encrypt(self, b_plaintext, b_password):
-        display.v('Using cryptography_aes for AES256 encrypt')
         b_salt = os.urandom(32)
         b_key1, b_key2, b_iv = self._gen_key_initctr(b_password, b_salt)
 
@@ -126,7 +125,6 @@ class VaultCipher(VaultCipherBase):
         return b_vaulttext
 
     def decrypt(self, b_vaulttext, b_password):
-        display.v('Using cryptography_aes for AES256 decrypt')
         # SPLIT SALT, DIGEST, AND DATA
         b_vaulttext = unhexlify(b_vaulttext)
         b_salt, b_cryptedHmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
