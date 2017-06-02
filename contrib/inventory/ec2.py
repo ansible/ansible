@@ -488,18 +488,23 @@ class Ec2Inventory(object):
 
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
         self.ec2_instance_filters = defaultdict(list)
+
+        instance_filters = []
         if config.has_option('ec2', 'instance_filters'):
+            instance_filters = [f for f in config.get('ec2', 'instance_filters').split(',') if f]
 
-            filters = [f for f in config.get('ec2', 'instance_filters').split(',') if f]
+        if 'EC2_INSTANCE_FILTERS' in os.environ:
+            env_instance_filters = [f for f in os.environ.get('EC2_INSTANCE_FILTERS', '').split(',') if f]
+            instance_filters.extend(env_instance_filters)
 
-            for instance_filter in filters:
-                instance_filter = instance_filter.strip()
-                if not instance_filter or '=' not in instance_filter:
-                    continue
-                filter_key, filter_value = [x.strip() for x in instance_filter.split('=', 1)]
-                if not filter_key:
-                    continue
-                self.ec2_instance_filters[filter_key].append(filter_value)
+        for instance_filter in instance_filters:
+            instance_filter = instance_filter.strip()
+            if not instance_filter or '=' not in instance_filter:
+                continue
+            filter_key, filter_value = [x.strip() for x in instance_filter.split('=', 1)]
+            if not filter_key:
+                continue
+            self.ec2_instance_filters[filter_key].append(filter_value)
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
