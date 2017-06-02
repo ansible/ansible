@@ -120,7 +120,7 @@ options:
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
-      - Requires docker-py >= 1.4.0.
+      - Requires docker >= 1.4.0.
     default: null
     required: false
   entrypoint:
@@ -487,7 +487,7 @@ author:
 
 requirements:
     - "python >= 2.6"
-    - "docker-py >= 1.7.0"
+    - "docker >= 1.7.0"
     - "Docker API >= 1.20"
 '''
 
@@ -679,7 +679,7 @@ try:
     else:
         from docker.utils.types import Ulimit
 except:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker handled in ansible.module_utils.docker
     pass
 
 
