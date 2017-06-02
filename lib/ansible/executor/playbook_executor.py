@@ -123,6 +123,10 @@ class PlaybookExecutor:
                     # Create a temporary copy of the play here, so we can run post_validate
                     # on it without the templating changes affecting the original object.
                     all_vars = self._variable_manager.get_vars(play=play)
+
+                    if not play.evaluate_tags(self._options.tags, self._options.skip_tags, all_vars):
+                        continue
+
                     templar = Templar(loader=self._loader, variables=all_vars)
                     new_play = play.copy()
                     new_play.post_validate(templar)
