@@ -48,7 +48,7 @@ class VcenterProvider(CloudProvider):
         """
         super(VcenterProvider, self).__init__(args, config_extension='.ini')
 
-        self.image = 'jctanner:vcenter-simulator'
+        self.image = 'ansible:vcenter-simulator'
         self.container_name = ''
         self.endpoint = ''
         self.vcenter_host = None
