@@ -25,11 +25,14 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import traceback
 from contextlib import contextmanager
+
 from xml.etree.ElementTree import Element, SubElement
 from xml.etree.ElementTree import tostring, fromstring
 
 from ansible.module_utils.connection import exec_command
+from ansible.module_utils._text import to_native, to_bytes
 
 
 NS_MAP = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
@@ -38,7 +41,25 @@ def send_request(module, obj, check_rc=True):
     request = tostring(obj)
     rc, out, err = exec_command(module, request)
     if rc != 0 and check_rc:
-        error_root = fromstring(err)
+        ### DEBUGGING: TAKE OUT BEFORE MERGING
+        try:
+            error_root = fromstring(err)
+        except Exception as e:
+            with open('/tmp/outfile', 'wb') as f:
+                f.write(to_bytes(out, errors='surrogate_then_replace'))
+
+            with open('/tmp/errfile', 'wb') as f:
+                f.write(to_bytes(out, errors='surrogate_then_replace'))
+
+            with open('/tmp/rcfile', 'wb') as f:
+                f.write(to_bytes(rc, errors='surrogate_then_replace'))
+
+            with open('/tmp/traceback_file', 'wb') as f:
+                f.write(to_bytes(traceback.format_exc(), errors='surrogate_then_replace'))
+
+            raise
+        ### END DEBUGGING: TAKE OUT BEFORE MERGING
+        #error_root = fromstring(err)
         fake_parent = Element('root')
         fake_parent.append(error_root)
 
