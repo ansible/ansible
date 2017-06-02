@@ -9,3 +9,4 @@
 
   roles:
     - { role: net_system, when: "limit_to in ['*', 'net_system']" }
+    - { role: net_banner, when: "limit_to in ['*', 'net_banner']" }
