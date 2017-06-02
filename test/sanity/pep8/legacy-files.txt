@@ -728,10 +728,6 @@ lib/ansible/plugins/filter/core.py
 lib/ansible/plugins/filter/ipaddr.py
 lib/ansible/plugins/filter/json_query.py
 lib/ansible/plugins/filter/mathstuff.py
-lib/ansible/plugins/inventory/__init__.py
-lib/ansible/plugins/inventory/ini.py
-lib/ansible/plugins/inventory/yaml.py
-lib/ansible/plugins/inventory/script.py
 lib/ansible/plugins/lookup/__init__.py
 lib/ansible/plugins/lookup/cartesian.py
 lib/ansible/plugins/lookup/csvfile.py
