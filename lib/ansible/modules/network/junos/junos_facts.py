@@ -42,7 +42,9 @@ options:
         all, hardware, config, and interfaces.  Can specify a list of
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
-        not be collected.
+        not be collected. To maintain backward compatbility old style facts
+        can be retrieved using all value, this reqires junos-eznc to be installed
+        as a prerequisite.
     required: false
     default: "!config"
     version_added: "2.3"
@@ -73,17 +75,24 @@ ansible_facts:
   type: dict
 """
 
-import re
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import junos_argument_spec, check_args, get_param
 from ansible.module_utils.junos import command, get_configuration
 from ansible.module_utils.netconf import send_request
 
+try:
+    from jnpr.junos import Device
+    from jnpr.junos.exception import ConnectError
+    HAS_PYEZ = True
+except ImportError:
+    HAS_PYEZ = False
 
 USE_PERSISTENT_CONNECTION = True
+
 
 class FactsBase(object):
 
@@ -135,7 +144,7 @@ class Config(FactsBase):
         config_format = self.module.params['config_format']
         reply = get_configuration(self.module, format=config_format)
 
-        if config_format =='xml':
+        if config_format == 'xml':
             config = tostring(reply.find('configuration')).strip()
 
         elif config_format == 'text':
@@ -148,7 +157,6 @@ class Config(FactsBase):
             config = self.get_text(reply, 'configuration-set')
 
         self.facts['config'] = config
-
 
 
 class Hardware(FactsBase):
@@ -197,11 +205,55 @@ class Interfaces(FactsBase):
         self.facts['interfaces'] = interfaces
 
 
+class Facts(FactsBase):
+    def _connect(self, module):
+        host = get_param(module, 'host')
+
+        kwargs = {
+            'port': get_param(module, 'port') or 830,
+            'user': get_param(module, 'username')
+        }
+
+        if get_param(module, 'password'):
+            kwargs['passwd'] = get_param(module, 'password')
+
+        if get_param(module, 'ssh_keyfile'):
+            kwargs['ssh_private_key_file'] = get_param(module, 'ssh_keyfile')
+
+        kwargs['gather_facts'] = False
+
+        try:
+            device = Device(host, **kwargs)
+            device.open()
+            device.timeout = get_param(module, 'timeout') or 10
+        except ConnectError:
+            exc = get_exception()
+            module.fail_json('unable to connect to %s: %s' % (host, str(exc)))
+
+        return device
+
+    def populate(self):
+
+        device = self._connect(self.module)
+        facts = dict(device.facts)
+
+        if '2RE' in facts:
+            facts['has_2RE'] = facts['2RE']
+            del facts['2RE']
+
+        facts['version_info'] = dict(facts['version_info'])
+        if 'junos_info' in facts:
+            for key, value in facts['junos_info'].items():
+                if 'object' in value:
+                    value['object'] = dict(value['object'])
+
+        return facts
+
 FACT_SUBSETS = dict(
     default=Default,
     hardware=Hardware,
     config=Config,
-    interfaces=Interfaces,
+    interfaces=Interfaces
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
@@ -224,6 +276,7 @@ def main():
     check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
+    ofacts = False
 
     runable_subsets = set()
     exclude_subsets = set()
@@ -231,12 +284,14 @@ def main():
     for subset in gather_subset:
         if subset == 'all':
             runable_subsets.update(VALID_SUBSETS)
+            ofacts = True
             continue
 
         if subset.startswith('!'):
             subset = subset[1:]
             if subset == 'all':
                 exclude_subsets.update(VALID_SUBSETS)
+                ofacts = False
                 continue
             exclude = True
         else:
@@ -272,6 +327,13 @@ def main():
     for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
+
+    if ofacts:
+        if HAS_PYEZ:
+            ansible_facts.update(Facts(module).populate())
+        else:
+            warnings += ['junos-eznc is required to gather old style facts but does not appear to be installed. '
+                         'It can be installed using `pip  install junos-eznc`']
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
