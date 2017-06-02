@@ -723,11 +723,6 @@ lib/ansible/plugins/connection/paramiko_ssh.py
 lib/ansible/plugins/connection/ssh.py
 lib/ansible/plugins/connection/winrm.py
 lib/ansible/plugins/connection/zone.py
-lib/ansible/plugins/filter/__init__.py
-lib/ansible/plugins/filter/core.py
-lib/ansible/plugins/filter/ipaddr.py
-lib/ansible/plugins/filter/json_query.py
-lib/ansible/plugins/filter/mathstuff.py
 lib/ansible/plugins/inventory/__init__.py
 lib/ansible/plugins/inventory/ini.py
 lib/ansible/plugins/inventory/yaml.py
