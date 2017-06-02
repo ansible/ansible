@@ -131,7 +131,7 @@ class ForemanInventory(object):
             self.cache_max_age = 60
 
         # If the FOREMAN_ORGANIZATION environment variable is set to the
-        # label of a Satellite organization, only hosts from that
+        # label of a Foreman organization, only hosts from that
         # organization will be listed. This can be used in Ansible Tower
         # inventories.
         foreman_organization_label = os.environ.get('FOREMAN_ORGANIZATION')
@@ -140,9 +140,8 @@ class ForemanInventory(object):
             self.foreman_organization_id = self._get_organization_id(foreman_organization_label)
 
         # If the FOREMAN_HOSTCOLLECTION environment variable is set to the
-        # name of a Satellite host collection, only hosts from that
-        # collection will be listed. This can be used in Ansible Tower
-        # inventories.
+        # name of a Foreman host collection, only hosts from that collection
+        # will be listed. This can be used in Ansible Tower inventories.
         self.foreman_hostcollection_name = os.environ.get('FOREMAN_HOSTCOLLECTION')
 
         return True
