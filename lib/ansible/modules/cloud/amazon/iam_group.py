@@ -228,7 +228,7 @@ def create_or_update_group(connection, module):
     changed = False
 
     # Get group
-    group = get_group(connection, params['GroupName'])
+    group = get_group(connection, module, params['GroupName'])
 
     # If group is None, create it
     if group is None:
@@ -242,7 +242,7 @@ def create_or_update_group(connection, module):
             module.fail_json(msg=e.message, exception=traceback.format_exc())
 
     # Manage managed policies
-    current_attached_policies = get_attached_policy_list(connection, params['GroupName'])
+    current_attached_policies = get_attached_policy_list(connection, module, params['GroupName'])
     if not compare_attached_group_policies(current_attached_policies, managed_policies):
         # If managed_policies has a single empty element we want to remove all attached policies
         if purge_policy:
@@ -274,7 +274,7 @@ def create_or_update_group(connection, module):
         changed = True
 
     # Manage group memberships
-    current_group_members = get_group(connection, params['GroupName'])['Users']
+    current_group_members = get_group(connection, module, params['GroupName'])['Users']
     current_group_members_list = []
     for member in current_group_members:
         current_group_members_list.append(member['UserName'])
@@ -304,7 +304,7 @@ def create_or_update_group(connection, module):
         changed = True
 
     # Get the group again
-    group = get_group(connection, params['GroupName'])
+    group = get_group(connection, module, params['GroupName'])
 
     module.exit_json(changed=changed, iam_group=camel_dict_to_snake_dict(group))
 
@@ -314,11 +314,11 @@ def destroy_group(connection, module):
     params = dict()
     params['GroupName'] = module.params.get('name')
 
-    if get_group(connection, params['GroupName']):
+    if get_group(connection, module, params['GroupName']):
 
         # Remove any attached policies otherwise deletion fails
         try:
-            for policy in get_attached_policy_list(connection, params['GroupName']):
+            for policy in get_attached_policy_list(connection, module, params['GroupName']):
                 connection.detach_group_policy(GroupName=params['GroupName'], PolicyArn=policy['PolicyArn'])
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(),
@@ -328,7 +328,7 @@ def destroy_group(connection, module):
 
         # Remove any users in the group otherwise deletion fails
         current_group_members_list = []
-        current_group_members = get_group(connection, params['GroupName'])['Users']
+        current_group_members = get_group(connection, module, params['GroupName'])['Users']
         for member in current_group_members:
             current_group_members_list.append(member['UserName'])
         for user in current_group_members_list:
@@ -354,7 +354,7 @@ def destroy_group(connection, module):
     module.exit_json(changed=True)
 
 
-def get_group(connection, name):
+def get_group(connection, module, name):
 
     params = dict()
     params['GroupName'] = name
@@ -368,7 +368,7 @@ def get_group(connection, name):
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
 
-def get_attached_policy_list(connection, name):
+def get_attached_policy_list(connection, module, name):
 
     try:
         return connection.list_attached_group_policies(GroupName=name)['AttachedPolicies']
@@ -410,6 +410,7 @@ def main():
         create_or_update_group(connection, module)
     else:
         destroy_group(connection, module)
+
 
 if __name__ == '__main__':
     main()
