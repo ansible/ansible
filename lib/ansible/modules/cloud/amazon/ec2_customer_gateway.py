@@ -226,22 +226,20 @@ def main():
     name = module.params.get('name')
 
     existing = gw_mgr.describe_gateways(module.params['ip_address'])
-    # describe_gateways returns a key of CustomerGateways where as create_gateway returns a
-    # key of CustomerGateway. For consistency, change it here
-    existing['CustomerGateway'] = existing['CustomerGateways'][0]
 
     results = dict(changed=False)
     if module.params['state'] == 'present':
-        if existing['CustomerGateway']:
+        if existing['CustomerGateways']:
+            existing['CustomerGateway'] = existing['CustomerGateways'][0]
             results['gateway'] = existing
-            if existing['CustomerGateway'][0]['Tags']:
-                tag_array = existing['CustomerGateway'][0]['Tags']
+            if existing['CustomerGateway']['Tags']:
+                tag_array = existing['CustomerGateway']['Tags']
                 for key, value in enumerate(tag_array):
                     if value['Key'] == 'Name':
                         current_name = value['Value']
                         if current_name != name:
                             results['name'] = gw_mgr.tag_cgw_name(
-                                results['gateway']['CustomerGateway'][0]['CustomerGatewayId'],
+                                results['gateway']['CustomerGateway']['CustomerGatewayId'],
                                 module.params['name'],
                             )
                             results['changed'] = True
@@ -258,11 +256,12 @@ def main():
             results['changed'] = True
 
     elif module.params['state'] == 'absent':
-        if existing['CustomerGateway']:
+        if existing['CustomerGateways']:
+            existing['CustomerGateway'] = existing['CustomerGateways'][0]
             results['gateway'] = existing
             if not module.check_mode:
                 results['gateway'] = gw_mgr.ensure_cgw_absent(
-                    existing['CustomerGateway'][0]['CustomerGatewayId']
+                    existing['CustomerGateway']['CustomerGatewayId']
                 )
             results['changed'] = True
 
