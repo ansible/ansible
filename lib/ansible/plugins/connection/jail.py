@@ -64,7 +64,13 @@ class Connection(ConnectionBase):
 
         self.jls_cmd = self._search_executable('jls')
         self.jexec_cmd = self._search_executable('jexec')
+        self.iocage_cmd = distutils.spawn.find_executable('iocage')
 
+        if self.jail not in self.list_jails() and self.iocage_cmd:
+            ioc_jail = self.get_ioc_jail_by_tag(self.jail)
+            if ioc_jail:
+                self.jail = 'ioc-{}'.format(ioc_jail['uuid'])
+        
         if self.jail not in self.list_jails():
             raise AnsibleError("incorrect jail name %s" % self.jail)
 
@@ -75,6 +81,31 @@ class Connection(ConnectionBase):
             raise AnsibleError("%s command not found in PATH" % executable)
         return cmd
 
+    @staticmethod
+    def ioc_tag_uuid_extract(line):
+        components = line.split()
+        if components != []:
+            return {'uuid': components[0], 'tag': components[1]}
+
+    def list_ioc_jails(self):
+        p = subprocess.Popen([self.iocage_cmd, 'show', 'tag'],
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        
+        stdout, stderr = p.communicate()
+        
+        # remove table header and terminating newline
+        return map(lambda extract: self.ioc_tag_uuid_extract(extract), stdout.split('\n')[1:-1])
+
+    def get_ioc_jail_by_tag(self, tag):
+        ioc_jails = self.list_ioc_jails()
+        for jail in ioc_jails:
+            if jail['tag'] == tag:
+                return jail
+
+        return None
+    
     def list_jails(self):
         p = subprocess.Popen([self.jls_cmd, '-q', 'name'],
                              stdin=subprocess.PIPE,
