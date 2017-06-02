@@ -4,6 +4,7 @@
   ios_banner:
     banner: motd
     state: absent
+    provider: "{{ cli }}"
     authorize: yes
 
 - name: Set motd
