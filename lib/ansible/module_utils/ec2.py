@@ -161,11 +161,11 @@ def get_aws_connection_info(module, boto3=False):
             ec2_url = os.environ['EC2_URL']
 
     if not access_key:
-        if os.environ.get('AWS_ACCESS_KEY_ID', None):
+        if os.environ.get('AWS_ACCESS_KEY_ID'):
             access_key = os.environ['AWS_ACCESS_KEY_ID']
-        elif os.environ.get('AWS_ACCESS_KEY', None):
+        elif os.environ.get('AWS_ACCESS_KEY'):
             access_key = os.environ['AWS_ACCESS_KEY']
-        elif os.environ.get('EC2_ACCESS_KEY', None):
+        elif os.environ.get('EC2_ACCESS_KEY'):
             access_key = os.environ['EC2_ACCESS_KEY']
         elif boto.config.get('Credentials', 'aws_access_key_id'):
             access_key = boto.config.get('Credentials', 'aws_access_key_id')
@@ -176,11 +176,11 @@ def get_aws_connection_info(module, boto3=False):
             access_key = None
 
     if not secret_key:
-        if os.environ.get('AWS_SECRET_ACCESS_KEY', None):
+        if os.environ.get('AWS_SECRET_ACCESS_KEY'):
             secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
-        elif os.environ.get('AWS_SECRET_KEY', None):
+        elif os.environ.get('AWS_SECRET_KEY'):
             secret_key = os.environ['AWS_SECRET_KEY']
-        elif os.environ.get('EC2_SECRET_KEY', None):
+        elif os.environ.get('EC2_SECRET_KEY'):
             secret_key = os.environ['EC2_SECRET_KEY']
         elif boto.config.get('Credentials', 'aws_secret_access_key'):
             secret_key = boto.config.get('Credentials', 'aws_secret_access_key')
@@ -210,11 +210,11 @@ def get_aws_connection_info(module, boto3=False):
                 module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
     if not security_token:
-        if os.environ.get('AWS_SECURITY_TOKEN', None):
+        if os.environ.get('AWS_SECURITY_TOKEN'):
             security_token = os.environ['AWS_SECURITY_TOKEN']
-        elif os.environ.get('AWS_SESSION_TOKEN', None):
+        elif os.environ.get('AWS_SESSION_TOKEN'):
             security_token = os.environ['AWS_SESSION_TOKEN']
-        elif os.environ.get('EC2_SECURITY_TOKEN', None):
+        elif os.environ.get('EC2_SECURITY_TOKEN'):
             security_token = os.environ['EC2_SECURITY_TOKEN']
         elif boto.config.get('Credentials', 'aws_security_token'):
             security_token = boto.config.get('Credentials', 'aws_security_token')
