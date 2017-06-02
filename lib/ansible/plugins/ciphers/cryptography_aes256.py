@@ -24,8 +24,6 @@ from binascii import unhexlify
 import os
 
 
-from ansible.errors import AnsibleError
-
 from ansible.plugins.ciphers import VaultCipherBase
 
 try:
@@ -34,32 +32,21 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-HAS_CRYPTOGRAPHY = False
-try:
-    from cryptography.exceptions import InvalidSignature
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import hashes, padding
-    from cryptography.hazmat.primitives.hmac import HMAC
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-    from cryptography.hazmat.primitives.ciphers import (
-        Cipher as C_Cipher, algorithms, modes
-    )
-    HAS_CRYPTOGRAPHY = True
-except ImportError:
-    # TODO: log/display something?
-    pass
-except Exception as e:
-    display.vvvv("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'.")
-    import traceback
-    display.vvvv("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, padding
+from cryptography.hazmat.primitives.hmac import HMAC
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher as C_Cipher, algorithms, modes
+)
 
 
 BACKEND = default_backend()
 
 
 def check_prereqs():
-    if not HAS_CRYPTOGRAPHY:
-        raise AnsibleError("ansible-vault requires the 'cryptography' python module to be installed.")
+    pass
 
 
 class VaultCipher(VaultCipherBase):

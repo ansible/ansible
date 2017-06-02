@@ -28,13 +28,7 @@ from ansible.plugins.ciphers import VaultCipherBase
 # Note: Only used for loading obsolete VaultAES files.  All files are written
 # using the newer VaultAES256 which does not require md5
 
-
-# AES IMPORTS
-try:
-    from Crypto.Cipher import AES as AES
-    HAS_AES = True
-except ImportError:
-    HAS_AES = False
+from Crypto.Cipher import AES
 
 from ansible.errors import AnsibleError
 
@@ -53,8 +47,7 @@ CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the on
 
 
 def check_prereqs():
-    if not HAS_AES:
-        raise AnsibleError(CRYPTO_UPGRADE)
+    pass
 
 
 class VaultCipher(VaultCipherBase):
@@ -71,10 +64,6 @@ class VaultCipher(VaultCipherBase):
     @staticmethod
     def check_prereqs():
         return check_prereqs()
-
-    def __init__(self):
-        if not HAS_AES:
-            raise AnsibleError(CRYPTO_UPGRADE)
 
     def _aes_derive_key_and_iv(self, b_password, b_salt, key_length, iv_length):
 

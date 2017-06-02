@@ -1,3 +1,23 @@
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+# (c) 2016, Adrian Likins <alikins@redhat.com>
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from binascii import unhexlify
 from hashlib import md5
@@ -14,21 +34,11 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-HAS_CRYPTOGRAPHY = False
-try:
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import padding
-    from cryptography.hazmat.primitives.ciphers import (
-        Cipher as C_Cipher, algorithms, modes
-    )
-    HAS_CRYPTOGRAPHY = True
-except ImportError:
-    # TODO: log/display something?
-    pass
-except Exception as e:
-    display.vvvv("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'.")
-    import traceback
-    display.vvvv("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher as C_Cipher, algorithms, modes
+)
 
 
 BACKEND = default_backend()

@@ -23,37 +23,11 @@ import os
 
 from ansible.plugins.ciphers import VaultCipherBase
 
-# Note: Only used for loading obsolete VaultAES files.  All files are written
-# using the newer VaultAES256 which does not require md5
-
-try:
-    from Crypto.Hash import SHA256, HMAC
-    HAS_HASH = True
-except ImportError:
-    HAS_HASH = False
-
+from Crypto.Hash import SHA256, HMAC
 # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Util import Counter
-    HAS_COUNTER = True
-except ImportError:
-    HAS_COUNTER = False
-
-# KDF import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Protocol.KDF import PBKDF2
-    HAS_PBKDF2 = True
-except ImportError:
-    HAS_PBKDF2 = False
-
-# AES IMPORTS
-try:
-    from Crypto.Cipher import AES as AES
-    HAS_AES = True
-except ImportError:
-    HAS_AES = False
-
-from ansible.errors import AnsibleError
+from Crypto.Util import Counter
+from Crypto.Protocol.KDF import PBKDF2
+from Crypto.Cipher import AES as AES
 
 from ansible.module_utils.six import PY3, binary_type
 from ansible.module_utils.six.moves import zip
@@ -65,45 +39,13 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-# OpenSSL pbkdf2_hmac
-HAS_PBKDF2HMAC = False
-try:
-    from cryptography.hazmat.primitives.hashes import SHA256 as c_SHA256
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-    from cryptography.hazmat.backends import default_backend
-    HAS_PBKDF2HMAC = True
-except ImportError:
-    pass
-except Exception as e:
-    display.vvvv("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'.")
-    import traceback
-    display.vvvv("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
-
-HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
 
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform." \
     " You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 
 def check_prereqs():
-    if not HAS_AES or not HAS_COUNTER or not HAS_ANY_PBKDF2HMAC or not HAS_HASH:
-        raise AnsibleError(CRYPTO_UPGRADE)
-
-
-# TODO: vault_envelope to plugin
-# TODO: decide where envelope starts/stops
-class notVaultCipher(VaultCipherBase):
-    # TODO: add a 'cipher_options' arg for cipher specific info?
-    def encrypt(self, b_plaintext, b_password):
-        # return b_ciphertext (as bytes) (not the entire envelope, but the encrypted ciphertext and signatures/hmacs/salts/etc
-        # ready to be wrapped in a vault envelope
-        pass
-
-    def decrypt(self, b_vaulttext, b_password):
-        # b_vaulttest is bytes of text from the vault format after the header has been split off.
-        # Basically, whatever self.encrypt() returns, self.decrypt() should take as its first argument and vice versa
-        # returns b_plaintext bytes
-        pass
+    pass
 
 
 class VaultCipher(VaultCipherBase):
@@ -141,17 +83,7 @@ class VaultCipher(VaultCipherBase):
         # match the size used for counter.new to avoid extra work
         ivlength = 16
 
-        if HAS_PBKDF2HMAC:
-            backend = default_backend()
-            kdf = PBKDF2HMAC(
-                algorithm=c_SHA256(),
-                length=2 * keylength + ivlength,
-                salt=b_salt,
-                iterations=10000,
-                backend=backend)
-            b_derivedkey = kdf.derive(b_password)
-        else:
-            b_derivedkey = cls._create_key(b_password, b_salt, keylength, ivlength)
+        b_derivedkey = cls._create_key(b_password, b_salt, keylength, ivlength)
 
         b_key1 = b_derivedkey[:keylength]
         b_key2 = b_derivedkey[keylength:(keylength * 2)]
