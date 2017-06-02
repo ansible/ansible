@@ -24,6 +24,8 @@ __metaclass__ = type
 import io
 import os
 
+from nose.plugins.skip import SkipTest
+
 from binascii import hexlify
 
 from ansible.compat.tests import unittest
@@ -134,7 +136,7 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
 # TODO: mv to plugin tests
 class TestVaultCipherAes256(unittest.TestCase):
     def setUp(self):
-        cipher_mapping = cipher_util.get_cipher_mapping()
+        cipher_mapping = cipher_util.build_cipher_mapping()
         # self.vault_cipher_class = cipher_loader.get('AES256', class_only=True)
         # note this doesnt check whitelist etc
         self.vault_cipher_class = cipher_mapping['AES256']
@@ -164,6 +166,16 @@ class TestVaultCipherAes256(unittest.TestCase):
         b_key_2 = self.vault_cipher._create_key(b_password, b_salt, keylength=32, ivlength=16)
         self.assertIsInstance(b_key, six.binary_type)
         self.assertEqual(b_key, b_key_2)
+
+
+class TestPyCryptoAes256IsSEqual(unittest.TestCase):
+    def setUp(self):
+        try:
+            from ansible.plugins.ciphers import pycrypto_aes256
+        except ImportError as e:
+            raise SkipTest(e)
+
+        self.vault_cipher = pycrypto_aes256.VaultCipher()
 
     def test_is_equal_is_equal(self):
         self.assertTrue(self.vault_cipher._is_equal(b'abcdefghijklmnopqrstuvwxyz', b'abcdefghijklmnopqrstuvwxyz'))

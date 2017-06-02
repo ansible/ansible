@@ -50,7 +50,7 @@ class TestVaultEditor(unittest.TestCase):
     def setUp(self):
         self._test_dir = None
         # print('cipher_util: %s' % cipher_util)
-        self.cipher_mapping = cipher_util.get_cipher_mapping()
+        self.cipher_mapping = cipher_util.build_cipher_mapping()
 
     def tearDown(self):
         if self._test_dir:
