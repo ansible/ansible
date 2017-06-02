@@ -45,7 +45,7 @@ class Playbook:
         # be either a play or an include statement
         self._entries = []
         self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
-        self._loader  = loader
+        self._loader = loader
         self._file_name = None
 
     @staticmethod
