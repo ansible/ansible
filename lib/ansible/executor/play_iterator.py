@@ -174,7 +174,7 @@ class PlayIterator:
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
-        setup_task.tags = ['always']
+        setup_task.tags = self._play._get_attr_tags()
         setup_task.args = {
             'gather_subset': gather_subset,
         }
