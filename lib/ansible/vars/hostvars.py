@@ -39,8 +39,8 @@ STATIC_VARS = [
     'play_hosts',
     'role_names',
     'ungrouped',
-    'child_groups',
-    'parent_groups',
+    'ansible_child_groups',
+    'ansible_parent_groups',
 ]
 
 try:
