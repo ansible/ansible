@@ -48,7 +48,7 @@ class ActionModule(ActionBase):
             )
 
         play_context = copy.deepcopy(self._play_context)
-        play_context.network_os = play_context.network_os or self._get_network_os(task_vars)
+        play_context.network_os = self._get_network_os(task_vars)
         # TODO this can be netconf
         play_context.connection = 'network_cli'
 
@@ -129,6 +129,9 @@ class ActionModule(ActionBase):
         if ('network_os' in self._task.args and self._task.args['network_os']):
             display.vvvv('Getting network OS from task argument')
             network_os = self._task.args['network_os']
+        elif (self._play_context.network_os):
+            display.vvvv('Getting network OS from inventory')
+            network_os = self._play_context.network_os
         elif ('network_os' in task_vars['ansible_facts'] and
                 task_vars['ansible_facts']['network_os']):
             display.vvvv('Getting network OS from fact')
