@@ -108,9 +108,9 @@ Delegation
 This isn't actually rolling update specific but comes up frequently in those cases.
 
 If you want to perform a task on one host with reference to other hosts, use the 'delegate_to' keyword on a task.
-This is ideal for placing nodes in a load balanced pool, or removing them.  It is also very useful for controlling
-outage windows.  Using this with the 'serial' keyword to control the number of hosts executing at one time is also
-a good idea::
+This is ideal for placing nodes in a load balanced pool, or removing them.  It is also very useful for controlling outage windows.
+Be aware that it does not make sense to delegate all tasks, debug, add_host, include, etc always get executed on the controller.
+Using this with the 'serial' keyword to control the number of hosts executing at one time is also a good idea::
 
     ---
 
