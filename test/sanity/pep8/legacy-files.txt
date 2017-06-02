@@ -66,7 +66,6 @@ lib/ansible/modules/cloud/amazon/sts_assume_role.py
 lib/ansible/modules/cloud/amazon/sts_session_token.py
 lib/ansible/modules/cloud/atomic/atomic_host.py
 lib/ansible/modules/cloud/atomic/atomic_image.py
-lib/ansible/modules/cloud/azure/azure.py
 lib/ansible/modules/cloud/azure/azure_rm_deployment.py
 lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py
 lib/ansible/modules/cloud/azure/azure_rm_networkinterface_facts.py
