@@ -118,4 +118,3 @@ class TestNetconfConnectionClass(unittest.TestCase):
         self.assertEqual(1, rc)
         self.assertEqual(b'', out)
         self.assertEqual(b'unable to parse request', err)
-
