@@ -162,6 +162,13 @@ EXAMPLES = '''
     identifier=new_cluster
     username=cluster_admin
     password=1nsecure
+
+# Cluster delete example
+- redshift: >
+    command: "delete"
+    identifier: "new_cluster"
+    skip_final_cluster_snapshot: true
+    wait: true
 '''
 
 RETURN = '''
@@ -346,11 +353,6 @@ def delete_cluster(module, redshift):
     skip_final_cluster_snapshot       = module.params.get('skip_final_cluster_snapshot')
     final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
 
-    if skip_final_cluster_snapshot and final_cluster_snapshot_identifier is not None:
-        module.fail_json(msg="Final snapshot is skipped but a snapshot id was specified")
-    if not skip_final_cluster_snapshot and final_cluster_snapshot_identifier is None:
-        module.fail_json(msg="Snapshot identifier (final_cluster_snapshot_identifier) must be provided if skip_final_cluster_snapshot is false.")
-
     try:
         redshift.delete_cluster(
             identifier,
@@ -446,8 +448,8 @@ def main():
         cluster_type                        = dict(choices=['multi-node', 'single-node', ], default='single-node'),
         cluster_security_groups             = dict(aliases=['security_groups'], type='list'),
         vpc_security_group_ids              = dict(aliases=['vpc_security_groups'], type='list'),
-        skip_final_cluster_snapshot         = dict(aliases=['skip_snapshot'], type='bool', default=False),
-        final_cluster_snapshot_identifier   = dict(aliases=['snapshot_identifier'], required=False),
+        skip_final_cluster_snapshot         = dict(aliases=['skip_final_snapshot'], type='bool', default=False),
+        final_cluster_snapshot_identifier   = dict(aliases=['final_snapshot_id'], required=False),
         cluster_subnet_group_name           = dict(aliases=['subnet']),
         availability_zone                   = dict(aliases=['aws_zone', 'zone']),
         preferred_maintenance_window        = dict(aliases=['maintance_window', 'maint_window']),
@@ -463,11 +465,16 @@ def main():
         new_cluster_identifier              = dict(aliases=['new_identifier']),
         wait                                = dict(type='bool', default=False),
         wait_timeout                        = dict(type='int', default=300),
+    ),
     )
-    )
+
+    required_if = [
+        ('skip_final_cluster_snapshot', False, ['final_cluster_snapshot_identifier'])
+    ]
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_if=required_if
     )
 
     if not HAS_BOTO:
