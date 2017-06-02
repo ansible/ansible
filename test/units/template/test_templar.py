@@ -318,7 +318,7 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
 
     def test_lookup_jinja_undefined(self):
         self.assertRaisesRegexp(AnsibleUndefinedVariable,
-                                "'an_undefined_jinja_var' is undefined",
+                                "{{ an_undefined_jinja_var }} is undefined",
                                 self.templar._lookup,
                                 'list', '{{ an_undefined_jinja_var }}')
 
@@ -352,7 +352,7 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
 
     def test_lookup_jinja_list_wantlist_undefined(self):
         self.assertRaisesRegexp(AnsibleUndefinedVariable,
-                                "'some_undefined_var' is undefined",
+                                "{{ some_undefined_var }} is undefined",
                                 self.templar._lookup,
                                 'list',
                                 '{{ some_undefined_var }}',
