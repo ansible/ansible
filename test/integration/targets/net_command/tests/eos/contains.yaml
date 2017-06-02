@@ -1,4 +1,4 @@
---
+---
 - debug: msg="START eos/contains.yaml"
 
 - name: test contains operator
