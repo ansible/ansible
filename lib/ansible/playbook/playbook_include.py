@@ -34,9 +34,9 @@ from ansible.template import Templar
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
-    _name      = FieldAttribute(isa='string')
-    _include   = FieldAttribute(isa='string')
-    _vars      = FieldAttribute(isa='dict', default=dict())
+    _name = FieldAttribute(isa='string')
+    _include = FieldAttribute(isa='string')
+    _vars = FieldAttribute(isa='dict', default=dict())
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
@@ -113,7 +113,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if isinstance(ds, AnsibleBaseYAMLObject):
             new_ds.ansible_pos = ds.ansible_pos
 
-        for (k,v) in iteritems(ds):
+        for (k, v) in iteritems(ds):
             if k == 'include':
                 self._preprocess_include(ds, new_ds, k, v)
             else:
@@ -152,4 +152,3 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 if 'vars' in new_ds:
                     raise AnsibleParserError("include parameters cannot be mixed with 'vars' entries for include statements", obj=ds)
                 new_ds['vars'] = params
-

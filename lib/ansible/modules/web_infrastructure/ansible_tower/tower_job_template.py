@@ -233,7 +233,7 @@ def update_fields(p):
 
     extra_vars = params.get('extra_vars_path')
     if extra_vars is not None:
-        params_update['extra_vars'] = '@' + extra_vars
+        params_update['extra_vars'] = ['@' + extra_vars]
 
     params.update(params_update)
     return params

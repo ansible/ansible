@@ -1,0 +1,12 @@
+---
+- hosts: platform_agnostic
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+    - { role: net_system, when: "limit_to in ['*', 'net_system']" }
+    - { role: net_banner, when: "limit_to in ['*', 'net_banner']" }

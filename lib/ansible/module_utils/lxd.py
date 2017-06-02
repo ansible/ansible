@@ -55,10 +55,12 @@ class UnixHTTPConnection(HTTPConnection):
         sock.connect(self.path)
         self.sock = sock
 
+
 class LXDClientException(Exception):
     def __init__(self, msg, **kwargs):
         self.msg = msg
         self.kwargs = kwargs
+
 
 class LXDClient(object):
     def __init__(self, url, key_file=None, cert_file=None, debug=False):

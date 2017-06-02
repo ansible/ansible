@@ -146,9 +146,9 @@ class LookupModule(LookupBase):
 
     def sanity_check(self):
         if self.count is None and self.end is None:
-            raise AnsibleError( "must specify count or end in with_sequence")
+            raise AnsibleError("must specify count or end in with_sequence")
         elif self.count is not None and self.end is not None:
-            raise AnsibleError( "can't specify both count and end in with_sequence")
+            raise AnsibleError("can't specify both count and end in with_sequence")
         elif self.count is not None:
             # convert count to end
             if self.count != 0:

@@ -58,8 +58,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
     ''' a REPL that allows for running ad-hoc tasks against a chosen inventory (based on dominis' ansible-shell).'''
 
     modules = []
-    ARGUMENTS = { 'host-pattern': 'A name of a group in the inventory, a shell-like glob '
-                                'selecting hosts in inventory or any combination of the two separated by commas.', }
+    ARGUMENTS = {'host-pattern': 'A name of a group in the inventory, a shell-like glob '
+                                 'selecting hosts in inventory or any combination of the two separated by commas.'}
 
     def __init__(self, args):
 
@@ -93,7 +93,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         # options unique to shell
         self.parser.add_option('--step', dest='step', action='store_true',
-            help="one-step-at-a-time: confirm each task before running")
+                               help="one-step-at-a-time: confirm each task before running")
 
         self.parser.set_defaults(cwd='*')
 
@@ -150,7 +150,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 elif module in C.IGNORE_FILES:
                     continue
                 elif module.startswith('_'):
-                    fullpath = '/'.join([path,module])
+                    fullpath = '/'.join([path, module])
                     if os.path.islink(fullpath):  # avoids aliases
                         continue
                     module = module.replace('_', '', 1)
@@ -184,10 +184,10 @@ class ConsoleCLI(CLI, cmd.Cmd):
         try:
             check_raw = self.options.module_name in ('command', 'shell', 'script', 'raw')
             play_ds = dict(
-                name = "Ansible Shell",
-                hosts = self.options.cwd,
-                gather_facts = 'no',
-                tasks = [ dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)))]
+                name="Ansible Shell",
+                hosts=self.options.cwd,
+                gather_facts='no',
+                tasks=[dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)))]
             )
             play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader)
         except Exception as e:
@@ -368,7 +368,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
 
-        if self.options.cwd in ('all','*','\\'):
+        if self.options.cwd in ('all', '*', '\\'):
             completions = self.hosts + self.groups
         else:
             completions = [x.name for x in self.inventory.list_hosts(self.options.cwd)]
@@ -392,7 +392,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         super(ConsoleCLI, self).run()
 
-        sshpass    = None
+        sshpass = None
         becomepass = None
 
         # hosts
@@ -410,7 +410,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
-        self.passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
+        self.passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
         self.loader, self.inventory, self.variable_manager = self._play_prereqs(self.options)
 

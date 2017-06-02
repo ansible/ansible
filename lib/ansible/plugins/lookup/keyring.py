@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 '''
@@ -56,20 +54,20 @@ except ImportError:
 
 from ansible.plugins.lookup import LookupBase
 
+
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
         if not HAS_KEYRING:
             raise AnsibleError(u"Can't LOOKUP(keyring): missing required python library 'keyring'")
 
-        display.vvvv(u"keyring: %s" % keyring.get_keyring() )
+        display.vvvv(u"keyring: %s" % keyring.get_keyring())
         ret = []
         for term in terms:
             (servicename, username) = (term.split()[0], term.split()[1])
-            display.vvvv(u"username: %s, servicename: %s " %(username,servicename))
-            password = keyring.get_password(servicename,username)
+            display.vvvv(u"username: %s, servicename: %s " % (username, servicename))
+            password = keyring.get_password(servicename, username)
             if password is None:
                 raise AnsibleError(u"servicename: %s for user %s not found" % (servicename, username))
             ret.append(password.rstrip())
         return ret
-
