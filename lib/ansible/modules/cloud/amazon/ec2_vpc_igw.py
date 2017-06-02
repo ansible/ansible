@@ -32,6 +32,13 @@ options:
       - The VPC ID for the VPC in which to manage the Internet Gateway.
     required: true
     default: null
+  tags:
+    description:
+      - "A dict of tags to apply to the internet gateway. Any tags currently applied to the internet gateway and not present here will be removed."
+    required: false
+    default: null
+    aliases: [ 'resource_tags' ]
+    version_added: "2.4"
   state:
     description:
       - Create or terminate the IGW
@@ -67,63 +74,110 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.six import string_types
 
 
 class AnsibleIGWException(Exception):
     pass
 
 
-def ensure_igw_absent(vpc_conn, vpc_id, check_mode):
-    igws = vpc_conn.get_all_internet_gateways(
-        filters={'attachment.vpc-id': vpc_id})
+def get_igw_info(igw):
+    return {'id': igw.id,
+            'tags': igw.tags,
+            'vpc_id': igw.vpc_id
+            }
 
-    if not igws:
+
+def get_resource_tags(vpc_conn, resource_id):
+    return dict((t.name, t.value) for t in
+                vpc_conn.get_all_tags(filters={'resource-id': resource_id}))
+
+
+def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
+    try:
+        cur_tags = get_resource_tags(vpc_conn, resource_id)
+        if cur_tags == tags:
+            return {'changed': False, 'tags': cur_tags}
+
+        to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
+        if to_delete and not add_only:
+            vpc_conn.delete_tags(resource_id, to_delete, dry_run=check_mode)
+
+        to_add = dict((k, tags[k]) for k in tags if k not in cur_tags or cur_tags[k] != tags[k])
+        if to_add:
+            vpc_conn.create_tags(resource_id, to_add, dry_run=check_mode)
+
+        latest_tags = get_resource_tags(vpc_conn, resource_id)
+        return {'changed': True, 'tags': latest_tags}
+    except EC2ResponseError as e:
+        raise AnsibleTagCreationException(
+            'Unable to update tags for {0}, error: {1}'.format(resource_id, e))
+
+
+def get_matching_igw(vpc_conn, vpc_id):
+    igws = vpc_conn.get_all_internet_gateways(filters={'attachment.vpc-id': vpc_id})
+    if len(igws) > 1:
+        raise AnsibleIGWException(
+            'EC2 returned more than one Internet Gateway for VPC {0}, aborting'
+            .format(vpc_id))
+    return igws[0] if igws else None
+
+
+def ensure_igw_absent(vpc_conn, vpc_id, check_mode):
+    igw = get_matching_igw(vpc_conn, vpc_id)
+    if igw is None:
         return {'changed': False}
 
     if check_mode:
         return {'changed': True}
 
-    for igw in igws:
-        try:
-            vpc_conn.detach_internet_gateway(igw.id, vpc_id)
-            vpc_conn.delete_internet_gateway(igw.id)
-        except EC2ResponseError as e:
-            raise AnsibleIGWException(
-                'Unable to delete Internet Gateway, error: {0}'.format(e))
+    try:
+        vpc_conn.detach_internet_gateway(igw.id, vpc_id)
+        vpc_conn.delete_internet_gateway(igw.id)
+    except EC2ResponseError as e:
+        raise AnsibleIGWException(
+            'Unable to delete Internet Gateway, error: {0}'.format(e))
 
     return {'changed': True}
 
 
-def ensure_igw_present(vpc_conn, vpc_id, check_mode):
-    igws = vpc_conn.get_all_internet_gateways(
-        filters={'attachment.vpc-id': vpc_id})
-
-    if len(igws) > 1:
-        raise AnsibleIGWException(
-            'EC2 returned more than one Internet Gateway for VPC {0}, aborting'
-            .format(vpc_id))
-
-    if igws:
-        return {'changed': False, 'gateway_id': igws[0].id}
-    else:
+def ensure_igw_present(vpc_conn, vpc_id, tags, check_mode):
+    igw = get_matching_igw(vpc_conn, vpc_id)
+    changed = False
+    if igw is None:
         if check_mode:
             return {'changed': True, 'gateway_id': None}
 
         try:
             igw = vpc_conn.create_internet_gateway()
             vpc_conn.attach_internet_gateway(igw.id, vpc_id)
-            return {'changed': True, 'gateway_id': igw.id}
+            changed = True
         except EC2ResponseError as e:
             raise AnsibleIGWException(
                 'Unable to create Internet Gateway, error: {0}'.format(e))
+
+    igw.vpc_id = vpc_id
+
+    if tags != igw.tags:
+        ensure_tags(vpc_conn, igw.id, tags, False, check_mode)
+        igw.tags = tags
+        changed = True
+
+    igw_info = get_igw_info(igw)
+
+    return {
+        'changed': changed,
+        'gateway': igw_info
+    }
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            vpc_id = dict(required=True),
-            state = dict(default='present', choices=['present', 'absent'])
+            vpc_id=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            tags=dict(default=dict(), required=False, type='dict', aliases=['resource_tags'])
         )
     )
 
@@ -147,10 +201,15 @@ def main():
 
     vpc_id = module.params.get('vpc_id')
     state = module.params.get('state', 'present')
+    tags = module.params.get('tags')
+
+    nonstring_tags = [k for k, v in tags.items() if not isinstance(v, string_types)]
+    if nonstring_tags:
+        module.fail_json(msg='One or more tags contain non-string values: {0}'.format(nonstring_tags))
 
     try:
         if state == 'present':
-            result = ensure_igw_present(connection, vpc_id, check_mode=module.check_mode)
+            result = ensure_igw_present(connection, vpc_id, tags, check_mode=module.check_mode)
         elif state == 'absent':
             result = ensure_igw_absent(connection, vpc_id, check_mode=module.check_mode)
     except AnsibleIGWException as e:
