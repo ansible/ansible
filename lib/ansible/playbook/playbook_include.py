@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.errors import AnsibleParserError, AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.six import iteritems
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
@@ -34,9 +34,10 @@ from ansible.template import Templar
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
-    _name      = FieldAttribute(isa='string')
-    _include   = FieldAttribute(isa='string')
-    _vars      = FieldAttribute(isa='dict', default=dict())
+    _name           = FieldAttribute(isa='string')
+    _include        = FieldAttribute(isa='string')
+    _vars           = FieldAttribute(isa='dict', default=dict())
+    _ignore_errors  = FieldAttribute(isa='bool')
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
@@ -70,7 +71,11 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if not os.path.isabs(file_name):
             file_name = os.path.join(basedir, file_name)
 
-        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
+        try:
+            pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
+        except AnsibleFileNotFound:
+            if not self.ignore_errors:
+                raise
 
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
