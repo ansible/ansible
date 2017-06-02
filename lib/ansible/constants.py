@@ -242,7 +242,7 @@ NAMESPACE_FACTS = get_config(p, DEFAULTS, 'restrict_facts_namespace', 'ANSIBLE_R
 # Inventory
 DEFAULT_HOST_LIST = get_config(p, DEFAULTS, 'inventory', 'ANSIBLE_INVENTORY', '/etc/ansible/hosts', value_type='path', expand_relative_paths=True)
 INVENTORY_ENABLED = get_config(p, DEFAULTS, 'inventory_enabled', 'ANSIBLE_INVENTORY_ENABLED',
-                               ['host_list', 'script', 'ini', 'yaml'], value_type='list')
+                               ['host_list', 'script', 'yaml', 'ini'], value_type='list')
 INVENTORY_IGNORE_EXTS = get_config(p, DEFAULTS, 'inventory_ignore_extensions', 'ANSIBLE_INVENTORY_IGNORE',
                                    BLACKLIST_EXTS + (".orig", ".ini", ".cfg", ".retry"), value_type='list')
 INVENTORY_IGNORE_PATTERNS = get_config(p, DEFAULTS, 'inventory_ignore_patterns', 'ANSIBLE_INVENTORY_IGNORE_REGEX', [], value_type='list')
