@@ -135,6 +135,9 @@ class VcenterProvider(CloudProvider):
     def _get_credentials(self):
         pass
 
+    def _setup_static(self):
+        pass
+
 
 class VcenterEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
