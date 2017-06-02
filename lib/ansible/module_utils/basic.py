@@ -228,7 +228,6 @@ FILE_COMMON_ARGUMENTS=dict(
     directory_mode = dict(), # used by copy
     unsafe_writes  = dict(type='bool'), # should be available to any module using atomic_move
     attributes = dict(aliases=['attr']),
-    state = dict(),         # Useful with get_url
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -829,12 +828,10 @@ class AnsibleModule(object):
                 secontext[i] = default_secontext[i]
 
         attributes = params.get('attributes', None)
-        state = params.get('state', None)
         return dict(
             path=path, mode=mode, owner=owner, group=group,
             seuser=seuser, serole=serole, setype=setype,
             selevel=selevel, secontext=secontext, attributes=attributes,
-            state=state
         )
 
 
