@@ -148,6 +148,18 @@ def _link_local_query(v, value):
         if ipaddr(str(v_ip), 'fe80::/10'):
             return value
 
+def _eui64_query(v, value):
+    v_ip = netaddr.IPAddress(str(v.ip))
+    if v.version != 6:
+        return False
+
+    # RFC 4862, 5.5.3
+    if v.prefixlen != 64:
+        return False
+
+    hw = netaddr.EUI(value);
+    return str(hw.ipv6(v.ip)) + '/64'
+
 def _loopback_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
     if v_ip.is_loopback():
@@ -458,7 +470,10 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
                 return value
 
         except:
-            raise errors.AnsibleFilterError(alias + ': unknown filter type: %s' % query)
+            if hwaddr(query):
+                return _eui64_query(v,query)
+            else:
+                raise errors.AnsibleFilterError(alias + ': unknown filter type: %s' % query)
 
     return False
 
