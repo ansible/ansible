@@ -93,7 +93,6 @@ lib/ansible/modules/cloud/cloudstack/cs_instancegroup.py
 lib/ansible/modules/cloud/cloudstack/cs_iso.py
 lib/ansible/modules/cloud/cloudstack/cs_nic.py
 lib/ansible/modules/cloud/cloudstack/cs_portforward.py
-lib/ansible/modules/cloud/cloudstack/cs_project.py
 lib/ansible/modules/cloud/cloudstack/cs_router.py
 lib/ansible/modules/cloud/cloudstack/cs_securitygroup.py
 lib/ansible/modules/cloud/cloudstack/cs_securitygroup_rule.py
