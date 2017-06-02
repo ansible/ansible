@@ -1084,7 +1084,7 @@ def main():
         iops=dict(required=False),
         security_groups=dict(required=False),
         vpc_security_groups=dict(type='list', required=False),
-        port=dict(required=False),
+        port=dict(required=False, type='int'),
         upgrade=dict(type='bool', default=False),
         option_group=dict(required=False),
         maint_window=dict(required=False),
