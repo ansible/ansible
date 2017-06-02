@@ -191,3 +191,6 @@ def load_config(module, candidate, warnings, action='merge', commit=False, forma
                 discard_changes(module)
 
         return diff
+
+def get_param(module, key):
+    return module.params[key] or module.params['provider'].get(key)
