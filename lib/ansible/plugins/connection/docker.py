@@ -235,7 +235,7 @@ class Connection(ConnectionBase):
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
             try:
                 p = subprocess.Popen(args, stdin=in_file,
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except OSError:
                 raise AnsibleError("docker connection requires dd command in the container to put files")
             stdout, stderr = p.communicate()
@@ -257,7 +257,7 @@ class Connection(ConnectionBase):
         args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
 
         # Rename if needed
