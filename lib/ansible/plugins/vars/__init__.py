@@ -26,6 +26,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class BaseVarsPlugin(object):
 
     """
@@ -39,4 +40,3 @@ class BaseVarsPlugin(object):
     def get_vars(self, loader, path, entities):
         """ Gets variables. """
         self._basedir = basedir(path)
-

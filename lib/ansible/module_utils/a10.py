@@ -44,6 +44,7 @@ AXAPI_VPORT_PROTOCOLS = {
     'https': 12,
 }
 
+
 def a10_argument_spec():
     return dict(
         host=dict(type='str', required=True),
@@ -52,10 +53,12 @@ def a10_argument_spec():
         write_config=dict(type='bool', default=False)
     )
 
+
 def axapi_failure(result):
     if 'response' in result and result['response'].get('status') == 'fail':
         return True
     return False
+
 
 def axapi_call(module, url, post=None):
     '''
@@ -81,6 +84,7 @@ def axapi_call(module, url, post=None):
         rsp.close()
     return data
 
+
 def axapi_authenticate(module, base_url, username, password):
     url = '%s&method=authenticate&username=%s&password=%s' % (base_url, username, password)
     result = axapi_call(module, url)
@@ -88,6 +92,7 @@ def axapi_authenticate(module, base_url, username, password):
         return module.fail_json(msg=result['response']['err']['msg'])
     sessid = result['session_id']
     return base_url + '&session_id=' + sessid
+
 
 def axapi_authenticate_v3(module, base_url, username, password):
     url = base_url
@@ -97,6 +102,7 @@ def axapi_authenticate_v3(module, base_url, username, password):
         return module.fail_json(msg=result['response']['err']['msg'])
     signature = result['authresponse']['signature']
     return signature
+
 
 def axapi_call_v3(module, url, method=None, body=None, signature=None):
     '''
@@ -126,6 +132,7 @@ def axapi_call_v3(module, url, method=None, body=None, signature=None):
         rsp.close()
     return data
 
+
 def axapi_enabled_disabled(flag):
     '''
     The axapi uses 0/1 integer values for flags, rather than strings
@@ -137,8 +144,10 @@ def axapi_enabled_disabled(flag):
     else:
         return 0
 
+
 def axapi_get_port_protocol(protocol):
     return AXAPI_PORT_PROTOCOLS.get(protocol.lower(), None)
+
 
 def axapi_get_vport_protocol(protocol):
     return AXAPI_VPORT_PROTOCOLS.get(protocol.lower(), None)

@@ -130,7 +130,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 for line in b_data.splitlines():
                     if line and line[0] in self.b_COMMENT_MARKERS:
                         # Replace is okay for comment lines
-                        #data.append(to_text(line, errors='surrogate_then_replace'))
+                        # data.append(to_text(line, errors='surrogate_then_replace'))
                         # Currently we only need these lines for accurate lineno in errors
                         data.append(u'')
                     else:
@@ -140,7 +140,6 @@ class InventoryModule(BaseFileInventoryPlugin):
             self._parse(path, data)
         except Exception as e:
             raise AnsibleParserError(e)
-
 
     def _raise_error(self, message):
         raise AnsibleError("%s:%d: " % (self._filename, self.lineno) + message)
@@ -281,7 +280,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         self._raise_error("Expected key=value, got: %s" % (line))
 
-    def _parse_host_definition(self, line ):
+    def _parse_host_definition(self, line):
         '''
         Takes a single line and tries to parse it as a host definition. Returns
         a list of Hosts if successful, or raises an error.

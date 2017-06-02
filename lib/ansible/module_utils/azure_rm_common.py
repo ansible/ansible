@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
@@ -16,7 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
 import json
 import os
@@ -102,6 +100,7 @@ except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
 
+
 def azure_id_to_dict(id):
     pieces = re.sub(r'^\/', '', id).split('/')
     result = {}
@@ -120,6 +119,7 @@ AZURE_EXPECTED_VERSIONS = dict(
 )
 
 AZURE_MIN_RELEASE = '2.0.0rc5'
+
 
 class AzureRMModuleBase(object):
 
@@ -202,7 +202,7 @@ class AzureRMModuleBase(object):
         if Version(client_version) < Version(expected_version):
             self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
                       "`pip install azure>={3} --upgrade`".format(client_name, client_version, expected_version,
-                                                        AZURE_MIN_RELEASE))
+                                                                  AZURE_MIN_RELEASE))
 
     def exec_module(self, **kwargs):
         self.fail("Error: {0} failed to implement exec_module method.".format(self.__class__.__name__))
@@ -220,11 +220,11 @@ class AzureRMModuleBase(object):
     def log(self, msg, pretty_print=False):
         pass
         # Use only during module development
-        #if self.debug:
-        #    log_file = open('azure_rm.log', 'a')
-        #   if pretty_print:
+        # if self.debug:
+        #     log_file = open('azure_rm.log', 'a')
+        #     if pretty_print:
         #         log_file.write(json.dumps(msg, indent=4, sort_keys=True))
-        #    else:
+        #     else:
         #         log_file.write(msg + u'\n')
 
     def validate_tags(self, tags):

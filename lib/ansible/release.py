@@ -20,4 +20,4 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 __version__ = '2.4.0'
-__author__  = 'Ansible, Inc.'
+__author__ = 'Ansible, Inc.'

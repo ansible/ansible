@@ -20,25 +20,26 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import getpass
 import operator
 import optparse
 import os
+import subprocess
+import re
 import sys
 import time
 import yaml
-import re
-import getpass
-import subprocess
+
 from abc import ABCMeta, abstractmethod
 
 import ansible
-from ansible.release import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.dataloader import DataLoader
+from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 from ansible.utils.vars import load_extra_vars, load_options_vars
 from ansible.vars.manager import VariableManager
@@ -79,7 +80,7 @@ class InvalidOptsParser(SortedOptParser):
                                  add_help_option=False,
                                  prog=parser.prog,
                                  epilog=parser.epilog)
-        self.version=parser.version
+        self.version = parser.version
 
     def _process_long_opt(self, rargs, values):
         try:
@@ -93,18 +94,19 @@ class InvalidOptsParser(SortedOptParser):
         except optparse.BadOptionError:
             pass
 
+
 class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
 
     VALID_ACTIONS = []
 
     _ITALIC = re.compile(r"I\(([^)]+)\)")
-    _BOLD   = re.compile(r"B\(([^)]+)\)")
+    _BOLD = re.compile(r"B\(([^)]+)\)")
     _MODULE = re.compile(r"M\(([^)]+)\)")
-    _URL    = re.compile(r"U\(([^)]+)\)")
-    _CONST  = re.compile(r"C\(([^)]+)\)")
+    _URL = re.compile(r"U\(([^)]+)\)")
+    _CONST = re.compile(r"C\(([^)]+)\)")
 
-    PAGER   = 'less'
+    PAGER = 'less'
 
     # -F (quit-if-one-screen) -R (allow raw ansi control chars)
     # -S (chop long lines) -X (disable termcap init and de-init)
@@ -229,7 +231,7 @@ class CLI(with_metaclass(ABCMeta, object)):
     def normalize_become_options(self):
         ''' this keeps backwards compatibility with sudo/su self.options '''
         self.options.become_ask_pass = self.options.become_ask_pass or self.options.ask_sudo_pass or self.options.ask_su_pass or C.DEFAULT_BECOME_ASK_PASS
-        self.options.become_user     = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
+        self.options.become_user = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
 
         if self.options.become:
             pass
@@ -287,78 +289,79 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
-            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
-            runas_prompt_opts=False, desc=None):
+                    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
+                    runas_prompt_opts=False, desc=None):
         ''' create an options parser for most ansible scripts '''
 
         # base opts
         parser = SortedOptParser(usage, version=CLI.version("%prog"), description=desc, epilog=epilog)
-        parser.add_option('-v','--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
-            help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+        parser.add_option('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
+                          help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
         if inventory_opts:
             parser.add_option('-i', '--inventory', '--inventory-file', dest='inventory', action="append",
-                help="specify inventory host path (default=[%s]) or comma separated host list. --inventory-file is deprecated" % C.DEFAULT_HOST_LIST)
+                              help="specify inventory host path (default=[%s]) or comma separated host list. "
+                                   "--inventory-file is deprecated" % C.DEFAULT_HOST_LIST)
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
-                help='outputs a list of matching hosts; does not execute anything else')
+                              help='outputs a list of matching hosts; does not execute anything else')
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
-                help='further limit selected hosts to an additional pattern')
+                              help='further limit selected hosts to an additional pattern')
 
         if module_opts:
             parser.add_option('-M', '--module-path', dest='module_path', default=None,
-                help="prepend path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
-                action="callback", callback=CLI.expand_tilde, type=str)
+                              help="prepend path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
+                              action="callback", callback=CLI.expand_tilde, type=str)
         if runtask_opts:
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-                help="set additional variables as key=value or YAML/JSON", default=[])
+                              help="set additional variables as key=value or YAML/JSON", default=[])
 
         if fork_opts:
-            parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
-                help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
+            parser.add_option('-f', '--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
+                              help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
 
         if vault_opts:
             parser.add_option('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
-                help='ask for vault password')
+                              help='ask for vault password')
             parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE, dest='vault_password_file',
-                help="vault password file", action="callback", callback=CLI.unfrack_path, type='string')
+                              help="vault password file", action="callback", callback=CLI.unfrack_path, type='string')
             parser.add_option('--new-vault-password-file', dest='new_vault_password_file',
-                help="new vault password file for rekey", action="callback", callback=CLI.unfrack_path, type='string')
+                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_path, type='string')
             parser.add_option('--output', default=None, dest='output_file',
-                help='output file name for encrypt or decrypt; use - for stdout',
-                action="callback", callback=CLI.unfrack_path, type='string')
+                              help='output file name for encrypt or decrypt; use - for stdout',
+                              action="callback", callback=CLI.unfrack_path, type='string')
 
         if subset_opts:
             parser.add_option('-t', '--tags', dest='tags', default=[], action='append',
-                help="only run plays and tasks tagged with these values")
+                              help="only run plays and tasks tagged with these values")
             parser.add_option('--skip-tags', dest='skip_tags', default=[], action='append',
-                help="only run plays and tasks whose tags do not match these values")
+                              help="only run plays and tasks whose tags do not match these values")
 
         if output_opts:
             parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
-                help='condense output')
+                              help='condense output')
             parser.add_option('-t', '--tree', dest='tree', default=None,
-                help='log output to this directory')
+                              help='log output to this directory')
 
         if connect_opts:
             connect_group = optparse.OptionGroup(parser, "Connection Options", "control as whom and how to connect to hosts")
             connect_group.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
-                help='ask for connection password')
-            connect_group.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-                help='use this file to authenticate the connection', action="callback", callback=CLI.unfrack_path, type='string')
+                                     help='ask for connection password')
+            connect_group.add_option('--private-key', '--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
+                                     help='use this file to authenticate the connection', action="callback", callback=CLI.unfrack_path, type='string')
             connect_group.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
-                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
+                                     help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
             connect_group.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
-                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
+                                     help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
             connect_group.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
-                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+                                     help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
             connect_group.add_option('--ssh-common-args', default='', dest='ssh_common_args',
-                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
+                                     help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
             connect_group.add_option('--sftp-extra-args', default='', dest='sftp_extra_args',
-                help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
+                                     help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
             connect_group.add_option('--scp-extra-args', default='', dest='scp_extra_args',
-                help="specify extra arguments to pass to scp only (e.g. -l)")
+                                     help="specify extra arguments to pass to scp only (e.g. -l)")
             connect_group.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
-                help="specify extra arguments to pass to ssh only (e.g. -R)")
+                                     help="specify extra arguments to pass to ssh only (e.g. -R)")
 
             parser.add_option_group(connect_group)
 
@@ -368,54 +371,55 @@ class CLI(with_metaclass(ABCMeta, object)):
             runas_group = rg
             # priv user defaults to root later on to enable detecting when this option was given here
             runas_group.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
-                help="run operations with sudo (nopasswd) (deprecated, use become)")
+                                   help="run operations with sudo (nopasswd) (deprecated, use become)")
             runas_group.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
-                              help='desired sudo user (default=root) (deprecated, use become)')
+                                   help='desired sudo user (default=root) (deprecated, use become)')
             runas_group.add_option('-S', '--su', default=C.DEFAULT_SU, action='store_true',
-                help='run operations with su (deprecated, use become)')
+                                   help='run operations with su (deprecated, use become)')
             runas_group.add_option('-R', '--su-user', default=None,
-                help='run operations with su as this user (default=%s) (deprecated, use become)' % C.DEFAULT_SU_USER)
+                                   help='run operations with su as this user (default=%s) (deprecated, use become)' % C.DEFAULT_SU_USER)
 
             # consolidated privilege escalation (become)
             runas_group.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
-                help="run operations with become (does not imply password prompting)")
+                                   help="run operations with become (does not imply password prompting)")
             runas_group.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, type='choice', choices=C.BECOME_METHODS,
-                help="privilege escalation method to use (default=%s), valid choices: [ %s ]" % (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
+                                   help="privilege escalation method to use (default=%s), valid choices: [ %s ]" %
+                                   (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
             runas_group.add_option('--become-user', default=None, dest='become_user', type='string',
-                help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
+                                   help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
 
         if runas_opts or runas_prompt_opts:
             if not runas_group:
                 runas_group = rg
             runas_group.add_option('--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
-                help='ask for sudo password (deprecated, use become)')
+                                   help='ask for sudo password (deprecated, use become)')
             runas_group.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
-                help='ask for su password (deprecated, use become)')
+                                   help='ask for su password (deprecated, use become)')
             runas_group.add_option('-K', '--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
-                help='ask for privilege escalation password')
+                                   help='ask for privilege escalation password')
 
         if runas_group:
             parser.add_option_group(runas_group)
 
         if async_opts:
             parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int', dest='poll_interval',
-                help="set the poll interval if using -B (default=%s)" % C.DEFAULT_POLL_INTERVAL)
+                              help="set the poll interval if using -B (default=%s)" % C.DEFAULT_POLL_INTERVAL)
             parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
-                help='run asynchronously, failing after X seconds (default=N/A)')
+                              help='run asynchronously, failing after X seconds (default=N/A)')
 
         if check_opts:
             parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
-                help="don't make any changes; instead, try to predict some of the changes that may occur")
+                              help="don't make any changes; instead, try to predict some of the changes that may occur")
             parser.add_option('--syntax-check', dest='syntax', action='store_true',
-                help="perform a syntax check on the playbook, but do not execute it")
+                              help="perform a syntax check on the playbook, but do not execute it")
             parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
-                help="when changing (small) files and templates, show the differences in those files; works great with --check")
+                              help="when changing (small) files and templates, show the differences in those files; works great with --check")
 
         if meta_opts:
             parser.add_option('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action='store_true',
-                help="run handlers even if a task fails")
+                              help="run handlers even if a task fails")
             parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
-                help="clear the fact cache")
+                              help="clear the fact cache")
 
         return parser
 
@@ -491,7 +495,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             else:
                 # set default if it exists
                 if os.path.exists(C.DEFAULT_HOST_LIST):
-                    self.options.inventory = [ C.DEFAULT_HOST_LIST ]
+                    self.options.inventory = [C.DEFAULT_HOST_LIST]
 
     @staticmethod
     def version(prog):
@@ -531,11 +535,11 @@ class CLI(with_metaclass(ABCMeta, object)):
         if len(ansible_versions) < 3:
             for counter in range(len(ansible_versions), 3):
                 ansible_versions.append(0)
-        return {'string':      ansible_version_string.strip(),
-                'full':        ansible_version,
-                'major':       ansible_versions[0],
-                'minor':       ansible_versions[1],
-                'revision':    ansible_versions[2]}
+        return {'string': ansible_version_string.strip(),
+                'full': ansible_version,
+                'major': ansible_versions[0],
+                'minor': ansible_versions[1],
+                'revision': ansible_versions[2]}
 
     @staticmethod
     def _git_repo_info(repo_path):
@@ -576,8 +580,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 offset = time.timezone
             else:
                 offset = time.altzone
-            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), int(offset / -36))
+            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit, time.strftime("%Y/%m/%d %H:%M:%S", date), int(offset / -36))
         else:
             result = ''
         return result
@@ -669,7 +672,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         else:
             try:
                 f = open(this_path, "rb")
-                vault_pass=f.read().strip()
+                vault_pass = f.read().strip()
                 f.close()
             except (OSError, IOError) as e:
                 raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
@@ -705,4 +708,3 @@ class CLI(with_metaclass(ABCMeta, object)):
         variable_manager.options_vars = load_options_vars(options, CLI.version_info(gitinfo=False))
 
         return loader, inventory, variable_manager
-

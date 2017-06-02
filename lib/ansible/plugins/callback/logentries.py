@@ -160,10 +160,10 @@ class PlainTextSocketAppender(object):
 
 try:
     import ssl
-    HAS_SSL=True
+    HAS_SSL = True
 except ImportError:  # for systems without TLS support.
     SocketAppender = PlainTextSocketAppender
-    HAS_SSL=False
+    HAS_SSL = False
 else:
 
     class TLSSocketAppender(PlainTextSocketAppender):
@@ -199,14 +199,14 @@ class CallbackModule(CallbackBase):
             self._display.warning("Unable to import ssl module. Will send over port 80.")
 
         if not HAS_CERTIFI:
-            self.disabled =True
+            self.disabled = True
             self._display.warning('The `certifi` python module is not installed. '
-                                 'Disabling the Logentries callback plugin.')
+                                  'Disabling the Logentries callback plugin.')
 
         if not HAS_FLATDICT:
-            self.disabled =True
+            self.disabled = True
             self._display.warning('The `flatdict` python module is not installed. '
-                                 'Disabling the Logentries callback plugin.')
+                                  'Disabling the Logentries callback plugin.')
 
         config_path = os.path.abspath(os.path.dirname(__file__))
         config = configparser.ConfigParser()

@@ -44,7 +44,7 @@ except ImportError:
 # ((1400-8)/4)*3) = 1044
 # which leaves room for the TCP/IP header. We set this to a
 # multiple of the value to speed up file reads.
-CHUNK_SIZE=1044*20
+CHUNK_SIZE = 1044 * 20
 
 
 class Connection(ConnectionBase):
@@ -73,7 +73,7 @@ class Connection(ConnectionBase):
                          host=self._play_context.remote_addr)
             while tries > 0:
                 try:
-                    self.conn.connect((self._play_context.remote_addr,self._play_context.accelerate_port))
+                    self.conn.connect((self._play_context.remote_addr, self._play_context.accelerate_port))
                     break
                 except socket.error:
                     display.vvvv("connection to %s failed, retrying..." % self._play_context.remote_addr, host=self._play_context.remote_addr)
@@ -107,11 +107,11 @@ class Connection(ConnectionBase):
         sock.close()
 
     def send_data(self, data):
-        packed_len = struct.pack('!Q',len(data))
+        packed_len = struct.pack('!Q', len(data))
         return self.conn.sendall(packed_len + data)
 
     def recv_data(self):
-        header_len = 8 # size of a packed unsigned long long
+        header_len = 8  # size of a packed unsigned long long
         data = b""
         try:
             display.vvvv("in recv_data(), waiting for the header", host=self._play_context.remote_addr)
@@ -122,7 +122,7 @@ class Connection(ConnectionBase):
                     return None
                 data += d
             display.vvvv("got the header, unpacking", host=self._play_context.remote_addr)
-            data_len = struct.unpack('!Q',data[:header_len])[0]
+            data_len = struct.unpack('!Q', data[:header_len])[0]
             data = data[header_len:]
             display.vvvv("data received so far (expecting %d): %d" % (data_len, len(data)), host=self._play_context.remote_addr)
             while len(data) < data_len:
@@ -252,7 +252,7 @@ class Connection(ConnectionBase):
                 response = keyczar_decrypt(self.key, response)
                 response = json.loads(response)
 
-                if response.get('failed',False):
+                if response.get('failed', False):
                     raise AnsibleError("failed to put the file in the requested location")
         finally:
             fd.close()
@@ -263,7 +263,7 @@ class Connection(ConnectionBase):
             response = keyczar_decrypt(self.key, response)
             response = json.loads(response)
 
-            if response.get('failed',False):
+            if response.get('failed', False):
                 raise AnsibleError("failed to put the file in the requested location")
 
     def fetch_file(self, in_path, out_path):

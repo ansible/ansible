@@ -37,6 +37,7 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
 
+
 def get_opsidl():
     extschema = restparser.parseSchema(settings.get('ext_schema'))
     ovsschema = settings.get('ovs_schema')
@@ -129,7 +130,7 @@ class Rest(object):
     def authorize(self, params, **kwargs):
         raise NotImplementedError
 
-    ### REST methods ###
+    # REST methods
 
     def _url_builder(self, path):
         if path[0] == '/':
@@ -160,12 +161,12 @@ class Rest(object):
     def delete(self, path, data=None, headers=None):
         return self.request('DELETE', path, data, headers)
 
-    ### Command methods ###
+    # Command methods
 
     def run_commands(self, commands):
         raise NotImplementedError
 
-    ### Config methods ###
+    # Config methods
 
     def configure(self, commands):
         path = '/system/full-configuration'
@@ -212,7 +213,7 @@ class Cli(CliBase):
 
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
-    ### Config methods ###
+    # Config methods
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']

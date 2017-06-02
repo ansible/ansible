@@ -78,9 +78,9 @@ class StrategyModule(LinearStrategyModule):
                 # rollback host state
                 self.curr_tqm.clear_failed_hosts()
                 iterator._host_states[self.curr_host.name] = prev_host_state
-                if reduce(lambda total, res : res.is_failed() or total, results, False):
+                if reduce(lambda total, res: res.is_failed() or total, results, False):
                     self._tqm._stats.failures[self.curr_host.name] -= 1
-                elif reduce(lambda total, res : res.is_unreachable() or total, results, False):
+                elif reduce(lambda total, res: res.is_unreachable() or total, results, False):
                     self._tqm._stats.dark[self.curr_host.name] -= 1
 
                 # redo
@@ -94,7 +94,7 @@ class StrategyModule(LinearStrategyModule):
         return results
 
     def _need_debug(self, results):
-        return reduce(lambda total, res : res.is_failed() or res.is_unreachable() or total, results, False)
+        return reduce(lambda total, res: res.is_failed() or res.is_unreachable() or total, results, False)
 
 
 class Debugger(cmd.Cmd):

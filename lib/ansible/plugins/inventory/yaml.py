@@ -71,6 +71,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.inventory import BaseFileInventoryPlugin, detect_range, expand_hostname_range
 
+
 class InventoryModule(BaseFileInventoryPlugin):
 
     NAME = 'yaml'
@@ -120,7 +121,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             self.inventory.add_group(group)
 
             if isinstance(group_data, dict):
-                #make sure they are dicts
+                # make sure they are dicts
                 for section in ['vars', 'children', 'hosts']:
                     if section in group_data and isinstance(group_data[section], string_types):
                         group_data[section] = {group_data[section]: None}
@@ -178,4 +179,4 @@ class InventoryModule(BaseFileInventoryPlugin):
         '''
         Compiles the regular expressions required to parse the inventory and stores them in self.patterns.
         '''
-        self.patterns['groupname'] = re.compile( r'''^[A-Za-z_][A-Za-z0-9_]*$''')
+        self.patterns['groupname'] = re.compile(r'''^[A-Za-z_][A-Za-z0-9_]*$''')

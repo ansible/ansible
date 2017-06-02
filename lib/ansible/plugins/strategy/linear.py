@@ -71,7 +71,7 @@ class StrategyModule(StrategyBase):
         display.debug("done building task lists")
 
         num_setups = 0
-        num_tasks  = 0
+        num_tasks = 0
         num_rescue = 0
         num_always = 0
 
@@ -84,7 +84,7 @@ class StrategyModule(StrategyBase):
             try:
                 lowest_cur_block = min(
                     (s.cur_block for h, (s, t) in host_tasks_to_run
-                    if s.run_state != PlayIterator.ITERATING_COMPLETE))
+                     if s.run_state != PlayIterator.ITERATING_COMPLETE))
             except ValueError:
                 lowest_cur_block = None
         else:
@@ -192,7 +192,7 @@ class StrategyModule(StrategyBase):
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
 
                 # skip control
-                skip_rest   = False
+                skip_rest = False
                 choose_step = True
 
                 # flag set if task is set to any_errors_fatal
@@ -303,7 +303,7 @@ class StrategyModule(StrategyBase):
                                 loop_var = hr._task.loop_control.loop_var or 'item'
                             include_results = hr._result.get('results', [])
                         else:
-                            include_results = [ hr._result ]
+                            include_results = [hr._result]
 
                         for include_result in include_results:
                             if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
@@ -363,7 +363,7 @@ class StrategyModule(StrategyBase):
                                 display.debug("done filtering new block on tags")
 
                                 noop_block = Block(parent_block=task._parent)
-                                noop_block.block  = [noop_task for t in new_block.block]
+                                noop_block.block = [noop_task for t in new_block.block]
                                 noop_block.always = [noop_task for t in new_block.always]
                                 noop_block.rescue = [noop_task for t in new_block.rescue]
 

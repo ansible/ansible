@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import sys
 import re
+import sys
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -38,6 +38,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class InventoryData(object):
     """
@@ -92,8 +93,8 @@ class InventoryData(object):
                 if not py_interp:
                     # sys.executable is not set in some cornercases.  #13585
                     py_interp = '/usr/bin/python'
-                    display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default.'
-                            ' You can correct this by setting ansible_python_interpreter for localhost')
+                    display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. '
+                                    'You can correct this by setting ansible_python_interpreter for localhost')
                 new_host.set_variable("ansible_python_interpreter", py_interp)
 
             if "ansible_connection" not in new_host.vars:
@@ -102,7 +103,6 @@ class InventoryData(object):
             self.localhost = new_host
 
         return new_host
-
 
     def _scan_groups_for_host(self, hostname, localhost=False):
         ''' in case something did not update inventory correctly, fallback to group scan '''
@@ -120,7 +120,6 @@ class InventoryData(object):
             display.debug('Found host (%s) in groups but it was missing from main inventory' % hostname)
 
         return found
-
 
     def reconcile_inventory(self):
         ''' Ensure inventory basic rules, run after updates '''
@@ -190,7 +189,6 @@ class InventoryData(object):
 
         return matching_host
 
-
     def add_group(self, group):
         ''' adds a group to inventory if not there already '''
 
@@ -215,7 +213,7 @@ class InventoryData(object):
         if host not in self.hosts:
             h = Host(host, port)
             self.hosts[host] = h
-            if self.current_source: # set to 'first source' in which host was encountered
+            if self.current_source:  # set to 'first source' in which host was encountered
                 self.set_variable(host, 'inventory_file', os.path.basename(self.current_source))
                 self.set_variable(host, 'inventory_dir', basedir(self.current_source))
             else:
@@ -236,8 +234,7 @@ class InventoryData(object):
         if g and host not in g.get_hosts():
             g.add_host(h)
             self._groups_dict_cache = {}
-            display.debug("Added host %s to group %s" % (host,group))
-
+            display.debug("Added host %s to group %s" % (host, group))
 
     def set_variable(self, entity, varname, value):
         ''' sets a varible for an inventory object '''
@@ -251,7 +248,6 @@ class InventoryData(object):
 
         inv_object.set_variable(varname, value)
         display.debug('set %s for %s' % (varname, entity))
-
 
     def add_child(self, group, child):
         ''' Add host or group to group '''
@@ -278,4 +274,3 @@ class InventoryData(object):
                 self._groups_dict_cache[group_name] = [h.name for h in group.get_hosts()]
 
         return self._groups_dict_cache
-

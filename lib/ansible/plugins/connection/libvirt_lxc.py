@@ -97,7 +97,7 @@ class Connection(ConnectionBase):
         display.vvv("EXEC %s" % (local_cmd,), host=self.lxc)
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return p
 

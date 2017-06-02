@@ -51,16 +51,16 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         super(RoleDefinition, self).__init__()
 
-        self._play             = play
+        self._play = play
         self._variable_manager = variable_manager
-        self._loader           = loader
+        self._loader = loader
 
-        self._role_path    = None
+        self._role_path = None
         self._role_basedir = role_basedir
-        self._role_params  = dict()
+        self._role_params = dict()
 
-    #def __repr__(self):
-    #    return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
+    # def __repr__(self):
+    #     return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):
@@ -205,8 +205,8 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             #        remember to update it manually.
             if key not in base_attribute_names or key in ('connection', 'port', 'remote_user'):
                 if key in ('connection', 'port', 'remote_user'):
-                    display.deprecated("Using '%s' as a role param has been deprecated. " % key + \
-                                       "In the future, these values should be entered in the `vars:` " + \
+                    display.deprecated("Using '%s' as a role param has been deprecated. " % key +
+                                       "In the future, these values should be entered in the `vars:` " +
                                        "section for roles, but for now we'll store it as both a param and an attribute.", version="2.7")
                     role_def[key] = value
                 # this key does not match a field attribute, so it must be a role param

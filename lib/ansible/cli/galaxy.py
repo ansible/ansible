@@ -23,11 +23,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os.path
-import sys
-import yaml
-import time
 import re
 import shutil
+import sys
+import time
+import yaml
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -36,11 +36,11 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
 from ansible.galaxy.api import GalaxyAPI
-from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
+from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import GalaxyToken
-from ansible.playbook.role.requirement import RoleRequirement
 from ansible.module_utils._text import to_text
+from ansible.playbook.role.requirement import RoleRequirement
 
 try:
     from __main__ import display
@@ -52,7 +52,7 @@ except ImportError:
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repostories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
-    SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
+    SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url")
     VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
 
     def __init__(self, args):
@@ -63,7 +63,6 @@ class GalaxyCLI(CLI):
     def set_action(self):
 
         super(GalaxyCLI, self).set_action()
-
 
         # specific to actions
         if self.action == "delete":
@@ -113,9 +112,9 @@ class GalaxyCLI(CLI):
 
         # options that apply to more than one action
         if self.action in ['init', 'info']:
-            self.parser.add_option( '--offline', dest='offline', default=False, action='store_true', help="Don't query the galaxy API when creating roles")
+            self.parser.add_option('--offline', dest='offline', default=False, action='store_true', help="Don't query the galaxy API when creating roles")
 
-        if self.action not in ("delete","import","init","login","setup"):
+        if self.action not in ("delete", "import", "init", "login", "setup"):
             # NOTE: while the option type=str, the default is a list, and the
             # callback will set the value to a list.
             self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.expand_paths, type=str,
@@ -123,15 +122,15 @@ class GalaxyCLI(CLI):
                                    help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg '
                                         'file (/etc/ansible/roles if not configured)')
 
-        if self.action in ("init","install"):
+        if self.action in ("init", "install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
 
         self.parser = CLI.base_parser(
-            usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+            usage="usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
+            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
         # common
@@ -190,8 +189,8 @@ class GalaxyCLI(CLI):
         creates the skeleton framework of a role that complies with the galaxy metadata format.
         """
 
-        init_path  = self.get_opt('init_path', './')
-        force      = self.get_opt('force', False)
+        init_path = self.get_opt('init_path', './')
+        force = self.get_opt('force', False)
         role_skeleton = self.get_opt('role_skeleton', C.GALAXY_ROLE_SKELETON)
 
         role_name = self.args.pop(0).strip() if self.args else None
@@ -203,9 +202,9 @@ class GalaxyCLI(CLI):
                 raise AnsibleError("- the path %s already exists, but is a file - aborting" % role_path)
             elif not force:
                 raise AnsibleError("- the directory %s already exists."
-                            "you can use --force to re-initialize this directory,\n"
-                            "however it will reset any main.yml files that may have\n"
-                            "been modified there already." % role_path)
+                                   "you can use --force to re-initialize this directory,\n"
+                                   "however it will reset any main.yml files that may have\n"
+                                   "been modified there already." % role_path)
 
         inject_data = dict(
             role_name=role_name,
@@ -292,12 +291,12 @@ class GalaxyCLI(CLI):
                 role_info.update(gr.metadata)
 
             req = RoleRequirement()
-            role_spec= req.role_yaml_parse({'role': role})
+            role_spec = req.role_yaml_parse({'role': role})
             if role_spec:
                 role_info.update(role_spec)
 
             data = self._display_role_info(role_info)
-            ### FIXME: This is broken in both 1.9 and 2.0 as
+            # FIXME: This is broken in both 1.9 and 2.0 as
             # _display_role_info() always returns something
             if not data:
                 data = u"\n- the role %s was not found" % role
@@ -310,7 +309,7 @@ class GalaxyCLI(CLI):
         can be a name (which will be downloaded via the galaxy API and github), or it can be a local .tar.gz file.
         """
 
-        role_file  = self.get_opt("role_file", None)
+        role_file = self.get_opt("role_file", None)
 
         if len(self.args) == 0 and role_file is None:
             # the user needs to specify one of either --role-file
@@ -321,8 +320,8 @@ class GalaxyCLI(CLI):
             # the role name on the command line
             raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
 
-        no_deps    = self.get_opt("no_deps", False)
-        force      = self.get_opt('force', False)
+        no_deps = self.get_opt("no_deps", False)
+        force = self.get_opt('force', False)
 
         roles_left = []
         if role_file:
@@ -511,7 +510,7 @@ class GalaxyCLI(CLI):
             raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
 
         response = self.api.search_roles(search, platforms=self.options.platforms,
-            tags=self.options.galaxy_tags, author=self.options.author, page_size=page_size)
+                                         tags=self.options.galaxy_tags, author=self.options.author, page_size=page_size)
 
         if response['count'] == 0:
             display.display("No roles match your search.", color=C.COLOR_ERROR)
@@ -568,9 +567,9 @@ class GalaxyCLI(CLI):
         """ used to import a role into Ansible Galaxy """
 
         colors = {
-            'INFO':    'normal',
+            'INFO': 'normal',
             'WARNING': C.COLOR_WARN,
-            'ERROR':   C.COLOR_ERROR,
+            'ERROR': C.COLOR_ERROR,
             'SUCCESS': C.COLOR_OK,
             'FAILED': C.COLOR_ERROR,
         }
@@ -589,19 +588,19 @@ class GalaxyCLI(CLI):
 
             if len(task) > 1:
                 # found multiple roles associated with github_user/github_repo
-                display.display("WARNING: More than one Galaxy role associated with Github repo %s/%s." % (github_user,github_repo),
-                    color='yellow')
+                display.display("WARNING: More than one Galaxy role associated with Github repo %s/%s." % (github_user, github_repo),
+                                color='yellow')
                 display.display("The following Galaxy roles are being updated:" + u'\n', color=C.COLOR_CHANGED)
                 for t in task:
-                    display.display('%s.%s' % (t['summary_fields']['role']['namespace'],t['summary_fields']['role']['name']), color=C.COLOR_CHANGED)
+                    display.display('%s.%s' % (t['summary_fields']['role']['namespace'], t['summary_fields']['role']['name']), color=C.COLOR_CHANGED)
                 display.display(u'\nTo properly namespace this role, remove each of the above and re-import %s/%s from scratch' % (github_user, github_repo),
-                        color=C.COLOR_CHANGED)
+                                color=C.COLOR_CHANGED)
                 return 0
             # found a single role as expected
             display.display("Successfully submitted import request %d" % task[0]['id'])
             if not self.options.wait:
                 display.display("Role name: %s" % task[0]['summary_fields']['role']['name'])
-                display.display("Repo: %s/%s" % (task[0]['github_user'],task[0]['github_repo']))
+                display.display("Repo: %s/%s" % (task[0]['github_user'], task[0]['github_repo']))
 
         if self.options.check_status or self.options.wait:
             # Get the status of the import
@@ -634,7 +633,7 @@ class GalaxyCLI(CLI):
             display.display("---------- ---------- ----------", color=C.COLOR_OK)
             for secret in secrets:
                 display.display("%-10s %-10s %s/%s" % (secret['id'], secret['source'], secret['github_user'],
-                    secret['github_repo']),color=C.COLOR_OK)
+                                                       secret['github_repo']), color=C.COLOR_OK)
             return 0
 
         if self.options.remove_id:
@@ -672,7 +671,7 @@ class GalaxyCLI(CLI):
             display.display("ID     User            Name")
             display.display("------ --------------- ----------")
             for role in resp['deleted_roles']:
-                display.display("%-8s %-15s %s" % (role.id,role.namespace,role.name))
+                display.display("%-8s %-15s %s" % (role.id, role.namespace, role.name))
 
         display.display(resp['status'])
 
@@ -692,4 +691,3 @@ class GalaxyCLI(CLI):
             if os.pathsep in data:
                 data = data.split(os.pathsep)[0]
         return data
-

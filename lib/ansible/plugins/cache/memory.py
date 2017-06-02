@@ -30,6 +30,7 @@ __metaclass__ = type
 
 from ansible.plugins.cache import BaseCacheModule
 
+
 class CacheModule(BaseCacheModule):
 
     def __init__(self, *args, **kwargs):

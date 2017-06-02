@@ -20,6 +20,7 @@ __metaclass__ = type
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+
 class LookupModule(LookupBase):
 
     def __init__(self, basedir=None, **kwargs):
@@ -32,4 +33,3 @@ class LookupModule(LookupBase):
 
         items = self._flatten(terms)
         return list(zip(range(len(items)), items))
-

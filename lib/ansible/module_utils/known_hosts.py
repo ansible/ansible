@@ -153,7 +153,7 @@ def not_in_host_file(self, host):
             if tokens[0].find(HASHED_KEY_MAGIC) == 0:
                 # this is a hashed known host entry
                 try:
-                    (kn_salt,kn_host) = tokens[0][len(HASHED_KEY_MAGIC):].split("|",2)
+                    (kn_salt, kn_host) = tokens[0][len(HASHED_KEY_MAGIC):].split("|", 2)
                     hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
                     hash.update(host)
                     if hash.digest() == kn_host.decode('base64'):
@@ -204,7 +204,7 @@ def add_host_key(module, fqdn, port=22, key_type="rsa", create_dir=False):
     if rc != 0 or not out:
         msg = 'failed to retrieve hostkey'
         if not out:
-            msg += '. "%s" returned no matches.'  % this_cmd
+            msg += '. "%s" returned no matches.' % this_cmd
         else:
             msg += ' using command "%s". [stdout]: %s' % (this_cmd, out)
 

@@ -71,18 +71,18 @@ import sys
 
 
 # FIXME: Importing constants as C simply does not work, beats me :-/
-#from ansible import constants as C
+# from ansible import constants as C
 class C:
-    COLOR_HIGHLIGHT   = 'white'
-    COLOR_VERBOSE     = 'blue'
-    COLOR_WARN        = 'bright purple'
-    COLOR_ERROR       = 'red'
-    COLOR_DEBUG       = 'dark gray'
-    COLOR_DEPRECATE   = 'purple'
-    COLOR_SKIP        = 'cyan'
+    COLOR_HIGHLIGHT = 'white'
+    COLOR_VERBOSE = 'blue'
+    COLOR_WARN = 'bright purple'
+    COLOR_ERROR = 'red'
+    COLOR_DEBUG = 'dark gray'
+    COLOR_DEPRECATE = 'purple'
+    COLOR_SKIP = 'cyan'
     COLOR_UNREACHABLE = 'bright red'
-    COLOR_OK          = 'green'
-    COLOR_CHANGED     = 'yellow'
+    COLOR_OK = 'green'
+    COLOR_CHANGED = 'yellow'
 
 
 # Taken from Dstat
@@ -136,15 +136,16 @@ class vt100:
 
 
 colors = dict(
-    ok = vt100.darkgreen,
-    changed = vt100.darkyellow,
-    skipped = vt100.darkcyan,
-    ignored = vt100.cyanbg + vt100.red,
-    failed = vt100.darkred,
-    unreachable = vt100.red,
+    ok=vt100.darkgreen,
+    changed=vt100.darkyellow,
+    skipped=vt100.darkcyan,
+    ignored=vt100.cyanbg + vt100.red,
+    failed=vt100.darkred,
+    unreachable=vt100.red,
 )
 
-states = ( 'skipped', 'ok', 'changed', 'failed', 'unreachable' )
+states = ('skipped', 'ok', 'changed', 'failed', 'unreachable')
+
 
 class CallbackModule_dense(CallbackModule_default):
 
@@ -155,7 +156,6 @@ class CallbackModule_dense(CallbackModule_default):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'dense'
-
 
     def __init__(self):
 

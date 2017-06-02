@@ -135,6 +135,7 @@ class AnsibleControlPersistBrokenPipeError(AnsibleError):
     ''' ControlPersist broken pipe '''
     pass
 
+
 def _ssh_retry(func):
     """
     Decorator to retry ssh/scp/sftp in the case of a connection failure
@@ -365,12 +366,14 @@ class Connection(ConnectionBase):
 
         user = self._play_context.remote_user
         if user:
-            self._add_args(b_command,
-                    (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
+            self._add_args(
+                b_command,
+                (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
                 u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
             )
 
-        self._add_args(b_command,
+        self._add_args(
+            b_command,
             (b"-o", b"ConnectTimeout=" + to_bytes(self._play_context.timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
             u"ANSIBLE_TIMEOUT/timeout set"
         )
@@ -459,7 +462,7 @@ class Connection(ConnectionBase):
             display_line = to_text(b_line).rstrip('\r\n')
             suppress_output = False
 
-            #display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
+            # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
             if self._play_context.prompt and self.check_password_prompt(b_line):
                 display.debug("become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
@@ -594,7 +597,7 @@ class Connection(ConnectionBase):
         for fd in (p.stdout, p.stderr):
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
-        ### TODO: bcoca would like to use SelectSelector() when open
+        # TODO: bcoca would like to use SelectSelector() when open
         # filehandles is low, then switch to more efficient ones when higher.
         # select is faster when filehandles is low.
         selector = selectors.DefaultSelector()
@@ -839,8 +842,8 @@ class Connection(ConnectionBase):
         if returncode == 255:
             raise AnsibleConnectionFailure("Failed to connect to the host via %s: %s" % (method, to_native(stderr)))
         else:
-            raise AnsibleError("failed to transfer file to {0} {1}:\n{2}\n{3}"\
-                    .format(to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
+            raise AnsibleError("failed to transfer file to %s %s:\n%s\n%s" %
+                               (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
 
     #
     # Main public methods
@@ -851,7 +854,6 @@ class Connection(ConnectionBase):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
-
 
         # we can only use tty when we are not pipelining the modules. piping
         # data into /usr/bin/python inside a tty automatically invokes the

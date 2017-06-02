@@ -38,9 +38,9 @@ class CallbackModule(CallbackBase):
         ''' output the result of a command run '''
 
         buf = "%s | %s | rc=%s >>\n" % (host, caption, result.get('rc', -1))
-        buf += result.get('stdout','')
-        buf += result.get('stderr','')
-        buf += result.get('msg','')
+        buf += result.get('stdout', '')
+        buf += result.get('stderr', '')
+        buf += result.get('msg', '')
 
         return buf + "\n"
 

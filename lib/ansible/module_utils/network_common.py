@@ -24,9 +24,10 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-from ansible.module_utils.six import iteritems
+
 from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.six import iteritems
+
 
 def to_list(val):
     if isinstance(val, (list, tuple, set)):
@@ -35,6 +36,7 @@ def to_list(val):
         return [val]
     else:
         return list()
+
 
 class ComplexDict(object):
     """Transforms a dict to with an argument spec
@@ -77,7 +79,7 @@ class ComplexDict(object):
             if attr.get('read_from'):
                 spec = self._module.argument_spec.get(attr['read_from'])
                 if not spec:
-                    raise ValueError('argument_spec %s does not exist' %  attr['read_from'])
+                    raise ValueError('argument_spec %s does not exist' % attr['read_from'])
                 for key, value in iteritems(spec):
                     if key not in attr:
                         attr[key] = value
@@ -87,7 +89,6 @@ class ComplexDict(object):
                     raise ValueError('only one key value can be specified')
                 self_has_key = True
                 attr['required'] = True
-
 
     def _dict(self, value):
         obj = {}
@@ -131,8 +132,7 @@ class ComplexDict(object):
 
             if 'choices' in attr:
                 if value[name] not in attr['choices']:
-                    raise ValueError('%s must be one of %s, got %s' % \
-                            (name, ', '.join(attr['choices']), value[name]))
+                    raise ValueError('%s must be one of %s, got %s' % (name, ', '.join(attr['choices']), value[name]))
 
             if value[name] is not None:
                 value_type = attr.get('type', 'str')
@@ -141,6 +141,7 @@ class ComplexDict(object):
 
         return value
 
+
 class ComplexList(ComplexDict):
     """Extends ```ComplexDict``` to handle a  list of dicts """
 
@@ -148,4 +149,3 @@ class ComplexList(ComplexDict):
         if not isinstance(values, (list, tuple)):
             raise TypeError('value must be an ordered iterable')
         return [(super(ComplexList, self).__call__(v)) for v in values]
-

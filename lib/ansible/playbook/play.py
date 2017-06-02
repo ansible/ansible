@@ -20,10 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
-
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
-
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -56,40 +54,40 @@ class Play(Base, Taggable, Become):
     """
 
     # =================================================================================
-    _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
+    _name = FieldAttribute(isa='string', default='', always_post_validate=True)
 
     # TODO: generalize connection
-    _accelerate          = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _accelerate_ipv6     = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _accelerate_port     = FieldAttribute(isa='int', default=5099, always_post_validate=True)
+    _accelerate = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _accelerate_ipv6 = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _accelerate_port = FieldAttribute(isa='int', default=5099, always_post_validate=True)
 
     # Connection
-    _fact_path           = FieldAttribute(isa='string', default=None)
-    _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
-    _gather_subset       = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
-    _gather_timeout      = FieldAttribute(isa='int', default=None, always_post_validate=True)
-    _hosts               = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
+    _fact_path = FieldAttribute(isa='string', default=None)
+    _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
+    _gather_subset = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
+    _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
+    _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
 
     # Variable Attributes
-    _vars_files          = FieldAttribute(isa='list', default=[], priority=99)
-    _vars_prompt         = FieldAttribute(isa='list', default=[], always_post_validate=True)
-    _vault_password      = FieldAttribute(isa='string', always_post_validate=True)
+    _vars_files = FieldAttribute(isa='list', default=[], priority=99)
+    _vars_prompt = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _vault_password = FieldAttribute(isa='string', always_post_validate=True)
 
     # Role Attributes
-    _roles               = FieldAttribute(isa='list', default=[], priority=90)
+    _roles = FieldAttribute(isa='list', default=[], priority=90)
 
     # Block (Task) Lists Attributes
-    _handlers            = FieldAttribute(isa='list', default=[])
-    _pre_tasks           = FieldAttribute(isa='list', default=[])
-    _post_tasks          = FieldAttribute(isa='list', default=[])
-    _tasks               = FieldAttribute(isa='list', default=[])
+    _handlers = FieldAttribute(isa='list', default=[])
+    _pre_tasks = FieldAttribute(isa='list', default=[])
+    _post_tasks = FieldAttribute(isa='list', default=[])
+    _tasks = FieldAttribute(isa='list', default=[])
 
     # Flag/Setting Attributes
-    _force_handlers      = FieldAttribute(isa='bool', always_post_validate=True)
+    _force_handlers = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
-    _serial              = FieldAttribute(isa='list', default=[], always_post_validate=True)
-    _strategy            = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
-    _order               = FieldAttribute(isa='string', always_post_validate=True)
+    _serial = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _strategy = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
+    _order = FieldAttribute(isa='string', always_post_validate=True)
 
     # =================================================================================
 
@@ -132,8 +130,8 @@ class Play(Base, Taggable, Become):
             # this should never happen, but error out with a helpful message
             # to the user if it does...
             if 'remote_user' in ds:
-                raise AnsibleParserError("both 'user' and 'remote_user' are set for %s."
-                        " The use of 'user' is deprecated, and should be removed" % self.get_name(), obj=ds)
+                raise AnsibleParserError("both 'user' and 'remote_user' are set for %s. "
+                                         "The use of 'user' is deprecated, and should be removed" % self.get_name(), obj=ds)
 
             ds['remote_user'] = ds['user']
             del ds['user']
@@ -207,14 +205,14 @@ class Play(Base, Taggable, Become):
                 display.deprecated("Using the 'short form' for vars_prompt has been deprecated", version="2.7")
                 for vname, prompt in prompt_data.items():
                     vars_prompts.append(dict(
-                        name      = vname,
-                        prompt    = prompt,
-                        default   = None,
-                        private   = None,
-                        confirm   = None,
-                        encrypt   = None,
-                        salt_size = None,
-                        salt      = None,
+                        name=vname,
+                        prompt=prompt,
+                        default=None,
+                        private=None,
+                        confirm=None,
+                        encrypt=None,
+                        salt_size=None,
+                        salt=None,
                     ))
             else:
                 vars_prompts.append(prompt_data)

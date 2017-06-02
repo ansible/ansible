@@ -504,7 +504,6 @@ class BaseModule(object):
                 after[k] = update[k]
         return after
 
-
     def create(
         self,
         entity=None,
@@ -579,9 +578,14 @@ class BaseModule(object):
         # Wait for the entity to be created and to be in the defined state:
         entity_service = self._service.service(entity.id)
 
-        state_condition = lambda entity: entity
+        def state_condition(entity):
+            return entity
+
         if result_state:
-            state_condition = lambda entity: entity and entity.status == result_state
+
+            def state_condition(entity):
+                return entity and entity.status == result_state
+
         wait(
             service=entity_service,
             condition=state_condition,

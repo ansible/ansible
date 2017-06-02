@@ -23,6 +23,7 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
+
 class LookupModule(LookupBase):
 
     def _lookup_variables(self, terms, variables):
@@ -47,10 +48,8 @@ class LookupModule(LookupBase):
         result = my_list.pop()
         while len(my_list) > 0:
             result2 = self._combine(result, my_list.pop())
-            result  = result2
+            result = result2
         new_result = []
         for x in result:
             new_result.append(self._flatten(x))
         return new_result
-
-

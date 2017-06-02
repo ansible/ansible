@@ -22,10 +22,10 @@ import pwd
 import grp
 import stat
 
-HAVE_SELINUX=False
+HAVE_SELINUX = False
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
     pass
 
@@ -37,6 +37,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 # If selinux fails to find a default, return an array of None
 def selinux_context(path):
@@ -119,7 +120,7 @@ class LookupModule(LookupBase):
                     relpath = os.path.relpath(os.path.join(root, entry), path)
 
                     # Skip if relpath was already processed (from another root)
-                    if relpath not in [ entry['path'] for entry in ret ]:
+                    if relpath not in [entry['path'] for entry in ret]:
                         props = file_props(path, relpath)
                         if props is not None:
                             ret.append(props)

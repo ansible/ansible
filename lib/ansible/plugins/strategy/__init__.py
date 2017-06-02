@@ -54,8 +54,10 @@ except ImportError:
 
 __all__ = ['StrategyBase']
 
+
 class StrategySentinel:
     pass
+
 
 # TODO: this should probably be in the plugins/__init__.py, with
 #       a smarter mechanism to set all of the attributes based on
@@ -69,12 +71,13 @@ class SharedPluginLoaderObj:
         self.action_loader = action_loader
         self.connection_loader = connection_loader
         self.filter_loader = filter_loader
-        self.test_loader   = test_loader
+        self.test_loader = test_loader
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader
 
-
 _sentinel = StrategySentinel()
+
+
 def results_thread_main(strategy):
     while True:
         try:
@@ -90,6 +93,7 @@ def results_thread_main(strategy):
         except Queue.Empty:
             pass
 
+
 class StrategyBase:
 
     '''
@@ -98,27 +102,27 @@ class StrategyBase:
     '''
 
     def __init__(self, tqm):
-        self._tqm               = tqm
-        self._inventory         = tqm.get_inventory()
-        self._workers           = tqm.get_workers()
+        self._tqm = tqm
+        self._inventory = tqm.get_inventory()
+        self._workers = tqm.get_workers()
         self._notified_handlers = tqm._notified_handlers
         self._listening_handlers = tqm._listening_handlers
-        self._variable_manager  = tqm.get_variable_manager()
-        self._loader            = tqm.get_loader()
-        self._final_q           = tqm._final_q
-        self._step              = getattr(tqm._options, 'step', False)
-        self._diff              = getattr(tqm._options, 'diff', False)
+        self._variable_manager = tqm.get_variable_manager()
+        self._loader = tqm.get_loader()
+        self._final_q = tqm._final_q
+        self._step = getattr(tqm._options, 'step', False)
+        self._diff = getattr(tqm._options, 'diff', False)
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
-        self._display           = display
+        self._display = display
 
         # internal counters
-        self._pending_results   = 0
-        self._cur_worker        = 0
+        self._pending_results = 0
+        self._cur_worker = 0
 
         # this dictionary is used to keep track of hosts that have
         # outstanding tasks still in queue
-        self._blocked_hosts     = dict()
+        self._blocked_hosts = dict()
 
         self._results = deque()
         self._results_lock = threading.Condition(threading.Lock())
@@ -141,7 +145,7 @@ class StrategyBase:
 
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
-        failed_hosts      = iterator.get_failed_hosts()
+        failed_hosts = iterator.get_failed_hosts()
         unreachable_hosts = self._tqm._unreachable_hosts.keys()
 
         display.debug("running handlers")
@@ -153,7 +157,7 @@ class StrategyBase:
 
         # now update with the hosts (if any) that failed or were
         # unreachable during the handler execution phase
-        failed_hosts      = set(failed_hosts).union(iterator.get_failed_hosts())
+        failed_hosts = set(failed_hosts).union(iterator.get_failed_hosts())
         unreachable_hosts = set(unreachable_hosts).union(self._tqm._unreachable_hosts.keys())
 
         # return the appropriate code, depending on the status hosts after the run
@@ -216,7 +220,7 @@ class StrategyBase:
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
                     worker_prc.start()
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
+                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
                 self._cur_worker += 1
                 if self._cur_worker >= len(self._workers):
@@ -260,7 +264,7 @@ class StrategyBase:
         ret_results = []
 
         def get_original_host(host_name):
-            #FIXME: this should not need x2 _inventory
+            # FIXME: this should not need x2 _inventory
             host_name = to_text(host_name)
             if host_name in self._inventory.hosts:
                 return self._inventory.hosts[host_name]
@@ -292,7 +296,6 @@ class StrategyBase:
                             # out unnecessarily
                             continue
             return None
-
 
         def search_handler_blocks_by_uuid(handler_uuid, handler_blocks):
             for handler_block in handler_blocks:
@@ -429,7 +432,7 @@ class StrategyBase:
                     # loop over all of them instead of a single result
                     result_items = task_result._result.get('results', [])
                 else:
-                    result_items = [ task_result._result ]
+                    result_items = [task_result._result]
 
                 for result_item in result_items:
                     if '_ansible_notify' in result_item:
@@ -546,7 +549,7 @@ class StrategyBase:
 
             # If this is a role task, mark the parent role as being run (if
             # the task was ok or failed, but not skipped or unreachable)
-            if original_task._role is not None and role_ran: #TODO:  and original_task.action != 'include_role':?
+            if original_task._role is not None and role_ran:  # TODO:  and original_task.action != 'include_role':?
                 # lookup the role in the ROLE_CACHE to make sure we're dealing
                 # with the correct object and mark it as executed
                 for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role._role_name]):
@@ -555,7 +558,7 @@ class StrategyBase:
 
             ret_results.append(task_result)
 
-            if one_pass or max_passes is not None and (cur_pass+1) >= max_passes:
+            if one_pass or max_passes is not None and (cur_pass + 1) >= max_passes:
                 break
 
             cur_pass += 1
@@ -594,12 +597,12 @@ class StrategyBase:
             host_name = host_info.get('host_name')
 
             # Check if host in inventory, add if not
-            if not host_name in self._inventory.hosts:
+            if host_name not in self._inventory.hosts:
                 self._inventory.add_host(host_name, 'all')
             new_host = self._inventory.hosts.get(host_name)
 
             # Set/update the vars for this host
-            new_host.vars = combine_vars(new_host.get_vars(),  host_info.get('host_vars', dict()))
+            new_host.vars = combine_vars(new_host.get_vars(), host_info.get('host_vars', dict()))
 
             new_groups = host_info.get('groups', [])
             for group_name in new_groups:
@@ -733,10 +736,10 @@ class StrategyBase:
     def _do_handler_run(self, handler, handler_name, iterator, play_context, notified_hosts=None):
 
         # FIXME: need to use iterator.get_failed_hosts() instead?
-        #if not len(self.get_hosts_remaining(iterator._play)):
-        #    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-        #    result = False
-        #    break
+        # if not len(self.get_hosts_remaining(iterator._play)):
+        #     self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+        #     result = False
+        #     break
         saved_name = handler.name
         handler.name = handler_name
         self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
@@ -813,14 +816,14 @@ class StrategyBase:
 
     def _take_step(self, task, host=None):
 
-        ret=False
-        msg=u'Perform task: %s ' % task
+        ret = False
+        msg = u'Perform task: %s ' % task
         if host:
             msg += u'on %s ' % host
         msg += u'(N)o/(y)es/(c)ontinue: '
         resp = display.prompt(msg)
 
-        if resp.lower() in ['y','yes']:
+        if resp.lower() in ['y', 'yes']:
             display.debug("User ran task")
             ret = True
         elif resp.lower() in ['c', 'continue']:
@@ -853,7 +856,7 @@ class StrategyBase:
         msg = ''
         if meta_action == 'noop':
             # FIXME: issue a callback for the noop here?
-            msg="noop"
+            msg = "noop"
         elif meta_action == 'flush_handlers':
             self.run_handlers(iterator, play_context)
             msg = "ran handlers"
@@ -873,26 +876,26 @@ class StrategyBase:
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
-                msg="cleared host errors"
+                msg = "cleared host errors"
             else:
                 skipped = True
         elif meta_action == 'end_play':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
-                    if not host.name in self._tqm._unreachable_hosts:
+                    if host.name not in self._tqm._unreachable_hosts:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
-                msg="ending play"
+                msg = "ending play"
         elif meta_action == 'reset_connection':
             connection = connection_loader.get(play_context.connection, play_context, os.devnull)
             if connection:
                 connection.reset()
-                msg= 'reset connection'
+                msg = 'reset connection'
             else:
-                msg= 'no connection, nothing to reset'
+                msg = 'no connection, nothing to reset'
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
-        result = { 'msg': msg }
+        result = {'msg': msg}
         if skipped:
             result['skipped'] = True
         else:

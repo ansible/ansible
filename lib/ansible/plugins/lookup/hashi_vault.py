@@ -30,7 +30,6 @@
 # necessarily be an error if a bad endpoint is specified.
 #
 # Requires hvac library. Install with pip.
-#
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -45,6 +44,7 @@ ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
 
 if os.getenv('VAULT_ADDR') is not None:
     ANSIBLE_HASHI_VAULT_ADDR = os.environ['VAULT_ADDR']
+
 
 class HashiVault:
     def __init__(self, **kwargs):
@@ -62,7 +62,7 @@ class HashiVault:
 
         s_f = s.split(':')
         self.secret = s_f[0]
-        if len(s_f)>=2:
+        if len(s_f) >= 2:
             self.secret_field = s_f[1]
         else:
             self.secret_field = 'value'
@@ -108,7 +108,7 @@ class HashiVault:
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist" % self.secret)
 
-        if self.secret_field=='': # secret was specified with trailing ':'
+        if self.secret_field == '':  # secret was specified with trailing ':'
             return data['data']
 
         if self.secret_field not in data['data']:
@@ -153,4 +153,3 @@ class LookupModule(LookupBase):
             ret.append(value)
 
         return ret
-

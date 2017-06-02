@@ -47,4 +47,3 @@ class LookupModule(LookupBase):
             raise AnsibleError("with_together requires at least one element in each list")
 
         return [self._flatten(x) for x in zip_longest(*my_list, fillvalue=None)]
-

@@ -281,5 +281,8 @@ class CliBase(object):
             exc = get_exception()
             raise NetworkError(to_native(exc))
 
-    run_commands = lambda self, x: self.execute(to_list(x))
-    exec_command = lambda self, x: self.shell.send(self.to_command(x))
+    def run_commands(self, x):
+        return self.execute(to_list(x))
+
+    def exec_command(self, x):
+        return self.shell.send(self.to_command(x))

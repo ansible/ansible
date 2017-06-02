@@ -59,13 +59,13 @@ class ActionModule(ActionBase):
         prompt = None
         seconds = None
         result.update(dict(
-            changed = False,
-            rc      = 0,
-            stderr  = '',
-            stdout  = '',
-            start   = None,
-            stop    = None,
-            delta   = None,
+            changed=False,
+            rc=0,
+            stderr='',
+            stdout='',
+            start=None,
+            stop=None,
+            delta=None,
         ))
 
         # Is 'args' empty, then this is the default prompted pause
@@ -162,7 +162,6 @@ class ActionModule(ActionBase):
                         break
                     else:
                         raise AnsibleError('user requested abort!')
-
 
         except AnsibleTimeoutExceeded:
             # this is the exception we expect when the alarm signal

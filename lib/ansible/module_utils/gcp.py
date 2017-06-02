@@ -502,8 +502,7 @@ class GCPUtils(object):
 
     @staticmethod
     def underscore_to_camel(txt):
-        return txt.split('_')[0] + ''.join(x.capitalize()
-                                           or '_' for x in txt.split('_')[1:])
+        return txt.split('_')[0] + ''.join(x.capitalize() or '_' for x in txt.split('_')[1:])
 
     @staticmethod
     def remove_non_gcp_params(params):
@@ -626,7 +625,7 @@ class GCPUtils(object):
                         # TODO(supertom): Isolate 'build-new-request' stuff.
                         resource_name_singular = GCPUtils.get_entity_name_from_resource_name(
                             resource_name)
-                        if op_resp['operationType'] == 'insert' or not 'entity_name' in parsed_url:
+                        if op_resp['operationType'] == 'insert' or 'entity_name' not in parsed_url:
                             parsed_url['entity_name'] = GCPUtils.parse_gcp_url(op_resp['targetLink'])[
                                 'entity_name']
                         args = {'project': project_id,

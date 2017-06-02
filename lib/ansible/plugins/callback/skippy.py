@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 
+
 class CallbackModule(CallbackModule_default):
 
     '''

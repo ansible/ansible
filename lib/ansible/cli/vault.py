@@ -22,11 +22,11 @@ __metaclass__ = type
 import os
 import sys
 
+from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor
-from ansible.cli import CLI
-from ansible.module_utils._text import to_text, to_bytes
 
 try:
     from __main__ import display
@@ -95,9 +95,9 @@ class VaultCLI(CLI):
 
         self.parser = CLI.base_parser(
             vault_opts=True,
-            usage = "usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
-            desc = "encryption/decryption utility for Ansbile data files",
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+            usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
+            desc="encryption/decryption utility for Ansbile data files",
+            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
         self.set_action()

@@ -27,7 +27,7 @@ class ActionModule(ActionBase):
 
         # individual modules might disagree but as the generic the action plugin, pass at this point.
         self._supports_check_mode = True
-        self._supports_async      = True
+        self._supports_async = True
 
         results = super(ActionModule, self).run(tmp, task_vars)
 

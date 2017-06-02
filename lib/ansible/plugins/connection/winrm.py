@@ -74,15 +74,15 @@ class Connection(ConnectionBase):
     become_methods = ['runas']
     allow_executable = False
 
-    def __init__(self,  *args, **kwargs):
+    def __init__(self, *args, **kwargs):
 
-        self.has_pipelining   = True
+        self.has_pipelining = True
         self.always_pipeline_modules = True
         self.has_native_async = True
-        self.protocol         = None
-        self.shell_id         = None
-        self.delegate         = None
-        self._shell_type      = 'powershell'
+        self.protocol = None
+        self.shell_id = None
+        self.delegate = None
+        self._shell_type = 'powershell'
         # FUTURE: Add runas support
 
         super(Connection, self).__init__(*args, **kwargs)
@@ -109,13 +109,13 @@ class Connection(ConnectionBase):
         self._become_user = self._play_context.become_user
         self._become_pass = self._play_context.become_pass
 
-        self._kinit_cmd  = hostvars.get('ansible_winrm_kinit_cmd', 'kinit')
+        self._kinit_cmd = hostvars.get('ansible_winrm_kinit_cmd', 'kinit')
 
         if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
             self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
         else:
             # for legacy versions of pywinrm, use the values we know are supported
-            self._winrm_supported_authtypes = set(['plaintext','ssl','kerberos'])
+            self._winrm_supported_authtypes = set(['plaintext', 'ssl', 'kerberos'])
 
         # TODO: figure out what we want to do with auto-transport selection in the face of NTLM/Kerb/CredSSP/Cert/Basic
         transport_selector = 'ssl' if self._winrm_scheme == 'https' else 'plaintext'
@@ -191,7 +191,7 @@ class Connection(ConnectionBase):
         Establish a WinRM connection over HTTP/HTTPS.
         '''
         display.vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" %
-            (self._winrm_user, self._winrm_port, self._winrm_host), host=self._winrm_host)
+                    (self._winrm_user, self._winrm_port, self._winrm_host), host=self._winrm_host)
         netloc = '%s:%d' % (self._winrm_host, self._winrm_port)
         endpoint = urlunsplit((self._winrm_scheme, netloc, self._winrm_path, '', ''))
         errors = []
@@ -320,7 +320,7 @@ class Connection(ConnectionBase):
         payload_bytes = to_bytes(payload)
         byte_count = len(payload_bytes)
         for i in range(0, byte_count, buffer_size):
-            yield payload_bytes[i:i+buffer_size], i+buffer_size >= byte_count
+            yield payload_bytes[i:i + buffer_size], i + buffer_size >= byte_count
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -348,7 +348,6 @@ class Connection(ConnectionBase):
                 pass
 
         return (result.status_code, result.std_out, result.std_err)
-
 
     def exec_command_old(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -406,7 +405,7 @@ class Connection(ConnectionBase):
         in_size = os.path.getsize(to_bytes(in_path, errors='surrogate_or_strict'))
         offset = 0
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
-            for out_data in iter((lambda:in_file.read(buffer_size)), ''):
+            for out_data in iter((lambda: in_file.read(buffer_size)), ''):
                 offset += len(out_data)
                 self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._winrm_host)
                 # yes, we're double-encoding over the wire in this case- we want to ensure that the data shipped to the end PS pipeline is still b64-encoded

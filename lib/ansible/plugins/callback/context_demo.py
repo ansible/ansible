@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible.plugins.callback import CallbackBase
 
+
 class CallbackModule(CallbackBase):
     """
     This is a very trivial example of how any callback function can get at play and task objects.

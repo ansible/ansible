@@ -36,7 +36,6 @@ from ansible import errors
 
 
 # ---- IP address and network query helpers ----
-
 def _empty_ipaddr_query(v, vtype):
     # We don't have any query to process, so just check what type the user
     # expects, and return the IP address in a correct format
@@ -45,6 +44,7 @@ def _empty_ipaddr_query(v, vtype):
             return str(v.ip)
         elif vtype == 'network':
             return str(v)
+
 
 def _6to4_query(v, vtype, value):
     if v.version == 4:
@@ -76,6 +76,7 @@ def _6to4_query(v, vtype, value):
             else:
                 return False
 
+
 def _ip_query(v):
     if v.size == 1:
         return str(v.ip)
@@ -84,21 +85,26 @@ def _ip_query(v):
         if v.ip != v.network or not v.broadcast:
             return str(v.ip)
 
+
 def _gateway_query(v):
     if v.size > 1:
         if v.ip != v.network:
             return str(v.ip) + '/' + str(v.prefixlen)
 
+
 def _bool_ipaddr_query(v):
     if v:
         return True
+
 
 def _broadcast_query(v):
     if v.size > 1:
         return str(v.broadcast)
 
+
 def _cidr_query(v):
     return str(v)
+
 
 def _cidr_lookup_query(v, iplist, value):
     try:
@@ -107,6 +113,7 @@ def _cidr_lookup_query(v, iplist, value):
     except:
         return False
 
+
 def _host_query(v):
     if v.size == 1:
         return str(v)
@@ -114,14 +121,17 @@ def _host_query(v):
         if v.ip != v.network:
             return str(v.ip) + '/' + str(v.prefixlen)
 
+
 def _hostmask_query(v):
     return str(v.hostmask)
+
 
 def _int_query(v, vtype):
     if vtype == 'address':
         return int(v.ip)
     elif vtype == 'network':
         return str(int(v.ip)) + '/' + str(int(v.prefixlen))
+
 
 def _ipv4_query(v, value):
     if v.version == 6:
@@ -132,11 +142,13 @@ def _ipv4_query(v, value):
     else:
         return value
 
+
 def _ipv6_query(v, value):
     if v.version == 4:
         return str(v.ipv6())
     else:
         return value
+
 
 def _link_local_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
@@ -148,33 +160,41 @@ def _link_local_query(v, value):
         if ipaddr(str(v_ip), 'fe80::/10'):
             return value
 
+
 def _loopback_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
     if v_ip.is_loopback():
         return value
 
+
 def _multicast_query(v, value):
     if v.is_multicast():
         return value
+
 
 def _net_query(v):
     if v.size > 1:
         if v.ip == v.network:
             return str(v.network) + '/' + str(v.prefixlen)
 
+
 def _netmask_query(v):
     return str(v.netmask)
+
 
 def _network_query(v):
     if v.size > 1:
         return str(v.network)
 
+
 def _prefix_query(v):
     return int(v.prefixlen)
+
 
 def _private_query(v, value):
     if v.is_private():
         return value
+
 
 def _public_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
@@ -183,15 +203,19 @@ def _public_query(v, value):
             not v_ip.is_hostmask()):
         return value
 
+
 def _revdns_query(v):
     v_ip = netaddr.IPAddress(str(v.ip))
     return v_ip.reverse_dns
 
+
 def _size_query(v):
     return v.size
 
+
 def _subnet_query(v):
     return str(v.cidr)
+
 
 def _type_query(v):
     if v.size == 1:
@@ -202,12 +226,15 @@ def _type_query(v):
         else:
             return 'network'
 
+
 def _unicast_query(v, value):
     if v.is_unicast():
         return value
 
+
 def _version_query(v):
     return v.version
+
 
 def _wrap_query(v, vtype, value):
     if v.version == 6:
@@ -224,32 +251,40 @@ def _bare_query(v):
     v.dialect = netaddr.mac_bare
     return str(v)
 
+
 def _bool_hwaddr_query(v):
     if v:
         return True
 
+
 def _int_hwaddr_query(v):
     return int(v)
+
 
 def _cisco_query(v):
     v.dialect = netaddr.mac_cisco
     return str(v)
 
+
 def _empty_hwaddr_query(v, value):
     if v:
         return value
+
 
 def _linux_query(v):
     v.dialect = mac_linux
     return str(v)
 
+
 def _postgresql_query(v):
     v.dialect = netaddr.mac_pgsql
     return str(v)
 
+
 def _unix_query(v):
     v.dialect = netaddr.mac_unix
     return str(v)
+
 
 def _win_query(v):
     v.dialect = netaddr.mac_eui48
@@ -257,8 +292,7 @@ def _win_query(v):
 
 
 # ---- IP address and network filters ----
-
-def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
+def ipaddr(value, query='', version=False, alias='ipaddr'):
     ''' Check if string is an IP address or network and filter it '''
 
     query_func_extra_args = {
@@ -276,7 +310,8 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
         'public': ('value',),
         'unicast': ('value',),
         'wrap': ('vtype', 'value'),
-        }
+    }
+
     query_func_map = {
         '': _empty_ipaddr_query,
         '6to4': _6to4_query,
@@ -316,7 +351,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
         'v6': _ipv6_query,
         'version': _version_query,
         'wrap': _wrap_query,
-        }
+    }
 
     vtype = None
 
@@ -421,7 +456,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
     # that string is a valid subnet, if so, we can check later if given IP
     # address/network is inside that specific subnet
     try:
-        ### ?? 6to4 and link-local were True here before.  Should they still?
+        # ?? 6to4 and link-local were True here before.  Should they still?
         if query and (query not in query_func_map or query == 'cidr_lookup') and ipaddr(query, 'network'):
             iplist = netaddr.IPSet([netaddr.IPNetwork(query)])
             query = 'cidr_lookup'
@@ -463,19 +498,19 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
     return False
 
 
-def ipwrap(value, query = ''):
+def ipwrap(value, query=''):
     try:
         if isinstance(value, (list, tuple, types.GeneratorType)):
             _ret = []
             for element in value:
-                if ipaddr(element, query, version = False, alias = 'ipwrap'):
+                if ipaddr(element, query, version=False, alias='ipwrap'):
                     _ret.append(ipaddr(element, 'wrap'))
                 else:
                     _ret.append(element)
 
             return _ret
         else:
-            _ret = ipaddr(value, query, version = False, alias = 'ipwrap')
+            _ret = ipaddr(value, query, version=False, alias='ipwrap')
             if _ret:
                 return ipaddr(_ret, 'wrap')
             else:
@@ -485,12 +520,12 @@ def ipwrap(value, query = ''):
         return value
 
 
-def ipv4(value, query = ''):
-    return ipaddr(value, query, version = 4, alias = 'ipv4')
+def ipv4(value, query=''):
+    return ipaddr(value, query, version=4, alias='ipv4')
 
 
-def ipv6(value, query = ''):
-    return ipaddr(value, query, version = 6, alias = 'ipv6')
+def ipv6(value, query=''):
+    return ipaddr(value, query, version=6, alias='ipv6')
 
 
 # Split given subnet into smaller subnets or find out the biggest subnet of
@@ -511,7 +546,7 @@ def ipv6(value, query = ''):
 #
 #  - address | ipsubnet(cidr, index)
 #      returns next indexed subnet which contains given address
-def ipsubnet(value, query = '', index = 'x'):
+def ipsubnet(value, query='', index='x'):
     ''' Manipulate IPv4/IPv6 subnets '''
 
     try:
@@ -563,6 +598,7 @@ def ipsubnet(value, query = '', index = 'x'):
 
     return False
 
+
 # Returns the nth host within a network described by value.
 # Usage:
 #
@@ -594,11 +630,12 @@ def nthhost(value, query=''):
 
     return False
 
+
 # Returns the SLAAC address within a network for a given HW/MAC address.
 # Usage:
 #
 #  - prefix | slaac(mac)
-def slaac(value, query = ''):
+def slaac(value, query=''):
     ''' Get the SLAAC address within given network '''
     try:
         vtype = ipaddr(value, 'type')
@@ -618,7 +655,7 @@ def slaac(value, query = ''):
         return False
 
     try:
-        mac = hwaddr(query, alias = 'slaac')
+        mac = hwaddr(query, alias='slaac')
 
         eui = netaddr.EUI(mac)
     except:
@@ -628,13 +665,13 @@ def slaac(value, query = ''):
 
 
 # ---- HWaddr / MAC address filters ----
-
-def hwaddr(value, query = '', alias = 'hwaddr'):
+def hwaddr(value, query='', alias='hwaddr'):
     ''' Check if string is a HW/MAC address and filter it '''
 
     query_func_extra_args = {
         '': ('value',),
-        }
+    }
+
     query_func_map = {
         '': _empty_hwaddr_query,
         'bare': _bare_query,
@@ -648,7 +685,7 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
         'psql': _postgresql_query,
         'unix': _unix_query,
         'win': _win_query,
-        }
+    }
 
     try:
         v = netaddr.EUI(value)
@@ -666,23 +703,26 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
 
     return False
 
-def macaddr(value, query = ''):
-    return hwaddr(value, query, alias = 'macaddr')
+
+def macaddr(value, query=''):
+    return hwaddr(value, query, alias='macaddr')
+
 
 def _need_netaddr(f_name, *args, **kwargs):
-    raise errors.AnsibleFilterError('The {0} filter requires python-netaddr be'
-            ' installed on the ansible controller'.format(f_name))
+    raise errors.AnsibleFilterError('The %s filter requires python-netaddr be '
+                                    'installed on the ansible controller' % f_name)
+
 
 def ip4_hex(arg):
     ''' Convert an IPv4 address to Hexadecimal notation '''
     numbers = list(map(int, arg.split('.')))
     return '{:02x}{:02x}{:02x}{:02x}'.format(*numbers)
 
-# ---- Ansible filters ----
 
+# ---- Ansible filters ----
 class FilterModule(object):
     ''' IP address and network manipulation filters '''
-    filter_map =  {
+    filter_map = {
         # IP addresses and networks
         'ipaddr': ipaddr,
         'ipwrap': ipwrap,

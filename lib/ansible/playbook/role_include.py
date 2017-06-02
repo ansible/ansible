@@ -60,12 +60,11 @@ class IncludeRole(Task):
         self._parent_role = role
         self._role_name = None
 
-
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
         # only need play passed in when dynamic
         if play is None:
-            myplay =  self._parent._play
+            myplay = self._parent._play
         else:
             myplay = play
 
@@ -99,7 +98,7 @@ class IncludeRole(Task):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
-        ### Process options
+        # Process options
         # name is needed, or use role as alias
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
@@ -107,11 +106,11 @@ class IncludeRole(Task):
 
         # build options for role includes
         for key in ['tasks', 'vars', 'defaults']:
-            from_key ='%s_from' % key
+            from_key = '%s_from' % key
             if ir.args.get(from_key):
                 ir._from_files[key] = basename(ir.args.get(from_key))
 
-        #FIXME: find a way to make this list come from object ( attributes does not work as per below)
+        # FIXME: find a way to make this list come from object ( attributes does not work as per below)
         # manual list as otherwise the options would set other task parameters we don't want.
         for option in ['private', 'allow_duplicates']:
             if option in ir.args:
@@ -125,7 +124,7 @@ class IncludeRole(Task):
         new_me.statically_loaded = self.statically_loaded
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
-        new_me._role_name   = self._role_name
+        new_me._role_name = self._role_name
 
         return new_me
 

@@ -79,7 +79,7 @@ class StrategyModule(StrategyBase):
                 break
 
             work_to_do = False        # assume we have no more work to do
-            starting_host = last_host # save current position so we know when we've looped back around and need to break
+            starting_host = last_host  # save current position so we know when we've looped back around and need to break
 
             # try and find an unblocked host with a task to run
             host_results = []
@@ -155,8 +155,8 @@ class StrategyModule(StrategyBase):
                             # handle step if needed, skip meta actions as they are used internally
                             if not self._step or self._take_step(task, host_name):
                                 if task.any_errors_fatal:
-                                    display.warning("Using any_errors_fatal with the free strategy is not supported,"
-                                            " as tasks are executed independently on each host")
+                                    display.warning("Using any_errors_fatal with the free strategy is not supported, "
+                                                    "as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
                                 del task_vars

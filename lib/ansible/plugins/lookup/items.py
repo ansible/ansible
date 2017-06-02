@@ -19,9 +19,9 @@ __metaclass__ = type
 
 from ansible.plugins.lookup import LookupBase
 
+
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
 
         return self._flatten(terms)
-

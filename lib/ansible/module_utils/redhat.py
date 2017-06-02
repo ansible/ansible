@@ -125,9 +125,9 @@ class Rhsm(RegistrationBase):
         # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
         # non-configuration parameters and replace '_' with '.'.  For example,
         # 'server_hostname' becomes '--system.hostname'.
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             if re.search(r'^(system|rhsm)_', k):
-                args.append('--%s=%s' % (k.replace('_','.'), v))
+                args.append('--%s=%s' % (k.replace('_', '.'), v))
 
         self.module.run_command(args, check_rc=True)
 
@@ -213,7 +213,7 @@ class RhsmPool(object):
 
     def __init__(self, module, **kwargs):
         self.module = module
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
     def __str__(self):
@@ -255,7 +255,7 @@ class RhsmPools(object):
                 continue
             # If a colon ':' is found, parse
             elif ':' in line:
-                (key, value) = line.split(':',1)
+                (key, value) = line.split(':', 1)
                 key = key.strip().replace(" ", "")  # To unify
                 value = value.strip()
                 if key in ['ProductName', 'SubscriptionName']:
@@ -265,7 +265,7 @@ class RhsmPools(object):
                     # Associate value with most recently recorded product
                     products[-1].__setattr__(key, value)
                 # FIXME - log some warning?
-                #else:
+                # else:
                     # warnings.warn("Unhandled subscription key/value: %s/%s" % (key,value))
         return products
 
@@ -277,4 +277,3 @@ class RhsmPools(object):
         for product in self.products:
             if r.search(product._name):
                 yield product
-

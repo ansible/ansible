@@ -27,6 +27,7 @@ import urlparse
 from ansible.module_utils._text import to_text
 from ansible.plugins.action.ios import ActionModule as _ActionModule
 
+
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):

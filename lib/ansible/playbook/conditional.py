@@ -41,6 +41,7 @@ DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
 
+
 class Conditional:
 
     '''
@@ -63,7 +64,7 @@ class Conditional:
 
     def _validate_when(self, attr, name, value):
         if not isinstance(value, list):
-            setattr(self, name, [ value ])
+            setattr(self, name, [value])
 
     def _get_attr_when(self):
         '''
@@ -234,7 +235,4 @@ class Conditional:
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
             except Exception as new_e:
-                raise AnsibleUndefinedVariable(
-                    "error while evaluating conditional (%s): %s" % (original, e)
-                )
-
+                raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
