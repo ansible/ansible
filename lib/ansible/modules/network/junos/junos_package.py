@@ -99,7 +99,7 @@ EXAMPLES = """
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.junos import junos_argument_spec
+from ansible.module_utils.junos import junos_argument_spec, get_param
 
 try:
     from jnpr.junos import Device
@@ -109,8 +109,6 @@ try:
 except ImportError:
     HAS_PYEZ = False
 
-
-get_param = lambda x, y: x.params[y] or x.params['provider'].get(y)
 
 def connect(module):
     host = get_param(module, 'host')
@@ -137,6 +135,7 @@ def connect(module):
         module.fail_json('unable to connect to %s: %s' % (host, str(exc)))
 
     return device
+
 
 def install_package(module, device):
     junos = SW(device)
