@@ -566,4 +566,3 @@ netconf_loader = PluginLoader(
     'netconf_plugins',
     required_base_class='NetconfBase'
 )
-
