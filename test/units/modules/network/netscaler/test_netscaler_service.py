@@ -20,7 +20,9 @@
 from ansible.compat.tests.mock import patch, Mock, MagicMock, call
 
 import sys
-import requests
+
+if sys.version_info[:2] != (2, 6):
+    import requests
 
 
 from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
@@ -101,6 +103,9 @@ class TestNetscalerServiceModule(TestModule):
                 self.assertTrue(result['msg'].startswith('nitro exception'), msg='nitro exception during login not handled properly')
 
     def test_graceful_no_connection_error(self):
+
+        if sys.version_info[:2] == (2, 6):
+            self.skipTest('requests library not available under python2.6')
         self.set_module_operation('present')
         from ansible.modules.network.netscaler import netscaler_service
 
@@ -122,6 +127,9 @@ class TestNetscalerServiceModule(TestModule):
     def test_graceful_login_error(self):
         self.set_module_operation('present')
         from ansible.modules.network.netscaler import netscaler_service
+
+        if sys.version_info[:2] == (2, 6):
+            self.skipTest('requests library not available under python2.6')
 
         class MockException(Exception):
             pass
