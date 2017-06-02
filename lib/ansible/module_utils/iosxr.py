@@ -44,6 +44,10 @@ iosxr_argument_spec = {
 }
 
 
+def get_argspec():
+    return iosxr_argument_spec
+
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in iosxr_argument_spec:

@@ -48,6 +48,10 @@ ARGS_DEFAULT_VALUE = {
 }
 
 
+def get_argspec():
+    return junos_argument_spec
+
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in junos_argument_spec:
