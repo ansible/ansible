@@ -115,6 +115,10 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception as e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
+def contains(value, values):
+    ''' Test if a value is contained in list '''
+    return value in set(values)
+
 class TestModule(object):
     ''' Ansible core jinja2 tests '''
 
@@ -134,6 +138,10 @@ class TestModule(object):
             'match': match,
             'search': search,
             'regex': regex,
+
+            # contains
+            'in': contains,
+            'contains': contains,
 
             # version comparison
             'version_compare': version_compare,
