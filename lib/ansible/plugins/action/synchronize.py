@@ -363,7 +363,7 @@ class ActionModule(ActionBase):
                 # If no rsync_path is set, become was originally set, and dest is
                 # remote then add privilege escalation here.
                 if self._play_context.become_method == 'sudo':
-                    rsync_path = 'sudo rsync'
+                    rsync_path = 'sudo -u %s rsync' % self._play_context.become_user
                 # TODO: have to add in the rest of the become methods here
 
             # We cannot use privilege escalation on the machine running the
