@@ -34,7 +34,7 @@ class ActionModule(ActionBase):
         ''' handler for package operations '''
 
         self._supports_check_mode = True
-        self._supports_async      = True
+        self._supports_async = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
@@ -42,12 +42,12 @@ class ActionModule(ActionBase):
 
         if module == 'auto':
             try:
-                if self._task.delegate_to: # if we delegate, we should use delegated host's facts
+                if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
                     module = self._templar.template("{{hostvars['%s']['ansible_facts']['ansible_pkg_mgr']}}" % self._task.delegate_to)
                 else:
                     module = self._templar.template('{{ansible_facts["ansible_pkg_mgr"]}}')
             except:
-                pass # could not get it from template!
+                pass  # could not get it from template!
 
         if module == 'auto':
             facts = self._execute_module(module_name='setup', module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'), task_vars=task_vars)

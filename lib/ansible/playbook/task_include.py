@@ -76,4 +76,3 @@ class TaskInclude(Task):
             del all_vars['when']
 
         return all_vars
-

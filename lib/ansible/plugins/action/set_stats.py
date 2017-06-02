@@ -28,7 +28,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    #TODO: document this in non-empty set_stats.py module
+    # TODO: document this in non-empty set_stats.py module
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()

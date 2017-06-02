@@ -23,10 +23,11 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
-from ansible.utils.hashing import checksum_s
 from ansible.template import generate_ansible_template_vars
+from ansible.utils.hashing import checksum_s
 
 boolean = C.mk_boolean
+
 
 class ActionModule(ActionBase):
 
@@ -56,9 +57,9 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
 
         source = self._task.args.get('src', None)
-        dest   = self._task.args.get('dest', None)
-        force  = boolean(self._task.args.get('force', True))
-        state  = self._task.args.get('state', None)
+        dest = self._task.args.get('dest', None)
+        force = boolean(self._task.args.get('force', True))
+        state = self._task.args.get('state', None)
         newline_sequence = self._task.args.get('newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
         variable_start_string = self._task.args.get('variable_start_string', None)
         variable_end_string = self._task.args.get('variable_end_string', None)
@@ -191,7 +192,7 @@ class ActionModule(ActionBase):
                         dest=dest,
                         original_basename=os.path.basename(source),
                         follow=True,
-                        ),
+                    ),
                 )
                 result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 

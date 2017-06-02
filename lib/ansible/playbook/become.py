@@ -29,13 +29,14 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class Become:
 
     # Privilege escalation
-    _become              = FieldAttribute(isa='bool')
-    _become_method       = FieldAttribute(isa='string')
-    _become_user         = FieldAttribute(isa='string')
-    _become_flags        = FieldAttribute(isa='string')
+    _become = FieldAttribute(isa='bool')
+    _become_method = FieldAttribute(isa='string')
+    _become_user = FieldAttribute(isa='string')
+    _become_flags = FieldAttribute(isa='string')
 
     def __init__(self):
         super(Become, self).__init__()
@@ -44,8 +45,8 @@ class Become:
 
         # Fail out if user specifies conflicting privilege escalations
         has_become = 'become' in ds or 'become_user'in ds
-        has_sudo   = 'sudo' in ds or 'sudo_user' in ds
-        has_su     = 'su' in ds or 'su_user' in ds
+        has_sudo = 'sudo' in ds or 'sudo_user' in ds
+        has_su = 'su' in ds or 'su_user' in ds
 
         if has_become:
             msg = 'The become params ("become", "become_user") and'
@@ -101,4 +102,3 @@ class Become:
                 become_method = C.DEFAULT_BECOME_METHOD
             if become_user is None:
                 become_user = C.DEFAULT_BECOME_USER
-

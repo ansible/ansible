@@ -36,6 +36,7 @@ except ImportError:
 from ansible.module_utils.six import PY3
 from ansible.plugins.cache import BaseFileCacheModule
 
+
 class CacheModule(BaseFileCacheModule):
     """
     A caching module backed by pickle files.

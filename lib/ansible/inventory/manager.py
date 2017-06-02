@@ -42,10 +42,11 @@ except ImportError:
 HOSTS_PATTERNS_CACHE = {}
 
 IGNORED_ALWAYS = [b"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
-IGNORED_PATTERNS = [ to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS ]
+IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
 IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS]
 
 IGNORED = re.compile(b'|'.join(IGNORED_ALWAYS + IGNORED_PATTERNS + IGNORED_EXTS))
+
 
 def order_patterns(patterns):
     ''' takes a list of patterns and reorders them by modifier to apply them consistently '''
@@ -114,6 +115,7 @@ def split_host_pattern(pattern):
 
     return [p.strip() for p in patterns]
 
+
 class InventoryManager(object):
     ''' Creates and manages inventory '''
 
@@ -135,7 +137,7 @@ class InventoryManager(object):
         if sources is None:
             self._sources = []
         elif isinstance(sources, string_types):
-            self._sources = [ sources ]
+            self._sources = [sources]
         else:
             self._sources = sources
 
@@ -175,7 +177,7 @@ class InventoryManager(object):
     def _setup_inventory_plugins(self):
         ''' sets up loaded inventory plugins for usage '''
 
-        inventory_loader = PluginLoader( 'InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
+        inventory_loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
         display.vvvv('setting up inventory plugins')
 
         for name in C.INVENTORY_ENABLED:
@@ -197,7 +199,7 @@ class InventoryManager(object):
 
             if source:
                 if ',' not in source:
-                    source =  unfrackpath(source, follow=False)
+                    source = unfrackpath(source, follow=False)
                 parse = self.parse_source(source, cache=cache)
                 if parse and not parsed:
                     parsed = True
@@ -257,7 +259,7 @@ class InventoryManager(object):
                         display.vvv(u'Parsed %s inventory source with %s plugin' % (to_text(source), plugin_name))
                         break
                     except AnsibleParserError as e:
-                        failures.append(u'\n* Failed to parse %s with %s inventory plugin: %s\n' %(to_text(source), plugin_name, to_text(e)))
+                        failures.append(u'\n* Failed to parse %s with %s inventory plugin: %s\n' % (to_text(source), plugin_name, to_text(e)))
                 else:
                     display.debug(u'%s did not meet %s requirements' % (to_text(source), plugin_name))
             else:
@@ -279,7 +281,7 @@ class InventoryManager(object):
         global HOSTS_PATTERNS_CACHE
         HOSTS_PATTERNS_CACHE = {}
         self._pattern_cache = {}
-        #FIXME: flush inventory cache
+        # FIXME: flush inventory cache
 
     def refresh_inventory(self):
         ''' recalculate inventory '''
@@ -340,11 +342,11 @@ class InventoryManager(object):
             if not ignore_limits and self._subset:
                 # exclude hosts not in a subset, if defined
                 subset = self._evaluate_patterns(self._subset)
-                hosts = [ h for h in hosts if h in subset ]
+                hosts = [h for h in hosts if h in subset]
 
             if not ignore_restrictions and self._restriction:
                 # exclude hosts mentioned in any restriction (ex: failed hosts)
-                hosts = [ h for h in hosts if h.name in self._restriction ]
+                hosts = [h for h in hosts if h.name in self._restriction]
 
             seen = set()
             HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
@@ -365,7 +367,6 @@ class InventoryManager(object):
 
         return hosts
 
-
     def _evaluate_patterns(self, patterns):
         """
         Takes a list of patterns and returns a list of matching host names,
@@ -382,11 +383,11 @@ class InventoryManager(object):
             else:
                 that = self._match_one_pattern(p)
                 if p.startswith("!"):
-                    hosts = [ h for h in hosts if h not in that ]
+                    hosts = [h for h in hosts if h not in that]
                 elif p.startswith("&"):
-                    hosts = [ h for h in hosts if h in that ]
+                    hosts = [h for h in hosts if h in that]
                 else:
-                    to_append = [ h for h in that if h.name not in [ y.name for y in hosts ] ]
+                    to_append = [h for h in that if h.name not in [y.name for y in hosts]]
                     hosts.extend(to_append)
         return hosts
 
@@ -500,10 +501,10 @@ class InventoryManager(object):
 
         if end:
             if end == -1:
-                end = len(hosts)-1
-            return hosts[start:end+1]
+                end = len(hosts) - 1
+            return hosts[start:end + 1]
         else:
-            return [ hosts[start] ]
+            return [hosts[start]]
 
     def _enumerate_matches(self, pattern):
         """
@@ -539,13 +540,13 @@ class InventoryManager(object):
                 matched = True
 
         if not matched:
-            display.warning("Could not match supplied host pattern, ignoring: %s" %  pattern)
+            display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
         return results
 
     def list_hosts(self, pattern="all"):
         """ return a list of hostnames for a pattern """
-        #FIXME: cache?
-        result = [ h for h in self.get_hosts(pattern) ]
+        # FIXME: cache?
+        result = [h for h in self.get_hosts(pattern)]
 
         # allow implicit localhost if pattern matches and no other results
         if len(result) == 0 and pattern in C.LOCALHOST:
@@ -554,7 +555,7 @@ class InventoryManager(object):
         return result
 
     def list_groups(self):
-        #FIXME: cache?
+        # FIXME: cache?
         return sorted(self._inventory.groups.keys(), key=lambda x: x)
 
     def restrict_to_hosts(self, restriction):
@@ -566,8 +567,8 @@ class InventoryManager(object):
         if restriction is None:
             return
         elif not isinstance(restriction, list):
-            restriction = [ restriction ]
-        self._restriction = [ h.name for h in restriction ]
+            restriction = [restriction]
+        self._restriction = [h.name for h in restriction]
 
     def subset(self, subset_pattern):
         """

@@ -39,6 +39,7 @@ def json_query(data, expr):
 
     return jmespath.search(expr, data)
 
+
 class FilterModule(object):
     ''' Query filter '''
 
