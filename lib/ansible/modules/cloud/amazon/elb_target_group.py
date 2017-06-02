@@ -299,11 +299,7 @@ def get_tg_attributes(connection, module, tg_arn):
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Replace '.' with '_' in attribute key names to make it more Ansibley
-    for k, v in tg_attributes.items():
-        tg_attributes[k.replace('.', '_')] = v
-        del tg_attributes[k]
-
-    return tg_attributes
+    return dict((k.replace('.', '_'), v) for k, v in tg_attributes.items())
 
 
 def get_target_group_tags(connection, module, target_group_arn):

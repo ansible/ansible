@@ -416,11 +416,7 @@ def get_elb_attributes(connection, module, elb_arn):
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Replace '.' with '_' in attribute key names to make it more Ansibley
-    for k, v in dict(elb_attributes).items():
-        elb_attributes[k.replace('.', '_')] = v
-        del elb_attributes[k]
-
-    return elb_attributes
+    return dict((k.replace('.', '_'), v) for k, v in elb_attributes.items())
 
 
 def get_listener(connection, module, elb_arn, listener_port):
