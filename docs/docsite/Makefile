@@ -50,4 +50,12 @@ staticmin:
 	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
 
 epub:
-	 (CPUS=$(CPUS) make -f Makefile.sphinx epub)
+	(CPUS=$(CPUS) make -f Makefile.sphinx epub)
+
+htmlsingle:
+ifndef rst
+    $(error specify target rst file to build via 'rst=somefile.rst')
+endif
+
+	sphinx-build -j $(CPUS) -b html -d _build/doctrees ./rst _build/html rst/$(rst)
+	@echo "Output is in _build/html/$(rst)"
