@@ -77,12 +77,12 @@ class VaultCLI(CLI):
 
         for name in self.VALID_ACTIONS:
             subparser = subparsers.add_parser(name, parents=[vault_parent])
-            subparser.add_argument('-v','--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
-                help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+            subparser.add_argument('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
+                                   help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
             if name in ('encrypt', 'decrypt', 'encrypt_string'):
                 subparser.add_argument('--output', default=None, dest='output_file',
-                    help='output file name for encrypt or decrypt; use - for stdout',
-                    type=CLI.unfrack_path)
+                                       help='output file name for encrypt or decrypt; use - for stdout',
+                                       type=CLI.unfrack_path)
 
             if name in ('encrypt_string',):
                 subparser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
@@ -100,7 +100,7 @@ class VaultCLI(CLI):
 
             if name in ('rekey',):
                 subparser.add_argument('--new-vault-password-file', dest='new_vault_password_file',
-                    help="new vault password file for rekey", type=CLI.unfrack_path)
+                                       help="new vault password file for rekey", type=CLI.unfrack_path)
 
         super(VaultCLI, self).parse()
 
@@ -114,8 +114,8 @@ class VaultCLI(CLI):
         can_output = ['encrypt', 'decrypt', 'encrypt_string']
 
         if self.action not in can_output:
-            #if self.options.output_file:
-            #    raise AnsibleOptionsError("The --output option can be used only with ansible-vault %s" % '/'.join(can_output))
+            # if self.options.output_file:
+            #     raise AnsibleOptionsError("The --output option can be used only with ansible-vault %s" % '/'.join(can_output))
             if len(self.args) == 0:
                 raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
         else:

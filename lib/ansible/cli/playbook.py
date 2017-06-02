@@ -59,13 +59,13 @@ class PlaybookCLI(CLI):
 
         # ansible playbook specific opts
         parser.add_argument('--list-tasks', dest='listtasks', action='store_true',
-            help="list all tasks that would be executed")
+                            help="list all tasks that would be executed")
         parser.add_argument('--list-tags', dest='listtags', action='store_true',
-            help="list all available tags")
+                            help="list all available tags")
         parser.add_argument('--step', dest='step', action='store_true',
-            help="one-step-at-a-time: confirm each task before running")
+                            help="one-step-at-a-time: confirm each task before running")
         parser.add_argument('--start-at-task', dest='start_at_task',
-            help="start the playbook at the task matching this name")
+                            help="start the playbook at the task matching this name")
         parser.add_argument('args', metavar='playbook(s)', help='playbooks', nargs='*')
 
         self.parser = parser

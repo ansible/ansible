@@ -65,7 +65,7 @@ class GalaxyCLI(CLI):
         ''' create an options parser for bin/ansible '''
 
         self.parser = CLI.base_parser(
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
         # common
@@ -79,8 +79,8 @@ class GalaxyCLI(CLI):
         for name in self.VALID_ACTIONS:
             subparser = subparsers.add_parser(name, parents=[galaxy_parent])
 
-            subparser.add_argument('-v','--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
-                help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+            subparser.add_argument('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
+                                   help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
             if name in ('delete', 'import'):
                 subparser.add_argument('args', metavar='github_user github_repo', nargs='*')
