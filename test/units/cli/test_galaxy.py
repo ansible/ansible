@@ -431,3 +431,20 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
 
     def test_skeleton_option(self):
         self.assertEquals(self.role_skeleton_path, self.gc.get_opt('role_skeleton'), msg='Skeleton path was not parsed properly from the command line')
+
+
+class TestGalaxyInitSkeletonConfigEnv(unittest.TestCase, ValidRoleTests):
+
+    @classmethod
+    def setUpClass(cls):
+        role_skeleton_path = os.path.join(os.path.split(__file__)[0], 'test_data', 'role_skeleton')
+        with patch('ansible.constants.GALAXY_ROLE_SKELETON', role_skeleton_path):
+            cls.setUpRole('delete_me_skeleton')
+            # role_skeleton_path is normally set from the argument passed to setUpRole,
+            # In this case, we're mocking the skeleton path being passed in from the config file or environment
+            # so we'll override it here.
+            cls.role_skeleton_path = role_skeleton_path
+
+    def test_correct_skeleton_used(self):
+        self.assertTrue(os.path.exists(os.path.join(self.role_dir, 'test_role_marker')),
+                        msg="test_role_marker file not found, skeleton path wasn't loaded correctly from the config/environment")

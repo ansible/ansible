@@ -192,7 +192,10 @@ class GalaxyCLI(CLI):
 
         init_path  = self.get_opt('init_path', './')
         force      = self.get_opt('force', False)
-        role_skeleton = self.get_opt('role_skeleton', C.GALAXY_ROLE_SKELETON)
+        role_skeleton = self.get_opt('role_skeleton', None)
+
+        if not role_skeleton:
+            role_skeleton = C.GALAXY_ROLE_SKELETON
 
         role_name = self.args.pop(0).strip() if self.args else None
         if not role_name:
