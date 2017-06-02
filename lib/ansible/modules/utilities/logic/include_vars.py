@@ -21,7 +21,8 @@ description:
   - Loads variables from a YAML/JSON files dynamically from within a file or from a directory recursively during task
     runtime. If loading a directory, the files are sorted alphabetically before being loaded.
   - This module is also supported for Windows targets.
-  - Please note that the use of 'delegate_facts: True' may be required depending on your use case when delegating the include.
+    - Please note that the use of :doc:`delegated facts </playbooks_delegation#delegated-facts>` may be required,
+    depending on your use case, when delegating the include.
 version_added: "1.4"
 options:
   file:
