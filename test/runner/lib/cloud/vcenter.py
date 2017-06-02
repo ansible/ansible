@@ -1,10 +1,7 @@
 """CloudStack plugin for integration tests."""
 from __future__ import absolute_import, print_function
 
-import json
 import os
-import re
-import time
 
 from lib.cloud import (
     CloudProvider,
@@ -42,7 +39,7 @@ except ImportError:
 
 
 class VcenterProvider(CloudProvider):
-    """CloudStack cloud provider plugin. Sets up cloud resources before delegation."""
+    """VMware vcenter/esx plugin. Sets up cloud resources for tests."""
     DOCKER_SIMULATOR_NAME = 'vcsim'
 
     def __init__(self, args):

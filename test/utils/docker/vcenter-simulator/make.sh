@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t jctanner:vcenter-simulator .
+docker build -t ansible:vcenter-simulator .
