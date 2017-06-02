@@ -298,11 +298,14 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.vmware import get_all_objs, connect_to_api, gather_vm_facts
+from ansible.module_utils.vmware import PyVmomiHelper
 
+'''
 try:
     import json
 except ImportError:
     import simplejson as json
+'''
 
 HAS_PYVMOMI = False
 try:
@@ -442,7 +445,7 @@ class PyVmomiCache(object):
         return self.esx_hosts[host]
 
 
-class PyVmomiHelper(object):
+class PyVmomiGuestHelper(PyVmomiHelper):
     def __init__(self, module):
         if not HAS_PYVMOMI:
             module.fail_json(msg='pyvmomi module required')
@@ -460,40 +463,6 @@ class PyVmomiHelper(object):
 
     def should_deploy_from_template(self):
         return self.params.get('template') is not None
-
-    def getvm(self, name=None, uuid=None, folder=None):
-
-        # https://www.vmware.com/support/developer/vc-sdk/visdk2xpubs/ReferenceGuide/vim.SearchIndex.html
-        # self.si.content.searchIndex.FindByInventoryPath('DC1/vm/test_folder')
-
-        vm = None
-        searchpath = None
-
-        if uuid:
-            vm = self.content.searchIndex.FindByUuid(uuid=uuid, vmSearch=True)
-        elif folder:
-            # Build the absolute folder path to pass into the search method
-            if not self.params['folder'].startswith('/'):
-                self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
-            searchpath = '%(datacenter)s%(folder)s' % self.params
-
-            # get all objects for this path ...
-            f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
-            if f_obj:
-                if isinstance(f_obj, vim.Datacenter):
-                    f_obj = f_obj.vmFolder
-                for c_obj in f_obj.childEntity:
-                    if not isinstance(c_obj, vim.VirtualMachine):
-                        continue
-                    if c_obj.name == name:
-                        vm = c_obj
-                        if self.params['name_match'] == 'first':
-                            break
-
-        if vm:
-            self.current_vm_obj = vm
-
-        return vm
 
     def set_powerstate(self, vm, state, force):
         """
@@ -563,7 +532,22 @@ class PyVmomiHelper(object):
 
         # need to get new metadata if changed
         if result['changed']:
-            newvm = self.getvm(uuid=vm.config.uuid)
+            vm_uuid = vm.config.uuid
+            if vm_uuid is not None:
+                newvm = self.getvm(uuid=vm_uuid)
+            else:
+                # Build searchpath for FindByInventoryPath
+                searchpath = PyVmomiHelper.construct_vm_searchpath(
+                    self.module.params['datacenter'],
+                    self.module.params['folder']
+                )
+                newvm = pyv.getvm(
+                    name=module.params['name'],
+                    searchpath=searchpath
+                )
+            if newvm is None:
+                msg = "Unable to locate VM for fact gathering"
+                self.module.fail_json(msg=msg)
             facts = self.gather_facts(newvm)
             result['instance'] = facts
 
@@ -973,6 +957,7 @@ class PyVmomiHelper(object):
             # TODO: really use the datastore for newly created disks
             if 'autoselect_datastore' in self.params['disk'][0] and self.params['disk'][0]['autoselect_datastore']:
                 datastores = get_all_objs(self.content, [vim.Datastore])
+                import q; q(datastores)
                 if datastores is None or len(datastores) == 0:
                     self.module.fail_json(msg="Unable to find a datastore list when autoselecting")
 
@@ -1066,12 +1051,30 @@ class PyVmomiHelper(object):
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
 
         destfolder = None
-        if not self.params['folder'].startswith('/'):
-            self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
+        f_obj = self.content.searchIndex.FindByInventoryPath('%(folder)s' % self.params)
 
-        f_obj = self.content.searchIndex.FindByInventoryPath('/%(datacenter)s%(folder)s' % self.params)
         if f_obj is None:
-            self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
+            # return a list of possible folder paths so that the user
+            # can make a better input without having to guess.
+            folder_paths = []
+            folders = get_all_objs(self.content, [vim.Folder])
+            for f in folders:
+                fpaths = []
+                parent = f
+                while hasattr(parent, 'parent'):
+                    try:
+                        fpaths.insert(0, parent.name)
+                        if parent.parent == parent:
+                            break
+                        else:
+                            parent = parent.parent
+                    except:
+                        break
+                folder_paths.append('/' + '/'.join(fpaths))
+
+            msg = 'No folder matched the path: %(folder)s' % self.params
+            msg += ' possible choices: %s' % ', '.join(folder_paths)
+            self.module.fail_json(msg=msg)
         destfolder = f_obj
 
         hostsystem = self.select_host()
@@ -1335,15 +1338,17 @@ def main():
 
     result = {'failed': False, 'changed': False}
 
-    # Prepend /vm if it was missing from the folder path, also strip trailing slashes
-    if not module.params['folder'].startswith('/vm') and module.params['folder'].startswith('/'):
-        module.params['folder'] = '/vm%(folder)s' % module.params
-    module.params['folder'] = module.params['folder'].rstrip('/')
+    # Build searchpath for FindByInventoryPath
+    searchpath = PyVmomiHelper.construct_vm_searchpath(
+        module.params['datacenter'],
+        module.params['folder']
+    )
 
-    pyv = PyVmomiHelper(module)
+    #pyv = PyVmomiHelper(module)
+    pyv = PyVmomiGuestHelper(module)
     # Check if the VM exists before continuing
     vm = pyv.getvm(name=module.params['name'],
-                   folder=module.params['folder'],
+                   searchpath=searchpath,
                    uuid=module.params['uuid'])
 
     # VM already exists

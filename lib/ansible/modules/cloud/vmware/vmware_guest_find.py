@@ -270,7 +270,7 @@ def main():
     # VM already exists
     if folders:
         try:
-            module.exit_json(folders=folders)
+            module.exit_json(folders=folders, failed=False)
         except Exception:
             e = get_exception()
             module.fail_json(msg="Folder enumeration failed with exception %s" % e)

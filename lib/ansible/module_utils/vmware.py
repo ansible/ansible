@@ -18,7 +18,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.urls import fetch_url
+import ast
 import atexit
+import os
 import ssl
 import time
 
@@ -30,6 +33,117 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+
+class PyVmomiHelper(object):
+
+    def __init__(self, module):
+        if not HAS_PYVMOMI:
+            module.fail_json(msg='pyvmomi module required')
+
+        self.module = module
+        self.params = module.params
+        self.content = connect_to_api(self.module)
+
+    @staticmethod
+    def construct_vm_searchpath(datacenter, folder):
+        # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.SearchIndex.html#findByInventoryPath
+        #   "My Folder/My Datacenter/vm/Discovered VM/VM1"
+        #   * leading slash or trailing slash is ignored
+        #   * the following paths all represents the same object:
+        #       "a/b", "/a/b", "a/b/", and '/a/b/'
+        #   * Slashes in names must be represented using %2f
+
+        if not folder:
+            folder = '/vm'
+        else:
+            if not folder.startswith('/vm') and not folder.startswith('vm'):
+                folder = os.path.join('/vm', folder)
+
+        if folder.endswith('/'):
+            folder = folder.rstrip('/')
+
+        searchpath = os.path.join(datacenter, folder)
+        return searchpath
+
+    def getvm(self, name=None, uuid=None, searchpath=None):
+        '''Find a VM by name and optionally a folder with absolute certainty'''
+
+        vm = None
+
+        # prefer a UUID
+        if uuid is not None:
+            vm = find_vm_by_id(self.content, uuid, vm_id_type="uuid", instanceUuid=False)
+            return vm
+
+        # use a searchpath + FindByInventoryPath to search by whatever
+        # folder the user thinks it is in.
+        elif searchpath:
+
+            # get all objects for this path ...
+            f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
+
+            # find the VM object(s)
+            if f_obj:
+                if isinstance(f_obj, vim.Datacenter):
+                    f_obj = f_obj.vmFolder
+                for c_obj in f_obj.childEntity:
+                    if not isinstance(c_obj, vim.VirtualMachine):
+                        continue
+                    if c_obj.name == name:
+                        vm = c_obj
+                        if self.params['name_match'] == 'first':
+                            break
+
+        # If no vm was found with the UUID or the explicit searchpath given,
+        # collect all VMs by the given name and correlate based on their folder
+        # paths.
+        if not vm:
+            vms = find_vm_by_name(
+                self.content,
+                name,
+                folder=None,
+                recurse=True,
+                allow_duplicates=True
+            )
+            if vms:
+                # return if only one name because we don't have to worry
+                # about duplicates
+                if len(vms) == 1:
+                    return vms[0]
+                else:
+                    # need to find the best path for the duplicate VMs
+                    fmap = {}
+                    for xvm in vms:
+                        fp = self.get_vm_folder_path(xvm)
+                        fmap[fp] = xvm
+                    best_match = None
+                    for key in fmap.keys():
+                        if key.endswith(searchpath):
+                            if not best_match:
+                                best_match = key
+                            elif len(best_match) < len(key):
+                                best_match = key
+                    if best_match:
+                        vm = fmap[best_match]
+        return vm
+
+    def get_vm_folder_path(self, vm):
+        '''Crawl the parent objects to make a folder path for a vm'''
+        paths = []
+        obj = vm
+        while hasattr(obj, 'parent'):
+            try:
+                paths.insert(0, obj.parent.name)
+                obj = obj.parent
+            except:
+                break
+
+        folderpath = '/' + '/'.join(paths)
+        return folderpath
+
+    def gather_facts(self, vm):
+        return gather_vm_facts(self.content, vm)
 
 
 class TaskError(Exception):
@@ -70,7 +184,7 @@ def find_entity_child_by_path(content, entityRootFolder, path):
     paths = path.split("/")
     try:
         for path in paths:
-            entity = searchIndex.FindChild (entity, path)
+            entity = searchIndex.FindChild(entity, path)
 
         if entity.name == paths[-1]:
             return entity
@@ -115,6 +229,7 @@ def find_datacenter_by_name(content, datacenter_name):
 
     return None
 
+
 def find_datastore_by_name(content, datastore_name):
 
     datastores = get_all_objs(content, [vim.Datastore])
@@ -127,7 +242,10 @@ def find_datastore_by_name(content, datastore_name):
 
 def find_dvs_by_name(content, switch_name):
 
-    vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
+    vmware_distributed_switches = get_all_objs(
+        content, [vim.dvs.VmwareDistributedVirtualSwitch]
+    )
+
     for dvs in vmware_distributed_switches:
         if dvs.name == switch_name:
             return dvs
@@ -143,19 +261,31 @@ def find_hostsystem_by_name(content, hostname):
     return None
 
 
-def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None):
+def find_vm_by_id(
+    content, vm_id, vm_id_type="vm_name", instanceUuid=True,
+    datacenter=None, cluster=None
+):
     """ UUID is unique to a VM, every other id returns the first match. """
     si = content.searchIndex
     vm = None
 
     if vm_id_type == 'dns_name':
-        vm = si.FindByDnsName(datacenter=datacenter, dnsName=vm_id, vmSearch=True)
+        vm = si.FindByDnsName(
+            datacenter=datacenter, dnsName=vm_id, vmSearch=True
+        )
     elif vm_id_type == 'inventory_path':
         vm = si.FindByInventoryPath(inventoryPath=vm_id)
         if isinstance(vm, vim.VirtualMachine):
             vm = None
     elif vm_id_type == 'uuid':
-        vm = si.FindByUuid(datacenter=datacenter, instanceUuid=vm_id, vmSearch=True)
+        # datacenter ManagedObjectReference to a Datacenter
+        # uuid xsd:string
+        # vmSearch xsd:boolean
+        # instanceUuid xsd:boolean
+        vm = si.FindByUuid(
+            datacenter=datacenter, uuid=vm_id, instanceUuid=instanceUuid, vmSearch=True
+        )
+
     elif vm_id_type == 'ip':
         vm = si.FindByIp(datacenter=datacenter, ip=vm_id, vmSearch=True)
     elif vm_id_type == 'vm_name':
@@ -169,13 +299,19 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
     return vm
 
 
-def find_vm_by_name(content, vm_name, folder=None, recurse=True):
+def find_vm_by_name(
+    content, vm_name, folder=None, recurse=True, allow_duplicates=False
+):
 
+    matches = []
     vms = get_all_objs(content, [vim.VirtualMachine], folder, recurse=recurse)
     for vm in vms:
         if vm.name == vm_name:
-            return vm
-    return None
+            if allow_duplicates:
+                matches.append(vm)
+            else:
+                return vm
+    return matches
 
 
 def find_host_portgroup_by_name(host, portgroup_name):
@@ -186,44 +322,67 @@ def find_host_portgroup_by_name(host, portgroup_name):
     return None
 
 
+def safe_eval_vm_property(vm, prop):
+    '''Operate like an eval on a nested property path'''
+    subattrs = prop.split('.')
+    val = vm
+    for subattr in subattrs:
+        if hasattr(val, subattr):
+            val = getattr(val, subattr)
+        else:
+            return None
+    return val
+
 def gather_vm_facts(content, vm):
     """ Gather facts from vim.VirtualMachine object. """
+
     facts = {
         'module_hw': True,
-        'hw_name': vm.config.name,
-        'hw_power_status': vm.summary.runtime.powerState,
-        'hw_guest_full_name': vm.summary.guest.guestFullName,
-        'hw_guest_id': vm.summary.guest.guestId,
-        'hw_product_uuid': vm.config.uuid,
-        'hw_processor_count': vm.config.hardware.numCPU,
-        'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
-        'guest_tools_status': vm.guest.toolsRunningStatus,
-        'guest_tools_version': vm.guest.toolsVersion,
         'ipv4': None,
         'ipv6': None,
-        'annotation': vm.config.annotation,
         'customvalues': {},
         'snapshots': [],
         'current_snapshot': None,
     }
 
-    cfm = content.customFieldsManager
-    # Resolve custom values
-    for value_obj in vm.summary.customValue:
-        kn = value_obj.key
-        if cfm is not None and cfm.field:
-            for f in cfm.field:
-                if f.key == value_obj.key:
-                    kn = f.name
-                    # Exit the loop immediately, we found it
-                    break
+    facts_map = {
+        'hw_name': 'config.name',
+        'hw_power_status': 'summary.runtime.powerState',
+        'hw_guest_full_name': 'summary.guest.guestFullName',
+        'hw_guest_id': 'summary.guest.guestId',
+        'hw_product_uuid': 'config.uuid',
+        'hw_processor_count': 'config.hardware.numCPU',
+        'hw_memtotal_mb': 'config.hardware.memoryMB',
+        'guest_tools_status': 'guest.toolsRunningStatus',
+        'guest_tools_version': 'guest.toolsVersion',
+        'annotation': 'config.annotation',
+    }
 
-        facts['customvalues'][kn] = value_obj.value
+    for k, v in facts_map.items():
+        facts[k] = safe_eval_vm_property(vm, v)
+
+    try:
+        cfm = content.customFieldsManager
+        # Resolve custom values
+        for value_obj in vm.summary.customValue:
+            kn = value_obj.key
+            if cfm is not None and cfm.field:
+                for f in cfm.field:
+                    if f.key == value_obj.key:
+                        kn = f.name
+                        # Exit the loop immediately, we found it
+                        break
+            facts['customvalues'][kn] = value_obj.value
+    except:
+        pass
 
     net_dict = {}
-    for device in vm.guest.net:
-        net_dict[device.macAddress] = list(device.ipAddress)
+    try:
+        for device in vm.guest.net:
+            net_dict[device.macAddress] = list(device.ipAddress)
+    except:
+        pass
 
     for k, v in iteritems(net_dict):
         for ipaddress in v:
@@ -233,33 +392,40 @@ def gather_vm_facts(content, vm):
                 else:
                     facts['ipv4'] = ipaddress
 
-    ethernet_idx = 0
-    for idx, entry in enumerate(vm.config.hardware.device):
-        if not hasattr(entry, 'macAddress'):
-            continue
+    try:
+        ethernet_idx = 0
+        for idx, entry in enumerate(vm.config.hardware.device):
+            if not hasattr(entry, 'macAddress'):
+                continue
 
-        if entry.macAddress:
-            mac_addr = entry.macAddress
-            mac_addr_dash = mac_addr.replace(':', '-')
-        else:
-            mac_addr = mac_addr_dash = None
+            if entry.macAddress:
+                mac_addr = entry.macAddress
+                mac_addr_dash = mac_addr.replace(':', '-')
+            else:
+                mac_addr = mac_addr_dash = None
 
-        factname = 'hw_eth' + str(ethernet_idx)
-        facts[factname] = {
-            'addresstype': entry.addressType,
-            'label': entry.deviceInfo.label,
-            'macaddress': mac_addr,
-            'ipaddresses': net_dict.get(entry.macAddress, None),
-            'macaddress_dash': mac_addr_dash,
-            'summary': entry.deviceInfo.summary,
-        }
-        facts['hw_interfaces'].append('eth' + str(ethernet_idx))
-        ethernet_idx += 1
+            factname = 'hw_eth' + str(ethernet_idx)
+            facts[factname] = {
+                'addresstype': entry.addressType,
+                'label': entry.deviceInfo.label,
+                'macaddress': mac_addr,
+                'ipaddresses': net_dict.get(entry.macAddress, None),
+                'macaddress_dash': mac_addr_dash,
+                'summary': entry.deviceInfo.summary,
+            }
+            facts['hw_interfaces'].append('eth' + str(ethernet_idx))
+            ethernet_idx += 1
+    except:
+        pass
 
-    snapshot_facts = list_snapshots(vm)
-    if 'snapshots' in snapshot_facts:
-        facts['snapshots'] = snapshot_facts['snapshots']
-        facts['current_snapshot'] = snapshot_facts['current_snapshot']
+    try:
+        snapshot_facts = list_snapshots(vm)
+        if 'snapshots' in snapshot_facts:
+            facts['snapshots'] = snapshot_facts['snapshots']
+            facts['current_snapshot'] = snapshot_facts['current_snapshot']
+    except:
+        pass
+
     return facts
 
 
@@ -275,7 +441,8 @@ def list_snapshots_recursively(snapshots):
     snapshot_data = []
     for snapshot in snapshots:
         snapshot_data.append(deserialize_snapshot_obj(snapshot))
-        snapshot_data = snapshot_data + list_snapshots_recursively(snapshot.childSnapshotList)
+        snapshot_data = snapshot_data + \
+            list_snapshots_recursively(snapshot.childSnapshotList)
     return snapshot_data
 
 
@@ -284,7 +451,8 @@ def get_current_snap_obj(snapshots, snapob):
     for snapshot in snapshots:
         if snapshot.snapshot == snapob:
             snap_obj.append(snapshot)
-        snap_obj = snap_obj + get_current_snap_obj(snapshot.childSnapshotList, snapob)
+        snap_obj = snap_obj + \
+            get_current_snap_obj(snapshot.childSnapshotList, snapob)
     return snap_obj
 
 
@@ -293,9 +461,13 @@ def list_snapshots(vm):
     if vm.snapshot is None:
         return result
 
-    result['snapshots'] = list_snapshots_recursively(vm.snapshot.rootSnapshotList)
+    result['snapshots'] = list_snapshots_recursively(
+        vm.snapshot.rootSnapshotList
+    )
     current_snapref = vm.snapshot.currentSnapshot
-    current_snap_obj = get_current_snap_obj(vm.snapshot.rootSnapshotList, current_snapref)
+    current_snap_obj = get_current_snap_obj(
+        vm.snapshot.rootSnapshotList, current_snapref
+    )
     result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
 
     return result
@@ -304,10 +476,18 @@ def list_snapshots(vm):
 def vmware_argument_spec():
 
     return dict(
-        hostname=dict(type='str', required=True),
-        username=dict(type='str', aliases=['user', 'admin'], required=True),
-        password=dict(type='str', aliases=['pass', 'pwd'], required=True, no_log=True),
-        validate_certs=dict(type='bool', required=False, default=True),
+        hostname=dict(
+            type='str', required=True
+        ),
+        username=dict(
+            type='str', aliases=['user', 'admin'], required=True
+        ),
+        password=dict(
+            type='str', aliases=['pass', 'pwd'], required=True, no_log=True
+        ),
+        validate_certs=dict(
+            type='bool', required=False, default=True
+        ),
     )
 
 
@@ -319,24 +499,36 @@ def connect_to_api(module, disconnect_atexit=True):
     validate_certs = module.params['validate_certs']
 
     if validate_certs and not hasattr(ssl, 'SSLContext'):
-        module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
-                             'python or or use validate_certs=false')
+        msg = 'pyVim does not support changing verification mode with'
+        msg += ' python < 2.7.9. Either update python or or use'
+        msg += ' validate_certs=false'
+        module.fail_json(msg=msg)
 
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
+        service_instance = connect.SmartConnect(
+            host=hostname, user=username, pwd=password
+        )
     except vim.fault.InvalidLogin as invalid_login:
         module.fail_json(msg=invalid_login.msg, apierror=str(invalid_login))
     except (requests.ConnectionError, ssl.SSLError) as connection_error:
-        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(connection_error) and not validate_certs:
+        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(connection_error) and \
+                not validate_certs:
             context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             context.verify_mode = ssl.CERT_NONE
-            service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
+            service_instance = connect.SmartConnect(
+                host=hostname, user=username, pwd=password, sslContext=context
+            )
         else:
-            module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
-    except Exception as e:
+            module.fail_json(
+                msg="Unable to connect to vCenter or ESXi API on TCP/443.",
+                apierror=str(connection_error)
+            )
+    except:
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         context.verify_mode = ssl.CERT_NONE
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
+        service_instance = connect.SmartConnect(
+            host=hostname, user=username, pwd=password, sslContext=context
+        )
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
@@ -351,13 +543,38 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
         folder = content.rootFolder
 
     obj = {}
-    container = content.viewManager.CreateContainerView(folder, vimtype, recurse)
+    container = content.viewManager.CreateContainerView(
+        folder, vimtype, recurse
+    )
     for managed_object_ref in container.view:
         obj.update({managed_object_ref: managed_object_ref.name})
     return obj
 
 
-def fetch_file_from_guest(content, vm, username, password, src, dest):
+def get_obj(content, vimtype, name):
+    """
+    Return an object by name, if name is None the
+    first found object is returned
+    """
+    obj = None
+    container = content.viewManager.CreateContainerView(
+        content.rootFolder, vimtype, True)
+    for c in container.view:
+        if name:
+            if c.name == name:
+                obj = c
+                break
+        else:
+            obj = c
+            break
+
+    container.Destroy()
+    return obj
+
+
+def fetch_file_from_guest(
+    content, vm, username, password, src, dest, module=None
+):
 
     """ Use VMWare's filemanager api to fetch a file over http """
 
@@ -366,7 +583,8 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
     tools_status = vm.guest.toolsStatus
     if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
         result['failed'] = True
-        result['msg'] = "VMwareTools is not installed or is not running in the guest"
+        result['msg'] = "VMwareTools is not installed"
+        result['msg'] += " or is not running in the guest"
         return result
 
     # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
@@ -382,7 +600,7 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
     result['url'] = fti.url
 
     # Use module_utils to fetch the remote url returned from the api
-    rsp, info = fetch_url(self.module, fti.url, use_proxy=False,
+    rsp, info = fetch_url(module, fti.url, use_proxy=False,
                           force=True, last_mod_time=None,
                           timeout=10, headers=None)
 
@@ -406,7 +624,9 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
     return result
 
 
-def push_file_to_guest(content, vm, username, password, src, dest, overwrite=True):
+def push_file_to_guest(
+    content, vm, username, password, src, dest, overwrite=True, module=None
+):
 
     """ Use VMWare's filemanager api to fetch a file over http """
 
@@ -415,7 +635,8 @@ def push_file_to_guest(content, vm, username, password, src, dest, overwrite=Tru
     tools_status = vm.guest.toolsStatus
     if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
         result['failed'] = True
-        result['msg'] = "VMwareTools is not installed or is not running in the guest"
+        result['msg'] = "VMwareTools is not installed"
+        result['msg'] += " or is not running in the guest"
         return result
 
     # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
@@ -443,7 +664,7 @@ def push_file_to_guest(content, vm, username, password, src, dest, overwrite=Tru
                                     filesize, overwrite)
 
     # PUT the filedata to the url ...
-    rsp, info = fetch_url(self.module, url, method="put", data=fdata,
+    rsp, info = fetch_url(module, url, method="put", data=fdata,
                           use_proxy=False, force=True, last_mod_time=None,
                           timeout=10, headers=None)
 
@@ -456,15 +677,19 @@ def push_file_to_guest(content, vm, username, password, src, dest, overwrite=Tru
     return result
 
 
-def run_command_in_guest(content, vm, username, password, program_path, program_args, program_cwd, program_env):
+def run_command_in_guest(
+    content, vm, username, password, program_path, program_args, program_cwd,
+    program_env
+):
 
     result = {'failed': False}
 
     tools_status = vm.guest.toolsStatus
     if (tools_status == 'toolsNotInstalled' or
-                tools_status == 'toolsNotRunning'):
+            tools_status == 'toolsNotRunning'):
         result['failed'] = True
-        result['msg'] = "VMwareTools is not installed or is not running in the guest"
+        result['msg'] = "VMwareTools is not installed"
+        result['msg'] = " or is not running in the guest"
         return result
 
     # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
