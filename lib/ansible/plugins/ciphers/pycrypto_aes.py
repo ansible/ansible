@@ -147,6 +147,12 @@ class VaultCipher(VaultCipherBase):
 
         # split out sha and verify decryption
         b_split_data = b_out_data.split(b"\n", 1)
+
+        # The decrypted blob should have the sha256, a newline, and the plaintext.
+        # If there is no newline b_split_data will have 1 entry, indicating the decryption failed.
+        if len(b_split_data) < 2:
+            raise AnsibleError("Decryption failed")
+
         b_this_sha = b_split_data[0]
         b_plaintext = b_split_data[1]
         b_test_sha = to_bytes(sha256(b_plaintext).hexdigest())
