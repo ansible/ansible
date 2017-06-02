@@ -529,13 +529,10 @@ class User(object):
 
         if self.expires:
             cmd.append('--expiredate')
-            try:
-                if self.clearexpires < 0:
-                    cmd.append('')
-                else:
-                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
-            except ValueError:
-                raise
+            if self.clearexpires < 0:
+                cmd.append('')
+            else:
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
