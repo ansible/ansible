@@ -199,19 +199,18 @@ def compare_group_members(current_group_members, new_group_members):
         return False
 
 
-def convert_friendly_names_to_arns(connection, module, policies):
-    # if not any([not policy.startswith('arn:') for policy in policies if policy is not None]):
-    if not [policy.startswith('arn:') for policy in policies if policy is not None]:
-        return policies
+def convert_friendly_names_to_arns(connection, module, policy_names):
+    if not any([not policy.startswith('arn:') for policy in policy_names if policy is not None]):
+        return policy_names
     allpolicies = {}
     paginator = connection.get_paginator('list_policies')
+    policies = paginator.paginate().build_full_result()['Policies']
 
-    for response in paginator.paginate(PaginationConfig=dict(MaxItems=1000)):
-        for policy in response['Policies']:
-            allpolicies[policy['PolicyName']] = policy['Arn']
-            allpolicies[policy['Arn']] = policy['Arn']
+    for policy in policies:
+        allpolicies[policy['PolicyName']] = policy['Arn']
+        allpolicies[policy['Arn']] = policy['Arn']
     try:
-        return [allpolicies[policy] for policy in policies]
+        return [allpolicies[policy] for policy in policy_names]
     except KeyError as e:
         module.fail_json(msg="Couldn't find policy: " + str(e))
 
@@ -220,7 +219,9 @@ def create_or_update_group(connection, module):
 
     params = dict()
     params['GroupName'] = module.params.get('name')
-    managed_policies = convert_friendly_names_to_arns(connection, module, module.params.get('managed_policy'))
+    managed_policies = module.params.get('managed_policy')
+    if managed_policies:
+        managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
     users = module.params.get('users')
     purge_users = module.params.get('purge_users')
     purge_policy = module.params.get('purge_policy')
