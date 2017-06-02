@@ -421,6 +421,12 @@ options:
       - Number of seconds to wait for the container to stop before sending SIGKILL.
     required: false
     default: null
+  tmpfs:
+    description:
+      - List of mounting points for a tmpfs folder. This can be used to create a temporary writable folder when having a
+        read-only container
+    required: false
+    default: null
   trust_image_content:
     description:
       - If true, skip image verification.
@@ -761,6 +767,7 @@ class TaskParameters(DockerBaseClass):
         self.state = None
         self.stop_signal = None
         self.stop_timeout = None
+        self.tmpfs = None
         self.trust_image_content = None
         self.tty = None
         self.user = None
@@ -946,6 +953,7 @@ class TaskParameters(DockerBaseClass):
             cap_add='capabilities',
             extra_hosts='etc_hosts',
             read_only='read_only',
+            tmpfs='tmpfs',
             ipc_mode='ipc_mode',
             security_opt='security_opts',
             ulimits='ulimits',
@@ -1193,6 +1201,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_ulimits = None
         self.parameters.expected_etc_hosts = None
         self.parameters.expected_env = None
+        self.parameters.expected_tmpfs = None
 
     def fail(self, msg):
         self.parameters.client.module.fail_json(msg=msg)
@@ -1224,6 +1233,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_env = self._get_expected_env(image)
         self.parameters.expected_cmd = self._get_expected_cmd()
         self.parameters.expected_devices = self._get_expected_devices()
+        self.parameters.expected_tmpfs = self._get_expected_tmpfs()
 
         if not self.container.get('HostConfig'):
             self.fail("has_config_diff: Error parsing container properties. HostConfig missing.")
@@ -1287,6 +1297,7 @@ class Container(DockerBaseClass):
             # shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
             stop_signal=config.get("StopSignal"),
+            expected_tmpfs=host_config.get('Tmpfs'),
             tty=config.get('Tty'),
             expected_ulimits=host_config.get('Ulimits'),
             uts=host_config.get('UTSMode'),
@@ -1681,6 +1692,18 @@ class Container(DockerBaseClass):
         if not self.parameters.command:
             return None
         return shlex.split(self.parameters.command)
+    
+    def _get_expected_tmpfs(self):
+        self.log('_get_expected_tmpfs')
+        result = dict()
+        for tmpfs_mnt in self.parameters.tmpfs:
+            loc_param = tmpfs_mnt.split(":")
+            if (len(loc_param) == 1):
+                result[loc_param[0]] = ""
+            else:
+                result[loc_param[0]] = loc_param[1]
+        return result
+
 
     def _convert_simple_dict_to_list(self, param_name, join_with=':'):
         if getattr(self.parameters, param_name, None) is None:
@@ -2043,6 +2066,7 @@ def main():
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped'], default='started'),
         stop_signal=dict(type='str'),
         stop_timeout=dict(type='int'),
+        tmpfs=dict(type='list'),
         trust_image_content=dict(type='bool', default=False),
         tty=dict(type='bool', default=False),
         ulimits=dict(type='list'),
