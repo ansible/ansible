@@ -50,7 +50,7 @@ def get_impl_score(cph_class):
     return score
 
 
-def get_cipher_mapping():
+def build_cipher_mapping():
     cipher_class_gen = cipher_loader.all(class_only=True)
 
     # map cipher_name -> list of classes that provide it
@@ -62,6 +62,10 @@ def get_cipher_mapping():
             continue
         mapping[cc.name].append(cc)
 
+    for cipher_name, cipher_classes in mapping.items():
+        for class_name in cipher_classes:
+            display.debug('Found (%s) cipher plugin %s' % (cipher_name, class_name))
+
     cipher_mapping = {}
 
     # set our prefered cipher to be the class with the highest score (last in the list when sorted via get_score())
@@ -71,7 +75,7 @@ def get_cipher_mapping():
     return cipher_mapping
 
 
-cipher_mapping = get_cipher_mapping()
+cipher_mapping = build_cipher_mapping()
 
 
 def get_decrypt_cipher(cipher_name):
@@ -85,6 +89,7 @@ def get_decrypt_cipher(cipher_name):
     if not cipher_class:
         raise AnsibleVaultError("{0} decryption cipher could not be found".format(cipher_name))
 
+    display.vvvv('Using cipher plugin %s implementation of decrypt cipher %s' % (cipher_class, cipher_name))
     return cipher_class
 
 
@@ -98,5 +103,7 @@ def get_encrypt_cipher(cipher_name):
     cipher_class = cipher_mapping.get(cipher_name, None)
     if not cipher_class:
         raise AnsibleVaultError("{0} encryption cipher could not be found".format(cipher_name))
+
+    display.vvvv('Using cipher plugin %s implementation of encrypt cipher %s' % (cipher_class, cipher_name))
 
     return cipher_class
