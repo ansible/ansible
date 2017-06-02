@@ -59,8 +59,8 @@ options:
             - A special value of "*" can be used for interface-independent connections.
             - The ifname argument is mandatory for all connection types except bond, team, bridge and vlan.
     type:
-        required: False
-        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, vlan ]
+        required: True
+        choices: [ethernet, team, team-slave, bond, bond-slave, bridge, vlan]
         description:
             - This is the type of device or network connection that you wish to create or modify.
     mode:
