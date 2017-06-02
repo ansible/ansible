@@ -282,7 +282,7 @@ def _update_monitor(module, monitor, options):
 
         if 'errors' in msg:
             module.fail_json(msg=str(msg['errors']))
-        elif _equal_dicts(msg, monitor, ['creator', 'overall_state', 'modified']):
+        elif _equal_dicts(msg, monitor, ['creator', 'overall_state', 'modified', 'matching_downtimes', 'overall_state_modified']):
             module.exit_json(changed=False, msg=msg)
         else:
             module.exit_json(changed=True, msg=msg)
