@@ -1760,17 +1760,21 @@ class AnsibleModule(object):
                     self._check_argument_types(spec, param[k])
                     self._check_argument_values(spec, param[k])
 
-    def _set_defaults(self, pre=True):
-        for (k,v) in self.argument_spec.items():
+    def _set_defaults(self, pre=True, spec=None, param=None):
+
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+
+        for (k,v) in spec.items():
             default = v.get('default', None)
-            if pre is True:
-                # this prevents setting defaults on required items
-                if default is not None and k not in self.params:
-                    self.params[k] = default
-            else:
-                # make sure things without a default still get set None
-                if k not in self.params:
-                    self.params[k] = default
+            spec = param[k].get('options', None)
+            if not pre or (default is not None and k not in param):
+                if spec:
+                    self._set_defaults(pre=pre, spec=spec, param=param[k])
+                else:
+                    param[k] = default
 
     def _set_fallbacks(self):
         for k,v in self.argument_spec.items():
