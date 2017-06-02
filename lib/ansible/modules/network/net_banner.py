@@ -37,7 +37,6 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
     choices: ['login', 'banner']
   text:
     description:
