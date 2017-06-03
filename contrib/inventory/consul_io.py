@@ -464,7 +464,7 @@ class ConsulConfig(dict):
 
     def read_cli_args(self):
         ''' Command line argument processing '''
-        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based nodes in a Consul cluster')
+        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on nodes in a Consul cluster')
 
         parser.add_argument('--list', action='store_true',
                             help='Get all inventory variables from all nodes in the consul cluster')
@@ -475,7 +475,7 @@ class ConsulConfig(dict):
                             help='Get all inventory about a specific consul datacenter')
         parser.add_argument('--url', action='store',
                             help='URL of the Consul cluster (if not specified, defaults'
-                                'to http requests to localhost on port 8500)')
+                                  'to http requests to localhost on port 8500)')
 
         args = parser.parse_args()
         arg_names = ['host', 'datacenter', 'url']
