@@ -294,7 +294,7 @@ class DocCLI(CLI):
 
             required = opt.pop('required', False)
             if not isinstance(required, bool):
-                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+                raise AnsibleError("Incorrect value for 'Required', a boolean is needed.: %s" % required)
             if required:
                 opt_leadin = "="
             else:
