@@ -117,6 +117,8 @@
 
 - name: Get mount options
   shell: mount | grep mount_dest | grep -E -w '(ro|read-only)' | wc -l
+  args:
+    warn: no
   register: remount_options
 
 - debug: var=remount_options

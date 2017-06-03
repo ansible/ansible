@@ -47,7 +47,7 @@
 - name: again make sure the old commit was not fetched
   assert:
     that: 'checkout_early.rc != 0'
-  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
+  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
 
 # make sure we are still able to fetch other versions
 - name: Clone same repo with older version

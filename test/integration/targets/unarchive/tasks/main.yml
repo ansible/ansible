@@ -70,7 +70,10 @@
   copy: src=foo.txt dest={{output_dir}}/unarchive-dir/foo-unarchive.txt
 
 - name: prep a tar.gz file with directory
-  shell: tar czvf test-unarchive-dir.tar.gz unarchive-dir  chdir={{output_dir}}
+  shell: tar czvf test-unarchive-dir.tar.gz unarchive-dir
+  args:
+    chdir: '{{ output_dir }}'
+    warn: no
 
 - name: create our tar unarchive destination
   file: path={{output_dir}}/test-unarchive-tar state=directory
