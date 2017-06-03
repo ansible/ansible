@@ -32,6 +32,7 @@ RUN dnf clean all && \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \
+    python-lxml \
     python-mock \
     python-nose \
     python-paramiko \
