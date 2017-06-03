@@ -130,6 +130,7 @@ class AnsibleCloudStack(object):
         self.os_type = None
         self.hypervisor = None
         self.capabilities = None
+        self.network_acl = None
 
     def _connect(self):
         api_region = self.module.params.get('api_region') or os.environ.get('CLOUDSTACK_REGION')
@@ -223,6 +224,21 @@ class AnsibleCloudStack(object):
                 return my_dict[key]
             self.fail_json(msg="Something went wrong: %s not found" % key)
         return my_dict
+
+    def get_network_acl(self, key=None):
+        if self.network_acl is None:
+            args = {
+                'name': self.module.params.get('network_acl'),
+                'vpcid': self.get_vpc(key='id'),
+            }
+            network_acls = self.cs.listNetworkACLLists(**args)
+            if network_acls:
+                self.network_acl = network_acls['networkacllist'][0]
+                self.result['network_acl'] = self.network_acl['name']
+        if self.network_acl:
+            return self._get_by_key(key, self.network_acl)
+        else:
+            self.fail_json("Network ACL %s not found" % self.module.params.get('network_acl'))
 
     def get_vpc(self, key=None):
         """Return a VPC dictionary or the value of given key of."""
