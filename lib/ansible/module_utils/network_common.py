@@ -87,7 +87,7 @@ class ComplexDict(object):
             if attr.get('key'):
                 if self._has_key:
                     raise ValueError('only one key value can be specified')
-                self_has_key = True
+                self._has_key = True
                 attr['required'] = True
 
     def _dict(self, value):
