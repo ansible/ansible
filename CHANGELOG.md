@@ -169,6 +169,7 @@ Ansible Changes By Release
   * ce_vxlan_vap
 - cloudstack
   * cs_network_acl
+  * cs_network_acl_rule
   * cs_vpn_gateway
 - crypto
   * openssl_csr
