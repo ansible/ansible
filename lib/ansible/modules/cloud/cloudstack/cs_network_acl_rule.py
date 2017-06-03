@@ -44,7 +44,7 @@ options:
   rule_position:
     description:
       - CIDR of the rule.
-    required: required
+    required: true
     aliases: [ number ]
   protocol:
     description:
@@ -63,7 +63,7 @@ options:
       - Considered if C(protocol=tcp) or C(protocol=udp).
     required: false
     default: null
-    aliases: [ 'port' ]
+    aliases: [ port ]
   end_port:
     description:
       - End port for this rule.
