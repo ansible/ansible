@@ -4,9 +4,11 @@ Ansible Changes By Release
 ## 2.3.2 "Ramble On" - TBD
 
 ### Bugfixes
-* Fix sorting of ec2 policies on python3
 * Fix partend i18n issues
 * fixed handling of extra vars for tower_job_template (#25272)
+* Python3 bugfixes
+  * Fix sorting of ec2 policies
+  * Fix digital_ocean dynamic inventory script
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
