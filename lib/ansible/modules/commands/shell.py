@@ -1,4 +1,4 @@
-# There is actually no actual shell module source, when you use 'shell' in ansible,
+# There is no actual shell module source, when you use 'shell' in ansible,
 # it runs the 'command' module with special arguments and it behaves differently.
 # See the command source and the comment "#USE_SHELL".
 
