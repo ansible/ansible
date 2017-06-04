@@ -83,9 +83,13 @@ options:
     caller_reference:
       description:
         - A unique identifier for creating and updating cloudfront
-          distributions.
+          distributions. Each caller reference must be unique across all
+          distributions. eg. a caller reference used in a web distribution_id
+          cannot be reused in a streaming distribution.
           This can be used instead of C(distribution_id) or
-          C(streaming_distribution_id).
+          C(streaming_distribution_id) to reference an existing distribution.
+          If not specified, this defaults to a datetime stamp of the format
+            'YYYY-MM-DDTHH:MM:SS.ffffff'
       required: false
 
     pem_key_path:
@@ -819,6 +823,26 @@ class CloudFrontServiceManager(object):
                 exception=traceback.format_exc(),
                 **camel_dict_to_snake_dict(e.response))
 
+    def update_tags(self, valid_tags, purge_tags, arn, alias,
+                    distribution_id, streaming_distribution_id):
+        try:
+            changed = False
+            if purge_tags:
+                self.remove_all_tags_from_resource(arn)
+                changed = True
+            if valid_tags is not None:
+                valid_aws_tags = helpers.python_list_to_aws_list(
+                    valid_tags, False)
+                valid_pascal_aws_tags = helpers.snake_dict_to_pascal_dict(
+                    valid_aws_tags)
+                self.tag_resource(arn, valid_pascal_aws_tags)
+                changed = True
+            return changed
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating and updating tags - " + str(e) + "\n" +
+                traceback.format_exc())
+
     def paginated_response(self, func, result_key=''):
         '''
         Returns expanded response for paginated operations.
@@ -1443,6 +1467,8 @@ class CloudFrontValidationManager(object):
     def validate_tagging_arn(self, alias, distribution_id,
                              streaming_distribution_id):
         try:
+            distribution_response = None
+            streaming_distribution_response = None
             if(alias is not None and (distribution_id is not None or
                streaming_distribution_id is not None)):
                 self.module.fail_json(
@@ -1666,7 +1692,28 @@ class CloudFrontValidationManager(object):
         except Exception as e:
             self.module.fail_json(
                 msg="error validating (streaming)distribution_id from caller " +
-                "reference" + str(e) + "\n" + traceback.format_exc())
+                "reference - " + str(e) + "\n" + traceback.format_exc())
+
+    def validate_distribution_requires_update(
+            self, proposed_config, distribution_id, streaming=False):
+        try:
+            if not streaming:
+                config_name = "DistributionConfig"
+                distribution = (
+                    self.__cloudfront_facts_mgr.get_distribution_config(
+                        distribution_id))
+            else:
+                config_name = "StreamingDistributionConfig"
+                distribution = (
+                    self.__cloudfront_facts_mgr.get_streaming_distribution_config(
+                        distribution_id))
+            existing_config = distribution.get(config_name)
+            return sorted(
+                existing_config.items()) == sorted(proposed_config.items())
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating distribution requires update - " +
+                str(e) + "\n" + traceback.format_exc())
 
 
 def main():
@@ -1719,6 +1766,7 @@ def main():
     ))
 
     result = {}
+    changed = True
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -1927,28 +1975,34 @@ def main():
     elif delete_distribution:
         result = service_mgr.delete_distribution(distribution_id, e_tag)
     elif update_distribution:
-        result = service_mgr.update_distribution(config, distribution_id, e_tag)
+        identical = validation_mgr.validate_distribution_requires_update(
+            config, distribution_id)
+        if identical:
+            changed = False
+        else:
+            result = service_mgr.update_distribution(
+                config, distribution_id, e_tag)
     elif create_streaming_distribution:
         result = service_mgr.create_streaming_distribution(config, valid_tags)
     elif delete_streaming_distribution:
         result = service_mgr.delete_streaming_distribution(
             streaming_distribution_id, e_tag)
     elif update_streaming_distribution:
-        result = service_mgr.update_streaming_distribution(
-            config, streaming_distribution_id, e_tag)
-
+        identical = validation_mgr.validate_distribution_requires_update(
+            config, streaming_distribution_id, True)
+        if identical:
+            changed = False
+        else:
+            result = service_mgr.update_streaming_distribution(
+                config, streaming_distribution_id, e_tag)
     if update:
         arn = validation_mgr.validate_tagging_arn(
             alias, distribution_id, streaming_distribution_id)
-        if purge_tags:
-            service_mgr.remove_all_tags_from_resource(arn)
-        if valid_tags is not None:
-            valid_aws_tags = helpers.python_list_to_aws_list(valid_tags, False)
-            valid_pascal_aws_tags = helpers.snake_dict_to_pascal_dict(
-                valid_aws_tags)
-            service_mgr.tag_resource(arn, valid_pascal_aws_tags)
+        changed |= service_mgr.update_tags(
+            valid_tags, purge_tags, arn, alias, distribution_id,
+            streaming_distribution_id)
 
-    module.exit_json(changed=True, **helpers.pascal_dict_to_snake_dict(result))
+    module.exit_json(changed=changed, **helpers.pascal_dict_to_snake_dict(result))
 
 
 if __name__ == '__main__':
