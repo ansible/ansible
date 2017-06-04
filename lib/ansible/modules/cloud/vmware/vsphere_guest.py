@@ -793,7 +793,7 @@ def update_disks(vsphere_client, vm, module, vm_disk, changes):
         found = False
         for dev_key in vm._devices:
             if vm._devices[dev_key]['type'] == 'VirtualDisk':
-                hdd_id = vm._devices[dev_key]['label'].split()[2]
+                hdd_id = vm._devices[dev_key]['label'].split()[1]
                 if disk_id == hdd_id:
                     found = True
                     continue
