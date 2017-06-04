@@ -239,6 +239,17 @@ class ActionModule(ActionBase):
 
                 # Run the copy module
 
+                # if mode is 'copy', then for each file read the mode of the source
+                # and pass that to the 'copy' module.
+                mode = self._task.args.get('mode')
+                if mode == 'copy':
+                    try:
+                        mode = '%04o' % (os.stat(source_full).st_mode & 0o777)
+                    except OSError as err:
+                        result['failed'] = True
+                        result['msg'] = "failed to read file mode from src=%s" % source_full
+                        return result
+
                 # src and dest here come after original and override them
                 # we pass dest only to make sure it includes trailing slash in case of recursive copy
                 new_module_args = self._task.args.copy()
@@ -246,6 +257,7 @@ class ActionModule(ActionBase):
                     dict(
                         src=tmp_src,
                         dest=dest,
+                        mode=mode,
                         original_basename=source_rel,
                     )
                 )
