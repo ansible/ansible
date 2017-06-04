@@ -117,5 +117,6 @@ def python_list_to_aws_list(list_items=None, include_quantity=True):
     result = {}
     if include_quantity:
         result['quantity'] = len(list_items)
-    result['items'] = list_items
+    if len(list_items) > 0:
+        result['items'] = list_items
     return result
