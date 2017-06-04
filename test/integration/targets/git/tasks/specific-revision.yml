@@ -50,7 +50,7 @@
   git:
     repo: "{{ repo_dir }}/format1"
     dest: "{{ checkout_dir }}"
-    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    version: 569eba8a57b84adbe806dd2bd9e30967b9bab85a
   ignore_errors: true
   register: git_result
 
@@ -64,7 +64,7 @@
   git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: '{{ checkout_dir }}'
-    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    version: 569eba8a57b84adbe806dd2bd9e30967b9bab85a
     refspec: refs/pull/7/merge
 
 - name: check HEAD after update with refspec
@@ -75,7 +75,7 @@
 
 - assert:
     that:
-      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+      - 'git_result.stdout == "569eba8a57b84adbe806dd2bd9e30967b9bab85a"'
 
 # try out combination of refspec and depth
 - name: clear checkout_dir
@@ -87,7 +87,7 @@
   git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: '{{ checkout_dir }}'
-    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    version: 569eba8a57b84adbe806dd2bd9e30967b9bab85a
     refspec: refs/pull/7/merge
     depth: 1
 
@@ -99,7 +99,7 @@
 
 - assert:
     that:
-      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+      - 'git_result.stdout == "569eba8a57b84adbe806dd2bd9e30967b9bab85a"'
 
 - name: try to access other commit
   shell: git checkout 0ce1096
@@ -124,7 +124,7 @@
   git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: '{{ checkout_dir }}'
-    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    version: 569eba8a57b84adbe806dd2bd9e30967b9bab85a
     refspec: refs/pull/7/merge
 
 - name: check HEAD after update with refspec
@@ -135,7 +135,7 @@
 
 - assert:
     that:
-      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+      - 'git_result.stdout == "569eba8a57b84adbe806dd2bd9e30967b9bab85a"'
 
 # Test that a forced shallow checkout referincing branch only always fetches latest head
 
