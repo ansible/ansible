@@ -197,8 +197,7 @@ import ipaddress
 
 try:
     import boto3
-    from botocore.exceptions import ClientError as BotoServerError
-    #from boto.exception import BotoServerError
+    from botocore import exceptions
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -470,7 +469,7 @@ def main():
             try:
                 if not module.check_mode:
                     group.delete()
-            except BotoServerError as e:
+            except exceptions.ClientError as e:
                 module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message), exception=traceback.format_exc())
             else:
                 group = None
@@ -537,7 +536,11 @@ def main():
                                 ips=ipPermissions
                                 if vpc_id:
                                     ips=map(lambda x: map(lambda y: y.update({'VpcId': vpc_id}), x.get('UserIdGroupPairs')), [ipPermissions])
-                                group.authorize_ingress(GroupName=group.group_name, IpPermissions=ips)
+                                try:
+                                    group.authorize_ingress(GroupName=group.group_name, IpPermissions=[ips])
+                                except exceptions.ClientError as e:
+                                    module.fail_json(msg="Unable to authorize ingress for group %s security group '%s' - %s" % (group_id, group, e.message), exception=traceback.format_exc())
+                        changed=True
                 else:
                     # Convert ip to list we can iterate over
                     if not isinstance(ip, list):
@@ -554,14 +557,21 @@ def main():
                                 except Exception, e:
                                     module.fail_json(msg=e.message)
                                 if ipPermissions:
-                                    group.authorize_ingress(GroupName=group.group_name, IpPermissions=[ipPermissions])
+                                    try:
+                                        group.authorize_ingress(GroupName=group.group_name, IpPermissions=[ipPermissions])
+                                    except exceptions.ClientError as e:
+                                        module.fail_json(msg="Unable to authorize ingress for ip %s security group '%s' - %s" % (thisip, group, e.message), exception=traceback.format_exc())
                             changed=True
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:
             for (rule, grant) in groupRules.values():
                 ipPermissions = createRevokeIpPermission(grant, rule)
                 if not module.check_mode:
-                    group.revoke_ingress(GroupName=group.group_name, IpPermissions=[ipPermissions])
+                    try:
+                        group.revoke_ingress(GroupName=group.group_name, IpPermissions=[ipPermissions])
+                    except exceptions.ClientError as e:
+                        module.fail_json(msg="Unable to revoke ingress for security group '%s' - %s" % (group, e.message), exception=traceback.format_exc())
+                changed=True
 
         # Manage egress rules
         groupRules = {}
@@ -591,7 +601,15 @@ def main():
                                 ips=ipPermissions
                                 if vpc_id:
                                     ips=map(lambda x: map(lambda y: y.update({'VpcId': vpc_id}), x.get('UserIdGroupPairs')), [ipPermissions])
+<<<<<<< HEAD
                                 group.authorize_egress(IpPermissions=ips)
+=======
+                                try:
+                                    group.authorize_egress(IpPermissions=ips)
+                                except exceptions.ClientError as e:
+                                    module.fail_json(msg="Unable to authorize egress for group %s security group '%s' - %s" % (group_id, group, e.message), exception=traceback.format_exc())
+                        changed=True
+>>>>>>> Use Boto3 for ec2_group
                 else:
                     # Convert ip to list we can iterate over
                     if not isinstance(ip, list):
@@ -605,7 +623,10 @@ def main():
                             if not module.check_mode:
                                 ipPermissions = createGrantIpPermissions(rule, thisip)
                                 if ipPermissions:
-                                    group.authorize_egress(IpPermissions=[ipPermissions])
+                                    try:
+                                        group.authorize_egress(IpPermissions=[ipPermissions])
+                                    except exceptions.ClientError as e:
+                                        module.fail_json(msg="Unable to authorize egress for ip %s security group '%s' - %s" % (thisip, group, e.message), exception=traceback.format_exc())
                             changed=True
         else:
             # when no egress rules are specified,
@@ -627,7 +648,7 @@ def main():
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules_egress:
             for (rule, grant) in groupRules.values():
-                ipPermissions = createRevokeIpPermission(grant, ipPermissions, rule)
+                ipPermissions = createRevokeIpPermission(grant, rule)
                 if not module.check_mode:
                     group.revoke_egress(GroupId=group.id, IpPermissions=[ipPermissions])
                 changed = True
@@ -676,6 +697,8 @@ def createRevokeIpPermission(grant, rule):
 
 def createGrantIpPermissions(rule, thisip):
     ip = unicode(thisip.split('/')[0])
+    ipv4Range=[]
+    ipv6Range=[]
     try:
         if isinstance(ipaddress.ip_address(ip), ipaddress.IPv4Address):
             ipv4Range = [{'CidrIp': thisip}]
