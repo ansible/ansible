@@ -84,9 +84,9 @@ options:
       description:
         - A unique identifier for creating and updating cloudfront
           distributions. Each caller reference must be unique across all
-          distributions. eg. a caller reference used in a web distribution_id
+          distributions. eg. a caller reference used in a web distribution
           cannot be reused in a streaming distribution.
-          This can be used instead of C(distribution_id) or
+          This parameter can be used instead of C(distribution_id) or
           C(streaming_distribution_id) to reference an existing distribution.
           If not specified, this defaults to a datetime stamp of the format
             'YYYY-MM-DDTHH:MM:SS.ffffff'
