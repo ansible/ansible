@@ -17,7 +17,7 @@
 
 from ansible.compat.tests import unittest
 import ansible.module_utils.basic
-from ansible.modules.files import interfaces_file
+from ansible.modules.system import interfaces_file
 import os
 import json
 import sys
