@@ -207,10 +207,10 @@ class LibvirtConnection(object):
         return self.find_vm(vmid).shutdown()
 
     def pause(self, vmid):
-        return self.suspend(self.conn,vmid)
+        return self.suspend(vmid)
 
     def unpause(self, vmid):
-        return self.resume(self.conn,vmid)
+        return self.resume(vmid)
 
     def suspend(self, vmid):
         return self.find_vm(vmid).suspend()
