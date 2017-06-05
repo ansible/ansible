@@ -99,12 +99,13 @@ Function Join-Domain {
         [string] $dns_domain_name,
         [string] $new_hostname,
         [string] $domain_admin_user,
-        [string] $domain_admin_password
+        [string] $domain_admin_password,
+        [string] $domain_ou_path
     )
 
     Write-DebugLog ("Creating credential for user {0}" -f $domain_admin_user)
     $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
-    
+
     $add_args = @{
         ComputerName="."
         Credential=$domain_cred
@@ -115,6 +116,11 @@ Function Join-Domain {
     Write-DebugLog "adding hostname set arg to Add-Computer args"
     If($new_hostname) {
         $add_args["NewName"] = $new_hostname
+    }
+
+    Write-DebugLog "adding OU path set arg to Add-Computer args"
+    if ($domain_ou_path) {
+        $add_args["OUPath"] = $domain_ou_path
     }
 
     Write-DebugLog "calling Add-Computer"
@@ -172,6 +178,7 @@ $hostname = Get-AnsibleParam $params "hostname"
 $workgroup_name = Get-AnsibleParam $params "workgroup_name"
 $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
+$domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
 
 $log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
@@ -220,6 +227,11 @@ Try {
                     If(-not $hostname_match) {
                         Write-DebugLog "adding hostname change to domain-join args"
                         $join_args.new_hostname = $hostname
+                    }
+
+                    if ($domain_ou_path) {
+                        Write-DebugLog "adding OU path to domain-join args"
+                        $join_args.domain_ou_path = $domain_ou_path
                     }
 
                     $join_result = Join-Domain @join_args
@@ -276,4 +288,3 @@ Catch {
 
     Throw
 }
-

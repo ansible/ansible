@@ -45,6 +45,10 @@ options:
   hostname:
     description:
       - the desired hostname for the Windows host
+  domain_ou_path:
+    description:
+      - the desired OU path for the Windows host in the target domain
+    version_added: "2.4"
   state:
     description:
       - whether the target host should be a member of a domain or workgroup
@@ -69,6 +73,7 @@ reboot_required:
 EXAMPLES = '''
 
 # host should be a member of domain ansible.vagrant; module will ensure the hostname is mydomainclient
+# host domain object will be created/joined in 'CN=Computers,DC=ansible,DC=vagrant'
 # and will use the passed credentials to join domain if necessary.
 # Ansible connection should use local credentials if possible.
 # If a reboot is required, the second task will trigger one and wait until the host is available.
@@ -80,6 +85,7 @@ EXAMPLES = '''
       hostname: mydomainclient
       domain_admin_user: testguy@ansible.vagrant
       domain_admin_password: password123!
+      domain_ou_path: 'CN=Computers,DC=ansible,DC=vagrant'
       state: domain
     register: domain_state
 
