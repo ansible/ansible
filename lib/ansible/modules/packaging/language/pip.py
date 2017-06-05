@@ -460,7 +460,7 @@ def main():
                         cmd += ' --no-site-packages'
 
                 # -p is a virtualenv option, not compatible with pyenv or venv
-                # this if validates if the command being used is not any of them 
+                # this if validates if the command being used is not any of them
                 if not any(ex in module.params['virtualenv_command'] for ex in ('pyvenv', '-m venv')):
                     if virtualenv_python:
                         cmd += ' -p%s' % virtualenv_python
