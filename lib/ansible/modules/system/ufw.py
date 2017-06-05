@@ -126,6 +126,10 @@ options:
       - Apply the rule to routed/forwarded packets.
     required: false
     choices: ['yes', 'no']
+  comment:
+    description:
+      - Add a rule comment.
+    required: False
 '''
 
 EXAMPLES = '''
@@ -185,6 +189,13 @@ EXAMPLES = '''
     port: 80
     proto: tcp
 
+# Allow all access to tcp port 80 with a comment:
+- ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+    comment: allow http trafic
+
 # Allow all access from RFC1918 networks to this host:
 - ufw:
     rule: allow
@@ -230,6 +241,7 @@ EXAMPLES = '''
 '''
 
 from operator import itemgetter
+from distutils.version import LooseVersion
 
 
 def main():
@@ -250,7 +262,8 @@ def main():
             to_ip     = dict(default='any', aliases=['dest', 'to']),
             to_port   = dict(default=None,  aliases=['port']),
             proto     = dict(default=None,  aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']),
-            app       = dict(default=None,  aliases=['name'])
+            app       = dict(default=None,  aliases=['name']),
+            comment   = dict(default=None),
         ),
         supports_check_mode = True,
         mutually_exclusive = [['app', 'proto', 'logging']]
@@ -286,6 +299,15 @@ def main():
     (_, pre_state, _) = module.run_command(ufw_bin + ' status verbose')
     (_, pre_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user*.rules")
 
+    # Retrieve ufw version
+    ufw_version_err, ufw_version, ufw_version_stderr = module.run_command(ufw_bin + ' version')
+    if ufw_version_err:
+        module.exit_json('Unable to retrieve ufw version %s' % ufw_version_stderr)
+    ufw_version = ufw_version.split(' ')[1]
+
+    if params['comment'] is not None and LooseVersion(ufw_version) < LooseVersion('0.35'):
+        module.fail_json(msg='Note: you must use ufw >=0.35 for comment directive.')
+
     # Execute commands
     for (command, value) in commands.items():
         cmd = [[ufw_bin], [module.check_mode, '--dry-run']]
@@ -317,7 +339,8 @@ def main():
 
             for (key, template) in [('from_ip',   "from %s" ), ('from_port', "port %s" ),
                                     ('to_ip',     "to %s"   ), ('to_port',   "port %s" ),
-                                    ('proto',     "proto %s"), ('app',       "app '%s'")]:
+                                    ('proto',     "proto %s"), ('app',       "app '%s'"),
+                                    ('comment',   "comment '%s'"),]:
 
                 value = params[key]
                 cmd.append([value, template % (value)])
