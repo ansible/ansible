@@ -57,7 +57,7 @@ options:
     tag:
         required: false
         description:
-            - Tag name when creating a release. Required when using create_release.
+            - Tag name when creating a release. Required when using action is set to C(create_release).
         version_added: 2.4
     target:
         required: false
