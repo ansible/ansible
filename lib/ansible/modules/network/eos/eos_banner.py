@@ -91,6 +91,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import load_config, run_commands
 from ansible.module_utils.eos import eos_argument_spec, check_args
 
+
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
@@ -113,6 +114,7 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
@@ -131,6 +133,7 @@ def map_config_to_obj(module):
         obj['state'] = 'present'
     return obj
 
+
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
@@ -141,6 +144,7 @@ def map_params_to_obj(module):
         'text': text,
         'state': module.params['state']
     }
+
 
 def main():
     """ main entry point for module execution
@@ -162,9 +166,8 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    result = dict(changed=False, warnings=warnings)
+
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 

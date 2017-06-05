@@ -129,6 +129,7 @@ from ansible.module_utils.eos import eos_argument_spec
 from ansible.module_utils.eos import check_args as eos_check_args
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 
+
 def check_args(module, warnings):
     eos_check_args(module, warnings)
 
@@ -138,6 +139,7 @@ def check_args(module, warnings):
     if module.params['replace'] and 'eapi' in (transport, provider_transport):
         module.fail_json(msg='config replace is only supported over cli')
 
+
 def get_current_config(module):
     config = module.params.get('config')
     if not config and not module.params['force']:
@@ -146,6 +148,7 @@ def get_current_config(module):
             flags.append('all')
         config = get_config(module, flags)
     return config
+
 
 def filter_exit(commands):
     # Filter out configuration mode commands followed immediately by an
@@ -171,6 +174,7 @@ def filter_exit(commands):
         count += 1
     return temp
 
+
 def main():
     """ main entry point for module execution
     """
@@ -195,9 +199,7 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    result = dict(changed=False, warnings=warnings)
 
     src = module.params['src']
     candidate = NetworkConfig(contents=src, indent=3)
@@ -213,8 +215,6 @@ def main():
         commands = [str(c).strip() for c in commands if c]
     else:
         commands = [c.strip() for c in str(candidate).split('\n')]
-
-    #commands = str(candidate).split('\n')
 
     if commands:
         commands = filter_exit(commands)
