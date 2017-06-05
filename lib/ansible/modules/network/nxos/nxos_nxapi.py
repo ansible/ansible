@@ -196,22 +196,32 @@ def map_obj_to_commands(want, have, module):
     return commands
 
 def parse_http(data):
-    match = re.search(r'HTTP Port:\s+(\d+)', data, re.M)
-    if match:
-        return {'http': True, 'http_port': int(match.group(1))}
-    else:
-        return {'http': False, 'http_port': None}
+    http_res = [r'HTTP Port:\s+(\d+)', r'HTTP Listen on port (\d+)']
+    http_port = None
+
+    for regex in http_res:
+        match = re.search(regex, data, re.M)
+        if match:
+            http_port = int(match.group(1))
+            break
+
+    return {'http': http_port is not None, 'http_port': http_port}
 
 def parse_https(data):
-    match = re.search(r'HTTPS Port:\s+(\d+)', data, re.M)
-    if match:
-        return {'https': True, 'https_port': int(match.group(1))}
-    else:
-        return {'https': False, 'https_port': None}
+    https_res = [r'HTTPS Port:\s+(\d+)', r'HTTPS Listen on port (\d+)']
+    https_port = None
+
+    for regex in https_res:
+        match = re.search(regex, data, re.M)
+        if match:
+            https_port = int(match.group(1))
+            break
+
+    return {'https': https_port is not None, 'https_port': https_port}
 
 def parse_sandbox(data):
     match = re.search(r'Sandbox:\s+(.+)$', data, re.M)
-    value = None
+    value = False
     if match:
         value = match.group(1) == 'Enabled'
     return {'sandbox': value}
