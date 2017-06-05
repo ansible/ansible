@@ -1,0 +1,111 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (c) 2013, Lukas Lalinsky <lalinsky@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: crontab
+short_description: Installs user crontabs from files or templates.
+description:
+  - The M(crontab) module uses a local file or template to install crontab
+    for a particular user.
+  - This is different from the M(cron) module, which maintains individual jobs
+    inside a crontab, while this module maintains the whole crontab.
+options:
+  user:
+    description:
+      - User whose crontab should be installed.
+    required: true
+    default: null
+  file:
+    description:
+      - File with the crontab's content.
+    required: false
+    default: null
+  template:
+    description:
+      - Jinja2-formatted template with the crontab's content.
+    required: false
+    default: null
+examples:
+  - code: "crontab: user=foo file=crontab"
+    description: Install crontab using a file
+  - code: "crontab: user=foo template=crontab.j2"
+    description: Install crontab using a template
+author: Lukas Lalinsky
+'''
+
+import base64
+import tempfile
+
+def get_crontab(module, user):
+    tmpfile = tempfile.NamedTemporaryFile()
+    cmd = "crontab -l -u %s > %s" % (user, tmpfile.name)
+    rc, out, err = module.run_command(cmd)
+    if rc != 0 and rc != 1:
+        module.fail_json(msg=err)
+    content = tmpfile.read()
+    tmpfile.close()
+    return content
+
+
+def install_crontab(module, user, content):
+    tmpfile = tempfile.NamedTemporaryFile()
+    tmpfile.write(content)
+    tmpfile.flush()
+    cmd = "crontab -u %s %s" % (user, tmpfile.name)
+    rc, out, err = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg=err)
+    tmpfile.close()
+
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            user = dict(default=None, required=True),
+            file = dict(default=None, required=True),
+            template = dict(default=None, required=False),
+            return_prev_content = dict(default=False, type='bool', required=False),
+        ),
+        supports_check_mode=True,
+    )
+
+    params = module.params
+    user = params['user']
+    file = params['file']
+
+    content = open(file).read()
+    prev_content = get_crontab(module, user)
+    if content == prev_content:
+        module.exit_json(changed=False)
+
+    if not module.check_mode:
+        install_crontab(module, user, content)
+    elif params.get('return_prev_content'):
+        module.exit_json(changed=True, prev_content=base64.b64encode(prev_content))
+
+    module.exit_json(changed=True)
+
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+
