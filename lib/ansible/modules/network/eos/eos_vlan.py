@@ -76,6 +76,7 @@ from ansible.module_utils.eos import eos_argument_spec, check_args
 
 import re
 
+
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
@@ -89,6 +90,7 @@ def map_obj_to_commands(updates, module):
             commands.append('name %s' % want['name'])
 
     return commands
+
 
 def map_config_to_obj(module):
     obj = {}
@@ -108,12 +110,14 @@ def map_config_to_obj(module):
 
     return obj
 
+
 def map_params_to_obj(module):
     return {
         'vlan_id': module.params['vlan_id'],
         'name': module.params['name'],
         'state': module.params['state']
     }
+
 
 def main():
     """ main entry point for module execution
@@ -124,8 +128,8 @@ def main():
         interfaces=dict(),
         collection=dict(),
         purge=dict(default=False, type='bool'),
-        state=dict(default='present', choices=['present', 'absent', 'active',
-            'suspend'])
+        state=dict(default='present',
+                   choices=['present', 'absent', 'active', 'suspend'])
     )
 
     argument_spec.update(eos_argument_spec)
