@@ -1,0 +1,270 @@
+#!/usr/bin/python
+
+DOCUMENTATION = '''
+---
+module: elasticache_group
+short_description: Maintain an ElastiCache cache security group
+description:
+    - Create or delete an ElastiCache cache security group.
+    - Authorize network ingress for EC2 security groups.
+    - Returns information about the specified ElastiCache cache security group.
+    - This module has a dependency on python-boto >= 2.5.
+version_added: "1.5"
+requirements: [ "boto" ]
+author: Anislav Atanasov
+options:
+  name:
+    description:
+      - The name for the cache security group. 
+    required: true
+  description:
+    description:
+      - The description for the cache security group.
+    required: true    
+  ec2_security_groups:
+    description:
+      - A list of the EC2 security group names to authorize network ingress for.
+    required: false   
+  state:
+    description:
+        - Create or delete ElastiCache cache security group.
+    choices: ['present', 'absent']
+    default: 'present'
+    required: false
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+    required: false
+    default: null
+    aliases: [ 'ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ 'ec2_access_key', 'access_key' ]
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    default: null
+    aliases: [ 'aws_region', 'ec2_region' ]
+'''
+
+EXAMPLES = '''
+# Note: None of these examples set aws_access_key, aws_secret_key, or region.
+# It is assumed that their matching environment variables are set.
+
+# Basic example
+- name: create ElastiCache cache security group
+  local_action:
+    module: elasticache_group 
+    name: basic-cache-group
+    description: Do not authorize any EC2 security groups
+
+# Advanced example with authorizing EC2 security groups
+- name: create ElastiCache cache security group
+  local_action:
+    module: elasticache_group 
+    name: advanced-cache-group
+    description: Authorize the EC2 security groups of application servers and workers
+    ec2_security_groups: '{{ hostvars[item].ec2_security_group_names }}'
+  with_items:
+    - "{{ groups['app_servers'][0] }}"
+    - "{{ groups['workers'][0] }}"  
+'''
+
+import sys
+import json
+
+try:
+    import boto.elasticache
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+
+class ElastiCacheGroupManager(object):
+    """Maintain an ElastiCache cache security group and authorize network ingress for EC2 security groups."""
+
+    def __init__(self, module, name, description, ec2_security_groups, aws_access_key, aws_secret_key, region):
+
+        self.module = module
+        self.name = name
+        self.description = description
+        self.ec2_security_groups = ec2_security_groups
+
+        self.aws_access_key = aws_access_key
+        self.aws_secret_key = aws_secret_key
+        self.region = region
+
+        self.changed = False
+        self.conn = self._get_connection()
+
+        self.data = self._describe()
+        self.exists = self.data is not None
+
+    def _get_connection(self):
+        """Get an ElastiCache connection"""
+        try:
+            conn = boto.elasticache.connect_to_region(self.region,
+                                                      aws_access_key_id=self.aws_access_key,
+                                                      aws_secret_access_key=self.aws_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            self.module.fail_json(msg=e.error_message)
+
+        return conn
+
+    def _describe(self):
+        """Retrieve data about ElastiCache cache security group"""
+        try:
+            response = self.conn.describe_cache_security_groups(cache_security_group_name=self.name)
+        except boto.exception.BotoServerError:
+            return None
+
+        return response['DescribeCacheSecurityGroupsResponse']['DescribeCacheSecurityGroupsResult']['CacheSecurityGroups'][0]
+
+    def ensure_present(self):
+        """Ensure cache security group exists or create it if not"""
+        if self.exists:
+            self.sync()
+        else:
+            self.create()
+
+    def ensure_absent(self):
+        """Ensure cache security group is not presented or delete it if not"""
+        if self.exists:
+            self.delete()
+
+    def sync(self):
+        """Add EC2 security groups ingress if required"""
+
+        if self.ec2_security_groups:
+            if self.data['EC2SecurityGroups'] is None:
+                for group_name in self.ec2_security_groups:
+                    self._authorize_group(group_name)
+            else:
+                for group_name in self.ec2_security_groups:
+                    existing_group_data = self._get_group_data(group_name)
+
+                    if existing_group_data is None:
+                        self._authorize_group(group_name)
+
+                    # Valid status values: authorizing | authorized | revoking
+                    elif existing_group_data['Status'] == 'revoking':
+                        self._wait_group_revoking(group_name)
+                        self._authorize_group(group_name)
+
+    def _get_group_data(self, group_name):
+        """Retrieve data for a given EC2 security group"""
+        group_data = next((group_data for group_data in self.data['EC2SecurityGroups']
+                           if group_data['EC2SecurityGroupName'] == group_name),
+                          None)
+        return group_data
+
+    def _authorize_group(self, group_name):
+        """Authorize network ingress for a given EC2 security group"""
+        try:
+            self.conn.authorize_cache_security_group_ingress(cache_security_group_name=self.name,
+                                                            ec2_security_group_name=group_name,
+                                                            ec2_security_group_owner_id=self.data['OwnerId'])
+            self.changed = True
+        except boto.exception.BotoServerError, e:
+            if e.message:
+                error_message = json.loads(e.message)
+                if error_message['Error']['Code'] == 'AuthorizationAlreadyExists':
+                    return
+
+            self.module.fail_json(msg=e.message)
+
+    def _wait_group_revoking(self, group_name):
+        """Wait until the network ingress or a given EC2 security group is revoked"""
+        while True:
+            time.sleep(1)
+            self.data = self._describe()
+
+            if self.data['EC2SecurityGroups'] is None:
+                break
+            else:
+                group_data = self._get_group_data(group_name)
+                if group_data is None:
+                    break
+
+    def create(self):
+        """Create an ElastiCache cache security group"""
+        try:
+            response = self.conn.create_cache_security_group(cache_security_group_name=self.name,
+                                                             description=self.description)
+        except boto.exception.BotoServerError, e:
+            self.module.fail_json(msg=e.message)
+        else:
+            self.changed = True
+
+        self.data = response['CreateCacheSecurityGroupResponse']['CreateCacheSecurityGroupResult']['CacheSecurityGroup']
+        self.sync()
+
+    def delete(self):
+        """Delete an ElastiCache cache security group"""
+        try:
+            response = self.conn.delete_cache_security_group(cache_security_group_name=self.name)
+        except boto.exception.BotoServerError, e:
+            self.module.fail_json(msg=e.message)
+
+        self.data = response['DeleteCacheSecurityGroupResponse']['ResponseMetadata']
+        self.changed = True
+
+    def get_info(self):
+        """Return basic info about the ElastiCache cache security group"""
+        info = {
+            'name': self.name,
+        }
+
+        if self.data:
+            info['data'] = self.data
+
+        return info
+
+def main():
+
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+            name=dict(required=True),
+            description=dict(required=True),
+            ec2_security_groups=dict(required=False, type='list'),
+            state=dict(default='present', choices=['present', 'absent']),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
+
+    _, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+
+    if not region:
+        module.fail_json(msg=str("Either region or EC2_REGION environment variable must be set."))
+
+    name = module.params['name']
+    description = module.params['description']
+    state = module.params.get('state')
+    ec2_security_groups = module.params.get('ec2_security_groups')
+
+    group_manager = ElastiCacheGroupManager(module, name, description, ec2_security_groups,
+                                            aws_access_key, aws_secret_key, region)
+
+    if state == 'present':
+        group_manager.ensure_present()
+    elif state == 'absent':
+        group_manager.ensure_absent()
+
+    facts_result = dict(changed=group_manager.changed,
+                        elasticache=group_manager.get_info())
+
+    module.exit_json(**facts_result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
