@@ -459,7 +459,9 @@ def main():
 
                 # -p is a virtualenv option, not compatible with pyenv, therefore, this if validates
                 # the type of command, whether it is pyenv or not
-                if 'pyvenv' not in module.params['virtualenv_command']:
+                if ('pyvenv' not in module.params['virtualenv_command']):
+                    if ('venv' in module.params['virtualenv_command'] and module.params['virtualenv_python']):
+                        module.fail_json(msg='redundant specification of the interpreter, -p option is not supported by the venv module')
                     if virtualenv_python:
                         cmd += ' -p%s' % virtualenv_python
                     elif PY3:
