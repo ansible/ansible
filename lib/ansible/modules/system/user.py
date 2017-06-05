@@ -297,9 +297,10 @@ class User(object):
 
         if module.params['expires']:
             try:
-                self.expires = time.gmtime(module.params['expires'])
-            except Exception as e:
-                module.fail_json(msg="Invalid expires time %s: %s" % (self.expires, to_native(e)))
+                self.expires = time.gmtime((module.params['expires']//86400) * 86400)
+            except Exception:
+                e = get_exception()
+                module.fail_json(msg="Invalid expires time %s: %s" %(self.expires, str(e)))
 
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
@@ -516,8 +517,13 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
+<<<<<<< HEAD
         if self.expires:
             cmd.append('-e')
+=======
+        if self.expires is not None and info[7] != self.expires:
+            cmd.append('--expiredate')
+>>>>>>> Fix #13235
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
@@ -597,6 +603,7 @@ class User(object):
         info = self.get_pwd_info()
         if len(info[1]) == 1 or len(info[1]) == 0:
             info[1] = self.user_password()
+        info.append( time.gmtime(self.user_expire()*86400) )
         return info
 
     def user_password(self):
@@ -615,6 +622,23 @@ class User(object):
                     if line.startswith('%s:' % self.name):
                         passwd = line.split(':')[1]
         return passwd
+
+    def user_expire(self):
+        expire = ''
+        if HAVE_SPWD:
+            try:
+                expire = spwd.getspnam(self.name)[7]
+            except KeyError:
+                return expire
+        if not self.user_exists():
+            return expire
+        elif self.SHADOWFILE:
+            # Read shadow file for user's expiry time
+            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+                for line in open(self.SHADOWFILE).readlines():
+                    if line.startswith('%s:' % self.name):
+                        passwd = line.split(':')[7]
+        return expire
 
     def get_ssh_key_path(self):
         info = self.user_info()
