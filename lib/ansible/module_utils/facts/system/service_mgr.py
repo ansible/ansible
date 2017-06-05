@@ -39,7 +39,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
     name = 'service_mgr'
     _fact_ids = set()
 
-    def is_systemd_managed(self, module):
+    @staticmethod
+    def is_systemd_managed(module):
         # tools must be installed
         if module.get_bin_path('systemctl'):
 

@@ -53,7 +53,7 @@ from distutils.version import LooseVersion
 
 # import module snippets
 from ansible.module_utils.basic import *
-from ansible.module_utils.facts import *
+from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils._text import to_bytes, to_native
 
 
@@ -112,7 +112,7 @@ class Hostname(object):
     def __init__(self, module):
         self.module       = module
         self.name         = module.params['name']
-        if self.platform == 'Linux' and Facts(module).is_systemd_managed():
+        if self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
             self.strategy = SystemdStrategy(module)
         else:
             self.strategy = self.strategy_class(module)
