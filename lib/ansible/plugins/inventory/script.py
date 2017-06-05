@@ -120,29 +120,29 @@ class InventoryModule(BaseInventoryPlugin):
 
             group = None
             data_from_meta = None
+
+            # A "_meta" subelement may contain a variable "hostvars" which contains a hash for each host
+            # if this "hostvars" exists at all then do not call --host for each # host.
+            # This is for efficiency and scripts should still return data
+            # if called with --host for backwards compat with 1.2 and earlier.
             for (group, gdata) in processed.items():
                 if group == '_meta':
-                    if 'hostvars' in processed:
-                        data_from_meta = processed['hostvars']
+                    if 'hostvars' in gdata:
+                        data_from_meta = gdata['hostvars']
                 else:
                     self._parse_group(group, gdata)
 
-            # in Ansible 1.3 and later, a "_meta" subelement may contain
-            # a variable "hostvars" which contains a hash for each host
-            # if this "hostvars" exists at all then do not call --host for each
-            # host.  This is for efficiency and scripts should still return data
-            # if called with --host for backwards compat with 1.2 and earlier.
             for host in self._hosts:
                 got = {}
                 if data_from_meta is None:
                     got = self.get_host_variables(path, host)
                 else:
                     try:
-                        got = processed.get(host, {})
+                        got = data_from_meta.get(host, {})
                     except AttributeError as e:
                         raise AnsibleError("Improperly formatted host information for %s: %s" % (host, to_native(e)))
 
-                    self.populate_host_vars(host, got, group)
+                self.populate_host_vars([host], got)
 
         except Exception as e:
             raise AnsibleParserError(to_native(e))
@@ -172,7 +172,7 @@ class InventoryModule(BaseInventoryPlugin):
             for k, v in iteritems(data['vars']):
                 self.inventory.set_variable(group, k, v)
 
-        if group != 'meta' and isinstance(data, dict) and 'children' in data:
+        if group != '_meta' and isinstance(data, dict) and 'children' in data:
             for child_name in data['children']:
                 self.inventory.add_group(child_name)
                 self.inventory.add_child(group, child_name)

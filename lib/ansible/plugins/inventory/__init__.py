@@ -73,7 +73,7 @@ class BaseInventoryPlugin(object):
     def clear_cache(self):
         pass
 
-    def populate_host_vars(self, hosts, variables, group, port=None):
+    def populate_host_vars(self, hosts, variables, group=None, port=None):
 
         if hosts:
             for host in hosts:
