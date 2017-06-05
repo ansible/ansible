@@ -230,7 +230,7 @@ In addition to positive testing, negative tests are required to ensure user frie
        gather_subset:
          - "foobar"
      register: result
-     ignore_errors: true
+     ignore_errors: True
 
    - assert:
        that:
