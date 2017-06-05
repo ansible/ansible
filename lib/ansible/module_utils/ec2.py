@@ -102,6 +102,12 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
 
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
+    # if params are inherited from get_aws_connection_info(),
+    # they are already set
+    if params['aws_session_token'] is None:
+        params['aws_session_token'] = params.pop('security_token', None)
+    if params['verify'] is None:
+        params['verify'] = params.pop('validate_certs', None)
 
     if conn_type not in ['both', 'resource', 'client']:
         raise ValueError('There is an issue in the calling code. You '
