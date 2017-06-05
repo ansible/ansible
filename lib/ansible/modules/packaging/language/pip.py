@@ -457,11 +457,9 @@ def main():
                     if '--no-site-packages' in cmd_opts:
                         cmd += ' --no-site-packages'
 
-                # -p is a virtualenv option, not compatible with pyenv, therefore, this if validates
-                # the type of command, whether it is pyenv or not
-                if ('pyvenv' not in module.params['virtualenv_command']):
-                    if ('-m venv' in module.params['virtualenv_command'] and module.params['virtualenv_python']):
-                        module.fail_json(msg='redundant specification of the interpreter, -p option is not supported by the venv module')
+                # -p is a virtualenv option, not compatible with pyenv or venv
+                # this if validates if the command being used is not any of them 
+                if not any([ex in module.params['virtualenv_command'] for ex in ['pyvenv', '-m venv'])):
                     if virtualenv_python:
                         cmd += ' -p%s' % virtualenv_python
                     elif PY3:
