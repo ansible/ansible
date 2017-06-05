@@ -22,7 +22,7 @@
 - include: formats.yml
 - include: missing_hostkey.yml
 - include: no-destination.yml
-#- include: specific-revision.yml
+- include: specific-revision.yml
 - include: submodules.yml
 - include: change-repo-url.yml
 - include: depth.yml
