@@ -160,7 +160,7 @@ import os
 import re
 import tempfile
 
-from ansible.module_utils._text import to_native, to_bytes
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -168,7 +168,7 @@ def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd,'wb')
-    f.write(to_bytes(contents))
+    f.write(contents)
     f.close()
 
     validate = module.params.get('validate', None)
@@ -208,6 +208,7 @@ def main():
             before=dict(required=False),
             backup=dict(default=False, type='bool'),
             validate=dict(default=None, type='str'),
+            encoding=dict(default='utf-8', type='str'),
         ),
         add_file_common_args=True,
         supports_check_mode=True
@@ -224,11 +225,7 @@ def main():
         module.fail_json(rc=257, msg='Path %s does not exist !' % path)
     else:
         f = open(path, 'rb')
-        data = f.read()
-        try:
-            contents = to_native(data, errors='surrogate_or_strict')
-        except:
-            contents = bytes(data)
+        contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
         f.close()
 
     pattern = ''
@@ -273,7 +270,7 @@ def main():
             res_args['backup_file'] = module.backup_local(path)
         if params['follow'] and os.path.islink(path):
             path = os.path.realpath(path)
-        write_changes(module, result[0], path)
+        write_changes(module, to_bytes(result[0], encoding=encoding), path)
 
     res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
     module.exit_json(**res_args)
