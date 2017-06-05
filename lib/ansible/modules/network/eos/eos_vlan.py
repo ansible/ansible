@@ -29,7 +29,7 @@ DOCUMENTATION = """
 module: eos_vlan
 version_added: "2.4"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Manage VLANs on network devices
+short_description: Manage VLANs on Arista EOS network devices
 description:
   - This module provides declarative management of VLANs
     on Arista EOS network devices.
@@ -67,8 +67,8 @@ commands:
   returned: always
   type: list
   sample:
-    - hostname ios01
-    - ip domain name test.example.com
+    - vlan 20
+    - name test-vlan
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import load_config, run_commands
