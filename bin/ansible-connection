@@ -117,9 +117,11 @@ class Server():
         self.path = path
         self.play_context = play_context
 
+        port = play_context.port or 22
+
         display.display(
             'creating new control socket for host %s:%s as user %s' %
-            (play_context.remote_addr, play_context.port, play_context.remote_user),
+            (play_context.remote_addr, port, play_context.remote_user),
             log_only=True
         )
 
@@ -317,7 +319,8 @@ def main():
                 server.run()
             sys.exit(rc)
     else:
-        display.display('re-using existing socket for %s@%s:%s' % (pc.remote_user, pc.remote_addr, pc.port), log_only=True)
+        port = pc.port or 22
+        display.display('re-using existing socket for %s@%s:%s' % (pc.remote_user, pc.remote_addr, port), log_only=True)
     fcntl.lockf(lock_fd, fcntl.LOCK_UN)
     os.close(lock_fd)
 
