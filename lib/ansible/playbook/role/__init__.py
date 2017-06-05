@@ -422,7 +422,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         return block_list
 
-    def serialize(self, include_deps=True):
+    def serialize(self, include_deps=True, already_included_roles=[]):
         res = super(Role, self).serialize()
 
         res['_role_name'] = self._role_name
@@ -444,7 +444,10 @@ class Role(Base, Become, Conditional, Taggable):
 
         parents = []
         for parent in self._parents:
-            parents.append(parent.serialize(include_deps=False))
+            if parent.get_name() not in already_included_roles:
+                already_included_roles.append(parent.get_name())
+                parents.append(parent.serialize(include_deps=False, already_included_roles=already_included_roles))
+
         res['_parents'] = parents
 
         return res
