@@ -16,12 +16,14 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'core'
+}
 
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
 module: nxos_system
 extends_documentation_fragment: nxos
@@ -75,9 +77,9 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
-"""
+'''
 
-EXAMPLES = """
+EXAMPLES = '''
 - name: configure hostname and domain-name
   nxos_system:
     hostname: nxos01
@@ -102,17 +104,17 @@ EXAMPLES = """
     name_servers:
       - { server: 8.8.8.8, vrf: mgmt }
       - { server: 8.8.4.4, vrf: mgmt }
-"""
+'''
 
-RETURN = """
+RETURN = '''
 commands:
   description: The list of configuration mode commands to send to the device
   returned: always
   type: list
-  sample:
-    - hostname nxos01
-    - ip domain-name test.example.com
-"""
+  sample: ["hostname nxos01", "ip domain-name test.example.com"]
+'''
+
+
 import re
 
 from ansible.module_utils.nxos import get_config, load_config
@@ -122,6 +124,8 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.network_common import ComplexList
 
+
+
 _CONFIGURED_VRFS = None
 
 def has_vrf(module, vrf):
@@ -129,7 +133,7 @@ def has_vrf(module, vrf):
     if _CONFIGURED_VRFS is not None:
         return vrf in _CONFIGURED_VRFS
     config = get_config(module)
-    _CONFIGURED_VRFS = re.findall('vrf context (\S+)', config)
+    _CONFIGURED_VRFS = re.findall(r'vrf context (\S+)', config)
     return vrf in _CONFIGURED_VRFS
 
 def map_obj_to_commands(want, have, module):
@@ -211,13 +215,13 @@ def map_obj_to_commands(want, have, module):
     return commands
 
 def parse_hostname(config):
-    match = re.search('^hostname (\S+)', config, re.M)
+    match = re.search(r'^hostname (\S+)', config, re.M)
     if match:
         return match.group(1)
 
 def parse_domain_name(config, vrf_config):
     objects = list()
-    regex = re.compile('ip domain-name (\S+)')
+    regex = re.compile(r'ip domain-name (\S+)')
 
     match = regex.search(config, re.M)
     if match:
@@ -233,11 +237,11 @@ def parse_domain_name(config, vrf_config):
 def parse_domain_search(config, vrf_config):
     objects = list()
 
-    for item in re.findall('^ip domain-list (\S+)', config, re.M):
+    for item in re.findall(r'^ip domain-list (\S+)', config, re.M):
         objects.append({'name': item, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
-        for item in re.findall('ip domain-list (\S+)', cfg, re.M):
+        for item in re.findall(r'ip domain-list (\S+)', cfg, re.M):
             objects.append({'name': item, 'vrf': vrf})
 
     return objects
@@ -245,20 +249,20 @@ def parse_domain_search(config, vrf_config):
 def parse_name_servers(config, vrf_config):
     objects = list()
 
-    match = re.search('^ip name-server (.+)$', config, re.M)
+    match = re.search(r'^ip name-server (.+)$', config, re.M)
     if match:
         for addr in match.group(1).split(' '):
             objects.append({'server': addr, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
-        for item in re.findall('ip name-server (\S+)', cfg, re.M):
+        for item in re.findall(r'ip name-server (\S+)', cfg, re.M):
             for addr in match.group(1).split(' '):
                 objects.append({'server': addr, 'vrf': vrf})
 
     return objects
 
 def parse_system_mtu(config):
-    match = re.search('^system jumbomtu (\d+)', config, re.M)
+    match = re.search(r'^system jumbomtu (\d+)', config, re.M)
     if match:
         return int(match.group(1))
 
@@ -268,7 +272,7 @@ def map_config_to_obj(module):
 
     vrf_config = {}
 
-    vrfs = re.findall('^vrf context (\S+)$', config, re.M)
+    vrfs = re.findall(r'^vrf context (\S+)$', config, re.M)
     for vrf in vrfs:
         config_data = configobj.get_block_config(path=['vrf context %s' % vrf])
         vrf_config[vrf] = config_data
@@ -318,23 +322,13 @@ def map_params_to_obj(module):
     return obj
 
 def main():
-    """ main entry point for module execution
-    """
     argument_spec = dict(
         hostname=dict(),
         domain_lookup=dict(type='bool'),
-
-        # { name: <str>, vrf: <str> }
         domain_name=dict(type='list'),
-
-        # {name: <str>, vrf: <str> }
         domain_search=dict(type='list'),
-
-        # { server: <str>; vrf: <str> }
         name_servers=dict(type='list'),
-
         system_mtu=dict(type='int'),
-
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -346,9 +340,7 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    result = dict(changed=False, warnings=warnings)
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
