@@ -1,0 +1,182 @@
+# Copyright 2016 Red Hat | Ansible
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+import os
+
+from ansible.errors import AnsibleError
+from ansible.plugins.action import ActionBase
+from ansible.utils.hashing import checksum
+from ansible.utils.unicode import to_bytes, to_str
+
+
+class ActionModule(ActionBase):
+
+    def run(self, tmp=None, task_vars=None):
+        ''' handler for file transfer operations '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
+
+        source  = self._task.args.get('project_src', None)
+        dest    = self._task.args.get('dest', None)
+        raw     = False
+        force   = True
+        follow  = True
+
+        if source and dest:
+
+            # Check if the source ends with a "/"
+            source_trailing_slash = False
+            if source:
+                source_trailing_slash = self._connection._shell.path_has_trailing_slash(source)
+
+            try:
+                source = self._find_needle('files', source)
+            except AnsibleError as e:
+                result['failed'] = True
+                result['msg'] = to_str(e)
+                return result
+
+            # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
+            source_files = []
+
+            # If source is a directory populate our list else source is a file and translate it to a tuple.
+            if os.path.isdir(to_bytes(source, errors='strict')):
+                # Get the amount of spaces to remove to get the relative path.
+                if source_trailing_slash:
+                    sz = len(source)
+                else:
+                    sz = len(source.rsplit('/', 1)[0]) + 1
+
+                # Walk the directory and append the file tuples to source_files.
+                for base_path, sub_folders, files in os.walk(source):
+                    for file in files:
+                        full_path = os.path.join(base_path, file)
+                        rel_path = full_path[sz:]
+                        if rel_path.startswith('/'):
+                            rel_path = rel_path[1:]
+                        if rel_path.startswith(os.path.basename(source) + '/'):
+                            rel_path = rel_path.replace(os.path.basename(source) + '/', '', 1)
+                        source_files.append((full_path, rel_path))
+
+                # If it's recursive copy, destination is always a dir,
+                # explicitly mark it so (note - copy module relies on this).
+                if not self._connection._shell.path_has_trailing_slash(dest):
+                    dest = self._connection._shell.join_path(dest, '')
+            else:
+                source_files.append((source, os.path.basename(source)))
+
+            changed = False
+            module_return = dict(changed=False)
+            remote_user = self._play_context.remote_user
+
+            # If this is a recursive action create a tmp path that we can share as the _exec_module create is too late.
+            if tmp is None or "-tmp-" not in tmp:
+                tmp = self._make_tmp_path(remote_user)
+                self._cleanup_remote_tmp = True
+
+            # expand any user home dir specifier
+            dest = self._remote_expand_user(dest)
+
+            diffs = []
+            for source_full, source_rel in source_files:
+
+                source_full = self._loader.get_real_file(source_full)
+
+                # Generate a hash of the local file.
+                local_checksum = checksum(source_full)
+
+                # If local_checksum is not defined we can't find the file so we should fail out.
+                if local_checksum is None:
+                    result['failed'] = True
+                    result['msg'] = "could not find src=%s" % source_full
+                    self._remove_tmp_path(tmp)
+                    return result
+
+                # This is kind of optimization - if user told us destination is
+                # dir, do path manipulation right away, otherwise we still check
+                # for dest being a dir via remote call below.
+                if self._connection._shell.path_has_trailing_slash(dest):
+                    dest_file = self._connection._shell.join_path(dest, source_rel)
+                else:
+                    dest_file = self._connection._shell.join_path(dest)
+
+                # Attempt to get remote file info
+                dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
+
+                if dest_status['exists'] and dest_status['isdir']:
+                    # The dest is a directory.
+                    # Append the relative source location to the destination and get remote stats again
+                    dest_file = self._connection._shell.join_path(dest, source_rel)
+                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
+
+                if dest_status['exists'] and not force:
+                    # remote_file does not exist so continue to next iteration.
+                    continue
+
+                if local_checksum != dest_status['checksum']:
+                    # The checksums don't match and we will change or error out.
+                    changed = True
+
+                    if self._play_context.diff and not raw:
+                        diffs.append(self._get_diff_data(dest_file, source_full, task_vars))
+
+                    if self._play_context.check_mode:
+                        changed = True
+                        module_return = dict(changed=True)
+                        continue
+
+                    # Define a remote directory that we will copy the file to.
+                    tmp_src = self._connection._shell.join_path(tmp, 'source')
+
+                    if not raw:
+                        self._transfer_file(source_full, tmp_src)
+                    else:
+                        self._transfer_file(source_full, dest_file)
+
+                    # fix file permissions when the copy is done as a different user
+                    self._fixup_perms(tmp_src, remote_user, recursive=True)
+
+                    if raw:
+                        # Continue to next iteration if raw is defined.
+                        continue
+
+                    # Run the copy module
+
+                    # src and dest here come after original and override them
+                    # we pass dest only to make sure it includes trailing slash in case of recursive copy
+                    # new_module_args = self._task.args.copy()
+                    new_module_args = dict(
+                        src=tmp_src,
+                        dest=dest,
+                        original_basename=source_rel,
+                    )
+                    self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False)
+
+            module_return['changed'] = changed
+            self._task.args['project_src'] = self._task.args.pop('dest')
+
+        module_return = self._execute_module(module_name='docker_service', module_args=self._task.args, task_vars=task_vars)
+
+        result.update(module_return)
+        self._remove_tmp_path(tmp)
+        return result
