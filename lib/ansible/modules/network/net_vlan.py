@@ -37,9 +37,6 @@ options:
   name:
     description:
       - Name of the VLAN.
-  description:
-    description:
-      - Description for the VLAN.
   vlan_id:
     description:
       - ID of the VLAN.
@@ -60,28 +57,20 @@ options:
 """
 
 EXAMPLES = """
-- name: configure hostname and domain name
-  net_system:
-    hostname: ios01
-    domain_name: test.example.com
-    domain-search:
-      - ansible.com
-      - redhat.com
-      - cisco.com
+- name: configure VLAN ID and name
+  net_vlan:
+    vlan_id: 20
+    name: test-vlan
 
 - name: remove configuration
-  net_system:
+  net_vlan:
     state: absent
 
-- name: configure DNS lookup sources
-  net_system:
-    lookup_source: MgmtEth0/0/CPU0/0
+- name: configure VLAN state
+  net_vlan:
+    vlan_id:
+    state: suspend
 
-- name: configure name servers
-  net_system:
-    name_servers:
-      - 8.8.8.8
-      - 8.8.4.4
 """
 
 RETURN = """
@@ -90,6 +79,6 @@ commands:
   returned: always
   type: list
   sample:
-    - hostname ios01
-    - ip domain name test.example.com
+    - vlan 20
+    - name test-vlan
 """
