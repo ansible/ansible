@@ -51,7 +51,7 @@ options:
     default: no
   state:
     description:
-      - State of the VLAN configuration. 
+      - State of the VLAN configuration.
     default: present
     choices: ['present', 'absent', 'active', 'suspend']
 """
