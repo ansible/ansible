@@ -314,6 +314,11 @@ class Ec2Inventory(object):
         if config.has_option('ec2', 'elasticache'):
             self.elasticache_enabled = config.getboolean('ec2', 'elasticache')
 
+        # Combine with Autoscaling groups tags?
+        self.autoscaling_enabled = False
+        if config.has_option('ec2', 'autoscaling'):
+            self.autoscaling_enabled = config.getboolean('ec2', 'autoscaling')
+
         # Return all EC2 instances?
         if config.has_option('ec2', 'all_instances'):
             self.all_instances = config.getboolean('ec2', 'all_instances')
@@ -530,6 +535,8 @@ class Ec2Inventory(object):
                 self.get_elasticache_replication_groups_by_region(region)
             if self.include_rds_clusters:
                 self.include_rds_clusters_by_region(region)
+            if self.autoscaling_enabled:
+                self.get_autoscaling_instances_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
@@ -788,6 +795,51 @@ class Ec2Inventory(object):
 
         for replication_group in replication_groups:
             self.add_elasticache_replication_group(replication_group, region)
+
+    def get_autoscaling_instances_by_region(self, region):
+        ''' Makes an AWS API call to the list of Autoscale instances
+         in a particular region with tags of their Autoscale group
+         if the "propagate_at_launch" is set '''
+
+        try:
+            conn_autoscale = self.connect_to_aws(autoscale, region)
+            conn_ec2 = self.connect_to_aws(ec2, region)
+            if conn_autoscale and conn_ec2:
+                reservations = []
+                autoscale_groups = conn_autoscale.get_all_groups()
+                for autoscale_group in autoscale_groups:
+                    if autoscale_group.name:
+                        tags = {}
+                        for tag in autoscale_group.tags:
+                            if tag.propagate_at_launch:
+                                tags[tag.key] = tag.value
+
+                        for autoscale_group_instance in autoscale_group.instances:
+
+                            if self.ec2_instance_filters:
+                                for filter_key, filter_values in self.ec2_instance_filters.items():
+                                    reservations.extend(conn_ec2.get_all_instances(
+                                        filters = {
+                                            filter_key : filter_values,
+                                            'instance-id': [ autoscale_group_instance.instance_id ]
+                                        }
+                                    ))
+                            else:
+                                reservations = conn_ec2.get_all_instances(
+                                    filters = { 'instance-id': [ autoscale_group_instance.instance_id ] })
+
+                            for reservation in reservations:
+                                for reservation_instance in reservation.instances:
+                                    reservation_instance.tags = tags
+                                    self.add_instance(reservation_instance, region)
+
+        except boto.exception.BotoServerError as e:
+            if e.error_code == 'AuthFailure':
+                error = self.get_auth_error_message()
+            else:
+                backend = 'Eucalyptus' if self.eucalyptus else 'AWS'
+                error = "Error connecting to %s backend.\n%s" % (backend, e.message)
+            self.fail_with_error(error, 'getting Autoscaling Group instances')
 
     def get_auth_error_message(self):
         ''' create an informative error message if there is an issue authenticating'''
