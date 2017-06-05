@@ -217,7 +217,10 @@ options:
     default_origin_domain_name:
       description:
         - The domain name to use for an origin if no C(origins)
-          have been specified.
+          have been specified. Should only be used on a first run of generating
+          a distribution and not on subsequent runs. Should not be used in
+          conjunction with C(distribution_id), C(caller_reference) or
+          C(alias).
           Used with C(streaming_distribution=no)
       required: false
 
@@ -251,6 +254,10 @@ options:
         - The domain name of an s3 bucket to use for a streaming distribution.
           Required as a minimum if no other parameters are specified. Can be
           used in place of specifying C(s3_origin).
+          This parameter should only be used on a first run of generating
+          a distribution and not on subsequent runs. Should not be used in
+          conjunction with C(distribution_id), C(caller_reference) or
+          C(alias).
           Used with C(streaming_distribution=yes)
       required: false
 
