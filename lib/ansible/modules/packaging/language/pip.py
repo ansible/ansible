@@ -472,7 +472,7 @@ def main():
                         # virtualenv to determine which python is used inside of
                         # the virtualenv (when none are specified).
                         cmd += ' -p%s' % sys.executable
-                
+
                 # if venv or pyvenv are used and virtualenv_python is defined, then
                 # virtualenv_python is ignored, this has to be acknowledged
                 elif module.params['virtualenv_python']:
