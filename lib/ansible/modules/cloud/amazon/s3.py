@@ -555,7 +555,11 @@ def main():
     # otherwise the connection will fail. See https://github.com/boto/boto/issues/2836
     # for more details.
     if '.' in bucket:
-        aws_connect_kwargs['calling_format'] = OrdinaryCallingFormat()
+        # don't set OrdinaryCallingFormat for fakes3 or rgw since it is used by default
+        if s3_url and (rgw or is_fakes3(s3_url)):
+            pass
+        else:
+            aws_connect_kwargs['calling_format'] = OrdinaryCallingFormat()
 
     # Look at s3_url and tweak connection settings
     # if connecting to RGW, Walrus or fakes3
