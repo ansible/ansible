@@ -297,7 +297,7 @@ class User(object):
 
         if module.params['expires']:
             try:
-                self.expires = time.gmtime(module.params['expires']//86400*86400)
+                self.expires = time.gmtime((module.params['expires']//86400) * 86400)
             except Exception:
                 e = get_exception()
                 module.fail_json(msg="Invalid expires time %s: %s" %(self.expires, str(e)))
@@ -518,8 +518,7 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires is not None and info[7] != self.expires:
-            #cmd.append('--expiredate') # SLES11 usermod does not know --expiredate
-            cmd.append('-e')
+            cmd.append('--expiredate')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
@@ -599,11 +598,7 @@ class User(object):
         info = self.get_pwd_info()
         if len(info[1]) == 1 or len(info[1]) == 0:
             info[1] = self.user_password()
-        expire = self.user_expire()
-        if expire is not None and len(expire)>0:
-            info.append( time.gmtime(float(expire)*86400) )
-        else:
-            info.append( None )
+        info.append( time.gmtime(self.user_expire()*86400) )
         return info
 
     def user_password(self):
@@ -624,7 +619,7 @@ class User(object):
         return passwd
 
     def user_expire(self):
-        expire = None
+        expire = ''
         if HAVE_SPWD:
             try:
                 expire = spwd.getspnam(self.name)[7]
@@ -637,7 +632,7 @@ class User(object):
             if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
                 for line in open(self.SHADOWFILE).readlines():
                     if line.startswith('%s:' % self.name):
-                        expire = line.split(':')[7]
+                        passwd = line.split(':')[7]
         return expire
 
     def get_ssh_key_path(self):
