@@ -82,12 +82,26 @@ def map_obj_to_commands(updates, module):
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' and have:
-        commands.append('no vlan %s' % str(module.params['vlan_id']))
+    if state == 'absent':
+        if have:
+            commands.append('no vlan %s' % want['vlan_id'])
     elif state == 'present':
         if not have or want['name'] != have['name']:
-            commands.append('vlan %s' % str(want['vlan_id']))
+            commands.append('vlan %s' % want['vlan_id'])
             commands.append('name %s' % want['name'])
+    else:
+        if not have:
+            commands.append('vlan %s' % want['vlan_id'])
+            commands.append('name %s' % want['name'])
+            commands.append('state %s' % want['state'])
+        elif have['name'] != want['name'] or have['state'] != want['state']:
+            commands.append('vlan %s' % want['vlan_id'])
+
+            if have['name'] != want['name']:
+                commands.append('name %s' % want['name'])
+
+            if have['state'] != want['state']:
+                commands.append('state %s' % want['state'])
 
     return commands
 
@@ -105,7 +119,9 @@ def map_config_to_obj(module):
         if vlan_id == str(module.params['vlan_id']):
             obj['vlan_id'] = vlan_id
             obj['name'] = name
-            obj['status'] = status
+            obj['state'] = status
+            if obj['state'] == 'suspended':
+                obj['state'] = 'suspend'
             break
 
     return obj
@@ -113,7 +129,7 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     return {
-        'vlan_id': module.params['vlan_id'],
+        'vlan_id': str(module.params['vlan_id']),
         'name': module.params['name'],
         'state': module.params['state']
     }
