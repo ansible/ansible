@@ -69,6 +69,14 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if connect_timeout is not None:
         config['connect_timeout'] = connect_timeout
 
+    # If config['ssl'] is still empty at this point then a ssl connection is not
+    # being requested. We remove config['ssl'] because passing the 'ssl' argument to
+    # MySQLdb, even if empty, will still make MySQLdb attempt to initiate a SSL connection
+    # (as per documentation). In the rare case that MySQL SSL support is disabled on
+    # the server this will raise an exception.
+    if 'ssl' in config and not config['ssl']:
+        del config['ssl']
+
     db_connection = MySQLdb.connect(**config)
     if cursor_class is not None:
         return db_connection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
