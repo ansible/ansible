@@ -46,6 +46,10 @@ options:
             - Limit results to a resource group. Required when filtering by name.
         required: false
         default: null
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -125,6 +129,8 @@ class AzureRMStorageAccountFacts(AzureRMModuleBase):
         self.module_arg_spec = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
+            resource=dict(type='str', default=None),
+            storage_endpoint_suffix=dict(type='str', default=None),
             tags=dict(type='list'),
         )
 

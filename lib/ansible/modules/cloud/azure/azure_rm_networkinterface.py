@@ -43,6 +43,10 @@ options:
         description:
             - Name of a resource group where the network interface exists or will be created.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     name:
         description:
             - Name of the network interface.
@@ -307,6 +311,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
             open_ports=dict(type='list'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
+            resource=dict(type='str', default=None)
         )
 
         self.resource_group = None

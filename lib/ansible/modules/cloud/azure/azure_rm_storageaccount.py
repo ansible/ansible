@@ -37,6 +37,10 @@ options:
         description:
             - Name of the resource group to use.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     name:
         description:
             - Name of the storage account to update or create.
@@ -179,7 +183,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             state=dict(default='present', choices=['present', 'absent']),
             force=dict(type='bool', default=False),
             tags=dict(type='dict'),
-            kind=dict(type='str', default='Storage', choices=['Storage', 'BlobStorage'])
+            kind=dict(type='str', default='Storage', choices=['Storage', 'BlobStorage']),
+            storage_endpoint_suffix=dict(type='str', default=None),
+            resource=dict(type='str', default=None)
         )
 
         for key in SkuName:

@@ -252,10 +252,15 @@ class AzureRM(object):
         self._compute_client = None
         self._resource_client = None
         self._network_client = None
-
+        self.resource = None
         self.debug = False
         if args.debug:
             self.debug = True
+
+        if args.resource:
+            self.resource = args.resource.rstrip('\/')
+            self.resource += '/'
+
 
         self.credentials = self._get_credentials(args)
         if not self.credentials:
@@ -274,7 +279,10 @@ class AzureRM(object):
                                                                  secret=self.credentials['secret'],
                                                                  tenant=self.credentials['tenant'])
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
-            self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
+            if self.resource:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], resource=self.resource)
+            else:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password.")
@@ -372,7 +380,7 @@ class AzureRM(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id)
+            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -380,14 +388,14 @@ class AzureRM(object):
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id)
+            self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
         return self._resource_client
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id)
+            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
             self._register('Microsoft.Compute')
         return self._compute_client
 
@@ -477,6 +485,8 @@ class AzureInventory(object):
                             help='Return inventory for comma separated list of locations')
         parser.add_argument('--no-powerstate', action='store_true', default=False,
                             help='Do not include the power state of each virtual host')
+        parser.add_argument('--resource', action='store',
+                            help='The base URL for the Resource Manager API (e.g. https://management.azure.com)')
         return parser.parse_args()
 
     def get_inventory(self):

@@ -39,6 +39,10 @@ options:
         required: true
         aliases:
             - account_name
+    storage_endpoint_suffix:
+        description:
+            - The endpoint suffix for storage endpoing API (e.g. core.windows.net)
+        required: false
     blob:
         description:
             - Name of a blob object within the container.
@@ -99,6 +103,10 @@ options:
         description:
             - Name of the resource group to use.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     src:
         description:
             - Source file path. Use with state 'present' to upload a blob.
@@ -221,11 +229,13 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             storage_account_name=dict(required=True, type='str', aliases=['account_name']),
+            storage_endpoint_suffix=dict(type='str', default=None),
             blob=dict(type='str', aliases=['blob_name']),
             container=dict(required=True, type='str', aliases=['container_name']),
             dest=dict(type='str'),
             force=dict(type='bool', default=False),
             resource_group=dict(required=True, type='str'),
+            resource=dict(type='str', default=None),
             src=dict(type='str'),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             public_access=dict(type='str', choices=['container', 'blob']),
@@ -234,7 +244,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
             content_language=dict(type='str'),
             content_disposition=dict(type='str'),
             cache_control=dict(type='str'),
-            content_md5=dict(type='str'),
+            content_md5=dict(type='str')
         )
 
         mutually_exclusive = [('src', 'dest')]

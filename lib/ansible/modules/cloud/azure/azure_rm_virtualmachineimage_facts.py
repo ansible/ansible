@@ -42,6 +42,10 @@ options:
             - Only show results for a specific security group.
         default: null
         required: false
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     location:
         description:
             - Azure location value (ie. westus, eastus, eastus2, northcentralus, etc.). Supplying only a
@@ -133,7 +137,8 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
             publisher=dict(type='str'),
             offer=dict(type='str'),
             sku=dict(type='str'),
-            version=dict(type='str')
+            version=dict(type='str'),
+            resource=dict(type='str', default=None)
         )
 
         self.results = dict(
