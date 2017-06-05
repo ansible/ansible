@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
 module: interfaces_file
@@ -28,7 +32,7 @@ description:
      - Manage (add, remove, change) individual interface options in an interfaces-style file without having
        to manage the file as a whole with, say, M(template) or M(assemble). Interface has to be presented in a file.
      - Read information about interfaces from interfaces-styled files
-version_added: "2.2"
+version_added: "2.4"
 options:
   dest:
     description:
@@ -47,7 +51,10 @@ options:
     default: null
   value:
     description:
-      - If I(option) is not presented for the I(interface) and I(state) is C(present) option will be added. If I(option) already exists and is not C(pre-up), C(up), C(post-up) or C(down), it's value will be updated. C(pre-up), C(up), C(post-up) and C(down) options can't be updated, only adding new options, removing existing ones or cleaning the whole option set are supported
+      - If I(option) is not presented for the I(interface) and I(state) is C(present) option will be added.
+        If I(option) already exists and is not C(pre-up), C(up), C(post-up) or C(down), it's value will be updated.
+        C(pre-up), C(up), C(post-up) and C(down) options can't be updated, only adding new options, removing existing
+        ones or cleaning the whole option set are supported
     required: false
     default: null
   backup:
@@ -79,7 +86,7 @@ dest:
 ifaces:
     description: interfaces dictionary
     returned: success
-    type: dictionary
+    type: complex
     contains:
       ifaces:
         description: interface dictionary
@@ -91,7 +98,7 @@ ifaces:
             returned: success
             type: dictionary
             contains:
-              address_family: 
+              address_family:
                 description: interface address family
                 returned: success
                 type: string
@@ -101,8 +108,8 @@ ifaces:
                 returned: success
                 type: string
                 sample: "manual"
-              mtu: 
-                description: other options, all velues returned as strings
+              mtu:
+                description: other options, all values returned as strings
                 returned: success
                 type: string
                 sample: "1500"
@@ -152,12 +159,16 @@ EXAMPLES = '''
 import os
 import tempfile
 import re
+from ansible.module_utils.basic import AnsibleModule
+
 
 def lineDict(line):
-    return {'line': line, 'line_type':'unknown'}
+    return {'line': line, 'line_type': 'unknown'}
+
 
 def optionDict(line, iface, option, value):
-    return {'line': line, 'iface': iface, 'option': option, 'value': value, 'line_type':'option' }
+    return {'line': line, 'iface': iface, 'option': option, 'value': value, 'line_type': 'option'}
+
 
 def getValueFromLine(s):
     spaceRe = re.compile('\s+')
@@ -167,17 +178,19 @@ def getValueFromLine(s):
     option = s.split()[0]
     optionStart = s.find(option)
     optionLen = len(option)
-    valueStart = re.search('\s',s[optionLen + optionStart:]).end() + optionLen + optionStart
+    valueStart = re.search('\s', s[optionLen + optionStart:]).end() + optionLen + optionStart
     return s[valueStart:valueEnd]
+
 
 def read_interfaces_file(module, filename):
     f = open(filename, 'r')
     return read_interfaces_lines(module, f)
 
+
 def read_interfaces_lines(module, line_strings):
     lines = []
     ifaces = {}
-    currently_processing = None;
+    currently_processing = None
     i = 0
     for line in line_strings:
         i += 1
@@ -200,23 +213,23 @@ def read_interfaces_lines(module, line_strings):
             currently_processing = "NONE"
         elif words[0] == "iface":
             currif = {
-                "pre-up":  [],
-                "up":      [],
-                "down":    [],
+                "pre-up": [],
+                "up": [],
+                "down": [],
                 "post-up": []
             }
-            iface_name, address_family_name, method_name =  words[1:4]
+            iface_name, address_family_name, method_name = words[1:4]
             if len(words) != 4:
                 module.fail_json(msg="Incorrect number of parameters (%d) in line %d, must be exectly 3" % (len(words), i))
                 # TODO: put line and count parameters
-                return None, None;
-            
+                return None, None
+
             currif['address_family'] = address_family_name
-            currif['method']         = method_name
-            
-            ifaces[iface_name]   = currif
-            lines.append({'line':line, 'iface':iface_name, 'line_type':'iface', 'params': currif})
-            currently_processing     = "IFACE"
+            currif['method'] = method_name
+
+            ifaces[iface_name] = currif
+            lines.append({'line': line, 'iface': iface_name, 'line_type': 'iface', 'params': currif})
+            currently_processing = "IFACE"
         elif words[0] == "auto":
             lines.append(lineDict(line))
             currently_processing = "NONE"
@@ -234,8 +247,8 @@ def read_interfaces_lines(module, line_strings):
                 option_name = words[0]
                 # TODO: if option_name in currif.options
                 value = getValueFromLine(line)
-                lines.append(optionDict(line,iface_name,option_name,value))
-                if option_name in ["pre-up","up","down","post-up"]:
+                lines.append(optionDict(line, iface_name, option_name, value))
+                if option_name in ["pre-up", "up", "down", "post-up"]:
                     currif[option_name].append(value)
                 else:
                     currif[option_name] = value
@@ -248,30 +261,30 @@ def read_interfaces_lines(module, line_strings):
                 return None, None
     return lines, ifaces
 
+
 def setInterfaceOption(module, lines, iface, option, raw_value, state):
-    # TODO: implement state
-    value=str(raw_value)
+    value = str(raw_value)
     changed = False
-    
+
     iface_lines = [item for item in lines if "iface" in item and item["iface"] == iface]
-    
-    if len (iface_lines) < 1:
+
+    if len(iface_lines) < 1:
         # interface not found
-        module.fail_json(msg="Error: interface %s not found" % iface )
+        module.fail_json(msg="Error: interface %s not found" % iface)
         return changed
-    
-    iface_options = filter(lambda i: i['line_type'] == 'option', iface_lines)
-    target_options = filter(lambda i: i['option'] == option, iface_options)
-    
+
+    iface_options = list(filter(lambda i: i['line_type'] == 'option', iface_lines))
+    target_options = list(filter(lambda i: i['option'] == option, iface_options))
+
     if state == "present":
-        if len (target_options) < 1:
+        if len(target_options) < 1:
             changed = True
             # add new option
             last_line_dict = iface_lines[-1]
             lines = addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options)
         else:
-            if option in ["pre-up","up","down","post-up"]:
-                if len(filter(lambda i: i['value'] == value, target_options)) < 1:
+            if option in ["pre-up", "up", "down", "post-up"]:
+                if len(list(filter(lambda i: i['value'] == value, target_options))) < 1:
                     changed = True
                     lines = addOptionAfterLine(option, value, iface, lines, target_options[-1], iface_options)
             else:
@@ -283,27 +296,28 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
                     old_value = target_option['value']
                     prefix_start = old_line.find(option)
                     optionLen = len(option)
-                    old_value_position = re.search("\s+".join(old_value.split()),old_line[prefix_start + optionLen:])
+                    old_value_position = re.search("\s+".join(old_value.split()), old_line[prefix_start + optionLen:])
                     start = old_value_position.start() + prefix_start + optionLen
-                    end   = old_value_position.end() + prefix_start + optionLen
+                    end = old_value_position.end() + prefix_start + optionLen
                     line = old_line[:start] + value + old_line[end:]
                     index = len(lines) - lines[::-1].index(target_option) - 1
                     lines[index] = optionDict(line, iface, option, value)
     elif state == "absent":
-        if len (target_options) >= 1:
-            if option in ["pre-up","up","down","post-up"] and value != None and value != "None":
+        if len(target_options) >= 1:
+            if option in ["pre-up", "up", "down", "post-up"] and value is not None and value != "None":
                 for target_option in filter(lambda i: i['value'] == value, target_options):
                     changed = True
-                    lines = filter(lambda l: l != target_option, lines)
+                    lines = list(filter(lambda l: l != target_option, lines))
             else:
                 changed = True
                 for target_option in target_options:
-                    lines = filter(lambda l: l != target_option, lines)
+                    lines = list(filter(lambda l: l != target_option, lines))
     else:
         module.fail_json(msg="Error: unsupported state %s, has to be either present or absent" % state)
-    
+
     return changed, lines
     pass
+
 
 def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options):
     last_line = last_line_dict['line']
@@ -311,58 +325,59 @@ def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_option
     suffix_start = last_line.rfind(last_line.split()[-1]) + len(last_line.split()[-1])
     prefix = last_line[:prefix_start]
 
-    if len (iface_options) < 1:
+    if len(iface_options) < 1:
         # interface has no options, ident
         prefix += "    "
-    
+
     line = prefix + "%s %s" % (option, value) + last_line[suffix_start:]
     option_dict = optionDict(line, iface, option, value)
     index = len(lines) - lines[::-1].index(last_line_dict)
     lines.insert(index, option_dict)
     return lines
-    
 
-def write_changes(module,lines,dest):
+
+def write_changes(module, lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    f = os.fdopen(tmpfd,'wb')
+    f = os.fdopen(tmpfd, 'wb')
     f.writelines(lines)
     f.close()
     module.atomic_move(tmpfile, os.path.realpath(dest))
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            dest      = dict(default='/etc/network/interfaces',required=False),
-            iface     = dict(required=False),
-            option    = dict(required=False),
-            value     = dict(required=False),
-            backup    = dict(default='no', type='bool'),
-            state     = dict(default='present', choices=['present', 'absent']),
+        argument_spec=dict(
+            dest=dict(default='/etc/network/interfaces', required=False),
+            iface=dict(required=False),
+            option=dict(required=False),
+            value=dict(required=False),
+            backup=dict(default='no', type='bool'),
+            state=dict(default='present', choices=['present', 'absent']),
         ),
-        add_file_common_args = True,
-        supports_check_mode = True
+        add_file_common_args=True,
+        supports_check_mode=True
     )
-    
+
     dest = os.path.expanduser(module.params['dest'])
 
-    iface  = module.params['iface' ]
+    iface = module.params['iface']
     option = module.params['option']
-    value  = module.params['value' ]
+    value = module.params['value']
     backup = module.params['backup']
-    state  = module.params['state' ]
+    state = module.params['state']
 
-    if option != None and iface == None:
+    if option is not None and iface is None:
         module.fail_json(msg="Inteface must be set if option is defined")
-    
-    if option != None and state == "present" and value == None:
+
+    if option is not None and state == "present" and value is None:
         module.fail_json(msg="Value must be set if option is defined and state is 'present'")
-    
+
     lines, ifaces = read_interfaces_file(module, dest)
-    
+
     changed = False
-    
-    if option != None:
+
+    if option is not None:
         changed, lines = setInterfaceOption(module, lines, iface, option, value, state)
 
     if changed:
@@ -372,10 +387,9 @@ def main():
         if backup:
             module.backup_local(dest)
         write_changes(module, [d['line'] for d in lines if 'line' in d], dest)
-    
-    
+
     module.exit_json(dest=dest, changed=changed, ifaces=ifaces)
 
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
