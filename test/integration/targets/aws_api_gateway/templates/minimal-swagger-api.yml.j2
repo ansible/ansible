@@ -1,0 +1,33 @@
+---
+swagger: "2.0"
+info:
+  version: "2017-05-11T12:14:59Z"
+  title: "{{resource_prefix}}Empty_API"
+host: "fakeexample.execute-api.us-east-1.amazonaws.com"
+basePath: "/minimal"
+schemes:
+- "https"
+paths:
+  /:
+    get:
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/Empty"
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: "200"
+        requestTemplates:
+          application/json: "{\"statusCode\": 200}"
+        passthroughBehavior: "when_no_match"
+        type: "mock"
+definitions:
+  Empty:
+    type: "object"
+    title: "Empty Schema"

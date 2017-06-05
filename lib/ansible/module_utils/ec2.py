@@ -80,9 +80,17 @@ class AWSRetry(CloudRetry):
     def found(response_code):
         # This list of failures is based on this API Reference
         # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
+        #
+        # TooManyRequestsException comes from inside botocore when it
+        # does retrys, unfortunately however it does not try long
+        # enough to allow some services such as API Gateway to
+        # complete configuration.  At the moment of writing there is a
+        # botocore/boto3 bug open to fix this.
+        #
+        # https://github.com/boto/boto3/issues/876 (and linked PRs etc)
         retry_on = [
             'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
-            'InternalFailure', 'InternalError'
+            'InternalFailure', 'InternalError', 'TooManyRequestsException'
         ]
 
         not_found = re.compile(r'^\w+.NotFound')
