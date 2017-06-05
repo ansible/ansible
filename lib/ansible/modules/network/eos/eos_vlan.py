@@ -110,19 +110,33 @@ def map_config_to_obj(module):
     obj = {}
     output = run_commands(module, ['show vlan'])
 
-    for l in output[0].strip().splitlines()[2:]:
-        split_line = l.split()
-        vlan_id = split_line[0]
-        name = split_line[1]
-        status = split_line[2]
+    if isinstance(output[0], str):
+        for l in output[0].strip().splitlines()[2:]:
+            split_line = l.split()
+            vlan_id = split_line[0]
+            name = split_line[1]
+            status = split_line[2]
 
-        if vlan_id == str(module.params['vlan_id']):
-            obj['vlan_id'] = vlan_id
-            obj['name'] = name
-            obj['state'] = status
-            if obj['state'] == 'suspended':
-                obj['state'] = 'suspend'
-            break
+            if vlan_id == str(module.params['vlan_id']):
+                obj['vlan_id'] = vlan_id
+                obj['name'] = name
+                obj['state'] = status
+                if obj['state'] == 'suspended':
+                    obj['state'] = 'suspend'
+                break
+    else:
+        for k, v in output[0]['vlans'].iteritems():
+            vlan_id = k
+            name = v['name']
+            status = v['status']
+
+            if vlan_id == str(module.params['vlan_id']):
+                obj['vlan_id'] = vlan_id
+                obj['name'] = name
+                obj['state'] = status
+                if obj['state'] == 'suspended':
+                    obj['state'] = 'suspend'
+                break
 
     return obj
 
