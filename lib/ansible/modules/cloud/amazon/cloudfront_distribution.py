@@ -1715,6 +1715,36 @@ class CloudFrontValidationManager(object):
                 msg="error validating distribution requires update - " +
                 str(e) + "\n" + traceback.format_exc())
 
+    def validate_id_from_alias_aliases_caller_reference(
+        self, distribution_id, streaming_distribution_id, alias, aliases,
+            caller_reference, streaming_distribution):
+        try:
+            if caller_reference is not None:
+                if streaming_distribution:
+                    streaming_distribution_id = (
+                        self.validate_distribution_id_from_caller_reference(
+                            caller_reference, True))
+                else:
+                    distribution_id = (
+                        self.validate_distribution_id_from_caller_reference(
+                            caller_reference, False))
+            if streaming_distribution_id is None and distribution_id is None:
+                if alias is not None or aliases is not None:
+                    if not streaming_distribution:
+                        distribution_id = (
+                            self.validate_distribution_id_from_alias(
+                                alias, aliases))
+                    if streaming_distribution:
+                        streaming_distribution_id = (
+                            self.validate_distribution_id_from_alias(
+                                alias, aliases))
+            return (distribution_id, streaming_distribution_id)
+        except Exception as e:
+            self.module.fail_json(
+                msg="error validating (streaming)distribution_id from caller " +
+                "reference, alias and aliases - " + str(e) + "\n" +
+                traceback.format_exc())
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -1797,7 +1827,13 @@ def main():
             ['default_s3_origin_domain_name', 'trusted_signers'],
             ['distribution_id', 'streaming_distribution_id'],
             ['distribution_id', 'alias'],
-            ['streaming_distribution_id', 'alias']
+            ['streaming_distribution_id', 'alias'],
+            ['default_origin_domain_name', 'distribution_id'],
+            ['default_origin_domain_name', 'caller_reference'],
+            ['default_origin_domain_name', 'alias'],
+            ['default_s3_origin_domain_name', 'streaming_distribution_id'],
+            ['default_s3_origin_domain_name', 'caller_reference'],
+            ['default_s3_origin_domain_name', 'alias']
         ]
     )
     service_mgr = CloudFrontServiceManager(module)
@@ -1845,23 +1881,10 @@ def main():
     default_streaming_s3_origin_access_identity = module.params.get(
         'default_streaming_s3_origin_access_identity')
 
-    if caller_reference is not None:
-        if streaming_distribution:
-            streaming_distribution_id = (
-                validation_mgr.validate_distribution_id_from_caller_reference(
-                    caller_reference, True))
-        else:
-            distribution_id = (
-                validation_mgr.validate_distribution_id_from_caller_reference(
-                    caller_reference, False))
-    if alias is not None or aliases is not None and not generate_presigned_url:
-        if not streaming_distribution and distribution_id is None:
-            distribution_id = validation_mgr.validate_distribution_id_from_alias(
-                alias, aliases)
-        if streaming_distribution_id and streaming_distribution_id is None:
-            streaming_distribution_id = (
-                validation_mgr.validate_distribution_id_from_alias(
-                    alias, aliases))
+    (distribution_id, streaming_distribution_id) = (
+        validation_mgr.validate_id_from_alias_aliases_caller_reference(
+            distribution_id, streaming_distribution_id, alias, aliases,
+            caller_reference, streaming_distribution))
 
     create_distribution = (state == 'present' and not streaming_distribution and
                            distribution_id is None)
