@@ -26,13 +26,18 @@ description:
     - Gather facts about ec2 VPC subnets in AWS
 version_added: "2.1"
 author: "Rob White (@wimnat)"
+requirements:
+  - boto3
+  - botocore
 options:
+  subnet_ids:
+    description:
+      - A list of subnet IDs to gather facts for.
+    version_added: "2.4"
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html) for possible filters.
-    required: false
-    default: null
 extends_documentation_fragment:
     - aws
     - ec2
@@ -46,8 +51,7 @@ EXAMPLES = '''
 
 # Gather facts about a particular VPC subnet using ID
 - ec2_vpc_subnet_facts:
-    filters:
-      subnet-id: subnet-00112233
+    subnet_ids: subnet-00112233
 
 # Gather facts about any VPC subnet with a tag key Name and value Example
 - ec2_vpc_subnet_facts:
@@ -77,73 +81,150 @@ EXAMPLES = '''
     subnet_ids: "{{ subnet_facts.results|map(attribute='subnets.0.id')|list }}"
 '''
 
-try:
-    import boto.vpc
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
+RETURN = '''
+subnets:
+    description: Returns an array of complex objects as described below.
+    returned: success
+    type: complex
+    contains:
+        subnet_id:
+            description: The ID of the Subnet.
+            returned: always
+            type: string
+        id:
+            description: The ID of the Subnet (for backwards compatibility).
+            returned: always
+            type: string
+        vpc_id:
+            description: The ID of the VPC .
+            returned: always
+            type: string
+        state:
+            description: The state of the subnet.
+            returned: always
+            type: string
+        tags:
+            description: A dict of tags associated with the Subnet.
+            returned: always
+            type: dict
+        map_public_ip_on_launch:
+            description: True/False depending on attribute setting for public IP mapping.
+            returned: always
+            type: boolean
+        default_for_az:
+            description: True if this is the default subnet for AZ.
+            returned: always
+            type: boolean
+        cidr_block:
+            description: The IPv4 CIDR block assigned to the subnet.
+            returned: always
+            type: string
+        available_ip_address_count:
+            description: Count of available IPs in subnet.
+            returned: always
+            type: string
+        availability_zone:
+            description: The availability zone where the subnet exists.
+            returned: always
+            type: string
+        assign_ipv6_address_on_creation:
+            description: True/False depending on attribute setting for IPv6 address assignment.
+            returned: always
+            type: boolean
+        ipv6_cidr_block_association_set:
+            description: An array of IPv6 cidr block association set information.
+            returned: always
+            type: complex
+            contains:
+                association_id:
+                    description: The association ID
+                    returned: always
+                    type: string
+                ipv6_cidr_block:
+                    description: The IPv6 CIDR block that is associated with the subnet.
+                    returned: always
+                    type: string
+                ipv6_cidr_block_state:
+                    description: A hash/dict that contains a single item. The state of the cidr block association.
+                    returned: always
+                    type: dict
+                    contains:
+                        state:
+                            description: The CIDR block association state.
+                            returned: always
+                            type: string
+'''
 
+import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import (
+    boto3_conn,
+    ec2_argument_spec,
+    get_aws_connection_info,
+    AWSRetry,
+    HAS_BOTO3,
+    boto3_tag_list_to_ansible_dict,
+    camel_dict_to_snake_dict,
+    ansible_dict_to_boto3_filter_list
+)
+
+try:
+    from botocore.exceptions import ClientError, NoCredentialsError
+except ImportError:
+    pass  # caught by imported HAS_BOTO3
 
 
-def get_subnet_info(subnet):
+@AWSRetry.backoff()
+def describe_subnets(connection, module):
+    """
+    Describe Subnets.
 
-    subnet_info = {'id': subnet.id,
-                   'availability_zone': subnet.availability_zone,
-                   'available_ip_address_count': subnet.available_ip_address_count,
-                   'cidr_block': subnet.cidr_block,
-                   'default_for_az': subnet.defaultForAz,
-                   'map_public_ip_on_launch': subnet.mapPublicIpOnLaunch,
-                   'state': subnet.state,
-                   'tags': subnet.tags,
-                   'vpc_id': subnet.vpc_id}
+    module  : AnsibleModule object
+    connection  : boto3 client connection object
+    """
+    # collect parameters
+    filters = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
+    subnet_ids = module.params.get('subnet_ids')
 
-    return subnet_info
+    # init empty list for return vars
+    subnet_info = list()
 
-
-def list_ec2_vpc_subnets(connection, module):
-
-    filters = module.params.get("filters")
-    subnet_dict_array = []
-
+    # Get the basic VPC info
     try:
-        all_subnets = connection.get_all_subnets(filters=filters)
-    except BotoServerError as e:
-        module.fail_json(msg=e.message)
+        response = connection.describe_subnets(SubnetIds=subnet_ids, Filters=filters)
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-    for subnet in all_subnets:
-        subnet_dict_array.append(get_subnet_info(subnet))
+    for subnet in response['Subnets']:
+        # for backwards compatibility
+        subnet['id'] = subnet['SubnetId']
+        subnet_info.append(camel_dict_to_snake_dict(subnet))
+        # convert tag list to ansible dict
+        subnet_info[-1]['tags'] = boto3_tag_list_to_ansible_dict(subnet['Tags'])
 
-    module.exit_json(subnets=subnet_dict_array)
+    module.exit_json(subnets=subnet_info)
 
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            filters=dict(default=None, type='dict')
-        )
-    )
+    argument_spec.update(dict(
+        subnet_ids=dict(type='list', default=[]),
+        filters=dict(type='dict', default={})
+    ))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 is required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    try:
+        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+        connection = boto3_conn(module, conn_type='client', resource='ec2', **aws_connect_params)
+    except (ClientError, NoCredentialsError) as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-    if region:
-        try:
-            connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
-            module.fail_json(msg=str(e))
-    else:
-        module.fail_json(msg="region must be specified")
-
-    list_ec2_vpc_subnets(connection, module)
+    describe_subnets(connection, module)
 
 
 if __name__ == '__main__':
