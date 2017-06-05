@@ -1,15 +1,39 @@
 ---
 - name: Test 'conf'
-  include: case_conf.yml
+  include: result_{{ item.assert }}.yml type={{ item.type }} name={{ item.name }} state={{ item.state }} msg={{ item.msg | default("test module") }}
+  with_items:
+    - { type: conf, name: conf_example.conf, state: absent,  assert: not_changed, msg: "disable disabled, to ensure module is idempotent" }
+    - { type: conf, name: conf_example.conf, state: present, assert: changed,     msg: "enable" }
+    - { type: conf, name: conf_example.conf, state: present, assert: not_changed, msg: "enable enabled, to ensure module is idempotent" }
+    - { type: conf, name: conf_example.conf, state: absent,  assert: changed,     msg: "disable" }
+    - { type: conf, name: nonexistent,       state: present, assert: failed,      msg: "enable nonexistent" }
+    - { type: conf, name: nonexistent,       state: absent,  assert: failed,      msg: "disable nonexistent" }
+    - { type: conf, name: conf_example,      state: present, assert: changed,     msg: "enable by short name" }
+    - { type: conf, name: conf_example,      state: absent,  assert: changed,     msg: "disable by short name" }
+    - { type: conf, name: /etc/resolv.conf,  state: present, assert: failed,      msg: "enable wrong conf" }
 
 - name: Test 'site'
-  include: case_site.yml
+  include: result_{{ item.assert }}.yml type={{ item.type }} name={{ item.name }} state={{ item.state }} msg={{ item.msg | default("test module") }}
+  with_items:
+    - { type: site, name: site_example.conf, state: absent,  assert: not_changed, msg: "disable disabled, to ensure module is idempotent" }
+    - { type: site, name: site_example.conf, state: present, assert: changed,     msg: "enable" }
+    - { type: site, name: site_example.conf, state: present, assert: not_changed, msg: "enable enabled, to ensure module is idempotent" }
+    - { type: site, name: site_example.conf, state: absent,  assert: changed,     msg: "disable" }
+    - { type: site, name: nonexistent,       state: present, assert: failed,      msg: "enable nonexistent" }
+    - { type: site, name: nonexistent,       state: absent,  assert: failed,      msg: "disable nonexistent" }
+    - { type: site, name: site_example,      state: present, assert: changed,     msg: "enable by short name" }
+    - { type: site, name: site_example,      state: absent,  assert: changed,     msg: "disable by short name" }
+    - { type: site, name: /etc/resolv.conf,  state: present, assert: failed,      msg: "enable wrong site" }
 
 - name: Test 'mod'
-  include: "{{ item }}"
+  include: result_{{ item.assert }}.yml type={{ item.type }} name={{ item.name }} state={{ item.state }} msg={{ item.msg | default("test module") }}
   with_items:
-    - case_mod.yml
-    - case_mod_enable_nonexistent.yml
-    - case_mod_disable_nonexistent.yml
-    - case_mod_enable_shortname.yml
-    - case_mod_disable_shortname.yml
+    - { type: mod, name: mod_example.load,   state: absent,  assert: not_changed, msg: "disable disabled, to ensure module is idempotent" }
+    - { type: mod, name: mod_example.load,   state: present, assert: changed,     msg: "enable module" }
+    - { type: mod, name: mod_example.load,   state: present, assert: not_changed, msg: "enable enabled, to ensure module is idempotent" }
+    - { type: mod, name: mod_example.load,   state: absent,  assert: changed,     msg: "disable module" }
+    - { type: mod, name: nonexistent,        state: present, assert: failed,      msg: "enable nonexistent" }
+    - { type: mod, name: nonexistent,        state: absent,  assert: failed,      msg: "disable nonexistent" }
+    - { type: mod, name: mod_example,        state: present, assert: changed,     msg: "enable module with short name" }
+    - { type: mod, name: mod_example,        state: absent,  assert: changed,     msg: "disable module with short name" }
+

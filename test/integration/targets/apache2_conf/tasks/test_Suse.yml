@@ -1,7 +1,8 @@
 ---
 - name: Test 'mod'
-  include: "{{ item }}"
+  include: result_{{ item.assert }}.yml type={{ item.type }} name={{ item.name }} state={{ item.state }} msg={{ item.msg | default("test module") }}
   with_items:
-    - case_mod.yml
-    - case_mod_enable_shortname.yml
-    - case_mod_disable_shortname.yml
+    - { type: mod, name: unique_id, state: absent,  assert: not_changed, msg: "disable disabled, to ensure module is idempotent" }
+    - { type: mod, name: unique_id, state: present, assert: changed,     msg: "enable module" }
+    - { type: mod, name: unique_id, state: present, assert: not_changed, msg: "enable enabled, to ensure module is idempotent" }
+    - { type: mod, name: unique_id, state: absent,  assert: changed,     msg: "disable module" }

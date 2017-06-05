@@ -1,0 +1,12 @@
+---
+- name: "{{ msg }}"
+  apache2_conf:
+    type: "{{ type }}"
+    name: "{{ name }}"
+    state: "{{ state }}"
+  register: result
+
+- name: ensure state not changed
+  assert:
+    that:
+      - "not result.changed"
