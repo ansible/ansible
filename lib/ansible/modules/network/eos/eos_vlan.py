@@ -73,6 +73,7 @@ commands:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import load_config, run_commands
 from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.six import iteritems
 
 import re
 
@@ -125,7 +126,7 @@ def map_config_to_obj(module):
                     obj['state'] = 'suspend'
                 break
     else:
-        for k, v in output[0]['vlans'].iteritems():
+        for k, v in iteritems(output[0]['vlans']):
             vlan_id = k
             name = v['name']
             status = v['status']
