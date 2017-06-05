@@ -84,7 +84,9 @@ options:
     description:
       - The Python executable used for creating the virtual environment.
         For example C(python3.5), C(python2.7). When not specified, the
-        Python version used to run the ansible module is used.
+        Python version used to run the ansible module is used. This parameter
+        should not be used when C(virtualenv_command) is using C(pyvenv) or
+        the C(-m venv) module.
     required: false
     default: null
   state:
@@ -459,7 +461,7 @@ def main():
 
                 # -p is a virtualenv option, not compatible with pyenv or venv
                 # this if validates if the command being used is not any of them 
-                if not any((ex in module.params['virtualenv_command'] for ex in ['pyvenv', '-m venv'])):
+                if not any(ex in module.params['virtualenv_command'] for ex in ('pyvenv', '-m venv')):
                     if virtualenv_python:
                         cmd += ' -p%s' % virtualenv_python
                     elif PY3:
@@ -470,6 +472,14 @@ def main():
                         # virtualenv to determine which python is used inside of
                         # the virtualenv (when none are specified).
                         cmd += ' -p%s' % sys.executable
+                
+                # if venv or pyvenv are used and virtualenv_python is defined, then
+                # virtualenv_python is ignored, this has to be acknowledged
+                elif module.params['virtualenv_python']:
+                    module.fail_json(
+                        msg='virtualenv_python should not be used when'
+                            ' using the venv module or pyvenv as virtualenv_command'
+                    )
 
                 cmd = "%s %s" % (cmd, env)
                 rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
