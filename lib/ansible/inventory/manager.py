@@ -182,8 +182,10 @@ class InventoryManager(object):
 
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
-            name = os.path.splitext(os.path.basename(plugin._original_path))[0]
-            self._inventory_plugins.append(plugin)
+            if plugin:
+                self._inventory_plugins.append(plugin)
+            else:
+                display.warning('Failed to load inventory plugin, skipping %s' % name)
 
         if not self._inventory_plugins:
             raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
