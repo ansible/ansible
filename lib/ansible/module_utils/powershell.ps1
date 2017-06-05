@@ -226,9 +226,15 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
             } else {
                 Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter $name is not a YAML list."
             }
+        } elseif ($type -eq "psobject") {
+            $result = New-Object psobject;
+            foreach ($key in $value.keys)
+            {
+                $result | Add-Member -MemberType NoteProperty -Name $key -Value $value[$key]
+            }
+            $value = $result
         }
     }
-
     return $value
 }
 
