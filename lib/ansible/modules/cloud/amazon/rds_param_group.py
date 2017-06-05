@@ -32,26 +32,17 @@ options:
       - Specifies whether the group should be present or absent.
     required: true
     default: present
-    aliases: []
     choices: [ 'present' , 'absent' ]
   name:
     description:
       - Database parameter group identifier.
     required: true
-    default: null
-    aliases: []
   description:
     description:
       - Database parameter group description. Only set when a new group is added.
-    required: false
-    default: null
-    aliases: []
   engine:
     description:
       - The type of database for this group. Required for state=present.
-    required: false
-    default: null
-    aliases: []
     choices:
         - 'aurora5.6'
         - 'mariadb10.0'
@@ -84,20 +75,16 @@ options:
   immediate:
     description:
       - Whether to apply the changes immediately, or after the next reboot of any associated instances.
-    required: false
-    default: null
     aliases:
       - apply_immediately
   params:
     description:
       - Map of parameter names and values. Numeric values may be represented as K for kilo (1024), M for mega (1024^2), G for giga (1024^3),
         or T for tera (1024^4), and these values will be expanded into the appropriate number before being set in the parameter group.
-    required: false
-    default: null
-    aliases: []
   tags:
     description:
       - Dictionary of tags to attach to the parameter group
+    version_added: "2.4"
 author:
     - "Scott Anderson (@tastychutney)"
     - "Will Thames (@willthames)"
@@ -128,18 +115,28 @@ EXAMPLES = '''
 RETURN = '''
 db_parameter_group_name:
     description: Name of DB parameter group
+    type: string
+    returned: when state is present
 db_parameter_group_family:
     description: DB parameter group family that this DB parameter group is compatible with.
+    type: string
+    returned: when state is present
 db_parameter_group_arn:
     description: ARN of the DB parameter group
+    type: string
+    returned: when state is present
 description:
     description: description of the DB parameter group
+    type: string
+    returned: when state is present
 errors:
     description: list of errors from attempting to modify parameters that are not modifiable
     type: list
+    returned: when state is present
 tags:
     description: dictionary of tags
     type: dict
+    returned: when state is present
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -275,6 +272,11 @@ def update_tags(module, connection, group, tags):
             module.fail_json(msg="Couldn't add tags to parameter group: %s" % str(e),
                              exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.ParamValidationError as e:
+            # Usually a tag value has been passed as an int or bool, needs to be a string
+            # The AWS exception message is reasonably ok for this purpose
+            module.fail_json(msg="Couldn't add tags to parameter group: %s." % str(e),
+                             exception=traceback.format_exc())
     if to_delete:
         try:
             connection.remove_tags_from_resource(ResourceName=group['DBParameterGroupArn'],
@@ -295,13 +297,16 @@ def ensure_present(module, connection):
     try:
         response = connection.describe_db_parameter_groups(DBParameterGroupName=groupname)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Couldn't access parameter group information: %s" % str(e),
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
-    if not response['DBParameterGroups']:
+        if e.response['Error']['Code'] == 'DBParameterGroupNotFound':
+            response = None
+        else:
+            module.fail_json(msg="Couldn't access parameter group information: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+    if not response:
         params = dict(DBParameterGroupName=groupname,
                       DBParameterGroupFamily=module.params['engine'],
-                      Description=module.params.get('Description'))
+                      Description=module.params['description'])
         if tags:
             params['Tags'] = ansible_dict_to_boto3_tag_list(tags)
         try:
@@ -312,12 +317,13 @@ def ensure_present(module, connection):
                              exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
     else:
-        if module.params.get('params'):
-            changed, errors = update_parameters(module, connection)
-
         group = response['DBParameterGroups'][0]
         if tags:
-            changed = update_tags(module, connection, group, tags) or changed
+            changed = update_tags(module, connection, group, tags)
+
+    if module.params.get('params'):
+        params_changed, errors = update_parameters(module, connection)
+        changed = changed or params_changed
 
     try:
         response = connection.describe_db_parameter_groups(DBParameterGroupName=groupname)
@@ -342,11 +348,12 @@ def ensure_absent(module, connection):
     try:
         response = connection.describe_db_parameter_groups(DBParameterGroupName=group)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Couldn't access parameter group information: %s" % str(e),
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
-    if not response['DBParameterGroups']:
-        module.exit_json(changed=False)
+        if e.response['Error']['Code'] == 'DBParameterGroupNotFound':
+            module.exit_json(changed=False)
+        else:
+            module.fail_json(msg="Couldn't access parameter group information: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
     try:
         response = connection.delete_db_parameter_group(DBParameterGroupName=group)
         module.exit_json(changed=True)
@@ -370,7 +377,7 @@ def main():
         )
     )
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_if=[['state', 'present', ['name', 'description', 'engine']]])
+                           required_if=[['state', 'present', ['description', 'engine']]])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore are required for this module')
