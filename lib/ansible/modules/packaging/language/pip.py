@@ -459,13 +459,19 @@ def main():
 
                 if virtualenv_python:
                     cmd += ' -p%s' % virtualenv_python
-                elif PY3:
+                elif PY3 and module.params['virtualenv_command'] == 'virtualenv':
                     # Ubuntu currently has a patch making virtualenv always
                     # try to use python2.  Since Ubuntu16 works without
                     # python2 installed, this is a problem.  This code mimics
                     # the upstream behaviour of using the python which invoked
                     # virtualenv to determine which python is used inside of
                     # the virtualenv (when none are specified).
+                    #
+                    # However, if we unconditionally add this flag in
+                    # all cases, it breaks any command to create a
+                    # venv which is not arg-compatible with virtualenv
+                    # (including the officially correct way to make
+                    # venvs in py3)
                     cmd += ' -p%s' % sys.executable
 
                 cmd = "%s %s" % (cmd, env)
