@@ -61,6 +61,7 @@ Ansible Changes By Release
   Use ignore_errors or failed_when in playbooks if you wish to ignore errors.
 * Experimentally added pmrun become method.
 * Enable the docker connection plugin to use su as a become method
+* Add an encoding parameter for the replace module so that it can operate on non-utf-8 files
 
 #### New Inventory scripts:
 - lxd
