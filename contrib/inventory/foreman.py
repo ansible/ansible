@@ -160,13 +160,16 @@ class ForemanInventory(object):
             self.session.verify = self.foreman_ssl_verify
         return self.session
 
-    def _get_json(self, url, ignore_errors=None, params={}):
+    def _get_json(self, url, ignore_errors=None, params=None):
+        if params is None:
+            params = {}
+        params['per_page'] = 250
+
         page = 1
-        params.update({'per_page': 250})
         results = []
         s = self._get_session()
         while True:
-            params.update({'page': page})
+            params['page'] = page
             ret = s.get(url, params=params)
             if ignore_errors and ret.status_code in ignore_errors:
                 break
