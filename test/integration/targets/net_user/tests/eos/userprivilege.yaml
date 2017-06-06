@@ -1,0 +1,19 @@
+---
+- name: Set user to privilege level 15
+  net_user:
+    name: netop
+    privilege: 15
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username netop privilege 15"]'
+
+- name: tearDown
+  net_user:
+    purge: yes
+    provider: "{{ cli }}"

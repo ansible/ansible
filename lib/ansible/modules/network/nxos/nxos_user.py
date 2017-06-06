@@ -298,13 +298,13 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', no_log=True),
+        users=dict(type='list', no_log=True, aliases=['collection']),
         name=dict(),
 
         password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
-        roles=dict(type='list'),
+        roles=dict(type='list', aliases=['role']),
 
         sshkey=dict(),
 
