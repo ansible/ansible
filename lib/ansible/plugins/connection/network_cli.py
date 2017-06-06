@@ -24,15 +24,17 @@ import re
 import signal
 import socket
 import traceback
+
 from collections import Sequence
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six import BytesIO, binary_type
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.plugins import cliconf_loader
 from ansible.plugins import terminal_loader
-from ansible.plugins.connection import ensure_connect
 from ansible.plugins.connection.paramiko_ssh import Connection as _Connection
+from ansible.utils.jsonrpc import Rpc
 
 try:
     from __main__ import display
@@ -41,7 +43,7 @@ except ImportError:
     display = Display()
 
 
-class Connection(_Connection):
+class Connection(Rpc, _Connection):
     ''' CLI (shell) SSH connections on Paramiko '''
 
     transport = 'network_cli'
@@ -51,11 +53,13 @@ class Connection(_Connection):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self._terminal = None
+        self._cliconf = None
         self._shell = None
         self._matched_prompt = None
         self._matched_pattern = None
         self._last_response = None
         self._history = list()
+        self._play_context = play_context
 
         if play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
@@ -84,6 +88,9 @@ class Connection(_Connection):
 
         display.display('ssh connection done, setting terminal', log_only=True)
 
+        self._shell = self.ssh.invoke_shell()
+        self._shell.settimeout(self._play_context.timeout)
+
         network_os = self._play_context.network_os
         if not network_os:
             raise AnsibleConnectionFailure(
@@ -95,46 +102,45 @@ class Connection(_Connection):
         if not self._terminal:
             raise AnsibleConnectionFailure('network os %s is not supported' % network_os)
 
-        self._connected = True
-        display.display('ssh connection has completed successfully', log_only=True)
+        display.display('loaded terminal plugin for network_os %s' % network_os, log_only=True)
 
-    @ensure_connect
-    def open_shell(self):
-        display.display('attempting to open shell to device', log_only=True)
-        self._shell = self.ssh.invoke_shell()
-        self._shell.settimeout(self._play_context.timeout)
+        self._cliconf = cliconf_loader.get(network_os, self)
+        if self._cliconf:
+            self._rpc.add(self._cliconf)
+            display.display('loaded cliconf plugin for network_os %s' % network_os, log_only=True)
+        else:
+            display.display('unable to load cliconf for network_os %s' % network_os)
 
         self.receive()
 
-        if self._shell:
-            self._terminal.on_open_shell()
+        display.display('firing event: on_open_shell()', log_only=True)
+        self._terminal.on_open_shell()
 
         if getattr(self._play_context, 'become', None):
+            display.display('firing event: on_authorize', log_only=True)
             auth_pass = self._play_context.become_pass
             self._terminal.on_authorize(passwd=auth_pass)
 
-        display.display('shell successfully opened', log_only=True)
-        return (0, b'ok', b'')
+        self._connected = True
+        display.display('ssh connection has completed successfully', log_only=True)
 
     def close(self):
-        display.display('closing connection', log_only=True)
-        self.close_shell()
-        super(Connection, self).close()
-        self._connected = False
-
-    def close_shell(self):
-        """Closes the vty shell if the device supports multiplexing"""
-        display.display('closing shell on device', log_only=True)
+        """Close the active connection to the device
+        """
+        display.display("closing ssh connection to device", log_only=True)
         if self._shell:
+            display.display("firing event: on_close_shell()", log_only=True)
             self._terminal.on_close_shell()
-
-        if self._shell:
             self._shell.close()
             self._shell = None
+            display.display("cli session is now closed", log_only=True)
 
-        return (0, b'ok', b'')
+        super(Connection, self).close()
 
-    def receive(self, obj=None):
+        self._connected = False
+        display.display("ssh connection has been closed successfully", log_only=True)
+
+    def receive(self, command=None, prompts=None, answer=None):
         """Handles receiving of output from command"""
         recv = BytesIO()
         handled = False
@@ -150,23 +156,22 @@ class Connection(_Connection):
 
             window = self._strip(recv.read())
 
-            if obj and (obj.get('prompt') and not handled):
-                handled = self._handle_prompt(window, obj['prompt'], obj['answer'])
+            if prompts and not handled:
+                handled = self._handle_prompt(window, prompts, answer)
 
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
-                return self._sanitize(resp, obj)
+                return self._sanitize(resp, command)
 
-    def send(self, obj):
+    def send(self, command, prompts=None, answer=None, send_only=False):
         """Sends the command to the device in the opened shell"""
         try:
-            command = obj['command']
             self._history.append(command)
             self._shell.sendall(b'%s\r' % command)
-            if obj.get('sendonly'):
+            if send_only:
                 return
-            return self.receive(obj)
+            return self.receive(command, prompts, answer)
         except (socket.timeout, AttributeError):
             display.display(traceback.format_exc(), log_only=True)
             raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
@@ -195,10 +200,9 @@ class Connection(_Connection):
                 return True
         return False
 
-    def _sanitize(self, resp, obj=None):
+    def _sanitize(self, resp, command=None):
         """Removes elements from the response before returning to the caller"""
         cleaned = []
-        command = obj.get('command') if obj else None
         for line in resp.splitlines():
             if (command and line.startswith(command.strip())) or self._matched_prompt.strip() in line:
                 continue
@@ -243,10 +247,10 @@ class Connection(_Connection):
     def exec_command(self, cmd):
         """Executes the cmd on in the shell and returns the output
 
-        The method accepts two forms of cmd.  The first form is as a byte
+        The method accepts three forms of cmd.  The first form is as a byte
         string that represents the command to be executed in the shell.  The
         second form is as a utf8 JSON byte string with additional keywords.
-
+        The third form is a json-rpc (2.0)
         Keywords supported for cmd:
             :command: the command string to execute
             :prompt: the expected prompt generated by executing command.
@@ -275,27 +279,23 @@ class Connection(_Connection):
             else:
                 # Prompt was a Sequence of strings.  Make sure they're byte strings
                 obj['prompt'] = [to_bytes(p, errors='surrogate_or_strict') for p in obj['prompt'] if p is not None]
-        if obj['command'] == b'close_shell()':
-            return self.close_shell()
-        elif obj['command'] == b'open_shell()':
-            return self.open_shell()
-        elif obj['command'] == b'prompt()':
-            return (0, self._matched_prompt, b'')
 
-        try:
-            if self._shell is None:
-                self.open_shell()
-        except AnsibleConnectionFailure as exc:
-            # FIXME: Feels like we should raise this rather than return it
-            return (1, b'', to_bytes(exc))
+        if 'jsonrpc' in obj:
+            if self._cliconf:
+                out = self._exec_rpc(obj)
+            else:
+                out = self.internal_error("cliconf is not supported for network_os %s" % self._play_context.network_os)
+            return 0, to_bytes(out, errors='surrogate_or_strict'), b''
+
+        if obj['command'] == b'prompt()':
+            return 0, self._matched_prompt, b''
 
         try:
             if not signal.getsignal(signal.SIGALRM):
                 signal.signal(signal.SIGALRM, self.alarm_handler)
             signal.alarm(self._play_context.timeout)
-            out = self.send(obj)
+            out = self.send(obj['command'], obj.get('prompt'), obj.get('answer'), obj.get('sendonly'))
             signal.alarm(0)
-            return (0, out, b'')
+            return 0, out, b''
         except (AnsibleConnectionFailure, ValueError) as exc:
-            # FIXME: Feels like we should raise this rather than return it
-            return (1, b'', to_bytes(exc))
+            return 1, b'', to_bytes(exc)

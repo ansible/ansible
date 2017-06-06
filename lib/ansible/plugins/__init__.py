@@ -550,3 +550,19 @@ vars_loader = PluginLoader(
     C.DEFAULT_VARS_PLUGIN_PATH,
     'vars_plugins',
 )
+
+cliconf_loader = PluginLoader(
+    'Cliconf',
+    'ansible.plugins.cliconf',
+    'cliconf_plugins',
+    'cliconf_plugins',
+    required_base_class='CliconfBase'
+)
+
+netconf_loader = PluginLoader(
+    'Netconf',
+    'ansible.plugins.netconf',
+    'netconf_plugins',
+    'netconf_plugins',
+    required_base_class='NetconfBase'
+)

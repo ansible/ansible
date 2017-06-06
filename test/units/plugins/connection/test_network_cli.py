@@ -35,6 +35,30 @@ from ansible.plugins.connection import network_cli
 
 class TestConnectionClass(unittest.TestCase):
 
+    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    def test_network_cli__connect_error(self, mocked_super):
+        pc = PlayContext()
+        new_stdin = StringIO()
+
+        conn = network_cli.Connection(pc, new_stdin)
+        conn.ssh = MagicMock()
+        conn.receive = MagicMock()
+        conn._terminal = MagicMock()
+        pc.network_os = None
+        self.assertRaises(AnsibleConnectionFailure, conn._connect)
+
+    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    def test_network_cli__invalid_os(self, mocked_super):
+        pc = PlayContext()
+        new_stdin = StringIO()
+
+        conn = network_cli.Connection(pc, new_stdin)
+        conn.ssh = MagicMock()
+        conn.receive = MagicMock()
+        conn._terminal = MagicMock()
+        pc.network_os = None
+        self.assertRaises(AnsibleConnectionFailure, conn._connect)
+
     @patch("ansible.plugins.connection.network_cli.terminal_loader")
     @patch("ansible.plugins.connection.network_cli._Connection._connect")
     def test_network_cli__connect(self, mocked_super, mocked_terminal_loader):
@@ -42,27 +66,7 @@ class TestConnectionClass(unittest.TestCase):
         new_stdin = StringIO()
 
         conn = network_cli.Connection(pc, new_stdin)
-        conn.ssh = None
-
-        self.assertRaises(AnsibleConnectionFailure, conn._connect)
-
-        mocked_terminal_loader.reset_mock()
-        mocked_terminal_loader.get.return_value = None
-
-        pc.network_os = 'invalid'
-        self.assertRaises(AnsibleConnectionFailure, conn._connect)
-        self.assertFalse(mocked_terminal_loader.all.called)
-
-        mocked_terminal_loader.reset_mock()
-        mocked_terminal_loader.get.return_value = 'valid'
-
-        conn._connect()
-        self.assertEqual(conn._terminal, 'valid')
-
-    def test_network_cli_open_shell(self):
-        pc = PlayContext()
-        new_stdin = StringIO()
-        conn = network_cli.Connection(pc, new_stdin)
+        pc.network_os = 'ios'
 
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
@@ -70,26 +74,19 @@ class TestConnectionClass(unittest.TestCase):
         mock_terminal = MagicMock()
         conn._terminal = mock_terminal
 
-        mock__connect = MagicMock()
-        conn._connect = mock__connect
-
-        conn.open_shell()
-
-        self.assertTrue(mock__connect.called)
-        self.assertTrue(mock_terminal.on_open_shell.called)
-        self.assertFalse(mock_terminal.on_authorize.called)
-
-        mock_terminal.reset_mock()
+        conn._connect()
+        self.assertTrue(conn._terminal.on_open_shell.called)
+        self.assertFalse(conn._terminal.on_authorize.called)
 
         conn._play_context.become = True
         conn._play_context.become_pass = 'password'
 
-        conn.open_shell()
+        conn._connect()
 
-        self.assertTrue(mock__connect.called)
-        mock_terminal.on_authorize.assert_called_with(passwd='password')
+        conn._terminal.on_authorize.assert_called_with(passwd='password')
 
-    def test_network_cli_close_shell(self):
+    @patch("ansible.plugins.connection.network_cli._Connection.close")
+    def test_network_cli_close(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = network_cli.Connection(pc, new_stdin)
@@ -97,25 +94,23 @@ class TestConnectionClass(unittest.TestCase):
         terminal = MagicMock(supports_multiplexing=False)
         conn._terminal = terminal
 
-        conn.close_shell()
+        conn.close()
 
         conn._shell = MagicMock()
 
-        conn.close_shell()
+        conn.close()
         self.assertTrue(terminal.on_close_shell.called)
 
         terminal.supports_multiplexing = True
 
-        conn.close_shell()
+        conn.close()
         self.assertIsNone(conn._shell)
 
-    def test_network_cli_exec_command(self):
+    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    def test_network_cli_exec_command(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = network_cli.Connection(pc, new_stdin)
-
-        mock_open_shell = MagicMock()
-        conn.open_shell = mock_open_shell
 
         mock_send = MagicMock(return_value=b'command response')
         conn.send = mock_send
@@ -123,25 +118,19 @@ class TestConnectionClass(unittest.TestCase):
         # test sending a single command and converting to dict
         rc, out, err = conn.exec_command('command')
         self.assertEqual(out, b'command response')
-        self.assertTrue(mock_open_shell.called)
-        mock_send.assert_called_with({'command': b'command'})
-
-        mock_open_shell.reset_mock()
+        mock_send.assert_called_with(b'command', None, None, None)
 
         # test sending a json string
         rc, out, err = conn.exec_command(json.dumps({'command': 'command'}))
         self.assertEqual(out, b'command response')
-        mock_send.assert_called_with({'command': b'command'})
-        self.assertTrue(mock_open_shell.called)
+        mock_send.assert_called_with(b'command', None, None, None)
 
-        mock_open_shell.reset_mock()
         conn._shell = MagicMock()
 
         # test _shell already open
         rc, out, err = conn.exec_command('command')
         self.assertEqual(out, b'command response')
-        self.assertFalse(mock_open_shell.called)
-        mock_send.assert_called_with({'command': b'command'})
+        mock_send.assert_called_with(b'command', None, None, None)
 
     def test_network_cli_send(self):
         pc = PlayContext()
@@ -163,7 +152,7 @@ class TestConnectionClass(unittest.TestCase):
 
         mock__shell.recv.return_value = response
 
-        output = conn.send({'command': b'command'})
+        output = conn.send(b'command', None, None, None)
 
         mock__shell.sendall.assert_called_with(b'command\r')
         self.assertEqual(output, b'command response')
@@ -172,5 +161,5 @@ class TestConnectionClass(unittest.TestCase):
         mock__shell.recv.return_value = b"ERROR: error message device#"
 
         with self.assertRaises(AnsibleConnectionFailure) as exc:
-            conn.send({'command': b'command'})
+            conn.send(b'command', None, None, None)
         self.assertEqual(str(exc.exception), 'ERROR: error message device#')
