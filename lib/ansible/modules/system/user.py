@@ -297,7 +297,7 @@ class User(object):
 
         if module.params['expires']:
             try:
-                self.expires = time.gmtime((module.params['expires']//86400) * 86400)
+                self.expires = time.gmtime((module.params['expires']//86400) * 86400.0)
             except Exception:
                 e = get_exception()
                 module.fail_json(msg="Invalid expires time %s: %s" %(self.expires, str(e)))
