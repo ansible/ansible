@@ -37,7 +37,6 @@ import sys
 from time import time
 from collections import defaultdict
 from distutils.version import LooseVersion, StrictVersion
-import urllib
 
 # 3rd party imports
 import requests
@@ -164,12 +163,14 @@ class ForemanInventory(object):
             self.session.verify = self.foreman_ssl_verify
         return self.session
 
-    def _get_json(self, url, ignore_errors=None):
+    def _get_json(self, url, ignore_errors=None, params={}):
         page = 1
+        params.update({'per_page': 250})
         results = []
         s = self._get_session()
         while True:
-            ret = s.get(url, params={'page': page, 'per_page': 250})
+            params.update({'page': page})
+            ret = s.get(url, params=params)
             if ignore_errors and ret.status_code in ignore_errors:
                 break
             ret.raise_for_status()
@@ -193,25 +194,26 @@ class ForemanInventory(object):
         return results
 
     def _get_organization_id(self, organization_label):
-        url = "%s/katello/api/v2/organizations?search=label=%s" % (self.foreman_url, urllib.quote_plus(organization_label))
-        json = self._get_json(url)
+        url = "%s/katello/api/v2/organizations" % self.foreman_url
+        params = {'search': "label=%s" % organization_label}
+        json = self._get_json(url, params=params)
 
         if json:
             return json[0]['id']
         else:
-            raise ValueError("Cannot find Foreman organization \"%s\"" % organization_name)
+            raise ValueError("Cannot find Foreman organization \"%s\"" % organization_label)
 
     def _get_hosts(self):
-        search_query = ""
+        params = {}
         if self.foreman_hostcollection_name:
-            search_query = "?search=host_collection=%s" % urllib.quote_plus(self.foreman_hostcollection_name)
+            params['search'] = "host_collection=\"%s\"" % self.foreman_hostcollection_name
 
         if self.foreman_organization_id:
-            hosts = self._get_json("%s/api/v2/organizations/%s/hosts%s" % (self.foreman_url, self.foreman_organization_id, search_query))
+            url = "%s/api/v2/organizations/%s/hosts" % (self.foreman_url, self.foreman_organization_id)
         else:
-            hosts = self._get_json("%s/api/v2/hosts%s" % (self.foreman_url, search_query))
+            url = "%s/api/v2/hosts" % self.foreman_url
 
-        return hosts
+        return self._get_json(url, params=params)
 
     def _get_host_data_by_id(self, hid):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
