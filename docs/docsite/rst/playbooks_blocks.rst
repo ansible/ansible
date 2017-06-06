@@ -84,7 +84,7 @@ Another example is how to run handlers after an error occurred :
 
    :doc:`playbooks`
        An introduction to playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

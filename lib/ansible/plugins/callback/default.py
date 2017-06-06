@@ -27,6 +27,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
+from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 
@@ -80,7 +81,7 @@ class CallbackModule(CallbackBase):
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         self._clean_results(result._result, result._task.action)
-        if result._task.action in ('include', 'include_role'):
+        if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
             if delegated_vars:
@@ -194,7 +195,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_ok(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if result._task.action in ('include', 'include_role'):
+        if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
             msg = 'changed'
