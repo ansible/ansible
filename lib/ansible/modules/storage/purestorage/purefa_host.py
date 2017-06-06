@@ -109,6 +109,7 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
@@ -202,7 +203,5 @@ def main():
         make_host(module, array)
 
 
-# Import Ansible Utilities
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
