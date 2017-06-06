@@ -230,7 +230,9 @@ Function Set-ServiceDependencies($wmi_svc, $dependency_action, $dependencies) {
     [System.Collections.ArrayList]$new_dependencies = @()
 
     if ($dependency_action -eq 'set') {
-        $new_dependencies = $dependencies
+        foreach ($dependency in $dependencies) {
+            $new_dependencies.Add($dependency)
+        }
     } else {
         $new_dependencies = $existing_dependencies
         foreach ($dependency in $dependencies) {
