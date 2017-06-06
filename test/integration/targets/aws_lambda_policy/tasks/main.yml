@@ -145,4 +145,4 @@
       assert:
         that:
            - 'destroy_result.changed == True'
-           - '"failed" not in result'
+           - 'not result|failed'
