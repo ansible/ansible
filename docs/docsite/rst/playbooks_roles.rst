@@ -341,7 +341,7 @@ Finally, you may wish to assign tags to the roles you specify. You can do so inl
       roles:
         - { role: foo, tags: ["bar", "baz"] }
 
-Note that this *tags all of the tasks in that role with the tags specified*, overriding any tags that are specified inside the role. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
+Note that this *tags all of the tasks in that role with the tags specified*, appending them to any tags that are specified on the tasks inside the role. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
 
 If the play still has a 'tasks' section, those tasks are executed after roles are applied.
 
