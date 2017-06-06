@@ -100,7 +100,7 @@ your roles is up to you and your application, but most sites will have one or mo
 all systems, and then a series of application-specific roles that install and configure particular parts of the site.
 
 Roles can have variables and dependencies, and you can pass in parameters to roles to modify their behavior. 
-You can read more about roles in the :doc:`playbooks_roles` section.
+You can read more about roles in the :doc:`playbooks_reuse_roles` section.
 
 .. _lamp_group_variables:
 
@@ -276,7 +276,7 @@ This should give you a good idea of how to structure a multi-tier application wi
        The lamp_haproxy example discussed here.
    :doc:`playbooks`
        An introduction to playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        An introduction to playbook roles
    :doc:`playbooks_variables`
        An introduction to Ansible variables
