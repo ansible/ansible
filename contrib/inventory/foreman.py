@@ -130,18 +130,15 @@ class ForemanInventory(object):
             self.cache_max_age = 60
 
         # If the FOREMAN_ORGANIZATION environment variable is set to the
-        # label of a Foreman organization, only hosts from that organization
-        # will be listed. This can be used to define inventories with
-        # different host subsets in Ansible Tower.
-        foreman_organization_label = os.environ.get('FOREMAN_ORGANIZATION')
-        self.foreman_organization_id = None
-        if foreman_organization_label:
-            self.foreman_organization_id = self._get_organization_id(foreman_organization_label)
+        # name of a Foreman organization (like "Default Organization"), only
+        # hosts from that organization will be listed. This can be used to
+        # define inventories with different host subsets in Ansible Tower.
+        self.foreman_organization_name = os.environ.get('FOREMAN_ORGANIZATION')
 
         # If the FOREMAN_HOSTCOLLECTION environment variable is set to the
-        # name of a Foreman host collection, only hosts from that collection
-        # will be listed. This can be used to define inventories with
-        # different host subsets in Ansible Tower.
+        # name of a Foreman host collection (like "Web Servers"), only hosts
+        # from that collection will be listed. This can be used to define
+        # inventories with different host subsets in Ansible Tower.
         self.foreman_hostcollection_name = os.environ.get('FOREMAN_HOSTCOLLECTION')
 
         return True
@@ -193,25 +190,20 @@ class ForemanInventory(object):
                 break
         return results
 
-    def _get_organization_id(self, organization_label):
-        url = "%s/katello/api/v2/organizations" % self.foreman_url
-        params = {'search': "label=%s" % organization_label}
-        json = self._get_json(url, params=params)
-
-        if json:
-            return json[0]['id']
-        else:
-            raise ValueError("Cannot find Foreman organization \"%s\"" % organization_label)
-
     def _get_hosts(self):
         params = {}
-        if self.foreman_hostcollection_name:
-            params['search'] = "host_collection=\"%s\"" % self.foreman_hostcollection_name
+        filters = []
 
-        if self.foreman_organization_id:
-            url = "%s/api/v2/organizations/%s/hosts" % (self.foreman_url, self.foreman_organization_id)
-        else:
-            url = "%s/api/v2/hosts" % self.foreman_url
+        if self.foreman_organization_name:
+            filters.append('organization="%s"' % self.foreman_organization_name)
+
+        if self.foreman_hostcollection_name:
+            filters.append('host_collection="%s"' % self.foreman_hostcollection_name)
+
+        url = "%s/api/v2/hosts" % self.foreman_url
+
+        if filters:
+            params['search'] = " and ".join(filters)
 
         return self._get_json(url, params=params)
 
