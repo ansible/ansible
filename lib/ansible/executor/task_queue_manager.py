@@ -83,11 +83,11 @@ class TaskQueueManager:
         self._callback_plugins = []
         self._start_at_done = False
 
-        # make sure the module path (if specified) is parsed and
-        # added to the module_loader object
-        if options.module_path is not None:
-            for path in options.module_path.split(os.pathsep):
-                module_loader.add_directory(path)
+        # make sure any module paths (if specified) are added to the module_loader
+        if isinstance(options.module_path, list):
+            for path in options.module_path:
+                if path is not None:
+                    module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly
         self._terminated = False

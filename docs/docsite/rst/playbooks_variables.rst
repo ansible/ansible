@@ -90,7 +90,7 @@ Variables defined from included files and roles
 
 It turns out we've already talked about variables in another place too.
 
-As described in :doc:`playbooks_roles`, variables can also be included in the playbook via include files, which may or may
+As described in :doc:`playbooks_reuse_roles`, variables can also be included in the playbook via include files, which may or may
 not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
 
 .. _about_jinja2:
@@ -946,7 +946,7 @@ roles aren't you?  Hint hint.
 
 Ok, so if you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
-See :doc:`playbooks_roles` for more info about this::
+See :doc:`playbooks_reuse_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
@@ -1029,7 +1029,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Jinja2 filters and their uses
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

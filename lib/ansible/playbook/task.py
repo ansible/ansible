@@ -215,10 +215,10 @@ class Task(Base, Conditional, Taggable, Become):
                 # top level of the task, so we move those into the 'vars' dictionary
                 # here, and show a deprecation message as we will remove this at
                 # some point in the future.
-                if action == 'include' and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
-                    display.deprecated("Specifying include variables at the top-level of the task is deprecated. "
-                                       "Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n "
-                                       "for currently supported syntax regarding included files and variables", version="2.7")
+                if action in ('include', 'include_tasks') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
+                    display.deprecated("Specifying include variables at the top-level of the task is deprecated."
+                                       " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
+                                       " for currently supported syntax regarding included files and variables", version="2.7")
                     new_ds['vars'][k] = v
                 else:
                     new_ds[k] = v
@@ -331,7 +331,7 @@ class Task(Base, Conditional, Taggable, Become):
         all_vars = dict()
         if self._parent:
             all_vars.update(self._parent.get_include_params())
-        if self.action in ('include', 'include_role'):
+        if self.action in ('include', 'include_tasks', 'include_role'):
             all_vars.update(self.vars)
         return all_vars
 

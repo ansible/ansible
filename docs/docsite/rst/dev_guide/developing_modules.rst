@@ -37,11 +37,11 @@ There are a lot of existing modules available, and more that are in development.
 
 Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary.
 
-For more information about action plugins, go `here <https://docs.ansible.com/ansible/dev_guide/developing_plugins.html>`_.
+For more information about action plugins, `read the action plugins documentation here <https://docs.ansible.com/ansible/dev_guide/developing_plugins.html>`_.
 
 3. Should you use a role instead?
 
-Check out the `roles documentation <http://docs.ansible.com/ansible/playbooks_roles.html#roles>`_.
+Check out the roles documentation `available here <http://docs.ansible.com/ansible/playbooks_reuse_roles.html#roles>`_.
 
 
 .. _developing_modules_all:

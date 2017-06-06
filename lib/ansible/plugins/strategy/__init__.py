@@ -535,7 +535,7 @@ class StrategyBase:
                     if self._diff:
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
-                if original_task.action not in ['include', 'include_role']:
+                if not isinstance(original_task, TaskInclude):
                     self._tqm._stats.increment('ok', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)

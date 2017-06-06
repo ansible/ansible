@@ -162,7 +162,7 @@ The complex form can also be used as follows:
         name: composer
 
 When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the *roles_path*. To understand how dependencies 
-are handled during play execution, see :doc:`playbooks_roles`.
+are handled during play execution, see :doc:`playbooks_reuse_roles`.
 
 .. note::
 
@@ -471,7 +471,7 @@ Provide the ID of the integration to be disabled. You can find the ID by using t
 
 .. seealso::
 
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        All about ansible roles
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

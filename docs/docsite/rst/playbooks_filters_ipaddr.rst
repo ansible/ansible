@@ -496,7 +496,7 @@ convert it between various formats. Examples::
        All about variables
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

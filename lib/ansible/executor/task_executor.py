@@ -432,7 +432,7 @@ class TaskExecutor:
             if self._loop_eval_error is not None:
                 raise self._loop_eval_error
             # skip conditional exception in the case of includes as the vars needed might not be available except in the included tasks or due to tags
-            if self._task.action not in ['include', 'include_role']:
+            if self._task.action not in ['include', 'include_tasks', 'include_role']:
                 raise
 
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
@@ -445,7 +445,7 @@ class TaskExecutor:
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
-        if self._task.action == 'include':
+        if self._task.action in ('include', 'include_tasks'):
             include_variables = self._task.args.copy()
             include_file = include_variables.pop('_raw_params', None)
             if not include_file:

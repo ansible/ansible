@@ -175,7 +175,7 @@ The following tasks are illustrative of the tests meant to check the status of t
        All about variables
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
