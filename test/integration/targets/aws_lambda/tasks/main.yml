@@ -115,7 +115,7 @@
     - name: assert lambda manages to respond as expected
       assert:
         that:
-           - '"failed" not in result'
+           - 'not result|failed'
 
     - name: test lambda works
       execute_lambda:
@@ -131,7 +131,7 @@
     - name: assert lambda manages to respond as expected
       assert:
         that:
-           - '"failed" not in result'
+           - 'not result|failed'
            - 'result.result.output.message == "hello Mr Ansible Tests"'
 
     - name: test state=present with all nullable variables explicitly set to null
@@ -159,7 +159,7 @@
     - name: assert lambda manages to respond as expected
       assert:
         that:
-           - '"failed" not in result'
+           - 'not result|failed'
            - 'result.changed == False'
 
     # ============================================================
@@ -176,7 +176,7 @@
     - name: assert state=absent
       assert:
         that:
-           - '"failed" not in result'
+           - 'not result|failed'
            - 'result.changed == True'
 
     # ============================================================
@@ -240,7 +240,7 @@
     - name: assert lambda manages to respond as expected
       assert:
         that:
-           - '"failed" not in result'
+           - 'not result|failed'
 
     - name: wait for async job 1
       async_status: jid={{ async_1.ansible_job_id }}
@@ -311,7 +311,7 @@
     - name: assert lambda creation has succeeded
       assert:
         that:
-           - '"failed" not in result'
+           - 'not result|failed'
 
     - name: wait for async job 1
       async_status: jid={{ async_1.ansible_job_id }}
@@ -355,5 +355,5 @@
     - name: assert state=absent
       assert:
         that:
-           - '"failed" not in result'
+           - 'not result|failed'
            - 'result.changed == False'
