@@ -61,6 +61,31 @@
            - 'result.msg == "region must be specified"'
 
     # ============================================================
+    - name: test with all module required variables, no region and all possible variables set to blank
+      lambda:
+        name: ansible-testing-fake-should-not-be-created
+        state: present
+        runtime: "python2.7"
+        role: arn:fake-role-doesnt-exist
+        handler:
+        s3_bucket:
+        s3_key:
+        s3_object_version:
+        description:
+        vpc_subnet_ids:
+        vpc_security_group_ids:
+        environment_variables:
+        dead_letter_arn:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with only 'name'
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "region must be specified"'
+
+    # ============================================================
     # direct zip file upload
     - name: move lambda into place for archive module
       copy:
@@ -108,6 +133,33 @@
         that:
            - '"failed" not in result'
            - 'result.result.output.message == "hello Mr Ansible Tests"'
+
+    - name: test state=present with all nullable variables explicitly set to null
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+        handler:
+        s3_bucket:
+        s3_key:
+        s3_object_version:
+        description:
+        vpc_subnet_ids:
+        vpc_security_group_ids:
+        environment_variables:
+        dead_letter_arn:
+      register: result
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - '"failed" not in result'
+
 
     # ============================================================
     # parallel lambda creation
