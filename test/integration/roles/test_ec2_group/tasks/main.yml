@@ -62,21 +62,6 @@
        - 'result.msg == "Must provide description when state is present."'
 
 # ============================================================
-- name: test invalid region parameter
-  ec2_group:
-    name='{{ec2_group_name}}'
-    description='{{ec2_group_description}}'
-    region='not_valid_region'
-  register: result
-  ignore_errors: true
-
-- name: assert invalid region parameter
-  assert:
-    that:
-       - 'result.failed'
-       - '"Region not_valid_region" in result.msg'
-
-# ============================================================
 - name: test valid region parameter
   ec2_group:
     name='{{ec2_group_name}}'
