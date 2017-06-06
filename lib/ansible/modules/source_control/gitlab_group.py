@@ -69,6 +69,12 @@ options:
             - If not supplied, the group_name will be used.
         required: false
         default: null
+    members:
+        description:
+            - "Users to add to the group in the form { username: NAME, access_level: ACCESS_LEVEL }"
+        required: false
+        default: null
+        version_added: 2.4
     state:
         description:
             - create or delete group.
@@ -110,6 +116,7 @@ except:
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.modules.extras.source_control.gitlab_user import GitLabUser
 
 class GitLabGroup(object):
     def __init__(self, module, git):
@@ -159,6 +166,7 @@ def main():
             login_token=dict(required=False, no_log=True),
             name=dict(required=True),
             path=dict(required=False),
+            members=dict(required=False),
             state=dict(default="present", choices=["present", "absent"]),
         ),
         supports_check_mode=True
@@ -175,6 +183,7 @@ def main():
     login_token = module.params['login_token']
     group_name = module.params['name']
     group_path = module.params['path']
+    group_members = module.params['members']
     state = module.params['state']
 
     # We need both login_user and login_password or login_token, otherwise we fail.
@@ -224,8 +233,13 @@ def main():
             if group_exists:
                 module.exit_json(changed=False)
             else:
-                if group.createGroup(group_name, group_path):
-                    module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name)
+                changed = group.createGroup(group_name, group_path)
+                if group_members:
+                    for member in group_members:
+                        user = GitLabUser(module, git)
+                        user_id = user.getUserId(member['username'])
+                        changed |= user.addToGroup(group.idGroup(), user_id, member['access_level'])
+                module.exit_json(changed=changed, result="Successfully created or updated the group %s" % group_name)
 
 
 

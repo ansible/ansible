@@ -72,7 +72,7 @@ options:
     password:
         description:
             - The password of the user.
-        required: true
+        required: false
     email:
         description:
             - The email that belongs to the user.
@@ -133,6 +133,21 @@ EXAMPLES = '''
     validate_certs: True
     login_user: dj-wasabi
     login_password: MySecretPassword
+    name: My Name
+    username: myusername
+    password: mysecretpassword
+    email: me@example.com
+    sshkey_name: MySSH
+    sshkey_file: ssh-rsa AAAAB3NzaC1yc...
+    state: present
+  delegate_to: localhost
+
+- name: Add Gitlab User to Group
+  gitlab_user:
+    server_url: https://gitlab.dj-wasabi.local
+    validate_certs: True
+    login_user: dj-wasabi
+    group: somegroup
     name: My Name
     username: myusername
     password: mysecretpassword
@@ -253,7 +268,7 @@ class GitLabUser(object):
 
         # Lets check if we need to update the user
         for arg_key, arg_value in arguments.items():
-            if user_data[arg_key] != arg_value:
+            if arg_key in user_data and user_data[arg_key] != arg_value:
                 user_changed = True
 
         if user_changed:
@@ -283,7 +298,7 @@ def main():
             login_token=dict(required=False, no_log=True),
             name=dict(required=True),
             username=dict(required=True),
-            password=dict(required=True, no_log=True),
+            password=dict(required=False, no_log=True),
             email=dict(required=True),
             sshkey_name=dict(required=False),
             sshkey_file=dict(required=False),
