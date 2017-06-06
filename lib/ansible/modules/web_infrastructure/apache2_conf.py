@@ -117,7 +117,7 @@ stderr:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.facts import Distribution
+from ansible.module_utils.facts.system.distribution import Distribution
 from os.path import basename, join, exists, islink, samefile, splitext
 import glob
 import shlex
@@ -255,8 +255,7 @@ def _set_state(state):
     name = module.params['name']
 
     distribution = Distribution(module)
-    distribution.populate()
-    os_family = distribution.facts['os_family']
+    os_family = distribution.get_distribution_facts()['os_family']
 
     fragment = None
     if os_family == 'Debian':
