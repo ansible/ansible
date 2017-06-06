@@ -36,4 +36,3 @@
     - { type: mod, name: nonexistent,        state: absent,  assert: failed,      msg: "disable nonexistent" }
     - { type: mod, name: mod_example,        state: present, assert: changed,     msg: "enable module with short name" }
     - { type: mod, name: mod_example,        state: absent,  assert: changed,     msg: "disable module with short name" }
-
