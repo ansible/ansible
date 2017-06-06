@@ -347,39 +347,36 @@ class ForemanInventory(object):
     def load_inventory_from_cache(self):
         """Read the index from the cache file sets self.index"""
 
-        cache = open(self.cache_path_inventory, 'r')
-        json_inventory = cache.read()
-        self.inventory = json.loads(json_inventory)
+        with open(self.cache_path_inventory, 'r') as fp:
+            self.inventory = json.load(fp)
 
     def load_params_from_cache(self):
         """Read the index from the cache file sets self.index"""
 
-        cache = open(self.cache_path_params, 'r')
-        json_params = cache.read()
-        self.params = json.loads(json_params)
+        with open(self.cache_path_params, 'r') as fp:
+            self.params = json.load(fp)
 
     def load_facts_from_cache(self):
         """Read the index from the cache file sets self.facts"""
+
         if not self.want_facts:
             return
-        cache = open(self.cache_path_facts, 'r')
-        json_facts = cache.read()
-        self.facts = json.loads(json_facts)
+        with open(self.cache_path_facts, 'r') as fp:
+            self.facts = json.load(fp)
 
     def load_hostcollections_from_cache(self):
         """Read the index from the cache file sets self.hostcollections"""
+
         if not self.want_hostcollections:
             return
-        cache = open(self.cache_path_hostcollections, 'r')
-        json_hostcollections = cache.read()
-        self.hostcollections = json.loads(json_hostcollections)
+        with open(self.cache_path_hostcollections, 'r') as fp:
+            self.hostcollections = json.load(fp)
 
     def load_cache_from_cache(self):
         """Read the cache from the cache file sets self.cache"""
 
-        cache = open(self.cache_path_cache, 'r')
-        json_cache = cache.read()
-        self.cache = json.loads(json_cache)
+        with open(self.cache_path_cache, 'r') as fp:
+            self.cache = json.load(fp)
 
     def get_inventory(self):
         if self.args.refresh_cache or not self.is_cache_valid():
