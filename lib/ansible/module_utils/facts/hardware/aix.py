@@ -74,9 +74,9 @@ class AIXHardware(Hardware):
             cpu_facts['processor'] = data[1]
 
             rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
-
-            data = out.split(' ')
-            cpu_facts['processor_cores'] = int(data[1])
+            if out:
+                data = out.split(' ')
+                cpu_facts['processor_cores'] = int(data[1])
 
         return cpu_facts
 
