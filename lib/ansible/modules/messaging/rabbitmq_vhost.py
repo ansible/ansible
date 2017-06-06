@@ -56,6 +56,12 @@ options:
       - The state of vhost
     default: present
     choices: [present, absent]
+  prefix:
+    description:
+      - Specify a custom install prefix to a RabbitMQ installation
+    required: false
+    version_added: "2.4"
+    default: null
 '''
 
 EXAMPLES = '''
@@ -73,7 +79,23 @@ class RabbitMqVhost(object):
         self.node = node
 
         self._tracing = False
-        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+        self._rabbitmqctl = self._get_rmq_exec(module, 'rabbitmqctl')
+
+    def _get_rmq_exec(self, module, command):
+        prefix = module.params['prefix']
+        if prefix:
+            if os.path.isdir(os.path.join(prefix, 'bin')):
+                bin_path = os.path.join(prefix, 'bin')
+            elif os.path.isdir(os.path.join(prefix, 'sbin')):
+                bin_path = os.path.join(prefix, 'sbin')
+            else:
+                # No such path exists.
+                raise Exception("No binary folder in prefix %s" % prefix)
+
+            return bin_path + '/' + command
+
+        else:
+            return module.get_bin_path(command, True)
 
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
@@ -120,6 +142,7 @@ def main():
         tracing=dict(default='off', aliases=['trace'], type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         node=dict(default='rabbit'),
+        prefix=dict(default=None)
     )
 
     module = AnsibleModule(
