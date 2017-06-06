@@ -229,14 +229,12 @@ def main():
             service=networks_service,
         )
         state = module.params['state']
-        network = networks_module.search_entity(
-            search_params={
-                'name': module.params['name'],
-                'datacenter': module.params['data_center'],
-            },
-        )
+        search_params = {
+            'name': module.params['name'],
+            'datacenter': module.params['data_center'],
+        }
         if state == 'present':
-            ret = networks_module.create(entity=network)
+            ret = networks_module.create(search_params=search_params)
 
             # Update clusters networks:
             if module.params.get('clusters') is not None:
@@ -258,7 +256,7 @@ def main():
                         ret = cluster_networks_module.remove()
 
         elif state == 'absent':
-            ret = networks_module.remove(entity=network)
+            ret = networks_module.remove(search_params=search_params)
 
         module.exit_json(**ret)
     except Exception as e:
