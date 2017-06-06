@@ -96,6 +96,12 @@ options:
     version_added: "1.9"
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
+  encoding:
+    required: false
+    default: "utf-8"
+    version_added: "2.4"
+    description:
+      - "The character encoding for reading and writing the file."
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 """
