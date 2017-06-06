@@ -652,13 +652,14 @@ def map_complex_type(complex_type, type_map):
 def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
     """
     Compare two dicts of AWS tags. Dicts are expected to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
-    Two dicts are returned - the first is tags to be set, the second is any tags to remove
+    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ t
+hese may not be able to be used out of the box.
 
     :param current_tags_dict:
     :param new_tags_dict:
     :param purge_tags:
     :return: tag_key_value_pairs_to_set: a dict of key value pairs that need to be set in AWS. If all tags are identical this dict will be empty
-    :return: tag_keys_to_unset: a list of key names that need to be unset in AWS. If no tags need to be unset this list will be empty
+    :return: tag_keys_to_unset: a list of key names (type str) that need to be unset in AWS. If no tags need to be unset this list will be empty
     """
 
     tag_key_value_pairs_to_set = {}
