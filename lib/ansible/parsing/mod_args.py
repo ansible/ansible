@@ -23,7 +23,7 @@ from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
-from ansible.plugins import module_loader
+from ansible.plugins import module_loader, action_loader
 from ansible.template import Templar
 
 
@@ -281,7 +281,7 @@ class ModuleArgsParser:
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item in module_loader or item in ['meta', 'include', 'include_role']:
+            if item in module_loader or item in action_loader or item in ['meta', 'include', 'include_role']:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
