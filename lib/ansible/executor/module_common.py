@@ -345,7 +345,7 @@ if __name__ == '__main__':
     finally:
         try:
             shutil.rmtree(temp_path)
-        except OSError:
+        except (NameError, OSError):
             # tempdir creation probably failed
             pass
     sys.exit(exitcode)
