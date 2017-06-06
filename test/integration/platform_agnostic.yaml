@@ -11,3 +11,4 @@
     - { role: net_system, when: "limit_to in ['*', 'net_system']" }
     - { role: net_banner, when: "limit_to in ['*', 'net_banner']" }
     - { role: net_command, when: "limit_to in ['*', 'net_command']" }
+    - { role: net_user, when: "limit_to_in ['*', 'net_user']" }
