@@ -14,6 +14,7 @@ pip install --user pycrypto
 
 # start enforcing success
 set -e
+echo "Testing with just pycrypto installed"
 ./runme.sh "$@"
 
 
@@ -22,10 +23,12 @@ set -e
 pip uninstall -y pycrypto
 pip install --user cryptography
 
+echo "Testing with just cryptography installed"
 ./runme.sh "$@"
 
 # now both
 
 pip install --user pycrypto
 
+echo "Testing with pycrypto and cryptography installed"
 ./runme.sh "$@"
