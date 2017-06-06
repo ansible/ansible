@@ -42,12 +42,12 @@ options:
     description:
       - The runtime environment for the Lambda function you are uploading. Required when creating a function. Use parameters as described in boto3 docs.
         Current example runtime environments are nodejs, nodejs4.3, java8 or python2.7
-    required: true
+      - Required when C(state=present)
   role:
     description:
       - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS)
         resources. You may use the bare ARN if the role belongs to the same AWS account.
-    required: true
+      - Required when C(state=present)
   handler:
     description:
       - The function within your code that Lambda calls to begin execution
@@ -55,17 +55,21 @@ options:
   zip_file:
     description:
       - A .zip file containing your deployment package
+      - If C(state=present) then either zip_file or s3_bucket must be present.
     required: false
     default: null
     aliases: [ 'src' ]
   s3_bucket:
     description:
       - Amazon S3 bucket name where the .zip file containing your deployment package is stored
+      - If C(state=present) then either zip_file or s3_bucket must be present.
+      - s3_bucket and s3_key are required together
     required: false
     default: null
   s3_key:
     description:
       - The Amazon S3 object (the deployment package) key name you want to upload
+      - s3_bucket and s3_key are required together
     required: false
     default: null
   s3_object_version:

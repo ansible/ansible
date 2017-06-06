@@ -145,9 +145,10 @@
         security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
         handler:
-        s3_bucket:
-        s3_key:
-        s3_object_version:
+# These are not allowed because of mutually exclusive.
+#        s3_bucket:
+#        s3_key:
+#        s3_object_version:
         description:
         vpc_subnet_ids:
         vpc_security_group_ids:
@@ -159,7 +160,24 @@
       assert:
         that:
            - '"failed" not in result'
+           - 'result.changed == False'
 
+    # ============================================================
+    - name: test state=absent (expect changed=False)
+      lambda:
+        name="{{lambda_function_name}}"
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=absent
+      register: result
+
+    - name: assert state=absent
+      assert:
+        that:
+           - '"failed" not in result'
+           - 'result.changed == True'
 
     # ============================================================
     # parallel lambda creation
@@ -324,7 +342,7 @@
   always:
 
     # ============================================================
-    - name: test state=absent (expect changed=false)
+    - name: test state=absent (expect changed=False)
       lambda:
         name="{{lambda_function_name}}"
         ec2_region='{{ec2_region}}'
@@ -338,3 +356,4 @@
       assert:
         that:
            - '"failed" not in result'
+           - 'result.changed == False'
