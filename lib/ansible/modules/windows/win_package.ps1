@@ -76,7 +76,7 @@ Function Throw-InvalidArgumentException
         [string] $Message,
         [string] $ParamName
     )
-    
+
     $exception = new-object System.ArgumentException $Message,$ParamName
     $errorRecord = New-Object System.Management.Automation.ErrorRecord $exception,$ParamName,"InvalidArgument",$null
     throw $errorRecord
@@ -87,7 +87,7 @@ Function Throw-InvalidNameOrIdException
     param(
         [string] $Message
     )
-    
+
     $exception = new-object System.ArgumentException $Message
     $errorRecord = New-Object System.Management.Automation.ErrorRecord $exception,"NameOrIdNotInMSI","InvalidArgument",$null
     throw $errorRecord
@@ -99,7 +99,7 @@ Function Throw-TerminatingError
         [string] $Message,
         [System.Management.Automation.ErrorRecord] $ErrorRecord
     )
-    
+
     if ($errorRecord)
     {
         $exception = new-object "System.InvalidOperationException" $Message,$ErrorRecord.Exception
@@ -108,7 +108,7 @@ Function Throw-TerminatingError
     {
         $exception = new-object "System.InvalidOperationException" $Message
     }
-    
+
     $errorRecord = New-Object System.Management.Automation.ErrorRecord $exception,"MachineStateIncorrect","InvalidOperation",$null
     throw $errorRecord
 }
@@ -158,7 +158,7 @@ Function Validate-StandardArguments
         $ProductId,
         $Name
     )
-    
+
     Trace-Message "Validate-StandardArguments, Path was $Path"
     $uri = $null
     try
@@ -169,20 +169,20 @@ Function Validate-StandardArguments
     {
         Throw-InvalidArgumentException ($LocalizedData.InvalidPath -f $Path) "Path"
     }
-    
+
     if(-not @("file", "http", "https") -contains $uri.Scheme)
     {
         Trace-Message "The uri scheme was $uri.Scheme"
         Throw-InvalidArgumentException ($LocalizedData.InvalidPath -f $Path) "Path"
     }
-    
+
     $pathExt = [System.IO.Path]::GetExtension($Path)
     Trace-Message "The path extension was $pathExt"
     if(-not @(".msi",".exe") -contains $pathExt.ToLower())
     {
         Throw-InvalidArgumentException ($LocalizedData.InvalidBinaryType -f $Path) "Path"
     }
-    
+
     $identifyingNumber = $null
     if(-not $Name -and -not $ProductId)
     {
@@ -206,7 +206,7 @@ Function Validate-StandardArguments
                 $identifyingNumber = $ProductId
                 Trace-Message "Parsed $ProductId as $identifyingNumber (is not guid)"
             }
-            
+
             Trace-Message "Parsed $ProductId as $identifyingNumber"
         }
         catch
@@ -214,7 +214,7 @@ Function Validate-StandardArguments
             Throw-InvalidArgumentException ($LocalizedData.InvalidIdentifyingNumber -f $ProductId) $ProductId
         }
     }
-    
+
     return $uri, $identifyingNumber
 }
 
@@ -228,10 +228,10 @@ Function Get-ProductEntry
         [string] $InstalledCheckRegValueName,
         [string] $InstalledCheckRegValueData
     )
-    
+
     $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
     $uninstallKeyWow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-    
+
     if($IdentifyingNumber)
     {
         $keyLocation = "$uninstallKey\$identifyingNumber"
@@ -244,7 +244,7 @@ Function Get-ProductEntry
 
         return $item
     }
-    
+
     foreach($item in (Get-ChildItem -EA Ignore $uninstallKey, $uninstallKeyWow64))
     {
         if($Name -eq (Get-LocalizableRegKeyValue $item "DisplayName"))
@@ -252,7 +252,7 @@ Function Get-ProductEntry
             return $item
         }
     }
-    
+
     if ($InstalledCheckRegKey -and $InstalledCheckRegValueName -and $InstalledCheckRegValueData)
     {
         $installValue = $null
@@ -262,7 +262,7 @@ Function Get-ProductEntry
         {
             $installValue = Get-RegistryValueIgnoreError LocalMachine "$InstalledCheckRegKey" "$InstalledCheckRegValueName" Registry64
         }
-        
+
         if($installValue -eq $null)
         {
             $installValue = Get-RegistryValueIgnoreError LocalMachine "$InstalledCheckRegKey" "$InstalledCheckRegValueName" Registry32
@@ -288,25 +288,25 @@ function Test-TargetResource
     (
         [ValidateSet("Present", "Absent")]
         [string] $Ensure = "Present",
-        
+
         [parameter(Mandatory = $true)]
         [AllowEmptyString()]
         [string] $Name,
-        
+
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $Path,
-        
+
         [parameter(Mandatory = $true)]
         [AllowEmptyString()]
         [string] $ProductId,
-        
+
         [string] $Arguments,
-        
+
         [pscredential] $Credential,
-        
+
         [int[]] $ReturnCode,
-        
+
         [string] $LogPath,
 
         [pscredential] $RunAsCredential,
@@ -315,9 +315,11 @@ function Test-TargetResource
 
         [string] $InstalledCheckRegValueName,
 
-        [string] $InstalledCheckRegValueData
+        [string] $InstalledCheckRegValueData,
+
+        [bool] $WhatIf
     )
-    
+
     $uri, $identifyingNumber = Validate-StandardArguments $Path $ProductId $Name
     $product = Get-ProductEntry $Name $identifyingNumber $InstalledCheckRegKey $InstalledCheckRegValueName $InstalledCheckRegValueData
     Trace-Message "Ensure is $Ensure"
@@ -346,7 +348,7 @@ function Test-TargetResource
             Write-Verbose ($LocalizedData.PackageAppearsInstalled -f $name)
         }
         else
-        {   
+        {
             $displayName = $null
             if($Name)
             {
@@ -356,12 +358,12 @@ function Test-TargetResource
             {
                 $displayName = $ProductId
             }
-        
+
             Write-Verbose ($LocalizedData.PackageDoesNotAppearInstalled -f $displayName)
         }
 
     }
-    
+
     return $res
 }
 
@@ -371,13 +373,13 @@ function Get-LocalizableRegKeyValue
         [object] $RegKey,
         [string] $ValueName
     )
-    
+
     $res = $RegKey.GetValue("{0}_Localized" -f $ValueName)
     if(-not $res)
     {
         $res = $RegKey.GetValue($ValueName)
     }
-    
+
     return $res
 }
 
@@ -388,11 +390,11 @@ function Get-TargetResource
         [parameter(Mandatory = $true)]
         [AllowEmptyString()]
         [string] $Name,
-        
+
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $Path,
-        
+
         [parameter(Mandatory = $true)]
         [AllowEmptyString()]
         [string] $ProductId,
@@ -403,14 +405,14 @@ function Get-TargetResource
 
         [string] $InstalledCheckRegValueData
     )
-    
+
     #If the user gave the ProductId then we derive $identifyingNumber
     $uri, $identifyingNumber = Validate-StandardArguments $Path $ProductId $Name
-    
+
     $localMsi = $uri.IsFile -and -not $uri.IsUnc
-    
+
     $product = Get-ProductEntry $Name $identifyingNumber $InstalledCheckRegKey $InstalledCheckRegValueName $InstalledCheckRegValueData
-    
+
     if(-not $product)
     {
         return @{
@@ -423,7 +425,7 @@ function Get-TargetResource
             InstalledCheckRegValueData = $InstalledCheckRegValueData
         }
     }
-    
+
     if ($InstalledCheckRegKey -and $InstalledCheckRegValueName -and $InstalledCheckRegValueData)
     {
         return @{
@@ -443,7 +445,7 @@ function Get-TargetResource
     {
         $identifyingNumber = Split-Path -Leaf $product.Name
     }
-    
+
     $date = $product.GetValue("InstallDate")
     if($date)
     {
@@ -456,14 +458,14 @@ function Get-TargetResource
             $date = $null
         }
     }
-    
+
     $publisher = Get-LocalizableRegKeyValue $product "Publisher"
     $size = $product.GetValue("EstimatedSize")
     if($size)
     {
         $size = $size/1024
     }
-    
+
     $version = $product.GetValue("DisplayVersion")
     $description = $product.GetValue("Comments")
     $name = Get-LocalizableRegKeyValue $product "DisplayName"
@@ -487,7 +489,7 @@ Function Get-MsiTools
     {
         return $script:MsiTools
     }
-    
+
     $sig = @'
     [DllImport("msi.dll", CharSet = CharSet.Unicode, PreserveSig = true, SetLastError = true, ExactSpelling = true)]
     private static extern UInt32 MsiOpenPackageW(string szPackagePath, out IntPtr hProduct);
@@ -508,7 +510,7 @@ Function Get-MsiTools
             {
                 return null;
             }
-            
+
             int length = 256;
             var buffer = new StringBuilder(length);
             res = MsiGetPropertyW(MsiHandle, property, buffer, ref length);
@@ -526,7 +528,7 @@ Function Get-MsiTools
     {
         return GetPackageProperty(msi, "ProductCode");
     }
-    
+
     public static string GetProductName(string msi)
     {
         return GetPackageProperty(msi, "ProductName");
@@ -549,7 +551,7 @@ Function Get-MsiProductEntry
     {
         Throw-TerminatingError ($LocalizedData.PathDoesNotExist -f $Path)
     }
-    
+
     $tools = Get-MsiTools
 
     $pn = $tools::GetProductName($Path)
@@ -567,25 +569,25 @@ function Set-TargetResource
     (
         [ValidateSet("Present", "Absent")]
         [string] $Ensure = "Present",
-        
+
         [parameter(Mandatory = $true)]
         [AllowEmptyString()]
         [string] $Name,
-        
+
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $Path,
-        
+
         [parameter(Mandatory = $true)]
         [AllowEmptyString()]
         [string] $ProductId,
-        
+
         [string] $Arguments,
-        
+
         [pscredential] $Credential,
-        
+
         [int[]] $ReturnCode,
-        
+
         [string] $LogPath,
 
         [pscredential] $RunAsCredential,
@@ -594,11 +596,13 @@ function Set-TargetResource
 
         [string] $InstalledCheckRegValueName,
 
-        [string] $InstalledCheckRegValueData
+        [string] $InstalledCheckRegValueData,
+
+        [bool] $WhatIf
     )
-    
+
     $ErrorActionPreference = "Stop"
-    
+
     if((Test-TargetResource -Ensure $Ensure -Name $Name -Path $Path -ProductId $ProductId `
         -InstalledCheckRegKey $InstalledCheckRegKey -InstalledCheckRegValueName $InstalledCheckRegValueName `
         -InstalledCheckRegValueData $InstalledCheckRegValueData))
@@ -607,17 +611,17 @@ function Set-TargetResource
     }
 
     $uri, $identifyingNumber = Validate-StandardArguments $Path $ProductId $Name
-    
+
     #Path gets overwritten in the download code path. Retain the user's original Path in case the install succeeded
     #but the named package wasn't present on the system afterward so we can give a better message
     $OrigPath = $Path
-    
+
     Write-Verbose $LocalizedData.PackageConfigurationStarting
     if(-not $ReturnCode)
     {
         $ReturnCode = @(0)
     }
-    
+
     $logStream = $null
     $psdrive = $null
     $downloadedFileName = $null
@@ -635,12 +639,12 @@ function Set-TargetResource
                     #be rather problematic for the user
                     if((Test-Path $LogPath) -and $PSCmdlet.ShouldProcess($LocalizedData.RemoveExistingLogFile,$null,$null))
                     {
-                        rm $LogPath
+                        Remove-Item -LiteralPath $LogPath -WhatIf:$whatif
                     }
-                    
+
                     if($PSCmdlet.ShouldProcess($LocalizedData.CreateLogFile, $null, $null))
                     {
-                        New-Item -Type File $LogPath | Out-Null
+                        New-Item -Type File $LogPath -WhatIf:$whatif
                     }
                 }
                 elseif($PSCmdlet.ShouldProcess($LocalizedData.CreateLogFile, $null, $null))
@@ -653,7 +657,7 @@ function Set-TargetResource
                 Throw-TerminatingError ($LocalizedData.CouldNotOpenLog -f $LogPath) $_
             }
         }
-        
+
         #Download or mount file as necessary
         if(-not ($fileExtension -eq ".msi" -and $Ensure -eq "Absent"))
         {
@@ -666,7 +670,7 @@ function Set-TargetResource
                     #we pass a null for Credential which causes the cmdlet to pop a dialog up
                     $psdriveArgs["Credential"] = $Credential
                 }
-                
+
                 $psdrive = New-PSDrive @psdriveArgs
                 $Path = Join-Path $psdrive.Root (Split-Path -Leaf $uri.LocalPath) #Necessary?
             }
@@ -682,11 +686,11 @@ function Set-TargetResource
 
                     if(-not (Test-Path -PathType Container $CacheLocation))
                     {
-                        mkdir $CacheLocation | Out-Null
+                        New-Item -LiteralPath $CacheLocation -Type "directory" -WhatIf:$whatif | Out-Null
                     }
-                
+
                     $destName = Join-Path $CacheLocation (Split-Path -Leaf $uri.LocalPath)
-                
+
                     Trace-Message "Need to download file from $scheme, destination will be $destName"
 
                     try
@@ -710,7 +714,7 @@ function Set-TargetResource
                         {
                             Trace-Message "Setting authentication level"
                             # default value is MutualAuthRequested, which applies to https scheme
-                            $request.AuthenticationLevel = [System.Net.Security.AuthenticationLevel]::None                            
+                            $request.AuthenticationLevel = [System.Net.Security.AuthenticationLevel]::None
                         }
                         if ($scheme -eq "https")
                         {
@@ -744,7 +748,7 @@ function Set-TargetResource
                     {
                         $outStream.Close()
                     }
-                    
+
                     if($responseStream)
                     {
                         $responseStream.Close()
@@ -754,13 +758,13 @@ function Set-TargetResource
                 $Path = $downloadedFileName = $destName
             }
         }
-        
+
         #At this point the Path ought to be valid unless it's an MSI uninstall case
         if(-not (Test-Path -PathType Leaf $Path) -and -not ($Ensure -eq "Absent" -and $fileExtension -eq ".msi"))
         {
             Throw-TerminatingError ($LocalizedData.PathDoesNotExist -f $Path)
         }
-        
+
         $startInfo = New-Object System.Diagnostics.ProcessStartInfo
         $startInfo.UseShellExecute = $false #Necessary for I/O redirection and just generally a good idea
         $process = New-Object System.Diagnostics.Process
@@ -792,14 +796,14 @@ function Set-TargetResource
                 $id = Split-Path -Leaf $product.Name #We may have used the Name earlier, now we need the actual ID
                 $startInfo.Arguments = ("/x{0}" -f $id)
             }
-            
+
             if($LogPath)
             {
                 $startInfo.Arguments += ' /log "{0}"' -f $LogPath
             }
-            
+
             $startInfo.Arguments += " /quiet"
-            
+
             if($Arguments)
             {
                 $startInfo.Arguments += " " + $Arguments
@@ -819,10 +823,10 @@ function Set-TargetResource
                 Register-ObjectEvent -InputObject $process -EventName "ErrorDataReceived" -SourceIdentifier $errLogPath
             }
         }
-        
+
         Trace-Message ("Starting {0} with {1}" -f $startInfo.FileName, $startInfo.Arguments)
-        
-        if($PSCmdlet.ShouldProcess(($LocalizedData.StartingProcessMessage -f $startInfo.FileName, $startInfo.Arguments), $null, $null))
+
+        if(-not $whatif -and $PSCmdlet.ShouldProcess(($LocalizedData.StartingProcessMessage -f $startInfo.FileName, $startInfo.Arguments), $null, $null))
         {
             try
             {
@@ -844,13 +848,14 @@ function Set-TargetResource
                         $process.BeginOutputReadLine();
                         $process.BeginErrorReadLine();
                     }
-            
+
                     $process.WaitForExit()
 
                     if($process)
                     {
                         $exitCode = $process.ExitCode
-                        $result.exit_code = $exitCode
+                        $result.exit_code = $exitCode # Backward compatibility
+                        $result.rc = $exitCode
                     }
                 }
             }
@@ -859,7 +864,7 @@ function Set-TargetResource
                 Throw-TerminatingError ($LocalizedData.CouldNotStartProcess -f $Path) $_
             }
 
-            
+
             if($logStream)
             {
                 #We have to re-mux these since they appear to us as different streams
@@ -870,16 +875,16 @@ function Set-TargetResource
                 $errorEvents = Get-Event -SourceIdentifier $errLogPath
                 $masterEvents = @() + $outputEvents + $errorEvents
                 $masterEvents = $masterEvents | Sort-Object -Property TimeGenerated
-                
+
                 foreach($event in $masterEvents)
                 {
                     $logStream.Write($event.SourceEventArgs.Data);
                 }
-                
+
                 Remove-Event -SourceIdentifier $LogPath
                 Remove-Event -SourceIdentifier $errLogPath
             }
-            
+
             if(-not ($ReturnCode -contains $exitCode))
             {
                 Throw-TerminatingError ($LocalizedData.UnexpectedReturnCode -f $exitCode.ToString())
@@ -892,26 +897,26 @@ function Set-TargetResource
         {
             Remove-PSDrive -Force $psdrive
         }
-        
+
         if($logStream)
         {
             $logStream.Dispose()
         }
     }
-    
+
     if($downloadedFileName -and $PSCmdlet.ShouldProcess($LocalizedData.RemoveDownloadedFile, $null, $null))
     {
         #This is deliberately not in the Finally block. We want to leave the downloaded file on disk
         #in the error case as a debugging aid for the user
-        rm $downloadedFileName
+        Remove-Item -LiteralPath $downloadedFileName
     }
-    
+
     $operationString = $LocalizedData.PackageUninstalled
     if($Ensure -eq "Present")
     {
         $operationString = $LocalizedData.PackageInstalled
     }
-    
+
     # Check if reboot is required, if so notify CA. The MSFT_ServerManagerTasks provider is missing on client SKUs
     $featureData = invoke-wmimethod -EA Ignore -Name GetServerFeature -namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
     $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
@@ -920,7 +925,7 @@ function Set-TargetResource
         Write-Verbose $LocalizedData.MachineRequiresReboot
         $global:DSCMachineStatus = 1
     }
-    
+
     if($Ensure -eq "Present")
     {
         $productEntry = Get-ProductEntry $Name $identifyingNumber $InstalledCheckRegKey $InstalledCheckRegValueName $InstalledCheckRegValueData
@@ -929,7 +934,7 @@ function Set-TargetResource
             Throw-TerminatingError ($LocalizedData.PostValidationError -f $OrigPath)
         }
     }
-    
+
     Write-Verbose $operationString
     Write-Verbose $LocalizedData.PackageConfigurationComplete
 }
@@ -953,7 +958,7 @@ namespace Source
     public static class NativeMethods
     {
         //The following structs and enums are used by the various Win32 API's that are used in the code below
-        
+
         [StructLayout(LayoutKind.Sequential)]
         public struct STARTUPINFO
         {
@@ -1181,7 +1186,7 @@ namespace Source
                 {
                     throw new Win32Exception("Token elevation error #" + Marshal.GetLastWin32Error().ToString());
                 }
-                
+
                 bResult = DuplicateTokenEx(
                     hToken,
                     GENERIC_ALL_ACCESS,
@@ -1253,77 +1258,62 @@ namespace Source
 #endregion
 
 
-$params = Parse-Args $args;
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+
+$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -default $path
+$productid = Get-AnsibleParam -obj $params -name "productid" -type "str" -aliases "product_id"
+$arguments = Get-AnsibleParam -obj $params -name "arguments" -type "str"
+$state = Get-AnsibleParam -obj $params -name "state" -type 'str' -default "present" -validateset "absent","present" -aliases "ensure"
+$username = Get-AnsibleParam -obj $params -name "username" -type "str" -aliases "user_name"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str" -aliases "user_password"
+$return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "list" -default @(0, 3010)
 
 $result = @{
-    changed = $false
-}
-
-$path = Get-Attr -obj $params -name path -failifempty $true -resultobj $result
-$name = Get-Attr -obj $params -name name -default $path
-$productid = Get-Attr -obj $params -name productid
-if ($productid -eq $null)
-{
-    #Alias added for backwards compat.
-    $productid = Get-Attr -obj $params -name product_id -failifempty $true -resultobj $result
-}
-$arguments = Get-Attr -obj $params -name arguments
-$ensure = Get-Attr -obj $params -name state -default "present"
-if ($ensure -eq $null)
-{
-    $ensure = Get-Attr -obj $params -name ensure -default "present"
-}
-$username = Get-Attr -obj $params -name user_name
-$password = Get-Attr -obj $params -name user_password
-$return_code = Get-Attr -obj $params -name expected_return_code -default 0
-
-#Construct the DSC param hashtable
-$dscparams = @{
-    name=$name
-    path=$path
-    productid = $productid
     arguments = $arguments
-    ensure = $ensure
-    returncode = $return_code
+    changed = $false
+    failed = $false
+    name = $name
+    path = $path
+    productid = $productid
+    rc = $null
+    restart_required = $false
 }
 
-if (($username -ne $null) -and ($password -ne $null))
-{
-    #Add network credential to the list
+# Construct the DSC param hashtable
+$dscparams = @{
+    Arguments = $arguments
+    Ensure = $state
+    Name = $name
+    Path = $path
+    Productid = $productid
+    Returncode = $return_code
+    WhatIf = $check_mode
+}
+
+if ($username -and $password) {
+    # Add network credential to the list
     $secpassword = $password | ConvertTo-SecureString -AsPlainText -Force
     $credential = New-Object pscredential -ArgumentList $username, $secpassword
-    $dscparams.add("Credential",$credential)
+    $dscparams.add("Credential", $credential)
 }
 
-#Always return the name
-$result.name = $name
-
-$testdscresult = Test-TargetResource @dscparams
-if ($testdscresult -eq $true)
-{
-    Exit-Json -obj $result
-}
-Else
-{
-    try
-    {
-        set-TargetResource @dscparams
-    }
-    catch
-    {
+if (-not (Test-TargetResource @dscparams)) {
+    try {
+        Set-TargetResource @dscparams
+    } catch {
         $errormsg = $_
-        Fail-Json -obj $result -message $errormsg.ToString()
+        Fail-Json -obj $result -message "$errormsg"
     }
 
-    #Check if DSC thinks the computer needs a reboot:
-    if ((get-variable DSCMachinestatus -Scope Global -ea 0) -and ($global:DSCMachineStatus -eq 1))
-    {
+    # Check if DSC thinks the computer needs a reboot
+    if ((get-variable DSCMachinestatus -Scope Global -ea 0) -and ($global:DSCMachineStatus -eq 1)) {
         $result.restart_required = $true
     }
 
-    #Set-TargetResource did its job. We can assume a change has happened
+    # Set-TargetResource did its job. We can assume a change has happened
     $result.changed = $true
-    Exit-Json -obj $result
-
 }
 
+Exit-Json -obj $result
