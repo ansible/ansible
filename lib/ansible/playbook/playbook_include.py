@@ -113,7 +113,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if isinstance(ds, AnsibleBaseYAMLObject):
             new_ds.ansible_pos = ds.ansible_pos
 
-        for (k,v) in iteritems(ds):
+        for (k, v) in iteritems(ds):
             if k in ('include', 'import_playbook'):
                 self._preprocess_import(ds, new_ds, k, v)
             else:

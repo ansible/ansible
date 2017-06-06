@@ -110,7 +110,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
         else:
             if 'include' in task_ds or 'import_tasks' in task_ds or 'include_tasks' in task_ds:
                 if 'include' in task_ds:
-                    display.deprecated("The use of 'include' for tasks has been deprecated. " \
+                    display.deprecated("The use of 'include' for tasks has been deprecated. "
                                        "Use 'import_tasks' for static inclusions or 'include_tasks' for dynamic inclusions")
 
                 if use_handlers:
@@ -138,7 +138,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 elif 'import_tasks' in task_ds:
                     is_static = True
                 elif t.static is not None:
-                    display.deprecated("The use of 'static' has been deprecated. " \
+                    display.deprecated("The use of 'static' has been deprecated. "
                                        "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
                     is_static = t.static
                 else:
@@ -295,7 +295,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 if 'import_role' in task_ds:
                     is_static = True
                 if ir.static is not None:
-                    display.deprecated("The use of 'static' for 'include_role' has been deprecated. " \
+                    display.deprecated("The use of 'static' for 'include_role' has been deprecated. "
                                        "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
                     is_static = ir.static
                 else:
