@@ -598,7 +598,7 @@ class User(object):
         info = self.get_pwd_info()
         if len(info[1]) == 1 or len(info[1]) == 0:
             info[1] = self.user_password()
-        info.append( time.gmtime(self.user_expire()*86400) )
+        info.append( time.gmtime(self.user_expire()*86400.0) )
         return info
 
     def user_password(self):
