@@ -54,12 +54,13 @@ options:
 """
 
 EXAMPLES = """
-- name: configure VLAN ID and name
+- name: Create VRF named MANAGEMENT
   net_vrf:
     name: MANAGEMENT
 
-- name: remove configuration
-  net_vlan:
+- name: remove VRF named MANAGEMENT
+  net_vrf:
+    name: MANAGEMENT
     state: absent
 """
 
