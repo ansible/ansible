@@ -1,6 +1,6 @@
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
 # (c) 2016, Adrian Likins <alikins@redhat.com>
-# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
+# (c) 2016 Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,28 +20,50 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import random
 import shlex
 import shutil
 import sys
 import tempfile
-import random
-from subprocess import call
-from hashlib import sha256
 from binascii import hexlify
 from binascii import unhexlify
 from hashlib import md5
+from hashlib import sha256
+from io import BytesIO
+from subprocess import call
 
-# Note: Only used for loading obsolete VaultAES files.  All files are written
-# using the newer VaultAES256 which does not require md5
+HAS_CRYPTOGRAPHY = False
+HAS_PYCRYPTO = False
+HAS_SOME_PYCRYPTO = False
+CRYPTOGRAPHY_BACKEND = None
+try:
+    from cryptography.exceptions import InvalidSignature
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes, padding
+    from cryptography.hazmat.primitives.hmac import HMAC
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives.ciphers import (
+        Cipher as C_Cipher, algorithms, modes
+    )
+    CRYPTOGRAPHY_BACKEND = default_backend()
+    HAS_CRYPTOGRAPHY = True
+except ImportError:
+    try:
+        from Crypto.Cipher import AES as AES
+        HAS_SOME_PYCRYPTO = True
 
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, padding
-from cryptography.hazmat.primitives.hmac import HMAC
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives.ciphers import (
-    Cipher as C_Cipher, algorithms, modes
-)
+        # Note: Only used for loading obsolete VaultAES files.  All files are written
+        # using the newer VaultAES256 which does not require md5
+        from Crypto.Hash import SHA256, HMAC
+
+        # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
+        from Crypto.Util import Counter
+
+        # KDF import fails for 2.0.1, requires >= 2.6.1 from pip
+        from Crypto.Protocol.KDF import PBKDF2
+        HAS_PYCRYPTO = True
+    except ImportError:
+        pass
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import PY3, binary_type
@@ -55,12 +77,16 @@ except ImportError:
     display = Display()
 
 
-BACKEND = default_backend()
 b_HEADER = b'$ANSIBLE_VAULT'
 CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
 CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
+
+NEED_CRYPTO_LIBRARY = "ansible-vault requires either the cryptography library (preferred) or"
+if HAS_SOME_PYCRYPTO:
+    NEED_CRYPTO_LIBRARY += " a newer version of"
+NEED_CRYPTO_LIBRARY += " pycrypto in order to function."
 
 
 class AnsibleVaultError(AnsibleError):
@@ -553,7 +579,12 @@ class VaultAES:
 
     # Note: strings in this class should be byte strings by default.
 
-    def _aes_derive_key_and_iv(self, b_password, b_salt, key_length, iv_length):
+    def __init__(self):
+        if not HAS_CRYPTOGRAPHY and not HAS_PYCRYPTO:
+            raise AnsibleError(NEED_CRYPTO_LIBRARY)
+
+    @staticmethod
+    def _aes_derive_key_and_iv(b_password, b_salt, key_length, iv_length):
 
         """ Create a key and an initialization vector """
 
@@ -568,34 +599,18 @@ class VaultAES:
 
         return b_key, b_iv
 
-    def encrypt(self, b_plaintext, b_password, key_length=32):
+    @staticmethod
+    def encrypt(b_plaintext, b_password, key_length=32):
 
         """ Read plaintext data from in_file and write encrypted to out_file """
 
         raise AnsibleError("Encryption disabled for deprecated VaultAES class")
 
-    def decrypt(self, b_vaulttext, b_password, key_length=32):
-
-        """ Decrypt the given data and return it
-        :arg b_data: A byte string containing the encrypted data
-        :arg b_password: A byte string containing the encryption password
-        :arg key_length: Length of the key
-        :returns: A byte string containing the decrypted data
-        """
-
-        display.deprecated(u'The VaultAES format is insecure and has been '
-                           'deprecated since Ansible-1.5.  Use vault rekey FILENAME to '
-                           'switch to the newer VaultAES256 format', version='2.3')
-        # http://stackoverflow.com/a/14989032
-
-        b_vaultdata = unhexlify(b_vaulttext)
-        b_tmpsalt = b_vaultdata[:16]
-        b_ciphertext = b_vaultdata[16:]
-
+    @classmethod
+    def _decrypt_cryptography(cls, b_salt, b_ciphertext, b_password, key_length):
         bs = algorithms.AES.block_size // 8
-        b_salt = b_tmpsalt[len(b'Salted__'):]
-        b_key, b_iv = self._aes_derive_key_and_iv(b_password, b_salt, key_length, bs)
-        cipher = C_Cipher(algorithms.AES(b_key), modes.CBC(b_iv), BACKEND).decryptor()
+        b_key, b_iv = cls._aes_derive_key_and_iv(b_password, b_salt, key_length, bs)
+        cipher = C_Cipher(algorithms.AES(b_key), modes.CBC(b_iv), CRYPTOGRAPHY_BACKEND).decryptor()
         unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
 
         b_plaintext = unpadder.update(
@@ -613,6 +628,76 @@ class VaultAES:
 
         return b_plaintext
 
+    def _decrypt_pycrypto(cls, b_salt, b_ciphertext, b_password, key_length):
+        in_file = BytesIO(b_ciphertext)
+        in_file.seek(0)
+        out_file = BytesIO()
+
+        bs = AES.block_size
+        b_key, b_iv = cls._aes_derive_key_and_iv(b_password, b_salt, key_length, bs)
+        cipher = AES.new(b_key, AES.MODE_CBC, b_iv)
+        b_next_chunk = b''
+        finished = False
+
+        while not finished:
+            b_chunk, b_next_chunk = b_next_chunk, cipher.decrypt(in_file.read(1024 * bs))
+            if len(b_next_chunk) == 0:
+                if PY3:
+                    padding_length = b_chunk[-1]
+                else:
+                    padding_length = ord(b_chunk[-1])
+
+                b_chunk = b_chunk[:-padding_length]
+                finished = True
+
+            out_file.write(b_chunk)
+            out_file.flush()
+
+        # reset the stream pointer to the beginning
+        out_file.seek(0)
+        b_out_data = out_file.read()
+        out_file.close()
+
+        # split out sha and verify decryption
+        b_split_data = b_out_data.split(b"\n", 1)
+        b_this_sha = b_split_data[0]
+        b_plaintext = b_split_data[1]
+        b_test_sha = to_bytes(sha256(b_plaintext).hexdigest())
+
+        if b_this_sha != b_test_sha:
+            raise AnsibleError("Decryption failed")
+
+        return b_plaintext
+
+    @classmethod
+    def decrypt(cls, b_vaulttext, b_password, key_length=32):
+
+        """ Decrypt the given data and return it
+        :arg b_data: A byte string containing the encrypted data
+        :arg b_password: A byte string containing the encryption password
+        :arg key_length: Length of the key
+        :returns: A byte string containing the decrypted data
+        """
+
+        display.deprecated(u'The VaultAES format is insecure and has been '
+                           'deprecated since Ansible-1.5.  Use vault rekey FILENAME to '
+                           'switch to the newer VaultAES256 format', version='2.3')
+        # http://stackoverflow.com/a/14989032
+
+        b_vaultdata = unhexlify(b_vaulttext)
+        b_salt = b_vaultdata[len(b'Salted__'):16]
+        b_ciphertext = b_vaultdata[16:]
+
+        if HAS_CRYPTOGRAPHY:
+            b_plaintext = cls._decrypt_cryptography(b_salt, b_ciphertext, key_length)
+        elif HAS_PYCRYPTO:
+            b_plaintext = cls._decrypt_pycrypto(b_salt, b_ciphertext, key_length)
+        else:
+            display.warning(u"Neither Cryptography nor pycrypto was installed and this should have been detected earlier")
+            raise AnsibleError(NEED_CRYPTO_LIBRARY)
+
+        return b_plaintext
+
 
 class VaultAES256:
 
@@ -625,68 +710,132 @@ class VaultAES256:
 
     # Note: strings in this class should be byte strings by default.
 
+    def __init__(self):
+        if not HAS_CRYPTOGRAPHY and not HAS_PYCRYPTO:
+            raise AnsibleError(NEED_CRYPTO_LIBRARY)
+
     @staticmethod
-    def _create_key(b_password, b_salt, keylength, ivlength):
+    def _create_key_cryptography(b_password, b_salt, key_length, iv_length):
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
-            length=2 * keylength + ivlength,
+            length=2 * key_length + iv_length,
             salt=b_salt,
             iterations=10000,
-            backend=BACKEND)
+            backend=CRYPTOGRAPHY_BACKEND)
         b_derivedkey = kdf.derive(b_password)
 
+        return b_derivedkey
+
+    @staticmethod
+    def _create_key_pycrypto(b_password, b_salt, key_length, iv_length):
+        hash_function = SHA256
+
+        # make two keys and one iv
+        pbkdf2_prf = lambda p, s: HMAC.new(p, s, hash_function).digest()
+
+        b_derivedkey = PBKDF2(b_password, b_salt, dkLen=(2 * key_length) + iv_length,
+                            count=10000, prf=pbkdf2_prf)
         return b_derivedkey
 
     @classmethod
     def _gen_key_initctr(cls, b_password, b_salt):
         # 16 for AES 128, 32 for AES256
-        keylength = 32
+        key_length = 32
 
-        # AES is a 128-bit block cipher, so IVs and counter nonces are 16 bytes
-        ivlength = algorithms.AES.block_size // 8
+        if HAS_CRYPTOGRAPHY:
+            # AES is a 128-bit block cipher, so IVs and counter nonces are 16 bytes
+            iv_length = algorithms.AES.block_size // 8
 
-        b_derivedkey = cls._create_key(b_password, b_salt, keylength, ivlength)
+            b_derivedkey = cls._create_key_cryptography(b_password, b_salt, key_length, iv_length)
+            b_iv = b_derivedkey[(key_length * 2):(key_length * 2) + iv_length]
+        elif HAS_PYCRYPTO:
+            # match the size used for counter.new to avoid extra work
+            iv_length = 16
 
-        b_key1 = b_derivedkey[:keylength]
-        b_key2 = b_derivedkey[keylength:(keylength * 2)]
-        b_iv = b_derivedkey[(keylength * 2):(keylength * 2) + ivlength]
+            b_derivedkey = cls._create_key_pycrypto(b_password, b_salt, key_length, iv_length)
+            b_iv = hexlify(b_derivedkey[(key_length * 2):(key_length * 2) + iv_length])
+        else:
+            display.warning(u"Neither Cryptography nor pycrypto was installed. This should have been detected earlier")
+            raise AnsibleError(NEED_CRYPTO_LIBRARY)
+
+        b_key1 = b_derivedkey[:key_length]
+        b_key2 = b_derivedkey[key_length:(key_length * 2)]
 
         return b_key1, b_key2, b_iv
 
-    def encrypt(self, b_plaintext, b_password):
-        b_salt = os.urandom(32)
-        b_key1, b_key2, b_iv = self._gen_key_initctr(b_password, b_salt)
-
-        cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), BACKEND)
+    @staticmethod
+    def _encrypt_cryptography(b_plaintext, b_salt, b_key1, b_key2, b_iv):
+        cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
         encryptor = cipher.encryptor()
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
         b_ciphertext = encryptor.update(padder.update(b_plaintext) + padder.finalize())
         b_ciphertext += encryptor.finalize()
 
         # COMBINE SALT, DIGEST AND DATA
-        hmac = HMAC(b_key2, hashes.SHA256(), BACKEND)
+        hmac = HMAC(b_key2, hashes.SHA256(), CRYPTOGRAPHY_BACKEND)
         hmac.update(b_ciphertext)
-        b_vaulttext = b'\n'.join([hexlify(b_salt), hexlify(hmac.finalize()), hexlify(b_ciphertext)])
+        b_hmac = hmac.finalize()
+
+        return hexlify(b_hmac), hexlify(b_ciphertext)
+
+    @staticmethod
+    def _encrypt_pycrypto(b_plaintext, b_salt, b_key1, b_key2, b_iv):
+        # PKCS#7 PAD DATA http://tools.ietf.org/html/rfc5652#section-6.3
+        bs = AES.block_size
+        padding_length = (bs - len(b_plaintext) % bs) or bs
+        b_plaintext += to_bytes(padding_length * chr(padding_length), encoding='ascii', errors='strict')
+
+        # COUNTER.new PARAMETERS
+        # 1) nbits (integer) - Length of the counter, in bits.
+        # 2) initial_value (integer) - initial value of the counter. "iv" from _gen_key_initctr
+
+        ctr = Counter.new(128, initial_value=int(b_iv, 16))
+
+        # AES.new PARAMETERS
+        # 1) AES key, must be either 16, 24, or 32 bytes long -- "key" from _gen_key_initctr
+        # 2) MODE_CTR, is the recommended mode
+        # 3) counter=<CounterObject>
+
+        cipher = AES.new(b_key1, AES.MODE_CTR, counter=ctr)
+
+        # ENCRYPT PADDED DATA
+        b_ciphertext = cipher.encrypt(b_plaintext)
+
+        # COMBINE SALT, DIGEST AND DATA
+        hmac = HMAC.new(b_key2, b_ciphertext, SHA256)
+
+        return to_bytes(hmac.hexdigest(), errors='surrogate_or_strict'), hexlify(b_ciphertext)
+
+    @classmethod
+    def encrypt(cls, b_plaintext, b_password):
+        b_salt = os.urandom(32)
+        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
+
+        if HAS_CRYPTOGRAPHY:
+            b_hmac, b_ciphertext = cls._encrypt_cryptography(b_plaintext, b_salt, b_key1, b_key2, b_iv)
+        elif HAS_PYCRYPTO:
+            b_hmac, b_ciphertext = cls._encrypt_pycrypto(b_plaintext, b_salt, b_key1, b_key2, b_iv)
+        else:
+            display.warning(u"Neither Cryptography nor pycrypto is installed. This should have been detected earlier")
+            raise AnsibleError(NEED_CRYPTO_LIBRARY)
+
+        b_vaulttext = b'\n'.join([hexlify(b_salt), b_hmac, b_ciphertext])
+        # Unnecessary but getting rid of it is a backwards incompatible vault
+        # format change
         b_vaulttext = hexlify(b_vaulttext)
         return b_vaulttext
 
-    def decrypt(self, b_vaulttext, b_password):
-        # SPLIT SALT, DIGEST, AND DATA
-        b_vaulttext = unhexlify(b_vaulttext)
-        b_salt, b_cryptedHmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
-        b_salt = unhexlify(b_salt)
-        b_ciphertext = unhexlify(b_ciphertext)
-        b_key1, b_key2, b_iv = self._gen_key_initctr(b_password, b_salt)
-
+    @staticmethod
+    def _decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv):
         # EXIT EARLY IF DIGEST DOESN'T MATCH
-        hmac = HMAC(b_key2, hashes.SHA256(), BACKEND)
+        hmac = HMAC(b_key2, hashes.SHA256(), CRYPTOGRAPHY_BACKEND)
         hmac.update(b_ciphertext)
         try:
-            hmac.verify(unhexlify(b_cryptedHmac))
+            hmac.verify(unhexlify(b_crypted_hmac))
         except InvalidSignature:
             return None
 
-        cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), BACKEND)
+        cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
         decryptor = cipher.decryptor()
         unpadder = padding.PKCS7(128).unpadder()
         b_plaintext = unpadder.update(
@@ -695,6 +844,68 @@ class VaultAES256:
 
         return b_plaintext
 
+    @staticmethod
+    def _is_equal(b_a, b_b):
+        """
+        Comparing 2 byte arrrays in constant time
+        to avoid timing attacks.
+
+        It would be nice if there was a library for this but
+        hey.
+        """
+        if not (isinstance(b_a, binary_type) and isinstance(b_b, binary_type)):
+            raise TypeError('_is_equal can only be used to compare two byte strings')
+
+        # http://codahale.com/a-lesson-in-timing-attacks/
+        if len(b_a) != len(b_b):
+            return False
+
+        result = 0
+        for b_x, b_y in zip(b_a, b_b):
+            if PY3:
+                result |= b_x ^ b_y
+            else:
+                result |= ord(b_x) ^ ord(b_y)
+        return result == 0
+
+    @classmethod
+    def _decrypt_pycrypto(cls, b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv):
+        # EXIT EARLY IF DIGEST DOESN'T MATCH
+        hmac_decrypt = HMAC.new(b_key2, b_ciphertext, SHA256)
+        if not cls._is_equal(b_crypted_hmac, to_bytes(hmac_decrypt.hexdigest())):
+            return None
+
+        # SET THE COUNTER AND THE CIPHER
+        ctr = Counter.new(128, initial_value=int(b_iv, 16))
+        cipher = AES.new(b_key1, AES.MODE_CTR, counter=ctr)
+
+        # DECRYPT PADDED DATA
+        b_plaintext = cipher.decrypt(b_ciphertext)
+
+        # UNPAD DATA
+        if PY3:
+            padding_length = b_plaintext[-1]
+        else:
+            padding_length = ord(b_plaintext[-1])
+
+        b_plaintext = b_plaintext[:-padding_length]
+        return b_plaintext
+
+    @classmethod
+    def decrypt(cls, b_vaulttext, b_password):
+        # SPLIT SALT, DIGEST, AND DATA
+        b_vaulttext = unhexlify(b_vaulttext)
+        b_salt, b_crypted_hmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
+        b_salt = unhexlify(b_salt)
+        b_ciphertext = unhexlify(b_ciphertext)
+        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
+
+        if HAS_CRYPTOGRAPHY:
+            b_plaintext = cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
+        elif HAS_PYCRYPTO:
+            b_plaintext = cls._decrypt_pycrypto(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
+
+        return b_plaintext
 
 # Keys could be made bytes later if the code that gets the data is more
 # naturally byte-oriented
