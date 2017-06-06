@@ -185,24 +185,32 @@ class ApacheFragment(object):
 
 class ApacheSuseVariable(object):
     sysconf_file = '/etc/sysconfig/apache2'
+    sysconf_variable = None
     command_names = dict(present=None, absent=None)
 
     def __init__(self, name):
-        self.name = name
+        # start scripts add '_module' suffix and remove 'mod_' prefix to get module ID
+        # then try to find name.so with and without 'mod_' prefix
+        # if found - it add LoadModule directive to /etc/apache2/sysconfig.d/loadmodule.conf
+        # if not found - this module will be silently ignored
+        suffix_position = name.rfind('_module')
+        if suffix_position == -1:
+            self.name = name
+        else:
+            self.name = name[0:suffix_position]
 
     def state(self):
-        command_name = module.get_bin_path(self.command_names["present"])
-        if command_name is None:
-            raise ApacheFragmentUnsupported("command %s not found" % self.command_names["present"])
-        rc, stdout, stderr = module.run_command([command_name, '-q', self.name])
-        if rc == 0:
-            return "present"
-        elif rc == 1:
-            return "absent"
-        else:
-            raise ApacheFragmentException(
-                "Can't get state of Apache variable %s, command fail with rc=%s, stdout=%s, stderr=%s" % (
-                    self.name, rc, stdout, stderr))
+        with open(self.sysconf_file, 'rt') as sysconf:
+            lexer = shlex.shlex(sysconf, infile=self.sysconf_file, posix=True)
+            for token in lexer:
+                if token == self.sysconf_variable:
+                    if lexer.get_token() == '=':
+                        sysconf_variable_values = lexer.get_token().split()
+                        if self.name in sysconf_variable_values:
+                            return "present"
+                        else:
+                            return "absent"
+            raise ApacheFragmentException('Can\'t parse variable %s in %s' % (self.sysconf_variable, self.sysconf_file))
 
     def set(self, state=None):
         command_name = module.get_bin_path(self.command_names[state])
@@ -233,25 +241,13 @@ class ApacheModuleFragment(ApacheFragment):
 
 
 class ApacheSuseModuleVariable(ApacheSuseVariable):
+    sysconf_variable = 'APACHE_MODULES'
     command_names = dict(present='a2enmod', absent='a2dismod')
 
 
 class ApacheSuseFlagVariable(ApacheSuseVariable):
     sysconf_variable = 'APACHE_SERVER_FLAGS'
     command_names = dict(present='a2enflag', absent='a2disflag')
-
-    def state(self):
-        with open(self.sysconf_file, 'rt') as sysconf:
-            lexer = shlex.shlex(sysconf, infile=self.sysconf_file, posix=True)
-            for token in lexer:
-                if token == self.sysconf_variable:
-                    if lexer.get_token() == '=':
-                        sysconf_variable_values = lexer.get_token().split()
-                        if self.name in sysconf_variable_values:
-                            return "present"
-                        else:
-                            return "absent"
-            raise ApacheFragmentException('Can\'t parse variable %s in %s' % (self.sysconf_variable, self.sysconf_file))
 
 
 def _set_state(state):
