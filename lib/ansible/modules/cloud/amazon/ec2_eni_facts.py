@@ -280,8 +280,11 @@ def list_ec2_network_interfaces(connection, module):
         # Copy the tags because we don't want to snake these
         if 'TagSet' in network_interface:
             tag_set_copy = copy.copy(network_interface['TagSet'])
+        else:
+            tag_set_copy = []
+
         snaked_network_interfaces.append(camel_dict_to_snake_dict(network_interface))
-        snaked_network_interfaces['tags'] = boto3_tag_list_to_ansible_dict(tag_set_copy)
+        network_interface['tags'] = boto3_tag_list_to_ansible_dict(tag_set_copy)
         del network_interface['tag_set']
 
     module.exit_json(network_interfaces=snaked_network_interfaces)
