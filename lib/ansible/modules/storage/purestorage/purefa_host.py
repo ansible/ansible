@@ -62,7 +62,7 @@ options:
       - Volume name to map to the host
     required: false
 extends_documentation_fragment:
-    - pure_flasharray
+    - purestorage
 '''
 
 EXAMPLES = '''

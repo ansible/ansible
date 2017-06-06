@@ -61,7 +61,7 @@ options:
     default: false
     choices: [ "false", "true" ]
 extends_documentation_fragment:
-    - pure_flasharray
+    - purestorage
 '''
 
 EXAMPLES = '''

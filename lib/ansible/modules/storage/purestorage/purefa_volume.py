@@ -53,7 +53,7 @@ options:
       - Volume size in M, G, T or P units. See examples. Default 1G
     required: false
 extends_documentation_fragment:
-    - pure_flasharray
+    - purestorage
 '''
 
 EXAMPLES = '''

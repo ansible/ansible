@@ -51,7 +51,7 @@ options:
       - List of existing volumes to add to hostgroup
     required: false
 extends_documentation_fragment:
-    - pure_flasharray
+    - purestorage
 '''
 
 EXAMPLES = '''
