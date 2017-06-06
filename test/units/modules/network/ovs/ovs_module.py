@@ -76,7 +76,7 @@ class TestOpenVSwitchModule(unittest.TestCase):
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
 
-        if commands:
+        if commands is not None:
             self.assertEqual(commands, result['commands'], result['commands'])
 
         return result
