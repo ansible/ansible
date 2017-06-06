@@ -170,24 +170,6 @@ test_vault:
 test_delegate_to:
 	(cd targets/delegate_to && ./runme.sh $(TEST_FLAGS))
 
-# Split Windows CI targets to support parallel execution.
-# Targets should be balanced to have similar run times.
-ci_win: ci_win1 ci_win2 ci_win3
-ci_win1: test_win_group1
-ci_win2: test_win_group2 test_binary_modules_winrm
-ci_win3: test_win_group3 test_connection_winrm
-
-test_winrm: test_win_group1 test_win_group2 test_win_group3
-
-test_win_group1:
-	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group1.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
-
-test_win_group2:
-	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group2.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
-
-test_win_group3:
-	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group3.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
-
 test_tags:
 	(cd targets/tags && ./runme.sh $(TEST_FLAGS))
 
