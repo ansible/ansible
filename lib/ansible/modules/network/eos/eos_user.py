@@ -166,10 +166,16 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
-        add = lambda x: commands.append('username %s %s' % (want['username'], x))
+        if 'name' in want:
+            add = lambda x: commands.append('username %s %s' % (want['name'], x))
+        else:
+            add = lambda x: commands.append('username %s %s' % (want['username'], x))
 
         if want['state'] == 'absent':
-            commands.append('no username %s' % want['username'])
+            if 'name' in want:
+                commands.append('no username %s' % want['name'])
+            else:
+                commands.append('no username %s' % want['username'])
             continue
 
         if needs_update('role'):
@@ -189,7 +195,10 @@ def map_obj_to_commands(updates, module):
             if want['nopassword']:
                 add('nopassword')
             else:
-                add('no username %s nopassword' % want['username'])
+                if 'name' in want:
+                    add('no username %s nopassword' % want['name'])
+                else:
+                    add('no username %s nopassword' % want['username'])
 
     return commands
 
@@ -289,7 +298,11 @@ def map_params_to_obj(module):
 def update_objects(want, have):
     updates = list()
     for entry in want:
-        item = next((i for i in have if i['username'] == entry['username']), None)
+        if 'name' in entry:
+            item = next((i for i in have if i['username'] == entry['name']), None)
+        else:
+            item = next((i for i in have if i['username'] == entry['username']), None)
+
         if all((item is None, entry['state'] == 'present')):
             updates.append((entry, {}))
         elif item:
@@ -319,7 +332,6 @@ def main():
     )
 
     argument_spec.update(eos_argument_spec)
-
     mutually_exclusive = [('username', 'users')]
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -339,7 +351,7 @@ def main():
     commands = map_obj_to_commands(update_objects(want, have), module)
 
     if module.params['purge']:
-        want_users = [x['username'] for x in want]
+        want_users = [x['username'] if 'username' in x else x['name'] for x in want]
         have_users = [x['username'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
