@@ -352,6 +352,9 @@ def main():
         else:
             if not module.check_mode:
                 # Doesn't exist. create it.
+                for container in module.params['containers']:
+                    container['cpu'] = int(container['cpu'])
+                    container['memory'] = int(container['memory'])
                 volumes = module.params.get('volumes', []) or []
                 for container in module.params['containers']:
                     if 'environment' in container:
