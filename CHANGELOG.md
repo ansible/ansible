@@ -9,6 +9,7 @@ Ansible Changes By Release
 * Python3 bugfixes
   * Fix sorting of ec2 policies
   * Fix digital_ocean dynamic inventory script
+* Fix pip module when using python3's pyvenv and python3 -m venv to create virtualenvs
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
