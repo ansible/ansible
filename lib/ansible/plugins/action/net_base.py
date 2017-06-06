@@ -17,16 +17,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import sys
 import copy
 
 from ansible.plugins.action import ActionBase
-from ansible.utils.path import unfrackpath
-from ansible.plugins import connection_loader
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_bytes
 
 from imp import find_module, load_module
 
@@ -99,25 +95,19 @@ class ActionModule(ActionBase):
         connection = self._shared_loader_obj.connection_loader.get('persistent',
                                                                    play_context, sys.stdin)
 
-        socket_path = self._get_socket_path(play_context)
+        socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, play_context.remote_addr)
+        if not socket_path:
+            return {'failed': True,
+                    'msg': 'unable to open shell. Please see: ' +
+                           'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
-        if not os.path.exists(socket_path):
-            # start the connection if it isn't started
-            rc, out, err = connection.exec_command('open_shell()')
-            display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
-            if not rc == 0:
-                return {'failed': True,
-                        'msg': 'unable to open shell. Please see: ' +
-                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
-                        'rc': rc}
-        else:
-            # make sure we are in the right cli context which should be
-            # enable mode and not config module
-            rc, out, err = connection.exec_command('prompt()')
-            if str(out).strip().endswith(')#'):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                connection.exec_command('exit')
+        # make sure we are in the right cli context which should be
+        # enable mode and not config module
+        rc, out, err = connection.exec_command('prompt()')
+        if str(out).strip().endswith(')#'):
+            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+            connection.exec_command('exit')
 
         if self._play_context.become_method == 'enable':
             self._play_context.become = False
@@ -150,13 +140,6 @@ class ActionModule(ActionBase):
             implementation_module = None
 
         return implementation_module
-
-    # this will be removed once the new connection work is done
-    def _get_socket_path(self, play_context):
-        ssh = connection_loader.get('ssh', class_only=True)
-        cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user)
-        path = unfrackpath("$HOME/.ansible/pc")
-        return cp % dict(directory=path)
 
     def _load_provider(self, network_os):
         # we should be able to stream line this a bit by creating a common
