@@ -11,12 +11,12 @@ As noted in :doc:`playbooks_reuse`, include and import statements are very simil
 - All ``import*`` statements are pre-processed at the time playbooks are parsed.
 - All ``include*`` statements are processed as they encountered during the execution of the playbook.
 
-Please refer to above for documentation concerning the trade-offs one may encounter when using each type.
+Please refer to  :doc:`playbooks_reuse` for documentation concerning the trade-offs one may encounter when using each type.
 
 Importing Playbooks
 ```````````````````
 
-It is possible to include playbooks inside a master playbook, as follows::
+It is possible to include playbooks inside a master playbook. For example::
 
     ---
     import_playbook: webservers.yml
@@ -51,7 +51,7 @@ You can also pass variables into imports and includes::
     - import_tasks: wordpress.yml wp_user=alice
     - import_tasks: wordpress.yml wp_user=bob
 
-Starting in Ansible 1.0, variables can also be passed to include files using an alternative syntax, which also supports structured variables like dictionaries and lists::
+Variables can also be passed to include files using an alternative syntax, which also supports structured variables like dictionaries and lists::
 
     tasks:
     - include_tasks: wordpress.yml
@@ -63,13 +63,12 @@ Starting in Ansible 1.0, variables can also be passed to include files using an 
 
 Using either syntax, variables passed in can then be used in the included files. These variables will only be available to tasks within the included file. See :doc:`variable_precedence` for more details on variable inheritance and precedence.
 
-.. note::
-    As of 1.0, task include statements can be used at arbitrary depth. They were previously limited to a single level, so task includes could not include other files containing task includes.
+Task include statements can be used at arbitrary depth.
 
 .. note::
-    The static and dynamic can be mixed, however this is not recommended as it may lead to difficult-to-diagnose bugs in your playbooks.
+    Static and dynamic can be mixed, however this is not recommended as it may lead to difficult-to-diagnose bugs in your playbooks.
 
-Includes and imports can also be used in the ``handlers:`` section, for instance, if you want to define how to restart apache, you only have to do that once for all of your playbooks.  You might make a handlers.yml that looks like::
+Includes and imports can also be used in the ``handlers:`` section; for instance, if you want to define how to restart apache, you only have to do that once for all of your playbooks.  You might make a handlers.yml that looks like::
 
    # more_handlers.yml
    ---
