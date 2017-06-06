@@ -160,7 +160,7 @@ class Connection(ConnectionBase):
             getattr(self._play_context, 'ssh_args', '') or '',
         ]
         if ssh_args is not None:
-            args = self._split_ssh_args(' '.join(ssh_args))
+            args = self._split_ssh_args(' '.join(filter(None,ssh_args)))
             for i, arg in enumerate(args):
                 if arg.lower() == 'proxycommand':
                     # _split_ssh_args split ProxyCommand from the command itself
