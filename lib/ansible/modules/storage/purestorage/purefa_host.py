@@ -109,13 +109,14 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
+from ansible.module_utils.pure import get_system, purefa_argument_spec
+
+
 HAS_PURESTORAGE = True
 try:
     from purestorage import purestorage
 except ImportError:
     HAS_PURESTORAGE = False
-
-from ansible.module_utils.pure import *
 
 
 def get_host(module, array):
