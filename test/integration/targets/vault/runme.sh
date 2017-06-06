@@ -2,6 +2,21 @@
 
 set -eux
 
+pre_fail() {
+    # just for less confusing echos when running -x by default
+    set +x
+    echo
+    echo "=====  v  EXPECTED TO ERROR - The wrong password tests are expected to return 1 (fail)  ===="
+    set -eux
+}
+
+post_fail() {
+    set +x
+    echo "====  ^ EXPECTED TO ERROR =================================================================="
+    echo
+    set -eux
+}
+
 MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 trap 'rm -rf "${MYTMPDIR}"' EXIT
 
@@ -17,21 +32,27 @@ ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_
 ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_1_AES.yml
 
 # old format, wrong password
-echo "The wrong password tests are expected to return 1"
+pre_fail
 ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_0_AES.yml && :
 WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
+post_fail
 
+pre_fail
 ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES.yml && :
 WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
+post_fail
 
+
+pre_fail
 ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES256.yml && :
 WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
+post_fail
 
 set -eux
 

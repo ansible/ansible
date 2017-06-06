@@ -5,12 +5,16 @@
 pip uninstall -y cryptography
 pip uninstall -y pycrypto
 
-./runme.sh
+# this will fail in some fashion or another, but
+# need to decide what is expected and test for it
+./runme.sh "$@"
 
 # now just pycrypto
 pip install --user pycrypto
 
-./runme.sh
+# start enforcing success
+set -e
+./runme.sh "$@"
 
 
 # now just cryptography
@@ -18,10 +22,10 @@ pip install --user pycrypto
 pip uninstall -y pycrypto
 pip install --user cryptography
 
-./runme.sh
+./runme.sh "$@"
 
 # now both
 
 pip install --user pycrypto
 
-./runme.sh
+./runme.sh "$@"
