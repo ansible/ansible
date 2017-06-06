@@ -24,7 +24,6 @@ import os
 import tempfile
 
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -125,7 +124,6 @@ class TaskQueueManager:
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
-        self._executor = None
         self._job_queue = deque()
         self._job_queue_lock = threading.Lock()
 
@@ -161,8 +159,6 @@ class TaskQueueManager:
         return self._pop_off_queue(self._res_queue, self._res_queue_lock)
 
     def _initialize_processes(self, num):
-        # FIXME: be safe about creating this
-        self._executor = PoolExecutor(max_workers=num)
         # FIXME: do we need a global lock for workers here instead of a per-worker?
         self._workers = []
 
@@ -171,11 +167,8 @@ class TaskQueueManager:
         shared_loader_obj = SharedPluginLoaderObj()
 
         for i in range(num):
-            w_thread = self._executor.submit(
-                run_worker,
-                self,
-                shared_loader_obj
-            )
+            w_thread = threading.Thread(target=run_worker, args=(self, shared_loader_obj))
+            w_thread.start()
             w_lock = threading.Lock()
             self._workers.append([w_thread, w_lock])
 
@@ -383,8 +376,8 @@ class TaskQueueManager:
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
             for (w_thread, w_lock) in self._workers:
-                if w_thread and not w_thread.running():
-                    w_thread.cancel()
+                if w_thread and not w_thread.is_alive():
+                    w_thread.join()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
