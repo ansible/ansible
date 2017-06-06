@@ -111,7 +111,7 @@ class ForemanInventory(object):
         try:
             self.want_hostcollections = config.getboolean('ansible', 'want_hostcollections')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            self.want_hostcollections = True
+            self.want_hostcollections = False
 
         # Cache related
         try:
