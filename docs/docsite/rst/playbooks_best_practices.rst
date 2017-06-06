@@ -16,9 +16,8 @@ The following section shows one of many possible ways to organize playbook conte
 
 Your usage of Ansible should fit your needs, however, not ours, so feel free to modify this approach and organize as you see fit.
 
-One thing you will definitely want to do though, is use the "roles" organization feature, which is documented as part
-of the main playbooks page.  See :doc:`playbooks_reuse_roles`.  You absolutely should be using roles.  Roles are great.  Use roles.  Roles!
-Did we say that enough?  Roles are great.
+One crucial way to organize your playbook content is Ansible's "roles" organization feature, which is documented as part
+of the main playbooks page.  You should take the time to read and understand the roles documentation which is available here: :doc:`playbooks_reuse_roles`.  
 
 .. _directory_layout:
 
