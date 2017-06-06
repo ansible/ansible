@@ -74,7 +74,7 @@ class TestVyosModule(unittest.TestCase):
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
 
-        if commands:
+        if commands is not None:
             if sort:
                 self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
             else:

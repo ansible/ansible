@@ -19,15 +19,14 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$result = @{
-    changed = $false
-    win_timezone = @{}
-}
-
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$timezone = Get-AnsibleParam -obj $params -name "timezone" -failifempty $true -resultobj $result
+$timezone = Get-AnsibleParam -obj $params -name "timezone" -type "str" -failifempty $true
+
+$result = @{
+    changed = $false
+}
 
 Try {
     # Get the current timezone set

@@ -138,7 +138,7 @@ def _module_is_enabled(module):
             if 'AH00534' in stderr and 'mpm_' in name:
                 module.warnings.append(
                     "No MPM module loaded! apache2 reload AND other module actions"
-                    " will fail if no MPM module is loaded immediatly."
+                    " will fail if no MPM module is loaded immediately."
                 )
             else:
                 module.warnings.append(error_msg)

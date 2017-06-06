@@ -29,9 +29,9 @@ class LookupModule(LookupBase):
         # make sure term is not a list of one (list of one..) item
         # return the final non list item if so
 
-        if isinstance(term,list) and len(term) == 1:
+        if isinstance(term, list) and len(term) == 1:
             term = term[0]
-            if isinstance(term,list):
+            if isinstance(term, list):
                 term = self._check_list_of_one_list(term)
 
         return term
@@ -50,7 +50,7 @@ class LookupModule(LookupBase):
                 # convert a variable to a list
                 term2 = listify_lookup_plugin_terms(term, templar=self._templar, loader=self._loader)
                 # but avoid converting a plain string to a list of one string
-                if term2 != [ term ]:
+                if term2 != [term]:
                     term = term2
 
             if isinstance(term, list):
@@ -62,11 +62,9 @@ class LookupModule(LookupBase):
 
         return ret
 
-
     def run(self, terms, variables, **kwargs):
 
         if not isinstance(terms, list):
             raise AnsibleError("with_flattened expects a list")
 
         return self._do_flatten(terms, variables)
-

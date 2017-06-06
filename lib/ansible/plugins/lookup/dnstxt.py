@@ -17,17 +17,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-HAVE_DNS=False
+HAVE_DNS = False
 try:
     import dns.resolver
     from dns.exception import DNSException
-    HAVE_DNS=True
+    HAVE_DNS = True
 except ImportError:
     pass
 
 from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_native
+from ansible.plugins.lookup import LookupBase
+
 
 # ==============================================================
 # DNSTXT: DNS TXT records
@@ -63,4 +64,3 @@ class LookupModule(LookupBase):
             ret.append(''.join(string))
 
         return ret
-

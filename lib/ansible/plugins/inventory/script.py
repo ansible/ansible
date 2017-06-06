@@ -80,7 +80,7 @@ class InventoryModule(BaseInventoryPlugin):
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
         # directory when '.' is not in PATH.
-        cmd = [ path, "--list" ]
+        cmd = [path, "--list"]
 
         try:
             cache_key = self.get_cache_prefix(path)
@@ -95,7 +95,7 @@ class InventoryModule(BaseInventoryPlugin):
 
                 path = to_native(path)
                 if stderr:
-                    err =  to_native(stderr) + "\n"
+                    err = to_native(stderr) + "\n"
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
@@ -120,33 +120,32 @@ class InventoryModule(BaseInventoryPlugin):
 
             group = None
             data_from_meta = None
+
+            # A "_meta" subelement may contain a variable "hostvars" which contains a hash for each host
+            # if this "hostvars" exists at all then do not call --host for each # host.
+            # This is for efficiency and scripts should still return data
+            # if called with --host for backwards compat with 1.2 and earlier.
             for (group, gdata) in processed.items():
                 if group == '_meta':
-                    if 'hostvars' in processed:
-                        data_from_meta = processed['hostvars']
+                    if 'hostvars' in gdata:
+                        data_from_meta = gdata['hostvars']
                 else:
                     self._parse_group(group, gdata)
 
-            # in Ansible 1.3 and later, a "_meta" subelement may contain
-            # a variable "hostvars" which contains a hash for each host
-            # if this "hostvars" exists at all then do not call --host for each
-            # host.  This is for efficiency and scripts should still return data
-            # if called with --host for backwards compat with 1.2 and earlier.
             for host in self._hosts:
                 got = {}
                 if data_from_meta is None:
                     got = self.get_host_variables(path, host)
                 else:
                     try:
-                        got = processed.get(host, {})
+                        got = data_from_meta.get(host, {})
                     except AttributeError as e:
-                        raise AnsibleError("Improperly formatted host information for %s: %s" % (host,to_native(e)))
+                        raise AnsibleError("Improperly formatted host information for %s: %s" % (host, to_native(e)))
 
-                    self.populate_host_vars(host, got, group)
+                self.populate_host_vars([host], got)
 
         except Exception as e:
             raise AnsibleParserError(to_native(e))
-
 
     def _parse_group(self, group, data):
 
@@ -155,7 +154,7 @@ class InventoryModule(BaseInventoryPlugin):
         if not isinstance(data, dict):
             data = {'hosts': data}
         # is not those subkeys, then simplified syntax, host with vars
-        elif not any(k in data for k in ('hosts','vars','children')):
+        elif not any(k in data for k in ('hosts', 'vars', 'children')):
             data = {'hosts': [group], 'vars': data}
 
         if 'hosts' in data:
@@ -173,7 +172,7 @@ class InventoryModule(BaseInventoryPlugin):
             for k, v in iteritems(data['vars']):
                 self.inventory.set_variable(group, k, v)
 
-        if group != 'meta' and isinstance(data, dict) and 'children' in data:
+        if group != '_meta' and isinstance(data, dict) and 'children' in data:
             for child_name in data['children']:
                 self.inventory.add_group(child_name)
                 self.inventory.add_child(group, child_name)

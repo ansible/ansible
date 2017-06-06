@@ -39,8 +39,8 @@ class RoleMetadata(Base):
     '''
 
     _allow_duplicates = FieldAttribute(isa='bool', default=False)
-    _dependencies     = FieldAttribute(isa='list', default=[])
-    _galaxy_info      = FieldAttribute(isa='GalaxyInfo')
+    _dependencies = FieldAttribute(isa='list', default=[])
+    _galaxy_info = FieldAttribute(isa='GalaxyInfo')
 
     def __init__(self, owner=None):
         self._owner = owner
@@ -103,8 +103,8 @@ class RoleMetadata(Base):
 
     def serialize(self):
         return dict(
-            allow_duplicates = self._allow_duplicates,
-            dependencies     = self._dependencies,
+            allow_duplicates=self._allow_duplicates,
+            dependencies=self._dependencies,
         )
 
     def deserialize(self, data):

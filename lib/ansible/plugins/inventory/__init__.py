@@ -61,11 +61,11 @@ class BaseInventoryPlugin(object):
         ''' create predictable unique prefix for plugin/inventory '''
 
         m = hashlib.sha1()
-        m.update(self.NAME)
+        m.update(to_bytes(self.NAME))
         d1 = m.hexdigest()
 
         n = hashlib.sha1()
-        n.update(path)
+        n.update(to_bytes(path))
         d2 = n.hexdigest()
 
         return 's_'.join([d1[:5], d2[:5]])
@@ -73,7 +73,7 @@ class BaseInventoryPlugin(object):
     def clear_cache(self):
         pass
 
-    def populate_host_vars(self, hosts, variables, group, port=None):
+    def populate_host_vars(self, hosts, variables, group=None, port=None):
 
         if hosts:
             for host in hosts:
@@ -85,8 +85,7 @@ class BaseInventoryPlugin(object):
     def _compose(self, template, variables):
         ''' helper method for pluigns to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = Templar(loader=self.loader, variables=variables)
-        return t.do_template('%s%s%s' % (t.environment.variable_start_string,template,t.environment.variable_end_string), disable_lookups=True)
-
+        return t.do_template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
 
 
 class BaseFileInventoryPlugin(BaseInventoryPlugin):
@@ -100,8 +99,8 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
         super(BaseFileInventoryPlugin, self).__init__(cache=None)
 
 
-#### Helper methods ####
-def detect_range(line = None):
+# Helper methods
+def detect_range(line=None):
     '''
     A helper function that checks a given host line to see if it contains
     a range pattern described in the docstring above.
@@ -110,7 +109,8 @@ def detect_range(line = None):
     '''
     return '[' in line
 
-def expand_hostname_range(line = None):
+
+def expand_hostname_range(line=None):
     '''
     A helper function that expands a given line that contains a pattern
     specified in top docstring, and returns a list that consists of the
@@ -137,7 +137,7 @@ def expand_hostname_range(line = None):
         # - also add an optional third parameter which contains the step. (Default: 1)
         #   so range can be [01:10:2] -> 01 03 05 07 09
 
-        (head, nrange, tail) = line.replace('[','|',1).replace(']','|',1).split('|')
+        (head, nrange, tail) = line.replace('[', '|', 1).replace(']', '|', 1).split('|')
         bounds = nrange.split(":")
         if len(bounds) != 2 and len(bounds) != 3:
             raise AnsibleError("host range must be begin:end or begin:end:step")
@@ -152,10 +152,13 @@ def expand_hostname_range(line = None):
         if not end:
             raise AnsibleError("host range must specify end value")
         if beg[0] == '0' and len(beg) > 1:
-            rlen = len(beg) # range length formatting hint
+            rlen = len(beg)  # range length formatting hint
             if rlen != len(end):
                 raise AnsibleError("host range must specify equal-length begin and end formats")
-            fill = lambda _: str(_).zfill(rlen)  # range sequence
+
+            def fill(x):
+                return str(x).zfill(rlen)  # range sequence
+
         else:
             fill = str
 
@@ -164,17 +167,16 @@ def expand_hostname_range(line = None):
             i_end = string.ascii_letters.index(end)
             if i_beg > i_end:
                 raise AnsibleError("host range must have begin <= end")
-            seq = list(string.ascii_letters[i_beg:i_end+1:int(step)])
+            seq = list(string.ascii_letters[i_beg:i_end + 1:int(step)])
         except ValueError:  # not an alpha range
-            seq = range(int(beg), int(end)+1, int(step))
+            seq = range(int(beg), int(end) + 1, int(step))
 
         for rseq in seq:
             hname = ''.join((head, fill(rseq), tail))
 
             if detect_range(hname):
-                all_hosts.extend( expand_hostname_range( hname ) )
+                all_hosts.extend(expand_hostname_range(hname))
             else:
                 all_hosts.append(hname)
 
         return all_hosts
-

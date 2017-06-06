@@ -58,7 +58,7 @@ class CallbackModule(CallbackBase):
         if not HAS_PRETTYTABLE:
             self.disabled = True
             self._display.warning('The `prettytable` python module is not installed. '
-                          'Disabling the HipChat callback plugin.')
+                                  'Disabling the HipChat callback plugin.')
 
         self.msg_uri = 'https://api.hipchat.com/v1/rooms/message'
         self.token = os.getenv('HIPCHAT_TOKEN')
@@ -69,8 +69,8 @@ class CallbackModule(CallbackBase):
         if self.token is None:
             self.disabled = True
             self._display.warning('HipChat token could not be loaded. The HipChat '
-                          'token can be provided using the `HIPCHAT_TOKEN` '
-                          'environment variable.')
+                                  'token can be provided using the `HIPCHAT_TOKEN` '
+                                  'environment variable.')
 
         self.printed_playbook = False
         self.playbook_name = None

@@ -146,29 +146,32 @@ tags:
   sample: '[ { "key": "foo", "value": "bar" } ]'
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackProject(AnsibleCloudStack):
-
 
     def get_project(self):
         if not self.project:
             project = self.module.params.get('name')
 
-            args                = {}
-            args['account']     = self.get_account(key='name')
-            args['domainid']    = self.get_domain(key='id')
-
+            args = {
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id')
+            }
             projects = self.cs.listProjects(**args)
             if projects:
                 for p in projects['project']:
-                    if project.lower() in [ p['name'].lower(), p['id']]:
+                    if project.lower() in [p['name'].lower(), p['id']]:
                         self.project = p
                         break
         return self.project
-
 
     def present_project(self):
         project = self.get_project()
@@ -182,12 +185,11 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
             self.project = project
         return project
 
-
     def update_project(self, project):
-        args                = {}
-        args['id']          = project['id']
-        args['displaytext'] = self.get_or_fallback('display_text', 'name')
-
+        args = {
+            'id': project['id'],
+            'displaytext': self.get_or_fallback('display_text', 'name')
+        }
         if self.has_changed(args, project):
             self.result['changed'] = True
             if not self.module.check_mode:
@@ -201,16 +203,15 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
                     project = self.poll_job(project, 'project')
         return project
 
-
     def create_project(self, project):
         self.result['changed'] = True
 
-        args                = {}
-        args['name']        = self.module.params.get('name')
-        args['displaytext'] = self.get_or_fallback('display_text', 'name')
-        args['account']     = self.get_account('name')
-        args['domainid']    = self.get_domain('id')
-
+        args = {
+            'name': self.module.params.get('name'),
+            'displaytext': self.get_or_fallback('display_text', 'name'),
+            'account': self.get_account('name'),
+            'domainid': self.get_domain('id')
+        }
         if not self.module.check_mode:
             project = self.cs.createProject(**args)
 
@@ -222,16 +223,15 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
                 project = self.poll_job(project, 'project')
         return project
 
-
     def state_project(self, state='active'):
         project = self.present_project()
 
         if project['state'].lower() != state:
             self.result['changed'] = True
 
-            args        = {}
-            args['id']  = project['id']
-
+            args = {
+                'id': project['id']
+            }
             if not self.module.check_mode:
                 if state == 'suspended':
                     project = self.cs.suspendProject(**args)
@@ -246,15 +246,14 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
                     project = self.poll_job(project, 'project')
         return project
 
-
     def absent_project(self):
         project = self.get_project()
         if project:
             self.result['changed'] = True
 
-            args        = {}
-            args['id']  = project['id']
-
+            args = {
+                'id': project['id']
+            }
             if not self.module.check_mode:
                 res = self.cs.deleteProject(**args)
 
@@ -267,17 +266,16 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
             return project
 
 
-
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        display_text = dict(default=None),
-        state = dict(choices=['present', 'absent', 'active', 'suspended' ], default='present'),
-        domain = dict(default=None),
-        account = dict(default=None),
-        poll_async = dict(type='bool', default=True),
-        tags=dict(type='list', aliases=['tag'], default=None),
+        name=dict(required=True),
+        display_text=dict(),
+        state=dict(choices=['present', 'absent', 'active', 'suspended'], default='present'),
+        domain=dict(),
+        account=dict(),
+        poll_async=dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag']),
     ))
 
     module = AnsibleModule(
@@ -306,7 +304,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

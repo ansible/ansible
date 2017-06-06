@@ -119,6 +119,7 @@ import traceback
 import xml.etree.ElementTree as ET
 
 import ansible.module_utils.six.moves.urllib.parse as urlparse
+from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import sort_json_policy_dict
@@ -210,7 +211,7 @@ def _create_or_update_bucket(connection, module, location):
         else:
             module.fail_json(msg=e.message)
     if policy is not None:
-        if isinstance(policy, basestring):
+        if isinstance(policy, string_types):
             policy = json.loads(policy)
 
         if not policy:
