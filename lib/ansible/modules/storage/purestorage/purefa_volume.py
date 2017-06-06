@@ -53,7 +53,11 @@ options:
       - Volume size in M, G, T or P units. See examples. Default 1G
     required: false
 extends_documentation_fragment:
+<<<<<<< HEAD
     - pure_flasharray
+=======
+    - purestorage
+>>>>>>> 73042d3... Initial commit for Pure Storage Ansible module
 '''
 
 EXAMPLES = '''

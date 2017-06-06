@@ -61,7 +61,11 @@ options:
     default: false
     choices: [ "false", "true" ]
 extends_documentation_fragment:
+<<<<<<< HEAD
     - pure_flasharray
+=======
+    - purestorage
+>>>>>>> 73042d3... Initial commit for Pure Storage Ansible module
 '''
 
 EXAMPLES = '''
