@@ -22,7 +22,7 @@
 Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 
-$helper_def = @"
+$helper_def = @'
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -58,7 +58,7 @@ namespace Ansible.Shell
         }
     }
 }
-"@
+'@
 
 # Cleanse CLIXML from stderr (sift out error stream data, discard others for now)
 Function Cleanse-Stderr($raw_stderr) {
@@ -102,11 +102,11 @@ $result = @{
     cmd = $raw_command_line
 }
 
-If($creates -and $(Test-Path $creates)) {
+If($creates -and $(Test-Path -Path $creates)) {
     Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
-If($removes -and -not $(Test-Path $removes)) {
+If($removes -and -not $(Test-Path -Path $removes)) {
     Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
