@@ -29,8 +29,8 @@ We recommend using Google search to see if a topic has been answered recently, b
 
 Before you post, be sure you are running the latest stable version of Ansible.  You can check this by comparing the output of ``ansible --version`` with the version indicated on `PyPi <https://pypi.python.org/pypi/ansible>`_.
 
-Alternatively, you can also join our IRC channel - ``#ansible`` on irc.freenode.net.  It's a very high traffic channel as well, if you don't get an answer you like, please stop by our mailing list, which is more likely
-to get attention of core developers since it's asynchronous.
+Alternatively, you can also join our IRC channel - ``#ansible`` on irc.freenode.net.  It's a very high traffic channel as well, so if you don't get an answer you like, please stop by our mailing list, which is more likely
+to get the attention of core developers since it's asynchronous.
 
 I'd Like To Keep Up With Release Announcements
 ----------------------------------------------
@@ -270,31 +270,25 @@ Notes on Priority Flags
 
 Ansible was one of the top 5 projects with the most OSS contributors on GitHub in 2013, and has over 1400 contributors
 to the project to date, not to mention a very large user community that has downloaded the application well over a million
-times.
-
-As a result, we have a LOT of incoming activity to process.
+times. As a result, we have a LOT of incoming activity to process.
 
 In the interest of transparency, we're telling you how we sort incoming requests.
 
-In our bug tracker you'll notice some labels - P1 and P2.  These are our internal
+In our bug tracker you'll notice some labels - P1 and P2.  These are the internal
 priority orders that we use to sort tickets.
 
 With some exceptions for easy merges (like documentation typos for instance),
 we're going to spend most of our time working on P1 and P2 items first, including pull requests.
-These usually relate to important bugs or features affecting large segments of the userbase.  So if you see something categorized without P1 or P2, and it's not appearing to get a lot of immediate attention, this is why.
+These usually relate to important bugs or features affecting large segments of the userbase.  If you see something categorized without P1 or P2, and it's not appearing to get a lot of immediate attention, this is why.
 
-These labels don't really have definition - they are a simple ordering.  However something
+These labels don't really have a definition - they are a simple ordering.  However something
 affecting a major module (yum, apt, etc) is likely to be prioritized higher than a module
 affecting a smaller number of users.
 
-Since we place a strong emphasis on testing and code review, it may take a few months for a minor feature to get merged.
+Since we place a strong emphasis on testing and code review, it may take a few months for a minor feature to get merged. This doesn't mean that we'll be exhausting all of the higher-priority queues before getting to your ticket; we will also take periodic sweeps through the lower priority queues and give them some attention as well, particularly in the area of new module changes. 
 
-Don't worry though -- we'll also take periodic sweeps through the lower priority queues and give
-them some attention as well, particularly in the area of new module changes.  So it doesn't necessarily
-mean that we'll be exhausting all of the higher-priority queues before getting to your ticket.
 
-Every bit of effort helps - if you're wishing to expedite the inclusion of a P3 feature pull request for instance, the best thing you can do
-is help close P2 bug reports.
+Every bit of effort helps - if you're wishing to expedite the inclusion of a P3 feature pull request for instance, the best thing you can do is help close P2 bug reports.
 
 Community Code of Conduct
 =========================
