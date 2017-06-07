@@ -224,6 +224,7 @@ DEFAULT_MANAGED_STR = get_config(p, DEFAULTS, 'ansible_managed', None, 'Ansible 
 DEFAULT_SYSLOG_FACILITY = get_config(p, DEFAULTS, 'syslog_facility', 'ANSIBLE_SYSLOG_FACILITY', 'LOG_USER')
 DEFAULT_KEEP_REMOTE_FILES = get_config(p, DEFAULTS, 'keep_remote_files', 'ANSIBLE_KEEP_REMOTE_FILES', False, value_type='boolean')
 DEFAULT_HASH_BEHAVIOUR = get_config(p, DEFAULTS, 'hash_behaviour', 'ANSIBLE_HASH_BEHAVIOUR', 'replace')
+DEFAULT_LIST_BEHAVIOUR    = get_config(p, DEFAULTS, 'list_behaviour', 'ANSIBLE_LIST_BEHAVIOUR', 'replace')
 DEFAULT_PRIVATE_ROLE_VARS = get_config(p, DEFAULTS, 'private_role_vars', 'ANSIBLE_PRIVATE_ROLE_VARS', False, value_type='boolean')
 DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBLE_JINJA2_EXTENSIONS', None)
 DEFAULT_EXECUTABLE = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
