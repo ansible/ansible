@@ -1,20 +1,7 @@
 #!powershell
-# This file is part of Ansible
 #
 # Copyright 2015, Corwin Brown <corwin.brown@maxpoint.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # WANT_JSON
 # POWERSHELL_COMMON
@@ -66,13 +53,10 @@ if (-not (Test-Path -Path $src)) {
 }
 
 # Build Arguments
-$robocopy_opts = @()
-
-$robocopy_opts += $src
-$robocopy_opts += $dest
+$robocopy_opts = @($src, $dest)
 
 if ($check_mode) {
-    $robocopy_opts += "/L"
+    $robocopy_opts += "/l"
 }
 
 if ($flags -eq $null) {
@@ -90,23 +74,19 @@ if ($flags -eq $null) {
 }
 
 $result.flags = $flags
+$result.cmd = "$robocopy $robocopy_opts"
 
-$robocopy_output = ""
-$rc = 0
 Try {
-
-    &robocopy $robocopy_opts | Tee-Object -Variable robocopy_output | Out-Null
+    $robocopy_output = &robocopy $robocopy_opts
     $rc = $LASTEXITCODE
-
 } Catch {
-
     Fail-Json $result "Error synchronizing $src to $dest! Msg: $($_.Exception.Message)"
-
 }
 
 $result.msg = "Success"
 $result.output = $robocopy_output
-$result.return_code = $rc
+$result.return_code = $rc # Backward compatibility
+$result.rc = $rc
 
 switch ($rc) {
 
@@ -116,28 +96,40 @@ switch ($rc) {
     1 {
         $result.msg = "Files copied successfully!"
         $result.changed = $true
+        $result.failed = $false
     }
     2 {
         $result.msg = "Some Extra files or directories were detected. No files were copied."
+        Add-Warning $result $result.msg
+        $result.failed = $false
     }
     3 {
         $result.msg = "(2+1) Some files were copied. Additional files were present."
+        Add-Warning $result $result.msg
         $result.changed = $true
+        $result.failed = $false
     }
     4 {
         $result.msg = "Some mismatched files or directories were detected. Housekeeping might be required!"
+        Add-Warning $result $result.msg
         $result.changed = $true
+        $result.failed = $false
     }
     5 {
         $result.msg = "(4+1) Some files were copied. Some files were mismatched."
+        Add-Warning $result $result.msg
         $result.changed = $true
+        $result.failed = $false
     }
     6 {
         $result.msg = "(4+2) Additional files and mismatched files exist. No files were copied."
+        $result.failed = $false
     }
     7 {
         $result.msg = "(4+1+2) Files were copied, a file mismatch was present, and additional files were present."
+        Add-Warning $result $result.msg
         $result.changed = $true
+        $result.failed = $false
     }
     8 {
         Fail-Json $result (SearchForError $robocopy_output "Some files or directories could not be copied!")
@@ -148,6 +140,7 @@ switch ($rc) {
     16 {
         Fail-Json $result (SearchForError $robocopy_output "Serious Error! No files were copied! Do you have permissions to access $src and $dest?")
     }
+
 }
 
 Exit-Json $result

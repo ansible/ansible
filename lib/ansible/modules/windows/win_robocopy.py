@@ -58,14 +58,12 @@ options:
   flags:
     description:
       - Directly supply Robocopy flags. If set, C(purge) and C(recurse) will be ignored.
-    default: None
-    required: false
-author: Corwin Brown (@blakfeld)
+author:
+- Corwin Brown (@blakfeld)
 notes:
 - This is not a complete port of the M(synchronize) module. Unlike the M(synchronize) module this only performs the sync/copy on the remote machine,
   not from the master to the remote machine.
 - This module does not currently support all Robocopy flags.
-- Works on Windows 7, Windows 8, Windows Server 2k8, and Windows Server 2k12
 '''
 
 EXAMPLES = r'''
@@ -101,16 +99,21 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+cmd:
+    description: The used command line
+    returned: always
+    type: string
+    sample: robocopy C:\DirectoryOne C:\DirectoryTwo /e /purge
 src:
     description: The Source file/directory of the sync.
     returned: always
     type: string
-    sample: c:\Some\Path
+    sample: C:\Some\Path
 dest:
     description: The Destination file/directory of the sync.
     returned: always
     type: string
-    sample: c:\Some\Path
+    sample: C:\Some\Path
 recurse:
     description: Whether or not the recurse flag was toggled.
     returned: always
@@ -125,7 +128,7 @@ flags:
     description: Any flags passed in by the user.
     returned: always
     type: string
-    sample: "/e /purge"
+    sample: /e /purge
 rc:
     description: The return code retuned by robocopy.
     returned: success
@@ -141,9 +144,4 @@ msg:
     returned: always
     type: string
     sample: No files copied!
-changed:
-    description: Whether or not any changes were made.
-    returned: always
-    type: bool
-    sample: False
 '''
