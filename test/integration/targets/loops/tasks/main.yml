@@ -18,3 +18,26 @@
 - assert:
     that:
     - '(after.stdout |int) - (before.stdout|int) >= 4'
+
+- name: Configure variables for batch lookup plugin test
+  set_fact:
+    batch_count: 0
+    batch_items:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+
+- name: Run items asynchronously in batch
+  vars:
+    batched_items: "{{ item }}"
+    batch_lookup_size: 2
+  include: execute_batch.yml
+  with_batch: "{{ batch_items }}"
+
+# execute_batch should have run 3 times - we have a list of 5 items and the
+# batch_lookup_size is 2.
+- assert:
+    that:
+      - batch_count == "3"

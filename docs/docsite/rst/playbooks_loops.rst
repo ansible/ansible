@@ -641,6 +641,77 @@ There is also a specific lookup plugin ``inventory_hostnames`` that can be used 
 
 More information on the patterns can be found on :doc:`intro_patterns`
 
+.. _looping_over_batches_of_items:
+
+Looping over batches of items
+`````````````````````````````
+
+.. versionadded:: 2.4
+
+``with_batch`` is particularly useful when you have a large list of items you
+want to batch into subsets so that they are not all executed immediately when
+using asynchronous tasks.
+
+It splits the list into a list of lists with a maximum length.
+The maximum length is controlled by the ``batch_lookup_size`` variable which
+can be set at a task level, if necessary. The default ``batch_lookup_size`` is
+5.
+
+For example::
+
+    #####################
+    # main.yml
+    #####################
+    - name: Set up some variables
+      set_fact:
+        batch_count: 0
+        batch_items:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+
+    - name: Run items asynchronously in batch
+      vars:
+        batched_items: "{{ item }}"
+        batch_lookup_size: 2
+      include: execute_batch.yml
+      with_batch: "{{ batch_items }}"
+
+    # execute_batch should have run 3 times - we have a list of 5 items and the
+    # batch_lookup_size is 2.
+    - assert:
+        that:
+          - batch_count == "3"
+
+    #####################
+    # execute_batch.yml
+    #####################
+    - name: Increment batch count
+      set_fact:
+        batch_count: "{{ batch_count | int + 1 }}"
+
+    - name: Async sleeping for batched_items
+      command: sleep {{ async_item }}
+      async: 45
+      poll: 0
+      with_items: "{{ batched_items }}"
+      loop_control:
+        loop_var: "async_item"
+      register: async_results
+
+    - name: Check sync status
+      async_status:
+        jid: "{{ async_result_item.ansible_job_id }}"
+      with_items: "{{ async_results.results }}"
+      loop_control:
+        loop_var: "async_result_item"
+      register: async_poll_results
+      until: async_poll_results.finished
+      retries: 30
+      delay: 1
+
 .. _loop_control:
 
 Loop Control
