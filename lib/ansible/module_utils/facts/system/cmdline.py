@@ -33,7 +33,7 @@ class CmdLineFactCollector(BaseFactCollector):
     def _parse_proc_cmdline(self, data):
         cmdline_dict = {}
         try:
-            for piece in shlex.split(data):
+            for piece in shlex.split(data, posix=False):
                 item = piece.split('=', 1)
                 if len(item) == 1:
                     cmdline_dict[item[0]] = True
@@ -53,5 +53,4 @@ class CmdLineFactCollector(BaseFactCollector):
             return cmdline_facts
 
         cmdline_facts['cmdline'] = self._parse_proc_cmdline(data)
-
         return cmdline_facts
