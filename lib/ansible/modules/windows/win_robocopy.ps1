@@ -20,21 +20,20 @@
 # POWERSHELL_COMMON
 
 $params = Parse-Args $args -supports_check_mode $true
-
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $purge = Get-AnsibleParam -obj $params -name "purge" -type "bool" -default $false
 $recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default $false
-$flags = Get-AnsibleParam -obj $params -name "flags" -type "string" -default $null
+$flags = Get-AnsibleParam -obj $params -name "flags" -type "string"
 
 $result = @{
-    src = $src
-    dest = $dest
-    recurse = $recurse
-    purge = $purge
     changed = $false
+    dest = $dest
+    purge = $purge
+    recurse = $recurse
+    src = $src
 }
 
 # Search for an Error Message
@@ -43,7 +42,7 @@ Function SearchForError($cmd_output, $default_msg) {
     $separator_count = 0
     $error_msg = $default_msg
     ForEach ($line in $cmd_output) {
-        if (-Not $line) {
+        if (-not $line) {
             continue
         }
 
@@ -51,9 +50,8 @@ Function SearchForError($cmd_output, $default_msg) {
             if (Select-String -InputObject $line -pattern "^(\s+)?(\-+)(\s+)?$") {
                 $separator_count += 1
             }
-        }
-        Else {
-            If (Select-String -InputObject $line -pattern "error") {
+        } else {
+            if (Select-String -InputObject $line -pattern "error") {
                 $error_msg = $line
                 break
             }
@@ -63,15 +61,19 @@ Function SearchForError($cmd_output, $default_msg) {
     return $error_msg
 }
 
-# Build Arguments
-$robocopy_opts = @()
-
-if (-Not (Test-Path $src)) {
+if (-not (Test-Path -Path $src)) {
     Fail-Json $result "$src does not exist!"
 }
 
+# Build Arguments
+$robocopy_opts = @()
+
 $robocopy_opts += $src
 $robocopy_opts += $dest
+
+if ($check_mode) {
+    $robocopy_opts += "/L"
+}
 
 if ($flags -eq $null) {
     if ($purge) {
@@ -81,8 +83,7 @@ if ($flags -eq $null) {
     if ($recurse) {
         $robocopy_opts += "/e"
     }
-}
-Else {
+} else {
     ForEach ($f in $flags.split(" ")) {
         $robocopy_opts += $f
     }
@@ -92,74 +93,61 @@ $result.flags = $flags
 
 $robocopy_output = ""
 $rc = 0
-If ($check_mode -eq $true) {
-    $robocopy_output = "Would have copied the contents of $src to $dest"
-    $rc = 0
-}
-Else {
-    Try {
-        &robocopy $robocopy_opts | Tee-Object -Variable robocopy_output | Out-Null
-        $rc = $LASTEXITCODE
-    }
-    Catch {
-        $ErrorMessage = $_.Exception.Message
-        Fail-Json $result "Error synchronizing $src to $dest! Msg: $ErrorMessage"
-    }
+Try {
+
+    &robocopy $robocopy_opts | Tee-Object -Variable robocopy_output | Out-Null
+    $rc = $LASTEXITCODE
+
+} Catch {
+
+    Fail-Json $result "Error synchronizing $src to $dest! Msg: $($_.Exception.Message)"
+
 }
 
-$result.return_code = $rc
+$result.msg = "Success"
 $result.output = $robocopy_output
+$result.return_code = $rc
 
-$cmd_msg = "Success"
-$changed = $false
-switch ($rc)
-{
+switch ($rc) {
+
     0 {
-        $cmd_msg = "No files copied."
+        $result.msg = "No files copied."
     }
     1 {
-        $cmd_msg = "Files copied successfully!"
-        $changed = $true
+        $result.msg = "Files copied successfully!"
+        $result.changed = $true
     }
     2 {
-        $cmd_msg = "Some Extra files or directories were detected. No files were copied."
-        $changed = $true
+        $result.msg = "Some Extra files or directories were detected. No files were copied."
     }
     3 {
-        $cmd_msg = "(2+1) Some files were copied. Additional files were present."
-        $changed = $true
+        $result.msg = "(2+1) Some files were copied. Additional files were present."
+        $result.changed = $true
     }
     4 {
-        $cmd_msg = "Some mismatched files or directories were detected. Housekeeping might be required!"
-        $changed = $true
+        $result.msg = "Some mismatched files or directories were detected. Housekeeping might be required!"
+        $result.changed = $true
     }
     5 {
-        $cmd_msg = "(4+1) Some files were copied. Some files were mismatched."
-        $changed = $true
+        $result.msg = "(4+1) Some files were copied. Some files were mismatched."
+        $result.changed = $true
     }
     6 {
-        $cmd_msg = "(4+2) Additional files and mismatched files exist. No files were copied."
-        $changed = $true
+        $result.msg = "(4+2) Additional files and mismatched files exist. No files were copied."
     }
     7 {
-        $cmd_msg = "(4+1+2) Files were copied, a file mismatch was present, and additional files were present."
-        $changed = $true
+        $result.msg = "(4+1+2) Files were copied, a file mismatch was present, and additional files were present."
+        $result.changed = $true
     }
     8 {
-        $error_msg = SearchForError $robocopy_output "Some files or directories could not be copied!"
-        Fail-Json $result $error_msg
+        Fail-Json $result (SearchForError $robocopy_output "Some files or directories could not be copied!")
     }
     { @(9, 10, 11, 12, 13, 14, 15) -contains $_ } {
-        $error_msg = SearchForError $robocopy_output "Fatal error. Check log message!"        
-        Fail-Json $result $error_msg
+        Fail-Json $result (SearchForError $robocopy_output "Fatal error. Check log message!")
     }
     16 {
-        $error_msg = SearchForError $robocopy_output "Serious Error! No files were copied! Do you have permissions to access $src and $dest?"
-        Fail-Json $result $error_msg
+        Fail-Json $result (SearchForError $robocopy_output "Serious Error! No files were copied! Do you have permissions to access $src and $dest?")
     }
 }
-
-$result.msg = $cmd_msg
-$result.changed = $changed
 
 Exit-Json $result
