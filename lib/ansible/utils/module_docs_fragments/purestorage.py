@@ -28,7 +28,7 @@ options:
     required: true
   api_token:
     description:
-      - FlashArray API token for admin privilaed user.
+      - FlashArray API token for admin privilaged user.
     required: true
 notes:
   - This module requires purestorage python library

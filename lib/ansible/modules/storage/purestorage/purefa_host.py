@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: purefa_host
-version_added: 2.4
+version_added: "2.4"
 short_description: Create, Delete and Modify Hosts on Pure Storage FlashArray
 description:
     - This module creates, deletes or modifies hosts on Pure Storage FlashArray.
@@ -38,14 +38,14 @@ options:
     required: true
   state:
     description:
-      - Creates/Modifies Host when present or removes when absent
-      - When removing all connected volumes will be disconnected
+      - Creates host.
+      - When removing host all connected volumes will be disconnected.
     required: false
     default: present
     choices: [ "present", "absent" ]
   protocol:
     description:
-      - Defines the host connection protocol for volumes, either iscsi of fc
+      - Defines the host connection protocol for volumes.
     required: false
     default: iscsi
     choices: [ "iscsi", "fc" ]
