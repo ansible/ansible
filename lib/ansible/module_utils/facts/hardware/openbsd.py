@@ -146,9 +146,9 @@ class OpenBSDHardware(Hardware):
 
     def get_dmi_facts(self):
         dmi_facts = {}
-        # We don't use dmidecode(1) here because:
+        # We don't use dmidecode(8) here because:
         # - it would add dependency on an external package
-        # - dmidecode(1) can only be ran as root
+        # - dmidecode(8) can only be ran as root
         # So instead we rely on sysctl(8) to provide us the information on a
         # best-effort basis. As a bonus we also get facts on non-amd64/i386
         # platforms this way.
