@@ -37,7 +37,7 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.inventory import BaseInventoryPlugin, detect_range, expand_hostname_range
 
@@ -72,8 +72,6 @@ class InventoryModule(BaseInventoryPlugin):
                     for host in hostnames:
                         if host not in self.inventory.hosts:
                             self.inventory.add_host(host, group='ungrouped', port=port)
-                else:
-                    self.display.warning("Skipping invalid hostname: %s" % to_text(h))
         except Exception as e:
             raise AnsibleParserError("Invalid data from string, could not parse: %s" % str(e))
 
