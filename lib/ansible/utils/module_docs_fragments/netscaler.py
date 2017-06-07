@@ -35,11 +35,11 @@ options:
             - Time in seconds until a timeout error is thrown when establishing a new session with Netscaler
         default: 310
 
-    operation:
+    state:
         choices: ['present', 'absent']
-        required: True
+        default: 'present'
         description:
-            - The operation to perform for the given netscaler module.
+            - The state of the resource being configured by the module on the netscaler node.
             - When present the resource will be created if needed and configured according to the module's parameters.
             - When absent the resource will be deleted from the netscaler node.
 '''

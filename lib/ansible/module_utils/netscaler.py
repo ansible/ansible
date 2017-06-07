@@ -220,13 +220,13 @@ netscaler_common_arguments = dict(
         type='bool'
     ),
     nitro_timeout=dict(default=310, type='float'),
-    operation=dict(
-        required=True,
+    state=dict(
         choices=[
             'present',
             'absent',
-        ]
-    )
+        ],
+        default='present',
+    ),
 )
 
 

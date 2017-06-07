@@ -388,7 +388,7 @@ EXAMPLES = '''
     nitro_user: nsroot
     nitro_pass: nsroot
 
-    operation: present
+    state: present
 
     name: service-http-1
     servicetype: HTTP
@@ -867,9 +867,9 @@ def main():
 
     try:
 
-        # Apply appropriate operation
-        if module.params['operation'] == 'present':
-            log('Applying actions for operation present')
+        # Apply appropriate state
+        if module.params['state'] == 'present':
+            log('Applying actions for state present')
             if not service_exists(client, module):
                 if not module.check_mode:
                     service_proxy.add()
@@ -901,9 +901,9 @@ def main():
             else:
                 module_result['changed'] = False
 
-            # Sanity check for operation
+            # Sanity check for state
             if not module.check_mode:
-                log('Sanity checks for operation present')
+                log('Sanity checks for state present')
                 if not service_exists(client, module):
                     module.fail_json(msg='Service does not exist', **module_result)
                 if not service_identical(client, module, service_proxy):
@@ -912,8 +912,8 @@ def main():
                 if not monitor_bindings_identical(client, module, monitor_bindings_rw_attrs):
                     module.fail_json(msg='Monitor bindings are not identical', **module_result)
 
-        elif module.params['operation'] == 'absent':
-            log('Applying actions for operation absent')
+        elif module.params['state'] == 'absent':
+            log('Applying actions for state absent')
             if service_exists(client, module):
                 if not module.check_mode:
                     service_proxy.delete()
@@ -922,9 +922,9 @@ def main():
             else:
                 module_result['changed'] = False
 
-            # Sanity check for operation
+            # Sanity check for state
             if not module.check_mode:
-                log('Sanity checks for operation absent')
+                log('Sanity checks for state absent')
                 if service_exists(client, module):
                     module.fail_json(msg='Service still exists', **module_result)
 
