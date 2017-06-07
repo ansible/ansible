@@ -45,6 +45,7 @@ RUN apt-get update -y && \
     rubygems \
     subversion \
     sudo \
+    tzdata \
     unzip \
     xsltproc \
     zip \
