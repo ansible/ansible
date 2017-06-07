@@ -42,11 +42,16 @@ try:
     from library.bigip_gtm_pool import UntypedManager
     from library.bigip_gtm_pool import TypedManager
 except ImportError:
-    from ansible.modules.network.f5.bigip_gtm_pool import Parameters
-    from ansible.modules.network.f5.bigip_gtm_pool import ModuleManager
-    from ansible.modules.network.f5.bigip_gtm_pool import ArgumentSpec
-    from ansible.modules.network.f5.bigip_gtm_pool import UntypedManager
-    from ansible.modules.network.f5.bigip_gtm_pool import TypedManager
+    try:
+        from ansible.modules.network.f5.bigip_gtm_pool import Parameters
+        from ansible.modules.network.f5.bigip_gtm_pool import ModuleManager
+        from ansible.modules.network.f5.bigip_gtm_pool import ArgumentSpec
+        from ansible.modules.network.f5.bigip_gtm_pool import UntypedManager
+        from ansible.modules.network.f5.bigip_gtm_pool import TypedManager
+    except ImportError:
+        from nose.plugins.skip import SkipTest
+        raise SkipTest("%s requires the python modules for f5/bigip" % __file__)
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
