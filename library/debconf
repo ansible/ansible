@@ -1,0 +1,155 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to (re)configure debian packages.
+(c) 2013, Sebastien Bocahu <sebastien.bocahu@nuxit.com>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: debconf
+short_description: (Re)Configure a Debian package.
+description:
+     - Set Debian package configuration using debconf.
+version_added: "1.1"
+options:
+  pkg:
+    description:
+      - Package to configure.
+    required: true
+    default: null
+    aliases: []
+  keys:
+    description:
+      - Debconf configuration key(s)/question(s).
+    required: true
+    default: null
+    aliases: []
+  reconfigure:
+    description:
+      - whether dpkg-reconfigure should be run (default) or not (package not yet installed)
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+examples:
+   - code: "debconf: pkg=nsca keys='nsca/run-nsca-daemon boolean true'"
+     description: "Example from Ansible Playbooks"
+   - code: "debconf: pkg=roundcube keys='$FILE(/path/dpkg-selections/roundcube)'"
+     description: "Store selections in a file"
+author: Sebastien Bocahu
+'''
+
+import sys
+import os
+import pwd
+import os.path
+import re
+
+
+def get_selections(module, pkg):
+    cmd = [module.get_bin_path('debconf-get-selections', True)]
+    cmd.append('| grep ^%s' % pkg)
+    rc, out, err = module.run_command(' '.join(cmd))
+    if rc == 0:
+        selections = {}
+        for key in out.split('\n'):
+            item = re.findall(r"[^\s]+", key)
+            if len(item) > 1:
+                selections[ item[1].strip() ] = ' '.join(item[2:])
+
+        return selections
+    else:
+        module.fail_json(msg=err)
+
+
+def set_selections(module, keys):
+    cmd = [module.get_bin_path('debconf-set-selections', True)]
+    rc, out, err = module.run_command(cmd, data=keys)
+    if rc == 0:
+        return True, out
+    else:
+        return False, err
+
+
+def dpkg_reconfigure(module, pkg):
+    cmd = [ 'DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical' ]
+    cmd.append(module.get_bin_path('dpkg-reconfigure', True))
+    cmd.append(pkg)
+    rc, out, err = module.run_command(' '.join(cmd))
+    if rc == 0:
+        return True, err
+    else:
+        return False, err
+
+
+def enforce_state(module, params):
+
+    pkg   = params["pkg"]
+    keys  = params["keys"]
+    reconfigure = params.get("reconfigure", "yes")
+
+
+    wanted_config = {}
+    for key in keys.split('\n'):
+        item = re.findall(r"[^\s]+", key)
+        if len(item) > 2:
+             wanted_config[ item[0].strip() ] = ' '.join(item[1:])
+
+    current_config = get_selections(module, params["pkg"])
+
+    already_configured = 1
+    for key in wanted_config:
+        if not key in current_config or current_config[key] != wanted_config[key]:
+            already_configured = 0
+
+    if already_configured:
+        module.exit_json(changed=False, msg="Already configured")
+
+    else:
+        config = []
+        for key in wanted_config:
+          config.append(' '.join([ pkg, key, wanted_config[key] ]))
+        rc, msg = set_selections(module, '\n'.join(config))
+        if not rc:
+            module.fail_json(msg=msg)
+        if reconfigure == 'yes':
+            rc, msg = dpkg_reconfigure(module, pkg)
+            if not rc:
+                module.fail_json(msg=msg)
+
+    params['changed'] = True
+    params['msg'] = msg
+    return params
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+           pkg   = dict(required=True),
+           keys  = dict(required=True),
+           reconfigure = dict(default='yes', choices=['yes','no'])
+        )
+    )
+
+    results = enforce_state(module, module.params)
+    module.exit_json(**results)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
