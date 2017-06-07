@@ -57,4 +57,4 @@ ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-pass
 ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file vault-password --syntax-check
 ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file vault-password
 ansible-playbook test_vaulted_inventory.yml -i vaulted.inventory -v "$@" --vault-password-file vault-password
-
+ansible-playbook test_vaulted_template.yml -i ../../inventory -v "$@" --vault-password-file vault-password

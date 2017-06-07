@@ -20,7 +20,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
@@ -107,10 +107,18 @@ class ActionModule(ActionBase):
             if dest_stat['exists'] and dest_stat['isdir']:
                 dest = self._connection._shell.join_path(dest, os.path.basename(source))
 
-        # template the source data locally & get ready to transfer
-        b_source = to_bytes(source)
+        # Get vault decrypted tmp file
         try:
-            with open(b_source, 'r') as f:
+            tmp_source = self._loader.get_real_file(source)
+        except AnsibleFileNotFound as e:
+            result['failed'] = True
+            result['msg'] = "could not find src=%s, %s" % (source, e)
+            self._remove_tmp_path(tmp)
+            return result
+
+        # template the source data locally & get ready to transfer
+        try:
+            with open(tmp_source, 'r') as f:
                 template_data = to_text(f.read())
 
             # set jinja2 internal search path for includes
@@ -150,6 +158,8 @@ class ActionModule(ActionBase):
             result['failed'] = True
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
+        finally:
+            self._loader.cleanup_tmp_file(tmp_source)
 
         if not tmp:
             tmp = self._make_tmp_path()
