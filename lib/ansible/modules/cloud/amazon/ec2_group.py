@@ -19,7 +19,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'curated'}
 
-
 DOCUMENTATION = '''
 ---
 module: ec2_group
@@ -200,6 +199,7 @@ import ipaddress
 try:
     import boto3
     import botocore
+
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -215,24 +215,26 @@ def deduplicate_rules_args(rules):
 
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
-    if 'proto'  in rule:
-        proto, from_port, to_port = [ rule.get(x, None) for x in ('proto', 'from_port', 'to_port')]
-    elif 'IpProtocol'  in rule:
-        proto, from_port, to_port = [ rule.get(x, None) for x in ('IpProtocol', 'FromPort', 'ToPort')]
+    if 'proto' in rule:
+        proto, from_port, to_port = [rule.get(x, None) for x in ('proto', 'from_port', 'to_port')]
+    elif 'IpProtocol' in rule:
+        proto, from_port, to_port = [rule.get(x, None) for x in ('IpProtocol', 'FromPort', 'ToPort')]
     if proto not in ['icmp', 'tcp', 'udp'] and from_port == -1 and to_port == -1:
         from_port = 'none'
         to_port = 'none'
     key = "%s-%s-%s-%s-%s-%s" % (prefix, proto, from_port, to_port, group_id, cidr_ip)
     return key.lower().replace('-none', '-None')
 
-def addRulesToLookup(ipPermissions, groupId, prefix, dict):
+
+def add_rules_to_loopkup(ipPermissions, group_id, prefix, dict):
     for rule in ipPermissions:
         for groupGrant in rule.get('UserIdGroupPairs'):
-            dict[make_rule_key(prefix, rule, groupId, groupGrant.get('GroupId'))] = ( rule, groupGrant )
+            dict[make_rule_key(prefix, rule, group_id, groupGrant.get('GroupId'))] = (rule, groupGrant)
         for ipv4Grants in rule.get('IpRanges'):
-            dict[make_rule_key(prefix, rule, groupId, ipv4Grants.get('CidrIp'))] = (rule, ipv4Grants)
+            dict[make_rule_key(prefix, rule, group_id, ipv4Grants.get('CidrIp'))] = (rule, ipv4Grants)
         for ipv6Grants in rule.get('Ipv6Ranges'):
-            dict[make_rule_key(prefix, rule, groupId, ipv6Grants.get('CidrIpv6'))] = (rule, ipv6Grants)
+            dict[make_rule_key(prefix, rule, group_id, ipv6Grants.get('CidrIpv6'))] = (rule, ipv6Grants)
+
 
 def validate_rule(module, rule):
     VALID_PARAMS = ('cidr_ip',
@@ -295,7 +297,8 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
             group_id = groups[group_name].id
         else:
             if not rule.get('group_desc', '').strip():
-                module.fail_json(msg="group %s will be automatically created by rule %s and no description was provided" % (group_name, rule))
+                module.fail_json(msg="group %s will be automatically created by rule %s and "
+                                     "no description was provided" % (group_name, rule))
             if not module.check_mode:
                 auto_group = ec2.create_security_group(group_name, rule['group_desc'], vpc_id=vpc_id)
                 group_id = auto_group.id
@@ -381,15 +384,16 @@ def rules_expand_sources(rules):
             for rule in rule_expand_sources(rule_complex)]
 
 
-def serializeGroupGrant(group_id, rule):
-    ipPermissions = {'IpProtocol': rule['proto'],
-                     'FromPort': rule['from_port'],
-                     'ToPort': rule['to_port'],
-                     'UserIdGroupPairs': [{'GroupId': group_id}]}
-    return ipPermissions
+def serialize_group_grant(group_id, rule):
+    permission = {'IpProtocol': rule['proto'],
+                  'FromPort': rule['from_port'],
+                  'ToPort': rule['to_port'],
+                  'UserIdGroupPairs': [{'GroupId': group_id}]}
+    return permission
 
-def serializeRevoke(grant, rule):
-    permission=dict()
+
+def serialize_revoke(grant, rule):
+    permission = dict()
     fromPort = rule['FromPort'] if 'FromPort' in rule else None
     toPort = rule['ToPort'] if 'ToPort' in rule else None
     if 'GroupId' in grant:
@@ -416,25 +420,26 @@ def serializeRevoke(grant, rule):
     return permission
 
 
-def serializeIpGrant(rule, thisip):
-    #Construct permission for granting to an IP
+def serialize_ip_grant(rule, thisip):
+    # Construct permission for granting to an IP
     ip = unicode(thisip.split('/')[0])
-    ipv4Range=[]
-    ipv6Range=[]
+    ipv4_range = []
+    ipv6_range = []
     try:
         if isinstance(ipaddress.ip_address(ip), ipaddress.IPv4Address):
-            ipv4Range = [{'CidrIp': thisip}]
+            ipv4_range = [{'CidrIp': thisip}]
         elif isinstance(ipaddress.ip_address(ip), ipaddress.IPv6Address):
-            ipv6Range = [{'CidrIpv6': thisip}]
+            ipv6_range = [{'CidrIpv6': thisip}]
     except ipaddress.AddressValueError as e:
         raise e
     # now construct the permission
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port'],
-                  'IpRanges': ipv4Range,
-                  'Ipv6Ranges': ipv6Range}
+                  'IpRanges': ipv4_range,
+                  'Ipv6Ranges': ipv6_range}
     return permission
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -476,10 +481,11 @@ def main():
     changed = False
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     if not region:
-         module.fail_json(msg="The AWS region must be specified as an "
-                              "environment variable or in the AWS credentials "
-                              "profile.")
-    client, ec2 = ec2_utils.boto3_conn(module, conn_type='both', resource='ec2', endpoint=ec2_url, region = region, **aws_connect_params)
+        module.fail_json(msg="The AWS region must be specified as an "
+                             "environment variable or in the AWS credentials "
+                             "profile.")
+    client, ec2 = ec2_utils.boto3_conn(module, conn_type='both', resource='ec2', endpoint=ec2_url, region=region,
+                                       **aws_connect_params)
     group = None
     groups = dict()
     security_groups = []
@@ -492,7 +498,8 @@ def main():
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc())
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
 
     for sg in security_groups:
         curGroup = ec2.SecurityGroup(sg['GroupId'])
@@ -520,7 +527,8 @@ def main():
                 if not module.check_mode:
                     group.delete()
             except botocore.exceptions.ClientError as e:
-                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message),
+                                 exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             else:
                 group = None
                 changed = True
@@ -533,7 +541,8 @@ def main():
         if group:
             # existing group
             if group.description != description:
-                module.fail_json(msg="Group description does not match existing group. ec2_group does not support this case.")
+                module.fail_json(
+                    msg="Group description does not match existing group. ec2_group does not support this case.")
 
         # if the group doesn't exist, create it now
         else:
@@ -546,7 +555,8 @@ def main():
                 # reflected in the object returned by the AWS API
                 # call. We re-read the group for getting an updated object
                 # amazon sometimes takes a couple seconds to update the security group so wait till it exists
-                while len(client.describe_security_groups(GroupIds = [groupId])['SecurityGroups'][0]['IpPermissionsEgress']) == 0:
+                while len(client.describe_security_groups(GroupIds=[groupId])
+                          ['SecurityGroups'][0]['IpPermissionsEgress']) == 0:
                     time.sleep(0.1)
 
                 group = ec2.SecurityGroup(groupId)
@@ -558,15 +568,16 @@ def main():
     if group:
         # Manage ingress rules
         groupRules = {}
-        addRulesToLookup(group.ip_permissions, group.id, 'in', groupRules)
+        add_rules_to_loopkup(group.ip_permissions, group.id, 'in', groupRules)
         # Now, go through all provided rules and ensure they are there.
         print len(groupRules.keys())
         if rules is not None:
-            ipPermissions=[]
+            ip_permission = []
             for rule in rules:
                 validate_rule(module, rule)
 
-                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
+                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups,
+                                                                          vpc_id)
                 if target_group_created:
                     changed = True
 
@@ -576,62 +587,71 @@ def main():
                     rule['to_port'] = None
 
                 if group_id:
-                    ruleId = make_rule_key('in', rule, group.id, group_id)
-                    if ruleId in groupRules:
-                        del groupRules[ruleId]
+                    rule_id = make_rule_key('in', rule, group.id, group_id)
+                    if rule_id in groupRules:
+                        del groupRules[rule_id]
                     else:
                         if not module.check_mode:
-                            ipPermissions = serializeGroupGrant(group_id, rule)
-                            if ipPermissions:
-                                ips=ipPermissions
+                            ip_permission = serialize_group_grant(group_id, rule)
+                            if ip_permission:
+                                ips = ip_permission
                                 if vpc_id:
-                                    [ useridpair.update({'VpcId': vpc_id}) for useridpair in ipPermissions.get('UserIdGroupPairs')]
+                                    [useridpair.update({'VpcId': vpc_id}) for useridpair in
+                                     ip_permission.get('UserIdGroupPairs')]
                                 try:
                                     client.authorize_security_group_ingress(GroupId=group.group_id, IpPermissions=[ips])
                                 except botocore.exceptions.ClientError as e:
-                                    module.fail_json(msg="Unable to authorize ingress for group %s security group '%s' - %s" % (group_id, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                        changed=True
+                                    module.fail_json(
+                                        msg="Unable to authorize ingress for group %s security group '%s' - %s" %
+                                            (group_id, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                        changed = True
                 else:
                     # Convert ip to list we can iterate over
                     if not isinstance(ip, list):
                         ip = [ip]
                     # If rule already exists, don't later delete it
                     for thisip in ip:
-                        ruleId = make_rule_key('in', rule, group.id, thisip)
-                        if ruleId in groupRules:
-                            del groupRules[ruleId]
+                        rule_id = make_rule_key('in', rule, group.id, thisip)
+                        if rule_id in groupRules:
+                            del groupRules[rule_id]
                         else:
                             if not module.check_mode:
                                 try:
-                                    ipPermissions = serializeIpGrant(rule, thisip)
+                                    ip_permission = serialize_ip_grant(rule, thisip)
                                 except ipaddress.AddressValueError as e:
                                     module.fail_json(msg=e.message)
-                                if ipPermissions:
+                                if ip_permission:
                                     try:
-                                        client.authorize_security_group_ingress(GroupId=group.group_id, IpPermissions=[ipPermissions])
+                                        client.authorize_security_group_ingress(GroupId=group.group_id,
+                                                                                IpPermissions=[ip_permission])
                                     except botocore.exceptions.ClientError as e:
-                                        module.fail_json(msg="Unable to authorize ingress for ip %s security group '%s' - %s" % (thisip, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                            changed=True
+                                        module.fail_json(
+                                            msg="Unable to authorize ingress for ip %s security group '%s' - %s" %
+                                                (thisip, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                            changed = True
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:
             for (rule, grant) in groupRules.values():
-                ipPermissions = serializeRevoke(grant, rule)
+                ip_permission = serialize_revoke(grant, rule)
                 if not module.check_mode:
                     try:
-                        client.revoke_security_group_ingress(GroupId=group.group_id, IpPermissions=[ipPermissions])
+                        client.revoke_security_group_ingress(GroupId=group.group_id, IpPermissions=[ip_permission])
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg="Unable to revoke ingress for security group '%s' - %s" % (group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                changed=True
+                        module.fail_json(
+                            msg="Unable to revoke ingress for security group '%s' - %s" %
+                                (group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                changed = True
 
         # Manage egress rules
         groupRules = {}
-        addRulesToLookup(group.ip_permissions_egress, group.id, 'out', groupRules)
+        add_rules_to_loopkup(group.ip_permissions_egress, group.id, 'out', groupRules)
         # Now, go through all provided rules and ensure they are there.
         if rules_egress is not None:
             for rule in rules_egress:
                 validate_rule(module, rule)
 
-                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
+                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups,
+                                                                          vpc_id)
                 if target_group_created:
                     changed = True
 
@@ -641,54 +661,63 @@ def main():
                     rule['to_port'] = None
 
                 if group_id:
-                    ruleId = make_rule_key('out', rule, group.id, group_id)
-                    if ruleId in groupRules:
-                        del groupRules[ruleId]
+                    rule_id = make_rule_key('out', rule, group.id, group_id)
+                    if rule_id in groupRules:
+                        del groupRules[rule_id]
                     else:
                         if not module.check_mode:
-                            ipPermissions = serializeGroupGrant(group_id, rule)
-                            if ipPermissions:
-                                ips=ipPermissions
+                            ip_permission = serialize_group_grant(group_id, rule)
+                            if ip_permission:
+                                ips = ip_permission
                                 if vpc_id:
-                                    [ useridpair.update({'VpcId': vpc_id}) for useridpair in ipPermissions.get('UserIdGroupPairs')]
+                                    [useridpair.update({'VpcId': vpc_id}) for useridpair in
+                                     ip_permission.get('UserIdGroupPairs')]
                                 try:
                                     client.authorize_security_group_egress(GroupId=group.group_id, IpPermissions=[ips])
                                 except botocore.exceptions.ClientError as e:
-                                    module.fail_json(msg="Unable to authorize egress for group %s security group '%s' - %s" % (group_id, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                        changed=True
+                                    module.fail_json(
+                                        msg="Unable to authorize egress for group %s security group '%s' - %s" %
+                                            (group_id, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                        changed = True
                 else:
                     # Convert ip to list we can iterate over
                     if not isinstance(ip, list):
                         ip = [ip]
                     # If rule already exists, don't later delete it
                     for thisip in ip:
-                        ruleId = make_rule_key('out', rule, group.id, thisip)
-                        if ruleId in groupRules:
-                            del groupRules[ruleId]
+                        rule_id = make_rule_key('out', rule, group.id, thisip)
+                        if rule_id in groupRules:
+                            del groupRules[rule_id]
                         else:
                             if not module.check_mode:
-                                ipPermissions = serializeIpGrant(rule, thisip)
-                                if ipPermissions:
+                                ip_permission = serialize_ip_grant(rule, thisip)
+                                if ip_permission:
                                     try:
-                                        client.authorize_security_group_egress(GroupId=group.group_id, IpPermissions=[ipPermissions])
+                                        client.authorize_security_group_egress(GroupId=group.group_id,
+                                                                               IpPermissions=[ip_permission])
                                     except botocore.exceptions.ClientError as e:
-                                        module.fail_json(msg="Unable to authorize egress for ip %s security group '%s' - %s" % (thisip, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                            changed=True
+                                        module.fail_json(
+                                            msg="Unable to authorize egress for ip %s security group '%s' - %s" %
+                                                (thisip, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                            changed = True
         else:
             # when no egress rules are specified,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
-            default_egress_rule = 'out--1-None-None-'+group.id+'-0.0.0.0/0'
+            default_egress_rule = 'out--1-None-None-' + group.id + '-0.0.0.0/0'
             if default_egress_rule not in groupRules:
                 if not module.check_mode:
-                    ipPermissions=[{'IpProtocol': '-1',
-                                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                                    }
-                                   ]
+                    ip_permission = [{'IpProtocol': '-1',
+                                      'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+                                      }
+                                     ]
                     try:
-                        client.authorize_security_group_egress(GroupId=group.group_id, IpPermissions=ipPermissions)
+                        client.authorize_security_group_egress(GroupId=group.group_id, IpPermissions=ip_permission)
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg="Unable to authorize egress for ip %s security group '%s' - %s" % ('0.0.0.0/0', group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                        module.fail_json(msg="Unable to authorize egress for ip %s security group '%s' - %s" %
+                                             ('0.0.0.0/0',
+                                              group.group_name,
+                                              e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
             else:
                 # make sure the default egress rule is not removed
@@ -697,18 +726,22 @@ def main():
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules_egress:
             for (rule, grant) in groupRules.values():
-                ipPermissions = serializeRevoke(grant, rule)
+                ip_permission = serialize_revoke(grant, rule)
                 if not module.check_mode:
                     try:
-                        client.revoke_security_group_egress(GroupId=group.group_id, IpPermissions=[ipPermissions])
+                        client.revoke_security_group_egress(GroupId=group.group_id, IpPermissions=[ip_permission])
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg="Unable to revoke egress for ip %s security group '%s' - %s" % ('0.0.0.0/0', group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                        module.fail_json(msg="Unable to revoke egress for ip %s security group '%s' - %s" %
+                                             ('0.0.0.0/0',
+                                              group.group_name,
+                                              e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
     if group:
         module.exit_json(changed=changed, group_id=group.id)
     else:
         module.exit_json(changed=changed, group_id=None)
+
 
 if __name__ == '__main__':
     main()
