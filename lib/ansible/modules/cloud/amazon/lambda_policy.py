@@ -165,6 +165,10 @@ except ImportError:
 #
 # ---------------------------------------------------------------------------------------------------
 
+class AWSConnectionException(Exception):
+    pass
+
+
 class AWSConnection:
     """
     Create the connection object and client objects as required.
@@ -174,6 +178,8 @@ class AWSConnection:
 
         try:
             self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(ansible_obj, boto3=boto3)
+            if not self.region:
+                raise AWSConnectionException('region must be specified')
 
             self.resource_client = dict()
             if not resources:
@@ -189,18 +195,8 @@ class AWSConnection:
                                                ))
                 self.resource_client[resource] = boto3_conn(ansible_obj, **aws_connect_kwargs)
 
-            # if region is not provided, then get default profile/session region
-            if not self.region:
-                self.region = self.resource_client['lambda'].meta.region_name
-
         except (ClientError, ParamValidationError, MissingParametersError) as e:
             ansible_obj.fail_json(msg="Unable to connect, authorize or access resource: {0}".format(e))
-
-        # set account ID
-        try:
-            self.account_id = self.resource_client['iam'].get_user()['User']['Arn'].split(':')[4]
-        except (ClientError, ValueError, KeyError, IndexError):
-            self.account_id = ''
 
     def client(self, resource='lambda'):
         return self.resource_client[resource]
@@ -242,7 +238,7 @@ def set_api_params(module, module_params):
 
     for param in module_params:
         module_param = module.params.get(param, None)
-        if module_param:
+        if module_param is not None:
             api_params[pc(param)] = module_param
 
     return api_params
@@ -479,7 +475,10 @@ def main():
     if not HAS_BOTOCORE:
         module.fail_json(msg='botocore (exceptions) is required for this module.')
 
-    aws = AWSConnection(module, ['lambda'])
+    try:
+        aws = AWSConnection(module, ['lambda'])
+    except AWSConnectionException as e:
+        module.fail_json(msg=str(e))
 
     validate_params(module, aws)
 
