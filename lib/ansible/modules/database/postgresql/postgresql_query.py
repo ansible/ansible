@@ -193,6 +193,7 @@ else:
 
 import traceback
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule, get_exception, BOOLEANS
 import ansible.module_utils.postgres as pgutils
 
 # ===========================================
@@ -333,9 +334,6 @@ def main():
                      query_results=query_results,
                      ansible_facts=ansible_facts,
                      rowcount=rowcount)
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule, get_exception, BOOLEANS
 
 if __name__ == '__main__':
     main()
