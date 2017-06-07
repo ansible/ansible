@@ -730,7 +730,7 @@ def main():
         elif str(type(e)) == "<class 'requests.exceptions.SSLError'>":
             module.fail_json(msg='SSL Error %s' % str(e))
         else:
-            raise
+            module.fail_json(msg='Unexpected error during login %s' % str(e))
 
     # Fallthrough to rest of execution
 
