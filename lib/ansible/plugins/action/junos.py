@@ -38,6 +38,30 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        # Override sys.exit() with a no-op
+        def _override_sys_exit(return_code):
+            pass
+
+        saved_sys_exit = sys.exit
+        sys.exit = _override_sys_exit
+
+        # Send stdout to /dev/null
+        saved_stdout = sys.stdout
+        null_stdout = open(os.devnull, 'w')
+        sys.stdout = null_stdout
+
+        module = None
+        try:
+            module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))
+        except Exception:
+            pass
+
+        # Restore sys.exit and sys.stdout
+        sys.exit = saved_sys_exit
+        sys.stdout = saved_stdout
+
+        if module is None or not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
+            return super(ActionModule, self).run(tmp, task_vars)
 
         if self._play_context.connection != 'local':
             return dict(
@@ -45,11 +69,6 @@ class ActionModule(_ActionModule):
                 msg='invalid connection specified, expected connection=local, '
                     'got %s' % self._play_context.connection
             )
-
-        module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))
-
-        if not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
-            return super(ActionModule, self).run(tmp, task_vars)
 
         provider = self.load_provider()
 
