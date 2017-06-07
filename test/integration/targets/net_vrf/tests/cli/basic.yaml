@@ -1,0 +1,7 @@
+---
+- debug: msg="START cli/set_name_servers.yaml"
+
+- include: "{{ role_path }}/tests/eos/basic.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'eos'
+
+- debug: msg="END cli/set_name_servers.yaml"
