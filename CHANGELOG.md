@@ -66,6 +66,18 @@ Ansible Changes By Release
 * Enable the docker connection plugin to use su as a become method
 * Add an encoding parameter for the replace module so that it can operate on non-utf-8 files
 
+#### New Callbacks:
+- profile_roles
+
+#### New Inventory Plugins:
+- advanced_host_list
+- constructed_groups
+- host_list
+- ini
+- script
+- yaml
+- virtualbox
+
 #### New Inventory scripts:
 - lxd
 
