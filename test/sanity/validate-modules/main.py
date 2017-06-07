@@ -1111,7 +1111,7 @@ def re_compile(value):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog="validate-modules")
     parser.add_argument('modules', nargs='+',
                         help='Path to module or module directory')
     parser.add_argument('-w', '--warnings', help='Show warnings',
