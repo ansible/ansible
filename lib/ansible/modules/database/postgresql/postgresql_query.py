@@ -31,7 +31,7 @@ description:
      Number of rows affected are returned as "row_count".
    - Can read queries from a .sql script files
    - SQL scripts may be templated with ansible variables at execution time
-version_added: "2.3"
+version_added: "2.4"
 options:
   db:
     description:
@@ -317,7 +317,7 @@ def main():
     changed = False
 
     # set changed flag only on non read-only command
-    if "UPDATDE" in statusmessage or "INSERT" in statusmessage or \
+    if "UPDATE" in statusmessage or "INSERT" in statusmessage or \
             "UPSERT" in statusmessage:
         changed = True
 
