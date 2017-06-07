@@ -1,0 +1,390 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Chris Petersen <geek@ex-nerd.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: timezone
+short_description: Configure the system timezone.
+description:
+  - Configures the system timezone.
+version_added: "1.4.x"
+options:
+  zone:
+    description:
+      - "Name of the time zone to use (example: C(America/Los_Angeles))"
+    required: true
+  mode:
+    description:
+      - The method used to update the file for platforms which use zonefiles like /etc/localtime. Default of C(auto)
+        will attempt to use the host's current convention and will fail if it is not a symlink or regular file.
+        Not used for Debian and OSX, which have higher-level ways to manipulate /etc/localtime.
+    required: false
+    default: auto
+    choices: ["auto", "symlink", "copy"]
+author: Chris Petersen <geek@ex-nerd.com>
+'''
+
+EXAMPLES = '''
+- timezone: zone=UTC
+- timezone: zone=US/Pacific
+- timezone: zone=America/Los_Angeles
+'''
+
+import os
+import filecmp
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+# ===========================================
+
+class Timezone(object):
+    """
+    This is a generic Timezone manipulation class that is subclassed based on platform.
+
+    A subclass may wish to override the following action method:-
+      - set_timezone()
+
+    All subclasses MUST define platform and distribution (which may be None).
+    All sub-subclasses MUST also inherit directly from Timezone or load_platform_subclass() will not find them.
+    """
+
+    platform = 'Generic'
+    distribution = None
+
+    def __new__(cls, *args, **kwargs):
+        return load_platform_subclass(Timezone, args, kwargs)
+
+    def __init__(self, module):
+        self.module = module
+        self.zone = module.params["zone"].replace(' ', '_')
+
+    def set_timezone(self):
+        """
+        Do the various things necessary to change the timezone.
+        Must be overridden.
+
+        :returns: changed status
+        :rtype: bool
+        """
+        self.module.fail_json(msg='timezone module cannot be used on platform {0}'.format(self._platform_str()))
+
+    def _platform_str(self):
+        """ For error messages.  Return a string corresponding to the current platform/distribution. """
+        platform = get_platform()
+        distribution = get_distribution()
+        if distribution is not None:
+            platform += ' ({0})'.format(distribution)
+        return platform
+
+
+class ZonefileTimezone(Timezone):
+    """
+    This is an "abstract" Timezone manipulation class which implements timezone control via zone files like
+    /etc/localtime.  Because this functionality is shared by various platforms, it must be subclassed before
+    it can be used and detected by Ansible.
+
+    A subclass may wish to override the following action methods:-
+      - set_timezone()
+      - _set_mode()
+      - _set_mode_auto()
+      - _set_mode_auto_no_target()
+      - _set_mode_auto_unknown_target()
+
+    All subclasses MUST define platform and distribution (which may be None).
+    """
+
+    # Some helpful constants to avoid typos.
+    MODE_AUTO = "auto"
+    MODE_COPY = "copy"
+    MODE_LINK = "symlink"
+
+    # Standard location for zonefile information.  Subclasses should override these when appropriate.
+    ZONEFILE_TARGET = "/etc/localtime"
+    ZONEINFO_PATH   = "/usr/share/zoneinfo"
+
+    def __init__(self, module):
+        super(ZonefileTimezone, self).__init__(module)
+        self.mode = self._set_mode(module.params["mode"])
+
+    def set_timezone(self):
+        """
+        Transfer (copy or symlink) a zonefile into the proper place to set the time zone.
+        This method can be overridden by subclasses but will likely still be called via super().
+
+        :returns: changed status
+        :rtype: bool
+        """
+        # Sanity check against stupid subclass developers
+        if self.mode not in [ZonefileTimezone.MODE_COPY, ZonefileTimezone.MODE_LINK]:
+            self.module.fail_json(msg="Developer made a mistake processing 'mode' parameter.  Please file a bug.")
+
+        # Make sure the zoneinfo_path exists
+        if not os.path.isdir(ZonefileTimezone.ZONEINFO_PATH):
+            self.module.fail_json(msg="{0} is not a directory".format(ZonefileTimezone.ZONEINFO_PATH))
+
+        # Make sure the source exists
+        source_path = os.path.realpath(os.path.join(ZonefileTimezone.ZONEINFO_PATH, self.zone))
+        if not os.path.exists(source_path):
+            self.module.fail_json(msg="Could not find {0}".format(source_path))
+        elif not os.path.isfile(source_path):
+            self.module.fail_json(msg="Zone file at {0} is not a regular file".format(source_path))
+
+        # Some "changed" checks based on the existing target file type, to see if we can return early
+        if os.path.islink(self.ZONEFILE_TARGET):
+            # No change if the existing link already matches
+            if self.mode == self.MODE_LINK and source_path == os.path.realpath(os.readlink(self.ZONEFILE_TARGET)):
+                return False
+        elif os.path.isfile(self.ZONEFILE_TARGET):
+            # No change if the existing file is identical, unless we have to fix permissions
+            if self.mode == self.MODE_COPY and filecmp.cmp(source_path, self.ZONEFILE_TARGET, False):
+                return self.module.set_mode_if_different(self.ZONEFILE_TARGET, 0644, False)
+        elif os.path.exists(self.ZONEFILE_TARGET):
+            # Something strange.  Bail out before we break something.
+            self.module.fail_json(msg="{0} exists but is not a file or symlink".format(self.ZONEFILE_TARGET))
+
+        # Remove the existing file and copy/link the new one into place
+        if os.path.exists(self.ZONEFILE_TARGET):
+            os.remove(self.ZONEFILE_TARGET)
+        # Copy or link into place
+        if self.mode == self.MODE_LINK:
+            os.symlink(source_path, self.ZONEFILE_TARGET)
+        elif self.mode == self.MODE_COPY:
+            shutil.copyfile(source_path, self.ZONEFILE_TARGET)
+            self.module.set_mode_if_different(self.ZONEFILE_TARGET, 0644, True)
+
+        return True
+
+    def _set_mode(self, mode):
+        """
+        Protected method to set the zonefile transfer mode.
+        It must return MODE_COPY, MODE_LINK, or call self.module.fail_json()
+        Should be overridden when appropriate (e.g. distro only supports copy)
+
+        :param mode: mode value sent to ansible
+        :type mode: str
+        :returns: ZonefileTimezone.MODE_COPY or ZonefileTimezone.MODE_LINK
+        :rtype: str
+        """
+        if mode == ZonefileTimezone.MODE_AUTO:
+            return self._set_mode_auto()
+        elif mode in [ZonefileTimezone.MODE_COPY, ZonefileTimezone.MODE_LINK]:
+            return mode
+        else:
+            # Ansible should not allow us to get here, but left in just in case.
+            self.module.fail_json(msg="Mode {0} is not supported".format(mode))
+
+    def _set_mode_auto(self):
+        """
+        Protected method to return an auto-detected mode.
+        Should be overriden when appropriate (e.g. distro only supports copy)
+
+        :returns: ZonefileTimezone.MODE_COPY or ZonefileTimezone.MODE_LINK
+        :rtype: str
+        """
+        if os.path.islink(self.ZONEFILE_TARGET):
+            return self.MODE_LINK
+        elif os.path.isfile(self.ZONEFILE_TARGET):
+            return self.MODE_COPY
+        elif os.path.exists(self.ZONEFILE_TARGET):
+            return self._set_mode_auto_unknown_target()
+        else:
+            return self._set_mode_auto_no_target()
+
+    def _set_mode_auto_no_target(self):
+        """
+        Protected method to return an auto-detected mode or failure if the zonefile target does not exist.
+        Should be overriden when appropriate.
+
+        :returns: ZonefileTimezone.MODE_COPY or ZonefileTimezone.MODE_LINK
+        :rtype: str
+        """
+        self._set_mode_auto_unknown_target()
+
+    def _set_mode_auto_unknown_target(self):
+        """
+        Protected method to return an auto-detected mode or failure if the zonefile target is of an unknown type
+        Should be overriden when appropriate.
+
+        :returns: ZonefileTimezone.MODE_COPY or ZonefileTimezone.MODE_LINK
+        :rtype: str
+        """
+        self.module.fail_json(msg="'auto' mode for {0} requires {1} be a file or symlink".format(
+            self.module.get_distribution() or self.module.get_platform(),
+            self.ZONEFILE_TARGET
+        ))
+
+# ===========================================
+
+class FreeBSDTimezone(ZonefileTimezone, Timezone):
+    platform = 'FreeBSD'
+    distribution = None
+    # note: distro-preferred mode is copy
+
+
+class OpenBSDTimezone(ZonefileTimezone, Timezone):
+    platform = 'OpenBSD'
+    distribution = None
+    # note: distro-preferred mode is copy
+
+class NetBSDTimezone(ZonefileTimezone, Timezone):
+    platform = 'NetBSD'
+    distribution = None
+    # note: distro-preferred mode is link
+
+# ===========================================
+
+class RedHatTimezone(ZonefileTimezone, Timezone):
+    platform = 'Linux'
+    distribution = 'Redhat'
+    # note: distro-preferred mode is link
+
+    # Red Hat uses this file to control how its GUI tools update the timezone
+    SYSCONFIG_CLOCK_FILE = "/etc/sysconfig/clock"
+
+    def set_timezone(self):
+        changed = super(RedHatTimezone, self).set_timezone()
+        changed = changed | self._update_sysconfig_clock()
+        return changed
+
+    def _update_sysconfig_clock(self):
+        zone = self.zone.replace('_', ' ')
+        to_write = []
+        current_zone = None
+        for line in open(self.SYSCONFIG_CLOCK_FILE, 'r').readlines():
+            if line.strip().startswith('ZONE'):
+                current_zone = line.strip().split('=', 1)[1]
+                if current_zone.startswith('"'):
+                    current_zone = current_zone[1:-1].replace('\\"', '"')
+            else:
+                # Note: Leave things open for interacting with other variables stored in this file
+                to_write.append(line)
+
+        changed = False
+        if current_zone != zone:
+            to_write.append('ZONE="{0}"\n'.format(zone))
+            changed = True
+
+        if changed:
+            with open(self.SYSCONFIG_CLOCK_FILE, 'w') as config:
+                for l in to_write:
+                    config.write(l)
+
+        return changed
+
+
+class CentOSTimezone(RedHatTimezone, Timezone):
+    platform = 'Linux'
+    distribution = 'Centos'
+
+class AmazonLinuxTimezone(RedHatTimezone, Timezone):
+    platform = 'Linux'
+    distribution = 'Amazon'
+
+class ScientificLinuxTimezone(RedHatTimezone, Timezone):
+    platform = 'Linux'
+    distribution = 'Scientific'
+    # Untested but assumed to work
+
+class FedoraTimezone(RedHatTimezone, Timezone):
+    platform = 'Linux'
+    distribution = 'Fedora'
+
+    def _update_sysconfig_clock(self):
+        # Fedora 18 and later don't use /etc/sysconfig/clock, so don't inherit this method from RedHat
+        # @todo detect distro version and call super(RedHatTimezone, self)._update_sysconfig_clock() for < 18
+        # @todo look at timedatectl
+        pass
+
+# ===========================================
+
+class DebianTimezone(Timezone):
+    """
+    Debian uses /etc/localtime but offers a tool to control this and other related config, so we'll use that instead.
+    """
+    platform = 'Linux'
+    distribution = 'Debian'
+
+    # Debian uses this file to control how it sets up other files like /etc/localtime
+    TIMEZONE_FILE = "/etc/timezone"
+
+    def set_timezone(self):
+        changed = False
+        # If changed, write the new config file
+        with open(self.TIMEZONE_FILE, "r") as config:
+            current_zone = config.read().replace('\n', '')
+        if current_zone != self.zone:
+            changed = True
+            with open(self.TIMEZONE_FILE, "w") as config:
+                config.write(self.zone)
+        self.module.set_owner_if_different(self.TIMEZONE_FILE, 'root', changed)
+        self.module.set_mode_if_different(self.TIMEZONE_FILE, 0644, changed)
+        # Reconfigure and let the OS set up /etc/localtime and anything else it needs
+        cmd = ['dpkg-reconfigure', '-f', 'noninteractive', 'tzdata']
+        rc, out, err = self.module.run_command(cmd, True)
+        return True
+
+class UbuntuTimezone(DebianTimezone, Timezone):
+    platform = 'Linux'
+    distribution = 'Ubuntu'
+
+# ===========================================
+
+class MacOSXTimezone(Timezone):
+    """
+    OSX uses /etc/localtime but offers a tool to control this and other related config, so we'll use that instead.
+    Mostly provided for testing purposes since MacOSX can set timezone based on wifi and network address.
+    """
+    platform = 'Darwin'
+    distribution = None # Should be 'MacOSX' but for some reason Ansible doesn' set distribution for non-Linux
+
+    def set_timezone(self):
+        systemsetup = self.module.get_bin_path('systemsetup', True)
+        # Check for change
+        cmd = [systemsetup, '-gettimezone']
+        rc, out, err = self.module.run_command(cmd, True)
+        if self.zone in out:
+            current_zone = out.strip().split(': ',1)[1]
+            if current_zone == self.zone:
+                return False
+        # Update the timezone to the new value
+        cmd = [systemsetup, '-settimezone', self.zone]
+        rc, out, err = self.module.run_command(cmd, True)
+        return True
+
+# ===========================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            zone = dict(required=True),
+            mode = dict(default=ZonefileTimezone.MODE_AUTO, choices=[ZonefileTimezone.MODE_AUTO, ZonefileTimezone.MODE_LINK, ZonefileTimezone.MODE_COPY]),
+        ),
+        # Certain distributions require commands to be run against config files before new settings take effect.
+        # We can't support check_mode until these commands support their own dry-run mode.
+        supports_check_mode = False
+    )
+    timezone = Timezone(module)
+    changed = timezone.set_timezone()
+    module.exit_json(changed=changed)
+
+if __name__ == '__main__':
+    main()
