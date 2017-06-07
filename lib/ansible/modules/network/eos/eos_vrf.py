@@ -92,7 +92,7 @@ def map_obj_to_commands(updates, module):
         if not have:
             commands.append('vrf definition %s' % want['name'])
 
-            if want['rd']:
+            if want['rd'] is not None:
                 commands.append('rd %s' % want['rd'])
 
             if want['interfaces']:
@@ -100,7 +100,7 @@ def map_obj_to_commands(updates, module):
                     commands.append('interface %s' % i)
                     commands.append('vrf forwarding %s' % want['name'])
         else:
-            if want['rd'] != have['rd']:
+            if want['rd'] is not None and want['rd'] != have['rd']:
                 commands.append('vrf definition %s' % want['name'])
                 commands.append('rd %s' % want['rd'])
 
