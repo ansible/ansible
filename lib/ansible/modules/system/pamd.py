@@ -56,19 +56,15 @@ options:
       - The module path of the PAM rule being modified.  The type,
         control and module_path all must match a rule to be modified.
   new_type:
-    required: false
     description:
-    - The type to assign to the new rule.
+    - The new type to assign to the new rule.
   new_control:
-    required: false
     description:
-    - The control to assign to the new rule.
+    - The new control to assign to the new rule.
   new_module_path:
-    required: false
     description:
-    - The control to assign to the new rule.
+    - The new module path to be assigned to the new rule.
   module_arguments:
-    required: false
     description:
     - When state is 'updated', the module_arguments will replace existing
       module_arguments.  When state is 'args_absent' args matching those
@@ -78,7 +74,6 @@ options:
       takes a value denoted by '=', the value will be changed to that specified
       in module_arguments.
   state:
-    required: false
     default: updated
     choices:
     - updated
@@ -96,7 +91,6 @@ options:
       must all be specified.  If state is 'args_absent' or 'args_present',
       new_type, new_control, and new_module_path will be ignored.
   path:
-    required: false
     default: /etc/pam.d/
     description:
     - This is the path to the PAM service files
@@ -130,15 +124,16 @@ EXAMPLES = """
     new_module_path: pam_faillock.so
     state: before
 
-- name: Insert a new rule after an existing rule
+- name: Insert a new rule pam_wheel.so with argument 'use_uid' after an existing rule pam_rootok.so
   pamd:
-    name: system-auth
+    name: su
     type: auth
-    control: required
-    module_path: pam_faillock.so
+    control: sufficient
+    module_path: pam_rootok.so
     new_type: auth
-    new_control: sufficient
-    new_module_path: pam_faillock.so
+    new_control: required
+    new_module_path: pam_wheel.so
+    module_arguments: 'use_uid'
     state: after
 
 - name: Remove module arguments from an existing rule
@@ -233,7 +228,7 @@ class PamdRule(object):
 
         if rule_control.startswith('['):
             rule_control = stringline[stringline.index('['):
-                                      stringline.index(']')+1]
+                                      stringline.index(']') + 1]
 
         if "]" in split_line[2]:
             rule_module_path = split_line[3]
@@ -318,7 +313,7 @@ def update_rule(service, old_rule, new_rule):
             except AttributeError:
                 pass
             if changed:
-                result['updated_rule_'+str(change_count)] = str(rule)
+                result['updated_rule_' + str(change_count)] = str(rule)
                 result['new_rule'] = str(new_rule)
 
                 change_count += 1
@@ -340,16 +335,16 @@ def insert_before_rule(service, old_rule, new_rule):
             if index == 0:
                 service.rules.insert(0, new_rule)
                 changed = True
-            elif (new_rule.rule_type != service.rules[index-1].rule_type or
+            elif (new_rule.rule_type != service.rules[index - 1].rule_type or
                     new_rule.rule_control !=
-                    service.rules[index-1].rule_control or
+                    service.rules[index - 1].rule_control or
                     new_rule.rule_module_path !=
-                    service.rules[index-1].rule_module_path):
+                    service.rules[index - 1].rule_module_path):
                 service.rules.insert(index, new_rule)
                 changed = True
             if changed:
                 result['new_rule'] = str(new_rule)
-                result['before_rule_'+str(change_count)] = str(rule)
+                result['before_rule_' + str(change_count)] = str(rule)
                 change_count += 1
         index += 1
     result['change_count'] = change_count
@@ -365,16 +360,16 @@ def insert_after_rule(service, old_rule, new_rule):
         if (old_rule.rule_type == rule.rule_type and
                 old_rule.rule_control == rule.rule_control and
                 old_rule.rule_module_path == rule.rule_module_path):
-            if (new_rule.rule_type != service.rules[index+1].rule_type or
+            if (new_rule.rule_type != service.rules[index + 1].rule_type or
                     new_rule.rule_control !=
-                    service.rules[index+1].rule_control or
+                    service.rules[index + 1].rule_control or
                     new_rule.rule_module_path !=
-                    service.rules[index+1].rule_module_path):
-                service.rules.insert(index+1, new_rule)
+                    service.rules[index + 1].rule_module_path):
+                service.rules.insert(index + 1, new_rule)
                 changed = True
             if changed:
                 result['new_rule'] = str(new_rule)
-                result['after_rule_'+str(change_count)] = str(rule)
+                result['after_rule_' + str(change_count)] = str(rule)
                 change_count += 1
         index += 1
 
@@ -396,8 +391,8 @@ def remove_module_arguments(service, old_rule, module_args):
                     if arg == arg_to_remove:
                         rule.rule_module_args.remove(arg)
                         changed = True
-                        result['removed_arg_'+str(change_count)] = arg
-                        result['from_rule_'+str(change_count)] = str(rule)
+                        result['removed_arg_' + str(change_count)] = arg
+                        result['from_rule_' + str(change_count)] = str(rule)
                         change_count += 1
 
     result['change_count'] = change_count
@@ -415,15 +410,15 @@ def add_module_arguments(service, old_rule, module_args):
                 old_rule.rule_module_path == rule.rule_module_path):
             for arg_to_add in module_args:
                 if "=" in arg_to_add:
-                    pre_string = arg_to_add[:arg_to_add.index('=')+1]
+                    pre_string = arg_to_add[:arg_to_add.index('=') + 1]
                     indicies = [i for i, arg
                                 in enumerate(rule.rule_module_args)
                                 if arg.startswith(pre_string)]
                     if len(indicies) == 0:
                         rule.rule_module_args.append(arg_to_add)
                         changed = True
-                        result['added_arg_'+str(change_count)] = arg_to_add
-                        result['to_rule_'+str(change_count)] = str(rule)
+                        result['added_arg_' + str(change_count)] = arg_to_add
+                        result['to_rule_' + str(change_count)] = str(rule)
                         change_count += 1
                     else:
                         for i in indicies:
@@ -438,8 +433,8 @@ def add_module_arguments(service, old_rule, module_args):
                 elif arg_to_add not in rule.rule_module_args:
                     rule.rule_module_args.append(arg_to_add)
                     changed = True
-                    result['added_arg_'+str(change_count)] = arg_to_add
-                    result['to_rule_'+str(change_count)] = str(rule)
+                    result['added_arg_' + str(change_count)] = arg_to_add
+                    result['to_rule_' + str(change_count)] = str(rule)
                     change_count += 1
     result['change_count'] = change_count
     return changed, result
@@ -450,13 +445,13 @@ def write_rules(service):
 
     f = open(service.fname, 'w')
     for amble in service.preamble:
-        f.write(amble+'\n')
+        f.write(amble + '\n')
 
     for rule in service.rules:
         if (previous_rule is not None and
                 previous_rule.rule_type != rule.rule_type):
             f.write('\n')
-        f.write(str(rule)+'\n')
+        f.write(str(rule) + '\n')
         previous_rule = rule
     f.close()
 
