@@ -195,6 +195,7 @@ Ansible Changes By Release
 - vmware
   * vmware_guest_find
 - windows
+  * win_dsc
   * win_firewall
 
 
