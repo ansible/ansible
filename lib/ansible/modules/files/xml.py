@@ -95,7 +95,7 @@ options:
     choices: [ xml, yaml ]
     default: yaml
 requirements:
-- lxml
+- lxml >= 2.3.0
 notes:
 - This module does not handle complicated xpath expressions.
   So limit xpath selectors to simple expressions.
@@ -587,20 +587,19 @@ def children_to_nodes(module=None, children=[], type='yaml'):
     return [child_to_element(module, child, type) for child in children]
 
 
-def finish(m, tree, xpath, namespaces, changed=False, msg="", hitcount=0, matches=[]):
-    actions = dict(xpath=xpath, namespaces=namespaces, state=m.params['state'])
+def finish(module, tree, xpath, namespaces, changed=False, msg="", hitcount=0, matches=[]):
+    actions = dict(xpath=xpath, namespaces=namespaces, state=module.params['state'])
 
     if not changed:
-        m.exit_json(changed=changed, actions=actions, msg=msg, count=hitcount, matches=matches)
+        module.exit_json(changed=changed, actions=actions, msg=msg, count=hitcount, matches=matches)
 
-    if m.params['path']:
-        xml_file = os.path.expanduser(m.params['path'])
-        tree.write(xml_file, xml_declaration=True, encoding='UTF-8', pretty_print=m.params['pretty_print'])
-        m.exit_json(changed=changed, actions=actions, msg=msg, count=hitcount, matches=matches)
+    if module.params['path']:
+        tree.write(module.params['path'], xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+        module.exit_json(changed=changed, actions=actions, msg=msg, count=hitcount, matches=matches)
 
-    if m.params['xmlstring']:
-        xml_string = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=m.params['pretty_print'])
-        m.exit_json(changed=changed, actions=actions, msg=msg, count=hitcount, matches=matches, xmlstring=xml_string)
+    if module.params['xmlstring']:
+        xml_string = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+        module.exit_json(changed=changed, actions=actions, msg=msg, count=hitcount, matches=matches, xmlstring=xml_string)
 
 
 def decode(value):

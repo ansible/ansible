@@ -13,5 +13,9 @@
               name: Ansible Brew
               type: light
 
+  # NOTE: This test may fail if lxml does not support predictable element attribute order
+  #       So we filter the failure out for these platforms (e.g. CentOS 6)
   - name: Test expected result
     command: diff -u {{ role_path }}/results/test-add-children-with-attributes.xml /tmp/ansible-xml-beers.xml
+    register: diff
+    failed_when: diff.rc != 0 and lxml_predictable_attribute_order
