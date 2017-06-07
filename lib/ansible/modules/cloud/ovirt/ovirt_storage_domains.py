@@ -61,6 +61,12 @@ options:
     host:
         description:
             - "Host to be used to mount storage."
+    localfs:
+        description:
+            - "Dictionary with values for localfs storage type:"
+            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
+            - "Note that these parameters are not idempotent."
+        version_added: "2.4"
     nfs:
         description:
             - "Dictionary with values for NFS storage type:"
@@ -125,6 +131,14 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/data
+
+# Add data localfs storage domain
+- ovirt_storage_domains:
+    name: data_localfs
+    host: myhost
+    data_center: mydatacenter
+    localfs:
+      path: /path/to/data
 
 # Add data iSCSI storage domain:
 - ovirt_storage_domains:
@@ -209,12 +223,12 @@ from ansible.module_utils.ovirt import (
 class StorageDomainModule(BaseModule):
 
     def _get_storage_type(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
             if self._module.params.get(sd_type) is not None:
                 return sd_type
 
     def _get_storage(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
             if self._module.params.get(sd_type) is not None:
                 return self._module.params.get(sd_type)
 
@@ -412,6 +426,7 @@ def main():
         data_center=dict(required=True),
         domain_function=dict(choices=['data', 'iso', 'export'], default='data', aliases=['type']),
         host=dict(default=None),
+        localfs=dict(default=None, type='dict'),
         nfs=dict(default=None, type='dict'),
         iscsi=dict(default=None, type='dict'),
         posixfs=dict(default=None, type='dict'),
