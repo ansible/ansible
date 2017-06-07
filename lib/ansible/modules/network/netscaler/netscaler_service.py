@@ -874,7 +874,8 @@ def main():
                 if not module.check_mode:
                     service_proxy.add()
                     sync_monitor_bindings(client, module, monitor_bindings_rw_attrs)
-                    client.save_config()
+                    if module.params['save_config']:
+                        client.save_config()
                 module_result['changed'] = True
             elif not all_identical(client, module, service_proxy, monitor_bindings_rw_attrs):
 
@@ -897,7 +898,8 @@ def main():
 
                 module_result['changed'] = True
                 if not module.check_mode:
-                    client.save_config()
+                    if module.params['save_config']:
+                        client.save_config()
             else:
                 module_result['changed'] = False
 
@@ -918,7 +920,8 @@ def main():
             if service_exists(client, module):
                 if not module.check_mode:
                     service_proxy.delete()
-                    client.save_config()
+                    if module.params['save_config']:
+                        client.save_config()
                 module_result['changed'] = True
             else:
                 module_result['changed'] = False

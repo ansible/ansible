@@ -225,6 +225,10 @@ netscaler_common_arguments = dict(
         ],
         default='present',
     ),
+    save_config=dict(
+        type='bool',
+        default=True,
+    ),
 )
 
 

@@ -42,4 +42,11 @@ options:
             - The state of the resource being configured by the module on the netscaler node.
             - When present the resource will be created if needed and configured according to the module's parameters.
             - When absent the resource will be deleted from the netscaler node.
+
+    save_config:
+        description:
+            - If true the module will save the configuration on the netscaler node if it makes any changes.
+            - The module will not save the configuration on the netscaler node if it made no changes.
+        type: bool
+        default: true
 '''
