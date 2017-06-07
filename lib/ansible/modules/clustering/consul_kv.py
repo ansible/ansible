@@ -51,9 +51,14 @@ options:
             'release' respectively. a valid session must be supplied to make the
             attempt changed will be true if the attempt is successful, false
             otherwise.
+            'read_only' will simply return the value of a given key (or an array
+            of keys if C(recurse) is set to C(True)) and fail if no key is
+            found, this is a "remote" alternative to the "local"
+            C(consul_kv) lookup plugin.
         required: false
-        choices: ['present', 'absent', 'acquire', 'release']
+        choices: ['present', 'absent', 'acquire', 'release', 'read_only']
         default: present
+        version_added: "2.4"
     key:
         description:
           - the key at which the value should be stored.
@@ -142,16 +147,37 @@ EXAMPLES = '''
       value: 20160509
       session: "{{ sessionid }}"
       state: acquire
-'''
 
-import sys
+  ## 'read_only' state examples
+  - name: Retrieve a single value, plain and simple.
+    consul_kv:
+      key: some/value
+      state: read_only
+    register: my_consul_value
+
+  - name: Output the value.
+    debug:
+      var: my_consul_value.data.Value
+
+  - name: Recurse through a path and retrieve all associated values.
+    consul_kv:
+      key: some/path
+      state: read_only
+      recurse: true
+    register: my_consul_values
+
+  - name: Output the values.
+    debug:
+      var: item.Value
+    with_items: "{{ my_consul_values.data }}"
+'''
 
 try:
     import consul
     from requests.exceptions import ConnectionError
-    python_consul_installed = True
+    PYTHON_CONSUL_INSTALLED = True
 except ImportError:
-    python_consul_installed = False
+    PYTHON_CONSUL_INSTALLED = False
 
 from requests.exceptions import ConnectionError
 
@@ -163,9 +189,10 @@ def execute(module):
         lock(module, state)
     if state == 'present':
         add_value(module)
+    elif state == 'read_only':
+        read_value(module)
     else:
         remove_value(module)
-
 
 def lock(module, state):
 
@@ -224,13 +251,30 @@ def add_value(module):
                      data=stored)
 
 
+def read_value(module):
+    ''' read the value associated with the given key. if the recurse parameter
+     is set then any key prefixed with the given key will be appended to an array that returned.'''
+
+    consul_api = get_consul_api(module)
+    key = module.params.get('key')
+
+    index, existing = consul_api.kv.get(
+        key, recurse=module.params.get('recurse'))
+
+    if existing is not None:
+        module.exit_json(changed=False,
+                         index=index,
+                         key=key,
+                         data=existing)
+    else:
+        module.fail_json(msg="No key(s) found in specified path!")
+
 def remove_value(module):
     ''' remove the value associated with the given key. if the recurse parameter
      is set then any key prefixed with the given key will be removed. '''
     consul_api = get_consul_api(module)
 
     key = module.params.get('key')
-    value = module.params.get('value')
 
     index, existing = consul_api.kv.get(
         key, recurse=module.params.get('recurse'))
@@ -245,7 +289,7 @@ def remove_value(module):
                      data=existing)
 
 
-def get_consul_api(module, token=None):
+def get_consul_api(module):
     return consul.Consul(host=module.params.get('host'),
                          port=module.params.get('port'),
                          scheme=module.params.get('scheme'),
@@ -253,7 +297,7 @@ def get_consul_api(module, token=None):
                          token=module.params.get('token'))
 
 def test_dependencies(module):
-    if not python_consul_installed:
+    if not PYTHON_CONSUL_INSTALLED:
         module.fail_json(msg="python-consul required for this module. "\
               "see http://python-consul.readthedocs.org/en/latest/#installation")
 
@@ -269,7 +313,8 @@ def main():
         port=dict(default=8500, type='int'),
         recurse=dict(required=False, type='bool'),
         retrieve=dict(required=False, type='bool', default=True),
-        state=dict(default='present', choices=['present', 'absent', 'acquire', 'release']),
+        state=dict(default='present', choices=['present', 'absent', 'acquire',
+                                               'release', 'read_only']),
         token=dict(required=False, no_log=True),
         value=dict(required=False),
         session=dict(required=False)
