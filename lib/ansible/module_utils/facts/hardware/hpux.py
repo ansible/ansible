@@ -62,9 +62,11 @@ class HPUXHardware(Hardware):
         elif collected_facts.get('ansible_architecture') == 'ia64':
             if collected_facts.get('ansible_distribution_version') == "B.11.23":
                 rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo | grep 'Number of CPUs'", use_unsafe_shell=True)
-                cpu_facts['processor_count'] = int(out.strip().split('=')[1])
+                if out:
+                    cpu_facts['processor_count'] = int(out.strip().split('=')[1])
                 rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo | grep 'processor family'", use_unsafe_shell=True)
-                cpu_facts['processor'] = re.search('.*(Intel.*)', out).groups()[0].strip()
+                if out:
+                    cpu_facts['processor'] = re.search('.*(Intel.*)', out).groups()[0].strip()
                 rc, out, err = self.module.run_command("ioscan -FkCprocessor | wc -l", use_unsafe_shell=True)
                 cpu_facts['processor_cores'] = int(out.strip())
             if collected_facts.get('ansible_distribution_version') == "B.11.31":
