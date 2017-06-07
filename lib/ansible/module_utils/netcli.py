@@ -141,8 +141,6 @@ class CommandRunner(object):
 
         self.match = 'all'
 
-        self._default_output = module.connection.default_output
-
     def add_command(self, command, output=None, prompt=None, response=None,
                     **kwargs):
         if command in [str(c) for c in self.commands]:
