@@ -74,10 +74,6 @@ options:
         device running configuration. The argument accepts a string value
         defining the view name. This argument does not check if the view
         has been configured on the device.
-  sshkey:
-    description:
-      - Specifies the SSH public key to configure
-        for the given username. This argument accepts a valid SSH key value.
   nopassword:
     description:
       - Defines the username without assigning
@@ -107,7 +103,7 @@ EXAMPLES = """
 - name: create a new user
   ios_user:
     name: ansible
-    sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    nopassword: True
     state: present
 - name: remove all users except admin
   ios_user:
@@ -152,6 +148,11 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.ios import ios_argument_spec, check_args
 
 
+def validate_privilege(value, module):
+    if not 1 <= value <= 15:
+        module.fail_json(msg='privilege must be between 1 and 15, got %s' % value)
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
     state = module.params['state']
@@ -180,9 +181,6 @@ def map_obj_to_commands(updates, module):
             if update_password == 'always' or not have:
                 add(commands, want, 'secret %s' % want['password'])
 
-        if needs_update(want, have, 'sshkey'):
-            add(commands, want, 'sshkey %s' % want['sshkey'])
-
         if needs_update(want, have, 'nopassword'):
             if want['nopassword']:
                 add(commands, want, 'nopassword')
@@ -194,12 +192,6 @@ def map_obj_to_commands(updates, module):
 
 def parse_view(data):
     match = re.search(r'view (\S+)', data, re.M)
-    if match:
-        return match.group(1)
-
-
-def parse_sshkey(data):
-    match = re.search(r'sshkey (.+)$', data, re.M)
     if match:
         return match.group(1)
 
@@ -228,7 +220,6 @@ def map_config_to_obj(module):
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
             'password': None,
-            'sshkey': parse_sshkey(cfg),
             'privilege': parse_privilege(cfg),
             'view': parse_view(cfg)
         }
@@ -284,7 +275,6 @@ def map_params_to_obj(module):
         item['nopassword'] = get_value('nopassword')
         item['privilege'] = get_value('privilege')
         item['view'] = get_value('view')
-        item['sshkey'] = get_value('sshkey')
         item['state'] = get_value('state')
         objects.append(item)
 
@@ -317,8 +307,6 @@ def main():
 
         privilege=dict(type='int'),
         view=dict(aliases=['role']),
-
-        sshkey=dict(),
 
         purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
