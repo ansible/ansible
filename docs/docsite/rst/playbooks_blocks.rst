@@ -7,13 +7,13 @@ at the block level, which also makes it much easier to set data or directives co
 to the tasks. This does not mean the directive affects the block itself, but is inherited
 by the tasks enclosed by a block. i.e. a `when` will be applied to the tasks, not the block itself.
 
-
 .. code-block:: YAML
- :emphasize-lines: 2
+ :emphasize-lines: 3
  :caption: Block example
 
     tasks:
-      - block:
+      - name: Install, confugure & start services
+        block:
           - yum: name={{ item }} state=installed
             with_items:
               - httpd
@@ -31,6 +31,8 @@ by the tasks enclosed by a block. i.e. a `when` will be applied to the tasks, no
 In the example above, each of the 3 tasks will be executed after appending the `when` condition from the block
 and evaluating it in the task's context. Also they inherit the privilege escalation directives enabling "become to root"
 for all the enclosed tasks.
+
+Blocks also support a `name` field, as shown above, to aid in playbook readability.
 
 
 .. _block_error_handling:
