@@ -396,7 +396,7 @@ class Distribution(object):
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
-                     'Archlinux': ['Archlinux', 'Manjaro'],
+                     'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
                      'Mandrake': ['Mandrake', 'Mandriva'],
                      'Solaris': ['Solaris', 'Nexenta', 'OmniOS', 'OpenIndiana', 'SmartOS'],
                      'Slackware': ['Slackware'],
