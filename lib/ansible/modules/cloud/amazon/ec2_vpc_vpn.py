@@ -68,7 +68,7 @@ options:
         If one of the following suboptions is a list of items to filter by, only one item needs to match to find the VPN
         that correlates. e.g. if the filter 'cidr' is ['194.168.2.0/24', '192.168.2.0/24'] and the VPN route only has the
         destination cidr block of '192.168.2.0/24' it will be found with this filter (assuming there are not multiple
-        VPNs that are matched). Another example: if the filter 'vpn' is equal to ['vpn-ccf7e7ad', 'vpn-cb0ae2a2'] and one
+        VPNs that are matched). Another example, if the filter 'vpn' is equal to ['vpn-ccf7e7ad', 'vpn-cb0ae2a2'] and one
         of of the VPNs has the state deleted (exists but is unmodifiable) and the other exists and is not deleted,
         it will be found via this filter.
     type: dict
@@ -85,7 +85,7 @@ options:
       bgp:
         description:
           - The BGP ASN number associated with a BGP device. Only works if the connection is attached.
-            TODO: This filtering option is currently not working.
+            This filtering option is currently not working.
       vpn:
         description:
           - The VPN connection id as a string or a list of those strings.
@@ -188,26 +188,31 @@ changed:
     changed: true
 customer_gateway_configuration:
   description: the configuration of the connection
+  returned: I(state=present)
   type: str
 customer_gateway_id:
   description: the customer gateway connected via the connection
   type: str
+  returned: I(state=present)
   sample:
     customer_gateway_id: cgw-1220c87b
 vpn_gateway_id:
   description: the virtual private gateway connected via the connection
   type: str
+  returned: I(state=present)
   sample:
     vpn_gateway_id: vgw-cb0ae2a2
 options:
   static_routes_only:
     description: the type of routing option
     type: bool
+    returned: I(state=present)
     sample:
       static_routes_only: true
 routes:
   description: the connection routes
   type: list
+  returned: I(state=present)
   sample:
     routes: [{
               'destination_cidr_block': '192.168.1.0/24',
@@ -216,11 +221,13 @@ routes:
 state:
   description: the status of the connection
   type: string
+  returned: I(state=present)
   sample:
     state: available
 tags:
   description: the tags associated with the connection
   type: dict
+  returned: I(state=present)
   sample:
     tags:
       name: ansible-test
@@ -228,10 +235,12 @@ tags:
 type:
   description: the type of connection
   type: str
+  returned: I(state=present)
   sample:
     type: "ipsec.1"
 vgw_telemetry:
   type: list
+  returned: I(state=present)
   description: the telemetry for the VPN tunnel
   sample:
     vgw_telemetry: [{
@@ -244,6 +253,7 @@ vgw_telemetry:
 vpn_connection_id:
   description: the identifier for the VPN connection
   type: str
+  returned: I(state=present)
   sample:
     vpn_connection_id: vpn-781e0e19
 """
@@ -283,8 +293,10 @@ def find_connection(connection, module_params, vpn_connection_id=None):
     if not vpn_connection_id and module_params.get('vpn_connection_id'):
         vpn_connection_id = module_params.get('vpn_connection_id')
 
-    if isinstance(vpn_connection_id, str):
-        vpn_connection_id = [vpn_connection_id]
+    if not isinstance(vpn_connection_id, list) and vpn_connection_id:
+        vpn_connection_id = [to_text(vpn_connection_id)]
+    elif isinstance(vpn_connection_id, list):
+        vpn_connection_id = [to_text(connection) for connection in vpn_connection_id]
 
     formatted_filter = []
     # if vpn_connection_id is provided it will take precedence over any filters since it is a unique identifier
