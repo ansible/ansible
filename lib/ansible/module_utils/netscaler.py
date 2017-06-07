@@ -143,7 +143,6 @@ class ConfigProxy(object):
             return {}
         server_list = self.actual.__class__.get_filtered(self.client, '%s:%s' % (filter, self.attribute_values_dict[filter]))
         actual_instance = server_list[0]
-        print('actual_instance %s' % actual_instance)
         ret_val = {}
         for attribute in self.readwrite_attrs:
             if not hasattr(actual_instance, attribute):
@@ -156,7 +155,6 @@ class ConfigProxy(object):
             return {}
         server_list = self.actual.__class__.get_filtered(self.client, '%s:%s' % (filter, self.attribute_values_dict[filter]))
         actual_instance = server_list[0]
-        print('actual_instance %s' % actual_instance)
         ret_val = {}
         for attribute in self.readonly_attrs:
             if not hasattr(actual_instance, attribute):
