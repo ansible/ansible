@@ -147,9 +147,10 @@ changed:
     sample: true
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
@@ -158,7 +159,10 @@ def execute_show_command(command, module, command_type='cli_show'):
         cmds = [command]
         body = run_commands(module, cmds)
     elif module.params['transport'] == 'nxapi':
-        cmds = [command]
+        if command_type == 'cli_show_ascii':
+            cmds = [command]
+        else:
+            cmds = [command + ' | json']
         body = run_commands(module, cmds)
     return body
 
@@ -177,10 +181,9 @@ def get_vrf_list(module):
     command = 'show vrf all'
     vrf_table = None
 
-    body = execute_show_command(command, module)
-
     try:
-        vrf_table = body[0]['TABLE_vrf']['ROW_vrf']
+        body = execute_show_command(command, module)[0]
+        vrf_table = body['TABLE_vrf']['ROW_vrf']
     except (KeyError, AttributeError):
         return []
 
@@ -219,7 +222,7 @@ def get_vpc(module):
     if domain != 'not configured':
         delay_restore = None
         pkl_src = None
-        role_priority = None
+        role_priority = '32667'
         system_priority = None
         pkl_dest = None
         pkl_vrf = None
@@ -248,7 +251,6 @@ def get_vpc(module):
                     system_priority = line[-1]
                 if 'peer-gateway' in each:
                     peer_gw = True
-
 
         command = 'show vpc peer-keepalive'
         body = execute_show_command(command, module)[0]
@@ -299,7 +301,7 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         pkl_dest = existing.get('pkl_dest')
         if pkl_src and pkl_dest:
             pkl_command = ('peer-keepalive destination {0}'
-                          ' source {1} vrf {2}'.format(pkl_dest, pkl_src, pkl_vrf))
+                           ' source {1} vrf {2}'.format(pkl_dest, pkl_src, pkl_vrf))
             commands.append(pkl_command)
 
     if vpc.get('auto_recovery') is False:
@@ -307,10 +309,16 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
     else:
         vpc['auto_recovery'] = ''
 
-    if vpc.get('peer_gw') is False:
-        vpc['peer_gw'] = 'no'
+    if 'peer_gw' in vpc:
+        if vpc.get('peer_gw') is False:
+            vpc['peer_gw'] = 'no'
+        else:
+            vpc['peer_gw'] = ''
     else:
-        vpc['peer_gw'] = ''
+        if existing.get('peer_gw') is False:
+            vpc['peer_gw'] = 'no'
+        else:
+            vpc['peer_gw'] = ''
 
     CONFIG_ARGS = {
         'role_priority': 'role priority {role_priority}',
@@ -318,7 +326,7 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         'delay_restore': 'delay restore {delay_restore}',
         'peer_gw': '{peer_gw} peer-gateway',
         'auto_recovery': '{auto_recovery} auto-recovery',
-        }
+    }
 
     for param, value in vpc.items():
         command = CONFIG_ARGS.get(param, 'DNE').format(**vpc)
@@ -359,7 +367,7 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
@@ -442,4 +450,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
