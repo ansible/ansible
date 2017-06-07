@@ -909,15 +909,13 @@ class Collector(LogicMonitor):
                 self.module.run_command("mkdir " + self.installdir)
 
                 try:
-                    f = open(installfilepath, "w")
                     installer = (self.do("logicmonitorsetup",
                                          {"id": self.id,
                                           "arch": arch}))
-                    f.write(installer)
-                    f.closed
+                    with open(installfilepath, "w") as write_file:
+                        write_file.write(installer)
                 except:
                     self.fail(msg="Unable to open installer file for writing")
-                    f.closed
             else:
                 self.module.debug("Collector installer already exists")
                 return installfilepath
