@@ -32,8 +32,8 @@ options:
     required: true
 notes:
   - This module requires purestorage python library
-  - You must set PUREFA_URL and PUREFA_API environment variables
-    if url and api_token arguments are not passed to the module directly
+  - You must set C(PUREFA_URL) and C(PUREFA_API) environment variables
+    if I(url) and I(api_token) arguments are not passed to the module directly
 requirements:
   - "python >= 2.7"
   - purestorage

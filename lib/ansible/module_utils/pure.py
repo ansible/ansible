@@ -73,5 +73,5 @@ def purefa_argument_spec():
 
     return dict(
         fa_url=dict(),
-        api_token=dict(),
+        api_token=dict(no_log=True),
     )
