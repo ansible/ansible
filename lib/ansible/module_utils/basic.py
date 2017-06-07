@@ -179,6 +179,8 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
+ITERABLETYPE = (map,)
+
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
@@ -383,7 +385,7 @@ def return_values(obj):
         if obj:
             yield to_native(obj, errors='surrogate_or_strict')
         return
-    elif isinstance(obj, SEQUENCETYPE):
+    elif isinstance(obj, SEQUENCETYPE) or isinstance(obj, ITERABLETYPE):
         for element in obj:
             for subelement in return_values(element):
                 yield subelement
