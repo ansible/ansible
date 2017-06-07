@@ -121,15 +121,13 @@ class FreeBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+', ' ', line).split()
-                size_total, size_available = get_mount_size(fields[1])
-                mount_facts['mounts'].append({
-                    'mount': fields[1],
-                    'device': fields[0],
-                    'fstype': fields[2],
-                    'options': fields[3],
-                    'size_total': size_total,
-                    'size_available': size_available
-                })
+                mount_statvfs_info = get_mount_size(fields[1])
+                mount_info = {'mount': fields[1],
+                              'device': fields[0],
+                              'fstype': fields[2],
+                              'options': fields[3]}
+                mount_info.update(mount_statvfs_info)
+                mount_facts['mounts'].append(mount_info)
 
         return mount_facts
 

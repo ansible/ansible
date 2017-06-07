@@ -428,7 +428,7 @@ class LinuxHardware(Hardware):
             if fstype == 'none':
                 continue
 
-            size_total, size_available = get_mount_size(mount)
+            mount_statvfs_info = get_mount_size(mount)
 
             if mount in bind_mounts:
                 # only add if not already there, we might have a plain /etc/mtab
@@ -439,10 +439,9 @@ class LinuxHardware(Hardware):
                           'device': device,
                           'fstype': fstype,
                           'options': options,
-                          # statvfs data
-                          'size_total': size_total,
-                          'size_available': size_available,
                           'uuid': uuids.get(device, 'N/A')}
+
+            mount_info.update(mount_statvfs_info)
 
             mounts.append(mount_info)
 
