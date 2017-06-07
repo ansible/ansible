@@ -42,9 +42,14 @@ try:
     from library.bigip_pool import ModuleManager
     from library.bigip_pool import ArgumentSpec
 except ImportError:
-    from ansible.modules.network.f5.bigip_pool import Parameters
-    from ansible.modules.network.f5.bigip_pool import ModuleManager
-    from ansible.modules.network.f5.bigip_pool import ArgumentSpec
+    try:
+        from ansible.modules.network.f5.bigip_pool import Parameters
+        from ansible.modules.network.f5.bigip_pool import ModuleManager
+        from ansible.modules.network.f5.bigip_pool import ArgumentSpec
+    except ImportError:
+        from nose.plugins.skip import SkipTest
+        raise SkipTest("%s requires the python modules for f5/bigip" % __file__)
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}

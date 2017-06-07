@@ -45,11 +45,16 @@ try:
     from library.bigip_user import UnparitionedManager
     from library.bigip_user import PartitionedManager
 except ImportError:
-    from ansible.modules.network.f5.bigip_user import Parameters
-    from ansible.modules.network.f5.bigip_user import ModuleManager
-    from ansible.modules.network.f5.bigip_user import ArgumentSpec
-    from ansible.modules.network.f5.bigip_user import UnparitionedManager
-    from ansible.modules.network.f5.bigip_user import PartitionedManager
+    try:
+        from ansible.modules.network.f5.bigip_user import Parameters
+        from ansible.modules.network.f5.bigip_user import ModuleManager
+        from ansible.modules.network.f5.bigip_user import ArgumentSpec
+        from ansible.modules.network.f5.bigip_user import UnparitionedManager
+        from ansible.modules.network.f5.bigip_user import PartitionedManager
+    except ImportError:
+        from nose.plugins.skip import SkipTest
+        raise SkipTest("%s requires the python modules for f5/bigip" % __file__)
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}

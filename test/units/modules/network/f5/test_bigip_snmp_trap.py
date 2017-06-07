@@ -43,12 +43,17 @@ try:
     from library.bigip_snmp_trap import NonNetworkedManager
     from library.bigip_snmp_trap import ArgumentSpec
 except ImportError:
-    from ansible.modules.network.f5.bigip_snmp_trap import NetworkedParameters
-    from ansible.modules.network.f5.bigip_snmp_trap import NonNetworkedParameters
-    from ansible.modules.network.f5.bigip_snmp_trap import ModuleManager
-    from ansible.modules.network.f5.bigip_snmp_trap import NetworkedManager
-    from ansible.modules.network.f5.bigip_snmp_trap import NonNetworkedManager
-    from ansible.modules.network.f5.bigip_snmp_trap import ArgumentSpec
+    try:
+        from ansible.modules.network.f5.bigip_snmp_trap import NetworkedParameters
+        from ansible.modules.network.f5.bigip_snmp_trap import NonNetworkedParameters
+        from ansible.modules.network.f5.bigip_snmp_trap import ModuleManager
+        from ansible.modules.network.f5.bigip_snmp_trap import NetworkedManager
+        from ansible.modules.network.f5.bigip_snmp_trap import NonNetworkedManager
+        from ansible.modules.network.f5.bigip_snmp_trap import ArgumentSpec
+    except ImportError:
+        from nose.plugins.skip import SkipTest
+        raise SkipTest("%s requires the python modules for f5/bigip" % __file__)
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
