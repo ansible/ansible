@@ -231,18 +231,20 @@ class VariableManager:
 
             def _get_plugin_vars(plugin, loader, path, entities):
                 data = {}
-                if hasattr(plugin, 'get_vars'):
+                try:
                     data = plugin.get_vars(self._loader, path, entities)
-                elif hasattr(plugin, 'get_host_vars'):
-                    for entity in entities:
-                        if isinstance(entity, Host):
-                            data.update(plugin.get_host_vars(entity.name))
+                except AttributeError:
+                    try:
+                        for entity in entities:
+                            if isinstance(entity, Host):
+                                data.update(plugin.get_host_vars(entity.name))
+                            else:
+                                data.update(plugin.get_group_vars(entity.name))
+                    except AttributeError:
+                        if hasattr(plugin, 'run'):
+                            raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
                         else:
-                            data.update(plugin.get_group_vars(entity.name))
-                elif hasattr(plugin, 'run'):
-                    raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-                else:
-                    raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+                            raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
                 return data
 
             # internal fuctions that actually do the work
