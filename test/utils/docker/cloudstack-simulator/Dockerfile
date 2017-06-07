@@ -15,9 +15,10 @@ RUN apt-get -y update && apt-get install -y \
     netcat \
     openjdk-8-jdk \
     python-dev \
-    python-setuptools \
-    python-pip \
+    python-lxml \
     python-mysql.connector \
+    python-pip \
+    python-setuptools \
     supervisor \
     wget \
     nginx \

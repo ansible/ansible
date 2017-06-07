@@ -26,6 +26,7 @@ RUN apt-get update -y && \
     python3-dbus \
     python3-httplib2 \
     python3-jinja2 \
+    python3-lxml \
     python3-mock \
     python3-mysqldb \
     python3-nose \
