@@ -906,8 +906,9 @@ def main():
                 log('Sanity checks for state present')
                 if not service_exists(client, module):
                     module.fail_json(msg='Service does not exist', **module_result)
+
                 if not service_identical(client, module, service_proxy):
-                    module.fail_json(msg='Service differs from configured', diff=diff(), **module_result)
+                    module.fail_json(msg='Service differs from configured', diff=diff(client, module, service_proxy), **module_result)
 
                 if not monitor_bindings_identical(client, module, monitor_bindings_rw_attrs):
                     module.fail_json(msg='Monitor bindings are not identical', **module_result)
