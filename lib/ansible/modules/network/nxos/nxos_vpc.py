@@ -171,13 +171,12 @@ def get_vrf_list(module):
 
 
 def get_vpc(module):
-    vpc= {}
+    body = execute_show_command('show vpc', module)[0]
 
-    command = 'show vpc'
-    body = execute_show_command(command, module)[0]
     domain = str(body['vpc-domain-id'])
     auto_recovery = 'enabled' in str(body['vpc-auto-recovery-status']).lower()
 
+    vpc = {}
     if domain != 'not configured':
         delay_restore = None
         pkl_src = None
@@ -232,8 +231,6 @@ def get_vpc(module):
         vpc['pkl_dest'] = pkl_dest
         vpc['pkl_vrf'] = pkl_vrf
         vpc['peer_gw'] = peer_gw
-    else:
-        vpc = {}
 
     return vpc
 
