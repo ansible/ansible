@@ -124,19 +124,23 @@ from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
+CONFIG_ARGS = {
+    'role_priority': 'role priority {role_priority}',
+    'system_priority': 'system-priority {system_priority}',
+    'delay_restore': 'delay restore {delay_restore}',
+    'peer_gw': '{peer_gw} peer-gateway',
+    'auto_recovery': '{auto_recovery} auto-recovery',
+}
+
+
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if "section" not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        if command_type == 'cli_show_ascii':
-            cmds = [command]
-        else:
-            cmds = [command + ' | json']
-        body = run_commands(module, cmds)
-    return body
+    if module.params['transport'] == 'cli' and "section" not in command:
+        command += ' | json'
+    elif module.params['transport'] == 'nxapi' and command_type != 'cli_show_ascii':
+        command += ' | json'
+    cmds = [command]
+
+    return run_commands(module, cmds)
 
 
 def flatten_list(command_lists):
@@ -166,29 +170,13 @@ def get_vrf_list(module):
     return vrf_list
 
 
-def get_autorecovery(auto):
-    auto_recovery = auto.split(' ')[0]
-    if 'enabled' in auto_recovery.lower():
-        return True
-    else:
-        return False
-
-
-def get_vpc_running_config(module):
-    command = 'show running section vpc'
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
-
-    return body
-
-
 def get_vpc(module):
-    vpc = {}
+    vpc= {}
 
     command = 'show vpc'
     body = execute_show_command(command, module)[0]
     domain = str(body['vpc-domain-id'])
-    auto_recovery = get_autorecovery(str(
-        body['vpc-auto-recovery-status']))
+    auto_recovery = 'enabled' in str(body['vpc-auto-recovery-status']).lower()
 
     if domain != 'not configured':
         delay_restore = None
@@ -199,7 +187,8 @@ def get_vpc(module):
         pkl_vrf = None
         peer_gw = False
 
-        run = get_vpc_running_config(module)[0]
+        run = execute_show_command('show running section vpc', module,
+                                   command_type='cli_show_ascii')[0]
         if run:
             vpc_list = run.split('\n')
             for each in vpc_list:
@@ -291,19 +280,11 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         else:
             vpc['peer_gw'] = ''
 
-    CONFIG_ARGS = {
-        'role_priority': 'role priority {role_priority}',
-        'system_priority': 'system-priority {system_priority}',
-        'delay_restore': 'delay restore {delay_restore}',
-        'peer_gw': '{peer_gw} peer-gateway',
-        'auto_recovery': '{auto_recovery} auto-recovery',
-    }
-
-    for param, value in vpc.items():
-        command = CONFIG_ARGS.get(param, 'DNE').format(**vpc)
-        if command and command != 'DNE':
-            commands.append(command.strip())
-        command = None
+    for param in vpc:
+        command = CONFIG_ARGS.get(param)
+        if command is not None:
+            command = command.format(**vpc).strip()
+            commands.append(command)
 
     if commands or domain_only:
         commands.insert(0, 'vpc domain {0}'.format(domain))
