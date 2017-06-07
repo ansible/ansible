@@ -46,6 +46,7 @@ RUN apt-get update -y && \
     ruby \
     subversion \
     sudo \
+    tzdata \
     unzip \
     virtualenv \
     xsltproc \
