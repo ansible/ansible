@@ -153,7 +153,8 @@ EXAMPLES = '''
     vpc_id: 12345
     region: eu-west-1
     rules:
-      # 'ports' rule keyword was introduced in version 2.4. It accepts a single port value or a list of values including ranges (from_port-to_port).
+      # 'ports' rule keyword was introduced in version 2.4. It accepts a single port value or a list of values including
+      ranges (from_port-to_port).
       - proto: tcp
         ports: 22
         group_name: example-vpn
@@ -163,7 +164,8 @@ EXAMPLES = '''
           - 443
           - 8080-8099
         cidr_ip: 0.0.0.0/0
-      # Rule sources list support was added in version 2.4. This allows to define multiple sources per source type as well as multiple source types per rule.
+      # Rule sources list support was added in version 2.4. This allows to define multiple sources per source type as
+      well as multiple source types per rule.
       - proto: tcp
         ports:
           - 6379
@@ -194,7 +196,6 @@ import ansible.module_utils.ec2 as ec2_utils
 from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-import ipaddress
 
 try:
     import boto3
@@ -237,7 +238,7 @@ def add_rules_to_loopkup(ipPermissions, group_id, prefix, dict):
 
 
 def validate_rule(module, rule):
-    VALID_PARAMS = ('cidr_ip',
+    VALID_PARAMS = ('cidr_ip', 'cidr_ipv6',
                     'group_id', 'group_name', 'group_desc',
                     'proto', 'from_port', 'to_port')
     if not isinstance(rule, dict):
@@ -251,6 +252,12 @@ def validate_rule(module, rule):
         module.fail_json(msg='Specify group_id OR cidr_ip, not both')
     elif 'group_name' in rule and 'cidr_ip' in rule:
         module.fail_json(msg='Specify group_name OR cidr_ip, not both')
+    elif 'group_id' in rule and 'cidr_ipv6' in rule:
+        module.fail_json(msg="Specify group_id OR cidr_ipv6, not both")
+    elif 'group_name' in rule and 'cidr_ipv6' in rule:
+        module.fail_json(msg="Specify group_name OR cidr_ipv6, not both")
+    elif 'cidr_ip' in rule and 'cidr_ipv6' in rule:
+        module.fail_json(msg="Specify cidr_ip OR cidr_ipv6, not both")
     elif 'group_id' in rule and 'group_name' in rule:
         module.fail_json(msg='Specify group_id OR group_name, not both')
 
@@ -271,15 +278,22 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
     group_id = None
     group_name = None
     ip = None
+    ipv6 = None
     target_group_created = False
 
     if 'group_id' in rule and 'cidr_ip' in rule:
         module.fail_json(msg="Specify group_id OR cidr_ip, not both")
     elif 'group_name' in rule and 'cidr_ip' in rule:
         module.fail_json(msg="Specify group_name OR cidr_ip, not both")
+    elif 'group_id' in rule and 'cidr_ipv6' in rule:
+        module.fail_json(msg="Specify group_id OR cidr_ipv6, not both")
+    elif 'group_name' in rule and 'cidr_ipv6' in rule:
+        module.fail_json(msg="Specify group_name OR cidr_ipv6, not both")
     elif 'group_id' in rule and 'group_name' in rule:
         module.fail_json(msg="Specify group_id OR group_name, not both")
-    elif rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
+    elif 'cidr_ip' in rule and 'cidr_ipv6' in rule:
+        module.fail_json(msg="Specify cidr_ip OR cidr_ipv6, not both")
+    elif 'group_id' in rule and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
         group_instance = SecurityGroup(owner_id=owner_id, group_name=group_name, id=group_id)
@@ -307,8 +321,10 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
             target_group_created = True
     elif 'cidr_ip' in rule:
         ip = rule['cidr_ip']
+    elif 'cidr_ipv6' in rule:
+        ipv6 = rule['cidr_ipv6']
 
-    return group_id, ip, target_group_created
+    return group_id, ip, ipv6, target_group_created
 
 
 def ports_expand(ports):
@@ -354,7 +370,7 @@ def rules_expand_ports(rules):
 def rule_expand_source(rule, source_type):
     # takes a rule dict and returns a list of expanded rule dicts for specified source_type
     sources = rule[source_type] if isinstance(rule[source_type], list) else [rule[source_type]]
-    source_types_all = ('cidr_ip', 'group_id', 'group_name')
+    source_types_all = ('cidr_ip', 'cidr_ipv6', 'group_id', 'group_name')
 
     rule_expanded = []
     for source in sources:
@@ -382,6 +398,35 @@ def rules_expand_sources(rules):
 
     return [rule for rule_complex in rules
             for rule in rule_expand_sources(rule_complex)]
+
+
+def authorize_ip(type, changed, client, group, groupRules,
+                 ip, ip_permission, module, rule, ethertype):
+    # If rule already exists, don't later delete it
+    for thisip in ip:
+        rule_id = make_rule_key(type, rule, group.id, thisip)
+        if rule_id in groupRules:
+            del groupRules[rule_id]
+        else:
+            if not module.check_mode:
+                try:
+                    ip_permission = serialize_ip_grant(rule, thisip, ethertype)
+                except ipaddress.AddressValueError as e:
+                    module.fail_json(msg=e.message)
+                if ip_permission:
+                    try:
+                        if type == "in":
+                            client.authorize_security_group_ingress(GroupId=group.group_id,
+                                                                    IpPermissions=[ip_permission])
+                        elif type == "out":
+                            client.authorize_security_group_egress(GroupId=group.group_id,
+                                                                   IpPermissions=[ip_permission])
+                    except botocore.exceptions.ClientError as e:
+                        module.fail_json(msg="Unable to authorize %s for ip %s security group '%s' - %s" %
+                                             (type, thisip, group.group_name, e.message),
+                                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            changed = True
+    return changed, ip_permission
 
 
 def serialize_group_grant(group_id, rule):
@@ -420,24 +465,14 @@ def serialize_revoke(grant, rule):
     return permission
 
 
-def serialize_ip_grant(rule, thisip):
-    # Construct permission for granting to an IP
-    ip = unicode(thisip.split('/')[0])
-    ipv4_range = []
-    ipv6_range = []
-    try:
-        if isinstance(ipaddress.ip_address(ip), ipaddress.IPv4Address):
-            ipv4_range = [{'CidrIp': thisip}]
-        elif isinstance(ipaddress.ip_address(ip), ipaddress.IPv6Address):
-            ipv6_range = [{'CidrIpv6': thisip}]
-    except ipaddress.AddressValueError as e:
-        raise e
-    # now construct the permission
+def serialize_ip_grant(rule, thisip, ethertype):
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
-                  'ToPort': rule['to_port'],
-                  'IpRanges': ipv4_range,
-                  'Ipv6Ranges': ipv6_range}
+                  'ToPort': rule['to_port']}
+    if ethertype == "ipv4":
+        permission.update({'IpRanges': [{'CidrIp': thisip}]})
+    elif ethertype == "ipv6":
+        permission.update({'Ipv6Ranges': [{'CidrIpv6': thisip}]})
     return permission
 
 
@@ -576,8 +611,8 @@ def main():
             for rule in rules:
                 validate_rule(module, rule)
 
-                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups,
-                                                                          vpc_id)
+                group_id, ip, ipv6, target_group_created = get_target_from_rule(module, ec2, rule, name,
+                                                                                group, groups, vpc_id)
                 if target_group_created:
                     changed = True
 
@@ -603,32 +638,23 @@ def main():
                                 except botocore.exceptions.ClientError as e:
                                     module.fail_json(
                                         msg="Unable to authorize ingress for group %s security group '%s' - %s" %
-                                            (group_id, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                                            (group_id, group.group_name, e.message),
+                                        exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                         changed = True
-                else:
+                elif ip:
                     # Convert ip to list we can iterate over
-                    if not isinstance(ip, list):
+                    if ip and not isinstance(ip, list):
                         ip = [ip]
+
+                    changed, ip_permission = authorize_ip("in", changed, client, group, groupRules, ip, ip_permission,
+                                                          module, rule, "ipv4")
+                elif ipv6:
+                    # Convert ip to list we can iterate over
+                    if not isinstance(ipv6, list):
+                        ipv6 = [ipv6]
                     # If rule already exists, don't later delete it
-                    for thisip in ip:
-                        rule_id = make_rule_key('in', rule, group.id, thisip)
-                        if rule_id in groupRules:
-                            del groupRules[rule_id]
-                        else:
-                            if not module.check_mode:
-                                try:
-                                    ip_permission = serialize_ip_grant(rule, thisip)
-                                except ipaddress.AddressValueError as e:
-                                    module.fail_json(msg=e.message)
-                                if ip_permission:
-                                    try:
-                                        client.authorize_security_group_ingress(GroupId=group.group_id,
-                                                                                IpPermissions=[ip_permission])
-                                    except botocore.exceptions.ClientError as e:
-                                        module.fail_json(
-                                            msg="Unable to authorize ingress for ip %s security group '%s' - %s" %
-                                                (thisip, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                            changed = True
+                    changed, ip_permission = authorize_ip("in", changed, client, group, groupRules, ipv6, ip_permission,
+                                                          module, rule, "ipv6")
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:
             for (rule, grant) in groupRules.values():
@@ -639,7 +665,8 @@ def main():
                     except botocore.exceptions.ClientError as e:
                         module.fail_json(
                             msg="Unable to revoke ingress for security group '%s' - %s" %
-                                (group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                                (group.group_name, e.message),
+                            exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
         # Manage egress rules
@@ -650,8 +677,8 @@ def main():
             for rule in rules_egress:
                 validate_rule(module, rule)
 
-                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups,
-                                                                          vpc_id)
+                group_id, ip, ipv6, target_group_created = get_target_from_rule(module, ec2, rule, name,
+                                                                                group, groups, vpc_id)
                 if target_group_created:
                     changed = True
 
@@ -677,29 +704,22 @@ def main():
                                 except botocore.exceptions.ClientError as e:
                                     module.fail_json(
                                         msg="Unable to authorize egress for group %s security group '%s' - %s" %
-                                            (group_id, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                                            (group_id, group.group_name, e.message),
+                                        exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                         changed = True
-                else:
+                elif ip:
                     # Convert ip to list we can iterate over
                     if not isinstance(ip, list):
                         ip = [ip]
+                    changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ip,
+                                                          ip_permission, module, rule, "ipv4")
+                elif ipv6:
+                    # Convert ip to list we can iterate over
+                    if not isinstance(ipv6, list):
+                        ipv6 = [ipv6]
                     # If rule already exists, don't later delete it
-                    for thisip in ip:
-                        rule_id = make_rule_key('out', rule, group.id, thisip)
-                        if rule_id in groupRules:
-                            del groupRules[rule_id]
-                        else:
-                            if not module.check_mode:
-                                ip_permission = serialize_ip_grant(rule, thisip)
-                                if ip_permission:
-                                    try:
-                                        client.authorize_security_group_egress(GroupId=group.group_id,
-                                                                               IpPermissions=[ip_permission])
-                                    except botocore.exceptions.ClientError as e:
-                                        module.fail_json(
-                                            msg="Unable to authorize egress for ip %s security group '%s' - %s" %
-                                                (thisip, group.group_name, e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                            changed = True
+                    changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ipv6,
+                                                          ip_permission, module, rule, "ipv6")
         else:
             # when no egress rules are specified,
             # we add in a default allow all out rule, which was the
@@ -717,7 +737,8 @@ def main():
                         module.fail_json(msg="Unable to authorize egress for ip %s security group '%s' - %s" %
                                              ('0.0.0.0/0',
                                               group.group_name,
-                                              e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                                              e.message),
+                                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
             else:
                 # make sure the default egress rule is not removed
@@ -734,14 +755,14 @@ def main():
                         module.fail_json(msg="Unable to revoke egress for ip %s security group '%s' - %s" %
                                              ('0.0.0.0/0',
                                               group.group_name,
-                                              e.message), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                                              e.message),
+                                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
     if group:
         module.exit_json(changed=changed, group_id=group.id)
     else:
         module.exit_json(changed=changed, group_id=None)
-
 
 if __name__ == '__main__':
     main()
