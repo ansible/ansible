@@ -12,7 +12,7 @@ by the tasks enclosed by a block. i.e. a `when` will be applied to the tasks, no
  :caption: Block example
 
     tasks:
-      - name: Install, confugure & start services
+      - name: Install, configure and start services
         block:
           - yum: name={{ item }} state=installed
             with_items:
