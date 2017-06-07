@@ -10,6 +10,8 @@ Ansible Changes By Release
   * Fix sorting of ec2 policies
   * Fix digital_ocean dynamic inventory script
 * Fix pip module when using python3's pyvenv and python3 -m venv to create virtualenvs
+* Fix for the AnsiBallZ wrapper so that it gives a better error message when
+  there's not enough disk space to create its tempdir.
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
