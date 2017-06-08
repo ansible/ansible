@@ -69,6 +69,9 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if connect_timeout is not None:
         config['connect_timeout'] = connect_timeout
 
+    if config['ssl'] == {}:
+      config.pop('ssl')
+
     db_connection = MySQLdb.connect(**config)
     if cursor_class is not None:
         return db_connection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
