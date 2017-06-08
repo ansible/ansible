@@ -135,10 +135,17 @@ options:
         define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry
         will be the boot disk (which must be READ_WRITE).
     default: null
-  nic_gce_struct:
+  disks_gce_struct:
     description:
       - Support passing in the GCE-specific
         formatted networkInterfaces[] structure.
+    default: null
+    version_added: "2.4"
+  nic_gce_struct:
+    description:
+      - Support passing in the GCE-specific
+        formatted networkInterfaces[] structure. Case sensitive.
+        see U(https://cloud.google.com/compute/docs/reference/latest/instanceTemplates#resource) for detailed information
     default: null
   project_id:
     description:
@@ -178,7 +185,6 @@ EXAMPLES = '''
     project_id: "your-project-name"
     credentials_file: "/path/to/your-key.json"
     service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
-
 # Example Playbook
 - name: Compute Engine Instance Template Examples
   hosts: localhost
@@ -205,6 +211,31 @@ EXAMPLES = '''
         project_id: "{{ project_id }}"
         credentials_file: "{{ credentials_file }}"
         service_account_email: "{{ service_account_email }}"
+# Example playbook using disks_gce_struct
+- name: Compute Engine Instance Template Examples
+  hosts: localhost
+  vars:
+    service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+    credentials_file: "/path/to/your-key.json"
+    project_id: "your-project-name"
+  tasks:
+    - name: create instance template
+      gce_instance_template:
+        name: foo
+        size: n1-standard-1
+        state: present
+        project_id: "{{ project_id }}"
+        credentials_file: "{{ credentials_file }}"
+        service_account_email: "{{ service_account_email }}"
+        disks_gce_struct:
+          - device_name: /dev/sda
+            boot: true
+            autoDelete: true
+            initializeParams:
+              diskSizeGb: 30
+              diskType: pd-ssd
+              sourceImage: projects/debian-cloud/global/images/family/debian-8
+
 '''
 
 RETURN = '''
@@ -234,7 +265,6 @@ except ImportError:
 
 def get_info(inst):
     """Retrieves instance template information
-
     """
     return({
         'name': inst.name,
@@ -272,6 +302,7 @@ def create_instance_template(module, gce):
     metadata = module.params.get('metadata')
     description = module.params.get('description')
     disks = module.params.get('disks')
+    disks_gce_struct = module.params.get('disks_gce_struct')
     changed = False
 
     # args of ex_create_instancetemplate
@@ -359,6 +390,9 @@ def create_instance_template(module, gce):
 
     if tags is not None:
         gce_args['tags'] = tags
+
+    if disks_gce_struct is not None:
+        gce_args['disks_gce_struct'] = disks_gce_struct
 
     # Try to convert the user's metadata value into the format expected
     # by GCE.  First try to ensure user has proper quoting of a
@@ -534,7 +568,8 @@ def main():
             project_id=dict(),
             pem_file=dict(type='path'),
             credentials_file=dict(type='path'),
-            subnetwork_region=dict()
+            subnetwork_region=dict(),
+            disks_gce_struct=dict(type='list')
         ),
         mutually_exclusive=[['source', 'image']],
         required_one_of=[['image', 'image_family']],
