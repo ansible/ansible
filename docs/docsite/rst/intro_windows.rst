@@ -357,20 +357,24 @@ In addition, the following core modules/action-plugins work with Windows:
 
 * add_host
 * assert
-* async
+* async_status
 * debug
 * fail
 * fetch
 * group_by
+* include
+* include_role
 * include_vars
 * meta
 * pause
 * raw
 * script
 * set_fact
+* set_stats
 * setup
 * slurp
 * template (also: win_template)
+* wait_for_connection
 
 Some modules can be utilised in playbooks that target windows by delegating to localhost, depending on what you are
 attempting to achieve.  For example, ``assemble`` can be used to create a file on your ansible controller that is then 
