@@ -135,18 +135,18 @@ options:
         define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry
         will be the boot disk (which must be READ_WRITE).
     default: null
-  disks_gce_struct:
+  nic_gce_struct:
     description:
       - Support passing in the GCE-specific
         formatted networkInterfaces[] structure.
     default: null
-    version_added: "2.4"
-  nic_gce_struct:
+  disks_gce_struct:
     description:
       - Support passing in the GCE-specific
-        formatted networkInterfaces[] structure. Case sensitive.
+        formatted formatted disks[] structure. Case sensitive.
         see U(https://cloud.google.com/compute/docs/reference/latest/instanceTemplates#resource) for detailed information
     default: null
+    version_added: "2.4"
   project_id:
     description:
       - your GCE project ID
