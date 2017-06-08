@@ -155,10 +155,10 @@ EXAMPLES = r'''
 - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
   wait_for:
     port: 22
-    host: '{{ ansible_ssh_host | default(inventory_hostname) }}'
+    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
     search_regex: OpenSSH
     delay: 10
-  delegate_to: localhost
+  connection: local
 '''
 
 import binascii
