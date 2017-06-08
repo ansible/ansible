@@ -134,7 +134,7 @@ class PlaybookExecutor:
                         # we are just doing a listing
                         entry['plays'].append(new_play)
 
-                    else:
+                    elif play.evaluate_tags(self._options.tags, self._options.skip_tags, all_vars):
                         self._tqm._unreachable_hosts.update(self._unreachable_hosts)
 
                         previously_failed = len(self._tqm._failed_hosts)
