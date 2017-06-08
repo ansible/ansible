@@ -23,9 +23,16 @@ import base64
 from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class ActionModule(ActionBase):
@@ -48,18 +55,25 @@ class ActionModule(ActionBase):
         fail_on_missing = boolean(self._task.args.get('fail_on_missing'))
         validate_checksum = boolean(self._task.args.get('validate_checksum', self._task.args.get('validate_md5', True)))
 
+        # validate source and dest are strings FIXME: use basic.py and module specs
+        if not isinstance(source, string_types):
+            result['msg'] = "Invalid type supplied for source option, it must be a string"
+
+        if not isinstance(dest, string_types):
+            result['msg'] = "Invalid type supplied for dest option, it must be a string"
+
         # validate_md5 is the deprecated way to specify validate_checksum
         if 'validate_md5' in self._task.args and 'validate_checksum' in self._task.args:
-            result['failed'] = True
             result['msg'] = "validate_checksum and validate_md5 cannot both be specified"
-            return result
 
         if 'validate_md5' in self._task.args:
             display.deprecated('Use validate_checksum instead of validate_md5', version='2.8')
 
         if source is None or dest is None:
-            result['failed'] = True
             result['msg'] = "src and dest are required"
+
+        if result.get('msg'):
+            result['failed'] = True
             return result
 
         source = self._connection._shell.join_path(source)
