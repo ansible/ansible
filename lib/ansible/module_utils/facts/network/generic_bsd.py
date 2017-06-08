@@ -51,7 +51,7 @@ class GenericBsdIfconfigNetwork(Network):
 
         self.merge_default_interface(default_ipv4, interfaces, 'ipv4')
         self.merge_default_interface(default_ipv6, interfaces, 'ipv6')
-        network_facts['interfaces'] = interfaces.keys()
+        network_facts['interfaces'] = sorted(list(interfaces.keys()))
 
         for iface in interfaces:
             network_facts[iface] = interfaces[iface]
@@ -198,24 +198,42 @@ class GenericBsdIfconfigNetwork(Network):
         #         inet alias 127.1.1.1 netmask 0xff000000
         if words[1] == 'alias':
             del words[1]
+
         address = {'address': words[1]}
-        # deal with hex netmask
-        if re.match('([0-9a-f]){8}', words[3]) and len(words[3]) == 8:
-            words[3] = '0x' + words[3]
-        if words[3].startswith('0x'):
-            address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(words[3], base=16)))
+        # cidr style ip address (eg, 127.0.0.1/24) in inet line
+        # used in netbsd ifconfig -e output after 7.1
+        if '/' in address['address']:
+            ip_address, cidr_mask = address['address'].split('/')
+
+            address['address'] = ip_address
+
+            netmask_length = int(cidr_mask)
+            netmask_bin = (1 << 32) - (1 << 32 >> int(netmask_length))
+            address['netmask'] = socket.inet_ntoa(struct.pack('!L', netmask_bin))
+
+            if len(words) > 5:
+                address['broadcast'] = words[3]
+
         else:
-            # otherwise assume this is a dotted quad
-            address['netmask'] = words[3]
+            # deal with hex netmask
+            if re.match('([0-9a-f]){8}', words[3]) and len(words[3]) == 8:
+                words[3] = '0x' + words[3]
+            if words[3].startswith('0x'):
+                address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(words[3], base=16)))
+            else:
+                # otherwise assume this is a dotted quad
+                address['netmask'] = words[3]
         # calculate the network
         address_bin = struct.unpack('!L', socket.inet_aton(address['address']))[0]
         netmask_bin = struct.unpack('!L', socket.inet_aton(address['netmask']))[0]
         address['network'] = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
-        # broadcast may be given or we need to calculate
-        if len(words) > 5:
-            address['broadcast'] = words[5]
-        else:
-            address['broadcast'] = socket.inet_ntoa(struct.pack('!L', address_bin | (~netmask_bin & 0xffffffff)))
+        if 'broadcast' not in address:
+            # broadcast may be given or we need to calculate
+            if len(words) > 5:
+                address['broadcast'] = words[5]
+            else:
+                address['broadcast'] = socket.inet_ntoa(struct.pack('!L', address_bin | (~netmask_bin & 0xffffffff)))
+
         # add to our list of addresses
         if not words[1].startswith('127.'):
             ips['all_ipv4_addresses'].append(address['address'])
@@ -223,10 +241,22 @@ class GenericBsdIfconfigNetwork(Network):
 
     def parse_inet6_line(self, words, current_if, ips):
         address = {'address': words[1]}
-        if (len(words) >= 4) and (words[2] == 'prefixlen'):
-            address['prefix'] = words[3]
-        if (len(words) >= 6) and (words[4] == 'scopeid'):
-            address['scope'] = words[5]
+
+        # using cidr style addresses, ala NetBSD ifconfig post 7.1
+        if '/' in address['address']:
+            ip_address, cidr_mask = address['address'].split('/')
+
+            address['address'] = ip_address
+            address['prefix'] = cidr_mask
+
+            if len(words) > 5:
+                address['scope'] = words[5]
+        else:
+            if (len(words) >= 4) and (words[2] == 'prefixlen'):
+                address['prefix'] = words[3]
+            if (len(words) >= 6) and (words[4] == 'scopeid'):
+                address['scope'] = words[5]
+
         localhost6 = ['::1', '::1/128', 'fe80::1%lo0']
         if address['address'] not in localhost6:
             ips['all_ipv6_addresses'].append(address['address'])
