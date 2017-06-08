@@ -76,7 +76,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg.startswith("No handler was ready to authenticate.")'
+           - '"Unable to locate credentials" in result.msg'
 
     # ============================================================
     - name: test environment variable EC2_REGION

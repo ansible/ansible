@@ -246,7 +246,6 @@ def validate_rule(module, rule):
             module.fail_json(msg='Invalid rule parameter \'{}\''.format(k))
 
     if 'group_id' in rule and 'cidr_ip' in rule:
-        print "isnide valid"
         module.fail_json(msg='Specify group_id OR cidr_ip, not both')
     elif 'group_name' in rule and 'cidr_ip' in rule:
         module.fail_json(msg='Specify group_name OR cidr_ip, not both')
@@ -603,7 +602,6 @@ def main():
         groupRules = {}
         add_rules_to_loopkup(group.ip_permissions, group.id, 'in', groupRules)
         # Now, go through all provided rules and ensure they are there.
-        print len(groupRules.keys())
         if rules is not None:
             ip_permission = []
             for rule in rules:
