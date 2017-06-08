@@ -185,6 +185,7 @@ EXAMPLES = '''
     project_id: "your-project-name"
     credentials_file: "/path/to/your-key.json"
     service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+
 # Example Playbook
 - name: Compute Engine Instance Template Examples
   hosts: localhost
@@ -211,6 +212,7 @@ EXAMPLES = '''
         project_id: "{{ project_id }}"
         credentials_file: "{{ credentials_file }}"
         service_account_email: "{{ service_account_email }}"
+
 # Example playbook using disks_gce_struct
 - name: Compute Engine Instance Template Examples
   hosts: localhost
