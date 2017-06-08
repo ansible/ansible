@@ -202,7 +202,12 @@ class DataLoader:
             err_obj = AnsibleBaseYAMLObject()
             err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 
-        raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content)
+        if hasattr(yaml_exc, 'problem'):
+            err_str = "%s\nThe YAML error was:\n > %s" % (YAML_SYNTAX_ERROR.strip(), yaml_exc.problem)
+        else:
+            err_str = YAML_SYNTAX_ERROR
+
+        raise AnsibleParserError(err_str, obj=err_obj, show_content=show_content)
 
     def get_basedir(self):
         ''' returns the current basedir '''
