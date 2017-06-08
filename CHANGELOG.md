@@ -14,6 +14,7 @@ Ansible Changes By Release
   there's not enough disk space to create its tempdir.
 * Fix so ansilbe-galaxy install --force with unversioned roles will once again
   overwrite old versions.
+* Fix for RabbitMQ 3.6.7 endpoint return code changing.
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
