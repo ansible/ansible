@@ -305,7 +305,7 @@ class Interfaces(FactsBase):
             primary_address = re.findall(r'Internet address is (.+)$', value, re.M)
             addresses = re.findall(r'Secondary address (.+)$', value, re.M)
             if len(primary_address) == 0:
-              continue
+                continue
             addresses.append(primary_address[0])
             for address in addresses:
                 addr, subnet = address.split("/")
