@@ -62,7 +62,7 @@ options:
         version_added: '2.1'
     inventory_zabbix:
         description:
-            - Add Facts for a zabbix inventory (e.g.: Tag) (see example below).
+            - Add Facts for a zabbix inventory (e.g. Tag) (see example below).
         required: false
         default: None
         version_added: '2.4'
