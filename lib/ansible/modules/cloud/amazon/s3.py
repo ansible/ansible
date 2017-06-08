@@ -675,7 +675,10 @@ def main():
     # Delete an entire bucket, including all objects in the bucket
     if mode == 'delete':
         if bucket:
-            deletertn = delete_bucket(module, s3, bucket)
+            try:
+                deletertn = delete_bucket(module, s3, bucket)
+            except AttributeError:
+                module.exit_json(msg="Bucket %s does not exist." % bucket, changed=False)
             if deletertn is True:
                 module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
         else:
