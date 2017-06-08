@@ -487,29 +487,15 @@ def main():
 
     result = False
 
-    if entity == 'product':
-        if action == 'sync':
-            result = ng.sync_product(params)
-        else:
-            result = ng.product(params)
-    elif entity == 'repository':
-        if action == 'sync':
-            result = ng.sync_repository(params)
-        else:
-            result = ng.repository(params)
-    elif entity == 'manifest':
+    if entity == 'manifest':
         result = ng.manifest(params)
     elif entity == 'repository_set':
         result = ng.repository_set(params)
     elif entity == 'sync_plan':
         result = ng.sync_plan(params)
     elif entity == 'content_view':
-        if action == 'publish':
-            result = ng.publish(params)
-        elif action == 'promote':
+        if action == 'promote':
             result = ng.promote(params)
-        else:
-            result = ng.content_view(params)
     elif entity == 'lifecycle_environment':
         result = ng.lifecycle_environment(params)
     elif entity == 'activation_key':
