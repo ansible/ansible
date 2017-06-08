@@ -25,8 +25,8 @@ module: cv_server_provision
 version_added: "2.4"
 author: "EOS+ CS (ansible-dev@arista.com) (@mharista)"
 short_description:
-    Provision server port by applying or removing template configuration to a
-    configlet
+    Provision server port by applying or removing template configuration to an
+    Arista CloudVision Portal configlet that is applied to a switch.
 description:
   - This module allows a server team to provision server network ports for
     new servers without having to access Arista CVP or asking the network team
