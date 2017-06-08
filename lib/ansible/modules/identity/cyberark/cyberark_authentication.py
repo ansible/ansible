@@ -96,7 +96,7 @@ cyberark_session:
     type: dictionary
     contains:
         token:
-            description: Session Token returned by the logon operation
+            description: Session Token returned by the logon operation.
             returned: success
             type: string
             sample: "AAEAAAD/////AQAAAAA......NiNWMtNDhhNy00ZDc5LWE2MTQtMmRlMTBjMWI1ZWQ2BgYAAAABNAs="
