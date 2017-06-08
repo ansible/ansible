@@ -37,6 +37,9 @@ options:
   prefix:
     description:
       - Network prefix of the static route.
+  mask:
+    description:
+      - Network prefix mask of the static route.
   next_hop:
     description:
       - Next hop IP of the static route.
@@ -59,12 +62,14 @@ options:
 EXAMPLES = """
 - name: configure static route
   net_static_route:
-    prefix: 192.168.2.0/24
+    prefix: 192.168.2.0
+    mask: 255.255.255.0
     next_hop: 10.0.0.1
 
 - name: remove configuration
   net_static_route:
-    prefix: 192.168.2.0/24
+    prefix: 192.168.2.0
+    mask: 255.255.255.0
     next_hop: 10.0.0.1
     state: absent
 
