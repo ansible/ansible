@@ -394,7 +394,11 @@ class PlayContext(Base):
                         setattr(new_info, attr, delegated_vars[variable_name])
                         attrs_considered.append(attr)
                 elif variable_name in variables:
-                    setattr(new_info, attr, variables[variable_name])
+                    # Ensure that "connection: local" supersedes "ansible_connection" variable
+                    if variable_name == 'ansible_connection' and getattr(task, 'connection') and task.connection == 'local':
+                        setattr(new_info, attr, 'local')
+                    else:
+                        setattr(new_info, attr, variables[variable_name])
                     attrs_considered.append(attr)
                 # no else, as no other vars should be considered
 
