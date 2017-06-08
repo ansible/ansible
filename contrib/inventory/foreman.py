@@ -113,6 +113,11 @@ class ForemanInventory(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_hostcollections = False
 
+        try:
+            self.host_filters = config.get('foreman', 'host_filters')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.host_filters = None
+
         # Cache related
         try:
             cache_path = os.path.expanduser(config.get('cache', 'path'))
@@ -128,18 +133,6 @@ class ForemanInventory(object):
             self.cache_max_age = config.getint('cache', 'max_age')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.cache_max_age = 60
-
-        # If the FOREMAN_ORGANIZATION environment variable is set to the
-        # name of a Foreman organization (like "Default Organization"), only
-        # hosts from that organization will be listed. This can be used to
-        # define inventories with different host subsets in Ansible Tower.
-        self.foreman_organization_name = os.environ.get('FOREMAN_ORGANIZATION')
-
-        # If the FOREMAN_HOSTCOLLECTION environment variable is set to the
-        # name of a Foreman host collection (like "Web Servers"), only hosts
-        # from that collection will be listed. This can be used to define
-        # inventories with different host subsets in Ansible Tower.
-        self.foreman_hostcollection_name = os.environ.get('FOREMAN_HOSTCOLLECTION')
 
         return True
 
@@ -194,19 +187,11 @@ class ForemanInventory(object):
         return results
 
     def _get_hosts(self):
-        params = {}
-        filters = []
-
-        if self.foreman_organization_name:
-            filters.append('organization="%s"' % self.foreman_organization_name)
-
-        if self.foreman_hostcollection_name:
-            filters.append('host_collection="%s"' % self.foreman_hostcollection_name)
-
         url = "%s/api/v2/hosts" % self.foreman_url
 
-        if filters:
-            params['search'] = " and ".join(filters)
+        params = {}
+        if self.host_filters:
+            params['search'] = self.host_filters
 
         return self._get_json(url, params=params)
 
