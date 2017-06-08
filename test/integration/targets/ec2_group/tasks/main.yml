@@ -92,7 +92,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg.startswith("No handler was ready to authenticate.")'
+           - '"Unable to locate credentials" in result.msg'
 
     # ============================================================
     - name: test invalid ec2_url parameter
@@ -108,7 +108,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg.startswith("No handler was ready to authenticate.")'
+           - 'result.msg.startswith("The AWS region must be specified as an environment variable or in the AWS credentials profile")'
 
     # ============================================================
     - name: test valid ec2_url parameter
@@ -124,7 +124,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg.startswith("No handler was ready to authenticate.")'
+           - 'result.msg.startswith("The AWS region must be specified as an environment variable or in the AWS credentials profile")'
 
     # ============================================================
     - name: test credentials from environment
@@ -142,7 +142,7 @@
       assert:
         that:
            - 'result.failed'
-           - '"Error in get_all_security_groups: AWS was not able to validate the provided access credentials" in result.msg'
+           - '"validate the provided access credentials" in result.msg'
 
     # ============================================================
     - name: test credential parameters
@@ -159,7 +159,7 @@
       assert:
         that:
            - 'result.failed'
-           - '"Error in get_all_security_groups: AWS was not able to validate the provided access credentials" in result.msg'
+           - '"validate the provided access credentials" in result.msg'
 
     # ============================================================
     - name: test state=absent
@@ -245,6 +245,103 @@
         that:
            - 'result.changed'
            - 'not result.group_id'
+
+    # ============================================================
+    - name: test state=present for ipv6 (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ipv6: "2001:558:1400::/40"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test rules_egress state=present for ipv6 (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ipv6: "2001:558:1400::/40"
+        rules_egress:
+        - proto: "tcp"
+          from_port: 8181
+          to_port: 8181
+          cidr_ipv6: "2001:558:1400::/40"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test state=present for ipv4 (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+        - 'result.changed'
+        - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: add same rule to the existing group  (expected changed=false)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      register: result
+
+    - name: assert state=present (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+          - 'result.group_id.startswith("sg-")'
 
   always:
 

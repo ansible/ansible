@@ -258,6 +258,7 @@ def validate_rule(module, rule):
     elif 'group_id' in rule and 'group_name' in rule:
         module.fail_json(msg='Specify group_id OR group_name, not both')
 
+
 def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
     """
     Returns tuple of (group_id, ip) after validating rule params.
