@@ -57,6 +57,7 @@ def shell_expand(path, expand_relative_paths=False):
             path = os.path.abspath(path)
     return path
 
+
 def _cast_config_value(value, value_type, expand_relative_paths):
     if value_type == 'integer':
         value = int(value)
@@ -84,8 +85,8 @@ def _cast_config_value(value, value_type, expand_relative_paths):
 
     elif value_type == 'pathlist':
         if isinstance(value, string_types):
-            value = [shell_expand(x, expand_relative_paths=expand_relative_paths) \
-                        for x in value.split(os.pathsep)]
+            value = [shell_expand(x, expand_relative_paths=expand_relative_paths)
+                     for x in value.split(os.pathsep)]
 
     elif isinstance(value, string_types):
         value = unquote(value)
