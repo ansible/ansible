@@ -23,7 +23,7 @@ import sys
 from collections import defaultdict
 
 from ansible.compat.tests import unittest
-from ansible.vars.unsafe_proxy import wrap_var, AnsibleUnsafeText
+from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.compat.six import string_types
 
 from ansible.template.safe_eval import safe_eval
