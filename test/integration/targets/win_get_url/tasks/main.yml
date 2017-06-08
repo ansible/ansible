@@ -133,4 +133,3 @@
     that:
       - "win_get_url_result_invalid_dest|failed"
       - "win_get_url_result_invalid_dest.msg is search('does not exist')"
-
