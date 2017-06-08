@@ -296,7 +296,7 @@ def connect(module):
                        module.params['password'],
                        protocol=module.params['protocol'],
                        port=module.params['port'])
-    except CvpLoginError, e:
+    except CvpLoginError as e:
         module.fail_json(msg=str(e))
     return client
 
@@ -608,7 +608,7 @@ def main():
                     result['taskCompleted'] = True
             else:
                 result['taskCreated'] = False
-    except CvpApiError, e:
+    except CvpApiError as e:
         module.fail_json(msg=str(e))
 
     module.exit_json(**result)
