@@ -1,51 +1,40 @@
-
-
+# (c) 2017, Edward Nunez <edward.nunez@cyberark.com>
 #
+# This file is part of Ansible
 #
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# USAGE: {{lookup('cyberarkpassword', AppID='Application1', Query='safe=Safe1;Folder=root;Object=User1',
-#                 Output='Password,PassProps.UserName,PassProps.Address' [, extraParms])}}
-#
-# It Requires CyberArk AIM Installed, and /opt/CARKaim/sdk/clipasswordsdk
-#
-#  Parameter names AppID, Query, Output are case sensitive.
-#
-#  Args:
-#      AppID (str): Defines the unique ID of the application that is issuing the password request.
-#      Query (str): Describes the filter criteria for the password retrieval.
-#      Output (str): Specifies the desired output fields separated by commas. They could be: Password, PassProps.<property>, PasswordChangeInProcess
-#      Optionally, you can specify extra parameters recognized by clipasswordsdk (like FailRequestOnPasswordChange, Queryformat, Reason, etc.)
-#
-#  Returns:
-#      dict: A dictionary with 'password' as key for the credential, passprops.<property>, passwordchangeinprocess
-#            If the specified property does not exist for this password, the value <na> will be returned for this property.
-#            If the value of the specified property is empty, <null> will be returned.
-#
-#
-# for extraParms values please check parameters for clipasswordsdk in CyberArk's "Credential Provider and ASCP Implementation Guide"
-#
-# For Ansible on windows, please change the -parameters (-p, -d, and -o) to /parameters (/p, /d, and /o) and change the location of CLIPasswordSDK.exe
-#
-#
-#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import subprocess
+
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+CLIPASSWORDSDK_CMD = '/opt/CARKaim/sdk/clipasswordsdk'
+if os.getenv('AIM_CLIPASSWORDSDK_CMD') is not None:
+    CLIPASSWORDSDK_CMD = os.environ['AIM_CLIPASSWORDSDK_CMD']
 
 class CyberarkPassword:
 
     def __init__(self, **kwargs):
 
-        self.appid = kwargs.pop('AppID', None)
-        self.query = kwargs.pop('Query', None)
-        self.output = kwargs.pop('Output', None)
+        self.appid = kwargs.pop('appid', None)
+        self.query = kwargs.pop('query', None)
+        self.output = kwargs.pop('output', None)
 
         # Support for Generic parameters to be able to specify
         # FailRequestOnPasswordChange, Queryformat, Reason, etc.
@@ -70,11 +59,12 @@ class CyberarkPassword:
         self.delimiter = "@#@"  # Known delimiter to split output results
 
     def get(self):
+
         resultDict = {}
 
         try:
             allParms = [
-                '/opt/CARKaim/sdk/clipasswordsdk',
+                CLIPASSWORDSDK_CMD,
                 'GetPassword',
                 '-p',
                 'AppDescs.AppID=' +
@@ -108,12 +98,38 @@ class CyberarkPassword:
         except subprocess.CalledProcessError as e:
             raise AnsibleError(e.output)
         except OSError as e:
-            raise AnsibleError("ERROR - AIM not installed or clipasswordsdk not in standard location. ERROR=(" + str(e.errno) + ") => " + e.strerror)
+            raise AnsibleError("ERROR - AIM not installed or clipasswordsdk not in standard location. ERROR=(" + to_text(e.errno) + ") => " + e.strerror)
 
         return [resultDict]
 
 
 class LookupModule(LookupBase):
+
+    """
+    USAGE: {{lookup('cyberarkpassword', appid='Application1', query='safe=Safe1;Folder=root;Object=User1',
+                    output='password,passprops.username,passprops.address' [, extraParms])}}
+
+    It Requires CyberArk AIM Installed, and /opt/CARKaim/sdk/clipasswordsdk in place or set environment variable AIM_CLIPASSWORDSDK_CMD to the AIM
+    CLI Password SDK executable.
+
+     Parameter names AppID, Query, Output are case sensitive.
+
+     Args:
+         appid (str): Defines the unique ID of the application that is issuing the password request.
+         query (str): Describes the filter criteria for the password retrieval.
+         output (str): Specifies the desired output fields separated by commas. They could be: Password, PassProps.<property>, PasswordChangeInProcess
+         Optionally, you can specify extra parameters recognized by clipasswordsdk (like FailRequestOnPasswordChange, Queryformat, Reason, etc.)
+
+     Returns:
+         dict: A dictionary with 'password' as key for the credential, passprops.<property>, passwordchangeinprocess
+               If the specified property does not exist for this password, the value <na> will be returned for this property.
+               If the value of the specified property is empty, <null> will be returned.
+
+
+    for extraParms values please check parameters for clipasswordsdk in CyberArk's "Credential Provider and ASCP Implementation Guide"
+
+    For Ansible on windows, please change the -parameters (-p, -d, and -o) to /parameters (/p, /d, and /o) and change the location of CLIPasswordSDK.exe
+    """
 
     def run(self, terms, variables, **kwargs):
 
