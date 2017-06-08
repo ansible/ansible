@@ -114,12 +114,13 @@ RETURN = '''
 id:
     description: ID of the storage connection which is managed
     returned: On success if storage connection is found.
-    type: str
+    type: string
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 storage_connection:
     description: "Dictionary of all the storage connection attributes. Storage connection attributes can be found on your oVirt instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/storage_connection."
     returned: On success if storage connection is found.
+    type: dict
 '''
 
 try:
