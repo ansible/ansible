@@ -480,6 +480,7 @@ except ImportError as exc:
     DEFAULT_TIMEOUT = 10
 
 from ansible.module_utils.docker_common import *
+from ansible.module_utils._text import to_native
 from contextlib import contextmanager
 
 
@@ -509,11 +510,11 @@ def get_stdout(path_name):
     with open(path_name, 'r') as fd:
         for line in fd:
             # strip terminal format/color chars
-            new_line = re.sub(r'\x1b\[.+m', '', line.encode('ascii'))
+            new_line = re.sub(r'\x1b\[.+m', '', to_native(line))
             full_stdout += new_line
             if new_line.strip():
                 # Assuming last line contains the error message
-                last_line = new_line.strip().encode('utf-8')
+                last_line = to_native(new_line.strip())
     fd.close()
     os.remove(path_name)
     return full_stdout, last_line
