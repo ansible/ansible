@@ -114,12 +114,13 @@ RETURN = '''
 id:
     description: ID of the storage connection which is managed
     returned: On success if storage connection is found.
-    type: str
+    type: string
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 storage_connection:
     description: "Dictionary of all the storage connection attributes. Storage connection attributes can be found on your oVirt instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/storage_connection."
     returned: On success if storage connection is found.
+    type: dict
 '''
 
 try:
@@ -183,18 +184,18 @@ class StorageConnectionModule(BaseModule):
 
     def update_check(self, entity):
         return (
-            equal(self.param('address'), entity.address)
-            and equal(self.param('path'), entity.path)
-            and equal(self.param('nfs_version'), entity.nfs_version)
-            and equal(self.param('nfs_timeout'), entity.nfs_timeo)
-            and equal(self.param('nfs_retrans'), entity.nfs_retrans)
-            and equal(self.param('mount_options'), entity.mount_options)
-            and equal(self.param('password'), entity.password)
-            and equal(self.param('username'), entity.username)
-            and equal(self.param('port'), entity.port)
-            and equal(self.param('target'), entity.target)
-            and equal(self.param('type'), str(entity.type))
-            and equal(self.param('vfs_type'), entity.vfs_type)
+            equal(self.param('address'), entity.address) and
+            equal(self.param('path'), entity.path) and
+            equal(self.param('nfs_version'), entity.nfs_version) and
+            equal(self.param('nfs_timeout'), entity.nfs_timeo) and
+            equal(self.param('nfs_retrans'), entity.nfs_retrans) and
+            equal(self.param('mount_options'), entity.mount_options) and
+            equal(self.param('password'), entity.password) and
+            equal(self.param('username'), entity.username) and
+            equal(self.param('port'), entity.port) and
+            equal(self.param('target'), entity.target) and
+            equal(self.param('type'), str(entity.type)) and
+            equal(self.param('vfs_type'), entity.vfs_type)
         )
 
 
@@ -206,14 +207,14 @@ def find_sc_by_attributes(module, storage_connections_service):
         sd_conn_type = str(sd_conn.type)
         if sd_conn_type in ['nfs', 'posixfs', 'glusterfs', 'localfs']:
             if (
-                module.params['address'] == sd_conn.address
-                and module.params['path'] == sd_conn.path
+                module.params['address'] == sd_conn.address and
+                module.params['path'] == sd_conn.path
             ):
                 return sd_conn
         elif sd_conn_type in ['iscsi', 'fcp']:
             if (
-                module.params['address'] == sd_conn.address
-                and module.params['target'] == sd_conn.target
+                module.params['address'] == sd_conn.address and
+                module.params['target'] == sd_conn.target
             ):
                 return sd_conn
 
