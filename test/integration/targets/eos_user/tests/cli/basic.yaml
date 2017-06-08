@@ -1,0 +1,43 @@
+---
+- name: Create user
+  eos_user:
+    username: netend
+    privilege: 15
+    role: network-operator
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username netend role network-operator", "username netend privilege 15"]'
+
+- name: Collection of users
+  eos_user:
+    users:
+      - username: test1
+      - username: test2
+    authorize: yes
+    state: present
+    role: network-admin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username test1 role network-admin", "username test2 role network-admin"]'
+
+- name: tearDown
+  eos_user:
+    purge: yes
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no username netend", "no username test1", "no username test2"]'

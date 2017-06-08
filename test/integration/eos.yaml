@@ -16,3 +16,4 @@
     - { role: eos_eapi, debug: yes, when: "limit_to in ['*', 'eos_eapi']" }
     - { role: eos_system, debug: yes, when: "limit_to in ['*', 'eos_system']" }
     - { role: eos_vlan, debug: yes, when: "limit_to in ['*', 'eos_vlan']" }
+    - { role: eos_user, when: "limit_to in ['*', eos_user']" }
