@@ -262,9 +262,6 @@ def main():
 
         # Using RealDictCursor allows access to row results by real column name
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
 
     except TypeError:
         e = get_exception()
@@ -273,6 +270,10 @@ def main():
                              8.4 to support sslrootcert.
                              Exception: {0}'''.format(e), exception=traceback.format_exc())
         module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
+
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
 
     # if query is a file, load the file and run it
     query = module.params["query"]
