@@ -18,15 +18,15 @@
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+                    'supported_by': 'community',
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: cyberark_authentication
 short_description: "Module for CyberArk Vault Authentication using Privileged Account Security Web Services SDK"
 author: "Edward Nunez (@enunez-cyberark)"
-version_added: "2.3"
+version_added: "2.4"
 description:
     - "Authenticates to CyberArk Vault using Privileged Account Security Web Services SDK and
        creates a session fact that can be used by other modules. It returns an Ansible fact
@@ -149,7 +149,7 @@ def processAuthentication(module):
     headers = {'Content-Type': 'application/json'}
     payload = ""
 
-    if state == "present": # Logon Action
+    if state == "present":  # Logon Action
 
         # Different end_points based on the use of shared logon authentication
         if use_shared_logon_authentication:
@@ -172,7 +172,7 @@ def processAuthentication(module):
 
             payload = json.dumps(payload_dict)
 
-    else: # Logoff Action
+    else:  # Logoff Action
 
         # Get values from cyberark_session already established
         api_base_url = cyberark_session["api_base_url"]
@@ -187,6 +187,10 @@ def processAuthentication(module):
         else:
             end_point = "/PasswordVault/WebServices/auth/Cyberark/CyberArkAuthenticationService.svc/Logoff"
 
+    result = None
+    changed = False
+    response = None
+
     try:
 
         response = open_url(
@@ -196,80 +200,67 @@ def processAuthentication(module):
             data=payload,
             validate_certs=validate_certs)
 
-        result = None
-        changed = False
+    except httplib.HTTPException as e:
 
-        if response.getcode() == 200: # Success
-
-            if state == "present": # Logon Action
-
-                # Result token from REST Api uses a different key based
-                # the use of shared logon authentication
-                if use_shared_logon_authentication:
-                    token = json.loads(response.read())["LogonResult"]
-                else:
-                    token = json.loads(response.read())["CyberArkLogonResult"]
-
-                # Preparing result of the module
-                result = {
-                    "cyberark_session": {
-                        "token": token,
-                        "api_base_url": api_base_url,
-                        "validate_certs": validate_certs,
-                        "use_shared_logon_authentication":
-                        use_shared_logon_authentication},
-                }
-
-                if new_password is not None:
-                    # Only marks change if new_password was received resulting
-                    # in a password change
-                    changed = True
-
-            else: # Logoff Action clears cyberark_session
-
-                result = {
-                    "cyberark_session": {}
-                }
-
-            return (changed, result, response.getcode())
-
-        else:
-            module.fail_json(
-                msg="error in end_point=>" +
-                end_point +
-                json.dumps(headers))
-
-    except httplib.HTTPException:
-
-        t, e = sys.exc_info()[:2]
         module.fail_json(
             msg="end_point=" +
             api_base_url +
-            end_point +
-            " headers=[" +
-            json.dumps(headers) +
-            "] payload=[" +
-            payload +
-            "] ===>" +
-            str(e),
-            exception=traceback.format_exc(),
+            end_point,
+            payload=payload,
+            headers=headers,
+            exception=to_text(e),
             status_code=e.code)
 
-    except Exception:
+    except Exception as e:
 
-        t, e = sys.exc_info()[:2]
         module.fail_json(
             msg="end_point=" +
             api_base_url +
-            end_point +
-            " headers=[" +
-            json.dumps(headers) +
-            "] payload=[" +
-            payload +
-            "] ===>" +
-            str(e),
-            exception=traceback.format_exc(),
+            end_point,
+            payload=payload,
+            headers=headers,
+            exception=to_text(e),
             status_code=-1)
+
+    if response.getcode() == 200:  # Success
+
+        if state == "present":  # Logon Action
+
+            # Result token from REST Api uses a different key based
+            # the use of shared logon authentication
+            if use_shared_logon_authentication:
+                token = json.loads(response.read())["LogonResult"]
+            else:
+                token = json.loads(response.read())["CyberArkLogonResult"]
+
+            # Preparing result of the module
+            result = {
+                "cyberark_session": {
+                    "token": token,
+                    "api_base_url": api_base_url,
+                    "validate_certs": validate_certs,
+                    "use_shared_logon_authentication":
+                    use_shared_logon_authentication},
+            }
+
+            if new_password is not None:
+                # Only marks change if new_password was received resulting
+                # in a password change
+                changed = True
+
+        else:  # Logoff Action clears cyberark_session
+
+            result = {
+                "cyberark_session": {}
+            }
+
+        return (changed, result, response.getcode())
+
+    else:
+        module.fail_json(
+            msg="error in end_point=>" +
+            end_point,
+            headers=headers)
 
 
 def main():
@@ -277,7 +268,7 @@ def main():
     fields = {
         "api_base_url": {"type": "str"},
         "validate_certs": {"type": "bool",
-                          "default": "true"},
+                           "default": "true"},
         "username": {"type": "str"},
         "password": {"type": "str", "no_log": True},
         "new_password": {"type": "str", "no_log": True},
