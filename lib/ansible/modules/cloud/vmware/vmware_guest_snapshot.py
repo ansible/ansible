@@ -63,7 +63,7 @@ options:
    datacenter:
         description:
             - Destination datacenter for the deploy operation
-        required: True
+        default: ha-datacenter
    snapshot_name:
         description:
         - Sets the snapshot name to manage.
@@ -280,7 +280,7 @@ def main():
             name_match=dict(required=False, type='str', default='first'),
             uuid=dict(required=False, type='str'),
             folder=dict(required=False, type='str', default='/vm'),
-            datacenter=dict(required=True, type='str'),
+            datacenter=dict(required=False, type='str', default='ha-datacenter'),
             snapshot_name=dict(required=False, type='str'),
             description=dict(required=False, type='str', default=''),
         ),
