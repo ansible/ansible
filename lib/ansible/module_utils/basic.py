@@ -1201,6 +1201,7 @@ class AnsibleModule(object):
                     self.fail_json(path=path, msg="Invalid mode supplied, only permission info is allowed", details=mode)
 
         prev_mode = stat.S_IMODE(path_stat.st_mode)
+        mode = stat.S_IMODE(mode)
 
         if prev_mode != mode:
 
