@@ -47,8 +47,11 @@ options:
   opts:
     description:
     - List of options to be passed to mkfs command.
+requirements:
+  - Uses tools related to the I(fstype) (C(mkfs)) and C(blkid) command. When I(resizefs) is enabled, C(blockdev) command is required too.
 notes:
-  - Uses mkfs command.
+  - Potential filesystem on I(dev) are checked using C(blkid), in case C(blkid) isn't able to detect an existing filesystem,
+    this filesystem is overwritten even if I(force) is C(no).
 '''
 
 EXAMPLES = '''
