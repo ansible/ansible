@@ -40,7 +40,12 @@ options:
     vm:
         description:
             - "Name of the Virtual Machine to manage."
-        required: true
+            - "You must provide either C(vm) parameter or C(template) parameter."
+    template:
+        description:
+            - "Name of the template to manage."
+            - "You must provide either C(vm) parameter or C(template) parameter."
+        version_added: "2.4"
     state:
         description:
             - "Should the Virtual Machine NIC be present/absent/plugged/unplugged."
@@ -90,11 +95,24 @@ EXAMPLES = '''
     vm: myvm
     name: mynic
 
+
+# add NIC to template
+- ovirt_nics:
+    auth: "{{ ovirt_auth }}"
+    state: present
+    template: my_template
+    name: nic1
+    interface: virtio
+    profile: ovirtmgmt
+    network: ovirtmgmt
+
+
 # Remove NIC from VM
 - ovirt_nics:
     state: absent
     vm: myvm
     name: mynic
+
 '''
 
 RETURN = '''
@@ -129,10 +147,10 @@ from ansible.module_utils.ovirt import (
 )
 
 
-class VmNicsModule(BaseModule):
+class EntityNicsModule(BaseModule):
 
     def __init__(self, *args, **kwargs):
-        super(VmNicsModule, self).__init__(*args, **kwargs)
+        super(EntityNicsModule, self).__init__(*args, **kwargs)
         self.vnic_id = None
 
     @property
@@ -158,11 +176,17 @@ class VmNicsModule(BaseModule):
         )
 
     def update_check(self, entity):
-        return (
-            equal(self._module.params.get('interface'), str(entity.interface)) and
-            equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile)) and
-            equal(self._module.params.get('mac_address'), entity.mac.address)
-        )
+        if self._module.params.get('vm'):
+            return (
+                equal(self._module.params.get('interface'), str(entity.interface)) and
+                equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile)) and
+                equal(self._module.params.get('mac_address'), entity.mac.address)
+            )
+        elif self._module.params.get('template'):
+            return (
+                equal(self._module.params.get('interface'), str(entity.interface)) and
+                equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile))
+            )
 
 
 def main():
@@ -171,7 +195,8 @@ def main():
             choices=['present', 'absent', 'plugged', 'unplugged'],
             default='present'
         ),
-        vm=dict(required=True),
+        vm=dict(required=False),
+        template=dict(required=False),
         name=dict(required=True),
         interface=dict(default=None),
         profile=dict(default=None),
@@ -181,6 +206,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_one_of=[['vm', 'template']]
     )
     check_sdk(module)
 
@@ -189,18 +215,26 @@ def main():
         # search for the NIC:
         auth = module.params.pop('auth')
         connection = create_connection(auth)
-        vms_service = connection.system_service().vms_service()
+        entity_name = None
 
-        # Locate the VM, where we will manage NICs:
-        vm_name = module.params.get('vm')
-        vm = search_by_name(vms_service, vm_name)
-        if vm is None:
-            raise Exception("VM '%s' was not found." % vm_name)
+        if module.params.get('vm'):
+            # Locate the VM, where we will manage NICs:
+            entity_name = module.params.get('vm')
+            collection_service = connection.system_service().vms_service()
+        elif module.params.get('template'):
+            entity_name = module.params.get('template')
+            collection_service = connection.system_service().templates_service()
 
-        # Locate the service that manages the virtual machines NICs:
-        vm_service = vms_service.vm_service(vm.id)
-        nics_service = vm_service.nics_service()
-        vmnics_module = VmNicsModule(
+        # TODO: We have to modify the search_by_name function to accept raise_error=True/False,
+        entity = search_by_name(collection_service, entity_name)
+        if entity is None:
+            raise Exception("Vm/Template '%s' was not found." % entity_name)
+
+        service = collection_service.service(entity.id)
+        cluster_id = entity.cluster
+
+        nics_service = service.nics_service()
+        entitynics_module = EntityNicsModule(
             connection=connection,
             module=module,
             service=nics_service,
@@ -209,7 +243,7 @@ def main():
         # Find vNIC id of the network interface (if any):
         profile = module.params.get('profile')
         if profile and module.params['network']:
-            cluster_name = get_link_name(connection, vm.cluster)
+            cluster_name = get_link_name(connection, cluster_id)
             dcs_service = connection.system_service().data_centers_service()
             dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
             networks_service = dcs_service.service(dc.id).networks_service()
@@ -227,24 +261,24 @@ def main():
                 )
             for vnic in connection.system_service().vnic_profiles_service().list():
                 if vnic.name == profile and vnic.network.id == network.id:
-                    vmnics_module.vnic_id = vnic.id
+                    entitynics_module.vnic_id = vnic.id
 
         # Handle appropriate action:
         state = module.params['state']
         if state == 'present':
-            ret = vmnics_module.create()
+            ret = entitynics_module.create()
         elif state == 'absent':
-            ret = vmnics_module.remove()
+            ret = entitynics_module.remove()
         elif state == 'plugged':
-            vmnics_module.create()
-            ret = vmnics_module.action(
+            entitynics_module.create()
+            ret = entitynics_module.action(
                 action='activate',
                 action_condition=lambda nic: not nic.plugged,
                 wait_condition=lambda nic: nic.plugged,
             )
         elif state == 'unplugged':
-            vmnics_module.create()
-            ret = vmnics_module.action(
+            entitynics_module.create()
+            ret = entitynics_module.action(
                 action='deactivate',
                 action_condition=lambda nic: nic.plugged,
                 wait_condition=lambda nic: not nic.plugged,
