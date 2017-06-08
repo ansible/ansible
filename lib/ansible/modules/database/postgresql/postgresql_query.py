@@ -37,8 +37,8 @@ options:
   db:
     description:
       - name of the database to run queries against
-    required: true
-    default: null
+    required: false
+    default: postgres
   port:
     description:
       - Database port to connect to.
@@ -61,30 +61,39 @@ options:
     default: localhost
   login_unix_socket:
     description:
-      - Path to a Unix domain socket for local connections
+      - Path to a Unix domain socket for local connections.
     required: false
     default: null
   query:
     description:
       - SQL query to run. Variables can be escaped with psycopg2 syntax.
+      - Can be a sql scripts file.
+    required: true
   positional_args:
     description:
       - A list of values to be passed as positional arguments to the query.
-      - Cannot be used with named_args
+      - Cannot be used with named_args.
+    required: false
+    default: null
   autocommit:
       description:
-        - Enable transaction autocommit
-        - If enabled, This WILL run the query in check_mode
+        - Enable transaction autocommit.
+        - If enabled, This WILL run the query in check_mode.
       required: false
       default: false
       choices: [true, false]
   named_args:
     description:
       - A dictionary of key-value arguments to pass to the query.
-      - Cannot be used with positional_args
-  fact: |
-      Append the query_results to this key value, making this new variable
-      available to subsequent plays during an ansible-playbook run.
+      - Cannot be used with positional_args.
+    required: false
+    default: null
+  fact:
+    description:
+        - Assign the query_results to a key by the name of this arg.
+        - Will make this new variable available as a fact to subsequent tasks.
+    required: false
+    default: null
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
@@ -93,10 +102,10 @@ options:
     required: false
     default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
-    version_added: '2.3'
   ssl_rootcert:
     description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
     required: false
     default: null
 notes:
@@ -167,7 +176,7 @@ EXAMPLES = '''
 
 RETURN = '''
 query_results:
-    description: list of dictionaries in column:value form
+    description: List of dictionaries in column:value form representing returned rows.
     returned: changed
     type: list
     sample: [{"Column": "Value1"},{"Column": "Value2"}]
@@ -176,11 +185,6 @@ row_count:
     returned: changed
     type: int
     sample: 5
-ansible_facts:
-    "my_key": {
-        "column1": "value",
-        "column2": "value"
-        }
 '''
 
 HAS_PSYCOPG2 = False
@@ -197,9 +201,6 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule, get_exception, BOOLEANS
 import ansible.module_utils.postgres as pgutils
 
-# ===========================================
-# Module execution.
-#
 
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
@@ -215,10 +216,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True,
         mutually_exclusive=[
             ["positional_args", "named_args"]
         ],
+        supports_check_mode=True,
     )
 
     if not HAS_PSYCOPG2:
@@ -268,7 +269,9 @@ def main():
     except TypeError:
         e = get_exception()
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e), exception=traceback.format_exc())
+            module.fail_json(msg='''Postgresql server must be at least version
+                             8.4 to support sslrootcert.
+                             Exception: {0}'''.format(e), exception=traceback.format_exc())
         module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
 
     # if query is a file, load the file and run it
@@ -319,7 +322,7 @@ def main():
     changed = False
 
     # set changed flag only on non read-only command
-    if ("UPDATE" in statusmessage or "INSERT" in statusmessage or \
+    if ("UPDATE" in statusmessage or "INSERT" in statusmessage or
             "UPSERT" in statusmessage or "DELETE" in statusmessage):
         changed = True
 
