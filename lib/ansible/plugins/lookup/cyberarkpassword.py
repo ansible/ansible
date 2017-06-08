@@ -28,6 +28,7 @@ CLIPASSWORDSDK_CMD = '/opt/CARKaim/sdk/clipasswordsdk'
 if os.getenv('AIM_CLIPASSWORDSDK_CMD') is not None:
     CLIPASSWORDSDK_CMD = os.environ['AIM_CLIPASSWORDSDK_CMD']
 
+
 class CyberarkPassword:
 
     def __init__(self, **kwargs):
