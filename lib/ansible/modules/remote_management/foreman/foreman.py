@@ -93,7 +93,7 @@ class NailGun(object):
         if len(response) == 1:
             return response[0]
         else:
-            self._module.fail_json(msg="No Content View found for %s" % name)
+            return None
 
     def organization(self, params):
         name = params['name']
