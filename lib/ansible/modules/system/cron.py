@@ -705,6 +705,11 @@ def main():
                 crontab.remove_env(name)
                 changed = True
     else:
+        # Remove trailing new lines to properly compare job content after
+        # The `old_job` always got newline stripped due to nature of cron files
+        # But it's common to put a very long `job` into several lines with `key: >` or `key: |` YAML syntax
+        job = job.rstrip('\n')
+
         if do_install:
             job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
             old_job = crontab.find_job(name, job)
