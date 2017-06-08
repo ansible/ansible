@@ -162,6 +162,7 @@ options:
             - "C(interface) - Interface of the disk, either I(virtio) or I(IDE), default is I(virtio)."
             - "C(bootable) - I(True) if the disk should be bootable, default is non bootable."
             - "C(activate) - I(True) if the disk should be activated, default is activated."
+            - "C(storage_domain) - Name of the storage domain where the disk should be stored."
             - "C(Note:)"
             - "This parameter is used only when C(state) is I(running) or I(present) and is able to only attach disks.
                To manage disks of the VM in more depth please use M(ovirt_disks) module instead."
@@ -542,8 +543,52 @@ class VmsModule(BaseModule):
 
         return template
 
+    def __get_storage_domain(self, disk_id):
+        storage_domain = None
+
+        disks = self._module.params.get('disks', list())
+
+        for disk in disks:
+            if disk_id == disk.get('id'):
+                storage_domain = search_by_name(
+                    self._connection.system_service().storage_domains_service(),
+                    disk['storage_domain']
+                )
+
+        return storage_domain
+
+    def __get_disk_attachments(self, template):
+
+        disks = list()
+
+        template_service = self._connection.system_service().templates_service()
+
+        template_obj = template_service.template_service(template.id)
+
+        disk_attachments = self._connection.follow_link(
+            template_obj.get().disk_attachments
+        )
+
+        for disk in disk_attachments:
+            disks.append(
+                otypes.DiskAttachment(
+                    disk=otypes.Disk(
+                        id=disk.id,
+                        format=otypes.DiskFormat.COW,
+                        storage_domains=[
+                            otypes.StorageDomain(
+                                id=self.__get_storage_domain(disk.id).id
+                            )
+                        ]
+                    )
+                )
+            )
+
+        return disks
+
     def build_entity(self):
         template = self.__get_template_with_version()
+        disks = self.__get_disk_attachments(template)
         return otypes.Vm(
             name=self.param('name'),
             cluster=otypes.Cluster(
@@ -604,6 +649,7 @@ class VmsModule(BaseModule):
                 self.param('serial_policy') is not None or
                 self.param('serial_policy_value') is not None
             ) else None,
+            disk_attachments=disks if disks else None,
         )
 
     def update_check(self, entity):
@@ -773,6 +819,9 @@ class VmsModule(BaseModule):
 
     def __attach_disks(self, entity):
         disks_service = self._connection.system_service().disks_service()
+
+        if self.param('template'):
+            return
 
         for disk in self.param('disks'):
             # If disk ID is not specified, find disk by name:
