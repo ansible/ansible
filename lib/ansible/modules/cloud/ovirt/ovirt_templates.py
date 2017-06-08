@@ -39,8 +39,11 @@ options:
         required: true
     state:
         description:
-            - "Should the template be present/absent/exported/imported"
-        choices: ['present', 'absent', 'exported', 'imported']
+            - "Should the template be present/absent/exported/imported/registered.
+               When C(state) is R(registered) and the unregistered template's name
+               belongs to an already registered in engine template then we fail
+               to register the unregistered template."
+        choices: ['present', 'absent', 'exported', 'imported', 'registered']
         default: present
     vm:
         description:
@@ -71,7 +74,8 @@ options:
                to be imported as template."
     storage_domain:
         description:
-            - "When C(state) is I(imported) this parameter specifies the name of the destination data storage domain."
+            - "When C(state) is I(imported) this parameter specifies the name of the destination data storage domain.
+               When C(state) is R(registered) this parameter specifies the name of the data storage domain of the unregistered template."
     clone_permissions:
         description:
             - "If I(True) then the permissions of the VM (only the direct ones, not the inherited ones)
@@ -105,6 +109,13 @@ EXAMPLES = '''
 - ovirt_templates:
     state: absent
     name: mytemplate
+
+# Register template
+- ovirt_templates:
+  state: registered
+  name: mytemplate
+  storage_domain: mystorage
+  cluster: mycluster
 '''
 
 RETURN = '''
@@ -136,6 +147,7 @@ from ansible.module_utils.ovirt import (
     equal,
     get_dict_of_struct,
     get_link_name,
+    get_id_by_name,
     ovirt_full_argument_spec,
     search_by_attributes,
     search_by_name,
@@ -202,7 +214,7 @@ def wait_for_import(module, templates_service):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'exported', 'imported'],
+            choices=['present', 'absent', 'exported', 'imported', 'registered'],
             default='present',
         ),
         name=dict(default=None, required=True),
@@ -304,7 +316,47 @@ def main():
                     'id': template.id,
                     'template': get_dict_of_struct(template),
                 }
+        elif state == 'registered':
+            storage_domains_service = connection.system_service().storage_domains_service()
+            # Find the storage domain with unregistered template:
+            sd_id = get_id_by_name(storage_domains_service, module.params['storage_domain'])
+            storage_domain_service = storage_domains_service.storage_domain_service(sd_id)
+            templates_service = storage_domain_service.templates_service()
 
+            # Find the the unregistered Template we want to register:
+            templates = templates_service.list(unregistered=True)
+            template = next(
+                (t for t in templates if t.name == module.params['name']),
+                None
+            )
+            changed = False
+            if template is None:
+                # Test if template is registered:
+                template = templates_module.search_entity()
+                if template is None:
+                    raise ValueError(
+                        "Template with name '%s' wasn't found." % module.params['name']
+                    )
+            else:
+                changed = True
+                template_service = templates_service.template_service(template.id)
+                # Register the template into the system:
+                template_service.register(
+                    cluster=otypes.Cluster(
+                        name=module.params['cluster']
+                    ) if module.params['cluster'] else None,
+                    template=otypes.Template(
+                        name=module.params['name'],
+                    ),
+                )
+                if module.params['wait']:
+                    template = wait_for_import(module, templates_service)
+
+            ret = {
+                'changed': changed,
+                'id': template.id,
+                'template': get_dict_of_struct(template)
+            }
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
