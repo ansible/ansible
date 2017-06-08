@@ -93,28 +93,14 @@ RETURN = '''
 cyberark_session:
     description: Authentication facts.
     returned: success
-    type: dictionary
-    contains:
-        token:
-            description: Session Token returned by the logon operation.
-            returned: success
-            type: string
-            sample: "AAEAAAD/////AQAAAAA......NiNWMtNDhhNy00ZDc5LWE2MTQtMmRlMTBjMWI1ZWQ2BgYAAAABNAs="
-        api_base_url:
-            description: A string containing the base URL of the server hosting CyberArk's Privileged Account Security Web Services SDK.
-            returned: success
-            type: string
-            sample: "https://<IIS_Server_PVWA>"
-        validate_certs:
-            description: Whether SSL certificates will be validated.
-            returned: success
-            type: bool
-            sample: true
-        use_shared_logon_authentication:
-            description: Whether or not Shared Logon Authentication will be used.
-            returned: success
-            type: bool
-            sample: true
+    type: dict
+    sample:
+        {
+            "api_base_url": "https://components.cyberark.local",
+            "token": "TOKEN", 
+            "use_shared_logon_authentication": false,
+            "validate_certs": false
+        }
 '''
 
 from ansible.module_utils.basic import AnsibleModule
