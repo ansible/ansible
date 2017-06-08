@@ -112,7 +112,7 @@ class TestReturnValues(object):
                       [u'a unicode', 'another string'],
                       [{'j': [False, True]}],
                       [{'A': [], 'B': {}}],
-                      [{'B': ['C',b'D', u'E', ('Ff', 'Gg'), {'H': ['h', 'hh', 'hhh']}]}],
+                      [{'B': ['C', b'D', u'E', ('Ff', 'Gg'), {'H': ['h', 'hh', 'hhh']}]}],
                       ]
 
     test_data_fails = [Ellipsis,
@@ -149,8 +149,6 @@ class BaseTestModuleUtilsBasic(unittest.TestCase):
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
-
-class TestModuleUtilsBasic(ModuleTestCase):
 
 
 class TestModuleUtilsBasic(BaseTestModuleUtilsBasic):
@@ -746,17 +744,6 @@ class TestModuleUtilsBasicSelinux(BaseTestModuleUtilsBasic):
 
 
 class TestModuleUtilsBasicFileSystem(BaseTestModuleUtilsBasic):
-
-    def test_module_utils_basic_ansible_module_to_filesystem_str(self):
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec = dict(),
-        )
-
-        self.assertEqual(am._to_filesystem_str(u'foo'), b'foo')
-        self.assertEqual(am._to_filesystem_str(u'föö'), b'f\xc3\xb6\xc3\xb6')
 
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic

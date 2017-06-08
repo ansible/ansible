@@ -86,6 +86,7 @@ import tempfile
 import traceback
 import grp
 import pwd
+import pipes
 import platform
 import errno
 import datetime
