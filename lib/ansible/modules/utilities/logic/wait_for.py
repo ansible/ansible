@@ -159,6 +159,16 @@ EXAMPLES = r'''
     search_regex: OpenSSH
     delay: 10
   connection: local
+
+# Same as above but you normally have ansible_connection set in inventory, which overrides 'connection'
+- name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+  wait_for:
+    port: 22
+    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+    search_regex: OpenSSH
+    delay: 10
+  vars:
+    ansible_connection: local
 '''
 
 import binascii
