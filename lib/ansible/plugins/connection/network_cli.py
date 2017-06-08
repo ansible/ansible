@@ -28,6 +28,7 @@ import logging
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves import StringIO
 from ansible.plugins import terminal_loader
 from ansible.plugins.connection import ensure_connect
@@ -193,10 +194,11 @@ class Connection(_Connection):
         cleaned = []
         command = obj.get('command') if obj else None
         for line in resp.splitlines():
+            line = to_text(line, 'utf8').strip()
             if (command and line.startswith(command.strip())) or self._matched_prompt.strip() in line:
                 continue
             cleaned.append(line)
-        return str("\n".join(cleaned)).strip()
+        return "\n".join(cleaned).strip()
 
     def _find_prompt(self, response):
         """Searches the buffered response for a matching command prompt"""
