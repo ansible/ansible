@@ -792,9 +792,18 @@ def maybe_add_ssl_handler(url, validate_certs):
                              ' however this is unsafe and not recommended')
 
         # do the cert validation
+        netloc = parsed.get('netloc')
+        if '@' in netloc:
+            netloc = netloc.split('@', 1)[1]
+        if ':' in netloc:
+            hostname, port = netloc.split(':', 1)
+            port = int(port)
+        else:
+            hostname = netloc
+            port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(parsed.get('hostname'), parsed.get('port'))
+        return SSLValidationHandler(hostname, port)
 
 
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
@@ -821,12 +830,15 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
         if username:
             password = url_password
+        elif '@' in parsed.get('netloc'):
+            username = parsed.get('username')
+            password = parsed.get('password')
 
         if username and not force_basic_auth:
             passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
 
             # this creates a password manager
-            passman.add_password(None, parsed.get('netloc'), parsed.get('username'), parsed.get('password'))
+            passman.add_password(None, parsed.get('netloc'), username, password)
 
             # because we have put None at the start it will always
             # use this username/password combination for  urls
@@ -839,7 +851,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             handlers.append(digest_authhandler)
 
         elif username and force_basic_auth:
-            headers["Authorization"] = basic_auth_header(username, parsed.get('password'))
+            headers["Authorization"] = basic_auth_header(username, password)
 
         else:
             try:
@@ -975,7 +987,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         data={...}
         resp, info = fetch_url(module,
                                "http://example.com",
-                               data=module.jsonify(data)
+                               data=module.jsonify(data),
                                header={'Content-type': 'application/json'},
                                method="POST")
         status_code = info["status"]
