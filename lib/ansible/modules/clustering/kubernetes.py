@@ -203,7 +203,9 @@ except ImportError:
 
 KIND_URL = {
     "binding": "/api/v1/namespaces/{namespace}/bindings",
+    "deployment": "/apis/extensions/v1beta1/namespaces/{namespace}/deployments",
     "endpoints": "/api/v1/namespaces/{namespace}/endpoints",
+    "ingress": "/apis/extensions/v1beta1/namespaces/{namespace}/ingresses",
     "limitrange": "/api/v1/namespaces/{namespace}/limitranges",
     "namespace": "/api/v1/namespaces",
     "node": "/api/v1/nodes",
