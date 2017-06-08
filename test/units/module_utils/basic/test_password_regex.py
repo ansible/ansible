@@ -23,7 +23,6 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils.basic import PASSWORD_MATCH
-#from ansible.module_utils.basic import PASSWD_ARG_RE
 from ansible.module_utils._text import to_text, to_bytes
 
 
@@ -103,16 +102,15 @@ def new_line_post(text):
 
 # NOTE: the commented out modifiers cause the current regex to fail
 modifiers = [(no_mod, 'original'),
-#             (add_trailing, 'trailing space'),
-#             (add_leading, 'leading space'),
-#             (add_leading_and_trailing, 'leading and trailing space'),
-#             (dash_dash, '-- prepended'),
-#             (under_pre, '_ prepended'),
-#             (new_line_pre, 'new line prepended'),
+             #             (add_trailing, 'trailing space'),
+             #             (add_leading, 'leading space'),
+             #             (add_leading_and_trailing, 'leading and trailing space'),
+             #             (dash_dash, '-- prepended'),
+             #             (under_pre, '_ prepended'),
+             #             (new_line_pre, 'new line prepended'),
              (new_line_post, 'new line postpended'),
-#             (covert_to_bytes, 'to_bytes'),
+             #             (covert_to_bytes, 'to_bytes'),
              (covert_to_text, 'to_text')]
-
 
 regexes = [PASSWORD_MATCH]
 
