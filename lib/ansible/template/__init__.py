@@ -158,7 +158,6 @@ def _count_newlines_from_end(in_str):
         return i
 
 
-
 class AnsibleContext(Context):
     '''
     A custom context, which intercepts resolve() calls and sets a flag
