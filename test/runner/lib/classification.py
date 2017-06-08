@@ -414,6 +414,7 @@ class PathMapper(object):
                     'VERSION',
                     'Makefile',
                     'setup.py',
+                    'codecov.yml',
             ):
                 return minimal
 
