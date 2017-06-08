@@ -97,7 +97,7 @@ cyberark_session:
     sample:
         {
             "api_base_url": "https://components.cyberark.local",
-            "token": "TOKEN", 
+            "token": "TOKEN",
             "use_shared_logon_authentication": false,
             "validate_certs": false
         }
