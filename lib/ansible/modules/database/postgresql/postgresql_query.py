@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
 module: postgresql_query
@@ -318,8 +319,8 @@ def main():
     changed = False
 
     # set changed flag only on non read-only command
-    if "UPDATE" in statusmessage or "INSERT" in statusmessage or \
-            "UPSERT" in statusmessage:
+    if ("UPDATE" in statusmessage or "INSERT" in statusmessage or \
+            "UPSERT" in statusmessage or "DELETE" in statusmessage):
         changed = True
 
     if changed:
