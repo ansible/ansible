@@ -79,15 +79,41 @@ notes:
 '''
 
 EXAMPLES = r'''
-  # Set an environment variable for all users
+- name: Set an environment variable for all users
   win_environment:
     state: present
     name: TestVariable
     value: Test value
     level: machine
-  # Remove an environment variable for the current users
+
+- name: Remove an environment variable for the current user
   win_environment:
     state: absent
     name: TestVariable
     level: user
+'''
+
+RETURN = r'''
+before_value:
+  description:
+  - the value of the environment key before a change, this is null if it didn't
+    exist
+  returned: always
+  type: string
+  sample: C:\Windows\System32
+level:
+  description: the level set when calling the module
+  returned: always
+  type: string
+  sample: machine
+name:
+  description: the name of the environment key the module checked
+  returned: always
+  type: string
+  sample: JAVA_HOME
+value:
+  description: the value the environment key has been set to
+  returned: always
+  type: string
+  sample: C:\Program Files\jdk1.8
 '''
