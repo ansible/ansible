@@ -9,5 +9,82 @@
     that:
       - vault_encrypted_var == "Setec Astronomy\n"
 
+- name: Assert that a embedded vault of a string piped to quote uses plaintext
+  assert:
+    that:
+      - '{{ vault_encrypted_one_line_var|quote }} == "Setec Astronomy"'
+
+- name: Assert that a string created with an embedded vault of a string uses plaintext
+  assert:
+    that:
+      - '{{ one_line_var|quote }} == "Setec Astronomy"'
+
+- name: Assert that a string created with an embedded vault of a string piped to quote uses plaintext
+  assert:
+    that:
+      - '{{ quoted_one_line_var}} ==  "Setec Astronomy"'
 # TODO: add a expected fail here
 # - debug: var=vault_encrypted_one_line_var_with_embedded_template
+
+- name: assert various string ops and jinja filters work on embedded vault variables
+  assert:
+      that:
+        # - vaulted_valued|escape == 'foo bar'
+        # - vaulted_valued|pprint == 'foo bar'
+        # - vaulted_valued|title == 'Foo Bar'
+        # - vaulted_valued|to_json == '"foo bar"'
+        # jinja version dependent?
+          #- vaulted_valued|truncate(4) == 'f...'
+        # - vaulted_valued|wordcount == 2
+        # - vaulted_valued|wordwrap(4) == 'foo\nbar'
+        # - vaulted_valued|to_json == '"foo bar"'
+          #- vaulted_valued|regex_replace('foo', 'baz') == 'baz bar'
+          #- vaulted_valued|regex_search('foo') == 'foo'
+          #- vaulted_valued|regex_findall('foo') == ['foo']
+          # busted on py3 because it uses escape() also busted
+          # - vaulted_valued|urlize == 'foo bar'
+          #  these work but are flaky across py2/py3
+          # - vaulted_valued|random(seed='foo') == 'r'
+          #- vaulted_valued|shuffle(seed='foo') == ["b", "o", "a", " ", "o", "f", "r"]
+        - vaulted_valued == 'foo bar'
+        - vaulted_valued|string == 'foo bar'
+        - vaulted_valued|quote == "'foo bar'"
+        - vaulted_valued|capitalize == 'Foo bar'
+        - vaulted_valued|center(width=9) == ' foo bar '
+        - vaulted_valued|default('monkey') == 'foo bar'
+        - vaulted_valued|forceescape == 'foo bar'
+        - vaulted_valued|first == 'f'
+        - "'%s'|format(vaulted_valued) == 'foo bar'"
+        - vaulted_valued|indent(indentfirst=True) == '    foo bar'
+        - vaulted_valued.split() == ['foo', 'bar']
+        #- vaulted_valued.split()|first|int(base=36) == 20328
+        - vaulted_valued|join('-') == 'f-o-o- -b-a-r'
+        - vaulted_valued|last == 'r'
+        - vaulted_valued|length == 7
+        - vaulted_valued|list == ['f', 'o', 'o', ' ', 'b', 'a', 'r']
+        - vaulted_valued|lower == 'foo bar'
+        - vaulted_valued|replace('foo', 'baz') == 'baz bar'
+        - vaulted_valued|reverse == 'rab oof'
+        - vaulted_valued|safe == 'foo bar'
+        # equalto is jinja 2.8+
+        #- vaulted_valued|select('equalto', 'o')|list == ['o', 'o']
+        - vaulted_valued|slice(2)|list == [['f', 'o', 'o', ' '], ['b', 'a', 'r']]
+        - vaulted_valued|sort|list == [" ", "a", "b", "f", "o", "o", "r"]
+        - vaulted_valued|trim == 'foo bar'
+        - vaulted_valued|upper == 'FOO BAR'
+        - vaulted_valued|urlencode == 'foo%20bar'
+        - vaulted_valued is not callable
+        # - vaulted_valued is equalto('foo bar')
+        - vaulted_valued is iterable
+        - vaulted_valued is lower
+        - vaulted_valued is not none
+        - vaulted_valued is string
+        - vaulted_valued is not upper
+
+        - vaulted_valued|b64encode == 'Zm9vIGJhcg=='
+        - vaulted_valued|to_uuid == '0271fe51-bb26-560f-b118-5d6513850860'
+        - vaulted_valued|md5 == '327b6f07435811239bc47e1544353273'
+        - vaulted_valued|sha1 == '3773dea65156909838fa6c22825cafe090ff8030'
+        - vaulted_valued|hash == '3773dea65156909838fa6c22825cafe090ff8030'
+        - vaulted_valued|regex_escape == 'foo\ bar'
+        - vaulted_valued|comment == '#\n# foo bar\n#'
