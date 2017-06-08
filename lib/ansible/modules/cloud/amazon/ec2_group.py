@@ -153,8 +153,7 @@ EXAMPLES = '''
     vpc_id: 12345
     region: eu-west-1
     rules:
-      # 'ports' rule keyword was introduced in version 2.4. It accepts a single port value or a list of values including
-      ranges (from_port-to_port).
+      # 'ports' rule keyword was introduced in version 2.4. It accepts a single port value or a list of values including ranges (from_port-to_port).
       - proto: tcp
         ports: 22
         group_name: example-vpn
@@ -164,8 +163,7 @@ EXAMPLES = '''
           - 443
           - 8080-8099
         cidr_ip: 0.0.0.0/0
-      # Rule sources list support was added in version 2.4. This allows to define multiple sources per source type as
-      well as multiple source types per rule.
+      # Rule sources list support was added in version 2.4. This allows to define multiple sources per source type as well as multiple source types per rule.
       - proto: tcp
         ports:
           - 6379
