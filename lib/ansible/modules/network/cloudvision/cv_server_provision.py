@@ -277,7 +277,6 @@ import re
 import time
 from jinja2 import meta
 import jinja2
-
 from ansible.module_utils.basic import AnsibleModule
 from cvprac.cvp_client import CvpClient
 from cvprac.cvp_client_errors import CvpLoginError, CvpApiError
