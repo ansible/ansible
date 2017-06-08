@@ -27,7 +27,7 @@ import collections
 import time
 
 from ansible.plugins.callback import CallbackBase
-from ansible.module_utils.six import reduce
+from ansible.module_utils.six.moves import reduce
 
 # define start time
 t0 = tn = time.time()
@@ -35,7 +35,9 @@ t0 = tn = time.time()
 
 def secondsToStr(t):
     # http://bytes.com/topic/python/answers/635958-handy-short-cut-formatting-elapsed-time-floating-point-seconds
-    rediv = lambda ll, b: list(divmod(ll[0], b)) + ll[1:]
+    def rediv(ll, b):
+        return list(divmod(ll[0], b)) + ll[1:]
+
     return "%d:%02d:%02d.%03d" % tuple(
         reduce(rediv, [[t * 1000, ], 1000, 60, 60]))
 
@@ -123,4 +125,3 @@ class CallbackModule(CallbackBase):
                                               u' {0:.02f}s'.format(total_time))
         self._display.display(filled("", fchar="~"))
         self._display.display(msg_total)
-
