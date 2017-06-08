@@ -237,6 +237,11 @@ try:
 except:
     HAVE_SPWD = False
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 class User(object):
     """
@@ -297,7 +302,7 @@ class User(object):
 
         if module.params['expires']:
             try:
-                self.expires = time.gmtime((module.params['expires']//86400) * 86400.0)
+                self.expires = time.gmtime((module.params['expires']//86400) * 86400)
             except Exception:
                 e = get_exception()
                 module.fail_json(msg="Invalid expires time %s: %s" %(self.expires, str(e)))
@@ -603,7 +608,11 @@ class User(object):
         info = self.get_pwd_info()
         if len(info[1]) == 1 or len(info[1]) == 0:
             info[1] = self.user_password()
-        info.append( time.gmtime(self.user_expire()*86400.0) )
+        expire = self.user_expire()
+        if len(expire)>0:
+            info.append( time.gmtime(float(expire)*86400) )
+        else:
+            info.append( None )
         return info
 
     def user_password(self):
@@ -624,7 +633,7 @@ class User(object):
         return passwd
 
     def user_expire(self):
-        expire = ''
+        expire = None
         if HAVE_SPWD:
             try:
                 expire = spwd.getspnam(self.name)[7]
@@ -637,7 +646,7 @@ class User(object):
             if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
                 for line in open(self.SHADOWFILE).readlines():
                     if line.startswith('%s:' % self.name):
-                        passwd = line.split(':')[7]
+                        expire = line.split(':')[7]
         return expire
 
     def get_ssh_key_path(self):
