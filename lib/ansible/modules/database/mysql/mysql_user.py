@@ -82,6 +82,14 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     version_added: "1.4"
+  preserve_privs:
+    description:
+      - Keep the existing privileges for this user and only overwrite
+        those defined by privs
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "2.4"
   sql_log_bin:
     description:
       - Whether binary logging should be enabled or disabled for the connection.
@@ -163,6 +171,14 @@ EXAMPLES = """
     append_privs: true
     priv: '*.*:REQUIRESSL'
     state: present
+
+# Modify user Bob privileges, giving read permissions on the db1 database while keeping his permissions on other databases
+- mysql_user:
+    name: bob
+    preserve_privs: true
+    priv: 'db1.*:SELECT'
+    state: present
+
 
 # Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
 - mysql_user:
@@ -311,7 +327,7 @@ def is_hash(password):
     return ishash
 
 
-def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, module):
+def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, preserve_privs, module):
     changed = False
     grant_option = False
 
@@ -374,8 +390,9 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if user != "root" and "PROXY" not in priv and not append_privs:
                         if module.check_mode:
                             return True
-                        privileges_revoke(cursor, user, host, db_table, priv, grant_option)
-                        changed = True
+                        if not preserve_privs:
+                            privileges_revoke(cursor, user, host, db_table, priv, grant_option)
+                            changed = True
 
             # If the user doesn't currently have any privileges on a db.table, then
             # we can perform a straight grant operation.
@@ -562,6 +579,7 @@ def main():
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
             append_privs=dict(default=False, type='bool'),
+            preserve_privs=dict(default=False, type='bool'),
             check_implicit_admin=dict(default=False, type='bool'),
             update_password=dict(default="always", choices=["always", "on_create"]),
             connect_timeout=dict(default=30, type='int'),
@@ -586,6 +604,7 @@ def main():
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
     append_privs = module.boolean(module.params["append_privs"])
+    preserve_privs = module.boolean(module.params["preserve_privs"])
     update_password = module.params['update_password']
     ssl_cert = module.params["ssl_cert"]
     ssl_key = module.params["ssl_key"]
@@ -632,9 +651,31 @@ def main():
         if user_exists(cursor, user, host, host_all):
             try:
                 if update_password == 'always':
-                    changed = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module)
+                    changed = user_mod(
+                        cursor,
+                        user,
+                        host,
+                        host_all,
+                        password,
+                        encrypted,
+                        priv,
+                        append_privs,
+                        preserve_privs,
+                        module
+                    )
                 else:
-                    changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
+                    changed = user_mod(
+                        cursor,
+                        user,
+                        host,
+                        host_all,
+                        None,
+                        encrypted,
+                        priv,
+                        append_privs,
+                        preserve_privs,
+                        module
+                    )
 
             except (SQLParseError, InvalidPrivsError, MySQLdb.Error):
                 e = get_exception()

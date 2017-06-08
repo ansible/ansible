@@ -481,6 +481,14 @@ def main():
                             ' using the venv module or pyvenv as virtualenv_command'
                     )
 
+                # if venv or pyvenv are used and virtualenv_python is defined, then
+                # virtualenv_python is ignored, this has to be acknowledged
+                elif module.params['virtualenv_python']:
+                    module.fail_json(
+                        msg='virtualenv_python should not be used when'
+                            ' using the venv module or pyvenv as virtualenv_command'
+                    )
+
                 cmd = "%s %s" % (cmd, env)
                 rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
                 out += out_venv
