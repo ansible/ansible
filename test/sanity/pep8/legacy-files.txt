@@ -108,7 +108,6 @@ lib/ansible/modules/cloud/docker/docker_image.py
 lib/ansible/modules/cloud/docker/docker_image_facts.py
 lib/ansible/modules/cloud/docker/docker_login.py
 lib/ansible/modules/cloud/docker/docker_network.py
-lib/ansible/modules/cloud/docker/docker_service.py
 lib/ansible/modules/cloud/google/gc_storage.py
 lib/ansible/modules/cloud/google/gcdns_record.py
 lib/ansible/modules/cloud/google/gcdns_zone.py
