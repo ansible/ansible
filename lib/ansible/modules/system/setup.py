@@ -69,6 +69,7 @@ description:
        executed directly by C(/usr/bin/ansible) to check what variables are
        available to a host. Ansible provides many I(facts) about the system,
        automatically.
+     - This module is also supported for Windows targets.
 notes:
     - More ansible facts will be added with successive releases. If I(facter) or
       I(ohai) are installed, variables from these programs will also be snapshotted
@@ -85,6 +86,7 @@ notes:
       their output must be formattable in JSON (Ansible will take care of this). Test the
       output of your scripts.
       This option was added in Ansible 2.1.
+    - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"

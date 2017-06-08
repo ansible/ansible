@@ -32,7 +32,6 @@ description:
        for debugging variables or expressions without necessarily halting
        the playbook. Useful for debugging together with the 'when:' directive.
      - This module is also supported for Windows targets.
-
 version_added: "0.8"
 options:
   msg:
