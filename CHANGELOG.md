@@ -207,7 +207,10 @@ Ansible Changes By Release
 - vmware
   * vmware_guest_find
 - windows
+  * win_defrag
+  * win_dsc
   * win_firewall
+  * win_route
 
 
 ## 2.3 "Ramble On" - 2017-04-12
