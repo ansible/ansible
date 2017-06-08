@@ -167,6 +167,14 @@ EXAMPLES = '''
     status: enabled
     state: present
     inventory_mode: automatic
+    inventory_zabbix:
+      tag: "{{ your_tag }}"
+      alias: "{{ your_alias }}"
+      notes: "Special Informations: {{ your_informations | default('None') }}"
+      location: "{{ your_location }}"
+      site_rack: "{{ your_site_rack }}"
+      os: "{{ your_os }}"
+      hardware: "{{ your_hardware }}"
     interfaces:
       - type: 1
         main: 1
