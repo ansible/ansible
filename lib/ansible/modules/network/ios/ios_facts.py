@@ -268,7 +268,7 @@ class Interfaces(FactsBase):
         if data:
             data = self.parse_interfaces(data)
             self.populate_ipv4_interfaces(data)
-            
+
         data = self.responses[2]
         if data:
             data = self.parse_interfaces(data)
@@ -304,14 +304,15 @@ class Interfaces(FactsBase):
             primary_address = addresses = []
             primary_address = re.findall(r'Internet address is (.+)$', value, re.M)
             addresses = re.findall(r'Secondary address (.+)$', value, re.M)
-            if len(primary_address) == 0: continue
+            if len(primary_address) == 0:
+              continue
             addresses.append(primary_address[0])
             for address in addresses:
                 addr, subnet = address.split("/")
                 ipv4 = dict(address=addr.strip(), subnet=subnet.strip())
                 self.add_ip_address(addr.strip(), 'ipv4')
                 self.facts['interfaces'][key]['ipv4'].append(ipv4)
-      
+
     def populate_ipv6_interfaces(self, data):
         for key, value in iteritems(data):
             self.facts['interfaces'][key]['ipv6'] = list()
