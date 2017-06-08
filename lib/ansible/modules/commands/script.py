@@ -30,6 +30,7 @@ description:
      - "The given script will be processed through the shell environment on the remote node. "
      - "This module does not require python on the remote system, much like
        the M(raw) module. "
+     - This module is also supported for Windows targets.
 options:
   free_form:
     description:
@@ -53,6 +54,7 @@ notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The ssh connection plugin will force pseudo-tty allocation via -tt when scripts are executed. pseudo-ttys do not have a stderr channel and all
     stderr is sent to stdout. If you depend on separated stdout and stderr result keys, please switch to a copy+command set of tasks instead of using script.
+  - This module is also supported for Windows targets.
 author:
     - Ansible Core Team
     - Michael DeHaan

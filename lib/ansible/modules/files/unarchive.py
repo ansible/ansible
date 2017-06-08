@@ -35,6 +35,7 @@ description:
      - The C(unarchive) module unpacks an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
      - Set C(remote_src=yes) to unpack an archive which already exists on the target.
+     - For Windows targets, look at the M(win_unzip) module instead.
 options:
   src:
     description:
@@ -107,6 +108,7 @@ notes:
       are not touched. This is the same behavior as a normal archive extraction.
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
+    - For Windows targets, look at the M(win_unzip) module instead.
 '''
 
 EXAMPLES = r'''

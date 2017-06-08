@@ -29,6 +29,7 @@ module: set_stats
 short_description: Set stats for the current ansible run
 description:
      - This module allows setting/accumulating stats on the current ansible run, either per host of for all hosts in the run.
+     - This module is also supported for Windows targets.
 options:
   data:
     description:
@@ -44,6 +45,8 @@ options:
         - boolean that indicates if the provided value is aggregated to the existing stat C(yes) or will replace it C(no)
     required: no
     default: yes
+notes:
+    - This module is also supported for Windows targets.
 version_added: "2.3"
 '''
 
