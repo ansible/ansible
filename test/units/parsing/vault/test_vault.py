@@ -158,6 +158,38 @@ class TestVaultCipherAes256(unittest.TestCase):
         self.assertIsInstance(b_key, six.binary_type)
         self.assertEqual(b_key, b_key_2)
 
+    def test_is_equal_is_equal(self):
+        self.assertTrue(self.vault_cipher._is_equal(b'abcdefghijklmnopqrstuvwxyz', b'abcdefghijklmnopqrstuvwxyz'))
+
+    def test_is_equal_unequal_length(self):
+        self.assertFalse(self.vault_cipher._is_equal(b'abcdefghijklmnopqrstuvwxyz', b'abcdefghijklmnopqrstuvwx and sometimes y'))
+
+    def test_is_equal_not_equal(self):
+        self.assertFalse(self.vault_cipher._is_equal(b'abcdefghijklmnopqrstuvwxyz', b'AbcdefghijKlmnopQrstuvwxZ'))
+
+    def test_is_equal_empty(self):
+        self.assertTrue(self.vault_cipher._is_equal(b'', b''))
+
+    def test_is_equal_non_ascii_equal(self):
+        utf8_data = to_bytes(u'私はガラスを食べられます。それは私を傷つけません。')
+        self.assertTrue(self.vault_cipher._is_equal(utf8_data, utf8_data))
+
+    def test_is_equal_non_ascii_unequal(self):
+        utf8_data = to_bytes(u'私はガラスを食べられます。それは私を傷つけません。')
+        utf8_data2 = to_bytes(u'Pot să mănânc sticlă și ea nu mă rănește.')
+
+        # Test for the len optimization path
+        self.assertFalse(self.vault_cipher._is_equal(utf8_data, utf8_data2))
+        # Test for the slower, char by char comparison path
+        self.assertFalse(self.vault_cipher._is_equal(utf8_data, utf8_data[:-1] + b'P'))
+
+    def test_is_equal_non_bytes(self):
+        """ Anything not a byte string should raise a TypeError """
+        self.assertRaises(TypeError, self.vault_cipher._is_equal, u"One fish", b"two fish")
+        self.assertRaises(TypeError, self.vault_cipher._is_equal, b"One fish", u"two fish")
+        self.assertRaises(TypeError, self.vault_cipher._is_equal, 1, b"red fish")
+        self.assertRaises(TypeError, self.vault_cipher._is_equal, b"blue fish", 2)
+
 
 class TestVaultLib(unittest.TestCase):
     def setUp(self):

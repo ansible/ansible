@@ -12,6 +12,7 @@ redis
 python-memcached
 python-systemd
 cryptography
+pycrypto
 botocore
 boto3
 pytest
