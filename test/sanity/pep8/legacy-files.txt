@@ -100,7 +100,6 @@ lib/ansible/modules/cloud/cloudstack/cs_template.py
 lib/ansible/modules/cloud/cloudstack/cs_user.py
 lib/ansible/modules/cloud/cloudstack/cs_vmsnapshot.py
 lib/ansible/modules/cloud/cloudstack/cs_volume.py
-lib/ansible/modules/cloud/cloudstack/cs_zone.py
 lib/ansible/modules/cloud/docker/_docker.py
 lib/ansible/modules/cloud/docker/docker_container.py
 lib/ansible/modules/cloud/docker/docker_image.py
