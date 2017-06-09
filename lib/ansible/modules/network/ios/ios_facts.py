@@ -270,9 +270,22 @@ class Interfaces(FactsBase):
 
         data = self.responses[2]
         if data:
-            neighbors = self.run(['show lldp neighbors detail'])
-            if neighbors:
-                self.facts['neighbors'] = self.parse_neighbors(neighbors[0])
+            facts_neighbors = dict()
+            
+            lldp_neighbors = self.run(['show lldp neighbors detail'])
+            if lldp_neighbors:
+                facts_lldp = self.parse_lldp_neighbors(lldp_neighbors[0])
+                if facts_lldp:
+                  facts_neighbors.update(facts_lldp)
+            
+            cdp_neighbors = self.run(['show cdp neighbors detail'])
+            if cdp_neighbors:
+                facts_cdp = self.parse_cdp_neighbors(cdp_neighbors[0])
+                if facts_cdp:
+                  facts_neighbors = self.parse_cdp_neighbors(cdp_neighbors[0])
+                               
+            if facts_neighbors:
+              self.facts['neighbors'] = facts_neighbors
 
     def populate_interfaces(self, interfaces):
         facts = dict()
@@ -313,7 +326,7 @@ class Interfaces(FactsBase):
         else:
             self.facts['all_ipv6_addresses'].append(address)
 
-    def parse_neighbors(self, neighbors):
+    def parse_lldp_neighbors(self, neighbors):
         facts = dict()
         for entry in neighbors.split('------------------------------------------------'):
             if entry == '':
@@ -324,7 +337,23 @@ class Interfaces(FactsBase):
             fact = dict()
             fact['host'] = self.parse_lldp_host(entry)
             fact['port'] = self.parse_lldp_port(entry)
-            facts[intf].append(fact)
+            if intf is not None:
+                facts[intf].append(fact)
+        return facts
+
+    def parse_cdp_neighbors(self, neighbors):
+        facts = dict()
+        for entry in neighbors.split('-------------------------'):
+            if entry == '':
+                continue
+            intf = self.parse_cdp_intf(entry)
+            if intf not in facts:
+                facts[intf] = list()
+            fact = dict()
+            fact['host'] = self.parse_cdp_host(entry)
+            fact['port'] = self.parse_cdp_port(entry)
+            if intf is not None:
+                facts[intf].append(fact)
         return facts
 
     def parse_interfaces(self, data):
@@ -405,6 +434,21 @@ class Interfaces(FactsBase):
 
     def parse_lldp_port(self, data):
         match = re.search(r'Port id: (.+)$', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_cdp_intf(self, data):
+        match = re.search(r'Interface: (.+),', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_cdp_host(self, data):
+        match = re.search(r'^Device ID: (.+)$', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_cdp_port(self, data):
+        match = re.search(r'Port ID \(outgoing port\): (.+)$', data, re.M)
         if match:
             return match.group(1)
 
