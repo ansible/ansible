@@ -238,11 +238,11 @@ try:
 except:
     HAVE_SPWD = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+#try:
+#    from __main__ import display
+#except ImportError:
+#    from ansible.utils.display import Display
+#    display = Display()
 
 class User(object):
     """
@@ -605,8 +605,11 @@ class User(object):
         if len(info[1]) == 1 or len(info[1]) == 0:
             info[1] = self.user_password()
         expire = self.user_expire()
-        if len(expire)>0:
-            info.append( time.gmtime(float(expire)*86400) )
+        if expire is not None and len(expire)>0:
+            if platform.system() == "FreeBSD":
+                info.append( time.gmtime(float(expire)) )
+            else:
+                info.append( time.gmtime(float(expire)*86400) )
         else:
             info.append( None )
         return info
@@ -641,8 +644,14 @@ class User(object):
             # Read shadow file for user's expiry time
             if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
                 for line in open(self.SHADOWFILE).readlines():
+                    # HINT - GNU/Linux stores EXPIRE at pos. 7, FreeBSD uses pos. 6,
+                    #      - ansible on FreeBSD does not have spwd (freebsd11, python 2.7.13)
+                    #      - FreeBSD stores EXPIRE as UNIX timestamp in /etc/master.passwd (GNU/Linux uses days)
                     if line.startswith('%s:' % self.name):
-                        expire = line.split(':')[7]
+                        if platform.system() == "FreeBSD":
+                            expire = line.split(':')[6]
+                        else:
+                            expire = line.split(':')[7]
         return expire
 
     def get_ssh_key_path(self):
