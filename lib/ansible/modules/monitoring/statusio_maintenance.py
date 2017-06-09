@@ -210,7 +210,7 @@ def get_api_auth_headers(api_id, api_key, url, statuspage):
         else:
             auth_headers = headers
             auth_content = data
-    except:
+    except Exception as e:
         return 1, None, None, e
     return 0, auth_headers, auth_content, None
 

@@ -183,7 +183,7 @@ import xml
 import re
 from xml.dom.minidom import parseString as parseXML
 from ansible.module_utils.six import iteritems
-
+from ansible.module_utils.pycompat24 import get_exception
 
 class Package:
     def __init__(self, name, prefix, version):

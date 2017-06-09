@@ -616,8 +616,9 @@ EXAMPLES = '''
 '''
 
 import time
+import traceback
 from ast import literal_eval
-from ansible.module_utils.six import get_function_code
+from ansible.module_utils.six import get_function_code, string_types
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect, connect_to_aws
 from distutils.version import LooseVersion
@@ -1039,7 +1040,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                 grp_details = ec2.get_all_security_groups(filters={'vpc_id': vpc_id})
             else:
                 grp_details = ec2.get_all_security_groups()
-            if isinstance(group_name, basestring):
+            if isinstance(group_name, string_types):
                 group_name = [group_name]
             unmatched = set(group_name).difference(str(grp.name) for grp in grp_details)
             if len(unmatched) > 0:
@@ -1048,7 +1049,7 @@ def create_instances(module, ec2, vpc, override_count=None):
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
             # wrap the group_id in a list if it's not one already
-            if isinstance(group_id, basestring):
+            if isinstance(group_id, string_types):
                 group_id = [group_id]
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             group_name = [grp_item.name for grp_item in grp_details]
@@ -1122,7 +1123,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                     params['network_interfaces'] = interfaces
             else:
                 if network_interfaces:
-                    if isinstance(network_interfaces, basestring):
+                    if isinstance(network_interfaces, string_types):
                         network_interfaces = [network_interfaces]
                     interfaces = []
                     for i, network_interface_id in enumerate(network_interfaces):
@@ -1217,7 +1218,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                     module.fail_json(
                         msg="instance_initiated_shutdown_behavior=stop is not supported for spot instances.")
 
-                if spot_launch_group and isinstance(spot_launch_group, basestring):
+                if spot_launch_group and isinstance(spot_launch_group, string_types):
                     params['launch_group'] = spot_launch_group
 
                 params.update(dict(

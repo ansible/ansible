@@ -107,6 +107,7 @@ import itertools
 from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils.pycompat24 import get_exception
 
 
 class FactsBase(object):

@@ -111,7 +111,7 @@ def set_config_state(state, configfile):
         myfile.write(re.sub(r'^SELINUX=.*', stateline, line))
     myfile.close()
 
-def set_state(state):
+def set_state(module, state):
     if (state == 'enforcing'):
         selinux.security_setenforce(1)
     elif (state == 'permissive'):
@@ -196,12 +196,12 @@ def main():
             if (state == 'disabled'):
                 if (runtime_state != 'permissive'):
                     # Temporarily set state to permissive
-                    set_state('permissive')
+                    set_state(module, 'permissive')
                     msgs.append('runtime state temporarily changed from \'%s\' to \'permissive\', state change will take effect next reboot' % (runtime_state))
                 else:
                     msgs.append('state change will take effect next reboot')
             else:
-                set_state(state)
+                set_state(module, state)
                 msgs.append('runtime state changed from \'%s\' to \'%s\'' % (runtime_state, state))
         else:
             msgs.append('state change will take effect next reboot')

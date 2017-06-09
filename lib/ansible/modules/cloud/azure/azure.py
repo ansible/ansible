@@ -193,6 +193,7 @@ import base64
 import datetime
 import os
 import time
+import signal
 from urlparse import urlparse
 from ansible.module_utils.facts import * # TimeoutError
 
@@ -305,7 +306,7 @@ def _delete_disks_when_detached(azure, wait_timeout, disk_names):
                     azure.delete_disk(disk.name, True)
                     disk_names.remove(disk_name)
     except AzureException as e:
-        module.fail_json(msg="failed to get or delete disk %s, error was: %s" % (disk_name, str(e)))
+        raise AzureException("failed to get or delete disk %s, error was: %s" % (disk_name, str(e)))
     finally:
         signal.alarm(0)
 

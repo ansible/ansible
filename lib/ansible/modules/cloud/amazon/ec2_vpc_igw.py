@@ -80,6 +80,9 @@ from ansible.module_utils.six import string_types
 class AnsibleIGWException(Exception):
     pass
 
+class AnsibleTagCreationException(AnsibleIGWException):
+    pass
+
 
 def get_igw_info(igw):
     return {'id': igw.id,

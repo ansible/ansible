@@ -220,6 +220,7 @@ else:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import configparser
 
 
@@ -331,7 +332,7 @@ def check_if_roles_changed(uinfo, roles, db_name):
     def make_sure_roles_are_a_list_of_dict(roles, db_name):
         output = list()
         for role in roles:
-            if isinstance(role, basestring):
+            if isinstance(role, string_types):
                 new_role = { "role": role, "db": db_name }
                 output.append(new_role)
             else:

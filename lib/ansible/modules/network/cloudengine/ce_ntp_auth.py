@@ -204,6 +204,11 @@ import re
 import copy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ce import ce_argument_spec, load_config, get_nc_config, set_nc_config
+from ansible.module_utils.six import PY3
+
+if PY3:
+    long = int
+
 
 CE_NC_GET_NTP_AUTH_CONFIG = """
 <filter type="subtree">

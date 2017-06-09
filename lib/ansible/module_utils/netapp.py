@@ -24,6 +24,7 @@ except ImportError:
 
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
+from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import open_url
 

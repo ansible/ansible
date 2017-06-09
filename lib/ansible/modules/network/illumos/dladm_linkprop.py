@@ -231,7 +231,7 @@ def main():
             link=dict(required=True, default=None, type='str', aliases=['nic', 'interface']),
             property=dict(required=True, type='str', aliases=['name']),
             value=dict(required=False, type='str'),
-            temporary=dict(default=False, type='bool', choices=BOOLEANS),
+            temporary=dict(default=False, type='bool'),
             state=dict(
                 default='present', choices=['absent', 'present', 'reset']),
         ),

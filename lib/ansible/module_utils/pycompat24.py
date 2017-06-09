@@ -52,7 +52,7 @@ except ImportError:
     # which is essentially a cut/paste from an earlier (2.6) version of python's
     # ast.py
     from compiler import ast, parse
-    from ansible.module_utils.six import binary_type, string_types, text_type
+    from ansible.module_utils.six import binary_type, string_types, text_type, integer_types
 
     def literal_eval(node_or_string):
         """
@@ -69,7 +69,7 @@ except ImportError:
 
         def _convert(node):
             # Okay to use long here because this is only for python 2.4 and 2.5
-            if isinstance(node, ast.Const) and isinstance(node.value, (text_type, binary_type, int, float, long, complex)):
+            if isinstance(node, ast.Const) and isinstance(node.value, (text_type, binary_type, integer_types, float, complex)):
                 return node.value
             elif isinstance(node, ast.Tuple):
                 return tuple(map(_convert, node.nodes))

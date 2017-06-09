@@ -163,7 +163,7 @@ def main():
             module.exit_json(changed=True)
         except subprocess.CalledProcessError:
             e = get_exception()
-            module.fail_json(msg=str(dir(cpe)))
+            module.fail_json(msg=str(dir(e)))
     else:
         module.exit_json(changed=False)
 

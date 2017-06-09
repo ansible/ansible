@@ -199,7 +199,7 @@ class StackiHost:
                               headers=self.header, method="POST")
 
 
-    def stack_force_install(self):
+    def stack_force_install(self, result):
 
         data = dict()
         changed = False
@@ -216,7 +216,7 @@ class StackiHost:
         result['stdout'] = "api call successful".rstrip("\r\n")
 
 
-    def stack_add_interface(self):
+    def stack_add_interface(self, data):
 
         data['cmd'] = "add host interface {0} interface={1} ip={2} network={3} mac={4} default=true"\
             .format(self.hostname, self.prim_intf, self.prim_intf_ip, self.network, self.prim_intf_mac)

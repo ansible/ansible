@@ -958,7 +958,7 @@ class LxcContainerManagement(object):
         """
 
         self.container = self.get_container_bind()
-        for _ in xrange(timeout):
+        for _ in range(timeout):
             if self._get_state() != 'running':
                 self.container.start()
                 self.state_change = True
@@ -1012,7 +1012,7 @@ class LxcContainerManagement(object):
         :type timeout: ``int``
         """
 
-        for _ in xrange(timeout):
+        for _ in range(timeout):
             if not self._container_exists(container_name=self.container_name, lxc_path=self.lxc_path):
                 break
 

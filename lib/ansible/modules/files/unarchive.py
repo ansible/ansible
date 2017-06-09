@@ -142,6 +142,7 @@ from zipfile import ZipFile, BadZipfile
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.pycompat24 import get_exception
 
 try:  # python 3.3+
     from shlex import quote

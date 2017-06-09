@@ -85,7 +85,7 @@ class UnsafeProxy(object):
 class AnsibleJSONUnsafeEncoder(json.JSONEncoder):
     def encode(self, obj):
         if isinstance(obj, AnsibleUnsafe):
-            return super(AnsibleJSONUnsafeEncoder, self).encode(dict(__ansible_unsafe=True, value=unicode(obj)))
+            return super(AnsibleJSONUnsafeEncoder, self).encode(dict(__ansible_unsafe=True, value=to_text(obj)))
         else:
             return super(AnsibleJSONUnsafeEncoder, self).encode(obj)
 

@@ -156,6 +156,7 @@ except ImportError:
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gcp import check_params, get_google_api_client, GCPUtils
+from ansible.module_utils.six import string_types
 
 USER_AGENT_PRODUCT = 'ansible-url_map'
 USER_AGENT_VERSION = '0.0.1'
@@ -258,7 +259,7 @@ def _validate_host_rules_params(host_rules):
         try:
             check_params(hr, fields)
             for host in hr['hosts']:
-                if not isinstance(host, basestring):
+                if not isinstance(host, string_types):
                     raise ValueError("host in hostrules must be a string")
                 elif '*' in host:
                     if host.index('*') != 0:
