@@ -110,7 +110,8 @@ def merge_hash(a, b):
         # if there's already such key in a
         # and that key contains a MutableMapping
         if k in result and isinstance(result[k], MutableMapping) and isinstance(v, MutableMapping):
-            if C.DEFAULT_LIST_BEHAVIOUR == "merge" and isinstance(v, list):                                                        result[k] = unique(result[k] + v)
+            if C.DEFAULT_LIST_BEHAVIOUR == "merge" and isinstance(v, list):
+                result[k] = unique(result[k] + v)
             else:
                 # merge those dicts recursively
                 result[k] = merge_hash(result[k], v)
