@@ -1,3 +1,4 @@
+---
 - name: setup create a directory to serve files from
   file:
     dest: "{{ files_dir }}"
@@ -113,14 +114,22 @@
       - not waitfor|changed
       - "waitfor.port == {{ http_port }}"
 
+# TODO: fix drain test for freebsd and macOS, ubuntu-py3
+- name: setup install psutil
+  package:
+    name: python-psutil
+  when: ansible_system == "Linux" and not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "16.04")
+
 - name: test wait for port drained
   wait_for:
     port: "{{ http_port }}"
     state: drained
   register: waitfor
+  when: ansible_system == "Linux" and not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "16.04")
 - name: verify test wait for port
   assert:
     that:
       - waitfor|success
       - not waitfor|changed
       - "waitfor.port == {{ http_port }}"
+  when: ansible_system == "Linux" and not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "16.04")
