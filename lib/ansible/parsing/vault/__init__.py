@@ -25,6 +25,7 @@ import shlex
 import shutil
 import sys
 import tempfile
+import warnings
 from binascii import hexlify
 from binascii import unhexlify
 from hashlib import md5
@@ -37,14 +38,16 @@ HAS_PYCRYPTO = False
 HAS_SOME_PYCRYPTO = False
 CRYPTOGRAPHY_BACKEND = None
 try:
-    from cryptography.exceptions import InvalidSignature
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import hashes, padding
-    from cryptography.hazmat.primitives.hmac import HMAC
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-    from cryptography.hazmat.primitives.ciphers import (
-        Cipher as C_Cipher, algorithms, modes
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        from cryptography.exceptions import InvalidSignature
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import hashes, padding
+        from cryptography.hazmat.primitives.hmac import HMAC
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        from cryptography.hazmat.primitives.ciphers import (
+            Cipher as C_Cipher, algorithms, modes
+        )
     CRYPTOGRAPHY_BACKEND = default_backend()
     HAS_CRYPTOGRAPHY = True
 except ImportError:
