@@ -151,7 +151,7 @@ class TestVaultCipherAes256(unittest.TestCase):
 
         # A fixed salt
         b_salt = b'q' * 32  # q is the most random letter.
-        b_key = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
+        b_key_1 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
         self.assertIsInstance(b_key, six.binary_type)
 
         # verify we get the same answer
