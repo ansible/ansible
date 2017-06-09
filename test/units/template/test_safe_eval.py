@@ -22,9 +22,11 @@ __metaclass__ = type
 import sys
 from collections import defaultdict
 
+from ansible.module_utils.six import string_types
+
 from ansible.compat.tests import unittest
 from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
-from ansible.compat.six import string_types
+
 
 from ansible.template.safe_eval import safe_eval
 
@@ -166,10 +168,12 @@ class TestSafeEval(BaseSafeEval, unittest.TestCase):
         self._eval(code, code, string_types, _locals, Exception,
                    expected_exc_message='invalid expression ([x for x in some_list])')
 
-    @unittest.skipUnless(sys.version_info[:2] >= (2, 7), "Python 2.6 has no set literals")
-    def test_set(self):
-        code = '''{1,2,3}'''
-        self._eval(code, {1, 2, 3}, set, self._locals)
+# FIXME: No obvious way to test set literals without breaking tests and compile checks against py2.6
+#        since {1,2,3} is a syntax error there.
+#    @unittest.skipUnless(sys.version_info[:2] >= (2, 7), "Python 2.6 has no set literals")
+#    def test_set(self):
+#        code = '''{1,2,3}'''
+#        self._eval(code, {1, 2, 3}, set, self._locals)
 
     def test_yield(self):
         code = '''yield some_item'''
