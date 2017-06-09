@@ -37,12 +37,15 @@ options:
   prefix:
     description:
       - Network prefix of the static route.
+    required: true
   mask:
     description:
       - Network prefix mask of the static route.
+    required: true
   next_hop:
     description:
       - Next hop IP of the static route.
+    required: true
   admin_distance:
     description:
       - Admin distance of the static route.
