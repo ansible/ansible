@@ -161,7 +161,7 @@ class Task(Base, Conditional, Taggable, Become):
         keep it short.
         '''
 
-        assert isinstance(ds, dict)
+        assert isinstance(ds, dict), 'ds (%s) should be a dict but was a %s' % (ds, type(dict))
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure suitable for the
@@ -177,7 +177,7 @@ class Task(Base, Conditional, Taggable, Become):
         try:
             (action, args, delegate_to) = args_parser.parse()
         except AnsibleParserError as e:
-            raise AnsibleParserError(to_native(e), obj=ds)
+            raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
 
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that

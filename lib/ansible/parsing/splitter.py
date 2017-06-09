@@ -62,7 +62,7 @@ def parse_kv(args, check_raw=False):
             vargs = split_args(args)
         except ValueError as ve:
             if 'no closing quotation' in str(ve).lower():
-                raise AnsibleParserError("error parsing argument string, try quoting the entire line.")
+                raise AnsibleParserError("error parsing argument string, try quoting the entire line.", orig_exc=ve)
             else:
                 raise
 

@@ -105,7 +105,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         up with what we expect the proper attributes to be
         '''
 
-        assert isinstance(ds, dict)
+        assert isinstance(ds, dict), 'ds (%s) should be a dict but was a %s' % (ds, type(ds))
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure
