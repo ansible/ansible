@@ -17,7 +17,7 @@ and do not wish to install them from your operating system package manager, you
 can install them from pip
 
     $ easy_install pip               # if pip is not already available
-    $ pip install pyyaml jinja2 nose pytest passlib pycrypto
+    $ pip install pyyaml jinja2 nose pytest passlib cryptography
 
 From there, follow ansible instructions on docs.ansible.com as normal.
 

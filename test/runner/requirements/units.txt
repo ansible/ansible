@@ -1,11 +1,11 @@
 boto
 boto3
 placebo
+cryptography
 jinja2
 mock
 nose
 passlib
-pycrypto
 pytest
 pytest-mock
 pytest-xdist
