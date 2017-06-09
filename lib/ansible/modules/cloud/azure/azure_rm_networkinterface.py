@@ -77,6 +77,12 @@ options:
             - subnet
         required: false
         default: null
+    subnet_resource_group:
+        description:
+            - Name of the resource group that the specified subnet is a member of, if not the same as the resource
+              group of the network interface
+        required: false
+        default: null
     os_type:
         description:
             - Determines any rules to be added to a default security group. When creating a network interface, if no
@@ -303,6 +309,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             public_ip_address_name=dict(type='str', aliases=['public_ip_address', 'public_ip_name']),
             public_ip=dict(type='bool', default=True),
             subnet_name=dict(type='str', aliases=['subnet']),
+            subnet_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
             open_ports=dict(type='list'),
@@ -318,6 +325,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.public_ip_address_name = None
         self.state = None
         self.subnet_name = None
+        self.subnet_resource_group = None
         self.tags = None
         self.virtual_network_name = None
         self.security_group_name = None
@@ -352,6 +360,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             self.location = resource_group.location
 
         if self.state == 'present':
+            if not self.subnet_resource_group:
+                self.subnet_resource_group = self.resource_group
+
             if self.virtual_network_name and not self.subnet_name:
                 self.fail("Parameter error: a subnet is required when passing a virtual_network_name.")
 
@@ -558,7 +569,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
     def get_subnet(self, vnet_name, subnet_name):
         self.log("Fetching subnet {0} in virtual network {1}".format(subnet_name, vnet_name))
         try:
-            subnet = self.network_client.subnets.get(self.resource_group, vnet_name, subnet_name)
+            subnet = self.network_client.subnets.get(self.subnet_resource_group, vnet_name, subnet_name)
         except Exception as exc:
             self.fail("Error: fetching subnet {0} in virtual network {1} - {2}".format(subnet_name,
                                                                                       vnet_name,
