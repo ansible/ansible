@@ -279,6 +279,8 @@
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
         state: present
+        purge_rules: false
+        purge_rules_egress: false
         rules:
         - proto: "tcp"
           from_port: 8182
