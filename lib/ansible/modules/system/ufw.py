@@ -111,6 +111,11 @@ options:
       - Use profile located in C(/etc/ufw/applications.d)
     required: false
     aliases: ['app']
+  comment:
+    description:
+      - "This specifies a comment that will be added to the rule"
+    required: false
+    version_added: 2.4
   delete:
     description:
       - Delete rule.
@@ -250,6 +255,7 @@ def main():
             to_ip     = dict(default='any', aliases=['dest', 'to']),
             to_port   = dict(default=None,  aliases=['port']),
             proto     = dict(default=None,  aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']),
+            comment   = dict(default=None,  type='str'),
             app       = dict(default=None,  aliases=['name'])
         ),
         supports_check_mode = True,
@@ -306,7 +312,7 @@ def main():
             #
             # ufw [--dry-run] [delete] [insert NUM] [route] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
             #     [from ADDRESS [port PORT]] [to ADDRESS [port PORT]] \
-            #     [proto protocol] [app application]
+            #     [proto protocol] [app application] [comment COMMENT]
             cmd.append([module.boolean(params['delete']), 'delete'])
             cmd.append([module.boolean(params['route']), 'route'])
             cmd.append([params['insert'], "insert %s" % params['insert']])
@@ -317,7 +323,8 @@ def main():
 
             for (key, template) in [('from_ip',   "from %s" ), ('from_port', "port %s" ),
                                     ('to_ip',     "to %s"   ), ('to_port',   "port %s" ),
-                                    ('proto',     "proto %s"), ('app',       "app '%s'")]:
+                                    ('proto',     "proto %s"), ('app',       "app '%s'"),
+                                    ('comment',   "comment '%s'")]:
 
                 value = params[key]
                 cmd.append([value, template % (value)])
