@@ -426,6 +426,9 @@ def modify_eni(connection, vpc_id, module, eni):
         if attached is True:
             if eni.attachment and eni.attachment.instance_id != instance_id:
                 detach_eni(eni, module)
+                eni.attach(instance_id, device_index)
+                wait_for_eni(eni, "attached")
+                changed = True
             if eni.attachment is None:
                 eni.attach(instance_id, device_index)
                 wait_for_eni(eni, "attached")
@@ -472,10 +475,14 @@ def delete_eni(connection, module):
 
 def detach_eni(eni, module):
 
+    attached = module.params.get("attached")
+
     force_detach = module.params.get("force_detach")
     if eni.attachment is not None:
         eni.detach(force_detach)
         wait_for_eni(eni, "detached")
+        if attached:
+            return
         eni.update()
         module.exit_json(changed=True, interface=get_eni_info(eni))
     else:
@@ -489,6 +496,7 @@ def uniquely_find_eni(connection, module):
     subnet_id = module.params.get('subnet_id')
     instance_id = module.params.get('instance_id')
     device_index = module.params.get('device_index')
+    attached = module.params.get('attached')
 
     try:
         filters = {}
@@ -501,7 +509,7 @@ def uniquely_find_eni(connection, module):
             filters['private-ip-address'] = private_ip_address
             filters['subnet-id'] = subnet_id
 
-        if instance_id and device_index:
+        if not attached and instance_id and device_index:
             filters['attachment.instance-id'] = instance_id
             filters['attachment.device-index'] = device_index
 
@@ -562,11 +570,11 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=[
                                ['secondary_private_ip_addresses', 'secondary_private_ip_address_count']
-                               ],
+                           ],
                            required_if=([
                                ('state', 'absent', ['eni_id']),
                                ('attached', True, ['instance_id'])
-                               ])
+                           ])
                            )
 
     if not HAS_BOTO:
