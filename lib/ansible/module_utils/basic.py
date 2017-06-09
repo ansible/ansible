@@ -260,7 +260,7 @@ def get_distribution():
     ''' return the distribution name '''
     if platform.system() == 'Linux':
         try:
-            supported_dists = platform._supported_dists + ('arch', 'alpine')
+            supported_dists = platform._supported_dists + ('arch', 'alpine', 'devuan')
             distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
             if not distribution and os.path.isfile('/etc/system-release'):
                 distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
