@@ -204,8 +204,8 @@ def main():
     dev = module.params['dev']
     fstype = module.params['fstype']
     opts = module.params['opts']
-    force = module.boolean(module.params['force'])
-    resizefs = module.boolean(module.params['resizefs'])
+    force = module.params['force']
+    resizefs = module.params['resizefs']
 
     if fstype in friendly_names:
         fstype = friendly_names[fstype]
