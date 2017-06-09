@@ -115,7 +115,7 @@ options:
     description:
       - "This specifies a comment that will be added to the rule"
     required: false
-    default: null
+    version_added: 2.4
   delete:
     description:
       - Delete rule.
