@@ -373,8 +373,8 @@ def main():
         network_domain = dict(default=None),
         guest_cidr_address = dict(default=None),
         dhcp_provider = dict(default=None),
-        local_storage_enabled = dict(default=None),
-        securitygroups_enabled = dict(default=None),
+        local_storage_enabled = dict(type='bool', default=None),
+        securitygroups_enabled = dict(type='bool', default=None),
         state = dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
         domain = dict(default=None),
     ))
