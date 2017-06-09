@@ -39,8 +39,6 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-HOSTS_PATTERNS_CACHE = {}
-
 IGNORED_ALWAYS = [b"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
 IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
 IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS]
@@ -130,8 +128,9 @@ class InventoryManager(object):
         self._subset = None
 
         # caches
-        self._pattern_cache = {}      # resolved host patterns
-        self._inventory_plugins = []  # for generating inventory
+        self._hosts_patterns_cache = {} # resolved full patterns
+        self._pattern_cache = {}        # resolved individual patterns
+        self._inventory_plugins = []    # for generating inventory
 
         # the inventory dirs, files, script paths or lists of hosts
         if sources is None:
@@ -280,8 +279,7 @@ class InventoryManager(object):
 
     def clear_caches(self):
         ''' clear all caches '''
-        global HOSTS_PATTERNS_CACHE
-        HOSTS_PATTERNS_CACHE = {}
+        self._hosts_patterns_cache = {}
         self._pattern_cache = {}
         # FIXME: flush inventory cache
 
@@ -335,7 +333,7 @@ class InventoryManager(object):
         if not ignore_restrictions and self._restriction:
             pattern_hash += u":%s" % to_text(self._restriction)
 
-        if pattern_hash not in HOSTS_PATTERNS_CACHE:
+        if pattern_hash not in self._hosts_patterns_cache:
 
             patterns = split_host_pattern(pattern)
             hosts = self._evaluate_patterns(patterns)
@@ -351,16 +349,16 @@ class InventoryManager(object):
                 hosts = [h for h in hosts if h.name in self._restriction]
 
             seen = set()
-            HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
+            self._hosts_patterns_cache[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
 
         # sort hosts list if needed (should only happen when called from strategy)
         if order in ['sorted', 'reverse_sorted']:
             from operator import attrgetter
-            hosts = sorted(HOSTS_PATTERNS_CACHE[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+            hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
         elif order == 'reverse_inventory':
-            hosts = sorted(HOSTS_PATTERNS_CACHE[pattern_hash][:], reverse=True)
+            hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], reverse=True)
         else:
-            hosts = HOSTS_PATTERNS_CACHE[pattern_hash][:]
+            hosts = self._hosts_patterns_cache[pattern_hash][:]
             if order == 'shuffle':
                 from random import shuffle
                 shuffle(hosts)
