@@ -707,6 +707,11 @@ class LinaroHostname(Hostname):
     distribution = 'Linaro'
     strategy_class = DebianStrategy
 
+class DevuanHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Devuan'
+    strategy_class = DebianStrategy
+
 class GentooHostname(Hostname):
     platform = 'Linux'
     distribution = 'Gentoo base system'
