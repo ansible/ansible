@@ -44,7 +44,6 @@ def json_query(data, expr):
         raise AnsibleFilterError('Error in jmespath.search in json_query filter plugin:\n%s' % e)
 
 
-
 class FilterModule(object):
     ''' Query filter '''
 
