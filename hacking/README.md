@@ -18,7 +18,6 @@ can install them from pip
 
     $ easy_install pip               # if pip is not already available
     $ pip install -r requirements.txt
-    $ pip install cryptography       # if you want to use cryptography instead of pycrypto for vault
 
 From there, follow ansible instructions on docs.ansible.com as normal.
 
