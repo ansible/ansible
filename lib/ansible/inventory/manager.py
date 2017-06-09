@@ -128,9 +128,9 @@ class InventoryManager(object):
         self._subset = None
 
         # caches
-        self._hosts_patterns_cache = {} # resolved full patterns
-        self._pattern_cache = {}        # resolved individual patterns
-        self._inventory_plugins = []    # for generating inventory
+        self._hosts_patterns_cache = {}  # resolved full patterns
+        self._pattern_cache = {}  # resolved individual patterns
+        self._inventory_plugins = []  # for generating inventory
 
         # the inventory dirs, files, script paths or lists of hosts
         if sources is None:
