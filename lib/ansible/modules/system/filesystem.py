@@ -191,10 +191,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            fstype=dict(type='str', required=True, aliases=['type'],
+            fstype=dict(required=True, aliases=['type'],
                         choices=fs_cmd_map.keys() + friendly_names.keys()),
-            dev=dict(type='str', required=True, aliases=['device']),
-            opts=dict(type='str'),
+            dev=dict(required=True, aliases=['device']),
+            opts=dict(),
             force=dict(type='bool', default=False),
             resizefs=dict(type='bool', default=False),
         ),
@@ -230,16 +230,13 @@ def main():
     rc, raw_fs, err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
 
-    if fs == fstype and resizefs is False and not force:
+    if fs == fstype and not resizefs and not force:
         module.exit_json(changed=False)
-    elif fs == fstype and resizefs is True:
+    elif fs == fstype and resizefs:
         # Get dev and fs size and compare
         devsize_in_bytes = _get_dev_size(dev, module)
         fssize_in_bytes = _get_fs_size(fssize_cmd, dev, module)
-        if fssize_in_bytes < devsize_in_bytes:
-            fs_smaller = True
-        else:
-            fs_smaller = False
+        fs_smaller = fssize_in_bytes < devsize_in_bytes
 
         if module.check_mode and fs_smaller:
             module.exit_json(changed=True, msg="Resizing filesystem %s on device %s" % (fstype, dev))
