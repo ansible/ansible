@@ -296,7 +296,8 @@ class Conditional:
                 # as nothing above matched the failed var name, re-raise here to
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
-            except Exception as new_e:
+            # we dont except as e to avoid clobbering existing e exception
+            except Exception:
                 raise AnsibleUndefinedVariable(
                     "error while evaluating conditional (%s): %s" % (original, e)
                 )
