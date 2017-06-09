@@ -174,6 +174,7 @@ EXAMPLES = r'''
 import binascii
 import datetime
 import math
+import os
 import re
 import select
 import socket
