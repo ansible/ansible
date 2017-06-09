@@ -183,6 +183,7 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 from ansible.module_utils._text import to_native
+from ansible.module_utils.pycompat24 import get_exception
 
 
 HAS_PSUTIL = False
