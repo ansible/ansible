@@ -287,17 +287,23 @@ class AnsibleBufferingHandler(BufferingHandler):
 
         try:
             record_dict['message'] = record.getMessage()
+            # we populated the 'message', now replace 'msg' (the string format with %s's passed to debug() etc)
+            # with the rendered text, saving the orig in _orig_msg.
+            # Something that gets the log record_dict could reconstruct 'message' with: _orig_msg % _orig_args
+            record_dict['_orig_msg'] = record_dict['msg']
+            record_dict['msg'] = record_dict['message']
         except TypeError as e:
             record_dict['_log_message_format_exception'] = '%s' % e
             record_dict['message'] = 'ERROR: record.getMessage() failed. record.msg: %s record.args: %s' % (record.msg, record.args)
 
         # TODO: include record.args? needs to be serializable
         arg_reprs = []
-        for arg in record.args:
-            # arg_reprs.append(repr(arg))
-            arg_reprs.append(to_text(arg))
+        if isinstance(record.args, dict):
+            arg_reprs = dict([(to_text(x[0]), to_text(x[1])) for x in record.args.items()])
+        else:
+            arg_reprs = [to_text(arg) for arg in record.args]
 
-        record_dict['arg_reprs'] = arg_reprs
+        record_dict['_orig_args'] = arg_reprs
         return record_dict
 
 
@@ -956,6 +962,7 @@ class AnsibleModule(object):
                   log, self.logger, self.log_handler,
                   extra={'some_key': 'some_value', 'another_key': None})
         self.logger.info("self.logger test")
+        self.logger.info('test of passing a single dict as arg to logger %(foo)s test', {'foo': 'blip'})
 
     def warn(self, warning):
 
@@ -2049,6 +2056,7 @@ class AnsibleModule(object):
         # Sanitize possible password argument when logging.
         log_args = dict()
 
+        log_args_list = []
         for param in self.params:
             canon = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
@@ -2056,10 +2064,12 @@ class AnsibleModule(object):
 
             if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
+                log_args_list.append((param, 'NOT_LOGGING_PARAMETER'))
             # try to capture all passwords/passphrase named fields missed by no_log
             elif PASSWORD_MATCH.search(param) and arg_opts.get('type', 'str') != 'bool' and not arg_opts.get('choices', False):
                 # skip boolean and enums as they are about 'password' state
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
+                log_args_list.append((param, 'NOT_LOGGING_PASSWORD'))
                 self.warn('Module did not set no_log for %s' % param)
             else:
                 param_val = self.params[param]
@@ -2067,16 +2077,22 @@ class AnsibleModule(object):
                     param_val = str(param_val)
                 elif isinstance(param_val, text_type):
                     param_val = param_val.encode('utf-8')
-                log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
+                _msg = heuristic_log_sanitize(param_val, self.no_log_values)
+                log_args[param] = _msg
+                log_args_list.append((param, _msg))
 
-        msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
-        if msg:
-            msg = 'Invoked with %s' % ' '.join(msg)
+        msg_blurbs = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
+        log_msgs = ['%s=%s' for x in log_args_list]
+        if msg_blurbs:
+            msg = 'Invoked with %s' % ' '.join(msg_blurbs)
+            log_msgs_format = 'Invoked with %s' % ' '.join(log_msgs)
         else:
             msg = 'Invoked'
+            log_msgs_format = ['Invoked']
 
         self.log(msg, log_args)
-        self.logger.info(msg, log_args)
+
+        self.logger.info(log_msgs_format, *[item for sublist in log_args_list for item in sublist])
 
     def _set_cwd(self):
         try:
