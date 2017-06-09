@@ -59,13 +59,14 @@ try:
 
     # Note: Only used for loading obsolete VaultAES files.  All files are written
     # using the newer VaultAES256 which does not require md5
-    from Crypto.Hash import pycrypto_SHA256, pycrypto_HMAC
+    from Crypto.Hash import SHA256 as pycrypto_SHA256
+    from Crypto.Hash import HMAC as pycrypto_HMAC
 
     # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
-    from Crypto.Util import pycrypto_Counter
+    from Crypto.Util import Counter as pycrypto_Counter
 
     # KDF import fails for 2.0.1, requires >= 2.6.1 from pip
-    from Crypto.Protocol.KDF import pycrypto_PBKDF2
+    from Crypto.Protocol.KDF import PBKDF2 as pycrypto_PBKDF2
     HAS_PYCRYPTO = True
 except ImportError:
     pass
