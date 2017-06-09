@@ -229,24 +229,6 @@
            - 'result.group_id.startswith("sg-")'
 
     # ============================================================
-    - name: test state=absent (expected changed=true)
-      ec2_group:
-        name='{{ec2_group_name}}'
-        state=absent
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: '{{ec2_access_key}}'
-        EC2_SECRET_KEY: '{{ec2_secret_key}}'
-        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
-      register: result
-
-    - name: assert state=absent (expected changed=true)
-      assert:
-        that:
-           - 'result.changed'
-           - 'not result.group_id'
-
-    # ============================================================
     - name: test state=present for ipv6 (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -260,7 +242,7 @@
         - proto: "tcp"
           from_port: 8182
           to_port: 8182
-          cidr_ipv6: "2001:558:1400::/40"
+          cidr_ipv6: "64:ff9b::/96"
       register: result
 
     - name: assert state=present (expected changed=true)
@@ -279,18 +261,16 @@
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
         state: present
-        purge_rules: false
-        purge_rules_egress: false
         rules:
         - proto: "tcp"
           from_port: 8182
           to_port: 8182
-          cidr_ipv6: "2001:558:1400::/40"
+          cidr_ipv6: "64:ff9b::/96"
         rules_egress:
         - proto: "tcp"
           from_port: 8181
           to_port: 8181
-          cidr_ipv6: "2001:558:1400::/40"
+          cidr_ipv6: "64:ff9b::/96"
       register: result
 
     - name: assert state=present (expected changed=true)
@@ -344,6 +324,24 @@
         that:
           - 'not result.changed'
           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test state=absent (expected changed=true)
+      ec2_group:
+        name='{{ec2_group_name}}'
+        state=absent
+      environment:
+        EC2_REGION: '{{ec2_region}}'
+        EC2_ACCESS_KEY: '{{ec2_access_key}}'
+        EC2_SECRET_KEY: '{{ec2_secret_key}}'
+        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+      register: result
+
+    - name: assert state=absent (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'not result.group_id'
 
   always:
 

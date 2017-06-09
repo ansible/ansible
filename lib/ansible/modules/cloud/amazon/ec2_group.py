@@ -383,7 +383,7 @@ def rule_expand_source(rule, source_type):
 
 def rule_expand_sources(rule):
     # takes a rule dict and returns a list of expanded rule discts
-    source_types = (stype for stype in ('cidr_ip', 'group_id', 'group_name') if stype in rule)
+    source_types = (stype for stype in ('cidr_ip', 'cidr_ipv6', 'group_id', 'group_name') if stype in rule)
 
     return [r for stype in source_types
             for r in rule_expand_source(rule, stype)]
@@ -607,7 +607,6 @@ def main():
             ip_permission = []
             for rule in rules:
                 validate_rule(module, rule)
-
                 group_id, ip, ipv6, target_group_created = get_target_from_rule(module, ec2, rule, name,
                                                                                 group, groups, vpc_id)
                 if target_group_created:
@@ -673,7 +672,6 @@ def main():
         if rules_egress is not None:
             for rule in rules_egress:
                 validate_rule(module, rule)
-
                 group_id, ip, ipv6, target_group_created = get_target_from_rule(module, ec2, rule, name,
                                                                                 group, groups, vpc_id)
                 if target_group_created:
@@ -744,17 +742,19 @@ def main():
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules_egress:
             for (rule, grant) in groupRules.values():
-                ip_permission = serialize_revoke(grant, rule)
-                if not module.check_mode:
-                    try:
-                        client.revoke_security_group_egress(GroupId=group.group_id, IpPermissions=[ip_permission])
-                    except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg="Unable to revoke egress for ip %s security group '%s' - %s" %
-                                             ('0.0.0.0/0',
-                                              group.group_name,
-                                              e.message),
-                                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                changed = True
+                # we shouldn't be revoking 0.0.0.0 egress
+                if grant != '0.0.0.0/0':
+                    ip_permission = serialize_revoke(grant, rule)
+                    if not module.check_mode:
+                        try:
+                            client.revoke_security_group_egress(GroupId=group.group_id, IpPermissions=[ip_permission])
+                        except botocore.exceptions.ClientError as e:
+                            module.fail_json(msg="Unable to revoke egress for ip %s security group '%s' - %s" %
+                                                 (grant,
+                                                  group.group_name,
+                                                  e.message),
+                                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                    changed = True
 
     if group:
         module.exit_json(changed=changed, group_id=group.id)
