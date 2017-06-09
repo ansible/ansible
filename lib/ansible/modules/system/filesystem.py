@@ -16,15 +16,15 @@ DOCUMENTATION = '''
 author:
 - Alexander Bulimov (@abulimov)
 module: filesystem
-short_description: Makes file system on block device
+short_description: Makes a filesystem on block device
 description:
-  - This module creates file system.
+  - This module creates a filesystem.
 version_added: "1.2"
 options:
   fstype:
     choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs ]
     description:
-    - File System type to be created.
+    - Filesystem type to be created.
     - reiserfs support was added in 2.2.
     - lvm support was added in 2.5.
     required: yes
@@ -39,9 +39,9 @@ options:
     default: 'no'
   resizefs:
     description:
-    - If C(yes), if the block device and filessytem size differ, grow the filesystem into the space.
+    - If C(yes), if the block device and filesytem size differ, grow the filesystem into the space.
     - XFS Will only grow if mounted.
-    - btrfs and reiserfs don't support resizing.
+    - C(btrfs) and C(reiserfs) don't support resizing.
     type: bool
     default: 'no'
     version_added: "2.0"
