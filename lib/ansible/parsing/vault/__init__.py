@@ -618,9 +618,14 @@ class VaultAES:
         cipher = C_Cipher(algorithms.AES(b_key), modes.CBC(b_iv), CRYPTOGRAPHY_BACKEND).decryptor()
         unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
 
-        b_plaintext = unpadder.update(
-            cipher.update(b_ciphertext) + cipher.finalize()
-        ) + unpadder.finalize()
+        try:
+            b_plaintext = unpadder.update(
+                cipher.update(b_ciphertext) + cipher.finalize()
+            ) + unpadder.finalize()
+        except ValueError:
+            # In VaultAES, ValueError: invalid padding bytes can mean bad
+            # password was given
+            raise AnsibleError("Decryption failed")
 
         # split out sha and verify decryption
         b_split_data = b_plaintext.split(b"\n", 1)
