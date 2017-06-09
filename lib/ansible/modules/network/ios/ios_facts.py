@@ -271,21 +271,21 @@ class Interfaces(FactsBase):
         data = self.responses[2]
         if data:
             facts_neighbors = dict()
-            
+
             lldp_neighbors = self.run(['show lldp neighbors detail'])
             if lldp_neighbors:
                 facts_lldp = self.parse_lldp_neighbors(lldp_neighbors[0])
                 if facts_lldp:
-                  facts_neighbors.update(facts_lldp)
-            
+                    facts_neighbors.update(facts_lldp)
+
             cdp_neighbors = self.run(['show cdp neighbors detail'])
             if cdp_neighbors:
                 facts_cdp = self.parse_cdp_neighbors(cdp_neighbors[0])
                 if facts_cdp:
-                  facts_neighbors = self.parse_cdp_neighbors(cdp_neighbors[0])
-                               
+                    facts_neighbors = self.parse_cdp_neighbors(cdp_neighbors[0])
+           
             if facts_neighbors:
-              self.facts['neighbors'] = facts_neighbors
+                self.facts['neighbors'] = facts_neighbors
 
     def populate_interfaces(self, interfaces):
         facts = dict()
