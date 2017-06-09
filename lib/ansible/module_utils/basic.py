@@ -274,6 +274,7 @@ class AnsibleBufferingHandler(BufferingHandler):
         record_attrs = ['name', 'msg', 'levelname', 'levelno', 'pathname',
                         'filename', 'module', 'lineno', 'created', 'msecs', 'relativeCreated',
                         'thread', 'threadName', 'process', 'funcName', 'processName']
+        # TODO: could use set intersection here
         for attr in record.__dict__:
             if attr in record_attrs:
                 value = getattr(record, attr, None)
@@ -284,12 +285,17 @@ class AnsibleBufferingHandler(BufferingHandler):
             exc_text = self.format(record)
             record_dict['exc_text'] = exc_text
 
-        record_dict['message'] = record.getMessage()
+        try:
+            record_dict['message'] = record.getMessage()
+        except TypeError as e:
+            record_dict['_log_message_format_exception'] = '%s' % e
+            record_dict['message'] = 'ERROR: record.getMessage() failed. record.msg: %s record.args: %s' % (record.msg, record.args)
 
         # TODO: include record.args? needs to be serializable
         arg_reprs = []
         for arg in record.args:
-            arg_reprs.append(repr(arg))
+            # arg_reprs.append(repr(arg))
+            arg_reprs.append(to_text(arg))
 
         record_dict['arg_reprs'] = arg_reprs
         return record_dict
@@ -933,13 +939,22 @@ class AnsibleModule(object):
         self.logger.setLevel(level)
         log.setLevel(level)
 
+        # TODO: for no_log, setup a NullHandler
+        # TODO: could also setup a filter for censoring output, although we are just adding
+        #       adding a item to the returned results with a list of log records, and that gets passed
+        #       though remove_values already
+        # TODO: add a filter that will populate some record info about the task
+        #       (module name, arg spec? task args / invocation / self.params?
+        #       local hostname? remote_user? any of the _legal_inputs
         self.log_handler = AnsibleBufferingHandler(capacity=1)
         self.log_handler.setLevel(logging.DEBUG)
 
         # self.log propogates to 'log' and its handler, if the logger names are correct
         log.addHandler(self.log_handler)
 
-        log.debug('logging was setup. log=%s, self.logger=%s, self.log_handler=%s', log, self.logger, self.log_handler, extra={'some_key': 'some_value', 'another_key': None})
+        log.debug('logging was setup. log=%s, self.logger=%s, self.log_handler=%s',
+                  log, self.logger, self.log_handler,
+                  extra={'some_key': 'some_value', 'another_key': None})
         self.logger.info("self.logger test")
 
     def warn(self, warning):
@@ -947,6 +962,7 @@ class AnsibleModule(object):
         if isinstance(warning, string_types):
             self._warnings.append(warning)
             self.log('[WARNING] %s' % warning)
+            self.logger.warn(warning)
         else:
             raise TypeError("warn requires a string not a %s" % type(warning))
 
@@ -957,6 +973,7 @@ class AnsibleModule(object):
                 'version': version
             })
             self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
+            self.logger.warn('[DEPRECATION WARNING] %s %s', msg, version)
         else:
             raise TypeError("deprecate requires a string not a %s" % type(msg))
 
@@ -1980,17 +1997,18 @@ class AnsibleModule(object):
 
     def debug(self, msg):
         if self._debug:
+            self.logger.debug(msg)
             self.log('[debug] %s' % msg)
 
     def log(self, msg, log_args=None):
 
         if not self.no_log:
 
-            if log_args is None:
-                log_args = dict()
-
             # FIXME: kluge for testing, logging more useful if called directly
-            self.logger.info(msg, log_args)
+            # if log_args is None:
+            #    self.logger.info(msg)
+            # else:
+            #    self.logger.info(msg, log_args)
 
             module = 'ansible-%s' % self._name
             if isinstance(module, binary_type):
@@ -2057,7 +2075,8 @@ class AnsibleModule(object):
         else:
             msg = 'Invoked'
 
-        self.log(msg, log_args=log_args)
+        self.log(msg, log_args)
+        self.logger.info(msg, log_args)
 
     def _set_cwd(self):
         try:
@@ -2631,6 +2650,7 @@ class AnsibleModule(object):
         try:
             if self._debug:
                 self.log('Executing: ' + clean_args)
+                self.logger.info('Executing: %s', clean_args)
             cmd = subprocess.Popen(args, **kwargs)
 
             # the communication logic here is essentially taken from that
@@ -2681,10 +2701,14 @@ class AnsibleModule(object):
         except (OSError, IOError):
             e = get_exception()
             self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(e)))
+            self.logger.error("Error Executing CMD:%s Exception:%s", clean_args, to_native(e))
+            self.logger.exception(e)
             self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
         except Exception:
             e = get_exception()
             self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(traceback.format_exc())))
+            self.logger.error("Error Executing CMD:%s Exception:%s", clean_args, to_native(traceback.format_exc()))
+            self.logger.exception(e)
             self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
 
         # Restore env settings
