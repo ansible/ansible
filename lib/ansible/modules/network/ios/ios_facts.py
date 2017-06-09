@@ -283,7 +283,7 @@ class Interfaces(FactsBase):
                 facts_cdp = self.parse_cdp_neighbors(cdp_neighbors[0])
                 if facts_cdp:
                     facts_neighbors = self.parse_cdp_neighbors(cdp_neighbors[0])
-           
+
             if facts_neighbors:
                 self.facts['neighbors'] = facts_neighbors
 
