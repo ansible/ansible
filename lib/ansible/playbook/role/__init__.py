@@ -209,16 +209,18 @@ class Role(Base, Become, Conditional, Taggable):
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
-            except AssertionError:
-                raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name, obj=task_data)
+            except AssertionError as e:
+                raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
+                                         obj=task_data, orig_exc=e)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
             try:
                 self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
                                                            variable_manager=self._variable_manager)
-            except AssertionError:
-                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name, obj=handler_data)
+            except AssertionError as e:
+                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
+                                         obj=handler_data, orig_exc=e)
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'))

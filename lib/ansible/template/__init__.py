@@ -385,7 +385,7 @@ class Templar:
         are being changed.
         '''
 
-        assert isinstance(variables, dict)
+        assert isinstance(variables, dict), "the type of 'variables' should be a dict but was a %s" % (type(variables))
         self._available_variables = variables
         self._cached_result = {}
 

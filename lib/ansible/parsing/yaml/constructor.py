@@ -99,7 +99,10 @@ class AnsibleConstructor(SafeConstructor):
         ciphertext_data = to_bytes(value)
 
         if self._b_vault_password is None:
-            raise ConstructorError(None, None, "found vault but no vault password provided", node.start_mark)
+            raise ConstructorError(context=None, context_mark=None,
+                                   problem="found !vault but no vault password provided",
+                                   problem_mark=node.start_mark,
+                                   note=None)
 
         # could pass in a key id here to choose the vault to associate with
         vault = self._vaults['default']

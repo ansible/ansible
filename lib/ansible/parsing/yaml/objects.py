@@ -70,7 +70,7 @@ class AnsibleSequence(AnsibleBaseYAMLObject, list):
 
 # Unicode like object that is not evaluated (decrypted) until it needs to be
 # TODO: is there a reason these objects are subclasses for YAMLObject?
-class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleUnicode):
+class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
     __UNSAFE__ = True
     __ENCRYPTED__ = True
     yaml_tag = u'!vault'
