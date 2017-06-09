@@ -628,6 +628,7 @@ class VaultAES:
 
         return b_plaintext
 
+    @classmethod
     def _decrypt_pycrypto(cls, b_salt, b_ciphertext, b_password, key_length):
         in_file = BytesIO(b_ciphertext)
         in_file.seek(0)
@@ -689,9 +690,9 @@ class VaultAES:
         b_ciphertext = b_vaultdata[16:]
 
         if HAS_CRYPTOGRAPHY:
-            b_plaintext = cls._decrypt_cryptography(b_salt, b_ciphertext, key_length)
+            b_plaintext = cls._decrypt_cryptography(b_salt, b_ciphertext, b_password, key_length)
         elif HAS_PYCRYPTO:
-            b_plaintext = cls._decrypt_pycrypto(b_salt, b_ciphertext, key_length)
+            b_plaintext = cls._decrypt_pycrypto(b_salt, b_ciphertext, b_password, key_length)
         else:
             display.warning(u"Neither Cryptography nor pycrypto was installed and this should have been detected earlier")
             raise AnsibleError(NEED_CRYPTO_LIBRARY)
