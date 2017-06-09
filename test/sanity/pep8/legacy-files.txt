@@ -17,7 +17,6 @@ lib/ansible/modules/cloud/amazon/ec2_eip.py
 lib/ansible/modules/cloud/amazon/ec2_elb.py
 lib/ansible/modules/cloud/amazon/ec2_elb_facts.py
 lib/ansible/modules/cloud/amazon/ec2_elb_lb.py
-lib/ansible/modules/cloud/amazon/ec2_eni.py
 lib/ansible/modules/cloud/amazon/ec2_eni_facts.py
 lib/ansible/modules/cloud/amazon/ec2_key.py
 lib/ansible/modules/cloud/amazon/ec2_lc.py
