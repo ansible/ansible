@@ -121,7 +121,7 @@ class CallbackModule(CallbackBase):
                         msg += " because:\n"
                         for reason in reasons:
                             msg += "    %s\n" % reason
-                if (self._display.verbosity > 1 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
+                if (self._display.verbosity > 1 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                     msg += " => %s" % self._dump_results(result._result)
                 self._display.display(msg, color=C.COLOR_SKIP)
 
