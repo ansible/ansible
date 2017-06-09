@@ -48,6 +48,7 @@ from ansible.module_utils.six import PY3
 if PY3:
     long = int
 
+
 def interfaceConfig(
     obj, deviceType, prompt, timeout, interfaceArg1,
         interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5,
