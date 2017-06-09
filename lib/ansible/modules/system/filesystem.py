@@ -40,7 +40,8 @@ options:
   resizefs:
     description:
     - If C(yes), if the block device and filessytem size differ, grow the filesystem into the space.
-    - Note, XFS Will only grow if mounted.
+    - XFS Will only grow if mounted.
+    - btrfs and reiserfs don't support resizing.
     type: bool
     default: 'no'
     version_added: "2.0"
@@ -110,11 +111,6 @@ def _get_fs_size(fssize_cmd, dev, module):
                     break
         else:
             module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err)
-    elif 'btrfs' == fssize_cmd:
-        # ToDo
-        # There is no way to get the blocksize and blockcount for btrfs filesystems
-        block_size = 1
-        block_count = 1
     elif 'pvs' == fssize_cmd:
         rc, size, err = module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', dev])
         if rc == 0:
@@ -122,6 +118,8 @@ def _get_fs_size(fssize_cmd, dev, module):
             block_size = 1
         else:
             module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err)
+    else:
+        module.exit_json(changed=False, msg="WARNING: module does not support resizing %s filesystem yet." % module.param['fstype'])
 
     return block_size * block_count
 
