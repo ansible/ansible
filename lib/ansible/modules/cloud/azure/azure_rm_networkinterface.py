@@ -81,6 +81,7 @@ options:
         description:
             - Name of the resource group that the specified subnet is a member of, if not the same as the resource
               group of the network interface
+        version_added: 2.4
         required: false
         default: null
     os_type:
