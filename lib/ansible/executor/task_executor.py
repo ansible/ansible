@@ -34,7 +34,6 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.template import Templar
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
