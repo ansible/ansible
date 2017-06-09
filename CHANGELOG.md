@@ -186,6 +186,8 @@ Ansible Changes By Release
   * ce_vxlan_global
   * ce_vxlan_tunnel
   * ce_vxlan_vap
+- cisco_imc
+  * cisco_imc_xml
 - cloudstack
   * cs_network_acl
   * cs_network_acl_rule
