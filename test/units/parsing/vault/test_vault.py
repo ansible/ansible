@@ -129,6 +129,8 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
         self.assertTrue(vault.is_encrypted_file(b_data_fo, start_pos=4, count=vault_length))
 
 
+@pytest.mark.skipif(not vault.HAS_CRYPTOGRAPHY,
+                    reason="Skipping cryptography tests because cryptography is not installed")
 class TestVaultCipherAes256(unittest.TestCase):
     def setUp(self):
         self.vault_cipher = vault.VaultAES256()
@@ -143,20 +145,17 @@ class TestVaultCipherAes256(unittest.TestCase):
         b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
         self.assertIsInstance(b_key_cryptography, six.binary_type)
 
+    @pytest.mark.skipif(not vault.HAS_PYCRYPTO, reason='Not testing pycrypto key as pycrypto is not installed')
     def test_create_key_pycrypto(self):
-        if not vault.HAS_PYCRYPTO:
-            pytest.skip('Not testing pycrypto key as pycrypto is not installed')
-
         b_password = b'hunter42'
         b_salt = os.urandom(32)
 
         b_key_pycrypto = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
         self.assertIsInstance(b_key_pycrypto, six.binary_type)
 
+    @pytest.mark.skipif(not vault.HAS_PYCRYPTO,
+                        reason='Not comparing cryptography key to pycrypto key as pycrypto is not installed')
     def test_compare_new_keys(self):
-        if not vault.HAS_PYCRYPTO:
-            pytest.skip('Not comparing cryptography key to pycrypto key as pycrypto is not installed')
-
         b_password = b'hunter42'
         b_salt = os.urandom(32)
         b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
@@ -239,6 +238,21 @@ class TestVaultCipherAes256(unittest.TestCase):
         self.assertRaises(TypeError, self.vault_cipher._is_equal, b"blue fish", 2)
 
 
+@pytest.mark.skipif(not vault.HAS_PYCRYPTO,
+                    reason="Skipping Pycrypto tests because pycrypto is not installed")
+class TestVaultCipherAes256PyCrypto(TestVaultCipherAes256):
+    def setUp(self):
+        self.has_cryptography = vault.HAS_CRYPTOGRAPHY
+        vault.HAS_CRYPTOGRAPHY = False
+        super(TestVaultCipherAes256PyCrypto, self).setUp()
+
+    def tearDown(self):
+        vault.HAS_CRYPTOGRAPHY = self.has_cryptography
+        super(TestVaultCipherAes256PyCrypto, self).tearDown()
+
+
+@pytest.mark.skipif(not vault.HAS_CRYPTOGRAPHY,
+                    reason="Skipping cryptography tests because cryptography is not installed")
 class TestVaultLib(unittest.TestCase):
     def setUp(self):
         self.v = VaultLib('test-vault-password')
@@ -329,9 +343,9 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         b_plaintext = self.v.decrypt(b_vaulttext)
         self.assertEqual(b_plaintext, b_orig_plaintext, msg="decryption failed")
 
+    # FIXME This test isn't working quite yet.
+    @pytest.mark.skip(reason='This test is not ready yet')
     def test_encrypt_decrypt_aes256_bad_hmac(self):
-        # FIXME This test isn't working quite yet.
-        pytest.skip('This test is not ready yet')
 
         self.v.cipher_name = 'AES256'
         # plaintext = "Setec Astronomy"
@@ -384,3 +398,16 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         plaintext = u"ansible"
         self.v.encrypt(plaintext)
         self.assertEquals(self.v.cipher_name, "AES256")
+
+
+@pytest.mark.skipif(not vault.HAS_PYCRYPTO,
+                    reason="Skipping Pycrypto tests because pycrypto is not installed")
+class TestVaultLibPyCrypto(TestVaultLib):
+    def setUp(self):
+        self.has_cryptography = vault.HAS_CRYPTOGRAPHY
+        vault.HAS_CRYPTOGRAPHY = False
+        super(TestVaultLibPyCrypto, self).setUp()
+
+    def tearDown(self):
+        vault.HAS_CRYPTOGRAPHY = self.has_cryptography
+        super(TestVaultLibPyCrypto, self).tearDown()

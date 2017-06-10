@@ -23,6 +23,8 @@ __metaclass__ = type
 import os
 import tempfile
 
+import pytest
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
@@ -44,6 +46,8 @@ v11_data = """$ANSIBLE_VAULT;1.1;AES256
 3739"""
 
 
+@pytest.mark.skipif(not vault.HAS_CRYPTOGRAPHY,
+                    reason="Skipping cryptography tests because cryptography is not installed")
 class TestVaultEditor(unittest.TestCase):
 
     def setUp(self):
@@ -510,3 +514,16 @@ class TestVaultEditor(unittest.TestCase):
 
         res = ve._real_path(file_link_path)
         self.assertEqual(res, file_path)
+
+
+@pytest.mark.skipif(not vault.HAS_PYCRYPTO,
+                    reason="Skipping pycrypto tests because pycrypto is not installed")
+class TestVaultEditorPyCrypto(unittest.TestCase):
+    def setUp(self):
+        self.has_cryptography = vault.HAS_CRYPTOGRAPHY
+        vault.HAS_CRYPTOGRAPHY = False
+        super(TestVaultEditorPyCrypto, self).setUp()
+
+    def tearDown(self):
+        vault.HAS_CRYPTOGRAPHY = self.has_cryptography
+        super(TestVaultEditorPyCrypto, self).tearDown()
