@@ -742,7 +742,7 @@ class VaultAES256:
         hash_function = pycrypto_SHA256
 
         def _pbkdf2_prf(p, s):
-            pycrypto_HMAC.new(p, s, hash_function).digest()
+            return pycrypto_HMAC.new(p, s, hash_function).digest()
 
         # make two keys and one iv
 
