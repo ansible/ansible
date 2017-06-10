@@ -86,13 +86,13 @@ options:
     default: []
     version_added: "2.1"
   tags:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - a hash/dictionary of tags to add to the new instance or for starting/stopping instance by tag; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: false
     default: null
   wait_for_active_timeout:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - how long before wait gives up, in seconds. only used when tags is set
     required: false
