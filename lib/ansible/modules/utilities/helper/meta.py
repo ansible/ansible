@@ -23,12 +23,26 @@ description:
       Meta tasks can be used anywhere within your playbook.
     - This module is also supported for Windows targets.
 options:
+  name:
+    version_added: "2.8"
+    description:
+        - What action to run
+        - Use either this or C(free_form), not both
+    choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection']
+    default: null
+  filter:
+    version_added: "2.8"
+    description:
+        - List specifying what handlers to run by Name. Only Vaild with C(flush_handlers)
   free_form:
     description:
+        - B(Deprecated)
+        - "Starting with Ansible 2.8 we recommend using C(name)."
         - This module takes a free form command, as a string. There's not an actual option named "free form".  See the examples!
         - >
           C(flush_handlers) makes Ansible run any handler tasks which have thus far been notified. Ansible inserts these tasks internally at certain
           points to implicitly trigger handler runs (after pre/post tasks, the final role execution, and the main tasks section of your plays).
+        - Use either free form or C(name), not both
         - >
           C(refresh_inventory) (added in 2.0) forces the reload of the inventory, which in the case of dynamic inventory scripts means they will be
           re-executed. If the dynamic inventory script is using a cache, Ansible cannot know this and has no way of refreshing it (you can disable the cache
@@ -40,7 +54,6 @@ options:
         - "C(end_play) (added in 2.2) causes the play to end without failing the host(s). Note that this affects all hosts."
         - "C(reset_connection) (added in 2.3) interrupts a persistent connection (i.e. ssh + control persist)"
     choices: ['flush_handlers', 'refresh_inventory', 'noop', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection']
-    required: true
 notes:
     - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
     - This module is also supported for Windows targets.
@@ -55,6 +68,18 @@ EXAMPLES = '''
   notify: myhandler
 - name: force all notified handlers to run at this point, not waiting for normal sync points
   meta: flush_handlers
+
+- template:
+    src: new.j2
+    dest: /etc/config.txt
+  notify:
+    - myfirsthandler
+    - mysecondhandler
+- name: force only 'myfirsthandler' handler to run at this point if notified, not waiting for normal sync points
+  meta:
+    name: flush_handlers
+    filter:
+      -  myfirsthandler
 
 - name: reload inventory, useful with dynamic inventories when play makes changes to the existing hosts
   cloud_guest:            # this is fake module

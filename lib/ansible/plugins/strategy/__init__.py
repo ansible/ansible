@@ -866,7 +866,7 @@ class StrategyBase:
         display.debug("done processing included file")
         return block_list
 
-    def run_handlers(self, iterator, play_context):
+    def run_handlers(self, iterator, play_context, filters=None):
         '''
         Runs handlers on those hosts which have been notified.
         '''
@@ -878,6 +878,15 @@ class StrategyBase:
             #        but this may take some work in the iterator and gets tricky when
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
+                if filters is not None:
+                    handler_names = [handler.name]
+                    if handler.listen:
+                        if isinstance(handler.listen, list):
+                            handler_names.extend(handler.listen)
+                        else:
+                            handler_names.append(handler.listen)
+                    if all([name not in filters for name in handler_names]):
+                        continue
                 if handler._uuid in self._notified_handlers and len(self._notified_handlers[handler._uuid]):
                     handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
                     templar = Templar(loader=self._loader, variables=handler_vars)
@@ -1015,9 +1024,9 @@ class StrategyBase:
 
     def _execute_meta(self, task, play_context, iterator, target_host):
 
-        # meta tasks store their args in the _raw_params field of args,
-        # since they do not use k=v pairs, so get that
-        meta_action = task.args.get('_raw_params')
+        # old style meta tasks store their args in the _raw_params field of args,
+        # since they never use to use k=v pairs, now its recomended to use name k=v pair
+        meta_action = task.args.get('_raw_params') or task.args.get('name')
 
         def _evaluate_conditional(h):
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task)
@@ -1035,7 +1044,8 @@ class StrategyBase:
             if task.when:
                 self._cond_not_supported_warn(meta_action)
             self._flushed_hosts[target_host] = True
-            self.run_handlers(iterator, play_context)
+            filters = task.args.get('filter')
+            self.run_handlers(iterator, play_context, filters)
             self._flushed_hosts[target_host] = False
             msg = "ran handlers"
         elif meta_action == 'refresh_inventory' or self.flush_cache:

@@ -43,10 +43,23 @@
   notify:
     - count_handler
 
-- name: notify the counting handler again
+- name: notify the second, third & counting handler
   shell: echo
   notify:
+    - set_handler_fact_2
+    - set_handler_fact_3
     - count_handler
+
+- name: Run only set_handler_fact_3
+  meta:
+    name: flush_handlers
+    filter: set_handler_fact_3
+
+- name: assert set_handler_fact_3 ran and not set_handler_fact_2
+  assert:
+    that:
+        - handler3_called is defined
+        - handler2_called is not defined
 
 - name: force handler execution now
   meta: flush_handlers
@@ -73,3 +86,20 @@
   shell: echo
   notify:
     - set_handler_fact_2
+
+- name: notify listen handlers
+  shell: echo
+  notify:
+    - listen_handler_fact_1
+
+- name: Run listen_handler_fact_1 & listen_handler_fact_3
+  meta:
+    name: flush_handlers
+    filter:
+        - listen_handler_fact_1
+
+- name: assert that correct listen_handlers ran
+  assert:
+    that:
+        - listen_handler_fact_1 is defined
+        - listen_handler_list_fact_1 is defined

@@ -6,5 +6,20 @@
   set_fact:
     handler2_called: True
 
+- name: set_handler_fact_3
+  set_fact:
+    handler3_called: True
+
 - name: count_handler
   shell: echo . >> {{ handler_countpath }}
+
+- name: foo handler
+  set_fact:
+    listen_handler_fact_1: True
+  listen: listen_handler_fact_1
+
+- name: bar handler
+  set_fact:
+    listen_handler_list_fact_1: True
+  listen:
+    - listen_handler_fact_1
