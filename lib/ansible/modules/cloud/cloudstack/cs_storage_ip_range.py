@@ -147,9 +147,14 @@ vlan:
   sample: 200
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec, cs_required_together
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+)
+
 
 
 class AnsibleCloudStackCluster(AnsibleCloudStack):
