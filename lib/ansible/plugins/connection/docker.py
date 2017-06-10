@@ -35,7 +35,7 @@ from distutils.version import LooseVersion
 import ansible.constants as C
 from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
 
@@ -116,7 +116,7 @@ class Connection(ConnectionBase):
         p = subprocess.Popen(old_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         cmd_output, err = p.communicate()
 
-        return old_docker_cmd, cmd_output, err, p.returncode
+        return old_docker_cmd, to_native(cmd_output), err, p.returncode
 
     def _new_docker_version(self):
         # no result yet, must be newer Docker version
@@ -129,7 +129,7 @@ class Connection(ConnectionBase):
         new_docker_cmd = [self.docker_cmd] + cmd_args + new_version_subcommand
         p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         cmd_output, err = p.communicate()
-        return new_docker_cmd, cmd_output, err, p.returncode
+        return new_docker_cmd, to_native(cmd_output), err, p.returncode
 
     def _get_docker_version(self):
 
