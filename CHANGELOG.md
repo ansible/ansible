@@ -65,6 +65,8 @@ Ansible Changes By Release
 * Experimentally added pmrun become method.
 * Enable the docker connection plugin to use su as a become method
 * Add an encoding parameter for the replace module so that it can operate on non-utf-8 files
+* By default, Ansible now uses the cryptography module to implement vault
+  instead of the older pycrypto module.
 
 #### New Callbacks:
 - profile_roles
@@ -89,6 +91,7 @@ Ansible Changes By Release
 
 - The docker_container module has gained a new option, working_dir which allows
   specifying the working directory for the command being run in the image.
+- The ec2_win_password module now requires the cryptography python module be installed to run
 
 ### New Modules
 
