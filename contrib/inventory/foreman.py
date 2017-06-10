@@ -64,6 +64,7 @@ class ForemanInventory(object):
         self.params = dict()  # Params of each host
         self.facts = dict()   # Facts of each host
         self.hostgroups = dict()  # host groups
+        self.hostcollections = dict()  # host collections
         self.session = None   # Requests session
         self.config_paths = [
             "/etc/ansible/foreman.ini",
@@ -107,6 +108,16 @@ class ForemanInventory(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_facts = True
 
+        try:
+            self.want_hostcollections = config.getboolean('ansible', 'want_hostcollections')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.want_hostcollections = False
+
+        try:
+            self.host_filters = config.get('foreman', 'host_filters')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.host_filters = None
+
         # Cache related
         try:
             cache_path = os.path.expanduser(config.get('cache', 'path'))
@@ -117,10 +128,12 @@ class ForemanInventory(object):
         self.cache_path_inventory = cache_path + "/%s.index" % script
         self.cache_path_params = cache_path + "/%s.params" % script
         self.cache_path_facts = cache_path + "/%s.facts" % script
+        self.cache_path_hostcollections = cache_path + "/%s.hostcollections" % script
         try:
             self.cache_max_age = config.getint('cache', 'max_age')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.cache_max_age = 60
+
         return True
 
     def parse_cli_args(self):
@@ -140,12 +153,17 @@ class ForemanInventory(object):
             self.session.verify = self.foreman_ssl_verify
         return self.session
 
-    def _get_json(self, url, ignore_errors=None):
+    def _get_json(self, url, ignore_errors=None, params=None):
+        if params is None:
+            params = {}
+        params['per_page'] = 250
+
         page = 1
         results = []
         s = self._get_session()
         while True:
-            ret = s.get(url, params={'page': page, 'per_page': 250})
+            params['page'] = page
+            ret = s.get(url, params=params)
             if ignore_errors and ret.status_code in ignore_errors:
                 break
             ret.raise_for_status()
@@ -158,7 +176,7 @@ class ForemanInventory(object):
                 return json['results']
             # List of all hosts is returned paginaged
             results = results + json['results']
-            if len(results) >= json['total']:
+            if len(results) >= json['subtotal']:
                 break
             page += 1
             if len(json['results']) == 0:
@@ -169,20 +187,27 @@ class ForemanInventory(object):
         return results
 
     def _get_hosts(self):
-        return self._get_json("%s/api/v2/hosts" % self.foreman_url)
+        url = "%s/api/v2/hosts" % self.foreman_url
 
-    def _get_all_params_by_id(self, hid):
+        params = {}
+        if self.host_filters:
+            params['search'] = self.host_filters
+
+        return self._get_json(url, params=params)
+
+    def _get_host_data_by_id(self, hid):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
-        ret = self._get_json(url, [404])
-        if ret == []:
-            ret = {}
-        return ret.get('all_parameters', {})
+        return self._get_json(url)
 
-    def _resolve_params(self, host):
-        """Fetch host params and convert to dict"""
+    def _get_facts_by_id(self, hid):
+        url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
+        return self._get_json(url)
+
+    def _resolve_params(self, host_params):
+        """Convert host params to dict"""
         params = {}
 
-        for param in self._get_all_params_by_id(host['id']):
+        for param in host_params:
             name = param['name']
             params[name] = param['value']
 
@@ -218,6 +243,7 @@ class ForemanInventory(object):
         self.write_to_cache(self.inventory, self.cache_path_inventory)
         self.write_to_cache(self.params, self.cache_path_params)
         self.write_to_cache(self.facts, self.cache_path_facts)
+        self.write_to_cache(self.hostcollections, self.cache_path_hostcollections)
 
     def to_safe(self, word):
         '''Converts 'bad' characters in a string to underscores
@@ -237,6 +263,9 @@ class ForemanInventory(object):
 
         for host in self._get_hosts():
             dns_name = host['name']
+
+            host_data = self._get_host_data_by_id(host['id'])
+            host_params = host_data.get('all_parameters', {})
 
             # Create ansible groups for hostgroup
             group = 'hostgroup'
@@ -258,7 +287,7 @@ class ForemanInventory(object):
                     safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
                     self.inventory[safe_key].append(dns_name)
 
-            params = self._resolve_params(host)
+            params = self._resolve_params(host_params)
 
             # Ansible groups by parameters in host groups and Foreman host
             # attributes.
@@ -273,6 +302,17 @@ class ForemanInventory(object):
                     self.inventory[key].append(dns_name)
                 except KeyError:
                     pass  # Host not part of this group
+
+            if self.want_hostcollections:
+                hostcollections = host_data.get('host_collections')
+
+                if hostcollections:
+                    # Create Ansible groups for host collections
+                    for hostcollection in hostcollections:
+                        safe_key = self.to_safe('%shostcollection_%s' % (self.group_prefix, hostcollection['name'].lower()))
+                        self.inventory[safe_key].append(dns_name)
+
+                self.hostcollections[dns_name] = hostcollections
 
             self.cache[dns_name] = host
             self.params[dns_name] = params
@@ -295,31 +335,36 @@ class ForemanInventory(object):
     def load_inventory_from_cache(self):
         """Read the index from the cache file sets self.index"""
 
-        cache = open(self.cache_path_inventory, 'r')
-        json_inventory = cache.read()
-        self.inventory = json.loads(json_inventory)
+        with open(self.cache_path_inventory, 'r') as fp:
+            self.inventory = json.load(fp)
 
     def load_params_from_cache(self):
         """Read the index from the cache file sets self.index"""
 
-        cache = open(self.cache_path_params, 'r')
-        json_params = cache.read()
-        self.params = json.loads(json_params)
+        with open(self.cache_path_params, 'r') as fp:
+            self.params = json.load(fp)
 
     def load_facts_from_cache(self):
         """Read the index from the cache file sets self.facts"""
+
         if not self.want_facts:
             return
-        cache = open(self.cache_path_facts, 'r')
-        json_facts = cache.read()
-        self.facts = json.loads(json_facts)
+        with open(self.cache_path_facts, 'r') as fp:
+            self.facts = json.load(fp)
+
+    def load_hostcollections_from_cache(self):
+        """Read the index from the cache file sets self.hostcollections"""
+
+        if not self.want_hostcollections:
+            return
+        with open(self.cache_path_hostcollections, 'r') as fp:
+            self.hostcollections = json.load(fp)
 
     def load_cache_from_cache(self):
         """Read the cache from the cache file sets self.cache"""
 
-        cache = open(self.cache_path_cache, 'r')
-        json_cache = cache.read()
-        self.cache = json.loads(json_cache)
+        with open(self.cache_path_cache, 'r') as fp:
+            self.cache = json.load(fp)
 
     def get_inventory(self):
         if self.args.refresh_cache or not self.is_cache_valid():
@@ -328,6 +373,7 @@ class ForemanInventory(object):
             self.load_inventory_from_cache()
             self.load_params_from_cache()
             self.load_facts_from_cache()
+            self.load_hostcollections_from_cache()
             self.load_cache_from_cache()
 
     def get_host_info(self):
