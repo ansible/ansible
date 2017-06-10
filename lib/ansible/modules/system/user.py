@@ -238,12 +238,6 @@ try:
 except:
     HAVE_SPWD = False
 
-#try:
-#    from __main__ import display
-#except ImportError:
-#    from ansible.utils.display import Display
-#    display = Display()
-
 class User(object):
     """
     This is a generic User manipulation class that is subclassed
@@ -606,10 +600,7 @@ class User(object):
             info[1] = self.user_password()
         expire = self.user_expire()
         if expire is not None and len(expire)>0:
-            if platform.system() == "FreeBSD":
-                info.append( time.gmtime(float(expire)) )
-            else:
-                info.append( time.gmtime(float(expire)*86400) )
+            info.append( time.gmtime(float(expire)*86400) )
         else:
             info.append( None )
         return info
@@ -648,10 +639,7 @@ class User(object):
                     #      - ansible on FreeBSD does not have spwd (freebsd11, python 2.7.13)
                     #      - FreeBSD stores EXPIRE as UNIX timestamp in /etc/master.passwd (GNU/Linux uses days)
                     if line.startswith('%s:' % self.name):
-                        if platform.system() == "FreeBSD":
-                            expire = line.split(':')[6]
-                        else:
-                            expire = line.split(':')[7]
+                        expire = line.split(':')[7]
         return expire
 
     def get_ssh_key_path(self):
@@ -976,11 +964,9 @@ class FreeBsdUser(User):
                 cmd.append(','.join(new_groups))
 
         if self.expires is not None and info[7] != self.expires:
-            expire=calendar.timegm(self.expires)
-            if expire==0:
-                expire=1 # on FreeBSD 0 means unlock account (not 1.1.1970)
+            days = ( time.mktime(self.expires) - time.time() ) / 86400
             cmd.append('-e')
-            cmd.append( str(expire) )
+            cmd.append( str(int(days)) )
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
