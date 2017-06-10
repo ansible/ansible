@@ -705,8 +705,7 @@ class VaultAES:
         elif HAS_PYCRYPTO:
             b_plaintext = cls._decrypt_pycrypto(b_salt, b_ciphertext, b_password, key_length)
         else:
-            display.warning(u"Neither Cryptography nor pycrypto was installed and this should have been detected earlier")
-            raise AnsibleError(NEED_CRYPTO_LIBRARY)
+            raise AnsibleError(NEED_CRYPTO_LIBRARY + ' (Late detection)')
 
         return b_plaintext
 
@@ -769,8 +768,7 @@ class VaultAES256:
             b_derivedkey = cls._create_key_pycrypto(b_password, b_salt, key_length, iv_length)
             b_iv = hexlify(b_derivedkey[(key_length * 2):(key_length * 2) + iv_length])
         else:
-            display.warning(u"Neither Cryptography nor pycrypto was installed. This should have been detected earlier")
-            raise AnsibleError(NEED_CRYPTO_LIBRARY)
+            raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in initctr)')
 
         b_key1 = b_derivedkey[:key_length]
         b_key2 = b_derivedkey[key_length:(key_length * 2)]
@@ -830,8 +828,7 @@ class VaultAES256:
         elif HAS_PYCRYPTO:
             b_hmac, b_ciphertext = cls._encrypt_pycrypto(b_plaintext, b_salt, b_key1, b_key2, b_iv)
         else:
-            display.warning(u"Neither Cryptography nor pycrypto is installed. This should have been detected earlier")
-            raise AnsibleError(NEED_CRYPTO_LIBRARY)
+            raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in encrypt)')
 
         b_vaulttext = b'\n'.join([hexlify(b_salt), b_hmac, b_ciphertext])
         # Unnecessary but getting rid of it is a backwards incompatible vault
@@ -918,6 +915,8 @@ class VaultAES256:
             b_plaintext = cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
         elif HAS_PYCRYPTO:
             b_plaintext = cls._decrypt_pycrypto(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
+        else:
+            raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in decrypt)')
 
         return b_plaintext
 
