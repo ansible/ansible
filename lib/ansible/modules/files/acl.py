@@ -152,6 +152,7 @@ import os
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.pycompat24 import get_exception
 
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
