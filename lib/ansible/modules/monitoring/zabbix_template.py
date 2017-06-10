@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -40,15 +40,15 @@ options:
   server_url:
      description:
          - Url of Zabbix server, with protocol (http or https).
-     required: True
+     required: true
   login_user:
      description:
          - name of user to login to zabbix
-     required: True
+     required: true
   login_password:
      description:
          - password for user to login to zabbix
-     reuqierd: True
+     reuqierd: true
   http_login_user:
       description:
           - Basic Auth login
@@ -62,29 +62,29 @@ options:
   template_name:
      description:
          - Name of zabbix template
-     required: True
+     required: true
   template_groups:
      description:
          - List of template groups to create or delete.
-     required: True
+     required: true
   link_templates:
      description:
          - List of templates linked to the template.
-     required: False
+     required: false
   macros:
      description:
          - List of templates macro
-     required: False
+     required: false
   state:
      description:
          - state present create/update template, absent delete template
-     required: False
+     required: false
      choices: [ present, absent]
      default: "present"
   timeout:
      description:
          - The timeout of API request (seconds).
-     required: False
+     required: false
      default: 10
 '''
 
@@ -94,8 +94,8 @@ EXAMPLES = '''
   local_action:
     module: zabbix_template
     server_url: http://127.0.0.1
-    login_user: Admin
-    login_password: zabbix
+    login_user: username
+    login_password: password
     template_name: ExampleHost
     template_groups:
       - Role
@@ -145,8 +145,8 @@ class Template(object):
         group_ids = []
         if self.check_host_group_exist(group_names):
             group_list = self._zapi.hostgroup.get(
-                             {'output': 'extend',
-                              'filter': {'name': group_names}})
+                {'output': 'extend',
+                 'filter': {'name': group_names}})
             for group in group_list:
                 group_id = group['groupid']
                 group_ids.append({'groupid': group_id})
@@ -158,8 +158,8 @@ class Template(object):
             return template_ids
         for template in template_list:
             template_list = self._zapi.template.get(
-                                {'output': 'extend',
-                                 'filter': {'host': template}})
+                {'output': 'extend',
+                 'filter': {'host': template}})
             if len(template_list) < 1:
                 return None
             else:
