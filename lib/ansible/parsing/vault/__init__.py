@@ -747,7 +747,7 @@ class VaultAES256:
         # make two keys and one iv
 
         b_derivedkey = pycrypto_PBKDF2(b_password, b_salt, dkLen=(2 * key_length) + iv_length,
-                                       count=10000, prf=pbkdf2_prf)
+                                       count=10000, prf=_pbkdf2_prf)
         return b_derivedkey
 
     @classmethod
