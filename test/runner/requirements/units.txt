@@ -2,7 +2,7 @@ boto
 boto3
 placebo
 cryptography
-pycrypto >= 2.6
+pycrypto
 jinja2
 mock
 nose
