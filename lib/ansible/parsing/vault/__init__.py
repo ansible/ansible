@@ -738,16 +738,17 @@ class VaultAES256:
         return b_derivedkey
 
     @staticmethod
-    def _create_key_pycrypto(b_password, b_salt, key_length, iv_length):
+    def _pbkdf2_prf(p, s):
         hash_function = pycrypto_SHA256
+        return pycrypto_HMAC.new(p, s, hash_function).digest()
 
-        def _pbkdf2_prf(p, s):
-            return pycrypto_HMAC.new(p, s, hash_function).digest()
+    @classmethod
+    def _create_key_pycrypto(cls, b_password, b_salt, key_length, iv_length):
 
         # make two keys and one iv
 
         b_derivedkey = pycrypto_PBKDF2(b_password, b_salt, dkLen=(2 * key_length) + iv_length,
-                                       count=10000, prf=_pbkdf2_prf)
+                                       count=10000, prf=cls._pbkdf2_prf)
         return b_derivedkey
 
     @classmethod
