@@ -155,11 +155,11 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackCluster, self).__init__(module)
         self.returns = {
-            'startip':           'ipv4_start',
-            'endip':             'ipv4_end',
-            'gateway':           'ipv4_gateway',
-            'netmask':           'ipv4_netmask',
-            'vlan':              'vlan',
+            'startip': 'ipv4_start',
+            'endip': 'ipv4_end',
+            'gateway': 'ipv4_gateway',
+            'netmask': 'ipv4_netmask',
+            'vlan': 'vlan',
         }
         self.storage_ip_range = None
         self.pod = None
@@ -181,7 +181,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         pod = self.module.params.get('pod')
         ipv4_start = self.module.params.get('ipv4_start')
 
-        args = { 'podid': self.get_pod(key='id') }
+        args = {'podid': self.get_pod(key='id')}
 
         ranges = self.cs.listStorageNetworkIpRange(**args)
         if ranges:
@@ -232,7 +232,6 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
                 range = res['storagenetworkiprange']
         return range
 
-
     def absent_storage_ip_range(self):
         range = self.get_storage_ip_range()
         if range:
@@ -248,9 +247,9 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         return range
 
     def get_pod(self, key=None):
-        pod=self.module.params.get('pod')
+        pod = self.module.params.get('pod')
         if not pod:
-          return None
+            return None
         args = {
             'name': self.module.params.get('pod'),
             'zoneid': self.get_zone(key='id'),
@@ -259,6 +258,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         if pods:
             return self._get_by_key(key, pods['pod'][0])
         self.module.fail_json(msg="Pod %s not found in zone %s." % (self.module.params.get('pod'), self.get_zone(key='name')))
+
 
 def main():
     argument_spec = cs_argument_spec()

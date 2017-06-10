@@ -140,14 +140,14 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackCluster, self).__init__(module)
         self.returns = {
-            'traffictype':        'traffictype',
-            'isolationmethod':    'isolation_method',
-            'kvmnetworklabel':    'kvm_networklabel',
-            'xennetworklabel':    'xen_networklabel',
+            'traffictype': 'traffictype',
+            'isolationmethod': 'isolation_method',
+            'kvmnetworklabel': 'kvm_networklabel',
+            'xennetworklabel': 'xen_networklabel',
             'vmwarenetworklabel': 'vmware_networklabel',
             'hypervnetworklabel': 'hyperv_networklabel',
-            'ovm3networklabel':   'ovm3_networklabel',
-            'vlan':               'vlan',
+            'ovm3networklabel': 'ovm3_networklabel',
+            'vlan': 'vlan',
         }
         self.traffictype = None
         self.physical_network = None
@@ -176,7 +176,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         ttypes = self.cs.listTrafficTypes(**args)
         if ttypes:
             for t in ttypes['traffictype']:
-                if traffictype.lower() in [ t['traffictype'].lower(), t['id'] ]:
+                if traffictype.lower() in [t['traffictype'].lower(), t['id']]:
                     self.traffictype = t
                     break
         return self.traffictype
@@ -258,7 +258,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 
         if networks:
             for n in networks['physicalnetwork']:
-                if physical_network.lower() in [ n['name'].lower(), n['id'] ]:
+                if physical_network.lower() in [n['name'].lower(), n['id']]:
                     self.physical_network = n
                     return self._get_by_key(key, self.physical_network)
         self.module.fail_json(msg="physical network '%s' not found" % zone)
@@ -275,7 +275,7 @@ def main():
         vmware_networklabel=dict(default=None),
         hyperv_networklabel=dict(default=None),
         ovm3_networklabel=dict(default=None),
-        isolation_method=dict(choices=['vlan','vxlan'], default=None),
+        isolation_method=dict(choices=['vlan', 'vxlan'], default=None),
         state=dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
         url=dict(default=None),
         username=dict(default=None),

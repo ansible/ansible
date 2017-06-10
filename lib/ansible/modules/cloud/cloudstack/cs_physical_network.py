@@ -224,11 +224,11 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackCluster, self).__init__(module)
         self.returns = {
-            'isolationmethods':     'isolation_method',
+            'isolationmethods': 'isolation_method',
             'broadcastdomainrange': 'broadcast_domain_range',
-            'networkspeed':         'network_speed',
-            'vlan':                 'vlan',
-            'tags':                 'tags',
+            'networkspeed': 'network_speed',
+            'vlan': 'vlan',
+            'tags': 'tags',
         }
         self.network = None
         self.nsps = []
@@ -266,14 +266,14 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 
     def get_nsp(self, name=None):
         if not self.nsps:
-          network = self.get_network()
-          args = {
-              'physicalnetworkid': network['id']
-          }
-          res = self.cs.listNetworkServiceProviders(**args)
-          if 'errortext' in res:
-              self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-          self.nsps = res['networkserviceprovider']
+            network = self.get_network()
+            args = {
+                'physicalnetworkid': network['id']
+            }
+            res = self.cs.listNetworkServiceProviders(**args)
+            if 'errortext' in res:
+                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            self.nsps = res['networkserviceprovider']
 
         names = []
         for nsp in self.nsps:
@@ -286,7 +286,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
     def _update_nsp(self, name=None, state=None, service_list=None):
         nsp = self.get_nsp(name)
         if not service_list and nsp['state'] == state:
-          return nsp
+            return nsp
 
         args = {
             'id': nsp['id'],
@@ -304,12 +304,12 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         nsp = self.get_nsp(nsp_name)
         nspid = nsp['id']
         if self.vrouters is None:
-          self.vrouters = dict()
-          res = self.cs.listVirtualRouterElements()
-          if 'errortext' in res:
-              self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-          for vrouter in res['virtualrouterelement']:
-              self.vrouters[vrouter['nspid']] = vrouter
+            self.vrouters = dict()
+            res = self.cs.listVirtualRouterElements()
+            if 'errortext' in res:
+                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            for vrouter in res['virtualrouterelement']:
+                self.vrouters[vrouter['nspid']] = vrouter
 
         if nspid not in self.vrouters:
             self.module.fail_json(msg="Failed: No VirtualRouterElement founf for nsp '%s'" % nsp_name)
@@ -320,15 +320,15 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         nsp = self.get_nsp(nsp_name)
         nspid = nsp['id']
         if self.loadbalancers is None:
-          self.loadbalancers = dict()
-          res = self.cs.listInternalLoadBalancerElements()
-          if 'errortext' in res:
-              self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-          for loadbalancer in res['internalloadbalancerelement']:
-              self.loadbalancers[loadbalancer['nspid']] = loadbalancer
+            self.loadbalancers = dict()
+            res = self.cs.listInternalLoadBalancerElements()
+            if 'errortext' in res:
+                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            for loadbalancer in res['internalloadbalancerelement']:
+                self.loadbalancers[loadbalancer['nspid']] = loadbalancer
 
-          if nspid not in self.loadbalancers:
-              self.module.fail_json(msg="Failed: No Loadbalancer found for nsp '%s'" % nsp_name)
+            if nspid not in self.loadbalancers:
+                self.module.fail_json(msg="Failed: No Loadbalancer found for nsp '%s'" % nsp_name)
 
         return self.loadbalancers[nspid]
 
@@ -469,7 +469,7 @@ def main():
 
         if nsps_enabled is not None:
             for nsp_name in nsps_enabled:
-                if nsp_name in [ 'VirtualRouter', 'VpcVirtualRouter' ]:
+                if nsp_name in ['VirtualRouter', 'VpcVirtualRouter']:
                     acs_network.set_vrouter_element_state(enabled=True, nsp_name=nsp_name)
                 elif nsp_name == 'InternalLbVm':
                     acs_network.set_loadbalancer_element_state(enabled=True, nsp_name=nsp_name)

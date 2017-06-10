@@ -169,15 +169,15 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackCluster, self).__init__(module)
         self.returns = {
-            'startip':           'ipv4_start',
-            'endip':             'ipv4_end',
-            'gateway':           'ipv4_gateway',
-            'netmask':           'ipv4_netmask',
-            'startipv6':         'ipv6_start',
-            'endipv6':           'ipv6_end',
-            'ip6gateway':        'ipv6_gateway',
-            'ip6cidr':           'ipv6_cidr',
-            'vlan':              'vlan',
+            'startip': 'ipv4_start',
+            'endip': 'ipv4_end',
+            'gateway': 'ipv4_gateway',
+            'netmask': 'ipv4_netmask',
+            'startipv6': 'ipv6_start',
+            'endipv6': 'ipv6_end',
+            'ip6gateway': 'ipv6_gateway',
+            'ip6cidr': 'ipv6_cidr',
+            'vlan': 'vlan',
             'forvirtualnetwork': 'for_virtual_network',
         }
         self.vlan_ip_range = None
@@ -224,20 +224,20 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 
         args = {}
         if account and domain:
-          args['account'] = self.get_account(key='id')
-          args['domainid'] = self.get_domain(key='id')
+            args['account'] = self.get_account(key='id')
+            args['domainid'] = self.get_domain(key='id')
 
         if zone:
-          args['zoneid'] = self.get_zone(key='id')
+            args['zoneid'] = self.get_zone(key='id')
 
         if physical_network:
-          args['physicalnetworkid'] = self.get_physical_network(key='id')
+            args['physicalnetworkid'] = self.get_physical_network(key='id')
 
         if pod:
-          args['podid'] = self.get_pod(key='id')
+            args['podid'] = self.get_pod(key='id')
 
         if project:
-          args['projectid'] = self.get_project(key='id')
+            args['projectid'] = self.get_project(key='id')
 
         ranges = self.cs.listVlanIpRanges(**args)
         if ranges:
@@ -291,9 +291,9 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         return range
 
     def get_pod(self, key=None):
-        pod=self.module.params.get('pod')
+        pod = self.module.params.get('pod')
         if not pod:
-          return None
+            return None
         args = {
             'name': self.module.params.get('pod'),
             'zoneid': self.get_zone(key='id'),
@@ -320,7 +320,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 
         if networks:
             for n in networks['physicalnetwork']:
-                if physical_network.lower() in [ n['name'].lower(), n['id'] ]:
+                if physical_network.lower() in [n['name'].lower(), n['id']]:
                     self.physical_network = n
                     return self._get_by_key(key, self.physical_network)
         self.module.fail_json(msg="physical network '%s' not found" % zone)
