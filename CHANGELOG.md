@@ -9,7 +9,8 @@ Ansible Changes By Release
 * Python3 bugfixes
   * Fix sorting of ec2 policies
   * Fix digital_ocean dynamic inventory script
-* Fix pip module when using python3's pyvenv and python3 -m venv to create virtualenvs
+  * Fix for the docker connection plugin
+  * Fix pip module when using python3's pyvenv and python3 -m venv to create virtualenvs
 * Fix for the AnsiBallZ wrapper so that it gives a better error message when
   there's not enough disk space to create its tempdir.
 * Fix so ansilbe-galaxy install --force with unversioned roles will once again
