@@ -387,7 +387,7 @@ def main():
     argument_spec.update(dict(
         state=dict(default='present', choices=['present', 'absent']),
         name=dict(required=True, type='str'),
-        hash_key_name=dict(required=True, type='str'),
+        hash_key_name=dict(type='str'),
         hash_key_type=dict(default='STRING', type='str', choices=['STRING', 'NUMBER', 'BINARY']),
         range_key_name=dict(type='str'),
         range_key_type=dict(default='STRING', type='str', choices=['STRING', 'NUMBER', 'BINARY']),
