@@ -17,9 +17,9 @@
 '''
 DOCUMENTATION:
     cache: yaml
-    short_description: File backed, using Python's pickle.
+    short_description: Pickle formatted files.
     description:
-        - File backed cache that uses Python's pickle serialization as a format, the files are per host.
+        - This cache uses Python's pickle serialization format, in per host files, saved to the filesystem.
     version_added: "2.3"
     author: Brian Coca (@bcoca)
 '''

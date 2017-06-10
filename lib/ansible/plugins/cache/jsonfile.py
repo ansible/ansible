@@ -17,9 +17,9 @@
 '''
 DOCUMENTATION:
     cache: jsonfile
-    short_description: File backed, JSON formated.
+    short_description: JSON formatted files.
     description:
-        - File backed cache that uses JSON as a format, the files are per host.
+        - This cache uses JSON formatted, per host, files saved to the filesystem.
     version_added: "1.9"
     author: Brian Coca (@bcoca)
 '''
