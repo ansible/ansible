@@ -65,12 +65,12 @@ from ansible.plugins.inventory import BaseInventoryPlugin
 
 
 class InventoryModule(BaseInventoryPlugin):
-    ''' Host inventory parser for ansible using external inventory scripts. '''
+    ''' Host inventory parser for ansible using local virtualbox. '''
 
     NAME = 'virtualbox'
     VBOX = "VBoxManage"
 
-    def query_vbox_data(self, host, property_path):
+    def _query_vbox_data(self, host, property_path):
         ret = None
         try:
             cmd = [self.VBOX, 'guestproperty', 'get', host, property_path]
@@ -83,61 +83,32 @@ class InventoryModule(BaseInventoryPlugin):
             pass
         return ret
 
-    def verify_file(self, path):
+    def _set_variables(self, hostvars, data):
 
-        valid = False
-        if super(InventoryModule, self).verify_file(path):
-            if path.endswith('.vbox.yaml') or path.endswith('.vbox.yml'):
-                valid = True
-        return valid
+        # set vars in inventory from hostvars
+        for host in hostvars:
 
-    def parse(self, inventory, loader, path, cache=True):
+            # create vars from vbox properties
+            if data.get('query') and isinstance(data['query'], dict):
+                for varname in data['query']:
+                    hostvars[host][varname] = self._query_vbox_data(host, data['query'][varname])
 
-        super(InventoryModule, self).parse(inventory, loader, path)
+            # create composite vars
+            if data.get('compose') and isinstance(data['compose'], dict):
+                for varname in data['compose']:
+                    hostvars[host][varname] = self._compose(data['compose'][varname], hostvars[host])
 
-        cache_key = self.get_cache_prefix(path)
+            # actually update inventory
+            for key in hostvars[host]:
+                self.inventory.set_variable(host, key, hostvars[host][key])
 
-        # file is config file
-        try:
-            data = self.loader.load_from_file(path)
-        except Exception as e:
-            raise AnsibleParserError(e)
-
-        if not data or data.get('plugin') != self.NAME:
-            # this is not my config file
-            return False
-
-        if cache and cache_key in inventory.cache:
-            source_data = inventory.cache[cache_key]
-        else:
-            pwfile = to_bytes(data.get('settings_password_file'))
-            running = data.get('running_only', False)
-
-            # start getting data
-            cmd = [self.VBOX, 'list', '-l']
-            if running:
-                cmd.append('runningvms')
-            else:
-                cmd.append('vms')
-
-            if pwfile and os.path.exists(pwfile):
-                cmd.append('--settingspwfile')
-                cmd.append(pwfile)
-
-            try:
-                p = Popen(cmd, stdout=PIPE)
-            except Exception as e:
-                AnsibleParserError(e)
-
-            source_data = p.stdout.readlines()
-            inventory.cache[cache_key] = source_data
-
+    def _populate_from_source(self, source_data, config_data):
         hostvars = {}
         prevkey = pref_k = ''
         current_host = None
 
         # needed to possibly set ansible_host
-        netinfo = data.get('network_info_path', "/VirtualBox/GuestInfo/Net/0/V4/IP")
+        netinfo = config_data.get('network_info_path', "/VirtualBox/GuestInfo/Net/0/V4/IP")
 
         for line in source_data:
             try:
@@ -159,7 +130,7 @@ class InventoryModule(BaseInventoryPlugin):
                     self.inventory.add_host(current_host)
 
                 # try to get network info
-                netdata = self.query_vbox_data(current_host, netinfo)
+                netdata = self._query_vbox_data(current_host, netinfo)
                 if netdata:
                     self.inventory.set_variable(current_host, 'ansible_host', netdata)
 
@@ -184,19 +155,61 @@ class InventoryModule(BaseInventoryPlugin):
 
                 prevkey = pref_k
 
-        # set vars in inventory from hostvars
-        for host in hostvars:
+        self._set_variables(hostvars, config_data)
 
-            # create vars from vbox properties
-            if data.get('query') and isinstance(data['query'], dict):
-                for varname in data['query']:
-                    hostvars[host][varname] = self.query_vbox_data(host, data['query'][varname])
+    def verify_file(self, path):
 
-            # create composite vars
-            if data.get('compose') and isinstance(data['compose'], dict):
-                for varname in data['compose']:
-                    hostvars[host][varname] = self._compose(data['compose'][varname], hostvars[host])
+        valid = False
+        if super(InventoryModule, self).verify_file(path):
+            if path.endswith('.vbox.yaml') or path.endswith('.vbox.yml'):
+                valid = True
+        return valid
 
-            # actually update inventory
-            for key in hostvars[host]:
-                self.inventory.set_variable(host, key, hostvars[host][key])
+    def parse(self, inventory, loader, path, cache=True):
+
+        super(InventoryModule, self).parse(inventory, loader, path)
+
+        cache_key = self.get_cache_prefix(path)
+
+        # file is config file
+        try:
+            config_data = self.loader.load_from_file(path)
+        except Exception as e:
+            raise AnsibleParserError(e)
+
+        if not config_data or config_data.get('plugin') != self.NAME:
+            # this is not my config file
+            return False
+
+        source_data = None
+        if cache and cache_key in inventory.cache:
+            try:
+                source_data = inventory.cache[cache_key]
+            except KeyError:
+                pass
+
+        if not source_data:
+            pwfile = to_bytes(config_data.get('settings_password_file'))
+            running = config_data.get('running_only', False)
+
+            # start getting data
+            cmd = [self.VBOX, 'list', '-l']
+            if running:
+                cmd.append('runningvms')
+            else:
+                cmd.append('vms')
+
+            if pwfile and os.path.exists(pwfile):
+                cmd.append('--settingspwfile')
+                cmd.append(pwfile)
+
+            try:
+                p = Popen(cmd, stdout=PIPE)
+            except Exception as e:
+                AnsibleParserError(e)
+
+            source_data = p.stdout.readlines()
+            inventory.cache[cache_key] = source_data
+
+        self._populate_from_source(source_data, config_data)
+
