@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.basic import AnsibleModule
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -29,63 +28,63 @@ DOCUMENTATION = '''
 module: zabbix_template
 short_description: create/delete zabbix template
 description:
-  - create/delete zabbix template
+    - create/delete zabbix template
 version_added: "2.4"
 author:
-  - "@sookido"
+    - "@sookido"
 requirements:
-  - "python >= 2.6"
-  - zabbix-api
+    - "python >= 2.6"
+    - zabbix-api
 options:
-  server_url:
-     description:
-         - Url of Zabbix server, with protocol (http or https).
-     required: true
-  login_user:
-     description:
-         - name of user to login to zabbix
-     required: true
-  login_password:
-     description:
-         - password for user to login to zabbix
-     reuqierd: true
-  http_login_user:
-      description:
-          - Basic Auth login
-      required: false
-      default: None
-  http_login_password:
-      description:
-          - Basic Auth password
-      required: false
-      default: None
-  template_name:
-     description:
-         - Name of zabbix template
-     required: true
-  template_groups:
-     description:
-         - List of template groups to create or delete.
-     required: true
-  link_templates:
-     description:
-         - List of templates linked to the template.
-     required: false
-  macros:
-     description:
-         - List of templates macro
-     required: false
-  state:
-     description:
-         - state present create/update template, absent delete template
-     required: false
-     choices: [ present, absent]
-     default: "present"
-  timeout:
-     description:
-         - The timeout of API request (seconds).
-     required: false
-     default: 10
+    server_url:
+        description:
+            - Url of Zabbix server, with protocol (http or https).
+        required: true
+    login_user:
+        description:
+            - name of user to login to zabbix
+        required: true
+    login_password:
+        description:
+            - password for user to login to zabbix
+        required: true
+    http_login_user:
+        description:
+            - Basic Auth login
+        required: false
+        default: None
+    http_login_password:
+        description:
+            - Basic Auth password
+        required: false
+        default: None
+    template_name:
+        description:
+            - Name of zabbix template
+        required: true
+    template_groups:
+        description:
+            - List of template groups to create or delete.
+        required: true
+    link_templates:
+        description:
+            - List of templates linked to the template.
+        required: false
+    macros:
+        description:
+            - List of templates macro
+        required: false
+    state:
+        description:
+            - state present create/update template, absent delete template
+        required: false
+        choices: [ present, absent]
+        default: "present"
+    timeout:
+        description:
+            - The timeout of API request (seconds).
+        required: false
+        default: 10
 '''
 
 EXAMPLES = '''
@@ -118,6 +117,7 @@ RETURN = '''
 '''
 
 
+from ansible.module_utils.basic import AnsibleModule
 try:
     from zabbix_api import ZabbixAPI
 
