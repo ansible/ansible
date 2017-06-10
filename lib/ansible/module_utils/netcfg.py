@@ -81,7 +81,7 @@ class ConfigLine(object):
         return '\n'.join(config)
 
     @property
-    def has_chilren(self):
+    def has_children(self):
         return len(self._children) > 0
 
     @property
