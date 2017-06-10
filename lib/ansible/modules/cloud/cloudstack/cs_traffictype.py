@@ -133,7 +133,9 @@ isolation_method:
 '''
 
 # import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec, cs_required_together
+from ansible.module_utils.basic import AnsibleModule
+
 
 class AnsibleCloudStackCluster(AnsibleCloudStack):
 
@@ -304,7 +306,5 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
