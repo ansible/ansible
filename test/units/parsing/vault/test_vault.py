@@ -26,7 +26,7 @@ import io
 import os
 
 from binascii import hexlify
-from nose.plugins.skip import SkipTest
+import pytest
 
 from ansible.compat.tests import unittest
 
@@ -137,29 +137,47 @@ class TestVaultCipherAes256(unittest.TestCase):
         self.assertIsInstance(self.vault_cipher, vault.VaultAES256)
 
     # TODO: tag these as slow tests
-    def test_create_key(self):
+    def test_create_key_cryptography(self):
         b_password = b'hunter42'
         b_salt = os.urandom(32)
         b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
         self.assertIsInstance(b_key_cryptography, six.binary_type)
+
+    def test_create_key_pycrypto(self):
+        if not vault.HAS_PYCRYPTO:
+            pytest.skip('Not testing pycrypto key as pycrypto is not installed')
+
+        b_password = b'hunter42'
+        b_salt = os.urandom(32)
+
         b_key_pycrypto = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
         self.assertIsInstance(b_key_pycrypto, six.binary_type)
+
+    def test_compare_new_keys(self):
+        if not vault.HAS_PYCRYPTO:
+            pytest.skip('Not comparing cryptography key to pycrypto key as pycrypto is not installed')
+
+        b_password = b'hunter42'
+        b_salt = os.urandom(32)
+        b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
+
+        b_key_pycrypto = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
         self.assertEqual(b_key_cryptography, b_key_pycrypto)
 
-    def test_create_key_known(self):
+    def test_create_key_known_cryptography(self):
         b_password = b'hunter42'
 
         # A fixed salt
         b_salt = b'q' * 32  # q is the most random letter.
         b_key_1 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key, six.binary_type)
+        self.assertIsInstance(b_key_1, six.binary_type)
 
         # verify we get the same answer
         # we could potentially run a few iterations of this and time it to see if it's roughly constant time
         #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
         b_key_2 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key, six.binary_type)
-        self.assertEqual(b_key, b_key_2)
+        self.assertIsInstance(b_key_2, six.binary_type)
+        self.assertEqual(b_key_1, b_key_2)
 
         # And again with pycrypto
         b_key_3 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
@@ -172,6 +190,21 @@ class TestVaultCipherAes256(unittest.TestCase):
         self.assertIsInstance(b_key_4, six.binary_type)
         self.assertEqual(b_key_3, b_key_4)
         self.assertEqual(b_key_1, b_key_4)
+
+    def test_create_key_known_pycrypto(self):
+        b_password = b'hunter42'
+
+        # A fixed salt
+        b_salt = b'q' * 32  # q is the most random letter.
+        b_key_3 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
+        self.assertIsInstance(b_key_3, six.binary_type)
+
+        # verify we get the same answer
+        # we could potentially run a few iterations of this and time it to see if it's roughly constant time
+        #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
+        b_key_4 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
+        self.assertIsInstance(b_key_4, six.binary_type)
+        self.assertEqual(b_key_3, b_key_4)
 
     def test_is_equal_is_equal(self):
         self.assertTrue(self.vault_cipher._is_equal(b'abcdefghijklmnopqrstuvwxyz', b'abcdefghijklmnopqrstuvwxyz'))
@@ -298,7 +331,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
 
     def test_encrypt_decrypt_aes256_bad_hmac(self):
         # FIXME This test isn't working quite yet.
-        raise SkipTest
+        pytest.skip('This test is not ready yet')
 
         self.v.cipher_name = 'AES256'
         # plaintext = "Setec Astronomy"
