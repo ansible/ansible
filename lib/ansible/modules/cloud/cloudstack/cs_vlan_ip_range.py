@@ -170,7 +170,6 @@ from ansible.module_utils.cloudstack import (
 )
 
 
-
 class AnsibleCloudStackCluster(AnsibleCloudStack):
 
     def __init__(self, module):
