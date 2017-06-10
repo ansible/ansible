@@ -39,15 +39,15 @@ HAS_SOME_PYCRYPTO = False
 CRYPTOGRAPHY_BACKEND = None
 try:
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+        warnings.simplefilter("ignore", DeprecationWarning)
         from cryptography.exceptions import InvalidSignature
-        from cryptography.hazmat.backends import default_backend
-        from cryptography.hazmat.primitives import hashes, padding
-        from cryptography.hazmat.primitives.hmac import HMAC
-        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-        from cryptography.hazmat.primitives.ciphers import (
-            Cipher as C_Cipher, algorithms, modes
-        )
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes, padding
+    from cryptography.hazmat.primitives.hmac import HMAC
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives.ciphers import (
+        Cipher as C_Cipher, algorithms, modes
+    )
     CRYPTOGRAPHY_BACKEND = default_backend()
     HAS_CRYPTOGRAPHY = True
 except ImportError:
