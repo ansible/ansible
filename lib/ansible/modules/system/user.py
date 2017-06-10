@@ -237,12 +237,6 @@ try:
 except:
     HAVE_SPWD = False
 
-#try:
-#    from __main__ import display
-#except ImportError:
-#    from ansible.utils.display import Display
-#    display = Display()
-
 class User(object):
     """
     This is a generic User manipulation class that is subclassed
@@ -522,13 +516,8 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-<<<<<<< HEAD
-        if self.expires:
-            cmd.append('-e')
-=======
         if self.expires is not None and info[7] != self.expires:
             cmd.append('--expiredate')
->>>>>>> Fix #13235
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
@@ -610,10 +599,7 @@ class User(object):
             info[1] = self.user_password()
         expire = self.user_expire()
         if expire is not None and len(expire)>0:
-            if platform.system() == "FreeBSD":
-                info.append( time.gmtime(float(expire)) )
-            else:
-                info.append( time.gmtime(float(expire)*86400) )
+            info.append( time.gmtime(float(expire)*86400) )
         else:
             info.append( None )
         return info
@@ -652,10 +638,7 @@ class User(object):
                     #      - ansible on FreeBSD does not have spwd (freebsd11, python 2.7.13)
                     #      - FreeBSD stores EXPIRE as UNIX timestamp in /etc/master.passwd (GNU/Linux uses days)
                     if line.startswith('%s:' % self.name):
-                        if platform.system() == "FreeBSD":
-                            expire = line.split(':')[6]
-                        else:
-                            expire = line.split(':')[7]
+                        expire = line.split(':')[7]
         return expire
 
     def get_ssh_key_path(self):
@@ -786,6 +769,39 @@ class FreeBsdUser(User):
     platform = 'FreeBSD'
     distribution = None
     SHADOWFILE = '/etc/master.passwd'
+
+    def user_info(self):
+        if not self.user_exists():
+            return False
+        info = self.get_pwd_info()
+        if len(info[1]) == 1 or len(info[1]) == 0:
+            info[1] = self.user_password()
+        expire = self.user_expire()
+        print("StK BSD user_info() - expire: %s" % expire)
+        if expire is not None and len(expire)>0:
+            info.append( time.gmtime(float(expire)) )
+        else:
+            info.append( None )
+        return info
+
+    def user_expire(self):
+        expire = None
+        if HAVE_SPWD:
+            try:
+                expire = spwd.getspnam(self.name)[6]
+            except KeyError:
+                return expire
+        if not self.user_exists():
+            return expire
+        elif self.SHADOWFILE:
+            # Read shadow file for user's expiry time
+            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+                for line in open(self.SHADOWFILE).readlines():
+                    if line.startswith('%s:' % self.name):
+                        expire = line.split(':')[6]
+
+        print("StK BSD user_expire() - expire: %s" % expire)
+        return expire
 
     def remove_user(self):
         cmd = [
@@ -946,10 +962,11 @@ class FreeBsdUser(User):
                     new_groups = groups | set(current_groups)
                 cmd.append(','.join(new_groups))
 
-        if self.expires:
-            days = (time.mktime(self.expires) - time.time()) // 86400
+        if self.expires is not None and info[7] != self.expires:
+            days = ( time.mktime(self.expires) - time.time() ) / 86400
             cmd.append('-e')
-            cmd.append(str(int(days)))
+            cmd.append( str(int(days)) )
+            #cmd.append( str(time.mktime(self.expires)) )
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
