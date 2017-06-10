@@ -227,7 +227,8 @@ import pwd
 import shutil
 import socket
 import time
-
+import calendar
+import shutil
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
 
@@ -296,7 +297,8 @@ class User(object):
 
         if module.params['expires']:
             try:
-                self.expires = time.gmtime((module.params['expires']//86400) * 86400)
+                self.expires = time.gmtime(module.params['expires']//86400*86400)
+                print("StK - __INIT__ self.expires: %s" % str(self.expires) ) 
             except Exception:
                 e = get_exception()
                 module.fail_json(msg="Invalid expires time %s: %s" %(self.expires, str(e)))
@@ -637,6 +639,7 @@ class User(object):
                     # HINT - GNU/Linux stores EXPIRE at pos. 7, FreeBSD uses pos. 6,
                     #      - ansible on FreeBSD does not have spwd (freebsd11, python 2.7.13)
                     #      - FreeBSD stores EXPIRE as UNIX timestamp in /etc/master.passwd (GNU/Linux uses days)
+                    #      - FreeBSD uses 0 as expire date for unlock 
                     if line.startswith('%s:' % self.name):
                         expire = line.split(':')[7]
         return expire
@@ -864,10 +867,12 @@ class FreeBsdUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
+        print("StK BSD create_user() - self.expires %s" % str(self.expires) )
         if self.expires:
-            days = (time.mktime(self.expires) - time.time()) // 86400
+            expire=calendar.timegm(self.expires)
+            if expire==0: expire=1 # on FreeBSD 0 means unlock account
             cmd.append('-e')
-            cmd.append(str(int(days)))
+            cmd.append( str(expire) )
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -963,10 +968,10 @@ class FreeBsdUser(User):
                 cmd.append(','.join(new_groups))
 
         if self.expires is not None and info[7] != self.expires:
-            days = ( time.mktime(self.expires) - time.time() ) / 86400
+            expire=calendar.timegm(self.expires)
+            if expire==0: expire=1 # on FreeBSD 0 means unlock account
             cmd.append('-e')
-            cmd.append( str(int(days)) )
-            #cmd.append( str(time.mktime(self.expires)) )
+            cmd.append( str(expire) )
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
