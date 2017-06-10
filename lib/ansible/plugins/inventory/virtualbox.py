@@ -212,4 +212,3 @@ class InventoryModule(BaseInventoryPlugin):
             inventory.cache[cache_key] = source_data
 
         self._populate_from_source(source_data, config_data)
-
