@@ -490,7 +490,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         verify_commit_sign(git_path, module, dest, version)
 
 
-def has_local_mods(module, git_path, dest, bare):
+def has_local_mods(module, git_path, dest, bare, mirror):
     if bare:
         return False
 
@@ -709,7 +709,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
     return remote_url is not None
 
 
-def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used):
+def fetch(git_path, module, repo, dest, version, remote, depth, bare, mirror, refspec, git_version_used):
     ''' updates repo from remote sources '''
     set_remote_url(git_path, module, repo, dest, remote)
     commands = []
