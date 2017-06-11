@@ -149,7 +149,7 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
-        version_added: "2.3"
+        version_added: "2.4"
         description:
             - if C(yes), repository will be created as a mirror
     umask:
