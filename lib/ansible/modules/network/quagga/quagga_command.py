@@ -91,9 +91,11 @@ RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def run_cmd(module, cmd, check_rc=True):
     rc, out, err = module.run_command(cmd, check_rc=check_rc)
     return out
+
 
 def set_commands(module):
     command = ["vtysh", "'configure terminal'", "'end'", "'write memory'"]
@@ -101,20 +103,18 @@ def set_commands(module):
         command.insert(-2, "'{}'".format(raw))
     run_cmd(module, ' -c '.join(command))
 
-def main():
 
+def main():
     module = AnsibleModule(
         argument_spec = dict(
-            commands = dict(type='list', required=True),
-        ),
-    )
+            commands = dict(type='list', required=True)))
 
     before_status = run_cmd(module, "vtysh -c 'show run' -c 'end'")
-
     set_commands(module)
-
     after_status = run_cmd(module, "vtysh -c 'show run' -c 'end'")
     module.exit_json(changed=before_status!=after_status)
 
+
 if __name__ == '__main__':
     main()
+
