@@ -91,6 +91,7 @@ class GalaxyCLI(CLI):
                                    help='Ignore errors and continue with the next specified role.')
             self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
             self.parser.add_option('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
+            self.parser.add_option('--role-name', dest='role_name', help='The name the role should have, if different than the repo name or tar filename')
         elif self.action == "remove":
             self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
@@ -309,8 +310,8 @@ class GalaxyCLI(CLI):
         role_file = self.options.role_file
 
         if len(self.args) == 0 and role_file is None:
-            # the user needs to specify one of either --role-file or specify a single user/role name
-            raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
+            # the user needs to specify one of either --role-file, a single user/role name or a .tar.gz file
+            raise AnsibleOptionsError("- you must specify a user/role name, a .tar.gz file or a roles file")
         elif len(self.args) == 1 and role_file is not None:
             # using a role file is mutually exclusive of specifying the role name on the command line
             raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
@@ -366,6 +367,8 @@ class GalaxyCLI(CLI):
             # (and their dependencies, unless the user doesn't want us to).
             for rname in self.args:
                 role = RoleRequirement.role_yaml_parse(rname.strip())
+                if self.options.role_name is not None:
+                    role['name'] = self.options.role_name
                 roles_left.append(GalaxyRole(self.galaxy, **role))
 
         for role in roles_left:
