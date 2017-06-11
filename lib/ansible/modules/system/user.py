@@ -921,7 +921,10 @@ class FreeBsdUser(User):
         if self.expires:
             days = (time.mktime(self.expires) - time.time()) // 86400
             cmd.append('-e')
-            cmd.append(str(int(days)))
+            if self.clearexpires < 0:
+                cmd.append('0')
+            else:
+                cmd.append(str(int(days)))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
