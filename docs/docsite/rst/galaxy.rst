@@ -73,11 +73,22 @@ install a specific commit:
 
    $ ansible-galaxy install git+https://github.com/geerlingguy/ansible-role-apache.git,0b7cd353c0250e87a26e0499e59e7fd265cc2f25
 
+Installing a single role from a .tar.gz file
+============================================
+
+You can install a .tar.gz of a valid role you've downloaded directly from github.com. This is mainly useful when the system running Ansible does not have access to the Galaxy API, for instance when behind a firewall or proxy.
+
+Use the following command to install a role included in a .tar.gz:
+
+::
+
+   $ ansible-galaxy install hello-test.tar.gz
+
 
 Installing multiple roles from a file
 =====================================
 
-Beginning with Ansible 1.8 it is possible to install multiple roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the 
+Beginning with Ansible 1.8 it is possible to install one or more roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the 
 file extension must be either *.yml* or *.yaml*.
 
 Use the following command to install roles included in *requirements.yml*:
@@ -119,6 +130,10 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     
     # from a webserver, where the role is packaged in a tar.gz
     - src: https://some.webserver.example.com/files/master.tar.gz
+      name: http-role
+
+    # from a local file, where the role is packaged in a tar.gz
+    - src: /home/example/master.tar.gz
       name: http-role
 
     # from Bitbucket
