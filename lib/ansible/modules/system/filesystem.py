@@ -40,8 +40,8 @@ options:
   resizefs:
     description:
     - If C(yes), if the block device and filesytem size differ, grow the filesystem into the space.
+    - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(lvm) and C(xfs) filesystems.
     - XFS Will only grow if mounted.
-    - C(btrfs) and C(reiserfs) don't support resizing.
     type: bool
     default: 'no'
     version_added: "2.0"
