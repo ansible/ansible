@@ -207,11 +207,10 @@ EXAMPLES = '''
     password: NULL
 '''
 
-from hashlib import md5
 import itertools
 import re
-
 from distutils.version import StrictVersion
+from hashlib import md5
 
 try:
     import psycopg2
@@ -220,15 +219,15 @@ except ImportError:
     postgresqldb_found = False
 else:
     postgresqldb_found = True
+
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems
 
-_flags = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
-_flags_by_version = {'BYPASSRLS': '9.5.0'}
+FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
+FLAGS_BY_VERSION = {'BYPASSRLS': '9.5.0'}
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
-        database=frozenset(('CREATE', 'CONNECT', 'TEMPORARY', 'TEMP', 'ALL')),
-        )
+                   database=frozenset(('CREATE', 'CONNECT', 'TEMPORARY', 'TEMP', 'ALL')),)
 
 # map to cope with idiosyncracies of SUPERUSER and LOGIN
 PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
@@ -236,8 +235,10 @@ PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
                              INHERIT='rolinherit', LOGIN='rolcanlogin',
                              REPLICATION='rolreplication', BYPASSRLS='rolbypassrls')
 
+
 class InvalidFlagsError(Exception):
     pass
+
 
 class InvalidPrivsError(Exception):
     pass
@@ -260,9 +261,9 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
     """Create a new database user (role)."""
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a literal
     query_password_data = dict(password=password, expires=expires)
-    query = ['CREATE USER %(user)s' % { "user": pg_quote_identifier(user, 'role')}]
+    query = ['CREATE USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
     if password is not None:
-        query.append("WITH %(crypt)s" % { "crypt": encrypted })
+        query.append("WITH %(crypt)s" % {"crypt": encrypted})
         query.append("PASSWORD %(password)s")
     if expires is not None:
         query.append("VALID UNTIL %(expires)s")
@@ -270,6 +271,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
     query = ' '.join(query)
     cursor.execute(query, query_password_data)
     return True
+
 
 def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
@@ -285,9 +287,8 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
             return False
 
     # Handle passwords.
-    if not no_password_changes and (password is not None or role_attr_flags != ''):
+    if not no_password_changes and (password is not None or role_attr_flags != '' or expires is not None):
         # Select password and all flag-like columns in order to verify changes.
-        query_password_data = dict(password=password, expires=expires)
         select = "SELECT * FROM pg_authid where rolname=%(user)s"
         cursor.execute(select, {"user": user})
         # Grab current role attributes.
@@ -300,7 +301,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
             #  3: The size of the 'md5' prefix
             # When the provided password looks like a MD5-hash, value of
             # 'encrypted' is ignored.
-            if ((password.startswith('md5') and len(password) == 32+3) or encrypted == 'UNENCRYPTED'):
+            if ((password.startswith('md5') and len(password) == 32 + 3) or encrypted == 'UNENCRYPTED'):
                 if password != current_role_attrs['rolpassword']:
                     pwchanging = True
             elif encrypted == 'ENCRYPTED':
@@ -321,7 +322,12 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
                 if current_role_attrs[PRIV_TO_AUTHID_COLUMN[role_attr_name]] != role_attr_value:
                     role_attr_flags_changing = True
 
-        expires_changing = (expires is not None and expires == current_role_attrs['rolvaliduntil'])
+        if expires is not None:
+            cursor.execute("SELECT %s::timestamptz;", (expires,))
+            expires_with_tz = cursor.fetchone()[0]
+            expires_changing = expires_with_tz != current_role_attrs.get('rolvaliduntil')
+        else:
+            expires_changing = False
 
         if not pwchanging and not role_attr_flags_changing and not expires_changing:
             return False
@@ -336,6 +342,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         if expires is not None:
             alter.append("VALID UNTIL %(expires)s")
 
+        query_password_data = dict(password=password, expires=expires)
         try:
             cursor.execute(' '.join(alter), query_password_data)
             changed = True
@@ -396,11 +403,10 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         new_role_attrs = cursor.fetchone()
 
         # Detect any differences between current_ and new_role_attrs.
-        for i in range(len(current_role_attrs)):
-            if current_role_attrs[i] != new_role_attrs[i]:
-                changed = True
+        changed = current_role_attrs != new_role_attrs
 
     return changed
+
 
 def user_delete(cursor, user):
     """Try to remove a user. Returns True if successful otherwise False"""
@@ -414,6 +420,7 @@ def user_delete(cursor, user):
 
     cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
     return True
+
 
 def has_table_privileges(cursor, user, table, privs):
     """
@@ -431,6 +438,7 @@ def has_table_privileges(cursor, user, table, privs):
     desired = privs.difference(cur_privs)
     return (have_currently, other_current, desired)
 
+
 def get_table_privileges(cursor, user, table):
     if '.' in table:
         schema, table = table.split('.', 1)
@@ -441,25 +449,28 @@ def get_table_privileges(cursor, user, table):
     cursor.execute(query, (user, table, schema))
     return frozenset([x[0] for x in cursor.fetchall()])
 
+
 def grant_table_privileges(cursor, user, table, privs):
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
     query = 'GRANT %s ON TABLE %s TO %s' % (
-        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role') )
+        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role'))
     cursor.execute(query)
+
 
 def revoke_table_privileges(cursor, user, table, privs):
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
     query = 'REVOKE %s ON TABLE %s FROM %s' % (
-        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role') )
+        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role'))
     cursor.execute(query)
+
 
 def get_database_privileges(cursor, user, db):
     priv_map = {
-        'C':'CREATE',
-        'T':'TEMPORARY',
-        'c':'CONNECT',
+        'C': 'CREATE',
+        'T': 'TEMPORARY',
+        'c': 'CONNECT',
     }
     query = 'SELECT datacl FROM pg_database WHERE datname = %s'
     cursor.execute(query, (db,))
@@ -473,6 +484,7 @@ def get_database_privileges(cursor, user, db):
     for v in r.group(1):
         o.add(priv_map[v])
     return normalize_privileges(o, 'database')
+
 
 def has_database_privileges(cursor, user, db, privs):
     """
@@ -490,9 +502,10 @@ def has_database_privileges(cursor, user, db, privs):
     desired = privs.difference(cur_privs)
     return (have_currently, other_current, desired)
 
+
 def grant_database_privileges(cursor, user, db, privs):
     # Note: priv escaped by parse_privs
-    privs =', '.join(privs)
+    privs = ', '.join(privs)
     if user == "PUBLIC":
         query = 'GRANT %s ON DATABASE %s TO PUBLIC' % (
                 privs, pg_quote_identifier(db, 'database'))
@@ -501,6 +514,7 @@ def grant_database_privileges(cursor, user, db, privs):
                 privs, pg_quote_identifier(db, 'database'),
                 pg_quote_identifier(user, 'role'))
     cursor.execute(query)
+
 
 def revoke_database_privileges(cursor, user, db, privs):
     # Note: priv escaped by parse_privs
@@ -513,6 +527,7 @@ def revoke_database_privileges(cursor, user, db, privs):
                 privs, pg_quote_identifier(db, 'database'),
                 pg_quote_identifier(user, 'role'))
     cursor.execute(query)
+
 
 def revoke_privileges(cursor, user, privs):
     if privs is None:
@@ -532,6 +547,7 @@ def revoke_privileges(cursor, user, privs):
                 changed = True
     return changed
 
+
 def grant_privileges(cursor, user, privs):
     if privs is None:
         return False
@@ -550,6 +566,7 @@ def grant_privileges(cursor, user, privs):
                 changed = True
     return changed
 
+
 def parse_role_attrs(cursor, role_attr_flags):
     """
     Parse role attributes string for user creation.
@@ -567,20 +584,17 @@ def parse_role_attrs(cursor, role_attr_flags):
     Note: "[NO]BYPASSRLS" role attribute introduced in 9.5
 
     """
-    flags = frozenset(itertools.chain(_flags, get_valid_flags_by_version(cursor)))
-    valid_flags = frozenset(itertools.chain(flags, ('NO%s' % f for f in flags)))
+    flags = frozenset(role.upper() for role in role_attr_flags.split(',') if role)
 
-    if ',' in role_attr_flags:
-        flag_set = frozenset(r.upper() for r in role_attr_flags.split(","))
-    elif role_attr_flags:
-        flag_set = frozenset((role_attr_flags.upper(),))
-    else:
-        flag_set = frozenset()
-    if not flag_set.issubset(valid_flags):
+    valid_flags = frozenset(itertools.chain(FLAGS, get_valid_flags_by_version(cursor)))
+    valid_flags = frozenset(itertools.chain(valid_flags, ('NO%s' % flag for flag in valid_flags)))
+
+    if not flags.issubset(valid_flags):
         raise InvalidFlagsError('Invalid role_attr_flags specified: %s' %
-                ' '.join(flag_set.difference(valid_flags)))
-    o_flags = ' '.join(flag_set)
-    return o_flags
+                                ' '.join(flags.difference(valid_flags)))
+
+    return ' '.join(flags)
+
 
 def normalize_privileges(privs, type_):
     new_privs = set(privs)
@@ -592,6 +606,7 @@ def normalize_privileges(privs, type_):
         new_privs.remove('TEMP')
 
     return new_privs
+
 
 def parse_privs(privs, db):
     """
@@ -609,8 +624,8 @@ def parse_privs(privs, db):
         return privs
 
     o_privs = {
-        'database':{},
-        'table':{}
+        'database': {},
+        'table': {}
     }
     for token in privs.split('/'):
         if ':' not in token:
@@ -624,12 +639,13 @@ def parse_privs(privs, db):
 
         if not priv_set.issubset(VALID_PRIVS[type_]):
             raise InvalidPrivsError('Invalid privs specified for %s: %s' %
-                (type_, ' '.join(priv_set.difference(VALID_PRIVS[type_]))))
+                                    (type_, ' '.join(priv_set.difference(VALID_PRIVS[type_]))))
 
         priv_set = normalize_privileges(priv_set, type_)
         o_privs[type_][name] = priv_set
 
     return o_privs
+
 
 def get_pg_server_version(cursor):
     """
@@ -646,6 +662,7 @@ def get_pg_server_version(cursor):
     cursor.execute("SHOW SERVER_VERSION")
     return cursor.fetchone()['server_version']
 
+
 def get_valid_flags_by_version(cursor):
     """
     Some role attributes were introduced after certain versions. We want to
@@ -655,7 +672,7 @@ def get_valid_flags_by_version(cursor):
 
     return [
         flag
-        for flag, version_introduced in _flags_by_version.items()
+        for flag, version_introduced in FLAGS_BY_VERSION.items()
         if current_version >= StrictVersion(version_introduced)
     ]
 
@@ -685,7 +702,7 @@ def main():
             ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None)
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     user = module.params["user"]
@@ -696,7 +713,6 @@ def main():
     if db == '' and module.params["priv"] is not None:
         module.fail_json(msg="privileges require a database to be specified")
     privs = parse_privs(module.params["priv"], db)
-    port = module.params["port"]
     no_password_changes = module.params["no_password_changes"]
     if module.params["encrypted"]:
         encrypted = "ENCRYPTED"
@@ -712,15 +728,15 @@ def main():
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port",
-        "db":"database",
-        "ssl_mode":"sslmode",
-        "ssl_rootcert":"sslrootcert"
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "db": "database",
+        "ssl_mode": "sslmode",
+        "ssl_rootcert": "sslrootcert"
     }
-    kw = dict( (params_map[k], v) for (k, v) in iteritems(module.params)
+    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != "" and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
@@ -799,6 +815,7 @@ def main():
 
     kw['changed'] = changed
     module.exit_json(**kw)
+
 
 # import module snippets
 from ansible.module_utils.basic import *
