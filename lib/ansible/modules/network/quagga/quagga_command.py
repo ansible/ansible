@@ -106,15 +106,14 @@ def set_commands(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            commands = dict(type='list', required=True)))
+        argument_spec=dict(
+            commands=dict(type='list', required=True)))
 
     before_status = run_cmd(module, "vtysh -c 'show run' -c 'end'")
     set_commands(module)
     after_status = run_cmd(module, "vtysh -c 'show run' -c 'end'")
-    module.exit_json(changed=before_status!=after_status)
+    module.exit_json(changed=before_status != after_status)
 
 
 if __name__ == '__main__':
     main()
-
