@@ -463,7 +463,6 @@ class CronTab(object):
             else:
                 return "%s%s %s %s %s %s %s" % (disable_prefix,minute,hour,day,month,weekday,job)
 
-        return None
 
     def get_jobnames(self):
         jobnames = []
