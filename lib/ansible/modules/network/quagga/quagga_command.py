@@ -91,11 +91,8 @@ RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 
-def run_cmd(module, cmd, check_rc=True, split_lines=True):
-    try:
-        (rc, out, err) = module.run_command(cmd, check_rc=check_rc)
-    except Exception, e:
-        module.fail_json(msg=e.strerror)
+def run_cmd(module, cmd, check_rc=True):
+    rc, out, err = module.run_command(cmd, check_rc=check_rc)
     return out
 
 def set_commands(module):
