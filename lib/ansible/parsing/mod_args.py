@@ -95,8 +95,9 @@ class ModuleArgsParser:
     Args may also be munged for certain shell command parameters.
     """
 
+    # FIXME: mutable default arg
     def __init__(self, task_ds=dict()):
-        assert isinstance(task_ds, dict)
+        assert isinstance(task_ds, dict), "the type of 'task_ds' should be a dict, but is a %s" % type(task_ds)
         self._task_ds = task_ds
 
     def _split_module_string(self, module_string):

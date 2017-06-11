@@ -43,7 +43,7 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
     from ansible.playbook.task_include import TaskInclude
     from ansible.playbook.role_include import IncludeRole
 
-    assert isinstance(ds, (list, type(None)))
+    assert isinstance(ds, (list, type(None))), '%s should be a list or None but is %s' % (ds, type(ds))
 
     block_list = []
     if ds:
@@ -89,11 +89,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.handler_task_include import HandlerTaskInclude
     from ansible.template import Templar
 
-    assert isinstance(ds, list)
+    assert isinstance(ds, list), 'The ds (%s) should be a list but was a %s' % (ds, type(ds))
 
     task_list = []
     for task_ds in ds:
-        assert isinstance(task_ds, dict)
+        assert isinstance(task_ds, dict), 'The ds (%s) should be a dict but was a %s' % (ds, type(ds))
 
         if 'block' in task_ds:
             t = Block.load(
@@ -169,7 +169,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         if not isinstance(parent_include, TaskInclude):
                             parent_include = parent_include._parent
                             continue
-                        parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
+                        parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
                         if cumulative_path is None:
                             cumulative_path = parent_include_dir
                         elif not os.path.isabs(cumulative_path):
@@ -190,7 +190,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     if not found:
                         try:
                             include_target = templar.template(t.args['_raw_params'])
-                        except AnsibleUndefinedVariable:
+                        except AnsibleUndefinedVariable as e:
                             raise AnsibleParserError(
                                 "Error when evaluating variable in include name: %s.\n\n"
                                 "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n"
@@ -198,7 +198,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 "sources like group or host vars." % t.args['_raw_params'],
                                 obj=task_ds,
                                 suppress_extended_error=True,
-                            )
+                                orig_exc=e)
                         if t._role:
                             include_file = loader.path_dwim_relative(t._role._role_path, subdir, include_target)
                         else:
@@ -341,7 +341,7 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.role.include import RoleInclude
 
-    assert isinstance(ds, list)
+    assert isinstance(ds, list), 'ds (%s) should be a list but was a %s' % (ds, type(ds))
 
     roles = []
     for role_def in ds:

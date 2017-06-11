@@ -30,63 +30,46 @@ options:
     description:
       - Name of certificate to add, update or remove.
     required: true
-    aliases: []
   new_name:
     description:
       - When present, this will update the name of the cert with the value passed here.
     required: false
-    aliases: []
   new_path:
     description:
       - When present, this will update the path of the cert with the value passed here.
     required: false
-    aliases: []
   state:
     description:
       - Whether to create, delete certificate. When present is specified it will attempt to make an update if new_path or new_name is specified.
     required: true
     default: null
     choices: [ "present", "absent" ]
-    aliases: []
   path:
     description:
       - When creating or updating, specify the desired path of the certificate
     required: false
     default: "/"
-    aliases: []
   cert_chain:
     description:
-      - The path to the CA certificate chain in PEM encoded format.
+      - The CA certificate chain in PEM encoded format.
+      - Note that prior to 2.4, this parameter expected a path to a file. Since 2.4 this is now accomplished using a lookup plugin. See examples for detail
     required: false
     default: null
-    aliases: []
   cert:
     description:
-      - The path to the certificate body in PEM encoded format.
+      - The certificate body in PEM encoded format.
+      - Note that prior to 2.4, this parameter expected a path to a file. Since 2.4 this is now accomplished using a lookup plugin. See examples for detail
     required: false
-    aliases: []
   key:
     description:
-      - The path to the private key of the certificate in PEM encoded format.
+      - The key of the certificate in PEM encoded format.
+      - Note that prior to 2.4, this parameter expected a path to a file. Since 2.4 this is now accomplished using a lookup plugin. See examples for detail
   dup_ok:
     description:
       - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as
         long as the name is unique.
     required: false
     default: False
-    aliases: []
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_access_key', 'access_key' ]
 
 
 requirements: [ "boto" ]
@@ -97,16 +80,22 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Basic server certificate upload
-tasks:
-- name: Upload Certificate
-  iam_cert:
+# Basic server certificate upload from local file
+- iam_cert:
     name: very_ssl
     state: present
-    cert: somecert.pem
-    key: privcertkey
-    cert_chain: myverytrustedchain
+    cert: "{{ lookup('file', 'path/to/cert') }}"
+    key: "{{ lookup('file', 'path/to/key') }}"
+    cert_chain: "{{ lookup('file', 'path/to/certchain') }}"
 
+# Server certificate upload using key string
+- iam_cert:
+    name: very_ssl
+    state: present
+    path: "/a/cert/path/"
+    cert: body_of_somecert
+    key: vault_body_of_privcertkey
+    cert_chain: body_of_myverytrustedchain
 '''
 import json
 import sys
@@ -235,9 +224,9 @@ def main():
         state=dict(
             default=None, required=True, choices=['present', 'absent']),
         name=dict(default=None, required=False),
-        cert=dict(default=None, required=False, type='path'),
-        key=dict(default=None, required=False, type='path'),
-        cert_chain=dict(default=None, required=False, type='path'),
+        cert=dict(default=None, required=False),
+        key=dict(default=None, required=False, no_log=True),
+        cert_chain=dict(default=None, required=False),
         new_name=dict(default=None, required=False),
         path=dict(default='/', required=False),
         new_path=dict(default=None, required=False),
@@ -271,10 +260,12 @@ def main():
     cert_chain = module.params.get('cert_chain')
     dup_ok = module.params.get('dup_ok')
     if state == 'present':
-        cert = open(module.params.get('cert'), 'r').read().rstrip()
-        key = open(module.params.get('key'), 'r').read().rstrip()
-        if cert_chain is not None:
-            cert_chain = open(module.params.get('cert_chain'), 'r').read()
+        if module.params.get('cert') is not None:
+            cert = module.params.get('cert')
+        if module.params.get('key') is not None:
+            key = module.params.get('key')
+        if module.params.get('cert_chain') is not None:
+            cert_chain = module.params.get('cert_chain')
     else:
         key=cert=chain=None
 

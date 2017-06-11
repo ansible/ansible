@@ -155,15 +155,26 @@ EXAMPLES = r'''
 - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
   wait_for:
     port: 22
-    host: '{{ ansible_ssh_host | default(inventory_hostname) }}'
+    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
     search_regex: OpenSSH
     delay: 10
-  delegate_to: localhost
+  connection: local
+
+# Same as above but you normally have ansible_connection set in inventory, which overrides 'connection'
+- name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+  wait_for:
+    port: 22
+    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+    search_regex: OpenSSH
+    delay: 10
+  vars:
+    ansible_connection: local
 '''
 
 import binascii
 import datetime
 import math
+import os
 import re
 import select
 import socket
@@ -172,6 +183,7 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 from ansible.module_utils._text import to_native
+from ansible.module_utils.pycompat24 import get_exception
 
 
 HAS_PSUTIL = False

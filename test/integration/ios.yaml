@@ -14,3 +14,4 @@
     - { role: ios_facts, when: "limit_to in ['*', 'ios_facts']" }
     - { role: ios_template, when: "limit_to in ['*', 'ios_template']" }
     - { role: ios_system, when: "limit_to in ['*', 'ios_system']" }
+    - { role: ios_user, when: "limit_to in ['*', 'ios_user']" }

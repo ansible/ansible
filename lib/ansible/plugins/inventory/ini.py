@@ -200,7 +200,8 @@ class InventoryModule(BaseFileInventoryPlugin):
 
                 if groupname in pending_declarations and state != 'vars':
                     if pending_declarations[groupname]['state'] == 'children':
-                        self.inventory.add_child(pending_declarations[groupname]['parent'], groupname)
+                        for parent in pending_declarations[groupname]['parents']:
+                            self.inventory.add_child(parent, groupname)
                     del pending_declarations[groupname]
 
                 continue
@@ -231,7 +232,10 @@ class InventoryModule(BaseFileInventoryPlugin):
             elif state == 'children':
                 child = self._parse_group_name(line)
                 if child not in self.inventory.groups:
-                    pending_declarations[child] = dict(line=self.lineno, state=state, name=child, parent=groupname)
+                    if child not in pending_declarations:
+                        pending_declarations[child] = dict(line=self.lineno, state=state, name=child, parents=[groupname])
+                    else:
+                        pending_declarations[child]['parents'].append(groupname)
                 else:
                     self.inventory.add_child(groupname, child)
 
@@ -249,7 +253,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 if decl['state'] == 'vars':
                     raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (path, decl['line'], decl['name'], decl['name']))
                 elif decl['state'] == 'children':
-                    raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (path, decl['line'], decl['parent'], decl['name']))
+                    raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (path, decl['line'], decl['parents'].pop(), decl['name']))
 
     def _parse_group_name(self, line):
         '''

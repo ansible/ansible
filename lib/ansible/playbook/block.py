@@ -121,8 +121,8 @@ class Block(Base, Become, Conditional, Taggable):
                 loader=self._loader,
                 use_handlers=self._use_handlers,
             )
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading a block", obj=self._ds, orig_exc=e)
 
     def _load_rescue(self, attr, ds):
         try:
@@ -136,8 +136,8 @@ class Block(Base, Become, Conditional, Taggable):
                 loader=self._loader,
                 use_handlers=self._use_handlers,
             )
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading rescue.", obj=self._ds, orig_exc=e)
 
     def _load_always(self, attr, ds):
         try:
@@ -151,8 +151,8 @@ class Block(Base, Become, Conditional, Taggable):
                 loader=self._loader,
                 use_handlers=self._use_handlers,
             )
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds, orig_exc=e)
 
     def get_dep_chain(self):
         if self._dep_chain is None:
