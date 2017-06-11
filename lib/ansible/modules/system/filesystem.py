@@ -119,7 +119,7 @@ def _get_fs_size(fssize_cmd, dev, module):
         else:
             module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err)
     else:
-        module.exit_json(changed=False, msg="WARNING: module does not support resizing %s filesystem yet." % module.param['fstype'])
+        module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % module.param['fstype'])
 
     return block_size * block_count
 
@@ -215,7 +215,7 @@ def main():
     try:
         _ = fs_cmd_map[fstype]
     except KeyError:
-        module.exit_json(changed=False, msg="WARNING: module does not support this filesystem yet. %s" % fstype)
+        module.fail_json(changed=False, msg="module does not support this filesystem (%s) yet." % fstype)
 
     mkfscmd = fs_cmd_map[fstype]['mkfs']
     force_flag = fs_cmd_map[fstype]['force_flag']
