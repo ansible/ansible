@@ -29,7 +29,7 @@ module: cs_storage_pool
 short_description: Manages Primary Storage Pools on Apache CloudStack based clouds.
 description:
     - Create and remove storage pools.
-    - Updates are only possible on enabled, tags, capacity_bytes and capacity_iops
+    - Updates are only possible on enabled, tags, capacity_bytes and capacity_iops.
 version_added: "2.4"
 author: "Netservers Ltd. (@netservers)"
 options:
@@ -44,63 +44,41 @@ options:
   storage_url:
     description:
       - Storage URL.
-    required: false
-    default: null
   pod:
     description:
       - Pod name.
-    required: false
-    default: null
   cluster:
     description:
       - Cluster name.
-    required: false
-    default: null
   scope:
     description:
-      - The scope of the storage: cluster or zone
-    required: false
-    default: cluster when provided, otherwise zone.
+      - The scope of the storage [cluster or zone]
+      - Defaults to cluster when provided, otherwise zone
   hypervisor:
     description:
       - Required when creating a Zone scoped pool. [KVM, VMware]
-    required: false
-    default: null
   tags:
     description:
       - Tags associated with this pool
-    required: false
-    default: null
   provider:
     description:
       - Storage provider name [SolidFire, SolidFireShared, DefaultPrimary, CloudByte]
-    required: false
-    default: DefaultPrimary
+    default: 'DefaultPrimary'
   capacity_bytes:
     description:
       - Bytes CloudStack can provision from this storage pool
-    required: false
-    default: null
   capacity_iops:
     description:
       - Bytes CloudStack can provision from this storage pool
-    required: false
-    default: null
   url:
     description:
       - URL for the cluster
-    required: false
-    default: null
   username:
     description:
-      - Username for the cluster.
-    required: false
-    default: null
+      - Username for the cluster
   password:
     description:
-      - Password for the cluster.
-    required: false
-    default: null
+      - Password for the cluster
 extends_documentation_fragment: cloudstack
 '''
 
@@ -109,7 +87,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_storage_pool
     zone: zone01
-    storage_url: rbd://admin:SECRET@ceph-the-mons.domain/poolname
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
     provider: DefaultPrimary
     name: Ceph RBD
     scope: ZONE
@@ -135,63 +113,75 @@ EXAMPLES = '''
 RETURN = '''
 ---
 id:
-  description: UUID of the pool.
-  returned: success
-  type: string
-  sample: a3fca65a-7db1-4891-b97c-48806a978a96
+    description: UUID of the pool.
+    returned: success
+    type: string
+    sample: a3fca65a-7db1-4891-b97c-48806a978a96
 capacity_iops:
-  description: IOPS CloudStack can provision from this storage pool
-  type: int
-  sample: 60000
+    description: IOPS CloudStack can provision from this storage pool
+    returned: success
+    type: int
+    sample: 60000
 zone_id:
-  description: UUID of the zone.
-  returned: success
-  type: string
-  sample: a3fca65a-7db1-4891-b97c-48806a978a96
+    description: UUID of the zone.
+    returned: success
+    type: string
+    sample: a3fca65a-7db1-4891-b97c-48806a978a96
 zone_name:
-  description: The name of the cluster.
-  returned: success
-  type: string
-  sample: Zone01
+    description: The name of the cluster.
+    returned: success
+    type: string
+    sample: Zone01
 cluster_id:
-  description: UUID of the cluster.
-  returned: success
-  type: string
-  sample: a3fca65a-7db1-4891-b97c-48806a978a96
+    description: UUID of the cluster.
+    returned: success
+    type: string
+    sample: a3fca65a-7db1-4891-b97c-48806a978a96
 cluster_name:
-  description: The name of the cluster.
-  returned: success
-  type: string
-  sample: Cluster01
+    description: The name of the cluster.
+    returned: success
+    type: string
+    sample: Cluster01
 pod_id:
-  description: UUID of the pod.
-  returned: success
-  type: string
-  sample: a3fca65a-7db1-4891-b97c-48806a978a96
+    description: UUID of the pod.
+    returned: success
+    type: string
+    sample: a3fca65a-7db1-4891-b97c-48806a978a96
 pod_name:
-  description: The name of the pod.
-  returned: success
-  type: string
-  sample: Cluster01
+    description: The name of the pod.
+    returned: success
+    type: string
+    sample: Cluster01
 disk_size_allocated:
-  description: The pool's currently allocated disk space
-  type: int
-  sample: 2443517624320
+    description: The pool's currently allocated disk space
+    returned: success
+    type: int
+    sample: 2443517624320
 disk_size_total:
-  description: The total size of the pool
-  type: int
-  sample: 3915055693824
+    description: The total size of the pool
+    returned: success
+    type: int
+    sample: 3915055693824
 disk_size_used:
-  description: The pool's currently used disk size
-  sample: 1040862622180
+    description: The pool's currently used disk size
+    returned: success
+    type: int
+    sample: 1040862622180
 scope:
-  description: The scope of the storage pool [ZONE / CLUSTER]
-  sample: CLUSTER
+    description: "The scope of the storage pool [ZONE / CLUSTER]"
+    returned: success
+    type: string
+    sample: CLUSTER
 state:
-  description: The state of the storage pool
-  sample: Up
+    description: The state of the storage pool
+    returned: success
+    type: string
+    sample: Up
 tags:
-  description: the Tags for the storage pool
+    description: the Tags for the storage pool
+    returned: success
+    type: string
+    sample: rbd
 '''
 
 # import cloudstack common
