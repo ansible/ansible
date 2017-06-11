@@ -41,31 +41,49 @@ author:
 
 EXAMPLES = '''
 # Example for Ansible Playbooks.
-- name: "add interface to ospf"
+
+- name: "log syslog"
   quagga_command:
     commands:
-      - "interface {{ item }}"
-      - "ip ospf authentication message-digest"
-      - "ip ospf message-digest-key 1 md5 xxxx"
-      - "ip ospf hello-interval 10"
-      - "ip ospf dead-interval 40"
-      - "ip ospf priority 99"
-      - "ip ospf cost 40"
-      - "ip ospf network broadcast"
-  with_items:
-    - "{{ ansible_interfaces }}"
-  when: "'wg_' in item"
+      - "log syslog"
 
-- name: "add router to ospf"
+- name: "security"
+  quagga_command:
+    commands:
+      - "access-list localhost-in-only permit 127.0.0.1/32"
+      - "line vty"
+      - "access-class localhost-in-only"
+
+- name: "router-id"
+  quagga_command:
+    commands:
+      - "router-id {{ quagga_router_id }}"
+      - "interface lo"
+      - "ip address {{ quagga_router_id }}/32"
+      - "exit"
+      - "router ospf"
+      - "network {{ quagga_router_id }}/32 area 0"
+      - "router-id {{ quagga_router_id }}"
+  notify:
+    - 'quagga restarted'
+
+- name: "router ospf"
   quagga_command:
     commands:
       - "router ospf"
       - "log-adjacency-changes"
-      - "network 10.1.16.0/24 area 0"
-      - "network 10.254.222.0/24 area 0"
       - "area 0 authentication message-digest"
-      - "exit"
-      - "router-id 10.10.10.1"
+
+- name: "interface ospf"
+  quagga_command:
+    commands:
+      - "interface {{ item }}"
+      - "ip ospf area 0.0.0.0"
+      - "ip ospf network broadcast"
+      - "ip ospf authentication message-digest"
+      - "ip ospf message-digest-key 2 md5 xxxxxxxxxxxxxxxx"
+  with_items:
+    - "{{ ansible_interfaces }}"
 
 '''
 
