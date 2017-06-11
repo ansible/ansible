@@ -82,7 +82,7 @@ Use the following command to install a role included in a .tar.gz:
 
 ::
 
-   $ ansible-galaxy install hello-test.tar.gz
+   $ ansible-galaxy install --role-name=hello-test /tmp/hello-test.tar.gz
 
 
 Installing multiple roles from a file
