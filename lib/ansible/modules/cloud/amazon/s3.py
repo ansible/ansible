@@ -350,13 +350,27 @@ def delete_bucket(module, s3, bucket):
     if module.check_mode:
         module.exit_json(msg="DELETE operation skipped - running in check mode", changed=True)
     try:
-        bucket = s3.lookup(bucket)
+        bucket = s3.lookup(bucket, validate=False)
         bucket_contents = bucket.list()
         bucket.delete_keys([key.name for key in bucket_contents])
-        bucket.delete()
-        return True
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        if e.status == 404:
+            # bucket doesn't appear to exist
+            return False
+        elif e.status == 403:
+            # bucket appears to exist but user doesn't have list bucket permission; may still be able to delete bucket
+            try:
+                bucket.delete()
+            except s3.provider.storage_response_error as e:
+                if e.status == 403:
+                    module.exit_json(msg="Unable to complete DELETE operation. Check you have have s3:DeleteBucket "
+                                     "permission. Error: {0}.".format(e.message),
+                                     exception=traceback.format_exc())
+                elif e.status == 409:
+                    module.exit_json(msg="Unable to complete DELETE operation. It appears there are contents in the "
+                                     "bucket that you don't have permission to delete. Error: {0}.".format(e.message),
+                                     exception=traceback.format_exc())
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 def delete_key(module, s3, bucket, obj, validate=True):
     if module.check_mode:
@@ -675,12 +689,9 @@ def main():
     # Delete an entire bucket, including all objects in the bucket
     if mode == 'delete':
         if bucket:
-            try:
-                deletertn = delete_bucket(module, s3, bucket)
-            except AttributeError:
-                module.exit_json(msg="Bucket %s does not exist." % bucket, changed=False)
-            if deletertn is True:
-                module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
+            deletertn = delete_bucket(module, s3, bucket)
+            message = "Bucket {0} and all keys have been deleted.".format(bucket)
+            module.exit_json(msg=message, changed=deletertn)
         else:
             module.fail_json(msg="Bucket parameter is required.")
 
