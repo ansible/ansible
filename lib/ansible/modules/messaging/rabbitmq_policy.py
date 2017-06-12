@@ -76,7 +76,7 @@ options:
       - Only needed when running RabbitMQ as user other than root / rabbitmq
     required: false
     default: ()
-
+    version_added: "2.4"
   state:
     description:
       - The state of the policy.

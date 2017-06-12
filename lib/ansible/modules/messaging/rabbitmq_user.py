@@ -77,6 +77,7 @@ options:
       - Only needed when running RabbitMQ as user other than root / rabbitmq
     required: false
     default: ()
+    version_added: "2.4"
   configure_priv:
     description:
       - Regular expression to restrict configure actions on a resource
