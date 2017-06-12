@@ -577,14 +577,14 @@ def _delete_floating_ip_list(cloud, server, extra_ips):
             server=server.id, address=ip)
 
 
-def _check_floating_ips(module, cloud, server):
+def _check_ips(module, cloud, server):
     changed = False
 
     auto_ip = module.params['auto_ip']
     floating_ips = module.params['floating_ips']
     floating_ip_pools = module.params['floating_ip_pools']
 
-    if floating_ip_pools or floating_ips or auto_ip:
+    if floating_ip_pools or floating_ips:
         ips = openstack_find_nova_addresses(server.addresses, 'floating')
         if not ips:
             # If we're configured to have a floating but we don't have one,
@@ -617,6 +617,21 @@ def _check_floating_ips(module, cloud, server):
             if extra_ips:
                 _delete_floating_ip_list(cloud, server, extra_ips)
                 changed = True
+    elif auto_ip:
+        if server['interface_ip']:
+            changed = False
+        else:
+            # We're configured for auto_ip but we're not showing an
+            # interface_ip. Maybe someone deleted an IP out from under us.
+            server = cloud.add_ips_to_server(
+                server,
+                auto_ip=auto_ip,
+                ips=floating_ips,
+                ip_pool=floating_ip_pools,
+                wait=module.params['wait'],
+                timeout=module.params['timeout'],
+            )
+            changed = True
     return (changed, server)
 
 
@@ -659,7 +674,7 @@ def _get_server_state(module, cloud):
             module.fail_json(
                 msg="The instance is available but not Active state: "
                     + server.status)
-        (ip_changed, server) = _check_floating_ips(module, cloud, server)
+        (ip_changed, server) = _check_ips(module, cloud, server)
         (sg_changed, server) = _check_security_groups(module, cloud, server)
         (server_changed, server) = _update_server(module, cloud, server)
         _exit_hostvars(module, cloud, server,
