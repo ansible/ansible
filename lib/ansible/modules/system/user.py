@@ -395,10 +395,6 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-<<<<<<< HEAD
-=======
-            #cmd.append('--expiredate') # SLES11 useradd does not know --expiredate
->>>>>>> Fixes #13235
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
@@ -971,7 +967,7 @@ class FreeBsdUser(User):
 
         if self.expires is not None and info[7] != self.expires:
             expire=calendar.timegm(self.expires)
-            if expire==0: expire=1 # on FreeBSD 0 means unlock account
+            if expire==0: expire=1 # on FreeBSD 0 means unlock account (not 1.1.1970)
             cmd.append('-e')
             cmd.append( str(expire) )
 
