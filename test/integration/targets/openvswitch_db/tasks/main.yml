@@ -4,6 +4,7 @@
   find:
     paths: "{{ role_path }}/tests"
     patterns: "{{ testcase }}.yaml"
+  delegate_to: localhost
   register: test_cases
 
 - name: set test_items
