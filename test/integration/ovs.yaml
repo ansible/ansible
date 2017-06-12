@@ -1,0 +1,12 @@
+---
+- hosts: ovs
+  gather_facts: no
+  remote_user: ubuntu
+  become: yes
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+    - { role: openvswitch_db, when: "limit_to in ['*', 'openvswitch_db']" }
