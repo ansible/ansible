@@ -165,7 +165,7 @@ options:
         description: Number of LVM volumes to allow.
     availability_zone:
       description:
-        - Ignored. Present for backwards compatability
+        - Ignored. Present for backwards compatibility
       required: false
 
 

@@ -75,7 +75,7 @@ EXAMPLES = '''
     password: secret
     system: ibox001
 
-- name: Add multiple clients with RO access. Squash root priviledges
+- name: Add multiple clients with RO access. Squash root privileges
   infini_export_client:
     client: "{{ item }}"
     access_mode: RO

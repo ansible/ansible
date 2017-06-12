@@ -140,7 +140,7 @@ def main():
         params = module.params.copy()
 
         # tower-cli gets very noisy when monitoring.
-        # We pass in our our outfile to supress the out during our monitor call.
+        # We pass in our our outfile to suppress the out during our monitor call.
         outfile = StringIO()
         params['outfile'] = outfile
 

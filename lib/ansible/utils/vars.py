@@ -154,7 +154,7 @@ def load_options_vars(options, version):
 def isidentifier(ident):
     """
     Determines, if string is valid Python identifier using the ast module.
-    Orignally posted at: http://stackoverflow.com/a/29586366
+    Originally posted at: http://stackoverflow.com/a/29586366
     """
 
     if not isinstance(ident, string_types):

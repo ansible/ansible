@@ -550,7 +550,7 @@ class BaseModule(object):
                     )
                     self.post_update(entity)
 
-                # Update diffs only if user specified --diff paramter,
+                # Update diffs only if user specified --diff parameter,
                 # so we don't useless overload API:
                 if self._module._diff:
                     before = get_dict_of_struct(

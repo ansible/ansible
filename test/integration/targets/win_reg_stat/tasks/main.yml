@@ -113,12 +113,12 @@
     that:
       - "actual == expected"
 
-- name: get non-existant reg key
+- name: get non-existent reg key
   win_reg_stat:
     path: HKCU:\Test\Thispathwillneverexist
   register: actual
 
-- name: set expected value for non-existant reg key
+- name: set expected value for non-existent reg key
   set_fact:
     expected:
       changed: false
@@ -298,13 +298,13 @@
     that:
     - "actual == expected"
 
-- name: get non-existance property
+- name: get non-existence property
   win_reg_stat:
     path: HKCU:\Test\single
     name: doesnotexist
   register: actual
 
-- name: set expected non-existance property
+- name: set expected non-existence property
   set_fact:
     expected:
       changed: false

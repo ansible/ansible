@@ -38,7 +38,7 @@ options:
     required: true
   id:
     description:
-      - uuid of the exising pod.
+      - uuid of the existing pod.
     default: null
     required: false
   start_ip:

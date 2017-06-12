@@ -139,7 +139,7 @@
   register: actual
   failed_when: actual.msg != 'Argument path ' + win_output_dir + '\\win_find\\single\\large.ps1 is a file not a directory'
 
-- name: expect failure whe path is set to a non existant folder
+- name: expect failure whe path is set to a non existent folder
   win_find:
     paths: "{{win_output_dir}}\\win_find\\thisisafakefolder"
   register: actual

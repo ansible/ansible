@@ -76,7 +76,7 @@ options:
   path:
     version_added: "1.4"
     description:
-      - Path to a file on the filesytem that must exist before continuing.
+      - Path to a file on the filesystem that must exist before continuing.
   search_regex:
     version_added: "1.4"
     description:
