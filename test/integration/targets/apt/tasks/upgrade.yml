@@ -1,14 +1,7 @@
 ---
-#### Tests for upgrade ####
-
-# TODO: dynamic architecture
-
-- name: "download deb of older version of hello"
-  get_url: "url=https://launchpad.net/ubuntu/+archive/primary/+files/hello_{{ hello_old_version }}_amd64.deb dest={{ ansible_user_dir }}/hello.deb"
-
-# # Tests for dist-upgrade
-- name: install old version of hello
-  apt: "deb={{ ansible_user_dir }}/hello.deb"
+#### Tests for upgrade/download functions in modules/packaging/os/apt.py ####
+- name: download and install old version of hello
+  apt: "deb=https://launchpad.net/ubuntu/+archive/primary/+files/hello_{{ hello_old_version }}_amd64.deb"
 
 - name: check hello version
   shell: dpkg -s hello | grep Version | awk '{print $2}'
