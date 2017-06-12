@@ -53,3 +53,7 @@ localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
 
 [azure]
 localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
+
+[manageiq]
+manageiq_node ansible_host=manageiq_node ansible_ssh_pass=smartvm ansible_user=root ansible_connection=ssh ansible_port=22
+manageiq_master ansible_host=manageiq_master ansible_ssh_pass=smartvm ansible_user=root ansible_connection=ssh ansible_port=22

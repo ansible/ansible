@@ -1,0 +1,94 @@
+---
+#  setlocale: LC_CTYPE: cannot change locale (en_US.UTF-8)
+- name: setlocale
+  command: localedef -i en_US -f UTF-8 en_US.UTF-8
+
+# Test 1 - Simple internal database
+- name: test create simple internal database
+  manageiq_database:
+    state: present
+  register: results
+  # Ruby code fails when no TERM is set
+  environment:
+    TERM: xterm
+  when: inventory_hostname == 'manageiq_master'
+- name: assert internal database created
+  assert:
+    that:
+      - results|success
+  when: inventory_hostname == 'manageiq_master'
+
+# Wait for the EVM service to do initial configuration
+- pause:
+    minutes: 1
+
+# Test 2 - Reset internal Database
+- name: test reseting the database
+  manageiq_database:
+    state: reset
+  register: results
+  environment:
+    TERM: xterm
+  when: inventory_hostname == 'manageiq_master'
+- name: assert internal database reset
+  assert:
+    that:
+      - results|success
+  when: inventory_hostname == 'manageiq_master'
+
+# Wait for the EVM service to do initial configuration
+- pause:
+    minutes: 1
+
+# Test 3 Database Backup
+- name: test database backup to local file
+  manageiq_database:
+    state: backup
+  register: results
+  environment:
+    TERM: xterm
+  when: inventory_hostname == 'manageiq_master'
+- name: assert database backup created
+  assert:
+    that:
+      - results|success
+  when: inventory_hostname == 'manageiq_master'
+
+# Test 4 Database Restore
+- name: test database restore from local file
+  manageiq_database:
+    state: restore
+  register: results
+  environment:
+    TERM: xterm
+  when: inventory_hostname == 'manageiq_master'
+- name: assert database restored
+  assert:
+    that:
+      - results|success
+  when: inventory_hostname == 'manageiq_master'
+
+  # Test 5 Database destruction
+- name: test database absent
+  manageiq_database:
+    state: absent
+  register: results
+  environment:
+    TERM: xterm
+  when: inventory_hostname == 'manageiq_master'
+- name: assert database absent
+  assert:
+    that:
+      - results|success
+  when: inventory_hostname == 'manageiq_master'
+
+# Remove certificates
+- name: Remove certificates
+  file:
+    state: absent
+    path: "/var/www/miq/vmdb/certs/{{ item }}"
+  with_items:
+    - server.cer
+    - server.cer.key
+    - v2_key
+    - v2_key.dev
