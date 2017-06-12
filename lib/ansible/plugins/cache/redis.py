@@ -84,7 +84,7 @@ class CacheModule(BaseCacheModule):
 
     def contains(self, key):
         self._expire_keys()
-        return (self._cache.zrank(self._keys_set, key) >= 0)
+        return (self._cache.zrank(self._keys_set, key) is not None)
 
     def delete(self, key):
         self._cache.delete(self._make_key(key))
