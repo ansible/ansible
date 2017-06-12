@@ -110,12 +110,6 @@ options:
   purge_routes:
     description:
       - Whether or not to delete VPN connections routes that are not specified in the task.
-  check_mode:
-    description:
-      - See what changes will be made before making them.
-    default: False
-    type: bool
-    required: no
 """
 
 EXAMPLES = """
@@ -286,7 +280,6 @@ def find_connection(connection, module_params, vpn_connection_id=None):
     ''' Looks for a unique VPN connection. Uses find_connection_response() to return the connection found, None,
         or raise an error if there were multiple viable connections. '''
 
-    check_mode = module_params.get('check_mode')
     filters = module_params.get('filters')
 
     # vpn_connection_id may be provided via module option; takes precedence over any filter values
@@ -306,11 +299,11 @@ def find_connection(connection, module_params, vpn_connection_id=None):
     # see if there is a unique matching connection
     try:
         if vpn_connection_id:
-            existing_conn = connection.describe_vpn_connections(DryRun=check_mode,
+            existing_conn = connection.describe_vpn_connections(DryRun=False,
                                                                 VpnConnectionIds=vpn_connection_id,
                                                                 Filters=formatted_filter)
         else:
-            existing_conn = connection.describe_vpn_connections(DryRun=check_mode,
+            existing_conn = connection.describe_vpn_connections(DryRun=False,
                                                                 Filters=formatted_filter)
     except botocore.exceptions.ClientError as e:
         raise VPNConnectionException(msg="Failed while describing VPN connection.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -318,10 +311,7 @@ def find_connection(connection, module_params, vpn_connection_id=None):
     return find_connection_response(connections=existing_conn)
 
 
-def add_routes(connection, vpn_connection_id, routes_to_add, check_mode):
-    if check_mode:
-        return
-
+def add_routes(connection, vpn_connection_id, routes_to_add):
     try:
         for route in routes_to_add:
             response = connection.create_vpn_connection_route(VpnConnectionId=vpn_connection_id,
@@ -331,9 +321,7 @@ def add_routes(connection, vpn_connection_id, routes_to_add, check_mode):
                                      exception=traceback.format_exc(), response=e.response)
 
 
-def remove_routes(connection, vpn_connection_id, routes_to_remove, check_mode):
-    if check_mode:
-        return
+def remove_routes(connection, vpn_connection_id, routes_to_remove):
     try:
         for route in routes_to_remove:
             response = connection.delete_vpn_connection_route(VpnConnectionId=vpn_connection_id,
@@ -442,13 +430,13 @@ def find_connection_response(connections=None):
         return None
 
 
-def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type, check_mode):
+def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type):
     ''' Creates a VPN connection '''
     if not (customer_gateway_id and vpn_gateway_id):
         raise VPNConnectionException(msg="No matching connection was found. To create a new connection you must provide "
                                      "both vpn_gateway_id and customer_gateway_id.")
     try:
-        vpn = connection.create_vpn_connection(DryRun=check_mode,
+        vpn = connection.create_vpn_connection(DryRun=False,
                                                Type=connection_type,
                                                CustomerGatewayId=customer_gateway_id,
                                                VpnGatewayId=vpn_gateway_id,
@@ -459,34 +447,32 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
     return vpn['VpnConnection']
 
 
-def delete_connection(connection, vpn_connection_id, check_mode):
+def delete_connection(connection, vpn_connection_id):
     ''' Deletes a VPN connection '''
     try:
-        connection.delete_vpn_connection(DryRun=check_mode,
+        connection.delete_vpn_connection(DryRun=False,
                                          VpnConnectionId=vpn_connection_id)
     except botocore.exceptions.ClientError as e:
         raise VPNConnectionException(msg="Failed to delete the VPN connection: %s" % e.message, exception=traceback.format_exc(), response=e.response)
 
 
-def add_tags(connection, vpn_connection_id, add, check_mode):
+def add_tags(connection, vpn_connection_id, add):
     try:
-        connection.create_tags(DryRun=check_mode,
+        connection.create_tags(DryRun=False,
                                Resources=[vpn_connection_id],
                                Tags=add)
-        #                       Tags=ansible_dict_to_boto3_tag_list(add))
     except botocore.exceptions.ClientError as e:
         raise VPNConnectionException(msg="Failed to add the tags: %s." % add,
                                      exception=traceback.format_exc(), response=e.response)
 
 
-def remove_tags(connection, vpn_connection_id, remove, check_mode):
+def remove_tags(connection, vpn_connection_id, remove):
     # format tags since they are a list in the format ['tag1', 'tag2', 'tag3']
     key_dict_list = [{'Key': tag} for tag in remove]
     try:
-        connection.delete_tags(DryRun=check_mode,
+        connection.delete_tags(DryRun=False,
                                Resources=[vpn_connection_id],
                                Tags=key_dict_list)
-        #                       Tags=ansible_dict_to_boto3_tag_list(remove))
     except botocore.exceptions.ClientError as e:
         raise VPNConnectionException(msg="Failed to remove the tags: %s." % remove,
                                      exception=traceback.format_exc(), response=e.response)
@@ -546,36 +532,103 @@ def check_for_update(connection, module_params, vpn_connection_id):
     return changes
 
 
-def make_changes(connection, vpn_connection_id, changes, check_mode):
+def make_changes(connection, vpn_connection_id, changes):
     '''
     changes is a dict with the keys 'tags_to_add', 'tags_to_remove', 'routes_to_add', 'routes_to_remove',
     the values of which are lists (generated by check_for_update()).
     '''
-
     changed = False
 
     if changes['tags_to_add']:
         changed = True
-        add_tags(connection, vpn_connection_id, changes['tags_to_add'], check_mode)
+        add_tags(connection, vpn_connection_id, changes['tags_to_add'])
 
     if changes['tags_to_remove']:
         changed = True
-        remove_tags(connection, vpn_connection_id, changes['tags_to_remove'], check_mode)
+        remove_tags(connection, vpn_connection_id, changes['tags_to_remove'])
 
     if changes['routes_to_add']:
         changed = True
-        add_routes(connection, vpn_connection_id, changes['routes_to_add'], check_mode)
+        add_routes(connection, vpn_connection_id, changes['routes_to_add'])
 
     if changes['routes_to_remove']:
         changed = True
-        remove_routes(connection, vpn_connection_id, changes['routes_to_remove'], check_mode)
+        remove_routes(connection, vpn_connection_id, changes['routes_to_remove'])
 
     return changed
 
 
-def ensure_present(connection, module_params):
+def get_check_mode_results(connection, module_params, vpn_connection_id=None, current_state=None):
+    ''' Returns the changes that would be made to a VPN Connection '''
+    state = module_params.get('state')
+    if state == 'absent':
+        if vpn_connection_id:
+            return True, {}
+        else:
+            return False, {}
+
+    changed = False
+    results = {'customer_gateway_configuration': '',
+               'customer_gateway_id': module_params.get('customer_gateway_id'),
+               'vpn_gateway_id': module_params.get('vpn_gateway_id'),
+               'options': {'static_routes_only': module_params.get('static_only')},
+               'routes': [module_params.get('routes')]}
+
+    # get combined current tags and tags to set
+    present_tags = []
+    if current_state and 'Tags' in current_state:
+        new_tags = module_params.get('tags')
+        current_tags = boto3_tag_list_to_ansible_dict(current_state['Tags'])
+        if module_params.get('purge_tags'):
+            if current_tags != new_tags:
+                changed = True
+            present_tags = new_tags
+        elif current_tags != new_tags:
+            present_tags = {tag: new_tags[tag] for tag in new_tags if (tag not in current_tags or new_tags[tag] != current_tags[tag])}
+            present_tags = present_tags.update({tag: new_tags[tag] for tag in current_tags if tag not in present_tags})
+        else:
+            present_tags = current_tags
+        if current_tags != present_tags:
+            changed = True
+    elif module_params.get('tags'):
+        changed = True
+        present_tags = module_params.get('tags')
+    if present_tags:
+        results['tags'] = present_tags
+
+    # get combined current routes and routes to add
+    present_routes = []
+    if current_state and 'Routes' in current_state:
+        new_routes = module_params.get('routes')
+        current_routes = [route['DestinationCidrBlock'] for route in current_state['Routes']]
+        if module_params.get('purge_routes'):
+            if set(current_routes) != set(new_routes):
+                changed = True
+            present_routes = new_routes
+        elif set(new_routes) != set(current_routes):
+            present_routes = current_routes
+            present_routes.extend([route for route in new_routes if route not in present_routes])
+        else:
+            present_routes = current_routes
+        if set(current_routes) != set(present_routes):
+            changed = True
+    elif module_params.get('routes'):
+        changed = True
+        present_routes = module_params.get('routes')
+    results['routes'] = [{"destination_cidr_block": cidr, "state": "available"} for cidr in present_routes]
+
+    # return the vpn_connection_id if it's known
+    if vpn_connection_id:
+        results['vpn_connection_id'] = vpn_connection_id
+    else:
+        changed = True
+        results['vpn_connection_id'] = 'vpn-XXXXXXXX'
+
+    return changed, results
+
+
+def ensure_present(connection, module_params, check_mode=False):
     ''' Creates and adds tags to a VPN connection. If the connection already exists update tags. '''
-    check_mode = module_params.get('check_mode')
     vpn_connection = find_connection(connection, module_params)
     changed = False
 
@@ -586,23 +639,26 @@ def ensure_present(connection, module_params):
     # Unique match was found. Check if attributes provided differ.
     elif vpn_connection:
         vpn_connection_id = vpn_connection['VpnConnectionId']
+        if check_mode:
+            return get_check_mode_results(connection, module_params, vpn_connection_id, current_state=vpn_connection)
         # check_for_update returns a dict with the keys tags_to_add, tags_to_remove, routes_to_add, routes_to_remove
         changes = check_for_update(connection, module_params, vpn_connection_id)
-        changed = make_changes(connection, vpn_connection_id, changes, check_mode)
+        changed = make_changes(connection, vpn_connection_id, changes)
         # get latest version of vpn_connection
         vpn_connection = find_connection(connection, module_params, vpn_connection_id=vpn_connection_id)
 
     # No match was found. Create and tag a connection and add routes.
     else:
         changed = True
+        if check_mode:
+            return get_check_mode_results(connection, module_params)
         vpn_connection = create_connection(connection,
                                            customer_gateway_id=module_params.get('customer_gateway_id'),
                                            static_only=module_params.get('static_only'),
                                            vpn_gateway_id=module_params.get('vpn_gateway_id'),
-                                           connection_type=module_params.get('connection_type'),
-                                           check_mode=check_mode)
+                                           connection_type=module_params.get('connection_type'))
         changes = check_for_update(connection, module_params, vpn_connection['VpnConnectionId'])
-        _ = make_changes(connection, vpn_connection['VpnConnectionId'], changes, check_mode)
+        _ = make_changes(connection, vpn_connection['VpnConnectionId'], changes)
 
     # get latest version if a change has been made and make tags output nice before returning it
     if vpn_connection:
@@ -613,12 +669,15 @@ def ensure_present(connection, module_params):
     return changed, vpn_connection
 
 
-def ensure_absent(connection, module_params):
+def ensure_absent(connection, module_params, check_mode=False):
     ''' Deletes a VPN connection if it exists. '''
     vpn_connection = find_connection(connection, module_params)
 
+    if check_mode:
+        return get_check_mode_results(connection, module_params, vpn_connection['VpnConnectionId'] if vpn_connection else None)
+
     if vpn_connection:
-        delete_connection(connection, vpn_connection['VpnConnectionId'], module_params.get('check_mode'))
+        delete_connection(connection, vpn_connection['VpnConnectionId'])
         changed = True
     else:
         changed = False
@@ -634,7 +693,6 @@ def main():
             filters=dict(type='dict', default={}),
             vpn_gateway_id=dict(type='str'),
             tags=dict(default={}, type='dict'),
-            check_mode=dict(default=False, type='bool'),
             connection_type=dict(default='ipsec.1', type='str'),
             static_only=dict(default=False, type='bool'),
             customer_gateway_id=dict(type='str'),
@@ -644,7 +702,8 @@ def main():
             purge_routes=dict(type='bool', default=False),
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
@@ -664,9 +723,9 @@ def main():
 
     try:
         if state == 'present':
-            changed, response = ensure_present(connection, parameters)
+            changed, response = ensure_present(connection, parameters, module.check_mode)
         elif state == 'absent':
-            changed, response = ensure_absent(connection, parameters)
+            changed, response = ensure_absent(connection, parameters, module.check_mode)
     except VPNConnectionException as e:
         if e.response and e.error_traceback:
             module.fail_json(msg=e.msg, exception=e.error_traceback, **camel_dict_to_snake_dict(e.response))
