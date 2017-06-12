@@ -1,1 +1,1 @@
-hello world
+#!/usr/bin/python
