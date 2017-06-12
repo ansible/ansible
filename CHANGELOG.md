@@ -17,6 +17,8 @@ Ansible Changes By Release
   overwrite old versions.
 * Fix for RabbitMQ 3.6.7 endpoint return code changing.
 * Fix for Foreman organization creation
+* fixed incorrect fail_json ref in rpm_key
+* Corrected requried on hash_name for dynamodb_table
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
