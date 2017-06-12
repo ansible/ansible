@@ -173,7 +173,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_contents = to_bytes("some info in a file\nyup.")
         src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
 
-        # editor invocation doesnt change anything
+        # editor invocation doesn't change anything
         def faux_editor(editor_args):
             self._faux_editor(editor_args, src_file_contents)
 

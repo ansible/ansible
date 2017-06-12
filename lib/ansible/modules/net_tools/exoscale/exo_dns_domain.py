@@ -179,7 +179,7 @@ exo_dns_domain:
             type: int
             sample: null
         whois_protected:
-            description: Wheter the whois is protected or not
+            description: Whether the whois is protected or not
             returned: success
             type: bool
             sample: false

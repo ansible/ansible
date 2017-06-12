@@ -55,7 +55,7 @@ options:
         default: null
     cert_cn:
         description:
-            - Certificate CN (common name) embeded in the certificate signature.
+            - Certificate CN (common name) embedded in the certificate signature.
         required: true
         default: null
     signed_by:
@@ -126,7 +126,7 @@ def generate_cert(module, ip_address, key_filename, password,
     client = paramiko.SSHClient()
 
     # add policy to accept all host keys, I haven't found
-    # a way to retreive the instance SSH key fingerprint from AWS
+    # a way to retrieve the instance SSH key fingerprint from AWS
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     if not key_filename:

@@ -43,7 +43,7 @@ options:
   api_key:
     description:
       - Mattermost webhook api key. Log into your mattermost site, go to
-        Menu -> Integration -> Incomming Webhook -> Add Incomming Webhook.
+        Menu -> Integration -> Incoming Webhook -> Add Incoming Webhook.
         This will give you full URL. api_key is the last part.
         http://mattermost.example.com/hooks/C(API_KEY)
     required: true
@@ -147,7 +147,7 @@ def main():
     if module.check_mode is False:
         response, info = fetch_url(module=module, url=webhook_url, headers=headers, method='POST', data=payload)
 
-        #somthing's wrong
+        #something's wrong
         if info['status'] != 200:
             #some problem
             result['msg'] = "Failed to send mattermost message, the error was: {0}".format(info['msg'])

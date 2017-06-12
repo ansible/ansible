@@ -103,7 +103,7 @@ options:
     choices: ['line', 'block']
   multiline_delimiter:
     description:
-      - This arugment is used when pushing a multiline configuration
+      - This argument is used when pushing a multiline configuration
         element to the Ordnance router.  It specifies the character to use
         as the delimiting character.  This only applies to the
         configuration action

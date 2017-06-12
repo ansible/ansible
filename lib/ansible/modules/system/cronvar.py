@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Cronvar Plugin: The goal of this plugin is to provide an indempotent
+# Cronvar Plugin: The goal of this plugin is to provide an idempotent
 # method for set cron variable values.  It should play well with the
 # existing cron module as well as allow for manually added variables.
 # Each variable entered will be preceded with a comment describing the

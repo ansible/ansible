@@ -286,7 +286,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         self.assertTrue('some string' != vault_string)
         self.assertNotEquals('some string', vault_string)
 
-        # Note this is a compare of the str/unicode of these, they are diferent types
+        # Note this is a compare of the str/unicode of these, they are different types
         # so we want to test self == other, and other == self etc
         self.assertEquals(plaintext_var, vault_string)
         self.assertEquals(vault_string, plaintext_var)

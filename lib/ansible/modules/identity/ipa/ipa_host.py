@@ -73,7 +73,7 @@ options:
     description:
     - List of Base-64 encoded server certificates.
     - If option is omitted certificates will not be checked or changed.
-    - If an emtpy list is passed all assigned certificates will be removed.
+    - If an empty list is passed all assigned certificates will be removed.
     - Certificates already assigned but not passed will be removed.
     required: false
     aliases: ["usercertificate"]

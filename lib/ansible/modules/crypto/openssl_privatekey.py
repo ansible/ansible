@@ -182,7 +182,7 @@ class PrivateKey(object):
 
 
     def dump(self):
-        """Serialize the object into a dictionnary."""
+        """Serialize the object into a dictionary."""
 
         result = {
             'size': self.size,

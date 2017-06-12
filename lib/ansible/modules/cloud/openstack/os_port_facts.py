@@ -48,7 +48,7 @@ options:
         default: null
     availability_zone:
       description:
-        - Ignored. Present for backwards compatability
+        - Ignored. Present for backwards compatibility
       required: false
 extends_documentation_fragment: openstack
 '''

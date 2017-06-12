@@ -141,7 +141,7 @@
     - asyncresult.finished == 1
     - asyncresult.changed == false
     - asyncresult | failed == true
-# TODO: reenable after catastrophic failure behavior is cleaned up
+# TODO: re-enable after catastrophic failure behavior is cleaned up
 #    - asyncresult.msg is search('failing via exception')
 
 

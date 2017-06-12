@@ -193,7 +193,7 @@ author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom
 EXAMPLES = '''
 # Basic provisioning example.  Create a single Debian 8 instance in the
 # us-central1-a Zone of the n1-standard-1 machine type.
-# Create multiple instances by specifying multiple names, seperated by
+# Create multiple instances by specifying multiple names, separated by
 # commas in the instance_names field
 # (e.g. my-test-instance1,my-test-instance2)
     gce:

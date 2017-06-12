@@ -269,7 +269,7 @@ class Swupd(object):
         self.msg = "Failed to check for updates"
 
     def verify_os(self):
-        """Verifies filesystem agains specified or current version"""
+        """Verifies filesystem against specified or current version"""
         if self.module.check_mode:
             self.module.exit_json(changed=self._needs_verify())
 

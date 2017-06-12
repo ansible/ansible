@@ -133,7 +133,7 @@ class StackiHost:
         auth_creds  = {'USERNAME': module.params['stacki_user'],
                        'PASSWORD': module.params['stacki_password']}
 
-        # Get Intial CSRF
+        # Get Initial CSRF
         cred_a = self.do_request(self.module, self.endpoint, method="GET")
         cookie_a = cred_a.headers.get('Set-Cookie').split(';')
         init_csrftoken = None

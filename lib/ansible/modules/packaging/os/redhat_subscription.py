@@ -404,7 +404,7 @@ class Rhsm(RegistrationBase):
             to those pools.
 
             Since a pool id is a more specific match, we only fallback to matching
-            against names if we didnt match pool ids.
+            against names if we didn't match pool ids.
 
             Raises:
               * Exception - if error occurs while running command

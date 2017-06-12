@@ -53,7 +53,7 @@ options:
     privatekey_path:
         required: true
         description:
-            - Path to the TLS/SSL private key from which to genereate the public key.
+            - Path to the TLS/SSL private key from which to generate the public key.
 '''
 
 EXAMPLES = '''
@@ -153,7 +153,7 @@ class PublicKey(object):
                 self.changed = False
 
     def dump(self):
-        """Serialize the object into a dictionnary."""
+        """Serialize the object into a dictionary."""
 
         result = {
             'privatekey': self.privatekey_path,

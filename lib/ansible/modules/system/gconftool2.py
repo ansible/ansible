@@ -243,7 +243,7 @@ def main():
     # Check if the current value equals the value we want to set.  If not, make
     # a change
     if current_value != value:
-        # If check mode, we know a change would have occured.
+        # If check mode, we know a change would have occurred.
         if module.check_mode:
             # So we will set the change to True
             change = True
