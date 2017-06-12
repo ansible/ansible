@@ -73,7 +73,3 @@
     that:
     - "test_hash == replaced_hash_replaced_list"
   when: hash_behavior.stdout == 'replace' and list_behavior.stdout == 'replace'
-
-
-
-
