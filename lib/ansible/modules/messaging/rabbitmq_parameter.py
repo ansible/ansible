@@ -93,7 +93,7 @@ EXAMPLES = """
 """
 
 class RabbitMqParameter(object):
-    def __init__(self, module, component, name, value, vhost, node, 
+    def __init__(self, module, component, name, value, vhost, node,
             extra_ctl_paths):
         self.module = module
         self.component = component
