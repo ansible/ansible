@@ -1,0 +1,25 @@
+---
+
+- command: ovs-vsctl add-br br-test
+
+- openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: true
+
+- openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: false
+
+- openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: false
+    state: absent
