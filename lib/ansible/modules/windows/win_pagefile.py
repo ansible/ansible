@@ -95,48 +95,48 @@ EXAMPLES = r'''
 
 - name: Query C pagefile
   win_pagefile:
-    drive=c
+    drive: C
 
 - name: Set C pagefile, don't override if exists
   win_pagefile:
-    drive=C
-    initial_size=1024
-    maximum_size=1024
-    override=false
-    state=present
+    drive: C
+    initial_size: 1024
+    maximum_size: 1024
+    override: false
+    state: present
 
 - name: Set C pagefile, override if exists
   win_pagefile:
-    drive=C
-    initial_size=1024
-    maximum_size=1024
-    state=present
+    drive: C
+    initial_size: 1024
+    maximum_size: 1024
+    state: present
 
 - name: Remove C pagefile
   win_pagefile:
-    drive=c
-    state=absent
+    drive: C
+    state: absent
 
 - name: Remove all current pagefiles, enable AutomaticManagedPagefile and query at the end
   win_pagefile:
-    remove_all=true
-    automatic=true
+    remove_all: true
+    automatic: true
 
 - name: Remove all pagefiles disable AutomaticManagedPagefile and set C pagefile
   win_pagefile:
-    drive=c
-    initial_size=2048
-    maximum_size=2048
-    remove_all=true
-    automatic=false
-    state=present
+    drive: C
+    initial_size: 2048
+    maximum_size: 2048
+    remove_all: true
+    automatic: false
+    state: present
 
 - name: Set D pagefile, override if exists
   win_pagefile:
-    drive=d
-    initial_size=1024
-    maximum_size=1024
-    state=present
+    drive: d
+    initial_size: 1024
+    maximum_size: 1024
+    state: present
 '''
 
 RETURN = r'''
