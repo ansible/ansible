@@ -104,9 +104,6 @@ EXAMPLES = '''
     pkl_src: 10.1.100.20
     peer_gw: true
     auto_recovery: true
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
@@ -119,7 +116,7 @@ commands:
             "auto-recovery", "peer-gateway"]
 '''
 
-from ansible.module_utils.nxos import load_config, run_commands
+from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
@@ -133,16 +130,6 @@ CONFIG_ARGS = {
 }
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli' and "section" not in command:
-        command += ' | json'
-    elif module.params['transport'] == 'nxapi' and command_type != 'cli_show_ascii':
-        command += ' | json'
-    cmds = [command]
-
-    return run_commands(module, cmds)
-
-
 def flatten_list(command_lists):
     flat_command_list = []
     for command in command_lists:
@@ -154,10 +141,9 @@ def flatten_list(command_lists):
 
 
 def get_vrf_list(module):
-    command = 'show vrf all'
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, ['show vrf all | json'])[0]
         vrf_table = body['TABLE_vrf']['ROW_vrf']
     except (KeyError, AttributeError):
         return []
@@ -171,7 +157,7 @@ def get_vrf_list(module):
 
 
 def get_vpc(module):
-    body = execute_show_command('show vpc', module)[0]
+    body = run_commands(module, ['show vpc | json'])[0]
 
     domain = str(body['vpc-domain-id'])
     auto_recovery = 'enabled' in str(body['vpc-auto-recovery-status']).lower()
@@ -186,8 +172,7 @@ def get_vpc(module):
         pkl_vrf = None
         peer_gw = False
 
-        run = execute_show_command('show running section vpc', module,
-                                   command_type='cli_show_ascii')[0]
+        run = get_config(module, flags=['section vpc'])
         if run:
             vpc_list = run.split('\n')
             for each in vpc_list:
@@ -211,8 +196,7 @@ def get_vpc(module):
                 if 'peer-gateway' in each:
                     peer_gw = True
 
-        command = 'show vpc peer-keepalive'
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, ['show vpc peer-keepalive | json'])[0]
 
         if body:
             pkl_dest = body['vpc-keepalive-dest']
