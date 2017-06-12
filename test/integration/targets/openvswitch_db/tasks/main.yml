@@ -1,24 +1,16 @@
 ---
 
-- command: ovs-vsctl add-br br-test
+- name: collect all test cases
+  find:
+    paths: "{{ role_path }}/tests"
+    patterns: "{{ testcase }}.yaml"
+  register: test_cases
 
-- openvswitch_db:
-    table: Bridge
-    record: br-test
-    col: other_config
-    key: disable-in-band
-    value: true
+- name: set test_items
+  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
-- openvswitch_db:
-    table: Bridge
-    record: br-test
-    col: other_config
-    key: disable-in-band
-    value: false
-
-- openvswitch_db:
-    table: Bridge
-    record: br-test
-    col: other_config
-    key: disable-in-band
-    state: absent
+- name: run test case
+  include: "{{ test_case_to_run }}"
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run
