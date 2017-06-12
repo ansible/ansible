@@ -54,19 +54,19 @@ except ImportError:
     pass
 
 try:
-    from Crypto.Cipher import AES as pycrypto_AES
+    from Crypto.Cipher import AES as AES_pycrypto
     HAS_SOME_PYCRYPTO = True
 
     # Note: Only used for loading obsolete VaultAES files.  All files are written
     # using the newer VaultAES256 which does not require md5
-    from Crypto.Hash import SHA256 as pycrypto_SHA256
-    from Crypto.Hash import HMAC as pycrypto_HMAC
+    from Crypto.Hash import SHA256 as SHA256_pycrypto
+    from Crypto.Hash import HMAC as HMAC_pycrypto
 
     # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
-    from Crypto.Util import Counter as pycrypto_Counter
+    from Crypto.Util import Counter as Counter_pycrypto
 
     # KDF import fails for 2.0.1, requires >= 2.6.1 from pip
-    from Crypto.Protocol.KDF import PBKDF2 as pycrypto_PBKDF2
+    from Crypto.Protocol.KDF import PBKDF2 as PBKDF2_pycrypto
     HAS_PYCRYPTO = True
 except ImportError:
     pass
@@ -645,9 +645,9 @@ class VaultAES:
         in_file.seek(0)
         out_file = BytesIO()
 
-        bs = pycrypto_AES.block_size
+        bs = AES_pycrypto.block_size
         b_key, b_iv = cls._aes_derive_key_and_iv(b_password, b_salt, key_length, bs)
-        cipher = pycrypto_AES.new(b_key, pycrypto_AES.MODE_CBC, b_iv)
+        cipher = AES_pycrypto.new(b_key, AES_pycrypto.MODE_CBC, b_iv)
         b_next_chunk = b''
         finished = False
 
@@ -739,15 +739,15 @@ class VaultAES256:
 
     @staticmethod
     def _pbkdf2_prf(p, s):
-        hash_function = pycrypto_SHA256
-        return pycrypto_HMAC.new(p, s, hash_function).digest()
+        hash_function = SHA256_pycrypto
+        return HMAC_pycrypto.new(p, s, hash_function).digest()
 
     @classmethod
     def _create_key_pycrypto(cls, b_password, b_salt, key_length, iv_length):
 
         # make two keys and one iv
 
-        b_derivedkey = pycrypto_PBKDF2(b_password, b_salt, dkLen=(2 * key_length) + iv_length,
+        b_derivedkey = PBKDF2_pycrypto(b_password, b_salt, dkLen=(2 * key_length) + iv_length,
                                        count=10000, prf=cls._pbkdf2_prf)
         return b_derivedkey
 
@@ -794,7 +794,7 @@ class VaultAES256:
     @staticmethod
     def _encrypt_pycrypto(b_plaintext, b_salt, b_key1, b_key2, b_iv):
         # PKCS#7 PAD DATA http://tools.ietf.org/html/rfc5652#section-6.3
-        bs = pycrypto_AES.block_size
+        bs = AES_pycrypto.block_size
         padding_length = (bs - len(b_plaintext) % bs) or bs
         b_plaintext += to_bytes(padding_length * chr(padding_length), encoding='ascii', errors='strict')
 
@@ -802,20 +802,20 @@ class VaultAES256:
         # 1) nbits (integer) - Length of the counter, in bits.
         # 2) initial_value (integer) - initial value of the counter. "iv" from _gen_key_initctr
 
-        ctr = pycrypto_Counter.new(128, initial_value=int(b_iv, 16))
+        ctr = Counter_pycrypto.new(128, initial_value=int(b_iv, 16))
 
         # AES.new PARAMETERS
         # 1) AES key, must be either 16, 24, or 32 bytes long -- "key" from _gen_key_initctr
         # 2) MODE_CTR, is the recommended mode
         # 3) counter=<CounterObject>
 
-        cipher = pycrypto_AES.new(b_key1, pycrypto_AES.MODE_CTR, counter=ctr)
+        cipher = AES_pycrypto.new(b_key1, AES_pycrypto.MODE_CTR, counter=ctr)
 
         # ENCRYPT PADDED DATA
         b_ciphertext = cipher.encrypt(b_plaintext)
 
         # COMBINE SALT, DIGEST AND DATA
-        hmac = pycrypto_HMAC.new(b_key2, b_ciphertext, pycrypto_SHA256)
+        hmac = HMAC_pycrypto.new(b_key2, b_ciphertext, SHA256_pycrypto)
 
         return to_bytes(hmac.hexdigest(), errors='surrogate_or_strict'), hexlify(b_ciphertext)
 
@@ -883,13 +883,13 @@ class VaultAES256:
     @classmethod
     def _decrypt_pycrypto(cls, b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv):
         # EXIT EARLY IF DIGEST DOESN'T MATCH
-        hmac_decrypt = pycrypto_HMAC.new(b_key2, b_ciphertext, pycrypto_SHA256)
+        hmac_decrypt = HMAC_pycrypto.new(b_key2, b_ciphertext, SHA256_pycrypto)
         if not cls._is_equal(b_crypted_hmac, to_bytes(hmac_decrypt.hexdigest())):
             return None
 
         # SET THE COUNTER AND THE CIPHER
-        ctr = pycrypto_Counter.new(128, initial_value=int(b_iv, 16))
-        cipher = pycrypto_AES.new(b_key1, pycrypto_AES.MODE_CTR, counter=ctr)
+        ctr = Counter_pycrypto.new(128, initial_value=int(b_iv, 16))
+        cipher = AES_pycrypto.new(b_key1, AES_pycrypto.MODE_CTR, counter=ctr)
 
         # DECRYPT PADDED DATA
         b_plaintext = cipher.decrypt(b_ciphertext)
