@@ -78,6 +78,14 @@
         zip_file="{{zip_res.dest}}"
       register: lambda_result
 
+    - name: get the aws account ID for use in future commands
+      command: env AWS_ACCESS_KEY_ID='{{aws_access_key}}' AWS_SECRET_ACCESS_KEY='{{aws_secret_key}}' aws sts get-caller-identity --output text --query 'Account'
+      register: result
+
+    - name: register account id
+      set_fact:
+        aws_account_id: "{{ result.stdout | replace('\n', '') }}"
+
     - name: register lambda uri for use in template
       set_fact:
         mini_lambda_uri: "arn:aws:apigateway:{{ec2_region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{ec2_region}}:{{aws_account_id}}:function:{{ lambda_result.configuration.function_name }}/invocations"
