@@ -395,6 +395,10 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
+<<<<<<< HEAD
+=======
+            #cmd.append('--expiredate') # SLES11 useradd does not know --expiredate
+>>>>>>> Fixes #13235
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
@@ -518,7 +522,8 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires is not None and info[7] != self.expires:
-            cmd.append('--expiredate')
+            #cmd.append('--expiredate') # SLES11 usermod does not know --expiredate
+            cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
