@@ -18,6 +18,7 @@
  - name: Check if aptitude is installed
    command: dpkg-query -l aptitude
    register: deb_check
+   when: ansible_distribution in ('Ubuntu', 'Debian')
 
  - include: upgrade.yml upgrade_type=dist
    when: ansible_distribution in ('Ubuntu', 'Debian')
