@@ -7,17 +7,14 @@
       playbook_vars: "this is a playbook variable"
       test_list:
         - name: "this is a playbook variable"
-
     replaced_hash_replaced_list:
       extra_args: "this is an extra arg"
       test_list:
         - name: "this is an extra arg"
-
     replaced_hash_merged_list:
       extra_args: "this is an extra arg"
       test_list:
         - name: "this is an extra arg"
-
     merged_hash_merged_list:
       default_vars: "this is in role defaults/main.yml"
       extra_args: "this is an extra arg"
@@ -36,7 +33,6 @@
         - name: "this is in role vars/main.yml"
         - name: "this is a role argument variable"
         - name: "this is an extra arg"
-
     merged_hash_replaced_list:
       default_vars: "this is in role defaults/main.yml"
       extra_args: "this is an extra arg"
@@ -48,6 +44,5 @@
       vars_file: "this is in a vars_file"
       test_list:
         - name: "this is an extra arg"
-
   roles:
   - { role: test_hash_behavior, test_hash: {'role_argument':'this is a role argument variable', 'test_list':[{'name':'this is a role argument variable'}] } }

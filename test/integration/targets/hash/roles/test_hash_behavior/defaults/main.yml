@@ -21,4 +21,3 @@ test_hash:
   default_vars: "this is in role defaults/main.yml"
   test_list:
     - name: "this is in role defaults/main.yml"
-
