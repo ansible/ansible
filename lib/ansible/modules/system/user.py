@@ -636,10 +636,6 @@ class User(object):
             # Read shadow file for user's expiry time
             if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
                 for line in open(self.SHADOWFILE).readlines():
-                    # HINT - GNU/Linux stores EXPIRE at pos. 7, FreeBSD uses pos. 6,
-                    #      - ansible on FreeBSD does not have spwd (freebsd11, python 2.7.13)
-                    #      - FreeBSD stores EXPIRE as UNIX timestamp in /etc/master.passwd (GNU/Linux uses days)
-                    #      - FreeBSD uses 0 as expire date for unlock
                     if line.startswith('%s:' % self.name):
                         expire = line.split(':')[7]
         return expire
