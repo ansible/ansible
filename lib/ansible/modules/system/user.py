@@ -871,7 +871,7 @@ class FreeBsdUser(User):
         print("StK BSD create_user() - self.expires %s" % str(self.expires) )
         if self.expires:
             expire=calendar.timegm(self.expires)
-            if expire==0: expire=1 # on FreeBSD 0 means unlock account
+            if expire==0: expire=1 # on FreeBSD 0 means unlock account (not 1.1.1970)
             cmd.append('-e')
             cmd.append( str(expire) )
 
@@ -970,7 +970,7 @@ class FreeBsdUser(User):
 
         if self.expires is not None and info[7] != self.expires:
             expire=calendar.timegm(self.expires)
-            if expire==0: expire=1 # on FreeBSD 0 means unlock account
+            if expire==0: expire=1 # on FreeBSD 0 means unlock account (not 1.1.1970)
             cmd.append('-e')
             cmd.append( str(expire) )
 
