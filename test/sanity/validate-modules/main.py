@@ -542,9 +542,14 @@ class ModuleValidator(Validator):
                 )
 
     def _ensure_imports_below_docs(self, doc_info, first_callable):
-        min_doc_line = min(
-            [doc_info[key]['lineno'] for key in doc_info if doc_info[key]['lineno']]
-        )
+        try:
+            min_doc_line = min(
+                [doc_info[key]['lineno'] for key in doc_info if doc_info[key]['lineno']]
+            )
+        except ValueError:
+            # We can't perform this validation, as there are no DOCs provided at all
+            return
+
         max_doc_line = max(
             [doc_info[key]['end_lineno'] for key in doc_info if doc_info[key]['end_lineno']]
         )
