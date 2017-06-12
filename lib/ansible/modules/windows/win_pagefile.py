@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: win_pagefile
-version_added: "2.3.1"
+version_added: "2.4"
 short_description: Query or change pagefile configuration
 description:
     - Query current pagefile configuration
@@ -141,14 +141,16 @@ EXAMPLES = r'''
 
 RETURN = r'''
 automatic_managed_pagefiles:
-    description: Whether the pagefiles is automatically managed
-    returned: When state is query.   
+    description: Whether the pagefiles is automatically managed.
+    returned: When state is query.
     type: boolean
     sample: true
 pagefiles:
-    description: Pagefiles on the system.
+    description: Contains caption, description, initial_size, maximum_size and name for each pagefile in the system.
     returned: When state is query.
-    type: JSON that contains caption, description, initial_size, maximum_size and name.
-    sample: [{"caption": "c:\\ 'pagefile.sys'", "description": "'pagefile.sys' @ c:\\", "initial_size": 2048, "maximum_size": 2048, "name": "c:\\pagefile.sys"}, {"caption": "d:\\ 'pagefile.sys'", "description": "'pagefile.sys' @ d:\\", "initial_size": 1024, "maximum_size": 1024, "name": "d:\\pagefile.sys"}]
+    type: list
+    sample: 
+      [{"caption": "c:\\ 'pagefile.sys'", "description": "'pagefile.sys' @ c:\\", "initial_size": 2048, "maximum_size": 2048, "name": "c:\\pagefile.sys"}, 
+       {"caption": "d:\\ 'pagefile.sys'", "description": "'pagefile.sys' @ d:\\", "initial_size": 1024, "maximum_size": 1024, "name": "d:\\pagefile.sys"}]
 
 '''
