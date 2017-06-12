@@ -195,6 +195,14 @@ class AnsibleCloudStack(object):
                         self.result['diff']['before'][key] = current_dict[key]
                         self.result['diff']['after'][key] = value
                         result = True
+
+                elif type(value) is list:
+                    before_value = current_dict[key] if type(current_dict[key]) is list else [current_dict[key]]
+                    if len(value) != len(set(value).intersection(before_value)):
+                        self.result['diff']['before'][key] = list(map(lambda x: to_text(x), before_value))
+                        self.result['diff']['after'][key] = list(map(lambda x: to_text(x), value))
+                        result = True
+
                 else:
                     before_value = to_text(current_dict[key])
                     after_value = to_text(value)
