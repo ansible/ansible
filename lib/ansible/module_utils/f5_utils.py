@@ -203,6 +203,8 @@ class AnsibleF5Client(object):
                  required_if=None, required_one_of=None,
                  f5_product_name='bigip'):
 
+        self.f5_product_name = f5_product_name
+
         merged_arg_spec = dict()
         merged_arg_spec.update(F5_COMMON_ARGS)
         if argument_spec:
@@ -274,6 +276,25 @@ class AnsibleF5Client(object):
                 port=kwargs['server_port'],
                 token='local'
             )
+
+    def reconnect(self):
+        """Attempts to reconnect to a device
+
+        The existing token from a ManagementRoot can become invalid if you,
+        for example, upgrade the device (such as is done in the *_software
+        module.
+
+        This method can be used to reconnect to a remote device without
+        having to re-instantiate the ArgumentSpec and AnsibleF5Client classes
+        it will use the same values that were initially provided to those
+        classes
+
+        :return:
+        :raises iControlUnexpectedHTTPError
+        """
+        self.client.api = self._get_mgmt_root(
+            self.f5_product_name, **self._connect_params
+        )
 
 
 class AnsibleF5Parameters(object):
