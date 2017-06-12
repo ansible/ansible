@@ -27,11 +27,9 @@ short_description: lightbulb for your brainz
 description: insane in the membraine
 version_added: 2.4
 author: James Tanner (@jctanner)
-deprecated: False
+deprecated:
 options: {}
-requirements:
-suboptions:
-notes:
+requirements: []
 '''
 
 
@@ -42,8 +40,9 @@ EXAMPLES = '''
 
 
 RETURN = '''
-foo: bar
 '''
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
