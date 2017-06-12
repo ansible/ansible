@@ -85,8 +85,7 @@ def setup_mod_conn(placeboify, params):
 
 
 def make_params(cgw, vgw, tags={}, filters={}, routes=[]):
-    return {'check_mode': False,
-            'customer_gateway_id': cgw,
+    return {'customer_gateway_id': cgw,
             'static_only': True,
             'vpn_gateway_id': vgw,
             'connection_type': 'ipsec.1',
@@ -103,12 +102,12 @@ def make_conn(placeboify, module, connection):
     connection_type = module.params['connection_type']
     check_mode = module.params['check_mode']
     changed = True
-    vpn = ec2_vpc_vpn.create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type, check_mode)
+    vpn = ec2_vpc_vpn.create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type)
     return changed, vpn
 
 
 def tear_down_conn(placeboify, connection, vpn_connection_id):
-    ec2_vpc_vpn.delete_connection(connection, vpn_connection_id, False)
+    ec2_vpc_vpn.delete_connection(connection, vpn_connection_id)
 
 
 def test_find_connection_vpc_conn_id(placeboify, maybe_sleep):
@@ -139,7 +138,7 @@ def test_find_connection_filters(placeboify, maybe_sleep):
     ec2_vpc_vpn.ensure_present(conn2, params2)
 
     # create some new parameters for a filter
-    params = {'check_mode': False, 'filters': {'tags': {'Correct': 'Tag'}}}
+    params = {'filters': {'tags': {'Correct': 'Tag'}}}
 
     # find the connection that has the parameters above
     found = ec2_vpc_vpn.find_connection(conn1, params)
@@ -165,7 +164,7 @@ def test_find_connection_insufficient_filters(placeboify, maybe_sleep):
     _, vpn2 = ec2_vpc_vpn.ensure_present(conn2, m2.params)
 
     # reset the parameters so only filtering by tags will occur
-    m.params = {'check_mode': False, 'filters': {'tags': {'Correct': 'Tag'}}}
+    m.params = {'filters': {'tags': {'Correct': 'Tag'}}}
 
     # assert that multiple matching connections have been found
     with pytest.raises(Exception) as error_message:
@@ -179,7 +178,7 @@ def test_find_connection_insufficient_filters(placeboify, maybe_sleep):
 
 def test_find_connection_nonexistent(placeboify, maybe_sleep):
     # create parameters but don't create a connection with them
-    params = {'check_mode': False, 'filters': {'tags': {'Correct': 'Tag'}}}
+    params = {'filters': {'tags': {'Correct': 'Tag'}}}
     m, conn = setup_mod_conn(placeboify, params)
 
     # try to find a connection with matching parameters and assert None are found
@@ -248,7 +247,7 @@ def test_delete_connection(placeboify, maybe_sleep):
 
 def test_delete_nonexistent_connection(placeboify, maybe_sleep):
     # create parameters and ensure any connection matching (None) is deleted
-    params = {'check_mode': False, 'filters': {'tags': {'ThisConnection': 'DoesntExist'}}}
+    params = {'filters': {'tags': {'ThisConnection': 'DoesntExist'}}}
     m, conn = setup_mod_conn(placeboify, params)
     changed, vpn = ec2_vpc_vpn.ensure_absent(conn, m.params)
 
@@ -298,7 +297,7 @@ def test_add_tags(placeboify, maybe_sleep):
     params, vpn, m, conn = dependencies['params'], dependencies['vpn'], dependencies['module'], dependencies['connection']
 
     # add a tag to the connection
-    ec2_vpc_vpn.add_tags(conn, vpn['VpnConnectionId'], add=[{'Key': 'Ansible-Test', 'Value': 'VPN'}], check_mode=False)
+    ec2_vpc_vpn.add_tags(conn, vpn['VpnConnectionId'], add=[{'Key': 'Ansible-Test', 'Value': 'VPN'}])
 
     # assert tag is there
     current_vpn = ec2_vpc_vpn.find_connection(conn, params)
@@ -314,7 +313,7 @@ def test_remove_tags(placeboify, maybe_sleep):
     params, vpn, m, conn = dependencies['params'], dependencies['vpn'], dependencies['module'], dependencies['connection']
 
     # remove a tag from the connection
-    ec2_vpc_vpn.remove_tags(conn, vpn['VpnConnectionId'], remove=['Ansible-Test'], check_mode=False)
+    ec2_vpc_vpn.remove_tags(conn, vpn['VpnConnectionId'], remove=['Ansible-Test'])
 
     # assert the tag is gone
     current_vpn = ec2_vpc_vpn.find_connection(conn, params)
@@ -330,7 +329,7 @@ def test_add_routes(placeboify, maybe_sleep):
     params, vpn, m, conn = dependencies['params'], dependencies['vpn'], dependencies['module'], dependencies['connection']
 
     # create connection with a route
-    ec2_vpc_vpn.add_routes(conn, vpn['VpnConnectionId'], ['195.168.2.0/24', '196.168.2.0/24'], False)
+    ec2_vpc_vpn.add_routes(conn, vpn['VpnConnectionId'], ['195.168.2.0/24', '196.168.2.0/24'])
 
     # assert both routes are there
     current_vpn = ec2_vpc_vpn.find_connection(conn, params)
@@ -341,6 +340,7 @@ def test_add_routes(placeboify, maybe_sleep):
 
 
 def setup_req(placeboify, number_of_results=1):
+    ''' returns dependencies for VPN connections '''
     assert number_of_results in (1, 2)
     results = []
     cgw, vgw = get_dependencies()
