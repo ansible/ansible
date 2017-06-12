@@ -70,6 +70,13 @@ options:
       - Erlang node name of the rabbit we wish to configure.
     required: false
     default: rabbit
+  extra_ctl_paths:
+    description:
+      - List of alternative paths to look for rabbitmqctl in
+      - Only needed when running RabbitMQ as user other than root / rabbitmq
+    required: false
+    default: ()
+
   state:
     description:
       - The state of the policy.
@@ -85,6 +92,17 @@ EXAMPLES = '''
   args:
     tags:
       ha-mode: all
+
+- name: ensure the default vhost contains the HA policy via a dict 
+  using a rabbitmqctl path at /usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin/rabbitmqctl
+  rabbitmq_policy:
+    name: HA
+    pattern: .*
+  args:
+    tags:
+      ha-mode: all
+  extra_ctl_paths:
+    - '/usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin'
 
 - name: ensure the default vhost contains the HA policy
   rabbitmq_policy:
@@ -103,7 +121,9 @@ class RabbitMqPolicy(object):
         self._tags = module.params['tags']
         self._priority = module.params['priority']
         self._node = module.params['node']
-        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+        self._extra_ctl_paths = module.params['extra_ctl_paths']
+        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True,
+                self._extra_ctl_paths)
 
     def _exec(self, args, run_in_check_mode=False):
         if not self._module.check_mode or (self._module.check_mode and run_in_check_mode):
@@ -149,6 +169,7 @@ def main():
         tags=dict(type='dict', required=True),
         priority=dict(default='0'),
         node=dict(default='rabbit'),
+        extra_ctl_paths=dict(default=list(), type='list'),
         state=dict(default='present', choices=['present', 'absent']),
     )
 

@@ -45,6 +45,12 @@ options:
     required: false
     default: rabbit
     version_added: "1.2"
+  extra_ctl_paths:
+    description:
+      - List of alternative paths to look for rabbitmqctl in
+      - Only needed when running RabbitMQ as user other than root / rabbitmq
+    required: false
+    default: ()
   tracing:
     description:
       - Enable/disable tracing for a vhost
@@ -63,17 +69,27 @@ EXAMPLES = '''
 - rabbitmq_vhost:
     name: /test
     state: present
+
+# Ensure that the vhost /test exists using rabbitmqctl from
+# /usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin/rabbitmqctl
+- rabbitmq_vhost:
+    name: /test
+    extra_ctl_paths:
+      - '/usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin'
+    state: present
 '''
 
 class RabbitMqVhost(object):
-    def __init__(self, module, name, tracing, node):
+    def __init__(self, module, name, tracing, node, extra_ctl_paths):
         self.module = module
         self.name = name
         self.tracing = tracing
         self.node = node
+        self.extra_ctl_paths = extra_ctl_paths
 
         self._tracing = False
-        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True,
+                self.extra_ctl_paths)
 
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
@@ -120,6 +136,7 @@ def main():
         tracing=dict(default='off', aliases=['trace'], type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         node=dict(default='rabbit'),
+        extra_ctl_paths=dict(default=list(), type='list')
     )
 
     module = AnsibleModule(
@@ -131,8 +148,9 @@ def main():
     tracing = module.params['tracing']
     state = module.params['state']
     node = module.params['node']
+    extra_ctl_paths = module.params['extra_ctl_paths']
 
-    rabbitmq_vhost = RabbitMqVhost(module, name, tracing, node)
+    rabbitmq_vhost = RabbitMqVhost(module, name, tracing, node, extra_ctl_paths)
 
     changed = False
     if rabbitmq_vhost.get():
