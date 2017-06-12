@@ -95,7 +95,7 @@ class InventoryModule(BaseInventoryPlugin):
 
                 # get available variables to templar
                 hostvars = host.get_vars()
-                if host.name in inventory.cache: # adds facts if cache is active
+                if host.name in inventory.cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, inventory.cache[host.name])
                 templar.set_available_variables(hostvars)
 
