@@ -66,7 +66,7 @@ class RoleRequirement(RoleDefinition):
         if '://' not in repo_url and '@' not in repo_url:
             trailing_path = repo_url.split('/')[-1]
             if trailing_path.endswith('.tar.gz'):
-              return trailing_path[:-7]
+                return trailing_path[:-7]
             return repo_url
         trailing_path = repo_url.split('/')[-1]
         if trailing_path.endswith('.git'):
