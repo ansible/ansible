@@ -365,7 +365,7 @@ class Interfaces(FactsBase):
                 intf['mediatype'] = mediatype
             except:
                 # fanout
-                for subport in xrange(1, 5):
+                for subport in range(1, 5):
                     name = "ethernet" + sname + ":" + str(subport)
                     try:
                         intf = self.intf_facts[name]

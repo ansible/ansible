@@ -139,7 +139,7 @@ def post_annotation(module):
     module.params['url_password'] = api_key
     response, info = fetch_url(module, url, data=json_body, headers=headers)
     if info['status'] != 200:
-        module.fail_json(msg="Request Failed", reason=e.reason)
+        module.fail_json(msg="Request Failed", reason=info.get('msg'))
     response = response.read()
     module.exit_json(changed=True, annotation=response)
 

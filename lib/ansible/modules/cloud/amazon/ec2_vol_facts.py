@@ -136,7 +136,7 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError) as e:
+        except (boto.exception.NoAuthHandlerFound, Exception) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")

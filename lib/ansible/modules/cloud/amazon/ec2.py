@@ -616,8 +616,9 @@ EXAMPLES = '''
 '''
 
 import time
+import traceback
 from ast import literal_eval
-from ansible.module_utils.six import get_function_code
+from ansible.module_utils.six import get_function_code, string_types
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect, connect_to_aws
 from distutils.version import LooseVersion

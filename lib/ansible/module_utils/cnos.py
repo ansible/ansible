@@ -43,6 +43,11 @@ except:
     HAS_LIB = False
 from distutils.cmd import Command
 
+from ansible.module_utils.six import PY3
+
+if PY3:
+    long = int
+
 
 def interfaceConfig(
     obj, deviceType, prompt, timeout, interfaceArg1,
@@ -1950,7 +1955,7 @@ def bgpConfig(
 
     elif(bgpArg1 == "log-neighbor-changes"):
         # debugOutput(bgpArg1)
-        command = command + bgpArg1f
+        command = command + bgpArg1
 
     elif(bgpArg1 == "maxas-limit"):
         # debugOutput(bgpArg1)
@@ -3258,7 +3263,7 @@ def getRuleStringForVariable(deviceType, ruleFile, variableId):
     retVal = ""
     try:
         # with open(ruleFile, 'r') as f:
-        f = open(errorFile, 'r')
+        f = open(ruleFile, 'r')
         for line in f:
             # debugOutput(line)
             if(':' in line):

@@ -269,7 +269,7 @@ def create_volume(module, profitbricks):
             else:
                 module.fail_json(msg=e.message)
 
-        number_range = xrange(count_offset, count_offset + count + len(numbers))
+        number_range = range(count_offset, count_offset + count + len(numbers))
         available_numbers = list(set(number_range).difference(numbers))
         names = []
         numbers_to_use = available_numbers[:count]
@@ -326,7 +326,7 @@ def delete_volume(module, profitbricks):
 
     for n in instance_ids:
         if(uuid_match.match(n)):
-            _delete_volume(module, profitbricks, datacenter, volume)
+            _delete_volume(module, profitbricks, datacenter, n)
             changed = True
         else:
             volumes = profitbricks.list_volumes(datacenter)

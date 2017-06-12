@@ -27,6 +27,12 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class ActionModule(ActionBase):
 

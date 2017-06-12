@@ -129,7 +129,7 @@ def main():
         if name:
             # Let's suppose user is passing domain ID
             try:
-                domains = cloud.get_domain(name)
+                domains = opcloud.get_domain(name)
             except:
                 domains = opcloud.search_domains(filters={'name': name})
 

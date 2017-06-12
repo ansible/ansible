@@ -158,6 +158,7 @@ RETURN = """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import string_types
 
 try:
     import ldap
@@ -298,7 +299,7 @@ def main():
     # Check if objectClass is of the correct type
     if (
             module.params['objectClass'] is not None and not (
-                isinstance(module.params['objectClass'], basestring) or
+                isinstance(module.params['objectClass'], string_types) or
                 isinstance(module.params['objectClass'], list))):
         module.fail_json(msg="objectClass must be either a string or a list.")
 

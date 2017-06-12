@@ -654,7 +654,7 @@ class ElbManager(object):
         for x in range(0, max_retries):
             try:
                 self.elb_conn.get_all_lb_attributes(self.name)
-            except (boto.exception.BotoServerError, StandardError) as e:
+            except (boto.exception.BotoServerError, Exception) as e:
                 if "LoadBalancerNotFound" in e.code:
                     status_achieved = True
                     break
@@ -682,7 +682,7 @@ class ElbManager(object):
                         break
                     else:
                         time.sleep(polling_increment_secs)
-                except (boto.exception.BotoServerError, StandardError) as e:
+                except (boto.exception.BotoServerError, Exception) as e:
                     if 'InvalidNetworkInterfaceID' in e.code:
                         status_achieved = True
                         break
@@ -710,7 +710,7 @@ class ElbManager(object):
         try:
             return connect_to_aws(boto.ec2, self.region,
                                   **self.aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError) as e:
+        except (boto.exception.NoAuthHandlerFound, Exception) as e:
             self.module.fail_json(msg=str(e))
 
     @_throttleable_operation(_THROTTLING_RETRIES)

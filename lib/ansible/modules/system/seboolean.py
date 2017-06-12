@@ -214,7 +214,7 @@ def main():
 
     result['changed'] = r
     if not r:
-        module.fail_json(msg="Failed to set boolean %s to %s" % (name, value))
+        module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
     try:
         selinux.security_commit_booleans()
     except:

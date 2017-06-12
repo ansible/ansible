@@ -121,6 +121,12 @@ try:
 except ImportError:
     HAS_OVH = False
 
+from ansible.module_utils.six import PY3
+
+if PY3:
+    long = int
+
+
 def getOvhClient(ansibleModule):
     endpoint = ansibleModule.params.get('endpoint')
     application_key = ansibleModule.params.get('application_key')

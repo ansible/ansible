@@ -570,7 +570,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                         number = int(match.group(1))
                         numbers.add(number)
 
-                number_range = xrange(count_offset, count_offset + count)
+                number_range = range(count_offset, count_offset + count)
                 available_numbers = list(set(number_range)
                                          .difference(numbers))
             else:  # Not auto incrementing
@@ -660,8 +660,8 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                             number = int(match.group(1))
                             numbers.add(number)
 
-                    number_range = xrange(count_offset,
-                                          count_offset + count + len(numbers))
+                    number_range = range(count_offset,
+                                         count_offset + count + len(numbers))
                     available_numbers = list(set(number_range)
                                              .difference(numbers))
                     names = []

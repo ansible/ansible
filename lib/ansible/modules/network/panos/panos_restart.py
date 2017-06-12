@@ -104,10 +104,9 @@ def main():
     except Exception:
         x = sys.exc_info()[1]
         if 'succeeded' in str(x):
-            module.exit_json(changed=True, msg=str(msg))
+            module.exit_json(changed=True, msg=str(x))
         else:
-            module.fail_json(msg=x)
-            raise
+            module.fail_json(msg=str(x))
 
     module.exit_json(changed=True, msg="okey dokey")
 

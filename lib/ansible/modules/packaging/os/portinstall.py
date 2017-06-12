@@ -72,6 +72,8 @@ EXAMPLES = '''
 import shlex
 import os
 import sys
+import pipes
+
 
 def query_package(module, name):
 

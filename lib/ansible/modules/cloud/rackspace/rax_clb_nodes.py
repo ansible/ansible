@@ -131,7 +131,7 @@ except ImportError:
 def _activate_virtualenv(path):
     path = os.path.expanduser(path)
     activate_this = os.path.join(path, 'bin', 'activate_this.py')
-    execfile(activate_this, dict(__file__=activate_this))
+    exec(open(activate_this).read(), dict(__file__=activate_this))
 
 
 def _get_node(lb, node_id=None, address=None, port=None):

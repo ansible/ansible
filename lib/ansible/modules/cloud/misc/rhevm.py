@@ -933,13 +933,13 @@ class RHEVConn(object):
         VM = self.get_VM(vmname)
         try:
             if str(VM.status.state) == 'down':
-                cdrom = params.CdRom(file=cd_iso)
+                cdrom = params.CdRom(file=cd_drive)
                 VM.cdroms.add(cdrom)
                 setMsg("Attached the image.")
                 setChanged()
             else:
                 cdrom = VM.cdroms.get(id="00000000-0000-0000-0000-000000000000")
-                cdrom.set_file(cd_iso)
+                cdrom.set_file(cd_drive)
                 cdrom.update(current=True)
                 setMsg("Attached the image.")
                 setChanged()
@@ -971,7 +971,7 @@ class RHEVConn(object):
         HOST = self.get_Host_byid(VM.host.id)
         if str(HOST.name) != vmhost:
             try:
-                vm.migrate(
+                VM.migrate(
                     action=params.Action(
                         host=params.Host(
                             name=vmhost,

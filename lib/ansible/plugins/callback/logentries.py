@@ -76,14 +76,7 @@ except ImportError:
 
 from ansible.module_utils.six.moves import configparser
 from ansible.plugins.callback import CallbackBase
-
-
-def is_unicode(ch):
-    return isinstance(ch, unicode)
-
-
-def create_unicode(ch):
-    return unicode(ch, 'utf-8')
+from ansible.module_utils._text import to_text
 
 
 class PlainTextSocketAppender(object):
@@ -141,10 +134,7 @@ class PlainTextSocketAppender(object):
     def put(self, data):
         # Replace newlines with Unicode line separator
         # for multi-line events
-        if not is_unicode(data):
-            multiline = create_unicode(data).replace('\n', self.LINE_SEP)
-        else:
-            multiline = data.replace('\n', self.LINE_SEP)
+        multiline = to_text(data).replace('\n', self.LINE_SEP)
         multiline += "\n"
         # Send data, reconnect if needed
         while True:

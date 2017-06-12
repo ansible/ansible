@@ -157,12 +157,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.ce import ce_argument_spec, check_args
+from ansible.module_utils.six import string_types
 
 
 def to_lines(stdout):
     lines = list()
     for item in stdout:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = str(item).split('\n')
         lines.append(item)
     return lines

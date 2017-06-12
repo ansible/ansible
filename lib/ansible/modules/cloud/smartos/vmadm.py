@@ -380,7 +380,7 @@ def get_vm_prop(module, uuid, prop):
     except:
         e = get_exception()
         module.fail_json(
-            msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(alias),
+            msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(uuid),
             details=to_native(e))
 
     if len(stdout_json) > 0 and prop in stdout_json[0]:

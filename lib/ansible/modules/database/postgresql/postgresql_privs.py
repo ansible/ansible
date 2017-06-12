@@ -281,7 +281,7 @@ def partial(f, *args, **kwargs):
 class Connection(object):
     """Wrapper around a psycopg2 connection with some convenience methods"""
 
-    def __init__(self, params):
+    def __init__(self, params, module):
         self.database = params.database
         # To use defaults values, keyword arguments must be absent, so
         # check which values are empty and don't include in the **kw
@@ -610,7 +610,7 @@ def main():
     if not psycopg2:
         module.fail_json(msg='Python module "psycopg2" must be installed.')
     try:
-        conn = Connection(p)
+        conn = Connection(p, module)
     except psycopg2.Error:
         e = get_exception()
         module.fail_json(msg='Could not connect to database: %s' % e)

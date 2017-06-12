@@ -189,7 +189,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_PYVMOMI:
-        self.module.fail_json(msg='pyvmomi required for this module')
+        module.fail_json(msg='pyvmomi required for this module')
 
     vmware_migrate_vmk = VMwareMigrateVmk(module)
     vmware_migrate_vmk.process_state()

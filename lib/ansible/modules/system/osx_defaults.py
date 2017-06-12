@@ -121,6 +121,8 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import string_types
+
 
 # exceptions --------------------------------------------------------------- {{{
 class OSXDefaultsException(Exception):
@@ -169,7 +171,7 @@ class OSXDefaults(object):
         if type == "string":
             return str(value)
         elif type in ["bool", "boolean"]:
-            if isinstance(value, basestring):
+            if isinstance(value, string_types):
                 value = value.lower()
             if value in [True, 1, "true", "1", "yes"]:
                 return True
