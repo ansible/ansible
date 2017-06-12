@@ -2139,35 +2139,6 @@ class AnsibleModule(object):
         self._return_formatted(kwargs)
         sys.exit(1)
 
-    def fail_json_aws(self, exception, msg=None):
-        """call fail_json with processed exception
-
-        function for converting exceptions thrown by AWS SDK modules,
-        botocore, boto3 and boto, into nice error messages.
-        """
-        last_traceback = traceback.format_exc()
-
-        try:
-            except_msg = exception.message
-        except AttributeError:
-            except_msg = str(exception)
-
-        if msg is not None:
-            message = '{0}: {1}'.format(msg, except_msg)
-        else:
-            message = except_msg
-
-        try:
-            response = exception.response
-        except AttributeError:
-            response = None
-
-        if response is None:
-            self.fail_json(msg=message, exception=last_traceback)
-        else:
-            self.fail_json(msg=message, exception=last_traceback,
-                           **camel_dict_to_snake_dict(response))
-
     def fail_on_missing_params(self, required_params=None):
         ''' This is for checking for required params when we can not check via argspec because we
         need more information than is simply given in the argspec.
