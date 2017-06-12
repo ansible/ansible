@@ -149,8 +149,8 @@ pagefiles:
     description: Contains caption, description, initial_size, maximum_size and name for each pagefile in the system.
     returned: When state is query.
     type: list
-    sample: 
-      [{"caption": "c:\\ 'pagefile.sys'", "description": "'pagefile.sys' @ c:\\", "initial_size": 2048, "maximum_size": 2048, "name": "c:\\pagefile.sys"}, 
+    sample:
+      [{"caption": "c:\\ 'pagefile.sys'", "description": "'pagefile.sys' @ c:\\", "initial_size": 2048, "maximum_size": 2048, "name": "c:\\pagefile.sys"},
        {"caption": "d:\\ 'pagefile.sys'", "description": "'pagefile.sys' @ d:\\", "initial_size": 1024, "maximum_size": 1024, "name": "d:\\pagefile.sys"}]
 
 '''
