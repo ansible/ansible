@@ -70,6 +70,11 @@ options:
         description:
             - List of templates linked to the template.
         required: false
+    clear_templates:
+        description:
+            - List of templates cleared from the template.
+            - see templates_clear in https://www.zabbix.com/documentation/3.0/manual/api/reference/template/update
+        required: false
     macros:
         description:
             - List of templates macro
@@ -102,6 +107,9 @@ EXAMPLES = '''
     link_templates:
       - Example template1
       - Example template2
+    clear_templates:
+      - Example template3
+      - Example template4
     macros:
       - macro: '{$EXAMPLE_MACRO1}'
         value: 30000
@@ -177,12 +185,15 @@ class Template(object):
                                     'macros': macros})
 
     def update_template(self, templateids,
-                        group_ids, child_template_ids, macros):
+                        group_ids, child_template_ids,
+                        clear_template_ids, macros):
         if self._module.check_mode:
             self._module.exit_json(changed=True)
         self._zapi.template.update(
             {'templateid': templateids, 'groups': group_ids,
-             'templates': child_template_ids, 'macros': macros})
+             'templates': child_template_ids,
+             'templates_clear': clear_template_ids,
+             'macros': macros})
 
     def delete_template(self, templateids):
         if self._module.check_mode:
@@ -202,6 +213,7 @@ def main():
             template_name=dict(type='str', required=True),
             template_groups=dict(type='list', required=True),
             link_templates=dict(type='list', required=False),
+            clear_templates=dict(type='list', required=False),
             macros=dict(type='list', required=False),
             state=dict(default="present", choices=['present', 'absent']),
             timeout=dict(type='int', default=10)
@@ -222,6 +234,7 @@ def main():
     template_name = module.params['template_name']
     template_groups = module.params['template_groups']
     link_templates = module.params['link_templates']
+    clear_templates = module.params['clear_templates']
     macros = module.params['macros']
     state = module.params['state']
     timeout = module.params['timeout']
@@ -255,6 +268,10 @@ def main():
     if link_templates:
         child_template_ids = template.get_template_ids(link_templates)
 
+    clear_template_ids = []
+    if clear_templates:
+        clear_template_ids = template.get_template_ids(clear_templates)
+
     group_ids = template.get_group_ids_by_group_names(template_groups)
     if not group_ids:
         module.fail_json(msg='Template groups not found: %s' %
@@ -267,8 +284,9 @@ def main():
                          result="Successfully added template: %s" %
                          template_name)
     else:
-        template.update_template(template_ids[0],
-                                 group_ids, child_template_ids, macros)
+        template.update_template(template_ids[0], group_ids,
+                                 child_template_ids, clear_template_ids,
+                                 macros)
         module.exit_json(changed=True,
                          result="Successfully updateed template: %s" %
                          template_name)
