@@ -229,6 +229,7 @@ import socket
 import time
 import calendar
 import shutil
+
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
 
@@ -639,7 +640,7 @@ class User(object):
                     # HINT - GNU/Linux stores EXPIRE at pos. 7, FreeBSD uses pos. 6,
                     #      - ansible on FreeBSD does not have spwd (freebsd11, python 2.7.13)
                     #      - FreeBSD stores EXPIRE as UNIX timestamp in /etc/master.passwd (GNU/Linux uses days)
-                    #      - FreeBSD uses 0 as expire date for unlock 
+                    #      - FreeBSD uses 0 as expire date for unlock
                     if line.startswith('%s:' % self.name):
                         expire = line.split(':')[7]
         return expire
@@ -967,7 +968,8 @@ class FreeBsdUser(User):
 
         if self.expires is not None and info[7] != self.expires:
             expire=calendar.timegm(self.expires)
-            if expire==0: expire=1 # on FreeBSD 0 means unlock account (not 1.1.1970)
+            if expire==0:
+                expire=1 # on FreeBSD 0 means unlock account (not 1.1.1970)
             cmd.append('-e')
             cmd.append( str(expire) )
 
