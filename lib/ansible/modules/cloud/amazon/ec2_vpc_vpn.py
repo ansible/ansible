@@ -70,8 +70,7 @@ options:
         destination cidr block of '192.168.2.0/24' it will be found with this filter (assuming there are not multiple
         VPNs that are matched). Another example, if the filter 'vpn' is equal to ['vpn-ccf7e7ad', 'vpn-cb0ae2a2'] and one
         of of the VPNs has the state deleted (exists but is unmodifiable) and the other exists and is not deleted,
-        it will be found via this filter.
-    type: dict
+        it will be found via this filter. See examples.
     suboptions:
       cgw-config:
         description:
@@ -197,11 +196,10 @@ vpn_gateway_id:
   sample:
     vpn_gateway_id: vgw-cb0ae2a2
 options:
-  static_routes_only:
-    description: the type of routing option
-    type: bool
-    returned: I(state=present)
-    sample:
+  type: complex
+  returned: I(state=present)
+  sample:
+    options:
       static_routes_only: true
 routes:
   description: the connection routes
@@ -252,7 +250,6 @@ vpn_connection_id:
     vpn_connection_id: vpn-781e0e19
 """
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec,
@@ -306,7 +303,9 @@ def find_connection(connection, module_params, vpn_connection_id=None):
             existing_conn = connection.describe_vpn_connections(DryRun=False,
                                                                 Filters=formatted_filter)
     except botocore.exceptions.ClientError as e:
-        raise VPNConnectionException(msg="Failed while describing VPN connection.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        raise VPNConnectionException(msg="Failed while describing VPN connection.",
+                                     exception=traceback.format_exc(),
+                                     **camel_dict_to_snake_dict(e.response))
 
     return find_connection_response(connections=existing_conn)
 
@@ -318,7 +317,8 @@ def add_routes(connection, vpn_connection_id, routes_to_add):
                                                               DestinationCidrBlock=route)
     except botocore.exceptions.ClientError as e:
         raise VPNConnectionException(msg="Failed while adding routes to the VPN connection.",
-                                     exception=traceback.format_exc(), response=e.response)
+                                     exception=traceback.format_exc(),
+                                     response=e.response)
 
 
 def remove_routes(connection, vpn_connection_id, routes_to_remove):
@@ -328,7 +328,8 @@ def remove_routes(connection, vpn_connection_id, routes_to_remove):
                                                               DestinationCidrBlock=route)
     except botocore.exceptions.ClientError as e:
         raise VPNConnectionException(msg="Failed while adding routes to VPN connection.",
-                                     exception=traceback.format_exc(), response=e.response)
+                                     exception=traceback.format_exc(),
+                                     response=e.response)
 
 
 def create_filter(module_params, provided_filters):
@@ -362,7 +363,7 @@ def create_filter(module_params, provided_filters):
         elif raw_param in list(boto3ify_filter.items()):
             param = raw_param
         else:
-            raise VPNConnectionException(msg="%s is not a valid filter." % raw_param)
+            raise VPNConnectionException(msg="{0} is not a valid filter.".format(raw_param))
 
         # reformat filters with special formats
         if param == 'tag':
@@ -442,7 +443,9 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
                                                VpnGatewayId=vpn_gateway_id,
                                                Options={'StaticRoutesOnly': static_only})
     except botocore.exceptions.ClientError as e:
-        raise VPNConnectionException(msg="Failed to create VPN connection: %s" % e.message, exception=traceback.format_exc(), response=e.response)
+        raise VPNConnectionException(msg="Failed to create VPN connection: {0}".format(e.message),
+                                     exception=traceback.format_exc(),
+                                     response=e.response)
 
     return vpn['VpnConnection']
 
@@ -453,7 +456,9 @@ def delete_connection(connection, vpn_connection_id):
         connection.delete_vpn_connection(DryRun=False,
                                          VpnConnectionId=vpn_connection_id)
     except botocore.exceptions.ClientError as e:
-        raise VPNConnectionException(msg="Failed to delete the VPN connection: %s" % e.message, exception=traceback.format_exc(), response=e.response)
+        raise VPNConnectionException(msg="Failed to delete the VPN connection: {0}".format(e.message),
+                                     exception=traceback.format_exc(),
+                                     response=e.response)
 
 
 def add_tags(connection, vpn_connection_id, add):
@@ -462,8 +467,9 @@ def add_tags(connection, vpn_connection_id, add):
                                Resources=[vpn_connection_id],
                                Tags=add)
     except botocore.exceptions.ClientError as e:
-        raise VPNConnectionException(msg="Failed to add the tags: %s." % add,
-                                     exception=traceback.format_exc(), response=e.response)
+        raise VPNConnectionException(msg="Failed to add the tags: {0}.".format(add),
+                                     exception=traceback.format_exc(),
+                                     response=e.response)
 
 
 def remove_tags(connection, vpn_connection_id, remove):
@@ -474,8 +480,9 @@ def remove_tags(connection, vpn_connection_id, remove):
                                Resources=[vpn_connection_id],
                                Tags=key_dict_list)
     except botocore.exceptions.ClientError as e:
-        raise VPNConnectionException(msg="Failed to remove the tags: %s." % remove,
-                                     exception=traceback.format_exc(), response=e.response)
+        raise VPNConnectionException(msg="Failed to remove the tags: {0}.".format(remove),
+                                     exception=traceback.format_exc(),
+                                     response=e.response)
 
 
 def check_for_update(connection, module_params, vpn_connection_id):
@@ -526,8 +533,9 @@ def check_for_update(connection, module_params, vpn_connection_id):
             will_be = module_params.get(attribute, None)
 
         if will_be is not None and to_text(will_be) != to_text(is_now):
-            raise VPNConnectionException(msg="You cannot modify %s, the current value of which is %s. Modifiable VPN connection "
-                                         "attributes are tags and routes. The value you tried to change it to is %s." % (attribute, is_now, will_be))
+            raise VPNConnectionException(msg="You cannot modify {0}, the current value of which is {1}. Modifiable VPN "
+                                         "connection attributes are tags and routes. The value you tried to change it to "
+                                         "is {2}.".format(attribute, is_now, will_be))
 
     return changes
 
@@ -639,13 +647,11 @@ def ensure_present(connection, module_params, check_mode=False):
     # Unique match was found. Check if attributes provided differ.
     elif vpn_connection:
         vpn_connection_id = vpn_connection['VpnConnectionId']
-        if check_mode:
-            return get_check_mode_results(connection, module_params, vpn_connection_id, current_state=vpn_connection)
         # check_for_update returns a dict with the keys tags_to_add, tags_to_remove, routes_to_add, routes_to_remove
         changes = check_for_update(connection, module_params, vpn_connection_id)
+        if check_mode:
+            return get_check_mode_results(connection, module_params, vpn_connection_id, current_state=vpn_connection)
         changed = make_changes(connection, vpn_connection_id, changes)
-        # get latest version of vpn_connection
-        vpn_connection = find_connection(connection, module_params, vpn_connection_id=vpn_connection_id)
 
     # No match was found. Create and tag a connection and add routes.
     else:
