@@ -475,7 +475,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.extend(['--reference', str(reference)])
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
-    if bare:
+    if bare or mirror:
         if remote != 'origin':
             module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
@@ -491,7 +491,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
 
 
 def has_local_mods(module, git_path, dest, bare, mirror):
-    if bare:
+    if bare or mirror:
         return False
 
     cmd = "%s status --porcelain" % (git_path)
@@ -747,7 +747,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, mirror, re
     if not depth or not refspecs:
         # don't try to be minimalistic but do a full clone
         # also do this if depth is given, but version is something that can't be fetched directly
-        if bare:
+        if bare or mirror:
             refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
         else:
             # ensure all tags are fetched
@@ -1030,7 +1030,7 @@ def main():
     update = module.params['update']
     allow_clone = module.params['clone']
     bare = module.params['bare']
-    mirror = module.params['bare']
+    mirror = module.params['mirror']
     verify_commit = module.params['verify_commit']
     reference = module.params['reference']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
@@ -1040,6 +1040,9 @@ def main():
     archive = module.params['archive']
 
     result = dict(changed=False, warnings=list())
+
+    if bare and mirror:
+        module.fail_json(msg="'bare' and 'mirror' are incompatible options. You must set one or the other.")
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
