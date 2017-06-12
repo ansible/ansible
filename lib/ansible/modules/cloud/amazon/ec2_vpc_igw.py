@@ -62,6 +62,34 @@ register: igw
 
 '''
 
+RETURN = '''
+changed:
+  description: If any changes have been made to the Internet Gateway.
+  type: bool
+  returned: always
+  sample:
+    changed: false
+gateway_id:
+  description: The unique identifier for the Internet Gateway.
+  type: str
+  returned: I(state=present)
+  sample:
+    gateway_id: "igw-XXXXXXXX"
+tags:
+  description: The tags associated the Internet Gateway.
+  type: dict
+  returned: I(state=present)
+  sample:
+    tags:
+      "Ansible": "Test"
+vpc_id:
+  description: The VPC ID associated with the Internet Gateway.
+  type: str
+  returned: I(state=present)
+  sample:
+    vpc_id: "vpc-XXXXXXXX"
+'''
+
 try:
     import boto.ec2
     import boto.vpc
@@ -82,7 +110,7 @@ class AnsibleIGWException(Exception):
 
 
 def get_igw_info(igw):
-    return {'id': igw.id,
+    return {'gateway_id': igw.id,
             'tags': igw.tags,
             'vpc_id': igw.vpc_id
             }
@@ -215,7 +243,7 @@ def main():
     except AnsibleIGWException as e:
         module.fail_json(msg=str(e))
 
-    module.exit_json(**result)
+    module.exit_json(changed=result['changed'], **result.get('gateway', {}))
 
 
 if __name__ == '__main__':
