@@ -93,8 +93,7 @@ EXAMPLES = '''
     tags:
       ha-mode: all
 
-- name: ensure the default vhost contains the HA policy via a dict 
-  using a rabbitmqctl path at /usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin/rabbitmqctl
+- name: ensure the default vhost contains the HA policy via a dict with alternative rabbitmqctl path
   rabbitmq_policy:
     name: HA
     pattern: .*
