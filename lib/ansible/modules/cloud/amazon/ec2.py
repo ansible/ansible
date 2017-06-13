@@ -1447,7 +1447,7 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
                 if isinstance(group_name, string_types):
                     group_name = [group_name]
                 unmatched = set(group_name) - set(to_text(grp.name) for grp in grp_details)
-                if len(unmatched) > 0:
+                if unmatched:
                     module.fail_json(msg="The following group names are not valid: %s" % ', '.join(unmatched))
                 group_ids = [to_text(grp.id) for grp in grp_details if to_text(grp.name) in group_name]
             elif inst.vpc_id and group_id:
