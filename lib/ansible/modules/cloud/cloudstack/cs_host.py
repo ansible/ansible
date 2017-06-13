@@ -36,7 +36,7 @@ options:
     description:
       - Name of the host.
     required: true
-    aliases: [ 'url' ]
+    aliases: [ 'url', 'ip_address' ]
   username:
     description:
       - Username for the host.
@@ -427,13 +427,15 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
 
     def get_host(self):
         host = None
+        name = self.module.params.get('name')
         args = {
             'zoneid': self.get_zone(key='id'),
-            'name': self.module.params.get('name'),
         }
-        hosts = self.cs.listHosts(**args)
-        if hosts:
-            host = hosts['host'][0]
+        res = self.cs.listHosts(**args)
+        if res:
+            for h in res['host']:
+                if name in [h['ipaddress'], h['name']]:
+                    host = h
         return host
 
     def present_host(self):
@@ -505,7 +507,7 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True, aliases=['url']),
+        name=dict(required=True, aliases=['url', 'ip_address']),
         password=dict(default=None, no_log=True),
         username=dict(default=None),
         hypervisor=dict(choices=CS_HYPERVISORS, default=None),
