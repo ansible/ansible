@@ -25,30 +25,28 @@ import subprocess
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
-CLIPASSWORDSDK_CMD = '/opt/CARKaim/sdk/clipasswordsdk'
-if os.getenv('AIM_CLIPASSWORDSDK_CMD') is not None:
-    CLIPASSWORDSDK_CMD = os.environ['AIM_CLIPASSWORDSDK_CMD']
+CLIPASSWORDSDK_CMD = os.getenv('AIM_CLIPASSWORDSDK_CMD', '/opt/CARKaim/sdk/clipasswordsdk')
 
 
 class CyberarkPassword:
 
-    def __init__(self, **kwargs):
+    def __init__(self, appid=None, query=None, output=None, **kwargs):
 
-        self.appid = kwargs.pop('appid', None)
-        self.query = kwargs.pop('query', None)
-        self.output = kwargs.pop('output', None)
+        self.appid = appid
+        self.query = query
+        self.output = output
 
         # Support for Generic parameters to be able to specify
         # FailRequestOnPasswordChange, Queryformat, Reason, etc.
-        self.extraParms = []
+        self.extra_parms = []
         for key, value in kwargs.items():
-            self.extraParms.append('-p')
-            self.extraParms.append(key + "=" + value)
+            self.extra_parms.append('-p')
+            self.extra_parms.append("%s=%s" % (key,value))
 
         if self.appid is None:
-            raise AnsibleError("No Application ID specified")
+            raise AnsibleError("CyberArk Error: No Application ID specified")
         if self.query is None:
-            raise AnsibleError("No Vault query specified")
+            raise AnsibleError("CyberArk Error: No Vault query specified")
 
         if self.output is None:
             # If no output is specified, return at least the password
@@ -62,59 +60,53 @@ class CyberarkPassword:
 
     def get(self):
 
-        resultDict = {}
+        result_dict = {}
 
         try:
             allParms = [
                 CLIPASSWORDSDK_CMD,
                 'GetPassword',
-                '-p',
-                'AppDescs.AppID=' +
-                self.appid,
-                '-p',
-                'Query=' +
-                self.query,
-                '-o',
-                self.output,
-                '-d',
-                self.delimiter]
-            allParms.extend(self.extraParms)
+                '-p', 'AppDescs.AppID=%s' % self.appid,
+                '-p', 'Query=%s' % self.query,
+                '-o', self.output,
+                '-d', self.delimiter]
+            allParms.extend(self.extra_parms)
 
             credential = subprocess.check_output(allParms)
 
-            if len(credential) > 0 and credential.endswith("\n"):
+            if credential and credential.endswith("\n"):
                 credential = credential[:-1]
 
-            outputNames = self.output.split(",")
-            outputValues = credential.split(self.delimiter)
+            output_names = self.output.split(",")
+            output_values = credential.split(self.delimiter)
 
-            for i in range(len(outputNames)):
-                if outputNames[i].startswith("passprops."):
-                    if "passprops" not in resultDict:
-                        resultDict["passprops"] = {}
-                    outputPropName = outputNames[i][10:]
-                    resultDict["passprops"][outputPropName] = outputValues[i]
+            for i in range(len(output_names)):
+                if output_names[i].startswith("passprops."):
+                    if "passprops" not in result_dict:
+                        result_dict["passprops"] = {}
+                    output_prop_name = output_names[i][10:]
+                    result_dict["passprops"][output_prop_name] = output_values[i]
                 else:
-                    resultDict[outputNames[i]] = outputValues[i]
+                    result_dict[output_names[i]] = output_values[i]
 
         except subprocess.CalledProcessError as e:
             raise AnsibleError(e.output)
         except OSError as e:
-            raise AnsibleError("ERROR - AIM not installed or clipasswordsdk not in standard location. ERROR=(" + to_text(e.errno) + ") => " + e.strerror)
+            raise AnsibleError("ERROR - AIM not installed or clipasswordsdk not in standard location. ERROR=(%s) => %s " %(to_text(e.errno), e.strerror))
 
-        return [resultDict]
+        return [result_dict]
 
 
 class LookupModule(LookupBase):
 
     """
     USAGE: {{lookup('cyberarkpassword', appid='Application1', query='safe=Safe1;Folder=root;Object=User1',
-                    output='password,passprops.username,passprops.address' [, extraParms])}}
+                    output='password,passprops.username,passprops.address' [, extra_parms])}}
 
     It Requires CyberArk AIM Installed, and /opt/CARKaim/sdk/clipasswordsdk in place or set environment variable AIM_CLIPASSWORDSDK_CMD to the AIM
     CLI Password SDK executable.
 
-     Parameter names AppID, Query, Output are case sensitive.
+     Parameter names appid, query, output are case sensitive.
 
      Args:
          appid (str): Defines the unique ID of the application that is issuing the password request.
@@ -128,7 +120,7 @@ class LookupModule(LookupBase):
                If the value of the specified property is empty, <null> will be returned.
 
 
-    for extraParms values please check parameters for clipasswordsdk in CyberArk's "Credential Provider and ASCP Implementation Guide"
+    for extra_parms values please check parameters for clipasswordsdk in CyberArk's "Credential Provider and ASCP Implementation Guide"
 
     For Ansible on windows, please change the -parameters (-p, -d, and -o) to /parameters (/p, /d, and /o) and change the location of CLIPasswordSDK.exe
     """
@@ -136,7 +128,5 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
 
         cyberark_conn = CyberarkPassword(**kwargs)
-
         result = cyberark_conn.get()
-
         return result
