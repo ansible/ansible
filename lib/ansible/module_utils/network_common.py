@@ -40,10 +40,12 @@ def to_list(val):
     else:
         return list()
 
+
 def sort_list(val):
     if isinstance(val, list):
         return sorted(val)
     return val
+
 
 class Entity(object):
     """Transforms a dict to with an argument spec
@@ -151,8 +153,7 @@ class Entity(object):
 
             if 'choices' in attr:
                 if value[name] not in attr['choices']:
-                    self._module.fail_json(msg='%s must be one of %s, got %s' % \
-                            (name, ', '.join(attr['choices']), value[name]))
+                    self._module.fail_json(msg='%s must be one of %s, got %s' % (name, ', '.join(attr['choices']), value[name]))
 
             if value[name] is not None:
                 value_type = attr.get('type', 'str')
@@ -176,10 +177,12 @@ class EntityCollection(Entity):
 
         return [(super(EntityCollection, self).__call__(i, strict)) for i in iterable]
 
+
 # these are for backwards compatibility and can be removed once all of the
 # modules that use them are updated
 ComplexDict = lambda attrs, module: Entity(module, attrs)
 ComplexList = lambda attrs, module: EntityCollection(module, attrs)
+
 
 def dict_diff(base, comparable):
     """ Generate a dict object of differences
@@ -212,11 +215,11 @@ def dict_diff(base, comparable):
                 if sort_list(base[key]) != sort_list(comparable_value):
                     updates[key] = comparable_value
 
-
     for key in set(comparable.keys()).difference(base.keys()):
         updates[key] = comparable.get(key)
 
     return updates
+
 
 def dict_combine(base, other):
     """ Return a new dict object that combines base and other
