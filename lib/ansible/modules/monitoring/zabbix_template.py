@@ -258,7 +258,7 @@ def main():
         if not template_ids:
             module.exit_json(changed=False,
                              msg="Template not found. " +
-                                    "No changed: %s" % template_name)
+                                 "No changed: %s" % template_name)
         template.delete_template(template_ids)
         module.exit_json(changed=True,
                          result="Successfully delete template %s" %
