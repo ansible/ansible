@@ -15,10 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
 import os
 import subprocess
 
@@ -41,7 +39,7 @@ class CyberarkPassword:
         self.extra_parms = []
         for key, value in kwargs.items():
             self.extra_parms.append('-p')
-            self.extra_parms.append("%s=%s" % (key,value))
+            self.extra_parms.append("%s=%s" % (key, value))
 
         if self.appid is None:
             raise AnsibleError("CyberArk Error: No Application ID specified")
@@ -92,7 +90,7 @@ class CyberarkPassword:
         except subprocess.CalledProcessError as e:
             raise AnsibleError(e.output)
         except OSError as e:
-            raise AnsibleError("ERROR - AIM not installed or clipasswordsdk not in standard location. ERROR=(%s) => %s " %(to_text(e.errno), e.strerror))
+            raise AnsibleError("ERROR - AIM not installed or clipasswordsdk not in standard location. ERROR=(%s) => %s " % (to_text(e.errno), e.strerror))
 
         return [result_dict]
 
