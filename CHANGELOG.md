@@ -76,6 +76,7 @@ Ansible Changes By Release
 * 'service' tasks can now use async again, we had lost this capability when changed into an action plugin.
 * made any_errors_fatal inheritable from play to task and all other objects in between.
 * many small performance improvements in inventory and variable handling and in task execution.
+* Added a retry class to the ec2_asg module since customers were running into throttling errors (AWSRetry is a solution for modules using boto3 which isn't applicable here).
 
 ### Deprecations
 * Specifying --tags (or --skip-tags) multiple times on the command line
