@@ -253,7 +253,6 @@ class CLI(with_metaclass(ABCMeta, object)):
         if self.options.ask_su_pass or self.options.su_user:
             _dep('su')
 
-
     def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False):
         ''' check for conflicting options '''
 
@@ -270,10 +269,8 @@ class CLI(with_metaclass(ABCMeta, object)):
                     (op.su or op.su_user) and (op.become or op.become_user) or
                     (op.sudo or op.sudo_user) and (op.become or op.become_user)):
 
-                self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
-                                  "and su arguments ('--su', '--su-user', and '--ask-su-pass') "
-                                  "and become arguments ('--become', '--become-user', and '--ask-become-pass')"
-                                  " are exclusive of each other")
+                self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') and su arguments ('--su', '--su-user', and '--ask-su-pass') "
+                                  "and become arguments ('--become', '--become-user', and '--ask-become-pass') are exclusive of each other")
 
         if fork_opts:
             if op.forks < 1:
