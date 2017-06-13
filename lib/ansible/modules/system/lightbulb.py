@@ -45,7 +45,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    pass
+    module = AnsibleModule(
+        argument_spec=dict()
+    )
+    module.exit_json(changed=False)
 
 
 if __name__ == '__main__':
