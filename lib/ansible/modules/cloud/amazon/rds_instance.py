@@ -19,16 +19,23 @@ from __future__ import (absolute_import, division, print_function)
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '0.1'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: rds_instance
-version_added: "2.4"
 short_description: create, delete, or modify an Amazon rds instance
 description:
      - Creates, deletes, or modifies rds instances. When creating an instance
        it can be either a new instance or a read-only replica of an existing instance.
+requirements:
+    - "python >= 2.6"
+    - "boto3"
+version_added: "2.4"
+author:
+    - Bruce Pennypacker (@bpennypacker)
+    - Will Thames (@willthames)
+    - Michael De La Rue (@mikedlr)
 options:
   state:
     description:
@@ -133,7 +140,7 @@ options:
     description:
       - Number of days backups are retained. Set to 0 to disable backups. Default is 1 day. Valid range: 0-35.
     required: false
-  zone:
+  zone:281
     description:
       - availability zone in which to launch the instance.
     required: false
@@ -194,12 +201,6 @@ options:
     description:
       - tags dict to apply to a resource.
     required: false
-requirements:
-    - "python >= 2.6"
-    - "boto3"
-author:
-    - Bruce Pennypacker (@bpennypacker)
-    - Will Thames (@willthames)
 extends_documentation_fragment:
     - aws
     - ec2
@@ -273,6 +274,19 @@ EXAMPLES = '''
 
 - debug:
     msg: "The new db endpoint is {{ rds.instance.endpoint }}"
+'''
+
+RETURN = '''
+instance:
+  description: the information returned in data from boto3 get_db_instance
+  returned: success
+  type: dict
+operation:
+  description: The operation carried out on the DBM, e.g. create if a new DBM was created or modified if an existing one was changed.
+  returned: success
+  type: string
+  sample:
+    "operation": "create"
 '''
 
 import time
