@@ -16,6 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
+if not(sys.version_info[0] == 2 and sys.version_info[1] >= 7):
+    from nose.plugins.skip import SkipTest
+    raise SkipTest("Nuage Ansible modules requires Python 2.7")
+
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nuage import nuage_vspk
 from vspk import v5_0 as vsdk
