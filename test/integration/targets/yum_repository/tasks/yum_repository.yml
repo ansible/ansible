@@ -32,7 +32,7 @@
   assert:
     that:
       - sl_result.failed
-      - "sl_result.msg==\"No package matching \'sl\' found available, installed or updated\""
+      - "sl_result.msg==\"No package matching 'sl' found available, installed or updated\""
 
 - name: re-add epel
   yum_repository:
