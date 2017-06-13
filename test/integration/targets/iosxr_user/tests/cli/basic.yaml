@@ -1,0 +1,39 @@
+---
+- name: Create user
+  iosxr_user:
+    name: netend
+    password: test
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username netend secret" in result.commands'
+
+- name: Collection of users
+  iosxr_user:
+    users:
+      - name: test1
+      - name: test2
+    state: present
+    group: sysadmin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username test1 group sysadmin", "username test2 group sysadmin"]'
+
+- name: tearDown
+  iosxr_user:
+    purge: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no username test1", "no username test2", "no username netend"]'
