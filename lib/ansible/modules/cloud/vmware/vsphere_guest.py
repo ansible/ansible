@@ -471,7 +471,7 @@ def add_floppy(module, s, config_target, config, devices, default_devs, type="im
     devices.append(floppy_spec)
 
 
-def add_nic(module, s, nfmor, config, devices, mac_address, nic_type="vmxnet3", network_name="VM Network", network_type="standard"):
+def add_nic(module, s, nfmor, config, devices, mac_address="GENERATED", nic_type="vmxnet3", network_name="VM Network", network_type="standard"):
     # add a NIC
     # Different network card types are: "VirtualE1000",
     # "VirtualE1000e","VirtualPCNet32", "VirtualVmxnet", "VirtualNmxnet2",
