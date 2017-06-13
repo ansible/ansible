@@ -238,7 +238,7 @@ class AnsibleCloudStack(object):
         if self.network_acl:
             return self._get_by_key(key, self.network_acl)
         else:
-            self.fail_json("Network ACL %s not found" % self.module.params.get('network_acl'))
+            self.fail_json(msg="Network ACL %s not found" % self.module.params.get('network_acl'))
 
     def get_vpc(self, key=None):
         """Return a VPC dictionary or the value of given key of."""
