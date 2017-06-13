@@ -228,7 +228,7 @@ class DBusWrapper(object):
             rc, out, err = self.module.run_command(command)
 
             if self.dbus_session_bus_address is None and rc == 127:
-                self.module.fail_json("Failed to run passed-in command, dbus-run-session faced an internal erorr: %s" % err)
+                self.module.fail_json(msg="Failed to run passed-in command, dbus-run-session faced an internal error: %s" % err)
         else:
             extra_environment = {'DBUS_SESSION_BUS_ADDRESS': self.dbus_session_bus_address}
             rc, out, err = self.module.run_command(command, environ_update=extra_environment)
