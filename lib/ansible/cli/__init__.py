@@ -253,7 +253,6 @@ class CLI(with_metaclass(ABCMeta, object)):
         if self.options.ask_su_pass or self.options.su_user:
             _dep('su')
 
-
     def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False):
         ''' check for conflicting options '''
 
