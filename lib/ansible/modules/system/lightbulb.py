@@ -27,7 +27,6 @@ short_description: lightbulb for your brainz
 description: insane in the membraine
 version_added: 2.4
 author: James Tanner (@jctanner)
-deprecated:
 options: {}
 requirements: []
 '''
