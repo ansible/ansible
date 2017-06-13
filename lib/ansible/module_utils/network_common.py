@@ -178,10 +178,16 @@ class EntityCollection(Entity):
         return [(super(EntityCollection, self).__call__(i, strict)) for i in iterable]
 
 
-# these are for backwards compatibility and can be removed once all of the
+# these two are for backwards compatibility and can be removed once all of the
 # modules that use them are updated
-ComplexDict = lambda attrs, module: Entity(module, attrs)
-ComplexList = lambda attrs, module: EntityCollection(module, attrs)
+class ComplexDict(Entity):
+    def __init__(self, attrs, module, *args, **kwargs):
+        return super(ComplexDict, self).__init__(module, attrs, *args, **kwargs)
+
+
+class ComplexList(EntityCollection):
+    def __init__(self, attrs, module, *args, **kwargs):
+        return super(ComplexList, self).__init__(module, attrs, *args, **kwargs)
 
 
 def dict_diff(base, comparable):
