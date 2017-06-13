@@ -140,7 +140,9 @@ options:
    networks:
         description:
           - Network to use should include C(name) or C(vlan) entry
-          - Add an optional C(ip) and C(netmask) for network configuration
+          - Add an optional C(ip) for network configuration
+          - Add an optional C(dhcp) (bool) entry to get an IP via DHCP (to specify this option,do not specify thethe C(ip) option)
+          - Add an optional C(netmask) to specify a subnet mask
           - Add an optional C(gateway) entry to configure a gateway
           - Add an optional C(mac) entry to customize mac address
           - Add an optional C(dns_servers) or C(domain) entry per interface (Windows)
@@ -747,12 +749,18 @@ class PyVmomiHelper(object):
         # Network settings
         adaptermaps = []
         for network in self.params['networks']:
-            if 'ip' in network and 'netmask' in network:
+            if 'ip' in network and 'netmask' in network or 'dhcp' in network:
                 guest_map = vim.vm.customization.AdapterMapping()
                 guest_map.adapter = vim.vm.customization.IPSettings()
-                guest_map.adapter.ip = vim.vm.customization.FixedIp()
-                guest_map.adapter.ip.ipAddress = str(network['ip'])
-                guest_map.adapter.subnetMask = str(network['netmask'])
+
+                if 'ip' in network:
+                    guest_map.adapter.ip = vim.vm.customization.FixedIp()
+                    guest_map.adapter.ip.ipAddress = str(network['ip'])
+                elif 'dhcp' in network:
+                    guest_map.adapter.ip = vim.vm.customization.DhcpIpGenerator()
+
+                if 'netmask' in network:
+                    guest_map.adapter.subnetMask = str(network['netmask'])
 
                 if 'gateway' in network:
                     guest_map.adapter.gateway = network['gateway']
