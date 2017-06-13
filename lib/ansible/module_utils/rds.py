@@ -74,7 +74,7 @@ class RDSDBInstance(object):
         after = dict()
         for k in compare_keys:
             if self.data.get(k) != params.get(k):
-                if params.get(k) == None and k in leave_if_null:
+                if params.get(k) is None and k in leave_if_null:
                     pass
                 else:
                     before[k] = self.data.get(k)
@@ -84,7 +84,7 @@ class RDSDBInstance(object):
         except TypeError:
             old_port = None
         try:
-            new_port=params.get("endpoint")["port"]
+            new_port = params.get("endpoint")["port"]
         except TypeError:
             new_port = None
         if old_port != new_port:
