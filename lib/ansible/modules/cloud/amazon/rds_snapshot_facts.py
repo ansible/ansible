@@ -92,7 +92,7 @@ import traceback
 
 try:
     import botocore
-except:
+except BaseException:
     pass  # caught by imported HAS_BOTO3
 
 
@@ -152,7 +152,8 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     if not region:
-        module.fail_json(msg="Region not specified. Unable to determine region from configuration.")
+        module.fail_json(
+            msg="Region not specified. Unable to determine region from configuration.")
 
     # connect to the rds endpoint
     conn = boto3_conn(module, 'client', 'rds', region, **aws_connect_params)
