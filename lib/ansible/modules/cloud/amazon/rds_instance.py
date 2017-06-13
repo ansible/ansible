@@ -568,8 +568,8 @@ def modify_db_instance(module, conn):
     before_instance = get_db_instance(conn, before_instance_name)
     for immutable_key in ['username', 'db_engine', 'db_name']:
         if immutable_key in module.params:
-            if (immutable_key in before_instance.data
-                    and module.params[immutable_key] != before_instance.data[immutable_key]):
+            if ((immutable_key in before_instance.data
+                 and module.params[immutable_key] != before_instance.data[immutable_key])):
                 module.fail_json(msg="Cannot modify parameter %s for instance %s" %
                                  (immutable_key, before_instance_name))
             del(module.params[immutable_key])
@@ -595,7 +595,8 @@ def modify_db_instance(module, conn):
         tags = {}
 
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
-    if before_instance.instance['DBSubnetGroup']['DBSubnetGroupName'] == params.get('DBSubnetGroupName'):
+    if before_instance.instance['DBSubnetGroup']['DBSubnetGroupName'] == params.get(
+            'DBSubnetGroupName'):
         del(params['DBSubnetGroupName'])
     if not force_password_update:
         try:
