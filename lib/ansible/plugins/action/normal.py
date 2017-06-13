@@ -46,7 +46,7 @@ class ActionModule(ActionBase):
 
             # hack to keep --verbose from showing all the setup module results
             # moved from setup module as now we filter out all _ansible_ from results
-            if self._task.action in ['setup','gather_facts']:
+            if self._task.action in ['setup', 'gather_facts']:
                 results['_ansible_verbose_override'] = True
 
         return results
