@@ -169,7 +169,7 @@ class Template(object):
                 {'output': 'extend',
                  'filter': {'host': template}})
             if len(template_list) < 1:
-                return None
+                continue
             else:
                 template_id = template_list[0]['templateid']
                 template_ids.append(template_id)
@@ -257,7 +257,7 @@ def main():
         # if template not found. no change, no fail
         if not template_ids:
             module.exit_json(changed=False,
-                             result="Template not found. " +
+                             msg="Template not found. " +
                                     "No changed: %s" % template_name)
         template.delete_template(template_ids)
         module.exit_json(changed=True,
