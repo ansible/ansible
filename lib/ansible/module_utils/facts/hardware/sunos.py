@@ -154,16 +154,14 @@ class SunOSHardware(Hardware):
         if fstab:
             for line in fstab.splitlines():
                 fields = line.split('\t')
-                size_total, size_available = get_mount_size(fields[1])
-                mount_facts['mounts'].append({
-                    'mount': fields[1],
-                    'device': fields[0],
-                    'fstype': fields[2],
-                    'options': fields[3],
-                    'time': fields[4],
-                    'size_total': size_total,
-                    'size_available': size_available
-                })
+                mount_statvfs_info = get_mount_size(fields[1])
+                mount_info = {'mount': fields[1],
+                              'device': fields[0],
+                              'fstype': fields[2],
+                              'options': fields[3],
+                              'time': fields[4]}
+                mount_info.update(mount_statvfs_info)
+                mount_facts['mounts'].append(mount_info)
 
         return mount_facts
 
