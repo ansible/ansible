@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from contextlib import contextmanager
+import collections
 
+from contextlib import contextmanager
 from xml.etree.ElementTree import Element, SubElement, fromstring
 
 from ansible.module_utils.basic import env_fallback, return_values
@@ -213,3 +214,44 @@ def load_config(module, candidate, warnings, action='merge', commit=False, forma
 
 def get_param(module, key):
     return module.params[key] or module.params['provider'].get(key)
+
+
+def map_params_to_obj(module, param_xpath_map):
+    obj = collections.OrderedDict()
+    for key, value in param_xpath_map.items():
+        if key in module.params:
+            obj.update({value: module.params[key]})
+    return [obj]
+
+
+def map_obj_to_ele(module, want, top):
+    top_ele = top.split('/')
+    root = Element(top_ele[0])
+    ele = root
+    if len(top_ele) > 1:
+        for item in top_ele[1:-1]:
+            ele = SubElement(ele, item)
+    container = ele
+    state = module.params.get('state')
+
+    for obj in want:
+        node = SubElement(container, top_ele[-1])
+        if state and state != 'present':
+            if state == 'absent':
+                node.set('operation', 'delete')
+            elif state == 'active':
+                node.set('active', 'active')
+            elif state == 'suspend':
+                node.set('inactive', 'inactive')
+
+        for key, value in obj.items():
+            ele = node
+            tags = key.split('/')
+            for item in tags:
+                ele = SubElement(ele, item)
+            if value:
+                ele.text = to_text(value, errors='surrogate_then_replace')
+            if state != 'present':
+                break
+
+    return root
