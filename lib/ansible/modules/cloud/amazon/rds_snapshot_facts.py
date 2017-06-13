@@ -1,40 +1,31 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2014-2017 Ansible Project
+# Copyright (c) 2017, 2018 Will Thames
+# Copyright (c) 2017, 2018 Michael De La Rue
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
 module: rds_snapshot_facts
-version_added: "2.4"
+version_added: "2.7"
 short_description: obtain facts about one or more RDS snapshots
 description:
-  - obtain facts about one or more RDS snapshots
+  - obtain facts about one or more RDS snapshots.  This does not currently include
+  - Aurora snapshots but may in future change to include them.
 options:
-  name:
+  db_snapshot_identifier:
     description:
-      - Name of an RDS snapshot. Mutually exclusive with I(instance_name)
+      - Name of an RDS snapshot. Mutually exclusive with I(db_instance_identifier)
     required: false
     aliases:
       - snapshot_name
-  instance_name:
+  db_instance_identifier:
     description:
-      - RDS instance name for which to find snapshots. Mutually exclusive with I(name)
+      - RDS instance name for which to find snapshots. Mutually exclusive with I(db_snapshot_identifier)
     required: false
   snapshot_type:
     description:
@@ -56,12 +47,12 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Get facts about an snapshot
 - rds_snapshot_facts:
-    name: snapshot_name
+    db_snapshot_identifier: snapshot_name
   register: new_database_facts
 
 # Get all RDS snapshots for an RDS instance
 - rds_snapshot_facts:
-    instance_name: helloworld-rds-master
+    db_instance_identifier: helloworld-rds-master
 '''
 
 RETURN = '''
@@ -83,23 +74,20 @@ snapshots:
        ]
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.rds import RDSSnapshot
-
-import traceback
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import AWSRetry, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.aws.rds import snapshot_to_facts
 
 try:
     import botocore
-except:
+except BaseException:
     pass  # caught by imported HAS_BOTO3
 
 
 def snapshot_facts(module, conn):
-    snapshot_name = module.params.get('name')
+    snapshot_name = module.params.get('db_snapshot_identifier')
     snapshot_type = module.params.get('snapshot_type')
-    instance_name = module.params.get('instance_name')
+    instance_name = module.params.get('db_instance_identifier')
 
     params = dict()
     if snapshot_name:
@@ -113,51 +101,43 @@ def snapshot_facts(module, conn):
         elif snapshot_type == 'shared':
             params['IsShared'] = True
 
-    marker = ''
-    results = list()
-    while True:
-        try:
-            response = conn.describe_db_snapshots(Marker=marker, **params)
-            results.extend(response['DBSnapshots'])
-            marker = response.get('Marker')
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == 'DBSnapshotNotFound':
-                break
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-        if not marker:
-            break
+    paginator = conn.get_paginator('describe_db_snapshots')
+    try:
+        results = paginator.paginate(**params).build_full_result()['DBSnapshots']
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'DBSnapshotNotFound':
+            results = []
+        else:
+            module.fail_json_aws(e, "trying to get snapshot information")
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, "trying to get snapshot information")
 
-    module.exit_json(changed=False, snapshots=[RDSSnapshot(snapshot).data for snapshot in results])
+    for instance in results:
+        try:
+            instance['Tags'] = boto3_tag_list_to_ansible_dict(conn.list_tags_for_resource(ResourceName=instance['DBSnapshotArn'],
+                                                                                          aws_retry=True)['TagList'])
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, "Couldn't get tags for snapshot %s" % instance['DBSnapshotIdentifier'])
+
+    return dict(changed=False, snapshots=[snapshot_to_facts(snapshot) for snapshot in results])
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(aliases=['snapshot_name']),
-            instance_name=dict(),
-            snapshot_type=dict(choices=['automated', 'manual', 'shared', 'public'])
-        )
+    argument_spec = dict(
+        db_snapshot_identifier=dict(aliases=['snapshot_name']),
+        db_instance_identifier=dict(),
+        snapshot_type=dict(choices=['automated', 'manual', 'shared', 'public'])
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        mutually_exclusive=[['name', 'instance_name']],
+        mutually_exclusive=[['db_snapshot_identifier', 'db_instance_identifier']],
     )
 
-    if not HAS_BOTO3:
-        module.fail_json(msg="botocore and boto3 are required for rds_facts module")
+    conn = module.client('rds', retry_decorator=AWSRetry.jittered_backoff(retries=10))
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg="Region not specified. Unable to determine region from configuration.")
-
-    # connect to the rds endpoint
-    conn = boto3_conn(module, 'client', 'rds', region, **aws_connect_params)
-
-    snapshot_facts(module, conn)
+    module.exit_json(**snapshot_facts(module, conn))
 
 
 if __name__ == '__main__':
