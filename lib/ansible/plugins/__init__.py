@@ -343,7 +343,6 @@ class PluginLoader:
 
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
-        log_only = kwargs.pop('log_only', False)
         if name in self.aliases:
             name = self.aliases[name]
         path = self.find_plugin(name)
@@ -368,7 +367,7 @@ class PluginLoader:
                 return None
 
         self._display_plugin_load(self.class_name, name, self._searched_paths, path,
-                                  found_in_cache=found_in_cache, class_only=class_only, log_only=log_only)
+                                  found_in_cache=found_in_cache, class_only=class_only)
         if not class_only:
             try:
                 obj = obj(*args, **kwargs)
@@ -384,7 +383,7 @@ class PluginLoader:
         setattr(obj, '_load_name', name)
         return obj
 
-    def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None, log_only=False):
+    def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
         msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
 
         if len(searched_paths) > 1:
@@ -393,7 +392,7 @@ class PluginLoader:
         if found_in_cache or class_only:
             msg = '%s (found_in_cache=%s, class_only=%s)' % (msg, found_in_cache, class_only)
 
-        display.debug(msg, log_only)
+        display.debug(msg)
 
     def all(self, *args, **kwargs):
         ''' instantiates all plugins with the same arguments '''

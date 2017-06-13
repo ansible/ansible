@@ -174,9 +174,9 @@ class Display:
     def vvvvvv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=5)
 
-    def debug(self, msg, log_only=False):
+    def debug(self, msg):
         if C.DEFAULT_DEBUG:
-            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG, log_only=log_only)
+            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
         if self.verbosity > caplevel:
