@@ -24,6 +24,7 @@ DOCUMENTATION = '''
 module: ec2_group
 author: "Andrew de Quincey (@adq)"
 version_added: "1.3"
+requirements: [ boto3 ]
 short_description: maintain an ec2 VPC security group.
 description:
     - maintains ec2 security groups. This module has a dependency on python-boto >= 2.5
@@ -142,6 +143,7 @@ EXAMPLES = '''
         from_port: 80
         to_port: 80
         cidr_ip: 0.0.0.0/0
+        cidr_ipv6: 64:ff9b::/96
         group_name: example-other
         # description to use if example-other needs to be created
         group_desc: other example EC2 group
@@ -177,6 +179,9 @@ EXAMPLES = '''
         cidr_ip:
           - 172.16.1.0/24
           - 172.16.17.0/24
+        cidr_ipv6:
+          - 2607:F8B0::/32
+          - 64:ff9b::/96
         group_id:
           - sg-edcd9784
 
@@ -190,19 +195,13 @@ import json
 import re
 import time
 from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.ec2 as ec2_utils
+from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-
-try:
-    import boto3
-    import botocore
-
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
+from ansible.module_utils.ec2 import HAS_BOTO3
+from botocore.exceptions import ClientError
+from botocore.exceptions import NoCredentialsError
 import traceback
 
 
@@ -419,7 +418,7 @@ def authorize_ip(type, changed, client, group, groupRules,
                         elif type == "out":
                             client.authorize_security_group_egress(GroupId=group.group_id,
                                                                    IpPermissions=[ip_permission])
-                    except botocore.exceptions.ClientError as e:
+                    except ClientError as e:
                         module.fail_json(msg="Unable to authorize %s for ip %s security group '%s' - %s" %
                                              (type, thisip, group.group_name, e.message),
                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -517,8 +516,7 @@ def main():
         module.fail_json(msg="The AWS region must be specified as an "
                              "environment variable or in the AWS credentials "
                              "profile.")
-    client, ec2 = ec2_utils.boto3_conn(module, conn_type='both', resource='ec2', endpoint=ec2_url, region=region,
-                                       **aws_connect_params)
+    client, ec2 = boto3_conn(module, conn_type='both', resource='ec2', endpoint=ec2_url, region=region, **aws_connect_params)
     group = None
     groups = dict()
     security_groups = []
@@ -528,10 +526,10 @@ def main():
         response = client.describe_security_groups()
         if 'SecurityGroups' in response:
             security_groups = response.get('SecurityGroups')
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc())
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc(),
+    except NoCredentialsError as e:
+        module.fail_json(msg="Error in describe_security_groups: %s" % "Unable to locate credentials", exception=traceback.format_exc())
+    except ClientError as e:
+        module.fail_json(msg="Error in describe_security_groups: %s" % e.message, exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
 
     for sg in security_groups:
@@ -559,7 +557,7 @@ def main():
             try:
                 if not module.check_mode:
                     group.delete()
-            except botocore.exceptions.ClientError as e:
+            except ClientError as e:
                 module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message),
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             else:
@@ -631,7 +629,7 @@ def main():
                                      ip_permission.get('UserIdGroupPairs')]
                                 try:
                                     client.authorize_security_group_ingress(GroupId=group.group_id, IpPermissions=[ips])
-                                except botocore.exceptions.ClientError as e:
+                                except ClientError as e:
                                     module.fail_json(
                                         msg="Unable to authorize ingress for group %s security group '%s' - %s" %
                                             (group_id, group.group_name, e.message),
@@ -658,7 +656,7 @@ def main():
                 if not module.check_mode:
                     try:
                         client.revoke_security_group_ingress(GroupId=group.group_id, IpPermissions=[ip_permission])
-                    except botocore.exceptions.ClientError as e:
+                    except ClientError as e:
                         module.fail_json(
                             msg="Unable to revoke ingress for security group '%s' - %s" %
                                 (group.group_name, e.message),
@@ -696,7 +694,7 @@ def main():
                                      ip_permission.get('UserIdGroupPairs')]
                                 try:
                                     client.authorize_security_group_egress(GroupId=group.group_id, IpPermissions=[ips])
-                                except botocore.exceptions.ClientError as e:
+                                except ClientError as e:
                                     module.fail_json(
                                         msg="Unable to authorize egress for group %s security group '%s' - %s" %
                                             (group_id, group.group_name, e.message),
@@ -728,7 +726,7 @@ def main():
                                      ]
                     try:
                         client.authorize_security_group_egress(GroupId=group.group_id, IpPermissions=ip_permission)
-                    except botocore.exceptions.ClientError as e:
+                    except ClientError as e:
                         module.fail_json(msg="Unable to authorize egress for ip %s security group '%s' - %s" %
                                              ('0.0.0.0/0',
                                               group.group_name,
@@ -748,7 +746,7 @@ def main():
                     if not module.check_mode:
                         try:
                             client.revoke_security_group_egress(GroupId=group.group_id, IpPermissions=[ip_permission])
-                        except botocore.exceptions.ClientError as e:
+                        except ClientError as e:
                             module.fail_json(msg="Unable to revoke egress for ip %s security group '%s' - %s" %
                                                  (grant,
                                                   group.group_name,
