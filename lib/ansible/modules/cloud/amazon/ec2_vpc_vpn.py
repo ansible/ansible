@@ -174,35 +174,40 @@ EXAMPLES = """
 
 RETURN = """
 changed:
-  description: if the connection has changed
+  description: If the VPN connection has changed.
   type: bool
   returned: always
   sample:
     changed: true
 customer_gateway_configuration:
-  description: the configuration of the connection
+  description: The configuration of the VPN connection.
   returned: I(state=present)
   type: str
 customer_gateway_id:
-  description: the customer gateway connected via the connection
+  description: The customer gateway connected via the connection.
   type: str
   returned: I(state=present)
   sample:
     customer_gateway_id: cgw-1220c87b
 vpn_gateway_id:
-  description: the virtual private gateway connected via the connection
+  description: The virtual private gateway connected via the connection.
   type: str
   returned: I(state=present)
   sample:
     vpn_gateway_id: vgw-cb0ae2a2
 options:
+  description: The VPN connection options (currently only containing static_routes_only).
   type: complex
   returned: I(state=present)
-  sample:
-    options:
-      static_routes_only: true
+  contains:
+    static_routes_only:
+      description: If the VPN connection only allows static routes.
+      returned: I(state=present)
+      type: str
+      sample:
+        static_routes_only: true
 routes:
-  description: the connection routes
+  description: The routes of the VPN connection.
   type: list
   returned: I(state=present)
   sample:
@@ -211,13 +216,13 @@ routes:
               'state': 'available'
             }]
 state:
-  description: the status of the connection
+  description: The status of the VPN connection.
   type: string
   returned: I(state=present)
   sample:
     state: available
 tags:
-  description: the tags associated with the connection
+  description: The tags associated with the connection.
   type: dict
   returned: I(state=present)
   sample:
@@ -225,7 +230,7 @@ tags:
       name: ansible-test
       other: tag
 type:
-  description: the type of connection
+  description: The type of VPN connection (currently only ipsec.1 is available).
   type: str
   returned: I(state=present)
   sample:
@@ -233,7 +238,7 @@ type:
 vgw_telemetry:
   type: list
   returned: I(state=present)
-  description: the telemetry for the VPN tunnel
+  description: The telemetry for the VPN tunnel.
   sample:
     vgw_telemetry: [{
                      'outside_ip_address': 'string',
@@ -243,7 +248,7 @@ vgw_telemetry:
                      'accepted_route_count': 123
                     }]
 vpn_connection_id:
-  description: the identifier for the VPN connection
+  description: The identifier for the VPN connection.
   type: str
   returned: I(state=present)
   sample:
