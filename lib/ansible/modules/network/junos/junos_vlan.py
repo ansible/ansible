@@ -67,12 +67,10 @@ EXAMPLES = """
 
 RETURN = """
 rpc:
-  description: The list of load-configuration RPC send to the device
-  returned: always
-  type: list
-  sample:
-    - vlan 20
-    - name test-vlan
+  description: load-configuration RPC send to the device
+  returned: when configuration is changed on device
+  type: string
+  sample: "<vlans><vlan><name>test-vlan-4</name></vlan></vlans>"
 """
 import collections
 
@@ -81,6 +79,19 @@ from xml.etree.ElementTree import tostring
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+
+
+def validate_vlan_id(value, module):
+    if not 1 <= value <= 4094:
+        module.fail_json(msg='vlan_id must be between 1 and 4094')
+
+
+def validate_param_values(module, obj):
+    for key in obj:
+        # validate the param value (if validator func exists)
+        validator = globals().get('validate_%s' % key)
+        if callable(validator):
+            validator(module.params.get(key), module)
 
 
 def main():
@@ -119,12 +130,13 @@ def main():
         'description': 'description'
     })
 
+    validate_param_values(module, param_xpath_map)
+
     want = map_params_to_obj(module, param_xpath_map)
     ele = map_obj_to_ele(module, want, top)
 
     kwargs = {'commit': not module.check_mode}
-    if module.params['purge']:
-        kwargs['action'] = 'replace'
+    kwargs['action'] = 'replace'
 
     diff = load_config(module, tostring(ele), warnings, **kwargs)
 
