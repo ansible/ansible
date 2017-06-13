@@ -72,11 +72,17 @@ options:
 author: "Jon Hawkesworth (@jhawkesworth)"
 notes:
    - Needs speakers or headphones to do anything useful.
-   - To find which voices are installed, run the following powershell
-     Add-Type -AssemblyName System.Speech
-     $speech = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
-     $speech.GetInstalledVoices() | ForEach-Object { $_.VoiceInfo }
-     $speech.Dispose()
+   - |
+     To find which voices are installed, run the following powershell commands.
+
+                 Add-Type -AssemblyName System.Speech
+
+                 $speech = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+
+                 $speech.GetInstalledVoices() | ForEach-Object { $_.VoiceInfo }
+
+                 $speech.Dispose()
+
    - Speech can be surprisingly slow, so its best to keep message text short.
 '''
 
