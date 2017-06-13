@@ -233,14 +233,26 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.options.become_ask_pass = self.options.become_ask_pass or self.options.ask_sudo_pass or self.options.ask_su_pass or C.DEFAULT_BECOME_ASK_PASS
         self.options.become_user = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
 
+        def _dep(which):
+            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.6')
+
         if self.options.become:
             pass
         elif self.options.sudo:
             self.options.become = True
             self.options.become_method = 'sudo'
+            _dep('sudo')
         elif self.options.su:
             self.options.become = True
             self.options.become_method = 'su'
+            _dep('su')
+
+        # other deprecations:
+        if self.options.ask_sudo_pass or self.options.sudo_user:
+            _dep('sudo')
+        if self.options.ask_su_pass or self.options.su_user:
+            _dep('su')
+
 
     def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False):
         ''' check for conflicting options '''
