@@ -1,4 +1,5 @@
 
+#!/usr/bin/env python
 # (c) 2015, Ensighten <infra@ensighten.com>
 #
 # This file is part of Ansible
@@ -42,29 +43,23 @@ class LookupModule(LookupBase):
                 version = kwargs.pop('version', '')
                 region = kwargs.pop('region', None)
                 table = kwargs.pop('table', 'credential-store')
-                if 'profile' not in kwargs:
-                    profile_was_set = True
-                else:
-                    profile_was_set = False
-                profile = kwargs.pop('profile', 'default')
+
+                profile = kwargs.pop('profile', None)
                 iam_arn_assume_role = kwargs.pop('iam_arn_assume_role', None)
-                # As per docs, if profile is set we ignore arn.  Should probably log this.
-                # AWS_PROFILE set in environment WILL be respected.
-                if iam_arn_assume_role and not profile_was_set:
-                    try:
-                        # creds = botocore.session.Session().get_credentials()
-                        session_params = credstash.get_session_params(None, iam_arn_assume_role)
-                    except Exception as e:
-                        raise AnsibleError('error assuming role {0} in profile {1}: {2}'.format(iam_arn_assume_role, profile, e))
+
+                # If the profile is none, it will use arn, otherwise
+                # it will always use the profile to build the session
+                session_params = credstash.get_session_params(profile, iam_arn_assume_role)
+                kwargs.update(session_params)
+
                 try:
-                    val = credstash.getSecret(term, version, region, table, profile_name=profile,
-                                              context=kwargs)
+                    val = credstash.getSecret(term, version, region, table, **kwargs)
                 except Exception as e:
-                    raise AnsibleError('credstash.getSecret failed with context {}'.format(kwargs))
+                    raise AnsibleError('credstash.getSecret failed with context {}: {}'.format(kwargs, e))
             except credstash.ItemNotFound:
                 raise AnsibleError('Key {0} not found'.format(term))
             except Exception as e:
-                raise AnsibleError('Encountered exception while fetching {0}: {1}'.format(term, e.message))
+                raise AnsibleError('Encountered exception while fetching {}: {}'.format(term, e))
             ret.append(val)
 
         return ret
