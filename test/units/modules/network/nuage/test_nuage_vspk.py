@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import __builtin__
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nuage import nuage_vspk
 from vspk import v5_0 as vsdk
