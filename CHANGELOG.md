@@ -19,6 +19,7 @@ Ansible Changes By Release
 * Fix for Foreman organization creation
 * fixed incorrect fail_json ref in rpm_key
 * Corrected requried on hash_name for dynamodb_table
+* Fix for fetch action plugin not validating correctly
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
