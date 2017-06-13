@@ -27,6 +27,7 @@ description:
   - This module creates, modifies, and deletes VPN connections. Idempotence is achieved by using the filters
     options or specifying the VPN connection identifier.
 version_added: "2.4"
+requirements: ['boto3', 'botocore']
 author: "Sloane Hertel (@s-hertel)"
 options:
   state:
@@ -260,15 +261,15 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec,
                                       snake_dict_to_camel_dict, camel_dict_to_snake_dict,
                                       boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list,
-                                      compare_aws_tags)
+                                      compare_aws_tags, HAS_BOTO3)
 import traceback
 
 try:
     import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    # will be caught in main
+    pass
 
 
 class VPNConnectionException(Exception):
@@ -588,46 +589,37 @@ def get_check_mode_results(connection, module_params, vpn_connection_id=None, cu
                'routes': [module_params.get('routes')]}
 
     # get combined current tags and tags to set
-    present_tags = []
+    present_tags = module_params.get('tags')
     if current_state and 'Tags' in current_state:
-        new_tags = module_params.get('tags')
         current_tags = boto3_tag_list_to_ansible_dict(current_state['Tags'])
         if module_params.get('purge_tags'):
-            if current_tags != new_tags:
+            if current_tags != present_tags:
                 changed = True
-            present_tags = new_tags
-        elif current_tags != new_tags:
-            present_tags = {tag: new_tags[tag] for tag in new_tags if (tag not in current_tags or new_tags[tag] != current_tags[tag])}
-            present_tags = present_tags.update({tag: new_tags[tag] for tag in current_tags if tag not in present_tags})
-        else:
-            present_tags = current_tags
-        if current_tags != present_tags:
+        elif current_tags != present_tags:
+            if not set(present_tags.keys()) < set(current_tags.keys()):
+                changed = True
+            # add preexisting tags that new tags didn't overwrite
+            present_tags.update((tag, current_tags[tag]) for tag in current_tags if tag not in present_tags)
+        elif current_tags.keys() == present_tags.keys() and set(present_tags.values()) != set(current_tags.values()):
             changed = True
     elif module_params.get('tags'):
         changed = True
-        present_tags = module_params.get('tags')
     if present_tags:
         results['tags'] = present_tags
 
     # get combined current routes and routes to add
-    present_routes = []
+    present_routes = module_params.get('routes')
     if current_state and 'Routes' in current_state:
-        new_routes = module_params.get('routes')
         current_routes = [route['DestinationCidrBlock'] for route in current_state['Routes']]
         if module_params.get('purge_routes'):
-            if set(current_routes) != set(new_routes):
+            if set(current_routes) != set(present_routes):
                 changed = True
-            present_routes = new_routes
-        elif set(new_routes) != set(current_routes):
-            present_routes = current_routes
-            present_routes.extend([route for route in new_routes if route not in present_routes])
-        else:
-            present_routes = current_routes
-        if set(current_routes) != set(present_routes):
-            changed = True
+        elif set(present_routes) != set(current_routes):
+            if not set(present_routes) < set(current_routes):
+                changed = True
+            present_routes.extend([route for route in current_routes if route not in present_routes])
     elif module_params.get('routes'):
         changed = True
-        present_routes = module_params.get('routes')
     results['routes'] = [{"destination_cidr_block": cidr, "state": "available"} for cidr in present_routes]
 
     # return the vpn_connection_id if it's known
