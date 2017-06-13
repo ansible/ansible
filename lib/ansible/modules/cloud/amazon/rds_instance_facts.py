@@ -92,7 +92,7 @@ import traceback
 
 try:
     import botocore
-except:
+except BaseException:
     pass  # caught by imported HAS_BOTO3
 
 
@@ -123,9 +123,13 @@ def instance_facts(module, conn):
 
     # Get tags for each response
     for instance in results:
-        instance['tags'] = boto3_tag_list_to_ansible_dict(conn.list_tags_for_resource(ResourceName=instance['DBInstanceArn'])['TagList'])
+        instance['tags'] = boto3_tag_list_to_ansible_dict(
+            conn.list_tags_for_resource(
+                ResourceName=instance['DBInstanceArn'])['TagList'])
 
-    module.exit_json(changed=False, db_instances=[RDSDBInstance(instance).data for instance in results])
+    module.exit_json(
+        changed=False, db_instances=[
+            RDSDBInstance(instance).data for instance in results])
 
 
 def main():
@@ -147,12 +151,14 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     if not region:
-        module.fail_json(msg="Region not specified. Unable to determine region from configuration.")
+        module.fail_json(
+            msg="Region not specified. Unable to determine region from configuration.")
 
     # connect to the rds endpoint
     conn = boto3_conn(module, 'client', 'rds', region, **aws_connect_params)
 
     instance_facts(module, conn)
+
 
 if __name__ == '__main__':
     main()
