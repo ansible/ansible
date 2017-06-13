@@ -20,7 +20,7 @@ import os
 from . placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import ec2_vpc_vpn
 from ansible.module_utils._text import to_text
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, boto3_tag_list_to_ansible_dict
 
 
 class FakeModule(object):
@@ -266,7 +266,9 @@ def test_check_for_update_tags(placeboify, maybe_sleep):
     m.params['tags'] = {'Two': 'two', 'Three': 'three', 'Four': 'four'}
     changes = ec2_vpc_vpn.check_for_update(conn, m.params, vpn['VpnConnectionId'])
 
-    assert changes['tags_to_add'].sort() == [{'Key': 'Three', 'Value': 'three'}, {'Key': 'Four', 'Value': 'four'}].sort()
+    flat_dict_changes = boto3_tag_list_to_ansible_dict(changes['tags_to_add'])
+    correct_changes = boto3_tag_list_to_ansible_dict([{'Key': 'Three', 'Value': 'three'}, {'Key': 'Four', 'Value': 'four'}])
+    assert flat_dict_changes == correct_changes
     assert changes['tags_to_remove'] == ['One']
 
     # delete connection
