@@ -68,6 +68,11 @@ extends_documentation_fragment:
     - ec2
 '''
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.rds import RDSSnapshot, get_db_snapshot
+
 # FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
 
 EXAMPLES = '''
@@ -94,7 +99,9 @@ def await_resource(conn, resource, status, module):
             module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
         # Temporary until all the rds2 commands have their responses parsed
         if resource.name is None:
-            module.fail_json(msg="There was a problem waiting for RDS snapshot %s" % resource.snapshot)
+            module.fail_json(
+                msg="There was a problem waiting for RDS snapshot %s" %
+                resource.snapshot)
         resource = get_db_snapshot(conn, resource.name)
     return resource
 
@@ -154,12 +161,12 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            state = dict(choices=['present', 'absent'], default='present'),
-            snapshot = dict(required=True),
-            instance_name = dict(),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(type='int', default=300),
-            tags = dict(type='dict', required=False),
+            state=dict(choices=['present', 'absent'], default='present'),
+            snapshot=dict(required=True),
+            instance_name=dict(),
+            wait=dict(type='bool', default=False),
+            wait_timeout=dict(type='int', default=300),
+            tags=dict(type='dict', required=False),
         )
     )
 
@@ -179,9 +186,5 @@ def main():
     else:
         create_snapshot(module, conn)
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
-from ansible.module_utils.rds import RDSSnapshot, get_db_snapshot
 
 main()
