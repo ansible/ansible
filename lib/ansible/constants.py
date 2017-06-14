@@ -39,6 +39,26 @@ def mk_boolean(value):
 
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun']
+BECOME_ERROR_STRINGS = {
+    'sudo': 'Sorry, try again.',
+    'su': 'Authentication failure',
+    'pbrun': '',
+    'pfexec': '',
+    'doas': 'Permission denied',
+    'dzdo': '',
+    'ksu': 'Password incorrect',
+    'pmrun': 'You are not permitted to run this command'
+}  # FIXME: deal with i18n
+BECOME_MISSING_STRINGS = {
+    'sudo': 'sorry, a password is required to run sudo',
+    'su': '',
+    'pbrun': '',
+    'pfexec': '',
+    'doas': 'Authorization required',
+    'dzdo': '',
+    'ksu': 'No password given',
+    'pmrun': ''
+}  # FIXME: deal with i18n
 BOOL_TRUE = config.data.BOOL_TRUE
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
