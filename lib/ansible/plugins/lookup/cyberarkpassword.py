@@ -72,7 +72,7 @@ class CyberarkPassword:
 
             credential = subprocess.check_output(allParms)
 
-            if credential and credential.endswith("\n"):
+            if credential and credential.endswith(b'\n'):
                 credential = credential[:-1]
 
             output_names = self.output.split(",")
