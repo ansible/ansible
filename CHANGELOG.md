@@ -27,6 +27,9 @@ Ansible Changes By Release
 	- Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
 	- Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
 	- Improved warnings and error messages across the board
+* Configuration has been changed from a hardcoded into the constants module to dynamically loaded from yaml definitions
+	- Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
+	- TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 
 ### Deprecations
 * The behaviour when specifying --tags (or --skip-tags) multiple times on the command line
