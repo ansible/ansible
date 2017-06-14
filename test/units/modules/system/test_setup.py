@@ -198,6 +198,7 @@ class TestCollectedFacts(unittest.TestCase):
                       'gather_subset', 'module_setup',
                       'env']
     not_expected_facts = ['facter', 'ohai']
+    expected_facts_exceptions = []
 
     def _mock_module(self, gather_subset=None):
         return mock_module(gather_subset=self.gather_subset)
@@ -226,6 +227,14 @@ class TestCollectedFacts(unittest.TestCase):
     def test_not_expected_facts(self):
         self._assert_not_expected_facts(self.facts)
 
+    def test_facts_exceptions_exists(self):
+        self._assert_basics(self.facts)
+        self.assertIn('ansible_facts_exceptions', self.facts)
+
+    def test_facts_exceptions_expected(self):
+        self._assert_basics(self.facts)
+        self.assertEqual(self.facts['ansible_facts_exceptions'], [])
+
     def _assert_basics(self, facts):
         self.assertIsInstance(facts, dict)
         self.assertIn('ansible_facts', facts)
@@ -249,8 +258,6 @@ class TestCollectedFacts(unittest.TestCase):
     def _assert_expected_facts(self, facts):
         subfacts = facts['ansible_facts']
 
-        import pprint
-        pprint.pprint(subfacts)
         subfacts_keys = sorted(subfacts.keys())
         for expected_fact in self.expected_facts:
             self.assertIn(expected_fact, subfacts_keys)
@@ -272,12 +279,17 @@ class TestCollectedFacts(unittest.TestCase):
 
 
 class ExceptionThrowingCollector(collector.BaseFactCollector):
+    name = 'exception_thrower'
+
     def collect(self, module=None, collected_facts=None):
         raise Exception('A collector failed')
 
 
-class TestExceptionCollectedFacts(TestCollectedFacts):
+class AnotherExceptionThrowingCollector(ExceptionThrowingCollector):
+    name = 'another_exception_thrower'
 
+
+class TestExceptionCollectedFacts(TestCollectedFacts):
     def _collectors(self, module,
                     all_collector_classes=None,
                     minimal_gather_subset=None):
@@ -288,8 +300,19 @@ class TestExceptionCollectedFacts(TestCollectedFacts):
         c = [ExceptionThrowingCollector()] + collectors
         return c
 
+    def test_facts_exceptions_expected(self):
+        self._assert_basics(self.facts)
+        facts_exceptions = self.facts['ansible_facts_exceptions']
+        self.assertIsInstance(facts_exceptions, list)
+        self.assertIsInstance(facts_exceptions[0], dict)
 
-class TestOnlyExceptionCollector(TestCollectedFacts):
+        self.assertEqual(facts_exceptions[0]['collector_name'], 'exception_thrower')
+        self.assertEqual(facts_exceptions[0]['error_message'], 'A collector failed')
+        self.assertTrue(facts_exceptions[0]['traceback'].startswith('Traceback'))
+        self.assertTrue(facts_exceptions[0]['traceback'].endswith('A collector failed\n'))
+
+
+class TestOnlyExceptionCollector(TestExceptionCollectedFacts):
     expected_facts = []
     min_fact_count = 0
 
@@ -297,6 +320,33 @@ class TestOnlyExceptionCollector(TestCollectedFacts):
                     all_collector_classes=None,
                     minimal_gather_subset=None):
         return [ExceptionThrowingCollector()]
+
+
+class TestMultipleExceptionsCollector(TestCollectedFacts):
+    maxDiff = None
+
+    def _collectors(self, module,
+                    all_collector_classes=None,
+                    minimal_gather_subset=None):
+        collectors = _collectors(module=module,
+                                 all_collector_classes=all_collector_classes,
+                                 minimal_gather_subset=minimal_gather_subset)
+
+        c = [ExceptionThrowingCollector()] + collectors + [AnotherExceptionThrowingCollector()]
+        return c
+
+    def test_facts_exceptions_expected(self):
+        self._assert_basics(self.facts)
+        facts_exceptions = self.facts['ansible_facts_exceptions']
+        self.assertIsInstance(facts_exceptions, list)
+
+        for facts_exception in facts_exceptions:
+            self.assertIsInstance(facts_exception, dict)
+
+            self.assertIn(facts_exception['collector_name'], ['exception_thrower', 'another_exception_thrower'])
+            self.assertEqual(facts_exception['error_message'], 'A collector failed')
+            self.assertTrue(facts_exception['traceback'].startswith('Traceback'))
+            self.assertTrue(facts_exception['traceback'].endswith('A collector failed\n'))
 
 
 class TestMinimalCollectedFacts(TestCollectedFacts):
