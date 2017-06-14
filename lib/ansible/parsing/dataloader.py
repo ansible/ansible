@@ -80,6 +80,17 @@ class DataLoader:
         a JSON or YAML string.
         '''
         new_data = None
+
+        # YAML parser will take JSON as it is a subset.
+        if isinstance(data, AnsibleUnicode):
+            # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
+            # they are unable to cope with our subclass.
+            # Unwrap and re-wrap the unicode so we can keep track of line
+            # numbers
+            in_data = text_type(data)
+        else:
+            in_data = data
+
         try:
             # we first try to load this data as JSON
             new_data = json.loads(data)
