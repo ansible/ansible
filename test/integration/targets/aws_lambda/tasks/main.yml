@@ -112,7 +112,7 @@
         zip_file="{{zip_res.dest}}"
       register: result
 
-    - name: assert lambda manages to respond as expected
+    - name: assert lambda upload succeeded
       assert:
         that:
            - 'not result|failed'
@@ -134,6 +134,7 @@
            - 'not result|failed'
            - 'result.result.output.message == "hello Mr Ansible Tests"'
 
+    # ============================================================
     - name: test state=present with all nullable variables explicitly set to null
       lambda:
         name: "{{lambda_function_name}}"
@@ -160,6 +161,27 @@
       assert:
         that:
            - 'not result|failed'
+           - 'result.changed == False'
+
+    # ============================================================
+    - name: test state=present triggering a network exception due to bad url
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        role: "ansible_lambda_role"
+        ec2_url: https://noexist.example.com
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: 'iamnotreallyanaccesskey'
+        ec2_secret_key: 'thisisabadsecretkey'
+        security_token: 'andthisisabadsecuritytoken'
+        zip_file: "{{zip_res.dest}}"
+      register: result
+      ignore_errors: true
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - 'result|failed'
            - 'result.changed == False'
 
     # ============================================================
