@@ -1,0 +1,43 @@
+---
+- name: Create user
+  vyos_user:
+    name: netend
+    password: test
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set system login user netend authentication plaintext-password" in result.commands'
+
+- name: Collection of users
+  vyos_user:
+    users:
+      - name: test1
+      - name: test2
+    level: operator
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["set system login user test1 level operator", "set system login user test2 level operator"]'
+
+- name: tearDown
+  vyos_user:
+    users:
+      - name: netend
+      - name: test1
+      - name: test2
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["delete system login user netend", "delete system login user test1", "delete system login user test2"]'

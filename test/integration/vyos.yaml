@@ -10,3 +10,4 @@
   roles:
     - { role: vyos_command, when: "limit_to in ['*', 'vyos_command']" }
     - { role: vyos_config, when: "limit_to in ['*', 'vyos_config']" }
+    - { role: vyos_user, when: "limit_to in ['*', vyos_user']" }
