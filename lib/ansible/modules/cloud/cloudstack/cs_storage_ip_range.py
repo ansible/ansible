@@ -115,21 +115,6 @@ ipv4_netmask:
   returned: success
   type: string
   sample: 255.255.255.0
-networkid:
-  description: The network UUID for the range.
-  returned: success
-  type: string
-  sample: a3fca65a-7db1-4891-b97c-48806a978a96
-podid:
-  description: The Pod UUID for the range.
-  returned: success
-  type: string
-  sample: a3fca65a-7db1-4891-b97c-48806a978a96
-zoneid:
-  description: The Zone UUID for the range.
-  returned: success
-  type: string
-  sample: a3fca65a-7db1-4891-b97c-48806a978a96
 vlan:
   description: The VLAN id for the range.
   returned: success
@@ -146,10 +131,10 @@ from ansible.module_utils.cloudstack import (
 )
 
 
-class AnsibleCloudStackCluster(AnsibleCloudStack):
+class AnsibleCloudStackStorageIpRange(AnsibleCloudStack):
 
     def __init__(self, module):
-        super(AnsibleCloudStackCluster, self).__init__(module)
+        super(AnsibleCloudStackStorageIpRange, self).__init__(module)
         self.returns = {
             'startip': 'ipv4_start',
             'endip': 'ipv4_end',
@@ -254,23 +239,21 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 
     def get_pod(self, key=None):
         pod = self.module.params.get('pod')
-        if not pod:
-            return None
         args = {
-            'name': self.module.params.get('pod'),
+            'name': pod,
             'zoneid': self.get_zone(key='id'),
         }
         pods = self.cs.listPods(**args)
         if pods:
             return self._get_by_key(key, pods['pod'][0])
-        self.module.fail_json(msg="Pod %s not found in zone %s." % (self.module.params.get('pod'), self.get_zone(key='name')))
+        self.module.fail_json(msg="Pod %s not found in zone %s." % (pod, self.get_zone(key='name')))
 
 
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        pod=dict(default=None),
-        vlan=dict(default=None),
+        pod=dict(required=True),
+        vlan=dict(type='int', default=None),
         ipv4_start=dict(default=None),
         ipv4_end=dict(default=None),
         ipv4_gateway=dict(default=None),
@@ -286,7 +269,7 @@ def main():
     )
 
     try:
-        acs_storage_ip_range = AnsibleCloudStackCluster(module)
+        acs_storage_ip_range = AnsibleCloudStackStorageIpRange(module)
 
         state = module.params.get('state')
         if state in ['absent']:
