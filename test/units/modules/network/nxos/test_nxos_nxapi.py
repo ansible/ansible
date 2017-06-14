@@ -50,10 +50,7 @@ class TestNxosNxapiModule(TestNxosModule):
             output = list()
             for command in commands:
                 filename = str(command).split(' | ')[0].replace(' ', '_')
-                filepath = os.path.join(module_name, device, filename)
-                if not os.path.exists(filepath):
-                    filepath = os.path.join(module_name, filename)
-                output.append(load_fixture(filename))
+                output.append(load_fixture(module_name, device, filename))
             return output
 
         self.run_commands.side_effect = load_from_file

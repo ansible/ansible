@@ -36,8 +36,10 @@ fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
 
-def load_fixture(name):
-    path = os.path.join(fixture_path, name)
+def load_fixture(module_name, device, name):
+    path = os.path.join(fixture_path, module_name, device, name)
+    if not os.path.exists(path):
+        path = os.path.join(fixture_path, module_name, name)
 
     if path in fixture_data:
         return fixture_data[path]
@@ -84,10 +86,7 @@ class TestNxosModule(unittest.TestCase):
 
     def execute_module(self, failed=False, changed=False, commands=None, sort=True, device=''):
 
-        try:
-            self.load_fixtures(commands, device=device)
-        except TypeError:
-            self.load_fixtures(commands)
+        self.load_fixtures(commands, device=device)
 
         if failed:
             result = self.failed()
