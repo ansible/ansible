@@ -104,8 +104,6 @@ class LookupModule(LookupBase):
     It Requires CyberArk AIM Installed, and /opt/CARKaim/sdk/clipasswordsdk in place or set environment variable AIM_CLIPASSWORDSDK_CMD to the AIM
     CLI Password SDK executable.
 
-     Parameter names appid, query, output are case sensitive.
-
      Args:
          appid (str): Defines the unique ID of the application that is issuing the password request.
          query (str): Describes the filter criteria for the password retrieval.
