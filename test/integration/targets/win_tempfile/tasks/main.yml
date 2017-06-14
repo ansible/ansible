@@ -170,4 +170,4 @@
 - name: delete temp file folder
   win_file:
     path: "{{test_tempfile_path}}"
-    state: absent'
+    state: absent
