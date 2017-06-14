@@ -245,7 +245,7 @@ def fail_json_aws(module, exception, msg=None):
         except_msg = str(exception)
 
     if msg is not None:
-        message = '{}: {}'.format(msg, except_msg)
+        message = '{0}: {1}'.format(msg, except_msg)
     else:
         message = except_msg
 
@@ -255,9 +255,9 @@ def fail_json_aws(module, exception, msg=None):
         response = None
 
     if response is None:
-        module.fail_json(msg=message, traceback=last_traceback)
+        module.fail_json(msg=message, exception=last_traceback)
     else:
-        module.fail_json(msg=message, traceback=last_traceback,
+        module.fail_json(msg=message, exception=last_traceback,
                          **camel_dict_to_snake_dict(response))
 
 
