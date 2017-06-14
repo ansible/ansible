@@ -57,9 +57,8 @@ options:
   list:
     description:
       - Specify whether to allow or deny file listing, in case user got no permission on share
-    choices:
-      - yes
-      - no
+    type: bool
+    default: 'no'
   read:
     description:
       - Specify user list that should get read access on share, separated by comma.
@@ -84,6 +83,11 @@ options:
       - Unknown
     default: "Manual"
     version_added: "2.3"
+  encrypt:
+    description: Sets whether to encrypt the traffic to the share or not.
+    type: bool
+    default: 'no'
+    version_added: "2.4"
 author: Hans-Joachim Kliemeck (@h0nIg), David Baumann (@daBONDi)
 '''
 
@@ -96,7 +100,7 @@ EXAMPLES = r'''
     name: internal
     description: top secret share
     path: C:\shares\internal
-    list: 'no'
+    list: no
     full: Administrators,CEO
     read: HR-Global
     deny: HR-External
@@ -106,16 +110,20 @@ EXAMPLES = r'''
     name: company
     description: top secret share
     path: C:\shares\company
-    list: 'yes'
+    list: yes
     full: Administrators,CEO
     read: Global
 
-# Remove previously added share
+- name: Remove previously added share
   win_share:
     name: internal
     state: absent
 '''
 
 RETURN = r'''
-
+actions:
+    description: A list of action cmdlets that were run by the module.
+    returned: success
+    type: list
+    sample: ['New-SmbShare -Name share -Path C:\temp']
 '''
