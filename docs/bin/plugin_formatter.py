@@ -20,10 +20,10 @@
 from __future__ import print_function
 __metaclass__ = type
 
+import argparse
 import cgi
 import datetime
 import glob
-import optparse
 import os
 import re
 import sys
@@ -37,6 +37,11 @@ from six import iteritems
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
 from ansible.utils import plugin_docs
+
+try:
+    import argcomplete
+except ImportError:
+    argcomplete = None
 
 #####################################################################################
 # constants and paths
@@ -170,22 +175,24 @@ def list_modules(module_dir, depth=0):
 
 
 def generate_parser():
-    ''' generate an optparse parser '''
+    ''' generate a parser '''
 
-    p = optparse.OptionParser(
-        version='%prog 1.0',
-        usage='usage: %prog [options] arg1 arg2',
+    p = argparse.ArgumentParser(
         description='Generate module documentation from metadata',
     )
 
-    p.add_option("-A", "--ansible-version", action="store", dest="ansible_version", default="unknown", help="Ansible version number")
-    p.add_option("-M", "--module-dir", action="store", dest="module_dir", default=MODULEDIR, help="Ansible library path")
-    p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="hacking/templates", help="directory containing Jinja2 templates")
-    p.add_option("-t", "--type", action='store', dest='type', choices=['rst'], default='rst', help="Document type")
-    p.add_option("-v", "--verbose", action='store_true', default=False, help="Verbose")
-    p.add_option("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
-    p.add_option("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
-    p.add_option('-V', action='version', help='Show version number and exit')
+    p.add_argument('--version', '-V', action='version', version='%(prog)s 1.0')
+    p.add_argument("-A", "--ansible-version", action="store", dest="ansible_version", default="unknown", help="Ansible version number")
+    p.add_argument("-M", "--module-dir", action="store", dest="module_dir", default=MODULEDIR, help="Ansible library path")
+    p.add_argument("-T", "--template-dir", action="store", dest="template_dir", default="hacking/templates", help="directory containing Jinja2 templates")
+    p.add_argument("-t", "--type", action='store', dest='type', choices=['rst'], default='rst', help="Document type")
+    p.add_argument("-v", "--verbose", action='store_true', default=False, help="Verbose")
+    p.add_argument("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
+    p.add_argument("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
+
+    if argcomplete:
+        argcomplete.autocomplete(p, always_complete_options=False, validator=lambda i, k: True)
+
     return p
 
 
@@ -248,13 +255,13 @@ def process_module(module, options, env, template, outputname, module_map, alias
 
     # crash if module is missing documentation and not explicitly hidden from docs index
     if doc is None:
-        sys.exit("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+        raise SystemExit("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
 
     if metadata is None:
-        sys.exit("*** ERROR: MODULE MISSING METADATA: %s, %s ***\n" % (fname, module))
+        raise SystemExit("*** ERROR: MODULE MISSING METADATA: %s, %s ***\n" % (fname, module))
 
     if deprecated and 'deprecated' not in doc:
-        sys.exit("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
+        raise SystemExit("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
 
     if module in aliases:
         doc['aliases'] = aliases[module]
@@ -262,7 +269,7 @@ def process_module(module, options, env, template, outputname, module_map, alias
     all_keys = []
 
     if 'version_added' not in doc:
-        sys.exit("*** ERROR: missing version_added in: %s ***\n" % module)
+        raise SystemExit("*** ERROR: missing version_added in: %s ***\n" % module)
 
     added = 0
     if doc['version_added'] == 'historical':
@@ -419,18 +426,18 @@ def validate_options(options):
     ''' validate option parser options '''
 
     if not options.module_dir:
-        sys.exit("--module-dir is required", file=sys.stderr)
+        raise SystemExit("--module-dir is required")
     if not os.path.exists(options.module_dir):
-        sys.exit("--module-dir does not exist: %s" % options.module_dir, file=sys.stderr)
+        raise SystemExit("--module-dir does not exist: %s" % options.module_dir)
     if not options.template_dir:
-        sys.exit("--template-dir must be specified")
+        raise SystemExit("--template-dir must be specified")
 
 
 def main():
 
     p = generate_parser()
 
-    (options, args) = p.parse_args()
+    options = p.parse_args()
     validate_options(options)
 
     env, template, outputname = jinja2_environment(options.template_dir, options.type)

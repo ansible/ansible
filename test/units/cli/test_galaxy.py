@@ -43,7 +43,7 @@ class TestGalaxy(unittest.TestCase):
             shutil.rmtree("./delete_me")
 
         # creating framework for a role
-        gc = GalaxyCLI(args=["init", "--offline", "delete_me"])
+        gc = GalaxyCLI(args=["ansible-galaxy", "init", "--offline", "delete_me"])
         gc.parse()
         gc.run()
         cls.role_dir = "./delete_me"
@@ -113,7 +113,7 @@ class TestGalaxy(unittest.TestCase):
 
     def test_run(self):
         ''' verifies that the GalaxyCLI object's api is created and that execute() is called. '''
-        gc = GalaxyCLI(args=["install", "--ignore-errors", "imaginary_role"])
+        gc = GalaxyCLI(args=["ansible-galaxy", "install", "--ignore-errors", "imaginary_role"])
         gc.parse()
         with patch.object(ansible.cli.CLI, "execute", return_value=None) as mock_ex:
             with patch.object(ansible.cli.CLI, "run", return_value=None) as mock_run:
@@ -126,7 +126,7 @@ class TestGalaxy(unittest.TestCase):
 
     def test_execute_remove(self):
         # installing role
-        gc = GalaxyCLI(args=["install", "--offline", "-p", self.role_path, "-r", self.role_req])
+        gc = GalaxyCLI(args=["ansible-galaxy", "install", "--offline", "-p", self.role_path, "-r", self.role_req])
         gc.parse()
         gc.run()
 
@@ -134,7 +134,7 @@ class TestGalaxy(unittest.TestCase):
         role_file = os.path.join(self.role_path, self.role_name)
 
         # removing role
-        gc = GalaxyCLI(args=["remove", "-p", role_file, self.role_name])
+        gc = GalaxyCLI(args=["ansible-galaxy", "remove", "-p", self.role_path, self.role_name])
         gc.parse()
         gc.run()
 
@@ -144,7 +144,7 @@ class TestGalaxy(unittest.TestCase):
 
     def test_exit_without_ignore_without_flag(self):
         ''' tests that GalaxyCLI exits with the error specified if the --ignore-errors flag is not used '''
-        gc = GalaxyCLI(args=["install", "--server=None", "fake_role_name"])
+        gc = GalaxyCLI(args=["ansible-galaxy", "install", "--server=None", "fake_role_name"])
         gc.parse()
         with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
             # testing that error expected is raised
@@ -154,120 +154,11 @@ class TestGalaxy(unittest.TestCase):
     def test_exit_without_ignore_with_flag(self):
         ''' tests that GalaxyCLI exits without the error specified if the --ignore-errors flag is used  '''
         # testing with --ignore-errors flag
-        gc = GalaxyCLI(args=["install", "--server=None", "fake_role_name", "--ignore-errors"])
+        gc = GalaxyCLI(args=["ansible-galaxy", "install", "--server=None", "fake_role_name", "--ignore-errors"])
         gc.parse()
         with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
             gc.run()
             self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
-
-    def run_parse_common(self, galaxycli_obj, action):
-        with patch.object(ansible.cli.SortedOptParser, "set_usage") as mocked_usage:
-            galaxycli_obj.parse()
-
-            # checking that the common results of parse() for all possible actions have been created/called
-            self.assertIsInstance(galaxycli_obj.parser, ansible.cli.SortedOptParser)
-            self.assertIsInstance(galaxycli_obj.galaxy, ansible.galaxy.Galaxy)
-            formatted_call = {
-                'import': 'usage: %prog import [options] github_user github_repo',
-                'delete': 'usage: %prog delete [options] github_user github_repo',
-                'info': 'usage: %prog info [options] role_name[,version]',
-                'init': 'usage: %prog init [options] role_name',
-                'install': 'usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]',
-                'list': 'usage: %prog list [role_name]',
-                'login': 'usage: %prog login [options]',
-                'remove': 'usage: %prog remove role1 role2 ...',
-                'search': ('usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] '
-                           '[--author username]'),
-                'setup': 'usage: %prog setup [options] source github_user github_repo secret',
-            }
-
-            first_call = 'usage: %prog [delete|import|info|init|install|list|login|remove|search|setup] [--help] [options] ...'
-            second_call = formatted_call[action]
-            calls = [call(first_call), call(second_call)]
-            mocked_usage.assert_has_calls(calls)
-
-    def test_parse_no_action(self):
-        ''' testing the options parser when no action is given '''
-        gc = GalaxyCLI(args=[""])
-        self.assertRaises(AnsibleOptionsError, gc.parse)
-
-    def test_parse_invalid_action(self):
-        ''' testing the options parser when an invalid action is given '''
-        gc = GalaxyCLI(args=["NOT_ACTION"])
-        self.assertRaises(AnsibleOptionsError, gc.parse)
-
-    def test_parse_delete(self):
-        ''' testing the options parser when the action 'delete' is given '''
-        gc = GalaxyCLI(args=["delete"])
-        self.run_parse_common(gc, "delete")
-        self.assertEqual(gc.options.verbosity, 0)
-
-    def test_parse_import(self):
-        ''' testing the options parser when the action 'import' is given '''
-        gc = GalaxyCLI(args=["import"])
-        self.run_parse_common(gc, "import")
-        self.assertEqual(gc.options.wait, True)
-        self.assertEqual(gc.options.reference, None)
-        self.assertEqual(gc.options.check_status, False)
-        self.assertEqual(gc.options.verbosity, 0)
-
-    def test_parse_info(self):
-        ''' testing the options parser when the action 'info' is given '''
-        gc = GalaxyCLI(args=["info"])
-        self.run_parse_common(gc, "info")
-        self.assertEqual(gc.options.offline, False)
-
-    def test_parse_init(self):
-        ''' testing the options parser when the action 'init' is given '''
-        gc = GalaxyCLI(args=["init"])
-        self.run_parse_common(gc, "init")
-        self.assertEqual(gc.options.offline, False)
-        self.assertEqual(gc.options.force, False)
-
-    def test_parse_install(self):
-        ''' testing the options parser when the action 'install' is given '''
-        gc = GalaxyCLI(args=["install"])
-        self.run_parse_common(gc, "install")
-        self.assertEqual(gc.options.ignore_errors, False)
-        self.assertEqual(gc.options.no_deps, False)
-        self.assertEqual(gc.options.role_file, None)
-        self.assertEqual(gc.options.force, False)
-
-    def test_parse_list(self):
-        ''' testing the options parser when the action 'list' is given '''
-        gc = GalaxyCLI(args=["list"])
-        self.run_parse_common(gc, "list")
-        self.assertEqual(gc.options.verbosity, 0)
-
-    def test_parse_login(self):
-        ''' testing the options parser when the action 'login' is given '''
-        gc = GalaxyCLI(args=["login"])
-        self.run_parse_common(gc, "login")
-        self.assertEqual(gc.options.verbosity, 0)
-        self.assertEqual(gc.options.token, None)
-
-    def test_parse_remove(self):
-        ''' testing the options parser when the action 'remove' is given '''
-        gc = GalaxyCLI(args=["remove"])
-        self.run_parse_common(gc, "remove")
-        self.assertEqual(gc.options.verbosity, 0)
-
-    def test_parse_search(self):
-        ''' testing the options parswer when the action 'search' is given '''
-        gc = GalaxyCLI(args=["search"])
-        self.run_parse_common(gc, "search")
-        self.assertEqual(gc.options.platforms, None)
-        self.assertEqual(gc.options.galaxy_tags, None)
-        self.assertEqual(gc.options.author, None)
-
-    def test_parse_setup(self):
-        ''' testing the options parser when the action 'setup' is given '''
-        gc = GalaxyCLI(args=["setup"])
-        self.run_parse_common(gc, "setup")
-
-        self.assertEqual(gc.options.verbosity, 0)
-        self.assertEqual(gc.options.remove_id, None)
-        self.assertEqual(gc.options.setup_list, False)
 
 
 class ValidRoleTests(object):
@@ -292,7 +183,7 @@ class ValidRoleTests(object):
         cls.role_name = role_name
 
         # create role using default skeleton
-        gc = GalaxyCLI(args=['init', '-c', '--offline'] + galaxy_args + ['-p', cls.test_dir, cls.role_name])
+        gc = GalaxyCLI(args=['ansible-galaxy', 'init', '-c', '--offline'] + galaxy_args + ['-p', cls.test_dir, cls.role_name])
         gc.parse()
         gc.run()
         cls.gc = gc

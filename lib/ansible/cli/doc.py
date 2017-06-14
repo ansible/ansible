@@ -53,20 +53,20 @@ class DocCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage='usage: %prog [options] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
 
-        self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
-                               help='List available plugins')
-        self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
-                               help='Show playbook snippet for specified plugin(s)')
-        self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
-                               help='Show documentation for all plugins')
-        self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
-                               help='Choose which plugin type', choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy'])
+        self.parser.add_argument("-l", "--list", action="store_true", default=False, dest='list_dir',
+                                 help='List available plugins')
+        self.parser.add_argument("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
+                                 help='Show playbook snippet for specified plugin(s)')
+        self.parser.add_argument("-a", "--all", action="store_true", default=False, dest='all_plugins',
+                                 help='Show documentation for all plugins')
+        self.parser.add_argument("-t", "--type", action="store", default='module', dest='type',
+                                 help='Choose which plugin type', choices=['module', 'cache', 'connection', 'callback', 'lookup', 'strategy', 'inventory'])
+        self.parser.add_argument('args', metavar='plugin', help='plugin', nargs='*')
 
         super(DocCLI, self).parse()
 
