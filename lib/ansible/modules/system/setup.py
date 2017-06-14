@@ -118,9 +118,11 @@ EXAMPLES = """
 """
 import fnmatch
 import sys
+import traceback
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 
 from ansible.module_utils.facts import collector
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
@@ -159,22 +161,33 @@ class AnsibleFactCollector(collector.BaseFactCollector):
 
         facts_dict = {}
         facts_dict['ansible_facts'] = {}
+        facts_dict['ansible_facts_exceptions'] = {}
 
         for collector_obj in self.collectors:
             info_dict = {}
+            error_dict = {}
 
             # shallow copy of the accumulated collected facts to pass to each collector
             # for reference.
             collected_facts.update(facts_dict['ansible_facts'].copy())
 
+            # will be a list of tuples of dicts with keys 'message' and 'traceback'
+            errors = []
             try:
 
                 # Note: this collects with namespaces, so collected_facts also includes namespaces
                 info_dict = collector_obj.collect_with_namespace(module=module,
                                                                  collected_facts=collected_facts)
+                errors = info_dict.pop('ansible_facts_exceptions', None)
             except Exception as e:
-                sys.stderr.write(repr(e))
-                sys.stderr.write('\n')
+                errors.append({'error_message': to_text(e),
+                               'traceback': traceback.format_exc()})
+
+            if errors:
+                error_dict[collector_obj.name] = errors
+
+            if error_dict:
+                facts_dict['ansible_facts_exceptions'].update(error_dict)
 
             # filtered_info_dict = self._filter(info_dict, self.filter_spec)
             # NOTE: If we want complicated fact dict merging, this is where it would hook in
