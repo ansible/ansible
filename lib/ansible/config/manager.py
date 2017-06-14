@@ -89,17 +89,18 @@ class ConfigManager(object):
         # TODO: take list of files with merge/nomerge
 
         parser = None
-        if ftype == 'ini':
-            parser = configparser.ConfigParser()
-            try:
-                parser.read(cfile)
-            except configparser.Error as e:
-                raise AnsibleOptionsError("Error reading config file: \n{0}".format(e))
-        elif ftype == 'yaml':
-            with open(cfile, 'rb') as config_stream:
-                parser = yaml.safe_load(config_stream)
-        else:
-            raise AnsibleOptionsError("Unsupported configuration file type: \n{0}".format(ftype))
+        if cfile:
+            if ftype == 'ini':
+                parser = configparser.ConfigParser()
+                try:
+                    parser.read(cfile)
+                except configparser.Error as e:
+                    raise AnsibleOptionsError("Error reading config file: \n{0}".format(e))
+            elif ftype == 'yaml':
+                with open(cfile, 'rb') as config_stream:
+                    parser = yaml.safe_load(config_stream)
+            else:
+                raise AnsibleOptionsError("Unsupported configuration file type: \n{0}".format(ftype))
 
         self.update_config(cfile, self.initial_defs, parser, ftype)
 
