@@ -32,14 +32,14 @@ options:
         is copied. This behavior is similar to Rsync.
   content:
     description:
-      - When used instead of 'src', sets the contents of a file directly to the specified value.
+      - When used instead of I(src), sets the contents of a file directly to the specified value.
         For anything advanced or with formatting also look at the template module.
     version_added: "1.1"
   dest:
     description:
-      - Remote absolute path where the file should be copied to. If C(src) is a directory, this must be a directory too and
-        dest directory is created when it doesn't exist.
-        If src and dest are files, then parent directory of dest isn't created: the task fails if it doesn't already exist.
+      - Remote absolute path where the file should be copied to. If I(src) is a directory, this must be a directory too and
+        I(dest) directory is created when it doesn't exist.
+        If I(src) and I(dest) are files, then parent directory of I(dest) isn't created: the task fails if it doesn't already exist.
     required: yes
   backup:
     description:
@@ -65,9 +65,9 @@ options:
     version_added: "1.5"
   remote_src:
     description:
-      - If C(no), it will search for src at originating/master machine.
-      - If C(yes), it will go to the remote/target machine for the src. Default is False.
-      - Currently C(remote_src) does not support recursive copying.
+      - If C(no), it will search for I(src) at originating/master machine.
+      - If C(yes) it will go to the remote/target machine for the I(src). Default is C(no).
+      - Currently I(remote_src) does not support recursive copying.
     type: bool
     default: 'no'
     version_added: "2.0"
@@ -91,8 +91,8 @@ author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 notes:
-   - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
-     For alternative, see synchronize module, which is a wrapper around rsync.
+   - The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
+     For alternative, see M(synchronize) module, which is a wrapper around C(rsync).
    - For Windows targets, use the M(win_copy) module instead.
 '''
 
