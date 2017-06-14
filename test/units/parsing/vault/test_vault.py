@@ -21,42 +21,24 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import binascii
 import io
 import os
 
-from binascii import hexlify
 from nose.plugins.skip import SkipTest
+
+from binascii import hexlify
 
 from ansible.compat.tests import unittest
 
 from ansible import errors
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.parsing.vault import VaultLib
+
 from ansible.parsing import vault
+from ansible.parsing.vault import cipher_util
+from ansible.parsing.vault import envelope
 
-
-# Counter import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Util import Counter
-    HAS_COUNTER = True
-except ImportError:
-    HAS_COUNTER = False
-
-# KDF import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Protocol.KDF import PBKDF2
-    HAS_PBKDF2 = True
-except ImportError:
-    HAS_PBKDF2 = False
-
-# AES IMPORTS
-try:
-    from Crypto.Cipher import AES as AES
-    HAS_AES = True
-except ImportError:
-    HAS_AES = False
+from ansible.plugins import cipher_loader
 
 
 class TestVaultIsEncrypted(unittest.TestCase):
@@ -151,12 +133,17 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
         self.assertTrue(vault.is_encrypted_file(b_data_fo, start_pos=4, count=vault_length))
 
 
+# TODO: mv to plugin tests
 class TestVaultCipherAes256(unittest.TestCase):
     def setUp(self):
-        self.vault_cipher = vault.VaultAES256()
+        cipher_mapping = cipher_util.build_cipher_mapping()
+        # self.vault_cipher_class = cipher_loader.get('AES256', class_only=True)
+        # note this doesnt check whitelist etc
+        self.vault_cipher_class = cipher_mapping['AES256']
+        self.vault_cipher = self.vault_cipher_class()
 
     def test(self):
-        self.assertIsInstance(self.vault_cipher, vault.VaultAES256)
+        self.assertIsInstance(self.vault_cipher, self.vault_cipher_class)
 
     # TODO: tag these as slow tests
     def test_create_key(self):
@@ -179,6 +166,16 @@ class TestVaultCipherAes256(unittest.TestCase):
         b_key_2 = self.vault_cipher._create_key(b_password, b_salt, keylength=32, ivlength=16)
         self.assertIsInstance(b_key, six.binary_type)
         self.assertEqual(b_key, b_key_2)
+
+
+class TestPyCryptoAes256IsSEqual(unittest.TestCase):
+    def setUp(self):
+        try:
+            from ansible.plugins.ciphers import pycrypto_aes256
+        except ImportError as e:
+            raise SkipTest(e)
+
+        self.vault_cipher = pycrypto_aes256.VaultCipher()
 
     def test_is_equal_is_equal(self):
         self.assertTrue(self.vault_cipher._is_equal(b'abcdefghijklmnopqrstuvwxyz', b'abcdefghijklmnopqrstuvwxyz'))
@@ -215,7 +212,7 @@ class TestVaultCipherAes256(unittest.TestCase):
 
 class TestVaultLib(unittest.TestCase):
     def setUp(self):
-        self.v = VaultLib('test-vault-password')
+        self.v = vault.VaultLib('test-vault-password')
 
     def test_encrypt(self):
         plaintext = u'Some text to encrypt in a café'
@@ -241,10 +238,9 @@ class TestVaultLib(unittest.TestCase):
         b_data = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
         self.assertTrue(self.v.is_encrypted(b_data), msg="encryption check on headered text failed")
 
-    def test_format_output(self):
-        self.v.cipher_name = "TEST"
+    def test_format_envelope(self):
         b_ciphertext = b"ansible"
-        b_vaulttext = self.v._format_output(b_ciphertext)
+        b_vaulttext = envelope.format_envelope(b_ciphertext, "TEST", self.v.b_version)
         b_lines = b_vaulttext.split(b'\n')
         self.assertGreater(len(b_lines), 1, msg="failed to properly add header")
 
@@ -257,18 +253,15 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual(b_header_parts[1], self.v.b_version, msg="header version is incorrect")
         self.assertEqual(b_header_parts[2], b'TEST', msg="header does not end with cipher name")
 
-    def test_split_header(self):
+    def test_parse_envelope(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
-        b_ciphertext = self.v._split_header(b_vaulttext)
+        b_ciphertext, cipher_name, b_version = envelope.parse_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
-        self.assertEqual(self.v.cipher_name, u'TEST', msg="cipher name was not properly set")
-        self.assertEqual(self.v.b_version, b"9.9", msg="version was not properly set")
+        self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
+        self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
     def test_encrypt_decrypt_aes(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-        self.v.cipher_name = u'AES'
         self.v.b_password = b'ansible'
         # AES encryption code has been removed, so this is old output for
         # AES-encrypted 'foobar' with password 'ansible'.
@@ -281,9 +274,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         self.assertEqual(b_plaintext, b"foobar", msg="decryption failed")
 
     def test_encrypt_decrypt_aes256(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-        self.v.cipher_name = u'AES256'
         plaintext = u"foobar"
         b_vaulttext = self.v.encrypt(plaintext)
         b_plaintext = self.v.decrypt(b_vaulttext)
@@ -291,9 +281,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         self.assertEqual(b_plaintext, b"foobar", msg="decryption failed")
 
     def test_encrypt_decrypt_aes256_existing_vault(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-        self.v.cipher_name = u'AES256'
         b_orig_plaintext = b"Setec Astronomy"
         vaulttext = u'''$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
@@ -309,57 +296,13 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         b_plaintext = self.v.decrypt(b_vaulttext)
         self.assertEqual(b_plaintext, b_orig_plaintext, msg="decryption failed")
 
-    def test_encrypt_decrypt_aes256_bad_hmac(self):
-        # FIXME This test isn't working quite yet.
-        raise SkipTest
-
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-        self.v.cipher_name = 'AES256'
-        # plaintext = "Setec Astronomy"
-        enc_data = '''$ANSIBLE_VAULT;1.1;AES256
-33363965326261303234626463623963633531343539616138316433353830356566396130353436
-3562643163366231316662386565383735653432386435610a306664636137376132643732393835
-63383038383730306639353234326630666539346233376330303938323639306661313032396437
-6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
-        b_data = to_bytes(enc_data, errors='strict', encoding='utf-8')
-        b_data = self.v._split_header(b_data)
-        foo = binascii.unhexlify(b_data)
-        lines = foo.splitlines()
-        # line 0 is salt, line 1 is hmac, line 2+ is ciphertext
-        b_salt = lines[0]
-        b_hmac = lines[1]
-        b_ciphertext_data = b'\n'.join(lines[2:])
-
-        b_ciphertext = binascii.unhexlify(b_ciphertext_data)
-        # b_orig_ciphertext = b_ciphertext[:]
-
-        # now muck with the text
-        # b_munged_ciphertext = b_ciphertext[:10] + b'\x00' + b_ciphertext[11:]
-        # b_munged_ciphertext = b_ciphertext
-        # assert b_orig_ciphertext != b_munged_ciphertext
-
-        b_ciphertext_data = binascii.hexlify(b_ciphertext)
-        b_payload = b'\n'.join([b_salt, b_hmac, b_ciphertext_data])
-        # reformat
-        b_invalid_ciphertext = self.v._format_output(b_payload)
-
-        # assert we throw an error
-        self.v.decrypt(b_invalid_ciphertext)
-
     def test_encrypt_encrypted(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-        self.v.cipher_name = u'AES'
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
         vaulttext = to_text(b_vaulttext, errors='strict')
         self.assertRaises(errors.AnsibleError, self.v.encrypt, b_vaulttext)
         self.assertRaises(errors.AnsibleError, self.v.encrypt, vaulttext)
 
     def test_decrypt_decrypted(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
         plaintext = u"ansible"
         self.assertRaises(errors.AnsibleError, self.v.decrypt, plaintext)
 
@@ -368,8 +311,7 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
 
     def test_cipher_not_set(self):
         # not setting the cipher should default to AES256
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
+
         plaintext = u"ansible"
-        self.v.encrypt(plaintext)
-        self.assertEquals(self.v.cipher_name, "AES256")
+        b_vaulttext = self.v.encrypt(plaintext)
+        self.assertIn(b'AES256', b_vaulttext.splitlines()[0])

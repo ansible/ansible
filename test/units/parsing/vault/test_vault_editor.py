@@ -22,36 +22,15 @@ __metaclass__ = type
 
 import os
 import tempfile
-from nose.plugins.skip import SkipTest
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
 from ansible import errors
-from ansible.parsing import vault
 from ansible.module_utils._text import to_bytes, to_text
 
-
-# Counter import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Util import Counter
-    HAS_COUNTER = True
-except ImportError:
-    HAS_COUNTER = False
-
-# KDF import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Protocol.KDF import PBKDF2
-    HAS_PBKDF2 = True
-except ImportError:
-    HAS_PBKDF2 = False
-
-# AES IMPORTS
-try:
-    from Crypto.Cipher import AES as AES
-    HAS_AES = True
-except ImportError:
-    HAS_AES = False
+from ansible.parsing import vault
+from ansible.parsing.vault import cipher_util
 
 v10_data = """$ANSIBLE_VAULT;1.0;AES
 53616c7465645f5fd0026926a2d415a28a2622116273fbc90e377225c12a347e1daf4456d36a77f9
@@ -70,6 +49,8 @@ class TestVaultEditor(unittest.TestCase):
 
     def setUp(self):
         self._test_dir = None
+        # print('cipher_util: %s' % cipher_util)
+        self.cipher_mapping = cipher_util.build_cipher_mapping()
 
     def tearDown(self):
         if self._test_dir:
@@ -361,9 +342,6 @@ class TestVaultEditor(unittest.TestCase):
 
         self.assertEqual(src_file_plaintext, new_src_contents)
 
-        # self.assertEqual(src_file_plaintext, new_src_contents,
-        #                 'The decrypted plaintext of the editted file is not the expected contents.')
-
     @patch('ansible.parsing.vault.call')
     def test_edit_file_not_encrypted(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
@@ -422,9 +400,6 @@ class TestVaultEditor(unittest.TestCase):
         self.assertTrue(os.path.exists(tmp_file.name))
 
     def test_decrypt_1_0(self):
-        # Skip testing decrypting 1.0 files if we don't have access to AES, KDF or Counter.
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
 
         v10_file = tempfile.NamedTemporaryFile(delete=False)
         with v10_file as f:
@@ -451,8 +426,6 @@ class TestVaultEditor(unittest.TestCase):
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
     def test_decrypt_1_1(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
 
         v11_file = tempfile.NamedTemporaryFile(delete=False)
         with v11_file as f:
@@ -478,9 +451,6 @@ class TestVaultEditor(unittest.TestCase):
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
     def test_rekey_migration(self):
-        # Skip testing rekeying files if we don't have access to AES, KDF or Counter.
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
 
         v10_file = tempfile.NamedTemporaryFile(delete=False)
         with v10_file as f:
@@ -513,7 +483,6 @@ class TestVaultEditor(unittest.TestCase):
 
         os.unlink(v10_file.name)
 
-        assert vl.cipher_name == "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name
         assert error_hit is False, "error decrypting migrated 1.0 file"
         assert dec_data.strip() == b"foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
 

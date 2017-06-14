@@ -2,6 +2,21 @@
 
 set -eux
 
+pre_fail() {
+    # just for less confusing echos when running -x by default
+    set +x
+    echo
+    echo "=====  v  EXPECTED TO ERROR - The wrong password tests are expected to return 1 (fail)  ===="
+    set -eux
+}
+
+post_fail() {
+    set +x
+    echo "====  ^ EXPECTED TO ERROR =================================================================="
+    echo
+    set -eux
+}
+
 MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 trap 'rm -rf "${MYTMPDIR}"' EXIT
 
@@ -10,6 +25,39 @@ TEST_FILE="${MYTMPDIR}/test_file"
 echo "This is a test file" > "${TEST_FILE}"
 
 TEST_FILE_OUTPUT="${MYTMPDIR}/test_file_output"
+
+# old format
+ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
+
+ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_1_AES.yml
+
+# old format, wrong password
+pre_fail
+ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_0_AES.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+post_fail
+
+pre_fail
+ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+post_fail
+
+
+pre_fail
+ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES256.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+post_fail
+
+set -eux
+
+# new format, view
+ansible-vault view "$@" --vault-password-file vault-password format_1_1_AES256.yml
 
 # encrypt it
 ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE}"

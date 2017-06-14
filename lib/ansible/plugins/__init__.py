@@ -415,8 +415,12 @@ class PluginLoader:
                 continue
 
             if path not in self._module_cache:
-                self._module_cache[path] = self._load_module_source(name, path)
-                found_in_cache = False
+                try:
+                    self._module_cache[path] = self._load_module_source(name, path)
+                    found_in_cache = False
+                except ImportError as e:
+                    display.warning("Skipping plugin (%s) as it failed to import: %s" % (path, to_text(e)))
+                    continue
 
             try:
                 obj = getattr(self._module_cache[path], self.class_name)
@@ -566,3 +570,10 @@ netconf_loader = PluginLoader(
     'netconf_plugins',
     required_base_class='NetconfBase'
 )
+
+cipher_loader = PluginLoader(
+    class_name='VaultCipher',
+    package='ansible.plugins.ciphers',
+    config=C.DEFAULT_CIPHERS_PLUGIN_PATH,
+    subdir='cipher_plugins')
+

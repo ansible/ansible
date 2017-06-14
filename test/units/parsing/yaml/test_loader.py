@@ -223,12 +223,18 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
 
         return data_from_yaml
 
+    def _avu_from_plaintext(self, plaintext, vault):
+        ciphertext = vault.encrypt(plaintext)
+        avu = AnsibleVaultEncryptedUnicode(ciphertext)
+        avu.vault = vault
+        return avu
+
     def test_dump_load_cycle(self):
-        avu = AnsibleVaultEncryptedUnicode.from_plaintext('The plaintext for test_dump_load_cycle.', vault=self.vault)
+        avu = self._avu_from_plaintext('The plaintext for test_dump_load_cycle.', vault=self.vault)
         self._dump_load_cycle(avu)
 
     def test_embedded_vault_from_dump(self):
-        avu = AnsibleVaultEncryptedUnicode.from_plaintext('setec astronomy', vault=self.vault)
+        avu = self._avu_from_plaintext('setec astronomy', vault=self.vault)
         blip = {'stuff1': [{'a dict key': 24},
                            {'shhh-ssh-secrets': avu,
                             'nothing to see here': 'move along'}],
@@ -239,7 +245,6 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
 
         self._dump_stream(blip, stream, dumper=AnsibleDumper)
 
-        print(stream.getvalue())
         stream.seek(0)
 
         stream.seek(0)

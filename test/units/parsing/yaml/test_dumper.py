@@ -19,12 +19,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import io
-import yaml
-
-try:
-    from _yaml import ParserError
-except ImportError:
-    from yaml.parser import ParserError
 
 from ansible.compat.tests import unittest
 from ansible.parsing import vault
@@ -52,7 +46,11 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
 
     def test(self):
         plaintext = 'This is a string we are going to encrypt.'
-        avu = objects.AnsibleVaultEncryptedUnicode.from_plaintext(plaintext, vault=self.vault)
+
+        ciphertext = self.vault.encrypt(plaintext)
+        avu = objects.AnsibleVaultEncryptedUnicode(ciphertext)
+        avu.vault = vault
+        return avu
 
         yaml_out = self._dump_string(avu, dumper=self.dumper)
         stream = self._build_stream(yaml_out)
