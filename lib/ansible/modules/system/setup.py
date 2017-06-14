@@ -126,7 +126,6 @@ EXAMPLES = """
 # ansible windows -m setup -a "fact_path='c:\\custom_facts'"
 """
 import fnmatch
-import sys
 import traceback
 
 # import module snippets
@@ -174,7 +173,6 @@ class AnsibleFactCollector(collector.BaseFactCollector):
 
         for collector_obj in self.collectors:
             info_dict = {}
-            error_dict = {}
 
             # shallow copy of the accumulated collected facts to pass to each collector
             # for reference.
@@ -288,7 +286,8 @@ def main():
     if fail_on_error:
         facts_exceptions = facts_dict.get('ansible_facts_exceptions', None)
         if facts_exceptions:
-            module.fail_json(msg='There was one or more exceptions while collecting facts and fail_on_error is True. The first exception is provided as the \'exception\' return value.',
+            module.fail_json(msg='There was one or more exceptions while collecting facts and fail_on_error is True. '
+                             'The first exception is provided as the \'exception\' return value.',
                              facts_exceptions=facts_exceptions,
                              exception=facts_exceptions[0]['traceback'])
 
