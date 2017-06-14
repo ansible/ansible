@@ -38,7 +38,7 @@ options:
     required: true
   traffictype:
     description:
-      - Type of traffic [Guest / Public / Management / Storage].
+      - Type of traffic.
     required: true
     default: none
     choices: [ 'Guest', 'Public', 'Management', 'Storage' ]
@@ -279,7 +279,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        traffictype=dict(required=True),
+        traffictype=dict(required=True, choices=['Guest', 'Public', 'Management', 'Storage']),
         physical_network=dict(required=True),
         vlan=dict(default=None),
         kvm_networklabel=dict(default=None),
