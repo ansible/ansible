@@ -47,6 +47,8 @@ options:
     choices:
     - enabled
     - disabled
+requirements:
+  - This module requires Windows Management Framework 5 or later.
 author: Michael Eaton (@MichaelEaton83)
 '''
 
