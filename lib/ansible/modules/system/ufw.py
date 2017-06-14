@@ -274,6 +274,33 @@ def main():
         if rc != 0:
             module.fail_json(msg=err or out)
 
+    def ufw_version():
+        """
+        Returns the major and minor version of ufw installed on the system.
+        """
+        rc, out, err = module.run_command("%s --version" % ufw_bin)
+        if rc != 0:
+            module.fail_json(
+                msg="Failed to get ufw version.", rc=rc, out=out, err=err
+            )
+
+        lines = [x for x in out.split('\n') if x.strip() != '']
+        if len(lines) == 0:
+            module.fail_json(msg="Failed to get ufw version.", rc=0, out=out)
+
+        matches = re.search(r'^ufw.+(\d+)\.(\d+)(?:\.(\d+))?.*$', lines[0])
+        if matches is None:
+            module.fail_json(msg="Failed to get ufw version.", rc=0, out=out)
+
+        # Convert version to numbers
+        major = int(matches.group(1))
+        minor = int(matches.group(2))
+        rev   = 0
+        if matches.group(3) is not None:
+            rev = int(matches.group(3))
+
+        return major, minor, rev
+
     params = module.params
 
     # Ensure at least one of the command arguments are given
@@ -324,11 +351,15 @@ def main():
 
             for (key, template) in [('from_ip',   "from %s" ), ('from_port', "port %s" ),
                                     ('to_ip',     "to %s"   ), ('to_port',   "port %s" ),
-                                    ('proto',     "proto %s"), ('app',       "app '%s'"),
-                                    ('comment',   "comment '%s'")]:
+                                    ('proto',     "proto %s"), ('app',       "app '%s'")]:
 
                 value = params[key]
                 cmd.append([value, template % (value)])
+
+            ufw_major, ufw_minor, _ = ufw_version()
+            # comment is supported only in ufw version after 0.35
+            if (ufw_major == 0 and ufw_minor >= 35) or ufw_major > 0:
+                cmd.append([params['comment'], "comment '%s'" % params['comment']])
 
             execute(cmd)
 
