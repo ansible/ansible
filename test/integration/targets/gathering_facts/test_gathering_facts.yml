@@ -16,6 +16,24 @@
       debug:
         var: not_hardware_facts
 
+- hosts: facthost14
+  tags: [ 'fact_error_on_fail' ]
+  connection: local
+  gather_subset: "all"
+  gather_facts: no
+  tasks:
+    - name: setup with all and error_on_fail true but no errors
+      setup:
+       gather_subset:
+           - "all"
+       fail_on_error: true
+      register: error_on_fail_no_error
+
+    - name: debug setup with error_on_fail no error
+      debug:
+        var: error_on_fail_no_error
+
+
 - hosts: facthost0
   tags: [ 'fact_min' ]
   connection: local
