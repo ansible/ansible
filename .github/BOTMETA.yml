@@ -470,6 +470,7 @@ files:
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nuage/: pdellaert
   $modules/network/nxos/: $team_nxos
+  $modules/network/nso/: $team_nso
   $modules/network/openvswitch/:
     ignored: stygstra
     maintainers: $team_networking
@@ -990,6 +991,9 @@ files:
   $module_utils/network.py:
     maintainers: $team_networking
     labels: networking
+  $module_utils/nso.py:
+    maintainers: $team_nso
+    labels: networking
   $module_utils/nxos.py:
     maintainers: $team_networking
     labels: networking
@@ -1173,6 +1177,7 @@ macros:
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
   team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha kedarX
+  team_nso: cmoberg pekdon
   team_nxos: GGabriele jedelman8 mikewiebe privateip rahushen rcarrillocruz trishnaguha kedarX
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gundalow privateip
