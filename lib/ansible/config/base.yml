@@ -669,6 +669,22 @@ DEFAULT_LOG_PATH:
   - {key: log_path, section: defaults}
   type: path
   yaml: {key: defaults.log_path}
+DEFAULT_LOG_FORMAT:
+  default: '%(asctime)s p=%(process)d u=%(user)s |  %(message)s'
+  desc: 'The log entries written to ANSIBLE_LOG_PATH will use this format for logging.Formatter'
+  env: [{name: ANSIBLE_LOG_FORMAT}]
+  ini:
+  - {key: log_format, section: defaults}
+  vars: []
+  yaml: {key: defaults.log_format}
+DEFAULT_LOG_LEVEL:
+  default: INFO
+  desc: 'The log entries written to ANSIBLE_LOG_PATH use this logging level'
+  env: [{name: ANSIBLE_LOG_LEVEL}]
+  ini:
+  - {key: log_level, section: defaults}
+  vars: []
+  yaml: {key: defaults.log_level}
 DEFAULT_LOOKUP_PLUGIN_PATH:
   default: ~/.ansible/plugins/lookup:/usr/share/ansible/plugins/lookup
   description: 'TODO: write it'

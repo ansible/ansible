@@ -49,13 +49,23 @@ except NameError:
 
 logger = None
 # TODO: make this a logging callback instead
+
+LOG_FORMAT = "%(asctime)s [%(levelname)s] %(process)d | %(message)s"
+LOG_FORMAT_ALL_ATTRS = "%(asctime)s - name:%(name)s - level:%(levelname)s %(levelno)d - m:%(module)s fn:%(funcName)s:%(lineno)d " \
+    "- process:%(processName)s:%(process)d thread:%(threadName)s:%(thread)d - pn:%(pathname)s fn:%(filename)s - %(message)s"
+
+OLD_LOG_FORMAT = '%(asctime)s %(name)s %(message)s'
+log_format = LOG_FORMAT_ALL_ATTRS
+log_format = C.DEFAULT_LOG_FORMAT
+
+# could do with a logging filter or a few other ways
+_user = getpass.getuser()
+
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
     if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
-        mypid = str(os.getpid())
-        user = getpass.getuser()
-        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        logging.basicConfig(filename=path, level=C.DEFAULT_LOG_LEVEL, format=log_format)
+        logger = logging.getLogger('ansible')
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
@@ -65,6 +75,18 @@ b_COW_PATHS = (
     b"/usr/local/bin/cowsay",  # BSD path for cowsay
     b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
 )
+
+# we could add custom log levels to get a 1:1 map
+# this seems kind of backwards to me...
+color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
+                      C.COLOR_WARN: logging.WARNING,
+                      C.COLOR_OK: logging.INFO,
+                      C.COLOR_SKIP: logging.WARNING,
+                      C.COLOR_UNREACHABLE: logging.ERROR,
+                      C.COLOR_DEBUG: logging.DEBUG,
+                      C.COLOR_CHANGED: logging.INFO,
+                      C.COLOR_DEPRECATE: logging.WARNING,
+                      C.COLOR_VERBOSE: logging.DEBUG}
 
 
 class Display:
@@ -103,11 +125,16 @@ class Display:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, log_level=None):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
+
+        if color:
+            log_level = color_to_log_level.get(color, logging.INFO)
+
+        log_level = log_level or logging.INFO
 
         nocolor = msg
         if color:
@@ -151,10 +178,7 @@ class Display:
                 # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
-            if color == C.COLOR_ERROR:
-                logger.error(msg2)
-            else:
-                logger.info(msg2)
+            logger.log(log_level, msg2, extra={'user': _user})
 
     def v(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=0)
