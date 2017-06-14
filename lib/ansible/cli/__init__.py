@@ -295,7 +295,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         the list ['/blip/foo', '/foo/bar']. Each path string in the list
         will also have '~/' values expand via os.path.expanduser()."""
         path_entries = value.split(os.pathsep)
-        expanded_path_entries = [os.path.expanduser(path_entry) for path_entry in path_entries]
+        expanded_path_entries = [unfrackpath(path_entry) for path_entry in path_entries]
         setattr(parser.values, option.dest, expanded_path_entries)
 
     @staticmethod
@@ -321,7 +321,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         if module_opts:
             parser.add_option('-M', '--module-path', dest='module_path', default=None,
                               help="prepend path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
-                              action="callback", callback=CLI.expand_tilde, type=str)
+                              action="callback", callback=CLI.expand_tilde, type='str')
         if runtask_opts:
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
                               help="set additional variables as key=value or YAML/JSON", default=[])
