@@ -80,6 +80,7 @@ class AnsibleAWSModule(object):
         junk=None
         jook=None
         self._module = AnsibleModule(**kwargs)
+        self.check_mode = self._module.check_mode
 
     @property
     def params(self):
