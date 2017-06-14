@@ -278,7 +278,7 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
             group_id = group.id
             groups[group_id] = group
             groups[group_name] = group
-        elif group_name in groups and (vpc_id is None or groups[group_name].vpc_id == vpc_id):
+        elif group_name in groups and groups[group_name].vpc_id == vpc_id:
             group_id = groups[group_name].id
         else:
             if not rule.get('group_desc', '').strip():
@@ -419,12 +419,12 @@ def main():
         groups[curGroup.id] = curGroup
         if curGroup.name in groups:
             # Prioritise groups from the current VPC
-            if vpc_id is None or curGroup.vpc_id == vpc_id:
+            if curGroup.vpc_id == vpc_id:
                 groups[curGroup.name] = curGroup
         else:
             groups[curGroup.name] = curGroup
 
-        if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
+        if curGroup.name == name and curGroup.vpc_id == vpc_id:
             group = curGroup
 
     # Ensure requested group is absent
@@ -565,8 +565,8 @@ def main():
                                 src_group_id=grantGroup,
                                 cidr_ip=thisip)
                         changed = True
-        else:
-            # when no egress rules are specified,
+        elif vpc_id is not None:
+            # when no egress rules are specified and we're in a VPC,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             default_egress_rule = 'out--1-None-None-None-0.0.0.0/0'
@@ -586,7 +586,7 @@ def main():
                 del groupRules[default_egress_rule]
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
-        if purge_rules_egress:
+        if purge_rules_egress and vpc_id is not None:
             for (rule, grant) in groupRules.values():
                 grantGroup = None
                 if grant.group_id:
