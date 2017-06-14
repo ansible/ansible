@@ -126,6 +126,11 @@ options:
       - Apply the rule to routed/forwarded packets.
     required: false
     choices: ['yes', 'no']
+  comment:
+    description:
+      - Add a comment to the rule. Requires UFW version >=0.35.
+    required: false
+    version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -194,12 +199,13 @@ EXAMPLES = '''
     - 172.16.0.0/12
     - 192.168.0.0/16
 
-# Deny access to udp port 514 from host 1.2.3.4:
+# Deny access to udp port 514 from host 1.2.3.4 and include a comment:
 - ufw:
     rule: deny
     proto: udp
     src: 1.2.3.4
     port: 514
+    comment: "Block syslog"
 
 # Allow incoming access to eth0 from 1.2.3.5 port 5469 to 1.2.3.4 port 5469
 - ufw:
@@ -250,7 +256,8 @@ def main():
             to_ip     = dict(default='any', aliases=['dest', 'to']),
             to_port   = dict(default=None,  aliases=['port']),
             proto     = dict(default=None,  aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']),
-            app       = dict(default=None,  aliases=['name'])
+            app       = dict(default=None,  aliases=['name']),
+            comment   = dict(default=None, type='str')
         ),
         supports_check_mode = True,
         mutually_exclusive = [['app', 'proto', 'logging']]
@@ -284,7 +291,7 @@ def main():
 
     # Save the pre state and rules in order to recognize changes
     (_, pre_state, _) = module.run_command(ufw_bin + ' status verbose')
-    (_, pre_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user*.rules")
+    (_, pre_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules")
 
     # Execute commands
     for (command, value) in commands.items():
@@ -306,7 +313,7 @@ def main():
             #
             # ufw [--dry-run] [delete] [insert NUM] [route] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
             #     [from ADDRESS [port PORT]] [to ADDRESS [port PORT]] \
-            #     [proto protocol] [app application]
+            #     [proto protocol] [app application] [comment COMMENT]
             cmd.append([module.boolean(params['delete']), 'delete'])
             cmd.append([module.boolean(params['route']), 'route'])
             cmd.append([params['insert'], "insert %s" % params['insert']])
@@ -317,7 +324,8 @@ def main():
 
             for (key, template) in [('from_ip',   "from %s" ), ('from_port', "port %s" ),
                                     ('to_ip',     "to %s"   ), ('to_port',   "port %s" ),
-                                    ('proto',     "proto %s"), ('app',       "app '%s'")]:
+                                    ('proto',     "proto %s"), ('app',       "app '%s'"),
+                                    ('comment',   "comment '%s'")]:
 
                 value = params[key]
                 cmd.append([value, template % (value)])
@@ -326,7 +334,7 @@ def main():
 
     # Get the new state
     (_, post_state, _) = module.run_command(ufw_bin + ' status verbose')
-    (_, post_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user*.rules")
+    (_, post_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules")
     changed = (pre_state != post_state) or (pre_rules != post_rules)
 
     return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
