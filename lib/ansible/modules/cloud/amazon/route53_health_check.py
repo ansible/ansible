@@ -314,9 +314,9 @@ def main():
     # Default port
     if port_in is None:
         if type_in in ['HTTP', 'HTTP_STR_MATCH']:
-            port_in = 80
+            port_in = '80'
         elif type_in in ['HTTPS', 'HTTPS_STR_MATCH']:
-            port_in = 443
+            port_in = '443'
         else:
             module.fail_json(msg="parameter 'port' is required for 'type' TCP")
 
@@ -352,7 +352,7 @@ def main():
             changed = True
         else:
             diff = health_check_diff(existing_config, wanted_config)
-            if not diff:
+            if diff:
                 action = "update"
                 update_health_check(conn, existing_check.Id, int(existing_check.HealthCheckVersion), wanted_config)
                 changed = True
