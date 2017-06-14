@@ -182,23 +182,36 @@ currentConfigBlock:
   description: The current config block for the user specified interface
   returned: when action = show
   type: string
-  sample: "interface Ethernet4\n!"
+  sample: |
+    interface Ethernet4
+    !
 newConfigBlock:
   description: The new config block for the user specified interface
   returned: when action = add or remove
   type: string
-  sample: "interface Ethernet3\n    description example\n    no switchport\n!"
+  sample: |
+    interface Ethernet3
+        description example
+        no switchport
+    !
 oldConfigBlock:
   description: The current config block for the user specified interface
                before any changes are made
   returned: when action = add or remove
   type: string
-  sample: "interface Ethernet3\n!"
+  sample: |
+    interface Ethernet3
+    !
 fullConfig:
   description: The full config of the configlet after being updated
   returned: when action = add or remove
   type: string
-  sample: "!\ninterface Ethernet3\n!\ninterface Ethernet4\n!"
+  sample: |
+    !
+    interface Ethernet3
+    !
+    interface Ethernet4
+    !
 updateConfigletResponse:
   description: Response returned from CVP when configlet update is triggered
   returned: when action = add or remove and configuration changes
@@ -275,8 +288,8 @@ taskId:
 
 import re
 import time
-from jinja2 import meta
 import jinja2
+from jinja2 import meta
 from ansible.module_utils.basic import AnsibleModule
 from cvprac.cvp_client import CvpClient
 from cvprac.cvp_client_errors import CvpLoginError, CvpApiError
