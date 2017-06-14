@@ -37,8 +37,9 @@ options:
     version_added: "1.1"
   dest:
     description:
-      - Remote absolute path where the file should be copied to. If C(src) is a directory,
-        this must be a directory too.
+      - Remote absolute path where the file should be copied to. If C(src) is a directory, this must be a directory too and
+        dest directory is created when it doesn't exist.
+        If src and dest are files, then parent directory of dest isn't created: the task fails if it doesn't already exist.
     required: yes
   backup:
     description:
