@@ -45,13 +45,17 @@ class ActionModule(ActionBase):
 
         play_context = copy.deepcopy(self._play_context)
         play_context.network_os = self._get_network_os(task_vars)
-        # TODO this can be netconf
-        play_context.connection = 'network_cli'
 
         self.provider = self._load_provider(play_context.network_os)
 
+        if play_context.network_os == 'junos':
+            play_context.connection = 'netconf'
+            play_context.port = self.provider['port'] or self._play_context.port or 830
+        else:
+            play_context.connection = 'network_cli'
+            play_context.port = self.provider['port'] or self._play_context.port or 22
+
         play_context.remote_addr = self.provider['host'] or self._play_context.remote_addr
-        play_context.port = self.provider['port'] or self._play_context.port or 22
         play_context.remote_user = self.provider['username'] or self._play_context.connection_user
         play_context.password = self.provider['password'] or self._play_context.password
         play_context.private_key_file = self.provider['ssh_keyfile'] or self._play_context.private_key_file
