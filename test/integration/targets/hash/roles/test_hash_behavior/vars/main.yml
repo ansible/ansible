@@ -19,3 +19,5 @@
 ---
 test_hash:
   role_vars: "this is in role vars/main.yml"
+  test_list:
+    - name: "this is in role vars/main.yml"

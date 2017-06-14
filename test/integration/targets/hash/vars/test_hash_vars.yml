@@ -1,3 +1,6 @@
 ---
 test_hash:
   vars_file: "this is in a vars_file"
+  test_list:
+    - name: "this is in a vars_file"
+    - name: "this is a playbook variable"  # adding a duplicate item here to test that when list merging occurs duplicates are uniqed

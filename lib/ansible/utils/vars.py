@@ -32,7 +32,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.splitter import parse_kv
-
+from ansible.plugins.filter.mathstuff import unique
 
 _MAXSIZE = 2 ** 32
 cur_id = 0
@@ -112,6 +112,8 @@ def merge_hash(a, b):
         if k in result and isinstance(result[k], MutableMapping) and isinstance(v, MutableMapping):
             # merge those dicts recursively
             result[k] = merge_hash(result[k], v)
+        elif k in result and C.DEFAULT_LIST_BEHAVIOUR == "merge" and isinstance(v, list):
+            result[k] = unique(result[k] + v)
         else:
             # otherwise, just copy the value from b to a
             result[k] = v

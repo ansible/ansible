@@ -23,19 +23,53 @@
   connection: local
   delegate_to: localhost
 
+- name: get the list behavior env setting
+  shell: env | grep ^ANSIBLE_LIST_BEHAVIOUR'=' | cut -f2- -d'='
+  register: list_behavior
+  # This only works with the local connection.  The way this test is run means the
+  connection: local
+  delegate_to: localhost
+
 
 - name: debug hash behavior result
   debug: var=hash_behavior.stdout
+
+- name: debug list behavior result
+  debug: var=list_behavior.stdout
 
 - name: assert hash behavior is merge or replace
   assert:
     that:
     - "hash_behavior.stdout in ('merge', 'replace')"
 
+- name: assert list behavior is merge or replace
+  assert:
+    that:
+    - "list_behavior.stdout in ('merge', 'replace')"
+
 - name: debug test_hash var
   debug: var=test_hash
 
-- name: assert the dictionary values match
+- name: assert the test_hash = merged_hash_replace_list
   assert:
     that:
-    - "hash_behavior.stdout == 'merge' and test_hash == merged_hash or hash_behavior.stdout == 'replace' and test_hash == replaced_hash"
+    - "test_hash == merged_hash_replaced_list"
+  when: hash_behavior.stdout == 'merge' and list_behavior.stdout == 'replace'
+
+- name: assert the test_hash = merged_hash_merged_list
+  assert:
+    that:
+    - "test_hash == merged_hash_merged_list"
+  when: hash_behavior.stdout == 'merge' and list_behavior.stdout == 'merge'
+
+- name: assert the test_hash = replaced_hash_replace_list
+  assert:
+    that:
+    - "test_hash == replaced_hash_merged_list"
+  when: hash_behavior.stdout == 'replace' and list_behavior.stdout == 'merge'
+
+- name: assert the test_hash = replaced_hash_replaced_list
+  assert:
+    that:
+    - "test_hash == replaced_hash_replaced_list"
+  when: hash_behavior.stdout == 'replace' and list_behavior.stdout == 'replace'
