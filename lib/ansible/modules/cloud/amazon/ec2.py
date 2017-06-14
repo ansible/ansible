@@ -618,7 +618,8 @@ EXAMPLES = '''
 import traceback
 import time
 from ast import literal_eval
-from ansible.module_utils.six import get_function_code
+from ansible.module_utils.six import get_function_code, string_types
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
 from distutils.version import LooseVersion
@@ -1395,6 +1396,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
     wait_timeout = int(module.params.get('wait_timeout'))
     source_dest_check = module.params.get('source_dest_check')
     termination_protection = module.params.get('termination_protection')
+    group_id = module.params.get('group_id')
+    group_name = module.params.get('group')
     changed = False
     instance_dict_array = []
 
@@ -1440,6 +1443,24 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
             if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
                 inst.modify_attribute('disableApiTermination', termination_protection)
                 changed = True
+
+            # Check security groups and if we're using ec2-vpc; ec2-classic security groups may not be modified
+            if inst.vpc_id and group_name:
+                grp_details = ec2.get_all_security_groups(filters={'vpc_id': inst.vpc_id})
+                if isinstance(group_name, string_types):
+                    group_name = [group_name]
+                unmatched = set(group_name) - set(to_text(grp.name) for grp in grp_details)
+                if unmatched:
+                    module.fail_json(msg="The following group names are not valid: %s" % ', '.join(unmatched))
+                group_ids = [to_text(grp.id) for grp in grp_details if to_text(grp.name) in group_name]
+            elif inst.vpc_id and group_id:
+                if isinstance(group_id, string_types):
+                    group_id = [group_id]
+                grp_details = ec2.get_all_security_groups(group_ids=group_id)
+                group_ids = [grp_item.id for grp_item in grp_details]
+            if inst.vpc_id and (group_name or group_id):
+                if set(sg.id for sg in inst.groups) != set(group_ids):
+                    changed = inst.modify_attribute('groupSet', group_ids)
 
             # Check instance state
             if inst.state != state:
@@ -1614,7 +1635,7 @@ def main():
             ['network_interfaces', 'group_id'],
             ['network_interfaces', 'private_ip'],
             ['network_interfaces', 'vpc_subnet_id'],
-            ],
+        ],
     )
 
     if not HAS_BOTO:
