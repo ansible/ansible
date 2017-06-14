@@ -149,14 +149,9 @@ lambda_policy_action:
 
 import json
 import re
+import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO3, get_aws_connection_info, boto3_conn, ec2_argument_spec
-
-try:
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-    HAS_BOTOCORE = True
-except ImportError:
-    HAS_BOTOCORE = False
+from ansible.module_utils.ec2 import HAS_BOTO3, get_aws_connection_info, boto3_conn, ec2_argument_spec, camel_dict_to_snake_dict
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -177,7 +172,8 @@ class AWSConnection:
     def __init__(self, ansible_obj, resources, boto3=True):
 
         try:
-            self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(ansible_obj, boto3=boto3)
+            self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(
+                ansible_obj, boto3=boto3)
             if not self.region:
                 raise AWSConnectionException('region must be specified')
 
@@ -195,8 +191,8 @@ class AWSConnection:
                                                ))
                 self.resource_client[resource] = boto3_conn(ansible_obj, **aws_connect_kwargs)
 
-        except (ClientError, ParamValidationError, MissingParametersError) as e:
-            ansible_obj.fail_json(msg="Unable to connect, authorize or access resource: {0}".format(e))
+        except Exception as e:
+            fail_json_aws(ansible_obj, e, msg="setting up AWS connection")
 
     def client(self, resource='lambda'):
         return self.resource_client[resource]
@@ -258,10 +254,12 @@ def validate_params(module, aws):
     # validate function name
     if not re.search('^[\w\-:]+$', function_name):
         module.fail_json(
-            msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(function_name)
+            msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(
+                function_name)
         )
     if len(function_name) > 64:
-        module.fail_json(msg='Function name "{0}" exceeds 64 character limit'.format(function_name))
+        module.fail_json(
+            msg='Function name "{0}" exceeds 64 character limit'.format(function_name))
 
     return
 
@@ -281,6 +279,37 @@ def get_qualifier(module):
         qualifier = str(module.params['alias'])
 
     return qualifier
+
+
+# There is a PR open to merge fail_json_aws this into the standard module code;
+# see https://github.com/ansible/ansible/pull/23882
+def fail_json_aws(module, exception, msg=None):
+    """call fail_json with processed exception
+    function for converting exceptions thrown by AWS SDK modules,
+    botocore, boto3 and boto, into nice error messages.
+    """
+    last_traceback = traceback.format_exc()
+
+    try:
+        except_msg = exception.message
+    except AttributeError:
+        except_msg = str(exception)
+
+    if msg is not None:
+        message = '{0}: {1}'.format(msg, except_msg)
+    else:
+        message = except_msg
+
+    try:
+        response = exception.response
+    except AttributeError:
+        response = None
+
+    if response is None:
+        module.fail_json(msg=message, exception=last_traceback)
+    else:
+        module.fail_json(msg=message, exception=last_traceback,
+                         **camel_dict_to_snake_dict(response))
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -315,9 +344,13 @@ def get_policy_statement(module, aws):
         policy_results = client.get_policy(**api_params)
         policy = json.loads(policy_results.get('Policy', '{}'))
 
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        if not e.response['Error']['Code'] == 'ResourceNotFoundException':
-            module.fail_json(msg='Error retrieving function policy: {0}'.format(e))
+    except Exception as e:
+        try:
+            rc = e.response['Error']['Code']
+            if rc != 'ResourceNotFoundException':
+                fail_json_aws(module, e, msg="retrieving function policy")
+        except Exception:
+            fail_json_aws(module, e, msg="retrieving function policy")
 
     if 'Statement' in policy:
         # Now that we have the policy, check if required permission statement is present and flatten to
@@ -356,7 +389,14 @@ def add_policy_permission(module, aws):
     changed = False
 
     # set API parameters
-    params = ('function_name', 'statement_id', 'action', 'principal', 'source_arn', 'source_account', 'event_source_token')
+    params = (
+        'function_name',
+        'statement_id',
+        'action',
+        'principal',
+        'source_arn',
+        'source_account',
+        'event_source_token')
     api_params = set_api_params(module, params)
     qualifier = get_qualifier(module)
     if qualifier:
@@ -366,8 +406,8 @@ def add_policy_permission(module, aws):
         if not module.check_mode:
             client.add_permission(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error adding permission to policy: {0}'.format(e))
+    except Exception as e:
+        fail_json_aws(module, e, msg="adding permission to policy")
 
     return changed
 
@@ -394,8 +434,8 @@ def remove_policy_permission(module, aws):
         if not module.check_mode:
             client.remove_permission(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error removing permission from policy: {0}'.format(e))
+    except Exception as e:
+        fail_json_aws(module, e, msg="removing permission from policy")
 
     return changed
 
@@ -471,9 +511,7 @@ def main():
 
     # validate dependencies
     if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module.')
-    if not HAS_BOTOCORE:
-        module.fail_json(msg='botocore (exceptions) is required for this module.')
+        module.fail_json(msg='boto3 and botocore are required for this module.')
 
     try:
         aws = AWSConnection(module, ['lambda'])
