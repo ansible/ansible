@@ -50,21 +50,37 @@ except NameError:
 logger = None
 # TODO: make this a logging callback instead
 
-LOG_FORMAT = "%(asctime)s [%(levelname)s] %(process)d | %(message)s"
-LOG_FORMAT_ALL_ATTRS = "%(asctime)s - name:%(name)s - level:%(levelname)s %(levelno)d - m:%(module)s fn:%(funcName)s:%(lineno)d " \
-    "- process:%(processName)s:%(process)d thread:%(threadName)s:%(thread)d - pn:%(pathname)s fn:%(filename)s - %(message)s"
-
-OLD_LOG_FORMAT = '%(asctime)s %(name)s %(message)s'
-log_format = LOG_FORMAT_ALL_ATTRS
-log_format = C.DEFAULT_LOG_FORMAT
 
 # could do with a logging filter or a few other ways
 _user = getpass.getuser()
 
+V = 17
+VV = V - 1
+VVV = VV - 1
+VVVV = VVV - 1
+VVVVV = VVVV - 1
+VVVVVV = VVVVV - 1
+
+logging.V = V
+logging.VV = VV
+logging.VVV = VVV
+logging.VVVV = VVVV
+logging.VVVVV = VVVVV
+logging.VVVVVV = VVVVV
+
+logging.addLevelName(V, 'V')
+logging.addLevelName(VV, 'VV')
+logging.addLevelName(VVV, 'VVV')
+logging.addLevelName(VVVV, 'VVVV')
+logging.addLevelName(VVVVV, 'VVVVV')
+logging.addLevelName(VVVVVV, 'VVVVVV')
+
+print(logging._levelNames)
+
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
     if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=C.DEFAULT_LOG_LEVEL, format=log_format)
+        logging.basicConfig(filename=path, level=C.DEFAULT_LOG_LEVEL, format=C.DEFAULT_LOG_FORMAT)
         logger = logging.getLogger('ansible')
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
@@ -76,6 +92,7 @@ b_COW_PATHS = (
     b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
 )
 
+
 # we could add custom log levels to get a 1:1 map
 # this seems kind of backwards to me...
 color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
@@ -86,7 +103,7 @@ color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
                       C.COLOR_DEBUG: logging.DEBUG,
                       C.COLOR_CHANGED: logging.INFO,
                       C.COLOR_DEPRECATE: logging.WARNING,
-                      C.COLOR_VERBOSE: logging.DEBUG}
+                      C.COLOR_VERBOSE: VV}
 
 
 class Display:
@@ -125,7 +142,8 @@ class Display:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, log_level=None):
+    def display(self, msg, color=None, stderr=False, screen_only=False,
+                log_only=False, log_level=None, cap_level=None):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
@@ -134,12 +152,15 @@ class Display:
         if color:
             log_level = color_to_log_level.get(color, logging.INFO)
 
+        if cap_level:
+            log_level = V - cap_level
         log_level = log_level or logging.INFO
 
         nocolor = msg
         if color:
             msg = stringc(msg, color)
 
+        # screen_only and log_only could be logging.Filter()s
         if not log_only:
             if not msg.endswith(u'\n'):
                 msg2 = msg + u'\n'
@@ -205,9 +226,9 @@ class Display:
     def verbose(self, msg, host=None, caplevel=2):
         if self.verbosity > caplevel:
             if host is None:
-                self.display(msg, color=C.COLOR_VERBOSE)
+                self.display(msg, color=C.COLOR_VERBOSE, cap_level=caplevel)
             else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True)
+                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True, cap_level=caplevel)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
