@@ -18,10 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'metadata_version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -40,28 +41,22 @@ options:
   module:
     description:
       - The BIG-IP module to add the iRule to.
-    required: true
+    required: True
     choices:
       - ltm
       - gtm
-  partition:
-    description:
-      - The partition to create the iRule on.
-    required: false
-    default: Common
   name:
     description:
       - The name of the iRule.
-    required: true
+    required: True
   src:
     description:
       - The iRule file to interpret and upload to the BIG-IP. Either one
         of C(src) or C(content) must be provided.
-    required: true
+    required: True
   state:
     description:
       - Whether the iRule should exist or not.
-    required: false
     default: present
     choices:
       - present
@@ -77,9 +72,9 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Add the iRule contained in templated irule.tcl to the LTM module
+- name: Add the iRule contained in template irule.tcl to the LTM module
   bigip_irule:
-      content: "{{ lookup('template', 'irule-template.tcl') }}"
+      content: "{{ lookup('template', 'irule.tcl') }}"
       module: "ltm"
       name: "MyiRule"
       password: "secret"
@@ -94,7 +89,7 @@ EXAMPLES = '''
       name: "MyiRule"
       password: "secret"
       server: "lb.mydomain.com"
-      src: "irule-static.tcl"
+      src: "irule.tcl"
       state: "present"
       user: "admin"
   delegate_to: localhost
@@ -111,62 +106,112 @@ src:
     returned: changed and success, when provided
     type: string
     sample: "/opt/src/irules/example1.tcl"
-name:
-    description: The name of the iRule that was managed
-    returned: changed and success
-    type: string
-    sample: "my-irule"
 content:
     description: The content of the iRule that was managed
     returned: changed and success
     type: string
     sample: "when LB_FAILED { set wipHost [LB::server addr] }"
-partition:
-    description: The partition in which the iRule was managed
-    returned: changed and success
-    type: string
-    sample: "Common"
 '''
 
-try:
-    from f5.bigip import ManagementRoot
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
+from ansible.module_utils.f5_utils import (
+    AnsibleF5Client,
+    AnsibleF5Parameters,
+    HAS_F5SDK,
+    F5ModuleError,
+    iControlUnexpectedHTTPError
+)
 
-MODULES = ['gtm', 'ltm']
+
+class Parameters(AnsibleF5Parameters):
+    api_map = {
+        'apiAnonymous': 'content'
+    }
+
+    updatables = [
+        'content'
+    ]
+
+    api_attributes = [
+        'apiAnonymous'
+    ]
+
+    returnables = [
+        'content', 'src', 'module'
+    ]
+
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+    def api_params(self):
+        result = {}
+        for api_attribute in self.api_attributes:
+            if self.api_map is not None and api_attribute in self.api_map:
+                result[api_attribute] = getattr(self, self.api_map[api_attribute])
+            else:
+                result[api_attribute] = getattr(self, api_attribute)
+        result = self._filter_params(result)
+        return result
+
+    @property
+    def content(self):
+        if self._values['content'] is None:
+            return None
+        return str(self._values['content']).strip()
+
+    @property
+    def src(self):
+        if self._values['src'] is None:
+            return None
+        return self._values['src']
+
+    @src.setter
+    def src(self, value):
+        if value:
+            self._values['src'] = value
+            with open(value) as f:
+                result = f.read()
+            self._values['content'] = result
 
 
-class BigIpiRule(object):
-    def __init__(self, *args, **kwargs):
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
+class ModuleManager(object):
+    def __init__(self, client):
+        self.client = client
 
-        if kwargs['state'] != 'absent':
-            if not kwargs['content'] and not kwargs['src']:
-                raise F5ModuleError(
-                    "Either 'content' or 'src' must be provided"
-                )
+    def exec_module(self):
+        if self.client.module.params['module'] == 'ltm':
+            manager = self.get_manager('ltm')
+        elif self.client.module.params['module'] == 'gtm':
+            manager = self.get_manager('gtm')
+        else:
+            raise F5ModuleError(
+                "An unknown iRule module type was specified"
+            )
+        return manager.exec_module()
 
-        source = kwargs['src']
-        if source:
-            with open(source) as f:
-                kwargs['content'] = f.read()
+    def get_manager(self, type):
+        if type == 'ltm':
+            return LtmManager(self.client)
+        elif type == 'gtm':
+            return GtmManager(self.client)
 
-        # The params that change in the module
-        self.cparams = dict()
 
-        # Stores the params that are sent to the module
-        self.params = kwargs
-        self.api = ManagementRoot(kwargs['server'],
-                                  kwargs['user'],
-                                  kwargs['password'],
-                                  port=kwargs['server_port'])
+class BaseManager(object):
+    def __init__(self, client):
+        self.client = client
+        self.want = Parameters(self.client.module.params)
+        self.changes = Parameters()
 
-    def flush(self):
+    def exec_module(self):
+        changed = False
         result = dict()
-        state = self.params['state']
+        state = self.want.state
 
         try:
             if state == "present":
@@ -176,214 +221,206 @@ class BigIpiRule(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        result.update(**self.cparams)
+        changes = self.changes.to_return()
+        result.update(**changes)
         result.update(dict(changed=changed))
         return result
 
-    def read(self):
-        """Read information and transform it
+    def _set_changed_options(self):
+        changed = {}
+        for key in Parameters.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = Parameters(changed)
 
-        The values that are returned by BIG-IP in the f5-sdk can have encoding
-        attached to them as well as be completely missing in some cases.
-
-        Therefore, this method will transform the data from the BIG-IP into a
-        format that is more easily consumable by the rest of the class and the
-        parameters that are supported by the module.
-        """
-        p = dict()
-        name = self.params['name']
-        partition = self.params['partition']
-        module = self.params['module']
-
-        if module == 'ltm':
-            r = self.api.tm.ltm.rules.rule.load(
-                name=name,
-                partition=partition
-            )
-        elif module == 'gtm':
-            r = self.api.tm.gtm.rules.rule.load(
-                name=name,
-                partition=partition
-            )
-
-        if hasattr(r, 'apiAnonymous'):
-            p['content'] = str(r.apiAnonymous.strip())
-        p['name'] = name
-        return p
-
-    def delete(self):
-        params = dict()
-        check_mode = self.params['check_mode']
-        module = self.params['module']
-
-        params['name'] = self.params['name']
-        params['partition'] = self.params['partition']
-
-        self.cparams = camel_dict_to_snake_dict(params)
-        if check_mode:
+    def _update_changed_options(self):
+        changed = {}
+        for key in Parameters.updatables:
+            if getattr(self.want, key) is not None:
+                attr1 = getattr(self.want, key)
+                attr2 = getattr(self.have, key)
+                if attr1 != attr2:
+                    changed[key] = attr1
+        if changed:
+            self.changes = Parameters(changed)
             return True
-
-        if module == 'ltm':
-            r = self.api.tm.ltm.rules.rule.load(**params)
-            r.delete()
-        elif module == 'gtm':
-            r = self.api.tm.gtm.rules.rule.load(**params)
-            r.delete()
-
-        if self.exists():
-            raise F5ModuleError("Failed to delete the iRule")
-        return True
-
-    def exists(self):
-        name = self.params['name']
-        partition = self.params['partition']
-        module = self.params['module']
-
-        if module == 'ltm':
-            return self.api.tm.ltm.rules.rule.exists(
-                name=name,
-                partition=partition
-            )
-        elif module == 'gtm':
-            return self.api.tm.gtm.rules.rule.exists(
-                name=name,
-                partition=partition
-            )
+        return False
 
     def present(self):
+        if not self.want.content and not self.want.src:
+            raise F5ModuleError(
+                "Either 'content' or 'src' must be provided"
+            )
         if self.exists():
             return self.update()
         else:
             return self.create()
 
-    def update(self):
-        params = dict()
-        current = self.read()
-        changed = False
-
-        check_mode = self.params['check_mode']
-        content = self.params['content']
-        name = self.params['name']
-        partition = self.params['partition']
-        module = self.params['module']
-
-        if content is not None:
-            content = content.strip()
-            if 'content' in current:
-                if content != current['content']:
-                    params['apiAnonymous'] = content
-            else:
-                params['apiAnonymous'] = content
-
-        if params:
-            changed = True
-            params['name'] = name
-            params['partition'] = partition
-            self.cparams = camel_dict_to_snake_dict(params)
-            if 'api_anonymous' in self.cparams:
-                self.cparams['content'] = self.cparams.pop('api_anonymous')
-            if self.params['src']:
-                self.cparams['src'] = self.params['src']
-
-            if check_mode:
-                return changed
-        else:
-            return changed
-
-        if module == 'ltm':
-            d = self.api.tm.ltm.rules.rule.load(
-                name=name,
-                partition=partition
-            )
-            d.update(**params)
-            d.refresh()
-        elif module == 'gtm':
-            d = self.api.tm.gtm.rules.rule.load(
-                name=name,
-                partition=partition
-            )
-            d.update(**params)
-            d.refresh()
-
-        return True
-
     def create(self):
-        params = dict()
-
-        check_mode = self.params['check_mode']
-        content = self.params['content']
-        name = self.params['name']
-        partition = self.params['partition']
-        module = self.params['module']
-
-        if check_mode:
+        self._set_changed_options()
+        if self.client.check_mode:
             return True
-
-        if content is not None:
-            params['apiAnonymous'] = content.strip()
-
-        params['name'] = name
-        params['partition'] = partition
-
-        self.cparams = camel_dict_to_snake_dict(params)
-        if 'api_anonymous' in self.cparams:
-            self.cparams['content'] = self.cparams.pop('api_anonymous')
-        if self.params['src']:
-            self.cparams['src'] = self.params['src']
-
-        if check_mode:
-            return True
-
-        if module == 'ltm':
-            d = self.api.tm.ltm.rules.rule
-            d.create(**params)
-        elif module == 'gtm':
-            d = self.api.tm.gtm.rules.rule
-            d.create(**params)
-
+        self.create_on_device()
         if not self.exists():
             raise F5ModuleError("Failed to create the iRule")
         return True
 
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
+
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.client.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
     def absent(self):
-        changed = False
-
         if self.exists():
-            changed = self.delete()
+            return self.remove()
+        return False
 
-        return changed
+    def remove(self):
+        if self.client.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the iRule")
+        return True
+
+
+class LtmManager(BaseManager):
+    def exists(self):
+        result = self.client.api.tm.ltm.rules.rule.exists(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        return result
+
+    def update_on_device(self):
+        params = self.want.api_params()
+        resource = self.client.api.tm.ltm.rules.rule.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        resource.update(**params)
+
+    def create_on_device(self):
+        params = self.want.api_params()
+        resource = self.client.api.tm.ltm.rules.rule
+        resource.create(
+            name=self.want.name,
+            partition=self.want.partition,
+            **params
+        )
+
+    def read_current_from_device(self):
+        resource = self.client.api.tm.ltm.rules.rule.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result = resource.attrs
+        return Parameters(result)
+
+    def remove_from_device(self):
+        resource = self.client.api.tm.ltm.rules.rule.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        resource.delete()
+
+
+class GtmManager(BaseManager):
+    def read_current_from_device(self):
+        resource = self.client.api.tm.gtm.rules.rule.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result = resource.attrs
+        return Parameters(result)
+
+    def remove_from_device(self):
+        resource = self.client.api.tm.gtm.rules.rule.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        resource.delete()
+
+    def exists(self):
+        result = self.client.api.tm.gtm.rules.rule.exists(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        return result
+
+    def update_on_device(self):
+        params = self.want.api_params()
+        resource = self.client.api.tm.gtm.rules.rule.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        resource.update(**params)
+
+    def create_on_device(self):
+        params = self.want.api_params()
+        resource = self.client.api.tm.gtm.rules.rule
+        resource.create(
+            name=self.want.name,
+            partition=self.want.partition,
+            **params
+        )
+
+
+class ArgumentSpec(object):
+    def __init__(self):
+        self.supports_check_mode = True
+        self.argument_spec = dict(
+            content=dict(
+                required=False,
+                default=None
+            ),
+            src=dict(
+                required=False,
+                default=None
+            ),
+            name=dict(required=True),
+            module=dict(
+                required=True,
+                choices=['gtm', 'ltm']
+            )
+        )
+        self.mutually_exclusive = [
+            ['content', 'src']
+        ]
+        self.f5_product_name = 'bigip'
 
 
 def main():
-    argument_spec = f5_argument_spec()
+    if not HAS_F5SDK:
+        raise F5ModuleError("The python f5-sdk module is required")
 
-    meta_args = dict(
-        content=dict(required=False, default=None),
-        src=dict(required=False, default=None),
-        name=dict(required=True),
-        module=dict(required=True, choices=MODULES)
-    )
-    argument_spec.update(meta_args)
+    spec = ArgumentSpec()
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
-        mutually_exclusive=[
-            ['content', 'src']
-        ]
+    client = AnsibleF5Client(
+        argument_spec=spec.argument_spec,
+        mutually_exclusive=spec.mutually_exclusive,
+        supports_check_mode=spec.supports_check_mode,
+        f5_product_name=spec.f5_product_name
     )
 
     try:
-        obj = BigIpiRule(check_mode=module.check_mode, **module.params)
-        result = obj.flush()
-
-        module.exit_json(**result)
+        mm = ModuleManager(client)
+        results = mm.exec_module()
+        client.module.exit_json(**results)
     except F5ModuleError as e:
-        module.fail_json(msg=str(e))
+        client.module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()
