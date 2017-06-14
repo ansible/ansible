@@ -64,6 +64,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         try:
             for h in host_list.split(','):
+                h = h.strip()
                 if h:
                     try:
                         (host, port) = parse_address(h, allow_ranges=False)
