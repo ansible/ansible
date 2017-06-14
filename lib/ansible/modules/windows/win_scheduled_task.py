@@ -81,7 +81,8 @@ options:
       - Days of the week to run a weekly task, not idempotent
   path:
     description:
-      - Task folder in which this task will be stored
+      - Task folder in which this task will be stored - creates a non-existent path when C(state) is C(present),
+        and removes an empty path when C(state) is C(absent)
     default: '\'
 '''
 
@@ -92,7 +93,7 @@ EXAMPLES = r'''
     description: open command prompt
     executable: cmd
     arguments: -opt1 -opt2
-    path: example
+    path: \example
     time: 9am
     frequency: daily
     state: present
