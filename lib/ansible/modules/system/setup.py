@@ -63,6 +63,15 @@ options:
               File/results format can be json or ini-format
         required: false
         default: '/etc/ansible/facts.d'
+    fail_on_error:
+        version_added: '2.4'
+        description:
+            - if fail_on_error is True, any exceptions encounted while collecting facts will cause the module
+              to return a failure. The first exception will be returned in the 'exception' return value.
+              The default (False) will cause the module to return success even if one or more
+              fact collectors failed. All fact collector exceptions encounted will be included
+              in the facts_exceptions return value in either case, but only fail_on_error=True will
+              cause the module to fail.
 description:
      - This module is automatically called by playbooks to gather useful
        variables about remote hosts that can be used in playbooks. It can also be
@@ -161,7 +170,7 @@ class AnsibleFactCollector(collector.BaseFactCollector):
 
         facts_dict = {}
         facts_dict['ansible_facts'] = {}
-        facts_dict['ansible_facts_exceptions'] = {}
+        facts_dict['ansible_facts_exceptions'] = []
 
         for collector_obj in self.collectors:
             info_dict = {}
@@ -178,16 +187,17 @@ class AnsibleFactCollector(collector.BaseFactCollector):
                 # Note: this collects with namespaces, so collected_facts also includes namespaces
                 info_dict = collector_obj.collect_with_namespace(module=module,
                                                                  collected_facts=collected_facts)
-                errors = info_dict.pop('ansible_facts_exceptions', None)
+                errors = info_dict.pop('ansible_facts_exceptions', [])
             except Exception as e:
                 errors.append({'error_message': to_text(e),
                                'traceback': traceback.format_exc()})
 
-            if errors:
-                error_dict[collector_obj.name] = errors
+            for error in errors:
+                error['collector_name'] = collector_obj.name
+                #error_dict[collector_obj.name] = errors
 
-            if error_dict:
-                facts_dict['ansible_facts_exceptions'].update(error_dict)
+            if errors:
+                facts_dict['ansible_facts_exceptions'].extend(errors)
 
             # filtered_info_dict = self._filter(info_dict, self.filter_spec)
             # NOTE: If we want complicated fact dict merging, this is where it would hook in
@@ -223,6 +233,7 @@ def main():
             gather_timeout=dict(default=10, required=False, type='int'),
             filter=dict(default="*", required=False),
             fact_path=dict(default='/etc/ansible/facts.d', required=False, type='path'),
+            fail_on_error=dict(default=False, required=False, type='bool')
         ),
         supports_check_mode=True,
     )
@@ -230,6 +241,7 @@ def main():
     gather_subset = module.params['gather_subset']
     gather_timeout = module.params['gather_timeout']
     filter_spec = module.params['filter']
+    fail_on_error = module.params['fail_on_error']
 
     # TODO: this mimics existing behavior where gather_subset=["!all"] actually means
     #       to collect nothing except for the below list
@@ -272,6 +284,13 @@ def main():
                              filter_spec=filter_spec)
 
     facts_dict = fact_collector.collect(module=module)
+
+    if fail_on_error:
+        facts_exceptions = facts_dict.get('ansible_facts_exceptions', None)
+        if facts_exceptions:
+            module.fail_json(msg='There was one or more exceptions while collecting facts and fail_on_error is True. The first exception is provided as the \'exception\' return value.',
+                             facts_exceptions=facts_exceptions,
+                             exception=facts_exceptions[0]['traceback'])
 
     module.exit_json(**facts_dict)
 
