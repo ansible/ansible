@@ -7,17 +7,19 @@
 - name: disable epel
   yum_repository:
     name: epel
-    description: EPEL yum repo
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
     state: absent
 
 - name: disable epel (Idempotant)
   yum_repository:
     name: epel
-    description: EPEL yum repo
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
     state: absent
   register: epel_remove
+
+- name: check return values
+  assert:
+    that:
+      - "epel_remove.repo == \"epel\""
+      - "epel_remove.state == \"absent\""
 
 - name: check Idempotant
   assert:
@@ -45,6 +47,13 @@
     baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
     state: present
   register: epel_add
+
+- name: check return values
+  assert:
+    that:
+      - "epel_add.repo == \"epel\""
+      - "epel_add.state == \"present\""
+
 
 - name: get repolist
   shell: yum repolist
