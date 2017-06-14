@@ -117,11 +117,9 @@ class GalaxyCLI(CLI):
         if self.action not in ("delete", "import", "init", "login", "setup"):
             # NOTE: while the option type=str, the default is a list, and the
             # callback will set the value to a list.
-            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.expand_paths, type=str,
-                                   default=C.DEFAULT_ROLES_PATH,
-                                   help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg '
-                                        'file (/etc/ansible/roles if not configured)')
-
+            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.unfrack_paths, default=C.DEFAULT_ROLES_PATH,
+                                   help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg'
+                                        'file (/etc/ansible/roles if not configured)', type="string")
         if self.action in ("init", "install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
@@ -308,16 +306,13 @@ class GalaxyCLI(CLI):
         uses the args list of roles to be installed, unless -f was specified. The list of roles
         can be a name (which will be downloaded via the galaxy API and github), or it can be a local .tar.gz file.
         """
-
         role_file = self.get_opt("role_file", None)
 
         if len(self.args) == 0 and role_file is None:
-            # the user needs to specify one of either --role-file
-            # or specify a single user/role name
+            # the user needs to specify one of either --role-file or specify a single user/role name
             raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
         elif len(self.args) == 1 and role_file is not None:
-            # using a role file is mutually exclusive of specifying
-            # the role name on the command line
+            # using a role file is mutually exclusive of specifying the role name on the command line
             raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
 
         no_deps = self.get_opt("no_deps", False)
