@@ -120,6 +120,7 @@ import xml.etree.ElementTree as ET
 
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import sort_json_policy_dict
@@ -153,6 +154,95 @@ def create_tags_container(tags):
 
     tags_obj.add_tag_set(tag_set)
     return tags_obj
+
+
+def compare_policy_statement_part(current, new):
+    ''' Takes a matching part of a current policy statement and the
+        new policy statement and compares them. Ensures lists are
+        compared to other lists and calls itself recursively for dicts
+        so nesting structures are as expected.
+        Returns True if the policy has changed.
+    '''
+    if current != new:
+        if isinstance(current, dict):
+            if set(current.keys()) != set(new.keys()):
+                return True
+            for each in set(current.keys()):
+                current_inner = current[each]
+                new_inner = new[each]
+                # recursively checking each value in the dicts
+                if compare_policy_statement_part(current_inner, new_inner):
+                    return True
+        if isinstance(current, list) and isinstance(new, string_types):
+            current = [to_text(each) for each in current]
+            new = [to_text(new)]
+        elif isinstance(new, list) and isinstance(current, string_types):
+            new = [to_text(each) for each in new]
+            current = [to_text(current)]
+        if not isinstance(current, dict) and current != new:
+            return True
+
+    return False
+
+
+def sort_policy_statement(current_policy, new_policy):
+    ''' Takes two policies and looks for matching statement parts (since it is a list of dicts
+        and cannot be easily ordered).
+        Returns a list of tuple pairs that can then be given to
+        compare_policy_statement_part()
+        Return sample:
+          [({
+             "Sid":"AddCannedAcl",
+             "Effect":"Allow",
+             "Principal": {
+               "AWS": "arn:aws:iam::XXXXXXXXXXXX:user/name"
+             },
+             "Action":["s3:PutObjectAcl"],
+             "Resource": "arn:aws:s3:::XXXXXXXX/*"
+           },
+            {
+             "Sid": "AddCannedAcl",
+             "Effect": "Allow",
+             "Principal": {
+                "AWS": ["arn:aws:iam::XXXXXXXXXXXX:user/name"]
+             },
+             "Action": "s3:PutObjectAcl",
+             "Resource": ["arn:aws:s3:::XXXXXXXX/*"]
+           })]
+    '''
+    policy_pairs = []
+    for policy_chunk in range(0, len(current_policy.get(u'Statement'))):
+        old_chunk = current_policy[u'Statement'][policy_chunk]
+        for chunk in range(0, len(current_policy.get(u'Statement'))):
+            this_chunk = new_policy[u'Statement'][chunk]
+            if old_chunk[u'Sid'] == this_chunk[u'Sid']:
+                policy_pairs.append((old_chunk, this_chunk))
+        if len(policy_pairs) != policy_chunk + 1:
+            # don't waste more time searching if a match wasn't found
+            return policy_pairs
+    return policy_pairs
+
+
+def compare_policies(current_policy, new_policy):
+    ''' Compares the existing policy and the updated policy
+        Returns True if there is a difference between policies.
+    '''
+    # check the easily spotted things
+    if set(current_policy.keys()) != set(new_policy.keys()):
+        return True
+    if current_policy.get(u'Version') != new_policy.get(u'Version'):
+        return True
+    if len(current_policy.get(u'Statement')) != len(new_policy.get(u'Statement')):
+        return True
+    # sort the policy statement
+    matches = sort_policy_statement(current_policy, new_policy)
+    if len(matches) < len(new_policy.get(u'Statement')):
+        return True
+    # look at each sorted piece of the policy
+    for policy_chunks in matches:
+        if compare_policy_statement_part(policy_chunks[0], policy_chunks[1]):
+            return True
+    return False
 
 
 def _create_or_update_bucket(connection, module, location):
@@ -220,9 +310,11 @@ def _create_or_update_bucket(connection, module, location):
             changed = bool(current_policy)
 
         elif sort_json_policy_dict(current_policy) != sort_json_policy_dict(policy):
+            # doesn't necessarily mean the policy has changed; syntax could differ
+            changed = compare_policies(sort_json_policy_dict(current_policy), sort_json_policy_dict(policy))
             try:
-                bucket.set_policy(json.dumps(policy))
-                changed = True
+                if changed:
+                    bucket.set_policy(json.dumps(policy))
                 current_policy = json.loads(bucket.get_policy())
             except S3ResponseError as e:
                 module.fail_json(msg=e.message)
