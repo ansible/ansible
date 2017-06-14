@@ -29,7 +29,7 @@ DOCUMENTATION = """
 module: junos_vlan
 version_added: "2.4"
 author: "Ganesh Nalawade (@ganeshrn)"
-short_description: Manage VLANs on Arista JUNOS network devices
+short_description: Manage VLANs on Juniper JUNOS network devices
 description:
   - This module provides declarative management of VLANs
     on Juniper JUNOS network devices.
@@ -79,6 +79,8 @@ from xml.etree.ElementTree import tostring
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+
+USE_PERSISTENT_CONNECTION = True
 
 
 def validate_vlan_id(value, module):

@@ -39,7 +39,6 @@
 - assert:
     that:
       - "result.changed == false"
-      - "result.rpc | length == 0"
 
 - name: Deactivate vlan
   junos_vlan:
@@ -73,7 +72,7 @@
   junos_vlan:
     vlan_id: 100
     name: test-vlan
-    state: active
+    state: absent
     provider: "{{ netconf }}"
   register: result
 

@@ -245,13 +245,14 @@ def map_obj_to_ele(module, want, top):
                 node.set('inactive', 'inactive')
 
         for key, value in obj.items():
-            ele = node
-            tags = key.split('/')
-            for item in tags:
-                ele = SubElement(ele, item)
             if value:
+                ele = node
+                tags = key.split('/')
+                for item in tags:
+                    ele = SubElement(ele, item)
+
                 ele.text = to_text(value, errors='surrogate_then_replace')
-            if state != 'present':
-                break
+                if state != 'present':
+                    break
 
     return root
