@@ -192,7 +192,10 @@ class JenkinsJob:
         }
 
         # This kind of jobs do not have a property that makes them enabled/disabled
-        self.job_classes_exceptions = ["jenkins.branch.OrganizationFolder"]
+        self.job_classes_exceptions = [
+            "jenkins.branch.OrganizationFolder",
+            "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject"
+        ]
 
         self.EXCL_STATE = "excluded state"
 
