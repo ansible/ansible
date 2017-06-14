@@ -195,6 +195,7 @@ output:
 # Import from Python standard library
 import base64
 import hashlib
+import traceback
 
 try:
     import botocore
@@ -202,11 +203,9 @@ try:
 except ImportError:
     HAS_BOTOCORE = False
 
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
 
 
 def get_current_function(connection, function_name, qualifier=None):
@@ -231,26 +230,58 @@ def sha256sum(filename):
     return hex_digest
 
 
+# There is a PR open to merge fail_json_aws this into the standard module code;
+# see https://github.com/ansible/ansible/pull/23882
+def fail_json_aws(module, exception, msg=None):
+    """call fail_json with processed exception
+    function for converting exceptions thrown by AWS SDK modules,
+    botocore, boto3 and boto, into nice error messages.
+    """
+    last_traceback = traceback.format_exc()
+
+    try:
+        except_msg = exception.message
+    except AttributeError:
+        except_msg = str(exception)
+
+    if msg is not None:
+        message = '{}: {}'.format(msg, except_msg)
+    else:
+        message = except_msg
+
+    try:
+        response = exception.response
+    except AttributeError:
+        response = None
+
+    if response is None:
+        module.fail_json(msg=message, traceback=last_traceback)
+    else:
+        module.fail_json(msg=message, traceback=last_traceback,
+                         **camel_dict_to_snake_dict(response))
+
+
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        name=dict(type='str', required=True),
-        state=dict(type='str', default='present', choices=['present', 'absent']),
-        runtime=dict(type='str'),
-        role=dict(type='str'),
-        handler=dict(type='str', default=None),
-        zip_file=dict(type='str', default=None, aliases=['src']),
-        s3_bucket=dict(type='str'),
-        s3_key=dict(type='str'),
-        s3_object_version=dict(type='str', default=None),
-        description=dict(type='str', default=''),
-        timeout=dict(type='int', default=3),
-        memory_size=dict(type='int', default=128),
-        vpc_subnet_ids=dict(type='list', default=None),
-        vpc_security_group_ids=dict(type='list', default=None),
-        environment_variables=dict(type='dict', default=None),
-        dead_letter_arn=dict(type='str', default=None),
-    )
+    argument_spec.update(
+        dict(
+            name=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            runtime=dict(),
+            role=dict(),
+            handler=dict(),
+            zip_file=dict(aliases=['src']),
+            s3_bucket=dict(),
+            s3_key=dict(),
+            s3_object_version=dict(),
+            description=dict(default=''),
+            timeout=dict(type='int', default=3),
+            memory_size=dict(type='int', default=128),
+            vpc_subnet_ids=dict(type='list'),
+            vpc_security_group_ids=dict(type='list'),
+            environment_variables=dict(type='dict'),
+            dead_letter_arn=dict(),
+        )
     )
 
     mutually_exclusive = [['zip_file', 's3_key'],
@@ -302,7 +333,7 @@ def main():
         client = boto3_conn(module, conn_type='client', resource='lambda',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg=str(e))
+        fail_json_aws(module, e, msg="connecting to AWS")
 
     if state == 'present':
         if role.startswith('arn:aws:iam'):
@@ -311,11 +342,11 @@ def main():
             # get account ID and assemble ARN
             try:
                 iam_client = boto3_conn(module, conn_type='client', resource='iam',
-                                    region=region, endpoint=ec2_url, **aws_connect_kwargs)
+                                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
                 account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
                 role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
-            except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-                module.fail_json(msg=str(e))
+            except Exception as e:
+                fail_json_aws(module, e, msg="getting account information")
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
@@ -373,7 +404,7 @@ def main():
 
             if 'VpcConfig' not in current_config or subnet_net_id_changed or vpc_security_group_ids_changed:
                 func_kwargs.update({'VpcConfig':
-                                    {'SubnetIds': vpc_subnet_ids,'SecurityGroupIds': vpc_security_group_ids}})
+                                    {'SubnetIds': vpc_subnet_ids, 'SecurityGroupIds': vpc_security_group_ids}})
         else:
             # No VPC configuration is desired, assure VPC config is empty when present in current config
             if ('VpcConfig' in current_config and
@@ -389,7 +420,7 @@ def main():
                     current_version = response['Version']
                 changed = True
             except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
-                module.fail_json(msg=str(e))
+                fail_json_aws(module, e, msg="updating function configuration")
 
         # Update code configuration
         code_kwargs = {'FunctionName': name, 'Publish': True}
@@ -415,7 +446,7 @@ def main():
                         encoded_zip = f.read()
                     code_kwargs.update({'ZipFile': encoded_zip})
                 except IOError as e:
-                    module.fail_json(msg=str(e))
+                    module.fail_json(msg=str(e), exception=traceback.format_exc())
 
         # Upload new code if needed (e.g. code checksum has changed)
         if len(code_kwargs) > 2:
@@ -425,7 +456,7 @@ def main():
                     current_version = response['Version']
                 changed = True
             except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
-                module.fail_json(msg=str(e))
+                fail_json_aws(module, e, msg="updating function code")
 
         # Describe function code and configuration
         response = get_current_function(client, name, qualifier=current_version)
@@ -451,7 +482,7 @@ def main():
 
                 code = {'ZipFile': zip_content}
             except IOError as e:
-                module.fail_json(msg=str(e))
+                module.fail_json(msg=str(e), exception=traceback.format_exc())
 
         else:
             module.fail_json(msg='Either S3 object or path to zipfile required')
@@ -491,7 +522,7 @@ def main():
                 current_version = response['Version']
             changed = True
         except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
-            module.fail_json(msg=str(e))
+            fail_json_aws(module, e, msg="creating new function")
 
         response = get_current_function(client, name, qualifier=current_version)
         if not response:
@@ -505,7 +536,7 @@ def main():
                 client.delete_function(FunctionName=name)
             changed = True
         except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
-            module.fail_json(msg=str(e))
+            fail_json_aws(module, e, msg="deleting function")
 
         module.exit_json(changed=changed)
 
@@ -513,9 +544,6 @@ def main():
     elif state == 'absent':
         module.exit_json(changed=changed)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
