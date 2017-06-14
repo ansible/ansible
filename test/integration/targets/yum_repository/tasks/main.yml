@@ -1,4 +1,4 @@
-# (c) 2014, James Tanner <tanner.jc@gmail.com>
+# (c) 2017, Red Hat <davidn@redhat.coms>
 
 # This file is part of Ansible
 #
@@ -15,5 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
- - include: 'yum_repository.yml'
-   when: ansible_distribution in ('CentOS')
+ - include: 'yum_repository_centos.yml'
+   when: ansible_distribution in ['CentOS']
+
+# separate file for fedora because repos, package managers and packages are
+# different
+ - include: 'yum_repository_fedora.yml'
+   when: ansible_distribution in ['Fedora']

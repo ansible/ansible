@@ -1,4 +1,8 @@
 ---
+- name: ensure sl is uninstalled to begin with
+  yum:
+    name: sl
+    state: absent
 
 - name: disable epel
   yum_repository:
@@ -19,7 +23,7 @@
   assert:
     that: not epel_remove.changed
 
-- name: install sl
+- name: install sl, which should fail
   yum:
     name: sl
     state: present
@@ -97,6 +101,24 @@
       - "\"exclude = ['sl']\" in repofile.stdout"
       - "\"ip_resolve = 4\" in repofile.stdout"
       - "\"keepalive = 0\" in repofile.stdout"
+
+- name: check new config doesn't change (Idempotant)
+  yum_repository:
+    name: epel
+    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    description: New description
+    async: no
+    enablegroups: no
+    file: epel2
+    exclude:
+      - sl
+    ip_resolve: 4
+    keepalive: no
+  register: epel_add
+
+- name: check Idempotant
+  assert:
+    that: not epel_add.changed
 
 - name: re-enable the epel repo
   yum_repository:
