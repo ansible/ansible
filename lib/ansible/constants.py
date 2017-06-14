@@ -238,6 +238,7 @@ DEFAULT_ALLOW_UNSAFE_LOOKUPS = get_config(p, DEFAULTS, 'allow_unsafe_lookups', N
 ERROR_ON_MISSING_HANDLER = get_config(p, DEFAULTS, 'error_on_missing_handler', 'ANSIBLE_ERROR_ON_MISSING_HANDLER', True, value_type='boolean')
 SHOW_CUSTOM_STATS = get_config(p, DEFAULTS, 'show_custom_stats', 'ANSIBLE_SHOW_CUSTOM_STATS', False, value_type='boolean')
 NAMESPACE_FACTS = get_config(p, DEFAULTS, 'restrict_facts_namespace', 'ANSIBLE_RESTRICT_FACTS', False, value_type='boolean')
+DEFAULT_SKIP_ROLE_DEPENDENCIES    = get_config(p, DEFAULTS, 'skip_role_dependencies', 'ANSIBLE_SKIP_ROLE_DEPENDENCIES', False, value_type='boolean')
 
 # Inventory
 DEFAULT_HOST_LIST = get_config(p, DEFAULTS, 'inventory', 'ANSIBLE_INVENTORY', '/etc/ansible/hosts', value_type='path', expand_relative_paths=True)
