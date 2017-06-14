@@ -115,6 +115,8 @@ $result = @{
 }
 
 $params = Parse-Args $args -supports_check_mode $true
+
+# While the -SmbShare cmdlets have a -WhatIf parameter, they don't honor it, need to skip the cmdlet if in check mode
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
@@ -128,6 +130,7 @@ Try {
     $share = Get-SmbShare -Name $name -ErrorAction SilentlyContinue
     If ($state -eq "absent") {
         If ($share) {
+            # See message around -WhatIf where $check_mode is defined
             if (-not $check_mode) {
                 Remove-SmbShare -Force -Name $name
             }
