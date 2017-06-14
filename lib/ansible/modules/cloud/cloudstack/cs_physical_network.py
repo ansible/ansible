@@ -111,6 +111,11 @@ options:
     required: false
     default: 'present'
     choices: [ 'present', 'absent', 'disabled', 'enabled' ]
+  poll_async:
+    description:
+      - "Poll async jobs until job has finished."
+    required: false
+    default: true
 extends_documentation_fragment: cloudstack
 '''
 
@@ -303,8 +308,12 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         if 'errortext' in res:
             self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
+        poll_async = self.module.params.get('poll_async')
+        if poll_async:
+            nsp = self.poll_job(res, 'networkserviceprovider')
+
         self.result['changed'] = True
-        return res
+        return nsp
 
     def get_vrouter_element(self, nsp_name='VirtualRouter'):
         nsp = self.get_nsp(nsp_name)
@@ -351,8 +360,12 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         if 'errortext' in res:
             self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
+        poll_async = self.module.params.get('poll_async')
+        if poll_async:
+            vrouter = self.poll_job(res, 'virtualrouterelement')
+
         self.result['changed'] = True
-        return res
+        return vrouter
 
     def set_loadbalancer_element_state(self, enabled, nsp_name='InternalLbVm'):
         loadbalancer = self.get_loadbalancer_element(nsp_name=nsp_name)
@@ -367,8 +380,12 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         if 'errortext' in res:
             self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
+        poll_async = self.module.params.get('poll_async')
+        if poll_async:
+            loadbalancer = self.poll_job(res, 'internalloadbalancerelement')
+
         self.result['changed'] = True
-        return res
+        return loadbalancer
 
     def present_network(self):
         network = self.get_network()
@@ -399,8 +416,12 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             res = self.cs.createPhysicalNetwork(**args)
             if 'errortext' in res:
                 self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-            id = res['id']
-        return id
+
+            poll_async = self.module.params.get('poll_async')
+            if poll_async:
+                self.network = self.poll_job(res, 'physicalnetwork')
+
+        return self.network
 
     def _update_network(self):
         network = self.get_network()
@@ -415,6 +436,10 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
                 res = self.cs.updatePhysicalNetwork(**args)
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
+                poll_async = self.module.params.get('poll_async')
+                if poll_async:
+                    network = self.poll_job(res, 'physicalnetwork')
         return network
 
     def absent_network(self):
@@ -429,6 +454,14 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
                 res = self.cs.deletePhysicalNetwork(**args)
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
+                poll_async = self.module.params.get('poll_async')
+                if poll_async:
+                    success = self.poll_job(res, 'success')
+
+                if not success:
+                    self.module.fail_json(msg="Failed: Network not deleted")
+
         return network
 
 
@@ -449,6 +482,7 @@ def main():
         username=dict(default=None),
         password=dict(default=None, no_log=True),
         tags=dict(type='list', aliases=['tag'], default=None),
+        poll_async=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
