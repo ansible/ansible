@@ -98,7 +98,7 @@ def _bool_ipaddr_query(v):
 
 
 def _broadcast_query(v):
-    if v.size > 1:
+    if v.size > 2:
         return str(v.broadcast)
 
 
@@ -183,8 +183,8 @@ def _netmask_query(v):
 
 
 def _network_query(v):
-    if v.size > 1:
-        return str(v.network)
+    '''Return the network of a given IP or subnet'''
+    return str(v.network)
 
 
 def _prefix_query(v):

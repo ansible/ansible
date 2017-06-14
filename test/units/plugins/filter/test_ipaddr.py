@@ -33,3 +33,43 @@ class TestNetmask(unittest.TestCase):
     def test_32_cidr(self):
         address = '1.12.1.34/32'
         self.assertEqual(ipaddr(address, 'netmask'), '255.255.255.255')
+
+    def test_network_32(self):
+        address = '1.12.1.34/32'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+
+    def test_network_32_long(self):
+        address = '1.12.1.34/255.255.255.255'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+
+    def test_network_32_no_mask(self):
+        address = '1.12.1.34'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+
+    def test_network_31(self):
+        address = '1.12.1.35/31'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+
+    def test_network_24(self):
+        address = '1.12.1.34/24'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.0')
+
+    def test_broadcast_24(self):
+        address = '1.12.1.34/24'
+        self.assertEqual(ipaddr(address, 'broadcast'), '1.12.1.255')
+
+    def test_broadcast_16(self):
+        address = '1.12.1.34/16'
+        self.assertEqual(ipaddr(address, 'broadcast'), '1.12.255.255')
+
+    def test_broadcast_27(self):
+        address = '1.12.1.34/27'
+        self.assertEqual(ipaddr(address, 'broadcast'), '1.12.1.63')
+
+    def test_broadcast_32(self):
+        address = '1.12.1.34/32'
+        self.assertEqual(ipaddr(address, 'broadcast'), None)
+
+    def test_broadcast_31(self):
+        address = '1.12.1.35/31'
+        self.assertEqual(ipaddr(address, 'broadcast'), None)
