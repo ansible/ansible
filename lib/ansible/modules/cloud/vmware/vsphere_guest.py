@@ -1118,7 +1118,7 @@ def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_n
                             mac_address = mac_address.upper()
                         except KeyError:
                             mac_address = False
-                        if mac_address != False:
+                        if mac_address is not False:
                             # MAC addresses are the same, don't update
                             if mac_address not in ("REGENERATE", "GENERATED") and mac_address == dev.macAddress.upper():
                                 mac_address = False
@@ -1141,7 +1141,7 @@ def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_n
                             else:
                                 pass
                         # If no switch changes, but mac_address change
-                        if mac_address != False and k not in nics:
+                        if mac_address is not False and k not in nics:
                             nics[k] = (dev, '', 4, mac_address)
 
         if len(nics) > 0:
@@ -1176,7 +1176,7 @@ def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_n
                         "nic_backing").pyclass()
                     nic_backing.set_element_deviceName(vm_nic[nic]['network'])
                     dev._obj.set_element_backing(nic_backing)
-                if macKey != False:
+                if macKey is not False:
                     if macKey == "GENERATED":
                         # This will just change to type to Automatic without changing the mac_address
                         # If you regenerate your MAC and then later set to generated you might see
