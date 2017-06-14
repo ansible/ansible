@@ -350,14 +350,17 @@ def main():
         if dead_letter_arn is not None:
             if current_config.get('DeadLetterConfig'):
                 if current_config['DeadLetterConfig']['TargetArn'] != dead_letter_arn:
-                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+                    func_kwargs.update(
+                        {'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
             else:
                 if dead_letter_arn != "":
-                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+                    func_kwargs.update(
+                        {'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
         # Check for unsupported mutation
         if current_config['Runtime'] != runtime:
-            module.fail_json(msg='Cannot change runtime. Please recreate the function')
+            module.fail_json(
+                msg='Cannot change runtime. Please recreate the function')
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
@@ -369,25 +372,25 @@ def main():
                 current_vpc_subnet_ids = current_config['VpcConfig']['SubnetIds']
                 current_vpc_security_group_ids = current_config['VpcConfig']['SecurityGroupIds']
 
-                subnets_net_id_changed = sorted(vpc_subnet_ids) != sorted(current_vpc_subnet_ids)
+                subnet_net_id_changed = sorted(vpc_subnet_ids) != sorted(current_vpc_subnet_ids)
                 vpc_security_group_ids_changed = sorted(vpc_security_group_ids) != sorted(current_vpc_security_group_ids)
 
-            if 'VpcConfig' not in current_config or subnets_changed or security_groups_changed:
+            if 'VpcConfig' not in current_config or subnet_net_id_changed or vpc_security_group_ids_changed:
                 new_vpc_config = {'SubnetIds': vpc_subnet_ids,
                                   'SecurityGroupIds': vpc_security_group_ids}
                 func_kwargs.update({'VpcConfig': new_vpc_config})
         else:
             # No VPC configuration is desired, assure VPC config is empty when
             # present in current config
-            if ('VpcConfig' in current_config and'VpcId' in current_config['VpcConfig'] and
-                    current_config['VpcConfig']['VpcId'] != ''):
+            if 'VpcConfig' in current_config and 'VpcId' in current_config['VpcConfig'] and current_config['VpcConfig']['VpcId'] != ''):
                 func_kwargs.update({'VpcConfig': {'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
         if len(func_kwargs) > 1:
             try:
                 if not check_mode:
-                    response = client.update_function_configuration(**func_kwargs)
+                    response = client.update_function_configuration(
+                        **func_kwargs)
                     current_version = response['Version']
                 changed = True
             except (ParamValidationError, ClientError) as e:
@@ -431,9 +434,11 @@ def main():
                 module.fail_json_aws(e, msg="Trying to upload new code")
 
         # Describe function code and configuration
-        response = get_current_function(client, name, qualifier=current_version)
+        response = get_current_function(
+            client, name, qualifier=current_version)
         if not response:
-            module.fail_json(msg='Unable to get function information after updating')
+            module.fail_json(
+                msg='Unable to get function information after updating')
 
         # We're done
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
@@ -457,7 +462,8 @@ def main():
                 module.fail_json(msg=str(e), exception=traceback.format_exc())
 
         else:
-            module.fail_json(msg='Either S3 object or path to zipfile required')
+            module.fail_json(
+                msg='Either S3 object or path to zipfile required')
 
         func_kwargs = {'FunctionName': name,
                        'Publish': True,
@@ -475,7 +481,8 @@ def main():
             func_kwargs.update({'Handler': handler})
 
         if environment_variables:
-            func_kwargs.update({'Environment': {'Variables': environment_variables}})
+            func_kwargs.update(
+                {'Environment': {'Variables': environment_variables}})
 
         if dead_letter_arn:
             func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
@@ -497,9 +504,11 @@ def main():
         except (ParamValidationError, ClientError) as e:
             module.fail_json_aws(e, msg="Trying to create function")
 
-        response = get_current_function(client, name, qualifier=current_version)
+        response = get_current_function(
+            client, name, qualifier=current_version)
         if not response:
-            module.fail_json(msg='Unable to get function information after creating')
+            module.fail_json(
+                msg='Unable to get function information after creating')
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
 
     # Delete existing Lambda function
