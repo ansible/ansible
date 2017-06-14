@@ -122,7 +122,7 @@ commands:
   type: list
   sample:
     - set system login user test level operator
-    - set system login user authentication plaintext-password password
+    - set system login user authentication encrypted-password password
 """
 
 import re
@@ -163,13 +163,14 @@ def spec_to_commands(updates, module):
 
         if needs_update(want, have, 'password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'authentication plaintext-password %s' % want['password'])
+                add(commands, want, 'authentication encrypted-password %s' % want['password'])
 
     return commands
 
 
 def config_to_dict(module):
     data = get_config(module)
+    instances = []
 
     config = {'name': [], 'level': [], 'full_name': [], 'password': None, 'state': 'present'}
 
@@ -184,7 +185,9 @@ def config_to_dict(module):
                 match = re.findall(r'full-name (\S+)', line, re.M)
                 config['full_name'].extend(match)
 
-    return config
+    instances = [config]
+
+    return instances
 
 
 def get_param_value(key, item, module):
@@ -242,8 +245,8 @@ def update_objects(want, have):
     updates = list()
 
     for entry in want:
-        item = next((i for i in have['name'] if i == entry['name']), None)
-        if all((item is None, entry['state'] == 'present')):
+        item = next((i for i in have if i['name'] == entry['name']), None)
+        if item is None:
             updates.append((entry, {}))
         elif item:
             for key, value in iteritems(entry):
@@ -285,12 +288,12 @@ def main():
 
     want = map_params_to_obj(module)
     have = config_to_dict(module)
-
     commands = spec_to_commands(update_objects(want, have), module)
 
     if module.params['purge']:
         want_users = [x['name'] for x in want]
-        have_users = [x['name'] for x in have]
+        for x in have:
+            have_users = x['name']
         for item in set(have_users).difference(want_users):
             commands.append('delete system login user %s' % item)
 
