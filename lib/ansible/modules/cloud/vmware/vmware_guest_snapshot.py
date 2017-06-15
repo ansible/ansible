@@ -172,13 +172,11 @@ instance:
     sample: None
 """
 
-import os
-import time
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import connect_to_api
+import time
 from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec
 
 try:
     import json
@@ -321,37 +319,21 @@ class PyVmomiHelper(object):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            hostname=dict(
-                type='str',
-                default=os.environ.get('VMWARE_HOST')
-            ),
-            username=dict(
-                type='str',
-                default=os.environ.get('VMWARE_USER')
-            ),
-            password=dict(
-                type='str', no_log=True,
-                default=os.environ.get('VMWARE_PASSWORD')
-            ),
-            state=dict(
-                required=False,
-                choices=['present', 'absent', 'revert', 'remove_all'],
-                default='present'),
-            validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=True, type='str'),
-            name_match=dict(required=False, type='str', default='first'),
-            uuid=dict(required=False, type='str'),
-            folder=dict(required=False, type='str', default='/vm'),
-            datacenter=dict(required=True, type='str'),
-            snapshot_name=dict(required=False, type='str'),
-            description=dict(required=False, type='str', default=''),
-            quiesce=dict(type='bool', default=False),
-            memory_dump=dict(type='bool', default=False),
-            remove_children=dict(type='bool', default=False),
-        ),
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(
+        state=dict(default='present', choices=['present', 'absent', 'revert', 'remove_all']),
+        name=dict(required=True, type='str'),
+        name_match=dict(type='str', default='first'),
+        uuid=dict(type='str'),
+        folder=dict(type='str', default='/vm'),
+        datacenter=dict(required=True, type='str'),
+        snapshot_name=dict(type='str'),
+        description=dict(type='str', default=''),
+        quiesce=dict(type='bool', default=False),
+        memory_dump=dict(type='bool', default=False),
+        remove_children=dict(type='bool', default=False),
     )
+    module = AnsibleModule(argument_spec=argument_spec)
 
     # Prepend /vm if it was missing from the folder path, also strip trailing slashes
     if not module.params['folder'].startswith('/vm') and module.params['folder'].startswith('/'):
