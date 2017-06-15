@@ -161,7 +161,7 @@ class Task(Base, Conditional, Taggable, Become):
         keep it short.
         '''
 
-        assert isinstance(ds, dict), 'ds (%s) should be a dict but was a %s' % (ds, type(dict))
+        assert isinstance(ds, dict), 'ds (%s) should be a dict but was a %s' % (ds, type(ds))
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure suitable for the
