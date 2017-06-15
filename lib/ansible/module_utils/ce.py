@@ -29,6 +29,8 @@
 #
 
 import re
+import socket
+import sys
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network_common import to_list, ComplexList
@@ -443,3 +445,21 @@ def execute_nc_cli(module, xml_str):
 
     conn = get_nc_connection(module)
     return conn.execute_cli(xml_str)
+
+
+def check_ip_addr(ipaddr):
+    """ check ip address, Supports IPv4 and IPv6 """
+
+    if not ipaddr or '\x00' in ipaddr:
+        return False
+
+    try:
+        res = socket.getaddrinfo(ipaddr, 0, socket.AF_UNSPEC,
+                                 socket.SOCK_STREAM,
+                                 0, socket.AI_NUMERICHOST)
+        return bool(res)
+    except socket.gaierror:
+        err = sys.exc_info()[1]
+        if err.args[0] == socket.EAI_NONAME:
+            return False
+        raise

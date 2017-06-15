@@ -497,11 +497,8 @@ updates:
 '''
 
 import re
-import sys
-import socket
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
-
+from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 # get bgp address family
 CE_GET_BGP_ADDRESS_FAMILY_HEADER = """
@@ -880,27 +877,6 @@ CE_BGP_DELETE_NETWORK_UNIT = """
                     </networkRoute>
                   </networkRoutes>
 """
-
-
-def check_ip_addr(**kwargs):
-    """ check_ip_addr, Supports IPv4 and IPv6"""
-
-    ipaddr = kwargs["ipaddr"]
-
-    if not ipaddr or '\x00' in ipaddr:
-        return False
-
-    try:
-        res = socket.getaddrinfo(ipaddr, 0, socket.AF_UNSPEC,
-                                 socket.SOCK_STREAM,
-                                 0, socket.AI_NUMERICHOST)
-        return bool(res)
-    except socket.gaierror:
-        err = sys.exc_info()[1]
-        if err.args[0] == socket.EAI_NONAME:
-            return False
-        raise
-    return True
 
 
 class BgpAf(object):
