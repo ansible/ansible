@@ -25,14 +25,12 @@ import uuid
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
-from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.manager import InventoryManager
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
-from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.playbook.handler import Handler
 from ansible.plugins.strategy import StrategyBase
@@ -613,7 +611,7 @@ class TestStrategyBase(unittest.TestCase):
             task_result = TaskResult(Host('host01'), Handler(), dict(changed=False))
             tqm._final_q.put(task_result)
 
-            result = strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)
+            strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)
         finally:
             strategy_base.cleanup()
             tqm.cleanup()
