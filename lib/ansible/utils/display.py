@@ -47,10 +47,6 @@ except NameError:
     pass
 
 
-logger = None
-# TODO: make this a logging callback instead
-
-
 # could do with a logging filter or a few other ways
 _user = getpass.getuser()
 
@@ -75,15 +71,21 @@ logging.addLevelName(VVVV, 'VVVV')
 logging.addLevelName(VVVVV, 'VVVVV')
 logging.addLevelName(VVVVVV, 'VVVVVV')
 
-print(logging._levelNames)
 
-if C.DEFAULT_LOG_PATH:
-    path = C.DEFAULT_LOG_PATH
+logger = logging.getLogger(__name__)
+
+path = C.DEFAULT_LOG_PATH
+
+# would a try/except around this be sufficient?
+if path:
     if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
         logging.basicConfig(filename=path, level=C.DEFAULT_LOG_LEVEL, format=C.DEFAULT_LOG_FORMAT)
-        logger = logging.getLogger('ansible')
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
+        logger.addHandler(logging.NullHandler())
+else:
+    logger.addHandler(logging.NullHandler())
+
 
 b_COW_PATHS = (
     b"/usr/bin/cowsay",
