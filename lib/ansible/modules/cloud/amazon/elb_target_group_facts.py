@@ -233,10 +233,13 @@ def list_target_groups(connection, module):
     # Get the attributes and tags for each target group
     for target_group in target_groups['TargetGroups']:
         target_group.update(get_target_group_attributes(connection, module, target_group['TargetGroupArn']))
-        target_group['tags'] = get_target_group_tags(connection, module, target_group['TargetGroupArn'])
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_target_groups = [camel_dict_to_snake_dict(target_group) for target_group in target_groups['TargetGroups']]
+
+    # Get tags for each target group
+    for snaked_target_group in snaked_target_groups:
+        snaked_target_group['tags'] = get_target_group_tags(connection, module, snaked_target_group['target_group_arn'])
 
     module.exit_json(target_groups=snaked_target_groups)
 
