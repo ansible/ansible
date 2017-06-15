@@ -30,12 +30,13 @@ config = ConfigManager()
 for setting in config.data.get_settings():
     vars()[setting.name] = setting.value
 
+
 def mk_boolean(value):
     ''' moved '''
     return config.make_boolean(value)
 
 
-### CONSTANTS ### yes, actual ones
+# ### CONSTANTS ### yes, actual ones
 
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun']
@@ -66,7 +67,7 @@ DEFAULT_SUDO_PASS = None
 DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
 DEFAULT_SU_PASS = None
-IGNORE_FILES = ["COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES"] # ignore during module search
+IGNORE_FILES = ["COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES"]  # ignore during module search
 INTERNAL_RESULT_KEYS = ['add_host', 'add_group']
 LOCALHOST = frozenset(['127.0.0.1', 'localhost', '::1'])
 MODULE_REQUIRE_ARGS = ['command', 'win_command', 'shell', 'win_shell', 'raw', 'script']
@@ -75,4 +76,4 @@ RESTRICTED_RESULT_KEYS = ['ansible_rsync_path', 'ansible_playbook_python']
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
-YAML_FILENAME_EXTENSIONS = [".yml", ".yaml", ".json"] # check all of these extensions when looking for 'variable' files which should be YAML or JSON.
+YAML_FILENAME_EXTENSIONS = [".yml", ".yaml", ".json"]  # check all of these extensions when looking for 'variable' files which should be YAML or JSON.
