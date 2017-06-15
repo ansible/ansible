@@ -121,12 +121,12 @@ class VarsModule(BaseVarsPlugin):
 
         found = []
         for spath in os.listdir(path):
-            if not spath.startswith('.'): # skip hidden
+            if not spath.startswith('.'):  # skip hidden
 
                 ext = os.path.splitext()[-1]
                 full_spath = os.path.join(path, spath)
 
-                if os.path.isdir(full_spath) and not ext: # recursive search if dir
+                if os.path.isdir(full_spath) and not ext:  # recursive search if dir
                     found.extend(self._get_dir_files(full_spath))
                 elif os.path.isfile(full_spath) and (not ext or ext in C.YAML_FILENAME_EXTENSIONS):
                     # only consider files with valid extensions or no extension
