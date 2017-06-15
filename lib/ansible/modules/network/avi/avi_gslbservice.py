@@ -50,6 +50,11 @@ options:
             - Note that the datapath status is determined by the association of health monitor profiles.
             - Only the controller provided status is determined through this configuration.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+    created_by:
+        description:
+            - Creator name.
+            - Field introduced in 17.1.2.
+        version_added: "2.4"
     description:
         description:
             - User defined description for the object.
@@ -150,6 +155,7 @@ def main():
         state=dict(default='present',
                    choices=['absent', 'present']),
         controller_health_status_enabled=dict(type='bool',),
+        created_by=dict(type='str',),
         description=dict(type='str',),
         domain_names=dict(type='list',),
         down_response=dict(type='dict',),
