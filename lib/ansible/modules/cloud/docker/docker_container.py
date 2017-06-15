@@ -426,6 +426,12 @@ options:
       - If true, skip image verification.
     default: false
     required: false
+  tmpfs:
+    description:
+      - Mount a tmpfs directory
+    default: null
+    required: false
+    version_added: 2.4
   tty:
     description:
       - Allocate a pseudo-TTY.
@@ -768,6 +774,7 @@ class TaskParameters(DockerBaseClass):
         self.state = None
         self.stop_signal = None
         self.stop_timeout = None
+        self.tmpfs = None
         self.trust_image_content = None
         self.tty = None
         self.user = None
@@ -803,6 +810,7 @@ class TaskParameters(DockerBaseClass):
         if self.volumes:
             self.volumes = self._expand_host_paths()
 
+        self.tmpfs = self._parse_tmpfs()
         self.env = self._get_environment()
         self.ulimits = self._parse_ulimits()
         self.sysctls = self._parse_sysctls()
@@ -966,7 +974,8 @@ class TaskParameters(DockerBaseClass):
             shm_size='shm_size',
             group_add='groups',
             devices='devices',
-            pid_mode='pid_mode'
+            pid_mode='pid_mode',
+            tmpfs='tmpfs'
         )
 
         if HAS_DOCKER_PY_2:
@@ -1161,6 +1170,22 @@ class TaskParameters(DockerBaseClass):
         except ValueError as exc:
             self.fail('Error parsing logging options - %s' % (exc))
 
+    def _parse_tmpfs(self):
+        '''
+        Turn tmpfs into a hash of Tmpfs objects
+        '''
+        result = dict()
+        if self.tmpfs is None:
+            return result
+
+        for tmpfs_spec in self.tmpfs:
+            split_spec = tmpfs_spec.split(":", 1)
+            if len(split_spec) > 1:
+                result[split_spec[0]] = split_spec[1]
+            else:
+                result[split_spec[0]] = ""
+        return result
+
     def _get_environment(self):
         """
         If environment file is combined with explicit environment variables, the explicit environment variables
@@ -1304,6 +1329,7 @@ class Container(DockerBaseClass):
             # shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
             stop_signal=config.get("StopSignal"),
+            tmpfs=host_config.get('Tmpfs'),
             tty=config.get('Tty'),
             expected_ulimits=host_config.get('Ulimits'),
             expected_sysctls=host_config.get('Sysctls'),
@@ -2070,6 +2096,7 @@ def main():
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped'], default='started'),
         stop_signal=dict(type='str'),
         stop_timeout=dict(type='int'),
+        tmpfs=dict(type='list'),
         trust_image_content=dict(type='bool', default=False),
         tty=dict(type='bool', default=False),
         ulimits=dict(type='list'),
