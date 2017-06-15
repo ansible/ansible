@@ -1,0 +1,45 @@
+---
+- name: setup - remove exec
+  nxos_banner:
+    banner: exec
+    state: absent
+    provider: "{{ cli }}"
+
+- name: Set exec
+  nxos_banner:
+    banner: exec
+    text: |
+      this is my exec banner
+      that has a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'banner exec @\nthis is my exec banner\nthat has a multiline\nstring\n@' in result.commands"
+
+- name: Set exec again (idempotent)
+  nxos_banner:
+    banner: exec
+    text: |
+      this is my exec banner
+      that has a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"
