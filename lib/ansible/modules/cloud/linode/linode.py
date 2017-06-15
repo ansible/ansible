@@ -334,6 +334,29 @@ def getInstanceDetails(api, server):
                                         'ip_id': ip['IPADDRESSID']})
     return instance
 
+
+def param_satisfier(module, paramdict, provision_step):
+    '''
+    Verifies that the supplied set of API parameters have been included,
+    and returns an error message, with the provisioning step
+    Ex:
+    param_satisfier(module,
+                    {"name":name,
+                     "plan":plan,
+                     "distribution":distribution,
+                     "DC":datacenter},
+                    "create")
+    '''
+    unsatisfied_param_list = [
+        key for key, parameter in paramdict.iteritems()
+        if not parameter
+    ]
+    if unsatisfied_param_list:
+        module.fail_json(msg="{0}: required for create step".format(
+            ",".join(unsatisfied_param_list)
+        ))
+
+       
 def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_threshold, alert_bwout_enabled, alert_bwout_threshold,
                   alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled, alert_cpu_threshold, alert_diskio_enabled,
                   alert_diskio_threshold,backupweeklyday, backupwindow, displaygroup, plan, additional_disks, distribution,
@@ -369,9 +392,14 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
 
         # Any create step triggers a job that need to be waited for.
         if not servers:
-            for arg in (name, plan, distribution, datacenter):
-                if not arg:
-                    module.fail_json(msg='%s is required for active state' % arg)
+            # create a list of parameters that are necessary, but haven't been
+            # supplied
+            param_satisfier(module,
+                            {"name": name,
+                             "plan": plan,
+                             "distribution": distribution,
+                             "datacenter": datacenter},
+                            "create")
             # Create linode entity
             new_server = True
 
@@ -405,9 +433,11 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not disks:
-            for arg in (name, linode_id, distribution):
-                if not arg:
-                    module.fail_json(msg='%s is required for active state' % arg)
+            param_satisfier(module,
+                            {"name":name,
+                             "linodeid":linode_id,
+                             "distribution":distribution},
+                            "create")
             # Create disks (1 from distrib, 1 for SWAP)
             new_server = True
             try:
@@ -447,10 +477,11 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not configs:
-            for arg in (name, linode_id, distribution):
-                if not arg:
-                    module.fail_json(msg='%s is required for active state' % arg)
-
+            param_satisfier(module,
+                            {"name": name,
+                             "linodeid": linode_id,
+                             "distribution": distribution},
+                            "create")
             # Check architecture
             for distrib in api.avail_distributions():
                 if distrib['DISTRIBUTIONID'] != distribution:
@@ -535,9 +566,10 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
             instances.append(instance)
 
     elif state in ('stopped'):
-        for arg in (name, linode_id):
-            if not arg:
-                module.fail_json(msg='%s is required for active state' % arg)
+        param_satisfier(module,
+                        {"name": name,
+                         "linodeid": linode_id},
+                        "create")
 
         if not servers:
             module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
@@ -556,9 +588,10 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
             instances.append(instance)
 
     elif state in ('restarted'):
-        for arg in (name, linode_id):
-            if not arg:
-                module.fail_json(msg='%s is required for active state' % arg)
+        param_satisfier(module,
+                        {"name": name,
+                         "linodeid": linode_id},
+                        "create")
 
         if not servers:
             module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
