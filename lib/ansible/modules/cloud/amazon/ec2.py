@@ -629,7 +629,6 @@ try:
     import boto.ec2
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     from boto.exception import EC2ResponseError
-    from boto.vpc import VPCConnection
     from boto import connect_ec2_endpoint
     from boto import connect_vpc
     HAS_BOTO = True
