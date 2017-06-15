@@ -160,10 +160,10 @@ from ansible.module_utils.cloudstack import (
 )
 
 
-class AnsibleCloudStackCluster(AnsibleCloudStack):
+class AnsibleCloudStackVlanIpRange(AnsibleCloudStack):
 
     def __init__(self, module):
-        super(AnsibleCloudStackCluster, self).__init__(module)
+        super(AnsibleCloudStackVlanIpRange, self).__init__(module)
         self.returns = {
             'startip': 'ipv4_start',
             'endip': 'ipv4_end',
@@ -350,7 +350,7 @@ def main():
     )
 
     try:
-        acs_vlan_ip_range = AnsibleCloudStackCluster(module)
+        acs_vlan_ip_range = AnsibleCloudStackVlanIpRange(module)
 
         state = module.params.get('state')
         if state in ['absent']:
