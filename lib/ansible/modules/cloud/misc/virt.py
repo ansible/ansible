@@ -514,7 +514,7 @@ def core(module):
             return VIRT_SUCCESS, res
 
         else:
-            module.fail_json(msg="Command %s not recognized" % basecmd)
+            module.fail_json(msg="Command %s not recognized" % command)
 
     module.fail_json(msg="expected state or command parameter to be specified")
 
