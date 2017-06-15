@@ -28,13 +28,13 @@ module: quagga_command
 version_added: 2.4
 short_description: Provides configuring quaggas
 description:
-    - The M(quagga_command) module takes the command name followed by a list of space-delimited arguments.
+    - Takes the command name followed by a list of space-delimited arguments.
     - The given command will be executed on all selected nodes.
-    - Documentation for M (quagga) can be found U(http://www.nongnu.org/quagga/docs.html)
+    - Documentation for C(quagga) can be found U(http://www.nongnu.org/quagga/docs.html)
 options:
     raw:
         description:
-            - vtysh command after 'configure terminal'
+            - vtysh command after C(configure terminal)
 author:
     - Aleksey Gavrilov (@le9i0nx)
 '''
