@@ -263,7 +263,7 @@ def main():
         name=dict(),
 
         full_name=dict(),
-        level=dict(aliases=['privilege']),
+        level=dict(aliases=['role']),
 
         password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
