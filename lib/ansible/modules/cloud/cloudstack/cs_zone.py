@@ -106,6 +106,12 @@ options:
       - DHCP provider for the Zone.
     required: false
     default: null
+  secondary_storage:
+    description:
+      - One or more secondary storage URLs for this Zone
+      - Only additions and deletions are possible. No modification are allowed.
+      - Stores are keyed on the URL rather than the name.
+      - Set 'state' to absent to remove a storage URL (defaults to present).
 extends_documentation_fragment: cloudstack
 '''
 
@@ -135,6 +141,24 @@ EXAMPLES = '''
     module: cs_zone
     name: ch-zrh-ix-01
     state: absent
+
+# Ensure zone secondary storage URLs are present
+- local_action:
+    module: cs_zone
+    name: ch-zrh-ix-01
+    secondary_storage:
+    - name: My NFS
+      url: nfs://172.30.118.133/cs_secondary
+      provider: NFS
+
+# Ensure zone secondary storage URLs are absent
+- local_action:
+    module: cs_zone
+    name: ch-zrh-ix-01
+    secondary_storage:
+    - name: My NFS
+      url: nfs://172.30.118.133/cs_secondary
+      state: absent
 '''
 
 RETURN = '''
@@ -261,6 +285,7 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
             'zonetoken': 'zone_token',
         }
         self.zone = None
+        self.secondary_storage = None
 
     def _get_common_zone_args(self):
         args = {
@@ -358,6 +383,74 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
         return zone
 
+    def get_secondary_storage(self, url=None):
+        zone = self.get_zone()
+        zoneid = zone['id']
+        if not self.secondary_storage:
+            self.secondary_storage = {}
+            args = {
+                'zoneid': zoneid
+            }
+            res = self.cs.listImageStores(**args)
+            if 'errortext' in res:
+                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            if 'imagestore' in res:
+                for store in res['imagestore']:
+                    self.secondary_storage[store['url']] = store
+
+        if url:
+            if url in self.secondary_storage:
+                return self.secondary_storage[url]
+            else:
+                return None
+
+        return self.secondary_storage
+
+
+    def secondary_storage_absent(self, store=None):
+        self.result['changed'] = True
+        args = {'id': store['id']}
+        res = self.cs.deleteImageStore(**args)
+        if 'errortext' in res:
+            self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
+
+    def secondary_storage_apply(self):
+        zone = self.get_zone()
+        zoneid = zone['id']
+        for secstore in self.module.params.get('secondary_storage'):
+            url = secstore['url']
+            store = self.get_secondary_storage(url)
+            state = secstore['state'].lower() if 'state' in secstore else 'present'
+            if state not in ['present', 'absent']:
+                self.module.fail_json(msg="Secondary Storage state must be either 'present' or 'absent'")
+
+            if store and state == 'absent':
+                self.secondary_storage_absent(store)
+
+            if state == 'absent':
+                continue
+
+            name = secstore['name'] if 'name' in secstore else url
+            if 'provider' not in secstore:
+                self.module.fail_json(msg="Failed: Provider must be specified for secondary storage '%s'" % name)
+            provider = secstore['provider']
+
+            self.result['changed'] = True
+            args = {
+                'zoneid': zoneid,
+                'url': url,
+                'name': name,
+                'provider': provider,
+            }
+            res = self.cs.addImageStore(**args)
+            if 'errortext' in res:
+                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
+            store = res['imagestore']
+            self.secondary_storage[store['url']] = store
+
+        return self.secondary_storage
 
 def main():
     argument_spec = cs_argument_spec()
@@ -378,6 +471,7 @@ def main():
         securitygroups_enabled=dict(type='bool'),
         state=dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
         domain=dict(),
+        secondary_storage=dict(type='list', default=None),
     ))
 
     module = AnsibleModule(
@@ -390,10 +484,15 @@ def main():
         acs_zone = AnsibleCloudStackZone(module)
 
         state = module.params.get('state')
+        secondary_storage = module.params.get('secondary_storage')
+
         if state in ['absent']:
             zone = acs_zone.absent_zone()
         else:
             zone = acs_zone.present_zone()
+
+        if secondary_storage is not None:
+            acs_zone.secondary_storage_apply()
 
         result = acs_zone.get_result(zone)
 
