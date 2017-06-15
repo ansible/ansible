@@ -519,10 +519,10 @@ class CLI(object):
         ''' find reasonable way to display text '''
         # this is a much simpler form of what is in pydoc.py
         if not sys.stdout.isatty():
-            display.display(text)
+            display.display(text, screen_only=True)
         elif 'PAGER' in os.environ:
             if sys.platform == 'win32':
-                display.display(text)
+                display.display(text, screen_only=True)
             else:
                 self.pager_pipe(text, os.environ['PAGER'])
         else:
@@ -531,7 +531,7 @@ class CLI(object):
             if p.returncode == 0:
                 self.pager_pipe(text, 'less')
             else:
-                display.display(text)
+                display.display(text, screen_only=True)
 
     @staticmethod
     def pager_pipe(text, cmd):
