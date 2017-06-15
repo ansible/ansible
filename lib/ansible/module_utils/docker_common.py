@@ -82,6 +82,7 @@ DEFAULT_DOCKER_REGISTRY = 'https://index.docker.io/v1/'
 EMAIL_REGEX = r'[^@]+@[^@]+\.[^@]+'
 BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
+DOCKER_RESERVED_IMAGE_NAMES = ("sha256")
 
 if not HAS_DOCKER_PY:
     # No docker-py. Create a place holder client to allow
@@ -385,7 +386,7 @@ class AnsibleDockerClient(Client):
 
         self.log("Find image %s:%s" % (name, tag))
         images = self._image_lookup(name, tag)
-        if len(images) == 0:
+        if len(images) == 0 and name not in DOCKER_RESERVED_IMAGE_NAMES:
             # In API <= 1.20 seeing 'docker.io/<name>' as the name of images pulled from docker hub
             registry, repo_name = auth.resolve_repository_name(name)
             if registry == 'docker.io':
@@ -414,12 +415,21 @@ class AnsibleDockerClient(Client):
         exists.
         '''
         try:
-            response = self.images(name=name)
+            if name in DOCKER_RESERVED_IMAGE_NAMES:
+                response = self.images()
+            else:
+                response = self.images(name=name)
         except Exception as exc:
             self.fail("Error searching for image %s - %s" % (name, str(exc)))
         images = response
-        if tag:
-            lookup = "%s:%s" % (name, tag)
+        lookup = "%s:%s" % (name, tag)
+        if tag and name in DOCKER_RESERVED_IMAGE_NAMES:
+            images = []
+            for image in response:
+                if image['Id'] == lookup:
+                    images = [image]
+                    break
+        elif tag:
             images = []
             for image in response:
                 tags = image.get('RepoTags')
