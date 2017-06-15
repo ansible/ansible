@@ -88,8 +88,6 @@ commands:
     - string
 """
 
-import re
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
@@ -100,7 +98,8 @@ def map_obj_to_commands(updates, module):
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' and 'text' in have.keys() and have['text']:
+    if state == 'absent' or (state == 'absent' and
+                             'text' in have.keys() and have['text']):
         commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present':
