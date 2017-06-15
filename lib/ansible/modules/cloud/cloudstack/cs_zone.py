@@ -112,6 +112,9 @@ options:
       - Only additions and deletions are possible. No modification are allowed.
       - Stores are keyed on the URL rather than the name.
       - Set 'state' to absent to remove a storage URL (defaults to present).
+    required: false
+    default: null
+    version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
