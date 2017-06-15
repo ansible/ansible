@@ -277,13 +277,13 @@ class CLI(with_metaclass(ABCMeta, object)):
                 self.parser.error("The number of processes (--forks) must be >= 1")
 
     @staticmethod
-    def expand_tilde(option, opt, value, parser):
-        setattr(parser.values, option.dest, os.path.expanduser(value))
-
-    @staticmethod
     def unfrack_paths(option, opt, value, parser):
         if isinstance(value, string_types):
-            setattr(parser.values, option.dest, [unfrackpath(x) for x in value.split(os.sep)])
+            setattr(parser.values, option.dest, [unfrackpath(x) for x in value.split(os.pathsep)])
+        elif isinstance(value, list):
+            setattr(parser.values, option.dest, [unfrackpath(x) for x in value])
+        else:
+            pass #FIXME: should we raise options error?
 
     @staticmethod
     def unfrack_path(option, opt, value, parser):
@@ -312,7 +312,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         if module_opts:
             parser.add_option('-M', '--module-path', dest='module_path', default=None,
                               help="prepend path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
-                              action="callback", callback=CLI.expand_tilde, type=str)
+                              action="callback", callback=CLI.unfrack_path, type='str')
         if runtask_opts:
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
                               help="set additional variables as key=value or YAML/JSON", default=[])

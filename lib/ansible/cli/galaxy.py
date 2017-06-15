@@ -79,11 +79,11 @@ class GalaxyCLI(CLI):
             self.parser.set_usage("usage: %prog info [options] role_name[,version]")
         elif self.action == "init":
             self.parser.set_usage("usage: %prog init [options] role_name")
-            self.parser.add_option('-p', '--init-path', dest='init_path', default="./",
+            self.parser.add_option('--init-path', dest='init_path', default="./",
                                    help='The path in which the skeleton role will be created. The default is the current working directory.')
             self.parser.add_option('--container-enabled', dest='container_enabled', action='store_true', default=False,
                                    help='Initialize the skeleton role with default contents for a Container Enabled role.')
-            self.parser.add_option('--role-skeleton', dest='role_skeleton', default=None,
+            self.parser.add_option('--role-skeleton', dest='role_skeleton', default=C.GALAXY_ROLE_SKELETON,
                                    help='The path to a role skeleton that the new role should be based upon.')
         elif self.action == "install":
             self.parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
@@ -119,7 +119,7 @@ class GalaxyCLI(CLI):
             # callback will set the value to a list.
             self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.unfrack_paths, default=C.DEFAULT_ROLES_PATH,
                                    help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg'
-                                        'file (/etc/ansible/roles if not configured)', type="string")
+                                        'file (/etc/ansible/roles if not configured)', type='str')
         if self.action in ("init", "install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
@@ -154,7 +154,7 @@ class GalaxyCLI(CLI):
         Exits with the specified return code unless the
         option --ignore-errors was specified
         """
-        if not self.get_opt("ignore_errors", False):
+        if not self.options.ignore_errors:
             raise AnsibleError('- you can use --ignore-errors to skip failed roles and finish processing the list.')
 
     def _display_role_info(self, role_info):
@@ -187,9 +187,9 @@ class GalaxyCLI(CLI):
         creates the skeleton framework of a role that complies with the galaxy metadata format.
         """
 
-        init_path = self.get_opt('init_path', './')
-        force = self.get_opt('force', False)
-        role_skeleton = self.get_opt('role_skeleton', C.GALAXY_ROLE_SKELETON)
+        init_path = self.options.init_path
+        force = self.options.force
+        role_skeleton = self.options.role_skeleton
 
         role_name = self.args.pop(0).strip() if self.args else None
         if not role_name:
@@ -263,7 +263,7 @@ class GalaxyCLI(CLI):
             # the user needs to specify a role
             raise AnsibleOptionsError("- you must specify a user/role name")
 
-        roles_path = self.get_opt("roles_path")
+        roles_path = self.options.roles_path
 
         data = ''
         for role in self.args:
@@ -306,7 +306,7 @@ class GalaxyCLI(CLI):
         uses the args list of roles to be installed, unless -f was specified. The list of roles
         can be a name (which will be downloaded via the galaxy API and github), or it can be a local .tar.gz file.
         """
-        role_file = self.get_opt("role_file", None)
+        role_file = self.options.role_file
 
         if len(self.args) == 0 and role_file is None:
             # the user needs to specify one of either --role-file or specify a single user/role name
@@ -315,8 +315,8 @@ class GalaxyCLI(CLI):
             # using a role file is mutually exclusive of specifying the role name on the command line
             raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
 
-        no_deps = self.get_opt("no_deps", False)
-        force = self.get_opt('force', False)
+        no_deps = self.options.no_deps
+        force = self.options.force
 
         roles_left = []
         if role_file:
@@ -470,7 +470,7 @@ class GalaxyCLI(CLI):
                 display.display("- the role %s was not found" % name)
         else:
             # show all valid roles in the roles_path directory
-            roles_path = self.get_opt('roles_path')
+            roles_path = self.options.roles_path
             for path in roles_path:
                 role_path = os.path.expanduser(path)
                 if not os.path.exists(role_path):
@@ -671,18 +671,3 @@ class GalaxyCLI(CLI):
         display.display(resp['status'])
 
         return True
-
-    def get_opt(self, k, defval=""):
-        """
-        Returns an option from an Optparse values instance.
-        """
-        try:
-            data = getattr(self.options, k)
-        except:
-            return defval
-        # FIXME: Can this be removed if cli and/or constants ensures it's a
-        # list?
-        if k == "roles_path":
-            if os.pathsep in data:
-                data = data.split(os.pathsep)[0]
-        return data
