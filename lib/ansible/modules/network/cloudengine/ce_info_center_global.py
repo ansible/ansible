@@ -326,11 +326,10 @@ changed:
     type: boolean
     sample: true
 '''
-import socket
-import sys
+
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, get_nc_config, set_nc_config
+from ansible.module_utils.ce import ce_argument_spec, get_nc_config, set_nc_config, check_ip_addr
 
 
 CE_NC_GET_CENTER_GLOBAL_INFO_HEADER = """
@@ -569,25 +568,6 @@ CE_NC_DELETE_SERVER_DNS_INFO_TAIL = """
   </syslog>
 </config>
 """
-
-
-def is_valid_address(address):
-    """ check ip address, Supports IPv4 and IPv6"""
-
-    if not address or '\x00' in address:
-        return False
-
-    try:
-        res = socket.getaddrinfo(address, 0, socket.AF_UNSPEC,
-                                 socket.SOCK_STREAM,
-                                 0, socket.AI_NUMERICHOST)
-        return bool(res)
-    except socket.gaierror:
-        err = sys.exc_info()[1]
-        if err.args[0] == socket.EAI_NONAME:
-            return False
-        raise
-    return True
 
 
 def get_out_direct_default(out_direct):
@@ -1433,12 +1413,12 @@ class InfoCenterGlobal(object):
 
         # server_ip check
         if self.server_ip:
-            if not is_valid_address(self.server_ip):
+            if not check_ip_addr(self.server_ip):
                 self.module.fail_json(
                     msg='Error: The %s is not a valid ip address' % self.server_ip)
         # source_ip check
         if self.source_ip:
-            if not is_valid_address(self.source_ip):
+            if not check_ip_addr(self.source_ip):
                 self.module.fail_json(
                     msg='Error: The %s is not a valid ip address' % self.source_ip)
 

@@ -170,13 +170,10 @@ updates:
     sample: ["snmp-agent target-host host-name test2 trap address udp-domain 10.135.182.158 vpn-instance js params securityname wdz v3 authentication"]
 '''
 
-import sys
-import socket
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ce import get_nc_config, set_nc_config, \
-    ce_argument_spec, get_config, load_config
-
+    ce_argument_spec, get_config, load_config, check_ip_addr
 
 # get snmp version
 CE_GET_SNMP_VERSION = """
@@ -261,25 +258,6 @@ CE_DELETE_SNMP_TARGET_HOST_TAIL = """
 
 INTERFACE_TYPE = ['ethernet', 'eth-trunk', 'tunnel', 'null', 'loopback',
                   'vlanif', '100ge', '40ge', 'mtunnel', '10ge', 'ge', 'meth', 'vbdif', 'nve']
-
-
-def check_ip_addr(ipaddr):
-    """ check_ip_addr, Supports IPv4 and IPv6 """
-
-    if not ipaddr or '\x00' in ipaddr:
-        return False
-
-    try:
-        res = socket.getaddrinfo(ipaddr, 0, socket.AF_UNSPEC,
-                                 socket.SOCK_STREAM,
-                                 0, socket.AI_NUMERICHOST)
-        return bool(res)
-    except socket.gaierror:
-        err = sys.exc_info()[1]
-        if err.args[0] == socket.EAI_NONAME:
-            return False
-        raise
-    return True
 
 
 class SnmpTargetHost(object):
