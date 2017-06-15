@@ -670,7 +670,7 @@ DEFAULT_LOG_PATH:
   type: path
   yaml: {key: defaults.log_path}
 DEFAULT_LOG_FORMAT:
-  default: '%(asctime)s p=%(process)d u=%(user)s |  %(message)s'
+  default: '%(asctime)s p=%(process)d %(message)s'
   desc: 'The log entries written to ANSIBLE_LOG_PATH will use this format for logging.Formatter'
   env: [{name: ANSIBLE_LOG_FORMAT}]
   ini:

@@ -199,7 +199,15 @@ class Display:
                 # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
-            logger.log(log_level, msg2, extra={'user': _user})
+            # We could pass 'user' as an 'extra' var here and add it to the format,
+            # but the default formatters dont handle unknown attributes well, so messages
+            # sent from elsewhere would have to provide 'user'.
+            # We could also do it via a LoggingFilter.
+            #
+            # Ideally this would not munge msg and user and the formatting would all
+            # be in the format string, but this duplicates the existing format with minimal
+            # changes elsewhere.
+            logger.log(log_level, 'u=%s | %s' % (_user, msg2))
 
     def v(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=0)
