@@ -406,14 +406,12 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
 
         return self.secondary_storage
 
-
     def secondary_storage_absent(self, store=None):
         self.result['changed'] = True
         args = {'id': store['id']}
         res = self.cs.deleteImageStore(**args)
         if 'errortext' in res:
             self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-
 
     def secondary_storage_apply(self):
         zone = self.get_zone()
@@ -433,7 +431,7 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
 
             name = secstore['name'] if 'name' in secstore else url
             if 'provider' not in secstore:
-                self.module.fail_json(msg="Failed: Provider must be specified for secondary storage '%s'" % name)
+                self.module.fail_json(msg="Failed: Provider required for sec-storage '%s'" % name)
             provider = secstore['provider']
 
             self.result['changed'] = True
@@ -451,6 +449,7 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
             self.secondary_storage[store['url']] = store
 
         return self.secondary_storage
+
 
 def main():
     argument_spec = cs_argument_spec()
