@@ -1919,6 +1919,7 @@ def main():
         default_origin_path = None
         default_s3_origin_domain_name = None
         default_s3_origin_access_identity = None
+        default_streaming_s3_origin_access_identity = None
 
     if state is None and not generate_presigned_url:
         module.fail_json(
