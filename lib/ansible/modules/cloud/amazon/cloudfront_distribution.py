@@ -1173,9 +1173,6 @@ class CloudFrontValidationManager(object):
                     cache_behavior['target_origin_id'] = (
                         self.get_first_origin_id_for_default_cache_behavior(
                             valid_origins))
-                else:
-                    cache_behavior['target_origin_id'] = str(cache_behavior.get(
-                        'target_origin_id'))
             cache_behavior = self.validate_forwarded_values(
                 cache_behavior.get('forwarded_values'), cache_behavior)
             cache_behavior = self.validate_allowed_methods(
@@ -1836,10 +1833,8 @@ def main():
             ['distribution_id', 'alias'],
             ['streaming_distribution_id', 'alias'],
             ['default_origin_domain_name', 'distribution_id'],
-            ['default_origin_domain_name', 'caller_reference'],
             ['default_origin_domain_name', 'alias'],
             ['default_s3_origin_domain_name', 'streaming_distribution_id'],
-            ['default_s3_origin_domain_name', 'caller_reference'],
             ['default_s3_origin_domain_name', 'alias']
         ]
     )
@@ -1918,6 +1913,12 @@ def main():
     create = create_distribution or create_streaming_distribution
     update = update_distribution or update_streaming_distribution
     delete = delete_distribution or delete_streaming_distribution
+
+    if update:
+        default_origin_domain_name = None
+        default_origin_path = None
+        default_s3_origin_domain_name = None
+        default_s3_origin_access_identity = None
 
     if state is None and not generate_presigned_url:
         module.fail_json(
@@ -2007,9 +2008,8 @@ def main():
     elif update_distribution:
         identical = validation_mgr.validate_distribution_requires_update(
             config, distribution_id)
-        if identical:
-            changed = False
-        else:
+        changed = not identical
+        if not identical:
             result = service_mgr.update_distribution(
                 config, distribution_id, e_tag)
     elif create_streaming_distribution:
@@ -2020,9 +2020,8 @@ def main():
     elif update_streaming_distribution:
         identical = validation_mgr.validate_distribution_requires_update(
             config, streaming_distribution_id, True)
-        if identical:
-            changed = False
-        else:
+        changed = not identical
+        if not identical:
             result = service_mgr.update_streaming_distribution(
                 config, streaming_distribution_id, e_tag)
     if update:
