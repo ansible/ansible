@@ -1,5 +1,5 @@
 ---
-- name: Create user
+- name: Create user (SetUp)
   vyos_user:
     name: ansibletest1
     password: test
@@ -12,7 +12,7 @@
       - 'result.changed == true'
       - '"set system login user ansibletest1 authentication plaintext-password" in result.commands'
 
-- name: Collection of users
+- name: Collection of users (SetUp)
   vyos_user:
     users:
       - name: ansibletest2
@@ -26,6 +26,34 @@
     that:
       - 'result.changed == true'
       - 'result.commands == ["set system login user ansibletest2 level operator", "set system login user ansibletest3 level operator"]'
+
+- name: Add user again (Idempotent)
+  vyos_user:
+    name: ansibletest1
+    password: test
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
+
+- name: Add collection of users (Idempotent)
+  vyos_user:
+    users:
+      - name: ansibletest2
+      - name: ansibletest3
+    level: operator
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
 
 - name: tearDown
   vyos_user:
