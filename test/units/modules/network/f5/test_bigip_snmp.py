@@ -22,8 +22,9 @@ __metaclass__ = type
 
 import sys
 
+from nose.plugins.skip import SkipTest
+
 if sys.version_info < (2, 7):
-    from nose.plugins.skip import SkipTest
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 import os
@@ -40,9 +41,12 @@ try:
     from library.bigip_snmp import ModuleManager
     from library.bigip_snmp import ArgumentSpec
 except ImportError:
-    from ansible.modules.network.f5.bigip_snmp import Parameters
-    from ansible.modules.network.f5.bigip_snmp import ModuleManager
-    from ansible.modules.network.f5.bigip_snmp import ArgumentSpec
+    try:
+        from ansible.modules.network.f5.bigip_snmp import Parameters
+        from ansible.modules.network.f5.bigip_snmp import ModuleManager
+        from ansible.modules.network.f5.bigip_snmp import ArgumentSpec
+    except ImportError:
+        raise SkipTest("F5 Ansible modules the f5 python library")
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
