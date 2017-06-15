@@ -98,7 +98,7 @@ EXAMPLES = '''
 - elasticsearch_plugin:
     state: absent
     name: mobz/elasticsearch-head
-    
+
 # Install Elasticsearch plugin with another plugin binary
 - elasticsearch_plugin:
     state: present
