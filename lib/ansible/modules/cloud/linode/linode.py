@@ -334,7 +334,6 @@ def getInstanceDetails(api, server):
                                         'ip_id': ip['IPADDRESSID']})
     return instance
 
-
 def param_satisfier(module, paramdict, provision_step):
     '''
     Verifies that the supplied set of API parameters have been included,
@@ -348,14 +347,13 @@ def param_satisfier(module, paramdict, provision_step):
                     "create")
     '''
     unsatisfied_param_list = [
-        key for key, parameter in paramdict.iteritems()
+        key for key, parameter in paramdict.items()
         if not parameter
     ]
     if unsatisfied_param_list:
         module.fail_json(msg="{0}: required for create step".format(
             ",".join(unsatisfied_param_list)
         ))
-
 
 def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_threshold, alert_bwout_enabled, alert_bwout_threshold,
                   alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled, alert_cpu_threshold, alert_diskio_enabled,
