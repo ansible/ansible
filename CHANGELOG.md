@@ -1,6 +1,9 @@
 Ansible Changes By Release
 ==========================
 
+## 2.2.4 "The Battle of Evermore" - TBD
+* avoid vault view writing to logs
+
 ## 2.2.3 "The Battle of Evermore" - 05-09-2017
 
 ### Major Changes:
