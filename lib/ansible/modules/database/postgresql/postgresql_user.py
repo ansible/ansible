@@ -210,8 +210,6 @@ EXAMPLES = '''
 import itertools
 import re
 from distutils.version import StrictVersion
-from hashlib import md5
-
 
 from ansible.module_utils.basic import get_exception, AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier, SQLParseError
@@ -225,7 +223,6 @@ except ImportError:
 else:
     postgresqldb_found = True
 
-from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems
 
 try:
@@ -234,9 +231,6 @@ except ImportError:
     passlib_hash_found = False
 else:
     passlib_hash_found = True
-
-
-
 
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 FLAGS_BY_VERSION = {'BYPASSRLS': '9.5.0'}
@@ -670,7 +664,6 @@ def parse_role_attrs(cursor, role_attr_flags):
                                 ' '.join(flags.difference(valid_flags)))
 
     return ' '.join(flags)
-
 
 
 def normalize_privileges(privs, type_):
