@@ -20,6 +20,7 @@ Ansible Changes By Release
 * fixed incorrect fail_json ref in rpm_key
 * Corrected requried on hash_name for dynamodb_table
 * Fix for fetch action plugin not validating correctly
+* Avoid vault view writing display to logs
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
