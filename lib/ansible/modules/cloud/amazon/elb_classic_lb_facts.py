@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ec2_elb_facts
+module: elb_classic_lb_facts
 short_description: Gather facts about EC2 Elastic Load Balancers in AWS
 description:
     - Gather facts about EC2 Elastic Load Balancers in AWS
