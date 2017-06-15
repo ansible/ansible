@@ -115,6 +115,7 @@ Ansible Changes By Release
 * Update ipaddr Jinja filters to replace existing non RFC compliant ones. Added additional filters for easier use
   of handling IP addresses. (PR# 26566)
 * datetime filter updated to use default format of datetime.datetime (ISO8601)
+* The junit plugin now has an option to report a junit test failure on changes for idempotent testing.
 
 #### New Callbacks:
 - full_skip
