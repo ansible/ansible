@@ -136,10 +136,10 @@ from ansible.module_utils.cloudstack import (
 )
 
 
-class AnsibleCloudStackCluster(AnsibleCloudStack):
+class AnsibleCloudStackTrafficType(AnsibleCloudStack):
 
     def __init__(self, module):
-        super(AnsibleCloudStackCluster, self).__init__(module)
+        super(AnsibleCloudStackTrafficType, self).__init__(module)
         self.returns = {
             'traffictype': 'traffictype',
             'isolationmethod': 'isolation_method',
@@ -300,7 +300,7 @@ def main():
     )
 
     try:
-        acs_traffictype = AnsibleCloudStackCluster(module)
+        acs_traffictype = AnsibleCloudStackTrafficType(module)
 
         state = module.params.get('state')
         if state in ['absent']:
