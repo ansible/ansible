@@ -216,15 +216,23 @@ def get_param(module, key):
     return module.params[key] or module.params['provider'].get(key)
 
 
-def map_params_to_obj(module, param_xpath_map):
+def map_params_to_obj(module, param_to_xpath_map):
     obj = collections.OrderedDict()
-    for key, value in param_xpath_map.items():
+    for key, attrib in param_to_xpath_map.items():
         if key in module.params:
-            obj.update({value: module.params[key]})
-    return [obj]
+            if isinstance(attrib, dict):
+                xpath = attrib.get('xpath')
+                del attrib['xpath']
+
+                attrib.update({'value': module.params[key]})
+                obj.update({xpath: attrib})
+            else:
+                xpath = attrib
+                obj.update({xpath: {'value': module.params[key]}})
+    return obj
 
 
-def map_obj_to_ele(module, want, top):
+def map_obj_to_ele(module, want, top, value_map=None):
     top_ele = top.split('/')
     root = Element(top_ele[0])
     ele = root
@@ -244,14 +252,26 @@ def map_obj_to_ele(module, want, top):
             elif state == 'suspend':
                 node.set('inactive', 'inactive')
 
-        for key, value in obj.items():
-            if value:
+        for xpath, attrib in obj.items():
+            tag_only = attrib.get('tag_only', False)
+            value = attrib.get('value')
+
+            if value_map and xpath in value_map:
+                value = value_map[xpath].get(value)
+
+            if value or tag_only:
                 ele = node
-                tags = key.split('/')
+                tags = xpath.split('/')
+
                 for item in tags:
                     ele = SubElement(ele, item)
 
-                ele.text = to_text(value, errors='surrogate_then_replace')
+                if tag_only:
+                    if not value:
+                        ele.set('delete', 'delete')
+                else:
+                    ele.text = to_text(value, errors='surrogate_then_replace')
+
                 if state != 'present':
                     break
 

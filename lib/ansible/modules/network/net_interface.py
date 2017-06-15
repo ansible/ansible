@@ -26,51 +26,79 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: net_vlan
+module: net_interface
 version_added: "2.4"
-author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Manage VLANs on network devices
+author: "Ganesh Nalawade (@ganeshrn)"
+short_description: Manage Interface on network devices
 description:
-  - This module provides declarative management of VLANs
+  - This module provides declarative management of Interfaces
     on network devices.
 options:
   name:
     description:
-      - Name of the VLAN.
-  vlan_id:
+      - Name of the Interface.
+  description:
     description:
-      - ID of the VLAN.
-  interfaces:
+      - Description of Interface.
+  enabled:
     description:
-      - List of interfaces the VLAN should be configured on.
+      - Operational status of the interface link
+    default: yes
+  speed:
+    description:
+      - Interface link speed
+  mtu:
+    decription:
+      - Maximum size of transmit packet
+  duplex:
+    description:
+      - Interface link status
+    default: full
+    choices: ['full', 'half', 'auto']
+  tx_rate:
+    description:
+      - Transmit rate
+  rx_rate:
+    descriptiom:
+      - Recevier rate
   collection:
-    description: List of VLANs definitions
+    description: List of Interfaces definitions
   purge:
     description:
-      - Purge VLANs not defined in the collections parameter.
+      - Purge Interfaces not defined in the collections parameter.
+        This applies only for logical interface
     default: no
   state:
     description:
-      - State of the VLAN configuration.
+      - State of the Interface.
     default: present
-    choices: ['present', 'absent', 'active', 'suspend']
+    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
-- name: configure VLAN ID and name
-  net_vlan:
-    vlan_id: 20
-    name: test-vlan
+- name: configure interface
+  net_interface:
+    name: ge-0/0/1
+    description: test-interface
 
-- name: remove configuration
-  net_vlan:
+- name: remove interface
+  net_interface:
+    name: ge-0/0/1
     state: absent
 
-- name: configure VLAN state
-  net_vlan:
-    vlan_id:
-    state: suspend
+- name: make interface up
+  net_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    enabled: True
 
+- name: make interface down
+  net_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    enabled: False
 """
 
 RETURN = """
@@ -79,13 +107,18 @@ commands:
   returned: always
   type: list
   sample:
-    - vlan 20
-    - name test-vlan
+    - interface 20
+    - name test-interface
 rpc:
   description: load-configuration RPC send to the device
   returned: when configuration is changed on device
   type: string
-  sample: "<vlans><vlan><name>test-vlan-4</name></vlan></vlans>"
+  sample: "<interfaces>
+             <interface>
+               <name>ge-0/0/0</name>
+               <description>test interface</description>
+              </interface>
+           </interfaces>"
 
 Note: Return value varies based on the newtork os platform
 For junos platform C(rpc) is returned.
