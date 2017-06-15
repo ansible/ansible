@@ -96,9 +96,11 @@ service_names:
     service_names:
     - com.amazonaws.ap-southeast-2.s3
 vpc_endpoints:
-  description: endpoints that match the query
+  description:
+    - A list of endpoints that match the query. Each endpoint has the keys creation_timestamp,
+      policy_document, route_table_ids, service_name, state, vpc_endpoint_id, vpc_id.
   returned: I(query) is C(endpoints)
-  type: list of dictionaries
+  type: list
   sample:
     vpc_endpoints:
     - creation_timestamp: "2017-02-16T11:06:48+00:00"
