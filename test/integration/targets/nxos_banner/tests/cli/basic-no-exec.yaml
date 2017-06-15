@@ -1,0 +1,41 @@
+---
+- name: Setup
+  nxos_banner:
+    banner: exec
+    text: |
+      Junk exec banner
+      over multiple lines
+    state: present
+    provider: "{{ cli }}"
+
+- name: remove exec
+  nxos_banner:
+    banner: exec
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no banner exec' in result.commands"
+
+- name: remove exec (idempotent)
+  nxos_banner:
+    banner: exec
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"
