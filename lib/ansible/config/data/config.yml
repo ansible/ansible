@@ -1272,6 +1272,14 @@ PERSISTENT_CONNECT_INTERVAL:
   value_type: integer
   vars: []
   yaml: {key: persistent_connection.connect_interval}
+PERSISTENT_CONTROL_PATH_DIR:
+  default: ~/.ansible/pc
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PERSISTENT_CONTROL_PATH_DIR}]
+  ini:
+  - {key: control_path_dir, section: persistent_connection}
+  vars: []
+  yaml: {key: persistent_connection.control_path_dir}
 PERSISTENT_CONNECT_RETRIES:
   default: 30
   desc: 'TODO: write it'
