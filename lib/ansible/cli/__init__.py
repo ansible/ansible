@@ -283,7 +283,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         elif isinstance(value, list):
             setattr(parser.values, option.dest, [unfrackpath(x) for x in value])
         else:
-            pass #FIXME: should we raise options error?
+            pass  # FIXME: should we raise options error?
 
     @staticmethod
     def unfrack_path(option, opt, value, parser):
