@@ -33,7 +33,6 @@ description:
   - This will configure both exec and motd banners on remote devices
     running Cisco NXOS. It allows playbooks to add or remote
     banner text from the active running configuration.
-extends_documentation_fragment: nxos
 options:
   banner:
     description:
