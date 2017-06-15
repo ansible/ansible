@@ -1,7 +1,7 @@
 ---
 - name: Create user
   vyos_user:
-    name: netend
+    name: ansibletest1
     password: test
     state: present
     provider: "{{ cli }}"
@@ -10,13 +10,13 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set system login user netend authentication plaintext-password" in result.commands'
+      - '"set system login user ansibletest1 authentication plaintext-password" in result.commands'
 
 - name: Collection of users
   vyos_user:
     users:
-      - name: test1
-      - name: test2
+      - name: ansibletest2
+      - name: ansibletest3
     level: operator
     state: present
     provider: "{{ cli }}"
@@ -25,14 +25,14 @@
 - assert:
     that:
       - 'result.changed == true'
-      - 'result.commands == ["set system login user test1 level operator", "set system login user test2 level operator"]'
+      - 'result.commands == ["set system login user ansibletest2 level operator", "set system login user ansibletest3 level operator"]'
 
 - name: tearDown
   vyos_user:
     users:
-      - name: netend
-      - name: test1
-      - name: test2
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
     state: absent
     provider: "{{ cli }}"
   register: result
@@ -40,4 +40,4 @@
 - assert:
     that:
       - 'result.changed == true'
-      - 'result.commands == ["delete system login user netend", "delete system login user test1", "delete system login user test2"]'
+      - 'result.commands == ["delete system login user ansibletest1", "delete system login user ansibletest2", "delete system login user ansibletest3"]'
