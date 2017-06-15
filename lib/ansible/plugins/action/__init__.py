@@ -40,6 +40,7 @@ from ansible.parsing.utils.jsonify import jsonify
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.release import __version__
 from ansible.utils.unsafe_proxy import wrap_var
+from ansible.vars.manager import remove_internal_keys
 
 
 try:
@@ -743,7 +744,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         tmpdir_delete = (not data.pop("_ansible_suppress_tmpdir_delete", False) and wrap_async)
 
         # remove internal keys
-        self._remove_internal_keys(data)
+        remove_internal_keys(data)
 
         # cleanup tmp?
         if (self._play_context.become and self._play_context.become_user != 'root') and not persist_files and delete_remote_tmp or tmpdir_delete:
@@ -765,17 +766,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
-
-    def _remove_internal_keys(self, data):
-        for key in list(data.keys()):
-            if key.startswith('_ansible_') and key != '_ansible_parsed' or key in C.INTERNAL_RESULT_KEYS:
-                display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
-                del data[key]
-
-        # remove bad/empty internal keys
-        for key in ['warnings', 'deprecations']:
-            if key in data and not data[key]:
-                del data[key]
 
     def _clean_returned_data(self, data):
         remove_keys = set()
@@ -817,7 +807,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 display.warning("Removed restricted key from module data: %s = %s" % (r_key, r_val))
                 del data[r_key]
 
-        self._remove_internal_keys(data)
+        remove_internal_keys(data)
 
     def _parse_returned_data(self, res):
         try:

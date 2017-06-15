@@ -30,7 +30,7 @@ from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins import PluginLoader
+from ansible.plugins.loader import PluginLoader
 from ansible.utils.path import unfrackpath
 
 try:
@@ -260,14 +260,15 @@ class InventoryManager(object):
                         display.vvv(u'Parsed %s inventory source with %s plugin' % (to_text(source), plugin_name))
                         break
                     except AnsibleParserError as e:
-                        failures.append(u'\n* Failed to parse %s with %s inventory plugin: %s\n' % (to_text(source), plugin_name, to_text(e)))
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
                 else:
                     display.debug(u'%s did not meet %s requirements' % (to_text(source), plugin_name))
             else:
                 if failures:
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
-                        display.warning(fail)
+                        display.warning(u'\n* Failed to parse %s with %s inventory plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
+                        display.vvv(fail['exc'].tb)
 
         if not parsed:
             display.warning(u"Unable to parse %s as an inventory source" % to_text(source))
