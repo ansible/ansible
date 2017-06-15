@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.mock.loader import DictDataLoader
+from units.mock.path import mock_unfrackpath_noop
 import uuid
 
 from ansible.compat.tests import unittest
@@ -28,9 +29,11 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
+from ansible.inventory.manager import InventoryManager
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.playbook.block import Block
+from ansible.playbook.task import Task
 from ansible.playbook.handler import Handler
 from ansible.plugins.strategy import StrategyBase
 
@@ -179,6 +182,75 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm._unreachable_hosts = ["host02"]
         self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), mock_hosts[2:])
         strategy_base.cleanup()
+
+    @patch('ansible.inventory.manager.unfrackpath', mock_unfrackpath_noop)
+    def test_strategy_base_get_delegated_hosts(self):
+        queue_items = []
+        def _queue_empty(*args, **kwargs):
+            return len(queue_items) == 0
+        def _queue_get(*args, **kwargs):
+            if len(queue_items) == 0:
+                raise Queue.Empty
+            else:
+                return queue_items.pop()
+        def _queue_put(item, *args, **kwargs):
+            queue_items.append(item)
+
+        task = Task.load({
+          'name': 'Gather facts from server',
+          'action': 'setup',
+          'args': {'gather_subset': '!all'},
+          'delegate_facts': True,
+          'delegate_to': 'host2',
+        })
+
+        inventory_content = """
+            [servers]
+            host1
+            host2 ansible_host=10.10.10.10
+            """
+
+        fake_loader = DictDataLoader({
+            'hosts': inventory_content
+        })
+
+        with patch('ansible.plugins.inventory.ini.InventoryModule.verify_file') as base:
+            base.return_value = True
+            inventory = InventoryManager(loader=fake_loader, sources=['hosts'])
+
+        host2 = inventory.get_host('host2')
+
+        self.assertEqual(host2.vars['ansible_host'], '10.10.10.10')
+        self.assertEqual(host2.vars['inventory_file'], 'hosts')
+        self.assertEqual(host2.groups, [inventory.groups['servers'], inventory.groups['all']])
+
+        mock_queue = MagicMock()
+        mock_queue.empty.side_effect = _queue_empty
+        mock_queue.get.side_effect = _queue_get
+        mock_queue.put.side_effect = _queue_put
+
+        mock_tqm = MagicMock()
+        mock_tqm._final_q = mock_queue
+        mock_tqm.get_inventory.return_value = inventory
+
+        strategy_base = StrategyBase(tqm=mock_tqm)
+
+        try:
+            result = {
+                '_ansible_delegated_vars': {
+                    'ansible_host': u'10.10.10.10',
+                },
+            }
+
+            mock_tqm._failed_hosts = []
+            mock_tqm._unreachable_hosts = []
+
+            hosts = strategy_base.get_delegated_hosts(result, task)
+            self.assertEqual(len(hosts), 1)
+            self.assertEqual(hosts[0], host2)
+            self.assertIs(hosts[0], host2)
+        finally:
+            strategy_base.cleanup()
 
     @patch.object(WorkerProcess, 'run')
     def test_strategy_base_queue_task(self, mock_worker):
