@@ -1002,7 +1002,7 @@ class FreeBsdService(Service):
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
     def get_service_status(self):
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', self.arguments))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'status', self.arguments))
         if self.name == "pf":
             self.running = "Enabled" in stdout
         else:
@@ -1080,14 +1080,6 @@ class FreeBsdService(Service):
 
 
     def service_control(self):
-
-        if self.action == "start":
-            self.action = "onestart"
-        if self.action == "stop":
-            self.action = "onestop"
-        if self.action == "reload":
-            self.action = "onereload"
-
         ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
 
         if self.sleep:
