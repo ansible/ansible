@@ -1,7 +1,7 @@
 ---
-- name: Create user
+- name: Create user (SetUp)
   iosxr_user:
-    name: netend
+    name: ansibletest1
     password: test
     state: present
     provider: "{{ cli }}"
@@ -10,13 +10,13 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"username netend secret" in result.commands'
+      - '"username ansibletest1 secret" in result.commands'
 
-- name: Collection of users
+- name: Collection of users (SetUp)
   iosxr_user:
     users:
-      - name: test1
-      - name: test2
+      - name: ansibletest2
+      - name: ansibletest3
     state: present
     group: sysadmin
     provider: "{{ cli }}"
@@ -25,15 +25,47 @@
 - assert:
     that:
       - 'result.changed == true'
-      - 'result.commands == ["username test1 group sysadmin", "username test2 group sysadmin"]'
+      - 'result.commands == ["username ansibletest2 group sysadmin", "username ansibletest3 group sysadmin"]'
+
+- name: Add user again (Idempotent)
+  iosxr_user:
+    name: ansibletest1
+    password: test
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
+
+- name: Add collection of users again (Idempotent)
+  iosxr_user:
+    users:
+      - name: ansibletest2
+      - name: ansibletest3
+    state: present
+    group: sysadmin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
 
 - name: tearDown
   iosxr_user:
-    purge: yes
+    users:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
     provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - 'result.commands == ["no username test1", "no username test2", "no username netend"]'
+      - 'result.commands == ["no username ansibletest1", "no username ansibletest2", "no username ansibletest3"]'
