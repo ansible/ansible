@@ -78,6 +78,15 @@ $description = Get-AnsibleParam -obj $params -name "description" -type "str" -de
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -default '\'
 
+# Ensure the TaskPath starts with and ends with slashes as this causes issues with some
+# versions of Windows
+if ($path[0] -ne '\') {
+    $path = '\' + $path
+}
+if ($path[$path.get_Length()-1] -ne '\') {
+    $path = $path + '\'
+}
+
 # Required vars
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
@@ -104,7 +113,6 @@ try {
     } catch {
         $task = $null
     }
-
 
     # Correlate task state to enable variable, used to calculate if state needs to be changed
     $taskState = if ($task) { $task.State } else { $null }
@@ -162,7 +170,7 @@ try {
     }
 
     if ( ($state -eq "absent") -and ($exists) ) {
-        Unregister-ScheduledTask -TaskName $name -Confirm:$false -WhatIf:$check_mode
+        Unregister-ScheduledTask -TaskName $name -TaskPath $path -Confirm:$false -WhatIf:$check_mode
         $result.changed = $true
         $result.msg = "Deleted task $name"
 
@@ -220,9 +228,8 @@ try {
             $result.msg = "No change in task $name"
         }
         else {
-            Unregister-ScheduledTask -TaskName $name -Confirm:$false -WhatIf:$check_mode
-
             if (-not $check_mode) {
+                Unregister-ScheduledTask -TaskName $name -TaskPath $path -Confirm:$false 
                 $oldPathResults = Invoke-TaskPathCheck -Path $task.TaskPath -Remove
                 Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings -Principal $principal
             }
