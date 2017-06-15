@@ -61,6 +61,17 @@ options:
             - In compact placement, virtual services are placed on existing ses until max_vs_per_se limit is reached.
             - Enum options - PLACEMENT_ALGO_PACKED, PLACEMENT_ALGO_DISTRIBUTED.
             - Default value when not specified in API or module is interpreted by Avi Controller as PLACEMENT_ALGO_PACKED.
+    async_ssl:
+        description:
+            - Ssl handshakes will be handled by dedicated ssl threads.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.4"
+    async_ssl_threads:
+        description:
+            - Number of async ssl threads per se_dp.
+            - Allowed values are 1-4.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+        version_added: "2.4"
     auto_rebalance:
         description:
             - If set, virtual services will be automatically migrated when load on an se is less than minimum or more than maximum thresholds.
@@ -285,10 +296,22 @@ options:
     se_dos_profile:
         description:
             - Dosthresholdprofile settings for serviceenginegroup.
+    se_ipc_udp_port:
+        description:
+            - Udp port for se_dp ipc in docker bridge mode.
+            - Field introduced in 17.1.2.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1500.
+        version_added: "2.4"
     se_name_prefix:
         description:
             - Prefix to use for virtual machine name of service engines.
             - Default value when not specified in API or module is interpreted by Avi Controller as Avi.
+    se_remote_punt_udp_port:
+        description:
+            - Udp port for punted packets in docker bridge mode.
+            - Field introduced in 17.1.2.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1501.
+        version_added: "2.4"
     se_thread_multiplier:
         description:
             - Multiplier for se threads based on vcpu.
@@ -296,10 +319,21 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
     se_tunnel_mode:
         description:
-            - Determines if dsr from secondary se is active or not      0        automatically determine based on hypervisor type    1        disable dsr
-            - unconditionally    ~[0,1]   enable dsr unconditionally.
+            - Determines if dsr from secondary se is active or not.
+            - 0  automatically determine based on hypervisor type.
+            - 1  disable dsr unconditionally.
+            - ~[0,1]  enable dsr unconditionally.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+    se_udp_encap_ipc:
+        description:
+            - Determines if se-se ipc messages are encapsulated in an udp header.
+            - 0  automatically determine based on hypervisor type.
+            - 1  use udp encap unconditionally.
+            - ~[0,1]  don't use udp encap.
+            - Field introduced in 17.1.2.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        version_added: "2.4"
     se_vs_hb_max_pkts_in_batch:
         description:
             - Maximum number of aggregated vs heartbeat packets to send in a batch.
@@ -404,6 +438,8 @@ def main():
         advertise_backend_networks=dict(type='bool',),
         aggressive_failure_detection=dict(type='bool',),
         algo=dict(type='str',),
+        async_ssl=dict(type='bool',),
+        async_ssl_threads=dict(type='int',),
         auto_rebalance=dict(type='bool',),
         auto_rebalance_interval=dict(type='int',),
         auto_redistribute_active_standby_load=dict(type='bool',),
@@ -456,9 +492,12 @@ def main():
         realtime_se_metrics=dict(type='dict',),
         se_deprovision_delay=dict(type='int',),
         se_dos_profile=dict(type='dict',),
+        se_ipc_udp_port=dict(type='int',),
         se_name_prefix=dict(type='str',),
+        se_remote_punt_udp_port=dict(type='int',),
         se_thread_multiplier=dict(type='int',),
         se_tunnel_mode=dict(type='int',),
+        se_udp_encap_ipc=dict(type='int',),
         se_vs_hb_max_pkts_in_batch=dict(type='int',),
         se_vs_hb_max_vs_in_pkt=dict(type='int',),
         service_ip_subnets=dict(type='list',),
