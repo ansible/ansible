@@ -172,6 +172,22 @@ except ImportError:
     HAS_BOTO3 = False
 
 
+def get_elb_listeners(connection, module, elb_arn):
+
+    try:
+        return connection.describe_listeners(LoadBalancerArn=elb_arn)['Listeners']
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+
+def get_listener_rules(connection, module, listener_arn):
+
+    try:
+        return connection.describe_rules(ListenerArn=listener_arn)['Rules']
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+
 def get_load_balancer_attributes(connection, module, load_balancer_arn):
 
     try:
@@ -216,16 +232,23 @@ def list_load_balancers(connection, module):
     except NoCredentialsError as e:
         module.fail_json(msg="AWS authentication problem. " + e.message, exception=traceback.format_exc())
 
-    # Get the attributes and tags for each target group
     for load_balancer in load_balancers['LoadBalancers']:
+        # Get the attributes for each elb
         load_balancer.update(get_load_balancer_attributes(connection, module, load_balancer['LoadBalancerArn']))
+
+        # Get the listeners for each elb
+        load_balancer['listeners'] = get_elb_listeners(connection, module, load_balancer['LoadBalancerArn'])
+
+        # For each listener, get listener rules
+        for listener in load_balancer['listeners']:
+            listener['rules'] = get_listener_rules(connection, module, listener['ListenerArn'])
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_load_balancers = [camel_dict_to_snake_dict(load_balancer) for load_balancer in load_balancers['LoadBalancers']]
 
     # Get tags for each load balancer
     for snaked_load_balancer in snaked_load_balancers:
-        snaked_load_balancer['tags'] = get_load_balancer_tags(connection, module, load_balancer['LoadBalancerArn'])
+        snaked_load_balancer['tags'] = get_load_balancer_tags(connection, module, snaked_load_balancer['load_balancer_arn'])
 
     module.exit_json(load_balancers=snaked_load_balancers)
 
