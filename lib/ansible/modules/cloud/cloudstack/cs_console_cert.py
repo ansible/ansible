@@ -168,7 +168,7 @@ class AnsibleCloudStackConsoleCert(AnsibleCloudStack):
         cert = self.module.params.get('server_certificate')
         root = self.module.params.get('root_certificate')
         intermediate = self.module.params.get('intermediate_certificates').join("\n")
-        self.cert_signature = hashlib.md5(key+cert+root+intermediate).hexdigest()
+        self.cert_signature = hashlib.md5(key + cert + root + intermediate).hexdigest()
 
         return self.cert_signature
 
@@ -229,11 +229,11 @@ class AnsibleCloudStackConsoleCert(AnsibleCloudStack):
 
     def upload_cert(self, name=None, id=None, certificate=None, private_key=None):
         args = {
-          'name': name,
-          'id': id,
-          'domainsuffix': self.module.params.get('domain_suffix'),
-          'certificate': certificate,
-          'privatekey': private_key,
+            'name': name,
+            'id': id,
+            'domainsuffix': self.module.params.get('domain_suffix'),
+            'certificate': certificate,
+            'privatekey': private_key,
         }
         res = self.cs.uploadCustomCertificate(**args)
         if 'errortext' in res:
@@ -257,7 +257,7 @@ class AnsibleCloudStackConsoleCert(AnsibleCloudStack):
 
         for x in range(0, len(intermediates)):
             id = id + 1
-            name = "intermediate{}".format(x+1)
+            name = "intermediate{}".format(x + 1)
             self.upload_cert(name=name, id=id, certificate=intermediates[x])
 
         id = id + 1
