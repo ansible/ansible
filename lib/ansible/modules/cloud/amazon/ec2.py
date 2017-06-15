@@ -1642,11 +1642,14 @@ def main():
         module.fail_json(msg='boto required for this module')
 
     try:
-        _, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
         if module.params.get('region') or not module.params.get('ec2_url'):
             ec2 = ec2_connect(module)
         elif module.params.get('ec2_url'):
             ec2 = connect_ec2_endpoint(ec2_url, **aws_connect_kwargs)
+
+        if 'region' not in aws_connect_kwargs:
+            aws_connect_kwargs['region'] = ec2.region
 
         vpc = connect_vpc(**aws_connect_kwargs)
     except boto.exception.NoAuthHandlerFound as e:
