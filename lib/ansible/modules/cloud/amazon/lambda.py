@@ -192,21 +192,11 @@ output:
       }
 '''
 
-# Import from Python standard library
-
-# from ansible.module_utils.basic import *
 from ansible.module_utils.aws import AnsibleAWSModule
 from ansible.module_utils.ec2 import HAS_BOTO3, ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
 import base64
 import hashlib
 import traceback
-
-try:
-    import botocore
-    HAS_BOTOCORE = True
-except ImportError:
-    HAS_BOTOCORE = False
-
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
@@ -232,37 +222,6 @@ def sha256sum(filename):
     hex_digest = code_b64.decode('utf-8')
 
     return hex_digest
-
-
-# There is a PR open to merge fail_json_aws this into the standard module code;
-# see https://github.com/ansible/ansible/pull/23882
-def fail_json_aws(module, exception, msg=None):
-    """call fail_json with processed exception
-    function for converting exceptions thrown by AWS SDK modules,
-    botocore, boto3 and boto, into nice error messages.
-    """
-    last_traceback = traceback.format_exc()
-
-    try:
-        except_msg = exception.message
-    except AttributeError:
-        except_msg = str(exception)
-
-    if msg is not None:
-        message = '{0}: {1}'.format(msg, except_msg)
-    else:
-        message = except_msg
-
-    try:
-        response = exception.response
-    except AttributeError:
-        response = None
-
-    if response is None:
-        module.fail_json(msg=message, exception=last_traceback)
-    else:
-        module.fail_json(msg=message, exception=last_traceback,
-                         **camel_dict_to_snake_dict(response))
 
 
 def main():
