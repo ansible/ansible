@@ -235,6 +235,9 @@ The following fields can be used and are all required unless specified otherwise
     Data type
   :sample:
     One or more examples.
+  :version_added:
+    Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
+    This is a string, and not a float, i.e. ``version_added: "2.3"``.
   :contains:
     Optional, if you set `type: complex` you can detail the dictionary here by repeating the above elements.
 
@@ -249,6 +252,9 @@ The following fields can be used and are all required unless specified otherwise
         Data type
       :sample:
         One or more examples.
+      :version_added:
+        Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
+        This is a string, and not a float, i.e. ``version_added: "2.3"``.
 
 
 For complex nested returns type can be specified as ``type: complex``.
