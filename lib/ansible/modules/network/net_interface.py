@@ -43,14 +43,16 @@ options:
       - Description of Interface.
   enabled:
     description:
-      - Operational status of the interface link
+      - Configure operational status of the interface link.
+        If value is I(yes) interface is configured in up state,
+        for I(no) interface is configured in down state.
     default: yes
   speed:
     description:
-      - Interface link speed
+      - Interface link speed.
   mtu:
     description:
-      - Maximum size of transmit packet
+      - Maximum size of transmit packet.
   duplex:
     description:
       - Interface link status
@@ -63,15 +65,15 @@ options:
     description:
       - Receiver rate
   collection:
-    description: List of Interfaces definitions
+    description: List of Interfaces definitions.
   purge:
     description:
       - Purge Interfaces not defined in the collections parameter.
-        This applies only for logical interface
+        This applies only for logical interface.
     default: no
   state:
     description:
-      - State of the Interface.
+      - State of the Interface configuration.
     default: present
     choices: ['present', 'absent']
 """
@@ -104,7 +106,7 @@ EXAMPLES = """
 
 RETURN = """
 commands:
-  description: The list of configuration mode commands to send to the device
+  description: The list of configuration mode commands to send to the device.
   returned: always
   type: list
   sample:
@@ -112,7 +114,8 @@ commands:
     - name test-interface
 rpc:
   description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+  returned: C(rpc) is returned only for junos device
+            when configuration is changed on device
   type: string
   sample: >
             <interfaces>
@@ -121,9 +124,5 @@ rpc:
                     <description>test interface</description>
                 </interface>
             </interfaces>
-"""
-"""
-Note: Return value varies based on the newtork os platform
-For junos platform C(rpc) is returned.
-For other platform C(commands) is returned.
+
 """

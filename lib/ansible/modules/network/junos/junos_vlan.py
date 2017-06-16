@@ -50,7 +50,7 @@ options:
       - List of interfaces to check the VLAN has been
         configured correctly.
   collection:
-    description: List of VLANs definitions
+    description: List of VLANs definitions.
   purge:
     description:
       - Purge VLANs not defined in the collections parameter.
@@ -63,6 +63,26 @@ options:
 """
 
 EXAMPLES = """
+- name: configure VLAN ID and name
+  junos_vlan:
+    vlan_name: test
+    vlan_id: 20
+    name: test-vlan
+
+- name: remove VLAN configuration
+  junos_vlan:
+    vlan_name: test
+    state: absent
+
+- name: deactive VLAN configuration
+  junos_vlan:
+    vlan_name: test
+    state: suspend
+
+- name: activate VLAN configuration
+  junos_vlan:
+    vlan_name: test
+    state: active
 """
 
 RETURN = """

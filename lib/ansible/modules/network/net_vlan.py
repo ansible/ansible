@@ -44,7 +44,7 @@ options:
     description:
       - List of interfaces the VLAN should be configured on.
   collection:
-    description: List of VLANs definitions
+    description: List of VLANs definitions.
   purge:
     description:
       - Purge VLANs not defined in the collections parameter.
@@ -83,12 +83,8 @@ commands:
     - name test-vlan
 rpc:
   description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+  returned: C(rpc) is returned only for junos device
+            when configuration is changed on device
   type: string
   sample: "<vlans><vlan><name>test-vlan-4</name></vlan></vlans>"
-"""
-"""
-Note: Return value varies based on the newtork os platform
-For junos platform C(rpc) is returned.
-For other platform C(commands) is returned.
 """

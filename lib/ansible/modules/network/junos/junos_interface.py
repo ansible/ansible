@@ -43,37 +43,39 @@ options:
       - Description of Interface.
   enabled:
     description:
-      - Operational status of the interface link
+      - Configure operational status of the interface link.
+        If value is I(yes/true), interface is configured in up state.
+        For I(no/false) interface is configured in down state.
     default: yes
   speed:
     description:
-      - Interface link speed
+      - Interface link speed.
   mtu:
     description:
-      - Maximum size of transmit packet
+      - Maximum size of transmit packet.
   duplex:
     description:
-      - Interface link status
+      - Interface link status.
     default: auto
     choices: ['full', 'half', 'auto']
   tx_rate:
     description:
-      - Transmit rate
+      - Transmit rate.
   rx_rate:
     description:
-      - Receiver rate
+      - Receiver rate.
   collection:
-    description: List of Interfaces definitions
+    description: List of Interfaces definitions.
   purge:
     description:
       - Purge Interfaces not defined in the collections parameter.
-        This applies only for logical interface
+        This applies only for logical interface.
     default: no
   state:
     description:
-      - State of the Interface.
+      - State of the Interface configuration.
     default: present
-    choices: ['present', 'absent', active, suspend]
+    choices: ['present', 'absent', 'active', 'suspend']
 """
 
 EXAMPLES = """
