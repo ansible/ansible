@@ -207,7 +207,7 @@ def load_rules_for_token(module, consul_api, token):
         rules = RuleCollection()
         info = consul_api.acl.info(token)
         if info and info['Rules']:
-            rule_set = hcl.loads(to_ascii(info['Rules']))
+            rule_set = hcl.loads(to_text(info['Rules']))
             for rule_type in rule_set:
                 for pattern, policy in rule_set[rule_type].items():
                     rules.add_rule(rule_type, Rule(pattern, policy['policy']))
@@ -216,12 +216,6 @@ def load_rules_for_token(module, consul_api, token):
         module.fail_json(
             msg="Could not load rule list from retrieved rule data %s, %s" % (
                 token, e))
-
-
-def to_ascii(unicode_string):
-    if isinstance(unicode_string, unicode):
-        return unicode_string.encode('ascii', 'ignore')
-    return unicode_string
 
 
 def yml_to_rules(module, yml_rules):
@@ -262,7 +256,7 @@ class RuleCollection:
         for rule_type in RULE_TYPES:
             for pattern, rule in self.rules[rule_type].items():
                 rules += TEMPLATE % (rule_type, pattern, rule.policy)
-        return to_ascii(rules)
+        return to_text(rules)
 
     def __len__(self):
         count = 0
