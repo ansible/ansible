@@ -203,6 +203,11 @@ Ansible Changes By Release
   * gcp_healthcheck
   * gcp_target_proxy
   * gcp_url_map
+- purestorage
+  * purefa_host
+  * purefa_volume
+  * purefa_hg
+  * purefa_pg
 - rundeck
   * rundeck_acl_policy
   * rundeck_project
