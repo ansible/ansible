@@ -96,15 +96,18 @@ lambda_facts.function.TheName:
     type: dict
 '''
 
+from ansible.module_utils.aws import AnsibleAWSModule
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
+import json
 import datetime
 import sys
+import re
+
 
 try:
-    import boto3
     from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # protected by HAS_BOTO3 in theory at least
 
 
 def fix_return(node):
@@ -346,12 +349,12 @@ def main():
     argument_spec.update(
         dict(
             function_name=dict(required=False, default=None, aliases=['function', 'name']),
-            query=dict(required=False, choices=['aliases', 'all', 'config', 'mappings', 'policy',  'versions'], default='all'),
+            query=dict(required=False, choices=['aliases', 'all', 'config', 'mappings', 'policy', 'versions'], default='all'),
             event_source_arn=dict(required=False, default=None)
         )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=[],
@@ -404,10 +407,6 @@ def main():
 
     module.exit_json(**results)
 
-
-# ansible import module(s) kept at ~eof as recommended
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
