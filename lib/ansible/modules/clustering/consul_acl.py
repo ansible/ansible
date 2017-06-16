@@ -11,7 +11,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = """
 module: consul_acl
 short_description: "manipulate consul acl keys and rules"
@@ -125,6 +124,7 @@ try:
 except ImportError:
     pyhcl_installed = False
 
+from collections import defaultdict
 from requests.exceptions import ConnectionError
 
 
