@@ -1,4 +1,5 @@
 ---
+- debug: msg="START net_vlan eos/basic.yaml"
 
 - name: setup - remove vlan
   eos_vlan:
