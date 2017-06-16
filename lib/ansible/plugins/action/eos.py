@@ -27,7 +27,7 @@ from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.path import unfrackpath
 from ansible.plugins import connection_loader
 from ansible.compat.six import iteritems
-from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.eos import ARGS_DEFAULT_VALUE, eos_argument_spec
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils._text import to_bytes
 
@@ -97,7 +97,7 @@ class ActionModule(_ActionModule):
                 provider['host'] = self._play_context.remote_addr
 
             if provider.get('use_ssl') is None:
-                provider['use_ssl'] = eos_argument_spec['use_ssl']['default']
+                provider['use_ssl'] = ARGS_DEFAULT_VALUE['use_ssl']
 
             if provider.get('port') is None:
                 default_port = 443 if provider['use_ssl'] else 80
@@ -116,7 +116,7 @@ class ActionModule(_ActionModule):
                 provider['authorize'] = False
 
             if provider.get('validate_certs') is None:
-                provider['validate_certs'] = eos_argument_spec['validate_certs']['default']
+                provider['validate_certs'] = ARGS_DEFAULT_VALUE['validate_certs']
 
             self._task.args['provider'] = provider
 
