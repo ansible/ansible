@@ -39,4 +39,7 @@
       - "result.changed == false"
 
 - name: remove hello
-  apt: pkg=hello state=absent autoclean=yes
+  apt:
+    pkg: hello
+    state: absent
+    autoclean: yes
