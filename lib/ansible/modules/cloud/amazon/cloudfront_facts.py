@@ -272,7 +272,7 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
-                                  exception=traceback.format_exec(e),
+                                  exception=traceback.format_exc(),
                                   **camel_dict_to_snake_dict(e.response))
 
     def get_origin_access_identity(self, origin_access_identity_id):
