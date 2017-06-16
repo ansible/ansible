@@ -152,7 +152,7 @@ You can conditionally execute a role. This is not generally recommended with the
 
     - hosts: webservers
       tasks:
-      - include_role: 
+      - include_role:
           name: some_role
         when: "ansible_os_family == 'RedHat'"
 
@@ -170,7 +170,7 @@ Or, again, using the newer syntax::
 
     - hosts: webservers
       tasks:
-      - import_role: 
+      - import_role:
           name: foo
         tags:
         - bar
@@ -190,7 +190,7 @@ Ansible will only allow a role to execute once, even if defined multiple times, 
       - foo
       - foo
 
-Given the above, the role ``foo`` will only be run once. 
+Given the above, the role ``foo`` will only be run once.
 
 To make roles run more than once, there are two options:
 
