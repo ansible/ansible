@@ -76,7 +76,7 @@ current_status:
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec,camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict
 
 # import a class, otherwise we'll use a fully qualified path
 import ansible.module_utils.ec2
