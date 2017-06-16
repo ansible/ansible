@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2016, Kenneth D. Evensen <kevensen@redhat.com>
 # (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# (c) 2017, Branko Majic <branko@majic.rs>
 #
 # This file is part of Ansible (sort of)
 #
@@ -22,11 +23,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = """
 module: gconftool2
 author:
     - "Kenneth D. Evensen (@kevensen)"
+    - "Abhijeet Kasurde <akasurde@redhat.com>"
+    - "Branko Majic (azaghal)"
 short_description: Edit GNOME Configurations
 description:
   - This module allows for the manipulation of GNOME 2 Configuration via
@@ -36,146 +38,224 @@ options:
   key:
     required: true
     description:
-    - A GConf preference key is an element in the GConf repository
-      that corresponds to an application preference. See man gconftool-2(1)
+      - A GConf preference key is an element in the GConf repository
+        that corresponds to an application preference. See man gconftool-2(1)
   value:
     required: false
     description:
-    - Preference keys typically have simple values such as strings,
-      integers, or lists of strings and integers. This is ignored if the state
-      is "get". See man gconftool-2(1)
+      - Preference keys typically have simple values such as strings,
+        integers, or lists of strings and integers. This is ignored if the state
+        is "get". See man gconftool-2(1)
   value_type:
     required: false
     choices:
-    - int
-    - bool
-    - float
-    - string
+      - int
+      - bool
+      - float
+      - string
     description:
-    - The type of value being set. This is ignored if the state is "get".
+      - The type of value being set. This is ignored if the state is "get".
   state:
-    required: true
+    required: false
+    default: present
     choices:
-    - get
-    - present
-    - absent
+      - get
+      - present
+      - absent
     description:
-    - The action to take upon the key/value.
+      - The action to take upon the key/value.
   config_source:
     required: false
     description:
-    - Specify a configuration source to use rather than the default path.
-      See man gconftool-2(1)
-  direct:
-    required: false
-    choices: [ "yes", "no" ]
-    default: no
-    description:
-    - Access the config database directly, bypassing server.  If direct is
-      specified then the config_source must be specified as well.
-      See man gconftool-2(1)
-
+      - Specify a configuration source to use rather than the default
+        path. Specifying configuration source will also result in direct access
+        (via C(--direct) option), bypassing the server. See man gconftool-2(1)
+        for details.
 """
 
 EXAMPLES = """
 - name: Change the widget font to "Serif 12"
   gconftool2:
     key: "/desktop/gnome/interface/font_name"
+    state: present
     value_type: "string"
     value: "Serif 12"
+
+- name: Read the value of widget font
+  gconftool2:
+    key: "/desktop/gnome/interface/font_name"
+    state: get
+  register: fontname
+
+- name: Output the value of widget font
+  debug: var=fontname.value
+
+- name: Unset the widget font setting
+  gconftool2:
+    key: "/desktop/gnome/interface/font_name"
+    state: absent
 """
 
 RETURN = '''
-  key:
-    description: The key specified in the module parameters
-    returned: success
-    type: string
-    sample: "/desktop/gnome/interface/font_name"
-  value_type:
-    description: The type of the value that was changed
-    returned: success
-    type: string
-    sample: "string"
-  value:
-    description: The value of the preference key after executing the module
-    returned: success
+value:
+    description: value associated with the requested preference key
+    returned: success, state was "get"
     type: string
     sample: "Serif 12"
-...
 '''
 
-from subprocess import Popen, PIPE
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule
 
 
+class GConfTool2(object):
+    """
+    Small wrapper class around the gconftool-2 binary that can be used for
+    manipulating a single preference in GConf repository.
+    """
 
-class GConf2Preference(object):
-    def __init__(self, ansible, key, value_type, value,
-                 direct=False, config_source=""):
-        self.ansible = ansible
-        self.key = key
-        self.value_type = value_type
-        self.value = value
-        self.config_source = config_source
-        self.direct = direct
+    def __init__(self, module, config_source=None, check_mode=False):
+        """
+        Initialises instance of the class.
 
-    def value_already_set(self):
-        return False
+        :param module: Ansible module instance used to signal failures and run commands.
+        :type module: AnsibleModule
 
-    def call(self, call_type, fail_onerr=True):
-        """ Helper function to perform gconftool-2 operations """
-        config_source = ''
-        direct = ''
-        changed = False
-        out = ''
+        :param config_source: Alternative configuration source to use.
+        :type config_source: str
 
-        # If the configuration source is different from the default, create
-        # the argument
-        if self.config_source is not None and len(self.config_source) > 0:
-            config_source = "--config-source " + self.config_source
+        :param check_mode: Specify whether to only check if a change should be made or if to actually make a change.
+        :type check_mode: bool
+        """
 
-        # If direct is true, create the argument
-        if self.direct:
-            direct = "--direct"
+        self.module = module
+        self.base_command = [self.module.get_bin_path("gconftool-2", required=True)]
+        self.check_mode = check_mode
 
-        # Execute the call
-        cmd = "gconftool-2 "
-        try:
-            # If the call is "get", then we don't need as many parameters and
-            # we can ignore some
-            if call_type == 'get':
-                cmd += "--get {0}".format(self.key)
-            # Otherwise, we will use all relevant parameters
-            elif call_type == 'set':
-                cmd += "{0} {1} --type {2} --{3} {4} \"{5}\"".format(direct,
-                                                                     config_source,
-                                                                     self.value_type,
-                                                                     call_type,
-                                                                     self.key,
-                                                                     self.value)
-            elif call_type == 'unset':
-                cmd += "--unset {0}".format(self.key)
+        # This should help avoiding localisation issues when checking for errors
+        # based on stderr.
+        self.module.run_command_environ_update = {'LANG': 'C'}
 
-            # Start external command
-            process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
+        if config_source:
+            self.base_command += ["--direct", "--config-source", config_source]
 
-            # In either case, we will capture the output
-            out = process.stdout.read()
-            err = process.stderr.read()
+    def get(self, key):
+        """
+        Retrieves current value associated with the key.
 
-            if len(err) > 0:
-                if fail_onerr:
-                    self.ansible.fail_json(msg='gconftool-2 failed with '
-                                               'error: %s' % (str(err)))
-            else:
-                changed = True
+        If an error occurs, a call will be made to AnsibleModule.fail_json.
 
-        except OSError:
-            exception = get_exception()
-            self.ansible.fail_json(msg='gconftool-2 failed with exception: '
-                                       '%s' % exception)
-        return changed, out.rstrip()
+        :returns: string -- Value assigned to the provided key. If the key does not exist (i.e. no value is assigned), returns None.
+        """
+
+        # Set-up command to run.
+        command = list(self.base_command)
+        command += ["--get", key]
+
+        # Run the command and fetch standard return code, stdout, and stderr.
+        rc, out, err = self.module.run_command(command)
+
+        # Since the tool does not produce proper error return codes, we need to
+        # process the stderr output to determine if there are issues.
+        if len(err) > 0 and not err.startswith('No value set'):
+            self.module.fail_json(msg='gconftool-2 failed while reading the value from GConf with error: %s' % (str(err)))
+
+        # Standard output will contain the value, or message that no value is
+        # set at all.
+        if err.startswith('No value set'):
+            value = None
+        else:
+            value = out.rstrip("\n")
+
+        return value
+
+    def set(self, key, value_type, value):
+        """
+        Sets the value for specified key.
+
+        If an error occurs, a call will be made to AnsibleModule.fail_json.
+
+        :param key: GConf preference key to set. Should be a full path.
+        :type key: str
+
+        :param value_type: GConf value type. See gconftool-2 for supported values.
+        :type value_type: str
+
+        :param value: Value to set for the specified GConf preference key.
+        :type value: str
+
+        :returns: bool -- True if a change was made, False if no change was required.
+        """
+
+        # If no change is needed (or won't be done due to check_mode), notify
+        # caller straight away.
+        if value == self.get(key):
+            return False
+        elif self.check_mode:
+            return True
+
+        # Set-up command to run.
+        command = list(self.base_command)
+        command += ["--set", "--type", value_type, key, value]
+
+        # Run the command and fetch standard return code, stdout, and stderr.
+        rc, out, err = self.module.run_command(command)
+
+        # Since the tool does not produce proper error return codes, we need to
+        # process the stderr output to determine if there are issues.
+        if len(err) > 0:
+            self.module.fail_json(msg='gconftool-2 failed while setting the value with error: %s' % (str(err)))
+
+        # Value was changed.
+        return True
+
+    def unset(self, key):
+        """
+        Unsets the specified key (removes it from user configuration).
+
+        If an error occurs, a call will be made to AnsibleModule.fail_json.
+
+        .. note::
+
+          If GConf has global value for the specified key, unsetting will merely
+          wipe-out user's local configuration changes. Unfortunately, it is not
+          possible to distinguish removal of user value if global value is set
+          and identical to user's.
+
+        :param key: GConf preference key to unset. Should be a full path.
+        :type key: str
+
+        :returns: bool -- True if a change was made, False if no change was required.
+        """
+
+        # Read the current value first.
+        current_value = self.get(key)
+
+        # No change was needed, key is not set at all, or just notify user if we
+        # are in check mode.
+        if current_value is None:
+            return False
+        elif self.check_mode:
+            return True
+
+        # Set-up command to run.
+        command = list(self.base_command)
+        command += ["--unset", key]
+
+        # Run the command and fetch standard return code, stdout, and stderr.
+        rc, out, err = self.module.run_command(command)
+
+        # Since the tool does not produce proper error return codes, we need to
+        # process the stderr output to determine if there are issues.
+        if len(err) > 0:
+            self.ansible.fail_json(msg='gconftool-2 failed while setting the value with error: %s' % (str(err)))
+
+        # Try to detect if there was any change in values. This does not detect
+        # set 100% reliably if user's own value was identical to global one.
+        if current_value == self.get(key):
+            return False
+
+        # Value was changed.
+        return True
 
 
 def main():
@@ -187,84 +267,29 @@ def main():
                             choices=['int', 'bool', 'float', 'string'],
                             type='str'),
             value=dict(required=False, default=None, type='str'),
-            state=dict(required=True,
-                       default=None,
+            state=dict(default='present',
                        choices=['present', 'get', 'absent'],
                        type='str'),
-            direct=dict(required=False, default=False, type='bool'),
             config_source=dict(required=False, default=None, type='str')
             ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if = [('state', 'present', ('value', 'value_type'))]
     )
 
-    state_values = {"present": "set", "absent": "unset", "get": "get"}
+    # Create wrapper instance.
+    gconftool2 = GConfTool2(module, module.params['config_source'], module.check_mode)
 
-    direct = False
-    # Assign module values to dictionary values
-    key = module.params['key']
-    value_type = module.params['value_type']
-    if module.params['value'].lower() == "true":
-        value = "true"
-    elif module.params['value'] == "false":
-        value = "false"
-    else:
-        value = module.params['value']
+    # Process based on different states.
+    if module.params['state'] == 'get':
+        value = gconftool2.get(module.params['key'])
+        module.exit_json(changed=False, value=value)
+    elif module.params['state'] == 'present':
+        changed = gconftool2.set(module.params['key'], module.params['value_type'], module.params['value'])
+        module.exit_json(changed=changed)
+    elif module.params['state'] == 'absent':
+        changed = gconftool2.unset(module.params['key'])
+        module.exit_json(changed=changed)
 
-    state = state_values[module.params['state']]
-    if module.params['direct'] in BOOLEANS_TRUE:
-        direct = True
-    config_source = module.params['config_source']
-
-    # Initialize some variables for later
-    change = False
-    new_value = ''
-
-    if state != "get":
-        if value is None or value == "":
-            module.fail_json(msg='State %s requires "value" to be set'
-                             % str(state))
-        elif value_type is None or value_type == "":
-            module.fail_json(msg='State %s requires "value_type" to be set'
-                             % str(state))
-
-        if direct and config_source is None:
-            module.fail_json(msg='If "direct" is "yes" then the ' +
-                             '"config_source" must be specified')
-        elif not direct and config_source is not None:
-            module.fail_json(msg='If the "config_source" is specified ' +
-                             'then "direct" must be "yes"')
-
-    # Create a gconf2 preference
-    gconf_pref = GConf2Preference(module, key, value_type,
-                                  value, direct, config_source)
-    # Now we get the current value, if not found don't fail
-    _, current_value = gconf_pref.call("get", fail_onerr=False)
-
-    # Check if the current value equals the value we want to set.  If not, make
-    # a change
-    if current_value != value:
-        # If check mode, we know a change would have occurred.
-        if module.check_mode:
-            # So we will set the change to True
-            change = True
-            # And set the new_value to the value that would have been set
-            new_value = value
-        # If not check mode make the change.
-        else:
-            change, new_value = gconf_pref.call(state)
-    # If the value we want to set is the same as the current_value, we will
-    # set the new_value to the current_value for reporting
-    else:
-        new_value = current_value
-
-    facts = dict(gconftool2={'changed': change,
-                             'key': key,
-                             'value_type': value_type,
-                             'new_value': new_value,
-                             'previous_value': current_value,
-                             'playbook_value': module.params['value']})
-
-    module.exit_json(changed=change, ansible_facts=facts)
 
 if __name__ == '__main__':
     main()
