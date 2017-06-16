@@ -388,11 +388,11 @@ def main():
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
-            if len(vpc_subnet_ids) < 1:
-                module.fail_json(msg='At least 1 subnet is required')
-
-            if len(vpc_security_group_ids) < 1:
-                module.fail_json(msg='At least 1 security group is required')
+            try:
+                assert len(vpc_subnet_ids) > 0
+                assert len(vpc_security_group_ids) > 0
+            except (AssertionError, TypeError):
+                module.fail_json(msg='vpc connectivity requires at least one security group and one subnet')
 
             if 'VpcConfig' in current_config:
                 # Compare VPC config with current config
@@ -488,15 +488,19 @@ def main():
             module.fail_json(msg='Either S3 object or path to zipfile required')
 
         func_kwargs = {'FunctionName': name,
-                       'Description': description,
                        'Publish': True,
                        'Runtime': runtime,
                        'Role': role_arn,
-                       'Handler': handler,
                        'Code': code,
                        'Timeout': timeout,
                        'MemorySize': memory_size,
                        }
+
+        if description is not None:
+            func_kwargs.update({'Description': description})
+
+        if handler is not None:
+            func_kwargs.update({'Handler': handler})
 
         if environment_variables:
             func_kwargs.update({'Environment': {'Variables': environment_variables}})
@@ -506,11 +510,11 @@ def main():
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:
-            if len(vpc_subnet_ids) < 1:
-                module.fail_json(msg='At least 1 subnet is required')
-
-            if len(vpc_security_group_ids) < 1:
-                module.fail_json(msg='At least 1 security group is required')
+            try:
+                assert len(vpc_subnet_ids) > 0
+                assert len(vpc_security_group_ids) > 0
+            except (AssertionError, TypeError):
+                module.fail_json(msg='vpc connectivity requires at least one security group and one subnet')
 
             func_kwargs.update({'VpcConfig': {'SubnetIds': vpc_subnet_ids,
                                 'SecurityGroupIds': vpc_security_group_ids}})

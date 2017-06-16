@@ -135,7 +135,7 @@
            - 'result.result.output.message == "hello Mr Ansible Tests"'
 
     # ============================================================
-    - name: test state=present with all nullable variables explicitly set to null
+    - name: test state=present with security group but no vpc
       lambda:
         name: "{{lambda_function_name}}"
         runtime: "python2.7"
@@ -146,6 +146,34 @@
         security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
         handler:
+        description:
+        vpc_subnet_ids:
+        vpc_security_group_ids: sg-FA6E
+        environment_variables:
+        dead_letter_arn:
+      register: result
+      ignore_errors: true
+
+    - name: assert lambda fails with proper message
+      assert:
+        that:
+           - 'result|failed'
+           - 'result.msg != "MODULE FAILURE"'
+           - 'result.changed == False'
+           - '"requires at least one security group and one subnet" in result.msg'
+
+    # ============================================================
+    - name: test state=present with all nullable variables explicitly set to null
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+        handler: "mini_lambda.handler"
 # These are not allowed because of mutually exclusive.
 #        s3_bucket:
 #        s3_key:
@@ -157,7 +185,7 @@
         dead_letter_arn:
       register: result
 
-    - name: assert lambda manages to respond as expected
+    - name: assert lambda was updated as expected
       assert:
         that:
            - 'not result|failed'
