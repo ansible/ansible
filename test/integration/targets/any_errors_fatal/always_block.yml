@@ -1,5 +1,5 @@
 ---
-- hosts: localhost
+- hosts: testhost
   gather_facts: false
   any_errors_fatal: true
   tasks:

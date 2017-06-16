@@ -1,0 +1,9 @@
+---
+- name: Setting the fact for 'test' to 'test value'
+  set_fact:
+    test: "test value"
+  when: "inventory_hostname == testhost"
+- shell: "echo {{ test }}"
+- shell: "echo {{ inventory_hostname }}"
+- debug:
+    msg: "This should never be reached"
