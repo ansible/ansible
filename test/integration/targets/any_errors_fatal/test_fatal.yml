@@ -2,8 +2,8 @@
 - name: Setting the fact for 'test' to 'test value'
   set_fact:
     test: "test value"
-  when: "inventory_hostname == testhost"
+  when: "inventory_hostname == groups.all.0"
 - shell: "echo {{ test }}"
 - shell: "echo {{ inventory_hostname }}"
 - debug:
-    msg: "This should never be reached"
+    msg: "any_errors_fatal_this_should_never_be_reached"
