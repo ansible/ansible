@@ -38,7 +38,7 @@ The 'AnsibleAWSModule' module provides similar, but more restricted,
 interfaces to the normal Ansible module.  It also includes the following additional methods.
 
   m.fail_json_aws(Exception) # - take an exception and make a decent failure
-  m.get_conn() # - get an AWS connection. 
+  m.get_conn() # - get an AWS connection.
 
 """
 
@@ -46,12 +46,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec
 import traceback
 
-#We will also export HAS_BOTO3 so end user modules can use it. 
+# We will also export HAS_BOTO3 so end user modules can use it.
 HAS_BOTO3 = HAS_BOTO3
+
 
 class AnsibleAWSModule(object):
     """An ansible module class for AWS modules
-    
+
     AnsibleAWSModule provides an a class for building modules which
     connect to Amazon Web Services.  The interface is currently more
     restricted than the basic module class with the aim that later the
@@ -60,26 +61,27 @@ class AnsibleAWSModule(object):
     (available on #ansible-aws on IRC) to request the additional
     features needed.
     """
-    
+
     def __init__(self, **kwargs):
         try:
-            default_args=kwargs["default_args"]
+            default_args = kwargs["default_args"]
             del kwargs["default_args"]
         except KeyError:
-            default_args=True
+            default_args = True
 
         try:
-            check_boto3=kwargs["check_boto3"]
+            check_boto3 = kwargs["check_boto3"]
             del kwargs["check_boto3"]
         except KeyError:
-            check_boto3=True
+            check_boto3 = True
 
+        # Suggest that we autoretry on various AWS calls unless told not to:
 
-        try:
-            autoretry=kwargs["autoretry"]
-            del kwargs["autoretry"]
-        except KeyError:
-            autoretry=True
+        # try:
+        #     autoretry = kwargs["autoretry"]
+        #     del kwargs["autoretry"]
+        # except KeyError:
+        #     autoretry = True
 
         if default_args:
             argument_spec_full = ec2_argument_spec()
@@ -93,7 +95,7 @@ class AnsibleAWSModule(object):
         if check_boto3 and not HAS_BOTO3:
             self._module.fail_json(
                 msg='Python modules "botocore" or "boto3" are missing, please install both')
-            
+
         self.check_mode = self._module.check_mode
 
     @property
@@ -134,4 +136,3 @@ class AnsibleAWSModule(object):
         else:
             self._module.fail_json(msg=message, exception=last_traceback,
                                    **camel_dict_to_snake_dict(response))
-
