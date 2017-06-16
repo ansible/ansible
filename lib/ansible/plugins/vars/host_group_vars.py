@@ -23,6 +23,7 @@ DOCUMENTATION:
     description:
         - Loads YAML vars into corresponding groups/hosts in group_vars/ and host_vars/ directories.
         - Files are restricted by extension to one of .yaml, .json, .yml or no extension.
+        - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
     notes:
         - It takes the place of the previously hardcoded group_vars/host_vars loading.
@@ -121,7 +122,7 @@ class VarsModule(BaseVarsPlugin):
 
         found = []
         for spath in os.listdir(path):
-            if not spath.startswith('.'):  # skip hidden
+            if not spath.startswith('.') and not spath.endswith('~'):  # skip hidden and backups
 
                 ext = os.path.splitext(spath)[-1]
                 full_spath = os.path.join(path, spath)
