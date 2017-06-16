@@ -89,10 +89,12 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+
 def get_current_ttl_state(c, table_name):
     '''Fetch the state dict for a table.'''
     current_state = c.describe_time_to_live(TableName=table_name)
     return current_state.get('TimeToLiveDescription')
+
 
 def does_state_need_changing(attribute_name, desired_state, current_spec):
     '''Run checks to see if the table needs to be modified. Basically a dirty check.'''
@@ -108,6 +110,7 @@ def does_state_need_changing(attribute_name, desired_state, current_spec):
         return True
 
     return False
+
 
 def set_ttl_state(c, table_name, state, attribute_name):
     '''Set our specification. Returns the update_time_to_live specification dict,
@@ -126,12 +129,13 @@ def set_ttl_state(c, table_name, state, attribute_name):
 
     return ret.get('TimeToLiveSpecification')
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state = dict(choices=['enable', 'disable']),
-        table_name = dict(required=True),
-        attribute_name = dict(required=True))
+        state=dict(choices=['enable', 'disable']),
+        table_name=dict(required=True),
+        attribute_name=dict(required=True))
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -159,7 +163,7 @@ def main():
 
         if does_state_need_changing(module.params['attribute_name'], module.params['state'], current_state):
             # changes needed
-            new_state =  set_ttl_state(dbclient, module.params['table_name'], module.params['state'], module.params['attribute_name'])
+            new_state = set_ttl_state(dbclient, module.params['table_name'], module.params['state'], module.params['attribute_name'])
             result['current_status'] = new_state
             result['changed'] = True
         else:
@@ -176,4 +180,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
