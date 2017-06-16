@@ -225,26 +225,23 @@ def sha256sum(filename):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            runtime=dict(),
-            role=dict(),
-            handler=dict(),
-            zip_file=dict(aliases=['src']),
-            s3_bucket=dict(),
-            s3_key=dict(),
-            s3_object_version=dict(),
-            description=dict(default=''),
-            timeout=dict(type='int', default=3),
-            memory_size=dict(type='int', default=128),
-            vpc_subnet_ids=dict(type='list'),
-            vpc_security_group_ids=dict(type='list'),
-            environment_variables=dict(type='dict'),
-            dead_letter_arn=dict(),
-        )
+    argument_spec=dict(
+        name=dict(required=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        runtime=dict(),
+        role=dict(),
+        handler=dict(),
+        zip_file=dict(aliases=['src']),
+        s3_bucket=dict(),
+        s3_key=dict(),
+        s3_object_version=dict(),
+        description=dict(default=''),
+        timeout=dict(type='int', default=3),
+        memory_size=dict(type='int', default=128),
+        vpc_subnet_ids=dict(type='list'),
+        vpc_security_group_ids=dict(type='list'),
+        environment_variables=dict(type='dict'),
+        dead_letter_arn=dict(),
     )
 
     mutually_exclusive = [['zip_file', 's3_key'],
@@ -280,14 +277,6 @@ def main():
 
     check_mode = module.check_mode
     changed = False
-
-    if not HAS_BOTOCORE:
-        module.fail_json(
-            msg='Python module "botocore" is missing, please install it')
-
-    if not HAS_BOTO3:
-        module.fail_json(
-            msg='Python module "boto3" is missing, please install it')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
         module, boto3=True)
