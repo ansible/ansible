@@ -133,7 +133,7 @@ TEMPLATE = '''%s "%s" {
 }
 '''
 
-RULE_TYPES = ['key', 'service', 'event', 'query', 'agent', 'node']
+RULE_TYPES = ['agent', 'event', 'key', 'keyring', 'node', 'operator', 'query', 'service', 'session']
 
 
 def execute(module):
@@ -220,22 +220,17 @@ def load_rules_for_token(module, consul_api, token):
 
 def yml_to_rules(module, yml_rules):
     rules = RuleCollection()
+
     if yml_rules:
         for rule in yml_rules:
-            if 'key' in rule and 'policy' in rule:
-                rules.add_rule('key', Rule(rule['key'], rule['policy']))
-            elif 'service' in rule and 'policy' in rule:
-                rules.add_rule('service', Rule(rule['service'], rule['policy']))
-            elif 'event' in rule and 'policy' in rule:
-                rules.add_rule('event', Rule(rule['event'], rule['policy']))
-            elif 'query' in rule and 'policy' in rule:
-                rules.add_rule('query', Rule(rule['query'], rule['policy']))
-            elif 'agent' in rule and 'policy' in rule:
-                rules.add_rule('agent', Rule(rule['agent'], rule['policy']))
-            elif 'node' in rule and 'policy' in rule:
-                rules.add_rule('node', Rule(rule['node'], rule['policy']))
-            else:
-                module.fail_json(msg="a rule requires a key/service/event/query/agent or node and a policy.")
+            rule_added = False
+            for rule_type in RULE_TYPES:
+                if rule_type in rule and 'policy' in rule:
+                    rules.add_rule(rule_type, Rule(rule[rule_type], rule['policy']))
+                    rule_added = True
+                    break
+            if not rule_added:
+                module.fail_json(msg="a rule requires one of %s and a policy." % ('/'.join(RULE_TYPES)))
     return rules
 
 
