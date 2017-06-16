@@ -123,7 +123,7 @@ class VarsModule(BaseVarsPlugin):
         for spath in os.listdir(path):
             if not spath.startswith('.'):  # skip hidden
 
-                ext = os.path.splitext()[-1]
+                ext = os.path.splitext(path)[-1]
                 full_spath = os.path.join(path, spath)
 
                 if os.path.isdir(full_spath) and not ext:  # recursive search if dir
