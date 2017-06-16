@@ -92,7 +92,6 @@ import datetime
 from collections import deque
 from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
 from itertools import repeat, chain
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     import syslog

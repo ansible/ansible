@@ -16,9 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-
 try:
     import boto3
     import botocore
@@ -27,16 +24,9 @@ except:
     HAS_BOTO3 = False
 
 from nose.plugins.skip import SkipTest
-from ansible.compat.tests.mock import MagicMock, Mock, patch
-from ansible.module_utils import basic
+
 from ansible.compat.tests import unittest
 from ansible.module_utils.ec2 import AWSRetry
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
-import botocore.exceptions
-import json
-
-#from ansible.module_utils.basic import fail_json
 
 if not HAS_BOTO3:
     raise SkipTest("test_aws.py requires the python modules 'boto3' and 'botocore'")
@@ -102,4 +92,3 @@ class RetryTestCase(unittest.TestCase):
             self.assertEqual(e.response['Error']['Code'], 'AuthFailure')
 
         self.assertEqual(self.counter, 1)
-
