@@ -37,8 +37,8 @@ options:
     version_added: "1.1"
   dest:
     description:
-      - Remote absolute path where the file should be copied to. If I(src) is a directory, this must be a directory too and
-        I(dest) directory is created when it doesn't exist.
+      - Remote absolute path where the file should be copied to. If I(src) is a directory, this must be a directory too.
+        If I(dest) is a nonexistent path and if either I(dest) ends with "/" or I(src) is a directory, I(dest) is created.
         If I(src) and I(dest) are files, then parent directory of I(dest) isn't created: the task fails if it doesn't already exist.
     required: yes
   backup:
