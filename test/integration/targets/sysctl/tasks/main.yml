@@ -89,3 +89,31 @@
           - 'sysctl_test2.changed is defined'
           - 'sysctl_test2.changed'
           - 'sysctl_check2.stdout_lines == ["net.ipv4.ip_forward = 1"]'
+
+- name: Try sysctl with no name
+  sysctl:
+    name:
+    value: 1
+    sysctl_set: yes
+  ignore_errors: True
+  register: sysctl_no_name
+
+- name: validate nameless results
+  assert:
+    that:
+    - "sysctl_no_name|failed"
+    - "sysctl_no_name.msg == 'name can not be None'"
+
+- name: Try sysctl with no value
+  sysctl:
+    name: Foo
+    value:
+    sysctl_set: yes
+  ignore_errors: True
+  register: sysctl_no_value
+
+- name: validate nameless results
+  assert:
+    that:
+    - "sysctl_no_value|failed"
+    - "sysctl_no_value.msg == 'value can not be None'"
