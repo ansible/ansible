@@ -215,6 +215,11 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_role'] = 'host'
                 return virtual_facts
 
+            if 'virtio' in modules:
+                virtual_facts['virtualization_type'] = 'kvm'
+                virtual_facts['virtualization_role'] = 'guest'
+                return virtual_facts
+
         # If none of the above matches, return 'NA' for virtualization_type
         # and virtualization_role. This allows for proper grouping.
         virtual_facts['virtualization_type'] = 'NA'
