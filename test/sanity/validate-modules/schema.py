@@ -64,6 +64,7 @@ def return_schema(data):
         Required('description'): Any(list, *string_types),
         Required('returned'): Any(*string_types),
         Required('type'): Any('string', 'list', 'boolean', 'dict', 'complex', 'bool', 'float', 'int', 'dictionary', 'str'),
+        'version_added': Any(float, *string_types),
         'sample': Any(None, list, dict, int, float, *string_types),
         'example': Any(None, list, dict, int, float, *string_types)
     }
