@@ -128,12 +128,7 @@ except ImportError:
 from requests.exceptions import ConnectionError
 
 
-TEMPLATE = '''%s "%s" {
-  policy = "%s"
-}
-'''
-
-RULE_TYPES = ['agent', 'event', 'key', 'keyring', 'node', 'operator', 'query', 'service', 'session']
+RULE_SCOPES = {'agent', 'event', 'key', 'keyring', 'node', 'operator', 'query', 'service','session'}
 
 
 def execute(module):
@@ -154,27 +149,22 @@ def update_acl(module):
     consul = get_consul_api(module, mgmt)
     changed = False
 
+    rules = decode_rules_as_yml(module, rules)
+    rules_as_hcl = encode_rules_as_hcl_string(rules) if len(rules) > 0 else None
+
     try:
         if token:
             existing_rules = load_rules_for_token(module, consul, token)
-            supplied_rules = yml_to_rules(module, rules)
-            changed = existing_rules != supplied_rules
+            changed = existing_rules != rules
             if changed:
                 token = consul.acl.update(
                     token,
                     name=name,
                     type=token_type,
-                    rules=supplied_rules.to_hcl())
+                    rules=rules_as_hcl)
         else:
             try:
-                rules = yml_to_rules(module, rules)
-                if rules.are_rules():
-                    rules = rules.to_hcl()
-                else:
-                    rules = None
-
-                token = consul.acl.create(
-                    name=name, type=token_type, rules=rules)
+                token = consul.acl.create(name=name, type=token_type, rules=rules_as_hcl)
                 changed = True
             except Exception as e:
                 module.fail_json(
@@ -185,7 +175,7 @@ def update_acl(module):
 
     module.exit_json(changed=changed,
                      token=token,
-                     rules=rules,
+                     rules=hcl.loads(rules_as_hcl),
                      name=name,
                      type=token_type)
 
@@ -208,9 +198,12 @@ def load_rules_for_token(module, consul_api, token):
         info = consul_api.acl.info(token)
         if info and info['Rules']:
             rule_set = hcl.loads(to_text(info['Rules']))
-            for rule_type in rule_set:
-                for pattern, policy in rule_set[rule_type].items():
-                    rules.add_rule(rule_type, Rule(pattern, policy['policy']))
+            for scope in rule_set:
+                if isinstance(rule_set[scope], str):
+                    rules.add(Rule(scope, rule_set[scope]))
+                else:
+                    for pattern, policy in rule_set[scope].items():
+                        rules.add(Rule(scope, pattern, policy['policy']))
         return rules
     except Exception as e:
         module.fail_json(
@@ -218,81 +211,89 @@ def load_rules_for_token(module, consul_api, token):
                 token, e))
 
 
-def yml_to_rules(module, yml_rules):
-    rules = RuleCollection()
+def encode_rules_as_hcl_string(rules):
+    rules_as_hcl = ""
+    for rule in rules:
+        rules_as_hcl += encode_rule_as_hcl_string(rule)
+    return rules_as_hcl
 
-    if yml_rules:
-        for rule in yml_rules:
+
+def encode_rule_as_hcl_string(rule):
+    if rule.pattern is not None:
+        return '''%s "%s" {
+          policy = "%s"
+        }
+        ''' % (rule.scope, rule.pattern, rule.policy)
+    else:
+        return '%s = "%s"' % (rule.scope, rule.policy)
+
+
+def decode_rules_as_yml(module, rules_as_yml):
+    rules = RuleCollection()
+    if rules_as_yml:
+        for rule_as_yml in rules_as_yml:
             rule_added = False
-            for rule_type in RULE_TYPES:
-                if rule_type in rule and 'policy' in rule:
-                    rules.add_rule(rule_type, Rule(rule[rule_type], rule['policy']))
+            for scope in RULE_SCOPES:
+                if scope in rule_as_yml:
+                    policy = rule_as_yml["policy"] if "policy" in rule_as_yml else rule_as_yml[scope]
+                    pattern = rule_as_yml[scope] if "policy" in rule_as_yml else None
+                    rules.add(Rule(scope, policy, pattern))
                     rule_added = True
                     break
             if not rule_added:
-                module.fail_json(msg="a rule requires one of %s and a policy." % ('/'.join(RULE_TYPES)))
+                module.fail_json(msg="a rule requires one of %s and a policy." % ('/'.join(RULE_SCOPES)))
     return rules
+
+
+class Rule:
+    def __init__(self, scope, policy, pattern=None):
+        self.scope = scope
+        self.policy = policy
+        self.pattern = pattern
+
+    def __eq__(self, other):
+        return other \
+               and isinstance(other, self.__class__) \
+               and self.scope == other.scope \
+               and self.policy == other.policy \
+               and self.pattern == other.pattern
+
+    def __hash__(self):
+        return (hash(self.scope) ^ hash(self.policy)) ^ hash(self.pattern)
+
+    def __str__(self):
+        return encode_rule_as_hcl_string(self)
 
 
 class RuleCollection:
     def __init__(self):
-        self.rules = {}
-        for rule_type in RULE_TYPES:
-            self.rules[rule_type] = {}
+        self._rules = {}
+        for scope in RULE_SCOPES:
+            self._rules[scope] = {}
 
-    def add_rule(self, rule_type, rule):
-        self.rules[rule_type][rule.pattern] = rule
-
-    def are_rules(self):
-        return len(self) > 0
-
-    def to_hcl(self):
-        rules = ""
-        for rule_type in RULE_TYPES:
-            for pattern, rule in self.rules[rule_type].items():
-                rules += TEMPLATE % (rule_type, pattern, rule.policy)
-        return to_text(rules)
+    def __iter__(self):
+        all_rules = []
+        for scope, pattern_keyed_rules in self._rules.items():
+            for pattern, rule in pattern_keyed_rules.items():
+                all_rules.append(rule)
+        return iter(all_rules)
 
     def __len__(self):
         count = 0
-        for rule_type in RULE_TYPES:
-            count += len(self.rules[rule_type])
+        for scope in RULE_SCOPES:
+            count += len(self._rules[scope])
         return count
 
     def __eq__(self, other):
-        if not (other or isinstance(other, self.__class__)
-                or len(other) == len(self)):
-            return False
-
-        for rule_type in RULE_TYPES:
-            for name, other_rule in other.rules[rule_type].items():
-                if name not in self.rules[rule_type]:
-                    return False
-                rule = self.rules[rule_type][name]
-
-                if not (rule and rule == other_rule):
-                    return False
-        return True
+        return other \
+               and isinstance(other, self.__class__) \
+               and set(self) == set(other)
 
     def __str__(self):
-        return self.to_hcl()
+        return encode_rules_as_hcl_string(self)
 
-
-class Rule:
-    def __init__(self, pattern, policy):
-        self.pattern = pattern
-        self.policy = policy
-
-    def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and self.pattern == other.pattern
-                and self.policy == other.policy)
-
-    def __hash__(self):
-        return hash(self.pattern) ^ hash(self.policy)
-
-    def __str__(self):
-        return '%s %s' % (self.pattern, self.policy)
+    def add(self, rule):
+        self._rules[rule.scope][rule.pattern] = rule
 
 
 def get_consul_api(module, token=None):
@@ -313,6 +314,7 @@ def test_dependencies(module):
     if not pyhcl_installed:
         module.fail_json(msg="pyhcl required for this module. "
                              "see https://pypi.python.org/pypi/pyhcl")
+
 
 
 def main():
