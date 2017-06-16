@@ -241,6 +241,7 @@ try:
     python_consul_installed = True
 except ImportError:
     python_consul_installed = False
+from ansible.module_utils.basic import AnsibleModule
 
 
 def register_with_consul(module):
@@ -285,7 +286,7 @@ def add_check(module, check):
     retrieve the full metadata of an existing check  through the consul api.
     Without this we can't compare to the supplied check and so we must assume
     a change. '''
-    if not check.name and not service_id:
+    if not check.name and not check.service_id:
         module.fail_json(msg='a check name is required for a node level check, one not attached to a service')
 
     consul_api = get_consul_api(module)
@@ -513,8 +514,8 @@ class ConsulCheck():
                 self.check_id == other.check_id and
                 self.service_id == other.service_id and
                 self.name == other.name and
-                self.script == script and
-                self.interval == interval)
+                self.script == other.script and
+                self.interval == other.interval)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -586,7 +587,5 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
