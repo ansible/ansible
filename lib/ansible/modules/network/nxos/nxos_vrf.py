@@ -190,6 +190,7 @@ def get_vrf(vrf, module):
         return {}
 
     parsed_vrf = apply_key_map(vrf_key, vrf_table)
+    parsed_vrf['admin_state'] = parsed_vrf['admin_state'].lower()
 
     command = 'show run all | section vrf.context.{0}'.format(vrf)
     body = execute_show_command(command, module)[0]
