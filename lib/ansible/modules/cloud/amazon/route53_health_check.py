@@ -169,7 +169,7 @@ def find_health_check(conn, wanted):
 def to_health_check(config):
     return HealthCheck(
         config.get('IPAddress'),
-        config.get('Port'),
+        int(config.get('Port')),
         config.get('Type'),
         config.get('ResourcePath'),
         fqdn=config.get('FullyQualifiedDomainName'),
@@ -314,9 +314,9 @@ def main():
     # Default port
     if port_in is None:
         if type_in in ['HTTP', 'HTTP_STR_MATCH']:
-            port_in = '80'
+            port_in = 80
         elif type_in in ['HTTPS', 'HTTPS_STR_MATCH']:
-            port_in = '443'
+            port_in = 443
         else:
             module.fail_json(msg="parameter 'port' is required for 'type' TCP")
 
