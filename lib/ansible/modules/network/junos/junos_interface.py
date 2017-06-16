@@ -77,29 +77,29 @@ options:
 
 EXAMPLES = """
 - name: configure interface
-  net_interface:
+  junos_interface:
     name: ge-0/0/1
     description: test-interface
 
 - name: remove interface
-  net_interface:
+  junos_interface:
     name: ge-0/0/1
     state: absent
 
 - name: make interface down
-  net_interface:
+  junos_interface:
     name: ge-0/0/1
     state: present
     enabled: False
 
 - name: make interface up
-  net_interface:
+  junos_interface:
     name: ge-0/0/1
     state: present
     enabled: True
 
 - name: Deactivate interface config
-  net_interface:
+  junos_interface:
     name: ge-0/0/1
     state: suspend
 
@@ -109,7 +109,7 @@ EXAMPLES = """
     state: active
 
 - name: Configure interface speed, mtu, duplex
-  net_interface:
+  junos_interface:
     name: ge-0/0/1
     state: present
     speed: 1g

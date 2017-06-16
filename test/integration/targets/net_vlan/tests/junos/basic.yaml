@@ -1,5 +1,5 @@
 ---
-- debug: msg="START net_vlan netconf/basic.yaml"
+- debug: msg="START net_vlan junos/basic.yaml"
 
 - name: setup - remove vlan
   net_vlan:
