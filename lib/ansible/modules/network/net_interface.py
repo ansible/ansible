@@ -37,6 +37,7 @@ options:
   name:
     description:
       - Name of the Interface.
+    required: true
   description:
     description:
       - Description of Interface.
@@ -48,19 +49,19 @@ options:
     description:
       - Interface link speed
   mtu:
-    decription:
+    description:
       - Maximum size of transmit packet
   duplex:
     description:
       - Interface link status
-    default: full
+    default: auto
     choices: ['full', 'half', 'auto']
   tx_rate:
     description:
       - Transmit rate
   rx_rate:
-    descriptiom:
-      - Recevier rate
+    description:
+      - Receiver rate
   collection:
     description: List of Interfaces definitions
   purge:
@@ -113,13 +114,15 @@ rpc:
   description: load-configuration RPC send to the device
   returned: when configuration is changed on device
   type: string
-  sample: "<interfaces>
-             <interface>
-               <name>ge-0/0/0</name>
-               <description>test interface</description>
-              </interface>
-           </interfaces>"
-
+  sample: >
+            <interfaces>
+                <interface>
+                    <name>ge-0/0/0</name>
+                    <description>test interface</description>
+                </interface>
+            </interfaces>
+"""
+"""
 Note: Return value varies based on the newtork os platform
 For junos platform C(rpc) is returned.
 For other platform C(commands) is returned.

@@ -86,7 +86,8 @@ rpc:
   returned: when configuration is changed on device
   type: string
   sample: "<vlans><vlan><name>test-vlan-4</name></vlan></vlans>"
-
+"""
+"""
 Note: Return value varies based on the newtork os platform
 For junos platform C(rpc) is returned.
 For other platform C(commands) is returned.
