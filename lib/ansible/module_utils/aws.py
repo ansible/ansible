@@ -43,7 +43,7 @@ interfaces to the normal Ansible module.  It also includes the following additio
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec
 import traceback
 
 #We will also export HAS_BOTO3 so end user modules can use it. 
@@ -69,17 +69,31 @@ class AnsibleAWSModule(object):
             default_args=True
 
         try:
+            check_boto3=kwargs["check_boto3"]
+            del kwargs["check_boto3"]
+        except KeyError:
+            check_boto3=True
+
+
+        try:
             autoretry=kwargs["autoretry"]
             del kwargs["autoretry"]
         except KeyError:
             autoretry=True
 
         if default_args:
-            pass #We will set default arguments for AWS module here?
+            argument_spec_full = ec2_argument_spec()
+            try:
+                argument_spec_full.update(argument_spec)
+            except (TypeError, NameError):
+                pass
 
-        junk=None
-        jook=None
         self._module = AnsibleModule(**kwargs)
+
+        if check_boto3 and not HAS_BOTO3:
+            self._module.fail_json(
+                msg='Python modules "botocore" or "boto3" are missing, please install both')
+            
         self.check_mode = self._module.check_mode
 
     @property
