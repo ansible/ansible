@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - block:
+        - name: initial block debug
+          debug: msg='any_errors_fatal_block,  i execute normally'
+
+        - name: any_errors_fatal, initial block, bin/fasel to simulate failure
+          command: /bin/false
+
+        - name: after a task that fails I should never execute
+          debug:
+            msg: 'any_errors_fatal_block_post_fail ... i never execute, cause ERROR!'
+      rescue:
+        - name: any_errors_fatal_rescue_block debug
+          debug: msg='any_errors_fatal_rescue_block_start ... I caught an error'
+
+        - name: any_errors_fatal in rescue block, using bin/flase to simulate error
+          command: /bin/false
+
+        - name: any_errors_fatal post debug
+          debug: msg='any_errors_fatal_rescue_block_post_fail ... I also never execute :-('
+      always:
+        - name: any errors fatal always block debug
+          debug: msg='any_errors_fatal_always_block_start'
