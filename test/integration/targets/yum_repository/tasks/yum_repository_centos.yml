@@ -18,8 +18,8 @@
 - name: check return values
   assert:
     that:
-      - "epel_remove.repo == \"epel\""
-      - "epel_remove.state == \"absent\""
+      - "epel_remove.repo == 'epel'"
+      - "epel_remove.state == 'absent'"
 
 - name: check Idempotant
   assert:
@@ -51,8 +51,8 @@
 - name: check return values
   assert:
     that:
-      - "epel_add.repo == \"epel\""
-      - "epel_add.state == \"present\""
+      - "epel_add.repo == 'epel'"
+      - "epel_add.state == 'present'"
 
 
 - name: get repolist
@@ -62,7 +62,7 @@
 - name: ensure epel was added
   assert:
     that:
-      - "\"epel\" in repolist.stdout"
+      - "'epel' in repolist.stdout"
       - epel_add.changed
 
 - name: install sl
@@ -95,21 +95,20 @@
     keepalive: no
   register: epel_add
 
-- name: get epel config file
-  shell: "cat /etc/yum.repos.d/epel2.repo"
-  register: repofile
+- set_fact:
+    repofile: "{{ lookup('file', '/etc/yum.repos.d/epel2.repo') }}"
 
 - debug: var=repofile
 
 - name: check that options are correctly getting written to the repo file
   assert:
     that:
-      - "\"async = 0\" in repofile.stdout"
-      - "\"name = New description\" in repofile.stdout"
-      - "\"enablegroups = 0\" in repofile.stdout"
-      - "\"exclude = ['sl']\" in repofile.stdout"
-      - "\"ip_resolve = 4\" in repofile.stdout"
-      - "\"keepalive = 0\" in repofile.stdout"
+      - "'async = 0' in repofile"
+      - "'name = New description' in repofile"
+      - "'enablegroups = 0' in repofile"
+      - "\"exclude = ['sl']\" in repofile"
+      - "'ip_resolve = 4' in repofile"
+      - "'keepalive = 0' in repofile"
 
 - name: check new config doesn't change (Idempotant)
   yum_repository:
