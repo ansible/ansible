@@ -20,14 +20,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
-
-if sys.version_info < (2, 7):
-    from nose.plugins.skip import SkipTest
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
-
 import os
 import json
+import sys
+
+from nose.plugins.skip import SkipTest
+if sys.version_info < (2, 7):
+    raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, mock_open, Mock
@@ -43,11 +42,14 @@ try:
     from library.bigip_irule import GtmManager
     from library.bigip_irule import LtmManager
 except ImportError:
-    from ansible.modules.network.f5.bigip_irule import Parameters
-    from ansible.modules.network.f5.bigip_irule import ModuleManager
-    from ansible.modules.network.f5.bigip_irule import ArgumentSpec
-    from ansible.modules.network.f5.bigip_irule import GtmManager
-    from ansible.modules.network.f5.bigip_irule import LtmManager
+    try:
+        from ansible.modules.network.f5.bigip_irule import Parameters
+        from ansible.modules.network.f5.bigip_irule import ModuleManager
+        from ansible.modules.network.f5.bigip_irule import ArgumentSpec
+        from ansible.modules.network.f5.bigip_irule import GtmManager
+        from ansible.modules.network.f5.bigip_irule import LtmManager
+    except ImportError:
+        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
