@@ -157,13 +157,13 @@ class Base(with_metaclass(BaseMeta, object)):
     _vars                = FieldAttribute(isa='dict', priority=100, inherit=False)
 
     # flags and misc. settings
-    _environment         = FieldAttribute(isa='list')
-    _no_log              = FieldAttribute(isa='bool')
-    _always_run          = FieldAttribute(isa='bool')
-    _run_once            = FieldAttribute(isa='bool')
-    _ignore_errors       = FieldAttribute(isa='bool')
-    _check_mode          = FieldAttribute(isa='bool')
-    _any_errors_fatal     = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _environment      = FieldAttribute(isa='list')
+    _no_log           = FieldAttribute(isa='bool')
+    _always_run       = FieldAttribute(isa='bool')
+    _run_once         = FieldAttribute(isa='bool')
+    _ignore_errors    = FieldAttribute(isa='bool')
+    _check_mode       = FieldAttribute(isa='bool')
+    _any_errors_fatal = FieldAttribute(isa='bool', always_post_validate=True)
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
