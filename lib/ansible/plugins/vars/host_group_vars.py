@@ -121,7 +121,7 @@ class VarsModule(BaseVarsPlugin):
 
         found = []
         for spath in os.listdir(path):
-            if not spath.startswith('.'):  # skip hidden
+            if not spath.startswith('.') and not spath.endswith('~'):  # skip hidden and backups
 
                 ext = os.path.splitext(spath)[-1]
                 full_spath = os.path.join(path, spath)
