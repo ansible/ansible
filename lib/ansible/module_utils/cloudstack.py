@@ -431,6 +431,7 @@ class AnsibleCloudStack(object):
         # use the first zone if no zone param given
         if not zone:
             self.zone = zones['zone'][0]
+            self.result['zone'] = self.zone['name']
             return self._get_by_key(key, self.zone)
 
         if zones:
