@@ -3,7 +3,8 @@
   set_fact:
     test: "test value"
   when: "inventory_hostname == groups.all.0"
+
 - shell: "echo {{ test }}"
-- shell: "echo {{ inventory_hostname }}"
+
 - debug:
     msg: "any_errors_fatal_this_should_never_be_reached"
