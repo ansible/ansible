@@ -510,6 +510,8 @@ def create_role(module, iam, name, path, role_list, prof_list, trust_policy_doc)
                 instance_profile_result = iam.create_instance_profile(name,
                     path=path).create_instance_profile_response.create_instance_profile_result.instance_profile
                 iam.add_role_to_instance_profile(name, name)
+		else: 
+			instance_profile_result = iam.get_instance_profile(name).get_instance_profile_response.get_instance_profile_result.instance_profile
     except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err))
     else:
