@@ -220,12 +220,10 @@ def encode_rules_as_hcl_string(rules):
 
 def encode_rule_as_hcl_string(rule):
     if rule.pattern is not None:
-        return '''%s "%s" {
-          policy = "%s"
-        }
-        ''' % (rule.scope, rule.pattern, rule.policy)
+        return '%s "%s" {\n  policy = "%s"\n}\n' % (rule.scope, rule.pattern, rule.policy)
     else:
-        return '%s = "%s"' % (rule.scope, rule.policy)
+        return '%s = "%s"\n' % (rule.scope, rule.policy)
+
 
 
 def decode_rules_as_yml(module, rules_as_yml):
