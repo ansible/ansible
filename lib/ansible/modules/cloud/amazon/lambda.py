@@ -193,13 +193,15 @@ output:
 '''
 
 from ansible.module_utils.aws import AnsibleAWSModule
-from ansible.module_utils.ec2 import HAS_BOTO3, ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
 import base64
 import hashlib
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
+try:
+    from botocore.exceptions import ClientError, ValidationError, ParamValidationError
+except ImportError:
+    pass  # protected by AnsibleAWSModule
 
 
 def get_current_function(connection, function_name, qualifier=None):
@@ -208,7 +210,7 @@ def get_current_function(connection, function_name, qualifier=None):
             return connection.get_function(FunctionName=function_name,
                                            Qualifier=qualifier)
         return connection.get_function(FunctionName=function_name)
-    except botocore.exceptions.ClientError:
+    except ClientError:
         return None
 
 
@@ -225,7 +227,7 @@ def sha256sum(filename):
 
 
 def main():
-    argument_spec=dict(
+    argument_spec = dict(
         name=dict(required=True),
         state=dict(default='present', choices=['present', 'absent']),
         runtime=dict(),
@@ -256,7 +258,8 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
                               mutually_exclusive=mutually_exclusive,
-                              required_together=required_together)
+                              required_together=required_together,
+                              required_if=required_if)
 
     name = module.params.get('name')
     state = module.params.get('state').lower()
@@ -286,7 +289,7 @@ def main():
     try:
         client = boto3_conn(module, conn_type='client', resource='lambda',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
+    except (ClientError, ValidationError) as e:
         module.fail_json_aws(e, msg="Trying to connect to AWS")
 
     if state == 'present':
@@ -300,7 +303,7 @@ def main():
                 account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
                 role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
             except Exception as e:
-                fail_json_aws(module, e, msg="getting account information")
+                module.fail_json_aws(module, e, msg="getting account information")
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
@@ -383,7 +386,7 @@ def main():
                         **func_kwargs)
                     current_version = response['Version']
                 changed = True
-            except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+            except (ParamValidationError, ClientError) as e:
                 module.fail_json_aws(e, msg="Trying to update lambda configuration")
 
         # Update code configuration
@@ -420,7 +423,7 @@ def main():
                     response = client.update_function_code(**code_kwargs)
                     current_version = response['Version']
                 changed = True
-            except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+            except (ParamValidationError, ClientError) as e:
                 module.fail_json_aws(e, msg="Trying to upload new code")
 
         # Describe function code and configuration
@@ -494,7 +497,7 @@ def main():
                 response = client.create_function(**func_kwargs)
                 current_version = response['Version']
             changed = True
-        except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+        except (ParamValidationError, ClientError) as e:
             module.fail_json_aws(e, msg="Trying to create function")
 
         response = get_current_function(
@@ -510,7 +513,7 @@ def main():
             if not check_mode:
                 client.delete_function(FunctionName=name)
             changed = True
-        except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+        except (ParamValidationError, ClientError) as e:
             module.fail_json_aws(e, msg="Trying to delete Lambda function")
 
         module.exit_json(changed=changed)

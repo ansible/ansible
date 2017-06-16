@@ -39,6 +39,7 @@ def set_module_args(args):
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
     basic._ANSIBLE_ARGS = to_bytes(args)
 
+
 base_lambda_config = {
     'FunctionName': 'lambda_name',
     'Role': 'arn:aws:iam::987654321012:role/lambda_basic_execution',
@@ -123,6 +124,8 @@ def test_create_lambda_if_not_exist():
     set_module_args(base_module_args)
     (boto3_conn_double, lambda_client_double) = make_mock_no_connection_connection(code_change_lambda_config)
 
+    assert 0
+
     with patch.object(lda, 'boto3_conn', boto3_conn_double):
         try:
             lda.main()
@@ -130,7 +133,8 @@ def test_create_lambda_if_not_exist():
             pass
 
     # guard against calling other than for a lambda connection (e.g. IAM)
-    assert(len(boto3_conn_double.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(boto3_conn_double.mock_calls) > 0), "boto connections never used"
+    assert(len(boto3_conn_double.mock_calls) < 2), "multiple boto connections used unexpectedly"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) == 0), \
         "unexpectedly updated lambda configuration when should have only created"
     assert(len(lambda_client_double.update_function_code.mock_calls) == 0), \
@@ -162,7 +166,8 @@ def test_update_lambda_if_code_changed():
             pass
 
     # guard against calling other than for a lambda connection (e.g. IAM)
-    assert(len(boto3_conn_double.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(boto3_conn_double.mock_calls) > 0), "boto connections never used"
+    assert(len(boto3_conn_double.mock_calls) < 2), "multiple boto connections used unexpectedly"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) == 0), \
         "unexpectedly updatede lambda configuration when only code changed"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) < 2), \
@@ -187,7 +192,8 @@ def test_update_lambda_if_config_changed():
             pass
 
     # guard against calling other than for a lambda connection (e.g. IAM)
-    assert(len(boto3_conn_double.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(boto3_conn_double.mock_calls) > 0), "boto connections never used"
+    assert(len(boto3_conn_double.mock_calls) < 2), "multiple boto connections used unexpectedly"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) > 0), \
         "failed to update lambda function when configuration changed"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) < 2), \
@@ -208,7 +214,8 @@ def test_update_lambda_if_only_one_config_item_changed():
             pass
 
     # guard against calling other than for a lambda connection (e.g. IAM)
-    assert(len(boto3_conn_double.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(boto3_conn_double.mock_calls) > 0), "boto connections never used"
+    assert(len(boto3_conn_double.mock_calls) < 2), "multiple boto connections used unexpectedly"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) > 0), \
         "failed to update lambda function when configuration changed"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) < 2), \
@@ -229,7 +236,8 @@ def test_update_lambda_if_added_environment_variable():
             pass
 
     # guard against calling other than for a lambda connection (e.g. IAM)
-    assert(len(boto3_conn_double.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(boto3_conn_double.mock_calls) > 0), "boto connections never used"
+    assert(len(boto3_conn_double.mock_calls) < 2), "multiple boto connections used unexpectedly"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) > 0), \
         "failed to update lambda function when configuration changed"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) < 2), \
@@ -253,7 +261,8 @@ def test_dont_update_lambda_if_nothing_changed():
             pass
 
     # guard against calling other than for a lambda connection (e.g. IAM)
-    assert(len(boto3_conn_double.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(boto3_conn_double.mock_calls) > 0), "boto connections never used"
+    assert(len(boto3_conn_double.mock_calls) < 2), "multiple boto connections used unexpectedly"
     assert(len(lambda_client_double.update_function_configuration.mock_calls) == 0), \
         "updated lambda function when no configuration changed"
     assert(len(lambda_client_double.update_function_code.mock_calls) == 0), \
