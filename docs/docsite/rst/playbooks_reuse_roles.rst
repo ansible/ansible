@@ -177,7 +177,7 @@ Or, again, using the newer syntax::
         - baz
 
 .. note::
-    This *tags all of the tasks in that role with the tags specified*, appending to tags that are specified inside the role. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
+    This *tags all of the tasks in that role with the tags specified*, appending to any tags that are specified inside the role. The tags in this example will *not* be added to tasks inside an ``include_role``. Tag the ``include_role`` task directly in order to apply tags to tasks in included roles. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
 
 Role Duplication and Execution
 ``````````````````````````````
