@@ -25,7 +25,7 @@ short_description: set TTL for a given DynamoDB table.
 description:
 - Uses boto3 to set TTL.
 - requires botocore version 1.5.24 or higher.
-version_added: "2.3"
+version_added: "2.4"
 options:
   state:
     description:
@@ -76,7 +76,7 @@ current_status:
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec
+from ansible.module_utils.ec2 import ec2_argument_spec,camel_dict_to_snake_dict
 
 # import a class, otherwise we'll use a fully qualified path
 import ansible.module_utils.ec2
@@ -152,15 +152,24 @@ def main():
     result = {'changed': False}
     state = module.params['state']
 
-    current_state = get_current_ttl_state(dbclient, module.params['table_name'])
-    if does_state_need_changing(module.params['attribute_name'], module.params['state'], current_state):
-        # changes needed
-        new_state =  set_ttl_state(dbclient, module.params['table_name'], module.params['state'], module.params['attribute_name'])
-        result['current_status'] = new_state
-        result['changed'] = True
-    else:
-        # no changes needed
-        result['current_status'] = current_state
+    # wrap all our calls to catch the standard exceptions. We don't pass `module` in to the
+    # methods so it's easier to do here.
+    try:
+        current_state = get_current_ttl_state(dbclient, module.params['table_name'])
+
+        if does_state_need_changing(module.params['attribute_name'], module.params['state'], current_state):
+            # changes needed
+            new_state =  set_ttl_state(dbclient, module.params['table_name'], module.params['state'], module.params['attribute_name'])
+            result['current_status'] = new_state
+            result['changed'] = True
+        else:
+            # no changes needed
+            result['current_status'] = current_state
+
+    except (botocore.exceptions.ClientError, botocore.exceptions.ParamValidationError) as e:
+        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    except ValueError as e:
+        module.fail_json(msg=str(e))
 
     module.exit_json(**result)
 
