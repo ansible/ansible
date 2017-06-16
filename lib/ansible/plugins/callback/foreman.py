@@ -94,7 +94,7 @@ class CallbackModule(CallbackBase):
             self._display.warning("SSL verification of %s disabled" %
                                   self.FOREMAN_URL)
             verify = False
-        else:  # Set ta a CA bundle:
+        else:  # Set to a CA bundle:
             verify = self.FOREMAN_SSL_VERIFY
         return verify
 
