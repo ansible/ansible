@@ -1047,7 +1047,7 @@ class ShellModule(object):
     def mkdtemp(self, basefile, system=False, mode=None, tmpdir=None):
         basefile = self._escape(self._unquote(basefile))
         if tmpdir is None:
-	    tmpdir = "$env:temp"
+            tmpdir = "$env:temp"
 
         return self._encode_script('''(New-Item -Type Directory -Path %s -Name "%s").FullName | Write-Host -Separator '';''' % (tmpdir, basefile))
 
