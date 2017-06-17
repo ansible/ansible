@@ -448,7 +448,7 @@ DEFAULT_BECOME_ASK_PASS:
   vars: []
   yaml: {key: privilege_escalation.become_ask_pass}
 DEFAULT_BECOME_EXE:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_BECOME_EXE}]
   ini:
@@ -456,7 +456,7 @@ DEFAULT_BECOME_EXE:
   vars: []
   yaml: {key: privilege_escalation.become_exe}
 DEFAULT_BECOME_FLAGS:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
@@ -542,7 +542,7 @@ DEFAULT_EXECUTABLE:
   vars: []
   yaml: {key: defaults.executable}
 DEFAULT_FACT_PATH:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
@@ -650,7 +650,7 @@ DEFAULT_INVENTORY_PLUGIN_PATH:
   vars: []
   yaml: {key: defaults.inventory_plugins}
 DEFAULT_JINJA2_EXTENSIONS:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
   ini:
@@ -797,7 +797,7 @@ DEFAULT_NO_TARGET_SYSLOG:
   vars: []
   yaml: {key: defaults.no_target_syslog}
 DEFAULT_NULL_REPRESENTATION:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_NULL_REPRESENTATION}]
   ini:
@@ -815,7 +815,7 @@ DEFAULT_POLL_INTERVAL:
   vars: []
   yaml: {key: defaults.poll_interval}
 DEFAULT_PRIVATE_KEY_FILE:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_PRIVATE_KEY_FILE}]
   ini:
@@ -833,7 +833,7 @@ DEFAULT_PRIVATE_ROLE_VARS:
   vars: []
   yaml: {key: defaults.private_role_vars}
 DEFAULT_REMOTE_PORT:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_REMOTE_PORT}]
   ini:
@@ -851,7 +851,7 @@ DEFAULT_REMOTE_TMP:
     - name: ansible_remote_tmp
   yaml: {key: defaults.remote_tmp}
 DEFAULT_REMOTE_USER:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_REMOTE_USER}]
   ini:
@@ -904,7 +904,7 @@ DEFAULT_SQUASH_ACTIONS:
   vars: []
   yaml: {key: defaults.squash_actions}
 DEFAULT_SSH_TRANSFER_METHOD:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
   ini:
@@ -955,7 +955,7 @@ DEFAULT_SUDO:
   vars: []
   yaml: {key: defaults.sudo}
 DEFAULT_SUDO_EXE:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_SUDO_EXE}]
   ini:
@@ -979,7 +979,7 @@ DEFAULT_SUDO_USER:
   vars: []
   yaml: {key: defaults.sudo_user}
 DEFAULT_SU_EXE:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_SU_EXE}]
   ini:
@@ -987,7 +987,7 @@ DEFAULT_SU_EXE:
   vars: []
   yaml: {key: defaults.su_exe}
 DEFAULT_SU_FLAGS:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_SU_FLAGS}]
   ini:
@@ -1154,7 +1154,7 @@ GALAXY_IGNORE_CERTS:
   vars: []
   yaml: {key: galaxy.ignore_certs}
 GALAXY_ROLE_SKELETON:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON}]
   ini:
@@ -1243,7 +1243,7 @@ MERGE_MULTIPLE_CLI_TAGS:
   vars: []
   yaml: {key: defaults.merge_multiple_cli_tags}
 NETWORK_GROUP_MODULES:
-  default: [eos, nxos, ios, iosxr, junos, ce, vyos, sros, dellos9, dellos10, dellos6]
+  default: [eos, nxos, ios, iosxr, junos, ce, vyos, sros, dellos9, dellos10, dellos6, asa]
   desc: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:
@@ -1282,7 +1282,7 @@ PARAMIKO_LOOK_FOR_KEYS:
   vars: []
   yaml: {key: paramiko_connection.look_for_keys}
 PARAMIKO_PROXY_COMMAND:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
   ini:
