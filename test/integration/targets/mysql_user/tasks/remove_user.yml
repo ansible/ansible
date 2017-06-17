@@ -26,7 +26,7 @@
 
 # ============================================================
 - name: create blank mysql user to be removed later
-  mysql_user: name="" state=present
+  mysql_user: name="" state=present password='KJFDY&D*Sfuydsgf'
 
 - name: remove blank mysql user with hosts=all (expect changed)
   mysql_user: user="" host_all=true state=absent
