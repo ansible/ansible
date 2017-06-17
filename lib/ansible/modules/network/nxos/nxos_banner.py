@@ -40,7 +40,7 @@ options:
         configured on the remote device.
     required: true
     default: null
-    choices: ['exec', 'banner']
+    choices: ['exec', 'motd']
   text:
     description:
       - The banner text that should be

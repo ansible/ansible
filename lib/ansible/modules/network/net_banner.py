@@ -37,7 +37,7 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    choices: ['login', 'banner']
+    choices: ['login', 'motd']
   text:
     description:
       - The banner text that should be
@@ -85,4 +85,15 @@ commands:
     - this is my login banner
     - that contains a multiline
     - string
+
+rpc:
+  description: load-configuration RPC send to the device
+  returned: when configuration is changed on device
+  type: string
+  sample: >
+          <system>
+            <login>
+                <message>this is my login banner</message>
+            </login>
+          </system>"
 """
