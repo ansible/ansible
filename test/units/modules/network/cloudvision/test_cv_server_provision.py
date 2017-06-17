@@ -17,21 +17,22 @@
 import ansible.modules.network.cloudvision.cv_server_provision as cv_server_provision
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, Mock
-from nose.plugins.skip import SkipTest
-try:
-    from cvprac.cvp_client_errors import CvpLoginError, CvpApiError
-except ImportError:
-    raise SkipTest("CVP Ansible modules require the cvprac Python library")
+
+
+class MockException(Exception):
+    pass
 
 
 class TestCvServerProvision(unittest.TestCase):
+    @patch('ansible.modules.network.cloudvision.cv_server_provision.CvpApiError',
+           new_callable=lambda: MockException)
     @patch('ansible.modules.network.cloudvision.cv_server_provision.server_configurable_configlet')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.switch_in_compliance')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.switch_info')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.connect')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.AnsibleModule')
     def test_main_module_args(self, mock_module, mock_connect, mock_info,
-                              mock_comp, mock_server_conf):
+                              mock_comp, mock_server_conf, mock_exception):
         ''' Test main module args.
         '''
         mock_module_object = Mock()
@@ -39,7 +40,7 @@ class TestCvServerProvision(unittest.TestCase):
         mock_module_object.fail_json.side_effect = SystemExit('Exiting')
         mock_module.return_value = mock_module_object
         mock_connect.return_value = 'Client'
-        mock_info.side_effect = CvpApiError('Error Getting Info')
+        mock_info.side_effect = mock_exception('Error Getting Info')
         argument_spec = dict(
             host=dict(required=True),
             port=dict(required=False, default=None),
@@ -286,8 +287,10 @@ class TestCvServerProvision(unittest.TestCase):
                                                      protocol='https')
         module.fail_json.assert_not_called()
 
+    @patch('ansible.modules.network.cloudvision.cv_server_provision.CvpLoginError',
+           new_callable=lambda: MockException)
     @patch('ansible.modules.network.cloudvision.cv_server_provision.CvpClient')
-    def test_connect_fail(self, mock_client):
+    def test_connect_fail(self, mock_client, mock_exception):
         ''' Test connect failure with login error.
         '''
         module = Mock()
@@ -295,7 +298,7 @@ class TestCvServerProvision(unittest.TestCase):
                              password='password', protocol='https', port='10')
         module.fail_json.side_effect = SystemExit
         connect_mock = Mock()
-        connect_mock.connect.side_effect = CvpLoginError('Login Error')
+        connect_mock.connect.side_effect = mock_exception('Login Error')
         mock_client.return_value = connect_mock
         self.assertRaises(SystemExit, cv_server_provision.connect, module)
         connect_mock.connect.assert_called_once()
