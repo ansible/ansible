@@ -126,5 +126,5 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'<interface operation=\"delete\">' in result.rpc"
+      - "'<interface delete=\"delete\">' in result.rpc"
       - "'<name>ge-0/0/1</name>' in result.rpc"

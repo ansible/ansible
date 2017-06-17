@@ -79,5 +79,5 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'<vlan operation=\"delete\">' in result.rpc"
+      - "'<vlan delete=\"delete\">' in result.rpc"
       - "'<name>test-vlan</name>' in result.rpc"
