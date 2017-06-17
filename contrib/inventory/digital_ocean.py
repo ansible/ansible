@@ -193,7 +193,7 @@ or environment variables (DO_API_TOKEN)\n''')
             sys.exit(0)
 
         # Manage cache
-        self.cache_filename = self.cache_path + "/ansible-digital_ocean.cache"
+        self.cache_filename = '%s/ansible-digital_ocean.cache' % self.cache_path
         self.cache_refreshed = False
 
         if self.is_cache_valid():
@@ -250,7 +250,7 @@ or environment variables (DO_API_TOKEN)\n''')
     def read_settings(self):
         ''' Reads the settings from the digital_ocean.ini file '''
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/digital_ocean.ini')
+        config.read('%s/digital_ocean.ini' % os.path.dirname(os.path.realpath(__file__)))
 
         # Credentials
         if config.has_option('digital_ocean', 'api_token'):
@@ -273,10 +273,10 @@ or environment variables (DO_API_TOKEN)\n''')
     def read_environment(self):
         ''' Reads the settings from environment variables '''
         # Setup credentials
-        if os.getenv("DO_API_TOKEN"):
-            self.api_token = os.getenv("DO_API_TOKEN")
-        if os.getenv("DO_API_KEY"):
-            self.api_token = os.getenv("DO_API_KEY")
+        if os.getenv('DO_API_TOKEN'):
+            self.api_token = os.getenv('DO_API_TOKEN')
+        if os.getenv('DO_API_KEY'):
+            self.api_token = os.getenv('DO_API_KEY')
 
     def read_cli_args(self):
         ''' Command line argument processing '''
