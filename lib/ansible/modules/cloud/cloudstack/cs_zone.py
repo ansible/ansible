@@ -421,15 +421,15 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
         zoneid = zone['id']
         for secstore in self.module.params.get('secondary_storage'):
             url = secstore['url']
-            store = self.get_secondary_storage(url)
+            existing = self.get_secondary_storage(url)
             state = secstore['state'].lower() if 'state' in secstore else 'present'
             if state not in ['present', 'absent']:
                 self.module.fail_json(msg="Secondary Storage state must be either 'present' or 'absent'")
 
-            if store and state == 'absent':
-                self.secondary_storage_absent(store)
+            if existing and state == 'absent':
+                self.secondary_storage_absent(existing)
 
-            if state == 'absent':
+            if state == 'absent' or existing:
                 continue
 
             name = secstore['name'] if 'name' in secstore else url
