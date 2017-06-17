@@ -82,6 +82,17 @@ def exec_command(module, command):
     return rc, to_native(stdout), to_native(stderr)
 
 
+def request_builder(method, *args, **kwargs):
+    reqid = str(uuid.uuid4())
+    req = {'jsonrpc': '2.0', 'method': method, 'id': reqid}
+
+    params = list(args) or kwargs or None
+    if params:
+        req['params'] = params
+
+    return req
+
+
 class Connection:
 
     def __init__(self, module):
@@ -104,13 +115,8 @@ class Connection:
 
            For usage refer the respective connection plugin docs.
         """
-
-        reqid = str(uuid.uuid4())
-        req = {'jsonrpc': '2.0', 'method': name, 'id': reqid}
-
-        params = list(args) or kwargs or None
-        if params:
-            req['params'] = params
+        req = request_builder(name, *args, **kwargs)
+        reqid = req['id']
 
         if not self._module._socket_path:
             self._module.fail_json(msg='provider support not available for this host')
