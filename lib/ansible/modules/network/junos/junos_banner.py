@@ -53,7 +53,7 @@ options:
       - Specifies whether or not the configuration is
         present in the current devices active running configuration.
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'active', 'suspend']
 """
 
 EXAMPLES = """
