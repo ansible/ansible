@@ -147,9 +147,13 @@ class LinuxNetwork(Network):
                 interfaces[device]['perm_macaddress'] = get_file_content(os.path.join(path, 'bonding_slave', 'perm_hwaddr'), default='')
             if os.path.exists(os.path.join(path, 'device')):
                 interfaces[device]['pciid'] = os.path.basename(os.readlink(os.path.join(path, 'device')))
+            if os.path.exists(os.path.join(path, 'duplex')):
+                duplex = get_file_content(os.path.join(path, 'duplex'))
+                if duplex is not None and duplex != 'unknown':
+                    interfaces[device]['duplex'] = duplex
             if os.path.exists(os.path.join(path, 'speed')):
                 speed = get_file_content(os.path.join(path, 'speed'))
-                if speed is not None:
+                if speed is not None and duplex is not None and duplex != 'unknown':
                     interfaces[device]['speed'] = int(speed)
 
             # Check whether an interface is in promiscuous mode
@@ -224,7 +228,7 @@ class LinuxNetwork(Network):
                             default_ipv4['mtu'] = interfaces[device]['mtu']
                             default_ipv4['type'] = interfaces[device].get("type", "unknown")
                             default_ipv4['alias'] = words[-1]
-                        if not address.startswith('127.'):
+                        if not address.startswith('127.') and address not in ips['all_ipv4_addresses']:
                             ips['all_ipv4_addresses'].append(address)
                     elif words[0] == 'inet6':
                         if 'peer' == words[2]:
@@ -248,7 +252,7 @@ class LinuxNetwork(Network):
                             default_ipv6['macaddress'] = macaddress
                             default_ipv6['mtu'] = interfaces[device]['mtu']
                             default_ipv6['type'] = interfaces[device].get("type", "unknown")
-                        if not address == '::1':
+                        if not address == '::1' and address not in ips['all_ipv6_addresses']:
                             ips['all_ipv6_addresses'].append(address)
 
             ip_path = self.module.get_bin_path("ip")

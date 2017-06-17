@@ -235,7 +235,7 @@ class GenericBsdIfconfigNetwork(Network):
                 address['broadcast'] = socket.inet_ntoa(struct.pack('!L', address_bin | (~netmask_bin & 0xffffffff)))
 
         # add to our list of addresses
-        if not words[1].startswith('127.'):
+        if not words[1].startswith('127.') and address['address'] not in ips['all_ipv4_addresses']:
             ips['all_ipv4_addresses'].append(address['address'])
         current_if['ipv4'].append(address)
 
@@ -258,7 +258,7 @@ class GenericBsdIfconfigNetwork(Network):
                 address['scope'] = words[5]
 
         localhost6 = ['::1', '::1/128', 'fe80::1%lo0']
-        if address['address'] not in localhost6:
+        if address['address'] not in localhost6 + ips['all_ipv6_addresses']:
             ips['all_ipv6_addresses'].append(address['address'])
         current_if['ipv6'].append(address)
 
