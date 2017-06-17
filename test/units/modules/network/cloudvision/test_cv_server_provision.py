@@ -14,9 +14,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import ansible.modules.network.cloudvision.cv_server_provision as cv_server_provision
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, Mock
+import sys
+sys.modules['cvprac.cvp_client'] = Mock()
+sys.modules['cvprac.cvp_client_errors'] = Mock()
+import ansible.modules.network.cloudvision.cv_server_provision as cv_server_provision
 
 
 class MockException(Exception):
