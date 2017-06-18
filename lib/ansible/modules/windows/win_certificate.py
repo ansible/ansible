@@ -30,11 +30,11 @@ module: win_certificate
 version_added: "2.3.1.0"
 short_description: Manages certificates on a Windows machine
 description:
-- The C(win_certificate) module can be used to import or remove certificates from the internal LocalMachine certificate store. 
-  The certificate needs to be copied to the node before you try to import/delte the certificate object, as the module needs to extract
-  certificate facts from the cert file.abs
-  The following filetypes are supported: *.pfx, *.p12, *.cer, *.crt, *.p7b, *.spc
-  If you want to import a certificate with private key included (PFX), you have to provide the certificate password.
+  - The C(win_certificate) module can be used to import or remove certificates from the internal LocalMachine certificate store. 
+    The certificate needs to be copied to the node before you try to import/delte the certificate object, as the module needs to extract
+    certificate facts from the cert file
+    The following filetypes are supported *.pfx, *.p12, *.cer, *.crt, *.p7b, *.spc
+    If you want to import a certificate with private key included (PFX), you have to provide the certificate password.
 options:
   state:
     version_added: "2.3"
@@ -48,7 +48,7 @@ options:
     version_added: "2.3"
     description:
       - The host local path to the certificate file.
-        Usage: "C:\Install\MyCert.pfx"
+        Usage "C:\Install\MyCert.pfx"
     required: true
   store:
     version_added: "2.3"
