@@ -39,12 +39,17 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
-        argument_spec=dict()
+        argument_spec = dict(
+            external_dir = dict(required=False, type='str')
+        )
     )
 
     facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
 
     cmd = [facter_path, "--json"]
+
+    if module.params['external_dir']:
+        cmd += ["--external_dir", module.params['external_dir'].strip()]
 
     rc, out, err = module.run_command(cmd, check_rc=True)
     module.exit_json(**json.loads(out))
