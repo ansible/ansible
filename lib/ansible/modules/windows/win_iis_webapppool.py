@@ -29,34 +29,41 @@ module: win_iis_webapppool
 version_added: "2.0"
 short_description: Configures an IIS Web Application Pool.
 description:
-     - Creates, Removes and configures an IIS Web Application Pool
+- Creates, removes and configures an IIS Web Application Pool
 options:
   name:
     description:
-      - Name of application pool
+    - Name of the application pool
     required: true
-    default: null
-    aliases: []
   state:
     description:
-      - State of the binding
+    - The state of the application pool.
+    - If C(present) will ensure the app pool is configured and exists.
+    - If C(absent) will ensure the app pool is removed.
+    - If C(stopped) will ensure the app pool exists and is stopped.
+    - If C(started) will ensure the app pool exists and is started.
+    - If C(restarted) will ensure the app pool exists and will restart, this is
+      never idempotent.
     choices:
-      - absent
-      - stopped
-      - started
-      - restarted
-    required: false
-    default: null
+    - present
+    - absent
+    - stopped
+    - started
+    - restarted
+    default: present
   attributes:
     description:
-      - Application Pool attributes from string where attributes are separated by a pipe and attribute name/values by colon Ex. "foo:1|bar:2".
-      - The following attributes may only have the following names.
-      - managedPipelineMode may be either "Integrated" or  "Classic".
-      - startMode may be either "OnDemand" or  "AlwaysRunning".
-      - state may be one of "Starting", "Started", "Stopping", "Stopped", "Unknown".
-        Use the C(state) module parameter to modify, states shown are reflect the possible runtime values.
-    required: false
-    default: null
+    - The application pool attributes in a dict form, these attributes are
+      based on the naming standard at
+      https://www.iis.net/configreference/system.applicationhost/applicationpools/add#005,
+      see the examples section for more details on how to set this.
+    - managedPipelineMode may be either "Integrated" or "Classic".
+    - startMode may be either "OnDemand" or "AlwaysRunning".
+    - Use C(state) module parameter to modify the state of the app pool.
+    - DEPRECATED: As of Ansible 2.4 this field should be set using a dict form,
+      in older versions of Ansible this field used to be a string.
+    - This string has attributes that are separated by a pipe '|' and attribute
+      name/values by colon ':' Ex. "startMode:OnDemand|managedPipelineMode:Classic".
 author: Henrik Wallström
 '''
 
