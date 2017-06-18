@@ -27,10 +27,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: win_certificate
-version_added: "2.3.1.0"
+version_added: "2.3"
 short_description: Manages certificates on a Windows machine
 description:
-  - The C(win_certificate) module can be used to import or remove certificates from the internal LocalMachine certificate store. 
+  - The M(win_certificate) module can be used to import or remove certificates from the internal LocalMachine certificate store. 
     The certificate needs to be copied to the node before you try to import/delte the certificate object, as the module needs to extract
     certificate facts from the cert file
     The following filetypes are supported *.pfx, *.p12, *.cer, *.crt, *.p7b, *.spc
@@ -125,10 +125,10 @@ thumbprint:
     type: string
     sample: 058C31261C8C5FD55831E0EC9E2E1041E4A03238
 subject:
-    description: sha1 checksum of the file after running copy
+    description: the certificate subject
     returned: success
     type: string
-    sample: *.myansible-demo.int
+    sample: "*.myansible-demo.int"
 hasPrivateKey:
     description: whether the certificate has a private key embedded
     returned: success
