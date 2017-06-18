@@ -137,7 +137,7 @@ def main():
     else:
         host = server
     if module.params['encoding']:
-        xmpp.simplexml.ENCODING = params['encoding']
+        xmpp.simplexml.ENCODING = module.params['encoding']
 
     msg = xmpp.protocol.Message(body=module.params['msg'])
 
