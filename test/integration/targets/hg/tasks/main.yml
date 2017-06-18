@@ -72,3 +72,15 @@
   assert:
     that:
       - "not hg_result2.changed"
+
+- name: Checkout non-existent repo clone
+  hg: repo=https://bitbucket.org/pyro46/pythonscript_1 clone=no update=no
+  register: hg_result3
+  ignore_errors: true
+
+- name: Verify result of non-existent repo clone
+  assert:
+    that:
+      - hg_result3.msg
+      - "'abort: HTTP Error 404: Not Found' in hg_result3.msg"
+      - "not hg_result3.changed"
