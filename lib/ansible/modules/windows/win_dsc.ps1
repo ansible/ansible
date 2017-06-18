@@ -92,7 +92,16 @@ if (!$Resource)
 #Get the Module that provides the resource. Will be used as
 #mandatory argument for Invoke-DscResource
 $Module = $Resource.ModuleName
-$result["module_version"] = $Module.Version.ToString()
+
+#grab the module version if we can
+try {
+    if ($Resource.Module.Version)
+    {
+        $result["module_version"] = $Resource.Module.Version.ToString()
+    }
+}
+catch {}
+
 
 #Convert params to correct datatype and inject
 $attrib.Keys | foreach-object {
@@ -221,9 +230,13 @@ try
         if ($check_mode -eq $False)
         {
             $SetResult = Invoke-DscResource -Method Set @Config -ModuleName $Module -ErrorVariable SetError -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+            if ($SetError -and ($SetResult -eq $null))
+            {
+                #If SetError was filled, throw to exit out of the try/catch loop
+                throw $SetError
+            }
             $result["reboot_required"] = $SetResult.RebootRequired
         }
-
         $result["changed"] = $true
         if ($SetError)
         {
