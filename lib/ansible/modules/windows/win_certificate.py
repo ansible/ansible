@@ -27,17 +27,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: win_certificate
-version_added: "2.3"
+version_added: "2.4"
 short_description: Manages certificates on a Windows machine
 description:
-  - The M(win_certificate) module can be used to import or remove certificates from the internal LocalMachine certificate store. 
+  - The M(win_certificate) module can be used to import or remove certificates from the internal LocalMachine certificate store.
     The certificate needs to be copied to the node before you try to import/delte the certificate object, as the module needs to extract
     certificate facts from the cert file
     The following filetypes are supported *.pfx, *.p12, *.cer, *.crt, *.p7b, *.spc
     If you want to import a certificate with private key included (PFX), you have to provide the certificate password.
 options:
   state:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - Specifies the desired state of the provided certificate.
     required: true
@@ -45,13 +45,13 @@ options:
       - present
       - absent
   path:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - The host local path to the certificate file.
         Usage "C:\Install\MyCert.pfx"
     required: true
   store:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - Specifies the path of the store to which certificates will be imported/deleted.
     required: true
@@ -61,12 +61,12 @@ options:
       - Root
       - CA
   password:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - Specifies the password for the imported certificate file.
     required: false
   privatekey_exportable:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - Specifies whether the imported private key can be exported. If this parameter is not specified, then the private key cannot be exported.
     required: false
@@ -75,7 +75,7 @@ options:
       - true
       - false
   force:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - Defines if the certificate should be overwritten.
     required: false
