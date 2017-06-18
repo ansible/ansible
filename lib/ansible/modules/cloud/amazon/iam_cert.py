@@ -159,6 +159,9 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
                     if slug_orig_cert_bodies == slug_cert:
                         update=True
                         break
+                    elif slug_cert.startswith(slug_orig_cert_bodies):
+                        update=True
+                        break
                     elif slug_orig_cert_bodies != slug_cert:
                         module.fail_json(changed=False, msg='A cert with the name %s already exists and'
                                                            ' has a different certificate body associated'
