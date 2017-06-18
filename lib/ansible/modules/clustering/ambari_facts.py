@@ -94,7 +94,7 @@ ambari_cluster_component_versions:
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.url import url_open
+from ansible.module_utils.urls import open_url
 
 
 class AmbariAPI:
