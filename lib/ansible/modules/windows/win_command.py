@@ -68,7 +68,7 @@ EXAMPLES = r'''
   win_command: wbadmin -backupTarget:C:\backup\
     creates: C:\backup\
 
-- name: Move to C:\somedir\ and create a backup only if the file does not exists
+- name: Move to C:\somedir\ and create a backup only if the file does not exist leveraging the args to change directory and declare what will be created
   win_command: wbadmin -backupTarget:C:\backup\
   args:
     chdir: C:\somedir\
