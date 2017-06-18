@@ -241,7 +241,7 @@ def get_hbcarule_diff(client, ipa_hbcarule, module_hbcarule):
 
 
 def ensure(module, client):
-    name = module.params['name']
+    name = module.params['cn']
     state = module.params['state']
 
     if state in ['present', 'enabled']:
