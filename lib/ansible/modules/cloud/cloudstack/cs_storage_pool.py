@@ -127,8 +127,8 @@ zone_id:
     returned: success
     type: string
     sample: a3fca65a-7db1-4891-b97c-48806a978a96
-zone_name:
-    description: The name of the cluster.
+zone:
+    description: The name of the zone.
     returned: success
     type: string
     sample: Zone01
@@ -137,7 +137,7 @@ cluster_id:
     returned: when scope is cluster
     type: string
     sample: a3fca65a-7db1-4891-b97c-48806a978a96
-cluster_name:
+cluster:
     description: The name of the cluster.
     returned: when scope is cluster
     type: string
@@ -147,7 +147,7 @@ pod_id:
     returned: when scope is cluster
     type: string
     sample: a3fca65a-7db1-4891-b97c-48806a978a96
-pod_name:
+pod:
     description: The name of the pod.
     returned: when scope is cluster
     type: string
@@ -180,7 +180,7 @@ state:
 tags:
     description: the Tags for the storage pool
     returned: success
-    type: string
+    type: list
     sample: rbd
 '''
 
@@ -201,12 +201,8 @@ class AnsibleCloudStackStoragePool(AnsibleCloudStack):
         self.returns = {
             'id': 'id',
             'capacityiops': 'capacity_iops',
-            'zonename': 'zone_name',
-            'zoneid': 'zone_id',
-            'podname': 'pod_name',
-            'podid': 'pod_id',
-            'clustername': 'cluster_name',
-            'clusterid': 'cluster_id',
+            'podname': 'pod',
+            'clustername': 'cluster',
             'disksizeallocated': 'disk_size_allocated',
             'disksizetotal': 'disk_size_total',
             'disksizeused': 'disk_size_used',
@@ -216,7 +212,6 @@ class AnsibleCloudStackStoragePool(AnsibleCloudStack):
             'tags': 'tags',
         }
         self.storage_pool = None
-        self.zone = None
         self.pod = None
         self.cluster = None
 
@@ -267,23 +262,18 @@ class AnsibleCloudStackStoragePool(AnsibleCloudStack):
 
     def _create_storage_pool(self):
 
-        cluster = self.module.params.get('cluster')
+        cluster = self.get_cluster(key='id')
+        pod = self.get_pod(key='id')
         scope = self.module.params.get('scope')
-        pod = self.module.params.get('pod')
         args = self._get_common_args()
+        args['clusterid'] = cluster
+        args['podid'] = pod
 
         if scope is None:
             args['scope'] = 'CLUSTER' if cluster else 'ZONE'
 
-        if cluster:
-            args['clusterid'] = self.get_cluster(key='id')
-
-        if pod:
-            args['podid'] = self.get_pod(key='id')
-
         self.result['changed'] = True
 
-        id = None
         if not self.module.check_mode:
             res = self.cs.createStoragePool(**args)
             if 'errortext' in res:
@@ -343,17 +333,17 @@ class AnsibleCloudStackStoragePool(AnsibleCloudStack):
             self.get_zone(key='name')))
 
     def get_cluster(self, key=None):
-        cluster_name = self.module.params.get('cluster')
-        if not cluster_name:
+        cluster = self.module.params.get('cluster')
+        if not cluster:
             return None
         args = {
-            'name': cluster_name,
+            'name': cluster,
             'zoneid': self.get_zone(key='id'),
         }
         clusters = self.cs.listClusters(**args)
         if clusters:
             return self._get_by_key(key, clusters['cluster'][0])
-        self.module.fail_json(msg="Cluster %s not found" % cluster_name)
+        self.module.fail_json(msg="Cluster %s not found" % cluster)
 
 
 def main():
