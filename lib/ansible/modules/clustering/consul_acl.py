@@ -175,8 +175,8 @@ def update_acl(module):
                 changed = True
             except Exception as e:
                 module.fail_json(
-                    msg="No token returned, check your management key and that \
-                         the host is in the acl datacenter %s" % e)
+                    msg="No token returned, check your management key and that"
+                        "the host is in the acl datacenter %s" % e)
     except Exception as e:
         module.fail_json(msg="Could not create/update acl %s" % e)
 
