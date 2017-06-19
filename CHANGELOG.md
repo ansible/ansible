@@ -271,6 +271,8 @@ Ansible Changes By Release
   * cl_interface_policy
   * cl_license
   * cl_ports
+  * logicmonitor
+  * logicmonitor_facts
   * nxos_mtu, use nxos_system instead
 
 #### New: Callbacks
