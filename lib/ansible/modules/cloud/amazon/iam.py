@@ -719,6 +719,15 @@ def main():
                 been_updated = True
             name_change, key_list, user_changed, new_key = update_user(
                 module, iam, name, new_name, new_path, key_state, key_count, key_ids, password, been_updated)
+            if new_key:
+                user_meta = {'access_keys': list(new_key)}
+                user_meta['access_keys'].extend(
+                    [{'access_key_id': key, 'status': value} for key, value in key_list.items() if
+                     key not in [it['access_key_id'] for it in new_key]])
+            else:
+                user_meta = {
+                    'access_keys': [{'access_key_id': key, 'status': value} for key, value in key_list.items()]}
+
             if name_change and new_name:
                 orig_name = name
                 name = new_name
@@ -734,22 +743,23 @@ def main():
             if new_name and new_path:
                 module.exit_json(changed=changed, groups=user_groups, old_user_name=orig_name,
                                  new_user_name=new_name, old_path=path, new_path=new_path, keys=key_list,
-                                 created_keys=new_key)
+                                 created_keys=new_key, user_meta=user_meta)
             elif new_name and not new_path and not been_updated:
                 module.exit_json(
                     changed=changed, groups=user_groups, old_user_name=orig_name, new_user_name=new_name, keys=key_list,
-                    created_keys=new_key)
+                    created_keys=new_key, user_meta=user_meta)
             elif new_name and not new_path and been_updated:
                 module.exit_json(
                     changed=changed, groups=user_groups, user_name=new_name, keys=key_list, key_state=key_state,
-                    created_keys=new_key)
+                    created_keys=new_key, user_meta=user_meta)
             elif not new_name and new_path:
                 module.exit_json(
                     changed=changed, groups=user_groups, user_name=name, old_path=path, new_path=new_path,
-                    keys=key_list, created_keys=new_key)
+                    keys=key_list, created_keys=new_key, user_meta=user_meta)
             else:
                 module.exit_json(
-                    changed=changed, groups=user_groups, user_name=name, keys=key_list, created_keys=new_key)
+                    changed=changed, groups=user_groups, user_name=name, keys=key_list, created_keys=new_key,
+                    user_meta=user_meta)
 
         elif state == 'update' and not user_exists:
             module.fail_json(
