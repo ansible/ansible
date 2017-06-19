@@ -92,8 +92,7 @@ rpc:
   type: string
   sample: "<vlans><vlan><name>test-vlan-4</name></vlan></vlans>"
 """
-import collections
-
+from collections import OrderedDict
 from xml.etree.ElementTree import tostring
 
 from ansible.module_utils.junos import junos_argument_spec, check_args
@@ -145,9 +144,9 @@ def main():
 
     top = 'vlans/vlan'
 
-    param_to_xpath_map = collections.OrderedDict()
+    param_to_xpath_map = OrderedDict()
     param_to_xpath_map.update({
-        'name': 'name',
+        'name': {'xpath': 'name', 'is_key': True},
         'vlan_id': 'vlan-id',
         'description': 'description'
     })

@@ -100,8 +100,7 @@ rpc:
             </login>
           </system>"
 """
-import collections
-
+from collections import OrderedDict
 from xml.etree.ElementTree import tostring
 
 from ansible.module_utils.junos import junos_argument_spec, check_args
@@ -146,7 +145,7 @@ def main():
 
     top = 'system/login'
 
-    param_to_xpath_map = collections.OrderedDict()
+    param_to_xpath_map = OrderedDict()
 
     param_to_xpath_map.update({
         'text': {'xpath': 'message' if module.params['banner'] == 'login' else 'announcement',

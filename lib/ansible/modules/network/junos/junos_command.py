@@ -163,15 +163,12 @@ import time
 import re
 import shlex
 
-from functools import partial
-from xml.etree import ElementTree as etree
-from xml.etree.ElementTree import Element, SubElement, tostring
+from lxml.etree import Element, SubElement, tostring
 
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcli import Conditional, FailedConditionalError
 from ansible.module_utils.netconf import send_request
-from ansible.module_utils.network_common import ComplexList, to_list
 from ansible.module_utils.six import string_types, iteritems
 
 try:
@@ -182,6 +179,7 @@ except ImportError:
 
 USE_PERSISTENT_CONNECTION = True
 
+
 def to_lines(stdout):
     lines = list()
     for item in stdout:
@@ -189,6 +187,7 @@ def to_lines(stdout):
             item = str(item).split('\n')
         lines.append(item)
     return lines
+
 
 def rpc(module, items):
 
@@ -238,12 +237,14 @@ def rpc(module, items):
 
     return responses
 
+
 def split(value):
     lex = shlex.shlex(value)
     lex.quotes = '"'
     lex.whitespace_split = True
     lex.commenters = ''
     return list(lex)
+
 
 def parse_rpcs(module):
     items = list()
@@ -269,6 +270,7 @@ def parse_rpcs(module):
         items.append({'name': name, 'args': args, 'xattrs': xattrs})
 
     return items
+
 
 def parse_commands(module, warnings):
     items = list()
@@ -329,7 +331,6 @@ def main():
     items.extend(parse_rpcs(module))
 
     wait_for = module.params['wait_for'] or list()
-    display = module.params['display']
     conditionals = [Conditional(c) for c in wait_for]
 
     retries = module.params['retries']
@@ -344,8 +345,8 @@ def main():
         for item, resp in zip(items, responses):
             if item['xattrs']['format'] == 'xml':
                 if not HAS_JXMLEASE:
-                    module.fail_json(msg='jxmlease is required but does not appear to '
-                        'be installed.  It can be installed using `pip install jxmlease`')
+                    module.fail_json(msg='jxmlease is required but does not appear to be installed. '
+                                         'It can be installed using `pip install jxmlease`')
 
                 try:
                     transformed.append(jxmlease.parse(resp))
@@ -382,9 +383,7 @@ def main():
         'stdout_lines': to_lines(responses)
     }
 
-
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()

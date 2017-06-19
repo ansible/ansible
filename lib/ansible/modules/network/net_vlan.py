@@ -81,6 +81,7 @@ commands:
   sample:
     - vlan 20
     - name test-vlan
+
 rpc:
   description: load-configuration RPC send to the device
   returned: C(rpc) is returned only for junos device

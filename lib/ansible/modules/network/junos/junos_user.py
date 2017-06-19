@@ -116,7 +116,7 @@ RETURN = """
 """
 from functools import partial
 
-from xml.etree.ElementTree import Element, SubElement, tostring
+from lxml.etree import Element, SubElement, tostring
 
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule

@@ -26,7 +26,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 from contextlib import contextmanager
-from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
+from lxml.etree import Element, SubElement, fromstring, tostring
 
 from ansible.module_utils.connection import exec_command
 

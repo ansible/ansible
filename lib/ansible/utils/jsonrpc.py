@@ -65,7 +65,6 @@ class Rpc:
         else:
             try:
                 result = rpc_method(*args, **kwargs)
-                display.display(" -- result -- %s" % result, log_only=True)
             except Exception as exc:
                 display.display(traceback.format_exc(), log_only=True)
                 error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
@@ -78,7 +77,6 @@ class Rpc:
 
                 response = json.dumps(response)
 
-        display.display(" -- response -- %s" % response, log_only=True)
         delattr(self, '_identifier')
         return response
 
