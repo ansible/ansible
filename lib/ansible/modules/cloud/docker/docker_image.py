@@ -58,6 +58,7 @@ options:
     default: false
     required: false
     version_added: "2.1"
+    type: bool
   http_timeout:
     description:
       - Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of
@@ -82,23 +83,27 @@ options:
     default: true
     required: false
     version_added: "2.1"
+    type: bool
   push:
     description:
       - Push the image to the registry. Specify the registry as part of the I(name) or I(repository) parameter.
     default: false
     required: false
     version_added: "2.2"
+    type: bool
   rm:
     description:
       - Remove intermediate containers after build.
     default: true
     required: false
     version_added: "2.1"
+    type: bool
   nocache:
     description:
       - Do not use cache when building an image.
     default: false
     required: false
+    type: bool
   repository:
     description:
       - Full path to a repository. Use with state C(present) to tag the image into the repository. Expects
@@ -572,7 +577,7 @@ def main():
         http_timeout=dict(type='int'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
-        nocache=dict(type='str', default=False),
+        nocache=dict(type='bool', default=False),
         path=dict(type='path', aliases=['build_path']),
         pull=dict(type='bool', default=True),
         push=dict(type='bool', default=False),
