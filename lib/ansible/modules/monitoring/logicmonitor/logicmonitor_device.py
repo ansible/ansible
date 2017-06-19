@@ -189,11 +189,15 @@ EXAMPLES = '''
 
 
 from ansible.module_utils.basic import BOOLEANS
-import logicmonitor
-from logicmonitor.rest import ApiException
 import socket
 import types
 
+try:
+    import logicmonitor
+    from logicmonitor.rest import ApiException
+    HAS_LM = True
+except ImportError:
+    HAS_LM = False
 
 HAS_LIB_JSON = True
 try:
@@ -618,6 +622,8 @@ def main():
 
     if HAS_LIB_JSON is not True:
         module.fail_json(msg='Unable to load JSON library')
+    if not HAS_LM:
+        module.fail_json(msg='logicmonitor required for this module')
 
     selector(module)
 
