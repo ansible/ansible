@@ -177,13 +177,6 @@ try:
 except ImportError:
     pass
 
-#fix for python <2.4 compatibility
-if sys.version_info[0] < 3 and version_info[1] < 5:
-    def any(iterable):
-        for element in iterable:
-            if element:
-                return True
-        return False
 
 class TCPConnectionInfo(object):
     """
