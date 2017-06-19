@@ -22,7 +22,7 @@ sys.modules['cvprac.cvp_client_errors'] = Mock()
 import ansible.modules.network.cloudvision.cv_server_provision as cv_server_provision
 
 
-class MockException(Exception):
+class MockException(BaseException):
     pass
 
 
@@ -61,19 +61,22 @@ class TestCvServerProvision(unittest.TestCase):
         self.assertRaises(SystemExit, cv_server_provision.main)
         mock_module.assert_called_with(argument_spec=argument_spec,
                                        supports_check_mode=False)
-        mock_connect.assert_called_once()
-        mock_info.assert_called_once()
+        self.assertEqual(mock_connect.call_count, 1)
+        self.assertEqual(mock_info.call_count, 1)
         mock_comp.assert_not_called()
         mock_server_conf.assert_not_called()
         mock_module_object.fail_json.assert_called_with(msg='Error Getting Info')
 
+    @patch('ansible.modules.network.cloudvision.cv_server_provision.CvpApiError',
+           new_callable=lambda: MockException)
     @patch('ansible.modules.network.cloudvision.cv_server_provision.server_configurable_configlet')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.switch_in_compliance')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.switch_info')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.connect')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.AnsibleModule')
     def test_main_no_switch_configlet(self, mock_module, mock_connect,
-                                      mock_info, mock_comp, mock_server_conf):
+                                      mock_info, mock_comp, mock_server_conf,
+                                      mock_exception):
         ''' Test main fails if switch has no configlet for Ansible to edit.
         '''
         mock_module_object = Mock()
@@ -84,13 +87,15 @@ class TestCvServerProvision(unittest.TestCase):
         mock_info.return_value = 'Info'
         mock_server_conf.return_value = None
         self.assertRaises(SystemExit, cv_server_provision.main)
-        mock_connect.assert_called_once()
-        mock_info.assert_called_once()
-        mock_comp.assert_called_once()
-        mock_server_conf.assert_called_once()
+        self.assertEqual(mock_connect.call_count, 1)
+        self.assertEqual(mock_info.call_count, 1)
+        self.assertEqual(mock_comp.call_count, 1)
+        self.assertEqual(mock_server_conf.call_count, 1)
         mock_module_object.fail_json.assert_called_with(
             msg='Switch eos has no configurable server ports.')
 
+    @patch('ansible.modules.network.cloudvision.cv_server_provision.CvpApiError',
+           new_callable=lambda: MockException)
     @patch('ansible.modules.network.cloudvision.cv_server_provision.port_configurable')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.server_configurable_configlet')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.switch_in_compliance')
@@ -99,7 +104,7 @@ class TestCvServerProvision(unittest.TestCase):
     @patch('ansible.modules.network.cloudvision.cv_server_provision.AnsibleModule')
     def test_main_port_not_in_config(self, mock_module, mock_connect, mock_info,
                                      mock_comp, mock_server_conf,
-                                     mock_port_conf):
+                                     mock_port_conf, mock_exception):
         ''' Test main fails if user specified port not in configlet.
         '''
         mock_module_object = Mock()
@@ -112,11 +117,11 @@ class TestCvServerProvision(unittest.TestCase):
         mock_server_conf.return_value = 'Configlet'
         mock_port_conf.return_value = None
         self.assertRaises(SystemExit, cv_server_provision.main)
-        mock_connect.assert_called_once()
-        mock_info.assert_called_once()
-        mock_comp.assert_called_once()
-        mock_server_conf.assert_called_once()
-        mock_port_conf.assert_called_once()
+        self.assertEqual(mock_connect.call_count, 1)
+        self.assertEqual(mock_info.call_count, 1)
+        self.assertEqual(mock_comp.call_count, 1)
+        self.assertEqual(mock_server_conf.call_count, 1)
+        self.assertEqual(mock_port_conf.call_count, 1)
         mock_module_object.fail_json.assert_called_with(
             msg='Port 3 is not configurable as a server port on switch eos.')
 
@@ -141,12 +146,12 @@ class TestCvServerProvision(unittest.TestCase):
         mock_port_conf.return_value = 'Port'
         mock_conf_action.return_value = dict()
         cv_server_provision.main()
-        mock_connect.assert_called_once()
-        mock_info.assert_called_once()
+        self.assertEqual(mock_connect.call_count, 1)
+        self.assertEqual(mock_info.call_count, 1)
         mock_comp.assert_not_called()
-        mock_server_conf.assert_called_once()
-        mock_port_conf.assert_called_once()
-        mock_conf_action.assert_called_once()
+        self.assertEqual(mock_server_conf.call_count, 1)
+        self.assertEqual(mock_port_conf.call_count, 1)
+        self.assertEqual(mock_conf_action.call_count, 1)
         mock_module_object.fail_json.assert_not_called()
         return_dict = dict(changed=False, switchInfo='Info',
                            switchConfigurable=True, portConfigurable=True,
@@ -176,12 +181,12 @@ class TestCvServerProvision(unittest.TestCase):
         mock_port_conf.return_value = 'Port'
         mock_conf_action.return_value = dict(taskCreated=True)
         cv_server_provision.main()
-        mock_connect.assert_called_once()
-        mock_info.assert_called_once()
-        mock_comp.assert_called_once()
-        mock_server_conf.assert_called_once()
-        mock_port_conf.assert_called_once()
-        mock_conf_action.assert_called_once()
+        self.assertEqual(mock_connect.call_count, 1)
+        self.assertEqual(mock_info.call_count, 1)
+        self.assertEqual(mock_comp.call_count, 1)
+        self.assertEqual(mock_server_conf.call_count, 1)
+        self.assertEqual(mock_port_conf.call_count, 1)
+        self.assertEqual(mock_conf_action.call_count, 1)
         mock_module_object.fail_json.assert_not_called()
         return_dict = dict(changed=False, switchInfo='Info',
                            switchConfigurable=True, portConfigurable=True,
@@ -216,14 +221,14 @@ class TestCvServerProvision(unittest.TestCase):
         mock_conf_task.return_value = '7'
         mock_wait.return_value = True
         cv_server_provision.main()
-        mock_connect.assert_called_once()
-        mock_info.assert_called_once()
-        mock_comp.assert_called_once()
-        mock_server_conf.assert_called_once()
-        mock_port_conf.assert_called_once()
-        mock_conf_action.assert_called_once()
-        mock_conf_task.assert_called_once()
-        mock_wait.assert_called_once()
+        self.assertEqual(mock_connect.call_count, 1)
+        self.assertEqual(mock_info.call_count, 1)
+        self.assertEqual(mock_comp.call_count, 1)
+        self.assertEqual(mock_server_conf.call_count, 1)
+        self.assertEqual(mock_port_conf.call_count, 1)
+        self.assertEqual(mock_conf_action.call_count, 1)
+        self.assertEqual(mock_conf_task.call_count, 1)
+        self.assertEqual(mock_wait.call_count, 1)
         mock_module_object.fail_json.assert_not_called()
         return_dict = dict(changed=True, switchInfo='Info', taskId='7',
                            switchConfigurable=True, portConfigurable=True,
@@ -258,13 +263,13 @@ class TestCvServerProvision(unittest.TestCase):
         mock_conf_action.return_value = dict(taskCreated=True, changed=False)
         mock_conf_task.return_value = None
         cv_server_provision.main()
-        mock_connect.assert_called_once()
-        mock_info.assert_called_once()
-        mock_comp.assert_called_once()
-        mock_server_conf.assert_called_once()
-        mock_port_conf.assert_called_once()
-        mock_conf_action.assert_called_once()
-        mock_conf_task.assert_called_once()
+        self.assertEqual(mock_connect.call_count, 1)
+        self.assertEqual(mock_info.call_count, 1)
+        self.assertEqual(mock_comp.call_count, 1)
+        self.assertEqual(mock_server_conf.call_count, 1)
+        self.assertEqual(mock_port_conf.call_count, 1)
+        self.assertEqual(mock_conf_action.call_count, 1)
+        self.assertEqual(mock_conf_task.call_count, 1)
         mock_wait.assert_not_called()
         mock_module_object.fail_json.assert_not_called()
         return_dict = dict(changed=False, switchInfo='Info',
@@ -284,7 +289,7 @@ class TestCvServerProvision(unittest.TestCase):
         mock_client.return_value = connect_mock
         client = cv_server_provision.connect(module)
         self.assertIsInstance(client, Mock)
-        mock_client.assert_called_once()
+        self.assertEqual(mock_client.call_count, 1)
         connect_mock.connect.assert_called_once_with(['host'], 'username',
                                                      'password', port='10',
                                                      protocol='https')
@@ -304,7 +309,7 @@ class TestCvServerProvision(unittest.TestCase):
         connect_mock.connect.side_effect = mock_exception('Login Error')
         mock_client.return_value = connect_mock
         self.assertRaises(SystemExit, cv_server_provision.connect, module)
-        connect_mock.connect.assert_called_once()
+        self.assertEqual(connect_mock.connect.call_count, 1)
         module.fail_json.assert_called_once_with(msg='Login Error')
 
     def test_switch_info_good(self):
@@ -314,7 +319,7 @@ class TestCvServerProvision(unittest.TestCase):
         module.params = dict(switch_name='eos')
         module.client.api.get_device_by_name.return_value = dict(fqdn='eos')
         info = cv_server_provision.switch_info(module)
-        module.client.api.get_device_by_name.assert_called_once()
+        self.assertEqual(module.client.api.get_device_by_name.call_count, 1)
         self.assertEqual(info['fqdn'], 'eos')
         module.fail_json.assert_not_called()
 
@@ -325,7 +330,7 @@ class TestCvServerProvision(unittest.TestCase):
         module.params = dict(switch_name='eos')
         module.client.api.get_device_by_name.return_value = None
         info = cv_server_provision.switch_info(module)
-        module.client.api.get_device_by_name.assert_called_once()
+        self.assertEqual(module.client.api.get_device_by_name.call_count, 1)
         self.assertEqual(info, None)
         module.fail_json.assert_called_once_with(
             msg="Device with name 'eos' does not exist.")
@@ -338,7 +343,7 @@ class TestCvServerProvision(unittest.TestCase):
             complianceCode='0000')
         sw_info = dict(key='key', type='type', fqdn='eos')
         cv_server_provision.switch_in_compliance(module, sw_info)
-        module.client.api.check_compliance.assert_called_once()
+        self.assertEqual(module.client.api.check_compliance.call_count, 1)
         module.fail_json.assert_not_called()
 
     def test_switch_in_compliance_fail(self):
@@ -349,7 +354,7 @@ class TestCvServerProvision(unittest.TestCase):
             complianceCode='0001')
         sw_info = dict(key='key', type='type', fqdn='eos')
         cv_server_provision.switch_in_compliance(module, sw_info)
-        module.client.api.check_compliance.assert_called_once()
+        self.assertEqual(module.client.api.check_compliance.call_count, 1)
         module.fail_json.assert_called_with(
             msg='Switch eos is not in compliance.'
                 ' Returned compliance code 0001.')
@@ -365,7 +370,7 @@ class TestCvServerProvision(unittest.TestCase):
         sw_info = dict(key='key', type='type', fqdn='eos')
         result = cv_server_provision.server_configurable_configlet(module,
                                                                    sw_info)
-        module.client.api.get_configlets_by_device_id.assert_called_once()
+        self.assertEqual(module.client.api.get_configlets_by_device_id.call_count, 1)
         self.assertIsNotNone(result)
         self.assertEqual(result['name'], 'eos-server')
         self.assertEqual(result['info'], 'info')
@@ -380,7 +385,7 @@ class TestCvServerProvision(unittest.TestCase):
         module.client.api.get_configlets_by_device_id.return_value = configlets
         sw_info = dict(key='key', type='type', fqdn='eos')
         result = cv_server_provision.server_configurable_configlet(module, sw_info)
-        module.client.api.get_configlets_by_device_id.assert_called_once()
+        self.assertEqual(module.client.api.get_configlets_by_device_id.call_count, 1)
         self.assertIsNone(result)
 
     def test_server_configurable_configlet_no_configlets(self):
@@ -392,7 +397,7 @@ class TestCvServerProvision(unittest.TestCase):
         sw_info = dict(key='key', type='type', fqdn='eos')
         result = cv_server_provision.server_configurable_configlet(module,
                                                                    sw_info)
-        module.client.api.get_configlets_by_device_id.assert_called_once()
+        self.assertEqual(module.client.api.get_configlets_by_device_id.call_count, 1)
         self.assertIsNone(result)
 
     def test_port_configurable_good(self):
@@ -465,7 +470,7 @@ class TestCvServerProvision(unittest.TestCase):
                          update_return['data'])
         self.assertTrue(result['changed'])
         self.assertTrue(result['taskCreated'])
-        module.client.api.update_configlet.assert_called_once()
+        self.assertEqual(module.client.api.update_configlet.call_count, 1)
 
     @patch('ansible.modules.network.cloudvision.cv_server_provision.config_from_template')
     def test_configlet_action_add_no_task(self, mock_template):
@@ -490,7 +495,7 @@ class TestCvServerProvision(unittest.TestCase):
                          update_return['data'])
         self.assertNotIn('changed', result)
         self.assertNotIn('taskCreated', result)
-        module.client.api.update_configlet.assert_called_once()
+        self.assertEqual(module.client.api.update_configlet.call_count, 1)
 
     def test_configlet_action_remove_with_task(self):
         ''' Test configlet_action remove with change updates configlet and adds
@@ -515,7 +520,7 @@ class TestCvServerProvision(unittest.TestCase):
                          update_return['data'])
         self.assertTrue(result['changed'])
         self.assertTrue(result['taskCreated'])
-        module.client.api.update_configlet.assert_called_once()
+        self.assertEqual(module.client.api.update_configlet.call_count, 1)
 
     def test_configlet_action_remove_no_task(self):
         ''' Test configlet_action with remove that doesn't change configlet and
@@ -536,7 +541,7 @@ class TestCvServerProvision(unittest.TestCase):
                          update_return['data'])
         self.assertNotIn('changed', result)
         self.assertNotIn('taskCreated', result)
-        module.client.api.update_configlet.assert_called_once()
+        self.assertEqual(module.client.api.update_configlet.call_count, 1)
 
     def test_current_config_empty_config(self):
         ''' Test current_config with empty config for port
@@ -601,9 +606,9 @@ class TestCvServerProvision(unittest.TestCase):
         mock_env.return_value = env_mock
         self.assertRaises(SystemExit, cv_server_provision.config_from_template,
                           module)
-        mock_file_sys.assert_called_once()
-        mock_env.assert_called_once()
-        module.fail_json.assert_called_once()
+        self.assertEqual(mock_file_sys.call_count, 1)
+        self.assertEqual(mock_env.call_count, 1)
+        self.assertEqual(module.fail_json.call_count, 1)
 
     @patch('jinja2.meta.find_undeclared_variables')
     @patch('jinja2.DebugUndefined')
@@ -638,8 +643,8 @@ class TestCvServerProvision(unittest.TestCase):
                     '   switchport mode trunk\n'
                     '   no shutdown\n!')
         self.assertEqual(result, expected)
-        mock_file_sys.assert_called_once()
-        mock_env.assert_called_once()
+        self.assertEqual(mock_file_sys.call_count, 1)
+        self.assertEqual(mock_env.call_count, 1)
         module.fail_json.assert_not_called()
 
     @patch('jinja2.meta.find_undeclared_variables')
@@ -676,8 +681,8 @@ class TestCvServerProvision(unittest.TestCase):
                     '   switchport access vlan 7\n'
                     '   no shutdown\n!')
         self.assertEqual(result, expected)
-        mock_file_sys.assert_called_once()
-        mock_env.assert_called_once()
+        self.assertEqual(mock_file_sys.call_count, 1)
+        self.assertEqual(mock_env.call_count, 1)
         module.fail_json.assert_not_called()
 
     @patch('jinja2.meta.find_undeclared_variables')
@@ -706,8 +711,8 @@ class TestCvServerProvision(unittest.TestCase):
         self.assertIsNotNone(result)
         expected = 'interface Ethernet3\n   description test\n!'
         self.assertEqual(result, expected)
-        mock_file_sys.assert_called_once()
-        mock_env.assert_called_once()
+        self.assertEqual(mock_file_sys.call_count, 1)
+        self.assertEqual(mock_env.call_count, 1)
         module.fail_json.assert_called_with(msg='Template content does not'
                                                 ' configure proper interface'
                                                 ' - %s' % expected)
@@ -740,8 +745,8 @@ class TestCvServerProvision(unittest.TestCase):
         self.assertIsNotNone(result)
         expected = 'interface Ethernet3\n   description test\n!'
         self.assertEqual(result, expected)
-        mock_file_sys.assert_called_once()
-        mock_env.assert_called_once()
+        self.assertEqual(mock_file_sys.call_count, 1)
+        self.assertEqual(mock_env.call_count, 1)
         module.fail_json.assert_called_with(msg='Template jinja.j2 requires a'
                                                 ' vlan. Please re-run with vlan'
                                                 ' number provided.')
@@ -802,7 +807,7 @@ class TestCvServerProvision(unittest.TestCase):
         result = cv_server_provision.configlet_update_task(module)
         self.assertEqual(result, '7')
         mock_sleep.assert_not_called()
-        mock_info.assert_called_once()
+        self.assertEqual(mock_info.call_count, 1)
 
     @patch('time.sleep')
     @patch('ansible.modules.network.cloudvision.cv_server_provision.switch_info')
@@ -844,7 +849,7 @@ class TestCvServerProvision(unittest.TestCase):
             workOrderUserDefinedStatus='Completed')
         result = cv_server_provision.wait_for_task_completion(module, '7')
         self.assertTrue(result)
-        module.client.api.get_task_by_id.assert_called_once()
+        self.assertEqual(module.client.api.get_task_by_id.call_count, 1)
         module.fail_json.assert_not_called()
         mock_time.assert_not_called()
 
