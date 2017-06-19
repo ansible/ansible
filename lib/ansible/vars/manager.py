@@ -524,7 +524,8 @@ class VariableManager:
                 new_port = 5986
 
             new_delegated_host_vars = dict(
-                ansible_host=delegated_host_name,
+                ansible_delegated_host=delegated_host_name,
+                ansible_host=delegated_host_name, #  not redundant as other sources can change ansible_host
                 ansible_port=new_port,
                 ansible_user=C.DEFAULT_REMOTE_USER,
                 ansible_connection=C.DEFAULT_TRANSPORT,
