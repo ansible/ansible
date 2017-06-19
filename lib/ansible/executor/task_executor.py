@@ -628,7 +628,7 @@ class TaskExecutor:
         delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()).copy()
         if len(delegated_vars) > 0:
             result["_ansible_delegated_vars"] = dict()
-            for k in ('ansible_delegated_host', 'ansible_host' ):
+            for k in ('ansible_delegated_host', 'ansible_host'):
                 result["_ansible_delegated_vars"][k] = delegated_vars.get(k)
 
         # and return
