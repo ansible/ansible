@@ -21,6 +21,7 @@ Ansible Changes By Release
 * Corrected requried on hash_name for dynamodb_table
 * Fix for fetch action plugin not validating correctly
 * Avoid vault view writing display to logs
+* htpasswd: fix passlib module version comparison
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
