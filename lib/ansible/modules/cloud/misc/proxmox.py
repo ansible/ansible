@@ -332,7 +332,7 @@ def get_nextvmid(module, proxmox):
 
 
 def get_vmid(proxmox, hostname):
-    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm['name'] == hostname]
+    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if 'name' in vm and vm['name'] == hostname]
 
 
 def get_instance(proxmox, vmid):
