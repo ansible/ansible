@@ -184,22 +184,25 @@ class TestStrategyBase(unittest.TestCase):
     @patch('ansible.inventory.manager.unfrackpath', mock_unfrackpath_noop)
     def test_strategy_base_get_delegated_hosts(self):
         queue_items = []
+
         def _queue_empty(*args, **kwargs):
             return len(queue_items) == 0
+
         def _queue_get(*args, **kwargs):
             if len(queue_items) == 0:
                 raise Queue.Empty
             else:
                 return queue_items.pop()
+
         def _queue_put(item, *args, **kwargs):
             queue_items.append(item)
 
         task = Task.load({
-          'name': 'Gather facts from server',
-          'action': 'setup',
-          'args': {'gather_subset': '!all'},
-          'delegate_facts': True,
-          'delegate_to': 'host2',
+            'name': 'Gather facts from server',
+            'action': 'setup',
+            'args': {'gather_subset': '!all'},
+            'delegate_facts': True,
+            'delegate_to': 'host2',
         })
 
         inventory_content = """
