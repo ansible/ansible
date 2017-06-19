@@ -55,6 +55,20 @@
       - "not win_get_url_result_again|failed"
       - "win_get_url_result_again|changed"
 
+- name: test win_get_url module again, using additional headers
+  win_get_url:
+    url: "{{test_win_get_url_link}}"
+    dest: "{{test_win_get_url_path}}"
+    headers:
+      Host: "{{test_win_get_url_host}}"
+  register: win_get_url_result_host_header
+
+- name: check that url was downloaded again
+  assert:
+    that:
+      - "not win_get_url_result_host_header|failed"
+      - "win_get_url_result_host_header|changed"
+
 - name: test win_get_url module again with force=no
   win_get_url:
     url: "{{test_win_get_url_link}}"
