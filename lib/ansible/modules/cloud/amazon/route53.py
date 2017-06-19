@@ -30,7 +30,7 @@ options:
   state:
     description:
       - Specifies the state of the resource record. As of Ansible 2.4, the I(command) option has been changed
-        to I(state) as default, but I(command) still works as well.
+        to I(state) as default and the choices 'present' and 'absent' have been added, but I(command) still works as well.
     required: true
     aliases: [ 'command' ]
     choices: [ 'present', 'absent', 'get', 'create', 'delete' ]
