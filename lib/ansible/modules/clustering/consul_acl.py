@@ -128,7 +128,7 @@ from collections import defaultdict
 from requests.exceptions import ConnectionError
 
 
-RULE_SCOPES = {'agent', 'event', 'key', 'keyring', 'node', 'operator', 'query', 'service','session'}
+RULE_SCOPES = ['agent', 'event', 'key', 'keyring', 'node', 'operator', 'query', 'service','session']
 
 
 def execute(module):
