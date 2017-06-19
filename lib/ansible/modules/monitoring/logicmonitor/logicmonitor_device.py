@@ -187,7 +187,7 @@ EXAMPLES = '''
         state: absent
 '''
 
-
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import BOOLEANS
 import socket
 import types
