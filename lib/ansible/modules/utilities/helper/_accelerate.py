@@ -22,12 +22,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: accelerate
 short_description: Enable accelerated mode on remote node
-deprecated: "Use SSH with ControlPersist instead."
+deprecated: Use SSH with ControlPersist instead.
 description:
      - This modules launches an ephemeral I(accelerate) daemon on the remote node which
        Ansible can use to communicate with nodes at high speed.
@@ -38,33 +37,26 @@ options:
   port:
     description:
       - TCP port for the socket connection
-    required: false
     default: 5099
-    aliases: []
   timeout:
     description:
       - The number of seconds the socket will wait for data. If none is received when the timeout value is reached, the connection will be closed.
-    required: false
     default: 300
-    aliases: []
   minutes:
     description:
       - The I(accelerate) listener daemon is started on nodes and will stay around for
         this number of minutes before turning itself off.
-    required: false
     default: 30
   ipv6:
     description:
       - The listener daemon on the remote host will bind to the ipv6 localhost socket
         if this parameter is set to true.
-    required: false
-    default: false
+    default: no
   multi_key:
     description:
       - When enabled, the daemon will open a local socket file which can be used by future daemon executions to
         upload a new key to the already running daemon, so that multiple users can connect using different keys.
         This access still requires an ssh connection as the uid for which the daemon is currently running.
-    required: false
     default: no
     version_added: "1.6"
 notes:
@@ -72,10 +64,10 @@ notes:
 requirements:
     - "python >= 2.4"
     - "python-keyczar"
-author: "James Cammarata (@jimi-c)"
+author: James Cammarata (@jimi-c)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # To use accelerate mode, simply add "accelerate: true" to your play. The initial
 # key exchange and starting up of the daemon will occur over SSH, but all commands and
 # subsequent actions will be conducted over the raw socket connection using AES encryption
@@ -87,6 +79,7 @@ EXAMPLES = '''
 '''
 
 import base64
+import datetime
 import errno
 import getpass
 import json
@@ -95,6 +88,7 @@ import os.path
 import pwd
 import signal
 import socket
+import SocketServer
 import struct
 import sys
 import syslog
@@ -102,37 +96,39 @@ import tempfile
 import time
 import traceback
 
-import SocketServer
-
-import datetime
 from threading import Thread, Lock
 
-# import module snippets
-# we must import this here at the top so we can use get_module_path()
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule, get_module_path
 
 # the chunk size to read and send, assuming mtu 1500 and
 # leaving room for base64 (+33%) encoding and header (100 bytes)
 # 4 * (975/3) + 100 = 1400
 # which leaves room for the TCP/IP header
-CHUNK_SIZE=10240
+CHUNK_SIZE = 10240
+
 
 # FIXME: this all should be moved to module_common, as it's
 #        pretty much a copy from the callbacks/util code
-DEBUG_LEVEL=0
+DEBUG_LEVEL = 0
+
+
 def log(msg, cap=0):
     global DEBUG_LEVEL
     if DEBUG_LEVEL >= cap:
-        syslog.syslog(syslog.LOG_NOTICE|syslog.LOG_DAEMON, msg)
+        syslog.syslog(syslog.LOG_NOTICE | syslog.LOG_DAEMON, msg)
+
 
 def v(msg):
     log(msg, cap=1)
 
+
 def vv(msg):
     log(msg, cap=2)
 
+
 def vvv(msg):
     log(msg, cap=3)
+
 
 def vvvv(msg):
     log(msg, cap=4)
@@ -147,6 +143,7 @@ except ImportError:
 
 SOCKET_FILE = os.path.join(get_module_path(), '.ansible-accelerate', ".local.socket")
 
+
 def get_pid_location(module):
     """
     Try to find a pid directory in the common locations, falling
@@ -154,7 +151,7 @@ def get_pid_location(module):
     """
     for dir in ['/var/run', '/var/lib/run', '/run', os.path.expanduser("~/")]:
         try:
-            if os.path.isdir(dir) and os.access(dir, os.R_OK|os.W_OK):
+            if os.path.isdir(dir) and os.access(dir, os.R_OK | os.W_OK):
                 return os.path.join(dir, '.accelerate.pid')
         except:
             pass
@@ -173,7 +170,7 @@ def daemonize_self(module, password, port, minutes, pid_file):
             # exit first parent
             module.exit_json(msg="daemonized accelerate on port %s for %s minutes with pid %s" % (port, minutes, str(pid)))
     except OSError:
-        e       = get_exception()
+        e = get_exception()
         message = "fork #1 failed: %d (%s)" % (e.errno, e.strerror)
         module.fail_json(msg=message)
 
@@ -193,15 +190,16 @@ def daemonize_self(module, password, port, minutes, pid_file):
             vvv("pid file written")
             sys.exit(0)
     except OSError:
-        e       = get_exception()
+        e = get_exception()
         log('fork #2 failed: %d (%s)' % (e.errno, e.strerror))
         sys.exit(1)
 
-    dev_null = file('/dev/null','rw')
+    dev_null = file('/dev/null', 'rw')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
     os.dup2(dev_null.fileno(), sys.stdout.fileno())
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
     log("daemonizing successful")
+
 
 class LocalSocketThread(Thread):
     server = None
@@ -284,6 +282,7 @@ class LocalSocketThread(Thread):
         self.s.shutdown(socket.SHUT_RDWR)
         self.s.close()
 
+
 class ThreadWithReturnValue(Thread):
     def __init__(self, group=None, target=None, name=None, args=(), kwargs={}, Verbose=None):
         Thread.__init__(self, group, target, name, args, kwargs, Verbose)
@@ -294,14 +293,16 @@ class ThreadWithReturnValue(Thread):
             self._return = self._Thread__target(*self._Thread__args,
                                                 **self._Thread__kwargs)
 
-    def join(self,timeout=None):
+    def join(self, timeout=None):
         Thread.join(self, timeout=timeout)
         return self._return
+
 
 class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
     key_list = []
     last_event = datetime.datetime.now()
     last_event_lock = Lock()
+
     def __init__(self, server_address, RequestHandlerClass, module, password, timeout, use_ipv6=False):
         self.module = module
         self.key_list.append(AesKey.Read(password))
@@ -322,6 +323,7 @@ class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
         self.running = False
         SocketServer.ThreadingTCPServer.shutdown(self)
 
+
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     # the key to use for this connection
     active_key = None
@@ -337,7 +339,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         return self.request.sendall(packed_len + data)
 
     def recv_data(self):
-        header_len = 8 # size of a packed unsigned long long
+        header_len = 8  # size of a packed unsigned long long
         data = ""
         vvvv("in recv_data(), waiting for the header")
         while len(data) < header_len:
@@ -352,9 +354,9 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 vvvv("exception received while waiting for recv(), returning None")
                 return None
         vvvv("in recv_data(), got the header, unpacking")
-        data_len = struct.unpack('!Q',data[:header_len])[0]
+        data_len = struct.unpack('!Q', data[:header_len])[0]
         data = data[header_len:]
-        vvvv("data received so far (expecting %d): %d" % (data_len,len(data)))
+        vvvv("data received so far (expecting %d): %d" % (data_len, len(data)))
         while len(data) < data_len:
             try:
                 d = self.request.recv(data_len - len(data))
@@ -362,7 +364,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                     vvv("received nothing, bailing out")
                     return None
                 data += d
-                vvvv("data received so far (expecting %d): %d" % (data_len,len(data)))
+                vvvv("data received so far (expecting %d): %d" % (data_len, len(data)))
             except:
                 # probably got a connection reset
                 vvvv("exception received while waiting for recv(), returning None")
@@ -524,7 +526,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 response = self.active_key.Decrypt(response)
                 response = json.loads(response)
 
-                if response.get('failed',False):
+                if response.get('failed', False):
                     log("got a failed response from the master")
                     return dict(failed=True, stderr="Master reported failure, aborting transfer")
         except Exception:
@@ -552,7 +554,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                     os.makedirs(tmp_path, int('O700', 8))
                 except:
                     return dict(failed=True, msg='could not create a temporary directory at %s' % tmp_path)
-            (fd,out_path) = tempfile.mkstemp(prefix='ansible.', dir=tmp_path)
+            (fd, out_path) = tempfile.mkstemp(prefix='ansible.', dir=tmp_path)
             out_fd = os.fdopen(fd, 'w', 0)
             final_path = data['out_path']
         else:
@@ -560,7 +562,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             out_fd = open(out_path, 'w')
 
         try:
-            bytes=0
+            bytes = 0
             while True:
                 out = base64.b64decode(data['data'])
                 bytes += len(out)
@@ -588,6 +590,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             vvv("moving %s to %s" % (out_path, final_path))
             self.server.module.atomic_move(out_path, final_path)
         return dict()
+
 
 def daemonize(module, password, port, timeout, minutes, use_ipv6, pid_file):
     try:
@@ -628,7 +631,7 @@ def daemonize(module, password, port, timeout, minutes, use_ipv6, pid_file):
                 break
             except Exception:
                 e = get_exception()
-                vv("Failed to create the TCP server (tries left = %d) (error: %s) " % (tries,e))
+                vv("Failed to create the TCP server (tries left = %d) (error: %s) " % (tries, e))
             tries -= 1
             time.sleep(0.2)
 
@@ -656,35 +659,36 @@ def daemonize(module, password, port, timeout, minutes, use_ipv6, pid_file):
         log("exception caught, exiting accelerated mode: %s\n%s" % (e, tb))
         sys.exit(0)
 
+
 def main():
     global DEBUG_LEVEL
     module = AnsibleModule(
-        argument_spec = dict(
-            port=dict(required=False, default=5099),
-            ipv6=dict(required=False, default=False, type='bool'),
-            multi_key=dict(required=False, default=False, type='bool'),
-            timeout=dict(required=False, default=300),
+        argument_spec=dict(
+            port=dict(type='int', default=5099),
+            ipv6=dict(type='bool', default=False),
+            multi_key=dict(type='bool', default=False),
+            timeout=dict(type='int', default=300),
             password=dict(required=True, no_log=True),
-            minutes=dict(required=False, default=30),
-            debug=dict(required=False, default=0, type='int')
+            minutes=dict(type='int', default=30),
+            debug=dict(type='int', default=0)
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     syslog.openlog('ansible-%s' % module._name)
 
-    password  = base64.b64decode(module.params['password'])
-    port      = int(module.params['port'])
-    timeout   = int(module.params['timeout'])
-    minutes   = int(module.params['minutes'])
-    debug     = int(module.params['debug'])
-    ipv6      = module.params['ipv6']
+    password = base64.b64decode(module.params['password'])
+    port = module.params['port']
+    timeout = module.params['timeout']
+    minutes = module.params['minutes']
+    debug = module.params['debug']
+    ipv6 = module.params['ipv6']
     multi_key = module.params['multi_key']
 
     if not HAS_KEYCZAR:
         module.fail_json(msg="keyczar is not installed (on the remote side)")
 
-    DEBUG_LEVEL=debug
+    DEBUG_LEVEL = debug
     pid_file = get_pid_location(module)
 
     daemon_pid = None
@@ -698,8 +702,8 @@ def main():
                 # whether other signals can be sent
                 os.kill(daemon_pid, 0)
             except OSError:
-                e        = get_exception()
-                message  = 'the accelerate daemon appears to be running'
+                e = get_exception()
+                message = 'the accelerate daemon appears to be running'
                 message += 'as a different user that this user cannot access'
                 message += 'pid=%s' % daemon_pid
 
@@ -742,6 +746,7 @@ def main():
     else:
         # try to start up the daemon
         daemonize(module, password, port, timeout, minutes, ipv6, pid_file)
+
 
 if __name__ == '__main__':
     main()
