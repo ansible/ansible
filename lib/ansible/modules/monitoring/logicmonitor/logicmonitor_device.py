@@ -156,8 +156,7 @@ EXAMPLES = '''
     access_id: access_id
     access_key: access_key
   tasks:
-    - name: Create device
-      logicmonitor_device:
+    - logicmonitor_device:
         account: '{{ account }}'
         access_id: '{{ access_id }}'
         access_key: '{{ access_key }}'
@@ -179,8 +178,7 @@ EXAMPLES = '''
     access_id: access_id
     access_key: access_key
   tasks:
-    - name: Create device
-      logicmonitor_device:
+    - logicmonitor_device:
         account: '{{ account }}'
         access_id: '{{ access_id }}'
         access_key: '{{ access_key }}'
