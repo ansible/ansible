@@ -99,7 +99,7 @@ class VarsModule(BaseVarsPlugin):
         # first look for w/o extensions
         if os.path.exists(b_path):
             if os.path.isdir(b_path):
-                found.extend(self._get_dir_files(b_path))
+                found.extend(self._get_dir_files(to_text(b_path)))
             else:
                 found.append(b_path)
         else:
@@ -122,14 +122,14 @@ class VarsModule(BaseVarsPlugin):
 
         found = []
         for spath in os.listdir(path):
-            if not spath.startswith('.') and not spath.endswith('~'):  # skip hidden and backups
+            if not spath.startswith(b'.') and not spath.endswith(b'~'):  # skip hidden and backups
 
                 ext = os.path.splitext(spath)[-1]
                 full_spath = os.path.join(path, spath)
 
                 if os.path.isdir(full_spath) and not ext:  # recursive search if dir
                     found.extend(self._get_dir_files(full_spath))
-                elif os.path.isfile(full_spath) and (not ext or ext in C.YAML_FILENAME_EXTENSIONS):
+                elif os.path.isfile(full_spath) and (not ext or to_text(ext) in C.YAML_FILENAME_EXTENSIONS):
                     # only consider files with valid extensions or no extension
                     found.append(full_spath)
 
