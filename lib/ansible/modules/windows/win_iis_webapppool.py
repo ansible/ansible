@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 
 DOCUMENTATION = r'''
---- 
+---
 module: win_iis_webapppool
 version_added: "2.0"
 short_description: configures an IIS Web Application Pool
