@@ -85,7 +85,10 @@ author: [Jeff Wozniak (@woz5999)]
 notes:
   - You must have an existing LogicMonitor account for this module to function.
   - The specified token Access Id and Access Key must have sufficient permission to perform the requested actions
-requirements: ['An existing LogicMonitor account', 'Linux']
+requirements:
+  - An existing LogicMonitor account
+  - Linux
+  - logicmonitor_sdk >= 1.0.0
 options:
   state:
     description:
