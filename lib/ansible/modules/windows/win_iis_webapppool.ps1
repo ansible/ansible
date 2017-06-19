@@ -17,16 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
 # WANT_JSON
 # POWERSHELL_COMMON
+
+$ErrorActionPreference = 'Stop'
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateSet "started","restarted","stopped","absent","present"
-
 $result = @{
     changed = $false
     attributes = @{}
@@ -37,7 +37,9 @@ $result = @{
         cpu = @{}
         failure = @{}
         processModel = @{}
-        recycling = @{}
+        recycling = @{
+            periodicRestart = @{}
+        }
     }
 }
 
@@ -59,12 +61,75 @@ if ($input_attributes) {
 }
 $result.attributes = $attributes
 
+Function Get-DotNetClassForAttribute($attribute_parent) {
+    switch ($attribute_parent) {
+        "attributes" { [Microsoft.Web.Administration.ApplicationPool] }
+        "cpu" { [Microsoft.Web.Administration.ApplicationPoolCpu] }
+        "failure" { [Microsoft.Web.Administration.ApplicationPoolFailure] }
+        "processModel" { [Microsoft.Web.Administration.ApplicationPoolProcessModel] }
+        "recycling" { [Microsoft.Web.Administration.ApplicationPoolRecycling] }
+        default { [Microsoft.Web.Administration.ApplicationPool] }
+    }
+}
+
+Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
+    # Will convert the new value to the enum value expected and cast accordingly to the type
+    if ([bool]($attribute_value.PSobject.Properties -match "Value")) {
+        $attribute_value = $attribute_value.Value
+    }
+    $attribute_key_split = $attribute_key -split "\."
+    if ($attribute_key_split.Length -eq 1) {
+        $attribute_parent = "attributes"
+        $attribute_child = $attribute_key
+        $attribute_meta = $pool.Attributes | Where-Object { $_.Name -eq $attribute_child }
+    } elseif ($attribute_key_split.Length -eq 2) {
+        $attribute_parent = $attribute_key_split[0]
+        $attribute_child = $attribute_key_split[1]
+        $attribute_meta = $pool.$attribute_parent.Attributes | Where-Object { $_.Name -eq $attribute_child }
+    }
+
+    if ($attribute_meta) {
+        $type = $attribute_meta.Schema.Type
+        $value = $attribute_value
+        if ($type -eq "enum") {
+            # Attempt to convert the value from human friendly to enum value - use existing value if we fail
+            $dot_net_class = Get-DotNetClassForAttribute -attribute_parent $attribute_parent
+            $enum_attribute_name = $attribute_child.Substring(0,1).ToUpper() + $attribute_child.Substring(1)
+            $enum = $dot_net_class.GetProperty($enum_attribute_name).PropertyType.FullName
+            if ($enum) {
+                $enum_values = [Enum]::GetValues($enum)
+                foreach ($enum_value in $enum_values) {
+                    if ($attribute_value.GetType() -is $enum_value.GetType()) {
+                        if ($enum_value -eq $attribute_value) {
+                            $value = $enum_value
+                            break
+                        }
+                    } else {
+                        if ([System.String]$enum_value -eq [System.String]$attribute_value) {
+                            $value = $enum_value
+                            break
+                        }
+                    }
+                }
+            }            
+        }
+        # Try and cast the variable using the chosen type, revert to the default if it fails
+        Set-Variable -Name casted_value -Value ($value -as ([type] $attribute_meta.TypeName))
+        if ($casted_value -eq $null) {
+            $value
+        } else {
+            $casted_value
+        }
+    } else {
+        $attribute_value
+    }
+}
+
 # Ensure WebAdministration module is loaded
 if ((Get-Module -Name "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
     Import-Module WebAdministration
     $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll 
     Add-Type -Path $web_admin_dll_path
-    $t = [Type]"Microsoft.Web.Administration.ApplicationPool"
 }
 
 $pool = Get-Item -Path IIS:\AppPools\$name -ErrorAction SilentlyContinue
@@ -89,34 +154,23 @@ if ($state -eq "absent") {
             }
         }
         $result.changed = $true
-        $pool = Get-Item -Name IIS:\AppPools\$name
+        # If in check mode this pool won't actually exists so skip it
+        if (-not $check_mode) {
+            $pool = Get-Item -Path IIS:\AppPools\$name
+        }
     }
 
     # Modify pool based on parameters
     foreach ($attribute in $attributes.GetEnumerator()) {
         $attribute_key = $attribute.Name
-        $new_value = $attribute.Value
-        $current_value = Get-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -ErrorAction SilentlyContinue
-        $current_enum_value = $current_value
+        $new_raw_value = $attribute.Value
+        $new_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $new_raw_value
 
-        # Used to overwrite with the actual enum values if necessary
-        $attribute_key_split = $attribute_key -split "\."
-        if ($attribute_key_split.Length -eq 1) {
-            $attribute_meta = $pool.Attributes | Where-Object { $_.Name -eq $attribute_key }
-        } elseif ($attribute_key_split.Length -eq 2) {
-            $attribute_meta = $pool.($attribute_key_split[0]).Attributes | Where-Object { $_.Name -eq $attribute_key_split[1] }
-        }
-        if ($attribute_meta) {
-            if ($attribute_meta.Schema.Type -eq "enum") {
-                $current_enum_value = $attribute_meta.Value
-            }
-        }
+        $current_raw_value = Get-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -ErrorAction SilentlyContinue
+        $current_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $current_raw_value
 
-        if (-not $current_value -or (($current_value -ne $new_value) -and ($current_enum_value -ne $new_value))) {
-            # Convert to int if it is a number
-            if ($new_value -match '^\d+$') {
-                $new_value = [int]$new_value
-            }
+        # Cannot use ($current_value -or (..)) as that will fire if $current_value is 0/$null/"" when we only want $null
+        if (($current_value -eq $null) -or ($current_value -ne $new_value)) {
             try {
                 Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
             } catch {
@@ -175,40 +229,30 @@ if ($state -eq "absent") {
 
 # Get all the current attributes for the pool
 $pool = Get-Item -Path IIS:\AppPools\$name -ErrorAction SilentlyContinue
-$elements = @{
-    attributes = [Microsoft.Web.Administration.ApplicationPool]
-    cpu = [Microsoft.Web.Administration.ApplicationPoolCpu]
-    failure = [Microsoft.Web.Administration.ApplicationPoolFailure]
-    processModel = [Microsoft.Web.Administration.ApplicationPoolProcessModel]
-    recycling = [Microsoft.Web.Administration.ApplicationPoolRecycling]
-}
+$elements = @("attributes", "cpu", "failure", "processModel", "recycling")
 
-foreach ($element in $elements.GetEnumerator())  {
-    $parent_attribute = $element.Key
-    if ($parent_attribute -eq "attributes") {
+foreach ($element in $elements)  {
+    if ($element -eq "attributes") {
         $attribute_collection = $pool.Attributes
+        $attribute_parent = $pool
     } else {
-        $attribute_collection = $pool.$parent_attribute.Attributes
+        $attribute_collection = $pool.$element.Attributes
+        $attribute_parent = $pool.$element
     }
 
     foreach ($attribute in $attribute_collection) {
         $attribute_name = $attribute.Name
-        $attribute_value = $attribute.Value
-        $type = $attribute.Schema.Type
+        $attribute_value = $attribute_parent.$attribute_name
 
-        if ($type -eq "enum") {
-            $enum_attribute_name = $attribute_name.Substring(0,1).ToUpper() + $attribute_name.Substring(1)
-            $enum = $element.Value.GetProperty($enum_attribute_name).PropertyType.FullName
-            if ($enum) {
-                $enum_names = [Enum]::GetNames($enum)
-                $attribute_value = $enum_names[$attribute_value]
-            } else {
-                $attribute_value = $pool.$parent_attribute.$attribute_name
-            }
-        }
-
-        $result.info.$parent_attribute.Add($attribute_name, $attribute_value)
+        $result.info.$element.Add($attribute_name, $attribute_value)
     }
+}
+
+# Manually get the periodicRestart attributes in recycling
+foreach ($attribute in $pool.recycling.periodicRestart.Attributes) {
+    $attribute_name = $attribute.Name
+    $attribute_value = $pool.recycling.periodicRestart.$attribute_name
+    $result.info.recycling.periodicRestart.Add($attribute_name, $attribute_value)
 }
 
 Exit-Json $result
