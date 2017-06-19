@@ -78,8 +78,8 @@ EXAMPLES = '''
 
 '''
 
-import time
-import xmltodict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vca import VcaError, vca_argument_spec, vca_login
 
 VALID_RULE_KEYS = ['rule_type', 'original_ip', 'original_port',
                    'translated_ip', 'translated_port', 'protocol']
@@ -211,10 +211,6 @@ def main():
 
     module.exit_json(**result)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.vca import *
 
 if __name__ == '__main__':
     main()
