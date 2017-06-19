@@ -185,6 +185,13 @@ from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 from ansible.module_utils._text import to_native
 from ansible.module_utils.pycompat24 import get_exception
 
+#define any() in python < 2.5
+if sys.version_info[0] < 3 and if sys.version_info[1] < 5:
+    def any(iterable):
+        for element in iterable:
+            if element:
+                return True
+        return False  
 
 HAS_PSUTIL = False
 try:
