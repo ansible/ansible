@@ -150,43 +150,43 @@ options:
 EXAMPLES = '''
 # creating a device
 ---
-- hosts: hosts
+- hosts: all
   vars:
     account: myaccount
     access_id: access_id
     access_key: access_key
   tasks:
-  - name: Create device
-    logicmonitor_device:
-      account: '{{ account }}'
-      access_id: '{{ access_id }}'
-      access_key: '{{ access_key }}'
-      state: present
-      description: Device added by Ansible
-      name: server1.test.net
-      display_name: server1
-      groups: /AnsibleDevices/WebServers,/Production
-      preferred_collector_id: 1
-      properties:
-        snmp.community: commstring
-        environment: production
+    - name: Create device
+      logicmonitor_device:
+        account: '{{ account }}'
+        access_id: '{{ access_id }}'
+        access_key: '{{ access_key }}'
+        state: present
+        description: Device added by Ansible
+        name: server1.test.net
+        display_name: server1
+        groups: /AnsibleDevices/WebServers,/Production
+        preferred_collector_id: 1
+        properties:
+          snmp.community: commstring
+          environment: production
 
 # removing a device
 ---
-- hosts: hosts
+- hosts: all
   vars:
     account: myaccount
     access_id: access_id
     access_key: access_key
   tasks:
-  - name: Create device
-    logicmonitor_device:
-      account: '{{ account }}'
-      access_id: '{{ access_id }}'
-      access_key: '{{ access_key }}'
-      name: server1.test.net
-      preferred_collector_id: 1
-      state: absent
+    - name: Create device
+      logicmonitor_device:
+        account: '{{ account }}'
+        access_id: '{{ access_id }}'
+        access_key: '{{ access_key }}'
+        name: server1.test.net
+        preferred_collector_id: 1
+        state: absent
 '''
 
 
