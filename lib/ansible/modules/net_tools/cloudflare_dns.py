@@ -596,13 +596,17 @@ class CloudflareAPI(object):
             if (type == 'CNAME') and (cur_record['content'] != new_record['content']):
                 do_update = True
             if do_update:
-                if not self.module.check_mode:
+                if self.module.check_mode:
+                    result = new_record
+                else:
                     result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(zone_id,records[0]['id']),'PUT',new_record)
                 self.changed = True
                 return result,self.changed
             else:
                 return records,self.changed
-        if not self.module.check_mode:
+        if self.module.check_mode:
+            result = new_record
+        else:
             result, info = self._cf_api_call('/zones/{0}/dns_records'.format(zone_id),'POST',new_record)
         self.changed = True
         return result,self.changed
