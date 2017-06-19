@@ -69,10 +69,6 @@ import json
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import configparser as ConfigParser
 
-# NOTE -- this file assumes Ansible is being accessed FROM the cobbler
-# server, so it does not attempt to login with a username and password.
-# this will be addressed in a future version of this script.
-
 orderby_keyname = 'owners'  # alternatively 'mgmt_classes'
 
 
