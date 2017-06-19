@@ -76,18 +76,18 @@ current_status:
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict, HAS_BOTO3
 
 # import a class, otherwise we'll use a fully qualified path
 import ansible.module_utils.ec2
 
+import traceback
 import distutils.version
 
 try:
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 
 def get_current_ttl_state(c, table_name):
@@ -170,8 +170,10 @@ def main():
             # no changes needed
             result['current_status'] = current_state
 
-    except (botocore.exceptions.ClientError, botocore.exceptions.ParamValidationError) as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.ParamValidationError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc())
     except ValueError as e:
         module.fail_json(msg=str(e))
 
