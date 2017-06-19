@@ -255,6 +255,8 @@ def decode_rules_as_yml(module, rules_as_yml):
             rule_added = False
             for scope in RULE_SCOPES:
                 if scope in rule_as_yml:
+                    if rule_as_yml[scope] is None:
+                        raise ValueError("Rule for '%s' does not have a value associated to the scope" % scope)
                     policy = rule_as_yml["policy"] if "policy" in rule_as_yml else rule_as_yml[scope]
                     pattern = rule_as_yml[scope] if "policy" in rule_as_yml else None
                     rules.add(Rule(scope, policy, pattern))
