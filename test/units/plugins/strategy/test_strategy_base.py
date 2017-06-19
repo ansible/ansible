@@ -237,6 +237,7 @@ class TestStrategyBase(unittest.TestCase):
             result = {
                 '_ansible_delegated_vars': {
                     'ansible_host': u'10.10.10.10',
+                    'ansible_delegated_host': u'host2',
                 },
             }
 
