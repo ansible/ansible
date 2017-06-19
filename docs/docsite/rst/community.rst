@@ -262,6 +262,7 @@ Ansible has several IRC channels on Freenode (irc.freenode.net):
 - ``#ansible-aws`` - For discussions on Amazon Web Services.
 - ``#ansible-container`` - For discussions on Ansible Container.
 - ``#ansible-vmware`` - For discussions on Ansible & VMware.
+- ``#ansible-windows`` - For discussions on Ansible & Windows.
 - ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_
 - ``#ansible-notices`` - Mostly bot output from things like Github, etc.
 
