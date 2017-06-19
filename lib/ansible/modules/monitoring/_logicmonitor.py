@@ -556,7 +556,6 @@ except ImportError:
         HAS_LIB_JSON = False
 
 
-
 class LogicMonitor(object):
 
     def __init__(self, module, **params):
@@ -1037,18 +1036,18 @@ class Collector(LogicMonitor):
             else:
                 self.fail(msg="Error: Unable to retrieve timezone offset")
 
-        offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+        offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
         h = {"agentId": self.id,
              "type": 1,
              "notifyCC": True,
              "year": offsetstart.year,
-             "month": offsetstart.month-1,
+             "month": offsetstart.month - 1,
              "day": offsetstart.day,
              "hour": offsetstart.hour,
              "minute": offsetstart.minute,
              "endYear": offsetend.year,
-             "endMonth": offsetend.month-1,
+             "endMonth": offsetend.month - 1,
              "endDay": offsetend.day,
              "endHour": offsetend.hour,
              "endMinute": offsetend.minute}
@@ -1478,7 +1477,7 @@ class Host(LogicMonitor):
                     self.fail(
                         msg="Error: Unable to retrieve timezone offset")
 
-            offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+            offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
             h = {"hostId": self.info["id"],
                  "type": 1,
@@ -1712,18 +1711,18 @@ class Datasource(LogicMonitor):
             else:
                 self.fail(msg="Error: Unable to retrieve timezone offset")
 
-        offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+        offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
         h = {"hostDataSourceId": self.id,
              "type": 1,
              "notifyCC": True,
              "year": offsetstart.year,
-             "month": offsetstart.month-1,
+             "month": offsetstart.month - 1,
              "day": offsetstart.day,
              "hour": offsetstart.hour,
              "minute": offsetstart.minute,
              "endYear": offsetend.year,
-             "endMonth": offsetend.month-1,
+             "endMonth": offsetend.month - 1,
              "endDay": offsetend.day,
              "endHour": offsetend.hour,
              "endMinute": offsetend.minute}
@@ -1974,17 +1973,17 @@ class Hostgroup(LogicMonitor):
                 self.fail(
                     msg="Error: Unable to retrieve timezone offset")
 
-        offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+        offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
         h = {"hostGroupId": self.info["id"],
              "type": 1,
              "year": offsetstart.year,
-             "month": offsetstart.month-1,
+             "month": offsetstart.month - 1,
              "day": offsetstart.day,
              "hour": offsetstart.hour,
              "minute": offsetstart.minute,
              "endYear": offsetend.year,
-             "endMonth": offsetend.month-1,
+             "endMonth": offsetend.month - 1,
              "endDay": offsetend.day,
              "endHour": offsetend.hour,
              "endMinute": offsetend.minute}
