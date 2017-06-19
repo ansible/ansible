@@ -161,7 +161,7 @@ def main():
     want = map_params_to_obj(module)
     have = config_to_dict(module)
 
-    commands = spec_to_commands(update_objects(want, have), module)
+    commands = spec_to_commands((want, have), module)
     result['commands'] = commands
 
     if commands:
