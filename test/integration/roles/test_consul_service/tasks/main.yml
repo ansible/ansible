@@ -47,6 +47,17 @@
         - basic2_result.service_id == 'service2'
         - basic2_result.service_name == 'Basic Service'
 
+- name: register service without name
+  consul:
+    service_id: this_will_fail
+  register: noname_result
+  ignore_errors: True
+
+- name: verify registering service without name fails
+  assert:
+    that:
+        - noname_result | failed
+
 - name: register very basic service without service_port
   consul:
     service_name: Basic Service Without Port
