@@ -234,7 +234,7 @@ def decode_rules_as_json(rules_as_json):
             rules.add(Rule(scope, rules_as_json[scope]))
         else:
             for pattern, policy in rules_as_json[scope].items():
-                rules.add(Rule(scope, pattern, policy['policy']))
+                rules.add(Rule(scope, policy['policy'], pattern))
     return rules
 
 
