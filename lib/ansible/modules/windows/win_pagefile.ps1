@@ -33,11 +33,12 @@ Function Get-Pagefile($path)
 
 ########
 
-$params = Parse-Args $args;
-
 $result = @{ 
     changed = $false
 }
+
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name '_ansible_check_mode' -type 'bool' -default $false
 
 $automatic = Get-AnsibleParam -obj $params -name "automatic" -type "bool"
 $drive = Get-AnsibleParam -obj $params -name "drive" -type "str"
@@ -52,7 +53,13 @@ $systemManaged = Get-AnsibleParam -obj $params -name "system_managed" -type "boo
 $ErrorActionPreference = "Stop"
 
 if ($removeAll) {
-    Get-WmiObject Win32_PageFileSetting | Remove-WmiObject | Out-Null
+    $currentPageFiles = Get-WmiObject Win32_PageFileSetting
+    if ($currentPageFiles -ne $null) {
+        if (-not $check_mode) {
+            $currentPageFiles | Remove-WmiObject | Out-Null
+        }
+        $result.changed = $true
+    }
 }
 
 if ($automatic -ne $null) {
@@ -62,7 +69,9 @@ if ($automatic -ne $null) {
     
         if ($computerSystem.AutomaticManagedPagefile -ne $automatic) {
             $computerSystem.AutomaticManagedPagefile = $automatic
-            $computerSystem.Put() | Out-Null
+            if (-not $check_mode) {
+            	$computerSystem.Put() | Out-Null
+            }
             $result.changed = $true
         }
     } catch {
@@ -75,7 +84,9 @@ if ($state -eq "absent") {
     if ((Get-Pagefile $fullPath) -ne $null)
     {
         try {
-            Remove-Pagefile $fullPath
+            if (-not $check_mode) {
+                Remove-Pagefile $fullPath
+            }
             $result.changed = $true
         } catch {
             Fail-Json $result "Failed to remove pagefile $_.Exception.Message"
@@ -87,7 +98,9 @@ if ($state -eq "absent") {
         if ((Get-Pagefile $fullPath) -ne $null)
         {
             try {
-                Remove-Pagefile $fullPath
+                if (-not $check_mode) {
+                    Remove-Pagefile $fullPath
+                }
                 $result.changed = $true
             } catch {
                 Fail-Json $result "Failed to remove current pagefile $_.Exception.Message"
@@ -107,7 +120,9 @@ if ($state -eq "absent") {
             if (!$systemManaged) {
                 $pagefile.InitialSize = $initialSize
                 $pagefile.MaximumSize = $maximumSize
-                $pagefile.Put() | out-null
+                if (-not $check_mode) {
+                    $pagefile.Put() | out-null
+                }
             }
             $result.changed = $true
         }
