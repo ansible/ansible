@@ -105,7 +105,7 @@ EXAMPLES = r'''
 - name: change application pool attributes using new dict style
   win_iis_webapppool:
     name: AppPool
-    attribute:
+    attributes:
       managedRuntimeVersion: v4.0
       autoStart: false
 
@@ -113,7 +113,7 @@ EXAMPLES = r'''
 - name: change application pool attributes using older string style
   win_iis_webapppool:
     name: AppPool
-    attribute: 'managedRuntimeVersion:v4.0|autoStart:false'
+    attributes: 'managedRuntimeVersion:v4.0|autoStart:false'
 
 # This is the preferred style to use when setting attributes
 - name: creates an application pool, sets attributes and starts it
