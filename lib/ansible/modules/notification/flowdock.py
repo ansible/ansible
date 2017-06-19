@@ -156,7 +156,7 @@ def main():
         else:
             params['external_user_name'] = module.params["external_user_name"]
     elif type == 'chat':
-        module.fail_json(msg="%s is required for the 'inbox' type" % item)
+        module.fail_json(msg="external_user_name is required for the 'chat' type")
 
     # required params for the 'inbox' type
     for item in [ 'from_address', 'source', 'subject' ]:
