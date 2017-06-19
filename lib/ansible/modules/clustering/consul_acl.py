@@ -156,7 +156,7 @@ def update_acl(module):
     consul = get_consul_api(module, mgmt)
     changed = False
 
-    rules = decode_rules_as_yml(module, rules)
+    rules = decode_rules_as_yml(rules)
     rules_as_hcl = encode_rules_as_hcl_string(rules) if len(rules) > 0 else None
 
     try:
@@ -203,17 +203,10 @@ def remove_acl(module):
 
 def load_rules_for_token(module, consul_api, token):
     try:
-        rules = RuleCollection()
         info = consul_api.acl.info(token)
-        if info and info['Rules']:
-            rule_set = hcl.loads(to_text(info['Rules']))
-            for scope in rule_set:
-                if isinstance(rule_set[scope], str):
-                    rules.add(Rule(scope, rule_set[scope]))
-                else:
-                    for pattern, policy in rule_set[scope].items():
-                        rules.add(Rule(scope, pattern, policy['policy']))
-        return rules
+        rules_as_hcl_string = to_text(info['Rules'])
+        rules_as_json = hcl.loads(rules_as_hcl_string)
+        return decode_rules_as_json(rules_as_json)
     except Exception as e:
         module.fail_json(
             msg="Could not load rule list from retrieved rule data %s, %s" % (
@@ -234,6 +227,17 @@ def encode_rule_as_hcl_string(rule):
         return '%s = "%s"\n' % (rule.scope, rule.policy)
 
 
+def decode_rules_as_json(rules_as_json):
+    rules = RuleCollection()
+    for scope in rules_as_json:
+        if isinstance(rules_as_json[scope], str):
+            rules.add(Rule(scope, rules_as_json[scope]))
+        else:
+            for pattern, policy in rules_as_json[scope].items():
+                rules.add(Rule(scope, pattern, policy['policy']))
+    return rules
+
+
 def encode_rules_as_json(rules):
     rules_as_json = defaultdict(dict)
     for rule in rules:
@@ -248,7 +252,7 @@ def encode_rules_as_json(rules):
     return rules_as_json
 
 
-def decode_rules_as_yml(module, rules_as_yml):
+def decode_rules_as_yml(rules_as_yml):
     rules = RuleCollection()
     if rules_as_yml:
         for rule_as_yml in rules_as_yml:
@@ -263,7 +267,7 @@ def decode_rules_as_yml(module, rules_as_yml):
                     rule_added = True
                     break
             if not rule_added:
-                module.fail_json(msg="a rule requires one of %s and a policy." % ('/'.join(RULE_SCOPES)))
+                raise ValueError("a rule requires one of %s and a policy." % ('/'.join(RULE_SCOPES)))
     return rules
 
 
