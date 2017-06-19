@@ -128,7 +128,7 @@ from collections import defaultdict
 from requests.exceptions import ConnectionError
 
 
-RULE_SCOPES = ['agent', 'event', 'key', 'keyring', 'node', 'operator', 'query', 'service','session']
+RULE_SCOPES = ['agent', 'event', 'key', 'keyring', 'node', 'operator', 'query', 'service', 'session']
 
 
 def execute(module):
@@ -264,10 +264,10 @@ class Rule:
 
     def __eq__(self, other):
         return other \
-               and isinstance(other, self.__class__) \
-               and self.scope == other.scope \
-               and self.policy == other.policy \
-               and self.pattern == other.pattern
+            and isinstance(other, self.__class__) \
+            and self.scope == other.scope \
+            and self.policy == other.policy \
+            and self.pattern == other.pattern
 
     def __hash__(self):
         return (hash(self.scope) ^ hash(self.policy)) ^ hash(self.pattern)
@@ -297,8 +297,8 @@ class RuleCollection:
 
     def __eq__(self, other):
         return other \
-               and isinstance(other, self.__class__) \
-               and set(self) == set(other)
+            and isinstance(other, self.__class__) \
+            and set(self) == set(other)
 
     def __str__(self):
         return encode_rules_as_hcl_string(self)
@@ -325,7 +325,6 @@ def test_dependencies(module):
     if not pyhcl_installed:
         module.fail_json(msg="pyhcl required for this module. "
                              "see https://pypi.python.org/pypi/pyhcl")
-
 
 
 def main():
