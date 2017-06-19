@@ -334,7 +334,7 @@ def getInstanceDetails(api, server):
                                         'ip_id': ip['IPADDRESSID']})
     return instance
 
-def param_satisfier(module, paramdict, provision_step):
+def param_satisfier(module, paramdict, linode_state):
     '''
     Verifies that the supplied set of API parameters have been included,
     and returns an error message, with the provisioning step
@@ -351,8 +351,8 @@ def param_satisfier(module, paramdict, provision_step):
         if not parameter
     ]
     if unsatisfied_param_list:
-        module.fail_json(msg="{0}: required for create step".format(
-            ",".join(unsatisfied_param_list)
+        module.fail_json(msg="{0}: required for {1} state".format(
+            ",".join(unsatisfied_param_list, linode_state)
         ))
 
 def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_threshold, alert_bwout_enabled, alert_bwout_threshold,
@@ -397,7 +397,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                              "plan": plan,
                              "distribution": distribution,
                              "datacenter": datacenter},
-                            "create")
+                            state)
             # Create linode entity
             new_server = True
 
@@ -435,7 +435,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                             {"name":name,
                              "linodeid":linode_id,
                              "distribution":distribution},
-                            "create")
+                            state)
             # Create disks (1 from distrib, 1 for SWAP)
             new_server = True
             try:
@@ -479,7 +479,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                             {"name": name,
                              "linodeid": linode_id,
                              "distribution": distribution},
-                            "create")
+                            state)
             # Check architecture
             for distrib in api.avail_distributions():
                 if distrib['DISTRIBUTIONID'] != distribution:
@@ -567,7 +567,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
         param_satisfier(module,
                         {"name": name,
                          "linodeid": linode_id},
-                        "create")
+                        state)
 
         if not servers:
             module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
@@ -587,12 +587,11 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
 
     elif state in ('restarted'):
         param_satisfier(module,
-                        {"name": name,
-                         "linodeid": linode_id},
-                        "create")
+                        {"linodeid": linode_id},
+                        state)
 
         if not servers:
-            module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
+            module.fail_json(msg = 'Server with linode_ID %s not found' % (linode_id))
 
         for server in servers:
             instance = getInstanceDetails(api, server)
