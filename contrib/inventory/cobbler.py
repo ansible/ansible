@@ -69,8 +69,6 @@ import json
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import configparser as ConfigParser
 
-orderby_keyname = 'owners'  # alternatively 'mgmt_classes'
-
 
 class CobblerInventory(object):
 
@@ -145,6 +143,7 @@ class CobblerInventory(object):
             self.cobbler_username = config.get('cobbler', 'username')
         if config.has_option('cobbler', 'password'):
             self.cobbler_password = config.get('cobbler', 'password')
+        self.orderby_keyname = config.get('cobbler', 'orderby_keyname')
 
         # Cache related
         cache_path = config.get('cobbler', 'cache_path')
@@ -166,6 +165,7 @@ class CobblerInventory(object):
         self.cobbler_host = os.getenv('COBBLER_host', None)
         self.cobbler_username = os.getenv('COBBLER_username', None)
         self.cobbler_password = os.getenv('COBBLER_password', None)
+        self.orderby_keyname = os.getenv('COBBLER_orderby_keyname', 'owners')
 
         # Cache related
         cache_path = os.getenv('COBBLER_cache_path', None)
@@ -219,7 +219,7 @@ class CobblerInventory(object):
 
             status = host['status']
             profile = host['profile']
-            classes = host[orderby_keyname]
+            classes = host[self.orderby_keyname]
 
             if status not in self.inventory:
                 self.inventory[status] = []
