@@ -61,7 +61,6 @@ def do_fork():
         if pid > 0:
             return pid
 
-        #os.chdir("/")
         os.setsid()
         os.umask(0)
 
