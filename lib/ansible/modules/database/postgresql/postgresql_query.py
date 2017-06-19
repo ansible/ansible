@@ -25,18 +25,16 @@ DOCUMENTATION = '''
 module: postgresql_query
 short_description: Run arbitrary queries on a postgresql database.
 description:
-   - Run arbitrary queries on postgresql instances from the current host.
-   - The function of this module is primarily to allow running queries which
-     would benefit from bound parameters for SQL escaping.
+   - Run arbitrary SQL queries against a PostgreSQL instance from the current host.
    - Query results are returned as "query_results" as a list of dictionaries.
      Number of rows affected are returned as "row_count".
-   - Can read queries from a .sql script files
-   - SQL scripts may be templated with ansible variables at execution time
+   - Can read queries from a .sql script files.
+   - SQL scripts may be templated with ansible variables at execution time.
 version_added: "2.4"
 options:
   db:
     description:
-      - name of the database to run queries against
+      - name of the database to run queries against.
     required: false
     default: postgres
   port:
@@ -46,12 +44,12 @@ options:
     default: 5432
   login_user:
     description:
-      - User (role) used to authenticate with PostgreSQL
+      - User (role) used to authenticate with PostgreSQL.
     required: false
     default: postgres
   login_password:
     description:
-      - Password used to authenticate with PostgreSQL
+      - Password used to authenticate with PostgreSQL.
     required: false
     default: null
   login_host:
@@ -81,7 +79,7 @@ options:
         - If enabled, This WILL run the query in check_mode.
       required: false
       default: false
-      choices: [true, false]
+      type: bool
   named_args:
     description:
       - A dictionary of key-value arguments to pass to the query.
@@ -126,7 +124,9 @@ notes:
      PUBLIC user is specified.
    - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
 requirements: [ psycopg2 ]
-author: "Felix Archambault (@archf)"
+author:
+    - "Felix Archambault (@archf)"
+    - "Will Rouesnel (@wrouesnel)"
 '''
 
 EXAMPLES = '''
