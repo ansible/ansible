@@ -15,11 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- include: 'apt.yml'
-  when: ansible_distribution in ('Ubuntu', 'Debian')
+ - include: 'apt.yml'
+   when: ansible_distribution in ('Ubuntu', 'Debian')
 
-- include: 'apt-multiarch.yml'
-  when: ansible_distribution in ('Ubuntu', 'Debian') and ansible_userspace_architecture != apt_foreign_arch
+ - include: 'apt-multiarch.yml'
+   when: ansible_distribution in ('Ubuntu', 'Debian') and ansible_userspace_architecture != apt_foreign_arch
 
-- include: 'apt-builddep.yml'
-  when: ansible_distribution in ('Ubuntu', 'Debian')
+ - include: 'apt-builddep.yml'
+   when: ansible_distribution in ('Ubuntu', 'Debian')
+
+ - name: Check if aptitude is installed
+   command: dpkg-query -l aptitude
+   register: deb_check
+   when: ansible_distribution in ('Ubuntu', 'Debian')
+
+ - include: upgrade.yml upgrade_type=dist
+   when: ansible_distribution in ('Ubuntu', 'Debian')
+
+ - include: upgrade.yml upgrade_type=safe
+   when:
+     - ansible_distribution in ('Ubuntu', 'Debian')
+     - deb_check.stdout.find('no packages found') != -1
+
+ - include: upgrade.yml upgrade_type=full
+   when:
+     - ansible_distribution in ('Ubuntu', 'Debian')
+     - deb_check.stdout.find('no packages found') != -1

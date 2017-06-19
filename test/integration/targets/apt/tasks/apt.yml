@@ -116,6 +116,7 @@
 - name: check hello version
   shell: dpkg -s hello | grep Version | awk '{print $2}'
   register: hello_version
+
 - name: check hello architecture
   shell: dpkg -s hello | grep Architecture | awk '{print $2}'
   register: hello_architecture

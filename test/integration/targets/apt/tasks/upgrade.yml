@@ -1,0 +1,45 @@
+---
+#### Tests for upgrade/download functions in modules/packaging/os/apt.py ####
+- name: download and install old version of hello
+  apt: "deb=https://launchpad.net/ubuntu/+archive/primary/+files/hello_{{ hello_old_version }}_amd64.deb"
+
+- name: check hello version
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: hello_version
+
+- debug: var=hello_version
+
+- name: ensure the correct version of hello has been installed
+  assert:
+    that:
+      - "{{ hello_version.stdout }}=={{ hello_old_version }}"
+
+- name: "(upgrade type: {{upgrade_type}}) upgrade packages to latest version"
+  apt:
+    upgrade: "{{ upgrade_type }}"
+
+- name: check hello version
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: hello_version
+
+- name: check that old version upgraded correctly
+  assert:
+    that:
+      - "{{ hello_version.stdout }}!={{ hello_old_version }}"
+      - "{{ hello_version.changed }}"
+
+- name: "(upgrade type: {{upgrade_type}}) upgrade packages to latest version (Idempotant)"
+  apt:
+    upgrade: "{{ upgrade_type }}"
+  register: result
+
+- name: check that nothing has changed (Idempotant)
+  assert:
+    that:
+      - "result.changed == false"
+
+- name: remove hello
+  apt:
+    pkg: hello
+    state: absent
+    autoclean: yes
