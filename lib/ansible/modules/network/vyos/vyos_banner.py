@@ -82,6 +82,8 @@ commands:
     - string
 """
 
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vyos import get_config, load_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
@@ -99,7 +101,9 @@ def spec_to_commands(updates, module):
     elif state == 'present':
         if want['text'] and (want['text'] != have.get('text')):
             banner_cmd = 'set system login banner %s ' % module.params['banner']
+            banner_cmd += '"'
             banner_cmd += want['text'].strip()
+            banner_cmd += '"'
             commands.append(banner_cmd)
 
     return commands

@@ -44,7 +44,7 @@ class TestVyosBannerModule(TestVyosModule):
 
     def test_vyos_banner_create(self):
         set_module_args(dict(banner='pre-login', text='test\nbanner\nstring'))
-        commands = ['set system login banner pre-login test\nbanner\nstring']
+        commands = ['set system login banner pre-login "test\nbanner\nstring"']
         self.execute_module(changed=True, commands=commands)
 
     def test_vyos_banner_remove(self):
