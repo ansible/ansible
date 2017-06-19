@@ -133,6 +133,13 @@ options:
     required: false
     default: false
     version_added: "2.1"
+  suppress_daemon_actions:
+    description:
+      - Suppress any daemon actions, like starting or stopping, during the runtime of the module invocation.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
@@ -250,12 +257,15 @@ stderr:
 import warnings
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
+import contextlib
 import datetime
 import fnmatch
 import itertools
 import os
 import re
+import stat
 import sys
+import tempfile
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -850,6 +860,34 @@ def get_cache(module):
     return cache
 
 
+@contextlib.contextmanager
+def suppress_daemon_actions(yesno):
+    if yesno:
+        polscript = '/usr/sbin/policy-rc.d'
+        orig_polscript = None
+        if os.path.isfile(polscript):
+            # atomically rename to new temporary file in the same directory
+            # race (another process might create the same tmpfile) unavoidable without some explicit advisory locking
+            orig_polscript = tempfile.mktemp(dir=os.path.dirname(polscript))
+            os.rename(polscript, orig_polscript)
+
+        try:
+            with open(polscript, 'w') as f:
+                f.write("#!/bin/sh\nexit 101")
+            os.chmod(polscript, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+
+            yield
+
+        finally:
+            if orig_polscript:
+                os.rename(orig_polscript, polscript)
+            else:
+                os.remove(polscript)
+
+    else:
+        yield
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -868,6 +906,7 @@ def main():
             autoclean=dict(type='bool', default='no'),
             only_upgrade=dict(type='bool', default=False),
             allow_unauthenticated=dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
+            suppress_daemon_actions=dict(default='no', type='bool'),
         ),
         mutually_exclusive=[['package', 'upgrade', 'deb']],
         required_one_of=[['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
@@ -970,10 +1009,11 @@ def main():
                 module.fail_json(msg="deb only supports state=present")
             if '://' in p['deb']:
                 p['deb'] = download(module, p['deb'])
-            install_deb(module, p['deb'], cache,
-                        install_recommends=install_recommends,
-                        allow_unauthenticated=allow_unauthenticated,
-                        force=force_yes, dpkg_options=p['dpkg_options'])
+            with suppress_daemon_actions(p['suppress_daemon_actions']):
+                install_deb(module, p['deb'], cache,
+                            install_recommends=install_recommends,
+                            allow_unauthenticated=allow_unauthenticated,
+                            force=force_yes, dpkg_options=p['dpkg_options'])
 
         unfiltered_packages = p['package'] or ()
         packages = [package for package in unfiltered_packages if package != '*']
@@ -1006,20 +1046,21 @@ def main():
             if p['state'] == 'build-dep':
                 state_builddep = True
 
-            success, retvals = install(
-                module,
-                packages,
-                cache,
-                upgrade=state_upgrade,
-                default_release=p['default_release'],
-                install_recommends=install_recommends,
-                force=force_yes,
-                dpkg_options=dpkg_options,
-                build_dep=state_builddep,
-                autoremove=autoremove,
-                only_upgrade=p['only_upgrade'],
-                allow_unauthenticated=allow_unauthenticated
-            )
+            with suppress_daemon_actions(p['suppress_daemon_actions']):
+                success, retvals = install(
+                    module,
+                    packages,
+                    cache,
+                    upgrade=state_upgrade,
+                    default_release=p['default_release'],
+                    install_recommends=install_recommends,
+                    force=force_yes,
+                    dpkg_options=dpkg_options,
+                    build_dep=state_builddep,
+                    autoremove=autoremove,
+                    only_upgrade=p['only_upgrade'],
+                    allow_unauthenticated=allow_unauthenticated
+                )
 
             # Store if the cache has been updated
             retvals['cache_updated'] = updated_cache
