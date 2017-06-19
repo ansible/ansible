@@ -31,7 +31,7 @@ author: Dag Wieers (@dagwieers)
 short_description: Creates temporary files and directories.
 description:
   - Creates temporary files and directories.
-  - For non-Windows targets, please look at the M(tempfile) module instead.
+  - For non-Windows targets, please use the M(tempfile) module instead.
 options:
   state:
     description:
@@ -52,7 +52,7 @@ options:
       - Suffix of file/directory name created by module.
     default: ''
 notes:
-  - For non-Windows targets, please look at the M(tempfile) module instead.
+  - For non-Windows targets, please use the M(tempfile) module instead.
 '''
 
 EXAMPLES = r"""

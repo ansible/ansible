@@ -34,7 +34,7 @@ short_description: Interacts with webservices
 description:
 - Interacts with FTP, HTTP and HTTPS web services.
 - Supports Digest, Basic and WSSE HTTP authentication mechanisms.
-- For non-Windows targets, look at the M(uri) module instead.
+- For non-Windows targets, use the M(uri) module instead.
 options:
   url:
     description:
@@ -140,7 +140,7 @@ options:
     - Specifies the client certificate(.pfx)  that is used for a secure web request.
     version_added: '2.4'
 notes:
-- For non-Windows targets, look at the M(uri) module instead.
+- For non-Windows targets, use the M(uri) module instead.
 author:
 - Corwin Brown (@blakfeld)
 - Dag Wieers (@dagwieers)

@@ -35,7 +35,7 @@ description:
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), C(";") and C("&") will not work (use the M(shell)
        module if you need these features).
-     - For Windows targets, look at the M(win_command) module instead.
+     - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
     description:
@@ -77,7 +77,7 @@ notes:
        The C(command) module is much more secure as it's not affected by the user's environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
-    - For Windows targets, look at the M(win_command) module instead.
+    - For Windows targets, use the M(win_command) module instead.
 author:
     - Ansible Core Team
     - Michael DeHaan

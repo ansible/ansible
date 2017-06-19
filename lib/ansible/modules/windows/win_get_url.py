@@ -33,7 +33,7 @@ version_added: "1.7"
 short_description: Fetches a file from a given URL
 description:
  - Fetches a file from a URL and saves to locally
- - For non-Windows targets, look at the M(get_url) module instead.
+ - For non-Windows targets, use the M(get_url) module instead.
 author:
     - "Paul Durivage (@angstwad)"
     - "Takeshi Kuramochi (tksarah)"
@@ -92,7 +92,7 @@ options:
     version_added: "2.0"
     required: false
 notes:
- - For non-Windows targets, look at the M(get_url) module instead.
+ - For non-Windows targets, use the M(get_url) module instead.
 '''
 
 EXAMPLES = r'''

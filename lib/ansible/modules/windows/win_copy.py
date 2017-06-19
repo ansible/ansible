@@ -31,7 +31,7 @@ version_added: "1.9.2"
 short_description: Copies files to remote locations on windows hosts.
 description:
 - The C(win_copy) module copies a file on the local box to remote windows locations.
-- For non-Windows targets, look at the M(copy) module instead.
+- For non-Windows targets, use the M(copy) module instead.
 options:
   content:
     description:
@@ -74,7 +74,7 @@ options:
       itself with all contents is copied. This behavior is similar to Rsync.
     required: true
 notes:
-- For non-Windows targets, look at the M(copy) module instead.
+- For non-Windows targets, use the M(copy) module instead.
 author: "Jon Hawkesworth (@jhawkesworth)"
 '''
 

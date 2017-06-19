@@ -25,7 +25,7 @@ version_added: "1.3"
 short_description: Retrieve file or file system status
 description:
      - Retrieves facts for a file similar to the linux/unix 'stat' command.
-     - For Windows targets, look at the M(win_stat) module instead.
+     - For Windows targets, use the M(win_stat) module instead.
 options:
   path:
     description:
@@ -75,7 +75,7 @@ options:
     version_added: "2.3"
     aliases: [ attr, attributes ]
 notes:
-     - For Windows targets, look at the M(win_stat) module instead.
+     - For Windows targets, use the M(win_stat) module instead.
 author: Bruce Pennypacker (@bpennypacker)
 '''
 

@@ -34,14 +34,14 @@ short_description: A windows version of the classic ping module
 description:
   - Checks management connectivity of a windows host.
   - This is NOT ICMP ping, this is just a trivial test module.
-  - For non-Windows targets, look at the M(ping) module instead.
+  - For non-Windows targets, use the M(ping) module instead.
 options:
   data:
     description:
       - Alternate data to return instead of 'pong'
     default: 'pong'
 notes:
-  - For non-Windows targets, look at the M(ping) module instead.
+  - For non-Windows targets, use the M(ping) module instead.
 author: "Chris Church (@cchurch)"
 '''
 

@@ -31,7 +31,7 @@ short_description: return a list of files based on specific criteria
 description:
     - Return a list of files based on specified criteria.
     - Multiple criteria are AND'd together.
-    - For non-Windows targets, look at the M(find) module instead.
+    - For non-Windows targets, use the M(find) module instead.
 options:
     age:
         description:
@@ -115,7 +115,7 @@ options:
         default: false
         choices: ['true', 'false']
 notes:
-    - For non-Windows targets, look at the M(find) module instead.
+    - For non-Windows targets, use the M(find) module instead.
 author: "Jordan Borean (@jborean93)"
 '''
 

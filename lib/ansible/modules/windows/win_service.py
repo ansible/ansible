@@ -33,7 +33,7 @@ version_added: "1.7"
 short_description: Manages Windows services
 description:
     - Manages Windows services.
-    - For non-Windows targets, look at the M(service) module instead.
+    - For non-Windows targets, use the M(service) module instead.
 options:
   dependencies:
     description:
@@ -119,7 +119,7 @@ options:
       - This and the C(password) argument must be supplied together.
     version_added: "2.3"
 notes:
-    - For non-Windows targets, look at the M(service) module instead.
+    - For non-Windows targets, use the M(service) module instead.
 author: "Chris Hoffman (@chrishoffman)"
 '''
 

@@ -31,7 +31,7 @@ version_added: "2.0"
 short_description: Return a list of files based on specific criteria
 description:
     - Return a list of files based on specific criteria. Multiple criteria are AND'd together.
-    - For Windows targets, look at the M(win_find) module instead.
+    - For Windows targets, use the M(win_find) module instead.
 options:
     age:
         description:
@@ -98,7 +98,7 @@ options:
         description:
             - If false the patterns are file globs (shell) if true they are python regexes.
 notes:
-    - For Windows targets, look at the M(win_find) module instead.
+    - For Windows targets, use the M(win_find) module instead.
 '''
 
 

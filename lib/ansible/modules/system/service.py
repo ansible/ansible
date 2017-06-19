@@ -34,7 +34,7 @@ short_description:  Manage services.
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
-    - For Windows targets, look at the M(win_service) module instead.
+    - For Windows targets, use the M(win_service) module instead.
 options:
     name:
         required: true
@@ -89,7 +89,7 @@ options:
         default: 'auto'
         version_added: 2.2
 notes:
-    - For Windows targets, look at the M(win_service) module instead.
+    - For Windows targets, use the M(win_service) module instead.
 '''
 
 EXAMPLES = '''
