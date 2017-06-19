@@ -234,7 +234,7 @@ class RabbitMqUser(object):
         return set(self.tags) != set(self._tags)
 
     def has_permissions_modifications(self):
-        return self._permissions != self.permissions
+        return sorted(self._permissions) != sorted(self.permissions)
 
 def main():
     arg_spec = dict(
