@@ -319,6 +319,9 @@ class RuleCollection:
         return encode_rules_as_hcl_string(self)
 
     def add(self, rule):
+        if rule.pattern in self._rules[rule.scope]:
+            patten_info = " and pattern '%s'" % rule.pattern if rule.pattern is not None else ""
+            raise ValueError("Duplicate rule for scope '%s'%s" % (rule.scope, patten_info))
         self._rules[rule.scope][rule.pattern] = rule
 
 
