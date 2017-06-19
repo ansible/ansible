@@ -27,8 +27,8 @@ module: ecs
 version_added: "2.4"
 short_description: Create, Start, Stop, Restart or Terminate an Instance in ECS. Add or Remove Instance to/from a Security Group.
 description:
-    - Create, start, stop, restart, retrieval, modify or terminate ecs instances.
-    - Add or remove ecs instances to/from security group.
+    - Creates, starts, stops, restarts or terminates ecs instances.
+    - Adds or removes ecs instances to/from security group.
 options:
     status:
       description:
@@ -36,7 +36,10 @@ options:
       required: false
       default: 'present'
       aliases: ['state']
-      choices: [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
+      choices:
+        - [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
+        - map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
+                        'describe_status']
     alicloud_zone:
       description: Aliyun availability zone ID in which to launch the instance
       required: false
@@ -71,41 +74,24 @@ options:
       required: false
       default: null
     instance_name:
-      description:
-        - The name of ECS instance, which is a string of 2 to 128 Chinese or English characters. It must begin with an
-          uppercase/lowercase letter or a Chinese character and can contain numerals, ".", "_", or "-".
-          It cannot begin with http:// or https://.
+      description: Name of the instance to use.
       required: false
       default: null
     description:
-      description:
-        - The description of ECS instance, which is a string of 2 to 256 characters. It cannot begin with http:// or https://.
+      description: Description of the instance to use.
       required: false
       default: null
     internet_data:
       description:
         - A hash/dictionaries of internet to the new instance;
+        - >
+          '{"key":"value"}'; keys allowed:
+          - charge_type ( required:false;default: "PayByBandwidth", choices:["PayByBandwidth", "PayByTraffic"] )
+          - max_bandwidth_in(required:false, default:200)
+          - max_bandwidth_out(required:false, default:0).
+
       required: false
       default: null
-      suboptions:
-         charge_type:
-           description:
-             - Internet charge type, which can be PayByTraffic or PayByBandwidth.
-           required: false
-           default: "PayByBandwidth"
-           choices: ["PayByBandwidth", "PayByTraffic"]
-         max_bandwidth_in:
-           description:
-             - Maximum incoming bandwidth from the public network, measured in Mbps (Mega bit per second).
-           required: false
-           default: 200
-           choices: [1~200]
-         max_bandwidth_out:
-           description:
-             - Maximum outgoing bandwidth to the public network, measured in Mbps (Mega bit per second).
-           required: false
-           default: 0
-           choices: [0~100]
     host_name:
       description: Instance host name.
       required: false
@@ -117,31 +103,14 @@ options:
     system_disk:
       description:
         - A hash/dictionaries of system disk to the new instance;
+        - >
+          '{"key":"value"}'; keys allowed:
+          - disk_category (required:false; default: "cloud"; choices:["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"] )
+          - disk_size (required: false, default: max[40, ImageSize], choice: [40-500])
+          - disk_name (required: false, default: Null)
+          - disk_description (required:false; default:null)
       required: false
       default: null
-      suboptions:
-         disk_category:
-           description:
-             - Category of the system disk.
-           required: false
-           default: "cloud"
-           choices: ["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"]
-         disk_size:
-           description:
-             - Size of the system disk, in GB
-           required: false
-           default: max[40, ImageSize]
-           choices: [40~500]
-         disk_name:
-           description:
-             - Name of a system disk.
-           required: false
-           default: null
-         disk_description:
-           description:
-             - Description of a system disk.
-           required: false
-           default: null
     count:
       description: The number of the new instance.
       required: false
@@ -212,34 +181,14 @@ options:
     attributes:
       description:
         - A list of hash/dictionaries of instance attributes. If it's set, the specified instance's attributes would be modified.
+        - keys allowed are
+            - id (required=true; default=null; description=ID of an ECS instance )
+            - name (required=false; default=null; description=Name of the instance to modify)
+            - description (required=false; default=null; description=Description of the instance to use)
+            - password (required=false; default=null; description=The password to login instance)
+            - host_name (required=false; default=null; description=Instance host name)
       required: false
       default: null
-      suboptions:
-         id:
-           description:
-             - ID of an ECS instance
-           required: true
-           default: null
-         name:
-           description:
-             - Name of the instance to modify
-           required: false
-           default: null
-         description:
-           description:
-             - Description of the instance to use
-           required: false
-           default: null
-         password:
-           description:
-             - The password to login instance
-           required: false
-           default: null
-         host_name:
-           description:
-             - Instance host name
-           required: false
-           default: null
     sg_action:
       description: The action of operating security group.
       required: true
@@ -377,7 +326,6 @@ EXAMPLES = '''
             max_bandwidth_in: 200
             max_bandwidth_out: 50
 
-
 # example with system disk configuration and IO optimized
 - name: advanced provisioning example
   hosts: localhost
@@ -494,7 +442,7 @@ EXAMPLES = '''
     status: running
   tasks:
     - name: start instance
-      ecs_model:
+      ecs:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -519,7 +467,7 @@ EXAMPLES = '''
     status: restarted
   tasks:
     - name: Restart instance
-      ecs_model:
+      ecs:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -541,7 +489,7 @@ EXAMPLES = '''
     sg_action: join
   tasks:
     - name: Add an instance to security group
-      ecs_model:
+      ecs:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -563,7 +511,7 @@ EXAMPLES = '''
     sg_action: leave
   tasks:
     - name: Remove an instance from security group
-      ecs_model:
+      ecs:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -575,7 +523,7 @@ EXAMPLES = '''
 RETURN = '''
 instance_ids:
     description: List all instances's id after operating ecs instance.
-    returned: always
+    returned: when success
     type: list
     sample: ["i-35b333d9","i-ddav***"]
 instance_ips:
@@ -585,7 +533,7 @@ instance_ips:
     sample: ["10.1.1.1","10.1.1.2"]
 instance_statuses:
     description: List all instances's status after operating ecs instance except deleted.
-    returned: always
+    returned: when success
     type: list
     sample: ["running","stopped"]
 instances:
@@ -600,8 +548,16 @@ instances:
                 "volume_id": "d-2ze9mho1vp79mctdoro0"
             }
         },
-        "eip": "",
-        "group_id": "sg-2zefacu0pduhah3yrhhz",
+        "eip": {
+            "allocation_id": "",
+            "internet_charge_type": "",
+            "ip_address": ""
+        },
+        "group_ids": {
+            "security_group_id": [
+                "sg-2zegcq33l0yz9sknp08o"
+            ]
+        },
         "host_name": "myhost",
         "id": "i-2ze9zfjdhtasdrfbgay1",
         "image_id": "ubuntu1404_64_40G_cloudinit_20160727.raw",
@@ -613,19 +569,22 @@ instances:
         "public_ip": "47.94.45.175",
         "region_id": "cn-beijing",
         "status": "running",
-        "subnet_id": "",
         "tags": {
             "create_test": "0.01"
         },
-        "vpc_id": "",
-        "vpc_private_ip": {
-            "ip_address": []
+        "vpc_attributes": {
+            "nat_ip_address": "",
+            "private_ip_address": {
+                "ip_address": []
+            },
+            "vpc_id": "",
+            "vswitch_id": ""
         },
         "zone_id": "cn-beijing-a"
     }
 total_count:
     description: The number of all instances after operating ecs instance.
-    returned: always
+    returned: when success
     type: int
     sample: 3
 failed_instance_ids:
@@ -669,13 +628,11 @@ def get_instance_info(inst):
                      'instance_type': inst.instance_type,
                      'instance_name': inst.instance_name,
                      'host_name': inst.host_name,
-                     'group_id': inst.group_id,
+                     'group_ids': inst.security_group_ids,
                      'status': inst.status,
                      'tags': inst.tags,
-                     'vpc_id': inst.vpc_id,
-                     'subnet_id': inst.subnet_id,
-                     'vpc_private_ip': inst.vpc_private_ip,
-                     'eip': inst.eip,
+                     'vpc_attributes': inst.vpc_attributes,
+                     'eip': inst.eip_address,
                      'io_optimized': inst.io_optimized
                      }
     try:
@@ -794,51 +751,48 @@ def startstop_instances(module, ecs, instance_ids, state, instance_tags):
             tag["tag:" + inst_tag['tag_key']] = inst_tag['tag_value']
             filters.append(tag)
     # Check (and eventually change) instances attributes and instances state
-    running_instances_array = []
     region, connect_args = get_acs_connection_info(module)
     connect_args['force'] = module.params.get('force', None)
     for inst in ecs.get_all_instances(instance_ids=instance_ids, filters=filters):
         if inst.state != state:
-            instance_dict_array.append(get_instance_info(inst))
             try:
                 if state == 'running':
                     inst.start()
                 elif state == 'restarted':
-                    inst.reboot()
+                    inst.reboot(force=module.params.get('force', None))
                 else:
-                    inst.stop()
+                    inst.stop(force=module.params.get('force', None))
             except ECSResponseError as e:
                 module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
             changed = True
 
-    return (changed, instance_dict_array, instance_ids)
+    for instance_id in instance_ids:
+        instance_dict_array.append(get_instance_info(ecs.get_instance_details(instance_id)))
+
+    return changed, instance_dict_array, instance_ids
 
 
-def delete_instance(module, ecs, instance_id):
+def delete_instances(module, ecs, instance_ids):
     """
     Delete an ECS Instance
     :param module: Ansible module object
     :param ecs: authenticated ecs connection object
-    :param instance_id: Id of ECS instances to be deleted
+    :param instance_ids: The list of instances to delete in the form of
+      [ "<inst-id>", ..]
     :return: Id of ECS Instances
     """
     try:
-        instance_info, result = ecs.get_instance_details(instance_id=str(instance_id[0]))
+        target = []
+        for instance_id in instance_ids:
+            instance = ecs.get_instance_details(instance_id=instance_id)
+            if str(instance.status) not in ["Stopped", "stopped"]:
+                target.append(instance_id)
+        startstop_instances(module=module, ecs=ecs, instance_ids=target, state="stopped", instance_tags=None)
 
-        if 'error' in (''.join(str(result))).lower():
-            module.fail_json(msg=result)
-
-        elif instance_info['Status'] != "Stopped":
-            startstop_instances(
-                module=module, ecs=ecs, instance_ids=instance_id, state="stopped", instance_tags=None)
-            time.sleep(60)
-
-        result = ecs.terminate_instances(instance_ids=instance_id, force=True)
-        if 'error' in (''.join(str(result))).lower():
-            module.fail_json(msg=result)
+        result = ecs.terminate_instances(instance_ids=instance_ids, force=True)
 
     except ECSResponseError as e:
-        module.fail_json(msg='Unable to delete instance {0}, error: {1}'.format(instance_id, e))
+        module.fail_json(msg='Unable to delete instance, error: {0}'.format(e))
 
     return result
 
@@ -936,23 +890,22 @@ def create_instance(module, ecs, image_id, instance_type, group_id, zone_id, ins
 
     try:
         # call to create_instance method from footmark
-        changed, result = ecs.create_instance(image_id=image_id, instance_type=instance_type, group_id=group_id,
-                                              zone_id=zone_id, instance_name=instance_name, description=description,
-                                              internet_data=internet_data, host_name=host_name, password=password,
-                                              io_optimized=io_optimized, system_disk=system_disk, disks=disks,
-                                              vswitch_id=vswitch_id, private_ip=private_ip, count=count,
-                                              allocate_public_ip=allocate_public_ip, bind_eip=bind_eip,
-                                              instance_charge_type=instance_charge_type, period=period,
-                                              auto_renew=auto_renew, auto_renew_period=auto_renew_period,
-                                              instance_tags=instance_tags, ids=ids, wait=wait,
-                                              wait_timeout=wait_timeout)
+        changed, instances, result = ecs.create_instance(image_id=image_id, instance_type=instance_type, group_id=group_id,
+                                                         zone_id=zone_id, instance_name=instance_name, description=description,
+                                                         internet_data=internet_data, host_name=host_name, password=password,
+                                                         io_optimized=io_optimized, system_disk=system_disk, disks=disks,
+                                                         vswitch_id=vswitch_id, private_ip=private_ip, count=count,
+                                                         allocate_public_ip=allocate_public_ip, bind_eip=bind_eip,
+                                                         instance_charge_type=instance_charge_type, period=period,
+                                                         auto_renew=auto_renew, auto_renew_period=auto_renew_period,
+                                                         instance_tags=instance_tags, ids=ids, wait=wait, wait_timeout=wait_timeout)
         if 'error' in (''.join(str(result))).lower():
-            module.fail_json(msg="Creating instance got an error: {0}".format(result))
+            module.fail_json(changed=changed, msg=result)
 
     except ECSResponseError as e:
         module.fail_json(msg='Unable to create instance, error: {0}'.format(e))
 
-    return changed, result
+    return changed, instances, result
 
 
 def modify_instance(module, ecs, attributes):
@@ -992,7 +945,7 @@ def modify_instance(module, ecs, attributes):
         changed = True
 
     except ECSResponseError as e:
-        module.fail_json(msg='Unable to modify instance {0}, error: {1}'.format(instance_ids, e))
+        module.fail_json(msg='Unable to modify instance, error: {0}'.format(e))
     return changed, instance_ids, result
 
 
@@ -1017,7 +970,7 @@ def get_instance_status(module, ecs, zone_id=None, pagenumber=None, pagesize=Non
             module.fail_json(changed=changed, msg=result)
 
     except ECSResponseError as e:
-        module.fail_json(msg='Unable to get status of instance(s) from {0}, error: {1}'.format(zone_id, e))
+        module.fail_json(msg='Unable to get status of instance(s), error: {0}'.format(e))
 
     return changed, result
 
@@ -1053,26 +1006,12 @@ def joinleave_security_group(module, ecs, action, instance_ids, security_group_i
         else:
             changed, result, success_instance_ids, failed_instance_ids = \
                 ecs.leave_security_group(instance_ids, security_group_id)
-        flag = 0
-        if len(result) > 0:
-            for item in result:
-                if 'error code' in str(item).lower():
-                    flag = 1
-        else:
-            flag = 1
 
-        if len(success_instance_ids) == 0:
-            success_instance_ids = None
-        if len(failed_instance_ids) == 0:
-            failed_instance_ids = None
-
-        if flag == 1:
+        if result and 'error' in (''.join(str(result))).lower():
             module.fail_json(msg=result, group_id=security_group_id, instance_ids=success_instance_ids,
                              failed_instance_ids=failed_instance_ids)
     except ECSResponseError as e:
-        module.fail_json(msg='Unable to join instance {0} in security group {1} or remove from it, '
-                             'error: {2}'.format(instance_ids, security_group_id, e))
-
+        module.fail_json(msg='Unable to join instance in security group or remove from it, error: {0}'.format(e))
     return changed, result, success_instance_ids, failed_instance_ids, security_group_id
 
 
@@ -1094,6 +1033,7 @@ def main():
             host_name=dict(),
             password=dict(),
             system_disk=dict(type='dict'),
+            disks=dict(type='list', aliases=['volumes']),
             force=dict(type='bool', default=False),
             instance_tags=dict(type='list', aliases=['tags']),
             status=dict(default='present', aliases=['state'], choices=['present', 'running', 'stopped', 'restarted',
@@ -1124,9 +1064,10 @@ def main():
         status = module.params['status']
 
         if status == 'absent':
-            instance_id = module.params['instance_id']
-
-            result = delete_instance(module=module, ecs=ecs, instance_id=instance_id)
+            instance_ids = module.params['instance_id']
+            if not isinstance(instance_ids, list) or len(instance_ids) < 1:
+                module.fail_json(msg='The parameter instance_ids should be a list, aborting')
+            result = delete_instances(module=module, ecs=ecs, instance_ids=instance_ids)
             module.exit_json(changed=True, instance_ids=result, total_count=len(result))
 
         elif status in ('running', 'stopped', 'restarted'):
@@ -1204,9 +1145,7 @@ def main():
                 host_name = module.params['host_name']
                 password = module.params['password']
                 system_disk = module.params['system_disk']
-                # Using ecs_disk to add data disks for instance
-                # disks = module.params['disks']
-                disks = None
+                disks = module.params['disks']
                 count = module.params['count']
                 allocate_public_ip = module.params['allocate_public_ip']
                 bind_eip = module.params['bind_eip']
@@ -1220,29 +1159,28 @@ def main():
                 wait = module.params['wait']
                 wait_timeout = module.params['wait_timeout']
 
-                (changed, result) = create_instance(module=module, ecs=ecs, image_id=image_id,
-                                                    instance_type=instance_type, group_id=group_id, zone_id=zone_id,
-                                                    instance_name=instance_name, description=description,
-                                                    internet_data=internet_data, host_name=host_name,
-                                                    password=password, io_optimized=io_optimized,
-                                                    system_disk=system_disk, disks=disks, vswitch_id=vswitch_id,
-                                                    private_ip=private_ip, count=count,
-                                                    allocate_public_ip=allocate_public_ip, bind_eip=bind_eip,
-                                                    instance_charge_type=instance_charge_type, period=period,
-                                                    auto_renew=auto_renew, auto_renew_period=auto_renew_period,
-                                                    instance_tags=instance_tags, ids=ids, wait=wait,
-                                                    wait_timeout=wait_timeout)
+                changed, instance_list, result = create_instance(module=module, ecs=ecs, image_id=image_id,
+                                                                 instance_type=instance_type, group_id=group_id, zone_id=zone_id,
+                                                                 instance_name=instance_name, description=description,
+                                                                 internet_data=internet_data, host_name=host_name, password=password,
+                                                                 io_optimized=io_optimized, system_disk=system_disk, disks=disks,
+                                                                 vswitch_id=vswitch_id, private_ip=private_ip, count=count,
+                                                                 allocate_public_ip=allocate_public_ip, bind_eip=bind_eip,
+                                                                 instance_charge_type=instance_charge_type, period=period,
+                                                                 auto_renew=auto_renew, auto_renew_period=auto_renew_period,
+                                                                 instance_tags=instance_tags, ids=ids, wait=wait, wait_timeout=wait_timeout)
+
+                instances = []
                 instance_ids = []
-                for inst in result:
-                    instance_ids.append(str(inst["instance_id"]))
-                (_, instance_dict_array, new_instance_ids) = get_instances(module, ecs, instance_ids)
                 statuses = []
                 public_ips = []
-                for inst in instance_dict_array:
-                    statuses.append(str(inst["status"]))
-                    public_ips.append(str(inst["public_ip"]))
+                for inst in instance_list:
+                    instances.append(get_instance_info(inst))
+                    instance_ids.append(str(inst.instance_id))
+                    statuses.append(str(inst.status))
+                    public_ips.append(str(inst.public_ip))
                 module.exit_json(changed=changed, instance_ids=instance_ids, instance_statuses=statuses,
-                                 instance_ips=public_ips, instances=instance_dict_array, total_count=len(instance_ids))
+                                 instance_ips=public_ips, instances=instances, total_count=len(instance_list))
 
         elif status == 'getinfo':
             instance_ids = module.params['instance_ids']
@@ -1265,11 +1203,11 @@ def main():
 
             instance_ids = []
             instance_statuses = []
-            for inst in result["InstanceStatuses"]["InstanceStatus"]:
-                instance_ids.append(str(inst["InstanceId"]))
-                instance_statuses.append(str.lower(str(inst["Status"])))
+            for inst in result.instance_statuses['instance_status']:
+                instance_ids.append(str(inst["instance_id"]))
+                instance_statuses.append(str.lower(str(inst["status"])))
             module.exit_json(changed=changed, instance_ids=instance_ids,
-                             instance_statuses=instance_statuses, total_count=result["TotalCount"])
+                             instance_statuses=instance_statuses, total_count=result.total_count)
 
 
 if __name__ == '__main__':
