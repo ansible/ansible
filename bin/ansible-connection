@@ -60,7 +60,8 @@ def do_fork():
         pid = os.fork()
         if pid > 0:
             return pid
-
+        # This is done as a 'good practice' for daemons, but we need to keep the cwd
+        # leaving it here as a note that we KNOW its good practice but are not doing it on purpose.
         #os.chdir("/")
         os.setsid()
         os.umask(0)
