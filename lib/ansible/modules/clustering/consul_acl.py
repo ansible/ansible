@@ -17,7 +17,7 @@ short_description: Manipulate Consul ACL keys and rules
 description:
  - Allows the addition, modification and deletion of ACL keys and associated
    rules in a consul cluster via the agent. For more details on using and
-   configuring ACLs, see https://www.consul.io/docs/internals/acl.html.
+   configuring ACLs, see https://www.consul.io/docs/guides/acl.html.
 version_added: "2.0"
 author:
   - Steve Gargan (@sgargan)
