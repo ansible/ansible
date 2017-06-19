@@ -47,9 +47,9 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.mock_send_show_command.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         self.get_interface_mode.return_value = 'layer3'
-        self.send_show_command.return_value = [load_fixture('nxos_ip_interface.cfg')]
+        self.send_show_command.return_value = [load_fixture('', 'nxos_ip_interface.cfg')]
         self.load_config.return_value = None
 
     def test_nxos_ip_interface_ip_present(self):

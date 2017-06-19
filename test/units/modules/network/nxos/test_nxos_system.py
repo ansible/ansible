@@ -41,8 +41,8 @@ class TestNxosSystemModule(TestNxosModule):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
-        self.get_config.return_value = load_fixture('nxos_system_config.cfg')
+    def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('', 'nxos_system_config.cfg')
         self.load_config.return_value = None
 
     def test_nxos_system_hostname_changed(self):
