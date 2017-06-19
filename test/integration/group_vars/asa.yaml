@@ -1,0 +1,8 @@
+---
+cli:
+  host: "{{ inventory_hostname }}"
+  username: "{{ asa_cli_user | default('cisco') }}"
+  password: "{{ asa_cli_pass | default('cisco') }}"
+  transport: cli
+  authorize: yes
+  auth_pass: "{{ asa_auth_pass | default('cisco') }}"

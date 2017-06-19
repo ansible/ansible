@@ -1,0 +1,42 @@
+---
+- debug: msg="START cli/sublevel.yaml"
+
+- name: setup test
+  dellos6_config:
+    lines:
+      - 'no ip access-list test'
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure sub level command
+  dellos6_config:
+    lines: ['1000 permit every log']
+    parents: ['ip access-list test']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list test' in result.updates"
+      - "'1000 permit every log' in result.updates"
+
+- name: configure sub level command idempotent check
+  dellos6_config:
+    lines: ['1000 permit every log']
+    parents: ['ip access-list test']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  dellos6_config:
+    lines:
+      - 'no ip access-list test'
+    provider: "{{ cli }}"
+    match: none
+
+- debug: msg="END cli/sublevel.yaml"

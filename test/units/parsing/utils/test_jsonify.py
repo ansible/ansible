@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # (c) 2016, James Cammarata <jimi@sngx.net>
 #
@@ -22,6 +21,7 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 from ansible.parsing.utils.jsonify import jsonify
+
 
 class TestJsonify(unittest.TestCase):
     def test_jsonify_simple(self):

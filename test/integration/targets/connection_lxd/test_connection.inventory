@@ -1,0 +1,6 @@
+[lxd]
+lxd-pipelining    ansible_ssh_pipelining=true
+lxd-no-pipelining ansible_ssh_pipelining=false
+[lxd:vars]
+ansible_host=centos-7-amd64
+ansible_connection=lxd

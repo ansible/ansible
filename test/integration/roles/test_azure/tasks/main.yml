@@ -92,4 +92,3 @@
     that:
        - 'result.changed'
        - 'result.deployment.name == "{{ instance_name }}"'
-

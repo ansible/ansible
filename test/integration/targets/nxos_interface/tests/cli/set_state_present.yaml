@@ -1,0 +1,30 @@
+---
+- debug: msg="START cli/set_state_present.yaml"
+
+- name: setup
+  nxos_config:
+    lines:
+      - no interface Loopback1
+    provider: "{{ cli }}"
+
+- name: set state=present
+  nxos_interface:
+    interface: Loopback1
+    state: present
+    provider: "{{ cli }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify state=present
+  nxos_interface:
+    interface: Loopback1
+    state: present
+    provider: "{{ cli }}"
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END cli/set_state_present.yaml"

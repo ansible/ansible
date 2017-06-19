@@ -17,31 +17,27 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from io import StringIO
 import os
 import re
-
-try:
-    # python2
-    import ConfigParser as configparser
-except ImportError:
-    # python3
-    import configparser
+from collections import MutableSequence
+from io import StringIO
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.lookup import LookupBase
 
 
 def _parse_params(term):
     '''Safely split parameter term to preserve spaces'''
 
-    keys = ['key', 'section', 'file', 're']
+    keys = ['key', 'type', 'section', 'file', 're', 'default']
     params = {}
     for k in keys:
         params[k] = ''
 
     thiskey = 'key'
-    for idp,phrase in enumerate(term.split()):
+    for idp, phrase in enumerate(term.split()):
         for k in keys:
             if ('%s=' % k) in phrase:
                 thiskey = k
@@ -58,13 +54,15 @@ class LookupModule(LookupBase):
 
     def read_properties(self, filename, key, dflt, is_regexp):
         config = StringIO()
-        config.write(u'[java_properties]\n' + open(filename).read())
+        current_cfg_file = open(to_bytes(filename, errors='surrogate_or_strict'), 'rb')
+
+        config.write(u'[java_properties]\n' + to_text(current_cfg_file.read(), errors='surrogate_or_strict'))
         config.seek(0, os.SEEK_SET)
         self.cp.readfp(config)
         return self.get_value(key, 'java_properties', dflt, is_regexp)
 
     def read_ini(self, filename, key, section, dflt, is_regexp):
-        self.cp.readfp(open(filename))
+        self.cp.readfp(open(to_bytes(filename, errors='surrogate_or_strict')))
         return self.get_value(key, section, dflt, is_regexp)
 
     def get_value(self, key, section, dflt, is_regexp):
@@ -83,7 +81,7 @@ class LookupModule(LookupBase):
 
         basedir = self.get_basedir(variables)
         self.basedir = basedir
-        self.cp      = configparser.ConfigParser()
+        self.cp = configparser.ConfigParser()
 
         ret = []
         for term in terms:
@@ -91,11 +89,11 @@ class LookupModule(LookupBase):
             key = params[0]
 
             paramvals = {
-                'file'     : 'ansible.ini',
-                're'       : False,
-                'default'  : None,
-                'section'  : "global",
-                'type'     : "ini",
+                'file': 'ansible.ini',
+                're': False,
+                'default': None,
+                'section': "global",
+                'type': "ini",
             }
 
             # parameters specified?
@@ -113,7 +111,7 @@ class LookupModule(LookupBase):
             else:
                 var = self.read_ini(path, key, paramvals['section'], paramvals['default'], paramvals['re'])
             if var is not None:
-                if type(var) is list:
+                if isinstance(var, MutableSequence):
                     for v in var:
                         ret.append(v)
                 else:

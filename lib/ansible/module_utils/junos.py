@@ -1,5 +1,5 @@
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2017 Red Hat, Inc.
 #
 # This file is part of Ansible
 #
@@ -16,354 +16,295 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import collections
 
-from distutils.version import LooseVersion
+from contextlib import contextmanager
+from xml.etree.ElementTree import Element, SubElement, fromstring
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.netconf import send_request, children
+from ansible.module_utils.netconf import discard_changes, validate
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 
-try:
-    from jnpr.junos import Device
-    from jnpr.junos.utils.config import Config
-    from jnpr.junos.version import VERSION
-    from jnpr.junos.exception import RpcError, ConfigLoadError, CommitError
-    from jnpr.junos.exception import LockError, UnlockError
-    if not LooseVersion(VERSION) >= LooseVersion('1.2.2'):
-        HAS_PYEZ = False
+ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
+JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
+FORMATS = frozenset(['xml', 'text', 'json'])
+CONFIG_FORMATS = frozenset(['xml', 'text', 'json', 'set'])
+
+junos_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict'),
+    'transport': dict()
+}
+
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'timeout': 10
+}
+
+OPERATION_LOOK_UP = {
+    'absent': 'delete',
+    'active': 'active',
+    'suspend': 'inactive'
+}
+
+
+def get_argspec():
+    return junos_argument_spec
+
+
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in junos_argument_spec:
+        if key not in ('provider',) and module.params[key]:
+            warnings.append('argument %s has been deprecated and will be '
+                            'removed in a future version' % key)
+
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
+
+
+def _validate_rollback_id(module, value):
+    try:
+        if not 0 <= int(value) <= 49:
+            raise ValueError
+    except ValueError:
+        module.fail_json(msg='rollback must be between 0 and 49')
+
+
+def load_configuration(module, candidate=None, action='merge', rollback=None, format='xml'):
+
+    if all((candidate is None, rollback is None)):
+        module.fail_json(msg='one of candidate or rollback must be specified')
+
+    elif all((candidate is not None, rollback is not None)):
+        module.fail_json(msg='candidate and rollback are mutually exclusive')
+
+    if format not in FORMATS:
+        module.fail_json(msg='invalid format specified')
+
+    if format == 'json' and action not in JSON_ACTIONS:
+        module.fail_json(msg='invalid action for format json')
+    elif format in ('text', 'xml') and action not in ACTIONS:
+        module.fail_json(msg='invalid action format %s' % format)
+    if action == 'set' and not format == 'text':
+        module.fail_json(msg='format must be text when action is set')
+
+    if rollback is not None:
+        _validate_rollback_id(module, rollback)
+        xattrs = {'rollback': str(rollback)}
     else:
-        HAS_PYEZ = True
-except ImportError:
-    HAS_PYEZ = False
+        xattrs = {'action': action, 'format': format}
 
-try:
-    import jxmlease
-    HAS_JXMLEASE = True
-except ImportError:
-    HAS_JXMLEASE = False
+    obj = Element('load-configuration', xattrs)
 
-try:
-    from lxml import etree
-except ImportError:
-    import xml.etree.ElementTree as etree
+    if candidate is not None:
+        lookup = {'xml': 'configuration', 'text': 'configuration-text',
+                  'set': 'configuration-set', 'json': 'configuration-json'}
 
-
-NET_COMMON_ARGS = dict(
-    host=dict(required=True),
-    port=dict(type='int'),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    timeout=dict(default=0, type='int'),
-    transport=dict(default='netconf', choices=['cli', 'netconf']),
-    provider=dict(type='dict')
-)
-
-
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
-
-
-def xml_to_json(val):
-    if isinstance(val, basestring):
-        return jxmlease.parse(val)
-    else:
-        return jxmlease.parse_etree(val)
-
-def xml_to_string(val):
-    return etree.tostring(val)
-
-
-class Cli(object):
-
-    def __init__(self, module):
-        self.module = module
-        self.shell = None
-
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
-
-        username = self.module.params['username']
-        password = self.module.params['password']
-        key_filename = self.module.params['ssh_keyfile']
-
-        allow_agent = (key_filename is not None) or (key_filename is None and password is None)
-
-        try:
-            self.shell = Shell()
-            self.shell.open(host, port=port, username=username, password=password,
-                    key_filename=key_filename, allow_agent=allow_agent)
-        except ShellError:
-            e = get_exception()
-            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
-            self.module.fail_json(msg=msg)
-
-        if self.shell._matched_prompt.strip().endswith('%'):
-            self.shell.send('cli')
-        self.shell.send('set cli screen-length 0')
-
-    def run_commands(self, commands, **kwargs):
-        try:
-            return self.shell.send(commands)
-        except ShellError:
-            e = get_exception()
-            self.module.fail_json(msg=e.message, commands=commands)
-
-    def configure(self, commands, **kwargs):
-        commands = to_list(commands)
-        commands.insert(0, 'configure')
-
-        if kwargs.get('comment'):
-            commands.append('commit and-quit comment "%s"' % kwargs.get('comment'))
+        if action == 'set':
+            cfg = SubElement(obj, 'configuration-set')
         else:
-            commands.append('commit and-quit')
+            cfg = SubElement(obj, lookup[format])
 
-        responses = self.shell.send(commands)
-        responses.pop(0)
-        responses.pop()
-        return responses
+        if isinstance(candidate, string_types):
+            if format == 'xml':
+                cfg.append(fromstring(candidate))
+            else:
+                cfg.text = to_text(candidate, encoding='latin1')
+        else:
+            cfg.append(candidate)
+    return send_request(module, obj)
 
-    def disconnect(self):
-        self.shell.close()
+
+def get_configuration(module, compare=False, format='xml', rollback='0'):
+    if format not in CONFIG_FORMATS:
+        module.fail_json(msg='invalid config format specified')
+    xattrs = {'format': format}
+    if compare:
+        _validate_rollback_id(module, rollback)
+        xattrs['compare'] = 'rollback'
+        xattrs['rollback'] = str(rollback)
+    return send_request(module, Element('get-configuration', xattrs))
 
 
-class Netconf(object):
+def commit_configuration(module, confirm=False, check=False, comment=None, confirm_timeout=None):
+    obj = Element('commit-configuration')
+    if confirm:
+        SubElement(obj, 'confirmed')
+    if check:
+        SubElement(obj, 'check')
+    if comment:
+        subele = SubElement(obj, 'log')
+        subele.text = str(comment)
+    if confirm_timeout:
+        subele = SubElement(obj, 'confirm-timeout')
+        subele.text = str(confirm_timeout)
+    return send_request(module, obj)
 
-    def __init__(self, module):
-        self.module = module
-        self.device = None
-        self.config = None
-        self._locked = False
 
-    def _fail(self, msg):
-        if self.device:
-            if self._locked:
-                self.config.unlock()
-            self.disconnect()
-        self.module.fail_json(msg=msg)
+def command(module, command, format='text', rpc_only=False):
+    xattrs = {'format': format}
+    if rpc_only:
+        command += ' | display xml rpc'
+        xattrs['format'] = 'text'
+    return send_request(module, Element('command', xattrs, text=command))
 
-    def connect(self, **kwargs):
-        try:
-            host = self.module.params['host']
-            port = self.module.params['port'] or 830
 
-            user = self.module.params['username']
-            passwd = self.module.params['password']
-            key_filename = self.module.params['ssh_keyfile']
+def lock_configuration(x):
+    return send_request(x, Element('lock-configuration'))
 
-            self.device = Device(host, user=user, passwd=passwd, port=port,
-                    gather_facts=False, ssh_private_key_file=key_filename).open()
 
-            self.config = Config(self.device)
+def unlock_configuration(x):
+    return send_request(x, Element('unlock-configuration'))
 
-        except Exception:
-            exc = get_exception()
-            self._fail('unable to connect to %s: %s' % (host, str(exc)))
 
-    def run_commands(self, commands, **kwargs):
-        response = list()
-        fmt = kwargs.get('format') or 'xml'
+@contextmanager
+def locked_config(module):
+    try:
+        lock_configuration(module)
+        yield
+    finally:
+        unlock_configuration(module)
 
-        for cmd in to_list(commands):
-            try:
-                resp = self.device.cli(command=cmd, format=fmt)
-                response.append(resp)
-            except (ValueError, RpcError):
-                exc = get_exception()
-                self._fail('Unable to get cli output: %s' % str(exc))
-            except Exception:
-                exc = get_exception()
-                self._fail('Uncaught exception - please report: %s' % str(exc))
 
-        return response
+def get_diff(module):
 
-    def unlock_config(self):
-        try:
-            self.config.unlock()
-            self._locked = False
-        except UnlockError:
-            exc = get_exception()
-            self.module.log('unable to unlock config: {0}'.format(str(exc)))
+    reply = get_configuration(module, compare=True, format='text')
+    output = reply.find('.//configuration-output')
+    if output is not None:
+        return to_text(output.text, encoding='latin1').strip()
 
-    def lock_config(self):
-        try:
-            self.config.lock()
-            self._locked = True
-        except LockError:
-            exc = get_exception()
-            self.module.log('unable to lock config: {0}'.format(str(exc)))
 
-    def check_config(self):
-        if not self.config.commit_check():
-            self._fail(msg='Commit check failed')
+def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
+                comment=None, confirm=False, confirm_timeout=None):
 
-    def commit_config(self, comment=None, confirm=None):
-        try:
-            kwargs = dict(comment=comment)
-            if confirm and confirm > 0:
-                kwargs['confirm'] = confirm
-            return self.config.commit(**kwargs)
-        except CommitError:
-            exc = get_exception()
-            msg = 'Unable to commit configuration: {0}'.format(str(exc))
-            self._fail(msg=msg)
+    if not candidate:
+        return
 
-    def load_config(self, candidate, action='replace', comment=None,
-            confirm=None, format='text', commit=True):
+    with locked_config(module):
+        if isinstance(candidate, list):
+            candidate = '\n'.join(candidate)
 
-        merge = action == 'merge'
-        overwrite = action == 'overwrite'
+        reply = load_configuration(module, candidate, action=action, format=format)
+        if isinstance(reply, list):
+            warnings.extend(reply)
 
-        self.lock_config()
+        validate(module)
+        diff = get_diff(module)
 
-        try:
-            self.config.load(candidate, format=format, merge=merge,
-                    overwrite=overwrite)
-        except ConfigLoadError:
-            exc = get_exception()
-            msg = 'Unable to load config: {0}'.format(str(exc))
-            self._fail(msg=msg)
-
-        diff = self.config.diff()
-        self.check_config()
-        if commit and diff:
-            self.commit_config(comment=comment, confirm=confirm)
-
-        self.unlock_config()
+        if diff:
+            if commit:
+                commit_configuration(module, confirm=confirm, comment=comment,
+                                     confirm_timeout=confirm_timeout)
+            else:
+                discard_changes(module)
 
         return diff
 
-    def rollback_config(self, identifier, commit=True, comment=None):
 
-        self.lock_config()
-
-        try:
-            result = self.config.rollback(identifier)
-        except Exception:
-            exc = get_exception()
-            msg = 'Unable to rollback config: {0}'.format(str(exc))
-            self._fail(msg=msg)
-
-        diff = self.config.diff()
-        if commit:
-            self.commit_config(comment=comment)
-
-        self.unlock_config()
-        return diff
-
-    def disconnect(self):
-        if self.device:
-            self.device.close()
-
-    def get_facts(self, refresh=True):
-        if refresh:
-            self.device.facts_refresh()
-        return self.device.facts
-
-    def get_config(self, config_format="text"):
-        if config_format not in ['text', 'set', 'xml']:
-            msg = 'invalid config format... must be one of xml, text, set'
-            self._fail(msg=msg)
-
-        ele = self.rpc('get_configuration', format=config_format)
-        if config_format in ['text', 'set']:
-           return str(ele.text).strip()
-        elif config_format == "xml":
-            return ele
-
-    def rpc(self, name, format='xml', **kwargs):
-        meth = getattr(self.device.rpc, name)
-        reply = meth({'format': format}, **kwargs)
-        return reply
+def get_param(module, key):
+    return module.params[key] or module.params['provider'].get(key)
 
 
-class NetworkModule(AnsibleModule):
-
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._connected = False
-
-    @property
-    def connected(self):
-        return self._connected
-
-    def _load_params(self):
-        super(NetworkModule, self)._load_params()
-        provider = self.params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS:
-                if self.params.get(key) is None and value is not None:
-                    self.params[key] = value
-
-    def connect(self):
-        cls = globals().get(str(self.params['transport']).capitalize())
-        try:
-            self.connection = cls(self)
-        except TypeError:
-            e = get_exception()
-            self.fail_json(msg=e.message)
-
-        self.connection.connect()
-
-        msg = 'connecting to host: {username}@{host}:{port}'.format(**self.params)
-        self.log(msg)
-
-        self._connected = True
-
-    def load_config(self, commands, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.load_config(commands, **kwargs)
-
-    def rollback_config(self, identifier, commit=True):
-        if not self.connected:
-            self.connect()
-        return self.connection.rollback_config(identifier)
-
-    def run_commands(self, commands, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.run_commands(commands, **kwargs)
-
-    def disconnect(self):
-        if self.connected:
-            self.connection.disconnect()
-            self._connected = False
-
-    def get_config(self, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.get_config(**kwargs)
-
-    def get_facts(self, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.get_facts(**kwargs)
-
-def get_module(**kwargs):
-    """Return instance of NetworkModule
+def map_params_to_obj(module, param_to_xpath_map):
     """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
-    kwargs['check_invalid_arguments'] = False
+    Creates a new dictionary with key as xpath corresponding
+    to param and value is a dict with metadata and value for
+    the xpath.
+    Acceptable metadata keys:
+        'xpath': Relative xpath corresponding to module param.
+        'value': Value of param.
+        'tag_only': Value is indicated by tag only in xml hierarchy.
+        'leaf_only': If operation is to be added at leaf node only.
+    eg: Output
+    {
+        'name': {'xpath': 'name', 'value': 'ge-0/0/1'}
+        'disable': {'xpath': 'disable', 'tag_only': True}
+    }
 
-    module = NetworkModule(**kwargs)
+    :param module:
+    :param param_to_xpath_map: Modules params to xpath map
+    :return: obj
+    """
+    obj = collections.OrderedDict()
+    for key, attrib in param_to_xpath_map.items():
+        if key in module.params:
+            if isinstance(attrib, dict):
+                xpath = attrib.get('xpath')
+                del attrib['xpath']
 
-    if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
-    elif module.params['transport'] == 'netconf' and not HAS_PYEZ:
-        module.fail_json(msg='junos-eznc >= 1.2.2 is required but does not appear to be installed')
-    elif module.params['transport'] == 'netconf' and not HAS_JXMLEASE:
-        module.fail_json(msg='jxmlease is required but does not appear to be installed')
+                attrib.update({'value': module.params[key]})
+                obj.update({xpath: attrib})
+            else:
+                xpath = attrib
+                obj.update({xpath: {'value': module.params[key]}})
+    return obj
 
-    module.connect()
-    return module
+
+def map_obj_to_ele(module, want, top, value_map=None):
+    top_ele = top.split('/')
+    root = Element(top_ele[0])
+    ele = root
+    oper = None
+    if len(top_ele) > 1:
+        for item in top_ele[1:-1]:
+            ele = SubElement(ele, item)
+    container = ele
+    state = module.params.get('state')
+
+    # build xml subtree
+    for obj in want:
+        node = SubElement(container, top_ele[-1])
+        if state and state != 'present':
+            oper = OPERATION_LOOK_UP.get(state)
+            node.set(oper, oper)
+
+        for xpath, attrib in obj.items():
+            tag_only = attrib.get('tag_only', False)
+            leaf_only = attrib.get('leaf_only', False)
+            value = attrib.get('value')
+
+            # convert param value to device specific value
+            if value_map and xpath in value_map:
+                value = value_map[xpath].get(value)
+
+            # for leaf only fields operation attributes should be at leaf level
+            # and not at node level.
+            if leaf_only and node.attrib.get(oper):
+                node.attrib.pop(oper)
+
+            if value or tag_only or leaf_only:
+                ele = node
+                tags = xpath.split('/')
+
+                for item in tags:
+                    ele = SubElement(ele, item)
+
+                if tag_only:
+                    if not value:
+                        ele.set('delete', 'delete')
+                elif leaf_only and oper:
+                    ele.set(oper, oper)
+                else:
+                    ele.text = to_text(value, errors='surrogate_then_replace')
+
+                if state != 'present':
+                    break
+
+    return root

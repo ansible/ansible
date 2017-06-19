@@ -1,0 +1,141 @@
+---
+- debug: msg="START junos_banner netconf/basic.yaml"
+
+- name: setup - remove login banner
+  junos_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create login banner
+  junos_banner:
+    banner: login
+    text: this is my login banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message>this is my login banner</message>' in result.rpc"
+
+- name: Create login banner (idempotent)
+  junos_banner:
+    banner: login
+    text: this is my login banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate login banner
+  junos_banner:
+    banner: login
+    text: this is my login banner
+    state: suspend
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message inactive=\"inactive\" />' in result.rpc"
+
+- name: Activate login banner
+  junos_banner:
+    banner: login
+    text: this is my login banner
+    state: active
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message active=\"active\" />' in result.rpc"
+
+- name: delete login banner
+  junos_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message delete=\"delete\" />' in result.rpc"
+
+- name: setup - remove motd banner
+  junos_banner:
+    banner: motd
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create motd banner
+  junos_banner:
+    banner: motd
+    text: this is my motd banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement>this is my motd banner</announcement>' in result.rpc"
+
+- name: Create motd banner (idempotent)
+  junos_banner:
+    banner: motd
+    text: this is my motd banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate motd banner
+  junos_banner:
+    banner: motd
+    state: suspend
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement inactive=\"inactive\" />' in result.rpc"
+
+- name: Activate motd banner
+  junos_banner:
+    banner: motd
+    state: active
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement active=\"active\" />' in result.rpc"
+
+- name: delete motd banner
+  junos_banner:
+    banner: motd
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement delete=\"delete\" />' in result.rpc"

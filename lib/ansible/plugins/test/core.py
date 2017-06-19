@@ -21,49 +21,57 @@ __metaclass__ = type
 
 import re
 import operator as py_operator
+from collections import MutableMapping, MutableSequence
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
 
+
 def failed(*a, **kw):
     ''' Test if task result yields failed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc',0)
-    failed = item.get('failed',False)
+    rc = item.get('rc', 0)
+    failed = item.get('failed', False)
     if rc != 0 or failed:
         return True
     else:
         return False
 
+
 def success(*a, **kw):
     ''' Test if task result yields success '''
     return not failed(*a, **kw)
 
+
 def changed(*a, **kw):
     ''' Test if task result yields changed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|changed expects a dictionary")
-    if not 'changed' in item:
+    if 'changed' not in item:
         changed = False
-        if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list
-                and type(item['results'][0]) == dict):
+        if (
+            'results' in item and   # some modules return a 'results' key
+            isinstance(item['results'], MutableSequence) and
+            isinstance(item['results'][0], MutableMapping)
+        ):
             for result in item['results']:
                 changed = changed or result.get('changed', False)
     else:
         changed = item.get('changed', False)
     return changed
 
+
 def skipped(*a, **kw):
     ''' Test if task result yields skipped '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|skipped expects a dictionary")
     skipped = item.get('skipped', False)
     return skipped
+
 
 def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='search'):
     ''' Expose `re` as a boolean filter using the `search` method by default.
@@ -79,21 +87,24 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
     _bool = __builtins__.get('bool')
     return _bool(getattr(_re, match_type, 'search')(value))
 
+
 def match(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.match` returning a boolean '''
     return regex(value, pattern, ignorecase, multiline, 'match')
+
 
 def search(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, multiline, 'search')
 
+
 def version_compare(value, version, operator='eq', strict=False):
     ''' Perform a version comparison on a value '''
     op_map = {
-        '==': 'eq', '=':  'eq', 'eq': 'eq',
-        '<':  'lt', 'lt': 'lt',
+        '==': 'eq', '=': 'eq', 'eq': 'eq',
+        '<': 'lt', 'lt': 'lt',
         '<=': 'le', 'le': 'le',
-        '>':  'gt', 'gt': 'gt',
+        '>': 'gt', 'gt': 'gt',
         '>=': 'ge', 'ge': 'ge',
         '!=': 'ne', '<>': 'ne', 'ne': 'ne'
     }
@@ -114,24 +125,21 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception as e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
+
 class TestModule(object):
     ''' Ansible core jinja2 tests '''
 
     def tests(self):
         return {
             # failure testing
-            'failed'    : failed,
-            'failure'   : failed,
-            'success'   : success,
-            'succeeded' : success,
+            'failed': failed,
+            'succeeded': success,
 
             # changed testing
-            'changed' : changed,
-            'change'  : changed,
+            'changed': changed,
 
             # skip testing
-            'skipped' : skipped,
-            'skip'    : skipped,
+            'skipped': skipped,
 
             # regex
             'match': match,
@@ -141,4 +149,7 @@ class TestModule(object):
             # version comparison
             'version_compare': version_compare,
 
+            # lists
+            'any': any,
+            'all': all,
         }

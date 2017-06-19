@@ -57,8 +57,6 @@
 
 
 
-
-
 # ============================================================
 - name: Test rax_scaling_group with creds, region and required args
   rax_scaling_group:
@@ -232,7 +230,6 @@
 
 
 
-
 # ============================================================
 - name: Test rax_scaling_group with invalid load balancers
   rax_scaling_group:
@@ -260,7 +257,6 @@
 
 
 
-
 # ============================================================
 - name: Build a CLB to test rax_scaling_group with
   rax_clb:
@@ -281,7 +277,6 @@
   set_fact:
     rax_clb_id: "{{ rax_clb.balancer.id }}"
 # ============================================================
-
 
 
 
@@ -336,7 +331,6 @@
     state: absent
   register: rax_scaling_group
 # ============================================================
-
 
 
 
@@ -470,7 +464,6 @@
 
 
 
-
 # ============================================================
 - name: Change max_entities
   rax_scaling_group:
@@ -493,7 +486,6 @@
       - rax_scaling_group|changed
       - rax_scaling_group.autoscale_group.max_entities == 2
 # ============================================================
-
 
 
 
@@ -522,7 +514,6 @@
 
 
 
-
 # ============================================================
 - name: Change server_name
   rax_scaling_group:
@@ -545,7 +536,6 @@
       - rax_scaling_group|changed
       - rax_scaling_group.autoscale_group.launchConfiguration.args.server.name == "{{ resource_prefix }}-5-1"
 # ============================================================
-
 
 
 
@@ -574,7 +564,6 @@
 
 
 
-
 # ============================================================
 - name: Change flavor
   rax_scaling_group:
@@ -597,7 +586,6 @@
       - rax_scaling_group|changed
       - rax_scaling_group.autoscale_group.launchConfiguration.args.server.flavorRef == "{{ rackspace_alt_flavor }}"
 # ============================================================
-
 
 
 
@@ -649,7 +637,6 @@
 
 
 
-
 # ============================================================
 - name: Change networks
   rax_scaling_group:
@@ -675,7 +662,6 @@
       - rax_scaling_group|changed
       - rax_scaling_group.autoscale_group.launchConfiguration.args.server.networks.0.uuid == "00000000-0000-0000-0000-000000000000"
 # ============================================================
-
 
 
 
@@ -711,7 +697,6 @@
 
 
 
-
 # ============================================================
 - name: Create keypair to test with
   rax_keypair:
@@ -730,7 +715,6 @@
       - rax_keypair.keypair.name == "{{ resource_prefix }}-keypair"
       - rax_keypair.keypair.public_key == "{{ rackspace_keypair_pub }}"
 # ============================================================
-
 
 
 
@@ -764,7 +748,6 @@
       - rax_scaling_group|changed
       - rax_scaling_group.autoscale_group.launchConfiguration.args.server.key_name == "{{ resource_prefix }}-keypair"
 # ============================================================
-
 
 
 
@@ -837,7 +820,6 @@
 
 
 
-
 # ============================================================
 - name: Delete keypair
   rax_keypair:
@@ -855,7 +837,6 @@
       - rax_keypair|success
       - rax_keypair|changed
 # ============================================================
-
 
 
 

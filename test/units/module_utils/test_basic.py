@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2016 Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -26,29 +27,16 @@ import os
 import sys
 from io import BytesIO, StringIO
 
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
-
-from units.mock.procenv import swap_stdin_and_argv
+from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
+from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__
 
-class TestModuleUtilsBasic(unittest.TestCase):
 
-    def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
-        self.stdin_swap.__enter__()
-
-    def tearDown(self):
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap.__exit__(None, None, None)
+class TestModuleUtilsBasic(ModuleTestCase):
 
     def clear_modules(self, mods):
         for mod in mods:
@@ -108,10 +96,10 @@ class TestModuleUtilsBasic(unittest.TestCase):
         mod = builtins.__import__('ansible.module_utils.basic')
 
     # FIXME: doesn't work yet
-    #@patch.object(builtins, 'bytes')
-    #def test_module_utils_basic_bytes(self, mock_bytes):
-    #    mock_bytes.side_effect = NameError()
-    #    from ansible.module_utils import basic
+    # @patch.object(builtins, 'bytes')
+    # def test_module_utils_basic_bytes(self, mock_bytes):
+    #     mock_bytes.side_effect = NameError()
+    #     from ansible.module_utils import basic
 
     @patch.object(builtins, '__import__')
     @unittest.skipIf(sys.version_info[0] >= 3, "literal_eval is available in every version of Python3")
@@ -131,12 +119,12 @@ class TestModuleUtilsBasic(unittest.TestCase):
         self.assertEqual(mod.module_utils.basic.literal_eval("'1'"), "1")
         self.assertEqual(mod.module_utils.basic.literal_eval("1"), 1)
         self.assertEqual(mod.module_utils.basic.literal_eval("-1"), -1)
-        self.assertEqual(mod.module_utils.basic.literal_eval("(1,2,3)"), (1,2,3))
+        self.assertEqual(mod.module_utils.basic.literal_eval("(1,2,3)"), (1, 2, 3))
         self.assertEqual(mod.module_utils.basic.literal_eval("[1]"), [1])
         self.assertEqual(mod.module_utils.basic.literal_eval("True"), True)
         self.assertEqual(mod.module_utils.basic.literal_eval("False"), False)
         self.assertEqual(mod.module_utils.basic.literal_eval("None"), None)
-        #self.assertEqual(mod.module_utils.basic.literal_eval('{"a": 1}'), dict(a=1))
+        # self.assertEqual(mod.module_utils.basic.literal_eval('{"a": 1}'), dict(a=1))
         self.assertRaises(ValueError, mod.module_utils.basic.literal_eval, "asdfasdfasdf")
 
     @patch.object(builtins, '__import__')
@@ -175,13 +163,13 @@ class TestModuleUtilsBasic(unittest.TestCase):
                 self.assertEqual(get_distribution(), "Foo")
 
             with patch('os.path.isfile', return_value=True):
-                with patch('platform.linux_distribution', side_effect=[("AmazonFooBar",)]):
+                with patch('platform.linux_distribution', side_effect=[("AmazonFooBar", )]):
                     self.assertEqual(get_distribution(), "Amazonfoobar")
 
-                with patch('platform.linux_distribution', side_effect=(("",), ("AmazonFooBam",))):
+                with patch('platform.linux_distribution', side_effect=(("", ), ("AmazonFooBam",))):
                     self.assertEqual(get_distribution(), "Amazon")
 
-                with patch('platform.linux_distribution', side_effect=[("",),("",)]):
+                with patch('platform.linux_distribution', side_effect=[("", ), ("", )]):
                     self.assertEqual(get_distribution(), "OtherLinux")
 
                 def _dist(distname='', version='', id='', supported_dists=(), full_distribution_name=1):
@@ -189,10 +177,10 @@ class TestModuleUtilsBasic(unittest.TestCase):
                         return ("Bar", "2", "Two")
                     else:
                         return ("", "", "")
-                
+
                 with patch('platform.linux_distribution', side_effect=_dist):
                     self.assertEqual(get_distribution(), "Bar")
-                
+
             with patch('platform.linux_distribution', side_effect=Exception("boo")):
                 with patch('platform.dist', return_value=("bar", "2", "Two")):
                     self.assertEqual(get_distribution(), "Bar")
@@ -254,11 +242,11 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils.basic import json_dict_unicode_to_bytes, json_dict_bytes_to_unicode
 
         test_data = dict(
-            item1 = u"Fóo",
-            item2 = [u"Bár", u"Bam"],
-            item3 = dict(sub1=u"Súb"),
-            item4 = (u"föo", u"bär", u"©"),
-            item5 = 42,
+            item1=u"Fóo",
+            item2=[u"Bár", u"Bam"],
+            item3=dict(sub1=u"Súb"),
+            item4=(u"föo", u"bär", u"©"),
+            item5=42,
         )
         res = json_dict_unicode_to_bytes(test_data)
         res2 = json_dict_bytes_to_unicode(res)
@@ -278,10 +266,10 @@ class TestModuleUtilsBasic(unittest.TestCase):
         )
 
         arg_spec = dict(
-            foo = dict(required=True),
-            bar = dict(),
-            bam = dict(),
-            baz = dict(),
+            foo=dict(required=True),
+            bar=dict(),
+            bam=dict(),
+            baz=dict(),
         )
         mut_ex = (('bar', 'bam'),)
         req_to = (('bam', 'baz'),)
@@ -292,9 +280,9 @@ class TestModuleUtilsBasic(unittest.TestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
-                argument_spec = arg_spec,
-                mutually_exclusive = mut_ex,
-                required_together = req_to,
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -311,9 +299,9 @@ class TestModuleUtilsBasic(unittest.TestCase):
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
-                argument_spec = arg_spec,
-                mutually_exclusive = mut_ex,
-                required_together = req_to,
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -321,15 +309,16 @@ class TestModuleUtilsBasic(unittest.TestCase):
             )
 
         # fail because of mutually exclusive parameters
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo":"hello", "bar": "bad", "bam": "bad"}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bar": "bad", "bam": "bad"}))
 
         with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
-                argument_spec = arg_spec,
-                mutually_exclusive = mut_ex,
-                required_together = req_to,
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -340,12 +329,58 @@ class TestModuleUtilsBasic(unittest.TestCase):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bam": "bad"}))
 
         with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
-                argument_spec = arg_spec,
-                mutually_exclusive = mut_ex,
-                required_together = req_to,
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+    def test_module_utils_basic_ansible_module_type_check(self):
+        from ansible.module_utils import basic
+
+        arg_spec = dict(
+            foo=dict(type='float'),
+            foo2=dict(type='float'),
+            foo3=dict(type='float'),
+            bar=dict(type='int'),
+            bar2=dict(type='int'),
+        )
+
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={
+            "foo": 123.0,  # float
+            "foo2": 123,  # int
+            "foo3": "123",  # string
+            "bar": 123,  # int
+            "bar2": "123",  # string
+        }))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+        # fail, because bar does not accept floating point numbers
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bar": 123.0}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -357,7 +392,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         am.selinux_mls_enabled = MagicMock()
@@ -370,26 +405,27 @@ class TestModuleUtilsBasic(unittest.TestCase):
         self.assertEqual(res, dict())
 
         base_params = dict(
-            path = '/path/to/file',
-            mode = 0o600,
-            owner = 'root',
-            group = 'root',
-            seuser = '_default',
-            serole = '_default',
-            setype = '_default',
-            selevel = '_default',
+            path='/path/to/file',
+            mode=0o600,
+            owner='root',
+            group='root',
+            seuser='_default',
+            serole='_default',
+            setype='_default',
+            selevel='_default',
         )
 
         extended_params = base_params.copy()
         extended_params.update(dict(
-            follow = True,
-            foo = 'bar',
+            follow=True,
+            foo='bar',
         ))
 
         final_params = base_params.copy()
         final_params.update(dict(
-            path = '/path/to/real_file',
+            path='/path/to/real_file',
             secontext=['unconfined_u', 'object_r', 'default_t', 's0'],
+            attributes=None,
         ))
 
         # with the proper params specified, the returned dictionary should represent
@@ -406,7 +442,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         basic.HAVE_SELINUX = False
@@ -426,7 +462,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         am.selinux_mls_enabled = MagicMock()
@@ -440,7 +476,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         # we first test the cases where the python selinux lib is
@@ -451,7 +487,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         am.get_bin_path = MagicMock()
         am.get_bin_path.return_value = '/path/to/selinuxenabled'
         am.run_command = MagicMock()
-        am.run_command.return_value=(0, '', '')
+        am.run_command.return_value = (0, '', '')
         self.assertRaises(SystemExit, am.selinux_enabled)
         am.get_bin_path.return_value = None
         self.assertEqual(am.selinux_enabled(), False)
@@ -472,7 +508,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         am.selinux_initial_context = MagicMock(return_value=[None, None, None, None])
@@ -508,7 +544,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         am.selinux_initial_context = MagicMock(return_value=[None, None, None, None])
@@ -547,14 +583,13 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_is_special_selinux_path(self):
         from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
 
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'_ansible_selinux_special_fs': "nfs,nfsd,foos"}))
 
         with swap_stdin_and_argv(stdin_data=args):
-
+            basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
-                argument_spec = dict(),
+                argument_spec=dict(),
             )
 
             def _mock_find_mount_point(path):
@@ -589,22 +624,12 @@ class TestModuleUtilsBasic(unittest.TestCase):
                 self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
                 self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
 
-    def test_module_utils_basic_ansible_module_to_filesystem_str(self):
+    def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
-        )
-
-        self.assertEqual(am._to_filesystem_str(u'foo'), b'foo')
-        self.assertEqual(am._to_filesystem_str(u'föö'), b'f\xc3\xb6\xc3\xb6')
-
-    def test_module_utils_basic_ansible_module_user_and_group(self):
-        from ansible.module_utils import basic
-
-        am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         mock_stat = MagicMock()
@@ -619,11 +644,11 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         def _mock_ismount(path):
-            if path == '/':
+            if path == b'/':
                 return True
             return False
 
@@ -631,7 +656,9 @@ class TestModuleUtilsBasic(unittest.TestCase):
             self.assertEqual(am.find_mount_point('/root/fs/../mounted/path/to/whatever'), '/')
 
         def _mock_ismount(path):
-            if path == '/subdir/mount':
+            if path == b'/subdir/mount':
+                return True
+            if path == b'/':
                 return True
             return False
 
@@ -643,7 +670,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         basic.HAVE_SELINUX = False
@@ -662,7 +689,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with(b'/path/to/file', 'foo_u:foo_r:foo_t:s0')
+                m.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
                 m.reset_mock()
                 am.check_mode = True
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
@@ -676,10 +703,10 @@ class TestModuleUtilsBasic(unittest.TestCase):
                 self.assertRaises(SystemExit, am.set_context_if_different, '/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
 
             am.is_special_selinux_path = MagicMock(return_value=(True, ['sp_u', 'sp_r', 'sp_t', 's0']))
-            
+
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with(b'/path/to/file', 'sp_u:sp_r:sp_t:s0')
+                m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
 
         delattr(basic, 'selinux')
 
@@ -688,7 +715,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         self.assertEqual(am.set_owner_if_different('/path/to/file', None, True), True)
@@ -698,7 +725,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         with patch('os.lchown', return_value=None) as m:
             self.assertEqual(am.set_owner_if_different('/path/to/file', 0, False), True)
-            m.assert_called_with('/path/to/file', 0, -1)
+            m.assert_called_with(b'/path/to/file', 0, -1)
 
             def _mock_getpwnam(*args, **kwargs):
                 mock_pw = MagicMock()
@@ -708,7 +735,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
             m.reset_mock()
             with patch('pwd.getpwnam', side_effect=_mock_getpwnam):
                 self.assertEqual(am.set_owner_if_different('/path/to/file', 'root', False), True)
-                m.assert_called_with('/path/to/file', 0, -1)
+                m.assert_called_with(b'/path/to/file', 0, -1)
 
             with patch('pwd.getpwnam', side_effect=KeyError):
                 self.assertRaises(SystemExit, am.set_owner_if_different, '/path/to/file', 'root', False)
@@ -727,7 +754,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         self.assertEqual(am.set_group_if_different('/path/to/file', None, True), True)
@@ -737,7 +764,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         with patch('os.lchown', return_value=None) as m:
             self.assertEqual(am.set_group_if_different('/path/to/file', 0, False), True)
-            m.assert_called_with('/path/to/file', -1, 0)
+            m.assert_called_with(b'/path/to/file', -1, 0)
 
             def _mock_getgrnam(*args, **kwargs):
                 mock_gr = MagicMock()
@@ -747,7 +774,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
             m.reset_mock()
             with patch('grp.getgrnam', side_effect=_mock_getgrnam):
                 self.assertEqual(am.set_group_if_different('/path/to/file', 'root', False), True)
-                m.assert_called_with('/path/to/file', -1, 0)
+                m.assert_called_with(b'/path/to/file', -1, 0)
 
             with patch('grp.getgrnam', side_effect=KeyError):
                 self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
@@ -761,64 +788,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         with patch('os.lchown', side_effect=OSError) as m:
             self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
 
-    def test_module_utils_basic_ansible_module_set_mode_if_different(self):
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec = dict(),
-        )
-
-        mock_stat1 = MagicMock()
-        mock_stat1.st_mode = 0o444
-        mock_stat2 = MagicMock()
-        mock_stat2.st_mode = 0o660
-
-        with patch('os.lstat', side_effect=[mock_stat1]):
-            self.assertEqual(am.set_mode_if_different('/path/to/file', None, True), True)
-        with patch('os.lstat', side_effect=[mock_stat1]):
-            self.assertEqual(am.set_mode_if_different('/path/to/file', None, False), False)
-
-        with patch('os.lstat') as m:
-            with patch('os.lchmod', return_value=None, create=True) as m_os:
-                m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
-                m_os.assert_called_with('/path/to/file', 0o660)
-
-                m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                am._symbolic_mode_to_octal = MagicMock(return_value=0o660)
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 'o+w,g+w,a-r', False), True)
-                m_os.assert_called_with('/path/to/file', 0o660)
-
-                m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                am._symbolic_mode_to_octal = MagicMock(side_effect=Exception)
-                self.assertRaises(SystemExit, am.set_mode_if_different, '/path/to/file', 'o+w,g+w,a-r', False)
-
-                m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                am.check_mode = True
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
-                am.check_mode = False
-
-        original_hasattr = hasattr
-        def _hasattr(obj, name):
-            if obj == os and name == 'lchmod':
-                return False
-            return original_hasattr(obj, name)
-
-        # FIXME: this isn't working yet
-        with patch('os.lstat', side_effect=[mock_stat1, mock_stat2]):
-            with patch.object(builtins, 'hasattr', side_effect=_hasattr):
-                with patch('os.path.islink', return_value=False):
-                    with patch('os.chmod', return_value=None) as m_chmod:
-                        self.assertEqual(am.set_mode_if_different('/path/to/file/no_lchmod', 0o660, False), True)
-        with patch('os.lstat', side_effect=[mock_stat1, mock_stat2]):
-            with patch.object(builtins, 'hasattr', side_effect=_hasattr):
-                with patch('os.path.islink', return_value=True):
-                    with patch('os.chmod', return_value=None) as m_chmod:
-                        with patch('os.stat', return_value=mock_stat2):
-                            self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
-
-    @patch('tempfile.NamedTemporaryFile')
+    @patch('tempfile.mkstemp')
     @patch('os.umask')
     @patch('shutil.copyfileobj')
     @patch('shutil.move')
@@ -832,29 +802,30 @@ class TestModuleUtilsBasic(unittest.TestCase):
     @patch('os.chmod')
     @patch('os.stat')
     @patch('os.path.exists')
+    @patch('os.close')
     def test_module_utils_basic_ansible_module_atomic_move(
-        self,
-        _os_path_exists,
-        _os_stat,
-        _os_chmod,
-        _os_chown,
-        _os_getlogin,
-        _os_environ,
-        _os_getuid,
-        _pwd_getpwuid,
-        _os_rename,
-        _shutil_copy2,
-        _shutil_move,
-        _shutil_copyfileobj,
-        _os_umask,
-        _tempfile_NamedTemporaryFile,
-        ):
+            self,
+            _os_close,
+            _os_path_exists,
+            _os_stat,
+            _os_chmod,
+            _os_chown,
+            _os_getlogin,
+            _os_environ,
+            _os_getuid,
+            _pwd_getpwuid,
+            _os_rename,
+            _shutil_copy2,
+            _shutil_move,
+            _shutil_copyfileobj,
+            _os_umask,
+            _tempfile_mkstemp):
 
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         environ = dict()
@@ -879,8 +850,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
         _os_chown.reset_mock()
         am.set_context_if_different.reset_mock()
         am.atomic_move('/path/to/src', '/path/to/dest')
-        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
-        self.assertEqual(_os_chmod.call_args_list, [call('/path/to/dest', basic.DEFAULT_PERM & ~18)])
+        _os_rename.assert_called_with(b'/path/to/src', b'/path/to/dest')
+        self.assertEqual(_os_chmod.call_args_list, [call(b'/path/to/dest', basic.DEFAULT_PERM & ~18)])
 
         # same as above, except selinux_enabled
         _os_path_exists.side_effect = [False, False]
@@ -897,8 +868,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
         am.set_context_if_different.reset_mock()
         am.selinux_default_context.reset_mock()
         am.atomic_move('/path/to/src', '/path/to/dest')
-        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
-        self.assertEqual(_os_chmod.call_args_list, [call('/path/to/dest', basic.DEFAULT_PERM & ~18)])
+        _os_rename.assert_called_with(b'/path/to/src', b'/path/to/dest')
+        self.assertEqual(_os_chmod.call_args_list, [call(b'/path/to/dest', basic.DEFAULT_PERM & ~18)])
         self.assertEqual(am.selinux_default_context.call_args_list, [call('/path/to/dest')])
         self.assertEqual(am.set_context_if_different.call_args_list, [call('/path/to/dest', mock_context, False)])
 
@@ -915,13 +886,13 @@ class TestModuleUtilsBasic(unittest.TestCase):
         stat1.st_mode = 0o0644
         stat1.st_uid = 0
         stat1.st_gid = 0
-        _os_stat.side_effect = [stat1,]
+        _os_stat.side_effect = [stat1, ]
         am.selinux_enabled.return_value = False
         _os_chmod.reset_mock()
         _os_chown.reset_mock()
         am.set_context_if_different.reset_mock()
         am.atomic_move('/path/to/src', '/path/to/dest')
-        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
+        _os_rename.assert_called_with(b'/path/to/src', b'/path/to/dest')
 
         # dest missing, selinux enabled
         _os_path_exists.side_effect = [True, True]
@@ -934,7 +905,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         stat1.st_mode = 0o0644
         stat1.st_uid = 0
         stat1.st_gid = 0
-        _os_stat.side_effect = [stat1,]
+        _os_stat.side_effect = [stat1, ]
         mock_context = MagicMock()
         am.selinux_context.return_value = mock_context
         am.selinux_enabled.return_value = True
@@ -943,7 +914,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         am.set_context_if_different.reset_mock()
         am.selinux_default_context.reset_mock()
         am.atomic_move('/path/to/src', '/path/to/dest')
-        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
+        _os_rename.assert_called_with(b'/path/to/src', b'/path/to/dest')
         self.assertEqual(am.selinux_context.call_args_list, [call('/path/to/dest')])
         self.assertEqual(am.set_context_if_different.call_args_list, [call('/path/to/dest', mock_context, False)])
 
@@ -980,20 +951,21 @@ class TestModuleUtilsBasic(unittest.TestCase):
         self.assertRaises(SystemExit, am.atomic_move, '/path/to/src', '/path/to/dest')
 
         # next we test with EPERM so it continues to the alternate code for moving
-        # test with NamedTemporaryFile raising an error first
+        # test with mkstemp raising an error first
         _os_path_exists.side_effect = [False, False]
         _os_getlogin.return_value = 'root'
         _os_getuid.return_value = 0
+        _os_close.return_value = None
         _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
         _os_umask.side_effect = [18, 0]
         _os_rename.side_effect = [OSError(errno.EPERM, 'failing with EPERM'), None]
-        _tempfile_NamedTemporaryFile.return_value = None
-        _tempfile_NamedTemporaryFile.side_effect = OSError()
+        _tempfile_mkstemp.return_value = None
+        _tempfile_mkstemp.side_effect = OSError()
         am.selinux_enabled.return_value = False
         self.assertRaises(SystemExit, am.atomic_move, '/path/to/src', '/path/to/dest')
 
         # then test with it creating a temp file
-        _os_path_exists.side_effect = [False, False]
+        _os_path_exists.side_effect = [False, False, False]
         _os_getlogin.return_value = 'root'
         _os_getuid.return_value = 0
         _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
@@ -1004,23 +976,20 @@ class TestModuleUtilsBasic(unittest.TestCase):
         mock_stat3 = MagicMock()
         _os_stat.return_value = [mock_stat1, mock_stat2, mock_stat3]
         _os_stat.side_effect = None
-        mock_tempfile = MagicMock()
-        mock_tempfile.name = '/path/to/tempfile'
-        _tempfile_NamedTemporaryFile.return_value = mock_tempfile
-        _tempfile_NamedTemporaryFile.side_effect = None
+        _tempfile_mkstemp.return_value = (None, '/path/to/tempfile')
+        _tempfile_mkstemp.side_effect = None
         am.selinux_enabled.return_value = False
         # FIXME: we don't assert anything here yet
         am.atomic_move('/path/to/src', '/path/to/dest')
 
         # same as above, but with selinux enabled
-        _os_path_exists.side_effect = [False, False]
+        _os_path_exists.side_effect = [False, False, False]
         _os_getlogin.return_value = 'root'
         _os_getuid.return_value = 0
         _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
         _os_umask.side_effect = [18, 0]
         _os_rename.side_effect = [OSError(errno.EPERM, 'failing with EPERM'), None]
-        mock_tempfile = MagicMock()
-        _tempfile_NamedTemporaryFile.return_value = mock_tempfile
+        _tempfile_mkstemp.return_value = (None, None)
         mock_context = MagicMock()
         am.selinux_default_context.return_value = mock_context
         am.selinux_enabled.return_value = True
@@ -1032,7 +1001,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         mock_stat = MagicMock()
@@ -1063,5 +1032,5 @@ class TestModuleUtilsBasic(unittest.TestCase):
         self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx'), 0o0700)
 
         # invalid modes
-        mock_stat.st_mode = 0o0400000
+        mock_stat.st_mode = 0o040000
         self.assertRaises(ValueError, am._symbolic_mode_to_octal, mock_stat, 'a=foo')

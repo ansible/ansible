@@ -39,18 +39,13 @@ import sys
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError
-
 from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.inventory import Inventory
-from ansible.parsing.dataloader import DataLoader
+from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.vars import VariableManager
-from ansible.utils import module_docs
-from ansible.utils.color import stringc
-from ansible.utils.unicode import to_unicode, to_str
 from ansible.plugins import module_loader
-
+from ansible.utils import plugin_docs
+from ansible.utils.color import stringc
 
 try:
     from __main__ import display
@@ -60,8 +55,11 @@ except ImportError:
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
+    ''' a REPL that allows for running ad-hoc tasks against a chosen inventory (based on dominis' ansible-shell).'''
 
     modules = []
+    ARGUMENTS = {'host-pattern': 'A name of a group in the inventory, a shell-like glob '
+                                 'selecting hosts in inventory or any combination of the two separated by commas.'}
 
     def __init__(self, args):
 
@@ -81,7 +79,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def parse(self):
         self.parser = CLI.base_parser(
-            usage='%prog <host-pattern> [options]',
+            usage='%prog [<host-pattern>] [options]',
             runas_opts=True,
             inventory_opts=True,
             connect_opts=True,
@@ -89,19 +87,20 @@ class ConsoleCLI(CLI, cmd.Cmd):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            desc="REPL console for executing Ansible tasks.",
+            epilog="This is not a live session/connection, each task executes in the background and returns it's results."
         )
 
         # options unique to shell
         self.parser.add_option('--step', dest='step', action='store_true',
-            help="one-step-at-a-time: confirm each task before running")
+                               help="one-step-at-a-time: confirm each task before running")
 
         self.parser.set_defaults(cwd='*')
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+
+        super(ConsoleCLI, self).parse()
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
-
-        return True
 
     def get_names(self):
         return dir(self)
@@ -151,12 +150,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 elif module in C.IGNORE_FILES:
                     continue
                 elif module.startswith('_'):
-                    fullpath = '/'.join([path,module])
-                    if os.path.islink(fullpath): # avoids aliases
+                    fullpath = '/'.join([path, module])
+                    if os.path.islink(fullpath):  # avoids aliases
                         continue
                     module = module.replace('_', '', 1)
 
-                module = os.path.splitext(module)[0] # removes the extension
+                module = os.path.splitext(module)[0]  # removes the extension
                 yield module
 
     def default(self, arg, forceshell=False):
@@ -185,31 +184,31 @@ class ConsoleCLI(CLI, cmd.Cmd):
         try:
             check_raw = self.options.module_name in ('command', 'shell', 'script', 'raw')
             play_ds = dict(
-                name = "Ansible Shell",
-                hosts = self.options.cwd,
-                gather_facts = 'no',
-                tasks = [ dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)))]
+                name="Ansible Shell",
+                hosts=self.options.cwd,
+                gather_facts='no',
+                tasks=[dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)))]
             )
             play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader)
         except Exception as e:
-            display.error(u"Unable to build command: %s" % to_unicode(e))
+            display.error(u"Unable to build command: %s" % to_text(e))
             return False
 
         try:
-            cb = 'minimal' #FIXME: make callbacks configurable
+            cb = 'minimal'  # FIXME: make callbacks configurable
             # now create a task queue manager to execute the play
             self._tqm = None
             try:
                 self._tqm = TaskQueueManager(
-                        inventory=self.inventory,
-                        variable_manager=self.variable_manager,
-                        loader=self.loader,
-                        options=self.options,
-                        passwords=self.passwords,
-                        stdout_callback=cb,
-                        run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
-                        run_tree=False,
-                    )
+                    inventory=self.inventory,
+                    variable_manager=self.variable_manager,
+                    loader=self.loader,
+                    options=self.options,
+                    passwords=self.passwords,
+                    stdout_callback=cb,
+                    run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
+                    run_tree=False,
+                )
 
                 result = self._tqm.run(play)
             finally:
@@ -225,8 +224,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.error('User interrupted execution')
             return False
         except Exception as e:
-            display.error(to_unicode(e))
-            #FIXME: add traceback in very very verbose mode
+            display.error(to_text(e))
+            # FIXME: add traceback in very very verbose mode
             return False
 
     def emptyline(self):
@@ -275,11 +274,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
         """
         if not arg:
             self.options.cwd = '*'
-        elif arg == '..':
-            try:
-                self.options.cwd = self.inventory.groups_for_host(self.options.cwd)[1].name
-            except Exception:
-                self.options.cwd = ''
         elif arg in '/*':
             self.options.cwd = 'all'
         elif self.inventory.get_hosts(arg):
@@ -332,6 +326,22 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             display.display("Please specify a become_method, e.g. `become_method su`")
 
+    def do_check(self, arg):
+        """Toggle whether plays run with check mode"""
+        if arg:
+            self.options.check = C.mk_boolean(arg)
+            display.v("check mode changed to %s" % self.options.check)
+        else:
+            display.display("Please specify check mode value, e.g. `check yes`")
+
+    def do_diff(self, arg):
+        """Toggle whether plays run with diff"""
+        if arg:
+            self.options.diff = C.mk_boolean(arg)
+            display.v("diff mode changed to %s" % self.options.diff)
+        else:
+            display.display("Please specify a diff value , e.g. `diff yes`")
+
     def do_exit(self, args):
         """Exits from the console"""
         sys.stdout.write('\n')
@@ -343,7 +353,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name in self.modules:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _ = module_docs.get_docstring(in_path)
+                oc, a, _, _ = plugin_docs.get_docstring(in_path)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
@@ -358,12 +368,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
 
-        if self.options.cwd in ('all','*','\\'):
+        if self.options.cwd in ('all', '*', '\\'):
             completions = self.hosts + self.groups
         else:
             completions = [x.name for x in self.inventory.list_hosts(self.options.cwd)]
 
-        return [to_str(s)[offs:] for s in completions if to_str(s).startswith(to_str(mline))]
+        return [to_native(s)[offs:] for s in completions if to_native(s).startswith(to_native(mline))]
 
     def completedefault(self, text, line, begidx, endidx):
         if line.split()[0] in self.modules:
@@ -375,17 +385,15 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _ = module_docs.get_docstring(in_path)
-        return oc['options'].keys()
-
+        oc, a, _, _ = plugin_docs.get_docstring(in_path)
+        return list(oc['options'].keys())
 
     def run(self):
 
         super(ConsoleCLI, self).run()
 
-        sshpass    = None
+        sshpass = None
         becomepass = None
-        vault_pass = None
 
         # hosts
         if len(self.args) != 1:
@@ -393,7 +401,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             self.pattern = self.args[0]
         self.options.cwd = self.pattern
-
 
         # dynamically add modules as commands
         self.modules = self.list_modules()
@@ -403,21 +410,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
-        self.passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
+        self.passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        self.loader = DataLoader()
-
-        if self.options.vault_password_file:
-            # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=self.loader)
-            self.loader.set_vault_password(vault_pass)
-        elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
-            self.loader.set_vault_password(vault_pass)
-
-        self.variable_manager = VariableManager()
-        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list=self.options.inventory)
-        self.variable_manager.set_inventory(self.inventory)
+        self.loader, self.inventory, self.variable_manager = self._play_prereqs(self.options)
 
         no_hosts = False
         if len(self.inventory.list_hosts()) == 0:
@@ -449,4 +444,3 @@ class ConsoleCLI(CLI, cmd.Cmd):
         atexit.register(readline.write_history_file, histfile)
         self.set_prompt()
         self.cmdloop()
-

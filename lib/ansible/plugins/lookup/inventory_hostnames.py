@@ -19,14 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.inventory.manager import split_host_pattern, order_patterns
 from ansible.plugins.lookup import LookupBase
-from ansible.inventory import Inventory
+
 
 class LookupModule(LookupBase):
 
     def get_hosts(self, variables, pattern):
         hosts = []
-        if pattern[0] in ('!','&'):
+        if pattern[0] in ('!', '&'):
             obj = pattern[1:]
         else:
             obj = pattern
@@ -42,14 +43,14 @@ class LookupModule(LookupBase):
         host_list = []
 
         for term in terms:
-            patterns = Inventory.order_patterns(Inventory.split_host_pattern(term))
+            patterns = order_patterns(split_host_pattern(term))
 
             for p in patterns:
                 that = self.get_hosts(variables, p)
                 if p.startswith("!"):
-                    host_list = [ h for h in host_list if h not in that]
+                    host_list = [h for h in host_list if h not in that]
                 elif p.startswith("&"):
-                    host_list = [ h for h in host_list if h in that ]
+                    host_list = [h for h in host_list if h in that]
                 else:
                     host_list.extend(that)
 

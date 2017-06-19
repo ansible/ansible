@@ -23,6 +23,8 @@ import os
 
 from ansible.errors import AnsibleParserError
 from ansible.parsing.dataloader import DataLoader
+from ansible.module_utils._text import to_bytes
+
 
 class DictDataLoader(DataLoader):
 
@@ -34,14 +36,16 @@ class DictDataLoader(DataLoader):
         self._file_mapping = file_mapping
         self._build_known_directories()
 
-    def load_from_file(self, path):
+    def load_from_file(self, path, unsafe=False):
         if path in self._file_mapping:
             return self.load(self._file_mapping[path], path)
         return None
 
+    # TODO: the real _get_file_contents returns a bytestring, so we actually convert the
+    #       unicode/text it's created with to utf-8
     def _get_file_contents(self, path):
         if path in self._file_mapping:
-            return (self._file_mapping[path], False)
+            return (to_bytes(self._file_mapping[path]), False)
         else:
             raise AnsibleParserError("file not found: %s" % path)
 
@@ -66,7 +70,7 @@ class DictDataLoader(DataLoader):
             self._known_directories.append(directory)
 
     def _build_known_directories(self):
-        self._known_directories  = []
+        self._known_directories = []
         for path in self._file_mapping:
             dirname = os.path.dirname(path)
             while dirname not in ('/', ''):
@@ -92,3 +96,5 @@ class DictDataLoader(DataLoader):
         self._file_mapping = dict()
         self._known_directories = []
 
+    def get_basedir(self):
+        return os.getcwd()

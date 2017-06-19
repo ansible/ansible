@@ -1,4 +1,3 @@
-
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
@@ -25,20 +24,20 @@ import gettext
 import os
 import shlex
 from abc import ABCMeta, abstractmethod, abstractproperty
-
 from functools import wraps
-from ansible.compat.six import with_metaclass
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types, with_metaclass
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import shell_loader
-from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
@@ -48,7 +47,8 @@ BUFSIZE = 65536
 def ensure_connect(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        self._connect()
+        if not self._connected:
+            self._connect()
         return func(self, *args, **kwargs)
     return wrapped
 
@@ -59,6 +59,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     '''
 
     has_pipelining = False
+    has_native_async = False  # eg, winrm
+    always_pipeline_modules = False  # eg, winrm
     become_methods = C.BECOME_METHODS
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
@@ -137,9 +139,10 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             # exception, it merely mangles the output:
             # >>> shlex.split(u't e')
             # ['t\x00\x00\x00', '\x00\x00\x00e\x00\x00\x00']
-            return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
+            return [to_text(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
         except AttributeError:
-            return [to_unicode(x.strip()) for x in shlex.split(argstring) if x.strip()]
+            # In Python3, shlex.split doesn't work on a byte string.
+            return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
     @abstractproperty
     def transport(self):
@@ -239,27 +242,30 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         """Terminate the connection"""
         pass
 
-    def check_become_success(self, output):
-        for line in output.splitlines(True):
-            if self._play_context.success_key == line.rstrip():
+    def check_become_success(self, b_output):
+        b_success_key = to_bytes(self._play_context.success_key)
+        for b_line in b_output.splitlines(True):
+            if b_success_key == b_line.rstrip():
                 return True
         return False
 
-    def check_password_prompt(self, output):
+    def check_password_prompt(self, b_output):
         if self._play_context.prompt is None:
             return False
-        elif isinstance(self._play_context.prompt, basestring):
-            return output.startswith(self._play_context.prompt)
+        elif isinstance(self._play_context.prompt, string_types):
+            b_prompt = to_bytes(self._play_context.prompt).strip()
+            b_lines = b_output.splitlines()
+            return any(l.strip().startswith(b_prompt) for l in b_lines)
         else:
-            return self._play_context.prompt(output)
+            return self._play_context.prompt(b_output)
 
-    def check_incorrect_password(self, output):
-        incorrect_password = gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method])
-        return incorrect_password and incorrect_password in output
+    def check_incorrect_password(self, b_output):
+        b_incorrect_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method]))
+        return b_incorrect_password and b_incorrect_password in b_output
 
-    def check_missing_password(self, output):
-        missing_password = gettext.dgettext(self._play_context.become_method, C.BECOME_MISSING_STRINGS[self._play_context.become_method])
-        return missing_password and missing_password in output
+    def check_missing_password(self, b_output):
+        b_missing_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_MISSING_STRINGS[self._play_context.become_method]))
+        return b_missing_password and b_missing_password in b_output
 
     def connection_lock(self):
         f = self._play_context.connection_lockfd
@@ -271,3 +277,6 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
         display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+
+    def reset(self):
+        display.warning("Reset is not implemented for this connection")

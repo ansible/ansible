@@ -21,7 +21,8 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.template import generate_ansible_template_vars
 
 try:
     from __main__ import display
@@ -43,18 +44,31 @@ class LookupModule(LookupBase):
             lookupfile = self.find_file_in_search_path(variables, 'templates', term)
             display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile:
-                with open(lookupfile, 'r') as f:
-                    template_data = to_unicode(f.read())
+                with open(to_bytes(lookupfile, errors='surrogate_or_strict'), 'rb') as f:
+                    template_data = to_text(f.read(), errors='surrogate_or_strict')
 
                     # set jinja2 internal search path for includes
-                    if 'ansible_search_path' in variables:
-                        searchpath = variables['ansible_search_path']
+                    searchpath = variables.get('ansible_search_path')
+                    if searchpath:
+                        # our search paths aren't actually the proper ones for jinja includes.
+                        # We want to search into the 'templates' subdir of each search path in
+                        # addition to our original search paths.
+                        newsearchpath = []
+                        for p in searchpath:
+                            newsearchpath.append(os.path.join(p, 'templates'))
+                            newsearchpath.append(p)
+                        searchpath = newsearchpath
                     else:
                         searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
                     self._templar.environment.loader.searchpath = searchpath
 
+                    # add ansible 'template' vars
+                    temp_vars = variables.copy()
+                    temp_vars.update(generate_ansible_template_vars(lookupfile))
+                    self._templar.set_available_variables(temp_vars)
+
                     # do the templating
-                    res = self._templar.template(template_data, preserve_trailing_newlines=True,convert_data=convert_data_p)
+                    res = self._templar.template(template_data, preserve_trailing_newlines=True, convert_data=convert_data_p)
                     ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)

@@ -59,13 +59,13 @@ class ActionModule(ActionBase):
         prompt = None
         seconds = None
         result.update(dict(
-            changed = False,
-            rc      = 0,
-            stderr  = '',
-            stdout  = '',
-            start   = None,
-            stop    = None,
-            delta   = None,
+            changed=False,
+            rc=0,
+            stderr='',
+            stdout='',
+            start=None,
+            stop=None,
+            delta=None,
         ))
 
         # Is 'args' empty, then this is the default prompted pause
@@ -125,8 +125,9 @@ class ActionModule(ActionBase):
             fd = None
             try:
                 fd = self._connection._new_stdin.fileno()
-            except ValueError:
-                # someone is using a closed file descriptor as stdin
+            except (ValueError, AttributeError):
+                # ValueError: someone is using a closed file descriptor as stdin
+                # AttributeError: someone is using a null file descriptor as stdin on windoez
                 pass
             if fd is not None:
                 if isatty(fd):
@@ -161,7 +162,6 @@ class ActionModule(ActionBase):
                         break
                     else:
                         raise AnsibleError('user requested abort!')
-
 
         except AnsibleTimeoutExceeded:
             # this is the exception we expect when the alarm signal

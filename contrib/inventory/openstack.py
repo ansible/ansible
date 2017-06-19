@@ -19,7 +19,7 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 # The OpenStack Inventory module uses os-client-config for configuration.
-# https://github.com/stackforge/os-client-config
+# https://github.com/openstack/os-client-config
 # This means it will either:
 #  - Respect normal OS_* environment variables like other OpenStack tools
 #  - Read values from a clouds.yaml file.
@@ -86,7 +86,7 @@ def get_groups_from_server(server_vars, namegroup=True):
 
     for extra_group in metadata.get('groups', '').split(','):
         if extra_group:
-            groups.append(extra_group)
+            groups.append(extra_group.strip())
 
     groups.append('instance-%s' % server_vars['id'])
     if namegroup:
@@ -121,6 +121,7 @@ def get_host_groups(inventory, refresh=False):
 def append_hostvars(hostvars, groups, key, server, namegroup=False):
     hostvars[key] = dict(
         ansible_ssh_host=server['interface_ip'],
+        ansible_host=server['interface_ip'],
         openstack=server)
     for group in get_groups_from_server(server, namegroup=namegroup):
         groups[group].append(key)

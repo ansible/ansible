@@ -21,17 +21,17 @@ __metaclass__ = type
 
 import datetime
 import os
-import traceback
 import textwrap
-
-from ansible.compat.six import iteritems
+import traceback
+import yaml
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.plugins import module_loader
 from ansible.cli import CLI
-from ansible.utils import module_docs
-
+from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils.six import string_types
+from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.plugins import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader, PluginLoader
+from ansible.utils import plugin_docs
 try:
     from __main__ import display
 except ImportError:
@@ -40,85 +40,123 @@ except ImportError:
 
 
 class DocCLI(CLI):
-    """ Vault command line class """
+    ''' displays information on modules installed in Ansible libraries.
+        It displays a terse listing of plugins and their short descriptions,
+        provides a printout of their DOCUMENTATION strings,
+        and it can create a short "snippet" which can be pasted into a playbook.  '''
 
     def __init__(self, args):
 
         super(DocCLI, self).__init__(args)
-        self.module_list = []
+        self.plugin_list = set()
 
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage='usage: %prog [options] [module...]',
-            epilog='Show Ansible module documentation',
+            usage='usage: %prog [options] [plugin]',
             module_opts=True,
+            desc="plugin documentation tool",
+            epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
 
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
-                help='List available modules')
+                               help='List available plugins')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
-                help='Show playbook snippet for specified module(s)')
+                               help='Show playbook snippet for specified plugin(s)')
+        self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
+                               help='Show documentation for all plugins')
+        self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
+                               help='Choose which plugin type', choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy'])
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(DocCLI, self).parse()
+
         display.verbosity = self.options.verbosity
 
     def run(self):
 
         super(DocCLI, self).run()
 
+        plugin_type = self.options.type
+
+        # choose plugin type
+        if plugin_type == 'cache':
+            loader = cache_loader
+        elif plugin_type == 'callback':
+            loader = callback_loader
+        elif plugin_type == 'connection':
+            loader = connection_loader
+        elif plugin_type == 'lookup':
+            loader = lookup_loader
+        elif plugin_type == 'strategy':
+            loader = strategy_loader
+        elif plugin_type == 'inventory':
+            loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
+        else:
+            loader = module_loader
+
+        # add to plugin path from command line
         if self.options.module_path is not None:
             for i in self.options.module_path.split(os.pathsep):
-                module_loader.add_directory(i)
+                loader.add_directory(i)
 
-        # list modules
+        # list plugins for type
         if self.options.list_dir:
-            paths = module_loader._get_paths()
+            paths = loader._get_paths()
             for path in paths:
-                self.find_modules(path)
+                self.find_plugins(path, plugin_type)
 
-            self.pager(self.get_module_list_text())
+            self.pager(self.get_plugin_list_text(loader))
             return 0
+
+        # process all plugins of type
+        if self.options.all_plugins:
+            paths = loader._get_paths()
+            for path in paths:
+                self.find_plugins(path, plugin_type)
 
         if len(self.args) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
 
-        # process command line module list
+        # process command line list
         text = ''
-        for module in self.args:
+        for plugin in self.args:
 
             try:
-                # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-                filename = module_loader.find_plugin(module, mod_type='.py')
+                # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True)
                 if filename is None:
-                    display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
+                    display.warning("%s %s not found in %s\n" % (plugin_type, plugin, DocCLI.print_paths(loader)))
                     continue
 
                 if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
                     continue
 
                 try:
-                    doc, plainexamples, returndocs = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
+                    doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
                 except:
-                    display.vvv(traceback.print_exc())
-                    display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
+                    display.vvv(traceback.format_exc())
+                    display.error("%s %s has a documentation error formatting or is missing documentation." % (plugin_type, plugin))
                     continue
 
                 if doc is not None:
 
-                    all_keys = []
-                    for (k,v) in iteritems(doc['options']):
-                        all_keys.append(k)
-                    all_keys = sorted(all_keys)
-                    doc['option_keys'] = all_keys
+                    # assign from other sections
+                    doc['plainexamples'] = plainexamples
+                    doc['returndocs'] = returndocs
+                    doc['metadata'] = metadata
 
-                    doc['filename']         = filename
-                    doc['docuri']           = doc['module'].replace('_', '-')
-                    doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
-                    doc['plainexamples']    = plainexamples
-                    doc['returndocs']       = returndocs
+                    # generate extra data
+                    if plugin_type == 'module':
+                        # is there corresponding action plugin?
+                        if plugin in action_loader:
+                            doc['action'] = True
+                        else:
+                            doc['action'] = False
+                    doc['filename'] = filename
+                    doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
+                    doc['docuri'] = doc[plugin_type].replace('_', '-')
 
-                    if self.options.show_snippet:
+                    if self.options.show_snippet and plugin_type == 'module':
                         text += self.get_snippet_text(doc)
                     else:
                         text += self.get_man_text(doc)
@@ -127,47 +165,57 @@ class DocCLI(CLI):
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
             except Exception as e:
-                display.vvv(traceback.print_exc())
-                raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
+                display.vvv(traceback.format_exc())
+                raise AnsibleError("%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, str(e)))
 
-        self.pager(text)
+        if text:
+            self.pager(text)
         return 0
 
-    def find_modules(self, path):
+    def find_plugins(self, path, ptype):
 
-        if os.path.isdir(path):
-            for module in os.listdir(path):
-                if module.startswith('.'):
-                    continue
-                elif os.path.isdir(module):
-                    self.find_modules(module)
-                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
-                    continue
-                elif module.startswith('__'):
-                    continue
-                elif module in C.IGNORE_FILES:
-                    continue
-                elif module.startswith('_'):
-                    fullpath = '/'.join([path,module])
-                    if os.path.islink(fullpath): # avoids aliases
-                        continue
+        display.vvvv("Searching %s for plugins" % path)
 
-                module = os.path.splitext(module)[0] # removes the extension
-                self.module_list.append(module)
+        if not os.path.exists(path):
+            display.vvvv("%s does not exist" % path)
+            return
 
-    def get_module_list_text(self):
+        bkey = ptype.upper()
+        for plugin in os.listdir(path):
+            display.vvvv("Found %s" % plugin)
+            full_path = '/'.join([path, plugin])
+
+            if plugin.startswith('.'):
+                continue
+            elif os.path.isdir(full_path):
+                continue
+            elif any(plugin.endswith(x) for x in C.BLACKLIST_EXTS):
+                continue
+            elif plugin.startswith('__'):
+                continue
+            elif plugin in C.IGNORE_FILES:
+                continue
+            elif plugin .startswith('_'):
+                if os.path.islink(full_path):  # avoids aliases
+                    continue
+
+            plugin = os.path.splitext(plugin)[0]  # removes the extension
+            plugin = plugin.lstrip('_')  # remove underscore from deprecated plugins
+
+            if plugin not in plugin_docs.BLACKLIST.get(bkey, ()):
+                self.plugin_list.add(plugin)
+                display.vvvv("Added %s" % plugin)
+
+    def get_plugin_list_text(self, loader):
         columns = display.columns
-        displace = max(len(x) for x in self.module_list)
+        displace = max(len(x) for x in self.plugin_list)
         linelimit = columns - displace - 5
         text = []
         deprecated = []
-        for module in sorted(set(self.module_list)):
-
-            if module in module_docs.BLACKLIST_MODULES:
-                continue
+        for plugin in sorted(self.plugin_list):
 
             # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-            filename = module_loader.find_plugin(module, mod_type='.py')
+            filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True)
 
             if filename is None:
                 continue
@@ -177,17 +225,23 @@ class DocCLI(CLI):
                 continue
 
             try:
-                doc, plainexamples, returndocs = module_docs.get_docstring(filename)
-                desc = self.tty_ify(doc.get('short_description', '?')).strip()
-                if len(desc) > linelimit:
-                    desc = desc[:linelimit] + '...'
-
-                if module.startswith('_'): # Handle deprecated
-                    deprecated.append("%-*s %-*.*s" % (displace, module[1:], linelimit, len(desc), desc))
-                else:
-                    text.append("%-*s %-*.*s" % (displace, module, linelimit, len(desc), desc))
+                doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename)
             except:
-                raise AnsibleError("module %s has a documentation error formatting or is missing documentation\n" % module)
+                display.warning("%s has a documentation formatting error" % plugin)
+
+            if not doc:
+                desc = 'UNDOCUMENTED'
+                display.warning("%s parsing did not produce documentation." % plugin)
+            else:
+                desc = self.tty_ify(doc.get('short_description', '?')).strip()
+
+            if len(desc) > linelimit:
+                desc = desc[:linelimit] + '...'
+
+            if plugin.startswith('_'):  # Handle deprecated
+                deprecated.append("%-*s %-*.*s" % (displace, plugin[1:], linelimit, len(desc), desc))
+            else:
+                text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
 
         if len(deprecated) > 0:
             text.append("\nDEPRECATED:")
@@ -210,32 +264,106 @@ class DocCLI(CLI):
         text = []
         desc = CLI.tty_ify(doc['short_description'])
         text.append("- name: %s" % (desc))
-        text.append("  action: %s" % (doc['module']))
+        text.append("  %s:" % (doc['module']))
         pad = 31
-        subdent = ''.join([" " for a in xrange(pad)])
+        subdent = " " * pad
         limit = display.columns - pad
 
         for o in sorted(doc['options'].keys()):
             opt = doc['options'][o]
-            desc = CLI.tty_ify(" ".join(opt['description']))
+            if isinstance(opt['description'], string_types):
+                desc = CLI.tty_ify(opt['description'])
+            else:
+                desc = CLI.tty_ify(" ".join(opt['description']))
 
             required = opt.get('required', False)
             if not isinstance(required, bool):
                 raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
             if required:
-                s = o + "="
-            else:
-                s = o
-            text.append("      %-20s   # %s" % (s, textwrap.fill(desc, limit, subsequent_indent=subdent)))
+                desc = "(required) %s" % desc
+            o = '%s:' % o
+            text.append("      %-20s   # %s" % (o, textwrap.fill(desc, limit, subsequent_indent=subdent)))
         text.append('')
 
         return "\n".join(text)
 
-    def get_man_text(self, doc):
+    def add_fields(self, text, fields, limit, opt_indent):
 
-        opt_indent="        "
+        for o in sorted(fields):
+            opt = fields[o]
+
+            required = opt.pop('required', False)
+            if not isinstance(required, bool):
+                raise AnsibleError("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+            if required:
+                opt_leadin = "="
+            else:
+                opt_leadin = "-"
+
+            text.append("%s %s" % (opt_leadin, o))
+
+            if isinstance(opt['description'], list):
+                for entry in opt['description']:
+                    text.append(textwrap.fill(CLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+            else:
+                text.append(textwrap.fill(CLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+            del opt['description']
+
+            aliases = ''
+            if 'aliases' in opt:
+                choices = "(Aliases: " + ", ".join(str(i) for i in opt['aliases']) + ")"
+                del opt['aliases']
+            choices = ''
+            if 'choices' in opt:
+                choices = "(Choices: " + ", ".join(str(i) for i in opt['choices']) + ")"
+                del opt['choices']
+            default = ''
+            if 'default' in opt or not required:
+                default = "[Default: " + str(opt.pop('default', '(null)')) + "]"
+            text.append(textwrap.fill(CLI.tty_ify(aliases + choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+
+            if 'options' in opt:
+                text.append(opt_indent + "options:\n")
+                self.add_fields(text, opt['options'], limit, opt_indent + opt_indent)
+                text.append('')
+                del opt['options']
+
+            if 'spec' in opt:
+                text.append(opt_indent + "spec:\n")
+                self.add_fields(text, opt['spec'], limit, opt_indent + opt_indent)
+                text.append('')
+                del opt['spec']
+
+            for conf in ('config', 'env_vars', 'host_vars'):
+                if conf in opt:
+                    text.append(textwrap.fill(CLI.tty_ify("%s: " % conf), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    for entry in opt[conf]:
+                        if isinstance(entry, dict):
+                            pre = "  -"
+                            for key in entry:
+                                text.append(textwrap.fill(CLI.tty_ify("%s %s: %s" % (pre, key, entry[key])),
+                                            limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                                pre = "   "
+                        else:
+                            text.append(textwrap.fill(CLI.tty_ify("  - %s" % entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    del opt[conf]
+
+            # unspecified keys
+            for k in opt:
+                if k.startswith('_'):
+                    continue
+                if isinstance(opt[k], string_types):
+                    text.append(textwrap.fill(CLI.tty_ify("%s: %s" % (k, opt[k])), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                elif isinstance(opt[k], (list, dict)):
+                    text.append(textwrap.fill(CLI.tty_ify("%s: %s" % (k, yaml.dump(opt[k], Dumper=AnsibleDumper, default_flow_style=False))),
+                                              limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                else:
+                    display.vv("Skipping %s key cuase we don't know how to handle eet" % k)
+
+    def get_man_text(self, doc):
+        opt_indent = "        "
         text = []
-        text.append("> %s\n" % doc['module'].upper())
+        text.append("> %s    (%s)\n" % (doc[self.options.type].upper(), doc['filename']))
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
@@ -249,42 +377,22 @@ class DocCLI(CLI):
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
 
-        if 'option_keys' in doc and len(doc['option_keys']) > 0:
+        if 'action' in doc and doc['action']:
+            text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
+
+        if 'options' in doc and doc['options']:
             text.append("Options (= is mandatory):\n")
-
-        for o in sorted(doc['option_keys']):
-            opt = doc['options'][o]
-
-            required = opt.get('required', False)
-            if not isinstance(required, bool):
-                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
-            if required:
-                opt_leadin = "="
-            else:
-                opt_leadin = "-"
-
-            text.append("%s %s" % (opt_leadin, o))
-
-            if isinstance(opt['description'], list):
-                desc = " ".join(opt['description'])
-            else:
-                desc = opt['description']
-
-            if 'choices' in opt:
-                choices = ", ".join(str(i) for i in opt['choices'])
-                desc = desc + " (Choices: " + choices + ")"
-            if 'default' in opt or not required:
-                default = str(opt.get('default', '(null)'))
-                desc = desc + " [Default: " + default + "]"
-            text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+            self.add_fields(text, doc['options'], limit, opt_indent)
+            text.append('')
 
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
-            notes = " ".join(doc['notes'])
-            text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), limit-6, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("Notes:")
+            for note in doc['notes']:
+                text.append(textwrap.fill(CLI.tty_ify(note), limit - 6, initial_indent="  * ", subsequent_indent=opt_indent))
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc['requirements'])
-            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), limit-16, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
 
         if 'examples' in doc and len(doc['examples']) > 0:
             text.append("Example%s:\n" % ('' if len(doc['examples']) < 2 else 's'))
@@ -292,22 +400,29 @@ class DocCLI(CLI):
                 text.append("%s\n" % (ex['code']))
 
         if 'plainexamples' in doc and doc['plainexamples'] is not None:
-            text.append("EXAMPLES:")
-            text.append(doc['plainexamples'])
+            text.append("EXAMPLES:\n")
+            if isinstance(doc['plainexamples'], string_types):
+                text.append(doc['plainexamples'])
+            else:
+                text.append(yaml.dump(doc['plainexamples'], indent=2, default_flow_style=False))
+
         if 'returndocs' in doc and doc['returndocs'] is not None:
-            text.append("RETURN VALUES:")
-            text.append(doc['returndocs'])
+            text.append("RETURN VALUES:\n")
+            if isinstance(doc['returndocs'], string_types):
+                text.append(doc['returndocs'])
+            else:
+                text.append(yaml.dump(doc['returndocs'], indent=2, default_flow_style=False))
         text.append('')
 
         maintainers = set()
         if 'author' in doc:
-            if isinstance(doc['author'], basestring):
+            if isinstance(doc['author'], string_types):
                 maintainers.add(doc['author'])
             else:
                 maintainers.update(doc['author'])
 
         if 'maintainers' in doc:
-            if isinstance(doc['maintainers'], basestring):
+            if isinstance(doc['maintainers'], string_types):
                 maintainers.add(doc['author'])
             else:
                 maintainers.update(doc['author'])
@@ -315,4 +430,12 @@ class DocCLI(CLI):
         text.append('MAINTAINERS: ' + ', '.join(maintainers))
         text.append('')
 
+        if 'metadata' in doc and doc['metadata']:
+            text.append("METADATA:")
+            for k in doc['metadata']:
+                if isinstance(k, list):
+                    text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
+                else:
+                    text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
+            text.append('')
         return "\n".join(text)

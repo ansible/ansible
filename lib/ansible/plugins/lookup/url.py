@@ -17,12 +17,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import urllib2
 
 from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
+from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
-from ansible.utils.unicode import to_unicode
+from ansible.plugins.lookup import LookupBase
 
 try:
     from __main__ import display
@@ -36,21 +36,25 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         validate_certs = kwargs.get('validate_certs', True)
+        split_lines = kwargs.get('split_lines', True)
 
         ret = []
         for term in terms:
             display.vvvv("url lookup connecting to %s" % term)
             try:
                 response = open_url(term, validate_certs=validate_certs)
-            except urllib2.HTTPError as e:
+            except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, str(e)))
-            except urllib2.URLError as e:
+            except URLError as e:
                 raise AnsibleError("Failed lookup url for %s : %s" % (term, str(e)))
             except SSLValidationError as e:
                 raise AnsibleError("Error validating the server's certificate for %s: %s" % (term, str(e)))
             except ConnectionError as e:
                 raise AnsibleError("Error connecting to %s: %s" % (term, str(e)))
 
-            for line in response.read().splitlines():
-                ret.append(to_unicode(line))
+            if split_lines:
+                for line in response.read().splitlines():
+                    ret.append(to_text(line))
+            else:
+                ret.append(to_text(response.read()))
         return ret

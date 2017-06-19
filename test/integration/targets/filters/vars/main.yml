@@ -1,0 +1,18 @@
+some_structure:
+  - "this is a list element"
+  -
+    this: "is a hash element in a list"
+    warp: 9
+    where: endor
+
+users:
+  - name: steve
+    hosts:
+      - host: host_a
+        password: abc
+      - host: host_b
+  - name: bill
+    hosts:
+      - host: host_c
+        password: default
+      - host: host_d

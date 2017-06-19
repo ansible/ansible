@@ -1,98 +1,230 @@
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# This code is part of Ansible, but is an independent component.
 #
-# This file is part of Ansible
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# (c) 2017 Red Hat, Inc.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 import re
+import collections
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
 
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+_DEVICE_CONNECTION = None
 
-NET_COMMON_ARGS = dict(
-    host=dict(required=True),
-    port=dict(type='int'),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    transport=dict(default='cli', choices=['cli', 'nxapi']),
-    use_ssl=dict(default=False, type='bool'),
-    validate_certs=dict(default=True, type='bool'),
-    provider=dict(type='dict'),
-    timeout=dict(default=10, type='int')
-)
+nxos_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
 
-NXAPI_COMMAND_TYPES = ['cli_show', 'cli_show_ascii', 'cli_conf', 'bash']
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE'])),
 
-NXAPI_ENCODINGS = ['json', 'xml']
+    'use_ssl': dict(type='bool'),
+    'validate_certs': dict(type='bool'),
+    'timeout': dict(type='int'),
 
-CLI_PROMPTS_RE = [
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
-]
+    'provider': dict(type='dict'),
+    'transport': dict(choices=['cli', 'nxapi'])
+}
 
-CLI_ERRORS_RE = [
-    re.compile(r"% ?Error"),
-    re.compile(r"^% \w+", re.M),
-    re.compile(r"% ?Bad secret"),
-    re.compile(r"invalid input", re.I),
-    re.compile(r"(?:incomplete|ambiguous) command", re.I),
-    re.compile(r"connection timed out", re.I),
-    re.compile(r"[^\r\n]+ not found", re.I),
-    re.compile(r"'[^']' +returned error code: ?\d+"),
-    re.compile(r"syntax error"),
-    re.compile(r"unknown command")
-]
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'transport': 'cli',
+    'timeout': 10
+}
 
 
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
+def get_argspec():
+    return nxos_argument_spec
 
 
-class Nxapi(object):
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in nxos_argument_spec:
+        if module._name == 'nxos_user':
+            if key not in ['password', 'provider', 'transport'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key not in ['provider', 'transport'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
+
+
+def load_params(module):
+    provider = module.params.get('provider') or dict()
+    for key, value in iteritems(provider):
+        if key in nxos_argument_spec:
+            if module.params.get(key) is None and value is not None:
+                module.params[key] = value
+
+
+def get_connection(module):
+    global _DEVICE_CONNECTION
+    if not _DEVICE_CONNECTION:
+        load_params(module)
+        if is_nxapi(module):
+            conn = Nxapi(module)
+        else:
+            conn = Cli(module)
+        _DEVICE_CONNECTION = conn
+    return _DEVICE_CONNECTION
+
+
+class Cli:
 
     def __init__(self, module):
-        self.module = module
+        self._module = module
+        self._device_configs = {}
 
-        # sets the module_utils/urls.py req parameters
-        self.module.params['url_username'] = module.params['username']
-        self.module.params['url_password'] = module.params['password']
+    def exec_command(self, command):
+        if isinstance(command, dict):
+            command = self._module.jsonify(command)
+        return exec_command(self._module, command)
 
-        self.url = None
+    def get_config(self, flags=[]):
+        """Retrieves the current config from the device or cache
+        """
+        cmd = 'show running-config '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        try:
+            return self._device_configs[cmd]
+        except KeyError:
+            rc, out, err = self.exec_command(cmd)
+            if rc != 0:
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            cfg = to_text(out, errors='surrogate_then_replace').strip()
+            self._device_configs[cmd] = cfg
+            return cfg
+
+    def run_commands(self, commands, check_rc=True):
+        """Run list of commands on remote device and return results
+        """
+        responses = list()
+
+        for item in to_list(commands):
+            if item['output'] == 'json' and not is_json(item['command']):
+                cmd = '%s | json' % item['command']
+            elif item['output'] == 'text' and is_json(item['command']):
+                cmd = item['command'].split('|')[0]
+            else:
+                cmd = item['command']
+
+            rc, out, err = self.exec_command(cmd)
+            out = to_text(out, errors='surrogate_then_replace')
+            if check_rc and rc != 0:
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+
+            try:
+                out = self._module.from_json(out)
+            except ValueError:
+                out = str(out).strip()
+
+            responses.append(out)
+        return responses
+
+    def load_config(self, config):
+        """Sends configuration commands to the remote device
+        """
+        rc, out, err = self.exec_command('configure')
+        if rc != 0:
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
+
+        for cmd in config:
+            rc, out, err = self.exec_command(cmd)
+            if rc != 0:
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+
+        self.exec_command('end')
+
+
+class Nxapi:
+
+    OUTPUT_TO_COMMAND_TYPE = {
+        'text': 'cli_show_ascii',
+        'json': 'cli_show',
+        'bash': 'bash',
+        'config': 'cli_conf'
+    }
+
+    def __init__(self, module):
+        self._module = module
         self._nxapi_auth = None
+        self._device_configs = {}
 
-    def _get_body(self, commands, command_type, encoding, version='1.0', chunk='0', sid=None):
+        self._module.params['url_username'] = self._module.params['username']
+        self._module.params['url_password'] = self._module.params['password']
+
+        host = self._module.params['host']
+        port = self._module.params['port']
+
+        if self._module.params['use_ssl']:
+            proto = 'https'
+            port = port or 443
+        else:
+            proto = 'http'
+            port = port or 80
+
+        self._url = '%s://%s:%s/ins' % (proto, host, port)
+
+    def _error(self, msg, **kwargs):
+        self._nxapi_auth = None
+        if 'url' not in kwargs:
+            kwargs['url'] = self._url
+        self._module.fail_json(msg=msg, **kwargs)
+
+    def _request_builder(self, commands, output, version='1.0', chunk='0', sid=None):
         """Encodes a NXAPI JSON request message
         """
+        try:
+            command_type = self.OUTPUT_TO_COMMAND_TYPE[output]
+        except KeyError:
+            msg = 'invalid format, received %s, expected one of %s' % \
+                (output, ','.join(self.OUTPUT_TO_COMMAND_TYPE.keys()))
+            self._error(msg=msg)
+
         if isinstance(commands, (list, set, tuple)):
             commands = ' ;'.join(commands)
-
-        if encoding not in NXAPI_ENCODINGS:
-            msg = 'invalid encoding, received %s, exceped one of %s' % \
-                    (encoding, ','.join(NXAPI_ENCODINGS))
-            self.module_fail_json(msg=msg)
 
         msg = {
             'version': version,
@@ -100,185 +232,168 @@ class Nxapi(object):
             'chunk': chunk,
             'sid': sid,
             'input': commands,
-            'output_format': encoding
+            'output_format': 'json'
         }
+
         return dict(ins_api=msg)
 
-    def connect(self):
-        host = self.module.params['host']
-        port = self.module.params['port']
+    def send_request(self, commands, output='text', check_status=True):
+        # only 10 show commands can be encoded in each request
+        # messages sent to the remote device
+        if output != 'config':
+            commands = collections.deque(to_list(commands))
+            stack = list()
+            requests = list()
 
-        if self.module.params['use_ssl']:
-            proto = 'https'
-            if not port:
-                port = 443
+            while commands:
+                stack.append(commands.popleft())
+                if len(stack) == 10:
+                    body = self._request_builder(stack, output)
+                    data = self._module.jsonify(body)
+                    requests.append(data)
+                    stack = list()
+
+            if stack:
+                body = self._request_builder(stack, output)
+                data = self._module.jsonify(body)
+                requests.append(data)
+
         else:
-            proto = 'http'
-            if not port:
-                port = 80
-
-        self.url = '%s://%s:%s/ins' % (proto, host, port)
-
-    def send(self, commands, command_type='cli_show_ascii', encoding='json'):
-        """Send commands to the device.
-        """
-        clist = to_list(commands)
-
-        if command_type not in NXAPI_COMMAND_TYPES:
-            msg = 'invalid command_type, received %s, exceped one of %s' % \
-                    (command_type, ','.join(NXAPI_COMMAND_TYPES))
-            self.module_fail_json(msg=msg)
-
-        data = self._get_body(clist, command_type, encoding)
-        data = self.module.jsonify(data)
+            body = self._request_builder(commands, 'config')
+            requests = [self._module.jsonify(body)]
 
         headers = {'Content-Type': 'application/json'}
-        if self._nxapi_auth:
-            headers['Cookie'] = self._nxapi_auth
-
-        response, headers = fetch_url(self.module, self.url, data=data,
-                headers=headers, method='POST')
-
-        self._nxapi_auth = headers.get('set-cookie')
-
-        if headers['status'] != 200:
-            self.module.fail_json(**headers)
-
-        response = self.module.from_json(response.read())
         result = list()
+        timeout = self._module.params['timeout']
 
-        output = response['ins_api']['outputs']['output']
-        for item in to_list(output):
-            if item['code'] != '200':
-                self.module.fail_json(**item)
-            else:
-                result.append(item['body'])
+        for req in requests:
+            if self._nxapi_auth:
+                headers['Cookie'] = self._nxapi_auth
+
+            response, headers = fetch_url(
+                self._module, self._url, data=req, headers=headers,
+                timeout=timeout, method='POST'
+            )
+            self._nxapi_auth = headers.get('set-cookie')
+
+            if headers['status'] != 200:
+                self._error(**headers)
+
+            try:
+                response = self._module.from_json(response.read())
+            except ValueError:
+                self._module.fail_json(msg='unable to parse response')
+
+            output = response['ins_api']['outputs']['output']
+            for item in to_list(output):
+                if check_status and item['code'] != '200':
+                    self._error(output=output, **item)
+                elif 'body' in item:
+                    result.append(item['body'])
+                # else:
+                    # error in command but since check_status is disabled
+                    # silently drop it.
+                    # result.append(item['msg'])
 
         return result
 
-
-class Cli(object):
-
-    def __init__(self, module):
-        self.module = module
-        self.shell = None
-
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
-
-        username = self.module.params['username']
-        password = self.module.params['password']
-        timeout = self.module.params['timeout']
-        key_filename = self.module.params['ssh_keyfile']
-
-        allow_agent = (key_filename is not None) or (key_filename is None and password is None)
+    def get_config(self, flags=[]):
+        """Retrieves the current config from the device or cache
+        """
+        cmd = 'show running-config '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
 
         try:
-            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE,
-                    errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username,
-                    password=password, key_filename=key_filename,
-                    allow_agent=allow_agent, timeout=timeout)
-        except ShellError:
-            e = get_exception()
-            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
-            self.module.fail_json(msg=msg)
+            return self._device_configs[cmd]
+        except KeyError:
+            out = self.send_request(cmd)
+            cfg = str(out[0]).strip()
+            self._device_configs[cmd] = cfg
+            return cfg
 
-    def send(self, commands, encoding='text'):
-        try:
-            return self.shell.send(commands)
-        except ShellError:
-            e = get_exception()
-            self.module.fail_json(msg=e.message, commands=commands)
+    def run_commands(self, commands, check_rc=True):
+        """Run list of commands on remote device and return results
+        """
+        output = None
+        queue = list()
+        responses = list()
 
+        def _send(commands, output):
+            return self.send_request(commands, output, check_status=check_rc)
 
-class NetworkModule(AnsibleModule):
+        for item in to_list(commands):
+            if is_json(item['command']):
+                item['command'] = str(item['command']).split('|')[0]
+                item['output'] = 'json'
 
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._config = None
-        self._connected = False
+            if all((output == 'json', item['output'] == 'text')) or all((output == 'text', item['output'] == 'json')):
+                responses.extend(_send(queue, output))
+                queue = list()
 
-    @property
-    def connected(self):
-        return self._connected
+            output = item['output'] or 'json'
+            queue.append(item['command'])
 
-    @property
-    def config(self):
-        if not self._config:
-            self._config = self.get_config()
-        return self._config
+        if queue:
+            responses.extend(_send(queue, output))
 
-    def _load_params(self):
-        super(NetworkModule, self)._load_params()
-        provider = self.params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS:
-                if self.params.get(key) is None and value is not None:
-                    self.params[key] = value
-
-    def connect(self):
-        cls = globals().get(str(self.params['transport']).capitalize())
-        try:
-            self.connection = cls(self)
-        except TypeError:
-            e = get_exception()
-            self.fail_json(msg=e.message)
-
-        self.connection.connect()
-
-        if self.params['transport'] == 'cli':
-            self.connection.send('terminal length 0')
-
-        self._connected = True
-
-    def configure(self, commands):
-        commands = to_list(commands)
-        if self.params['transport'] == 'cli':
-            return self.configure_cli(commands)
-        else:
-            return self.execute(commands, command_type='cli_conf')
-
-    def configure_cli(self, commands):
-        commands = to_list(commands)
-        commands.insert(0, 'configure')
-        responses = self.execute(commands)
-        responses.pop(0)
         return responses
 
-    def execute(self, commands, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.send(commands, **kwargs)
-
-    def disconnect(self):
-        self.connection.close()
-        self._connected = False
-
-    def parse_config(self, cfg):
-        return parse(cfg, indent=2)
-
-    def get_config(self):
-        cmd = 'show running-config'
-        if self.params.get('include_defaults'):
-            cmd += ' all'
-        response = self.execute(cmd)
-        return response[0]
+    def load_config(self, commands):
+        """Sends the ordered set of commands to the device
+        """
+        commands = to_list(commands)
+        self.send_request(commands, output='config')
 
 
-def get_module(**kwargs):
-    """Return instance of NetworkModule
-    """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
+def is_json(cmd):
+    return str(cmd).endswith('| json')
 
-    module = NetworkModule(**kwargs)
 
-    if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
+def is_text(cmd):
+    return not is_json(cmd)
 
-    return module
+
+def is_nxapi(module):
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+    return 'nxapi' in (transport, provider_transport)
+
+
+def to_command(module, commands):
+    if is_nxapi(module):
+        default_output = 'json'
+    else:
+        default_output = 'text'
+
+    transform = ComplexList(dict(
+        command=dict(key=True),
+        output=dict(default=default_output),
+        prompt=dict(),
+        answer=dict()
+    ), module)
+
+    commands = transform(to_list(commands))
+
+    for index, item in enumerate(commands):
+        if is_json(item['command']):
+            item['output'] = 'json'
+        elif is_text(item['command']):
+            item['output'] = 'text'
+
+    return commands
+
+
+def get_config(module, flags=[]):
+    conn = get_connection(module)
+    return conn.get_config(flags)
+
+
+def run_commands(module, commands, check_rc=True):
+    conn = get_connection(module)
+    return conn.run_commands(to_command(module, commands), check_rc)
+
+
+def load_config(module, config):
+    conn = get_connection(module)
+    return conn.load_config(config)

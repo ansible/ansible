@@ -24,7 +24,7 @@ options:
     docker_host:
         description:
             - "The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the
-              TCP connection string. For example, 'tcp://192.168.99.100:2376'. If TLS is used to encrypt the connection,
+              TCP connection string. For example, 'tcp://192.0.2.23:2376'. If TLS is used to encrypt the connection,
               the module will automatically replace 'tcp' in the connection URL with 'https'."
         required: false
         default: "unix://var/run/docker.sock"

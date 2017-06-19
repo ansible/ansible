@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 '''
 nsot
@@ -148,9 +148,11 @@ from pynsot.client import get_api_client
 from pynsot.app import HttpServerError
 from click.exceptions import UsageError
 
+from six import string_types
+
 
 def warning(*objs):
-        print("WARNING: ", *objs, file=sys.stderr)
+    print("WARNING: ", *objs, file=sys.stderr)
 
 
 class NSoTInventory(object):
@@ -200,7 +202,7 @@ class NSoTInventory(object):
         _inventory_group()
         '''
         inventory = dict()
-        for group, contents in self.config.iteritems():
+        for group, contents in self.config.items():
             group_response = self._inventory_group(group, contents)
             inventory.update(group_response)
         inventory.update({'_meta': self._meta})
@@ -215,7 +217,7 @@ class NSoTInventory(object):
         Depending on number of devices in NSoT, could be rather slow since this
         has to request every device resource to filter through
         '''
-        device = [i for i in self.client.devices.get()['data']['devices']
+        device = [i for i in self.client.devices.get()
                   if host in i['hostname']][0]
         attributes = device['attributes']
         attributes.update({'site_id': device['site_id'], 'id': device['id']})
@@ -251,7 +253,7 @@ class NSoTInventory(object):
         obj[group]['hosts'] = []
         obj[group]['vars'] = hostvars
         try:
-            assert isinstance(query, basestring)
+            assert isinstance(query, string_types)
         except:
             sys.exit('ERR: Group queries must be a single string\n'
                      '  Group: %s\n'
@@ -276,7 +278,7 @@ class NSoTInventory(object):
 
         # Would do a list comprehension here, but would like to save code/time
         # and also acquire attributes in this step
-        for host in devices['data']['devices']:
+        for host in devices:
             # Iterate through each device that matches query, assign hostname
             # to the group's hosts array and then use this single iteration as
             # a chance to update self._meta which will be used in the final

@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  gather_facts: no
+  roles:
+    - { role: test_exoscale_dns, tags: test_exoscale_dns }

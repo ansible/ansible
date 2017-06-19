@@ -1,0 +1,97 @@
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: install apache via apt
+  apt:
+    name: "{{item}}"
+    state: present
+  when: "ansible_os_family == 'Debian'"
+  with_items:
+    - apache2
+    - libapache2-mod-evasive
+
+- name: install apache via zypper
+  zypper:
+    name: apache2
+    state: present
+  when: "ansible_os_family == 'Suse'"
+
+- name: disable userdir module
+  apache2_module:
+    name: userdir
+    state: absent
+
+- name: disable userdir module, second run
+  apache2_module:
+    name: userdir
+    state: absent
+  register: disable
+
+- name: ensure apache2_module is idempotent
+  assert:
+    that:
+      - 'not disable.changed'
+
+- name: enable userdir module
+  apache2_module:
+    name: userdir
+    state: present
+  register: enable
+
+- name: ensure changed on successful enable
+  assert:
+    that:
+      - 'enable.changed'
+
+- name: enable userdir module, second run
+  apache2_module:
+    name: userdir
+    state: present
+  register: enabletwo
+
+- name: ensure apache2_module is idempotent
+  assert:
+    that:
+      - 'not enabletwo.changed'
+
+- name: disable userdir module, final run
+  apache2_module:
+    name: userdir
+    state: absent
+  register: disablefinal
+
+- name: ensure changed on successful disable
+  assert:
+    that:
+      - 'disablefinal.changed'
+
+- name: ensure autoindex enabled
+  apache2_module:
+    name: autoindex
+    state: present
+
+- name: force disable of autoindex  # bug #2499
+  apache2_module:
+    name: autoindex
+    state: absent
+    force: True
+  when: "ansible_os_family == 'Debian'"
+
+
+- name: enable evasive module, test https://github.com/ansible/ansible/issues/22635
+  apache2_module:
+    name: evasive
+    state: present
+  when: "ansible_os_family == 'Debian'"

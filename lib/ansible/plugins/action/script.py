@@ -19,14 +19,13 @@ __metaclass__ = type
 
 import os
 
-from ansible.plugins.action import ActionBase
 from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_str
+from ansible.module_utils._text import to_native
+from ansible.plugins.action import ActionBase
 
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
-
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
@@ -35,15 +34,8 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if self._play_context.check_mode:
-            result['skipped'] = True
-            result['msg'] = 'check mode not supported for this module'
-            return result
-
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            tmp = self._make_tmp_path()
 
         creates = self._task.args.get('creates')
         if creates:
@@ -67,31 +59,42 @@ class ActionModule(ActionBase):
         # out now so we know the file name we need to transfer to the remote,
         # and everything else is an argument to the script which we need later
         # to append to the remote command
-        parts  = self._task.args.get('_raw_params', '').strip().split()
+        parts = self._task.args.get('_raw_params', '').strip().split()
         source = parts[0]
-        args   = ' '.join(parts[1:])
+        args = ' '.join(parts[1:])
 
         try:
-            source = self._find_needle('files', source)
+            source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
         except AnsibleError as e:
-            return dict(failed=True, msg=to_str(e))
+            return dict(failed=True, msg=to_native(e))
 
         # transfer the file to a remote tmp location
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
         self._transfer_file(source, tmp_src)
 
         # set file permissions, more permissive when the copy is done as a different user
-        self._fixup_perms(tmp, remote_user, execute=True, recursive=True)
+        self._fixup_perms2((tmp, tmp_src), execute=True)
 
         # add preparation steps to one ssh roundtrip executing the script
-        env_string = self._compute_environment_string()
+        env_dict = dict()
+        env_string = self._compute_environment_string(env_dict)
         script_cmd = ' '.join([env_string, tmp_src, args])
+        script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
-        result.update(self._low_level_execute_command(cmd=script_cmd, sudoable=True))
+        exec_data = None
+        # HACK: come up with a sane way to pass around env outside the command
+        if self._connection.transport == "winrm":
+            exec_data = self._connection._create_raw_wrapper_payload(script_cmd, env_dict)
+
+        result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True))
 
         # clean up after
         self._remove_tmp_path(tmp)
 
         result['changed'] = True
+
+        if 'rc' in result and result['rc'] != 0:
+            result['failed'] = True
+            result['msg'] = 'non-zero return code'
 
         return result

@@ -1,2 +1,0 @@
-jinja2
-pyyaml

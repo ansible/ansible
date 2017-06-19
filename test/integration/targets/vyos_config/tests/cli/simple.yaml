@@ -1,0 +1,37 @@
+---
+- debug: msg="START cli/simple.yaml"
+
+- name: setup
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure simple config command
+  vyos_config:
+    lines: set system host-name foo
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set system host-name foo' in result.commands"
+
+- name: check simple config command idempontent
+  vyos_config:
+    lines: set system host-name foo
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    provider: "{{ cli }}"
+    match: none
+
+- debug: msg="END cli/simple.yaml"

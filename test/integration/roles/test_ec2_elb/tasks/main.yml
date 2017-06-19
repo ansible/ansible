@@ -92,8 +92,8 @@
 - name: "shutdown the apache service on the first instance ({{ec2_provision_result.instances[0].public_ip}})"
   service: name=httpd state=stopped
   remote_user: "ec2-user"
-  sudo: yes
-  sudo_user: root
+  become: yes
+  become_user: root
   delegate_to: "{{ec2_provision_result.instances[0].public_ip}}"
 
 - name: assert that the httpd service was stopped
@@ -185,4 +185,3 @@
       - 'item.changed == True'
       - '"{{resource_prefix}}" in item.ansible_facts.ec2_elbs'
   with_items: result.results
-

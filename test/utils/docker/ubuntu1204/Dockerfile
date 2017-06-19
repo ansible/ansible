@@ -17,6 +17,8 @@ RUN apt-get update -y && \
     gawk \
     gcc \
     git \
+    libffi-dev \
+    libssl-dev \
     libxml2-utils \
     locales \
     make \
@@ -27,7 +29,9 @@ RUN apt-get update -y && \
     python-coverage \
     python-dev \
     python-httplib2 \
+    python-jinja2 \
     python-keyczar \
+    python-lxml \
     python-mock \
     python-mysqldb \
     python-nose \
@@ -43,14 +47,14 @@ RUN apt-get update -y && \
     rubygems \
     subversion \
     sudo \
+    tzdata \
     unzip \
     xsltproc \
     zip \
     && \
     apt-get clean
 
-RUN pip install --upgrade jinja2 pycrypto
-
+RUN pip install --upgrade pycrypto cryptography
 # helpful things taken from the ubuntu-upstart Dockerfile:
 # https://github.com/tianon/dockerfiles/blob/4d24a12b54b75b3e0904d8a285900d88d3326361/sbin-init/ubuntu/upstart/14.04/Dockerfile
 ADD init-fake.conf /etc/init/fake-container-events.conf

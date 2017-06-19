@@ -48,10 +48,6 @@ options:
     description:
       - Name of the region.
     required: false
-  availability_zone:
-    description:
-      - Name of the availability zone.
-    required: false
   wait:
     description:
       - Should ansible wait until the requested resource is complete.
@@ -71,9 +67,9 @@ options:
     default: None
   validate_certs:
     description:
-      - Whether or not SSL API requests should be verified.
+      - Whether or not SSL API requests should be verified. Before 2.3 this defaulted to True.
     required: false
-    default: True
+    default: null
     aliases: ['verify']
   cacert:
     description:
@@ -83,12 +79,12 @@ options:
     default: None
   cert:
     description:
-      - A path to a client certificate to use as part of the SSL transaction
+      - A path to a client certificate to use as part of the SSL transaction.
     required: false
     default: None
   key:
     description:
-      - A path to a client key to use as part of the SSL transaction
+      - A path to a client key to use as part of the SSL transaction.
     required: false
     default: None
   endpoint_type:

@@ -1,6 +1,0 @@
-- hosts: all
-  gather_facts: no
-  tasks:
-  - ping:
-    run_once: yes
-  - add_host: name=foo

@@ -33,6 +33,7 @@ import re
 from uuid import UUID
 
 from ansible.module_utils.basic import BOOLEANS
+from ansible.module_utils.six import text_type, binary_type
 
 FINAL_STATUSES = ('ACTIVE', 'ERROR')
 VOLUME_STATUS = ('available', 'attaching', 'creating', 'deleting', 'in-use',
@@ -44,7 +45,7 @@ CLB_PROTOCOLS = ['DNS_TCP', 'DNS_UDP', 'FTP', 'HTTP', 'HTTPS', 'IMAPS',
                  'IMAPv4', 'LDAP', 'LDAPS', 'MYSQL', 'POP3', 'POP3S', 'SMTP',
                  'TCP', 'TCP_CLIENT_FIRST', 'UDP', 'UDP_STREAM', 'SFTP']
 
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
+NON_CALLABLES = (text_type, binary_type, bool, dict, int, list, type(None))
 PUBLIC_NET_ID = "00000000-0000-0000-0000-000000000000"
 SERVICE_NET_ID = "11111111-1111-1111-1111-111111111111"
 
@@ -244,14 +245,14 @@ def rax_argument_spec():
     return dict(
         api_key=dict(type='str', aliases=['password'], no_log=True),
         auth_endpoint=dict(type='str'),
-        credentials=dict(type='str', aliases=['creds_file']),
+        credentials=dict(type='path', aliases=['creds_file']),
         env=dict(type='str'),
         identity_type=dict(type='str', default='rackspace'),
         region=dict(type='str'),
         tenant_id=dict(type='str'),
         tenant_name=dict(type='str'),
         username=dict(type='str'),
-        verify_ssl=dict(choices=BOOLEANS, type='bool'),
+        verify_ssl=dict(type='bool'),
     )
 
 

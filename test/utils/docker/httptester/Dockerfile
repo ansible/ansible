@@ -17,7 +17,12 @@ RUN set -x && \
     openssl req -new -nodes -out /root/ca/sni2.ansible.http.tests-req.pem -keyout /root/ca/private/sni2.ansible.http.tests-key.pem -config /etc/ssl/openssl.cnf \
         -subj "/C=US/ST=North Carolina/L=Durham/O=Ansible/CN=sni2.ansible.http.tests" && \
     yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/sni2.ansible.http.tests-cert.pem -infiles /root/ca/sni2.ansible.http.tests-req.pem && \
+    openssl req -new -nodes -out /root/ca/client.ansible.http.tests-req.pem -keyout /root/ca/private/client.ansible.http.tests-key.pem -config /etc/ssl/openssl.cnf \
+        -subj "/C=US/ST=North Carolina/L=Durham/O=Ansible/CN=client.ansible.http.tests" && \
+    yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/client.ansible.http.tests-cert.pem -infiles /root/ca/client.ansible.http.tests-req.pem && \
     cp /root/ca/cacert.pem /usr/share/nginx/html/cacert.pem && \
+    cp /root/ca/client.ansible.http.tests-cert.pem /usr/share/nginx/html/client.pem && \
+    cp /root/ca/private/client.ansible.http.tests-key.pem /usr/share/nginx/html/client.key && \
     pip install gunicorn httpbin
 
 ADD services.sh /services.sh

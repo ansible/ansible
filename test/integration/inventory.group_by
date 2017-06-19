@@ -1,6 +1,0 @@
-[lamini]
-alpaca genus=vicugna
-llama genus=lama
-
-[lamini:vars]
-ansible_connection=local

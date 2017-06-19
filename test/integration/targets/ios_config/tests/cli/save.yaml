@@ -1,0 +1,40 @@
+---
+- debug: msg="START cli/save.yaml"
+
+- name: setup
+  ios_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Loopback999
+    match: none
+
+
+- name: save config
+  ios_config:
+    save: true
+  register: result
+# FIXME https://github.com/ansible/ansible-modules-core/issues/5008
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.changed == true"
+# FIXME https://github.com/ansible/ansible-modules-core/issues/5008
+  ignore_errors: true
+
+- name: save should always run
+  ios_config:
+    save: true
+  register: result
+# FIXME https://github.com/ansible/ansible-modules-core/issues/5008
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.changed == true"
+# FIXME https://github.com/ansible/ansible-modules-core/issues/5008
+  ignore_errors: true
+
+- debug: msg="END cli/save.yaml"

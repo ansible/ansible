@@ -20,15 +20,36 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-from json import dumps
-from collections import MutableMapping
+import random
+import uuid
 
-from ansible.compat.six import iteritems, string_types
+from collections import MutableMapping
+from json import dumps
+
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.splitter import parse_kv
-from ansible.utils.unicode import to_unicode, to_str
+
+
+_MAXSIZE = 2 ** 32
+cur_id = 0
+node_mac = ("%012x" % uuid.getnode())[:12]
+random_int = ("%08x" % random.randint(0, _MAXSIZE))[:8]
+
+
+def get_unique_id():
+    global cur_id
+    cur_id += 1
+    return "-".join([
+        node_mac[0:8],
+        node_mac[8:12],
+        random_int[0:4],
+        random_int[4:8],
+        ("%012x" % cur_id)[:12],
+    ])
 
 
 def _validate_mutable_mappings(a, b):
@@ -49,10 +70,11 @@ def _validate_mutable_mappings(a, b):
             try:
                 myvars.append(dumps(x))
             except:
-                myvars.append(to_str(x))
+                myvars.append(to_native(x))
         raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
             a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])
         )
+
 
 def combine_vars(a, b):
     """
@@ -67,6 +89,7 @@ def combine_vars(a, b):
         result = a.copy()
         result.update(b)
         return result
+
 
 def merge_hash(a, b):
     """
@@ -95,10 +118,12 @@ def merge_hash(a, b):
 
     return result
 
+
 def load_extra_vars(loader, options):
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
-        extra_vars_opt = to_unicode(extra_vars_opt, errors='strict')
+        data = None
+        extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
         if extra_vars_opt.startswith(u"@"):
             # Argument is a YAML file (JSON is a subset of YAML)
             data = loader.load_from_file(extra_vars_opt[1:])
@@ -108,20 +133,28 @@ def load_extra_vars(loader, options):
         else:
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
-        extra_vars = combine_vars(extra_vars, data)
+
+        if isinstance(data, MutableMapping):
+            extra_vars = combine_vars(extra_vars, data)
+        else:
+            raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
+
     return extra_vars
 
-def load_options_vars(options):
+
+def load_options_vars(options, version):
     options_vars = {}
     # For now only return check mode, but we can easily return more
     # options if we need variables for them
     options_vars['ansible_check_mode'] = options.check
+    options_vars['ansible_version'] = version
     return options_vars
+
 
 def isidentifier(ident):
     """
     Determines, if string is valid Python identifier using the ast module.
-    Orignally posted at: http://stackoverflow.com/a/29586366
+    Originally posted at: http://stackoverflow.com/a/29586366
     """
 
     if not isinstance(ident, string_types):
@@ -148,4 +181,3 @@ def isidentifier(ident):
         return False
 
     return True
-

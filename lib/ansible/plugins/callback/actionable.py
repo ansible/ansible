@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 
+
 class CallbackModule(CallbackModule_default):
 
     CALLBACK_VERSION = 2.0
@@ -76,4 +77,3 @@ class CallbackModule(CallbackModule_default):
     def v2_runner_item_on_failed(self, result):
         self.display_task_banner()
         self.super_ref.v2_runner_item_on_failed(result)
-

@@ -1,0 +1,10 @@
+- name: set_handler_fact_1
+  set_fact:
+    handler1_called: True
+
+- name: set_handler_fact_2
+  set_fact:
+    handler2_called: True
+
+- name: count_handler
+  shell: echo . >> {{ handler_countpath }}

@@ -211,7 +211,7 @@ class OVirtInventory(object):
             'ovirt_uuid': inst.get_id(),
             'ovirt_id': inst.get_id(),
             'ovirt_image': inst.get_os().get_type(),
-            'ovirt_machine_type': inst.get_instance_type(),
+            'ovirt_machine_type': self.get_machine_type(inst),
             'ovirt_ips': ips,
             'ovirt_name': inst.get_name(),
             'ovirt_description': inst.get_description(),
@@ -229,6 +229,11 @@ class OVirtInventory(object):
         :type inst: params.VM
         """
         return [x.get_name() for x in inst.get_tags().list()]
+
+    def get_machine_type(self, inst):
+        inst_type = inst.get_instance_type()
+        if inst_type:
+            return self.driver.instancetypes.get(id=inst_type.id).name
 
     # noinspection PyBroadException,PyUnusedLocal
     def get_instance(self, instance_name):

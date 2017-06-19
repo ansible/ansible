@@ -1,8 +1,8 @@
 ---
-- hosts: localhost                                                              
-  connection: local                                                             
-  gather_facts: no                                                              
-  tags:                                                                         
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tags:
     - cloudflare
-  roles:                                                                        
-    - { role: test_cloudflare_dns, tags: test_cloudflare_dns }      
+  roles:
+    - { role: test_cloudflare_dns, tags: test_cloudflare_dns }

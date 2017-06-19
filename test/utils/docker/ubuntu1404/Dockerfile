@@ -16,6 +16,8 @@ RUN apt-get update -y && \
     fakeroot \
     gawk \
     git \
+    libffi-dev \
+    libssl-dev \
     libxml2-utils \
     locales \
     make \
@@ -27,6 +29,7 @@ RUN apt-get update -y && \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \
+    python-lxml \
     python-mock \
     python-mysqldb \
     python-nose \
@@ -41,6 +44,7 @@ RUN apt-get update -y && \
     ruby \
     subversion \
     sudo \
+    tzdata \
     unzip \
     xsltproc \
     zip \

@@ -1,0 +1,38 @@
+# This contain sample template execution task
+---
+- name: Test Vlan - Create a vlan, name it
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
+  with_items: "{{cnos_vlan_data1}}"
+
+- name: Test Vlan - Create a vlan, Flood configuration
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
+  with_items: "{{cnos_vlan_data2}}"
+
+- name: Test Vlan - Create a vlan, State configuration
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
+  with_items: "{{cnos_vlan_data3}}"
+
+- name: Test Vlan - VLAN Access map1
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
+  with_items: "{{cnos_vlan_data4}}"
+
+- name: Test Vlan - VLAN Accep Map2
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}' vlanArg4='{{item.vlanArg4}}'
+  with_items: "{{cnos_vlan_data5}}"
+
+- name: Test Vlan - ip igmp snooping query interval
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}' vlanArg4='{{item.vlanArg4}}'
+  with_items: "{{cnos_vlan_data6}}"
+ 
+- name: Test Vlan - ip igmp snooping last member query interval
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}' vlanArg4='{{item.vlanArg4}}'
+  with_items: "{{cnos_vlan_data7}}"
+
+- name: Test Vlan - ip igmp snooping mrouter interface port-aggregation
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}' vlanArg4='{{item.vlanArg4}}' vlanArg5='{{item.vlanArg5}}'
+  with_items: "{{cnos_vlan_data8}}"
+
+- name: Idempotent Command
+  cnos_command: host={{ inventory_hostname }}  username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} clicommand='{{item.clicommand}}' outputfile=./results/cnos_command_{{ inventory_hostname }}_output.txt
+  with_items: "{{cnos_vlan_data9}}"
+# Completed file

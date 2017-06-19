@@ -125,7 +125,7 @@ class LookupModule(LookupBase):
             for param in params[1:]:
                 if param and len(param) > 0:
                     name, value = param.split('=')
-                    assert name in paramvals, "% not a valid consul lookup parameter" % name
+                    assert name in paramvals, "%s not a valid consul lookup parameter" % name
                     paramvals[name] = value
         except (ValueError, AssertionError) as e:
             raise AnsibleError(e)

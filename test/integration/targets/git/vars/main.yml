@@ -1,0 +1,20 @@
+---
+
+checkout_dir: '{{ output_dir }}/git'
+repo_dir: '{{ output_dir }}/local_repos'
+repo_format1: 'https://github.com/jimi-c/test_role'
+repo_format2: 'git@github.com:jimi-c/test_role.git'
+repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
+repo_submodules: 'https://github.com/abadger/test_submodules.git'
+repo_submodules_newer: 'https://github.com/abadger/test_submodules_newer.git'
+repo_submodule1: 'https://github.com/abadger/test_submodules_subm1.git'
+repo_submodule1_newer: 'https://github.com/abadger/test_submodules_subm1_newer.git'
+repo_submodule2: 'https://github.com/abadger/test_submodules_subm2.git'
+repo_update_url_1: 'https://github.com/ansible-test-robinro/git-test-old'
+repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
+repo_verify: 'https://github.com/pixelrebel/ansible-git-test.git'
+known_host_files:
+  - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
+  - '/etc/ssh/ssh_known_hosts'
+git_version_supporting_depth: 1.9.1
+git_version_supporting_ls_remote: 1.7.5

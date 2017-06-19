@@ -5,6 +5,9 @@
 PYTHONPATH=${PYTHONPATH-""}
 PATH=${PATH-""}
 MANPATH=${MANPATH-""}
+PYTHON=$(which python 2>/dev/null || which python3 2>/dev/null)
+PYTHON_BIN=${PYTHON_BIN-$PYTHON}
+
 verbosity=${1-info} # Defaults to `info' if unspecified
 
 if [ "$verbosity" = -q ]; then
@@ -16,19 +19,19 @@ if [ -n "$BASH_SOURCE" ] ; then
     HACKING_DIR=$(dirname "$BASH_SOURCE")
 elif [ $(basename -- "$0") = "env-setup" ]; then
     HACKING_DIR=$(dirname "$0")
-# Works with ksh93 but not pdksh
+# Works with ksh93 but not pdksh, have to eval to keep ash happy...
 elif [ -n "$KSH_VERSION" ] && echo $KSH_VERSION | grep -qv '^@(#)PD KSH'; then
-    HACKING_DIR=$(dirname "${.sh.file}")
+    eval "HACKING_DIR=\$(dirname \"\${.sh.file}\")"
 else
     HACKING_DIR="$PWD/hacking"
 fi
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
-FULL_PATH=$(python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
+FULL_PATH=$($PYTHON_BIN -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 export ANSIBLE_HOME="$(dirname "$FULL_PATH")"
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
-PREFIX_PATH="$ANSIBLE_HOME/bin"
+PREFIX_PATH="$ANSIBLE_HOME/bin:$ANSIBLE_HOME/test/runner"
 PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
 expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || export PYTHONPATH="$PREFIX_PYTHONPATH:$PYTHONPATH"
@@ -45,7 +48,7 @@ gen_egg_info()
     if [ -e "$PREFIX_PYTHONPATH/ansible.egg-info" ] ; then
         \rm -rf "$PREFIX_PYTHONPATH/ansible.egg-info"
     fi
-    python setup.py egg_info
+    $PYTHON_BIN setup.py egg_info
 }
 
 if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
@@ -56,11 +59,11 @@ fi
 (
 	cd "$ANSIBLE_HOME"
 	if [ "$verbosity" = silent ] ; then
-	    gen_egg_info > /dev/null 2>&1
-            find . -type f -name "*.pyc" -exec rm {} \; > /dev/null 2>&1
+	    gen_egg_info > /dev/null 2>&1 &
+            find . -type f -name "*.pyc" -exec rm -f {} \; > /dev/null 2>&1
 	else
 	    gen_egg_info
-            find . -type f -name "*.pyc" -exec rm {} \;
+            find . -type f -name "*.pyc" -exec rm -f {} \;
 	fi
 	cd "$current_dir"
 )

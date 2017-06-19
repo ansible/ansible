@@ -1,0 +1,36 @@
+---
+- debug: msg="START cli/set_hostname.yaml"
+
+- name: setup
+  nxos_config:
+    lines: hostname switch
+    match: none
+    provider: "{{ cli }}"
+
+- name: configure hostname
+  nxos_system:
+    hostname: foo
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify hostname
+  nxos_system:
+    hostname: foo
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines: "hostname {{ inventory_hostname }}"
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/set_hostname.yaml"

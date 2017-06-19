@@ -217,4 +217,3 @@
     that:
        - 'result.failed'
        - 'result.msg == "Cannot give both image (debian-7) and snapshot ({{ instance_name }}-snapshot)"'
-

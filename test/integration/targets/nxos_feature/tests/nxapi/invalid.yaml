@@ -1,0 +1,15 @@
+---
+- debug: msg="START nxapi/invalid.yaml"
+
+- name: configure invalid feature name
+  nxos_feature:
+    feature: invalid
+    provider: "{{ nxapi }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.failed == true
+
+- debug: msg="END nxapi/invalid.yaml"

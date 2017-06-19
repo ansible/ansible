@@ -32,7 +32,8 @@ Tested with Zabbix Server 2.0.6.
 
 from __future__ import print_function
 
-import os, sys
+import os
+import sys
 import argparse
 import ConfigParser
 
@@ -48,15 +49,16 @@ try:
 except:
     import simplejson as json
 
+
 class ZabbixInventory(object):
 
     def read_settings(self):
         config = ConfigParser.SafeConfigParser()
         conf_path = './zabbix.ini'
         if not os.path.exists(conf_path):
-	        conf_path = os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini'
+            conf_path = os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini'
         if os.path.exists(conf_path):
-	        config.read(conf_path)
+            config.read(conf_path)
         # server
         if config.has_option('zabbix', 'server'):
             self.zabbix_server = config.get('zabbix', 'server')
@@ -79,7 +81,7 @@ class ZabbixInventory(object):
         }
 
     def get_host(self, api, name):
-        data = {}
+        data = {'ansible_ssh_host': name}
         return data
 
     def get_list(self, api):
@@ -95,7 +97,7 @@ class ZabbixInventory(object):
             for group in host['groups']:
                 groupname = group['name']
 
-                if not groupname in data:
+                if groupname not in data:
                     data[groupname] = self.hoststub()
 
                 data[groupname]['hosts'].append(hostname)

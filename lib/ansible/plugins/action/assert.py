@@ -51,6 +51,7 @@ class ActionModule(ActionBase):
         # by this point, and is not used again, so we don't care about mangling
         # that value now
         cond = Conditional(loader=self._loader)
+        result['_ansible_verbose_always'] = True
         for that in thats:
             cond.when = [that]
             test_result = cond.evaluate_conditional(templar=self._templar, all_vars=task_vars)
@@ -65,5 +66,5 @@ class ActionModule(ActionBase):
                 return result
 
         result['changed'] = False
-        result['msg'] = 'all assertions passed'
+        result['msg'] = 'All assertions passed'
         return result

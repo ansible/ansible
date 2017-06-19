@@ -19,11 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
 import codecs
+import re
 
 from ansible.errors import AnsibleParserError
+from ansible.module_utils._text import to_text
 from ansible.parsing.quoting import unquote
+
 
 # Decode escapes adapted from rspeer's answer here:
 # http://stackoverflow.com/questions/4020539/process-escape-sequences-in-a-string-in-python
@@ -34,13 +36,15 @@ _ESCAPE_SEQUENCE_RE = re.compile(r'''
     | \\x{2}           # 2-digit hex escapes
     | \\N\{{[^}}]+\}}  # Unicode characters by name
     | \\[\\'"abfnrtv]  # Single-character escapes
-    )'''.format(_HEXCHAR*8, _HEXCHAR*4, _HEXCHAR*2), re.UNICODE | re.VERBOSE)
+    )'''.format(_HEXCHAR * 8, _HEXCHAR * 4, _HEXCHAR * 2), re.UNICODE | re.VERBOSE)
+
 
 def _decode_escapes(s):
     def decode_match(match):
         return codecs.decode(match.group(0), 'unicode-escape')
 
     return _ESCAPE_SEQUENCE_RE.sub(decode_match, s)
+
 
 def parse_kv(args, check_raw=False):
     '''
@@ -50,9 +54,7 @@ def parse_kv(args, check_raw=False):
     they will simply be ignored.
     '''
 
-    ### FIXME: args should already be a unicode string
-    from ansible.utils.unicode import to_unicode
-    args = to_unicode(args, nonstring='passthru')
+    args = to_text(args, nonstring='passthru')
 
     options = {}
     if args is not None:
@@ -60,7 +62,7 @@ def parse_kv(args, check_raw=False):
             vargs = split_args(args)
         except ValueError as ve:
             if 'no closing quotation' in str(ve).lower():
-                raise AnsibleParsingError("error parsing argument string, try quoting the entire line.")
+                raise AnsibleParserError("error parsing argument string, try quoting the entire line.", orig_exc=ve)
             else:
                 raise
 
@@ -99,6 +101,7 @@ def parse_kv(args, check_raw=False):
 
     return options
 
+
 def _get_quote_state(token, quote_char):
     '''
     the goal of this block is to determine if the quoted string
@@ -109,7 +112,7 @@ def _get_quote_state(token, quote_char):
     prev_char = None
     for idx, cur_char in enumerate(token):
         if idx > 0:
-            prev_char = token[idx-1]
+            prev_char = token[idx - 1]
         if cur_char in '"\'' and prev_char != '\\':
             if quote_char:
                 if cur_char == quote_char:
@@ -118,19 +121,21 @@ def _get_quote_state(token, quote_char):
                 quote_char = cur_char
     return quote_char
 
+
 def _count_jinja2_blocks(token, cur_depth, open_token, close_token):
     '''
     this function counts the number of opening/closing blocks for a
     given opening/closing type and adjusts the current depth for that
     block based on the difference
     '''
-    num_open  = token.count(open_token)
+    num_open = token.count(open_token)
     num_close = token.count(close_token)
     if num_open != num_close:
         cur_depth += (num_open - num_close)
         if cur_depth < 0:
             cur_depth = 0
     return cur_depth
+
 
 def split_args(args):
     '''
@@ -166,13 +171,13 @@ def split_args(args):
 
     quote_char = None
     inside_quotes = False
-    print_depth   = 0 # used to count nested jinja2 {{ }} blocks
-    block_depth   = 0 # used to count nested jinja2 {% %} blocks
-    comment_depth = 0 # used to count nested jinja2 {# #} blocks
+    print_depth = 0  # used to count nested jinja2 {{ }} blocks
+    block_depth = 0  # used to count nested jinja2 {% %} blocks
+    comment_depth = 0  # used to count nested jinja2 {# #} blocks
 
     # now we loop over each split chunk, coalescing tokens if the white space
     # split occurred within quotes or a jinja2 block of some kind
-    for itemidx,item in enumerate(items):
+    for (itemidx, item) in enumerate(items):
 
         # we split on spaces and newlines separately, so that we
         # can tell which character we split on for reassembly
@@ -180,7 +185,7 @@ def split_args(args):
         tokens = item.strip().split(' ')
 
         line_continuation = False
-        for idx,token in enumerate(tokens):
+        for (idx, token) in enumerate(tokens):
 
             # if we hit a line continuation character, but
             # we're not inside quotes, ignore it and continue

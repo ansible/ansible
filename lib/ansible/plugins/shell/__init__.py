@@ -19,32 +19,34 @@ __metaclass__ = type
 
 import os
 import re
-import pipes
 import ansible.constants as C
 import time
 import random
 
-from ansible.compat.six import text_type
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import shlex_quote
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
+
 
 class ShellBase(object):
 
     def __init__(self):
         self.env = dict()
         if C.DEFAULT_MODULE_SET_LOCALE:
+            module_locale = C.DEFAULT_MODULE_LANG or os.getenv('LANG', 'en_US.UTF-8')
             self.env.update(
                 dict(
-                    LANG        = C.DEFAULT_MODULE_LANG,
-                    LC_ALL      = C.DEFAULT_MODULE_LANG,
-                    LC_MESSAGES = C.DEFAULT_MODULE_LANG,
+                    LANG=module_locale,
+                    LC_ALL=module_locale,
+                    LC_MESSAGES=module_locale,
                 )
             )
 
     def env_prefix(self, **kwargs):
         env = self.env.copy()
         env.update(kwargs)
-        return ' '.join(['%s=%s' % (k, pipes.quote(text_type(v))) for k,v in env.items()])
+        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in env.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)
@@ -57,60 +59,40 @@ class ShellBase(object):
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
 
-    def chmod(self, mode, path, recursive=True):
-        path = pipes.quote(path)
-        cmd = ['chmod']
-
-        if recursive:
-            cmd.append('-R') # many chmods require -R before file list
-
-        cmd.extend([mode, path])
+    def chmod(self, paths, mode):
+        cmd = ['chmod', mode]
+        cmd.extend(paths)
+        cmd = [shlex_quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
-    def chown(self, path, user, group=None, recursive=True):
-        path = pipes.quote(path)
-        user = pipes.quote(user)
-
-        cmd = ['chown']
-
-        if recursive:
-            cmd.append('-R') # many chowns require -R before file list
-
-        if group is None:
-            cmd.extend([user, path])
-        else:
-            group = pipes.quote(group)
-            cmd.extend(['%s:%s' % (user, group), path])
+    def chown(self, paths, user):
+        cmd = ['chown', user]
+        cmd.extend(paths)
+        cmd = [shlex_quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
-    def set_user_facl(self, path, user, mode, recursive=True):
+    def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
-        path = pipes.quote(path)
-        mode = pipes.quote(mode)
-        user = pipes.quote(user)
-
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
-        if recursive:
-            cmd = ['find', path, '-exec'] + cmd + ["'{}'", "'+'"]
-        else:
-            cmd.append(path)
+        cmd.extend(paths)
+        cmd = [shlex_quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
     def remove(self, path, recurse=False):
-        path = pipes.quote(path)
+        path = shlex_quote(path)
         cmd = 'rm -f '
         if recurse:
             cmd += '-r '
         return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
     def exists(self, path):
-        cmd = ['test', '-e', pipes.quote(path)]
+        cmd = ['test', '-e', shlex_quote(path)]
         return ' '.join(cmd)
 
-    def mkdtemp(self, basefile=None, system=False, mode=None):
+    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
         if not basefile:
             basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
 
@@ -126,13 +108,17 @@ class ShellBase(object):
         # to somewhere in or below /var/tmp and if so use /var/tmp.  If
         # anything else we use /tmp (because /tmp is specified by POSIX nad
         # /var/tmp is not).
+
         if system:
             if C.DEFAULT_REMOTE_TMP.startswith('/var/tmp'):
                 basetmpdir = '/var/tmp'
             else:
                 basetmpdir = '/tmp'
-        else:
+        elif tmpdir is None:
             basetmpdir = C.DEFAULT_REMOTE_TMP
+        else:
+            basetmpdir = tmpdir
+
         basetmp = self.join_path(basetmpdir, basefile)
 
         cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
@@ -158,14 +144,14 @@ class ShellBase(object):
         # Check that the user_path to expand is safe
         if user_home_path != '~':
             if not _USER_HOME_PATH_RE.match(user_home_path):
-                # pipes.quote will make the shell return the string verbatim
-                user_home_path = pipes.quote(user_home_path)
+                # shlex_quote will make the shell return the string verbatim
+                user_home_path = shlex_quote(user_home_path)
         return 'echo %s' % user_home_path
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
         if cmd.strip() != '':
-            cmd = pipes.quote(cmd)
+            cmd = shlex_quote(cmd)
 
         cmd_parts = []
         if shebang:
@@ -186,4 +172,8 @@ class ShellBase(object):
         if self._SHELL_AND:
             cmd += ' %s %s' % (self._SHELL_AND, cmd_to_append)
 
+        return cmd
+
+    def wrap_for_exec(self, cmd):
+        """wrap script execution with any necessary decoration (eg '&' for quoted powershell script paths)"""
         return cmd

@@ -50,8 +50,8 @@ class TestPlay(unittest.TestCase):
             gather_facts=False,
             connection='local',
             remote_user="root",
-            sudo=True,
-            sudo_user="testing",
+            become=True,
+            become_user="testing",
         ))
 
     def test_play_with_user_conflict(self):
@@ -77,7 +77,7 @@ class TestPlay(unittest.TestCase):
             name="test play",
             hosts=['foo'],
             gather_facts=False,
-            tasks=[dict(action='shell echo "hello world"')], 
+            tasks=[dict(action='shell echo "hello world"')],
         ))
 
     def test_play_with_handlers(self):

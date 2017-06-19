@@ -20,19 +20,25 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import collections
-import sys
 
-from jinja2 import Undefined as j2undefined
+from jinja2.runtime import Undefined
 
-from ansible import constants as C
-from ansible.inventory.host import Host
 from ansible.template import Templar
 
 STATIC_VARS = [
-  'inventory_hostname', 'inventory_hostname_short',
-  'inventory_file', 'inventory_dir', 'playbook_dir',
-  'ansible_play_hosts', 'play_hosts', 'groups', 'ungrouped', 'group_names',
-  'ansible_version', 'omit', 'role_names'
+    'ansible_version',
+    'ansible_play_hosts',
+    'inventory_hostname',
+    'inventory_hostname_short',
+    'inventory_file',
+    'inventory_dir',
+    'groups',
+    'group_names',
+    'omit',
+    'playbook_dir',
+    'play_hosts',
+    'role_names',
+    'ungrouped',
 ]
 
 try:
@@ -41,6 +47,7 @@ except ImportError:
     from sha import sha as sha1
 
 __all__ = ['HostVars']
+
 
 # Note -- this is a Mapping, not a MutableMapping
 class HostVars(collections.Mapping):
@@ -62,27 +69,26 @@ class HostVars(collections.Mapping):
         self._inventory = inventory
 
     def _find_host(self, host_name):
-        if host_name in C.LOCALHOST:
-            host = self._inventory.localhost
-        else:
-            host = self._inventory.get_host(host_name)
-        return host
+        return self._inventory.get_host(host_name)
 
-    def __getitem__(self, host_name):
+    def raw_get(self, host_name):
+        '''
+        Similar to __getitem__, however the returned data is not run through
+        the templating engine to expand variables in the hostvars.
+        '''
         host = self._find_host(host_name)
         if host is None:
-            raise j2undefined
+            return Undefined(name="hostvars['%s']" % host_name)
 
-        data = self._variable_manager.get_vars(loader=self._loader, host=host, include_hostvars=False)
+        return self._variable_manager.get_vars(host=host, include_hostvars=False)
 
+    def __getitem__(self, host_name):
+        data = self.raw_get(host_name)
         sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
-        if sha1_hash in self._cached_result:
-            result = self._cached_result[sha1_hash]
-        else:
+        if sha1_hash not in self._cached_result:
             templar = Templar(variables=data, loader=self._loader)
-            result = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
-            self._cached_result[sha1_hash] = result
-        return result
+            self._cached_result[sha1_hash] = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
+        return self._cached_result[sha1_hash]
 
     def set_host_variable(self, host, varname, value):
         self._variable_manager.set_host_variable(host, varname, value)
@@ -97,15 +103,15 @@ class HostVars(collections.Mapping):
         return self._find_host(host_name) is not None
 
     def __iter__(self):
-        for host in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
-            yield host
+        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
+            yield host.name
 
     def __len__(self):
-        return len(self._inventory.get_hosts(ignore_limits_and_restrictions=True))
+        return len(self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True))
 
     def __repr__(self):
         out = {}
-        for host in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
             name = host.name
             out[name] = self.get(name)
         return repr(out)

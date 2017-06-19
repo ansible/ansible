@@ -1,43 +1,64 @@
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 #
-# This file is part of Ansible
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-import itertools
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, get_exception
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
+from ansible.module_utils.netcli import Cli, Command
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
 
 NET_TRANSPORT_ARGS = dict(
     host=dict(required=True),
     port=dict(type='int'),
+
     username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
     ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+
     authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
-    provider=dict(type='dict'),
+
+    provider=dict(type='dict', no_log=True),
     transport=dict(choices=list()),
+
     timeout=dict(default=10, type='int')
 )
 
 NET_CONNECTION_ARGS = dict()
 
 NET_CONNECTIONS = dict()
+
+
+def _transitional_argument_spec():
+    argument_spec = {}
+    for key, value in iteritems(NET_TRANSPORT_ARGS):
+        value['required'] = False
+        argument_spec[key] = value
+    return argument_spec
 
 
 def to_list(val):
@@ -56,91 +77,32 @@ class ModuleStub(object):
             self.params[key] = value.get('default')
         self.fail_json = fail_json
 
-class Command(object):
-
-    def __init__(self, command, output=None, prompt=None, response=None,
-                 is_reboot=False, delay=0):
-
-        self.command = command
-        self.output = output
-        self.prompt = prompt
-        self.response = response
-        self.is_reboot = is_reboot
-        self.delay = delay
-
-    def __str__(self):
-        return self.command
-
-class Cli(object):
-
-    def __init__(self, connection):
-        self.connection = connection
-        self.default_output = connection.default_output or 'text'
-        self.commands = list()
-
-    def __call__(self, commands, output=None):
-        commands = self.to_command(commands, output)
-        return self.connection.run_commands(commands)
-
-    def to_command(self, commands, output=None):
-        output = output or self.default_output
-        objects = list()
-        for cmd in to_list(commands):
-            if not isinstance(cmd, Command):
-                cmd = Command(cmd, output)
-            objects.append(cmd)
-        return objects
-
-    def add_commands(self, commands, output=None):
-        commands = self.to_command(commands, output)
-        self.commands.extend(commands)
-
-    def run_commands(self):
-        responses = self.connection.run_commands(self.commands)
-        for resp, cmd in itertools.izip(responses, self.commands):
-            cmd.response = resp
-        return responses
-
-class Config(object):
-
-    def __init__(self, connection):
-        self.connection = connection
-
-    def invoke(self, method, *args, **kwargs):
-        try:
-            return method(*args, **kwargs)
-        except AttributeError:
-            exc = get_exception()
-            raise NetworkError('undefined method "%s"' % method.__name__, exc=str(exc))
-        except NotImplementedError:
-            raise NetworkError('method not supported "%s"' % method.__name__)
-
-    def __call__(self, commands):
-        lines = to_list(commands)
-        return self.invoke(self.connection.configure, commands)
-
-    def load_config(self, commands, **kwargs):
-        commands = to_list(commands)
-        return self.invoke(self.connection.load_config, commands, **kwargs)
-
-    def get_config(self, **kwargs):
-        return self.invoke(self.connection.get_config, **kwargs)
-
-    def commit_config(self, **kwargs):
-        return self.invoke(self.connection.commit_config, **kwargs)
-
-    def abort_config(self, **kwargs):
-        return self.invoke(self.connection.abort_config, **kwargs)
-
-    def save_config(self):
-        return self.invoke(self.connection.save_config)
-
 
 class NetworkError(Exception):
 
     def __init__(self, msg, **kwargs):
         super(NetworkError, self).__init__(msg)
         self.kwargs = kwargs
+
+
+class Config(object):
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __call__(self, commands, **kwargs):
+        lines = to_list(commands)
+        return self.connection.configure(lines, **kwargs)
+
+    def load_config(self, commands, **kwargs):
+        commands = to_list(commands)
+        return self.connection.load_config(commands, **kwargs)
+
+    def get_config(self, **kwargs):
+        return self.connection.get_config(**kwargs)
+
+    def save_config(self):
+        return self.connection.save_config()
 
 
 class NetworkModule(AnsibleModule):
@@ -170,7 +132,7 @@ class NetworkModule(AnsibleModule):
             self.fail_json(msg='Unknown transport or no default transport specified')
         except (TypeError, NetworkError):
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
         if connect_on_load:
             self.connect()
@@ -212,72 +174,20 @@ class NetworkModule(AnsibleModule):
                 self.connection.connect(self.params)
                 if self.params['authorize']:
                     self.connection.authorize(self.params)
+                self.log('connected to %s:%s using %s' % (self.params['host'],
+                         self.params['port'], self.params['transport']))
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
     def disconnect(self):
         try:
             if self.connected:
                 self.connection.disconnect()
+            self.log('disconnected from %s' % self.params['host'])
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
-
-
-class NetCli(object):
-    """Basic paramiko-based ssh transport any NetworkModule can use."""
-
-    def __init__(self):
-        if not HAS_PARAMIKO:
-            raise NetworkError(
-                msg='paramiko is required but does not appear to be installed.  '
-                'It can be installed using  `pip install paramiko`'
-            )
-
-        self.shell = None
-        self._connected = False
-        self.default_output = 'text'
-
-    def connect(self, params, kickstart, **kwargs):
-        host = params['host']
-        port = params.get('port') or 22
-
-        username = params['username']
-        password = params.get('password')
-        key_file = params.get('ssh_keyfile')
-        timeout = params['timeout']
-
-        try:
-            self.shell = Shell(
-                kickstart=kickstart,
-                prompts_re=self.CLI_PROMPTS_RE,
-                errors_re=self.CLI_ERRORS_RE,
-            )
-            self.shell.open(
-                host, port=port, username=username, password=password,
-                key_filename=key_file, timeout=timeout,
-            )
-        except ShellError:
-            exc = get_exception()
-            raise NetworkError(
-                msg='failed to connect to %s:%s' % (host, port), exc=str(exc)
-            )
-
-    def disconnect(self, **kwargs):
-        self._connected = False
-        self.shell.close()
-
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
-
-    def execute(self, commands, **kwargs):
-        try:
-            return self.shell.send(commands)
-        except ShellError:
-            exc = get_exception()
-            raise NetworkError(exc.message, commands=commands)
+            self.fail_json(msg=to_native(exc))
 
 
 def register_transport(transport, default=False):
@@ -288,12 +198,6 @@ def register_transport(transport, default=False):
         return cls
     return register
 
+
 def add_argument(key, value):
     NET_CONNECTION_ARGS[key] = value
-
-def get_module(*args, **kwargs):
-    # This is a temporary factory function to avoid break all modules
-    # until the modules are updated.  This function *will* be removed
-    # before 2.2 final
-    return NetworkModule(*args, **kwargs)
-

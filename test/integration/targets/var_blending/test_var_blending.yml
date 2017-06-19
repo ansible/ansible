@@ -1,0 +1,8 @@
+- hosts: testhost
+  vars_files:
+    - vars_file.yml
+  vars:
+    vars_var: 123
+  gather_facts: True
+  roles:
+    - { role: test_var_blending, parameterized_beats_default: 1234, tags: test_var_blending }

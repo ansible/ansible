@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from subprocess import Popen,PIPE
+from subprocess import Popen, PIPE
 import sys
 import json
 
@@ -34,4 +34,4 @@ if len(sys.argv) == 2 and sys.argv[1] == '--list':
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
     print(json.dumps({'ansible_connection': 'jail'}))
 else:
-    print("Need an argument, either --list or --host <host>")
+    sys.stderr.write("Need an argument, either --list or --host <host>\n")

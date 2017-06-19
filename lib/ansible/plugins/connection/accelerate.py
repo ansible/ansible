@@ -27,10 +27,11 @@ import time
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionFailure
+from ansible.module_utils._text import to_bytes
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.encrypt import key_for_hostname, keyczar_encrypt, keyczar_decrypt
-from ansible.utils.unicode import to_bytes
+
 
 try:
     from __main__ import display
@@ -43,7 +44,7 @@ except ImportError:
 # ((1400-8)/4)*3) = 1044
 # which leaves room for the TCP/IP header. We set this to a
 # multiple of the value to speed up file reads.
-CHUNK_SIZE=1044*20
+CHUNK_SIZE = 1044 * 20
 
 
 class Connection(ConnectionBase):
@@ -68,10 +69,11 @@ class Connection(ConnectionBase):
             tries = 3
             self.conn = socket.socket()
             self.conn.settimeout(C.ACCELERATE_CONNECT_TIMEOUT)
-            display.vvvv("attempting connection to %s via the accelerated port %d" % (self._play_context.remote_addr, self._play_context.accelerate_port), host=self._play_context.remote_addr)
+            display.vvvv("attempting connection to %s via the accelerated port %d" % (self._play_context.remote_addr, self._play_context.accelerate_port),
+                         host=self._play_context.remote_addr)
             while tries > 0:
                 try:
-                    self.conn.connect((self._play_context.remote_addr,self._play_context.accelerate_port))
+                    self.conn.connect((self._play_context.remote_addr, self._play_context.accelerate_port))
                     break
                 except socket.error:
                     display.vvvv("connection to %s failed, retrying..." % self._play_context.remote_addr, host=self._play_context.remote_addr)
@@ -79,7 +81,8 @@ class Connection(ConnectionBase):
                     tries -= 1
             if tries == 0:
                 display.vvv("Could not connect via the accelerated connection, exceeded # of tries", host=self._play_context.remote_addr)
-                raise AnsibleConnectionFailure("Failed to connect to %s on the accelerated port %s" % (self._play_context.remote_addr, self._play_context.accelerate_port))
+                raise AnsibleConnectionFailure("Failed to connect to %s on the accelerated port %s" % (self._play_context.remote_addr,
+                                                                                                       self._play_context.accelerate_port))
             elif wrong_user:
                 display.vvv("Restarting daemon with a different remote_user", host=self._play_context.remote_addr)
                 raise AnsibleError("The accelerated daemon was started on the remote with a different user")
@@ -95,12 +98,20 @@ class Connection(ConnectionBase):
         self._connected = True
         return self
 
+    def transport_test(self, connect_timeout):
+        ''' Test the transport mechanism, if available '''
+        host = self._play_context.remote_addr
+        port = int(self._play_context.accelerate_port or 5099)
+        display.vvv("attempting transport test to %s:%s" % (host, port))
+        sock = socket.create_connection((host, port), connect_timeout)
+        sock.close()
+
     def send_data(self, data):
-        packed_len = struct.pack('!Q',len(data))
+        packed_len = struct.pack('!Q', len(data))
         return self.conn.sendall(packed_len + data)
 
     def recv_data(self):
-        header_len = 8 # size of a packed unsigned long long
+        header_len = 8  # size of a packed unsigned long long
         data = b""
         try:
             display.vvvv("in recv_data(), waiting for the header", host=self._play_context.remote_addr)
@@ -111,7 +122,7 @@ class Connection(ConnectionBase):
                     return None
                 data += d
             display.vvvv("got the header, unpacking", host=self._play_context.remote_addr)
-            data_len = struct.unpack('!Q',data[:header_len])[0]
+            data_len = struct.unpack('!Q', data[:header_len])[0]
             data = data[header_len:]
             display.vvvv("data received so far (expecting %d): %d" % (data_len, len(data)), host=self._play_context.remote_addr)
             while len(data) < data_len:
@@ -211,7 +222,7 @@ class Connection(ConnectionBase):
         ''' transfer a file from local to remote '''
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
-        in_path = to_bytes(in_path, errors='strict')
+        in_path = to_bytes(in_path, errors='surrogate_or_strict')
 
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
@@ -241,7 +252,7 @@ class Connection(ConnectionBase):
                 response = keyczar_decrypt(self.key, response)
                 response = json.loads(response)
 
-                if response.get('failed',False):
+                if response.get('failed', False):
                     raise AnsibleError("failed to put the file in the requested location")
         finally:
             fd.close()
@@ -252,7 +263,7 @@ class Connection(ConnectionBase):
             response = keyczar_decrypt(self.key, response)
             response = json.loads(response)
 
-            if response.get('failed',False):
+            if response.get('failed', False):
                 raise AnsibleError("failed to put the file in the requested location")
 
     def fetch_file(self, in_path, out_path):
@@ -265,7 +276,7 @@ class Connection(ConnectionBase):
         if self.send_data(data):
             raise AnsibleError("failed to initiate the file fetch with %s" % self._play_context.remote_addr)
 
-        fh = open(to_bytes(out_path, errors='strict'), "w")
+        fh = open(to_bytes(out_path, errors='surrogate_or_strict'), "w")
         try:
             bytes = 0
             while True:

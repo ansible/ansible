@@ -1,3 +1,26 @@
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+'''
+DOCUMENTATION:
+    strategy: debug
+    short_description: Executes tasks in interactive debug session.
+    description:
+        - Task execution is 'linear' but controlled by an interactive debug session.
+    version_added: "2.1"
+    author: Kishin Yagami
+'''
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -6,7 +29,8 @@ import cmd
 import pprint
 import sys
 
-from ansible.plugins.strategy import linear
+from ansible.module_utils.six.moves import reduce
+from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
 
 try:
     from __main__ import display
@@ -25,7 +49,7 @@ class NextAction(object):
         self.result = result
 
 
-class StrategyModule(linear.StrategyModule):
+class StrategyModule(LinearStrategyModule):
     def __init__(self, tqm):
         self.curr_tqm = tqm
         super(StrategyModule, self).__init__(tqm)
@@ -38,9 +62,9 @@ class StrategyModule(linear.StrategyModule):
 
         super(StrategyModule, self)._queue_task(host, task, task_vars, play_context)
 
-    def _process_pending_results(self, iterator, one_pass=False):
+    def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         if not hasattr(self, "curr_host"):
-            return super(StrategyModule, self)._process_pending_results(iterator, one_pass)
+            return super(StrategyModule, self)._process_pending_results(iterator, one_pass, max_passes)
 
         prev_host_state = iterator.get_host_state(self.curr_host)
         results = super(StrategyModule, self)._process_pending_results(iterator, one_pass)
@@ -54,9 +78,9 @@ class StrategyModule(linear.StrategyModule):
                 # rollback host state
                 self.curr_tqm.clear_failed_hosts()
                 iterator._host_states[self.curr_host.name] = prev_host_state
-                if reduce(lambda total, res : res.is_failed() or total, results, False):
+                if reduce(lambda total, res: res.is_failed() or total, results, False):
                     self._tqm._stats.failures[self.curr_host.name] -= 1
-                elif reduce(lambda total, res : res.is_unreachable() or total, results, False):
+                elif reduce(lambda total, res: res.is_unreachable() or total, results, False):
                     self._tqm._stats.dark[self.curr_host.name] -= 1
 
                 # redo
@@ -70,7 +94,7 @@ class StrategyModule(linear.StrategyModule):
         return results
 
     def _need_debug(self, results):
-        return reduce(lambda total, res : res.is_failed() or res.is_unreachable() or total, results, False)
+        return reduce(lambda total, res: res.is_failed() or res.is_unreachable() or total, results, False)
 
 
 class Debugger(cmd.Cmd):
@@ -143,7 +167,7 @@ class Debugger(cmd.Cmd):
             exec(code, globals(), self.scope)
         except:
             t, v = sys.exc_info()[:2]
-            if type(t) == type(''):
+            if isinstance(t, str):
                 exc_type_name = t
             else:
                 exc_type_name = t.__name__

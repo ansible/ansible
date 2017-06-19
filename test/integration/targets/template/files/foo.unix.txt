@@ -1,0 +1,3 @@
+BEGIN
+templated_var_loaded
+END

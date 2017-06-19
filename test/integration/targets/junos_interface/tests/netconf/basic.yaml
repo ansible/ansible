@@ -1,0 +1,130 @@
+---
+- debug: msg="START junos_interface netconf/basic.yaml"
+
+- name: setup - remove interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>ge-0/0/1</name>' in result.rpc"
+      - "'<description>test-interface</description>' in result.rpc"
+
+- name: Create interface (idempotent)
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate interface configuration
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: suspend
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<interface inactive=\"inactive\">' in result.rpc"
+      - "'<name>ge-0/0/1</name>' in result.rpc"
+
+- name: Activate interface configuration
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: active
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<interface active=\"active\">' in result.rpc"
+      - "'<name>ge-0/0/1</name>' in result.rpc"
+
+- name: Configure interface attributes
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    speed: 1g
+    mtu: 256
+    duplex: full
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>ge-0/0/1</name>' in result.rpc"
+      - "'<link-mode>full-duplex</link-mode>' in result.rpc"
+      - "'<mtu>256</mtu>' in result.rpc"
+      - "'<speed>1g</speed>' in result.rpc"
+      - "'<description>test-interface</description>' in result.rpc"
+
+- name: Disable interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    enabled: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<disable />' in result.rpc"
+      - "'<name>ge-0/0/1</name>' in result.rpc"
+
+- name: Enable interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    enabled: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<disable delete=\"delete\" />' in result.rpc"
+      - "'<name>ge-0/0/1</name>' in result.rpc"
+
+- name: Delete interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<interface delete=\"delete\">' in result.rpc"
+      - "'<name>ge-0/0/1</name>' in result.rpc"

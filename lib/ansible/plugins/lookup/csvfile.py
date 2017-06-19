@@ -19,10 +19,12 @@ __metaclass__ = type
 
 import codecs
 import csv
+from collections import MutableSequence
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.unicode import to_bytes, to_str, to_unicode
+from ansible.module_utils._text import to_bytes, to_native, to_text
+
 
 class CSVRecoder:
     """
@@ -37,6 +39,7 @@ class CSVRecoder:
     def next(self):
         return self.reader.next().encode("utf-8")
 
+
 class CSVReader:
     """
     A CSV reader which will iterate over lines in the CSV file "f",
@@ -49,10 +52,11 @@ class CSVReader:
 
     def next(self):
         row = self.reader.next()
-        return [to_unicode(s) for s in row]
+        return [to_text(s) for s in row]
 
     def __iter__(self):
         return self
+
 
 class LookupModule(LookupBase):
 
@@ -66,7 +70,7 @@ class LookupModule(LookupBase):
                 if row[0] == key:
                     return row[int(col)]
         except Exception as e:
-            raise AnsibleError("csvfile: %s" % to_str(e))
+            raise AnsibleError("csvfile: %s" % to_native(e))
 
         return dflt
 
@@ -79,11 +83,11 @@ class LookupModule(LookupBase):
             key = params[0]
 
             paramvals = {
-                'col' : "1",          # column to return
-                'default' : None,
-                'delimiter' : "TAB",
-                'file' : 'ansible.csv',
-                'encoding' : 'utf-8',
+                'col': "1",          # column to return
+                'default': None,
+                'delimiter': "TAB",
+                'file': 'ansible.csv',
+                'encoding': 'utf-8',
             }
 
             # parameters specified?
@@ -101,7 +105,7 @@ class LookupModule(LookupBase):
             lookupfile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
             var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
             if var is not None:
-                if type(var) is list:
+                if isinstance(var, MutableSequence):
                     for v in var:
                         ret.append(v)
                 else:

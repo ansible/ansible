@@ -1,0 +1,43 @@
+---
+- debug: msg="START cli/full_name_match.yaml"
+
+- name: setup
+  asa_config:
+    commands:
+      - clear configure access-list ACL-BASIC
+      - clear configure access-list ACL-BASIC2
+    provider: "{{ cli }}"
+  ignore_errors: yes
+
+- name: Basic ACL
+  asa_acl:
+    provider: "{{ cli }}"
+    lines:
+      - access-list ACL-BASIC2 extended permit tcp any any eq www
+      - access-list ACL-BASIC2 extended permit tcp any any eq https
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Should not match for ACL-BASIC2
+  asa_acl:
+    provider: "{{ cli }}"
+    lines:
+      - access-list ACL-BASIC extended permit tcp any any eq www
+      - access-list ACL-BASIC extended permit tcp any any eq https
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: teardown
+  asa_config:
+    commands:
+      - clear configure access-list ACL-BASIC
+      - clear configure access-list ACL-BASIC2
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/full_name_match.yaml"

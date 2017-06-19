@@ -1,0 +1,3 @@
+needs/privileged
+needs/root
+posix/ci/group2

@@ -11,7 +11,7 @@ supported_archs noarch
 
 maintainers     nomaintainer
 
-homepage        http://ansible.com/
+homepage        https://ansible.com/
 description     Radically simple IT automation
 long_description \
     Ansible is a radically simple model-driven configuration \
@@ -33,7 +33,6 @@ python.default_version  27
 depends_lib-append      port:py${python.version}-jinja2 \
                         port:py${python.version}-paramiko \
                         port:py${python.version}-yaml
-# fireball mode requires py-zmq, py-asn1, py-crypto and py-keyczar
 
 patch {
     fs-traverse f ${worksrcpath} {

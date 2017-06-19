@@ -1,382 +1,476 @@
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# This code is part of Ansible, but is an independent component.
 #
-# This file is part of Ansible
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# (c) 2017 Red Hat, Inc.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+import os
+import time
 
-import re
+from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.urls import fetch_url
 
-from ansible.module_utils.basic import json, get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.network import NetCli, Command, ModuleStub
-from ansible.module_utils.network import add_argument, register_transport, to_list
-from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.urls import fetch_url, url_argument_spec
+_DEVICE_CONNECTION = None
 
-# temporary fix until modules are update.  to be removed before 2.2 final
-from ansible.module_utils.network import get_module
+eos_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), aliases=['name']),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
-EAPI_FORMATS = ['json', 'text']
 
-add_argument('use_ssl', dict(default=True, type='bool'))
-add_argument('validate_certs', dict(default=True, type='bool'))
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
-def argument_spec():
-    return dict(
-        # config options
-        running_config=dict(aliases=['config']),
-        config_session=dict(default='ansible_session'),
-        save_config=dict(default=False, aliases=['save']),
-        force=dict(type='bool', default=False)
-    )
-eos_argument_spec = argument_spec()
+    'use_ssl': dict(type='bool'),
+    'validate_certs': dict(type='bool'),
+    'timeout': dict(type='int'),
 
-def get_config(module):
-    config = module.params['running_config']
-    if not config:
-        config = module.config.get_config(include_defaults=False)
-    return NetworkConfig(indent=3, contents=config)
+    'provider': dict(type='dict'),
+    'transport': dict(choices=['cli', 'eapi'])
+}
 
-def load_config(module, candidate):
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'transport': 'cli',
+    'use_ssl': True,
+    'validate_certs': True
+}
 
-    if not module.params['force']:
-        config = get_config(module)
-        commands = candidate.difference(config)
-    else:
-        commands = str(candidate)
 
-    commands = [str(c).strip() for c in commands]
+def get_argspec():
+    return eos_argument_spec
 
-    session = module.params['config_session']
-    save_config = module.params['save_config']
 
-    result = dict(changed=False)
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in eos_argument_spec:
+        if module._name == 'eos_user':
+            if (key not in ['username', 'password', 'provider', 'transport', 'authorize'] and
+                    module.params[key]):
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+        else:
+            if key not in ['provider', 'authorize'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
-    if commands:
-        if module._diff:
-            diff = module.config.load_config(commands, session_name=session)
-            if diff:
-                result['diff'] = dict(prepared=diff)
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
 
-            if not module.check_mode:
-                module.config.commit_config(session)
-                if save_config:
-                    module.config.save_config()
-            else:
-                module.config.abort_config(session_name=session)
+    if provider:
+        for param in ('auth_pass', 'password'):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
-        if not module.check_mode:
-            module.config(commands)
-            if save_config:
-                module.config.save_config()
 
-        result['changed'] = True
-        result['updates'] = commands
+def load_params(module):
+    provider = module.params.get('provider') or dict()
+    for key, value in iteritems(provider):
+        if key in eos_argument_spec:
+            if module.params.get(key) is None and value is not None:
+                module.params[key] = value
 
-    return result
 
-def expand_intf_range(interfaces):
-    match = re.match(r'([a-zA-Z]+)(.+)', interfaces)
-    if not match:
-        raise ValueError('could not parse interface range')
+def get_connection(module):
+    global _DEVICE_CONNECTION
+    if not _DEVICE_CONNECTION:
+        load_params(module)
+        if is_eapi(module):
+            conn = Eapi(module)
+        else:
+            conn = Cli(module)
+        _DEVICE_CONNECTION = conn
+    return _DEVICE_CONNECTION
 
-    name = match.group(1)
-    values = match.group(2).split(',')
 
-    indicies = list()
+class Cli:
 
-    for val in values:
-        tokens = val.split('-')
+    def __init__(self, module):
+        self._module = module
+        self._device_configs = {}
+        self._session_support = None
 
-        # single index value to handle
-        if len(tokens) == 1:
-            indicies.append(tokens[0])
+    @property
+    def supports_sessions(self):
+        if self._session_support is not None:
+            return self._session_support
+        rc, out, err = self.exec_command('show configuration sessions')
+        self._session_support = rc == 0
+        return self._session_support
 
-        elif len(tokens) == 2:
-            pairs = list()
-            mod = 0
+    def exec_command(self, command):
+        if isinstance(command, dict):
+            command = self._module.jsonify(command)
+        return exec_command(self._module, command)
 
-            for token in tokens:
-                parts = token.split('/')
+    def check_authorization(self):
+        for cmd in ['show clock', 'prompt()']:
+            rc, out, err = self.exec_command(cmd)
+            out = to_text(out, errors='surrogate_then_replace')
+        return out.endswith('#')
 
-                if len(parts) == 1:
-                    port = parts[0]
-                    if port == '$':
-                        port = last_port
-                    pairs.append((mod, int(port)))
-
-                elif len(parts) == 2:
-                    mod = int(parts[0])
-                    port = parts[1]
-                    if port == '$':
-                        port = last_port
-                    pairs.append((mod, int(port)))
-
-                else:
-                    raise ValueError('unable to parse interface')
-
-            if pairs[0][0] == pairs[1][0]:
-                # same module
-                mod = pairs[0][0]
-                start = pairs[0][1]
-                end = pairs[1][1] + 1
-
-                for i in range(start, end):
-                    if mod == 0:
-                        indicies.append(i)
-                    else:
-                        indicies.append('%s/%s' % (mod, i))
-            else:
-                # span modules
-                start_mod, start_port = pairs[0]
-                end_mod, end_port = pairs[1]
-                end_port += 1
-
-                for i in range(start_port, last_port+1):
-                    indicies.append('%s/%s' % (start_mod, i))
-
-                for i in range(first_port, end_port):
-                    indicies.append('%s/%s' % (end_mod, i))
-
-    return ['%s%s' % (name, index) for index in indicies]
-
-class EosConfigMixin(object):
-
-    def configure(self, commands, **kwargs):
-        commands = prepare_config(commands)
-        responses = self.execute(commands)
-        responses.pop(0)
-        return responses
-
-    def get_config(self, **kwargs):
-        cmd = 'show running-config'
-        if kwargs.get('include_defaults') is True:
-            cmd += ' all'
-        return self.execute([cmd])[0]
-
-    def load_config(self, commands, session_name='ansible_temp_session', **kwargs):
-        commands = to_list(commands)
-        commands.insert(0, 'configure session %s' % session_name)
-        commands.append('show session-config diffs')
-        commands.append('end')
-        responses = self.execute(commands)
-        return responses[-2]
-
-    def replace_config(self, contents, params, **kwargs):
-        remote_user = params['username']
-        remote_path = '/home/%s/ansible-config' % remote_user
-
-        commands = [
-            'bash echo "%s" > %s' % (contents, remote_path),
-            'diff running-config file:/%s' % remote_path,
-            'config replace file:/%s' % remote_path,
-        ]
-
-        responses = self.run_commands(commands)
-        return responses[-2]
-
-    def commit_config(self, session_name):
-        session = 'configure session %s' % session_name
-        commands = [session, 'commit', 'no %s' % session]
-        self.execute(commands)
-
-    def abort_config(self, session_name):
-        command = 'no configure session %s' % session_name
-        self.execute([command])
-
-    def save_config(self):
-        self.execute(['copy running-config startup-config'])
-
-class Eapi(EosConfigMixin):
-
-    def __init__(self):
-        self.url = None
-        self.url_args = ModuleStub(url_argument_spec(), self._error)
-        self.enable = None
-        self.default_output = 'json'
-        self._connected = False
-
-    def _error(self, msg):
-        raise NetworkError(msg, url=self.url)
-
-    def _get_body(self, commands, format, reqid=None):
-        """Create a valid eAPI JSON-RPC request message
+    def get_config(self, flags=[]):
+        """Retrieves the current config from the device or cache
         """
+        cmd = 'show running-config '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
 
-        if format not in EAPI_FORMATS:
-            msg = 'invalid format, received %s, expected one of %s' % \
-                    (format, ','.join(EAPI_FORMATS))
-            self._error(msg=msg)
+        try:
+            return self._device_configs[cmd]
+        except KeyError:
+            conn = get_connection(self)
+            rc, out, err = self.exec_command(cmd)
+            out = to_text(out, errors='surrogate_then_replace')
+            if rc != 0:
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            cfg = str(out).strip()
+            self._device_configs[cmd] = cfg
+            return cfg
 
-        params = dict(version=1, cmds=commands, format=format)
-        return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
-
-    def connect(self, params, **kwargs):
-        host = params['host']
-        port = params['port']
-
-        # sets the module_utils/urls.py req parameters
-        self.url_args.params['url_username'] = params['username']
-        self.url_args.params['url_password'] = params['password']
-        self.url_args.params['validate_certs'] = params['validate_certs']
-
-        if params['use_ssl']:
-            proto = 'https'
-            if not port:
-                port = 443
-        else:
-            proto = 'http'
-            if not port:
-                port = 80
-
-        self.url = '%s://%s:%s/command-api' % (proto, host, port)
-        self._connected = True
-
-    def disconnect(self, **kwargs):
-        self.url = None
-        self._connected = False
-
-    def authorize(self, params, **kwargs):
-        if params.get('auth_pass'):
-            passwd = params['auth_pass']
-            self.enable = dict(cmd='enable', input=passwd)
-        else:
-            self.enable = 'enable'
-
-
-    ### implementation of network.Cli ###
-
-    def run_commands(self, commands):
-        output = None
-        cmds = list()
+    def run_commands(self, commands, check_rc=True):
+        """Run list of commands on remote device and return results
+        """
         responses = list()
 
-        for cmd in commands:
-            if output and output != cmd.output:
-                responses.extend(self.execute(cmds, format=output))
-                cmds = list()
+        for cmd in to_list(commands):
+            rc, out, err = self.exec_command(cmd)
+            out = to_text(out, errors='surrogate_then_replace')
+            if check_rc and rc != 0:
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
-            output = cmd.output
-            cmds.append(str(cmd))
+            try:
+                out = self._module.from_json(out)
+            except ValueError:
+                out = str(out).strip()
 
-        if cmds:
-            responses.extend(self.execute(cmds, format=output))
-
-        for index, cmd in enumerate(commands):
-            if cmd.output == 'text':
-                responses[index] = responses[index].get('output')
-
+            responses.append(out)
         return responses
 
-    def execute(self, commands, format='json', **kwargs):
-        """Send commands to the device.
-        """
-        if self.url is None:
-            raise NetworkError('Not connected to endpoint.')
-        if self.enable is not None:
-            commands.insert(0, self.enable)
+    def send_config(self, commands):
+        multiline = False
+        rc = 0
+        for command in to_list(commands):
+            if command == 'end':
+                pass
 
-        data = self._get_body(commands, format)
-        data = json.dumps(data)
+            if command.startswith('banner') or multiline:
+                multiline = True
+                command = self._module.jsonify({'command': command, 'sendonly': True})
+            elif command == 'EOF' and multiline:
+                multiline = False
+
+            rc, out, err = self.exec_command(command)
+            if rc != 0:
+                return (rc, out, to_text(err, errors='surrogate_then_replace'))
+
+        return (rc, 'ok', '')
+
+    def configure(self, commands):
+        """Sends configuration commands to the remote device
+        """
+        if not self.check_authorization():
+            self._module.fail_json(msg='configuration operations require privilege escalation')
+
+        conn = get_connection(self)
+
+        rc, out, err = self.exec_command('configure')
+        if rc != 0:
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
+
+        rc, out, err = self.send_config(commands)
+        if rc != 0:
+            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+
+        self.exec_command('end')
+        return {}
+
+    def load_config(self, commands, commit=False, replace=False):
+        """Loads the config commands onto the remote device
+        """
+        if not self.check_authorization():
+            self._module.fail_json(msg='configuration operations require privilege escalation')
+
+        use_session = os.getenv('ANSIBLE_EOS_USE_SESSIONS', True)
+        try:
+            use_session = int(use_session)
+        except ValueError:
+            pass
+
+        if not all((bool(use_session), self.supports_sessions)):
+            return self.configure(self, commands)
+
+        conn = get_connection(self)
+        session = 'ansible_%s' % int(time.time())
+        result = {'session': session}
+
+        rc, out, err = self.exec_command('configure session %s' % session)
+        if rc != 0:
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
+
+        if replace:
+            self.exec_command('rollback clean-config', check_rc=True)
+
+        rc, out, err = self.send_config(commands)
+        if rc != 0:
+            self.exec_command('abort')
+            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), commands=commands)
+
+        rc, out, err = self.exec_command('show session-config diffs')
+        if rc == 0 and out:
+            result['diff'] = to_text(out, errors='surrogate_then_replace').strip()
+
+        if commit:
+            self.exec_command('commit')
+        else:
+            self.exec_command('abort')
+
+        return result
+
+
+class Eapi:
+
+    def __init__(self, module):
+        self._module = module
+        self._enable = None
+        self._session_support = None
+        self._device_configs = {}
+
+        host = module.params['provider']['host']
+        port = module.params['provider']['port']
+
+        self._module.params['url_username'] = self._module.params['username']
+        self._module.params['url_password'] = self._module.params['password']
+
+        if module.params['provider']['use_ssl']:
+            proto = 'https'
+        else:
+            proto = 'http'
+
+        module.params['validate_certs'] = module.params['provider']['validate_certs']
+
+        self._url = '%s://%s:%s/command-api' % (proto, host, port)
+
+        if module.params['auth_pass']:
+            self._enable = {'cmd': 'enable', 'input': module.params['auth_pass']}
+        else:
+            self._enable = 'enable'
+
+    @property
+    def supports_sessions(self):
+        if self._session_support:
+            return self._session_support
+        response = self.send_request(['show configuration sessions'])
+        self._session_support = 'error' not in response
+        return self._session_support
+
+    def _request_builder(self, commands, output, reqid=None):
+        params = dict(version=1, cmds=commands, format=output)
+        return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
+
+    def send_request(self, commands, output='text'):
+        commands = to_list(commands)
+
+        if self._enable:
+            commands.insert(0, 'enable')
+
+        body = self._request_builder(commands, output)
+        data = self._module.jsonify(body)
 
         headers = {'Content-Type': 'application/json-rpc'}
+        timeout = self._module.params['timeout']
 
         response, headers = fetch_url(
-            self.url_args, self.url, data=data, headers=headers,
-            method='POST'
+            self._module, self._url, data=data, headers=headers,
+            method='POST', timeout=timeout
         )
 
         if headers['status'] != 200:
-            raise NetworkError(**headers)
+            self._module.fail_json(**headers)
 
         try:
-            response = json.loads(response.read())
+            data = response.read()
+            response = self._module.from_json(to_text(data, errors='surrogate_then_replace'))
         except ValueError:
-            raise NetworkError('unable to load response from device')
+            self._module.fail_json(msg='unable to load response from device', data=data)
 
-        if 'error' in response:
-            err = response['error']
-            raise NetworkError(
-                msg=err['message'], code=err['code'], data=err['data'],
-                commands=commands
-            )
-
-        if self.enable:
+        if self._enable and 'result' in response:
             response['result'].pop(0)
 
-        return response['result']
-
-    def get_config(self, **kwargs):
-        return self.run_commands(['show running-config'], format='text')[0]
-Eapi = register_transport('eapi')(Eapi)
-
-
-class Cli(NetCli, EosConfigMixin):
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
-
-    CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"^% \w+", re.M),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-        re.compile(r"[^\r\n]\/bin\/(?:ba)?sh")
-    ]
-
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=True, **kwargs)
-        self.shell.send('terminal length 0')
-
-    ### implementation of network.Cli ###
+        return response
 
     def run_commands(self, commands):
-        cmds = list(prepare_commands(commands))
-        responses = self.execute(cmds)
-        for index, cmd in enumerate(commands):
-            if cmd.output == 'json':
-                try:
-                    responses[index] = json.loads(responses[index])
-                except ValueError:
-                    raise NetworkError(
-                        msg='unable to load response from device',
-                        response=responses[index]
-                    )
+        """Runs list of commands on remote device and returns results
+        """
+        output = None
+        queue = list()
+        responses = list()
+
+        def _send(commands, output):
+            response = self.send_request(commands, output=output)
+            if 'error' in response:
+                err = response['error']
+                self._module.fail_json(msg=err['message'], code=err['code'])
+            return response['result']
+
+        for item in to_list(commands):
+            if is_json(item['command']):
+                item['command'] = str(item['command']).replace('| json', '')
+                item['output'] = 'json'
+
+            if output and output != item['output']:
+                responses.extend(_send(queue, output))
+                queue = list()
+
+            output = item['output'] or 'json'
+            queue.append(item['command'])
+
+        if queue:
+            responses.extend(_send(queue, output))
+
+        for index, item in enumerate(commands):
+            try:
+                responses[index] = responses[index]['output'].strip()
+            except KeyError:
+                pass
+
         return responses
-Cli = register_transport('cli', default=True)(Cli)
 
-def prepare_config(commands):
-    commands = to_list(commands)
-    commands.insert(0, 'configure terminal')
-    commands.append('end')
-    return commands
+    def get_config(self, flags=[]):
+        """Retrieves the current config from the device or cache
+        """
+        cmd = 'show running-config '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
 
+        try:
+            return self._device_configs[cmd]
+        except KeyError:
+            out = self.send_request(cmd)
+            cfg = str(out['result'][0]['output']).strip()
+            self._device_configs[cmd] = cfg
+            return cfg
 
-def prepare_commands(commands):
-    jsonify = lambda x: '%s | json' % x
-    for cmd in to_list(commands):
-        if cmd.output == 'json':
-            cmd = jsonify(cmd)
+    def configure(self, commands):
+        """Sends the ordered set of commands to the device
+        """
+        cmds = ['configure terminal']
+        cmds.extend(commands)
+
+        responses = self.send_request(commands)
+        if 'error' in responses:
+            err = responses['error']
+            self._module.fail_json(msg=err['message'], code=err['code'])
+
+        return responses[1:]
+
+    def load_config(self, config, commit=False, replace=False):
+        """Loads the configuration onto the remote devices
+
+        If the device doesn't support configuration sessions, this will
+        fallback to using configure() to load the commands.  If that happens,
+        there will be no returned diff or session values
+        """
+        if not self.supports_sessions:
+            return self.configure(self, config)
+
+        session = 'ansible_%s' % int(time.time())
+        result = {'session': session}
+        commands = ['configure session %s' % session]
+
+        if replace:
+            commands.append('rollback clean-config')
+
+        commands.extend(config)
+
+        response = self.send_request(commands)
+        if 'error' in response:
+            commands = ['configure session %s' % session, 'abort']
+            self.send_request(commands)
+            err = response['error']
+            self._module.fail_json(msg=err['message'], code=err['code'])
+
+        commands = ['configure session %s' % session, 'show session-config diffs']
+        if commit:
+            commands.append('commit')
         else:
-            cmd = str(cmd)
-        yield cmd
+            commands.append('abort')
+
+        response = self.send_request(commands, output='text')
+        diff = response['result'][1]['output']
+        if len(diff) > 0:
+            result['diff'] = diff
+
+        return result
+
+
+def is_json(cmd):
+    return to_native(cmd, errors='surrogate_then_replace').endswith('| json')
+
+
+def is_eapi(module):
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+    return 'eapi' in (transport, provider_transport)
+
+
+def to_command(module, commands):
+    if is_eapi(module):
+        default_output = 'json'
+    else:
+        default_output = 'text'
+
+    transform = ComplexList(dict(
+        command=dict(key=True),
+        output=dict(default=default_output),
+        prompt=dict(),
+        answer=dict()
+    ), module)
+
+    return transform(to_list(commands))
+
+
+def get_config(module, flags=[]):
+    conn = get_connection(module)
+    return conn.get_config(flags)
+
+
+def run_commands(module, commands):
+    conn = get_connection(module)
+    return conn.run_commands(to_command(module, commands))
+
+
+def load_config(module, config, commit=False, replace=False):
+    conn = get_connection(module)
+    return conn.load_config(config, commit, replace)

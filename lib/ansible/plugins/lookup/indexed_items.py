@@ -20,6 +20,7 @@ __metaclass__ = type
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+
 class LookupModule(LookupBase):
 
     def __init__(self, basedir=None, **kwargs):
@@ -31,5 +32,4 @@ class LookupModule(LookupBase):
             raise AnsibleError("with_indexed_items expects a list")
 
         items = self._flatten(terms)
-        return zip(range(len(items)), items)
-
+        return list(zip(range(len(items)), items))

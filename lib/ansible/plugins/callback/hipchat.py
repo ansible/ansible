@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import urllib
 
 try:
     import prettytable
@@ -29,7 +28,9 @@ except ImportError:
     HAS_PRETTYTABLE = False
 
 from ansible.plugins.callback import CallbackBase
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import open_url
+
 
 class CallbackModule(CallbackBase):
     """This is an example ansible callback plugin that sends status
@@ -56,8 +57,8 @@ class CallbackModule(CallbackBase):
 
         if not HAS_PRETTYTABLE:
             self.disabled = True
-            self.display.warning('The `prettytable` python module is not installed. '
-                          'Disabling the HipChat callback plugin.')
+            self._display.warning('The `prettytable` python module is not installed. '
+                                  'Disabling the HipChat callback plugin.')
 
         self.msg_uri = 'https://api.hipchat.com/v1/rooms/message'
         self.token = os.getenv('HIPCHAT_TOKEN')
@@ -67,9 +68,9 @@ class CallbackModule(CallbackBase):
 
         if self.token is None:
             self.disabled = True
-            self.display.warning('HipChat token could not be loaded. The HipChat '
-                          'token can be provided using the `HIPCHAT_TOKEN` '
-                          'environment variable.')
+            self._display.warning('HipChat token could not be loaded. The HipChat '
+                                  'token can be provided using the `HIPCHAT_TOKEN` '
+                                  'environment variable.')
 
         self.printed_playbook = False
         self.playbook_name = None
@@ -88,11 +89,10 @@ class CallbackModule(CallbackBase):
 
         url = ('%s?auth_token=%s' % (self.msg_uri, self.token))
         try:
-            response = open_url(url, data=urllib.urlencode(params))
+            response = open_url(url, data=urlencode(params))
             return response.read()
         except:
-            self.display.warning('Could not submit message to hipchat')
-
+            self._display.warning('Could not submit message to hipchat')
 
     def v2_playbook_on_play_start(self, play):
         """Display Playbook and play start messages"""

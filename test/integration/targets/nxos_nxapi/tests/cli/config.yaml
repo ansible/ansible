@@ -1,0 +1,87 @@
+- debug: msg="START cli/config.yaml"
+
+
+#----
+- name: Setup
+  nxos_config:
+    lines: no feature nxapi
+    match: none
+    provider: "{{ cli }}"
+  connection: local
+
+- name: Get running-config
+  nxos_command:
+    commands: show running-config
+    provider: "{{ cli }}"
+  register: config
+  connection: local
+
+- name: Set config
+  nxos_nxapi:
+    config: "{{ config.stdout[0] }}"
+    provider: "{{ cli }}"
+  register: config
+  connection: local
+
+# Triggers the following changes:
+#    "updates": [
+#        "feature nxapi",
+#        "nxapi http port 80",
+#        "no nxapi https",
+#        "no nxapi sandbox"
+#    ],
+
+- name: Ensure that this triggered a change
+  assert:
+    that:
+      - "config.changed == true"
+
+#---
+- name: Get running-config again
+  nxos_command:
+    commands: show running-config
+    provider: "{{ cli }}"
+  register: runningconfig
+  connection: local
+
+- name: Set config
+  nxos_nxapi:
+    config: "{{ runningconfig.stdout[0] }}"
+    provider: "{{ cli }}"
+  register: config
+  connection: local
+
+# BUG: The above shouldn't trigger the following updates
+# Triggers the following changes:
+#    "updates": [
+#        "nxapi http port 80",
+#        "no nxapi https",
+#        "no nxapi sandbox"
+#    ],
+
+
+
+# DEBUG: Try another time
+- name: Set config - FIXME, shouldn't need this
+  nxos_nxapi:
+    config: "{{ runningconfig.stdout[0] }}"
+    provider: "{{ cli }}"
+  register: config
+  connection: local
+
+# BUG: We are still getting changes
+# Triggers the following changes:
+#    "updates": [
+#        "nxapi http port 80",
+#        "no nxapi https",
+#        "no nxapi sandbox"
+#    ],
+
+- name: Idempotency check
+  assert:
+    that:
+      - "config.changed == false"
+# FIXME: https://github.com/ansible/ansible-modules-core/issues/4955
+  ignore_errors: yes
+
+- debug: msg="END cli/config.yaml"

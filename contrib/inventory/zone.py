@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from subprocess import Popen,PIPE
+from subprocess import Popen, PIPE
 import sys
 import json
 
@@ -27,10 +27,10 @@ result['all'] = {}
 pipe = Popen(['zoneadm', 'list', '-ip'], stdout=PIPE, universal_newlines=True)
 result['all']['hosts'] = []
 for l in pipe.stdout.readlines():
-  # 1:work:running:/zones/work:3126dc59-9a07-4829-cde9-a816e4c5040e:native:shared
-  s = l.split(':')
-  if s[1] != 'global':
-    result['all']['hosts'].append(s[1])
+    # 1:work:running:/zones/work:3126dc59-9a07-4829-cde9-a816e4c5040e:native:shared
+    s = l.split(':')
+    if s[1] != 'global':
+        result['all']['hosts'].append(s[1])
 
 result['all']['vars'] = {}
 result['all']['vars']['ansible_connection'] = 'zone'
@@ -40,4 +40,4 @@ if len(sys.argv) == 2 and sys.argv[1] == '--list':
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
     print(json.dumps({'ansible_connection': 'zone'}))
 else:
-    print("Need an argument, either --list or --host <host>")
+    sys.stderr.write("Need an argument, either --list or --host <host>\n")
