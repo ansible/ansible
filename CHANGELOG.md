@@ -22,6 +22,7 @@ Ansible Changes By Release
 * Fix for fetch action plugin not validating correctly
 * Avoid vault view writing display to logs
 * htpasswd: fix passlib module version comparison
+* Fix for flowdock error message when external_user_name is missing
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
