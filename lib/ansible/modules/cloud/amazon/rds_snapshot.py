@@ -14,13 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import botocore
-import time
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '0.1'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -67,6 +63,10 @@ extends_documentation_fragment:
     - aws
     - ec2
 '''
+
+
+import botocore
+import time
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
