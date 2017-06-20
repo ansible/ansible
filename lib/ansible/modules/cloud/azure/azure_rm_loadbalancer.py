@@ -87,7 +87,7 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import LoadBalancer, FrontendIPConfiguration
+    from azure.mgmt.network.models import LoadBalancer, FrontendIPConfiguration, BackendAddressPool
 except ImportError as exc:
     # This is handled in azure_rm_common
     pass
@@ -192,6 +192,8 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                     .format(self.name)
                 )
                 changed = True
+
+        load_balancer_props['backend_address_pools'] = [BackendAddressPool(name=random_name('beap'))]
 
         self.results['changed'] = changed
         self.results['state'] = (
