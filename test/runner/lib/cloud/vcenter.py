@@ -140,7 +140,7 @@ class VcenterProvider(CloudProvider):
 
 
 class VcenterEnvironment(CloudEnvironment):
-    """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
+    """VMware vcenter/esx environment plugin. Updates integration test environment after delegation."""
     def configure_environment(self, env, cmd):
         """
         :type env: dict[str, str]
