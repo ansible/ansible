@@ -215,10 +215,8 @@ def state_present(module, existing, proposed, candidate):
 
         elif value is True:
             commands.append(key)
-
         elif value is False:
             commands.append('no {0}'.format(key))
-
         elif value == 'default':
             if existing_commands.get(key):
                 existing_value = existing_commands.get(key)
@@ -281,7 +279,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-    result = {'warnings': warnings, 'changed': False}
+    result = {'changed': False, 'commands': [], 'warnings': warnings}
 
     if module.params['assoc_vrf']:
         mutually_exclusive_params = ['multicast_group',
@@ -305,48 +303,42 @@ def main():
 
     state = module.params['state']
     args = PARAM_TO_COMMAND_KEYMAP.keys()
-
     existing, interface_exist = get_existing(module, args)
+
+    if state == 'present':
+        if not interface_exist:
+            module.fail_json(msg="The proposed NVE interface does not exist. Use nxos_interface to create it first.")
+        elif interface_exist != module.params['interface']:
+            module.fail_json(msg='Only 1 NVE interface is allowed on the switch.')
+    elif state == 'absent':
+        if interface_exist != module.params['interface']:
+            module.exit_json(**result)
+        elif existing and existing['vni'] != module.params['vni']:
+            module.fail_json(
+                msg="ERROR: VNI delete failed: Could not find vni node for {0}".format(module.params['vni']),
+                existing_vni=existing['vni']
+            )
+
     proposed_args = dict((k, v) for k, v in module.params.items()
                          if v is not None and k in args)
 
     proposed = {}
     for key, value in proposed_args.items():
-        if key != 'interface':
-            if existing.get(key) or (not existing.get(key) and value):
-                proposed[key] = value
+        if key != 'interface' and existing.get(key) != value:
+            proposed[key] = value
 
-    if state == 'present' or (state == 'absent' and existing):
-        if not interface_exist:
-            warnings.append("The proposed NVE interface does not exist. "
-                            "Use nxos_interface to create it first.")
-        elif interface_exist != module.params['interface']:
-            module.fail_json(msg='Only 1 NVE interface is allowed on '
-                                 'the switch.')
-        elif existing and state == 'absent' and existing['vni'] != module.params['vni']:
-            module.fail_json(msg="ERROR: VNI delete failed: Could not find"
-                                 " vni node for {0}".format(module.params['vni']),
-                             existing_vni=existing['vni'])
-        else:
-            candidate = CustomNetworkConfig(indent=3)
-            if state == 'present':
-                state_present(module, existing, proposed, candidate)
-            elif state == 'absent':
-                state_absent(module, existing, proposed, candidate)
+    candidate = CustomNetworkConfig(indent=3)
+    if state == 'present':
+        state_present(module, existing, proposed, candidate)
+    elif state == 'absent':
+        state_absent(module, existing, proposed, candidate)
 
-            for k in proposed:
-                if k in existing:
-                    if existing[k] != proposed[k] or state == 'absent':
-                        result['changed'] = True
-                if k not in existing and state == 'present':
-                    result['changed'] = True
-
-            candidate = candidate.items_text()
-            result['commands'] = candidate
-            if not module.check_mode:
-                load_config(module, candidate)
-    else:
-        result['commands'] = []
+    if candidate:
+        candidate = candidate.items_text()
+        result['changed'] = True
+        result['commands'] = candidate
+        if not module.check_mode:
+            load_config(module, candidate)
 
     module.exit_json(**result)
 
