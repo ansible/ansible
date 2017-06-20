@@ -16,7 +16,7 @@
         instance_name: "ansible-test-dont-create-youll-break-the-tests"
         state: absent
         region: '{{ec2_region}}'
-        maws_access_key: '{{aws_access_key}}'
+        aws_access_key: '{{aws_access_key}}'
         aws_secret_key: '{{aws_secret_key}}'
         security_token: '{{security_token}}'
 
