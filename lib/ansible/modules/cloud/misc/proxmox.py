@@ -98,6 +98,7 @@ options:
       - 0 is unlimited.
     required: false
     default: 0
+    version_added: 2.4
   cpus:
     description:
       - numbers of allocated cpus for instance
@@ -270,7 +271,7 @@ EXAMPLES = '''
     hostname: example.org
     ostemplate: local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
     mounts: '{"mp0":"local:8,mp=/mnt/test/"}'
-    
+
 # Create new container with minimal options defining a cpu core limit
 - proxmox:
     vmid: 100
