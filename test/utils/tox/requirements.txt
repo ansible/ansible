@@ -12,6 +12,10 @@ redis
 python-memcached
 python-systemd
 pycrypto
+boto
 botocore
 boto3
 pytest
+pytest-xdist
+pytest-mock
+netaddr
