@@ -64,11 +64,6 @@ custom_properties:
     returned: success
     type: str
     sample: "[{'name': 'environment', 'value': 'auto'}, {'name': 'snmp.community', 'value': 'commstring'}]"
-system_properties:
-    description: system properties for the device
-    returned: success
-    type: str
-    sample: "[{'name': 'system.collectorplatform', 'value': 'linux'}, {'name': 'system.devicetype', 'value': '0'}]"
 ...
 '''
 
@@ -319,8 +314,7 @@ def compare_objects(group_1, group_2):
     # system properties are immutable and automatically applied
     # ignore them when doing compare
     exclude_keys = {
-        'custom_properties': 'custom_properties',
-        'system_properties': 'system_properties'
+        'custom_properties': 'custom_properties'
     }
 
     dict_1 = {}
@@ -551,8 +545,7 @@ def succeed(changed, obj, module):
         description=obj.description,
         disable_alerting=obj.disable_alerting,
         current_collector_id=str(obj.current_collector_id),
-        custom_properties=str(obj.custom_properties),
-        system_properties=str(obj.system_properties)
+        custom_properties=str(obj.custom_properties)
     )
 
 
