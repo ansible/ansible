@@ -167,7 +167,9 @@ EXAMPLES = '''
         description: Device added by Ansible
         name: server1.test.net
         display_name: server1
-        groups: /AnsibleDevices/WebServers,/Production
+        groups:
+          - /AnsibleDevices/WebServers
+          - /Production
         preferred_collector_id: 1
         properties:
           snmp.community: commstring
