@@ -148,4 +148,3 @@ class Host:
 
     def get_vars(self):
         return combine_vars(self.vars, self.get_magic_vars(), scope_name='Host_get_vars')
-
