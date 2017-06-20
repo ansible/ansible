@@ -11,67 +11,25 @@ rm -f /lib/systemd/system/anaconda.target.wants/*;
 
 RUN dnf clean all && \
     dnf -y --setopt=install_weak_deps=false install \
-    acl \
-    asciidoc \
-    bzip2 \
-    dbus-python \
-    file \
-    findutils \
-    golang-bin \
     git \
-    glibc-locale-source \
-    iproute \
-    make \
-    mariadb-server \
-    mercurial \
-    MySQL-python \
-    openssh-clients \
-    openssh-server \
-    procps \
-    python2-dnf \
-    python2-pyvmomi \
-    python-coverage \
-    python-httplib2 \
-    python-jinja2 \
-    python-keyczar \
-    python-mock \
-    python-nose \
-    python-paramiko \
-    python-passlib \
+    glibc \
+    gcc \
+    golang-bin \
+    python-devel \
     python-pip \
     python-setuptools \
-    python-virtualenv \
-    PyYAML \
-    rpm-build \
-    rubygems \
-    subversion \
-    sudo \
-    tar \
-    unzip \
-    which \
+    redhat-rpm-config \
     yum \
-    zip \
     && \
     dnf clean all
 
-RUN localedef --quiet -c -i en_US -f UTF-8 en_US.UTF-8
-RUN /usr/bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
-RUN mkdir /etc/ansible/
-RUN /usr/bin/echo -e '[local]\nlocalhost ansible_connection=local' > /etc/ansible/hosts
 VOLUME /sys/fs/cgroup /run /tmp
-RUN ssh-keygen -q -t dsa -N '' -f /etc/ssh/ssh_host_dsa_key && \
-    ssh-keygen -q -t rsa -N '' -f /etc/ssh/ssh_host_rsa_key && \
-    ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
-    cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys && \
-    for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
-RUN pip install junit-xml
 ENV container=docker
 RUN mkdir -p /opt/gocode
 RUN chmod -R 777 /opt/gocode
 ENV GOPATH=/opt/gocode
-RUN go get -u github.com/vmware/vic/cmd/vcsim
+RUN go get -u github.com/vmware/govmomi/vcsim
 RUN go get github.com/vmware/govmomi/govc
-
 RUN pip install psutil
 RUN pip install flask
 ADD flask_control.py /root/flask_control.py
