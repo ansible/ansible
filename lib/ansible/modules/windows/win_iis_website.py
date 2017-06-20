@@ -139,7 +139,7 @@ EXAMPLES = r'''
     state: started
     application_pool: acme
     physical_path: C:\sites\acme
-    parameters: "logFile.directory:C:\sites\logs"
+    parameters: "logFile.directory:C:\\sites\\logs"
 
 - name: remove the Default Web Site
   win_iis_website:
@@ -195,7 +195,7 @@ info:
       returned: success
       type: list
       sample: [
-        { 
+        {
           "bindingInformation": "*:80:", "certificateHash": "",
            "certificateStoreName": "", "isDsMapperEnabled": False,
            "protocol": "http", "sslFlags": 0
