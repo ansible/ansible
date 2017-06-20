@@ -15,7 +15,6 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -106,41 +105,33 @@ options:
       - Specifies the number of IOPS for the instance. Must be an integer greater than 1000.
     required: false
   security_groups:
-    description:
-      - Comma separated list of one or more security groups.
+    description: Comma separated list of one or more security groups.
     required: false
   vpc_security_groups:
-    description:
-      - Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified.
+    description: Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified.
     required: false
   port:
-    description:
-      - Port number that the DB instance uses for connections.
+    description: Port number that the DB instance uses for connections.
     required: false
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   upgrade:
-    description:
-      - Indicates that minor version upgrades should be applied automatically.
+    description: Indicates that minor version upgrades should be applied automatically.
     required: false
     default: no
     choices: [ "yes", "no" ]
   option_group:
-    description:
-      - The name of the option group to use. If not specified then the default option group is used.
+    description: The name of the option group to use. If not specified then the default option group is used.
     required: false
   maint_window:
-    description:
-      - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi (Example: Mon:22:00-Mon:23:15). If not specified then AWS will assign a random maintenance window.
+    description: "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi (Example: Mon:22:00-Mon:23:15). If not specified then AWS will assign a random maintenance window."
     required: false
   backup_window:
-    description:
-      - Backup window in format of hh24:mi-hh24:mi (Example: 04:00-05:45). If not specified then AWS will assign a random backup window.
+    description: "Backup window in format of hh24:mi-hh24:mi (Example: 04:00-05:45). If not specified then AWS will assign a random backup window."
     required: false
   backup_retention:
-    description:
-      - Number of days backups are retained. Set to 0 to disable backups. Default is 1 day. Valid range: 0-35.
+    description: "Number of days backups are retained. Set to 0 to disable backups. Default is 1 day. Valid range: 0-35."
     required: false
-  zone:281
+  zone:
     description:
       - availability zone in which to launch the instance.
     required: false
@@ -228,7 +219,7 @@ EXAMPLES = '''
 
 # Promote the read replica to a standalone database by removing
 # the source_instance setting
-- rds_instance
+- rds_instance:
     instance_name: new-database-replica
     wait: yes
     wait_timeout: 600
@@ -289,13 +280,14 @@ operation:
     "operation": "create"
 '''
 
+# from __future__ import (absolute_import, division, print_function)
 import time
 import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.rds import RDSDBInstance, get_db_instance
-import sys
+# import sys
 
 try:
     import botocore
@@ -372,7 +364,8 @@ PARAMETER_MAP = {
 
 
 def eprint(*args, **kwargs):
-    print(args, file=sys.stderr, **kwargs)
+    pass
+#    print(args, file=sys.stderr, **kwargs)
 
 
 def await_resource(conn, resource, status, module, await_pending=None):
