@@ -194,7 +194,7 @@ import socket
 import types
 
 try:
-    import logicmonitor_sdk
+    import logicmonitor_sdk as lm_sdk
     from logicmonitor_sdk.rest import ApiException
     HAS_LM = True
 except ImportError:
@@ -233,15 +233,15 @@ except ImportError:
 def get_client(params, module):
     # Configure API key authorization: LMv1
 
-    logicmonitor.configuration.host = logicmonitor.configuration.host.replace(
+    lm_sdk.configuration.host = lm_sdk.configuration.host.replace(
         'localhost',
         params['account'] + '.logicmonitor.com'
     )
-    logicmonitor.configuration.api_key['id'] = params['access_id']
-    logicmonitor.configuration.api_key['Authorization'] = params['access_key']
+    lm_sdk.configuration.api_key['id'] = params['access_id']
+    lm_sdk.configuration.api_key['Authorization'] = params['access_key']
 
     # create an instance of the API class
-    return logicmonitor.DefaultApi(logicmonitor.ApiClient())
+    return lm_sdk.DefaultApi(lm_sdk.ApiClient())
 
 
 def get_obj(client, params, module):
@@ -279,7 +279,7 @@ def get_obj(client, params, module):
             # default to root device group
             params['host_group_ids'] = '1'
 
-        obj = logicmonitor.RestDevice(
+        obj = lm_sdk.RestDevice(
             custom_properties=format_custom_properties(params['properties']),
             description=params['description'],
             disable_alerting=bool(params['disable_alerting']),
@@ -361,7 +361,7 @@ def format_props(props):
         if isinstance(item, dict):
             name = item['name']
             value = item['value']
-        elif isinstance(item, logicmonitor.NameAndValue):
+        elif isinstance(item, lm_sdk.NameAndValue):
             name = item.name
             value = item.value
         ret[name] = value
@@ -621,7 +621,7 @@ def main():
         supports_check_mode=True
     )
 
-    if HAS_LIB_JSON is not True:
+    if not HAS_LIB_JSON:
         module.fail_json(msg='Unable to load JSON library')
     if not HAS_LM:
         module.fail_json(msg='logicmonitor_sdk required for this module')
