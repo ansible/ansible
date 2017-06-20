@@ -84,9 +84,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         try:
             cache_key = self.get_cache_prefix(path)
-            if cache and cache_key in inventory.cache:
-                data = inventory.cache[cache_key]
-            else:
+            if not cache or cache_key not in inventory.cache:
                 try:
                     sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except OSError as e:
@@ -107,14 +105,12 @@ class InventoryModule(BaseInventoryPlugin):
                 except Exception as e:
                     raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
 
-                if cache:
-                    inventory.cache[cache_key] = data
+                try:
+                    inventory.cache[cache_key] = self.loader.load(data, file_name=path)
+                except Exception as e:
+                    raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 
-            try:
-                processed = self.loader.load(data)
-            except Exception as e:
-                raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
-
+            processed = inventory.cache[cache_key]
             if not isinstance(processed, Mapping):
                 raise AnsibleError("failed to parse executable inventory script results from {0}: needs to be a json dict\n{1}".format(path, err))
 
@@ -189,6 +185,6 @@ class InventoryModule(BaseInventoryPlugin):
         if out.strip() == '':
             return {}
         try:
-            return json_dict_bytes_to_unicode(self.loader.load(out))
+            return json_dict_bytes_to_unicode(self.loader.load(out, file_name=path))
         except ValueError:
             raise AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
