@@ -129,7 +129,7 @@ options:
   properties:
     description:
       - A dictionary of properties associated with this device group
-      - Note: Sensitive properties cannot be parsed from the server and if specified, will always indicate a change
+      - Note that Sensitive properties cannot be parsed from the server and if specified, will always indicate a change
     required: false
     default: {}
   groups:
