@@ -1,0 +1,503 @@
+---
+- name: try and create web site without path
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+  register: create_fail_no_path
+  failed_when: create_fail_no_path.msg != 'physical_path is required to be set when creating a new website'
+
+- name: try and create web site with invalid path
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    physical_path: T:\fakepath
+  register: create_fail_invalid_path
+  failed_when: "create_fail_invalid_path.msg != 'physical_path is not a valid path: T:\\\\fakepath'"
+
+- name: try and create a web site with a non dict form
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    physical_path: '{{test_iis_website_path}}'
+    attributes: "string"
+  register: create_fail_invalid_attributes
+  failed_when: create_fail_invalid_attributes.msg != 'Expecting a dict for \'attributes\' but got string'
+
+- name: create default web site check
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    physical_path: '{{test_iis_website_path}}'
+  register: create_default_check
+  check_mode: yes
+
+- name: get actual of create default web site check
+  win_shell: Import-Module WebAdministration; (Get-Website | Where-Object { $_.Name -eq '{{test_iis_website_name}}' }).Count
+  register: create_default_actual_check
+
+- name: assert create default web site check
+  assert:
+    that:
+    - create_default_check|changed
+    - create_default_actual_check.stdout == "0\r\n"
+
+- name: create default web site
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    physical_path: '{{test_iis_website_path}}'
+  register: create_default
+
+- name: get actual of create default web site
+  win_shell: Import-Module WebAdministration; (Get-Website | Where-Object { $_.Name -eq '{{test_iis_website_name}}' }).Count
+  register: create_default_actual
+
+- name: assert create default web site check
+  assert:
+    that:
+    - create_default|changed
+    - create_default.info.applicationDefaults.enabledProtocols == 'http'
+    - create_default.info.attributes.id == 1
+    - create_default.info.attributes.name == test_iis_website_name
+    - create_default.info.attributes.serverAutoStart == True
+    - create_default.info.attributes.state == 'Started'
+    - create_default.info.attributes.physicalPath == test_iis_website_path
+    - create_default.info.attributes.applicationPool == 'DefaultAppPool'
+    - create_default.info.bindings[0].bindingInformation == '*:80:'
+    - create_default_actual.stdout == "1\r\n"
+
+- name: create default web site again
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    physical_path: '{{test_iis_website_path}}'
+  register: create_default_again
+
+- name: assert create default web site check again
+  assert:
+    that:
+    - not create_default_again|changed
+    - create_default_again.info == create_default.info
+
+- name: fail to create new site with an existing id
+  win_iis_website:
+    name: FailSite
+    state: started
+    physical_path: '{{test_iis_website_path}}'
+    site_id: '{{create_default_again.info.attributes.id}}'
+  register: fail_existing_id
+  failed_when: fail_existing_id.msg != 'Cannot set ID of site FailSite to ' + create_default_again.info.attributes.id|string + ', this ID is already taken by ' + test_iis_website_name
+
+- name: change the ID of an existing site check
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    physical_path: '{{test_iis_website_path}}'
+    site_id: 25
+  register: change_site_id_check
+  check_mode: yes
+
+- name: assert change the ID of an existing site check
+  assert:
+    that:
+    - change_site_id_check|changed
+    - change_site_id_check.info == create_default_again.info
+
+- name: change the ID of an existing site
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    physical_path: '{{test_iis_website_path}}'
+    site_id: 25
+  register: change_site_id
+
+- name: assert change the ID of an existing site
+  assert:
+    that:
+    - change_site_id|changed
+    - change_site_id.info.attributes.id == 25
+
+- name: change the ID of an existing site again
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    physical_path: '{{test_iis_website_path}}'
+    site_id: 25
+  register: change_site_id_again
+
+- name: assert change the ID of an existing site again
+  assert:
+    that:
+    - not change_site_id_again|changed
+    - change_site_id_again.info == change_site_id.info
+
+- name: remove site check
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: absent
+  register: remove_site_check
+  check_mode: yes
+
+- name: get actual of remove site check
+  win_shell: Import-Module WebAdministration; (Get-Website | Where-Object { $_.Name -eq '{{test_iis_website_name}}' }).Count
+  register: remove_site_actual_check
+
+- name: assert remote site check
+  assert:
+    that:
+    - remove_site_check|changed
+    - remove_site_actual_check.stdout == "1\r\n"
+
+- name: remove site
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: absent
+  register: remove_site
+
+- name: get actual of remove site
+  win_shell: Import-Module WebAdministration; (Get-Website | Where-Object { $_.Name -eq '{{test_iis_website_name}}' }).Count
+  register: remove_site_actual
+
+- name: assert remote site check
+  assert:
+    that:
+    - remove_site|changed
+    - remove_site_actual.stdout == "0\r\n"
+
+- name: remove site again
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: absent
+  register: remove_site_again
+
+- name: get actual of remove site again
+  win_shell: Import-Module WebAdministration; (Get-Website | Where-Object { $_.Name -eq '{{test_iis_website_name}}' }).Count
+  register: remove_site_actual_again
+
+- name: assert remote site check again
+  assert:
+    that:
+    - not remove_site_again|changed
+    - remove_site_actual_again.stdout == "0\r\n"
+
+- name: change attributes of the site check
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    application_pool: '{{test_iis_application_pool}}'
+    physical_path: '{{test_iis_website_path2}}'
+    attributes:
+      serverAutoStart: False
+      limits.maxBandwidth: 1024
+      logFile.logFormat: 0
+      virtualDirectoryDefaults.logonMethod: ClearText
+      virtualDirectoryDefaults.userName: '{{ansible_user}}'
+      virtualDirectoryDefaults.password: '{{ansible_password}}'
+  register: change_attributes_check
+  check_mode: yes
+
+- name: get actual of change attributes of the site check
+  win_shell: Import-Module WebAdministration; (Get-Website | Where-Object { $_.Name -eq '{{test_iis_website_name}}' }).Count
+  register: change_attributes_actual_check
+
+- name: assert change attributes of the site check
+  assert:
+    that:
+    - change_attributes_check|changed
+    - change_attributes_actual_check.stdout == "0\r\n"
+
+- name: change attributes of the site
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    application_pool: '{{test_iis_application_pool}}'
+    physical_path: '{{test_iis_website_path2}}'
+    attributes:
+      serverAutoStart: False
+      limits.maxBandwidth: 1024
+      logFile.logFormat: 0
+      virtualDirectoryDefaults.logonMethod: ClearText
+      virtualDirectoryDefaults.userName: '{{ansible_user}}'
+      virtualDirectoryDefaults.password: '{{ansible_password}}'
+  register: change_attributes
+
+- name: assert change attributes of the site
+  assert:
+    that:
+    - change_attributes|changed
+    - change_attributes.info.attributes.serverAutoStart == False
+    - change_attributes.info.limits.maxBandwidth == 1024
+    - change_attributes.info.logFile.logFormat == 'IIS'
+    - change_attributes.info.virtualDirectoryDefaults.logonMethod == 'ClearText'
+    - change_attributes.info.virtualDirectoryDefaults.userName == ansible_user
+    - change_attributes.info.virtualDirectoryDefaults.password == ansible_password
+
+- name: change attributes of the site again
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    application_pool: '{{test_iis_application_pool}}'
+    physical_path: '{{test_iis_website_path2}}'
+    attributes:
+      serverAutoStart: False
+      limits.maxBandwidth: 1024
+      logFile.logFormat: 0
+      virtualDirectoryDefaults.logonMethod: ClearText
+      virtualDirectoryDefaults.userName: '{{ansible_user}}'
+      virtualDirectoryDefaults.password: '{{ansible_password}}'
+  register: change_attributes_again
+
+- name: assert change attributes of the site again
+  assert:
+    that:
+    - not change_attributes_again|changed
+    - change_attributes_again.info == change_attributes.info
+
+- name: change attributes of the site again with enums swapped
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    application_pool: '{{test_iis_application_pool}}'
+    physical_path: '{{test_iis_website_path2}}'
+    attributes:
+      serverAutoStart: False
+      limits.maxBandwidth: 1024
+      logFile.logFormat: IIS # equates to 3
+      virtualDirectoryDefaults.logonMethod: 3 # Equates to ClearText
+      virtualDirectoryDefaults.userName: '{{ansible_user}}'
+      virtualDirectoryDefaults.password: '{{ansible_password}}'
+  register: change_attributes_enum_swapped
+
+- name: assert change attributes of the site again with enums swapped
+  assert:
+    that:
+    - not change_attributes_enum_swapped|changed
+    - change_attributes_enum_swapped.info == change_attributes_again.info
+
+- name: change attributes of the site with deprecated string style check
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    parameters: "serverAutoStart:True|limits.maxBandwidth:2048|logFile.logFormat:W3C|virtualDirectoryDefaults.logonMethod:1"
+  register: change_attributes_old_style_check
+  check_mode: yes
+
+- name: assert change attributes of the site with deprecated string style check
+  assert:
+    that:
+    - change_attributes_old_style_check|changed
+    - change_attributes_old_style_check.info == change_attributes_enum_swapped.info
+
+- name: change attributes of the site with deprecated string style
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    parameters: "serverAutoStart:True|limits.maxBandwidth:2048|logFile.logFormat:W3C|virtualDirectoryDefaults.logonMethod:1"
+  register: change_attributes_old_style
+
+- name: assert change attributes of the site with deprecated string style
+  assert:
+    that:
+    - change_attributes_old_style|changed
+    - change_attributes_old_style.info.attributes.serverAutoStart == True
+    - change_attributes_old_style.info.limits.maxBandwidth == 2048
+    - change_attributes_old_style.info.logFile.logFormat == 'W3C'
+    - change_attributes_old_style.info.virtualDirectoryDefaults.logonMethod == 'Batch'
+
+- name: change attributes of the site with deprecated string style again
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    parameters: "serverAutoStart:True|limits.maxBandwidth:2048|logFile.logFormat:W3C|virtualDirectoryDefaults.logonMethod:1"
+  register: change_attributes_old_style_again
+
+- name: assert change attributes of the site with deprecated string style again
+  assert:
+    that:
+    - not change_attributes_old_style_again|changed
+    - change_attributes_old_style_again.info == change_attributes_old_style.info
+
+- name: change attribute override string
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+    parameters: "virtualDirectoryDefaults.allowSubDirConfig:True"
+    attributes:
+      virtualDirectoryDefaults.allowSubDirConfig: False
+  register: change_attributes_old_override
+
+- name: assert change attribute override string
+  assert:
+    that:
+    - change_attributes_old_override|changed
+    - change_attributes_old_override.attributes["virtualDirectoryDefaults.allowSubDirConfig"] == False
+    - change_attributes_old_override.info.virtualDirectoryDefaults.allowSubDirConfig == False
+
+- name: stop site check
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: stopped
+  register: stop_site_check
+  check_mode: yes
+
+- name: get actual stop site check
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: stop_site_actual_check
+
+- name: assert stop site check
+  assert:
+    that:
+    - stop_site_check|changed
+    - stop_site_actual_check.stdout == "Started\r\n"
+
+- name: stop site
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: stopped
+  register: stop_site
+
+- name: get actual stop site
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: stop_site_actual
+
+- name: assert stop site
+  assert:
+    that:
+    - stop_site|changed
+    - stop_site_actual.stdout == "Stopped\r\n"
+
+- name: stop site again
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: stopped
+  register: stop_site_again
+
+- name: get actual stop site again
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: stop_site_actual_again
+
+- name: assert stop site again
+  assert:
+    that:
+    - not stop_site_again|changed
+    - stop_site_actual_again.stdout == "Stopped\r\n"
+
+- name: start site check
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+  register: start_site_check
+  check_mode: yes
+
+- name: get actual start site check
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: start_site_actual_check
+
+- name: assert start site check
+  assert:
+    that:
+    - start_site_check|changed
+    - start_site_actual_check.stdout == "Stopped\r\n"
+
+- name: start site
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+  register: start_site
+
+- name: get actual start site
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: start_site_actual
+
+- name: assert start site
+  assert:
+    that:
+    - start_site|changed
+    - start_site_actual.stdout == "Started\r\n"
+
+- name: start site again
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: started
+  register: start_site_again
+
+- name: get actual start site again
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: start_site_actual_again
+
+- name: assert start site again
+  assert:
+    that:
+    - not start_site_again|changed
+    - start_site_actual_again.stdout == "Started\r\n"
+
+- name: restart site check
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: restarted
+  register: restart_site_check
+  check_mode: yes
+
+- name: get actual restart site check
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: restart_site_actual_check
+
+- name: assert restart site check
+  assert:
+    that:
+    - restart_site_check|changed
+    - restart_site_actual_check.stdout == "Started\r\n"
+
+- name: restart site
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: restarted
+  register: restart_site
+
+- name: get actual restart site
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: restart_site_actual
+
+- name: assert restart site
+  assert:
+    that:
+    - restart_site|changed
+    - restart_site_actual.stdout == "Started\r\n"
+
+- name: stop site before restart from stop tests
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: stopped
+
+- name: restart site from stop check
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: restarted
+  register: restart_from_stop_site_check
+  check_mode: yes
+
+- name: get actual restart site from stop check
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: restart_from_stopsite_actual_check
+
+- name: assert restart site from stop check
+  assert:
+    that:
+    - restart_from_stop_site_check|changed
+    - restart_from_stopsite_actual_check.stdout == "Stopped\r\n"
+
+- name: restart site from stop
+  win_iis_website:
+    name: '{{test_iis_website_name}}'
+    state: restarted
+  register: restart_from_stop_site
+
+- name: get actual restart site from stop
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\Sites\{{test_iis_website_name}}).state"
+  register: restart_from_stop_site_actual
+
+- name: assert restart site from stop
+  assert:
+    that:
+    - restart_from_stop_site|changed
+    - restart_from_stop_site_actual.stdout == "Started\r\n"

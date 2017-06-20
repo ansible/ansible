@@ -1,0 +1,4 @@
+test_iis_website_name: TestSite
+test_iis_application_pool: AppPool
+test_iis_website_path: C:\ansible\win_iis_website
+test_iis_website_path2: C:\ansible\win_iis_website2
