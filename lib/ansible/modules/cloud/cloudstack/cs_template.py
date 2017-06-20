@@ -40,14 +40,25 @@ options:
     description:
       - URL of where the template is hosted on C(state=present).
       - URL to which the template would be extracted on C(state=extracted).
-      - Mutually exclusive with C(vm).
+      - Mutually exclusive with C(vm) and C(file).
     required: false
     default: null
   vm:
     description:
       - VM name the template will be created from its volume or alternatively from a snapshot.
       - VM must be in stopped state if created from its volume.
-      - Mutually exclusive with C(url).
+      - Mutually exclusive with C(url) and C(file).
+    required: false
+    default: null
+  file:
+    description:
+      - Path to local file to directly upload using http.
+      - This can be a full path, a path relative to the current working directory,
+      - or just the filename if the template is in the files folder.
+      - Mutually exclusive with C(url) and C(vm).
+      - Zone is required when using direct http upload.
+      - Compatible with CloudStack 4.6 and above.
+    version_added: '2.4'
     required: false
     default: null
   snapshot:
@@ -104,7 +115,7 @@ options:
       - Only used if C(state=extracted).
     required: false
     default: 'http_download'
-    choices: [ 'http_download', 'ftp_upload' ]
+    choices: [ 'http_download', 'ftp_upload', 'http_upload' ]
   domain:
     description:
       - Domain the template, snapshot or VM is related to.
@@ -390,6 +401,8 @@ project:
 
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
+import requests
+import os.path
 
 
 class AnsibleCloudStackTemplate(AnsibleCloudStack):
@@ -468,7 +481,6 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                     return self._get_by_key(key, s)
         self.module.fail_json(msg="Snapshot '%s' not found" % snapshot)
 
-
     def create_template(self):
         template = self.get_template()
         if not template:
@@ -492,6 +504,56 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                     template = self.poll_job(template, 'template')
         if template:
             template = self.ensure_tags(resource=template, resource_type='Template')
+
+        return template
+
+    def upload_template(self):
+        required_params = [
+            'format',
+            'file',
+            'hypervisor',
+            'zone',
+        ]
+        self.module.fail_on_missing_params(required_params=required_params)
+        filepath = self.module.params.get('file')
+        if not os.path.isfile(filepath):
+            if os.path.isfile('files/' + filepath):
+                filepath = 'files/' + filepath
+            else:
+                self.module.fail_json(msg="Failed: upload file '%s' does not exist" % filepath)
+
+        template = self.get_template()
+        if not template:
+            self.result['changed'] = True
+            args                    = self._get_args()
+            args['zoneid']          = self.get_zone(key='id')
+            args['format']          = self.module.params.get('format')
+            args['checksum']        = self.module.params.get('checksum')
+            args['isextractable']   = self.module.params.get('is_extractable')
+            args['isrouting']       = self.module.params.get('is_routing')
+            args['sshkeyenabled']   = self.module.params.get('sshkey_enabled')
+            args['hypervisor']      = self.get_hypervisor()
+            args['domainid']        = self.get_domain(key='id')
+            args['account']         = self.get_account(key='name')
+            args['projectid']       = self.get_project(key='id')
+
+            if not self.module.check_mode:
+                res = self.cs.getUploadParamsForTemplate(**args)
+                if 'errortext' in res:
+                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                uploadparams = res['getuploadparams']
+                files = {'file': (os.path.basename(filepath), open(filepath, 'rb'), 'application/octet-stream')}
+                headers = {
+                    'X-metadata': uploadparams['metadata'],
+                    'X-signature': uploadparams['signature'],
+                    'X-expires': uploadparams['expires'],
+                }
+                r = requests.post(uploadparams['postURL'], files=files, headers=headers)
+                if r.status_code == 200:
+                    template = self.get_template(id=uploadparams['id'])
+                else:
+                    self.module.fail_json(msg="Upload Failed: URL: '%s', Status: '%s', Text: '%s'" % (
+                        uploadparams['postURL'],r.status_code, r.text))
 
         return template
 
@@ -531,8 +593,9 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
         return template
 
 
-    def get_template(self):
+    def get_template(self, id=None):
         args                    = {}
+        args['id']              = id
         args['isready']         = self.module.params.get('is_ready')
         args['templatefilter']  = self.module.params.get('template_filter')
         args['domainid']        = self.get_domain(key='id')
@@ -614,6 +677,7 @@ def main():
         name = dict(required=True),
         display_text = dict(default=None),
         url = dict(default=None),
+        file = dict(default=None),
         vm = dict(default=None),
         snapshot = dict(default=None),
         os_type = dict(default=None),
@@ -635,7 +699,7 @@ def main():
         bits = dict(type='int', choices=[ 32, 64 ], default=64),
         state = dict(choices=['present', 'absent', 'extracted'], default='present'),
         cross_zones = dict(type='bool', default=False),
-        mode = dict(choices=['http_download', 'ftp_upload'], default='http_download'),
+        mode = dict(choices=['http_download', 'ftp_upload', 'http_upload'], default='http_download'),
         zone = dict(default=None),
         domain = dict(default=None),
         account = dict(default=None),
@@ -648,7 +712,7 @@ def main():
         argument_spec=argument_spec,
         required_together=cs_required_together(),
         mutually_exclusive = (
-            ['url', 'vm'],
+            ['url', 'vm', 'file'],
             ['zone', 'cross_zones'],
         ),
         supports_check_mode=True
@@ -669,6 +733,8 @@ def main():
                 tpl = acs_tpl.register_template()
             elif module.params.get('vm'):
                 tpl = acs_tpl.create_template()
+            elif module.params.get('file'):
+                tpl = acs_tpl.upload_template()
             else:
                 module.fail_json(msg="one of the following is required on state=present: url,vm")
 
