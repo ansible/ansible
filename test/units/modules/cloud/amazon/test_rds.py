@@ -91,12 +91,12 @@ def test_await_should_wait_till_not_pending():
     sleeper_double = MagicMock()
     get_db_instance_double = MagicMock(side_effect=[
         MagicMock(status='rebooting', data={"pending_modified_values": {"a": "b", "c": "d"}}),
-        MagicMock(status='available', data={"pending_modified_values": {"a": "b", "c": "d"}}),
+        MagicMock(status='available', data={"pending_modified_values": {"c": "d", "e": "f"}}),
         MagicMock(status='rebooting', data={"pending_modified_values": {"a": "b"}}),
-        MagicMock(status='rebooting', data={"pending_modified_values": {"a": "b", "c": "d"}}),
+        MagicMock(status='rebooting', data={"pending_modified_values": {"e": "f", "g": "h"}}),
         MagicMock(status='rebooting', data={"pending_modified_values": {}}),
-        MagicMock(status='available', data={"pending_modified_values": {"a": "b", "c": "d"}}),
-        MagicMock(status='rebooting', data={"pending_modified_values": {"a": "b", "c": "d"}}),
+        MagicMock(status='available', data={"pending_modified_values": {"g": "h", "i": "j"}}),
+        MagicMock(status='rebooting', data={"pending_modified_values": {"i": "j", "k": "l"}}),
         MagicMock(status='available', data={"pending_modified_values": {}}),
         MagicMock(status='available', data={"pending_modified_values": {}}),
     ])
