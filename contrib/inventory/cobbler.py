@@ -75,7 +75,9 @@ class CobblerInventory(object):
     def __init__(self):
 
         """ Main execution path """
-        self.conn = None
+        self.conn = dict()
+        self.sites = dict()
+        self.token = dict()
 
         self.inventory = dict()  # A list of groups and the hosts in that group
         self.cache = dict()  # Details about hosts in the inventory
@@ -110,10 +112,11 @@ class CobblerInventory(object):
 
     def _connect(self):
         if not self.conn:
-            self.conn = xmlrpclib.Server(self.cobbler_host, allow_none=True)
-            self.token = None
-            if self.cobbler_username is not None:
-                self.token = self.conn.login(self.cobbler_username, self.cobbler_password)
+            for site in self.sites.keys():
+                self.conn[site] = xmlrpclib.Server(self.sites[site]['cobbler_host'], allow_none=True)
+                self.token[site] = None
+                if self.sites[site]['cobbler_username'] is not None:
+                    self.token[site] = self.conn[site].login(self.sites[site]['cobbler_username'], self.sites[site]['cobbler_password'])
 
     def is_cache_valid(self):
         """ Determines if the cache files have expired, or if it is still valid """
@@ -136,13 +139,30 @@ class CobblerInventory(object):
         config = ConfigParser.SafeConfigParser()
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/cobbler.ini')
 
-        self.cobbler_host = config.get('cobbler', 'host')
-        self.cobbler_username = None
-        self.cobbler_password = None
-        if config.has_option('cobbler', 'username'):
-            self.cobbler_username = config.get('cobbler', 'username')
-        if config.has_option('cobbler', 'password'):
-            self.cobbler_password = config.get('cobbler', 'password')
+        if config.has_option('cobbler', 'host'):
+            self.sites['default'] = dict()
+            self.sites['default']['cobbler_host'] = config.get('cobbler', 'host')
+            self.sites['default']['cobbler_username'] = None
+            self.sites['default']['cobbler_password'] = None
+            if config.has_option('cobbler', 'username'):
+                self.sites['default']['cobbler_username'] = config.get('cobbler', 'username')
+            if config.has_option('cobbler', 'password'):
+                self.sites['default']['cobbler_password'] = config.get('cobbler', 'password')
+        else:
+            for section in config.sections():
+                m = re.search('^site_(.*)', section)
+                if m is not None:
+                    section = m.group(0)
+                    site = m.group(1)
+                    self.sites[site] = dict()
+                    self.sites[site]['cobbler_host'] = config.get(section, 'host')
+                    self.sites[site]['cobbler_username'] = None
+                    self.sites[site]['cobbler_password'] = None
+                    if config.has_option(section, 'username'):
+                        self.sites[site]['cobbler_username'] = config.get(section, 'username')
+                    if config.has_option(section, 'password'):
+                        self.sites[site]['cobbler_password'] = config.get(section, 'password')
+
         self.orderby_keyname = config.get('cobbler', 'orderby_keyname')
 
         # Cache related
@@ -196,52 +216,62 @@ class CobblerInventory(object):
         self._connect()
         self.groups = dict()
         self.hosts = dict()
-        if self.token is not None:
-            data = self.conn.get_systems(self.token)
-        else:
-            data = self.conn.get_systems()
 
-        for host in data:
-            # Get the FQDN for the host and add it to the right groups
-            dns_name = host['hostname']  # None
-            ksmeta = None
-            interfaces = host['interfaces']
-            # hostname is often empty for non-static IP hosts
-            if dns_name == '':
-                for (iname, ivalue) in iteritems(interfaces):
-                    if ivalue['management'] or not ivalue['static']:
-                        this_dns_name = ivalue.get('dns_name', None)
-                        if this_dns_name is not None and this_dns_name is not "":
-                            dns_name = this_dns_name
+        for site in self.sites.keys():
+            if self.token[site] is not None:
+                data = self.conn[site].get_systems(self.token[site])
+            else:
+                data = self.conn[site].get_systems()
 
-            if dns_name == '' or dns_name is None:
-                continue
+            for host in data:
+                # Get the FQDN for the host and add it to the right groups
+                dns_name = host['hostname']  # None
+                ksmeta = None
+                interfaces = host['interfaces']
+                # hostname is often empty for non-static IP hosts
+                if dns_name == '':
+                    for (iname, ivalue) in iteritems(interfaces):
+                        if ivalue['management'] or not ivalue['static']:
+                            this_dns_name = ivalue.get('dns_name', None)
+                            if this_dns_name is not None and this_dns_name is not "":
+                                dns_name = this_dns_name
 
-            status = host['status']
-            profile = host['profile']
-            classes = host[self.orderby_keyname]
+                if dns_name == '':
+                    continue
 
-            if status not in self.inventory:
-                self.inventory[status] = []
-            self.inventory[status].append(dns_name)
+                status = host['status']
+                profile = host['profile']
+                if host[self.orderby_keyname] == '<<inherit>>':
+                    classes = []
+                else:
+                    classes = host[self.orderby_keyname]
 
-            if profile not in self.inventory:
-                self.inventory[profile] = []
-            self.inventory[profile].append(dns_name)
+                if status not in self.inventory:
+                    self.inventory[status] = []
+                self.inventory[status].append(dns_name)
 
-            for cls in classes:
-                if cls not in self.inventory:
-                    self.inventory[cls] = []
-                self.inventory[cls].append(dns_name)
+                if profile not in self.inventory:
+                    self.inventory[profile] = []
+                self.inventory[profile].append(dns_name)
 
-            # Since we already have all of the data for the host, update the host details as well
+                for cls in classes:
+                    if cls not in self.inventory:
+                        self.inventory[cls] = []
+                    self.inventory[cls].append(dns_name)
 
-            # The old way was ksmeta only -- provide backwards compatibility
+                if site != 'default':
+                    if site not in self.inventory:
+                        self.inventory[site] = []
+                    self.inventory[site].append(dns_name)
 
-            self.cache[dns_name] = host
-            if "ks_meta" in host:
-                for key, value in iteritems(host["ks_meta"]):
-                    self.cache[dns_name][key] = value
+                # Since we already have all of the data for the host, update the host details as well
+
+                # The old way was ksmeta only -- provide backwards compatibility
+
+                self.cache[dns_name] = host
+                if "ks_meta" in host:
+                    for key, value in iteritems(host["ks_meta"]):
+                        self.cache[dns_name][key] = value
 
         self.write_to_cache(self.cache, self.cache_path_cache)
         self.write_to_cache(self.inventory, self.cache_path_inventory)
