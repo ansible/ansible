@@ -215,7 +215,8 @@ class TestStrategyBase(unittest.TestCase):
             'hosts': inventory_content
         })
 
-        with patch('ansible.plugins.inventory.ini.InventoryModule.verify_file') as base:
+        from ansible.plugins.inventory import ini
+        with patch('ini.InventoryModule.verify_file') as base:
             base.return_value = True
             inventory = InventoryManager(loader=fake_loader, sources=['hosts'])
 
