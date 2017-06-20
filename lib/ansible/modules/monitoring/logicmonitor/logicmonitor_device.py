@@ -55,7 +55,7 @@ disable_alerting:
     type: boolean
     sample: False
 current_collector_id:
-    description:
+    description: the id of the preferred collector assigned to monitor the device
     returned: success
     type: str
     sample: 1
