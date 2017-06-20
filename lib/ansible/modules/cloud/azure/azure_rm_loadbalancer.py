@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
@@ -80,12 +80,14 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
+import random
+
 from ansible.module_utils.basic import *
 from ansible.module_utils.azure_rm_common import *
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import LoadBalancer
+    from azure.mgmt.network.models import LoadBalancer, FrontendIPConfiguration
 except ImportError as exc:
     # This is handled in azure_rm_common
     pass
@@ -107,7 +109,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             public_ip_address_name=dict(
                 type='str',
                 required=False,
-                aliases=['public_ip_address', 'public_ip_name']
+                aliases=['public_ip_address', 'public_ip_name', 'public_ip']
             )
         )
 
@@ -132,24 +134,35 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         results = dict()
         changed = False
         pip = None
+        load_balancer_props = dict()
 
-        resource_group = self.get_resource_group(self.resource_group)
+        try:
+            resource_group = self.get_resource_group(self.resource_group)
+        except CloudError:
+            self.fail('resource group {} not found'.format(self.resource_group))
+
         if not self.location:
             self.location = resource_group.location
+        load_balancer_props['location'] = self.location
 
         if self.state == 'present':
             # handle present status
             if self.public_ip_address_name:
                 pip = self.get_public_ip_address(self.public_ip_address_name)
+                load_balancer_props['frontend_ip_configurations'] = [
+                    FrontendIPConfiguration(
+                        name=random_name('feipconfig'),
+                        public_ip_address=pip
+                    )
+                ]
         elif self.state == 'absent':
             try:
                 self.network_client.load_balancers.delete(
                     resource_group_name=self.resource_group,
                     load_balancer_name=self.name
                 ).wait()
-                change = True
+                changed = True
             except CloudError:
-                import pdb; pdb.set_trace()
                 changed = False
 
             self.results['changed'] = changed
@@ -181,25 +194,23 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 changed = True
 
         self.results['changed'] = changed
-        self.results['state'] = results
+        self.results['state'] = (
+            results if results
+            else load_balancer_to_dict(LoadBalancer(**load_balancer_props))
+        )
 
         if self.check_mode:
             return self.results
-
-        import pdb; pdb.set_trace()
 
         try:
             self.network_client.load_balancers.create_or_update(
                 resource_group_name=self.resource_group,
                 load_balancer_name=self.name,
-                parameters=LoadBalancer(
-                    location=self.location
-                )
+                parameters=LoadBalancer(**load_balancer_props)
             ).wait()
         except CloudError as err:
-            import pdb; pdb.set_trace()
+            self.fail('Error creating load balancer {}'.format(err))
 
-        # testing here
         return self.results
 
     def get_public_ip_address(self, name):
@@ -208,11 +219,13 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.log('Fetching public ip address {}'.format(name))
         try:
             public_ip = self.network_client.public_ip_addresses.get(self.resource_group, name)
-        except CloudError as exc:
-            self.fail('Error fetching public ip address {} - {}'.format(name, str(exc)))
+        except CloudError as err:
+            self.fail('Error fetching public ip address {} - {}'.format(name, str(err)))
         return public_ip
 
 def load_balancer_to_dict(load_balancer):
+    """Seralialize a LoadBalancer object to a dict"""
+
     result = dict(
         id=load_balancer.id,
         name=load_balancer.name,
@@ -326,6 +339,9 @@ def load_balancer_to_dict(load_balancer):
         ) for _ in load_balancer.outbound_nat_rules]
 
     return result
+
+def random_name(prefix):
+    return '{}{}'.format(prefix, random.randint(10000, 99999))
 
 def main():
     AzureRMLoadBalancer()
