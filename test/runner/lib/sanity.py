@@ -316,7 +316,7 @@ def command_sanity_pep8(args, targets):
         return SanitySkipped(test)
 
     cmd = [
-        'pep8',
+        'pycodestyle',
         '--max-line-length', '160',
         '--config', '/dev/null',
         '--ignore', ','.join(sorted(current_ignore)),
