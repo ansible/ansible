@@ -1,4 +1,4 @@
-"""CloudStack plugin for integration tests."""
+"""VMware vCenter plugin for integration tests."""
 from __future__ import absolute_import, print_function
 
 import os
