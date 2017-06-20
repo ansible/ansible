@@ -315,8 +315,12 @@ def compare_obj(obj_1, obj_2):
 
 
 def compare_objects(group_1, group_2):
+    # customer properties are k/v pairs and need special comparison
+    # system properties are immutable and automatically applied
+    # ignore them when doing compare
     exclude_keys = {
-        'custom_properties': 'custom_properties'
+        'custom_properties': 'custom_properties',
+        'system_properties': 'system_properties'
     }
 
     dict_1 = {}
@@ -348,23 +352,20 @@ def compare_objects(group_1, group_2):
 
 
 def compare_props(props_1, props_2):
-    # system properties are immutable and automatically applied
-    # ignore them when doing compare
-    p_1 = remove_system_props(props_1)
-    p_2 = remove_system_props(props_2)
+    p_1 = format_props(props_1)
+    p_2 = format_props(props_2)
     return compare_objects(p_1, p_2)
 
 
-def remove_system_props(props):
+def format_props(props):
     ret = {}
     for item in props:
         name = ''
         value = ''
 
         if isinstance(item, dict):
-            if item['name'].startswith('system'):
-                name = item['name']
-                value = item['value']
+            name = item['name']
+            value = item['value']
         elif isinstance(item, logicmonitor.NameAndValue):
             name = item.name
             value = item.value
