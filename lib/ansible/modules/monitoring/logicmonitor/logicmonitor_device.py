@@ -375,7 +375,7 @@ def find_device_group(client, full_path, module):
 
     device_groups = None
     try:
-        device_groups = client.get_device_group_list()
+        device_groups = client.get_device_group_list(size=-1)
     except ApiException as e:
         err = 'Exception when calling get_device_group_list: ' + str(e) + '\n'
         module.fail_json(msg=err, changed=False, failed=True)
@@ -402,7 +402,7 @@ def find_obj(client, params, module):
 
     devices = None
     try:
-        devices = client.get_device_list()
+        devices = client.get_device_list(size=-1)
     except ApiException as e:
         err = 'Exception when calling get_device_list: ' + str(e) + '\n'
         module.fail_json(msg=err, changed=False, failed=True)
