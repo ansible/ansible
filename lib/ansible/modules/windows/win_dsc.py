@@ -30,7 +30,7 @@ DOCUMENTATION = r'''
 module: win_dsc
 version_added: "2.4"
 short_description: Invokes a PowerShell DSC configuration
-description: |
+description:
      Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer).
      Most of the parameters for this module are dynamic and will vary depending on the DSC Resource.
      In order to find the required parameters for a given DSC resource, you can use the following on-liner:
@@ -44,7 +44,7 @@ options:
       - The DSC Resource to use. Must be accessible to PowerShell using any of the default paths.
     required: true
   module_version:
-    description: |
+    description:
       Can be used to configure the exact version of the dsc resource to be invoked.
       Useful if the target node has multiple versions installed of the module containing the DSC resource.
       If not specified, the module will follow standard Powershell convention and use the highest version available.
