@@ -248,25 +248,13 @@ def get_client(params, module):
 
 def get_obj(client, params, module):
     try:
-        obj = logicmonitor.RestDevice(
-            custom_properties=format_custom_properties(params['properties']),
-            description=params['description'],
-            disable_alerting=bool(params['disable_alerting']),
-            preferred_collector_id=params['preferred_collector_id'],
-            scan_config_id=0
-        )
-
-        if 'name' in params and params['name']:
-            obj.name = params['name']
-        else:
+        if 'name' not in params or not params['name']:
             # if name not specified, default to fqdn
-            obj.name = socket.getfqdn()
+            params['name'] = socket.getfqdn()
 
-        if 'display_name' in params and params['display_name']:
-            obj.display_name = params['display_name']
-        else:
+        if 'display_name' not in params or not params['display_name']:
             # if display name not set, default to host name
-            obj.display_name = obj.name
+            params['display_name'] = params['name']
 
         # find and format device group ids into comma-delimited string
         if 'groups' in params and len(params['groups']) > 0:
@@ -283,7 +271,7 @@ def get_obj(client, params, module):
                     unknown_device_groups.append(group)
 
             if all_found is True:
-                obj.host_group_ids = ','.join(device_group_ids)
+                params['host_group_ids'] = ','.join(device_group_ids)
             else:
                 module.fail_json(msg='Unknown device group(s) ' +
                                  ','.join(unknown_device_groups),
@@ -291,7 +279,19 @@ def get_obj(client, params, module):
                                  failed=True)
         else:
             # default to root device group
-            obj.host_group_ids = '1'
+            params['host_group_ids'] = '1'
+
+        obj = logicmonitor.RestDevice(
+            custom_properties=format_custom_properties(params['properties']),
+            description=params['description'],
+            disable_alerting=bool(params['disable_alerting']),
+            display_name=params['display_name'],
+            host_group_ids=params['host_group_ids'],
+            name=params['name'],
+            preferred_collector_id=params['preferred_collector_id'],
+            scan_config_id=0
+        )
+
         return obj
     except Exception as e:
         err = 'Exception creating object: ' + str(e) + '\n'
@@ -359,7 +359,7 @@ def remove_system_props(props):
         name = ''
         value = ''
 
-        if isinstance(item, 'dict'):
+        if isinstance(item, dict):
             if item['name'].startswith('system'):
                 name = item['name']
                 value = item['value']
