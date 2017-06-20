@@ -28,7 +28,7 @@ success:
     description: flag indicating that execution was successful
     returned: success
     type: boolean
-    sample: True
+    sample: true
 id:
     description: the id of the device
     returned: success
@@ -53,7 +53,7 @@ disable_alerting:
     description: indicates whether alerting is disabled (true) or enabled (false) for this device
     returned: success
     type: boolean
-    sample: False
+    sample: false
 current_collector_id:
     description: the id of the preferred collector assigned to monitor the device
     returned: success
