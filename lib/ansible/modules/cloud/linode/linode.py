@@ -369,6 +369,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
         #  - need config_id for linode_id - create config (need kernel)
 
         # Any create step triggers a job that need to be waited for.
+        # if no linode_id is provided, we assume that you would like to create a new linode
         if not servers:
             # Any creation step requires a name, plan, distribution and datacenter
             module.fail_on_missing_params(["name", "plan", "distribution", "datacenter"])
@@ -406,9 +407,10 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not disks:
-            module.fail_on_missing_params(["name", "linodeid", "distribution"])
-            # Create disks (1 from distrib, 1 for SWAP)
-            new_server = True
+            if new_server:
+                module.fail_on_missing_params(["name", "distribution"])
+            else:
+                module.fail_on_missing_params(["name", "linode_id", "distribution"])
             try:
                 if not password:
                     # Password is required on creation, if not provided generate one
@@ -446,7 +448,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not configs:
-            module.fail_on_missing_params(["name", "linodeid", "distribution"])
+            module.fail_on_missing_params(["name", "distribution"])
             # Check architecture
             for distrib in api.avail_distributions():
                 if distrib['DISTRIBUTIONID'] != distribution:
@@ -550,7 +552,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
             instances.append(instance)
 
     elif state in ('restarted'):
-        module.fail_on_missing_params(["linodeid"])
+        module.fail_on_missing_params(["linode_id"])
 
         if not servers:
             module.fail_json(msg = 'Server with linode_ID %s not found' % (linode_id))
