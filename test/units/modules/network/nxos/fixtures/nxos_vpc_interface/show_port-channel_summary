@@ -1,0 +1,14 @@
+{
+  "TABLE_channel": {
+    "ROW_channel": [
+    {
+      "group": "10",
+      "port-channel": "port-channel10",
+      "layer": "R",
+      "status": "D",
+      "type": "Eth",
+      "prtcl": "NONE"
+    }
+  ]
+  }
+}
