@@ -521,7 +521,12 @@ def main():
 
     sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
                                           type=type_in, identifier=identifier_in)
-    for rset in sets:
+    sets_iter = iter(sets)
+    while True:
+        try:
+            rset = invoke_with_throttling_retries(next, sets_iter)
+        except StopIteration:
+            break
         # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
         # tripping of things like * and @.
         decoded_name = rset.name.replace(r'\052', '*')
