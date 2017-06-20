@@ -123,13 +123,19 @@ options:
     description: The name of the option group to use. If not specified then the default option group is used.
     required: false
   maint_window:
-    description: "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi (Example: Mon:22:00-Mon:23:15). If not specified then AWS will assign a random maintenance window."
+    description:
+       - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi (Example: Mon:22:00-Mon:23:15). "
+       - "If not specified then AWS will assign a random maintenance window."
     required: false
   backup_window:
-    description: "Backup window in format of hh24:mi-hh24:mi (Example: 04:00-05:45). If not specified then AWS will assign a random backup window."
+    description:
+       - "Backup window in format of hh24:mi-hh24:mi (Example: 04:00-05:45). If not specified "
+       - "then AWS will assign a random backup window."
     required: false
   backup_retention:
-    description: "Number of days backups are retained. Set to 0 to disable backups. Default is 1 day. Valid range: 0-35."
+    description:
+       - "Number of days backups are retained. Set to 0 to disable backups. Default is 1 day. "
+       - "Valid range: 0-35."
     required: false
   zone:
     description:
@@ -374,19 +380,20 @@ def await_resource(conn, resource, status, module, await_pending=None):
     # should we sleep first?
     resource = get_db_instance(conn, resource.name)
     eprint(str(resource))
-    eprint("wait is " + str(wait_timeout) + " " + str(time.time()) + " await_pending is "
-           + str(await_pending) + " status is " + str(resource.status))
-    while ((await_pending and resource.data["pending_modified_values"])
-           or resource.status != status) and wait_timeout > time.time():
+    eprint("wait is {0} {1} await_pending is {2} status is {3}".format(
+        str(wait_timeout), str(time.time()), str(await_pending), str(resource.status)))
+    rdat = resource.data["pending_modified_values"]
+    while ((await_pending and rdat) or resource.status != status) and wait_timeout > time.time():
         time.sleep(5)
         # Temporary until all the rds2 commands have their responses parsed
         if resource.name is None:
             module.fail_json(
                 msg="There was a problem waiting for RDS instance %s" % resource.instance)
         resource = get_db_instance(conn, resource.name)
-        eprint(str(resource))
         if resource is None:
             break
+        rdat = resource.data["pending_modified_values"]
+        eprint(str(resource))
     if wait_timeout <= time.time() and resource.status != status:
         module.fail_json(msg="Timeout waiting for RDS resource %s status is still %s should be %s" % (
             resource.name, resource.status, status))
@@ -575,8 +582,12 @@ def modify_db_instance(module, conn):
     before_instance = get_db_instance(conn, before_instance_name)
     for immutable_key in ['username', 'db_engine', 'db_name']:
         if immutable_key in module.params:
-            if ((immutable_key in before_instance.data
-                 and module.params[immutable_key] != before_instance.data[immutable_key])):
+            try:
+                keys_different = module.params[immutable_key] != before_instance.data[immutable_key]
+            except KeyError:
+                keys_different = False
+
+            if (keys_different):
                 module.fail_json(msg="Cannot modify parameter %s for instance %s" %
                                  (immutable_key, before_instance_name))
             del(module.params[immutable_key])
