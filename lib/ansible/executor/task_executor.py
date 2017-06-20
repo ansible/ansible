@@ -59,7 +59,7 @@ class TaskExecutor:
     # the module
     SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q, tqm):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -70,6 +70,7 @@ class TaskExecutor:
         self._connection = None
         self._rslt_q = rslt_q
         self._loop_eval_error = None
+        self._tqm = tqm
 
         self._task.squash()
 
@@ -82,6 +83,7 @@ class TaskExecutor:
         '''
 
         display.debug("in run()")
+        self._tqm.send_callback('v2_runner_on_task_start', self._host, self._task)
 
         try:
             try:
