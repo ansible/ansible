@@ -637,6 +637,11 @@ class RedHatWorkstationHostname(Hostname):
     distribution = 'Red hat enterprise linux workstation'
     strategy_class = RedHatStrategy
 
+class RedHatAtomicHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Red hat enterprise linux atomic host'
+    strategy_class = RedHatStrategy
+
 class CentOSHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos'
