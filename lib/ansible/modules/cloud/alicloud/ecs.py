@@ -27,8 +27,8 @@ module: ecs
 version_added: "2.4"
 short_description: Create, Start, Stop, Restart or Terminate an Instance in ECS. Add or Remove Instance to/from a Security Group.
 description:
-    - Creates, starts, stops, restarts or terminates ecs instances.
-    - Adds or removes ecs instances to/from security group.
+    - Create, start, stop, restart, retrieval, modify or terminate ecs instances.
+    - Add or remove ecs instances to/from security group.
 options:
     status:
       description:
@@ -36,10 +36,7 @@ options:
       required: false
       default: 'present'
       aliases: ['state']
-      choices:
-        - [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
-        - map operation ['create', 'start', 'stop', 'restart', 'terminate', 'querying_instance', 'modify_attribute',
-                        'describe_status']
+      choices: [ 'present', 'pending', 'running', 'stopped', 'restarted', 'absent', 'getinfo', 'getstatus' ]
     alicloud_zone:
       description: Aliyun availability zone ID in which to launch the instance
       required: false
@@ -74,24 +71,41 @@ options:
       required: false
       default: null
     instance_name:
-      description: Name of the instance to use.
+      description:
+        - The name of ECS instance, which is a string of 2 to 128 Chinese or English characters. It must begin with an
+          uppercase/lowercase letter or a Chinese character and can contain numerals, ".", "_", or "-".
+          It cannot begin with http:// or https://.
       required: false
       default: null
     description:
-      description: Description of the instance to use.
+      description:
+        - The description of ECS instance, which is a string of 2 to 256 characters. It cannot begin with http:// or https://.
       required: false
       default: null
     internet_data:
       description:
-        - A hash/dictionaries of internet to the new instance;
-        - >
-          '{"key":"value"}'; keys allowed:
-          - charge_type ( required:false;default: "PayByBandwidth", choices:["PayByBandwidth", "PayByTraffic"] )
-          - max_bandwidth_in(required:false, default:200)
-          - max_bandwidth_out(required:false, default:0).
-
+        - A hash/dictionaries of internet to the new instance
       required: false
       default: null
+      suboptions:
+          charge_type:
+            description:
+              - Internet charge type, which can be PayByTraffic or PayByBandwidth.
+            required: false
+            default: "PayByBandwidth"
+            choices: ["PayByBandwidth", "PayByTraffic"]
+          max_bandwidth_in:
+            description:
+              - Maximum incoming bandwidth from the public network, measured in Mbps (Mega bit per second).
+            required: false
+            default: 200
+            choices: [1~200]
+          max_bandwidth_out:
+            description:
+              - Maximum outgoing bandwidth to the public network, measured in Mbps (Mega bit per second).
+            required: false
+            default: 0
+            choices: [0~100]
     host_name:
       description: Instance host name.
       required: false
@@ -102,15 +116,32 @@ options:
       default: null
     system_disk:
       description:
-        - A hash/dictionaries of system disk to the new instance;
-        - >
-          '{"key":"value"}'; keys allowed:
-          - disk_category (required:false; default: "cloud"; choices:["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"] )
-          - disk_size (required: false, default: max[40, ImageSize], choice: [40-500])
-          - disk_name (required: false, default: Null)
-          - disk_description (required:false; default:null)
+        - A hash/dictionaries of system disk to the new instance
       required: false
       default: null
+      suboptions:
+          disk_category:
+            description:
+              - Category of the system disk.
+            required: false
+            default: "cloud"
+            choices: ["cloud", "cloud_efficiency", "cloud_ssd", "ephemeral_ssd"]
+          disk_size:
+            description:
+              - Size of the system disk, in GB
+            required: false
+            default: max[40, ImageSize]
+            choices: [40~500]
+          disk_name:
+            description:
+              - Name of a system disk.
+            required: false
+            default: null
+          disk_description:
+            description:
+              - Description of a system disk.
+            required: false
+            default: null
     count:
       description: The number of the new instance.
       required: false
@@ -181,14 +212,34 @@ options:
     attributes:
       description:
         - A list of hash/dictionaries of instance attributes. If it's set, the specified instance's attributes would be modified.
-        - keys allowed are
-            - id (required=true; default=null; description=ID of an ECS instance )
-            - name (required=false; default=null; description=Name of the instance to modify)
-            - description (required=false; default=null; description=Description of the instance to use)
-            - password (required=false; default=null; description=The password to login instance)
-            - host_name (required=false; default=null; description=Instance host name)
       required: false
       default: null
+      suboptions:
+          id:
+            description:
+              - ID of an ECS instance
+            required: true
+            default: null
+          name:
+            description:
+              - Name of the instance to modify
+            required: false
+            default: null
+          description:
+            description:
+              - Description of the instance to use
+            required: false
+            default: null
+          password:
+            description:
+              - The password to login instance
+            required: false
+            default: null
+          host_name:
+            description:
+              - Instance host name
+            required: false
+            default: null
     sg_action:
       description: The action of operating security group.
       required: true
@@ -671,8 +722,6 @@ def get_instances(module, ecs, instance_ids):
     for inst in ecs.get_all_instances(instance_ids=instance_ids):
         instance_dict_array.append(get_instance_info(inst))
         changed = True
-
-    # C2C : Commented printing on to console as it causing error from ansible
 
     return changed, instance_dict_array, instance_ids
 
