@@ -194,8 +194,8 @@ import socket
 import types
 
 try:
-    import logicmonitor
-    from logicmonitor.rest import ApiException
+    import logicmonitor_sdk
+    from logicmonitor_sdk.rest import ApiException
     HAS_LM = True
 except ImportError:
     HAS_LM = False
@@ -624,7 +624,7 @@ def main():
     if HAS_LIB_JSON is not True:
         module.fail_json(msg='Unable to load JSON library')
     if not HAS_LM:
-        module.fail_json(msg='logicmonitor required for this module')
+        module.fail_json(msg='logicmonitor_sdk required for this module')
 
     selector(module)
 
