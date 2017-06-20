@@ -62,13 +62,13 @@ current_collector_id:
 custom_properties:
     description: custom properties for the device
     returned: success
-    type: list
-    sample: [ { "name" : "location", "value" : "Santa Barbara,CA"}, { "name" : "snmp.version", "value" : "v3" } ]
+    type: str
+    sample: "[{'name': 'environment', 'value': 'auto'}, {'name': 'snmp.community', 'value': 'commstring'}]"
 system_properties:
     description: system properties for the device
     returned: success
-    type: list
-    sample: [ { "name" : "system.collectorplatform", "value" : "linux"}, { "name" : "system.devicetype", "value" : "0" } ]
+    type: str
+    sample: "[{'name': 'system.collectorplatform', 'value': 'linux'}, {'name': 'system.devicetype', 'value': '0'}]"
 ...
 '''
 
@@ -548,8 +548,8 @@ def succeed(changed, obj, module):
         description=obj.description,
         disable_alerting=obj.disable_alerting,
         current_collector_id=str(obj.current_collector_id),
-        custom_properties=obj.custom_properties,
-        system_properties=obj.system_properties
+        custom_properties=str(obj.custom_properties),
+        system_properties=str(obj.system_properties)
     )
 
 
@@ -559,7 +559,7 @@ def ensure_present(client, params, module):
     found_obj = find_obj(client, params, module)
     if found_obj is None:
         if not module.check_mode:
-            add_obj(client, obj, module)
+            obj = add_obj(client, obj, module)
         succeed(True, obj, module)
     if not compare_obj(obj, found_obj):
         if not module.check_mode:
@@ -573,6 +573,7 @@ def ensure_present(client, params, module):
 def ensure_absent(client, params, module):
     obj = find_obj(client, params, module)
     if obj is None:
+        obj = get_obj(client, params, module)
         succeed(False, obj, module)
     else:
         if not module.check_mode:
