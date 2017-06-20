@@ -150,7 +150,7 @@ options:
     description:
       - enable detailed monitoring (CloudWatch) for instance
     required: false
-    default: null
+    default: no
     choices: [ "yes", "no" ]
     aliases: []
   user_data:
