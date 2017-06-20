@@ -453,7 +453,7 @@ def find_collector(client, id, module):
             ' calling get_collector_by_id: ' + str(e) + '\n'
         )
         module.fail_json(msg=err, changed=False, failed=True)
-    return collector
+    return collector.data
 
 
 def add_obj(client, device, module):
