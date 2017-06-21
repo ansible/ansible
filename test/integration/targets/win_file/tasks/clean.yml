@@ -1,0 +1,17 @@
+- name: Clean up
+  win_file:
+    path: '{{ win_output_dir }}'
+    state: absent
+
+- name: Create directory again
+  win_file:
+    path: '{{ win_output_dir }}'
+    state: directory
+
+- set_fact:
+    output_file: "{{ win_output_dir }}\\foo.txt"
+
+- name: Prep with a basic win copy
+  win_copy:
+    src: foo.txt
+    dest: '{{ output_file }}'
