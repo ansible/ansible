@@ -305,7 +305,7 @@ def main():
     if state == 'present':
         delta = dict(set(proposed.items()).difference(existing.items()))
         if delta:
-            state_present(portchannel, delta, config_value, existing)
+            commands = state_present(portchannel, delta, config_value, existing)
 
     elif state == 'absent' and existing:
         commands = state_absent(portchannel, existing)
@@ -313,7 +313,7 @@ def main():
     cmds = flatten_list(commands)
     if cmds:
         if module.check_mode:
-            module.exit_json(**results)
+            module.exit_json(changed=True, commands=cmds)
         else:
             load_config(module, cmds)
             results['changed'] = True
