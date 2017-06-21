@@ -297,7 +297,7 @@ except ImportError:
 
 
 def match_tags(tags_to_match, cluster):
-    for key, value in tags_to_match.item():
+    for key, value in tags_to_match.items():
         for tag in cluster['Tags']:
             if key == tag['Key'] and value == tag['Value']:
                 return True
@@ -326,7 +326,7 @@ def find_clusters(conn, module, identifier=None, tags=None):
 
         matched_tags = True
         if tags:
-            matched_tags = matched_tags(tags, cluster)
+            matched_tags = match_tags(tags, cluster)
 
         if matched_identifier and matched_tags:
             matched_clusters.append(camel_dict_to_snake_dict(cluster))
@@ -343,7 +343,10 @@ def main():
             tags=dict(type='dict')
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True
+    )
 
     cluster_identifier = module.params.get('cluster_identifier')
     cluster_tags = module.params.get('tags')
