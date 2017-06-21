@@ -34,7 +34,7 @@ author: Peter Sprygada (@privateip)
 options:
     purge_rules:
       description:
-        - If set to true, it will delete all rules in the gateway that are not given as paramter to this module.
+        - If set to true, it will delete all rules in the gateway that are not given as parameter to this module.
       required: false
       default: false
     nat_rules:
@@ -126,7 +126,7 @@ def rule_to_string(rule):
     strings = list()
     for key, value in rule.items():
         strings.append('%s=%s' % (key, value))
-    return ', '.join(string)
+    return ', '.join(strings)
 
 def main():
     argument_spec = vca_argument_spec()

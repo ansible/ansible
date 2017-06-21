@@ -66,6 +66,24 @@ options:
             - "Specify if latest template version should be used, when running a stateless VM."
             - "If this parameter is set to I(true) stateless VM is created."
         version_added: "2.3"
+    storage_domain:
+        description:
+            - "Name of the storage domain where all template disks should be created."
+            - "This parameter is considered only when C(template) is provided."
+            - "C(**IMPORTANT**)"
+            - "This parameter is not idempotent, if the VM exists and you specfiy different storage domain,
+              disk won't move."
+        version_added: "2.4"
+    disk_format:
+        description:
+            - "Specify format of the disk."
+            - "If (cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision)."
+            - "If (raw) format is used, disk storage will be allocated right away, also known as I(preallocated)."
+            - "Note that this option isn't idempotent as it's not currently possible to change format of the disk via API."
+            - "This parameter is considered only when C(template) and C(storage domain) is provided."
+        choices: ['cow', 'raw']
+        default: cow
+        version_added: "2.4"
     memory:
         description:
             - "Amount of memory of the Virtual Machine. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB)."
@@ -476,6 +494,15 @@ ovirt_vms:
       username: user
       password: password
 
+# create vm from template and create all disks on specific storage domain
+ovirt_vms:
+  name: vm_test
+  cluster: mycluster
+  template: mytemplate
+  storage_domain: mynfs
+  nics:
+    - name: nic1
+
 # Remove VM, if VM is running it will be stopped:
 ovirt_vms:
     state: absent
@@ -542,13 +569,47 @@ class VmsModule(BaseModule):
 
         return template
 
+    def __get_storage_domain_and_all_template_disks(self, template):
+
+        if self.param('template') is None:
+            return None
+
+        if self.param('storage_domain') is None:
+            return None
+
+        disks = list()
+
+        for att in self._connection.follow_link(template.disk_attachments):
+            disks.append(
+                otypes.DiskAttachment(
+                    disk=otypes.Disk(
+                        id=att.disk.id,
+                        format=otypes.DiskFormat(self.param('disk_format')),
+                        storage_domains=[
+                            otypes.StorageDomain(
+                                id=get_id_by_name(
+                                    self._connection.system_service().storage_domains_service(),
+                                    self.param('storage_domain')
+                                )
+                            )
+                        ]
+                    )
+                )
+            )
+
+        return disks
+
     def build_entity(self):
         template = self.__get_template_with_version()
+
+        disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
+
         return otypes.Vm(
             name=self.param('name'),
             cluster=otypes.Cluster(
                 name=self.param('cluster')
             ) if self.param('cluster') else None,
+            disk_attachments=disk_attachments,
             template=otypes.Template(
                 id=template.id,
             ) if template else None,
@@ -1005,6 +1066,8 @@ def main():
         template=dict(default=None),
         template_version=dict(default=None, type='int'),
         use_latest_template_version=dict(default=None, type='bool'),
+        storage_domain=dict(default=None),
+        disk_format=dict(choices=['cow','raw'], default='cow'),
         disks=dict(default=[], type='list'),
         memory=dict(default=None),
         memory_guaranteed=dict(default=None),

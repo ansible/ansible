@@ -137,6 +137,7 @@ else:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
@@ -208,8 +209,8 @@ def check(user_facts, user, profile, resource_pool,
     if (expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or
            ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True')):
         return False
-    if (roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or
-            cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0)):
+    if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
+            sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
         return False
     return True
 
@@ -275,8 +276,8 @@ def present(user_facts, cursor, user, profile, resource_pool,
             changed = True
         if changed:
             cursor.execute(' '.join(query_fragments))
-        if (roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or
-                cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0)):
+        if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
+               sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
             update_roles(user_facts, cursor, user,
                 user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
             changed = True
@@ -393,7 +394,7 @@ def main():
         raise
     except Exception:
         e = get_exception()
-        module.fail_json(msg=e)
+        module.fail_json(msg=to_native(e))
 
     module.exit_json(changed=changed, user=user, ansible_facts={'vertica_users': user_facts})
 

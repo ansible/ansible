@@ -137,8 +137,6 @@ options:
     default: merge
     choices: ['merge', 'override', 'replace']
     version_added: "2.3"
-requirements:
-  - junos-eznc
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
@@ -242,7 +240,7 @@ def filter_delete_statements(module, candidate):
     config = to_native(match.text, encoding='latin1')
 
     modified_candidate = candidate[:]
-    for index, line in enumerate(candidate):
+    for index, line in reversed(list(enumerate(candidate))):
         if line.startswith('delete'):
             newline = re.sub('^delete', 'set', line)
             if newline not in config:

@@ -134,7 +134,7 @@ class LookupModule(LookupBase):
             item[1] = ASCENDING
         elif sort_order == "DESCENDING":
             item[1] = DESCENDING
-        #else the user knows what s/he is doing and we won't predict. PyMongo will return an error if necessary
+        # else the user knows what s/he is doing and we won't predict. PyMongo will return an error if necessary
 
     def convert_mongo_result_to_valid_json(self, result):
         if result is None:
@@ -151,16 +151,15 @@ class LookupModule(LookupBase):
         elif isinstance(result, dict):
             new_dict = {}
             for key in result.keys():
-                value = result[key] # python2 and 3 compatible....
+                value = result[key]  # python2 and 3 compatible....
                 new_dict[key] = self.convert_mongo_result_to_valid_json(value)
             return new_dict
         elif isinstance(result, datetime.datetime):
-            #epoch
-            return (result - datetime.datetime(1970,1,1)).total_seconds()
+            # epoch
+            return (result - datetime.datetime(1970, 1, 1)). total_seconds()
         else:
-            #failsafe
+            # failsafe
             return "{}".format(result)
-
 
     def run(self, terms, variables, **kwargs):
 
@@ -187,7 +186,7 @@ class LookupModule(LookupBase):
 
       #optional query  parameters
       #we accept any parameter from the normal mongodb query.
-      # the offical documentation is here
+      # the official documentation is here
       # https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find
       #   filter:  { "hostname": "batman" }
       #   projection: { "pid": True    , "_id" : False , "hostname" : True }
@@ -226,7 +225,7 @@ class LookupModule(LookupBase):
 
             try:
                 client = MongoClient(connection_string, **extra_connection_parameters)
-                results = client[database][collection].find( **term )
+                results = client[database][collection].find(**term)
 
                 for result in results:
                     result = self.convert_mongo_result_to_valid_json(result)
@@ -234,7 +233,5 @@ class LookupModule(LookupBase):
 
             except ConnectionFailure as e:
                 raise AnsibleError('unable to connect to database: %s' % str(e))
-
-
 
         return ret

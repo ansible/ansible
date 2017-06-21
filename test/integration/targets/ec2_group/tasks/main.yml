@@ -188,11 +188,6 @@
         state=absent
       register: result
 
-    - name: assert state=absent
-      assert:
-        that:
-           - '"failed" not in result'
-
     # ============================================================
     - name: test state=present (expected changed=true)
       ec2_group:

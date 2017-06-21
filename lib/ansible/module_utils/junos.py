@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from contextlib import contextmanager
+import collections
 
+from contextlib import contextmanager
 from xml.etree.ElementTree import Element, SubElement, fromstring
 
 from ansible.module_utils.basic import env_fallback, return_values
@@ -47,12 +48,23 @@ ARGS_DEFAULT_VALUE = {
     'timeout': 10
 }
 
+OPERATION_LOOK_UP = {
+    'absent': 'delete',
+    'active': 'active',
+    'suspend': 'inactive'
+}
+
+
+def get_argspec():
+    return junos_argument_spec
+
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in junos_argument_spec:
         if key not in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+                            'removed in a future version' % key)
 
     # set argument's default value if not provided in input
     # This is done to avoid unwanted argument deprecation warning
@@ -66,12 +78,14 @@ def check_args(module, warnings):
             if provider.get(param):
                 module.no_log_values.update(return_values(provider[param]))
 
+
 def _validate_rollback_id(module, value):
     try:
         if not 0 <= int(value) <= 49:
             raise ValueError
     except ValueError:
         module.fail_json(msg='rollback must be between 0 and 49')
+
 
 def load_configuration(module, candidate=None, action='merge', rollback=None, format='xml'):
 
@@ -117,6 +131,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             cfg.append(candidate)
     return send_request(module, obj)
 
+
 def get_configuration(module, compare=False, format='xml', rollback='0'):
     if format not in CONFIG_FORMATS:
         module.fail_json(msg='invalid config format specified')
@@ -126,6 +141,7 @@ def get_configuration(module, compare=False, format='xml', rollback='0'):
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
     return send_request(module, Element('get-configuration', xattrs))
+
 
 def commit_configuration(module, confirm=False, check=False, comment=None, confirm_timeout=None):
     obj = Element('commit-configuration')
@@ -138,8 +154,9 @@ def commit_configuration(module, confirm=False, check=False, comment=None, confi
         subele.text = str(comment)
     if confirm_timeout:
         subele = SubElement(obj, 'confirm-timeout')
-        subele.text = int(confirm_timeout)
+        subele.text = str(confirm_timeout)
     return send_request(module, obj)
+
 
 def command(module, command, format='text', rpc_only=False):
     xattrs = {'format': format}
@@ -148,8 +165,14 @@ def command(module, command, format='text', rpc_only=False):
         xattrs['format'] = 'text'
     return send_request(module, Element('command', xattrs, text=command))
 
-lock_configuration = lambda x: send_request(x, Element('lock-configuration'))
-unlock_configuration = lambda x: send_request(x, Element('unlock-configuration'))
+
+def lock_configuration(x):
+    return send_request(x, Element('lock-configuration'))
+
+
+def unlock_configuration(x):
+    return send_request(x, Element('unlock-configuration'))
+
 
 @contextmanager
 def locked_config(module):
@@ -159,6 +182,7 @@ def locked_config(module):
     finally:
         unlock_configuration(module)
 
+
 def get_diff(module):
 
     reply = get_configuration(module, compare=True, format='text')
@@ -166,8 +190,12 @@ def get_diff(module):
     if output is not None:
         return to_text(output.text, encoding='latin1').strip()
 
+
 def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
+
+    if not candidate:
+        return
 
     with locked_config(module):
         if isinstance(candidate, list):
@@ -188,3 +216,95 @@ def load_config(module, candidate, warnings, action='merge', commit=False, forma
                 discard_changes(module)
 
         return diff
+
+
+def get_param(module, key):
+    return module.params[key] or module.params['provider'].get(key)
+
+
+def map_params_to_obj(module, param_to_xpath_map):
+    """
+    Creates a new dictionary with key as xpath corresponding
+    to param and value is a dict with metadata and value for
+    the xpath.
+    Acceptable metadata keys:
+        'xpath': Relative xpath corresponding to module param.
+        'value': Value of param.
+        'tag_only': Value is indicated by tag only in xml hierarchy.
+        'leaf_only': If operation is to be added at leaf node only.
+    eg: Output
+    {
+        'name': {'xpath': 'name', 'value': 'ge-0/0/1'}
+        'disable': {'xpath': 'disable', 'tag_only': True}
+    }
+
+    :param module:
+    :param param_to_xpath_map: Modules params to xpath map
+    :return: obj
+    """
+    obj = collections.OrderedDict()
+    for key, attrib in param_to_xpath_map.items():
+        if key in module.params:
+            if isinstance(attrib, dict):
+                xpath = attrib.get('xpath')
+                del attrib['xpath']
+
+                attrib.update({'value': module.params[key]})
+                obj.update({xpath: attrib})
+            else:
+                xpath = attrib
+                obj.update({xpath: {'value': module.params[key]}})
+    return obj
+
+
+def map_obj_to_ele(module, want, top, value_map=None):
+    top_ele = top.split('/')
+    root = Element(top_ele[0])
+    ele = root
+    oper = None
+    if len(top_ele) > 1:
+        for item in top_ele[1:-1]:
+            ele = SubElement(ele, item)
+    container = ele
+    state = module.params.get('state')
+
+    # build xml subtree
+    for obj in want:
+        node = SubElement(container, top_ele[-1])
+        if state and state != 'present':
+            oper = OPERATION_LOOK_UP.get(state)
+            node.set(oper, oper)
+
+        for xpath, attrib in obj.items():
+            tag_only = attrib.get('tag_only', False)
+            leaf_only = attrib.get('leaf_only', False)
+            value = attrib.get('value')
+
+            # convert param value to device specific value
+            if value_map and xpath in value_map:
+                value = value_map[xpath].get(value)
+
+            # for leaf only fields operation attributes should be at leaf level
+            # and not at node level.
+            if leaf_only and node.attrib.get(oper):
+                node.attrib.pop(oper)
+
+            if value or tag_only or leaf_only:
+                ele = node
+                tags = xpath.split('/')
+
+                for item in tags:
+                    ele = SubElement(ele, item)
+
+                if tag_only:
+                    if not value:
+                        ele.set('delete', 'delete')
+                elif leaf_only and oper:
+                    ele.set(oper, oper)
+                else:
+                    ele.text = to_text(value, errors='surrogate_then_replace')
+
+                if state != 'present':
+                    break
+
+    return root

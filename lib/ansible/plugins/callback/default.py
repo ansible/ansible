@@ -27,8 +27,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
+from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
+
 
 class CallbackModule(CallbackBase):
 
@@ -79,7 +81,7 @@ class CallbackModule(CallbackBase):
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         self._clean_results(result._result, result._task.action)
-        if result._task.action in ('include', 'include_role'):
+        if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
             if delegated_vars:
@@ -100,7 +102,7 @@ class CallbackModule(CallbackBase):
             self._process_items(result)
         else:
 
-            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 
@@ -113,7 +115,7 @@ class CallbackModule(CallbackBase):
                 self._process_items(result)
             else:
                 msg = "skipping: [%s]" % result._host.get_name()
-                if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
+                if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                     msg += " => %s" % self._dump_results(result._result)
                 self._display.display(msg, color=C.COLOR_SKIP)
 
@@ -193,7 +195,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_ok(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if result._task.action in ('include', 'include_role'):
+        if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
             msg = 'changed'
@@ -209,7 +211,7 @@ class CallbackModule(CallbackBase):
 
         msg += " => (item=%s)" % (self._get_item(result._result),)
 
-        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
+        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color=color)
 
@@ -230,7 +232,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_item_on_skipped(self, result):
         if C.DISPLAY_SKIPPED_HOSTS:
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
-            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                 msg += " => %s" % self._dump_results(result._result)
             self._display.display(msg, color=C.COLOR_SKIP)
 
@@ -269,16 +271,16 @@ class CallbackModule(CallbackBase):
         if C.SHOW_CUSTOM_STATS and stats.custom:
             self._display.banner("CUSTOM STATS: ")
             # per host
-            #TODO: come up with 'pretty format'
+            # TODO: come up with 'pretty format'
             for k in sorted(stats.custom.keys()):
                 if k == '_run':
                     continue
-                self._display.display('\t%s: %s' % (k, self._dump_results(stats.custom[k], indent=1).replace('\n','')))
+                self._display.display('\t%s: %s' % (k, self._dump_results(stats.custom[k], indent=1).replace('\n', '')))
 
             # print per run custom stats
             if '_run' in stats.custom:
                 self._display.display("", screen_only=True)
-                self._display.display('\tRUN: %s' % self._dump_results(stats.custom['_run'], indent=1).replace('\n',''))
+                self._display.display('\tRUN: %s' % self._dump_results(stats.custom['_run'], indent=1).replace('\n', ''))
             self._display.display("", screen_only=True)
 
     def v2_playbook_on_start(self, playbook):
@@ -291,13 +293,13 @@ class CallbackModule(CallbackBase):
                 for option in dir(self._options):
                     if option.startswith('_') or option in ['read_file', 'ensure_value', 'read_module']:
                         continue
-                    val =  getattr(self._options,option)
+                    val = getattr(self._options, option)
                     if val:
-                        self._display.vvvv('%s: %s' % (option,val))
+                        self._display.vvvv('%s: %s' % (option, val))
 
     def v2_runner_retry(self, result):
         task_name = result.task_name or result._task
         msg = "FAILED - RETRYING: %s (%d retries left)." % (task_name, result._result['retries'] - result._result['attempts'])
-        if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
+        if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)

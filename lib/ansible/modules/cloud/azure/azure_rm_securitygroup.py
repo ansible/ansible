@@ -701,7 +701,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                                                   parameters)
             result = self.get_poller_result(poller)
         except AzureHttpError as exc:
-            self.fail("Error creating/upating security group {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
         return create_network_security_group_dict(result)
 
     def delete(self):

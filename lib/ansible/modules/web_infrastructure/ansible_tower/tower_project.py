@@ -208,21 +208,27 @@ def main():
         project = tower_cli.get_resource('project')
         try:
             if state == 'present':
-                org_res = tower_cli.get_resource('organization')
-                org = org_res.get(name=organization)
+                try:
+                    org_res = tower_cli.get_resource('organization')
+                    org = org_res.get(name=organization)
+                except (exc.NotFound) as excinfo:
+                    module.fail_json(msg='Failed to update project, organization not found: {0}'.format(organization), changed=False)
+                try:
+                    cred_res = tower_cli.get_resource('credential')
+                    cred = cred_res.get(name=scm_credential)
+                except (exc.NotFound) as excinfo:
+                    module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
 
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
                                         scm_type=scm_type, scm_url=scm_url, local_path=local_path,
-                                        scm_branch=scm_branch, scm_clean=scm_clean, scm_credential=scm_credential,
+                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=cred['id'],
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
                                         create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = project.delete(name=name)
-        except (exc.NotFound) as excinfo:
-            module.fail_json(msg='Failed to update project, organization not found: {0}'.format(excinfo), changed=False)
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to update project: {0}'.format(excinfo), changed=False)
 

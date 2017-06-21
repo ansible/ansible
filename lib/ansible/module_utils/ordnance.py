@@ -1,5 +1,6 @@
 _DEVICE_CONFIGS = {}
 
+
 def get_config(module, flags=[]):
     cmd = 'show running-config '
     cmd += ' '.join(flags)

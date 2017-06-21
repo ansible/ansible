@@ -261,7 +261,7 @@ def main():
     params['state'] = module.params.get('state')
     params['target_proxy_name'] = module.params.get('target_proxy_name')
     params['target_proxy_type'] = module.params.get('target_proxy_type')
-    params['url_map_name'] = module.params.get('url_map_name', None)
+    params['url_map'] = module.params.get('url_map_name', None)
 
     changed = False
     json_output = {'state': params['state']}

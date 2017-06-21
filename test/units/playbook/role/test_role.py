@@ -274,4 +274,3 @@ class TestRole(unittest.TestCase):
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r.get_name(), "foo_complex")
-

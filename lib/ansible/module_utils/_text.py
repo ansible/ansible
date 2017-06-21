@@ -45,8 +45,8 @@ except LookupError:
 
 
 _COMPOSED_ERROR_HANDLERS = frozenset((None, 'surrogate_or_escape',
-                                     'surrogate_or_strict',
-                                     'surrogate_then_replace'))
+                                      'surrogate_or_strict',
+                                      'surrogate_then_replace'))
 
 
 def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):

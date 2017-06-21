@@ -89,19 +89,19 @@ class TestIosConfigModule(TestIosModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_ios_config_before(self):
-        set_module_args(dict(lines=['hostname foo'], before=['test1','test2']))
+        set_module_args(dict(lines=['hostname foo'], before=['test1', 'test2']))
         commands = ['test1', 'test2', 'hostname foo']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_config_after(self):
-        set_module_args(dict(lines=['hostname foo'], after=['test1','test2']))
+        set_module_args(dict(lines=['hostname foo'], after=['test1', 'test2']))
         commands = ['hostname foo', 'test1', 'test2']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_config_before_after_no_change(self):
         set_module_args(dict(lines=['hostname router'],
                              before=['test1', 'test2'],
-                             after=['test3','test4']))
+                             after=['test3', 'test4']))
         self.execute_module()
 
     def test_ios_config_config(self):

@@ -121,6 +121,9 @@ tests:
 tests-py3:
 	$(ANSIBLE_TEST) units -v --python $(PYTHON3_VERSION) $(TEST_FLAGS)
 
+tests-nonet:
+	$(ANSIBLE_TEST) units -v --python $(PYTHON_VERSION) $(TEST_FLAGS)  --exclude test/units/modules/network/
+
 integration:
 	$(ANSIBLE_TEST) integration -v --docker $(IMAGE) $(TARGET) $(TEST_FLAGS)
 
@@ -179,6 +182,7 @@ clean:
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
 	$(MAKE) -C docs/api clean
+	find test/ -type f -name '*.retry' -delete
 
 python:
 	$(PYTHON) setup.py build

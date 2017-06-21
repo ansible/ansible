@@ -40,7 +40,6 @@ from lib.util import (
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
-    MissingEnvironmentVariable,
     display,
     run_command,
     common_environment,
@@ -245,6 +244,11 @@ def command_network_integration(args):
     """
     :type args: NetworkIntegrationConfig
     """
+    filename = 'test/integration/inventory.networking'
+
+    if not args.explain and not args.platform and not os.path.isfile(filename):
+        raise ApplicationError('Use the --platform option or provide an inventory file (see %s.template).' % filename)
+
     internal_targets = command_integration_filter(args, walk_network_integration_targets())
     platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
 
@@ -275,8 +279,6 @@ def command_network_integration(args):
 
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = network_inventory(remotes)
-
-        filename = 'test/integration/inventory.networking'
 
         display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
 
@@ -349,6 +351,11 @@ def command_windows_integration(args):
     """
     :type args: WindowsIntegrationConfig
     """
+    filename = 'test/integration/inventory.winrm'
+
+    if not args.explain and not args.windows and not os.path.isfile(filename):
+        raise ApplicationError('Use the --windows option or provide an inventory file (see %s.template).' % filename)
+
     internal_targets = command_integration_filter(args, walk_windows_integration_targets())
 
     if args.windows:
@@ -367,8 +374,6 @@ def command_windows_integration(args):
 
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = windows_inventory(remotes)
-
-        filename = 'test/integration/inventory.winrm'
 
         display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
 
@@ -1111,6 +1116,14 @@ def get_integration_local_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --allow-destructive to run locally: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    if args.python_version.startswith('3'):
+        skip = 'skip/python3/'
+        skipped = [target.name for target in targets if skip in target.aliases]
+        if skipped:
+            exclude.append(skip)
+            display.warning('Excluding tests marked "%s" which are not yet supported on python 3: %s'
+                            % (skip.rstrip('/'), ', '.join(skipped)))
+
     return exclude
 
 
@@ -1275,10 +1288,7 @@ class SanityConfig(TestConfig):
         if args.base_branch:
             self.base_branch = args.base_branch  # str
         elif is_shippable():
-            try:
-                self.base_branch = os.environ['BASE_BRANCH']  # str
-            except KeyError as ex:
-                raise MissingEnvironmentVariable(name=ex.args[0])
+            self.base_branch = os.environ.get('BASE_BRANCH', '')  # str
 
             if self.base_branch:
                 self.base_branch = 'origin/%s' % self.base_branch

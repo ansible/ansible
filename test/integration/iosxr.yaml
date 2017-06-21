@@ -13,3 +13,5 @@
     - { role: iosxr_facts, when: "limit_to in ['*', 'iosxr_facts']" }
     - { role: iosxr_template, when: "limit_to in ['*', 'iosxr_template']" }
     - { role: iosxr_system, when: "limit_to in ['*', 'iosxr_system']" }
+    - { role: iosxr_user, when: "limit_to in ['*', 'iosxr_user']" }
+    - { role: iosxr_banner, when: "limit_to in ['*', 'iosxr_banner']" }

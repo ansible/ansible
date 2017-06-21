@@ -24,11 +24,11 @@ import string
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
-from ansible.inventory import Inventory
-from ansible.inventory.expand_hosts import expand_hostname_range
-from ansible.vars import VariableManager
+from ansible.inventory.manager import InventoryManager, split_host_pattern
+from ansible.vars.manager import VariableManager
 
 from units.mock.loader import DictDataLoader
+
 
 class TestInventory(unittest.TestCase):
 
@@ -39,7 +39,7 @@ class TestInventory(unittest.TestCase):
         ' a,b ,c[1:2] ': ['a', 'b', 'c[1:2]'],
         '9a01:7f8:191:7701::9': ['9a01:7f8:191:7701::9'],
         '9a01:7f8:191:7701::9,9a01:7f8:191:7701::9': ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9'],
-        '9a01:7f8:191:7701::9,9a01:7f8:191:7701::9,foo': ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9','foo'],
+        '9a01:7f8:191:7701::9,9a01:7f8:191:7701::9,foo': ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9', 'foo'],
         'foo[1:2]': ['foo[1:2]'],
         'a::b': ['a::b'],
         'a:b': ['a', 'b'],
@@ -52,7 +52,7 @@ class TestInventory(unittest.TestCase):
         [['a', 'b'], ['a', 'b']],
         [['a, b'], ['a', 'b']],
         [['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9,foo'],
-         ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9','foo']]
+         ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9', 'foo']]
     ]
 
     # pattern_string: [ ('base_pattern', (a,b)), ['x','y','z'] ]
@@ -60,7 +60,7 @@ class TestInventory(unittest.TestCase):
     # when applied to string.ascii_letters.
 
     subscripts = {
-        'a': [('a',None), list(string.ascii_letters)],
+        'a': [('a', None), list(string.ascii_letters)],
         'a[0]': [('a', (0, None)), ['a']],
         'a[1]': [('a', (1, None)), ['b']],
         'a[2:3]': [('a', (2, 3)), ['c', 'd']],
@@ -82,19 +82,18 @@ class TestInventory(unittest.TestCase):
     }
 
     def setUp(self):
-        v = VariableManager()
         fake_loader = DictDataLoader({})
 
-        self.i = Inventory(loader=fake_loader, variable_manager=v, host_list='')
+        self.i = InventoryManager(loader=fake_loader, sources=[None])
 
     def test_split_patterns(self):
 
         for p in self.patterns:
             r = self.patterns[p]
-            self.assertEqual(r, self.i.split_host_pattern(p))
+            self.assertEqual(r, split_host_pattern(p))
 
         for p, r in self.pattern_lists:
-            self.assertEqual(r, self.i.split_host_pattern(p))
+            self.assertEqual(r, split_host_pattern(p))
 
     def test_ranges(self):
 
@@ -108,12 +107,6 @@ class TestInventory(unittest.TestCase):
                     r[0][1]
                 )
             )
-
-    def test_expand_hostname_range(self):
-
-        for e in self.ranges_to_expand:
-            r = self.ranges_to_expand[e]
-            self.assertEqual(r, expand_hostname_range(e))
 
 
 class InventoryDefaultGroup(unittest.TestCase):
@@ -150,15 +143,10 @@ class InventoryDefaultGroup(unittest.TestCase):
             """)
 
     def _get_inventory(self, inventory_content):
-        v = VariableManager()
 
-        fake_loader = DictDataLoader({
-            'hosts': inventory_content
-        })
+        fake_loader = DictDataLoader({__file__: inventory_content})
 
-        with patch.object(Inventory, 'basedir') as mock_basedir:
-            mock_basedir.return_value = './'
-            return Inventory(loader=fake_loader, variable_manager=v, host_list='hosts')
+        return InventoryManager(loader=fake_loader, sources=[__file__])
 
     def _test_default_groups(self, inventory_content):
         inventory = self._get_inventory(inventory_content)

@@ -110,7 +110,7 @@ EXAMPLES = '''
     tags: tag1,tag2,tag3
 '''
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 # ===========================================
 # Module execution.
@@ -156,7 +156,7 @@ def main():
         else:
             params['external_user_name'] = module.params["external_user_name"]
     elif type == 'chat':
-        module.fail_json(msg="%s is required for the 'inbox' type" % item)
+        module.fail_json(msg="external_user_name is required for the 'chat' type")
 
     # required params for the 'inbox' type
     for item in [ 'from_address', 'source', 'subject' ]:
@@ -185,7 +185,7 @@ def main():
         module.exit_json(changed=False)
 
     # Send the data to Flowdock
-    data = urllib.urlencode(params)
+    data = urlencode(params)
     response, info = fetch_url(module, url, data=data)
     if info['status'] != 200:
         module.fail_json(msg="unable to send msg: %s" % info['msg'])

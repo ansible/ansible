@@ -38,7 +38,7 @@ class ActionModule(NetActionModule, ActionBase):
             self._handle_template()
 
         result.update(self._execute_module(module_name=self._task.action,
-            module_args=self._task.args, task_vars=task_vars))
+                      module_args=self._task.args, task_vars=task_vars))
 
         if self._task.args.get('backup') and result.get('_backup'):
             contents = json.dumps(result['_backup'], indent=4)
@@ -48,5 +48,3 @@ class ActionModule(NetActionModule, ActionBase):
             del result['_backup']
 
         return result
-
-

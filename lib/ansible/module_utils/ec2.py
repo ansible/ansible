@@ -34,7 +34,7 @@ from ansible.module_utils.cloud import CloudRetry
 
 try:
     import boto
-    import boto.ec2 #boto does weird import stuff
+    import boto.ec2  # boto does weird import stuff
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -53,6 +53,7 @@ except:
     HAS_LOOSE_VERSION = False
 
 from ansible.module_utils.six import string_types, binary_type, text_type
+
 
 class AnsibleAWSError(Exception):
     pass
@@ -79,9 +80,17 @@ class AWSRetry(CloudRetry):
     def found(response_code):
         # This list of failures is based on this API Reference
         # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
+        #
+        # TooManyRequestsException comes from inside botocore when it
+        # does retrys, unfortunately however it does not try long
+        # enough to allow some services such as API Gateway to
+        # complete configuration.  At the moment of writing there is a
+        # botocore/boto3 bug open to fix this.
+        #
+        # https://github.com/boto/boto3/issues/876 (and linked PRs etc)
         retry_on = [
             'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
-            'InternalFailure', 'InternalError'
+            'InternalFailure', 'InternalError', 'TooManyRequestsException'
         ]
 
         not_found = re.compile(r'^\w+.NotFound')
@@ -97,6 +106,7 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
     except ValueError:
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type '
                              'parameter in the boto3_conn function call')
+
 
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
@@ -119,6 +129,7 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
         return client, resource
 
 boto3_inventory_conn = _boto3_conn
+
 
 def aws_common_argument_spec():
     return dict(
@@ -161,23 +172,31 @@ def get_aws_connection_info(module, boto3=False):
             ec2_url = os.environ['EC2_URL']
 
     if not access_key:
-        if 'AWS_ACCESS_KEY_ID' in os.environ:
+        if os.environ.get('AWS_ACCESS_KEY_ID'):
             access_key = os.environ['AWS_ACCESS_KEY_ID']
-        elif 'AWS_ACCESS_KEY' in os.environ:
+        elif os.environ.get('AWS_ACCESS_KEY'):
             access_key = os.environ['AWS_ACCESS_KEY']
-        elif 'EC2_ACCESS_KEY' in os.environ:
+        elif os.environ.get('EC2_ACCESS_KEY'):
             access_key = os.environ['EC2_ACCESS_KEY']
+        elif boto.config.get('Credentials', 'aws_access_key_id'):
+            access_key = boto.config.get('Credentials', 'aws_access_key_id')
+        elif boto.config.get('default', 'aws_access_key_id'):
+            access_key = boto.config.get('default', 'aws_access_key_id')
         else:
             # in case access_key came in as empty string
             access_key = None
 
     if not secret_key:
-        if 'AWS_SECRET_ACCESS_KEY' in os.environ:
+        if os.environ.get('AWS_SECRET_ACCESS_KEY'):
             secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
-        elif 'AWS_SECRET_KEY' in os.environ:
+        elif os.environ.get('AWS_SECRET_KEY'):
             secret_key = os.environ['AWS_SECRET_KEY']
-        elif 'EC2_SECRET_KEY' in os.environ:
+        elif os.environ.get('EC2_SECRET_KEY'):
             secret_key = os.environ['EC2_SECRET_KEY']
+        elif boto.config.get('Credentials', 'aws_secret_access_key'):
+            secret_key = boto.config.get('Credentials', 'aws_secret_access_key')
+        elif boto.config.get('default', 'aws_secret_access_key'):
+            secret_key = boto.config.get('default', 'aws_secret_access_key')
         else:
             # in case secret_key came in as empty string
             secret_key = None
@@ -202,15 +221,18 @@ def get_aws_connection_info(module, boto3=False):
                 module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
     if not security_token:
-        if 'AWS_SECURITY_TOKEN' in os.environ:
+        if os.environ.get('AWS_SECURITY_TOKEN'):
             security_token = os.environ['AWS_SECURITY_TOKEN']
-        elif 'AWS_SESSION_TOKEN' in os.environ:
+        elif os.environ.get('AWS_SESSION_TOKEN'):
             security_token = os.environ['AWS_SESSION_TOKEN']
-        elif 'EC2_SECURITY_TOKEN' in os.environ:
+        elif os.environ.get('EC2_SECURITY_TOKEN'):
             security_token = os.environ['EC2_SECURITY_TOKEN']
-
-        if not security_token:
-            # in case security_token came in as empty string
+        elif boto.config.get('Credentials', 'aws_security_token'):
+            security_token = boto.config.get('Credentials', 'aws_security_token')
+        elif boto.config.get('default', 'aws_security_token'):
+            security_token = boto.config.get('default', 'aws_security_token')
+        else:
+            # in case secret_token came in as empty string
             security_token = None
 
     if HAS_BOTO3 and boto3:
@@ -291,6 +313,7 @@ def ec2_connect(module):
 
     return ec2
 
+
 def paging(pause=0, marker_property='marker'):
     """ Adds paging to boto retrieval functions that support a 'marker'
         this is configurable as not all boto functions seem to use the
@@ -330,7 +353,6 @@ def camel_dict_to_snake_dict(camel_dict):
 
         return all_cap_re.sub(r'\1_\2', s1).lower()
 
-
     def value_is_list(camel_list):
 
         checked_list = []
@@ -343,7 +365,6 @@ def camel_dict_to_snake_dict(camel_dict):
                 checked_list.append(item)
 
         return checked_list
-
 
     snake_dict = {}
     for k, v in camel_dict.items():
@@ -403,7 +424,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     """
 
     filters_list = []
-    for k,v in filters_dict.items():
+    for k, v in filters_dict.items():
         filter_dict = {'Name': k}
         if isinstance(v, string_types):
             filter_dict['Values'] = [v]
@@ -470,7 +491,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value
     """
 
     tags_list = []
-    for k,v in tags_dict.items():
+    for k, v in tags_dict.items():
         tags_list.append({tag_name_key_name: k, tag_value_key_name: v})
 
     return tags_list
@@ -490,7 +511,6 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
             return sg['GroupName']
         else:
             return sg.name
-
 
     def get_sg_id(sg, boto3):
 
@@ -520,7 +540,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
             all_sec_groups = ec2_connection.describe_security_groups()['SecurityGroups']
     else:
         if vpc_id:
-            filters = { 'vpc-id': vpc_id }
+            filters = {'vpc-id': vpc_id}
             all_sec_groups = ec2_connection.get_all_security_groups(filters=filters)
         else:
             all_sec_groups = ec2_connection.get_all_security_groups()
@@ -536,7 +556,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
         if len(still_unmatched) > 0:
             raise ValueError("The following group names are not valid: %s" % ', '.join(still_unmatched))
 
-    sec_group_id_list += [ str(get_sg_id(all_sg, boto3)) for all_sg in all_sec_groups if str(get_sg_name(all_sg, boto3)) in sec_group_name_list ]
+    sec_group_id_list += [str(get_sg_id(all_sg, boto3)) for all_sg in all_sec_groups if str(get_sg_name(all_sg, boto3)) in sec_group_name_list]
 
     return sec_group_id_list
 
@@ -570,7 +590,9 @@ def sort_json_policy_dict(policy_dict):
             else:
                 checked_list.append(item)
 
-        checked_list.sort()
+        # Sort list. If it's a list of dictionaries, sort by tuple of key-value
+        # pairs, since Python 3 doesn't allow comparisons such as `<` between dictionaries.
+        checked_list.sort(key=lambda x: sorted(x.items()) if isinstance(x, dict) else x)
         return checked_list
 
     ordered_policy_dict = {}
@@ -630,13 +652,14 @@ def map_complex_type(complex_type, type_map):
 def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
     """
     Compare two dicts of AWS tags. Dicts are expected to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
-    Two dicts are returned - the first is tags to be set, the second is any tags to remove
+    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ t
+hese may not be able to be used out of the box.
 
     :param current_tags_dict:
     :param new_tags_dict:
     :param purge_tags:
     :return: tag_key_value_pairs_to_set: a dict of key value pairs that need to be set in AWS. If all tags are identical this dict will be empty
-    :return: tag_keys_to_unset: a list of key names that need to be unset in AWS. If no tags need to be unset this list will be empty
+    :return: tag_keys_to_unset: a list of key names (type str) that need to be unset in AWS. If no tags need to be unset this list will be empty
     """
 
     tag_key_value_pairs_to_set = {}

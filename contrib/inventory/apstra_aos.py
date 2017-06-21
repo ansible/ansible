@@ -27,7 +27,7 @@ of hosts, groups the hosts are in, and even variables to assign to each host.
 
 To use this:
  - copy this file over /etc/ansible/hosts and chmod +x the file.
- - Copy both files (.py and .ini) in your prefered directory
+ - Copy both files (.py and .ini) in your preferred directory
 
 More information about Ansible Dynamic Inventory here
 http://unix.stackexchange.com/questions/205479/in-ansible-dynamic-inventory-json-can-i-render-hostvars-based-on-the-hostname

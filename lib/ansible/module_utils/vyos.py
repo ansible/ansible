@@ -45,6 +45,10 @@ vyos_argument_spec = {
 }
 
 
+def get_argspec():
+    return vyos_argument_spec
+
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in vyos_argument_spec:

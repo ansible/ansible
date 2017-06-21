@@ -45,10 +45,8 @@ options:
   recurse:
     description:
       - Indicates if the owner should be changed recursively
-    choices:
-      - no
-      - yes
-    default: no
+    type: bool
+    default: 'no'
 author: Hans-Joachim Kliemeck (@h0nIg)
 '''
 

@@ -17,18 +17,24 @@ RUN yum clean all && \
     bzip2 \
     dbus-python \
     file \
+    gcc \
     git \
     iproute \
+    libffi \
+    libffi-devel \
     make \
     mariadb-server \
     mercurial \
     MySQL-python \
     openssh-clients \
     openssh-server \
+    openssl-devel \
     python-coverage \
+    python-devel \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \
+    python-lxml \
     python-mock \
     python-nose \
     python-paramiko \

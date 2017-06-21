@@ -88,7 +88,16 @@ def compare_package(version1, version2):
 
     def normalize(v):
         return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
-    return cmp(normalize(version1), normalize(version2))
+    normalized_version1 = normalize(version1)
+    normalized_version2 = normalize(version2)
+    if normalized_version1 == normalized_version2:
+        rc = 0
+    elif normalized_version1 < normalized_version2:
+        rc = -1
+    else:
+        rc = 1
+    return rc
+
 
 def query_package(module, name, depot=None):
     """ Returns whether a package is installed or not and version. """

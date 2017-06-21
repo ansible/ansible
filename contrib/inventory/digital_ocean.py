@@ -22,7 +22,7 @@ found.  You can force this script to use the cache with --force-cache.
 
 ----
 Configuration is read from `digital_ocean.ini`, then from environment variables,
-then and command-line arguments.
+and then from command-line arguments.
 
 Most notably, the DigitalOcean API Token must be specified. It can be specified
 in the INI file or with the following environment variables:
@@ -138,8 +138,12 @@ import sys
 import re
 import argparse
 from time import time
-import ConfigParser
 import ast
+
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 try:
     import json
@@ -192,7 +196,7 @@ or environment variables (DO_API_TOKEN)\n''')
         self.cache_filename = self.cache_path + "/ansible-digital_ocean.cache"
         self.cache_refreshed = False
 
-        if self.is_cache_valid:
+        if self.is_cache_valid():
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
@@ -318,7 +322,7 @@ or environment variables (DO_API_TOKEN)\n''')
 
     def load_from_digital_ocean(self, resource=None):
         '''Get JSON from DigitalOcean API'''
-        if self.args.force_cache:
+        if self.args.force_cache and os.path.isfile(self.cache_filename):
             return
         # We always get fresh droplets
         if self.is_cache_valid() and not (resource == 'droplets' or resource is None):

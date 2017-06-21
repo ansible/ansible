@@ -1,0 +1,148 @@
+---
+- name: ensure sl is uninstalled to begin with
+  yum:
+    name: sl
+    state: absent
+
+- name: disable epel
+  yum_repository:
+    name: epel
+    state: absent
+
+- name: disable epel (Idempotant)
+  yum_repository:
+    name: epel
+    state: absent
+  register: epel_remove
+
+- name: check return values
+  assert:
+    that:
+      - "epel_remove.repo == 'epel'"
+      - "epel_remove.state == 'absent'"
+
+- name: check Idempotant
+  assert:
+    that: not epel_remove.changed
+
+- name: install sl, which should fail
+  yum:
+    name: sl
+    state: present
+  ignore_errors: yes
+  register: sl_result
+
+- debug: var=sl_result
+
+- name: check that install failed
+  assert:
+    that:
+      - sl_result.failed
+      - "sl_result.msg==\"No package matching 'sl' found available, installed or updated\""
+
+- name: re-add epel
+  yum_repository:
+    name: epel
+    description: EPEL yum repo
+    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    state: present
+  register: epel_add
+
+- name: check return values
+  assert:
+    that:
+      - "epel_add.repo == 'epel'"
+      - "epel_add.state == 'present'"
+
+
+- name: get repolist
+  shell: yum repolist
+  register: repolist
+
+- name: ensure epel was added
+  assert:
+    that:
+      - "'epel' in repolist.stdout"
+      - epel_add.changed
+
+- name: install sl
+  yum:
+    name: sl
+    state: present
+  register: sl_result
+
+- name: check that sl was successfully installed
+  assert:
+    that:
+      - sl_result.changed
+
+- name: remove sl
+  yum:
+    name: sl
+    state: absent
+
+- name: change configuration of epel repo
+  yum_repository:
+    name: epel
+    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    description: New description
+    async: no
+    enablegroups: no
+    file: epel2
+    exclude:
+      - sl
+    ip_resolve: 4
+    keepalive: no
+  register: epel_add
+
+- set_fact:
+    repofile: "{{ lookup('file', '/etc/yum.repos.d/epel2.repo') }}"
+
+- debug: var=repofile
+
+- name: check that options are correctly getting written to the repo file
+  assert:
+    that:
+      - "'async = 0' in repofile"
+      - "'name = New description' in repofile"
+      - "'enablegroups = 0' in repofile"
+      - "\"exclude = ['sl']\" in repofile"
+      - "'ip_resolve = 4' in repofile"
+      - "'keepalive = 0' in repofile"
+
+- name: check new config doesn't change (Idempotant)
+  yum_repository:
+    name: epel
+    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    description: New description
+    async: no
+    enablegroups: no
+    file: epel2
+    exclude:
+      - sl
+    ip_resolve: 4
+    keepalive: no
+  register: epel_add
+
+- name: check Idempotant
+  assert:
+    that: not epel_add.changed
+
+- name: re-enable the epel repo
+  yum_repository:
+    name: epel
+    description: EPEL yum repo
+    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    state: present
+
+- name: re-enable the epel repo (Idempotant)
+  yum_repository:
+    name: epel
+    description: EPEL yum repo
+    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    state: present
+  register: epel_add
+
+- name: check Idempotant
+  assert:
+    that: not epel_add.changed

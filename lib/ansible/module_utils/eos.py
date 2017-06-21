@@ -30,6 +30,7 @@
 import os
 import time
 
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import to_list, ComplexList
@@ -41,7 +42,7 @@ _DEVICE_CONNECTION = None
 eos_argument_spec = {
     'host': dict(),
     'port': dict(type='int'),
-    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), aliases=['name']),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
@@ -64,12 +65,21 @@ ARGS_DEFAULT_VALUE = {
     'validate_certs': True
 }
 
+
+def get_argspec():
+    return eos_argument_spec
+
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in eos_argument_spec:
-        if key not in ['provider', 'transport', 'authorize'] and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+        if module._name == 'eos_user':
+            if (key not in ['username', 'password', 'provider', 'transport', 'authorize'] and
+                    module.params[key]):
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+        else:
+            if key not in ['provider', 'authorize'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
     # set argument's default value if not provided in input
     # This is done to avoid unwanted argument deprecation warning
@@ -83,12 +93,14 @@ def check_args(module, warnings):
             if provider.get(param):
                 module.no_log_values.update(return_values(provider[param]))
 
+
 def load_params(module):
     provider = module.params.get('provider') or dict()
     for key, value in iteritems(provider):
         if key in eos_argument_spec:
             if module.params.get(key) is None and value is not None:
                 module.params[key] = value
+
 
 def get_connection(module):
     global _DEVICE_CONNECTION
@@ -125,6 +137,7 @@ class Cli:
     def check_authorization(self):
         for cmd in ['show clock', 'prompt()']:
             rc, out, err = self.exec_command(cmd)
+            out = to_text(out, errors='surrogate_then_replace')
         return out.endswith('#')
 
     def get_config(self, flags=[]):
@@ -139,8 +152,9 @@ class Cli:
         except KeyError:
             conn = get_connection(self)
             rc, out, err = self.exec_command(cmd)
+            out = to_text(out, errors='surrogate_then_replace')
             if rc != 0:
-                self._module.fail_json(msg=err)
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
             cfg = str(out).strip()
             self._device_configs[cmd] = cfg
             return cfg
@@ -152,9 +166,9 @@ class Cli:
 
         for cmd in to_list(commands):
             rc, out, err = self.exec_command(cmd)
-
+            out = to_text(out, errors='surrogate_then_replace')
             if check_rc and rc != 0:
-                self._module.fail_json(msg=err)
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
             try:
                 out = self._module.from_json(out)
@@ -179,9 +193,9 @@ class Cli:
 
             rc, out, err = self.exec_command(command)
             if rc != 0:
-                return (rc, out, err)
+                return (rc, out, to_text(err, errors='surrogate_then_replace'))
 
-        return (rc, 'ok','')
+        return (rc, 'ok', '')
 
     def configure(self, commands):
         """Sends configuration commands to the remote device
@@ -193,11 +207,11 @@ class Cli:
 
         rc, out, err = self.exec_command('configure')
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=err)
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
 
         rc, out, err = self.send_config(commands)
         if rc != 0:
-            self._module.fail_json(msg=err)
+            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
         self.exec_command('end')
         return {}
@@ -215,7 +229,7 @@ class Cli:
             pass
 
         if not all((bool(use_session), self.supports_sessions)):
-            return configure(self, commands)
+            return self.configure(self, commands)
 
         conn = get_connection(self)
         session = 'ansible_%s' % int(time.time())
@@ -223,7 +237,7 @@ class Cli:
 
         rc, out, err = self.exec_command('configure session %s' % session)
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=err)
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
 
         if replace:
             self.exec_command('rollback clean-config', check_rc=True)
@@ -231,11 +245,11 @@ class Cli:
         rc, out, err = self.send_config(commands)
         if rc != 0:
             self.exec_command('abort')
-            self._module.fail_json(msg=err, commands=commands)
+            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), commands=commands)
 
         rc, out, err = self.exec_command('show session-config diffs')
         if rc == 0 and out:
-            result['diff'] = out.strip()
+            result['diff'] = to_text(out, errors='surrogate_then_replace').strip()
 
         if commit:
             self.exec_command('commit')
@@ -244,13 +258,14 @@ class Cli:
 
         return result
 
+
 class Eapi:
 
     def __init__(self, module):
         self._module = module
         self._enable = None
         self._session_support = None
-        self._device_configs =  {}
+        self._device_configs = {}
 
         host = module.params['provider']['host']
         port = module.params['provider']['port']
@@ -306,7 +321,7 @@ class Eapi:
 
         try:
             data = response.read()
-            response = self._module.from_json(data)
+            response = self._module.from_json(to_text(data, errors='surrogate_then_replace'))
         except ValueError:
             self._module.fail_json(msg='unable to load response from device', data=data)
 
@@ -332,7 +347,7 @@ class Eapi:
         for item in to_list(commands):
             if is_json(item['command']):
                 item['command'] = str(item['command']).replace('| json', '')
-                item['output'] == 'json'
+                item['output'] = 'json'
 
             if output and output != item['output']:
                 responses.extend(_send(queue, output))
@@ -374,8 +389,8 @@ class Eapi:
         cmds.extend(commands)
 
         responses = self.send_request(commands)
-        if 'error' in response:
-            err = response['error']
+        if 'error' in responses:
+            err = responses['error']
             self._module.fail_json(msg=err['message'], code=err['code'])
 
         return responses[1:]
@@ -388,7 +403,7 @@ class Eapi:
         there will be no returned diff or session values
         """
         if not self.supports_sessions:
-            return configure(self, commands)
+            return self.configure(self, config)
 
         session = 'ansible_%s' % int(time.time())
         result = {'session': session}
@@ -419,15 +434,16 @@ class Eapi:
 
         return result
 
-is_json = lambda x: str(x).endswith('| json')
-is_text = lambda x: not str(x).endswith('| json')
 
-supports_sessions = lambda x: get_connection(module).supports_sessions
+def is_json(cmd):
+    return to_native(cmd, errors='surrogate_then_replace').endswith('| json')
+
 
 def is_eapi(module):
     transport = module.params['transport']
     provider_transport = (module.params['provider'] or {}).get('transport')
     return 'eapi' in (transport, provider_transport)
+
 
 def to_command(module, commands):
     if is_eapi(module):
@@ -444,15 +460,17 @@ def to_command(module, commands):
 
     return transform(to_list(commands))
 
+
 def get_config(module, flags=[]):
     conn = get_connection(module)
     return conn.get_config(flags)
+
 
 def run_commands(module, commands):
     conn = get_connection(module)
     return conn.run_commands(to_command(module, commands))
 
+
 def load_config(module, config, commit=False, replace=False):
     conn = get_connection(module)
     return conn.load_config(config, commit, replace)
-

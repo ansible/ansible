@@ -59,9 +59,9 @@ class ActionModule(ActionBase):
         # out now so we know the file name we need to transfer to the remote,
         # and everything else is an argument to the script which we need later
         # to append to the remote command
-        parts  = self._task.args.get('_raw_params', '').strip().split()
+        parts = self._task.args.get('_raw_params', '').strip().split()
         source = parts[0]
-        args   = ' '.join(parts[1:])
+        args = ' '.join(parts[1:])
 
         try:
             source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
@@ -92,5 +92,9 @@ class ActionModule(ActionBase):
         self._remove_tmp_path(tmp)
 
         result['changed'] = True
+
+        if 'rc' in result and result['rc'] != 0:
+            result['failed'] = True
+            result['msg'] = 'non-zero return code'
 
         return result

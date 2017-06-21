@@ -31,6 +31,18 @@
     - snap|failed
     - 'snap.msg.startswith("missing required arguments: ")'
 
+- name: test create snapshot in check mode
+  cs_vmsnapshot:
+    name: "{{ cs_resource_prefix }}_snapshot"
+    vm: "{{ cs_resource_prefix }}-vm-snapshot"
+    snapshot_memory: yes
+  register: snap
+  check_mode: true
+- name: verify test create snapshot in check mode
+  assert:
+    that:
+    - snap|changed
+
 - name: test create snapshot
   cs_vmsnapshot:
     name: "{{ cs_resource_prefix }}_snapshot"
@@ -55,6 +67,19 @@
     - not snap|changed
     - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
 
+- name: test revert snapshot in check mode
+  cs_vmsnapshot:
+    name: "{{ cs_resource_prefix }}_snapshot"
+    vm: "{{ cs_resource_prefix }}-vm-snapshot"
+    state: revert
+  register: snap
+  check_mode: true
+- name: verify test revert snapshot in check mode
+  assert:
+    that:
+    - snap|changed
+    - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
+
 - name: test revert snapshot
   cs_vmsnapshot:
     name: "{{ cs_resource_prefix }}_snapshot"
@@ -62,6 +87,19 @@
     state: revert
   register: snap
 - name: verify test revert snapshot
+  assert:
+    that:
+    - snap|changed
+    - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
+
+- name: test remove snapshot in check mode
+  cs_vmsnapshot:
+    name: "{{ cs_resource_prefix }}_snapshot"
+    vm: "{{ cs_resource_prefix }}-vm-snapshot"
+    state: absent
+  register: snap
+  check_mode: true
+- name: verify test remove snapshot in check mode
   assert:
     that:
     - snap|changed

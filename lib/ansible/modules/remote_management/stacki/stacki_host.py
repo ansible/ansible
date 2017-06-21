@@ -112,8 +112,8 @@ import os
 import re
 import tempfile
 import json
-import urllib
 
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 
 class StackiHost:
@@ -133,7 +133,7 @@ class StackiHost:
         auth_creds  = {'USERNAME': module.params['stacki_user'],
                        'PASSWORD': module.params['stacki_password']}
 
-        # Get Intial CSRF
+        # Get Initial CSRF
         cred_a = self.do_request(self.module, self.endpoint, method="GET")
         cookie_a = cred_a.headers.get('Set-Cookie').split(';')
         init_csrftoken = None
@@ -152,7 +152,7 @@ class StackiHost:
 
         # Get Final CSRF and Session ID
         login_req = self.do_request(self.module, login_endpoint, headers=header,
-                                    payload=urllib.urlencode(auth_creds), method="POST")
+                                    payload=urlencode(auth_creds), method='POST')
 
         cookie_f = login_req.headers.get('Set-Cookie').split(';')
         csrftoken = None

@@ -40,13 +40,13 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        source  = self._task.args.get('src', None)
+        source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
-        dest    = self._task.args.get('dest', None)
-        raw     = boolean(self._task.args.get('raw', 'no'))
-        force   = boolean(self._task.args.get('force', 'yes'))
+        dest = self._task.args.get('dest', None)
+        raw = boolean(self._task.args.get('raw', 'no'))
+        force = boolean(self._task.args.get('force', 'yes'))
         remote_src = boolean(self._task.args.get('remote_src', False))
-        follow  = boolean(self._task.args.get('follow', False))
+        follow = boolean(self._task.args.get('follow', False))
         decrypt = boolean(self._task.args.get('decrypt', True))
 
         result['failed'] = True
@@ -256,8 +256,8 @@ class ActionModule(ActionBase):
                         del new_module_args[key]
 
                 module_return = self._execute_module(module_name='copy',
-                        module_args=new_module_args, task_vars=task_vars,
-                        tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+                                                     module_args=new_module_args, task_vars=task_vars,
+                                                     tmp=tmp, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             else:
@@ -271,6 +271,14 @@ class ActionModule(ActionBase):
                     self._remove_tmp_path(tmp)
                     continue
 
+                # Fix for https://github.com/ansible/ansible-modules-core/issues/1568.
+                # If checksums match, and follow = True, find out if 'dest' is a link. If so,
+                # change it to point to the source of the link.
+                if follow:
+                    dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=False)
+                    if dest_status_nofollow['islnk'] and 'lnk_source' in dest_status_nofollow.keys():
+                        dest = dest_status_nofollow['lnk_source']
+
                 # Build temporary module_args.
                 new_module_args = self._task.args.copy()
                 new_module_args.update(
@@ -283,8 +291,8 @@ class ActionModule(ActionBase):
 
                 # Execute the file module.
                 module_return = self._execute_module(module_name='file',
-                        module_args=new_module_args, task_vars=task_vars,
-                        tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+                                                     module_args=new_module_args, task_vars=task_vars,
+                                                     tmp=tmp, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             if not module_return.get('checksum'):

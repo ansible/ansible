@@ -248,7 +248,7 @@ def main():
 
     argspath = None
     if module_style not in ('new', 'ansiballz'):
-        if module_style == 'non_native_want_json':
+        if module_style in ('non_native_want_json', 'binary'):
             argspath = write_argsfile(options.module_args, json=True)
         elif module_style == 'old':
             argspath = write_argsfile(options.module_args, json=False)

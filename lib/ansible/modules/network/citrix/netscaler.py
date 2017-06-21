@@ -117,7 +117,9 @@ EXAMPLES = '''
 
 import base64
 import socket
-import urllib
+
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+
 
 class netscaler(object):
 
@@ -129,7 +131,7 @@ class netscaler(object):
     def http_request(self, api_endpoint, data_json={}):
         request_url = self._nsc_protocol + '://' + self._nsc_host + self._nitro_base_url + api_endpoint
 
-        data_json = urllib.urlencode(data_json)
+        data_json = urlencode(data_json)
         if not len(data_json):
             data_json = None
 

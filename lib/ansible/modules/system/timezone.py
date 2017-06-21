@@ -20,7 +20,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -64,8 +64,8 @@ RETURN = '''
 diff:
   description: The differences about the given arguments.
   returned: success
-  type: dictionary
-  sample:
+  type: complex
+  contains:
     before:
       description: The values before change
       type: dict

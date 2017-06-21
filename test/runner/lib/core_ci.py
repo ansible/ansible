@@ -265,8 +265,8 @@ class AnsibleCoreCI(object):
         display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id), verbosity=1)
 
         if self.platform == 'windows':
-            with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'r') as winrm_config_fd:
-                winrm_config = winrm_config_fd.read()
+            with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'rb') as winrm_config_fd:
+                winrm_config = winrm_config_fd.read().decode('utf-8')
         else:
             winrm_config = None
 

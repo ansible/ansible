@@ -75,7 +75,7 @@ EXAMPLES = '''
 - name: Launch a job
   tower_job_launch:
     job_template: "My Job Template"
-    register: job
+  register: job
 - name: Wait for job max 120s
   tower_job_wait:
     job_id: job.id

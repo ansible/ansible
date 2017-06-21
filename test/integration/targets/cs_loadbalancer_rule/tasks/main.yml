@@ -59,6 +59,22 @@
     - lb|failed
     - "lb.msg.startswith('missing required arguments: ')"
 
+
+- name: test create rule in check mode
+  cs_loadbalancer_rule:
+    name: "{{ cs_resource_prefix }}_lb"
+    public_ip: "{{ ip_address.ip_address }}"
+    algorithm: roundrobin
+    public_port: 80
+    private_port: 8080
+  register: lb
+  check_mode: true
+- name: verify test create rule in check mode
+  assert:
+    that:
+    - lb|success
+    - lb|changed
+
 - name: test create rule
   cs_loadbalancer_rule:
     name: "{{ cs_resource_prefix }}_lb"
@@ -91,6 +107,26 @@
     that:
     - lb|success
     - not lb|changed
+    - lb.name == "{{ cs_resource_prefix }}_lb"
+    - lb.algorithm == "roundrobin"
+    - lb.public_ip == "{{ ip_address.ip_address }}"
+    - lb.public_port == 80
+    - lb.private_port == 8080
+
+- name: test update rule in check mode
+  cs_loadbalancer_rule:
+    name: "{{ cs_resource_prefix }}_lb"
+    public_ip: "{{ ip_address.ip_address }}"
+    algorithm: source
+    public_port: 80
+    private_port: 8080
+  register: lb
+  check_mode: true
+- name: verify  test update rule in check mode
+  assert:
+    that:
+    - lb|success
+    - lb|changed
     - lb.name == "{{ cs_resource_prefix }}_lb"
     - lb.algorithm == "roundrobin"
     - lb.public_ip == "{{ ip_address.ip_address }}"
@@ -145,6 +181,24 @@
     - lb|failed
     - "lb.msg.startswith('missing required arguments: ')"
 
+- name: test add members to rule in check mode
+  cs_loadbalancer_rule_member:
+    name: "{{ cs_resource_prefix }}_lb"
+    vm: "{{ cs_resource_prefix }}-vm-lb"
+  register: lb
+  check_mode: true
+- name: verify add members to rule in check mode
+  assert:
+    that:
+    - lb|success
+    - lb|changed
+    - lb.name == "{{ cs_resource_prefix }}_lb"
+    - lb.algorithm == "source"
+    - lb.public_ip == "{{ ip_address.ip_address }}"
+    - lb.public_port == 80
+    - lb.private_port == 8080
+    - "'{{ cs_resource_prefix }}-vm-lb' not in lb.vms"
+
 - name: test add members to rule
   cs_loadbalancer_rule_member:
     name: "{{ cs_resource_prefix }}_lb"
@@ -172,6 +226,25 @@
     that:
     - lb|success
     - not lb|changed
+    - lb.name == "{{ cs_resource_prefix }}_lb"
+    - lb.algorithm == "source"
+    - lb.public_ip == "{{ ip_address.ip_address }}"
+    - lb.public_port == 80
+    - lb.private_port == 8080
+    - "'{{ cs_resource_prefix }}-vm-lb' in lb.vms"
+
+- name: test remove members to rule in check mode
+  cs_loadbalancer_rule_member:
+    name: "{{ cs_resource_prefix }}_lb"
+    vm: "{{ cs_resource_prefix }}-vm-lb"
+    state: absent
+  register: lb
+  check_mode: true
+- name: verify remove members to rule in check mode
+  assert:
+    that:
+    - lb|success
+    - lb|changed
     - lb.name == "{{ cs_resource_prefix }}_lb"
     - lb.algorithm == "source"
     - lb.public_ip == "{{ ip_address.ip_address }}"
@@ -208,6 +281,24 @@
     that:
     - lb|success
     - not lb|changed
+
+- name: test remove rule in check mode
+  cs_loadbalancer_rule:
+    name: "{{ cs_resource_prefix }}_lb"
+    public_ip: "{{ ip_address.ip_address }}"
+    state: absent
+  register: lb
+  check_mode: true
+- name: verify remove rule in check mode
+  assert:
+    that:
+    - lb|success
+    - lb|changed
+    - lb.name == "{{ cs_resource_prefix }}_lb"
+    - lb.algorithm == "source"
+    - lb.public_ip == "{{ ip_address.ip_address }}"
+    - lb.public_port == 80
+    - lb.private_port == 8080
 
 - name: test remove rule
   cs_loadbalancer_rule:

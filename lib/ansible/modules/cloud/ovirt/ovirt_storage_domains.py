@@ -61,6 +61,12 @@ options:
     host:
         description:
             - "Host to be used to mount storage."
+    localfs:
+        description:
+            - "Dictionary with values for localfs storage type:"
+            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
+            - "Note that these parameters are not idempotent."
+        version_added: "2.4"
     nfs:
         description:
             - "Dictionary with values for NFS storage type:"
@@ -76,10 +82,10 @@ options:
             - "C(address) - Address of the iSCSI storage server."
             - "C(port) - Port of the iSCSI storage server."
             - "C(target) - The target IQN for the storage device."
-            - "C(lun_id) - LUN id."
+            - "C(lun_id) - LUN id(s)."
             - "C(username) - A CHAP user name for logging into a target."
             - "C(password) - A CHAP password for logging into a target."
-            - "C(override_luns) - If I(True) ISCSI storage domain luns will be overriden before adding."
+            - "C(override_luns) - If I(True) ISCSI storage domain luns will be overridden before adding."
             - "Note that these parameters are not idempotent."
     posixfs:
         description:
@@ -126,6 +132,14 @@ EXAMPLES = '''
       address: 10.34.63.199
       path: /path/data
 
+# Add data localfs storage domain
+- ovirt_storage_domains:
+    name: data_localfs
+    host: myhost
+    data_center: mydatacenter
+    localfs:
+      path: /path/to/data
+
 # Add data iSCSI storage domain:
 - ovirt_storage_domains:
     name: data_iscsi
@@ -133,7 +147,9 @@ EXAMPLES = '''
     data_center: mydatacenter
     iscsi:
       target: iqn.2016-08-09.domain-01:nickname
-      lun_id: 1IET_000d0002
+      lun_id:
+       - 1IET_000d0001
+       - 1IET_000d0002
       address: 10.34.63.204
 
 # Add data glusterfs storage domain
@@ -209,12 +225,12 @@ from ansible.module_utils.ovirt import (
 class StorageDomainModule(BaseModule):
 
     def _get_storage_type(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
             if self._module.params.get(sd_type) is not None:
                 return sd_type
 
     def _get_storage(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
             if self._module.params.get(sd_type) is not None:
                 return self._module.params.get(sd_type)
 
@@ -250,13 +266,17 @@ class StorageDomainModule(BaseModule):
                 type=otypes.StorageType(storage_type),
                 logical_units=[
                     otypes.LogicalUnit(
-                        id=storage.get('lun_id'),
+                        id=lun_id,
                         address=storage.get('address'),
                         port=storage.get('port', 3260),
                         target=storage.get('target'),
                         username=storage.get('username'),
                         password=storage.get('password'),
-                    ),
+                    ) for lun_id in (
+                        storage.get('lun_id')
+                        if isinstance(storage.get('lun_id'), list)
+                        else [storage.get('lun_id')]
+                    )
                 ] if storage_type in ['iscsi', 'fcp'] else None,
                 override_luns=storage.get('override_luns'),
                 mount_options=storage.get('mount_options'),
@@ -412,6 +432,7 @@ def main():
         data_center=dict(required=True),
         domain_function=dict(choices=['data', 'iso', 'export'], default='data', aliases=['type']),
         host=dict(default=None),
+        localfs=dict(default=None, type='dict'),
         nfs=dict(default=None, type='dict'),
         iscsi=dict(default=None, type='dict'),
         posixfs=dict(default=None, type='dict'),

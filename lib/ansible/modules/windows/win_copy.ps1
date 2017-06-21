@@ -32,8 +32,9 @@ $original_basename = Get-AnsibleParam -obj $params -name "original_basename" -ty
 
 $result = @{
     changed = $false
-    src = $src
     dest = $dest
+    original_basename = $original_basename
+    src = $src
 }
 
 if (($force -eq $false) -and (Test-Path -Path $dest)) {
@@ -122,6 +123,9 @@ if ($original_basename) {
         } catch {
             Fail-Json $result "Failed to create directory $($dest_folder): $($_.Exception.Message)"
         }
+    }
+
+    if ((Get-Item -Path $dest -Force).PSIsContainer) {
         $dest = Join-Path $dest -ChildPath $original_basename
     }
 }

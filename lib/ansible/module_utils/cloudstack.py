@@ -130,6 +130,7 @@ class AnsibleCloudStack(object):
         self.os_type = None
         self.hypervisor = None
         self.capabilities = None
+        self.network_acl = None
 
     def _connect(self):
         api_region = self.module.params.get('api_region') or os.environ.get('CLOUDSTACK_REGION')
@@ -223,6 +224,21 @@ class AnsibleCloudStack(object):
                 return my_dict[key]
             self.fail_json(msg="Something went wrong: %s not found" % key)
         return my_dict
+
+    def get_network_acl(self, key=None):
+        if self.network_acl is None:
+            args = {
+                'name': self.module.params.get('network_acl'),
+                'vpcid': self.get_vpc(key='id'),
+            }
+            network_acls = self.cs.listNetworkACLLists(**args)
+            if network_acls:
+                self.network_acl = network_acls['networkacllist'][0]
+                self.result['network_acl'] = self.network_acl['name']
+        if self.network_acl:
+            return self._get_by_key(key, self.network_acl)
+        else:
+            self.fail_json(msg="Network ACL %s not found" % self.module.params.get('network_acl'))
 
     def get_vpc(self, key=None):
         """Return a VPC dictionary or the value of given key of."""
@@ -415,6 +431,7 @@ class AnsibleCloudStack(object):
         # use the first zone if no zone param given
         if not zone:
             self.zone = zones['zone'][0]
+            self.result['zone'] = self.zone['name']
             return self._get_by_key(key, self.zone)
 
         if zones:
@@ -507,9 +524,17 @@ class AnsibleCloudStack(object):
                     return self._get_by_key(key, self.domain)
         self.fail_json(msg="Domain '%s' not found" % domain)
 
-    def get_tags(self, resource=None):
+    def query_tags(self, resource, resource_type):
+        args = {
+            'resourceids': resource['id'],
+            'resourcetype': resource_type,
+        }
+        tags = self.cs.listTags(**args)
+        return self.get_tags(resource=tags, key='tag')
+
+    def get_tags(self, resource=None, key='tags'):
         existing_tags = []
-        for tag in resource.get('tags', []):
+        for tag in resource.get(key) or []:
             existing_tags.append({'key': tag['key'], 'value': tag['value']})
         return existing_tags
 
@@ -545,7 +570,7 @@ class AnsibleCloudStack(object):
             if tags is not None:
                 self._process_tags(resource, resource_type, self._tags_that_should_not_exist(resource, tags), operation="delete")
                 self._process_tags(resource, resource_type, self._tags_that_should_exist_or_be_updated(resource, tags))
-                resource['tags'] = tags
+                resource['tags'] = self.query_tags(resource=resource, resource_type=resource_type)
         return resource
 
     def get_capabilities(self, key=None):

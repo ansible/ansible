@@ -67,32 +67,32 @@ options:
 
 EXAMPLES = '''
 # Example action to start sv dnscache, if not running
- - sv:
+ - runit:
     name: dnscache
     state: started
 
 # Example action to stop sv dnscache, if running
- - sv:
+ - runit:
     name: dnscache
     state: stopped
 
 # Example action to kill sv dnscache, in all cases
- - sv:
+ - runit:
     name: dnscache
     state: killed
 
 # Example action to restart sv dnscache, in all cases
- - sv:
+ - runit:
     name: dnscache
     state: restarted
 
 # Example action to reload sv dnscache, in all cases
- - sv:
+ - runit:
     name: dnscache
     state: reloaded
 
 # Example using alt sv directory location
- - sv:
+ - runit:
     name: dnscache
     state: reloaded
     service_dir: /run/service

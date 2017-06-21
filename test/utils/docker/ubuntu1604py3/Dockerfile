@@ -15,6 +15,8 @@ RUN apt-get update -y && \
     gawk \
     git \
     iproute2 \
+    libffi-dev \
+    libssl-dev \
     libxml2-utils \
     locales \
     lsb-release \
@@ -26,6 +28,7 @@ RUN apt-get update -y && \
     python3-dbus \
     python3-httplib2 \
     python3-jinja2 \
+    python3-lxml \
     python3-mock \
     python3-mysqldb \
     python3-nose \
@@ -41,6 +44,7 @@ RUN apt-get update -y && \
     ruby \
     subversion \
     sudo \
+    tzdata \
     unzip \
     virtualenv \
     xsltproc \

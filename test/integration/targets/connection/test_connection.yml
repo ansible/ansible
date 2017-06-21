@@ -1,4 +1,4 @@
-- hosts: "{{ hosts }}"
+- hosts: "{{ target_hosts }}"
   gather_facts: no
   serial: 1
   tasks:

@@ -34,7 +34,7 @@ class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
 
                 ansible.module_utils.basic._ANSIBLE_ARGS = None
                 am = ansible.module_utils.basic.AnsibleModule(
-                    argument_spec = dict(),
+                    argument_spec=dict(),
                 )
                 am._name = 'unittest'
 
@@ -51,7 +51,7 @@ class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
 
                 ansible.module_utils.basic._ANSIBLE_ARGS = None
                 am = ansible.module_utils.basic.AnsibleModule(
-                    argument_spec = dict(),
+                    argument_spec=dict(),
                 )
                 am._name = 'unittest'
 
@@ -76,7 +76,7 @@ class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
 
                 ansible.module_utils.basic._ANSIBLE_ARGS = None
                 am = ansible.module_utils.basic.AnsibleModule(
-                    argument_spec = dict(),
+                    argument_spec=dict(),
                 )
                 am._name = 'unittest'
 

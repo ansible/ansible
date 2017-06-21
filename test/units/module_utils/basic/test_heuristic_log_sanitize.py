@@ -25,8 +25,8 @@ import syslog
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
-
 from ansible.module_utils.basic import heuristic_log_sanitize
+
 
 class TestHeuristicLogSanitize(unittest.TestCase):
     def setUp(self):
@@ -39,13 +39,16 @@ class TestHeuristicLogSanitize(unittest.TestCase):
     def _gen_data(self, records, per_rec, top_level, secret_text):
         hostvars = {'hostvars': {}}
         for i in range(1, records, 1):
-            host_facts = {'host%s' % i:
-                            {'pstack':
-                                {'running': '875.1',
-                                 'symlinked': '880.0',
-                                 'tars': [],
-                                 'versions': ['885.0']},
-                         }}
+            host_facts = {
+                'host%s' % i: {
+                    'pstack': {
+                        'running': '875.1',
+                        'symlinked': '880.0',
+                        'tars': [],
+                        'versions': ['885.0']
+                    },
+                }
+            }
             if per_rec:
                 host_facts['host%s' % i]['secret'] = secret_text
             hostvars['hostvars'].update(host_facts)

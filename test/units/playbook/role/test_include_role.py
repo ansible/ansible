@@ -24,7 +24,7 @@ from ansible.compat.tests.mock import patch
 
 from ansible.playbook import Play
 from ansible.playbook.task import Task
-from ansible.vars import VariableManager
+from ansible.vars.manager import VariableManager
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
@@ -42,7 +42,6 @@ def flatten_tasks(tasks):
 class TestIncludeRole(unittest.TestCase):
 
     def setUp(self):
-        self.var_manager = VariableManager()
 
         self.loader = DictDataLoader({
             '/etc/ansible/roles/l1/tasks/main.yml': """
@@ -93,6 +92,8 @@ class TestIncludeRole(unittest.TestCase):
             """
         })
 
+        self.var_manager = VariableManager(loader=self.loader)
+
     def tearDown(self):
         pass
 
@@ -103,8 +104,7 @@ class TestIncludeRole(unittest.TestCase):
                 continue
 
             yield (role.get_name(),
-                   self.var_manager.get_vars(self.loader, play=play,
-                                             task=task))
+                   self.var_manager.get_vars(play=play, task=task))
 
     @patch('ansible.playbook.role.definition.unfrackpath',
            mock_unfrackpath_noop)
@@ -136,10 +136,8 @@ class TestIncludeRole(unittest.TestCase):
             name="test play",
             hosts=['foo'],
             gather_facts=False,
-            tasks=[
-                {'include_role': 'name=l3 tasks_from=alt defaults_from=alt'}
-            ]
-        ), loader=self.loader, variable_manager=self.var_manager)
+            tasks=[{'include_role': 'name=l3 tasks_from=alt defaults_from=alt'}]),
+            loader=self.loader, variable_manager=self.var_manager)
 
         tasks = play.compile()
         for role, task_vars in self.get_tasks_vars(play, tasks):
@@ -153,7 +151,7 @@ class TestIncludeRole(unittest.TestCase):
         """
         Test nested includes with default tasks and variables.
 
-        Variables from outer roles should be inherited, but overriden in inner
+        Variables from outer roles should be inherited, but overridden in inner
         roles.
         """
 
@@ -194,7 +192,7 @@ class TestIncludeRole(unittest.TestCase):
         """
         Test nested includes with alternative tasks and variables.
 
-        Variables from outer roles should be inherited, but overriden in inner
+        Variables from outer roles should be inherited, but overridden in inner
         roles.
         """
 

@@ -81,9 +81,6 @@ options:
 
 '''
 
-RETURN = '''
-#
-'''
 
 EXAMPLES = '''
 # Create a new virtual server

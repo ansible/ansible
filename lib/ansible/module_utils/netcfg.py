@@ -81,7 +81,7 @@ class ConfigLine(object):
         return '\n'.join(config)
 
     @property
-    def has_chilren(self):
+    def has_children(self):
         return len(self._children) > 0
 
     @property
@@ -92,13 +92,20 @@ class ConfigLine(object):
         assert isinstance(obj, ConfigLine), 'child must be of type `ConfigLine`'
         self._children.append(obj)
 
+
 def ignore_line(text, tokens=None):
     for item in (tokens or DEFAULT_COMMENT_TOKENS):
         if text.startswith(item):
             return True
 
-_obj_to_text = lambda x: [o.text for o in x]
-_obj_to_raw = lambda x: [o.raw for o in x]
+
+def _obj_to_text(x):
+    return [o.text for o in x]
+
+
+def _obj_to_raw(x):
+    return [o.raw for o in x]
+
 
 def _obj_to_block(objects, visited=None):
     items = list()
@@ -109,6 +116,7 @@ def _obj_to_block(objects, visited=None):
                 if child not in items:
                     items.append(child)
     return _obj_to_raw(items)
+
 
 def dumps(objects, output='block', comments=False):
     if output == 'block':
@@ -129,6 +137,7 @@ def dumps(objects, output='block', comments=False):
         items.append('end')
 
     return '\n'.join(items)
+
 
 class NetworkConfig(object):
 
@@ -328,7 +337,7 @@ class NetworkConfig(object):
         offset = 0
         obj = None
 
-        ## global config command
+        # global config command
         if not parents:
             for line in lines:
                 item = ConfigLine(line)

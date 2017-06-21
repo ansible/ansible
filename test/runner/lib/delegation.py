@@ -35,6 +35,8 @@ from lib.util import (
     ApplicationError,
     EnvironmentConfig,
     run_command,
+    common_environment,
+    pass_vars,
 )
 
 from lib.docker_util import (
@@ -129,7 +131,18 @@ def delegate_tox(args, exclude, require):
             if args.coverage and not args.coverage_label:
                 cmd += ['--coverage-label', 'tox-%s' % version]
 
-        run_command(args, tox + cmd)
+        env = common_environment()
+
+        # temporary solution to permit ansible-test delegated to tox to provision remote resources
+        optional = (
+            'SHIPPABLE',
+            'SHIPPABLE_BUILD_ID',
+            'SHIPPABLE_JOB_NUMBER',
+        )
+
+        env.update(pass_vars(required=[], optional=optional))
+
+        run_command(args, tox + cmd, env=env)
 
 
 def delegate_docker(args, exclude, require):

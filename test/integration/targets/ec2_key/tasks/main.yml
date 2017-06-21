@@ -157,11 +157,6 @@
         state=absent
       register: result
 
-    - name: assert state=absent with key_material
-      assert:
-        that:
-           - '"failed" not in result'
-
     # ============================================================
     - name: test state=present without key_material
       ec2_key:
@@ -177,7 +172,6 @@
       assert:
         that:
            - 'result.changed'
-           - '"failed" not in result'
            - '"key" in result'
            - '"name" in result.key'
            - '"fingerprint" in result.key'
@@ -200,7 +194,6 @@
       assert:
         that:
            - 'result.changed'
-           - '"failed" not in result'
            - '"key" in result'
            - 'result.key == None'
 
@@ -220,7 +213,6 @@
     - name: assert state=present with key_material
       assert:
         that:
-           - '"failed" not in result'
            - 'result.changed == True'
            - '"key" in result'
            - '"name" in result.key'
@@ -246,7 +238,6 @@
       assert:
         that:
            - 'result.changed'
-           - '"failed" not in result'
            - '"key" in result'
            - 'result.key == None'
 
@@ -324,7 +315,6 @@
       assert:
         that:
            - 'result.changed'
-           - '"failed" not in result'
            - '"key" in result'
            - 'result.key == None'
 
@@ -345,6 +335,5 @@
       assert:
         that:
            - 'not result.changed'
-           - '"failed" not in result'
            - '"key" in result'
            - 'result.key == None'

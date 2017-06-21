@@ -30,7 +30,7 @@ options:
   state:
     description:
       - Specifies the state of the resource record. As of Ansible 2.4, the I(command) option has been changed
-        to I(state) as default, but I(command) still works as well.
+        to I(state) as default and the choices 'present' and 'absent' have been added, but I(command) still works as well.
     required: true
     aliases: [ 'command' ]
     choices: [ 'present', 'absent', 'get', 'create', 'delete' ]
@@ -411,7 +411,7 @@ def main():
         alias=dict(required=False, type='bool'),
         alias_hosted_zone_id=dict(required=False),
         alias_evaluate_target_health=dict(required=False, type='bool', default=False),
-        value=dict(required=False, type='list'),
+        value=dict(required=False, type='list', default=[]),
         overwrite=dict(required=False, type='bool'),
         retry_interval=dict(required=False, default=500),
         private_zone=dict(required=False, type='bool', default=False),
@@ -521,7 +521,12 @@ def main():
 
     sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
                                           type=type_in, identifier=identifier_in)
-    for rset in sets:
+    sets_iter = iter(sets)
+    while True:
+        try:
+            rset = invoke_with_throttling_retries(next, sets_iter)
+        except StopIteration:
+            break
         # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
         # tripping of things like * and @.
         decoded_name = rset.name.replace(r'\052', '*')
@@ -561,11 +566,18 @@ def main():
                 record['values'] = sorted(rset.resource_records)
             if command_in == 'create' and rset.to_xml() == wanted_rset.to_xml():
                 module.exit_json(changed=False)
-            break
+
+        # We need to look only at the first rrset returned by the above call,
+        # so break here. The returned elements begin with the one matching our
+        # requested name, type, and identifier, if such an element exists,
+        # followed by all others that come after it in alphabetical order.
+        # Therefore, if the first set does not match, no subsequent set will
+        # match either.
+        break
 
     if command_in == 'get':
         if type_in == 'NS':
-            ns = record['values']
+            ns = record.get('values', [])
         else:
             # Retrieve name servers associated to the zone.
             z = invoke_with_throttling_retries(conn.get_zone, zone_in)

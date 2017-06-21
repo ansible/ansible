@@ -208,7 +208,7 @@ def common_environment():
     return env
 
 
-def pass_vars(required=None, optional=None):
+def pass_vars(required, optional):
     """
     :type required: collections.Iterable[str]
     :type optional: collections.Iterable[str]

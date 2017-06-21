@@ -5,6 +5,7 @@
   with_items:
       - service1
       - service2
+      - service3
       - http_check
       - with_check
       - with_tags
@@ -45,6 +46,20 @@
         - basic2_result.service_port == 80
         - basic2_result.service_id == 'service2'
         - basic2_result.service_name == 'Basic Service'
+
+- name: register very basic service without service_port
+  consul:
+    service_name: Basic Service Without Port
+    service_id: service3
+  register: basic3_result
+
+- name: verify service3 registration
+  assert:
+    that:
+        - basic3_result.changed
+        - basic3_result.service_port == None
+        - basic3_result.service_id == 'service3'
+        - basic3_result.service_name == 'Basic Service Without Port'
 
 - name: register a service with an http check
   consul:
@@ -141,7 +156,7 @@
     that:
       - delete_service_result.changed
 
-- name: removal of an non-existant service causes no change
+- name: removal of an non-existent service causes no change
   consul:
     service_id: 'service1'
     state: absent
@@ -163,7 +178,7 @@
     that:
       - delete_check_result.changed
 
-- name: removal of an non-existant check causes no change
+- name: removal of an non-existent check causes no change
   consul:
     check_id: 'node_level'
     state: absent

@@ -478,7 +478,7 @@ class Ntp(object):
                                    peer_type=ntp_dict['type'], prefer=is_preferred, key_id=key_id)
                 exp_ntp_cfg = dict(vpn_name=self.vpn_name, source_int=self.interface.lower(), address=self.address,
                                    peer_type=self.peer_type, prefer=self.is_preferred, key_id=self.key_id)
-                if cmp(cur_ntp_cfg, exp_ntp_cfg) == 0:
+                if cur_ntp_cfg == exp_ntp_cfg:
                     self.conf_exsit = True
 
             vpn_name = ntp_dict['vpnName']

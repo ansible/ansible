@@ -161,7 +161,7 @@ class RpmKey(object):
             gpg = self.module.get_bin_path('gpg2')
 
         if not gpg:
-            self.json_fail(msg="rpm_key requires a command line gpg or gpg2, none found")
+            self.module.fail_json(msg="rpm_key requires a command line gpg or gpg2, none found")
 
         stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', '--list-packets', keyfile])
         for line in stdout.splitlines():
@@ -170,7 +170,7 @@ class RpmKey(object):
                 # We want just the last 8 characters of the keyid
                 keyid = line.split()[-1].strip()[8:]
                 return keyid
-        self.json_fail(msg="Unexpected gpg output")
+        self.module.fail_json(msg="Unexpected gpg output")
 
     def is_keyid(self, keystr):
         """Verifies if a key, as provided by the user is a keyid"""
