@@ -1,42 +1,47 @@
-- name: create a new acl token
-  consul_acl:
-    mgmt_token: '{{mgmt_token}}'
-    host: '{{acl_host}}'
-    name: 'New ACL'
-  register: new_ruleless
+---
 
-- name: verify ruleless key created
+- name: create a new ACL token
+  consul_acl:
+    host: '{{ acl_host }}'
+    mgmt_token: '{{ mgmt_token }}'
+    name: 'New ACL'
+  register: created_ruleless_acl
+
+- name: verify ACL created without rules
   assert:
     that:
-      - new_ruleless.token | length == 36
-      - new_ruleless.name == 'New ACL'
+      - created_ruleless_acl.changed
+      - created_ruleless_acl.token | length == 36
+      - created_ruleless_acl.name == 'New ACL'
+      - created_ruleless_acl.rules == {}
 
-- name: add rules to an acl token
+- name: create an ACL with rules
   consul_acl:
-    mgmt_token: '{{mgmt_token}}'
-    host: '{{acl_host}}'
+    host: '{{ acl_host }}'
+    mgmt_token: '{{ mgmt_token }}'
     name: 'With rule'
     rules:
       - key: 'foo'
         policy: read
-      - key: 'private/foo'
+      - key: 'private/bar'
         policy: deny
-  register: with_rules
+  register: created_acl
 
-- name: verify rules created
+- name: verify created ACL's rules
   assert:
     that:
-      - with_rules.token | length == 36
-      - with_rules.name == 'With rule'
-      - with_rules.rules | match('.*"foo".*')
-      - with_rules.rules | search(pattern='private/foo')
+      - created_ruleless_acl.changed
+      - created_acl.token | length == 36
+      - created_acl.name == 'With rule'
+      - (created_acl.rules | json_query("key.foo.policy")) == "read"
+      - (created_acl.rules | json_query("key.'private/bar'.policy")) == "deny"
 
 - name: clear up
   consul_acl:
-    mgmt_token: '{{mgmt_token}}'
-    host: '{{acl_host}}'
-    token: '{{item}}'
+    host: '{{ acl_host }}'
+    mgmt_token: '{{ mgmt_token }}'
+    token: '{{ item }}'
     state: absent
   with_items:
-    - '{{new_ruleless.token}}'
-    - '{{with_rules.token}}'
+    - '{{ created_ruleless_acl.token }}'
+    - '{{ created_acl.token }}'
