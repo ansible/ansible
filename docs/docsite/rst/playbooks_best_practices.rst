@@ -296,8 +296,8 @@ What about just my webservers in Boston?::
 
 What about just the first 10, and then the next 10?::
    
-    ansible-playbook -i production webservers.yml --limit boston[1-10]
-    ansible-playbook -i production webservers.yml --limit boston[11-20]
+    ansible-playbook -i production webservers.yml --limit boston[1:10]
+    ansible-playbook -i production webservers.yml --limit boston[11:20]
 
 And of course just basic ad-hoc stuff is also possible.::
 
