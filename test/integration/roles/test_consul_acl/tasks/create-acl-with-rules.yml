@@ -29,7 +29,6 @@
     that:
       - created_ruleless_acl.changed
       - created_acl.token | length == 36
-      - created_acl.name == test_consul_acl_rule_name
       - (created_acl.rules | json_query("event.bbq.policy")) == "write"
       - (created_acl.rules | json_query("key.foo.policy")) == "read"
       - (created_acl.rules | json_query("key.'private/bar'.policy")) == "deny"

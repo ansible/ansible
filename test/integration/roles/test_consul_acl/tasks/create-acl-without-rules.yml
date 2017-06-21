@@ -12,7 +12,6 @@
     that:
       - created_ruleless_acl.changed
       - created_ruleless_acl.token | length == 36
-      - created_ruleless_acl.name == "New ACL"
       - created_ruleless_acl.rules == {}
 
 - name: create same rule-less ACL token

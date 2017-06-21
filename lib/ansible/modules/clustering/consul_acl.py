@@ -164,11 +164,7 @@ def update_acl(module):
             existing_rules = load_rules_for_token(module, consul, token)
             changed = existing_rules != rules
             if changed:
-                token = consul.acl.update(
-                    token,
-                    name=name,
-                    type=token_type,
-                    rules=rules_as_hcl)
+                token = consul.acl.update(token, name=name, type=token_type, rules=rules_as_hcl)
         else:
             try:
                 token = consul.acl.create(name=name, type=token_type, rules=rules_as_hcl)
@@ -180,13 +176,7 @@ def update_acl(module):
     except Exception as e:
         module.fail_json(msg="Could not create/update acl %s" % e)
 
-    # TODO: It is unclear to me why `token`, `rules`, `name` and `type` are returned - they are all inputs. The only one
-    # I can see being useful is the JSON view of the rules.
-    module.exit_json(changed=changed,
-                     token=token,
-                     rules=encode_rules_as_json(rules),
-                     name=name,
-                     type=token_type)
+    module.exit_json(changed=changed, token=token, rules=encode_rules_as_json(rules))
 
 
 def remove_acl(module):
