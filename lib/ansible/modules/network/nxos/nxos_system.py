@@ -251,8 +251,9 @@ def parse_name_servers(config, vrf_config):
             objects.append({'server': addr, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
-        for item in re.findall('ip name-server (\S+)', cfg, re.M):
-            for addr in match.group(1).split(' '):
+        vrf_match = re.search('ip name-server (.+)', cfg, re.M)
+        if vrf_match:
+            for addr in vrf_match.group(1).split(' '):
                 objects.append({'server': addr, 'vrf': vrf})
 
     return objects
