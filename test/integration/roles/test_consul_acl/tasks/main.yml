@@ -36,6 +36,25 @@
       - (created_acl.rules | json_query("key.foo.policy")) == "read"
       - (created_acl.rules | json_query("key.'private/bar'.policy")) == "deny"
 
+- name: change rules of existing ACL
+  consul_acl:
+    host: '{{ acl_host }}'
+    token: '{{ created_acl.token }}'
+    rules:
+      - key: 'foo'
+        policy: write
+      - key: 'moo'
+        policy: deny
+  register: updated_acl
+
+- name: verify updated ACL's rules
+  assert:
+    that:
+      - created_ruleless_acl.changed
+      - (updated_acl.rules | json_query("key.foo.policy")) == "write"
+      - (created_acl.rules | json_query("key.'private/bar'.policy")) == "deny"
+      - (updated_acl.rules | json_query("key.moo.policy")) == "deny"
+
 - name: clear up
   consul_acl:
     host: '{{ acl_host }}'
