@@ -42,6 +42,7 @@ options:
             - Name of the end datastore the VM's vmdk should be moved on (at least one of destination_host or destination_datastore is required)
         required: False
         aliases: ['datastore']
+        version_added: 2.4
 
 extends_documentation_fragment: vmware.documentation
 '''
@@ -90,9 +91,7 @@ running_host:
     sample: 'host1.example.com'
 datastores:
     description: List the datastores the virtual machine uses
-    returned:
-        - changed
-        - success
+    returned: ['changed', 'success']
     type: list
     sample: '[datastore1]'
 
