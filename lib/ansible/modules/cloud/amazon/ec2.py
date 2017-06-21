@@ -150,7 +150,7 @@ options:
     description:
       - enable detailed monitoring (CloudWatch) for instance
     required: false
-    default: null
+    default: no
     choices: [ "yes", "no" ]
     aliases: []
   user_data:
@@ -186,7 +186,7 @@ options:
     description:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
     required: false
-    default: null
+    default: no
     choices: [ "yes", "no" ]
     aliases: []
   private_ip:
