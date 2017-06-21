@@ -93,7 +93,7 @@ from ansible.module_utils.netconf import send_request
 try:
     from lxml.etree import Element, SubElement, tostring
 except ImportError:
-    from xml.etree.ElementTree import SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement, tostring
 
 try:
     from jnpr.junos import Device
