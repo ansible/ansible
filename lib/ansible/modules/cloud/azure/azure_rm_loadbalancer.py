@@ -88,7 +88,7 @@ from ansible.module_utils.azure_rm_common import *
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.network.models import LoadBalancer, FrontendIPConfiguration, BackendAddressPool
-except ImportError as exc:
+except ImportError:
     # This is handled in azure_rm_common
     pass
 
