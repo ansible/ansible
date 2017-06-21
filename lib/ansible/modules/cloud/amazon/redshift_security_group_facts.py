@@ -24,7 +24,7 @@ module: redshift_security_group_facts
 short_description: Gather facts about Redshift cluster security goups in AWS
 description:
   - Gather facts about Redshift cluster security goups in AWS
-version_added: "2.3"
+version_added: "2.4"
 author: "Jens Carl (@j-carl)"
 options:
   name:
@@ -202,7 +202,10 @@ def main():
             tags=dict(type='dict')
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True
+    )
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
