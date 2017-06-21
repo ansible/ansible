@@ -1,0 +1,35 @@
+---
+
+- name: create an ACL
+  consul_acl:
+    host: "{{ acl_host }}"
+    mgmt_token: "{{ mgmt_token }}"
+    name: "{{ test_consul_acl_rule_name }}"
+  register: created_acl
+
+- name: delete the ACL
+  consul_acl:
+    host: "{{ acl_host }}"
+    mgmt_token: "{{ mgmt_token }}"
+    token: "{{ created_acl.token }}"
+    state: absent
+  register: deleted_acl
+
+# TODO: This does little to actually verify that the ACL has been deleted
+- name: verify ACL has been deleted
+  assert:
+    that:
+      - deleted_acl.changed
+
+- name: delete the ACL again
+  consul_acl:
+    host: "{{ acl_host }}"
+    mgmt_token: "{{ mgmt_token }}"
+    token: "{{ created_acl.token }}"
+    state: absent
+  register: doubly deleted_acl
+
+- name: verify idempotence when deleting an ACL
+  assert:
+    that:
+      - not deleted_acl.changed

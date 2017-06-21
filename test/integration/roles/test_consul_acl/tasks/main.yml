@@ -5,3 +5,5 @@
 - import_tasks: create-acl-with-rules.yml
 
 - import_tasks: update-acl.yml
+
+- import_tasks: delete-acl.yml
