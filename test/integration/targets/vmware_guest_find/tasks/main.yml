@@ -1,0 +1,52 @@
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+- name: start vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
+  register: vcsim_instance
+
+- name: make sure pyvmomi is installed
+  package:
+    name: python-pyvmomi
+    state: latest    
+
+- name: get a list of VMS from vcsim   
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=_VM' }}"
+  register: vmlist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+- name: show the  
+  debug:
+    msg: "{{ (item|basename).split('_')[0] }}"
+  with_items: "{{ vmlist['json'] }}"
+
+- name: find folders for each vm
+  vmware_guest_find:
+    validate_certs: False
+    hostname: "{{ vcsim_instance['json']['host'] }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: folders
+
+- debug: var=folders
+
+- debug: var=item
+  with_items: "{{ folders.results }}"
+
+- assert:
+    that:
+        - "{{ 'folders' in item }}"
+        - "{{ item['folders']|length == 1 }}"
+  with_items: "{{ folders.results }}"
