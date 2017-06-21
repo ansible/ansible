@@ -196,10 +196,17 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
 try:
-    from lxml.etree import Element, fromstring, ParseError
+    from lxml.etree import Element, fromstring
 except ImportError:
-    from xml.etree.ElementTree import Element, fromstring, ParseError
-    if sys.version_info < (2, 7):
+    from xml.etree.ElementTree import Element, fromstring
+
+try:
+    from lxml.etree import ParseError
+except ImportError:
+    try:
+        from xml.etree.ElementTree import ParseError
+    except ImportError:
+        # for Python < 2.7
         from xml.parsers.expat import ExpatError
         ParseError = ExpatError
 
