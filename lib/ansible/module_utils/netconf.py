@@ -32,7 +32,7 @@ from ansible.module_utils.connection import exec_command
 try:
     from lxml.etree import Element, SubElement, fromstring, tostring
 except ImportError:
-    from xml.etree.ElementTree import SubElement, fromstring, tostring
+    from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
 
 NS_MAP = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
 

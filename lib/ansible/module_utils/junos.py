@@ -30,7 +30,7 @@ try:
     from lxml.etree import Element, SubElement, fromstring, tostring
     HAS_LXML = True
 except ImportError:
-    from xml.etree.ElementTree import SubElement, fromstring, tostring
+    from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
     HAS_LXML = False
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
