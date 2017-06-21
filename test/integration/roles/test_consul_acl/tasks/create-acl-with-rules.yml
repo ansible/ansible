@@ -6,10 +6,22 @@
     mgmt_token: "{{ mgmt_token }}"
     name: "{{ test_consul_acl_rule_name }}"
     rules:
+      - event: "bbq"
+        policy: write
       - key: "foo"
         policy: read
       - key: "private/bar"
         policy: deny
+      - keyring: write
+      - node: "hgs4"
+        policy: write
+      - operator: read
+      - query: ""
+        policy: write
+      - service: "consul"
+        policy: write
+      - session: "standup"
+        policy: write
   register: created_acl
 
 - name: verify created ACL's rules
@@ -18,8 +30,15 @@
       - created_ruleless_acl.changed
       - created_acl.token | length == 36
       - created_acl.name == test_consul_acl_rule_name
+      - (created_acl.rules | json_query("event.bbq.policy")) == "write"
       - (created_acl.rules | json_query("key.foo.policy")) == "read"
       - (created_acl.rules | json_query("key.'private/bar'.policy")) == "deny"
+      - (created_acl.rules | json_query("keyring")) == "deny"
+      - (created_acl.rules | json_query("node.hgs4.policy")) == "write"
+      - (created_acl.rules | json_query("operator")) == "read"
+      - (created_acl.rules | json_query("query.''.policy")) == "write"
+      - (created_acl.rules | json_query("service.consul.policy")) == "write"
+      - (created_acl.rules | json_query("session.standup.policy")) == "write"
 
 - name: create same rule-less ACL
   consul_acl:
