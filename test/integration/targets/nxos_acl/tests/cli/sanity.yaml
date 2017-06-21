@@ -1,0 +1,48 @@
+---
+- debug: msg="START TRANSPORT:CLI nxos_acl sanity test"
+
+- name: "Setup: Cleanup possibly existing acl."
+  nxos_acl: &remove
+    name: TEST_ACL
+    seq: 10
+    state: absent
+    provider: "{{ cli }}"
+  ignore_errors: yes
+
+- name: "Configure ACL"
+  nxos_acl: &configure
+    name: TEST_ACL
+    seq: 10
+    action: permit
+    proto: tcp
+    src: 1.1.1.1/24
+    dest: any
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert: &true
+    that:
+      - "result.changed == true"
+
+- name: "Check Idempotence"
+  nxos_acl: *configure
+  register: result
+
+- assert: &false
+    that:
+      - "result.changed == false"
+
+- name: "Remove ACL"
+  nxos_acl: *remove
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *remove
+  register: result
+
+- assert: *false
+
+- debug: msg="END TRANSPORT:CLI nxos_acl sanity test"
