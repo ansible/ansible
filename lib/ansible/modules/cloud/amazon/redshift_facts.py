@@ -125,7 +125,7 @@ cluster_create_time:
 automated_snapshot_retention_period:
     description: The number of days that automatic cluster snapshots are retained.
     returned: success
-    type: integer
+    type: int
     sample: 1
 cluster_security_groups:
     description: A list of cluster security groups that are associated with the cluster.
@@ -202,7 +202,7 @@ allow_version_upgrade:
 number_of_nodes:
     description:  The number of compute nodes in the cluster.
     returned: success
-    type: integer
+    type: int
     sample: 12
 publicly_accessible:
     description: A Boolean value that, if true , indicates that the cluster can be accessed from a public network.
