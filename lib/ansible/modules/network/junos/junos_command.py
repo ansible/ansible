@@ -176,7 +176,7 @@ from ansible.module_utils.six import string_types, iteritems
 try:
     from lxml.etree import Element, SubElement, tostring
 except ImportError:
-    from xml.etree.ElementTree import SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement, tostring
 
 try:
     import jxmlease
