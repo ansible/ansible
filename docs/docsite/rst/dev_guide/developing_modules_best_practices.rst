@@ -149,54 +149,11 @@ module file and test that the real module works via :command:`ansible` or
 
 Module Paths
 ````````````
-Ansible can find modules in several locations. 
-
-**Relative to Playbooks**
-
-The easiest way to include a module is by adding a ``library`` folder to your project 
-relative to your playbooks. Module files (.py, etc.) can be added there.
-
-The structure will look like this::
-
-    ├── playbook.yml
-    └── library
-        ├── my_module.py
-        └── my_other_module.py
-
-.. note::
-
-    Currently Ansible does not support organizing modules into sub-folders under the ``library``
-    folder.
-    
-**Inside a Role**
-
-The library folder can also exist within a role following the same layout above.
-
-The structure would look like this for a "webservers" role::
-
-    └── roles
-        └── webservers
-            ├── tasks
-            ├── vars
-            ├── ...
-            └── library
-                ├── my_module.py
-                └── my_other_module.py
-
-**Ansible Configuration File**
-
-In the Ansible configuration file you can modify the `library <http://docs.ansible.com/ansible/intro_configuration.html#library>`_
-setting to add additional module search paths.
-
-**Environment & Command-Line**
-
-You can specify additional module paths using the ``--module-path`` command-line option. You may also 
-specify paths in the :envvar:`ANSIBLE_LIBRARY` environment variable. 
 
 **Troubleshooting Module Discovery**
 
-If you are having trouble getting your module "found" by ansible, be sure it is in one of 
-those search paths.
+If you are having trouble getting your module "found" by ansible, be sure it 
+is in the correct path, see `Module Paths <http://docs.ansible.com/ansible/modules_intro.html#module-paths>`_.
 
 If you have a fork of one of the ansible module projects, do something like this::
 
@@ -234,5 +191,4 @@ Avoid creating a module that does the work of other modules; this leads to code 
 
 Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 
-Always use the hacking/test-module script when developing modules and it will warn
-you about these kind of things.
+Always use the hacking/test-module script when developing modules to receive warnings about these issues.
