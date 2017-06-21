@@ -40,7 +40,7 @@ except ImportError:
 
 class VcenterProvider(CloudProvider):
     """VMware vcenter/esx plugin. Sets up cloud resources for tests."""
-    DOCKER_SIMULATOR_NAME = 'ansible/ansible:vcenter-simulator'
+    DOCKER_SIMULATOR_NAME = 'vcenter-simulator'
 
     def __init__(self, args):
         """
@@ -48,7 +48,7 @@ class VcenterProvider(CloudProvider):
         """
         super(VcenterProvider, self).__init__(args, config_extension='.ini')
 
-        self.image = 'ansible:vcenter-simulator'
+        self.image = 'ansible/ansible:vcenter-simulator'
         self.container_name = ''
         self.endpoint = ''
         self.vcenter_host = None
