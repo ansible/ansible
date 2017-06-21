@@ -323,7 +323,7 @@ EXAMPLES = '''
     msg: "The new db endpoint is {{ rds.instance.endpoint }}"
 '''
 
-RETURN='''
+RETURN = '''
 engine:
     description: the name of the database engine
     returned: when RDS instance exists
@@ -357,7 +357,7 @@ publicly_accessible:
 latest_restorable_time:
     description: the latest time to which a database can be restored with point-in-time restore
     returned: when RDS instance exists
-    type: datetime
+    type: string
     sample: "1489707802.0"
 secondary_avaialbility_zone:
     description: the name of the secondary AZ for a DB instance with multi-AZ support
@@ -449,17 +449,17 @@ pending_modified_values:
             returned: when RDS instance exists
             type: string
             sample: "null"
-        master_user_password": null,
+        master_user_password:
             description: the pending or in-progress change of the master credentials for this RDS instance
             returned: when RDS instance exists
             type: string
             sample: "null"
-        multi_az": null,
+        multi_az:
             description: indicates that the single-AZ RDS instance is to change to a multi-AZ deployment
             returned: when RDS instance exists
             type: string
             sample: "null"
-        port: null
+        port:
             description: specifies the pending port for this RDS instance
             returned: when RDS instance exists
             type: string
