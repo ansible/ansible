@@ -79,7 +79,7 @@ def fail_if_missing(module, found, service, msg=''):
     This function will return an error or exit gracefully depending on check mode status
     and if the service is missing or not.
 
-    :arg module: is an  AnsbileModule object, used for it's utility methods
+    :arg module: is an  AnsibleModule object, used for it's utility methods
     :arg found: boolean indicating if services was found or not
     :arg service: name of service
     :kw msg: extra info to append to error/success msg when missing
@@ -95,7 +95,7 @@ def daemonize(module, cmd):
     '''
     Execute a command while detaching as a daemon, returns rc, stdout, and stderr.
 
-    :arg module: is an  AnsbileModule object, used for it's utility methods
+    :arg module: is an  AnsibleModule object, used for it's utility methods
     :arg cmd: is a list or string representing the command and options to run
 
     This is complex because daemonization is hard for people.

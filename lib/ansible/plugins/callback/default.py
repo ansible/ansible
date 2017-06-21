@@ -17,7 +17,7 @@
 '''
 DOCUMENTATION:
     callback: default
-    short_description: default Ansbile screen output
+    short_description: default Ansible screen output
     version_added: historical
     description:
         - This is the default output callback for ansible-playbook.
