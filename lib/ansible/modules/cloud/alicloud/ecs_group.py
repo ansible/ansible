@@ -34,7 +34,7 @@ options:
     required: false
     default: 'present'
     aliases: ['state']
-    choices: ['present', 'absent', 'getinfo']
+    choices: ['present', 'absent', 'fetch']
   group_name:
     description: Name of the security group.
     required: false
@@ -258,7 +258,7 @@ EXAMPLES = '''
     alicloud_access_key: xxxxxxxxxx
     alicloud_secret_key: xxxxxxxxxx
     alicloud_region: cn-beijing
-    status: getinfo
+    status: fetch
   tasks:
     - name: Querying Security group list
       ecs_group:
@@ -414,8 +414,7 @@ vpc_id:
 '''
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.alicloud_ecs import get_acs_connection_info, ecs_argument_spec, ecs_connect
-# from ansible.module_utils.ecs import get_acs_connection_info, ecs_argument_spec, ecs_connect
+from ansible.module_utils.alicloud_ecs import ecs_argument_spec, ecs_connect
 
 
 try:
@@ -424,13 +423,6 @@ try:
     HAS_FOOTMARK = True
 except ImportError:
     HAS_FOOTMARK = False
-
-# try:
-#     from ecsutils.ecs import *
-#
-#     HAS_ECS = True
-# except ImportError:
-#     HAS_ECS = False
 
 
 def create_security_group(module, ecs, group_name, group_description, vpc_id, group_tags):
@@ -529,9 +521,6 @@ def validate_format_sg_rules(module, inbound_rules=None, outbound_rules=None):
                            'nic_type', 'policy', 'priority', 'port_range')
     INBOUND_VALID_PARAMS = ('source_cidr_ip', 'source_group_id', 'source_group_owner_id')
     OUTBOUND_VALID_PARAMS = ('dest_cidr_ip', 'dest_group_id', 'dest_group_owner_id')
-
-    # tcp_proto_start_port = 1
-    # tcp_proto_end_port = 65535
 
     rule_types = []
 
@@ -696,7 +685,6 @@ def get_group(module, ecs, group_id=None):
         changed, group, result = ecs.get_security_group_attribute(group_id=group_id)
 
         if 'error' in (''.join(str(result))).lower():
-            # module.log()
             module.fail_json(msg="Retrieving security group {0} attribute got an error: {1}".format(group_id, result))
 
         if group:
@@ -731,14 +719,12 @@ def del_security_group(module, ecs, group_ids):
 
 
 def main():
-    # if HAS_ECS is False:
-    #     module.fail_json("ecsutils required for this module")
     if HAS_FOOTMARK is False:
         module.fail_json("Footmark required for this module")
 
     argument_spec = ecs_argument_spec()
     argument_spec.update(dict(
-        status=dict(default='present', aliases=['state'], choices=['present', 'absent', 'getinfo'], type='str'),
+        status=dict(default='present', aliases=['state'], choices=['present', 'absent', 'fetch'], type='str'),
         group_name=dict(type='str', aliases=['name']),
         description=dict(type='str'),
         vpc_id=dict(type='str'),
@@ -761,15 +747,6 @@ def main():
         vpc_id = module.params['vpc_id']
         group_tags = module.params['group_tags']
         group_id = module.params['group_id']
-
-        # # validating group_id and name
-        # if group_ids and group_name:
-        #     module.fail_json(msg='provide either security group id or name, not both')
-        # elif group_ids:
-        #     if len(group_ids) != 1:
-        #         module.fail_json(msg='provide single security group id for rule authorization')
-        # elif group_name is None:
-        #     module.fail_json(msg='provide either security group id or name')
 
         # validating rules if provided
         total_rules_count = 0
@@ -796,34 +773,11 @@ def main():
             changed, sg_id, _ = authorize_security_group(module, ecs, group_id=group_id, inbound_rules=inbound_rules,
                                                          outbound_rules=outbound_rules, add_to_fail_result=result)
 
-            # if rule authorization is required after group creation
-
-        # if group_ids:
-        #     if total_rules_count == 0:
-        #         module.fail_json(msg='provide rules for authorization')
-        #
-        #     changed, group_id, result = authorize_security_group(module, ecs, group_id=group_ids[0],
-        #                                                                   inbound_rules=inbound_rules,
-        #                                                                   outbound_rules=outbound_rules)
-        # # if security group creation is required
-        # else:
-        #
-        #     changed, group_id, result = create_security_group(module, ecs, group_name=group_name,
-        #                                                                group_description=group_description,
-        #                                                                vpc_id=vpc_id,
-        #                                                                group_tags=group_tags)
-        #
-        #     # if rule authorization is required after group creation
-        #     if group_id and (inbound_rules or outbound_rules):
-        #         c, s, result_details = authorize_security_group(module, ecs, group_id, inbound_rules,
-        #                                                         outbound_rules,
-        #                                                         add_to_fail_result=result[0])
-        #         result.extend(result_details)
         changed, group = get_group(module, ecs, group_id)
 
         module.exit_json(changed=changed, group_id=group['id'], group=group, group_rules=group['rules'], vpc_id=group['vpc_id'])
 
-    elif state == 'getinfo':
+    elif state == 'fetch':
         group_id = module.params['group_id']
 
         (changed, group) = get_group(module, ecs, group_id)
