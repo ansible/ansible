@@ -369,10 +369,12 @@ class VariableManager:
                         raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item,
                                                        obj=vars_file_item)
                     else:
-                        # we do not have a full context here, and the missing variable could be
-                        # because of that, so just show a warning and continue
+                        # we do not have a full context here, and the missing variable could be because of that
+                        # so just show a warning and continue
                         display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
                         continue
+
+                display.vvv("Read vars_file '%s'" % vars_file_item)
 
             # By default, we now merge in all vars from all roles in the play,
             # unless the user has disabled this via a config option
