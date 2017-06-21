@@ -40,7 +40,7 @@ except ImportError:
 
 class VcenterProvider(CloudProvider):
     """VMware vcenter/esx plugin. Sets up cloud resources for tests."""
-    DOCKER_SIMULATOR_NAME = 'vcsim'
+    DOCKER_SIMULATOR_NAME = 'ansible/ansible:vcenter-simulator'
 
     def __init__(self, args):
         """
