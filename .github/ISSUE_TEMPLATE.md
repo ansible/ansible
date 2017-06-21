@@ -28,6 +28,8 @@ Mention any settings you have changed/added/removed in ansible.cfg
 <!---
 Mention the OS you are running Ansible from, and the OS you are
 managing, or say “N/A” for anything that is not platform-specific.
+Also mention the specific version of what you are trying to control,
+e.g. if this is a network bug the version of firmware on the network device.
 -->
 
 ##### SUMMARY
