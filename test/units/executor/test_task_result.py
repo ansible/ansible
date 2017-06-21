@@ -125,11 +125,11 @@ class TestTaskResult(unittest.TestCase):
         tr = TaskResult(mock_host, mock_task, dict())
         self.assertFalse(tr.is_failed())
 
-        # test failed result with rc values
+        # test failed result with rc values (should not matter)
         tr = TaskResult(mock_host, mock_task, dict(rc=0))
         self.assertFalse(tr.is_failed())
         tr = TaskResult(mock_host, mock_task, dict(rc=1))
-        self.assertTrue(tr.is_failed())
+        self.assertFalse(tr.is_failed())
 
         # test with failed in result
         tr = TaskResult(mock_host, mock_task, dict(failed=True))
