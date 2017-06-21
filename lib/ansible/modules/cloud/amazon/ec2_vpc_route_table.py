@@ -131,7 +131,7 @@ EXAMPLES = '''
 '''
 
 import re
-
+import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
@@ -147,7 +147,9 @@ except ImportError:
 
 
 class AnsibleRouteTableException(Exception):
-    pass
+    def __init__(self, message, error_traceback=None):
+        self.message = message
+        self.error_traceback = error_traceback
 
 
 class AnsibleIgwSearchException(AnsibleRouteTableException):
@@ -274,7 +276,8 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
         return {'changed': True, 'tags': latest_tags}
     except EC2ResponseError as e:
         raise AnsibleTagCreationException(
-            'Unable to update tags for {0}, error: {1}'.format(resource_id, e))
+            message='Unable to update tags for {0}, error: {1}'.format(resource_id, e),
+            error_traceback=traceback.format_exc())
 
 
 def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
@@ -472,16 +475,18 @@ def ensure_route_table_absent(connection, module):
             try:
                 route_table = get_route_table_by_tags(connection, vpc_id, tags)
             except EC2ResponseError as e:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg="Error finding route table with lookup 'tag': {0}".format(e.message),
+                                 exception=traceback.format_exc())
             except RuntimeError as e:
-                module.fail_json(msg=e.args[0])
+                module.fail_json(msg=e.args[0], exception=traceback.format_exc())
         else:
             route_table = None
     elif lookup == 'id':
         try:
             route_table = get_route_table_by_id(connection, vpc_id, route_table_id)
         except EC2ResponseError as e:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Error finding route table with lookup 'id': {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     if route_table is None:
         return {'changed': False}
@@ -494,7 +499,8 @@ def ensure_route_table_absent(connection, module):
         if e.error_code == 'DryRunOperation':
             pass
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Error deleting route table: {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     return {'changed': True}
 
@@ -540,7 +546,8 @@ def ensure_route_table_present(connection, module):
     try:
         routes = create_route_spec(connection, module, vpc_id)
     except AnsibleIgwSearchException as e:
-        module.fail_json(msg=e[0])
+        module.fail_json(msg="Failed to find the Internet gateway for the given VPC ID {0}: {1}".format(vpc_id, e[0]),
+                         exception=traceback.format_exc())
 
     changed = False
     tags_valid = False
@@ -550,16 +557,18 @@ def ensure_route_table_present(connection, module):
             try:
                 route_table = get_route_table_by_tags(connection, vpc_id, tags)
             except EC2ResponseError as e:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg="Error finding route table with lookup 'tag': {0}".format(e.message),
+                                 exception=traceback.format_exc())
             except RuntimeError as e:
-                module.fail_json(msg=e.args[0])
+                module.fail_json(msg=e.args[0], exception=traceback.format_exc())
         else:
             route_table = None
     elif lookup == 'id':
         try:
             route_table = get_route_table_by_id(connection, vpc_id, route_table_id)
         except EC2ResponseError as e:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Error finding route table with lookup 'id': {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     # If no route table returned then create new route table
     if route_table is None:
@@ -569,8 +578,8 @@ def ensure_route_table_present(connection, module):
         except EC2ResponseError as e:
             if e.error_code == 'DryRunOperation':
                 module.exit_json(changed=True)
-
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Failed to create route table: {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     if routes is not None:
         try:
@@ -579,7 +588,8 @@ def ensure_route_table_present(connection, module):
                                    purge_routes)
             changed = changed or result['changed']
         except EC2ResponseError as e:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Error while updating routes: {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     if propagating_vgw_ids is not None:
         result = ensure_propagation(connection, route_table,
@@ -599,8 +609,9 @@ def ensure_route_table_present(connection, module):
             associated_subnets = find_subnets(connection, vpc_id, subnets)
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
-                'Unable to find subnets for route table {0}, error: {1}'
-                .format(route_table, e)
+                message='Unable to find subnets for route table {0}, error: {1}'
+                .format(route_table, e),
+                error_traceback=traceback.format_exc()
             )
 
         try:
@@ -611,8 +622,9 @@ def ensure_route_table_present(connection, module):
             changed = changed or result['changed']
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
-                'Unable to associate subnets for route table {0}, error: {1}'
-                .format(route_table, e)
+                message='Unable to associate subnets for route table {0}, error: {1}'
+                .format(route_table, e),
+                error_traceback=traceback.format_exc()
             )
 
     module.exit_json(changed=changed, route_table=get_route_table_info(route_table))
@@ -663,7 +675,9 @@ def main():
         elif state == 'absent':
             result = ensure_route_table_absent(connection, module)
     except AnsibleRouteTableException as e:
-        module.fail_json(msg=str(e))
+        if e.error_traceback:
+            module.fail_json(msg=e.message, exception=e.error_traceback)
+        module.fail_json(msg=e.message)
 
     module.exit_json(**result)
 
