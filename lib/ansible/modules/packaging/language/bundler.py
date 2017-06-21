@@ -77,8 +77,8 @@ options:
     default: "no"
   deployment_mode:
     description:
-      - Only applies if state is C(present). If set it will only install gems
-        that are in the default or production groups. Requires a Gemfile.lock
+      - Only applies if state is C(present). If set it will install gems in
+        ./vendor/bundle instead of the default location. Requires a Gemfile.lock
         file to have been created prior
     required: false
     choices: [yes, no]
@@ -126,7 +126,7 @@ EXAMPLES='''
     state: present
     exclude_groups: production
 
-# Only install gems from the default and production groups
+# Install gems into ./vendor/bundle
 - bundler:
     state: present
     deployment_mode: yes
