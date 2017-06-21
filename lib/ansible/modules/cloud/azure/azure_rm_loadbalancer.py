@@ -87,7 +87,7 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import LoadBalancer, FrontendIPConfiguration, BackendAddressPool, Probe
+    from azure.mgmt.network.models import LoadBalancer, FrontendIPConfiguration, BackendAddressPool, Probe, LoadBalancingRule, SubResource
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -131,6 +131,28 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             probe_request_path=dict(
                 type='str',
                 required=False
+            ),
+            protocol=dict(
+                type='str',
+                required=False,
+                choices=['Tcp', 'Udp']
+            ),
+            load_distribution=dict(
+                type='str',
+                required=False,
+                choices=['Default', 'SourceIP', 'SourceIPProtocol']
+            ),
+            frontend_port=dict(
+                type='int',
+                required=False
+            ),
+            backend_port=dict(
+                type='int',
+                required=False
+            ),
+            idle_timeout=dict(
+                type='int',
+                default=4
             )
         )
 
@@ -144,6 +166,11 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.probe_interval = None
         self.probe_fail_count = None
         self.probe_request_path = None
+        self.protocol = None
+        self.load_distribution = None
+        self.frontend_port = None
+        self.backend_port = None
+        self.idle_timeout = None
 
         self.results = dict(changed=False, state=dict())
 
@@ -173,11 +200,19 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
         if self.state == 'present':
             # handle present status
+
+            frontend_ip_config_name = random_name('feipconfig')
+            frontend_ip_config_id = frontend_ip_configuration_id(
+                subscription_id=self.subscription_id,
+                resource_group_name=self.resource_group,
+                load_balancer_name=self.name,
+                name=frontend_ip_config_name
+            )
             if self.public_ip_address_name:
                 pip = self.get_public_ip_address(self.public_ip_address_name)
                 load_balancer_props['frontend_ip_configurations'] = [
                     FrontendIPConfiguration(
-                        name=random_name('feipconfig'),
+                        name=frontend_ip_config_name,
                         public_ip_address=pip
                     )
                 ]
@@ -219,17 +254,48 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 )
                 changed = True
 
-        load_balancer_props['backend_address_pools'] = [BackendAddressPool(name=random_name('beap'))]
+        backend_address_pool_name = random_name('beap')
+        backend_addr_pool_id = backend_address_pool_id(
+            subscription_id=self.subscription_id,
+            resource_group_name=self.resource_group,
+            load_balancer_name=self.name,
+            name=backend_address_pool_name
+        )
+        load_balancer_props['backend_address_pools'] = [BackendAddressPool(name=backend_address_pool_name)]
 
         if self.probe_protocol:
+            probe_name = random_name('probe')
+            prb_id = probe_id(
+                subscription_id=self.subscription_id,
+                resource_group_name=self.resource_group,
+                load_balancer_name=self.name,
+                name=probe_name
+            )
             load_balancer_props['probes'] = [
                 Probe(
-                    name=random_name('probe'),
+                    name=probe_name,
                     protocol=self.probe_protocol,
                     port=self.probe_port,
                     interval_in_seconds=self.probe_interval,
                     number_of_probes=self.probe_fail_count,
                     request_path=self.probe_request_path
+                )
+            ]
+
+        load_balancing_rule_name = random_name('lbr')
+        if prb_id and backend_addr_pool_id and frontend_ip_config_id:
+            load_balancer_props['load_balancing_rules'] = [
+                LoadBalancingRule(
+                    name=load_balancing_rule_name,
+                    frontend_ip_configuration=SubResource(id=frontend_ip_config_id),
+                    backend_address_pool=SubResource(id=backend_addr_pool_id),
+                    probe=SubResource(id=prb_id),
+                    protocol=self.protocol,
+                    load_distribution=self.load_distribution,
+                    frontend_port=self.frontend_port,
+                    backend_port=self.backend_port,
+                    idle_timeout_in_minutes=self.idle_timeout,
+                    enable_floating_ip=False
                 )
             ]
 
@@ -322,7 +388,7 @@ def load_balancer_to_dict(load_balancer):
             load_distribution=_.load_distribution,
             frontend_port=_.frontend_port,
             backend_port=_.backend_port,
-            idle_time_in_minutes=_.idle_time_in_minutes,
+            idle_timeout_in_minutes=_.idle_timeout_in_minutes,
             enable_floating_ip=_.enable_floating_ip,
             provisioning_state=_.provisioning_state,
             etag=_.etag
@@ -381,9 +447,38 @@ def load_balancer_to_dict(load_balancer):
     return result
 
 def random_name(prefix):
+    """Generate a random name with a specific prefix"""
     return '{}{}'.format(prefix, random.randint(10000, 99999))
 
+def frontend_ip_configuration_id(subscription_id, resource_group_name, load_balancer_name, name):
+    """Generate the id for a frontend ip configuration"""
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/loadBalancers/{}/frontendIPConfigurations/{}'.format(
+        subscription_id,
+        resource_group_name,
+        load_balancer_name,
+        name
+    )
+
+def backend_address_pool_id(subscription_id, resource_group_name, load_balancer_name, name):
+    """Generate the id for a backend address pool"""
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/loadBalancers/{}/backendAddressPools/{}'.format(
+        subscription_id,
+        resource_group_name,
+        load_balancer_name,
+        name
+    )
+
+def probe_id(subscription_id, resource_group_name, load_balancer_name, name):
+    """Generate the id for a probe"""
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/loadBalancers/{}/probes/{}'.format(
+        subscription_id,
+        resource_group_name,
+        load_balancer_name,
+        name
+    )
+
 def main():
+    """Main execution"""
     AzureRMLoadBalancer()
 
 if __name__ == '__main__':
