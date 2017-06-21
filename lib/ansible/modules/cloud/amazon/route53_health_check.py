@@ -352,7 +352,7 @@ def main():
             changed = True
         else:
             diff = health_check_diff(existing_config, wanted_config)
-            if not diff:
+            if diff:
                 action = "update"
                 update_health_check(conn, existing_check.Id, int(existing_check.HealthCheckVersion), wanted_config)
                 changed = True
