@@ -59,6 +59,7 @@ options:
       - Zone is required when using direct http upload.
       - Compatible with CloudStack 4.6 and above.
     version_added: '2.4'
+    requirements: [ requests, requests_toolbelt ]
     required: false
     default: null
   snapshot:
@@ -401,8 +402,14 @@ project:
 
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
-import requests
 import os.path
+
+try:
+    import requests
+    from requests_toolbelt.multipart.encoder import MultipartEncoder
+    HAS_TOOLBELT = True
+except ImportError:
+    HAS_TOOLBELT = False
 
 
 class AnsibleCloudStackTemplate(AnsibleCloudStack):
@@ -515,6 +522,10 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             'zone',
         ]
         self.module.fail_on_missing_params(required_params=required_params)
+
+        if not HAS_TOOLBELT:
+            self.module.fail_json(msg='Python modules "requests" and "requests_toolbelt" are required, please install them')
+
         filepath = self.module.params.get('file')
         if not os.path.isfile(filepath):
             if os.path.isfile('files/' + filepath):
@@ -542,13 +553,18 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 uploadparams = res['getuploadparams']
-                files = {'file': (os.path.basename(filepath), open(filepath, 'rb'), 'application/octet-stream')}
+
+                m = MultipartEncoder(
+                    fields={'file': (os.path.basename(filepath), open(filepath, 'rb'), 'application/octet-stream')})
+
                 headers = {
                     'X-metadata': uploadparams['metadata'],
                     'X-signature': uploadparams['signature'],
                     'X-expires': uploadparams['expires'],
+                    'Content-Type': m.content_type,
                 }
-                r = requests.post(uploadparams['postURL'], files=files, headers=headers)
+                r = requests.post(uploadparams['postURL'], data=m, headers=headers)
+
                 if r.status_code == 200:
                     template = self.get_template(id=uploadparams['id'])
                 else:
