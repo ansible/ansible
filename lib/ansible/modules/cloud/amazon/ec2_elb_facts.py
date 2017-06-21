@@ -214,7 +214,7 @@ class ElbInformation(object):
         get_elb_with_backoff = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)
         while True:
             all_elbs = get_elb_with_backoff(marker=token)
-            token = all_elbs.next_token
+            token = all_elbs.next_marker
 
             if all_elbs:
                 if self.names:
