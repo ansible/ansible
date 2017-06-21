@@ -68,7 +68,7 @@ options:
         description:
             - Description of the host in Zabbix.
         required: false
-        version_added: '2.3'
+        version_added: '2.4'
     host_groups:
         description:
             - List of host groups the host is part of.
