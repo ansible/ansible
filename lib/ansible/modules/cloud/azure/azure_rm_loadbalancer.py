@@ -87,7 +87,7 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import LoadBalancer, FrontendIPConfiguration, BackendAddressPool
+    from azure.mgmt.network.models import LoadBalancer, FrontendIPConfiguration, BackendAddressPool, Probe
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -110,6 +110,27 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 type='str',
                 required=False,
                 aliases=['public_ip_address', 'public_ip_name', 'public_ip']
+            ),
+            probe_port=dict(
+                type='int',
+                required=False
+            ),
+            probe_protocol=dict(
+                type='str',
+                required=False,
+                choices=['Tcp', 'Http']
+            ),
+            probe_interval=dict(
+                type='int',
+                default=15
+            ),
+            probe_fail_count=dict(
+                type='int',
+                default=3
+            ),
+            probe_request_path=dict(
+                type='str',
+                required=False
             )
         )
 
@@ -118,6 +139,11 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.location = None
         self.public_ip_address_name = None
         self.state = None
+        self.probe_port = None
+        self.probe_protocol = None
+        self.probe_interval = None
+        self.probe_fail_count = None
+        self.probe_request_path = None
 
         self.results = dict(changed=False, state=dict())
 
@@ -194,6 +220,18 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 changed = True
 
         load_balancer_props['backend_address_pools'] = [BackendAddressPool(name=random_name('beap'))]
+
+        if self.probe_protocol:
+            load_balancer_props['probes'] = [
+                Probe(
+                    name=random_name('probe'),
+                    protocol=self.probe_protocol,
+                    port=self.probe_port,
+                    interval_in_seconds=self.probe_interval,
+                    number_of_probes=self.probe_fail_count,
+                    request_path=self.probe_request_path
+                )
+            ]
 
         self.results['changed'] = changed
         self.results['state'] = (
