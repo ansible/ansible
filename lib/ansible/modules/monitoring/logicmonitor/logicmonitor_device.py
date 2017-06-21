@@ -540,7 +540,7 @@ def succeed(changed, obj, module):
     return module.exit_json(
         changed=changed,
         success=True,
-        id=str(obj.id),
+        id=str(obj.id) or '',
         name=obj.name,
         display_name=obj.display_name,
         description=obj.description,
