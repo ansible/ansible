@@ -51,13 +51,15 @@ try:
     import winrm
     from winrm import Response
     from winrm.protocol import Protocol
+    HAS_WINRM = True
 except ImportError as e:
-    raise AnsibleError("winrm or requests is not installed: %s" % str(e))
+    HAS_WINRM = False
 
 try:
     import xmltodict
+    HAS_XMLTODICT = True
 except ImportError as e:
-    raise AnsibleError("xmltodict is not installed: %s" % str(e))
+    HAS_XMLTODICT = False
 
 try:
     from __main__ import display
@@ -99,6 +101,9 @@ class Connection(ConnectionBase):
         '''
         Override WinRM-specific options from host variables.
         '''
+        if not HAS_WINRM:
+            return
+
         self._winrm_host = self._play_context.remote_addr
         self._winrm_port = int(self._play_context.port or 5986)
         self._winrm_scheme = hostvars.get('ansible_winrm_scheme', 'http' if self._winrm_port == 5985 else 'https')
@@ -134,7 +139,7 @@ class Connection(ConnectionBase):
             raise AnsibleError('The installed version of WinRM does not support transport(s) %s' % list(unsupported_transports))
 
         # if kerberos is among our transports and there's a password specified, we're managing the tickets
-        kinit_mode = str(hostvars.get('ansible_winrm_kinit_mode', '')).strip()
+        kinit_mode = to_text(hostvars.get('ansible_winrm_kinit_mode', '')).strip()
         if kinit_mode == "":
             # HACK: ideally, remove multi-transport stuff
             self._kerb_managed = "kerberos" in self._winrm_transport and self._winrm_pass
@@ -294,6 +299,12 @@ class Connection(ConnectionBase):
                 self.protocol.cleanup_command(self.shell_id, command_id)
 
     def _connect(self):
+
+        if not HAS_WINRM:
+            raise AnsibleError("winrm or requests is not installed: %s" % to_text(e))
+        elif not HAS_XMLTODICT:
+            raise AnsibleError("xmltodict is not installed: %s" % to_text(e))
+
         super(Connection, self)._connect()
         if not self.protocol:
             self.protocol = self._winrm_connect()
