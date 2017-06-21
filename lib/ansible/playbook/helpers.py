@@ -294,6 +294,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 #   2. one of the appropriate config options was set
                 if 'import_role' in task_ds:
                     is_static = True
+
                 if ir.static is not None:
                     display.deprecated("The use of 'static' for 'include_role' has been deprecated. "
                                        "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
@@ -315,6 +316,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         (not needs_templating and ir.all_parents_static() and not ir.loop)
                     )
                     display.debug('Determined that if include_role static is %s' % str(is_static))
+
                 if is_static:
                     # uses compiled list from object
                     t = task_list.extend(ir.get_block_list(variable_manager=variable_manager, loader=loader))
