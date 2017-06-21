@@ -57,7 +57,12 @@ class TestNxosVpcModule(TestNxosModule):
         self.run_commands.side_effect = load_from_file
         self.load_config.return_value = None
 
-    def test_nxos_vpc_interface(self):
+    def test_nxos_vpc_interface_absent(self):
         set_module_args(dict(portchannel=10, vpc=100, state='absent'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['interface port-channel10', 'no vpc'])
+
+    def test_nxos_vpc_interface_present(self):
+        set_module_args(dict(portchannel=20, vpc=200, state='present'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['interface port-channel20', 'vpc 200'])
