@@ -64,15 +64,10 @@ EXAMPLES = r'''
   win_command: whoami
   register: whoami_out
 
-- name: Create a backup only if the file does not exist
-  win_command: wbadmin -backupTarget:C:\backup\
-    creates: C:\backup\
-
-- name: Move to C:\somedir\ and create a backup only if the file does not exist leveraging the args to change directory and declare what will be created
+- name: Move to C:\somedir\ and create a backup using additional argument to change folder
   win_command: wbadmin -backupTarget:C:\backup\
   args:
     chdir: C:\somedir\
-    creates: C:\backup\
 '''
 
 RETURN = r'''
