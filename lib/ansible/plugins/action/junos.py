@@ -60,10 +60,10 @@ class ActionModule(_ActionModule):
 
         if self._task.action == 'junos_netconf':
             pc.connection = 'network_cli'
-            pc.port = provider['port'] or self._play_context.port or 22
+            pc.port = int(provider['port'] or self._play_context.port or 22)
         else:
             pc.connection = 'netconf'
-            pc.port = provider['port'] or self._play_context.port or 830
+            pc.port = int(provider['port'] or self._play_context.port or 830)
 
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
