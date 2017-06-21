@@ -181,7 +181,7 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
         return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
 
 def delete_cert(module, executable, keystore_path, keystore_pass, alias):
-    ''' Delete cerificate identified with alias from keystore on keystore_path '''
+    ''' Delete certificate identified with alias from keystore on keystore_path '''
     del_cmd = ("%s -delete -keystore '%s' -storepass '%s' "
                "-alias '%s'")%(executable, keystore_path, keystore_pass, alias)
 
