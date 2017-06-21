@@ -30,7 +30,7 @@
 In order to use this module, include it as part of a custom
 module as shown below.
 
-  from ansible.module_utils.cloud import AnsibleAWSModule
+  from ansible.module_utils.aws import AnsibleAWSModule
   m=AnsibleAWSModule(argument_spec=dictionary, supports_check_mode=boolean
                      mutually_exclusive=list1, required_together=list2)
 
@@ -43,6 +43,7 @@ interfaces to the normal Ansible module.  It also includes the following additio
 """
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec
 import traceback
 
@@ -57,7 +58,7 @@ class AnsibleAWSModule(object):
     connect to Amazon Web Services.  The interface is currently more
     restricted than the basic module class with the aim that later the
     basic module class can be reduced.  If you find that any key
-    festure is missing please contact the author/Ansible AWS team
+    feature is missing please contact the author/Ansible AWS team
     (available on #ansible-aws on IRC) to request the additional
     features needed.
     """
@@ -77,11 +78,12 @@ class AnsibleAWSModule(object):
 
         # Suggest that we autoretry on various AWS calls unless told not to:
 
-        # try:
-        #     autoretry = kwargs["autoretry"]
-        #     del kwargs["autoretry"]
-        # except KeyError:
-        #     autoretry = True
+        try:
+            autoretry = kwargs["autoretry"]
+            del kwargs["autoretry"]
+        except KeyError:
+            autoretry = True
+        self.autoretry = autoretry
 
         if default_args:
             argument_spec_full = ec2_argument_spec()
@@ -116,10 +118,12 @@ class AnsibleAWSModule(object):
         """
         last_traceback = traceback.format_exc()
 
+        # to_native is trusted to handle exceptions that str() could
+        # convert to text.
         try:
-            except_msg = exception.message
+            except_msg = to_native(exception.message)
         except AttributeError:
-            except_msg = str(exception)
+            except_msg = to_native(exception)
 
         if msg is not None:
             message = '{0}: {1}'.format(msg, except_msg)
