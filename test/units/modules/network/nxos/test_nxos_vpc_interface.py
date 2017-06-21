@@ -42,6 +42,7 @@ class TestNxosVpcModule(TestNxosModule):
 
     def tearDown(self):
         self.mock_load_config.stop()
+        self.mock_get_config.stop()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):
