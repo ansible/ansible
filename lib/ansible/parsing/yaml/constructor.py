@@ -43,8 +43,9 @@ class AnsibleConstructor(SafeConstructor):
         self._vaults = {}
         self._vaults['default'] = VaultLib(b_password=self._b_vault_password)
 
-    def construct_yaml_map(self, node):
+    def construct_yaml_map(self, node, mergereplace=None):
         data = AnsibleMapping()
+        data.set_mergereplace(mergereplace)
         yield data
         value = self.construct_mapping(node)
         data.update(value)
@@ -119,6 +120,12 @@ class AnsibleConstructor(SafeConstructor):
     def construct_yaml_unsafe(self, node):
         return self.construct_yaml_str(node, unsafe=True)
 
+    def construct_yaml_dict_merge(self, node):
+        return self.construct_yaml_map(node, mergereplace='merge')
+
+    def construct_yaml_dict_replace(self, node):
+        return self.construct_yaml_map(node, mergereplace='replace')
+
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
         # Add one so that the first line is line 1 rather than line 0
@@ -157,6 +164,14 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'!unsafe',
     AnsibleConstructor.construct_yaml_unsafe)
+
+AnsibleConstructor.add_constructor(
+    u'!merge',
+    AnsibleConstructor.construct_yaml_dict_merge)
+
+AnsibleConstructor.add_constructor(
+    u'!replace',
+    AnsibleConstructor.construct_yaml_dict_replace)
 
 AnsibleConstructor.add_constructor(
     u'!vault',

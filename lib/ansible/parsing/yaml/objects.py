@@ -55,7 +55,18 @@ class AnsibleBaseYAMLObject(object):
 
 class AnsibleMapping(AnsibleBaseYAMLObject, dict):
     ''' sub class for dictionaries '''
-    pass
+    mergereplace = None
+
+    def __init__(self, *args, **kwargs):
+        ''' This constructor is here mostly for testing. '''
+        self.mergereplace = kwargs.pop('__mergereplace__', None)
+        super(AnsibleMapping, self).__init__(*args, **kwargs)
+
+    def set_mergereplace(self, mergereplace):
+        '''Set mergereplace, which is a string that indicates merge status.
+
+        Either "merge", "replace" or None, which defaults to the config.'''
+        self.mergereplace = mergereplace
 
 
 class AnsibleUnicode(AnsibleBaseYAMLObject, text_type):

@@ -24,6 +24,7 @@ from collections import defaultdict
 
 from ansible.compat.tests import mock, unittest
 from ansible.errors import AnsibleError
+from ansible.parsing.yaml.objects import AnsibleMapping
 from ansible.utils.vars import combine_vars, merge_hash
 
 
@@ -63,6 +64,30 @@ class TestVariableUtils(unittest.TestCase):
             result=defaultdict(a=1, b=2, c=defaultdict(baz='bam'))
         ),
     )
+    test_selective_merge_data = (
+        # Merge cases
+        dict(
+            a=AnsibleMapping(a=1, __mergereplace__='merge'),
+            b=AnsibleMapping(b=2, __mergereplace__='merge'),
+            result=dict(a=1, b=2)
+        ),
+        dict(
+            a=AnsibleMapping(a=1, c=dict(foo='bar'), __mergereplace__='merge'),
+            b=AnsibleMapping(b=2, c=dict(baz='bam'), __mergereplace__='merge'),
+            result=dict(a=1, b=2, c=dict(foo='bar', baz='bam'))
+        ),
+        # Replace cases
+        dict(
+            a=AnsibleMapping(a=1, __mergereplace__='replace'),
+            b=AnsibleMapping(b=2, __mergereplace__='replace'),
+            result=dict(a=1, b=2)
+        ),
+        dict(
+            a=AnsibleMapping(a=1, c=dict(foo='bar'), __mergereplace__='replace'),
+            b=AnsibleMapping(b=2, c=dict(baz='bam'), __mergereplace__='replace'),
+            result=dict(a=1, b=2, c=dict(baz='bam'))
+        ),
+    )
 
     def setUp(self):
         pass
@@ -95,4 +120,12 @@ class TestVariableUtils(unittest.TestCase):
     def test_combine_vars_merge(self):
         with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'merge'):
             for test in self.test_merge_data:
+                self.assertEqual(combine_vars(test['a'], test['b']), test['result'])
+
+    def test_combine_vars_selective_merge(self):
+        with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'replace'):
+            for test in self.test_selective_merge_data:
+                self.assertEqual(combine_vars(test['a'], test['b']), test['result'])
+        with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'merge'):
+            for test in self.test_selective_merge_data:
                 self.assertEqual(combine_vars(test['a'], test['b']), test['result'])

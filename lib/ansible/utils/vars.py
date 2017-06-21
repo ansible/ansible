@@ -32,6 +32,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.splitter import parse_kv
+from ansible.parsing.yaml.objects import AnsibleMapping
 
 
 _MAXSIZE = 2 ** 32
@@ -81,7 +82,13 @@ def combine_vars(a, b):
     Return a copy of dictionaries of variables based on configured hash behavior
     """
 
-    if C.DEFAULT_HASH_BEHAVIOUR == "merge":
+    should_merge = C.DEFAULT_HASH_BEHAVIOUR == "merge"
+    if isinstance(a, AnsibleMapping) and a.mergereplace:
+        should_merge = a.mergereplace == 'merge'
+    if isinstance(b, AnsibleMapping) and b.mergereplace:
+        should_merge = b.mergereplace == 'merge'
+
+    if should_merge:
         return merge_hash(a, b)
     else:
         # HASH_BEHAVIOUR == 'replace'
