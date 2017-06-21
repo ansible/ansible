@@ -104,6 +104,10 @@ options:
     version_added: "2.3"
 requirements:
   - jxmlease
+  - ncclient (>=v0.5.2)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
@@ -163,13 +167,16 @@ import time
 import re
 import shlex
 
-from lxml.etree import Element, SubElement, tostring
-
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcli import Conditional, FailedConditionalError
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types, iteritems
+
+try:
+    from lxml.etree import Element, SubElement, tostring
+except ImportError:
+    from xml.etree.ElementTree import SubElement, tostring
 
 try:
     import jxmlease

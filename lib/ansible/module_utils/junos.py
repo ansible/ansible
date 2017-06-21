@@ -16,17 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from collections import OrderedDict
+import collections
 from contextlib import contextmanager
 from copy import deepcopy
-
-from lxml.etree import Element, SubElement, fromstring
 
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+
+try:
+    from lxml.etree import Element, SubElement, fromstring, tostring
+    HAS_LXML = True
+except ImportError:
+    from xml.etree.ElementTree import SubElement, fromstring, tostring
+    HAS_LXML = False
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
 JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
@@ -244,7 +249,7 @@ def map_params_to_obj(module, param_to_xpath_map):
     :param param_to_xpath_map: Modules params to xpath map
     :return: obj
     """
-    obj = OrderedDict()
+    obj = collections.OrderedDict()
     for key, attribute in param_to_xpath_map.items():
         if key in module.params:
             is_attribute_dict = False
@@ -334,7 +339,10 @@ def map_obj_to_ele(module, want, top, value_map=None):
                             ele.text = value
                     else:
                         ele.text = value
-                        par = ele.getparent()
+                        if HAS_LXML:
+                            par = ele.getparent()
+                        else:
+                            module.fail_json(msg='lxml is not installed.')
                         if is_key and oper and not par.attrib.get(oper):
                             par.set(oper, oper)
 

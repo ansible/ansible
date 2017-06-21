@@ -60,6 +60,11 @@ options:
       - State of the VLAN configuration.
     default: present
     choices: ['present', 'absent', 'active', 'suspend']
+requirements:
+  - ncclient (>=v0.5.2)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
@@ -92,12 +97,16 @@ rpc:
   type: string
   sample: "<vlans><vlan><name>test-vlan-4</name></vlan></vlans>"
 """
-from collections import OrderedDict
-from xml.etree.ElementTree import tostring
+import collections
 
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+
+try:
+    from lxml.etree import tostring
+except ImportError:
+    from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -144,7 +153,7 @@ def main():
 
     top = 'vlans/vlan'
 
-    param_to_xpath_map = OrderedDict()
+    param_to_xpath_map = collections.OrderedDict()
     param_to_xpath_map.update({
         'name': {'xpath': 'name', 'is_key': True},
         'vlan_id': 'vlan-id',

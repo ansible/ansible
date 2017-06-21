@@ -137,6 +137,8 @@ options:
     default: merge
     choices: ['merge', 'override', 'replace']
     version_added: "2.3"
+requirements:
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
@@ -183,8 +185,7 @@ backup_path:
 """
 import re
 import json
-
-from lxml.etree import Element, fromstring, ParseError
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import get_diff, load_config, get_configuration
@@ -194,6 +195,13 @@ from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
+try:
+    from lxml.etree import Element, fromstring, ParseError
+except ImportError:
+    from xml.etree.ElementTree import Element, fromstring, ParseError
+    if sys.version_info < (2, 7):
+        from xml.parsers.expat import ExpatError
+        ParseError = ExpatError
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
