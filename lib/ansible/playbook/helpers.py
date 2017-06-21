@@ -296,6 +296,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC)  or \
                                 (not needs_templating and ir.all_parents_static() and not ir.loop)
                     display.debug('Determined that if include_role static is %s' % str(is_static))
+
                 if is_static:
                     # uses compiled list from object
                     t = task_list.extend(ir.get_block_list(variable_manager=variable_manager, loader=loader))
