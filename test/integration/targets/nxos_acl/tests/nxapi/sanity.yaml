@@ -16,7 +16,20 @@
     action: permit
     proto: tcp
     src: 1.1.1.1/24
+    src_port_op: range
+    src_port1: 5
+    src_port2: 20
+    ack: 'enable'
+    dscp: 'af43'
     dest: any
+    urg: 'enable'
+    psh: 'enable'
+    established: 'enable'
+    log: 'enable'
+    fin: 'enable'
+    rst: 'enable'
+    syn: 'enable'
+    time_range: 'ans-range'
     state: present
     provider: "{{ nxapi }}"
   register: result
