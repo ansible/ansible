@@ -536,17 +536,17 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
         template = self.get_template()
         if not template:
             self.result['changed'] = True
-            args                    = self._get_args()
-            args['zoneid']          = self.get_zone(key='id')
-            args['format']          = self.module.params.get('format')
-            args['checksum']        = self.module.params.get('checksum')
-            args['isextractable']   = self.module.params.get('is_extractable')
-            args['isrouting']       = self.module.params.get('is_routing')
-            args['sshkeyenabled']   = self.module.params.get('sshkey_enabled')
-            args['hypervisor']      = self.get_hypervisor()
-            args['domainid']        = self.get_domain(key='id')
-            args['account']         = self.get_account(key='name')
-            args['projectid']       = self.get_project(key='id')
+            args = self._get_args()
+            args['zoneid'] = self.get_zone(key='id')
+            args['format'] = self.module.params.get('format')
+            args['checksum'] = self.module.params.get('checksum')
+            args['isextractable'] = self.module.params.get('is_extractable')
+            args['isrouting'] = self.module.params.get('is_routing')
+            args['sshkeyenabled'] = self.module.params.get('sshkey_enabled')
+            args['hypervisor'] = self.get_hypervisor()
+            args['domainid'] = self.get_domain(key='id')
+            args['account'] = self.get_account(key='name')
+            args['projectid'] = self.get_project(key='id')
 
             if not self.module.check_mode:
                 res = self.cs.getUploadParamsForTemplate(**args)
