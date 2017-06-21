@@ -192,7 +192,7 @@ class CallbackModule(CallbackBase):
             'ansible_task': result._task,
             'ansible_result': self._dump_results(result._result)
         }
-        self.logger.error("ansbile unreachable", extra=data)
+        self.logger.error("ansible unreachable", extra=data)
 
     def v2_runner_on_async_failed(self, result, **kwargs):
         data = {
