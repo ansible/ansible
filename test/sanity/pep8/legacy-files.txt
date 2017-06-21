@@ -402,7 +402,6 @@ lib/ansible/modules/network/nxos/nxos_vrrp.py
 lib/ansible/modules/network/nxos/nxos_vtp_domain.py
 lib/ansible/modules/network/nxos/nxos_vtp_password.py
 lib/ansible/modules/network/nxos/nxos_vtp_version.py
-lib/ansible/modules/network/nxos/nxos_vxlan_vtep.py
 lib/ansible/modules/network/nxos/nxos_vxlan_vtep_vni.py
 lib/ansible/modules/net_tools/omapi_host.py
 lib/ansible/modules/network/openswitch/_ops_template.py
