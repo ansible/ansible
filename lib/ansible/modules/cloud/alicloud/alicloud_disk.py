@@ -290,9 +290,7 @@ instance_id:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.alicloud_ecs import get_acs_connection_info, ecs_argument_spec, ecs_connect
-# from ansible.module_utils.ecs import get_acs_connection_info, ecs_argument_spec, ecs_connect
 
-# HAS_ECS = False
 HAS_FOOTMARK = False
 
 try:
@@ -300,12 +298,6 @@ try:
     HAS_FOOTMARK = True
 except ImportError:
     HAS_FOOTMARK = False
-
-# try:
-#     from ecsutils.ecs import *
-#     HAS_ECS = True
-# except ImportError:
-#     HAS_ECS = False
 
 
 def get_disks(module, ecs, disk_id):
@@ -485,8 +477,6 @@ def delete_disk(module, ecs, disk_id):
 
 
 def main():
-    # if HAS_ECS is False:
-    #     module.fail_json("ecsutils required for this module")
     if not HAS_FOOTMARK:
         module.fail_json(msg="footmark required for this module")
 
@@ -550,8 +540,6 @@ def main():
             disk_tags = module.params['disk_tags']
             snapshot_id = module.params['snapshot_id']
             # create disk parameter values end
-
-            # performing operation create disk
 
             changed, result, disk_id, disk_dict = create_disk(module=module, ecs=ecs, zone_id=zone_id, disk_name=disk_name,
                                                               description=description, disk_category=disk_category,
