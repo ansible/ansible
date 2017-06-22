@@ -50,13 +50,10 @@ EXAMPLES = '''
 
 '''
 
-import subprocess
 
-
-def gather_lldp():
+def gather_lldp(module):
     cmd = ['lldpctl', '-f', 'keyvalue']
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    (output, err) = proc.communicate()
+    rc, output, err = module.run_command(cmd)
     if output:
         output_dict = {}
         lldp_entries = output.split("\n")
@@ -80,7 +77,7 @@ def gather_lldp():
 def main():
     module = AnsibleModule({})
 
-    lldp_output = gather_lldp()
+    lldp_output = gather_lldp(module)
     try:
         data = {'lldp': lldp_output['lldp']}
         module.exit_json(ansible_facts=data)
