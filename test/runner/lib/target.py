@@ -254,7 +254,8 @@ def walk_integration_targets():
     prefixes = load_integration_prefixes()
 
     for path in paths:
-        yield IntegrationTarget(path, modules, prefixes)
+        if os.path.isdir(path):
+            yield IntegrationTarget(path, modules, prefixes)
 
 
 def load_integration_prefixes():
