@@ -284,7 +284,7 @@ class CallbackBase:
         self.on_any(args, kwargs)
 
     def v2_runner_on_task_start(self, host, task):
-        pass # no v1 correspondence
+        pass  # no v1 correspondence
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         host = result._host.get_name()

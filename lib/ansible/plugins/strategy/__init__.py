@@ -217,7 +217,8 @@ class StrategyBase:
             while True:
                 (worker_prc, rslt_q) = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj, self._tqm)
+                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj,
+                                               self._tqm)
                     self._workers[self._cur_worker][0] = worker_prc
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
