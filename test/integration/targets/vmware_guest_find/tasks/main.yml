@@ -1,7 +1,7 @@
-- name: make sure pip is installed
-  package:
-    name: python-pip
-    state: latest    
+#- name: make sure pip is installed
+#  package:
+#    name: python-pip
+#    state: latest
 
 - name: make sure pyvmomi is installed
   pip:
