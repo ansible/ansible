@@ -8,7 +8,7 @@
 - name: include the vars/environments/development/all.yml
   include_vars:
     file: environments/development/all.yml
-    
+
 - name: verify that the default value is indeed 789
   assert:
     that:
@@ -19,7 +19,7 @@
   include_vars:
     file: environments/development/all.yml
     name: all
-    
+
 - name: verify that the values are stored in the all variable
   assert:
     that:
@@ -30,7 +30,7 @@
   include_vars:
     dir: all
     depth: 1
-    
+
 - name: verify that the default value is indeed 123
   assert:
     that:
@@ -40,7 +40,7 @@
 - name: include every directory in vars
   include_vars:
     dir: vars
-    
+
 - name: verify that the variable overwrite based on alphabetical order
   assert:
     that:
@@ -53,7 +53,7 @@
     dir: vars
     ignore_files:
       - webapp.yml
-    
+
 - name: verify that the webapp.yml file was not included
   assert:
     that:
@@ -84,3 +84,16 @@
       - "webapp['testing'] == 101112"
       - "webapp['base_dir'] == 'development/services'"
       - "webapp['webapp_containers'] == 20"
+
+- name: include an env file
+  include_vars:
+    file: environments/development/.env.all
+    name: env_vars
+    format: ENV
+
+- name: verify that the correct environment is loaded
+  assert:
+    that:
+      - "env_vars['VAR0'] == 'some""" value0'"
+      - "env_vars['VAR1'] == 'some value1'"
+      - "env_vars['VAR2'] == 'some_value2'"

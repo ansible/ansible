@@ -34,7 +34,8 @@ class ActionModule(ActionBase):
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
     VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
-    VALID_ALL = ['name']
+    VALID_ALL = ['name', 'format']
+    VALID_FORMATS = ['YAML/JSON', 'ENV']
 
     def _set_dir_defaults(self):
         if not self.depth:
@@ -61,6 +62,11 @@ class ActionModule(ActionBase):
         """ Set instance variables based on the arguments that were passed """
 
         self.return_results_as_name = self._task.args.get('name', None)
+        self.parse_file_as_format = self._task.args.get('format', 'YAML/JSON')
+        if self.parse_file_as_format not in self.VALID_FORMATS:
+            raise AnsibleError('Invalid parsing format \'{}\', it must be one of: {}'.format(
+                self.parse_file_as_format, self.VALID_FORMATS))
+
         self.source_dir = self._task.args.get('dir', None)
         self.source_file = self._task.args.get('file', None)
         if not self.source_dir and not self.source_file:
@@ -78,7 +84,7 @@ class ActionModule(ActionBase):
             raise AnsibleError('Invalid type for "extensions" option, it must be a list')
 
     def run(self, tmp=None, task_vars=None):
-        """ Load yml files recursively from a directory.
+        """ Load yml/json files recursively from a directory or single yml/json/env file.
         """
         if task_vars is None:
             task_vars = dict()
@@ -230,7 +236,11 @@ class ActionModule(ActionBase):
             data = to_text(b_data, errors='surrogate_or_strict')
 
             self.show_content = show_content
-            data = self._loader.load(data, show_content)
+            if self.parse_file_as_format == 'YAML/JSON':
+                data = self._loader.load(data, show_content)
+            else:
+                data = self._parse_env_file(data)
+
             if not data:
                 data = dict()
             if not isinstance(data, dict):
@@ -273,3 +283,29 @@ class ActionModule(ActionBase):
                         results.update(loaded_data)
 
         return failed, err_msg, results
+
+    def _parse_env_file(self, file_contents):
+        '''
+        Given a file containing:
+
+            # some comment with whitespace newlines
+
+            VAR0='some""" value0'
+            VAR1="some value1"
+            VAR2=ignored_value
+            VAR2=some_value2
+
+        It will return the dictionary with: {'VAR0': 'some""" value0', 'VAR1': 'some value1', 'VAR2': 'some_value2'}
+        TODO error if `VAR = some value1` contains whitespace?
+        '''
+        data = {}
+        for line in re.split("[\n\r]+", file_contents):
+            match = re.match('^([^\s\=]+)\=(.*)$', line)
+            if match:
+                key, value = match.groups()
+                match_quotes = re.match('^(?:"([^"]*)")|(?:\'([^\']*)\')$', value)
+                if match_quotes:
+                    value = match_quotes.groups()[0] or match_quotes.groups()[1]
+                data[key] = value
+
+        return data
