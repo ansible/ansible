@@ -110,9 +110,13 @@ def test_await_should_wait_till_not_pending():
         MagicMock(status='available', data={"pending_modified_values": {}}),
         MagicMock(status='available', data={"pending_modified_values": {}}),
     ])
+    mod_mock=MagicMock()
+    # we need our wait timeout to always be bigger than current time so that we use the
+    # above values to check that the correct state has been waited for.
+#    mod_mock.params.get.return_value.__add__.return_value.__gt__.return_value=Truex
     with patch.object(time, 'sleep', sleeper_double):
         with patch.object(rds_i, 'get_db_instance', get_db_instance_double):
-            rds_i.await_resource(MagicMock(), MagicMock(), "available", MagicMock(),
+            rds_i.await_resource(MagicMock(), MagicMock(), "available", mod_mock,
                                  await_pending=1)
 
     print("dbinstance calls:\n" + str(get_db_instance_double.mock_calls))
@@ -132,6 +136,11 @@ def test_await_should_wait_for_delete_and_handle_none():
         None,
         None,
     ])
+
+    mod_mock=MagicMock()
+    # we need our wait timeout to always be bigger than current time so that we use the
+    # above values to check that the correct state has been waited for.
+#    mod_mock.params.get.return_value.__add__.return_value.__gt__.return_value=True
     with patch.object(time, 'sleep', sleeper_double):
         with patch.object(rds_i, 'get_db_instance', get_db_instance_double):
             rds_i.await_resource(MagicMock(), MagicMock(), "deleted", MagicMock(),
