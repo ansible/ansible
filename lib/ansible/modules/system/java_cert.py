@@ -211,8 +211,8 @@ def is_new_cert(module, executable, path, keystore_path, keystore_pass, alias):
     if existing_sha == new_sha:
         return False
     else:
-        return True  
-  
+        return True
+
 def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias):
 >>>>>>> Fix conflict
     ''' Import certificate from URL into keystore located at keystore_path '''
