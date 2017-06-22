@@ -321,8 +321,6 @@ class Host(object):
                 parameters['tls_subject'] = tls_subject
             if description:
                 parameters['description'] = description
-            else:
-                parameters['description'] = ""
 
             self._zapi.host.update(parameters)
             interface_list_copy = exist_interface_list
