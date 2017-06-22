@@ -35,7 +35,7 @@
 - name: find folders for each vm
   vmware_guest_find:
     validate_certs: False
-    hostname: "{{ vcsim_instance['json']['host'] }}"
+    hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ item|basename }}"
