@@ -43,6 +43,7 @@ options:
       - Mututally exclusive with C(config).
       - Considered if C(state=present).
     required: false
+    default: yes
   name:
     description:
       - Name of the Jenkins job.
