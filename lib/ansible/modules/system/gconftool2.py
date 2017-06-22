@@ -104,10 +104,8 @@ RETURN = '''
 ...
 '''
 
-from subprocess import Popen, PIPE
 from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
 from ansible.module_utils.pycompat24 import get_exception
-
 
 
 class GConf2Preference(object):
@@ -158,11 +156,7 @@ class GConf2Preference(object):
                 cmd += "--unset {0}".format(self.key)
 
             # Start external command
-            process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
-
-            # In either case, we will capture the output
-            out = process.stdout.read()
-            err = process.stderr.read()
+            rc, out, err = self.ansible.run_command(cmd, use_unsafe_shell=True)
 
             if len(err) > 0:
                 if fail_onerr:
