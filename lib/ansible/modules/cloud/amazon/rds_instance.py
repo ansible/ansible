@@ -380,6 +380,7 @@ def await_resource(conn, resource, status, module, await_pending=None):
     # should we sleep first?
     resource = get_db_instance(conn, resource.name)
     eprint(str(resource))
+    assert 0
     eprint("wait is {0} {1} await_pending is {2} status is {3}".format(
         str(wait_timeout), str(time.time()), str(await_pending), str(resource.status)))
     rdat = resource.data["pending_modified_values"]
