@@ -1140,6 +1140,8 @@ def main():
     reporter = Reporter()
     git_cache = GitCache(args.base_branch)
 
+    check_dirs = set()
+
     for module in args.modules:
         if os.path.isfile(module):
             path = module
@@ -1150,6 +1152,7 @@ def main():
             with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
                                  base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv:
                 mv.validate()
+                check_dirs.add(os.path.dirname(path))
 
         for root, dirs, files in os.walk(module):
             basedir = root[len(module) + 1:].split('/', 1)[0]
@@ -1161,8 +1164,7 @@ def main():
                 path = os.path.join(root, dirname)
                 if args.exclude and args.exclude.search(path):
                     continue
-                pv = PythonPackageValidator(path, reporter=reporter)
-                pv.validate()
+                check_dirs.add(path)
 
             for filename in files:
                 path = os.path.join(root, filename)
@@ -1173,6 +1175,10 @@ def main():
                 with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
                                      base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv:
                     mv.validate()
+
+    for path in sorted(check_dirs):
+        pv = PythonPackageValidator(path, reporter=reporter)
+        pv.validate()
 
     if args.format == 'plain':
         sys.exit(reporter.plain(warnings=args.warnings, output=args.output))
