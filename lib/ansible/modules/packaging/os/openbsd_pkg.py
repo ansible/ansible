@@ -380,7 +380,16 @@ def parse_package_name(names, pkg_spec, module):
                 pkg_spec[name]['flavor']            = match.group('flavor')
                 pkg_spec[name]['branch']            = match.group('branch')
                 pkg_spec[name]['style']             = 'version'
-                module.debug("version_match: stem: %s, version: %s, flavor_separator: %s, flavor: %s, branch: %s, style: %s" % (pkg_spec[name]['stem'], pkg_spec[name]['version'], pkg_spec[name]['flavor_separator'], pkg_spec[name]['flavor'], pkg_spec[name]['branch'], pkg_spec[name]['style']))
+                module.debug("version_match: stem: %s, version: %s, flavor_separator: %s, flavor: %s, branch: %s, style: %s" %
+                    (
+                        pkg_spec[name]['stem'],
+                        pkg_spec[name]['version'],
+                        pkg_spec[name]['flavor_separator'],
+                        pkg_spec[name]['flavor'],
+                        pkg_spec[name]['branch'],
+                        pkg_spec[name]['style']
+                    )
+                )
             else:
                 module.fail_json(msg="unable to parse package name at version_match: " + name)
 
@@ -395,7 +404,14 @@ def parse_package_name(names, pkg_spec, module):
                 pkg_spec[name]['flavor']            = match.group('flavor')
                 pkg_spec[name]['branch']            = match.group('branch')
                 pkg_spec[name]['style']             = 'versionless'
-                module.debug("versionless_match: stem: %s, flavor: %s, branch: %s, style: %s" % (pkg_spec[name]['stem'], pkg_spec[name]['flavor'], pkg_spec[name]['branch'], pkg_spec[name]['style']))
+                module.debug("versionless_match: stem: %s, flavor: %s, branch: %s, style: %s" %
+                    (
+                        pkg_spec[name]['stem'],
+                        pkg_spec[name]['flavor'],
+                        pkg_spec[name]['branch'],
+                        pkg_spec[name]['style']
+                    )
+                )
             else:
                 module.fail_json(msg="unable to parse package name at versionless_match: " + name)
 
@@ -412,7 +428,13 @@ def parse_package_name(names, pkg_spec, module):
                 pkg_spec[name]['flavor']            = None
                 pkg_spec[name]['branch']            = match.group('branch')
                 pkg_spec[name]['style']             = 'stem'
-                module.debug("stem_match: stem: %s, branch: %s, style: %s" % (pkg_spec[name]['stem'], pkg_spec[name]['branch'], pkg_spec[name]['style']))
+                module.debug("stem_match: stem: %s, branch: %s, style: %s" %
+                    (
+                        pkg_spec[name]['stem'],
+                        pkg_spec[name]['branch'],
+                        pkg_spec[name]['style']
+                    )
+                )
             else:
                 module.fail_json(msg="unable to parse package name at else: " + name)
 
