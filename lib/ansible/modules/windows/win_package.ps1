@@ -1263,12 +1263,24 @@ $path = Get-AnsibleParam -obj $params -name "path" -failifempty $true -resultobj
 $name = Get-AnsibleParam -obj $params -name "name" -default $path
 $productid = Get-AnsibleParam -obj $params -name "productid" -aliases "product_id"
 $arguments = Get-AnsibleParam -obj $params -name "arguments"
-$normalizeargs = Get-AnsibleParam -obj $params -name "normalize_arguments" -type "bool" -aliases "parse_arguments"
+$options = Get-AnsibleParam -obj $params -name "options"
+#$normalizeargs = Get-AnsibleParam -obj $params -name "normalize_arguments" -type "bool" -aliases "parse_arguments"
 $ensure = Get-AnsibleParam -obj $params -name "state" -default "present" -aliases "ensure"
 $username = Get-AnsibleParam -obj $params -name "user_name"
 $password = Get-AnsibleParam -obj $params -name "user_password"
 $return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "int" -default 0
 
+
+if (($arguments -ne $null) -and ($options -ne $null))
+{
+    fail-json "specify either arguments or options"
+}
+
+if ($options -ne $null)
+{
+    $arguments = $options
+    $normalizeargs = $true
+}
 
 if ($normalizeargs -eq $true -and ($arguments -ne $null))
 {

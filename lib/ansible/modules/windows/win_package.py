@@ -61,13 +61,12 @@ options:
       - Any arguments the installer needs
     default: null
     required: false
-  normalize_arguments:
+  options:
     description:
-      - >
-        Performs argument normalization of the arguments string, replacing json-escaped double backslashes with single ones.
-        This makes it easier to pass in complex argument strings in a way that the installer will understand.
-    type: bool
-    default: 'no'
+      - mutually exclusive with "arguments"
+      - Similar to arguments, however using this instead of arguments will tell the module to attempt to normalize arguments.
+      - See examples below
+    required: false
     version_added: "2.4"
   state:
     description:
@@ -137,11 +136,10 @@ EXAMPLES = r'''
     ensure: present
     expected_return_code: [0,3010]
 # example of passing in complex args using json-escaped double backslashes with normalization
-- name: install ravendb using argument normalization
+- name: install ravendb using argument normalization (paths will be normalized before sent to the installer)
   win_package:
     path: "{{ ravendb_source_url }}"
-    arguments: "/quiet /log C:\\raven_log.txt /msicl TARGETDIR=F:\\apps\\RavenDB /msicl F:\\apps\\RavenDB"
+    options: "/quiet /log C:\\raven_log.txt /msicl TARGETDIR=F:\\apps\\RavenDB /msicl F:\\apps\\RavenDB"
     product_id: "{D90279D8-6EB3-417E-983B-4BB5E1E9BF88}"
-    normalize_arguments: true
   register: ravendb_install_result
 '''
