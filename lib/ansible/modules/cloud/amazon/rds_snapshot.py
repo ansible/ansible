@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: rds_snapshot
-version_added: "2.3"
+version_added: "2.4"
 short_description: manage Amazon RDS snapshots
 description:
      - Creates or deletes RDS snapshots.
@@ -64,17 +64,6 @@ extends_documentation_fragment:
     - ec2
 '''
 
-
-import botocore
-import time
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
-from ansible.module_utils.rds import RDSSnapshot, get_db_snapshot
-
-# FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
-
 EXAMPLES = '''
 # Create snapshot
 - rds_snapshot:
@@ -89,6 +78,23 @@ EXAMPLES = '''
 - debug:
     msg: "The new db endpoint is {{ rds.instance.endpoint }}"
 '''
+
+RETURN = '''
+snapshot:
+  description: the information returned in data from boto3 get_db_snapshot
+  returned: success
+  type: dict
+'''
+
+import botocore
+import time
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.rds import RDSSnapshot, get_db_snapshot
+
+# FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
 
 
 def await_resource(conn, resource, status, module):
