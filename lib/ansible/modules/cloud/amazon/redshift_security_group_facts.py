@@ -145,6 +145,7 @@ tags:
     ]
 '''
 
+import traceback
 import re
 # Import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -172,7 +173,7 @@ def find_csgs(conn, module, name=None, tags=None):
         csgs_paginator = conn.get_paginator('describe_cluster_security_groups')
         csgs = csgs_paginator.paginate().build_full_result()
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     matched_csgs = []
 
@@ -219,7 +220,7 @@ def main():
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         redshift = boto3_conn(module, conn_type='client', resource='redshift', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     results = find_csgs(redshift, module, name=csg_name, tags=csg_tags)
     module.exit_json(results=results)
