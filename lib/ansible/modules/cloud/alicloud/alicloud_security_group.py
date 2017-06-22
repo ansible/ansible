@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ecs_group
+module: alicloud_security_group
 version_added: "2.4"
 short_description: Create, Query or Delete Security Group.
 description:
@@ -163,7 +163,7 @@ EXAMPLES = '''
     alicloud_region: cn-shenzhen
   tasks:
     - name: create security grp
-      ecs_group:
+      alicloud_security_group:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -180,7 +180,7 @@ EXAMPLES = '''
     alicloud_region: cn-shenzhen
   tasks:
     - name: authorize security group
-      ecs_group:
+      alicloud_security_group:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         group_id: xxxxxxxxxx
@@ -206,7 +206,7 @@ EXAMPLES = '''
     alicloud_region: cn-shenzhen
   tasks:
     - name: create and authorize security grp
-      ecs_group:
+      alicloud_security_group:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         group_name: 'AliyunSG'
@@ -242,7 +242,7 @@ EXAMPLES = '''
     status: absent
   tasks:
     - name: delete security grp
-      ecs_group:
+      alicloud_security_group:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -261,7 +261,7 @@ EXAMPLES = '''
     status: fetch
   tasks:
     - name: Querying Security group list
-      ecs_group:
+      alicloud_security_group:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
