@@ -189,9 +189,9 @@ def health_check_diff(a, b):
         b_val = b.get(key)
         a_type = type(a_val)
         b_type = type(b_val)
-        if (a_type is int and b_type is unicode):
+        if (a_type is int and b_type is not int):
             b_val = int(b_val)
-        elif (a_type is unicode and b_type is int):
+        elif (a_type is not int and b_type is int):
             a_val = int(a_val)
         if a_val != b_val:
             diff[key] = b_val
