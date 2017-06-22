@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ecs_disk
+module: alicloud_disk
 version_added: "2.4"
 short_description: Create, Attach, Detach or Delete a disk in Alicloud ECS
 description:
@@ -130,7 +130,7 @@ EXAMPLES = '''
     status: present
   tasks:
     - name: create disk
-      ecs_disk:
+      alicloud_disk:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -157,7 +157,7 @@ EXAMPLES = '''
     status: present
   tasks:
     - name: create disk
-      ecs_disk:
+      alicloud_disk:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -186,7 +186,7 @@ EXAMPLES = '''
     delete_with_instance: no
   tasks:
     - name: Attach Disk to instance
-      ecs_disk:
+      alicloud_disk:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         status: '{{ status }}'
@@ -210,7 +210,7 @@ EXAMPLES = '''
     status: present
   tasks:
     - name: detach disk
-      ecs_disk:
+      alicloud_disk:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -232,7 +232,7 @@ EXAMPLES = '''
     status: absent
   tasks:
     - name: detach disk
-      ecs_disk:
+      alicloud_disk:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
