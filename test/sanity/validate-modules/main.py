@@ -60,6 +60,8 @@ else:
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\(.*')
+SUBPROCESS_REGEX = re.compile(r'subprocess\.P.*')
+OS_CALL_REGEX = re.compile(r'os\.call.*')
 BLACKLIST_IMPORTS = {
     'requests': {
         'new_only': True,
@@ -77,7 +79,7 @@ BLACKLIST_IMPORTS = {
         }
     },
 }
-
+WHITELIST_SHELL_OUT = frozenset(('service', 'async_wrapper', 'mysql_db'))
 
 class ReporterEncoder(json.JSONEncoder):
     def default(self, o):
@@ -1014,6 +1016,30 @@ class ModuleValidator(Validator):
 
         return False
 
+    def _check_for_subprocess(self):
+        for child in self.ast.body:
+            if isinstance(child, ast.Import):
+                if child.names[0].name == 'subprocess':
+                    for line_no, line in enumerate(self.text.splitlines()):
+                        sp_match = SUBPROCESS_REGEX.search(line)
+                        if sp_match:
+                            self.reporter.error(
+                                path=self.object_path,
+                                code=209,
+                                msg=('subprocess.Popen call found. Should be module.run_command - %d:%d' % (line_no + 1, sp_match.span()[0] + 1))
+                            )
+
+    def _check_for_os_call(self):
+        if 'os.call' in self.text:
+            for line_no, line in enumerate(self.text.splitlines()):
+                os_call_match = OS_CALL_REGEX.search(line)
+                if os_call_match:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=210,
+                        msg=('os.call() call found. Should be module.run_command - %d:%d' % (line_no + 1, os_call_match.span()[0] + 1))
+                    )
+
     def validate(self):
         super(ModuleValidator, self).validate()
 
@@ -1056,6 +1082,10 @@ class ModuleValidator(Validator):
             first_callable = self._get_first_callable()
             self._ensure_imports_below_docs(doc_info, first_callable)
 
+            if self.name not in WHITELIST_SHELL_OUT:
+                self._check_for_subprocess()
+                self._check_for_os_call()
+
         if self._powershell_module():
             self._find_ps_replacers()
             self._find_ps_docs_py_file()
@@ -1066,6 +1096,7 @@ class ModuleValidator(Validator):
             self._check_type_instead_of_isinstance(
                 powershell=self._powershell_module()
             )
+
 
 
 class PythonPackageValidator(Validator):
