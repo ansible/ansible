@@ -18,7 +18,6 @@ from lib.docker_util import (
     docker_rm,
     docker_inspect,
     docker_pull,
-    docker_network_inspect,
     get_docker_container_id,
 )
 
@@ -42,7 +41,6 @@ class VcenterProvider(CloudProvider):
 
         self.image = 'ansible/ansible:vcenter-simulator'
         self.container_name = ''
-        self.vcenter_host = None
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -86,7 +84,13 @@ class VcenterProvider(CloudProvider):
 
     def _setup_dynamic(self):
         """Create a vcenter simulator using docker."""
+        container_id = get_docker_container_id()
+
+        if container_id:
+            display.info('Running in docker container: %s' % container_id, verbosity=1)
+
         self.container_name = self.DOCKER_SIMULATOR_NAME
+
         results = docker_inspect(self.args, self.container_name)
 
         if results and not results[0].get('State', {}).get('Running'):
@@ -97,15 +101,35 @@ class VcenterProvider(CloudProvider):
             display.info('Using the existing vCenter simulator docker container.', verbosity=1)
         else:
             display.info('Starting a new vCenter simulator docker container.', verbosity=1)
+
+            if not self.args.docker and not container_id:
+                # publish the simulator ports when not running inside docker
+                publish_ports = [
+                    '-p', '80:80',
+                    '-p', '443:443',
+                    '-p', '8080:8080',
+                    '-p', '8989:8989',
+                    '-p', '5000:5000',  # control port for flask app in simulator
+                ]
+            else:
+                publish_ports = []
+
             docker_pull(self.args, self.image)
             docker_run(
                 self.args,
                 self.image,
-                ['-d', '--name', self.container_name]
+                ['-d', '--name', self.container_name] + publish_ports,
             )
 
-        self.vcenter_host = self._get_simulator_address()
-        self._set_cloud_config('vcenter_host', self.vcenter_host)
+        if self.args.docker:
+            vcenter_host = self.DOCKER_SIMULATOR_NAME
+        elif container_id:
+            vcenter_host = self._get_simulator_address()
+            display.info('Found vCenter simulator container address: %s' % vcenter_host, verbosity=1)
+        else:
+            vcenter_host = 'localhost'
+
+        self._set_cloud_config('vcenter_host', vcenter_host)
 
     def _get_simulator_address(self):
         results = docker_inspect(self.args, self.container_name)
