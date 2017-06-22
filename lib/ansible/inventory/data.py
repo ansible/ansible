@@ -28,7 +28,7 @@ from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.cache import FactCache
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
@@ -69,7 +69,22 @@ class InventoryData(object):
         self.cache = FactCache()
 
     def serialize(self):
+        _meta = dict(hostvars={})
         data = dict()
+
+        for (group_name, group) in self.groups.iteritems():
+
+            for h in group.get_hosts():
+                _meta["hostvars"][str(h.name)] = {str(k): str(v) for k, v in h.vars.items()}
+
+            data[to_text(group_name)] = {
+                'hosts':    [to_text(h.name) for h in group.get_hosts()],
+                'vars':     {to_text(k): to_text(v) for k, v in group.get_vars().items()},
+                'children': [to_text(c) for c in group.child_groups]
+            }
+
+        if _meta:
+            data["_meta"] = _meta
         return data
 
     def deserialize(self, data):
