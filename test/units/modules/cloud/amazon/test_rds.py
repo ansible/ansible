@@ -31,6 +31,8 @@ import ansible.module_utils.basic as basic
 from ansible.module_utils.rds import RDSDBInstance
 import pytest
 import time
+import sys
+import codecs
 boto3 = pytest.importorskip("boto3")
 boto = pytest.importorskip("boto")
 
@@ -39,9 +41,17 @@ def diff_return_a_populated_dict(junk, junktoo):
     """ return a populated dict which will be treated as true => something changed """
     return {"before": "fake", "after": "faketoo"}
 
+if sys.version_info < (3,):
+    def b(x):
+        return x
+else:
+    def b(x):
+        return codecs.latin_1_encode(x)[0]
+
 
 def test_modify_should_return_changed_if_param_changes():
-    basic._ANSIBLE_ARGS = '{ "ANSIBLE_MODULE_ARGS": { "instance_name":"fred", "port": 242} }'
+
+    basic._ANSIBLE_ARGS = b(b'{ "ANSIBLE_MODULE_ARGS": { "instance_name":"fred", "port": 242} }')
     params = {"port": 342, "force_password_update": True, "instance_name": "fred"}
     rds_client_double = MagicMock()
     module_double = MagicMock(AnsibleModule(argument_spec=rds_i.argument_spec,
