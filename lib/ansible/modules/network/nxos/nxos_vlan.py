@@ -80,7 +80,6 @@ options:
     required: false
     default: null
     choices: ['ce','fabricpath']
-    aliases: []
 '''
 
 EXAMPLES = '''
@@ -254,7 +253,7 @@ def get_vlan(vlanid, module):
         "admin_state": {
             "shutdown": "down",
             "noshutdown": "up"
-        }
+        },
         "mode": {
             "fabricpath-vlan": "fabricpath",
             "ce-vlan": "ce"
