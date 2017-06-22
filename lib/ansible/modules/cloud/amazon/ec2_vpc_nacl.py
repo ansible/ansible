@@ -29,11 +29,19 @@ options:
   name:
     description:
       - Tagged name identifying a network ACL.
-    required: true
+      - One and only one of the I(name) or I(nacl_id) is required.
+    required: false
+  nacl_id:
+    description:
+      - NACL id identifying a network ACL.
+      - One and only one of the I(name) or I(nacl_id) is required.
+    required: false
+    version_added: "2.4"
   vpc_id:
     description:
       - VPC id of the requesting VPC.
-    required: true
+      - Required when state present.
+    required: false
   subnets:
     description:
       - The list of subnets that should be associated with the network ACL.
@@ -117,6 +125,11 @@ EXAMPLES = '''
   ec2_vpc_nacl:
     vpc_id: vpc-12345678
     name: prod-dmz-nacl
+    state: absent
+
+- name: "Delete nacl by its id"
+  ec2_vpc_nacl:
+    nacl_id: acl-33b4ee5b
     state: absent
 '''
 RETURN = '''
@@ -343,10 +356,10 @@ def setup_network_acl(client, module):
 def remove_network_acl(client, module):
     changed = False
     result = dict()
-    vpc_id = module.params.get('vpc_id')
     nacl = describe_network_acl(client, module)
     if nacl['NetworkAcls']:
         nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
+        vpc_id = nacl['NetworkAcls'][0]['VpcId']
         associations = nacl['NetworkAcls'][0]['Associations']
         assoc_ids = [a['NetworkAclAssociationId'] for a in associations]
         default_nacl_id = find_default_vpc_nacl(vpc_id, client, module)
@@ -434,9 +447,14 @@ def describe_acl_associations(subnets, client, module):
 
 def describe_network_acl(client, module):
     try:
-        nacl = client.describe_network_acls(Filters=[
-            {'Name': 'tag:Name', 'Values': [module.params.get('name')]}
-        ])
+        if module.params.get('nacl_id'):
+            nacl = client.describe_network_acls(Filters=[
+                {'Name': 'network-acl-id', 'Values': [module.params.get('nacl_id')]}
+            ])
+        else:
+            nacl = client.describe_network_acls(Filters=[
+                {'Name': 'tag:Name', 'Values': [module.params.get('name')]}
+            ])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
     return nacl
@@ -527,8 +545,9 @@ def subnets_to_associate(nacl, client, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        vpc_id=dict(required=True),
-        name=dict(required=True),
+        vpc_id=dict(),
+        name=dict(),
+        nacl_id=dict(),
         subnets=dict(required=False, type='list', default=list()),
         tags=dict(required=False, type='dict'),
         ingress=dict(required=False, type='list', default=list()),
@@ -537,7 +556,9 @@ def main():
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+                           supports_check_mode=True,
+                           required_one_of=[['name', 'nacl_id']],
+                           required_if=[['state', 'present', ['vpc_id']]])
 
     if not HAS_BOTO3:
         module.fail_json(msg='json, botocore and boto3 are required.')
