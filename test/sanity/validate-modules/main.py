@@ -79,6 +79,7 @@ BLACKLIST_IMPORTS = {
         }
     },
 }
+
 WHITELIST_SHELL_OUT = frozenset(('service', 'async_wrapper', 'mysql_db'))
 
 class ReporterEncoder(json.JSONEncoder):
