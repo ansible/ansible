@@ -84,6 +84,7 @@ Function UserSearch
             return $apppoolobj.applicationPoolSid
         }
     }
+    Else
     {
         #Search by samaccountname
         $Searcher = [adsisearcher]""
