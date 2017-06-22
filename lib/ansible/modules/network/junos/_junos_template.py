@@ -21,7 +21,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-
 DOCUMENTATION = """
 ---
 module: junos_template
@@ -87,6 +86,8 @@ options:
     required: false
     default: null
     choices: ['text', 'xml', 'set']
+requirements:
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed
@@ -111,10 +112,10 @@ EXAMPLES = """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import check_args, junos_argument_spec
 from ansible.module_utils.junos import get_configuration, load_config
-from ansible.module_utils.six import text_type
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_template'
+
 
 def main():
 
@@ -137,16 +138,13 @@ def main():
 
     result = {'changed': False, 'warnings': warnings}
 
-    comment = module.params['comment']
-    confirm = module.params['confirm']
     commit = not module.check_mode
     action = module.params['action']
     src = module.params['src']
     fmt = module.params['config_format']
 
     if action == 'overwrite' and fmt == 'set':
-        module.fail_json(msg="overwrite cannot be used when format is "
-            "set per junos-pyez documentation")
+        module.fail_json(msg="overwrite cannot be used when format is set per junos-pyez documentation")
 
     if module.params['backup']:
         reply = get_configuration(module, format='set')

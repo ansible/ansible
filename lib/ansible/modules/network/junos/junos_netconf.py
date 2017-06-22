@@ -105,10 +105,12 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def parse_port(config):
     match = re.search(r'port (\d+)', config)
     if match:
         return int(match.group(1))
+
 
 def map_config_to_obj(module):
     cmd = 'show configuration system services netconf'
@@ -130,6 +132,7 @@ def validate_netconf_port(value, module):
     if not 1 <= value <= 65535:
         module.fail_json(msg='netconf_port must be between 1 and 65535')
 
+
 def map_params_to_obj(module):
     obj = {
         'netconf_port': module.params['netconf_port'],
@@ -143,6 +146,7 @@ def map_params_to_obj(module):
             validator(value, module)
 
     return obj
+
 
 def load_config(module, config, commit=False):
 
@@ -163,6 +167,7 @@ def load_config(module, config, commit=False):
             exec_command(module, cmd)
 
     return str(diff).strip()
+
 
 def main():
     """main entry point for module execution

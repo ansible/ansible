@@ -54,6 +54,11 @@ options:
         present in the current devices active running configuration.
     default: present
     choices: ['present', 'absent', 'active', 'suspend']
+requirements:
+  - ncclient (>=v0.5.2)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
@@ -102,11 +107,14 @@ rpc:
 """
 import collections
 
-from xml.etree.ElementTree import tostring
-
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+
+try:
+    from lxml.etree import tostring
+except ImportError:
+    from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
 

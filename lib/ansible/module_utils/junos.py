@@ -17,15 +17,21 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 import collections
-
 from contextlib import contextmanager
-from xml.etree.ElementTree import Element, SubElement, fromstring
+from copy import deepcopy
 
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+
+try:
+    from lxml.etree import Element, SubElement, fromstring, tostring
+    HAS_LXML = True
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
+    HAS_LXML = False
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
 JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
@@ -225,17 +231,18 @@ def get_param(module, key):
 def map_params_to_obj(module, param_to_xpath_map):
     """
     Creates a new dictionary with key as xpath corresponding
-    to param and value is a dict with metadata and value for
+    to param and value is a list of dict with metadata and values for
     the xpath.
     Acceptable metadata keys:
-        'xpath': Relative xpath corresponding to module param.
         'value': Value of param.
         'tag_only': Value is indicated by tag only in xml hierarchy.
         'leaf_only': If operation is to be added at leaf node only.
+        'value_req': If value(text) is requried for leaf node.
+        'is_key': If the field is key or not.
     eg: Output
     {
-        'name': {'xpath': 'name', 'value': 'ge-0/0/1'}
-        'disable': {'xpath': 'disable', 'tag_only': True}
+        'name': [{'value': 'ge-0/0/1'}]
+        'disable': [{'value': True, tag_only': True}]
     }
 
     :param module:
@@ -243,17 +250,32 @@ def map_params_to_obj(module, param_to_xpath_map):
     :return: obj
     """
     obj = collections.OrderedDict()
-    for key, attrib in param_to_xpath_map.items():
+    for key, attribute in param_to_xpath_map.items():
         if key in module.params:
-            if isinstance(attrib, dict):
-                xpath = attrib.get('xpath')
-                del attrib['xpath']
+            is_attribute_dict = False
 
-                attrib.update({'value': module.params[key]})
-                obj.update({xpath: attrib})
+            value = module.params[key]
+            if not isinstance(value, (list, tuple)):
+                value = [value]
+
+            if isinstance(attribute, dict):
+                xpath = attribute.get('xpath')
+                is_attribute_dict = True
             else:
-                xpath = attrib
-                obj.update({xpath: {'value': module.params[key]}})
+                xpath = attribute
+
+            if not obj.get(xpath):
+                obj[xpath] = list()
+
+            for val in value:
+                if is_attribute_dict:
+                    attr = deepcopy(attribute)
+                    del attr['xpath']
+
+                    attr.update({'value': val})
+                    obj[xpath].append(attr)
+                else:
+                    obj[xpath].append({'value': val})
     return obj
 
 
@@ -261,7 +283,7 @@ def map_obj_to_ele(module, want, top, value_map=None):
     top_ele = top.split('/')
     root = Element(top_ele[0])
     ele = root
-    oper = None
+
     if len(top_ele) > 1:
         for item in top_ele[1:-1]:
             ele = SubElement(ele, item)
@@ -270,41 +292,58 @@ def map_obj_to_ele(module, want, top, value_map=None):
 
     # build xml subtree
     for obj in want:
-        node = SubElement(container, top_ele[-1])
+        oper = None
+        if container.tag != top_ele[-1]:
+            node = SubElement(container, top_ele[-1])
+        else:
+            node = container
+
         if state and state != 'present':
             oper = OPERATION_LOOK_UP.get(state)
-            node.set(oper, oper)
 
-        for xpath, attrib in obj.items():
-            tag_only = attrib.get('tag_only', False)
-            leaf_only = attrib.get('leaf_only', False)
-            value = attrib.get('value')
+        for xpath, attributes in obj.items():
+            for attr in attributes:
+                tag_only = attr.get('tag_only', False)
+                leaf_only = attr.get('leaf_only', False)
+                is_value = attr.get('value_req', False)
+                is_key = attr.get('is_key', False)
+                value = attr.get('value')
 
-            # convert param value to device specific value
-            if value_map and xpath in value_map:
-                value = value_map[xpath].get(value)
+                # operation (delete/active/inactive) is added as element attribute
+                # only if it is key or tag only or leaf only node
+                if oper and not (is_key or tag_only or leaf_only):
+                    continue
 
-            # for leaf only fields operation attributes should be at leaf level
-            # and not at node level.
-            if leaf_only and node.attrib.get(oper):
-                node.attrib.pop(oper)
+                # convert param value to device specific value
+                if value_map and xpath in value_map:
+                    value = value_map[xpath].get(value)
 
-            if value or tag_only or leaf_only:
-                ele = node
-                tags = xpath.split('/')
+                if value or tag_only or (leaf_only and value):
+                    ele = node
+                    tags = xpath.split('/')
+                    if value:
+                        value = to_text(value, errors='surrogate_then_replace')
 
-                for item in tags:
-                    ele = SubElement(ele, item)
+                    for item in tags:
+                        ele = SubElement(ele, item)
 
-                if tag_only:
-                    if not value:
-                        ele.set('delete', 'delete')
-                elif leaf_only and oper:
-                    ele.set(oper, oper)
-                else:
-                    ele.text = to_text(value, errors='surrogate_then_replace')
-
-                if state != 'present':
-                    break
+                    if tag_only:
+                        if not value:
+                            ele.set('delete', 'delete')
+                    elif leaf_only:
+                        if oper:
+                            ele.set(oper, oper)
+                            if is_value:
+                                ele.text = value
+                        else:
+                            ele.text = value
+                    else:
+                        ele.text = value
+                        if HAS_LXML:
+                            par = ele.getparent()
+                        else:
+                            module.fail_json(msg='lxml is not installed.')
+                        if is_key and oper and not par.attrib.get(oper):
+                            par.set(oper, oper)
 
     return root

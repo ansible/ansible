@@ -26,54 +26,44 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: junos_interface
+module: junos_system
 version_added: "2.4"
 author: "Ganesh Nalawade (@ganeshrn)"
-short_description: Manage Interface on Juniper JUNOS network devices
+short_description: Manage the system attributes on Juniper JUNOS devices
 description:
-  - This module provides declarative management of Interfaces
-    on Juniper JUNOS network devices.
+  - This module provides declarative management of node system attributes
+    on Juniper JUNOS devices.  It provides an option to configure host system
+    parameters or remove those parameters from the device active
+    configuration.
 options:
-  name:
+  hostname:
     description:
-      - Name of the Interface.
-    required: true
-  description:
+      - Configure the device hostname parameter. This option takes an ASCII string value.
+  domain_name:
     description:
-      - Description of Interface.
-  enabled:
+      - Configure the IP domain name
+        on the remote device to the provided value. Value
+        should be in the dotted name form and will be
+        appended to the C(hostname) to create a fully-qualified
+        domain name.
+  domain_search:
     description:
-      - Configure operational status of the interface link.
-        If value is I(yes/true), interface is configured in up state.
-        For I(no/false) interface is configured in down state.
-    default: yes
-  speed:
+      - Provides the list of domain suffixes to
+        append to the hostname for the purpose of doing name resolution.
+        This argument accepts a list of names and will be reconciled
+        with the current active configuration on the running node.
+  name_servers:
     description:
-      - Interface link speed.
-  mtu:
-    description:
-      - Maximum size of transmit packet.
-  duplex:
-    description:
-      - Interface link status.
-    default: auto
-    choices: ['full', 'half', 'auto']
-  tx_rate:
-    description:
-      - Transmit rate.
-  rx_rate:
-    description:
-      - Receiver rate.
-  collection:
-    description: List of Interfaces definitions.
-  purge:
-    description:
-      - Purge Interfaces not defined in the collections parameter.
-        This applies only for logical interface.
-    default: no
+      - List of DNS name servers by IP address to use to perform name resolution
+        lookups.  This argument accepts either a list of DNS servers See
+        examples.
   state:
     description:
-      - State of the Interface configuration.
+      - State of the configuration
+        values in the device's current active configuration.  When set
+        to I(present), the values should be configured in the device active
+        configuration and when set to I(absent) the values should not be
+        in the device active configuration
     default: present
     choices: ['present', 'absent', 'active', 'suspend']
 requirements:
@@ -84,46 +74,24 @@ notes:
 """
 
 EXAMPLES = """
-- name: configure interface
-  junos_interface:
-    name: ge-0/0/1
-    description: test-interface
+- name: configure hostname and domain name
+  junos_system:
+    hostname: junos01
+    domain_name: test.example.com
+    domain-search:
+      - ansible.com
+      - redhat.com
+      - juniper.com
 
-- name: remove interface
-  junos_interface:
-    name: ge-0/0/1
+- name: remove configuration
+  junos_system:
     state: absent
 
-- name: make interface down
-  junos_interface:
-    name: ge-0/0/1
-    state: present
-    enabled: False
-
-- name: make interface up
-  junos_interface:
-    name: ge-0/0/1
-    state: present
-    enabled: True
-
-- name: Deactivate interface config
-  junos_interface:
-    name: ge-0/0/1
-    state: suspend
-
-- name: Activate interface config
-  net_interface:
-    name: ge-0/0/1
-    state: active
-
-- name: Configure interface speed, mtu, duplex
-  junos_interface:
-    name: ge-0/0/1
-    state: present
-    speed: 1g
-    mtu: 256
-    duplex: full
-    enabled: True
+- name: configure name servers
+  junos_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
 """
 
 RETURN = """
@@ -153,11 +121,6 @@ except ImportError:
 USE_PERSISTENT_CONNECTION = True
 
 
-def validate_mtu(value, module):
-    if value and not 256 <= value <= 9192:
-        module.fail_json(msg='mtu must be between 256 and 9192')
-
-
 def validate_param_values(module, obj):
     for key in obj:
         # validate the param value (if validator func exists)
@@ -170,23 +133,24 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        name=dict(required=True),
-        description=dict(),
-        enabled=dict(default=True, type='bool'),
-        speed=dict(),
-        mtu=dict(type='int'),
-        duplex=dict(choices=['full', 'half', 'auto']),
-        tx_rate=dict(),
-        rx_rate=dict(),
-        collection=dict(),
-        purge=dict(default=False, type='bool'),
-        state=dict(default='present',
-                   choices=['present', 'absent', 'active', 'suspend'])
+        hostname=dict(),
+        domain_name=dict(),
+        domain_search=dict(type='list'),
+        name_servers=dict(type='list'),
+
+        state=dict(choices=['present', 'absent', 'active', 'suspend'], default='present')
     )
 
     argument_spec.update(junos_argument_spec)
 
+    params = ['hostname', 'domain_name', 'domain_search', 'name_servers']
+    required_if = [('state', 'present', params, True),
+                   ('state', 'absent', params, True),
+                   ('state', 'active', params, True),
+                   ('state', 'suspend', params, True)]
+
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     warnings = list()
@@ -197,29 +161,21 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    top = 'interfaces/interface'
+    top = 'system'
 
     param_to_xpath_map = collections.OrderedDict()
     param_to_xpath_map.update({
-        'name': {'xpath': 'name', 'is_key': True},
-        'description': 'description',
-        'speed': 'speed',
-        'mtu': 'mtu',
-        'enabled': {'xpath': 'disable', 'tag_only': True},
-        'duplex': 'link-mode'
+        'hostname': {'xpath': 'host-name', 'leaf_only': True},
+        'domain_name': {'xpath': 'domain-name', 'leaf_only': True},
+        'domain_search': {'xpath': 'domain-search', 'leaf_only': True, 'value_req': True},
+        'name_servers': {'xpath': 'name-server/name', 'is_key': True}
     })
-
-    choice_to_value_map = {
-        'link-mode': {'full': 'full-duplex', 'half': 'half-duplex', 'auto': 'automatic'},
-        'disable': {True: False, False: True}
-    }
 
     validate_param_values(module, param_to_xpath_map)
 
     want = list()
     want.append(map_params_to_obj(module, param_to_xpath_map))
-
-    ele = map_obj_to_ele(module, want, top, choice_to_value_map)
+    ele = map_obj_to_ele(module, want, top)
 
     kwargs = {'commit': not module.check_mode}
     kwargs['action'] = 'replace'
