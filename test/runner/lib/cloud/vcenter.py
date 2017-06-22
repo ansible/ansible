@@ -10,15 +10,7 @@ from lib.cloud import (
 
 from lib.util import (
     find_executable,
-    ApplicationError,
     display,
-    SubprocessError,
-    is_shippable,
-)
-
-from lib.http import (
-    HttpClient,
-    urlparse,
 )
 
 from lib.docker_util import (
@@ -50,10 +42,7 @@ class VcenterProvider(CloudProvider):
 
         self.image = 'ansible/ansible:vcenter-simulator'
         self.container_name = ''
-        self.endpoint = ''
         self.vcenter_host = None
-        self.host = ''
-        self.port = 0
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -91,10 +80,7 @@ class VcenterProvider(CloudProvider):
     def cleanup(self):
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
         if self.container_name:
-            if is_shippable():
-                docker_rm(self.args, self.container_name)
-            elif not self.args.explain:
-                display.notice('Remember to run `docker rm -f %s` when finished testing.' % self.container_name)
+            docker_rm(self.args, self.container_name)
 
         super(VcenterProvider, self).cleanup()
 
@@ -108,10 +94,10 @@ class VcenterProvider(CloudProvider):
             results = []
 
         if results:
-            display.info('Using the existing Vcenter simulator docker container.', verbosity=1)
+            display.info('Using the existing vCenter simulator docker container.', verbosity=1)
         else:
-            display.info('Starting a new Vcenter simulator docker container.', verbosity=1)
-            # docker_pull(self.args, self.image)
+            display.info('Starting a new vCenter simulator docker container.', verbosity=1)
+            docker_pull(self.args, self.image)
             docker_run(
                 self.args,
                 self.image,
@@ -126,17 +112,8 @@ class VcenterProvider(CloudProvider):
         ipaddress = results[0]['NetworkSettings']['IPAddress']
         return ipaddress
 
-    def _read_config_template(self):
-        pass
-
-    def _wait_for_service(self):
-        pass
-
-    def _get_credentials(self):
-        pass
-
     def _setup_static(self):
-        pass
+        raise NotImplementedError()
 
 
 class VcenterEnvironment(CloudEnvironment):
