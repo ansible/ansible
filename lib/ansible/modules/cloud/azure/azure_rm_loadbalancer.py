@@ -87,7 +87,9 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import LoadBalancer, FrontendIPConfiguration, BackendAddressPool, Probe, LoadBalancingRule, SubResource
+    from azure.mgmt.network.models import (
+        LoadBalancer, FrontendIPConfiguration, BackendAddressPool, Probe, LoadBalancingRule, SubResource, InboundNatPool
+    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -153,6 +155,18 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             idle_timeout=dict(
                 type='int',
                 default=4
+            ),
+            natpool_frontend_port_start=dict(
+                type='int'
+            ),
+            natpool_frontend_port_end=dict(
+                type='int'
+            ),
+            natpool_backend_port=dict(
+                type='int'
+            ),
+            natpool_protocol=dict(
+                type='str'
             )
         )
 
@@ -171,6 +185,10 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.frontend_port = None
         self.backend_port = None
         self.idle_timeout = None
+        self.natpool_frontend_port_start = None
+        self.natpool_frontend_port_end = None
+        self.natpool_backend_port = None
+        self.natpool_protocol = None
 
         self.results = dict(changed=False, state=dict())
 
@@ -296,6 +314,19 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                     backend_port=self.backend_port,
                     idle_timeout_in_minutes=self.idle_timeout,
                     enable_floating_ip=False
+                )
+            ]
+
+        inbound_nat_pool_name = random_name('inp')
+        if frontend_ip_config_id and self.natpool_protocol:
+            load_balancer_props['inbound_nat_pools'] = [
+                InboundNatPool(
+                    name=inbound_nat_pool_name,
+                    frontend_ip_configuration=Subnet(id=frontend_ip_config_id),
+                    protocol=self.natpool_protocol,
+                    frontend_port_range_start=self.natpool_frontend_port_start,
+                    frontend_port_range_end=self.natpool_frontend_port_end,
+                    backend_port=self.natpool_backend_port
                 )
             ]
 
