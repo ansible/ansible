@@ -350,7 +350,7 @@ stat:
         attributes:
             description: list of file attributes
             returned: success, path exists and user can execute the path
-            type: boolean
+            type: list
             sample: [ immutable, extent ]
             version_added: 2.3
 '''
