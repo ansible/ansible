@@ -251,19 +251,15 @@ def get_vlan(vlanid, module):
     vlan['mode'] = mtu_table['vlanshowinfo-vlanmode']
 
     value_map = {
-        "mode": {
-            "fabricpath-vlan": "fabricpath",
-            "ce-vlan": "ce"
-        }
-    }
-
-    vlan = apply_value_map(value_map, vlan)
-
-    value_map = {
         "admin_state": {
             "shutdown": "down",
             "noshutdown": "up"
         }
+        "mode": {
+            "fabricpath-vlan": "fabricpath",
+            "ce-vlan": "ce"
+        }
+
     }
 
     vlan = apply_value_map(value_map, vlan)
