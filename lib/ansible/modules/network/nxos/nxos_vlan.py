@@ -248,7 +248,7 @@ def get_vlan(vlanid, module):
 
     vlan = apply_key_map(key_map, vlan_table)
 
-    vlan['mode'] = body['TABLE_mtuinfoid']['ROW_mtuinfoid']['vlanshowinfo-vlanmode']
+    vlan['mode'] = mtu_table['vlanshowinfo-vlanmode']
 
     value_map = {
         "mode": {
