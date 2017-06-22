@@ -284,6 +284,7 @@ iam_roles:
     sample: []
 '''
 
+import traceback
 import re
 # Import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -311,7 +312,7 @@ def find_clusters(conn, module, identifier=None, tags=None):
         cluster_paginator = conn.get_paginator('describe_clusters')
         clusters = cluster_paginator.paginate().build_full_result()
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     matched_clusters = []
 
@@ -358,7 +359,7 @@ def main():
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         redshift = boto3_conn(module, conn_type='client', resource='redshift', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     results = find_clusters(redshift, module, identifier=cluster_identifier, tags=cluster_tags)
     module.exit_json(results=results)
