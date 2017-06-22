@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = r'''
 ---
-module: cisco_imc_xml
+module: imc_xml
 short_description: Manage Cisco IMC hardware through its XML API
 description:
 - Provides direct access to the Cisco IMC XML API.
@@ -91,7 +91,7 @@ notes:
 
 EXAMPLES = r'''
 - name: Power down server
-  cisco_imc_xml:
+  imc_xml:
     hostname: '{{ imc_hostname }}'
     username: '{{ imc_username }}'
     password: '{{ imc_password }}'
@@ -103,7 +103,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Configure IMC using multiple XML documents
-  cisco_imc_xml:
+  imc_xml:
     hostname: '{{ imc_hostname }}'
     username: '{{ imc_username }}'
     password: '{{ imc_password }}'
@@ -127,7 +127,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Enable PXE boot and power-cycle server
-  cisco_imc_xml:
+  imc_xml:
     hostname: '{{ imc_hostname }}'
     username: '{{ imc_username }}'
     password: '{{ imc_password }}'
@@ -145,10 +145,10 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Reconfigure IMC to boot from storage
-  cisco_imc_xml:
-    hostname: '{{ cimc_host }}'
-    username: '{{ cimc_username }}'
-    password: '{{ cimc_password }}'
+  imc_xml:
+    hostname: '{{ imc_host }}'
+    username: '{{ imc_username }}'
+    password: '{{ imc_password }}'
     validate_certs: no
     content: |
       <configConfMo><inConfig>

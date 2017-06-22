@@ -186,8 +186,6 @@ Ansible Changes By Release
   * ce_vxlan_global
   * ce_vxlan_tunnel
   * ce_vxlan_vap
-- cisco_imc
-  * cisco_imc_xml
 - cloudstack
   * cs_network_acl
   * cs_network_acl_rule
@@ -210,6 +208,8 @@ Ansible Changes By Release
   * purefa_volume
   * purefa_hg
   * purefa_pg
+- imc
+  * imc_xml
 - rundeck
   * rundeck_acl_policy
   * rundeck_project
