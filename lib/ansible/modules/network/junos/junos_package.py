@@ -79,6 +79,7 @@ options:
     choices: ['true', 'false']
 requirements:
   - junos-eznc
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed
@@ -142,7 +143,8 @@ def install_package(module, device):
     package = module.params['src']
     no_copy = module.params['no_copy']
 
-    progress_log = lambda x, y: module.log(y)
+    def progress_log(dev, report):
+        module.log(report)
 
     module.log('installing package')
     result = junos.install(package, progress=progress_log, no_copy=no_copy)

@@ -17,3 +17,4 @@
     - { role: junos_vlan, when: "limit_to in ['*', 'junos_vlan']" }
     - { role: junos_interface, when: "limit_to in ['*', 'junos_interface']" }
     - { role: junos_banner, when: "limit_to in ['*', 'junos_banner']" }
+    - { role: junos_system, when: "limit_to in ['*', 'junos_system']" }

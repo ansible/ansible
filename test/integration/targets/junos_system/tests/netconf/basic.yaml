@@ -1,0 +1,308 @@
+---
+- debug: msg="START junos_system netconf/basic.yaml"
+
+- name: setup - remove hostname
+  junos_system:
+    hostname: vsrx01
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Set hostname
+  junos_system:
+    hostname: vsrx01
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<host-name>vsrx01</host-name>' in result.rpc"
+
+- name: Set hostname (idempotent)
+  junos_system:
+    hostname: vsrx01
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate hostname configuration
+  junos_system:
+    hostname: vsrx01
+    state: suspend
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<host-name inactive=\"inactive\" />' in result.rpc"
+
+- name: Activate hostname configuration
+  junos_system:
+    hostname: vsrx01
+    state: active
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<host-name active=\"active\" />' in result.rpc"
+
+- name: Delete hostname configuration
+  junos_system:
+    hostname: vsrx01
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<host-name delete=\"delete\" />' in result.rpc"
+
+- name: Teardown - set hostname
+  junos_system:
+    hostname: vsrx01
+    state: present
+    provider: "{{ netconf }}"
+
+- name: setup - remove domain name
+  junos_system:
+    domain_name: ansible.com
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Set domain name
+  junos_system:
+    domain_name: ansible.com
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-name>ansible.com</domain-name>' in result.rpc"
+
+- name: Set domain name (idempotent)
+  junos_system:
+    domain_name: ansible.com
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate domain name
+  junos_system:
+    domain_name: ansible.com
+    state: suspend
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-name inactive=\"inactive\" />' in result.rpc"
+
+- name: Activate domain name
+  junos_system:
+    domain_name: ansible.com
+    state: active
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-name active=\"active\" />' in result.rpc"
+
+- name: Delete domain name
+  junos_system:
+    domain_name: ansible.com
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-name delete=\"delete\" />' in result.rpc"
+
+- name: Teardown - set domain name
+  junos_system:
+    domain_name: ansible.com
+    state: present
+    provider: "{{ netconf }}"
+
+- name: Setup - delete domain search
+  junos_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Set domain search
+  junos_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-search>test.com</domain-search>' in result.rpc"
+      - "'<domain-search>sample.com</domain-search>' in result.rpc"
+
+- name: Set domain search
+  junos_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate domain search
+  junos_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: suspend
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-search inactive=\"inactive\">test.com</domain-search>' in result.rpc"
+      - "'<domain-search inactive=\"inactive\">sample.com</domain-search>' in result.rpc"
+
+- name: Activate domain search
+  junos_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: active
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-search active=\"active\">test.com</domain-search>' in result.rpc"
+      - "'<domain-search active=\"active\">sample.com</domain-search>' in result.rpc"
+
+- name: Delete domain search
+  junos_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-search delete=\"delete\">test.com</domain-search>' in result.rpc"
+      - "'<domain-search delete=\"delete\">sample.com</domain-search>' in result.rpc"
+
+- name: Setup - delete name servers
+  junos_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Set name servers
+  junos_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name-server><name>8.8.8.8</name></name-server>' in result.rpc"
+      - "'<name-server><name>8.8.4.4</name></name-server>' in result.rpc"
+
+- name: Set name servers (idempotent)
+  junos_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate name servers
+  junos_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: suspend
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name-server inactive=\"inactive\"><name>8.8.8.8</name></name-server>' in result.rpc"
+      - "'<name-server inactive=\"inactive\"><name>8.8.4.4</name></name-server>' in result.rpc"
+
+- name: Activate name servers
+  junos_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: active
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name-server active=\"active\"><name>8.8.8.8</name></name-server>' in result.rpc"
+      - "'<name-server active=\"active\"><name>8.8.4.4</name></name-server>' in result.rpc"
+
+- name: Delete name servers
+  junos_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name-server delete=\"delete\"><name>8.8.8.8</name></name-server>' in result.rpc"
+      - "'<name-server delete=\"delete\"><name>8.8.4.4</name></name-server>' in result.rpc"

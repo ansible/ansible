@@ -59,9 +59,13 @@ options:
     default: text
     choices: ['xml', 'set', 'text', 'json']
     version_added: "2.3"
+requirements:
+  - ncclient (>=v0.5.2)
 notes:
   - Ensure I(config_format) used to retrieve configuration from device
     is supported by junos version running on device.
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
@@ -79,15 +83,17 @@ ansible_facts:
   returned: always
   type: dict
 """
-
-from xml.etree.ElementTree import Element, SubElement, tostring
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.junos import junos_argument_spec, check_args, get_param
-from ansible.module_utils.junos import command, get_configuration
+from ansible.module_utils.junos import get_configuration
 from ansible.module_utils.netconf import send_request
+
+try:
+    from lxml.etree import Element, SubElement, tostring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring
 
 try:
     from jnpr.junos import Device

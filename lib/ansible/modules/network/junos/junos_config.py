@@ -137,6 +137,8 @@ options:
     default: merge
     choices: ['merge', 'override', 'replace']
     version_added: "2.3"
+requirements:
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
@@ -185,24 +187,32 @@ import re
 import json
 import sys
 
-from xml.etree import ElementTree
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import get_diff, load_config, get_configuration
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_native
 
-if sys.version_info < (2, 7):
-    from xml.parsers.expat import ExpatError
-    ParseError = ExpatError
-else:
-    ParseError = ElementTree.ParseError
+try:
+    from lxml.etree import Element, fromstring
+except ImportError:
+    from xml.etree.ElementTree import Element, fromstring
+
+try:
+    from lxml.etree import ParseError
+except ImportError:
+    try:
+        from xml.etree.ElementTree import ParseError
+    except ImportError:
+        # for Python < 2.7
+        from xml.parsers.expat import ExpatError
+        ParseError = ExpatError
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
+
 
 def check_args(module, warnings):
     junos_check_args(module, warnings)
@@ -210,8 +220,14 @@ def check_args(module, warnings):
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
 
-zeroize = lambda x: send_request(x, ElementTree.Element('request-system-zeroize'))
-rollback = lambda x: get_diff(x)
+
+def zeroize(ele):
+    return send_request(ele, Element('request-system-zeroize'))
+
+
+def rollback(ele):
+    return get_diff(ele)
+
 
 def guess_format(config):
     try:
@@ -221,7 +237,7 @@ def guess_format(config):
         pass
 
     try:
-        ElementTree.fromstring(config)
+        fromstring(config)
         return 'xml'
     except ParseError:
         pass
@@ -230,6 +246,7 @@ def guess_format(config):
         return 'set'
 
     return 'text'
+
 
 def filter_delete_statements(module, candidate):
     reply = get_configuration(module, format='set')
@@ -247,6 +264,7 @@ def filter_delete_statements(module, candidate):
                 del modified_candidate[index]
 
     return modified_candidate
+
 
 def configure_device(module, warnings):
     candidate = module.params['lines'] or module.params['src']
@@ -282,6 +300,7 @@ def configure_device(module, warnings):
         kwargs['action'] = 'set'
 
     return load_config(module, candidate, warnings, **kwargs)
+
 
 def main():
     """ main entry point for module execution

@@ -91,6 +91,11 @@ options:
     required: false
     default: present
     choices: ['present', 'absent']
+requirements:
+  - ncclient (>=v0.5.2)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
@@ -116,12 +121,15 @@ RETURN = """
 """
 from functools import partial
 
-from xml.etree.ElementTree import Element, SubElement, tostring
-
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import load_config
 from ansible.module_utils.six import iteritems
+
+try:
+    from lxml.etree import Element, SubElement, tostring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring
 
 ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
 USE_PERSISTENT_CONNECTION = True

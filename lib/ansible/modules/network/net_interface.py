@@ -112,6 +112,7 @@ commands:
   sample:
     - interface 20
     - name test-interface
+
 rpc:
   description: load-configuration RPC send to the device
   returned: C(rpc) is returned only for junos device
@@ -124,5 +125,4 @@ rpc:
                     <description>test interface</description>
                 </interface>
             </interfaces>
-
 """
