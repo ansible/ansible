@@ -82,6 +82,7 @@ BLACKLIST_IMPORTS = {
 
 WHITELIST_SHELL_OUT = frozenset(('service', 'async_wrapper', 'mysql_db'))
 
+
 class ReporterEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, Exception):
@@ -1097,7 +1098,6 @@ class ModuleValidator(Validator):
             self._check_type_instead_of_isinstance(
                 powershell=self._powershell_module()
             )
-
 
 
 class PythonPackageValidator(Validator):
