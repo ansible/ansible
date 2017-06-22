@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: ecs_vpc_vswitch
+module: alicloud_vswitch
 version_added: "2.4"
 short_description: Create, Query or Delete Vswitch.
 description:
@@ -58,7 +58,7 @@ options:
         It cannot begin with http:// or https://.
     required: false
     default: null
-    aliases: [ 'name' ]
+    aliases: [ 'name', 'subnet_name' ]
   description:
     description:
       - The description of vswitch, which is a string of 2 to 256 characters. It cannot begin with http:// or https://.
@@ -108,10 +108,10 @@ EXAMPLES = """
     state: present
   tasks:
     - name: create vswitch
-      ecs_vpc_vswitch:
+      alicloud_vswitch:
         alicloud_region: '{{ alicloud_region }}'
         cidr_block: '{{ cidr_blok }}'
-        name: ''{{ name }}''
+        name: '{{ name }}'
         description: '{{ description }}'
         vpc_id: '{{ vpc_id }}'
         state: '{{ state }}'
@@ -131,7 +131,7 @@ EXAMPLES = """
     state: absent
   tasks:
     - name: delete vswitch
-      ecs_vpc_vswitch:
+      alicloud_vswitch:
         alicloud_region: '{{ alicloud_region }}'
         vpc_id: '{{ vpc_id }}'
         purge_vswitches: '{{ purge_vswitches }}'
@@ -291,7 +291,7 @@ def check_vswitch_vpc(module, vpc, vpc_id, vswitch_ids):
 
     for vsw_id in vswitch_ids:
         if vsw_id not in vpc_obj.vswitch_ids['vswitch_id']:
-            module.fail_json(msg='The specified vswitch: {0} is not found in the vpc: {0}.'.format(vsw_id, vpc_id))
+            module.fail_json(msg='The specified vswitch: {0} is not found in the vpc: {1}.'.format(vsw_id, vpc_id))
     return
 
 
@@ -388,7 +388,7 @@ def main():
         description=dict(),
         alicloud_zone=dict(aliases=['acs_zone', 'ecs_zone', 'zone_id', 'zone']),
         vpc_id=dict(),
-        vswitch_name=dict(aliases=['name']),
+        vswitch_name=dict(aliases=['name', 'subnet_name']),
         vswitch_ids=dict(aliases=['subnet_ids']),
         pagenumber=dict(type='int', default='1'),
         pagesize=dict(type='int', default='10'),
