@@ -20,7 +20,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg == "missing required arguments: name"'
+           - 'result.msg == "one of the following is required: name,group_id"'
 
     # ============================================================
     - name: test failure with only name
@@ -46,7 +46,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg == "missing required arguments: name"'
+           - 'result.msg == "one of the following is required: name,group_id"'
 
     # ============================================================
     - name: test failure with empty description (AWS API requires non-empty string desc)

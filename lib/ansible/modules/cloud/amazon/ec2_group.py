@@ -32,7 +32,15 @@ options:
   name:
     description:
       - Name of the security group.
-    required: true
+      - One of and only one of I(name) or I(group_id) is required.
+      - Required if I(state=present).
+    required: false
+  group_id:
+    description:
+      - Id of group to delete (works only with absent).
+      - One of and only one of I(name) or I(group_id) is required.
+    required: false
+    version_added: "2.4"
   description:
     description:
       - Description of the security group. Required when C(state) is C(present).
@@ -172,6 +180,11 @@ EXAMPLES = '''
           - 172.16.17.0/24
         group_id:
           - sg-edcd9784
+
+- name: "Delete group by its id"
+  ec2_group:
+    group_id: sg-33b4ee5b
+    state: absent
 '''
 
 import json
@@ -371,9 +384,10 @@ def rules_expand_sources(rules):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        name=dict(type='str', required=True),
-        description=dict(type='str', required=False),
-        vpc_id=dict(type='str'),
+        name=dict(),
+        group_id=dict(),
+        description=dict(),
+        vpc_id=dict(),
         rules=dict(type='list'),
         rules_egress=dict(type='list'),
         state=dict(default='present', type='str', choices=['present', 'absent']),
@@ -385,12 +399,15 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_one_of=[['name', 'group_id']],
+        required_if=[['state', 'present', ['name']]],
     )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
     name = module.params['name']
+    group_id = module.params['group_id']
     description = module.params['description']
     vpc_id = module.params['vpc_id']
     rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules'])))
@@ -424,8 +441,12 @@ def main():
         else:
             groups[curGroup.name] = curGroup
 
-        if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
-            group = curGroup
+        if group_id:
+            if curGroup.id == group_id:
+                group = curGroup
+        else:
+            if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
+                group = curGroup
 
     # Ensure requested group is absent
     if state == 'absent':
