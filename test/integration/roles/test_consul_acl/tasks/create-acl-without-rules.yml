@@ -4,7 +4,7 @@
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"
-    name: "{{ test_consul_acl_rule_name }}"
+    name: "{{ test_consul_acl_token_name }}"
   register: created_ruleless_acl
 
 - name: verify ACL created without rules
@@ -18,7 +18,7 @@
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"
-    name: "New ACL"
+    name: "{{ test_consul_acl_token_name }}"
   register: doubly_created_ruleless_acl
 
 - name: verify idempotence when creating ruleless ACL tokens

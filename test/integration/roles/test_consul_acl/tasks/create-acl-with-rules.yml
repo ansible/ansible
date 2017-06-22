@@ -4,13 +4,13 @@
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"
-    name: "{{ test_consul_acl_rule_name }}"
+    name: "{{ test_consul_acl_token_name }}"
     rules:
       - event: "bbq"
         policy: write
       - key: "foo"
         policy: read
-      - key: "private/bar"
+      - key: "private"
         policy: deny
       - keyring: write
       - node: "hgs4"
@@ -31,7 +31,7 @@
       - created_acl.token | length == 36
       - (created_acl.rules | json_query("event.bbq.policy")) == "write"
       - (created_acl.rules | json_query("key.foo.policy")) == "read"
-      - (created_acl.rules | json_query("key.'private/bar'.policy")) == "deny"
+      - (created_acl.rules | json_query("key.private.policy")) == "deny"
       - (created_acl.rules | json_query("keyring")) == "deny"
       - (created_acl.rules | json_query("node.hgs4.policy")) == "write"
       - (created_acl.rules | json_query("operator")) == "read"
@@ -43,7 +43,7 @@
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"
-    name: "{{ test_consul_acl_rule_name }}"
+    name: "{{ test_consul_acl_token_name }}"
     rules:
       - key: "foo"
         policy: read
