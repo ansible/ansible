@@ -110,7 +110,7 @@ def get_instance_info(instance):
 
     instance_info = { 'id': instance.id,
                     'kernel': instance.kernel,
-                    'instance_profile': instance.instance_profile,
+                    'instance_profile': dict(instance.instance_profile),
                     'root_device_type': instance.root_device_type,
                     'private_dns_name': instance.private_dns_name,
                     'public_dns_name': instance.public_dns_name,
