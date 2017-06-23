@@ -33,7 +33,7 @@ version_added: "2.4"
 short_description: Manage Azure load balancers.
 
 description:
-    - Create and manage Azure load balancers
+    - Create, update and delete Azure load balancers
 
 options:
     resource_group:
@@ -64,8 +64,77 @@ options:
         aliases:
             - public_ip_address
             - public_ip_name
+            - public_ip
         required: false
-        default: null
+    probe_port:
+        description:
+            - The port that the health probe will use.
+        required: false
+    probe_protocol:
+        description:
+            - The protocol to use for the health probe.
+        required: false
+        choices:
+            - Tcp
+            - Http
+    probe_interval:
+        description:
+            - How much time (in seconds) to probe the endpoint for health.
+        default: 15
+        required: false
+    probe_fail_count:
+        description:
+            - The amount of probe failures for the load balancer to make a health determination.
+        default: 3
+        required: false
+    probe_request_path:
+        description:
+            - The URL that an HTTP probe will use (only relevant if probe_protocol is set to Http).
+        required: false
+    protocol:
+        description:
+            - The protocol (TCP or UDP) that the load balancer will use.
+        required: false
+        choices:
+            - Tcp
+            - Udp
+    load_distribution:
+        description:
+            - The type of load distribution that the load balancer will employ.
+        required: false
+        choices:
+            - Default
+            - SourceIP
+            - SourceIPProtocol
+    frontend_port:
+        description
+            - Frontend port that will be exposed for the load balancer.
+        required: false
+    backend_port:
+        description:
+            - Backend port that will be exposed for the load balancer.
+        required: false
+    idle_timeout:
+        description:
+            - Timeout for TCP idle connection in minutes.
+        default: 4
+        required: false
+    natpool_frontend_port_start:
+        description:
+            - Start of the port range for a NAT pool.
+        required: false
+    natpool_frontend_port_end:
+        description:
+            - End of the port range for a NAT pool.
+        required: false
+    natpool_backend_port:
+        description:
+            - Backend port used by the NAT pool.
+        required: false
+    natpool_protocol:
+        description:
+            - The protocol for the NAT pool.
+        required: false
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -75,9 +144,36 @@ author:
 '''
 
 EXAMPLES = '''
+    - name: Create a load balancer
+      azure_rm_loadbalancer:
+        name: myloadbalancer
+        location: eastus
+        resource_group: my-rg
+        public_ip: mypublicip
+        probe_protocol: Tcp
+        probe_port: 80
+        probe_interval: 10
+        probe_fail_count: 3
+        protocol: Tcp
+        load_distribution: Default
+        frontend_port: 80
+        backend_port: 8080
+        idle_timeout: 4
+        natpool_frontend_port_start: 1030
+        natpool_frontend_port_end: 1040
+        natpool_backend_port: 80
+        natpool_protocol: Tcp
 '''
 
 RETURN = '''
+state:
+    description: Current state of the load balancer
+    returned: always
+    type: dict
+changed:
+    description: Whether or not the resource has changed
+    returned: always
+    type: bool
 '''
 
 import random
@@ -100,15 +196,24 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
     def __init__(self):
         self.module_args = dict(
-            resource_group=dict(type='str', required=True),
-            name=dict(type='str', required=True),
+            resource_group=dict(
+                type='str',
+                required=True
+            ),
+            name=dict(
+                type='str',
+                required=True
+            ),
             state=dict(
                 type='str',
                 required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
-            location=dict(type='str', required=False),
+            location=dict(
+                type='str',
+                required=False
+            ),
             public_ip_address_name=dict(
                 type='str',
                 required=False,
