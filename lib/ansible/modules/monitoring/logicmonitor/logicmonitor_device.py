@@ -299,7 +299,6 @@ def get_obj(client, params, module):
 def set_update_fields(obj_1, obj_2):
     # set immutable fields for updating object
     obj_1.id = obj_2.id
-    obj_1.name = obj_2.name
     return obj_1
 
 
