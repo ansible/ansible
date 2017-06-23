@@ -178,10 +178,9 @@ def update_acl(module):
 def remove_acl(module):
     token = module.params.get('token')
     consul = get_consul_api(module)
-    changed = token and consul.acl.info(token)
+    changed = consul.acl.info(token) is not None
     if changed:
         consul.acl.destroy(token)
-
     module.exit_json(changed=changed, token=token)
 
 
