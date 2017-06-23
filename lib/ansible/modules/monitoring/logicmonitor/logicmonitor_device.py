@@ -468,10 +468,6 @@ def add_obj(client, device, module):
         module.fail_json(msg=err, changed=False, failed=True)
 
     if resp.status != 200:
-        if resp.status == 600:
-            # Status 600: The record already exists
-            return device
-
         err = (
             'Status ' + str(resp.status) + ' calling add_device\n' +
             str(resp.errmsg)
