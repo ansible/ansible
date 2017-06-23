@@ -13,4 +13,7 @@
 - include: "{{ role_path }}/tests/eos/set_name_servers.yaml"
   when: hostvars[inventory_hostname]['ansible_network_os'] == 'eos'
 
+- include: "{{ role_path }}/tests/vyos/set_name_servers.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'vyos'
+
 - debug: msg="END cli/set_name_servers.yaml"
