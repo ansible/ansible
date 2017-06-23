@@ -190,6 +190,10 @@ options:
               a network interface, at least one Virtual Network with one Subnet must exist.
         default: null
         required: false
+    virtual_network_resource_group:                                        
+        description: 
+            - When creating a virtual machine, if a specific virtual network from another resource group should be 
+              used, use thus parameter to specify the resource group to use. 
     virtual_network_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
@@ -314,7 +318,7 @@ azure_vm:
     description: Facts about the current state of the object. Note that facts are not part of the registered output but available directly.
     returned: always
     type: complex
-    contains: {
+    example: {
         "properties": {
             "hardwareProfile": {
                 "vmSize": "Standard_D1"
@@ -505,6 +509,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             network_interface_names=dict(type='list', aliases=['network_interfaces']),
             remove_on_absent=dict(type='list', default=['all']),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
+            virtual_network_resource_group=dict(type = 'str'),
             subnet_name=dict(type='str', aliases=['subnet']),
             allocated=dict(type='bool', default=True),
             restarted=dict(type='bool', default=False),
@@ -537,6 +542,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.public_ip_allocation_method = None
         self.open_ports = None
         self.virtual_network_name = None
+        self.virtual_network_resource_group = None
         self.subnet_name = None
         self.allocated = None
         self.restarted = None
@@ -1215,11 +1221,18 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.log("NIC {0} does not exist.".format(network_interface_name))
 
         if self.virtual_network_name:
-            try:
-                self.network_client.virtual_networks.list(self.resource_group, self.virtual_network_name)
-                virtual_network_name = self.virtual_network_name
-            except Exception as exc:
-                self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
+            if self.virtual_network_resource_group:
+                try:                                                                                                                        
+                    self.network_client.virtual_networks.list(self.virtual_network_resource_group, self.virtual_network_name)   
+                    virtual_network_name = self.virtual_network_name
+                except Exception as exc:
+                    self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
+            else:
+                try:                                                                                                                        
+                    self.network_client.virtual_networks.list(self.resource_group, self.virtual_network_name)      
+                    virtual_network_name = self.virtual_network_name
+                except Exception as exc:
+                    self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
         else:
             # Find a virtual network
             no_vnets_msg = "Error: unable to find virtual network in resource group {0}. A virtual network " \
@@ -1248,15 +1261,24 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             except Exception as exc:
                 self.fail("Error: fetching subnet {0} - {1}".format(self.subnet_name, str(exc)))
         else:
-            no_subnets_msg = "Error: unable to find a subnet in virtual network {0}. A virtual network " \
+            no_subnets_msg_1 = "Error: unable to find a subnet in virtual network {0}. A virtual network " \                       
                              "with at least one subnet must exist in order to create a NIC for the virtual " \
-                             "machine.".format(virtual_network_name)
+                             "machine in {1} resource_group.".format(virtual_network_name, self.resource_group)
+            no_subnets_msg_2 = "Error: unable to find a subnet in virtual network {0}. A virtual network " \
+                             "with at least one subnet must exist in order to create a NIC for the virtual " \
+                             "machine in {1} resource_group.".format(virtual_network_name, self.virtual_network_resource_group)
 
             subnet_id = None
-            try:
-                subnets = self.network_client.subnets.list(self.resource_group, virtual_network_name)
-            except CloudError:
-                self.fail(no_subnets_msg)
+            if self.virtual_network_resource_group:
+                try:
+                    subnets = self.network_client.subnets.list(self.virtual_network_resource_group, virtual_network_name)
+                except CloudError:
+                    self.fail(no_subnets_msg_2)
+            else:
+                try:
+                    subnets = self.network_client.subnets.list(self.resource_group, virtual_network_name)
+                except CloudError:
+                    self.fail(no_subnets_msg_1)
 
             for subnet in subnets:
                 subnet_id = subnet.id
@@ -1308,4 +1330,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
