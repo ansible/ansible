@@ -19,6 +19,7 @@ RUN yum clean all && \
     openssh-clients \
     openssh-server \
     openssl-devel \
+    python-argparse \
     python-coverage \
     python-devel \
     python-httplib2 \
