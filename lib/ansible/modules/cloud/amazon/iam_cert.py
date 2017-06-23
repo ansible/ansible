@@ -32,42 +32,41 @@ options:
     required: true
   new_name:
     description:
-      - When present, this will update the name of the cert with the value passed here.
-    required: false
+      - When state is present, this will update the name of the cert.
+      - The cert, key and cert_chain parameters will be ignored if this is defined.
   new_path:
     description:
-      - When present, this will update the path of the cert with the value passed here.
-    required: false
+      - When state is present, this will update the path of the cert.
+      - The cert, key and cert_chain parameters will be ignored if this is defined.
   state:
     description:
-      - Whether to create, delete certificate. When present is specified it will attempt to make an update if new_path or new_name is specified.
+      - Whether to create(or update) or delete certificate.
+      - If new_path or new_name is defined, specifying present will attempt to make an update these.
     required: true
-    default: null
     choices: [ "present", "absent" ]
   path:
     description:
-      - When creating or updating, specify the desired path of the certificate
-    required: false
+      - When creating or updating, specify the desired path of the certificate.
     default: "/"
   cert_chain:
     description:
       - The CA certificate chain in PEM encoded format.
-      - Note that prior to 2.4, this parameter expected a path to a file. Since 2.4 this is now accomplished using a lookup plugin. See examples for detail
-    required: false
-    default: null
+      - Note that prior to 2.4, this parameter expected a path to a file.
+        Since 2.4 this is now accomplished using a lookup plugin. See examples for detail.
   cert:
     description:
       - The certificate body in PEM encoded format.
-      - Note that prior to 2.4, this parameter expected a path to a file. Since 2.4 this is now accomplished using a lookup plugin. See examples for detail
-    required: false
+      - Note that prior to 2.4, this parameter expected a path to a file.
+        Since 2.4 this is now accomplished using a lookup plugin. See examples for detail.
   key:
     description:
       - The key of the certificate in PEM encoded format.
-      - Note that prior to 2.4, this parameter expected a path to a file. Since 2.4 this is now accomplished using a lookup plugin. See examples for detail
+      - Note that prior to 2.4, this parameter expected a path to a file.
+        Since 2.4 this is now accomplished using a lookup plugin. See examples for detail.
   dup_ok:
     description:
-      - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as
-        long as the name is unique.
+      - By default the module will not upload a certificate that is already uploaded into AWS.
+        If set to True, it will upload the certificate as long as the name is unique.
     required: false
     default: False
 
@@ -96,9 +95,17 @@ EXAMPLES = '''
     cert: body_of_somecert
     key: vault_body_of_privcertkey
     cert_chain: body_of_myverytrustedchain
+
+# Basic rename of existing certificate
+- iam_cert:
+    name: very_ssl
+    new_name: new_very_ssl
+    state: present
+
 '''
-import json
-import sys
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, connect_to_aws
+
 try:
     import boto
     import boto.iam
@@ -106,6 +113,7 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -118,42 +126,33 @@ def boto_exception(err):
 
     return error
 
+
 def cert_meta(iam, name):
-    opath       = iam.get_server_certificate(name).get_server_certificate_result.\
-        server_certificate.\
-        server_certificate_metadata.\
-        path
-    ocert       = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 certificate_body
-    ocert_id    = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 server_certificate_id
-    upload_date = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 upload_date
-    exp         = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 expiration
-    arn         = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 arn
+    certificate = iam.get_server_certificate(name).get_server_certificate_result.server_certificate
+    ocert = certificate.certificate_body
+    opath = certificate.server_certificate_metadata.path
+    ocert_id = certificate.server_certificate_metadata.server_certificate_id
+    upload_date = certificate.server_certificate_metadata.upload_date
+    exp = certificate.server_certificate_metadata.expiration
+    arn = certificate.server_certificate_metadata.arn
     return opath, ocert, ocert_id, upload_date, exp, arn
 
+
 def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodies, dup_ok):
-    update=False
-    if any(ct in orig_cert_names for ct in [name, new_name]):
-        for i_name in [name, new_name]:
+    update = False
+
+    # IAM cert names are case insensitive
+    names_lower = [n.lower() for n in [name, new_name]]
+    orig_cert_names_lower = [ocn.lower() for ocn in orig_cert_names]
+
+    if any(ct in orig_cert_names_lower for ct in names_lower):
+        for i_name in names_lower:
             if i_name is None:
                 continue
 
             if cert is not None:
                 try:
-                    c_index=orig_cert_names.index(i_name)
+                    c_index = orig_cert_names_lower.index(i_name)
                 except NameError:
                     continue
                 else:
@@ -161,17 +160,17 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
                     slug_cert = cert.replace('\r', '')
                     slug_orig_cert_bodies = orig_cert_bodies[c_index].replace('\r', '')
                     if slug_orig_cert_bodies == slug_cert:
-                        update=True
+                        update = True
                         break
                     elif slug_cert.startswith(slug_orig_cert_bodies):
-                        update=True
+                        update = True
                         break
                     elif slug_orig_cert_bodies != slug_cert:
                         module.fail_json(changed=False, msg='A cert with the name %s already exists and'
-                                                           ' has a different certificate body associated'
-                                                           ' with it. Certificates cannot have the same name' % i_name)
+                                         ' has a different certificate body associated'
+                                         ' with it. Certificates cannot have the same name' % i_name)
             else:
-                update=True
+                update = True
                 break
     elif cert in orig_cert_bodies and not dup_ok:
         for crt_name, crt_body in zip(orig_cert_names, orig_cert_bodies):
@@ -183,13 +182,13 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
 
 
 def cert_action(module, iam, name, cpath, new_name, new_path, state,
-                cert, key, chain, orig_cert_names, orig_cert_bodies, dup_ok):
+                cert, key, cert_chain, orig_cert_names, orig_cert_bodies, dup_ok):
     if state == 'present':
         update = dup_check(module, iam, name, new_name, cert, orig_cert_names,
                            orig_cert_bodies, dup_ok)
         if update:
             opath, ocert, ocert_id, upload_date, exp, arn = cert_meta(iam, name)
-            changed=True
+            changed = True
             if new_name and new_path:
                 iam.update_server_cert(name, new_cert_name=new_name, new_path=new_path)
                 module.exit_json(changed=changed, original_name=name, new_name=new_name,
@@ -206,44 +205,51 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
                                  original_path=opath, new_path=new_path, cert_body=ocert,
                                  upload_date=upload_date, expiration_date=exp, arn=arn)
             else:
-                changed=False
+                changed = False
                 module.exit_json(changed=changed, name=name, cert_path=opath, cert_body=ocert,
                                  upload_date=upload_date, expiration_date=exp, arn=arn,
                                  msg='No new path or name specified. No changes made')
         else:
-            changed=True
-            iam.upload_server_cert(name, cert, key, cert_chain=chain, path=cpath)
+            changed = True
+            iam.upload_server_cert(name, cert, key, cert_chain=cert_chain, path=cpath)
             opath, ocert, ocert_id, upload_date, exp, arn = cert_meta(iam, name)
             module.exit_json(changed=changed, name=name, cert_path=opath, cert_body=ocert,
-                                 upload_date=upload_date, expiration_date=exp, arn=arn)
+                             upload_date=upload_date, expiration_date=exp, arn=arn)
     elif state == 'absent':
         if name in orig_cert_names:
-            changed=True
+            changed = True
             iam.delete_server_cert(name)
             module.exit_json(changed=changed, deleted_cert=name)
         else:
-            changed=False
+            changed = False
             module.exit_json(changed=changed, msg='Certificate with the name %s already absent' % name)
+
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(
-            default=None, required=True, choices=['present', 'absent']),
-        name=dict(default=None, required=False),
-        cert=dict(default=None, required=False),
-        key=dict(default=None, required=False, no_log=True),
-        cert_chain=dict(default=None, required=False),
-        new_name=dict(default=None, required=False),
+        state=dict(required=True, choices=['present', 'absent']),
+        name=dict(),
+        cert=dict(),
+        key=dict(no_log=True),
+        cert_chain=dict(),
+        new_name=dict(),
         path=dict(default='/', required=False),
-        new_path=dict(default=None, required=False),
-        dup_ok=dict(default=False, required=False, type='bool')
+        new_path=dict(required=False),
+        dup_ok=dict(required=False, type='bool')
     )
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[],
+        mutually_exclusive=[
+            ['new_path', 'key'],
+            ['new_path', 'cert'],
+            ['new_path', 'cert_chain'],
+            ['new_name', 'key'],
+            ['new_name', 'cert'],
+            ['new_name', 'cert_chain'],
+        ],
     )
 
     if not HAS_BOTO:
@@ -264,26 +270,18 @@ def main():
     path = module.params.get('path')
     new_name = module.params.get('new_name')
     new_path = module.params.get('new_path')
-    cert_chain = module.params.get('cert_chain')
     dup_ok = module.params.get('dup_ok')
-    if state == 'present':
-        if module.params.get('cert') is not None:
-            cert = module.params.get('cert')
-        if module.params.get('key') is not None:
-            key = module.params.get('key')
-        if module.params.get('cert_chain') is not None:
-            cert_chain = module.params.get('cert_chain')
+    if state == 'present' and not new_name and not new_path:
+        cert = module.params.get('cert')
+        key = module.params.get('key')
+        cert_chain = module.params.get('cert_chain')
     else:
-        key=cert=chain=None
+        cert = key = cert_chain = None
 
-    orig_certs = [ctb['server_certificate_name'] for ctb in \
-                                                    iam.get_all_server_certs().\
-                                                    list_server_certificates_result.\
-                                                    server_certificate_metadata_list]
-    orig_bodies = [iam.get_server_certificate(thing).\
-                  get_server_certificate_result.\
-                  certificate_body \
-                  for thing in orig_certs]
+    orig_cert_names = [ctb['server_certificate_name'] for ctb in
+                       iam.get_all_server_certs().list_server_certificates_result.server_certificate_metadata_list]
+    orig_cert_bodies = [iam.get_server_certificate(thing).get_server_certificate_result.certificate_body
+                        for thing in orig_cert_names]
     if new_name == name:
         new_name = None
     if new_path == path:
@@ -292,13 +290,10 @@ def main():
     changed = False
     try:
         cert_action(module, iam, name, path, new_name, new_path, state,
-                cert, key, cert_chain, orig_certs, orig_bodies, dup_ok)
+                    cert, key, cert_chain, orig_cert_names, orig_cert_bodies, dup_ok)
     except boto.exception.BotoServerError as err:
-        module.fail_json(changed=changed, msg=str(err), debug=[cert,key])
+        module.fail_json(changed=changed, msg=str(err), debug=[cert, key])
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
