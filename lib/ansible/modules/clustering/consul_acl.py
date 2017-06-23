@@ -81,10 +81,10 @@ requirements:
 """
 
 EXAMPLES = """
-- name: create an acl token with rules
+- name: create an ACL token with rules
   consul_acl:
+    host: 'consul1.example.com'
     mgmt_token: 'some_management_acl'
-    host: 'consul1.mycluster.io'
     name: 'Foo access'
     rules:
       - key: 'foo'
@@ -92,23 +92,34 @@ EXAMPLES = """
       - key: 'private/foo'
         policy: deny
 
-- name: create an acl with specific token with both key and service rules
+- name: update the rules associated to an ACL token
   consul_acl:
+    host: 'consul1.example.com'
     mgmt_token: 'some_management_acl'
     name: 'Foo access'
     token: 'some_client_token'
     rules:
-      - key: 'foo'
-        policy: read
-      - service: ''
+      - event: "bbq"
         policy: write
-      - service: 'secret-'
+      - key: "foo"
+        policy: read
+      - key: "private"
         policy: deny
+      - keyring: write
+      - node: "hgs4"
+        policy: write
+      - operator: read
+      - query: ""
+        policy: write
+      - service: "consul"
+        policy: write
+      - session: "standup"
+        policy: write
 
 - name: remove a token
   consul_acl:
+    host: 'consul1.example.com'
     mgmt_token: 'some_management_acl'
-    host: 'consul1.mycluster.io'
     token: '172bd5c8-9fe9-11e4-b1b0-3c15c2c9fd5e'
     state: absent
 """
