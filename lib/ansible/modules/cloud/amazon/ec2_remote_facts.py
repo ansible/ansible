@@ -108,9 +108,11 @@ def get_instance_info(instance):
     except AttributeError:
         pass
 
+    instance_profile = dict(instance.instance_profile) if instance.instance_profile is not None else None
+
     instance_info = { 'id': instance.id,
                     'kernel': instance.kernel,
-                    'instance_profile': dict(instance.instance_profile),
+                    'instance_profile': instance_profile,
                     'root_device_type': instance.root_device_type,
                     'private_dns_name': instance.private_dns_name,
                     'public_dns_name': instance.public_dns_name,
