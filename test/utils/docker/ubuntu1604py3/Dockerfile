@@ -13,6 +13,7 @@ RUN apt-get update -y && \
     dpkg-dev \
     fakeroot \
     gawk \
+    gcc \
     git \
     iproute2 \
     libffi-dev \
@@ -25,6 +26,7 @@ RUN apt-get update -y && \
     openssh-client \
     openssh-server \
     python3-coverage \
+    python3-dev \
     python3-dbus \
     python3-httplib2 \
     python3-jinja2 \

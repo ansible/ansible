@@ -15,6 +15,7 @@ RUN apt-get update -y && \
     dpkg-dev \
     fakeroot \
     gawk \
+    gcc \
     git \
     libffi-dev \
     libssl-dev \
@@ -26,6 +27,7 @@ RUN apt-get update -y && \
     openssh-client \
     openssh-server \
     python-coverage \
+    python-dev \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \

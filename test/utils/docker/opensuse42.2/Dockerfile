@@ -22,6 +22,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     postgresql-server \
     python-coverage \
     python-cryptography \
+    python-devel \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \
