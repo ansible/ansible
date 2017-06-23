@@ -167,6 +167,12 @@ clean:
 	rm -f ./docs/man/man1/*
 	@echo "Cleaning up output from test runs"
 	rm -rf test/test_data
+	rm -rf shippable/
+	rm -rf logs/
+	rm -rf .cache/
+	rm -f test/units/.coverage*
+	rm -f test/results/*/*
+	find test/ -type f -name '*.retry' -delete
 	@echo "Cleaning up RPM building stuff"
 	rm -rf MANIFEST rpm-build
 	@echo "Cleaning up Debian building stuff"
@@ -176,13 +182,9 @@ clean:
 	rm -rf docs/js
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
-	@echo "Cleaning up tests"
-	rm -f test/units/.coverage*
-	rm -f test/results/*/*
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
 	$(MAKE) -C docs/api clean
-	find test/ -type f -name '*.retry' -delete
 
 python:
 	$(PYTHON) setup.py build
