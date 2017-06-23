@@ -33,7 +33,7 @@ version_added: "2.4"
 short_description: Manage Azure load balancers.
 
 description:
-    -
+    - Create and manage Azure load balancers
 
 options:
     resource_group:
@@ -93,6 +93,7 @@ try:
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
 
 class AzureRMLoadBalancer(AzureRMModuleBase):
     """Configuration class for an Azure RM load balancer resource"""
@@ -360,6 +361,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             self.fail('Error fetching public ip address {} - {}'.format(name, str(err)))
         return public_ip
 
+
 def load_balancer_to_dict(load_balancer):
     """Seralialize a LoadBalancer object to a dict"""
 
@@ -477,9 +479,11 @@ def load_balancer_to_dict(load_balancer):
 
     return result
 
+
 def random_name(prefix):
     """Generate a random name with a specific prefix"""
     return '{}{}'.format(prefix, random.randint(10000, 99999))
+
 
 def frontend_ip_configuration_id(subscription_id, resource_group_name, load_balancer_name, name):
     """Generate the id for a frontend ip configuration"""
@@ -490,6 +494,7 @@ def frontend_ip_configuration_id(subscription_id, resource_group_name, load_bala
         name
     )
 
+
 def backend_address_pool_id(subscription_id, resource_group_name, load_balancer_name, name):
     """Generate the id for a backend address pool"""
     return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/loadBalancers/{}/backendAddressPools/{}'.format(
@@ -499,6 +504,7 @@ def backend_address_pool_id(subscription_id, resource_group_name, load_balancer_
         name
     )
 
+
 def probe_id(subscription_id, resource_group_name, load_balancer_name, name):
     """Generate the id for a probe"""
     return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/loadBalancers/{}/probes/{}'.format(
@@ -507,6 +513,7 @@ def probe_id(subscription_id, resource_group_name, load_balancer_name, name):
         load_balancer_name,
         name
     )
+
 
 def main():
     """Main execution"""
