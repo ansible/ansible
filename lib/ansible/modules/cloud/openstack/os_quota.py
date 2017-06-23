@@ -99,6 +99,7 @@ options:
         required: False
         default: None
         description: Number of load balancers to allow.
+        version_added: "2.4"
     network:
         required: False
         default: None
@@ -111,6 +112,7 @@ options:
         required: False
         default: None
         description: Number of load balancer pools to allow.
+        version_added: "2.4"
     port:
         required: False
         default: None
