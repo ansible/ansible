@@ -517,7 +517,7 @@ def update_obj(client, device, module):
             str(resp.errmsg)
         )
         module.fail_json(msg=err, changed=False, failed=True)
-    return resp
+    return resp.data
 
 
 def format_custom_properties(properties):
@@ -557,7 +557,7 @@ def ensure_present(client, params, module):
         if not module.check_mode:
             # set known fields required for updating object
             obj = set_update_fields(obj, found_obj)
-            update_obj(client, obj, module)
+            obj = update_obj(client, obj, module)
         succeed(True, obj, module)
     succeed(False, obj, module)
 
