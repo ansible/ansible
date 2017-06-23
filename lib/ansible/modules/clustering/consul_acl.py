@@ -137,16 +137,26 @@ from ansible.module_utils.basic import to_text, AnsibleModule
 
 RULE_SCOPES = ['agent', 'event', 'key', 'keyring', 'node', 'operator', 'query', 'service', 'session']
 
-
-def execute(module):
-    state = module.params.get('state')
-    if state == 'present':
-        update_acl(module)
-    else:
-        remove_acl(module)
+_ARGUMENT_SPEC = dict(
+    mgmt_token=dict(required=True, no_log=True),
+    host=dict(default='localhost'),
+    scheme=dict(required=False, default='http'),
+    validate_certs=dict(required=False, type='bool', default=True),
+    name=dict(required=False),
+    port=dict(default=8500, type='int'),
+    rules=dict(default=None, required=False, type='list'),
+    state=dict(default='present', choices=['present', 'absent']),
+    token=dict(required=False),
+    token_type=dict(required=False, choices=['client', 'management'], default='client')
+)
 
 
 def update_acl(module):
+    """
+    Updates/Creates a ACL.
+    :param module:
+    :return:
+    """
     rules = module.params.get('rules')
     token = module.params.get('token')
     token_type = module.params.get('token_type')
@@ -176,6 +186,11 @@ def update_acl(module):
 
 
 def remove_acl(module):
+    """
+    Removes an ACL.
+    :param module:
+    :return:
+    """
     token = module.params.get('token')
     consul = get_consul_api(module)
     changed = consul.acl.info(token) is not None
@@ -199,6 +214,11 @@ def load_acl_with_token(consul, token):
 
 
 def encode_rules_as_hcl_string(rules):
+    """
+    Converts the given rules into the equivalent HCL (string) representation.
+    :param rules: the rules
+    :return: the equivalent HCL (string) representation of the rules
+    """
     rules_as_hcl = ""
     for rule in rules:
         rules_as_hcl += encode_rule_as_hcl_string(rule)
@@ -206,6 +226,11 @@ def encode_rules_as_hcl_string(rules):
 
 
 def encode_rule_as_hcl_string(rule):
+    """
+    Converts the given rule into the equivalent HCL (string) representation.
+    :param rule: the rule
+    :return: the equivalent HCL (string) representation of the rule
+    """
     if rule.pattern is not None:
         return '%s "%s" {\n  policy = "%s"\n}\n' % (rule.scope, rule.pattern, rule.policy)
     else:
@@ -213,12 +238,22 @@ def encode_rule_as_hcl_string(rule):
 
 
 def decode_rules_as_hcl_string(rules_as_hcl):
+    """
+    Converts the given HCL (string) representation of rules into a list of rule domain models.
+    :param rules_as_hcl: the HCL (string) representation of a collection of rules
+    :return: the equivalent domain model to the given rules
+    """
     rules_as_hcl = to_text(rules_as_hcl)
     rules_as_json = hcl.loads(rules_as_hcl)
     return decode_rules_as_json(rules_as_json)
 
 
 def decode_rules_as_json(rules_as_json):
+    """
+    Converts the given JSON representation of rules into a list of rule domain models.
+    :param rules_as_json: the JSON representation of a collection of rules
+    :return: the equivalent domain model to the given rules
+    """
     rules = RuleCollection()
     for scope in rules_as_json:
         if isinstance(rules_as_json[scope], str):
@@ -230,6 +265,12 @@ def decode_rules_as_json(rules_as_json):
 
 
 def encode_rules_as_json(rules):
+    """
+    Converts the given rules into the equivalent JSON representation according to the documentation:
+    https://www.consul.io/docs/guides/acl.html#rule-specification.
+    :param rules: the rules
+    :return: JSON representation of the given rules
+    """
     rules_as_json = defaultdict(dict)
     for rule in rules:
         if rule.pattern is not None:
@@ -244,6 +285,11 @@ def encode_rules_as_json(rules):
 
 
 def decode_rules_as_yml(rules_as_yml):
+    """
+    Converts the given YAML representation of rules into a list of rule domain models.
+    :param rules_as_yml: the YAML representation of a collection of rules
+    :return: the equivalent domain model to the given rules
+    """
     rules = RuleCollection()
     if rules_as_yml:
         for rule_as_yml in rules_as_yml:
@@ -263,6 +309,11 @@ def decode_rules_as_yml(rules_as_yml):
 
 
 def decode_acl_as_json(acl_as_json):
+    """
+    Converts the given JSON representation of an ACL into the equivalent domain model.
+    :param acl_as_json: the JSON representation of an ACL
+    :return: the equivalent domain model to the given ACL
+    """
     rules_as_hcl = acl_as_json["Rules"]
     rules = decode_rules_as_hcl_string(acl_as_json["Rules"]) if rules_as_hcl.strip() != "" else RuleCollection()
     return ACL(
@@ -274,6 +325,11 @@ def decode_acl_as_json(acl_as_json):
 
 
 def decode_acls_as_json(acls_as_json):
+    """
+    Converts the given JSON representation of ACLs into a list of ACL domain models.
+    :param acls_as_json: the JSON representation of a collection of ACLs
+    :return: list of equivalent domain models for the given ACLs (order not guaranteed to be the same)
+    """
     return [decode_acl_as_json(acl_as_json) for acl_as_json in acls_as_json]
 
 
@@ -284,6 +340,9 @@ class ConsulACLNotFoundException(Exception):
 
 
 class ACL:
+    """
+    Consul ACL. See: https://www.consul.io/docs/guides/acl.html.
+    """
     def __init__(self, rules, token_type, token, name):
         self.rules = rules
         self.token_type = token_type
@@ -303,6 +362,9 @@ class ACL:
 
 
 class Rule:
+    """
+    ACL rule. See: https://www.consul.io/docs/guides/acl.html#acl-rules-and-scope.
+    """
     def __init__(self, scope, policy, pattern=None):
         self.scope = scope
         self.policy = policy
@@ -323,6 +385,9 @@ class Rule:
 
 
 class RuleCollection:
+    """
+    Collection of ACL rules, which are part of a Consul ACL.
+    """
     def __init__(self):
         self._rules = {}
         for scope in RULE_SCOPES:
@@ -350,6 +415,11 @@ class RuleCollection:
         return encode_rules_as_hcl_string(self)
 
     def add(self, rule):
+        """
+        Adds the given rule to this collection.
+        :param rule: model of a rule
+        :raises ValueError: raised if there already exists a rule for a given scope and pattern
+        """
         if rule.pattern in self._rules[rule.scope]:
             patten_info = " and pattern '%s'" % rule.pattern if rule.pattern is not None else ""
             raise ValueError("Duplicate rule for scope '%s'%s" % (rule.scope, patten_info))
@@ -379,24 +449,19 @@ def check_dependencies(module):
 
 
 def main():
-    argument_spec = dict(
-        mgmt_token=dict(required=True, no_log=True),
-        host=dict(default='localhost'),
-        scheme=dict(required=False, default='http'),
-        validate_certs=dict(required=False, type='bool', default=True),
-        name=dict(required=False),
-        port=dict(default=8500, type='int'),
-        rules=dict(default=None, required=False, type='list'),
-        state=dict(default='present', choices=['present', 'absent']),
-        token=dict(required=False),
-        token_type=dict(required=False, choices=['client', 'management'], default='client')
-    )
-    module = AnsibleModule(argument_spec, supports_check_mode=False)
+    """
+    Main method.
+    """
+    module = AnsibleModule(_ARGUMENT_SPEC, supports_check_mode=False)
 
     check_dependencies(module)
 
     try:
-        execute(module)
+        state = module.params.get('state')
+        if state == 'present':
+            update_acl(module)
+        else:
+            remove_acl(module)
     except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
             module.params.get('host'), module.params.get('port'), str(e)))
