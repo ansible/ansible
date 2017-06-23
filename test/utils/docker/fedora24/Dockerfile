@@ -35,7 +35,6 @@ RUN dnf clean all && \
     openssh-server \
     openssl-devel \
     procps \
-    python2-dnf \
     python-coverage \
     python-devel \
     python-httplib2 \
@@ -49,6 +48,7 @@ RUN dnf clean all && \
     python-pip \
     python-setuptools \
     python-virtualenv \
+    python2-dnf \
     PyYAML \
     rpm-build \
     rubygems \
