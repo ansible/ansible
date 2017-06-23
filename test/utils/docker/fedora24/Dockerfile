@@ -35,8 +35,7 @@ RUN dnf clean all && \
     openssh-server \
     openssl-devel \
     procps \
-    python2-dnf \
-    python-coverage \
+    python-cryptography \
     python-devel \
     python-httplib2 \
     python-jinja2 \
@@ -49,6 +48,7 @@ RUN dnf clean all && \
     python-pip \
     python-setuptools \
     python-virtualenv \
+    python2-dnf \
     PyYAML \
     rpm-build \
     rubygems \
@@ -72,6 +72,6 @@ RUN ssh-keygen -q -t dsa -N '' -f /etc/ssh/ssh_host_dsa_key && \
     ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
     cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys && \
     for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
-RUN pip install junit-xml
+RUN pip install coverage junit-xml
 ENV container=docker
 CMD ["/usr/sbin/init"]
