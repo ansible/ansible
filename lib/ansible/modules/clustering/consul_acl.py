@@ -135,68 +135,101 @@ from requests.exceptions import ConnectionError
 from ansible.module_utils.basic import to_text, AnsibleModule
 
 
-RULE_SCOPES = ['agent', 'event', 'key', 'keyring', 'node', 'operator', 'query', 'service', 'session']
+RULE_SCOPES = ["agent", "event", "key", "keyring", "node", "operator", "query", "service", "session"]
 
-_ARGUMENT_SPEC = dict(
-    mgmt_token=dict(required=True, no_log=True),
-    host=dict(default='localhost'),
-    scheme=dict(required=False, default='http'),
-    validate_certs=dict(required=False, type='bool', default=True),
-    name=dict(required=False),
-    port=dict(default=8500, type='int'),
-    rules=dict(default=None, required=False, type='list'),
-    state=dict(default='present', choices=['present', 'absent']),
-    token=dict(required=False),
-    token_type=dict(required=False, choices=['client', 'management'], default='client')
-)
+MANAGEMENT_PARAMETER_NAME = "mgmt_token"
+HOST_PARAMETER_NAME = "host"
+SCHEME_PARAMETER_NAME = "scheme"
+VALIDATE_CERTS_PARAMETER_NAME = "validate_certs"
+NAME_PARAMETER_NAME = "name"
+PORT_PARAMETER_NAME = "port"
+RULES_PARAMETER_NAME = "rules"
+STATE_PARAMETER_NAME = "state"
+TOKEN_PARAMETER_NAME = "token"
+TOKEN_TYPE_PARAMETER_NAME = "token_type"
+
+PRESENT_STATE_VALUE = "present"
+ABSENT_STATE_VALUE = "absent"
+
+CLIENT_TOKEN_TYPE_VALUE = "client"
+MANAGEMENT_TOKEN_TYPE_VALUE = "management"
+
+_POLICY_JSON_PROPERTY = "policy"
+_RULES_JSON_PROPERTY = "Rules"
+_TOKEN_JSON_PROPERTY = "ID"
+_TOKEN_TYPE_JSON_PROPERTY = "Type"
+_NAME_JSON_PROPERTY = "Name"
+_POLICY_YML_PROPERTY = "policy"
+_POLICY_HCL_PROPERTY = "policy"
+
+_ARGUMENT_SPEC = {
+    MANAGEMENT_PARAMETER_NAME: dict(required=True, no_log=True),
+    HOST_PARAMETER_NAME: dict(default='localhost'),
+    SCHEME_PARAMETER_NAME: dict(required=False, default='http'),
+    VALIDATE_CERTS_PARAMETER_NAME: dict(required=False, type='bool', default=True),
+    NAME_PARAMETER_NAME: dict(required=False),
+    PORT_PARAMETER_NAME: dict(default=8500, type='int'),
+    RULES_PARAMETER_NAME: dict(default=None, required=False, type='list'),
+    STATE_PARAMETER_NAME: dict(default=PRESENT_STATE_VALUE, choices=[PRESENT_STATE_VALUE, ABSENT_STATE_VALUE]),
+    TOKEN_PARAMETER_NAME: dict(required=False),
+    TOKEN_TYPE_PARAMETER_NAME: dict(required=False, choices=[CLIENT_TOKEN_TYPE_VALUE, MANAGEMENT_TOKEN_TYPE_VALUE],
+                                    default=CLIENT_TOKEN_TYPE_VALUE)
+}
 
 
-def update_acl(module):
+def update_acl(consul, configuration):
     """
-    Updates/Creates a ACL.
-    :param module:
-    :return:
+    Updates an ACL.
+    :param consul: the consul client
+    :param configuration: the run configuration
+    :return: the output of the update
     """
-    rules = module.params.get('rules')
-    token = module.params.get('token')
-    token_type = module.params.get('token_type')
-    name = module.params.get('name')
-    consul = get_consul_api(module)
-    changed = False
+    existing_acl = load_acl_with_token(consul, configuration.token)
+    changed = existing_acl.rules != configuration.rules
 
-    rules = decode_rules_as_yml(rules)
-    rules_as_hcl = encode_rules_as_hcl_string(rules) if len(rules) > 0 else None
+    if changed:
+        name = configuration.name if configuration.name is not None else existing_acl.name
+        rules_as_hcl = encode_rules_as_hcl_string(configuration.rules)
+        updated_token = consul.acl.update(
+            configuration.token, name=name, type=configuration.token_type, rules=rules_as_hcl)
+        assert updated_token == configuration.token
 
-    if token:
-        existing_token = load_acl_with_token(consul, token)
-        changed = existing_token.rules != rules
-        if changed:
-            name = name if name is not None else existing_token.name
-            token = consul.acl.update(token, name=name, type=token_type, rules=rules_as_hcl)
+    return Output(changed=changed, token=configuration.token, rules=configuration.rules)
+
+
+def create_acl(consul, configuration):
+    """
+    Creates an ACL.
+    :param consul: the consul client
+    :param configuration: the run configuration
+    :return: the output of the creation
+    """
+    existing_acls_mapped_by_name = dict((acl.name, acl) for acl in decode_acls_as_json(consul.acl.list()))
+    if configuration.name not in existing_acls_mapped_by_name:
+        rules_as_hcl = encode_rules_as_hcl_string(configuration.rules) if len(configuration.rules) > 0 else None
+        token = consul.acl.create(name=configuration.name, type=configuration.token_type, rules=rules_as_hcl)
+        rules = configuration.rules
+        changed = True
     else:
-        existing_acls_mapped_by_name = dict((acl.name, acl) for acl in decode_acls_as_json(consul.acl.list()))
-        if name not in existing_acls_mapped_by_name:
-            token = consul.acl.create(name=name, type=token_type, rules=rules_as_hcl)
-            changed = True
-        else:
-            token = existing_acls_mapped_by_name[name].token
-            rules = existing_acls_mapped_by_name[name].rules
+        token = existing_acls_mapped_by_name[configuration.name].token
+        rules = existing_acls_mapped_by_name[configuration.name].rules
+        changed = False
 
-    module.exit_json(changed=changed, token=token, rules=encode_rules_as_json(rules))
+    return Output(changed=changed, token=token, rules=rules)
 
 
-def remove_acl(module):
+def remove_acl(consul, configuration):
     """
     Removes an ACL.
-    :param module:
-    :return:
+    :param consul: the consul client
+    :param configuration: the run configuration
+    :return: the output of the removal
     """
-    token = module.params.get('token')
-    consul = get_consul_api(module)
+    token = configuration.token
     changed = consul.acl.info(token) is not None
     if changed:
         consul.acl.destroy(token)
-    module.exit_json(changed=changed, token=token)
+    return Output(changed=changed, token=token)
 
 
 def load_acl_with_token(consul, token):
@@ -217,8 +250,13 @@ def encode_rules_as_hcl_string(rules):
     """
     Converts the given rules into the equivalent HCL (string) representation.
     :param rules: the rules
-    :return: the equivalent HCL (string) representation of the rules
+    :return: the equivalent HCL (string) representation of the rules. Will be None if there is no rules (see internal
+    note for justification)
     """
+    if len(rules) == 0:
+        # Note: empty string is not valid HCL according to `hcl.load` however, the ACL `Rule` property will be an empty
+        # string if there is no rules...
+        return None
     rules_as_hcl = ""
     for rule in rules:
         rules_as_hcl += encode_rule_as_hcl_string(rule)
@@ -232,7 +270,7 @@ def encode_rule_as_hcl_string(rule):
     :return: the equivalent HCL (string) representation of the rule
     """
     if rule.pattern is not None:
-        return '%s "%s" {\n  policy = "%s"\n}\n' % (rule.scope, rule.pattern, rule.policy)
+        return '%s "%s" {\n  %s = "%s"\n}\n' % (rule.scope, rule.pattern, _POLICY_HCL_PROPERTY, rule.policy)
     else:
         return '%s = "%s"\n' % (rule.scope, rule.policy)
 
@@ -260,7 +298,7 @@ def decode_rules_as_json(rules_as_json):
             rules.add(Rule(scope, rules_as_json[scope]))
         else:
             for pattern, policy in rules_as_json[scope].items():
-                rules.add(Rule(scope, policy['policy'], pattern))
+                rules.add(Rule(scope, policy[_POLICY_JSON_PROPERTY], pattern))
     return rules
 
 
@@ -276,7 +314,7 @@ def encode_rules_as_json(rules):
         if rule.pattern is not None:
             assert rule.pattern not in rules_as_json[rule.scope]
             rules_as_json[rule.scope][rule.pattern] = {
-                "policy": rule.policy
+                _POLICY_JSON_PROPERTY: rule.policy
             }
         else:
             assert rule.scope not in rules_as_json
@@ -298,8 +336,9 @@ def decode_rules_as_yml(rules_as_yml):
                 if scope in rule_as_yml:
                     if rule_as_yml[scope] is None:
                         raise ValueError("Rule for '%s' does not have a value associated to the scope" % scope)
-                    policy = rule_as_yml["policy"] if "policy" in rule_as_yml else rule_as_yml[scope]
-                    pattern = rule_as_yml[scope] if "policy" in rule_as_yml else None
+                    policy = rule_as_yml[_POLICY_YML_PROPERTY] if _POLICY_YML_PROPERTY in rule_as_yml \
+                        else rule_as_yml[scope]
+                    pattern = rule_as_yml[scope] if _POLICY_YML_PROPERTY in rule_as_yml else None
                     rules.add(Rule(scope, policy, pattern))
                     rule_added = True
                     break
@@ -314,13 +353,14 @@ def decode_acl_as_json(acl_as_json):
     :param acl_as_json: the JSON representation of an ACL
     :return: the equivalent domain model to the given ACL
     """
-    rules_as_hcl = acl_as_json["Rules"]
-    rules = decode_rules_as_hcl_string(acl_as_json["Rules"]) if rules_as_hcl.strip() != "" else RuleCollection()
+    rules_as_hcl = acl_as_json[_RULES_JSON_PROPERTY]
+    rules = decode_rules_as_hcl_string(acl_as_json[_RULES_JSON_PROPERTY]) if rules_as_hcl.strip() != "" \
+        else RuleCollection()
     return ACL(
         rules=rules,
-        token_type=acl_as_json["Type"],
-        token=acl_as_json["ID"],
-        name=acl_as_json["Name"]
+        token_type=acl_as_json[_TOKEN_TYPE_JSON_PROPERTY],
+        token=acl_as_json[_TOKEN_JSON_PROPERTY],
+        name=acl_as_json[_NAME_JSON_PROPERTY]
     )
 
 
@@ -337,6 +377,34 @@ class ConsulACLNotFoundException(Exception):
     """
     Exception raised if an ACL with is not found.
     """
+
+
+class Configuration:
+    """
+    Configuration for this module.
+    """
+    def __init__(self, management_token=None, host=None, scheme=None, validate_certs=None, name=None, port=None,
+                 rules=None, state=None, token=None, token_type=None):
+        self.management_token = management_token    # type: str
+        self.host = host    # type: str
+        self.scheme = scheme    # type: str
+        self.validate_certs = validate_certs    # type: bool
+        self.name = name    # type: str
+        self.port = port    # type: bool
+        self.rules = rules    # type: RuleCollection
+        self.state = state    # type: str
+        self.token = token    # type: str
+        self.token_type = token_type    # type: str
+
+
+class Output:
+    """
+    Output of an action of this module.
+    """
+    def __init__(self, changed=None, token=None, rules=None):
+        self.changed = changed  # type: bool
+        self.token = token  # type: str
+        self.rules = rules  # type: RuleCollection
 
 
 class ACL:
@@ -426,26 +494,34 @@ class RuleCollection:
         self._rules[rule.scope][rule.pattern] = rule
 
 
-def get_consul_api(module):
-    token = module.params.get('mgmt_token')
+def get_consul_client(configuration):
+    """
+    Gets a Consul client for the given configuration.
+
+    Does not check if the Consul client can connect.
+    :param configuration: the run configuration
+    :return: Consul client
+    """
+    token = configuration.management_token
     if token is None:
-        token = module.params.get('token')
-    assert token is not None, "Expecting the management token to alway be set"
-    return consul.Consul(host=module.params.get('host'),
-                         port=module.params.get('port'),
-                         scheme=module.params.get('scheme'),
-                         verify=module.params.get('validate_certs'),
-                         token=token)
+        token = configuration.token
+    assert token is not None, "Expecting the management token to always be set"
+    return consul.Consul(host=configuration.host, port=configuration.port, scheme=configuration.scheme,
+                         verify=configuration.validate_certs, token=token)
 
 
-def check_dependencies(module):
+def check_dependencies():
+    """
+    Checks that the required dependencies have been imported.
+    :exception ImportError: if it is detected that any of the required dependencies have not been iported
+    """
     if not python_consul_installed:
-        module.fail_json(msg="python-consul required for this module. "
-                             "See: http://python-consul.readthedocs.org/en/latest/#installation")
+        raise ImportError("python-consul required for this module. "
+                          "See: http://python-consul.readthedocs.org/en/latest/#installation")
 
     if not pyhcl_installed:
-        module.fail_json(msg="pyhcl required for this module. "
-                             "See: https://pypi.python.org/pypi/pyhcl")
+        raise ImportError("pyhcl required for this module. "
+                          "See: https://pypi.python.org/pypi/pyhcl")
 
 
 def main():
@@ -454,17 +530,40 @@ def main():
     """
     module = AnsibleModule(_ARGUMENT_SPEC, supports_check_mode=False)
 
-    check_dependencies(module)
+    try:
+        check_dependencies()
+    except ImportError as e:
+        module.fail_json(msg=str(e))
+
+    configuration = Configuration(
+        management_token=module.params.get(MANAGEMENT_PARAMETER_NAME),
+        host=module.params.get(HOST_PARAMETER_NAME),
+        scheme=module.params.get(SCHEME_PARAMETER_NAME),
+        validate_certs=module.params.get(VALIDATE_CERTS_PARAMETER_NAME),
+        name=module.params.get(NAME_PARAMETER_NAME),
+        port=module.params.get(PORT_PARAMETER_NAME),
+        rules=decode_rules_as_yml(module.params.get(RULES_PARAMETER_NAME)),
+        state=module.params.get(STATE_PARAMETER_NAME),
+        token=module.params.get(TOKEN_PARAMETER_NAME),
+        token_type=module.params.get(TOKEN_TYPE_PARAMETER_NAME)
+    )
+    consul_client = get_consul_client(configuration)
 
     try:
-        state = module.params.get('state')
-        if state == 'present':
-            update_acl(module)
+        if configuration.state == PRESENT_STATE_VALUE:
+            if configuration.token:
+                output = update_acl(consul_client, configuration)
+            else:
+                output = create_acl(consul_client, configuration)
         else:
-            remove_acl(module)
+            output = remove_acl(consul_client, configuration)
     except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
-            module.params.get('host'), module.params.get('port'), str(e)))
+            configuration.host, configuration.port, str(e)))
+        raise
+
+    module.exit_json(changed=output.changed, token=output.token,
+                     rules=encode_rules_as_json(output.rules) if output.rules is not None else None)
 
 
 if __name__ == '__main__':
