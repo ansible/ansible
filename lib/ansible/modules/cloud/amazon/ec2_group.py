@@ -406,10 +406,7 @@ def authorize_ip(type, changed, client, group, groupRules,
             del groupRules[rule_id]
         else:
             if not module.check_mode:
-                try:
-                    ip_permission = serialize_ip_grant(rule, thisip, ethertype)
-                except ipaddress.AddressValueError as e:
-                    module.fail_json(msg=e.message)
+                ip_permission = serialize_ip_grant(rule, thisip, ethertype)
                 if ip_permission:
                     try:
                         if type == "in":
@@ -420,7 +417,7 @@ def authorize_ip(type, changed, client, group, groupRules,
                                                                    IpPermissions=[ip_permission])
                     except ClientError as e:
                         module.fail_json(msg="Unable to authorize %s for ip %s security group '%s' - %s" %
-                                             (type, thisip, group.group_name, e.message),
+                                             (type, thisip, group.group_name, e),
                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             changed = True
     return changed, ip_permission
@@ -529,7 +526,7 @@ def main():
     except NoCredentialsError as e:
         module.fail_json(msg="Error in describe_security_groups: %s" % "Unable to locate credentials", exception=traceback.format_exc())
     except ClientError as e:
-        module.fail_json(msg="Error in describe_security_groups: %s" % e.message, exception=traceback.format_exc(),
+        module.fail_json(msg="Error in describe_security_groups: %s" % e, exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
 
     for sg in security_groups:
@@ -558,7 +555,7 @@ def main():
                 if not module.check_mode:
                     group.delete()
             except ClientError as e:
-                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message),
+                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e),
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             else:
                 group = None
@@ -632,7 +629,7 @@ def main():
                                 except ClientError as e:
                                     module.fail_json(
                                         msg="Unable to authorize ingress for group %s security group '%s' - %s" %
-                                            (group_id, group.group_name, e.message),
+                                            (group_id, group.group_name, e),
                                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                         changed = True
                 elif ip:
@@ -659,7 +656,7 @@ def main():
                     except ClientError as e:
                         module.fail_json(
                             msg="Unable to revoke ingress for security group '%s' - %s" %
-                                (group.group_name, e.message),
+                                (group.group_name, e),
                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
@@ -697,7 +694,7 @@ def main():
                                 except ClientError as e:
                                     module.fail_json(
                                         msg="Unable to authorize egress for group %s security group '%s' - %s" %
-                                            (group_id, group.group_name, e.message),
+                                            (group_id, group.group_name, e),
                                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                         changed = True
                 elif ip:
@@ -730,7 +727,7 @@ def main():
                         module.fail_json(msg="Unable to authorize egress for ip %s security group '%s' - %s" %
                                              ('0.0.0.0/0',
                                               group.group_name,
-                                              e.message),
+                                              e),
                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
             else:
@@ -750,7 +747,7 @@ def main():
                             module.fail_json(msg="Unable to revoke egress for ip %s security group '%s' - %s" %
                                                  (grant,
                                                   group.group_name,
-                                                  e.message),
+                                                  e),
                                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                     changed = True
 
