@@ -318,7 +318,7 @@ azure_vm:
     description: Facts about the current state of the object. Note that facts are not part of the registered output but available directly.
     returned: always
     type: complex
-    example: {
+    contains: {
         "properties": {
             "hardwareProfile": {
                 "vmSize": "Standard_D1"
@@ -508,8 +508,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             open_ports=dict(type='list'),
             network_interface_names=dict(type='list', aliases=['network_interfaces']),
             remove_on_absent=dict(type='list', default=['all']),
-            virtual_network_name=dict(type='str', aliases=['virtual_network']),
             virtual_network_resource_group=dict(type = 'str'),
+            virtual_network_name=dict(type='str', aliases=['virtual_network']),
             subnet_name=dict(type='str', aliases=['subnet']),
             allocated=dict(type='bool', default=True),
             restarted=dict(type='bool', default=False),
@@ -541,8 +541,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.force = None
         self.public_ip_allocation_method = None
         self.open_ports = None
-        self.virtual_network_name = None
         self.virtual_network_resource_group = None
+        self.virtual_network_name = None
         self.subnet_name = None
         self.allocated = None
         self.restarted = None
@@ -1222,14 +1222,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         if self.virtual_network_name:
             if self.virtual_network_resource_group:
-                try:                                                                                                                        
-                    self.network_client.virtual_networks.list(self.virtual_network_resource_group, self.virtual_network_name)   
+                try:
+                    self.network_client.virtual_networks.list(self.virtual_network_resource_group, self.virtual_network_name)
                     virtual_network_name = self.virtual_network_name
                 except Exception as exc:
                     self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
             else:
-                try:                                                                                                                        
-                    self.network_client.virtual_networks.list(self.resource_group, self.virtual_network_name)      
+                try:
+                    self.network_client.virtual_networks.list(self.resource_group, self.virtual_network_name)
                     virtual_network_name = self.virtual_network_name
                 except Exception as exc:
                     self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
@@ -1261,24 +1261,21 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             except Exception as exc:
                 self.fail("Error: fetching subnet {0} - {1}".format(self.subnet_name, str(exc)))
         else:
-            no_subnets_msg_1 = "Error: unable to find a subnet in virtual network {0}. A virtual network " \                       
+            no_subnets_msg = "Error: unable to find a subnet in virtual network {0}. A virtual network " \
                              "with at least one subnet must exist in order to create a NIC for the virtual " \
-                             "machine in {1} resource_group.".format(virtual_network_name, self.resource_group)
-            no_subnets_msg_2 = "Error: unable to find a subnet in virtual network {0}. A virtual network " \
-                             "with at least one subnet must exist in order to create a NIC for the virtual " \
-                             "machine in {1} resource_group.".format(virtual_network_name, self.virtual_network_resource_group)
+                             "machine.".format(virtual_network_name)
 
             subnet_id = None
             if self.virtual_network_resource_group:
                 try:
                     subnets = self.network_client.subnets.list(self.virtual_network_resource_group, virtual_network_name)
                 except CloudError:
-                    self.fail(no_subnets_msg_2)
+                    self.fail(no_subnets_msg)
             else:
                 try:
                     subnets = self.network_client.subnets.list(self.resource_group, virtual_network_name)
                 except CloudError:
-                    self.fail(no_subnets_msg_1)
+                    self.fail(no_subnets_msg)
 
             for subnet in subnets:
                 subnet_id = subnet.id
