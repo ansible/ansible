@@ -180,7 +180,7 @@ def remove_acl(module):
     consul = get_consul_api(module)
     changed = token and consul.acl.info(token)
     if changed:
-        token = consul.acl.destroy(token)
+        consul.acl.destroy(token)
 
     module.exit_json(changed=changed, token=token)
 
