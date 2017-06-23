@@ -29,9 +29,9 @@ class TestUrlparse(unittest.TestCase):
 
     def test_get_s3_connection(self):
         aws_connect_kwargs = dict(aws_access_key_id="access_key",
-                                    aws_secret_access_key="secret_key")
-        location=None
-        rgw=True
-        s3_url="http://bla.blubb"
+                                  aws_secret_access_key="secret_key")
+        location = None
+        rgw = True
+        s3_url = "http://bla.blubb"
         actual = s3.get_s3_connection(None, aws_connect_kwargs, location, rgw, s3_url)
         self.assertEqual(bool("bla.blubb" in str(actual._endpoint)), True)
