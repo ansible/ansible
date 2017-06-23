@@ -6,4 +6,4 @@
 
 - import_tasks: update-acl.yml
 
-- import_tasks: delete-acl.yml
+- import_tasks: remove-acl.yml

@@ -7,29 +7,36 @@
     name: "{{ test_consul_acl_token_name }}"
   register: created_acl
 
-- name: delete the ACL
+- name: remove the ACL
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"
     token: "{{ created_acl.token }}"
     state: absent
-  register: deleted_acl
+  register: removed_acl
 
-# TODO: This does little to actually verify that the ACL has been deleted
-- name: verify ACL has been deleted
+- debug:
+    var: removed_acl.token | length
+
+# TODO: This does little to actually verify that the ACL has been removed
+- name: verify ACL has been removed
   assert:
     that:
-      - deleted_acl.changed
+      - removed_acl.changed
+      - removed_acl.token | length == 36
 
-- name: delete the ACL again
+- name: remove the ACL again
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"
     token: "{{ created_acl.token }}"
     state: absent
-  register: doubly deleted_acl
+  register: doubly_removed_acl
+
+- debug:
+    var: doubly_removed_acl
 
 - name: verify idempotence when deleting an ACL
   assert:
     that:
-      - not deleted_acl.changed
+      - not doubly_removed_acl.changed

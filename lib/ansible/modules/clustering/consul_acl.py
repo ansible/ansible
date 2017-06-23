@@ -388,9 +388,8 @@ def main():
         port=dict(default=8500, type='int'),
         rules=dict(default=None, required=False, type='list'),
         state=dict(default='present', choices=['present', 'absent']),
-        token=dict(required=False, no_log=True),
-        token_type=dict(
-            required=False, choices=['client', 'management'], default='client')
+        token=dict(required=False),
+        token_type=dict(required=False, choices=['client', 'management'], default='client')
     )
     module = AnsibleModule(argument_spec, supports_check_mode=False)
 
