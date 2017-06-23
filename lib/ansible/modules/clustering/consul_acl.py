@@ -158,9 +158,10 @@ def update_acl(module):
     rules_as_hcl = encode_rules_as_hcl_string(rules) if len(rules) > 0 else None
 
     if token:
-        existing_rules = load_rules_for_token(consul, token)
-        changed = existing_rules != rules
+        existing_token = load_acl_with_token(consul, token)
+        changed = existing_token.rules != rules
         if changed:
+            name = name if name is not None else existing_token.name
             token = consul.acl.update(token, name=name, type=token_type, rules=rules_as_hcl)
     else:
         existing_acls_mapped_by_name = dict((acl.name, acl) for acl in decode_acls_as_json(consul.acl.list()))
@@ -184,18 +185,18 @@ def remove_acl(module):
     module.exit_json(changed=changed, token=token)
 
 
-def load_rules_for_token(consul, token):
+def load_acl_with_token(consul, token):
     """
-    Loads the ACL rules for the ACL with the given token (token == rule ID).
+    Loads the ACL with the given token (token == rule ID).
     :param consul: the consul client
     :param token: the ACL "token"/ID (not name)
-    :return: the collection of rules associated to the given token
+    :return: the ACL associated to the given token
     :exception ConsulACLTokenNotFoundException: raised if the given token does not exist
     """
     acl_as_json = consul.acl.info(token)
     if acl_as_json is None:
         raise ConsulACLNotFoundException(token)
-    return decode_acl_as_json(acl_as_json).rules
+    return decode_acl_as_json(acl_as_json)
 
 
 def encode_rules_as_hcl_string(rules):
