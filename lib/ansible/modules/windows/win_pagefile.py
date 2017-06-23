@@ -39,7 +39,6 @@ options:
   drive:
     description:
       - The drive of the pagefile.
-    required: false
   initial_size:
     description:
       - The initial size of the pagefile.
@@ -49,30 +48,22 @@ options:
   override:
     description:
       - Override the current pagefile on the drive.
-    choices:
-      - true
-      - false
-    default: true
+    type: bool
+    default: 'yes'
   system_managed:
     description:
       - Configures current pagefile to be managed by the system.
-    choices:
-      - true
-      - false
-    default: false
+    type: bool
+    default: 'no'
   automatic:
     description:
       - Configures AutomaticManagedPagefile for the entire system.
-    choices:
-      - true
-      - false
+    type: bool
   remove_all:
     description:
       - Remove all pagefiles in the system, not including automatic managed.
-    choices:
-      - true
-      - false
-    default: false
+    type: bool
+    default: 'no'
   state:
     description:
       - State of the pagefile.
@@ -86,7 +77,8 @@ notes:
 - InitialSize 0 and MaximumSize 0 means the pagefile is managed by the system.
 - Value out of range exception may be caused by several different issues, two common problems - No such drive, Pagefile size is too small.
 - Setting a pagefile when AutomaticManagedPagefile is on will disable the AutomaticManagedPagefile.
-author: "Liran Nisanov (@LiranNis)"
+author:
+- Liran Nisanov (@LiranNis)
 '''
 
 EXAMPLES = r'''
@@ -102,7 +94,7 @@ EXAMPLES = r'''
     drive: C
     initial_size: 1024
     maximum_size: 1024
-    override: false
+    override: no
     state: present
 
 - name: Set C pagefile, override if exists
@@ -119,16 +111,16 @@ EXAMPLES = r'''
 
 - name: Remove all current pagefiles, enable AutomaticManagedPagefile and query at the end
   win_pagefile:
-    remove_all: true
-    automatic: true
+    remove_all: yes
+    automatic: yes
 
 - name: Remove all pagefiles disable AutomaticManagedPagefile and set C pagefile
   win_pagefile:
     drive: C
     initial_size: 2048
     maximum_size: 2048
-    remove_all: true
-    automatic: false
+    remove_all: yes
+    automatic: no
     state: present
 
 - name: Set D pagefile, override if exists

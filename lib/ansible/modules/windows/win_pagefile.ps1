@@ -33,10 +33,6 @@ Function Get-Pagefile($path)
 
 ########
 
-$result = @{ 
-    changed = $false
-}
-
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name '_ansible_check_mode' -type 'bool' -default $false
 
@@ -50,7 +46,9 @@ $removeAll = Get-AnsibleParam -obj $params -name "remove_all" -type "bool" -defa
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "query" -validateset "present","absent","query"
 $systemManaged = Get-AnsibleParam -obj $params -name "system_managed" -type "bool" -default $false
 
-$ErrorActionPreference = "Stop"
+$result = @{
+    changed = $false
+}
 
 if ($removeAll) {
     $currentPageFiles = Get-WmiObject Win32_PageFileSetting
