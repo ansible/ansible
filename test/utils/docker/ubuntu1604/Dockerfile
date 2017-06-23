@@ -29,6 +29,7 @@ RUN apt-get update -y && \
     openssh-client \
     openssh-server \
     python-coverage \
+    python-cryptography \
     python-dev \
     python-dbus \
     python-httplib2 \

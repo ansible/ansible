@@ -26,6 +26,7 @@ RUN apt-get update -y && \
     openssh-client \
     openssh-server \
     python3-coverage \
+    python3-cryptography \
     python3-dev \
     python3-dbus \
     python3-httplib2 \

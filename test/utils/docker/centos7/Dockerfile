@@ -30,6 +30,7 @@ RUN yum clean all && \
     openssh-server \
     openssl-devel \
     python-coverage \
+    python-cryptography \
     python-devel \
     python-httplib2 \
     python-jinja2 \

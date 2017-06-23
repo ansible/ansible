@@ -36,6 +36,7 @@ RUN dnf clean all && \
     openssl-devel \
     procps \
     python-coverage \
+    python-cryptography \
     python-devel \
     python-httplib2 \
     python-jinja2 \
