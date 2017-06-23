@@ -190,10 +190,12 @@ options:
               a network interface, at least one Virtual Network with one Subnet must exist.
         default: null
         required: false
-    virtual_network_resource_group:                                        
-        description: 
-            - When creating a virtual machine, if a specific virtual network from another resource group should be 
-              used, use thus parameter to specify the resource group to use. 
+    virtual_network_resource_group:
+        description:
+            - When creating a virtual machine, if a specific virtual network from another resource group should be
+              used, use thus parameter to specify the resource group to use.
+        default: null
+        required: false
     virtual_network_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
