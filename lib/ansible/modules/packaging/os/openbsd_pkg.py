@@ -218,9 +218,8 @@ def package_present(names, pkg_spec, module):
             #
             # It is important to note that "version" relates to the
             # packages-specs(7) notion of a version. If using the branch syntax
-            # (like "python%3.5") the version number is considered part of the
-            # stem, and the pkg_add behavior behaves the same as if the name did
-            # not contain a version (which it strictly speaking does not).
+            # (like "python%3.5") even though a branch name may look like a
+            # version string it is not used an one by pkg_add.
             if pkg_spec[name]['version'] or build is True:
                 # Depend on the return code.
                 module.debug("package_present(): depending on return code for name '%s'" % name)
@@ -235,10 +234,7 @@ def package_present(names, pkg_spec, module):
                     # "file:/local/package/directory/ is empty" message on stderr
                     # while still installing the package, so we need to look for
                     # for a message like "packagename-1.0: ok" just in case.
-                    if pkg_spec[name]['style'] == 'branch':
-                        match = re.search("\W%s-[^:]+: ok\W" % pkg_spec[name]['pkgname'], pkg_spec[name]['stdout'])
-                    else:
-                        match = re.search("\W%s-[^:]+: ok\W" % name, pkg_spec[name]['stdout'])
+                    match = re.search("\W%s-[^:]+: ok\W" % pkg_spec[name]['stem'], pkg_spec[name]['stdout'])
 
                     if match:
                         # It turns out we were able to install the package.
@@ -375,59 +371,79 @@ def parse_package_name(names, pkg_spec, module):
 
         # If name includes a version.
         if version_match:
-            match = re.search("^(?P<stem>.*)-(?P<version>[0-9][^-]*)(?P<flavor_separator>-)?(?P<flavor>[a-z].*)?$", name)
+            match = re.search("^(?P<stem>[^%]+)-(?P<version>[0-9][^-]*)(?P<flavor_separator>-)?(?P<flavor>[a-z].*)?(%(?P<branch>.+))?$", name)
             if match:
                 pkg_spec[name]['stem']              = match.group('stem')
                 pkg_spec[name]['version_separator'] = '-'
                 pkg_spec[name]['version']           = match.group('version')
                 pkg_spec[name]['flavor_separator']  = match.group('flavor_separator')
                 pkg_spec[name]['flavor']            = match.group('flavor')
+                pkg_spec[name]['branch']            = match.group('branch')
                 pkg_spec[name]['style']             = 'version'
+                module.debug("version_match: stem: %s, version: %s, flavor_separator: %s, flavor: %s, branch: %s, style: %s" %
+                    (
+                        pkg_spec[name]['stem'],
+                        pkg_spec[name]['version'],
+                        pkg_spec[name]['flavor_separator'],
+                        pkg_spec[name]['flavor'],
+                        pkg_spec[name]['branch'],
+                        pkg_spec[name]['style']
+                    )
+                )
             else:
                 module.fail_json(msg="unable to parse package name at version_match: " + name)
 
         # If name includes no version but is version-less ("--").
         elif versionless_match:
-            match = re.search("^(?P<stem>.*)--(?P<flavor>[a-z].*)?$", name)
+            match = re.search("^(?P<stem>[^%]+)--(?P<flavor>[a-z].*)?(%(?P<branch>.+))?$", name)
             if match:
                 pkg_spec[name]['stem']              = match.group('stem')
                 pkg_spec[name]['version_separator'] = '-'
                 pkg_spec[name]['version']           = None
                 pkg_spec[name]['flavor_separator']  = '-'
                 pkg_spec[name]['flavor']            = match.group('flavor')
+                pkg_spec[name]['branch']            = match.group('branch')
                 pkg_spec[name]['style']             = 'versionless'
+                module.debug("versionless_match: stem: %s, flavor: %s, branch: %s, style: %s" %
+                    (
+                        pkg_spec[name]['stem'],
+                        pkg_spec[name]['flavor'],
+                        pkg_spec[name]['branch'],
+                        pkg_spec[name]['style']
+                    )
+                )
             else:
                 module.fail_json(msg="unable to parse package name at versionless_match: " + name)
 
-        # If name includes no version, and is not version-less, it is all a stem.
+        # If name includes no version, and is not version-less, it is all a
+        # stem, possibly with a branch (%branchname) tacked on at the
+        # end.
         else:
-            match = re.search("^(?P<stem>.*)$", name)
+            match = re.search("^(?P<stem>[^%]+)(%(?P<branch>.+))?$", name)
             if match:
                 pkg_spec[name]['stem']              = match.group('stem')
                 pkg_spec[name]['version_separator'] = None
                 pkg_spec[name]['version']           = None
                 pkg_spec[name]['flavor_separator']  = None
                 pkg_spec[name]['flavor']            = None
+                pkg_spec[name]['branch']            = match.group('branch')
                 pkg_spec[name]['style']             = 'stem'
+                module.debug("stem_match: stem: %s, branch: %s, style: %s" %
+                    (
+                        pkg_spec[name]['stem'],
+                        pkg_spec[name]['branch'],
+                        pkg_spec[name]['style']
+                    )
+                )
             else:
                 module.fail_json(msg="unable to parse package name at else: " + name)
 
-        # If the stem contains an "%" then it needs special treatment.
-        branch_match = re.search("%", pkg_spec[name]['stem'])
-        if branch_match:
-
+        # Verify that the managed host is new enough to support branch syntax.
+        if pkg_spec[name]['branch']:
             branch_release = "6.0"
 
-            if version_match or versionless_match:
-                module.fail_json(msg="package name using 'branch' syntax also has a version or is version-less: " + name)
             if StrictVersion(platform.release()) < StrictVersion(branch_release):
                 module.fail_json(msg="package name using 'branch' syntax requires at least OpenBSD %s: %s" % (branch_release, name))
-
-            pkg_spec[name]['style'] = 'branch'
-
-            # Key names from description in pkg_add(1).
-            pkg_spec[name]['pkgname'] = pkg_spec[name]['stem'].split('%')[0]
-            pkg_spec[name]['branch'] = pkg_spec[name]['stem'].split('%')[1]
 
         # Sanity check that there are no trailing dashes in flavor.
         # Try to stop strange stuff early so we can be strict later.
@@ -579,7 +595,7 @@ def main():
         # Not sure how the branch syntax is supposed to play together
         # with build mode. Disable it for now.
         for n in name:
-            if pkg_spec[n]['style'] == 'branch' and module.params['build'] is True:
+            if pkg_spec[n]['branch'] and module.params['build'] is True:
                 module.fail_json(msg="the combination of 'branch' syntax and build=%s is not supported: %s" % (module.params['build'], n))
 
         # Get state for all package names.
