@@ -245,51 +245,51 @@ def get_client(params, module):
 
 
 def get_obj(client, params, module):
-    try:
-        if 'name' not in params or not params['name']:
-            # if name not specified, default to fqdn
-            params['name'] = socket.getfqdn()
+    kwargs = {
+        'custom_properties': format_custom_properties(params['properties']),
+        'description': params['description'],
+        'disable_alerting': bool(params['disable_alerting']),
+        'preferred_collector_id': params['preferred_collector_id']
+    }
+    if 'name' in params and params['name']:
+        kwargs['name'] = params['name']
+    else:
+        # if name not specified, default to fqdn
+        kwargs['name'] = socket.getfqdn()
 
-        if 'display_name' not in params or not params['display_name']:
-            # if display name not set, default to host name
-            params['display_name'] = params['name']
+    if 'display_name' in params and params['display_name']:
+        kwargs['display_name'] = params['display_name']
+    else:
+        # if display name not set, default to host name
+        kwargs['display_name'] = kwargs['name']
 
-        # find and format device group ids into comma-delimited string
-        if 'groups' in params and len(params['groups']) > 0:
-            all_found = True
-            device_group_ids = []
-            unknown_device_groups = []
+    # find and format device group ids into comma-delimited string
+    if 'groups' in params and len(params['groups']) > 0:
+        all_found = True
+        device_group_ids = []
+        unknown_device_groups = []
 
-            for group in params['groups']:
-                device_group = find_device_group(client, group, module)
-                if device_group is not None:
-                    device_group_ids.append(str(device_group.id))
-                else:
-                    all_found = False
-                    unknown_device_groups.append(group)
-
-            if all_found is True:
-                params['host_group_ids'] = ','.join(device_group_ids)
+        for group in params['groups']:
+            device_group = find_device_group(client, group, module)
+            if device_group is not None:
+                device_group_ids.append(str(device_group.id))
             else:
-                module.fail_json(msg='Unknown device group(s) ' +
-                                 ','.join(unknown_device_groups),
-                                 change=False,
-                                 failed=True)
+                all_found = False
+                unknown_device_groups.append(group)
+
+        if all_found is True:
+            kwargs['host_group_ids'] = ','.join(device_group_ids)
         else:
-            # default to root device group
-            params['host_group_ids'] = '1'
+            module.fail_json(msg='Unknown device group(s) ' +
+                             ','.join(unknown_device_groups),
+                             change=False,
+                             failed=True)
+    else:
+        # default to root device group
+        kwargs['host_group_ids'] = '1'
 
-        obj = lm_sdk.RestDevice(
-            custom_properties=format_custom_properties(params['properties']),
-            description=params['description'],
-            disable_alerting=bool(params['disable_alerting']),
-            display_name=params['display_name'],
-            host_group_ids=params['host_group_ids'],
-            name=params['name'],
-            preferred_collector_id=params['preferred_collector_id'],
-            scan_config_id=0
-        )
-
+    try:
+        obj = lm_sdk.RestDevice(**kwargs)
         return obj
     except Exception as e:
         err = 'Exception creating object: ' + str(e) + '\n'
