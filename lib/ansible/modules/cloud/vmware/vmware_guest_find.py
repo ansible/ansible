@@ -111,8 +111,7 @@ class PyVmomiHelper(object):
 
         # compare the folder path of each VM against the search path
         vmList = get_all_objs(self.content, [vim.VirtualMachine])
-        for item in vmList.items():
-            vobj = item[0]
+        for vobj, _ in vmList.items():
             if not isinstance(vobj.parent, vim.Folder):
                 continue
             # Match by name
@@ -165,15 +164,13 @@ class PyVmomiHelper(object):
         self.foldermap['fvim_by_path'][thispath] = folder['vimobj']
         self.foldermap['path_by_fvim'][folder['vimobj']] = thispath
 
-        for item in folder.items():
-            k = item[0]
-            v = item[1]
+        for k, v in folder.items():
 
             if k == 'name':
                 pass
             elif k == 'subfolders':
-                for x in v.items():
-                    self._build_folder_map(x, inpath=thispath)
+                for x, y in v.items():
+                    self._build_folder_map((x, y), inpath=thispath)
             elif k == 'virtualmachines':
                 for x in v:
                     # Apparently x.config can be None on corrupted VMs
