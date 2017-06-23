@@ -59,6 +59,221 @@ EXAMPLES = '''
 
 '''
 
+RETURN = '''
+instances:
+    description: provides details about EC2 instance(s) found in AWS region
+    returned: when EC2 instances are found in AWS region otherwise empty
+    type: complex
+    contains:
+        ami_launch_index:
+            description: >
+                if more than one instance is started at the same time, this value indicates the order in which the instance was launched,
+                the value of the first instance launched is 0
+            returned: success
+            type: string
+            sample: "0"
+        architecture:
+            description: the instance architecture
+            returned: success
+            type: string
+            sample: "x86_64"
+        block_device_mapping:
+            description: a structure describing the attached volumes to instance
+            returned: success
+            type: complex
+            contains:
+                attach_time:
+                    description: the attach time for an EBS volume mapped to the instance
+                    returned: success
+                    type: string
+                    sample: "2017-01-03T15:19:52.000Z"
+                delete_on_termination:
+                    description: indicates whether the EBS volume is deleted on instance termination
+                    returned: success
+                    type: boolean
+                    sample: "true"
+                device_name:
+                    description: the device name for the EBS volume
+                    returned: success
+                    type: string
+                    sample: "/dev/sda1"
+                status:
+                    description: the status for the EBS volume
+                    returned: success
+                    type: string
+                    sample: "attaching"
+                volume_id:
+                    description: the volume id of the EBS volume
+                    returned: success
+                    type: string
+                    sample: "vol-3160f90df06b24080"
+        client_token:
+            description: the idempotency token provided when instance was launched
+            returned: success
+            type: string
+            sample: "Sample-awsmp-DFNBSML8ZMJ9"
+        ebs_optimized:
+            description: whether instance class has EBS optimized flag turned on
+            returned: success
+            type: boolean
+            sample: "true"
+        groups:
+            description: a list security groups to which the network interface belongs
+            returned: success
+            type: complex
+            contains:
+                id:
+                    description: security group id
+                    returned: success
+                    type: string
+                    sample: "sg-e203cf94"
+                name:
+                    descriptipn: security group name
+                    returned: success
+                    type: string
+                    sample: "Sample-Common-Sg"
+        hypervisor:
+            description: the hypervisor type of the instance
+            returned: success
+            type: string
+            sample: "xen"
+        id:
+            description: the id of the instance
+            returned: success
+            type: string
+            sample: "i-09275d68c04c1a16c"
+        image_id:
+            description: the id of the image used to launch the instance
+            returned: success
+            type: string
+            sample: "ami-1748d2f5"
+        instance_profile:
+            description: the instance profile associated with the instance
+            returned: success
+            type: complex
+            contains:
+                arn:
+                    description: specifies an ARN of instance profile
+                    returned: success
+                    type: string
+                    sample: "arn:aws:iam::171455704129:instance-profile/Sample-IamProfile"
+                id:
+                    description: instance profile id
+                    returned: success
+                    type: string
+                    sample: "AIPAD5WIZGNR9TH6LBFE4"
+        interfaces:
+            description: a list of ENI associated to instance
+            returned: success
+            type: complex
+            contains:
+                id:
+                    description: the id of ENI
+                    returned: success
+                    type: string
+                    sample: "eni-cf96b081"
+                mac_address:
+                    description: the MAC address of ENI
+                    returned: success
+                    type: string
+                    sample: "06:c4:fd:90:dc:61"
+        kernel:
+            description: the kernel id
+            returned: success
+            type: string
+            sample: "null"
+        key_name:
+            description: the name of the key pair used when the instance was launched
+            returned: success
+            type: string
+            sample: "MyKey"
+        launch_time":
+            description: the time when the instance was launched
+            returned: success
+            type: string
+            sample: "2017-06-16T15:44:54.000Z"
+        monitoring_state:
+            description: indicates whether detailed monitoring is enabled
+            returned: success
+            type: string
+            sample: "disabled"
+        private_dns_name:
+            description: the private IPv4 DNS name of the instance
+            returned: success
+            type: string
+            sample: "ip-10-21-39-23.ag-net.com"
+        private_ip_address:
+            description: the private IPv4 address of the instance
+            returned: success
+            type: string
+            sample: "10.216.139.23"
+        public_dns_name:
+            description: the public DNS name of the instance
+            returned: success
+            type: string
+            sample: "ec2-54-194-252-215.eu-west-1.compute.amazonaws.com"
+        public_ip_address:
+            description: the public IPv4 address of the instance
+            returned: success
+            type: string
+            sample: "54.194.252.215"
+        ramdisk:
+            description: the RAM disk id
+            returned: success
+            type: string
+            sample: "null"
+        region:
+            description: the AWS region in which instance is running in
+            returned: success
+            type: string
+            sample: "eu-west-1"
+        requester_id:
+            description: the id of the entity that launched the instance on your behalf
+            returned: success
+            type: string
+            sample: "null"
+        root_device_type:
+            description: the type of root device that the instance uses
+            returned: success
+            type: string
+            sample: "ebs"
+        source_destination_check:
+            description: indicates whether the instance performs source/destination checking
+            returned: success
+            type: boolean
+            sample: "true"
+        spot_instance_request_id:
+            description: the id of the spot instance request
+            returned: success
+            type: string
+            sample: "null"
+        state:
+            description: a message that describes the state change
+            returned: success
+            type: string
+            sample: "running"
+        tags:
+            description: a dictionary of key/value pairs assigned to the resource
+            returned: success
+            type: complex
+            contains:
+                key:
+                    description: the key of a tag assigned to the resource
+                    returned: success
+                    type: string
+                    sample: "Environment"
+        virtualization_type:
+            description: the virtualization type of the instance
+            returned: success
+            type: string
+            sample: "hvm"
+        vpc_id:
+            description: the id of the VPC that the instance is running in
+            returned: success
+            type: string
+            sample: "vpc-12c9ae4f"
+'''
+
 try:
     import boto.ec2
     from boto.exception import BotoServerError
