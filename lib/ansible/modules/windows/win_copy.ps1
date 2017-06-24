@@ -78,10 +78,10 @@ Function Copy-File($src, $dest) {
     if ($src_checksum -ne $dest_checksum) {
         try {
             Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode
-            $result.changed = $true
         } catch {
-            Fail-Json $result "Failed to copy file $($_.Exception.Message)"
+            Fail-Json $result "Failed to copy file: $($_.Exception.Message)"
         }
+        $result.changed = $true
     }
 
     # Verify the file we copied is the same
