@@ -18,47 +18,46 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+from pytest import importorskip
 import unittest
 from ansible.module_utils import basic
 from ansible.module_utils.aws import AnsibleAWSModule
 from ansible.module_utils._text import to_bytes
-from ansible.compat.tests.mock import MagicMock, Mock, patch
+from ansible.compat.tests.mock import Mock, patch
 import json
 
-try:
-    import boto3
-    import botocore
-    HAS_BOTO3 = True
-except:
-    HAS_BOTO3 = False
+importorskip("boto3")
+botocore = importorskip("botocore")
 
-if not HAS_BOTO3:
-    raise SkipTest("test_aws_module.py requires the python modules 'boto3' and 'botocore'")
 
 class AWSModuleTestCase(unittest.TestCase):
 
-    basic._ANSIBLE_ARGS=to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
+    basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
+
     def test_create_aws_module(self):
-        m=AnsibleAWSModule(argument_spec = dict(
-            fail_mode = dict(type='list', default=['success'])
+        m = AnsibleAWSModule(argument_spec=dict(
+            fail_mode=dict(type='list', default=['success'])
         ))
-        m_noretry_no_customargs=AnsibleAWSModule(
-            autoretry=False , default_args=False,
-            argument_spec = dict(
-                fail_mode = dict(type='list', default=['success'])
+        m_noretry_no_customargs = AnsibleAWSModule(
+            autoretry=False, default_args=False,
+            argument_spec=dict(
+                fail_mode=dict(type='list', default=['success'])
             )
         )
+        assert m, "module wasn't true!!"
+        assert m_noretry_no_customargs, "module wasn't true!!"
+
 
 class ErrorReportingTestcase(unittest.TestCase):
 
     def test_botocore_exception_reports_nicely_via_fail_json_aws(self):
 
-        basic._ANSIBLE_ARGS=to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
-        module = AnsibleAWSModule(argument_spec = dict(
-            fail_mode = dict(type='list', default=['success'])
+        basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
+        module = AnsibleAWSModule(argument_spec=dict(
+            fail_mode=dict(type='list', default=['success'])
         ))
 
-        fail_json_double=Mock()
+        fail_json_double = Mock()
         err_msg = {'Error': {'Code': 'FakeClass.FakeError'}}
         with patch.object(basic.AnsibleModule, 'fail_json', fail_json_double):
             try:
@@ -67,12 +66,13 @@ class ErrorReportingTestcase(unittest.TestCase):
                 print("exception is " + str(e))
                 module.fail_json_aws(e, msg="Fake failure for testing boto exception messages")
 
-        assert(len(fail_json_double.mock_calls) > 0), "failed to call fail_json when should have"
-        assert(len(fail_json_double.mock_calls) < 2), "called fail_json multiple times when once would do"
-        assert("test_botocore_exception_reports_nicely"
-               in fail_json_double.mock_calls[0][2]["exception"]), \
-               "exception traceback doesn't include correct function, fail call was actually: " \
-                + str(fail_json_double.mock_calls[0])
+        assert(len(fail_json_double.mock_calls) >
+               0), "failed to call fail_json when should have"
+        assert(len(fail_json_double.mock_calls) <
+               2), "called fail_json multiple times when once would do"
+        assert("test_botocore_exception_reports_nicely" in fail_json_double.mock_calls[0][2]["exception"]), \
+            "exception traceback doesn't include correct function, fail call was actually: " \
+            + str(fail_json_double.mock_calls[0])
 
         assert("Fake failure for testing boto exception messages:" in fail_json_double.mock_calls[0][2]["msg"]), \
             "error message doesn't include the local message; was: " \
@@ -87,16 +87,13 @@ class ErrorReportingTestcase(unittest.TestCase):
         assert("FakeClass.FakeError" == fail_json_double.mock_calls[0][2]["error"]["code"]), \
             "Failed to find error/code; was: " + str(fail_json_double.mock_calls[0])
 
-
-
     def test_botocore_exception_without_response_reports_nicely_via_fail_json_aws(self):
-
-        basic._ANSIBLE_ARGS=to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
-        module = AnsibleAWSModule(argument_spec = dict(
-            fail_mode = dict(type='list', default=['success'])
+        basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
+        module = AnsibleAWSModule(argument_spec=dict(
+            fail_mode=dict(type='list', default=['success'])
         ))
 
-        fail_json_double=Mock()
+        fail_json_double = Mock()
         err_msg = None
         with patch.object(basic.AnsibleModule, 'fail_json', fail_json_double):
             try:
@@ -106,13 +103,12 @@ class ErrorReportingTestcase(unittest.TestCase):
                 module.fail_json_aws(e, msg="Fake failure for testing boto exception messages again")
 
         assert(len(fail_json_double.mock_calls) > 0), "failed to call fail_json when should have"
-        assert(len(fail_json_double.mock_calls) < 2), \
-            "called fail_json multiple times when once would do"
+        assert(len(fail_json_double.mock_calls) < 2), "called fail_json multiple times"
 
         assert("test_botocore_exception_without_response_reports_nicely_via_fail_json_aws"
                in fail_json_double.mock_calls[0][2]["exception"]), \
-               "exception traceback doesn't include correct function, fail call was actually: " \
-               + str(fail_json_double.mock_calls[0])
+            "exception traceback doesn't include correct function, fail call was actually: " \
+            + str(fail_json_double.mock_calls[0])
 
         assert("Fake failure for testing boto exception messages again:" in fail_json_double.mock_calls[0][2]["msg"]), \
             "error message doesn't include the local message; was: " \

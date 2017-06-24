@@ -31,8 +31,8 @@ In order to use this module, include it as part of a custom
 module as shown below.
 
   from ansible.module_utils.aws import AnsibleAWSModule
-  m=AnsibleAWSModule(argument_spec=dictionary, supports_check_mode=boolean
-                     mutually_exclusive=list1, required_together=list2)
+  module = AnsibleAWSModule(argument_spec=dictionary, supports_check_mode=boolean
+                            mutually_exclusive=list1, required_together=list2)
 
 The 'AnsibleAWSModule' module provides similar, but more restricted,
 interfaces to the normal Ansible module.  It also includes the following additional methods.
