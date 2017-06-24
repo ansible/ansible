@@ -1,0 +1,14 @@
+{
+  "TABLE_vpc": {
+    "ROW_vpc": [
+      {
+	"vpc-id": 100,
+	"vpc-ifindex": "Po10",
+	"vpc-port-state": "Up",
+	"vpc-thru-peerlink": 19,
+	"vpc-consistency": "consistent",
+	"vpc-consistency-status": "SUCCESS"
+       }
+    ]
+  }
+}
