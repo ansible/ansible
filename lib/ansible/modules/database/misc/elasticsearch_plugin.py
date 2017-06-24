@@ -51,7 +51,7 @@ options:
         description:
             - "Timeout setting: 30s, 1m, 1h..."
         required: False
-        default: 1m
+        default: None
     plugin_bin:
         description:
             - Location of the plugin binary
@@ -98,6 +98,12 @@ EXAMPLES = '''
 - elasticsearch_plugin:
     state: absent
     name: mobz/elasticsearch-head
+
+# Install Elasticsearch plugin with another plugin binary
+- elasticsearch_plugin:
+    state: present
+    name: mobz/elasticsearch-head
+    plugin_bin: "/usr/share/elasticsearch/bin/elasticsearch-plugin"
 '''
 
 import os
@@ -185,7 +191,7 @@ def main():
             name=dict(required=True),
             state=dict(default="present", choices=PACKAGE_STATE_MAP.keys()),
             url=dict(default=None),
-            timeout=dict(default="1m"),
+            timeout=dict(default=None),
             plugin_bin=dict(default="/usr/share/elasticsearch/bin/plugin", type="path"),
             plugin_dir=dict(default="/usr/share/elasticsearch/plugins/", type="path"),
             proxy_host=dict(default=None),
