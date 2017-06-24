@@ -16,10 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -28,91 +28,56 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages interface VPC configuration
 description:
-    - Manages interface VPC configuration
+  - Manages interface VPC configuration
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 notes:
-    - Either vpc or peer_link param is required, but not both.
-    - C(state=absent) removes whatever VPC config is on a port-channel
-      if one exists.
-    - Re-assigning a vpc or peerlink from one portchannel to another is not
-      supported.  The module will force the user to unconfigure an existing
-      vpc/pl before configuring the same value on a new portchannel
+  - Either vpc or peer_link param is required, but not both.
+  - C(state=absent) removes whatever VPC config is on a port-channel
+    if one exists.
+  - Re-assigning a vpc or peerlink from one portchannel to another is not
+    supported.  The module will force the user to unconfigure an existing
+    vpc/pl before configuring the same value on a new portchannel
 options:
-    portchannel:
-        description:
-            - Group number of the portchannel that will be configured.
-        required: true
-    vpc:
-        description:
-            - VPC group/id that will be configured on associated portchannel.
-        required: false
-        default: null
-    peer_link:
-        description:
-            - Set to true/false for peer link config on associated portchannel.
-        required: false
-        default: null
-    state:
-        description:
-            - Manages desired state of the resource.
-        required: true
-        choices: ['present','absent']
+  portchannel:
+    description:
+      - Group number of the portchannel that will be configured.
+    required: true
+  vpc:
+    description:
+      - VPC group/id that will be configured on associated portchannel.
+    required: false
+    default: null
+  peer_link:
+    description:
+      - Set to true/false for peer link config on associated portchannel.
+    required: false
+    default: null
+  state:
+    description:
+      - Manages desired state of the resource.
+    required: true
+    choices: ['present','absent']
 '''
 
 EXAMPLES = '''
-- nxos_vpc_portchannel:
+- nxos_vpc_interface:
     portchannel: 10
     vpc: 100
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"portchannel": "100", "vpc": "10"}
-existing:
-    description: k/v pairs of existing configuration
-    returned: always
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of configuration after module execution
-    returned: always
-    type: dict
-    sample:  {"peer-link": false, "portchannel": "100", "vpc": "10"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface port-channel100", "vpc 10"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
-
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
 
 
 def flatten_list(command_lists):
@@ -126,15 +91,13 @@ def flatten_list(command_lists):
 
 
 def get_portchannel_list(module):
-    command = 'show port-channel summary'
     portchannels = []
     pc_list = []
 
-    body = execute_show_command(command, module)
-
     try:
-        pc_list = body[0]['TABLE_channel']['ROW_channel']
-    except (KeyError, AttributeError):
+        body = run_commands(module, ['show port-channel summary | json'])[0]
+        pc_list = body['TABLE_channel']['ROW_channel']
+    except (KeyError, AttributeError, TypeError):
         return portchannels
 
     if pc_list:
@@ -148,13 +111,11 @@ def get_portchannel_list(module):
 
 
 def get_existing_portchannel_to_vpc_mappings(module):
-    command = 'show vpc brief'
     pc_vpc_mapping = {}
 
-    body = execute_show_command(command, module)
-
     try:
-        vpc_table = body[0]['TABLE_vpc']['ROW_vpc']
+        body = run_commands(module, ['show vpc brief | json'])[0]
+        vpc_table = body['TABLE_vpc']['ROW_vpc']
     except (KeyError, AttributeError, TypeError):
         vpc_table = None
 
@@ -170,7 +131,7 @@ def get_existing_portchannel_to_vpc_mappings(module):
 
 def peer_link_exists(module):
     found = False
-    run = get_vpc_running_config(module)
+    run = get_config(module, flags=['section vpc'])
 
     vpc_list = run.split('\n')
     for each in vpc_list:
@@ -179,38 +140,28 @@ def peer_link_exists(module):
     return found
 
 
-def get_vpc_running_config(module):
-    command = 'show running section vpc'
-    body = execute_show_command(command, module,
-                                command_type='cli_show_ascii')[0]
-
-    return body
-
-
 def get_active_vpc_peer_link(module):
-    command = 'show vpc brief'
     peer_link = None
-    body = execute_show_command(command, module)
+
     try:
-        peer_link = body[0]['TABLE_peerlink']['ROW_peerlink']['peerlink-ifindex']
-    except (KeyError, AttributeError):
+        body = run_commands(module, ['show vpc brief | json'])[0]
+        peer_link = body['TABLE_peerlink']['ROW_peerlink']['peerlink-ifindex']
+    except (KeyError, AttributeError, TypeError):
         return peer_link
 
     return peer_link
 
 
 def get_portchannel_vpc_config(module, portchannel):
-    command = 'show vpc brief'
     peer_link_pc = None
     peer_link = False
     vpc = ""
     pc = ""
     config = {}
 
-    body = execute_show_command(command, module)
-
     try:
-        table = body[0]['TABLE_peerlink']['ROW_peerlink']
+        body = run_commands(module, ['show vpc brief | json'])[0]
+        table = body['TABLE_peerlink']['ROW_peerlink']
     except (KeyError, AttributeError, TypeError):
         table = {}
 
@@ -255,33 +206,58 @@ def get_commands_to_config_vpc_interface(portchannel, delta, config_value, exist
     return commands
 
 
+def state_present(portchannel, delta, config_value, existing):
+    commands = []
+
+    command = get_commands_to_config_vpc_interface(
+        portchannel,
+        delta,
+        config_value,
+        existing
+    )
+    commands.append(command)
+
+    return commands
+
+
+def state_absent(portchannel, existing):
+    commands = []
+    if existing.get('vpc'):
+        command = 'no vpc'
+        commands.append(command)
+    elif existing.get('peer-link'):
+        command = 'no vpc peer-link'
+        commands.append(command)
+    if commands:
+        commands.insert(0, 'interface port-channel{0}'.format(portchannel))
+
+    return commands
+
+
 def main():
     argument_spec = dict(
         portchannel=dict(required=True, type='str'),
         vpc=dict(required=False, type='str'),
         peer_link=dict(required=False, type='bool'),
-        state=dict(choices=['absent', 'present'], default='present'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=[['vpc', 'peer_link']],
-                                supports_check_mode=True)
+                           mutually_exclusive=[['vpc', 'peer_link']],
+                           supports_check_mode=True)
 
     warnings = list()
+    commands = []
     check_args(module, warnings)
-
+    results = {'changed': False, 'warnings': warnings}
 
     portchannel = module.params['portchannel']
     vpc = module.params['vpc']
     peer_link = module.params['peer_link']
     state = module.params['state']
 
-    changed = False
     args = {'portchannel': portchannel, 'vpc': vpc, 'peer-link': peer_link}
     active_peer_link = None
 
@@ -294,14 +270,14 @@ def main():
 
         if vpc in mapping and portchannel != mapping[vpc].strip('Po'):
             module.fail_json(msg="This vpc is already configured on "
-                                 "another portchannel.  Remove it first "
+                                 "another portchannel. Remove it first "
                                  "before trying to assign it here. ",
                              existing_portchannel=mapping[vpc])
 
         for vpcid, existing_pc in mapping.items():
             if portchannel == existing_pc.strip('Po') and vpcid != vpc:
                 module.fail_json(msg="This portchannel already has another"
-                                     " VPC configured.  Remove it first "
+                                     " VPC configured. Remove it first "
                                      "before assigning this one",
                                  existing_vpc=vpcid)
 
@@ -309,7 +285,7 @@ def main():
             active_peer_link = get_active_vpc_peer_link(module)
             if active_peer_link[-2:] == portchannel:
                 module.fail_json(msg="That port channel is the current "
-                                     "PEER LINK.  Remove it if you want it"
+                                     "PEER LINK. Remove it if you want it"
                                      " to be a VPC")
         config_value = vpc
 
@@ -319,64 +295,34 @@ def main():
             if active_peer_link != portchannel:
                 if peer_link:
                     module.fail_json(msg="A peer link already exists on"
-                                         " the device.  Remove it first",
-                                     current_peer_link='Po{0}'.format(
-                                         active_peer_link))
+                                         " the device. Remove it first",
+                                     current_peer_link='Po{0}'.format(active_peer_link))
         config_value = 'peer-link'
-
 
     proposed = dict((k, v) for k, v in args.items() if v is not None)
     existing = get_portchannel_vpc_config(module, portchannel)
-    end_state = existing
-    commands = []
 
     if state == 'present':
         delta = dict(set(proposed.items()).difference(existing.items()))
         if delta:
-            command = get_commands_to_config_vpc_interface(
-                portchannel,
-                delta,
-                config_value,
-                existing
-                )
-            commands.append(command)
+            commands = state_present(portchannel, delta, config_value, existing)
 
-    elif state == 'absent':
-        if existing.get('vpc'):
-            command = ['no vpc']
-            commands.append(command)
-        elif existing.get('peer-link'):
-            command = ['no vpc peer-link']
-            commands.append(command)
-        if commands:
-            commands.insert(0, ['interface port-channel{0}'.format(portchannel)])
+    elif state == 'absent' and existing:
+        commands = state_absent(portchannel, existing)
 
     cmds = flatten_list(commands)
     if cmds:
         if module.check_mode:
             module.exit_json(changed=True, commands=cmds)
         else:
-            changed = True
             load_config(module, cmds)
-            if module.params['transport'] == 'cli':
-                output = ' '.join(output)
-                if 'error' in output.lower():
-                    module.fail_json(msg=output.replace('\n', ''))
-            end_state = get_portchannel_vpc_config(module, portchannel)
+            results['changed'] = True
             if 'configure' in cmds:
                 cmds.pop(0)
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-
+    results['commands'] = cmds
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-
