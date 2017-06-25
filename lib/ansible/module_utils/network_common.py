@@ -227,7 +227,7 @@ def dict_diff(base, comparable):
     return updates
 
 
-def dict_combine(base, other):
+def dict_merge(base, other):
     """ Return a new dict object that combines base and other
 
     This will create a new dict object that is a combination of the key/value
@@ -250,7 +250,7 @@ def dict_combine(base, other):
             if key in other:
                 item = other.get(key)
                 if item is not None:
-                    combined[key] = dict_combine(value, other[key])
+                    combined[key] = dict_merge(value, other[key])
                 else:
                     combined[key] = item
             else:

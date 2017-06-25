@@ -24,7 +24,7 @@ __metaclass__ = type
 from ansible.compat.tests import unittest
 
 from ansible.module_utils.network_common import to_list, sort_list
-from ansible.module_utils.network_common import dict_diff, dict_combine
+from ansible.module_utils.network_common import dict_diff, dict_merge
 
 
 class TestModuleUtilsNetworkCommon(unittest.TestCase):
@@ -87,7 +87,7 @@ class TestModuleUtilsNetworkCommon(unittest.TestCase):
         self.assertTrue(result['b3'])
         self.assertTrue(result['b4'])
 
-    def test_dict_combine(self):
+    def test_dict_merge(self):
         base = dict(obj2=dict(), b1=True, b2=False, b3=False,
                     one=1, two=2, three=3, obj1=dict(key1=1, key2=2),
                     l1=[1, 3], l2=[1, 2, 3], l4=[4],
@@ -98,7 +98,7 @@ class TestModuleUtilsNetworkCommon(unittest.TestCase):
                      l1=[2, 1], l2=[3, 2, 1], l3=[1],
                      nested=dict(n1=dict(n2=2, n3=3)))
 
-        result = dict_combine(base, other)
+        result = dict_merge(base, other)
 
         # string assertions
         self.assertIn('one', result)
