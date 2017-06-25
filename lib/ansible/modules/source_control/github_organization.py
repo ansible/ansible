@@ -72,7 +72,7 @@ options:
     default: True
     required: False
 author:
-    - Peter Murray @peter-murray
+  - "Peter Murray (@peter-murray)"
 '''
 
 RETURN = '''
@@ -84,30 +84,36 @@ name:
 id:
   description: The id of the organization inside GitHub Enterprise
   returned: always
-  type: integer
+  type: int
   sample: 1
 created_at:
   description: The timestamp of when the organization was created
-  type: string
-  sample: 2017-06-25T12:20:25Z
+  returned: always
+  type: str
+  sample: '2017-06-25T12:20:25Z'
 updated_at:
   description: The timestamp of the last update to the organization
-  type: string
-  sample: 2017-06-25T12:20:25Z
+  returned: always
+  type: str
+  sample: '2017-06-25T12:20:25Z'
 collaborators:
   description: The number of collaborators in the organization
-  type: integer
+  returned: always
+  type: int
   sample: 10
 public_repo_count:
   description: The count of public repositories in the organization
-  type: integer
+  returned: always
+  type: int
   sample: 0
 private_repo_count:
   description: The count of private repositories in the organization
-  type: integer
+  returned: always
+  type: int
   sample: 1
 default_repo_permission:
   description: The default permission for repositories in the organization
+  returned: always
   type: string
   sample: read
 '''
