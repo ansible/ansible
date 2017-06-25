@@ -139,6 +139,8 @@ EXAMPLES = '''
 '''
 
 import base64
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.basic import AnsibleModule
 
 
 def _build_api_url(base_url, path):
@@ -302,7 +304,5 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
