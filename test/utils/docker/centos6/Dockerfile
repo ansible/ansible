@@ -36,6 +36,7 @@ RUN yum clean all && \
     rpm-build \
     rubygems \
     sed \
+    sshpass \
     subversion \
     sudo \
     unzip \
