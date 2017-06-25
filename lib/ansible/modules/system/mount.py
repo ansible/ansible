@@ -229,7 +229,9 @@ def set_mount(module, args):
             ) = line.split()
 
         # Check if we found the correct line
-        if ld['name'] != escaped_args['name']:
+        if (ld['name'] != escaped_args['name'] or
+            (ld['src'] != escaped_args['src'] and 
+            escaped_args['fstype'] == 'swap')):
             to_write.append(line)
 
             continue

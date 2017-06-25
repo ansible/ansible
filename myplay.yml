@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  user: root
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Swapfile | Install | Add swap entry in fstab
+      mount:
+        name: /
+        src: "/dev/mapper/cl_web-root"
+        fstype: xfs
+        opts: defaults
+        dump: 1
+        passno: 1
+        state: present
