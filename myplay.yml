@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  user: root
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Swapfile | Install | Add swap entry in fstab
+      mount:
+        name: none
+        src: "/swapfile"
+        fstype: swap
+        opts: rw
+        dump: 0
+        passno: 0
+        state: present
