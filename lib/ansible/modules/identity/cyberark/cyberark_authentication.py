@@ -103,6 +103,7 @@ cyberark_session:
         }
 '''
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
 import json
