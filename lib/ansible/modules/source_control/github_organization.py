@@ -134,6 +134,7 @@ EXAMPLES = '''
 
 import base64
 
+
 def _build_api_url(base_url, path):
     url = base_url
 
@@ -150,9 +151,11 @@ def _build_api_url(base_url, path):
 
     return url
 
+
 def _get_auth_header(user, token):
     auth = base64.encodestring('%s:%s' % (user, token)).replace('\n', '')
     return 'Basic %s' % auth
+
 
 def _get_organization(module, base_url, auth_header, name):
     path = "orgs/%s" % (name)
@@ -165,6 +168,7 @@ def _get_organization(module, base_url, auth_header, name):
     else:
         return None
 
+
 def _get_base_url(module):
     url = module.params['base_url']
 
@@ -172,6 +176,7 @@ def _get_base_url(module):
         url = _build_api_url(url, 'api/v3')
 
     return url
+
 
 def _merge_organization_result(res, org):
     res.update({
@@ -185,6 +190,7 @@ def _merge_organization_result(res, org):
         'default_repo_permission': org['default_repository_permission']
     })
     return res
+
 
 def create_organization(module, auth_header):
     result = {'changed': False}
@@ -220,6 +226,7 @@ def create_organization(module, auth_header):
 
     return result
 
+
 def rename_organization(module, auth_header):
     result = {'changed': False}
 
@@ -230,7 +237,7 @@ def rename_organization(module, auth_header):
         module.fail_json(msg="A name to rename the organization to must be provided")
 
     base_url = _get_base_url(module)
-    data = {"login": new_name}
+    data = {'login': new_name}
 
     existing_org = _get_organization(module, base_url, auth_header, organization_name)
     target_org = _get_organization(module, base_url, auth_header, new_name)
@@ -249,7 +256,7 @@ def rename_organization(module, auth_header):
                 # This action is added to a queue, so if successful, report back the change
                 result.update({'changed': True})
                 _merge_organization_result(result, existing_org)
-                result.update({"name": new_name})
+                result.update({'name': new_name})
             else:
                 failure = module.from_json(info['body'])
                 module.fail_json(msg='Failed to rename organization: {0}'.format(failure['message']))
@@ -257,6 +264,7 @@ def rename_organization(module, auth_header):
             module.fail_json(msg="An organization with the target name already exists, '{0}'".format(new_name))
 
     return result
+
 
 def main():
     module = AnsibleModule(
@@ -287,8 +295,8 @@ def main():
 
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
