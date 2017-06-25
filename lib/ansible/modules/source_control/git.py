@@ -60,9 +60,8 @@ options:
         choices: [ "yes", "no" ]
         version_added: "1.5"
         description:
-            - if C(yes), adds the hostkey for the repo url if not already
-              added. If ssh_opts contains "-o StrictHostKeyChecking=no",
-              this parameter is ignored.
+            - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
+              present as an ssh options.
     ssh_opts:
         required: false
         default: None
@@ -281,7 +280,6 @@ from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
 from ansible.module_utils.basic import get_exception
-from ansible.module_utils.known_hosts import add_git_host_key
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
 
@@ -367,6 +365,9 @@ if [ -z "$GIT_SSH_OPTS" ]; then
 else
     BASEOPTS=$GIT_SSH_OPTS
 fi
+
+# Let ssh fail rather than prompt
+BASEOPTS="$BASEOPTS -o BatchMode=yes"
 
 if [ -z "$GIT_KEY" ]; then
     ssh $BASEOPTS "$@"
@@ -777,15 +778,6 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
             if not os.path.exists(os.path.join(dest, path, '.git')):
                 changed = True
 
-        # add the submodule repo's hostkey
-        if line.strip().startswith('url'):
-            repo = line.split('=', 1)[1].strip()
-            if module.params['ssh_opts'] is not None:
-                if "-o StrictHostKeyChecking=no" not in module.params['ssh_opts']:
-                    add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-            else:
-                add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-
     # Check for updates to existing modules
     if not changed:
         # Fetch updates
@@ -1031,6 +1023,13 @@ def main():
 
     result = dict(changed=False, warnings=list())
 
+    if module.params['accept_hostkey']:
+        if ssh_opts is not None:
+            if "-o StrictHostKeyChecking=no" not in ssh_opts:
+                ssh_opts += " -o StrictHostKeyChecking=no"
+        else:
+            ssh_opts = "-o StrictHostKeyChecking=no"
+
     # evaluate and set the umask before doing anything else
     if umask is not None:
         if not isinstance(umask, string_types):
@@ -1064,18 +1063,10 @@ def main():
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
     # for git to use the wrapper script
-    ssh_wrapper = None
-    if key_file or ssh_opts:
-        ssh_wrapper = write_ssh_wrapper()
-        set_git_ssh(ssh_wrapper, key_file, ssh_opts)
-        module.add_cleanup_file(path=ssh_wrapper)
+    ssh_wrapper = write_ssh_wrapper()
+    set_git_ssh(ssh_wrapper, key_file, ssh_opts)
+    module.add_cleanup_file(path=ssh_wrapper)
 
-    # add the git repo's hostkey
-    if module.params['ssh_opts'] is not None:
-        if "-o StrictHostKeyChecking=no" not in module.params['ssh_opts']:
-            add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-    else:
-        add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
     git_version_used = git_version(git_path, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
