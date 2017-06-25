@@ -105,10 +105,6 @@ cyberark_session:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
-import urllib
-import httplib
-import traceback
-import sys
 import json
 
 
@@ -189,9 +185,7 @@ def processAuthentication(module):
     except httplib.HTTPException as e:
 
         module.fail_json(
-            msg="end_point=" +
-            api_base_url +
-            end_point,
+            msg="end_point=%s%s" % (api_base_url, end_point),
             payload=payload,
             headers=headers,
             exception=to_text(e),
@@ -200,9 +194,7 @@ def processAuthentication(module):
     except Exception as e:
 
         module.fail_json(
-            msg="end_point=" +
-            api_base_url +
-            end_point,
+            msg="end_point=%s%s" % (api_base_url, end_point),
             payload=payload,
             headers=headers,
             exception=to_text(e),
@@ -214,19 +206,25 @@ def processAuthentication(module):
 
             # Result token from REST Api uses a different key based
             # the use of shared logon authentication
-            if use_shared_logon_authentication:
-                token = json.loads(response.read())["LogonResult"]
-            else:
-                token = json.loads(response.read())["CyberArkLogonResult"]
+            token = None
+            try:
+                if use_shared_logon_authentication:
+                    token = json.loads(response.read())["LogonResult"]
+                else:
+                    token = json.loads(response.read())["CyberArkLogonResult"]
+            except Exception as e:
+                module.fail_json(
+                    msg="Exception obtaining token",
+                    payload=payload,
+                    headers=headers,
+                    exception=to_text(e),
+                    status_code=-1)
 
             # Preparing result of the module
             result = {
                 "cyberark_session": {
-                    "token": token,
-                    "api_base_url": api_base_url,
-                    "validate_certs": validate_certs,
-                    "use_shared_logon_authentication":
-                    use_shared_logon_authentication},
+                    "token": token, "api_base_url": api_base_url, "validate_certs": validate_certs,
+                    "use_shared_logon_authentication": use_shared_logon_authentication},
             }
 
             if new_password is not None:
