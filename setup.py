@@ -55,7 +55,7 @@ setup(
     author=__author__,
     author_email='info@ansible.com',
     url='https://ansible.com/',
-    license='GPLv3',
+    license='GPLv3+',
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
     install_requires=install_requirements,
