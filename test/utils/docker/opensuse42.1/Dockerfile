@@ -37,6 +37,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     python-virtualenv \
     rpm-build \
     ruby \
+    sshpass \
     subversion \
     sudo \
     tar \

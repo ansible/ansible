@@ -40,6 +40,7 @@ RUN apt-get update -y && \
     reprepro \
     rsync \
     ruby \
+    sshpass \
     subversion \
     sudo \
     tzdata \

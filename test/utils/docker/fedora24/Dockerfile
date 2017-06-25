@@ -47,6 +47,7 @@ RUN dnf clean all && \
     PyYAML \
     rpm-build \
     rubygems \
+    sshpass \
     subversion \
     sudo \
     tar \
