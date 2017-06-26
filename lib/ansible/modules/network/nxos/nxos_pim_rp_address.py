@@ -81,37 +81,36 @@ commands:
 '''
 
 
+import re
+
 from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
-def get_value(config, module):
-    value_list = []
-    splitted_config = config.splitlines()
-    for line in splitted_config:
-        tmp = {}
-        if 'ip pim rp-address' in line:
-            splitted_line = line.split()
-            tmp['rp_address'] = splitted_line[3]
-            if len(splitted_line) > 5:
-                value = splitted_line[5]
-                if splitted_line[4] == 'route-map':
-                    tmp['route_map'] = value
-                elif splitted_line[4] == 'prefix-list':
-                    tmp['prefix_list'] = value
-                elif splitted_line[4] == 'group-list':
-                    tmp['group_list'] = value
-            tmp['bidir'] = 'bidir' in line
-            value_list.append(tmp)
-    return value_list
-
-
 def get_existing(module, args):
     existing = {}
     config = str(get_config(module))
-    existing = get_value(config, module)
+    address = module.params['rp_address']
+
+    pim_address_re = r'ip pim rp-address (?P<value>.*)$'.format(address)
+    for line in re.findall(pim_address_re, config, re.M):
+
+        values = line.split()
+        if values[0] != address:
+            continue
+
+        existing['bidir'] = existing.get('bidir') or 'bidir' in line
+        if len(values) > 2:
+            value = values[1]
+            if values[2] == 'route-map':
+                existing['route_map'] = value
+            elif values[2] == 'prefix-list':
+                existing['prefix_list'] = value
+            elif values[2] == 'group-list':
+                existing['group_list'] = value
+
     return existing
 
 
@@ -142,18 +141,16 @@ def build_command(param_dict, command):
     return [command]
 
 
-def state_absent(module, existing, proposed, candidate):
+def state_absent(module, existing, candidate):
     address = module.params['rp_address']
-    commands = list()
-    for each in existing:
-        if each.get('rp_address') == address:
-            command = 'no ip pim rp-address {0}'.format(address)
-            if each.get('group_list'):
-                commands = build_command(each, command)
-            else:
-                commands = [command]
-    if commands:
-        candidate.add(commands, parents=[])
+
+    command = 'no ip pim rp-address {0}'.format(address)
+    if existing.get('group_list'):
+        commands = build_command(each, command)
+    else:
+        commands = [command]
+
+    candidate.add(commands, parents=[])
 
 
 def main():
@@ -199,15 +196,15 @@ def main():
                 value = True
             elif str(value).lower() == 'false':
                 value = False
-            for each in existing:
-                if each.get(key) != value:
-                    proposed[key] = value
+
+            if existing.get(key) != value:
+                proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)
-    if state == 'present' and proposed:
+    if state == 'present' and (proposed or not existing):
         state_present(module, existing, proposed, candidate)
-    elif state == 'absent':
-        state_absent(module, existing, proposed, candidate)
+    elif state == 'absent' and existing:
+        state_absent(module, existing, candidate)
 
     if candidate:
         candidate = candidate.items_text()
