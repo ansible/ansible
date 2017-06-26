@@ -458,7 +458,7 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
         self.result['changed'] = True
         args = {
             'hypervisor': self.module.params.get('hypervisor'),
-            'url': self.module.params.get('name'),
+            'url': 'http://' + self.module.params.get('name'),
             'username': self.module.params.get('username'),
             'password': self.module.params.get('password'),
             'podid': self.get_pod(key='id'),
