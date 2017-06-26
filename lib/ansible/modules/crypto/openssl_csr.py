@@ -286,6 +286,9 @@ def main():
         required_one_of=[['commonName', 'subjectAltName']],
     )
 
+    if not pyopenssl_found:
+        module.fail_json(msg='the python pyOpenSSL module is required')
+
     path = module.params['path']
     base_dir = os.path.dirname(module.params['path'])
 
