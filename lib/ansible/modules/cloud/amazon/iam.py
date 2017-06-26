@@ -451,29 +451,32 @@ def create_group(module=None, iam=None, name=None, path=None):
 
 def delete_group(module=None, iam=None, name=None):
     changed = False
+    del_meta = ''
     try:
-        iam.delete_group(name)
+        del_meta = iam.delete_group(name) #.delete_group_response
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
-        if ('must detach all policies first') in error_msg:
+        if ('must delete policies first') in error_msg:
             for policy in iam.get_all_group_policies(name).list_group_policies_result.policy_names:
                 iam.delete_group_policy(name, policy)
             try:
-                iam.delete_group(name)
+                del_meta = iam.delete_group(name)
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
-                if ('must detach all policies first') in error_msg:
+                if ('must delete policies first') in error_msg:
                     module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
                                                           "that %s has Managed Polices. This is not "
                                                           "currently supported by boto. Please detach the polices "
                                                           "through the console and try again." % name)
                 else:
-                    module.fail_json(changed=changed, msg=str(err))
+                    module.fail_json(changed=changed, msg=str(error_msg))
             else:
                 changed = True
+        else:
+            module.fail_json(changed=changed, msg=str(error_msg))
     else:
         changed = True
-    return changed, name
+    return del_meta, changed, name
 
 def update_group(module=None, iam=None, name=None, new_name=None, new_path=None):
     changed = False
@@ -780,7 +783,7 @@ def main():
 
         elif state == 'absent':
             if name in orig_group_list:
-                removed_group, changed = delete_group(module=module, iam=iam, name=name)
+                del_meta, removed_group, changed = delete_group(module=module, iam=iam, name=name)
                 module.exit_json(changed=changed, delete_group=removed_group)
             else:
                 module.exit_json(changed=changed, msg="Group already absent")
