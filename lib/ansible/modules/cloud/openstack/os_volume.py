@@ -80,7 +80,7 @@ options:
        - Scheduler hints passed to volume API in form of dict
      required: false
      default: None
-     version_added: "2.3"
+     version_added: "2.4"
 requirements:
      - "python >= 2.6"
      - "shade"
