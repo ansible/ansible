@@ -45,7 +45,7 @@ if ($diff_support) {
 
 # Fix HCCC:\ PSDrive for pre-2.3 compatibility
 if ($path -match "^HCCC:\\") {
-    Add-Warning("Please use path: HKCC:\... instead of path: $path")
+    Add-Warning $result "Please use path: HKCC:\... instead of path: $path"
     $path = $path -replace "HCCC:\\","HKCC:\\"
 }
 
