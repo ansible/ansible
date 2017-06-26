@@ -50,7 +50,7 @@ options:
             - Composer arguments like required package, version and so on.
         required: false
         default: null
-    php_executable:
+    executable:
         version_added: "2.4"
         description:
             - Path to PHP Executable on the remote host, if PHP is not in PATH
@@ -185,10 +185,10 @@ def composer_command(module, command, arguments="", options=None, global_command
     if options is None:
         options = []
 
-    if module.params['php_path'] is None:
+    if module.params['executable'] is None:
         php_path = module.get_bin_path("php", True, ["/usr/local/bin"])
     else:
-        php_path = module.params['php_path']
+        php_path = module.params['executable']
 
     composer_path = module.get_bin_path("composer", True, ["/usr/local/bin"])
     cmd = "%s %s %s %s %s %s" % (php_path, composer_path, "global" if global_command else "", command, " ".join(options), arguments)
@@ -200,7 +200,7 @@ def main():
         argument_spec=dict(
             command=dict(default="install", type="str", required=False),
             arguments=dict(default="", type="str", required=False),
-            php_path=dict(type="path", required=False, aliases=["php_path"]),
+            executable=dict(type="path", required=False, aliases=["php_path"]),
             working_dir=dict(type="path", aliases=["working-dir"]),
             global_command=dict(default=False, type="bool", aliases=["global-command"]),
             prefer_source=dict(default=False, type="bool", aliases=["prefer-source"]),
