@@ -183,6 +183,7 @@ import xml
 import re
 from xml.dom.minidom import parseString as parseXML
 from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_native
 
 
 class Package:
@@ -259,9 +260,8 @@ def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
 
     try:
         dom = parseXML(stdout)
-    except xml.parsers.expat.ExpatError:
-        e = get_exception()
-        m.fail_json(msg="Failed to parse zypper xml output: %s" % e,
+    except xml.parsers.expat.ExpatError as exc:
+        m.fail_json(msg="Failed to parse zypper xml output: %s" % to_native(exc),
                     rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
 
     if rc == 104:
