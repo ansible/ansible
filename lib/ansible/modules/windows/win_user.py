@@ -33,6 +33,7 @@ version_added: "1.7"
 short_description: Manages local Windows user accounts
 description:
      - Manages local Windows user accounts
+     - For non-Windows targets, use the M(user) module instead.
 options:
   name:
     description:
@@ -132,6 +133,8 @@ options:
       - query
     default: present
     aliases: []
+notes:
+     - For non-Windows targets, use the M(user) module instead.
 author:
     - "Paul Durivage (@angstwad)"
     - "Chris Church (@cchurch)"

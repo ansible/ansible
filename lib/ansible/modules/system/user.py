@@ -33,8 +33,10 @@ notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
     are present at runtime. If they are not, a descriptive error message will be shown.
+  - For Windows targets, use the M(win_user) module instead.
 description:
     - Manage user accounts and user attributes.
+    - For Windows targets, use the M(win_user) module instead.
 options:
     name:
         required: true

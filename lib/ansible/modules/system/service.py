@@ -34,6 +34,7 @@ short_description:  Manage services.
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
+    - For Windows targets, use the M(win_service) module instead.
 options:
     name:
         required: true
@@ -87,6 +88,8 @@ options:
             - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
         default: 'auto'
         version_added: 2.2
+notes:
+    - For Windows targets, use the M(win_service) module instead.
 '''
 
 EXAMPLES = '''
