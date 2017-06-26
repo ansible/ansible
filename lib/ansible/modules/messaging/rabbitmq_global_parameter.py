@@ -153,6 +153,6 @@ def main():
         rabbitmq_global_parameter.set()
         changed = True
 
-    module.exit_json(changed=changed, name=name,  value=value, state=state)
+    module.exit_json(changed=changed, name=name, value=value, state=state)
 
 main()
