@@ -177,14 +177,19 @@ changed:
 '''
 
 import random
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.network.models import (
-        LoadBalancer, FrontendIPConfiguration, BackendAddressPool, Probe, LoadBalancingRule, SubResource, InboundNatPool
+        LoadBalancer,
+        FrontendIPConfiguration,
+        BackendAddressPool,
+        Probe,
+        LoadBalancingRule,
+        SubResource,
+        InboundNatPool,
+        Subnet
     )
 except ImportError:
     # This is handled in azure_rm_common
