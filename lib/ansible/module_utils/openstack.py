@@ -92,7 +92,7 @@ def openstack_full_argument_spec(**kwargs):
             default='public', choices=['public', 'internal', 'admin']
         ),
         identity_api_version=dict(
-            default='2.0', choices=['2.0', '3']
+            default=None, choices=['2.0', '3']
         )
     )
     spec.update(kwargs)
