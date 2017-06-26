@@ -140,7 +140,6 @@ try:
     # module specific imports
     import socket, re
     from distutils.version import LooseVersion
-    from pprint import pprint
 
     # import module snippets
     from ansible.module_utils.basic import AnsibleModule
