@@ -76,6 +76,7 @@ notes:
 - Check-mode C(-C/--check) and diff output C(-D/--diff) are supported, so that you can test every change against the active configuration before
   applying changes.
 - Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths.
+- Since ansible 2.4, when checking if a string registry value has changed, a case-sensitive test is used.  Previously the test was case-insensitive.
 author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
 '''
 
