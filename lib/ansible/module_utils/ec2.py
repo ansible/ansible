@@ -592,7 +592,7 @@ def sort_json_policy_dict(policy_dict):
 
         # Sort list. If it's a list of dictionaries, sort by tuple of key-value
         # pairs, since Python 3 doesn't allow comparisons such as `<` between dictionaries.
-        checked_list.sort(key=lambda x: sorted(set(x.items())) if isinstance(x, dict) else x)
+        checked_list.sort(key=lambda x: sorted(list(x.items())) if isinstance(x, dict) else x)
         return checked_list
 
     ordered_policy_dict = {}
