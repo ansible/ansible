@@ -31,10 +31,10 @@ module: win_dsc
 version_added: "2.4"
 short_description: Invokes a PowerShell DSC configuration
 description:
-     - Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer).
-       Most of the parameters for this module are dynamic and will vary depending on the DSC Resource.
-       Also note that credentials are handled as follows: If the resource accepts a credential type property called "cred", 
-       the ansible parameters would be cred_username and cred_password. These will be used to inject a credential object on the fly for the DSC resource.
+    - Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer).
+      Most of the parameters for this module are dynamic and will vary depending on the DSC Resource.
+      Also note that credentials are handled as follows: If the resource accepts a credential type property called "cred",
+      the ansible parameters would be cred_username and cred_password. These will be used to inject a credential object on the fly for the DSC resource.
 options:
   resource_name:
     description:
