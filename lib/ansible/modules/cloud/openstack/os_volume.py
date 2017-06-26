@@ -110,6 +110,7 @@ except ImportError:
 
 from distutils.version import StrictVersion
 
+
 def _present_volume(module, cloud):
     if cloud.volume_exists(module.params['display_name']):
         v = cloud.get_volume(module.params['display_name'])
