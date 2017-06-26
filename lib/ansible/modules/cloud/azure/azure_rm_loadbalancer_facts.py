@@ -90,6 +90,7 @@ except:
 
 AZURE_OBJECT_CLASS = 'LoadBalancer'
 
+
 class AzureRMLoadBalancerFacts(AzureRMModuleBase):
     """Utility class to get load balancer facts"""
 
@@ -164,6 +165,7 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
                 results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
 
         return results
+
 
 def main():
     """Main module execution code path"""

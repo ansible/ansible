@@ -106,7 +106,7 @@ options:
             - SourceIP
             - SourceIPProtocol
     frontend_port:
-        description
+        description:
             - Frontend port that will be exposed for the load balancer.
         required: false
     backend_port:
