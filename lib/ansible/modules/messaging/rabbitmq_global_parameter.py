@@ -55,14 +55,25 @@ options:
     choices: [ 'present', 'absent']
 '''
 
-EXAMPLES = """
+EXAMPLES = '''
 # Set the global parameter 'cluster_name' to a value of 'mq-cluster' (in quotes)
 - rabbitmq_global_parameter: name=cluster_name
                              value='"mq-cluster"'
                              state=present
-"""
+'''
 
-RETURN = ""
+RETURN = '''
+name:
+    description: name of the global parameter being set
+    returned: success
+    type: string
+    sample: "cluster_name"
+value:
+    description: value of the global parameter, as a JSON term
+    returned: changed
+    type: string
+    sample: "the-cluster-name"
+'''
 
 from ansible.module_utils.basic import AnsibleModule, json
 
@@ -142,6 +153,6 @@ def main():
         rabbitmq_global_parameter.set()
         changed = True
 
-    module.exit_json(changed=changed, name=name, state=state)
+    module.exit_json(changed=changed, name=name,  value=value, state=state)
 
 main()
