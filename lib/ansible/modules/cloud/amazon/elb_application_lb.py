@@ -357,17 +357,6 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-def convert(data):
-    if isinstance(data, string_types):
-        return str(data)
-    elif isinstance(data, collections.Mapping):
-        return dict(map(convert, data.items()))
-    elif isinstance(data, collections.Iterable):
-        return type(data)(map(convert, data))
-    else:
-        return data
-
-
 def convert_tg_name_to_arn(connection, module, tg_name):
 
     try:
@@ -380,21 +369,9 @@ def convert_tg_name_to_arn(connection, module, tg_name):
     return tg_arn
 
 
-def convert_tg_arn_to_name(connection, module, tg_arn):
-
-    try:
-        response = connection.describe_target_groups(TargetGroupArns=[tg_arn])
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-
-    tg_name = response['TargetGroups'][0]['TargetGroupName']
-
-    return tg_name
-
-
 def wait_for_status(connection, module, elb_arn, status):
     polling_increment_secs = 15
-    max_retries = (module.params.get('wait_timeout') / polling_increment_secs)
+    max_retries = module.params.get('wait_timeout') / polling_increment_secs
     status_achieved = False
 
     for x in range(0, max_retries):
@@ -711,9 +688,8 @@ def compare_rules(connection, module, current_listeners, listener):
                 break
 
         # If the current rule was not matched against passed rules, mark for removal
-        if not current_rule_passed_to_module:
-            if not current_rule['IsDefault']:
-                rules_to_delete.append(current_rule['RuleArn'])
+        if not current_rule_passed_to_module and not current_rule['IsDefault']:
+            rules_to_delete.append(current_rule['RuleArn'])
 
     rules_to_add = listener['Rules']
 
@@ -729,7 +705,7 @@ def create_or_update_elb_listeners(connection, module, elb):
     purge_listeners = module.params.get("purge_listeners")
 
     # Does the ELB have any listeners exist?
-    current_listeners = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
+    current_listeners = get_elb_listeners(connection, module, elb['LoadBalancerArn'] or [])
 
     listeners_to_add, listeners_to_modify, listeners_to_delete = compare_listeners(connection, module, current_listeners, deepcopy(listeners), purge_listeners)
 
