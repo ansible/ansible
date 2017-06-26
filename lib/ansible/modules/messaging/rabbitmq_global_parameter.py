@@ -29,7 +29,7 @@ module: rabbitmq_global_parameter
 short_description: Adds or removes global parameters to RabbitMQ
 description:
   - Manage dynamic, cluster-wide global parameters for RabbitMQ
-version_added: "2.3"
+version_added: "2.4"
 author: '"Juergen Kirschbaum (@gmail.com)"'
 options:
   name:
@@ -61,6 +61,8 @@ EXAMPLES = """
                              value='"mq-cluster"'
                              state=present
 """
+
+RETURN = ""
 
 from ansible.module_utils.basic import AnsibleModule, json
 
