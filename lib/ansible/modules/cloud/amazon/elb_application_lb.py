@@ -334,6 +334,7 @@ vpc_id:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, get_ec2_security_group_ids_from_names, \
     ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
 import collections
@@ -348,7 +349,7 @@ except ImportError:
 
 
 def convert(data):
-    if isinstance(data, basestring):
+    if isinstance(data, string_types):
         return str(data)
     elif isinstance(data, collections.Mapping):
         return dict(map(convert, data.items()))
@@ -427,7 +428,7 @@ def get_elb_attributes(connection, module, elb_arn):
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Replace '.' with '_' in attribute key names to make it more Ansibley
-    for k, v in elb_attributes.items():
+    for k, v in dict(elb_attributes).items():
         elb_attributes[k.replace('.', '_')] = v
         del elb_attributes[k]
 
