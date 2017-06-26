@@ -206,7 +206,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         resource_group = self.get_resource_group(self.resource_group)
