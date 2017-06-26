@@ -422,6 +422,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         self.wait_for_deployment_completion = None
         self.wait_for_deployment_polling_period = None
         self.tags = None
+        self.append_tags = None
 
         self.results = dict(
             deployment=dict(),
@@ -435,7 +436,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['append_tags', 'tags']:
             setattr(self, key, kwargs[key])
 
         if self.state == 'present':
@@ -460,7 +461,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             self.results['changed'] = True
             self.results['msg'] = 'deployment succeeded'
         else:
-            if self.resource_group_exists(self.resource_group_name):
+            if self._get_resource_group(self.resource_group_name):
                 self.destroy_resource_group()
                 self.results['changed'] = True
                 self.results['msg'] = "deployment deleted"
@@ -489,6 +490,11 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             deploy_parameter.template_link = self.rm_models.TemplateLink(
                 uri=self.template_link
             )
+
+        if self.append_tags and self.tags:
+            rg = self._get_resource_group(self.resource_group_name)
+            if rg and rg.tags:
+                self.tags = dict(self.tags, **rg.tags)
 
         params = self.rm_models.ResourceGroup(location=self.location, tags=self.tags)
 
@@ -537,18 +543,19 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                 self.fail("Delete resource group and deploy failed with status code: %s and message: %s" %
                           (e.status_code, e.message))
 
-    def resource_group_exists(self, resource_group):
+    def _get_resource_group(self, resource_group):
         '''
-        Return True/False based on existence of requested resource group.
+        Return requested resource group or None
 
         :param resource_group: string. Name of a resource group.
-        :return: boolean
+        :return: resource group object
+        :rtype: :class:`ResourceGroup
+         <azure.mgmt.resource.resources.models.ResourceGroup>`
         '''
         try:
-            self.rm_client.resource_groups.get(resource_group)
+            return self.rm_client.resource_groups.get(resource_group)
         except CloudError:
-            return False
-        return True
+            return None
 
     def _get_failed_nested_operations(self, current_operations):
         new_operations = []
