@@ -94,7 +94,7 @@ def get_existing(module, args):
     config = str(get_config(module))
     address = module.params['rp_address']
 
-    pim_address_re = r'ip pim rp-address (?P<value>.*)$'.format(address)
+    pim_address_re = r'ip pim rp-address (?P<value>.*)$'
     for line in re.findall(pim_address_re, config, re.M):
 
         values = line.split()
@@ -173,7 +173,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
-
 
     state = module.params['state']
 
