@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
-#                    Chris Houseknecht, <house@redhat.com>
+# Copyright (c) 2016 Thomas Stringer, <tomstr@microsoft.com>
 #
 # This file is part of Ansible
 #
