@@ -45,6 +45,18 @@ if not contains $PREFIX_MANPATH $MANPATH
     end
 end
 
+# Set PYTHON_BIN
+if not set -q PYTHON_BIN
+    if test (which python)
+        set -gx PYTHON_BIN (which python)
+    else if test (which python3)
+        set -gx PYTHON_BIN (which python3)
+    else
+        echo "No valid Python found"
+        exit 1
+    end
+end
+
 set -gx ANSIBLE_LIBRARY $ANSIBLE_HOME/library
 
 # Generate egg_info so that pkg_resources works
@@ -53,9 +65,9 @@ if test -e $PREFIX_PYTHONPATH/ansible*.egg-info
     rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
 end
 if [ $QUIET ]
-    python setup.py -q egg_info
+    eval $PYTHON_BIN setup.py -q egg_info
 else
-    python setup.py egg_info
+    eval $PYTHON_BIN setup.py egg_info
 end
 find . -type f -name "*.pyc" -delete
 popd
@@ -67,6 +79,7 @@ if not [ $QUIET ]
     echo ""
     echo "PATH=$PATH"
     echo "PYTHONPATH=$PYTHONPATH"
+    echo "PYTHON_BIN=$PYTHON_BIN"
     echo "ANSIBLE_LIBRARY=$ANSIBLE_LIBRARY"
     echo "MANPATH=$MANPATH"
     echo ""
