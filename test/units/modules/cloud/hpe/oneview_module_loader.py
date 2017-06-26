@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (2016-2017) Hewlett Packard Enterprise Development LP
@@ -21,8 +20,16 @@ So, to avoid merging issues, and maintaining the tests code equal, we create a u
 configure the imports that change from ansible.modules.cloud.hpe.one repository to another.
 """
 
-ONEVIEW_MODULE_UTILS_PATH = 'ansible.module_utils.oneview'
+import sys
+from ansible.compat.tests.mock import patch, Mock
+sys.modules['hpOneView'] = Mock()
+sys.modules['hpOneView.oneview_client'] = Mock()
+sys.modules['hpOneView.exceptions'] = Mock()
+sys.modules['future'] = Mock()
+sys.modules['__future__'] = Mock()
+sys.modules['OrderedDict'] = Mock()
 
+ONEVIEW_MODULE_UTILS_PATH = 'ansible.module_utils.oneview'
 from ansible.module_utils.oneview import (HPOneViewException,
                                           HPOneViewTaskError,
                                           OneViewModuleBase,

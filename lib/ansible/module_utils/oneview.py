@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (2016-2017) Hewlett Packard Enterprise Development LP
@@ -521,7 +520,9 @@ class ServerProfileMerger(object):
         return merged_data
 
     def _merge_connections_boot(self, merged_data, resource):
-        existing_connection_map = {x[SPKeys.ID]: x.copy() for x in resource[SPKeys.CONNECTIONS]}
+        existing_connection_map = {}
+        for x in resource[SPKeys.CONNECTIONS]:
+            existing_connection_map[x[SPKeys.ID]] = x.copy()
         for merged_connection in merged_data[SPKeys.CONNECTIONS]:
             conn_id = merged_connection[SPKeys.ID]
             existing_conn_has_boot = conn_id in existing_connection_map and SPKeys.BOOT in existing_connection_map[
