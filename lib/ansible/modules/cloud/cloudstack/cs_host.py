@@ -384,8 +384,8 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
 
         }
         self.allocation_states = {
-            'enabled': 'enable',
-            'disabled': 'disable',
+            'enabled': 'Enable',
+            'disabled': 'Disable',
         }
 
     def get_pod(self, key=None):
