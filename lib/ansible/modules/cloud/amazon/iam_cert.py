@@ -50,19 +50,34 @@ options:
     default: "/"
   cert_chain:
     description:
+      - The path to the CA certificate chain in PEM encoded format.
+        I(cert_chain) is interchangeable with I(cert_chain_body).
+  cert_chain_body:
+    description:
       - The CA certificate chain in PEM encoded format.
-      - Note that prior to 2.4, this parameter expected a path to a file.
-        Since 2.4 this is now accomplished using a lookup plugin. See examples for detail.
+        This is accomplished using a lookup plugin. See examples for detail.
+        I(cert_chain_body) is interchangeable with I(cert_chain).
+    version_added: "2.4"
   cert:
     description:
+      - The path to the certificate body in PEM encoded format.
+        I(cert) is interchangeable with I(cert_body).
+  cert_body:
+    description:
       - The certificate body in PEM encoded format.
-      - Note that prior to 2.4, this parameter expected a path to a file.
-        Since 2.4 this is now accomplished using a lookup plugin. See examples for detail.
+        This is accomplished using a lookup plugin. See examples for detail.
+        I(cert_body) is interchangeable with I(cert).
+    version_added: "2.4"
   key:
     description:
+      - The path to the private key of the certificate in PEM encoded format.
+        I(key) is interchangeable with I(key_body).
+  key_body:
+    description:
       - The key of the certificate in PEM encoded format.
-      - Note that prior to 2.4, this parameter expected a path to a file.
-        Since 2.4 this is now accomplished using a lookup plugin. See examples for detail.
+        This is accomplished using a lookup plugin. See examples for detail.
+        I(key_body) is interchangeable with I(key).
+    version_added: "2.4"
   dup_ok:
     description:
       - By default the module will not upload a certificate that is already uploaded into AWS.
@@ -83,18 +98,26 @@ EXAMPLES = '''
 - iam_cert:
     name: very_ssl
     state: present
-    cert: "{{ lookup('file', 'path/to/cert') }}"
-    key: "{{ lookup('file', 'path/to/key') }}"
-    cert_chain: "{{ lookup('file', 'path/to/certchain') }}"
+    cert_body: "{{ lookup('file', 'path/to/cert') }}"
+    key_body: "{{ lookup('file', 'path/to/key') }}"
+    cert_chain_body: "{{ lookup('file', 'path/to/certchain') }}"
+
+# Basic server certificate upload without lookups
+- iam_cert:
+    name: very_ssl
+    state: present
+    cert: path/to/cert
+    key: path/to/key
+    cert_chain: path/to/certchain
 
 # Server certificate upload using key string
 - iam_cert:
     name: very_ssl
     state: present
     path: "/a/cert/path/"
-    cert: body_of_somecert
-    key: vault_body_of_privcertkey
-    cert_chain: body_of_myverytrustedchain
+    cert_body: body_of_somecert
+    key_body: vault_body_of_privcertkey
+    cert_chain_body: body_of_myverytrustedchain
 
 # Basic rename of existing certificate
 - iam_cert:
@@ -105,6 +128,7 @@ EXAMPLES = '''
 '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, connect_to_aws
+import os
 
 try:
     import boto
@@ -222,14 +246,28 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
             module.exit_json(changed=changed, msg='Certificate with the name %s already absent' % name)
 
 
+def read_files(cert, cert_body, key, key_body, cert_chain, cert_chain_body):
+    # if paths are provided rather than lookups read the files and return the contents
+    if not cert_body and os.path.exists(cert):
+        cert_body = open(cert, 'r').read().rstrip()
+    if not key_body and os.path.exists(key):
+        key_body = open(key, 'r').read().rstrip()
+    if not cert_chain_body and os.path.exists(cert_chain):
+        cert_chain_body = open(module.params.get('cert_chain'), 'r').read()
+    return cert_body, key_body, cert_chain_body
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(required=True, choices=['present', 'absent']),
         name=dict(),
         cert=dict(),
+        cert_body=dict(),
         key=dict(no_log=True),
+        key_body=dict(no_log=True),
         cert_chain=dict(),
+        cert_chain_body=dict(),
         new_name=dict(),
         path=dict(default='/', required=False),
         new_path=dict(required=False),
@@ -239,14 +277,12 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[
-            ['new_path', 'key'],
-            ['new_path', 'cert'],
-            ['new_path', 'cert_chain'],
-            ['new_name', 'key'],
-            ['new_name', 'cert'],
-            ['new_name', 'cert_chain'],
-        ],
+        mutually_exclusive=[('new_path', 'cert', 'cert_body'),
+                            ('new_path', 'key', 'key_body'),
+                            ('new_path', 'cert_chain', 'cert_chain_body'),
+                            ('new_name', 'cert', 'cert_body'),
+                            ('new_name', 'key', 'key_body'),
+                            ('new_name', 'cert_chain', 'cert_chain_body')]
     )
 
     if not HAS_BOTO:
@@ -269,9 +305,12 @@ def main():
     new_path = module.params.get('new_path')
     dup_ok = module.params.get('dup_ok')
     if state == 'present' and not new_name and not new_path:
-        cert = module.params.get('cert')
-        key = module.params.get('key')
-        cert_chain = module.params.get('cert_chain')
+        cert, key, cert_chain = read_files(cert=module.params.get('cert'),
+                                           cert_body=module.params.get('cert_body'),
+                                           key=module.params.get('key'),
+                                           key_body=module.params.get('key_body'),
+                                           cert_chain=module.params.get('cert_chain'),
+                                           cert_chain_body=module.params.get('cert_chain_body'))
     else:
         cert = key = cert_chain = None
 
