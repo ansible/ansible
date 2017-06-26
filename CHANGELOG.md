@@ -25,6 +25,7 @@ Ansible Changes By Release
 * Fix for flowdock error message when external_user_name is missing
 * fixed corner case for delegate_to, loops and delegate_facts
 * fixed wait_for python2.4/2.5 compatibility (this is last version this is needed)
+* fix for adhoc not obeying callback options
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
