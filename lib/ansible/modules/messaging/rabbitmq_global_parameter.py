@@ -18,13 +18,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 module: rabbitmq_global_parameter
 short_description: Adds or removes global parameters to RabbitMQ
 description:
   - Manage dynamic, cluster-wide global parameters for RabbitMQ
-version_added: "2.x"
+version_added: "2.3"
 author: '"Juergen Kirschbaum (@gmail.com)"'
 options:
   name:
@@ -56,6 +61,9 @@ EXAMPLES = """
                              value='"mq-cluster"'
                              state=present
 """
+
+from ansible.module_utils.basic import AnsibleModule, json
+
 
 class RabbitMqParameter(object):
     def __init__(self, module, name, value, node):
@@ -97,6 +105,7 @@ class RabbitMqParameter(object):
     def has_modifications(self):
         return self.value != self._value
 
+
 def main():
     arg_spec = dict(
         name=dict(required=True),
@@ -133,6 +142,4 @@ def main():
 
     module.exit_json(changed=changed, name=name, state=state)
 
-# import module snippets
-from ansible.module_utils.basic import *
 main()
