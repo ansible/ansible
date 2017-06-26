@@ -38,6 +38,9 @@ options:
         fail will simply bail out with a generic message.
     required: false
     default: "'Failed as requested from task'"
+notes:
+  - This action module will silently take any number of parameters in addition to C(msg)
+    without warnings, beware of indentation issues if you are using C(when) conditionals.
 
 author: "Dag Wieers (@dagwieers)"
 '''
