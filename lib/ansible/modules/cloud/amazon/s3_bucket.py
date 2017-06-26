@@ -288,9 +288,9 @@ def _create_or_update_bucket(connection, module, location):
     requester_pays_status = get_request_payment_status(bucket)
     if requester_pays_status != requester_pays:
         if requester_pays:
-            payer='Requester'
+            payer = 'Requester'
         else:
-            payer='BucketOwner'
+            payer = 'BucketOwner'
         bucket.set_request_payment(payer=payer)
         changed = True
         requester_pays_status = get_request_payment_status(bucket)
@@ -386,7 +386,7 @@ def _destroy_bucket(connection, module):
 
 
 def _create_or_update_bucket_ceph(connection, module, location):
-    #TODO: add update
+    # TODO: add update
 
     name = module.params.get("name")
 
@@ -443,6 +443,7 @@ def is_walrus(s3_url):
         return not o.hostname.endswith('amazonaws.com')
     else:
         return False
+
 
 def main():
 
@@ -529,8 +530,8 @@ def main():
     except Exception as e:
         module.fail_json(msg='Failed to connect to S3: %s' % str(e))
 
-    if connection is None: # this should never happen
-        module.fail_json(msg ='Unknown error, failed to create s3 connection, no information from boto.')
+    if connection is None:  # this should never happen
+        module.fail_json(msg='Unknown error, failed to create s3 connection, no information from boto.')
 
     state = module.params.get("state")
 
