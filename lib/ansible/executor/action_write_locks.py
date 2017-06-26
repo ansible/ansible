@@ -39,6 +39,6 @@ if 'action_write_locks' not in globals():
     # a strategy).  We precreate them here as an optimization
     mods = set(p['name'] for p in PKG_MGRS)
 
-    mods.update(('copy', 'file', 'setup', 'slurp', 'stat'))
+    mods.update(('copy', 'file', 'gather_facts', 'setup', 'slurp', 'stat'))
     for mod_name in mods:
         action_write_locks[mod_name] = Lock()
