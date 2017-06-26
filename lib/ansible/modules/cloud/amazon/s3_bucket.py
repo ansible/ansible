@@ -157,12 +157,12 @@ def create_tags_container(tags):
 
 
 def compare_policy_statement_part(current, new):
-    ''' Takes a matching part of a current policy statement and the
+    """ Takes a matching part of a current policy statement and the
         new policy statement and compares them. Ensures lists are
         compared to other lists and calls itself recursively for dicts
         so nesting structures are as expected.
         Returns True if the policy has changed.
-    '''
+    """
     if current != new:
         if isinstance(current, dict):
             if set(current.keys()) != set(new.keys()):
@@ -173,10 +173,12 @@ def compare_policy_statement_part(current, new):
                 # recursively checking each value in the dicts
                 if compare_policy_statement_part(current_inner, new_inner):
                     return True
+        # The S3 API will automatically turn single-item lists into strings
+        # To account for this we have to ensure we compare lists to lists
         if isinstance(current, list) and isinstance(new, string_types):
             current = [to_text(each) for each in current]
             new = [to_text(new)]
-        elif isinstance(new, list) and isinstance(current, string_types):
+        elif isinstance(current, string_types) and isinstance(new, list):
             new = [to_text(each) for each in new]
             current = [to_text(current)]
         if not isinstance(current, dict) and current != new:
@@ -186,10 +188,11 @@ def compare_policy_statement_part(current, new):
 
 
 def sort_policy_statement(current_policy, new_policy):
-    ''' Takes two policies and looks for matching statement parts (since it is a list of dicts
+    """ Takes two policies and looks for matching statement parts (since it is a list of dicts
         and cannot be easily ordered).
         Returns a list of tuple pairs that can then be given to
-        compare_policy_statement_part()
+        compare_policy_statement_part(); the return value is not a valid policy, it is only intended
+        for comparison purposes to determine if a change has been made to the existing policy.
         Return sample:
           [({
              "Sid":"AddCannedAcl",
@@ -209,7 +212,7 @@ def sort_policy_statement(current_policy, new_policy):
              "Action": "s3:PutObjectAcl",
              "Resource": ["arn:aws:s3:::XXXXXXXX/*"]
            })]
-    '''
+    """
     policy_pairs = []
     for policy_chunk in range(0, len(current_policy.get(u'Statement'))):
         old_chunk = current_policy[u'Statement'][policy_chunk]
@@ -224,9 +227,9 @@ def sort_policy_statement(current_policy, new_policy):
 
 
 def compare_policies(current_policy, new_policy):
-    ''' Compares the existing policy and the updated policy
+    """ Compares the existing policy and the updated policy
         Returns True if there is a difference between policies.
-    '''
+    """
     # check the easily spotted things
     if set(current_policy.keys()) != set(new_policy.keys()):
         return True
