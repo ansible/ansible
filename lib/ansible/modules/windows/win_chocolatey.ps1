@@ -66,7 +66,7 @@ Function Chocolatey-Install-Upgrade
     if ($ChocoAlreadyInstalled -eq $null)
     {
 
-        #We need to install chocolatey
+        # We need to install chocolatey
         $install_output = (new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1") | powershell -
         if ($LASTEXITCODE -ne 0)
         {
@@ -75,6 +75,7 @@ Function Chocolatey-Install-Upgrade
         }
         $result.changed = $true
         $script:executable = "C:\ProgramData\chocolatey\bin\choco.exe"
+        Add-Warning $result 'Chocolatey was missing from this system, so it was installed during this task run.'
 
     }
     else
