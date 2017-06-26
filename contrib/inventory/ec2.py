@@ -647,6 +647,8 @@ class Ec2Inventory(object):
                         instance.tags = {}
                         for tag in tags:
                             instance.tags[tag['Key']] = tag['Value']
+                        # collect the VPC ID from the DB subnet group
+                        instance.vpc_id = db_instances['DBInstances'][index]['DBSubnetGroup']['VpcId']
 
                         self.add_rds_instance(instance, region)
                     if not marker:
