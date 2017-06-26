@@ -30,14 +30,18 @@ DOCUMENTATION = r'''
 ---
 module: win_ping
 version_added: "1.7"
-short_description: A windows version of the classic ping module.
+short_description: A windows version of the classic ping module
 description:
-  - Checks management connectivity of a windows host
+  - Checks management connectivity of a windows host.
+  - This is NOT ICMP ping, this is just a trivial test module.
+  - For non-Windows targets, use the M(ping) module instead.
 options:
   data:
     description:
       - Alternate data to return instead of 'pong'
     default: 'pong'
+notes:
+  - For non-Windows targets, use the M(ping) module instead.
 author: "Chris Church (@cchurch)"
 '''
 

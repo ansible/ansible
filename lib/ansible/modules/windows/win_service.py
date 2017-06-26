@@ -32,7 +32,8 @@ module: win_service
 version_added: "1.7"
 short_description: Manages Windows services
 description:
-    - Manages Windows services
+    - Manages Windows services.
+    - For non-Windows targets, use the M(service) module instead.
 options:
   dependencies:
     description:
@@ -117,6 +118,8 @@ options:
       - The username to set the service to start as.
       - This and the C(password) argument must be supplied together.
     version_added: "2.3"
+notes:
+    - For non-Windows targets, use the M(service) module instead.
 author: "Chris Hoffman (@chrishoffman)"
 '''
 

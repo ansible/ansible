@@ -39,6 +39,7 @@ description:
      - In 1.8 and later, this module can also be used to wait for active
        connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
+     - This module is also supported for Windows targets.
 version_added: "0.7"
 options:
   host:
@@ -99,6 +100,8 @@ options:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
+  - This module is also supported for Windows targets.
+  - See also M(wait_for_connection)
 author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)
@@ -106,7 +109,6 @@ author:
 '''
 
 EXAMPLES = r'''
-
 - name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
   wait_for:
     port: 8000

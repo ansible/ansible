@@ -28,6 +28,7 @@ description:
      - This module works like M(copy), but in reverse. It is used for fetching
        files from remote machines and storing them locally in a file tree,
        organized by hostname.
+     - This module is also supported for Windows targets.
 version_added: "0.2"
 options:
   src:
@@ -86,6 +87,7 @@ notes:
       playbook authors are encouraged to use fail_when or ignore_errors to
       get this ability.  They may also explicitly set fail_on_missing to False
       to get the non-failing behaviour.
+    - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = '''

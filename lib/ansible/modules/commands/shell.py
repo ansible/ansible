@@ -30,6 +30,7 @@ description:
      - The C(shell) module takes the command name followed by a list of space-delimited arguments.
        It is almost exactly like the M(command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
+     - For Windows targets, use the M(win_shell) module instead.
 version_added: "0.2"
 options:
   free_form:
@@ -75,7 +76,7 @@ notes:
       judgement.
    -  To sanitize any variables passed to the shell module, you should use
       "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-
+   - For Windows targets, use the M(win_shell) module instead.
 requirements: [ ]
 author:
     - Ansible Core Team

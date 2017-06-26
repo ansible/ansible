@@ -34,6 +34,7 @@ description:
   - The C(tempfile) module creates temporary files and directories. C(mktemp) command takes different parameters on various systems, this module helps
     to avoid troubles related to that. Files/directories created by module are accessible only by creator. In case you need to make them world-accessible
     you need to use M(file) module.
+  - For Windows targets, use the M(win_tempfile) module instead.
 options:
   state:
     description:
@@ -56,6 +57,8 @@ options:
       - Suffix of file/directory name created by module.
     required: false
     default: ""
+notes:
+  - For Windows targets, use the M(win_tempfile) module instead.
 '''
 
 EXAMPLES = """

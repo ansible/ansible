@@ -33,7 +33,9 @@ description:
      - Creates (empty) files, updates file modification stamps of existing files,
        and can create or remove directories.
      - Unlike M(file), does not modify ownership, permissions or manipulate links.
+     - For non-Windows targets, use the M(file) module instead.
 notes:
+    - For non-Windows targets, use the M(file) module instead.
     - See also M(win_copy), M(win_template), M(copy), M(template), M(assemble)
 requirements: [ ]
 author: "Jon Hawkesworth (@jhawkesworth)"

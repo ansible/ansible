@@ -26,6 +26,7 @@ description:
      - Static includes are not subject to most directives, for example, loops or conditionals, they are applied instead to each inherited task.
      - Since 2.0 task includes are dynamic and behave more like real tasks.  This means they can be looped, skipped and use variables from any source.
        Ansible tries to auto detect this, use the `static` directive (new in 2.1) to bypass autodetection.
+     - This module is also supported for Windows targets.
 version_added: "0.6"
 options:
   free-form:
@@ -34,6 +35,7 @@ options:
 notes:
     - This is really not a module, though it appears as such, this is a feature of the Ansible Engine, as such it cannot be overridden the same way a
       module can.
+    - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = """

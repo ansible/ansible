@@ -35,6 +35,9 @@ description:
      contact. It does not make sense in playbooks, but it is useful from
      C(/usr/bin/ansible) to verify the ability to login and that a usable python is configured.
    - This is NOT ICMP ping, this is just a trivial test module.
+   - For Windows targets, use the M(ping) module instead.
+notes:
+   - For Windows targets, use the M(ping) module instead.
 options: {}
 author:
     - "Ansible Core Team"

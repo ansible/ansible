@@ -26,6 +26,7 @@ module: group_by
 short_description: Create Ansible groups based on facts
 description:
   - Use facts to create ad-hoc groups that can be used later in a playbook.
+  - This module is also supported for Windows targets.
 version_added: "0.9"
 options:
   key:
@@ -35,6 +36,7 @@ options:
 author: "Jeroen Hoekx (@jhoekx)"
 notes:
   - Spaces in group names are converted to dashes '-'.
+  - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = '''

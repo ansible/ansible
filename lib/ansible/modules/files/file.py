@@ -33,7 +33,9 @@ description:
      - Sets attributes of files, symlinks, and directories, or removes
        files/symlinks/directories. Many other modules support the same options as
        the C(file) module - including M(copy), M(template), and M(assemble).
+     - For Windows targets, use the M(win_file) module instead.
 notes:
+    - For Windows targets, use the M(win_file) module instead.
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
 author:

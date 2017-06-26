@@ -33,6 +33,7 @@ author:
 short_description: Generic OS package manager
 description:
      - Installs, upgrade and removes packages using the underlying OS package manager.
+     - For Windows targets, use the M(win_package) module instead.
 options:
   name:
     description:
@@ -53,6 +54,7 @@ requirements:
     - Whatever is required for the package plugins specific for each system.
 notes:
     - This module actually calls the pertinent package modules for each system (apt, yum, etc).
+    - For Windows targets, use the M(win_package) module instead.
 '''
 EXAMPLES = '''
 - name: install the latest version of ntpdate
