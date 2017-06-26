@@ -32,6 +32,7 @@ version_added: "2.4"
 short_description: Invokes a PowerShell DSC configuration
 description:
     - Invokes a PowerShell DSC Configuration. Requires PowerShell version 5 (February release or newer).
+    - Most of the parameters for this module are dynamic and will vary depending on the DSC Resource.
 options:
   resource_name:
     description:
