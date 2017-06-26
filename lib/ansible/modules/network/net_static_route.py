@@ -76,6 +76,11 @@ EXAMPLES = """
     next_hop: 10.0.0.1
     state: absent
 
+- name: configure collections of static routes
+  net_static_route:
+    collection:
+      - { prefix: 192.168.2.0, mask 255.255.255.0, next_hop: 10.0.0.1 }
+      - { prefix: 192.168.3.0, mask 255.255.255.0, next_hop: 10.0.2.1 }
 """
 
 RETURN = """
