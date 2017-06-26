@@ -142,14 +142,11 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
     update = False
 
     # IAM cert names are case insensitive
-    names_lower = [n.lower() for n in [name, new_name]]
+    names_lower = [n.lower() for n in [name, new_name] if n is not None]
     orig_cert_names_lower = [ocn.lower() for ocn in orig_cert_names]
 
     if any(ct in orig_cert_names_lower for ct in names_lower):
         for i_name in names_lower:
-            if i_name is None:
-                continue
-
             if cert is not None:
                 try:
                     c_index = orig_cert_names_lower.index(i_name)
@@ -168,7 +165,7 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
                     elif slug_orig_cert_bodies != slug_cert:
                         module.fail_json(changed=False, msg='A cert with the name %s already exists and'
                                          ' has a different certificate body associated'
-                                         ' with it. Certificates cannot have the same name' % i_name)
+                                         ' with it. Certificates cannot have the same name' % orig_cert_names[c_index])
             else:
                 update = True
                 break
