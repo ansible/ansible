@@ -50,12 +50,13 @@ options:
             - Composer arguments like required package, version and so on.
         required: false
         default: null
-    php_path:
+    php_executable:
         version_added: "2.4"
         description:
             - Path to PHP Executable on the remote host, if PHP is not in PATH
         required: false
         default: null
+        aliases: [ "php_path" ]
     working_dir:
         description:
             - Directory of your project (see --working-dir). This is required when
@@ -199,7 +200,7 @@ def main():
         argument_spec=dict(
             command=dict(default="install", type="str", required=False),
             arguments=dict(default="", type="str", required=False),
-            php_path=dict(type="path", required=False),
+            php_path=dict(type="path", required=False, aliases=["php_path"]),
             working_dir=dict(type="path", aliases=["working-dir"]),
             global_command=dict(default=False, type="bool", aliases=["global-command"]),
             prefer_source=dict(default=False, type="bool", aliases=["prefer-source"]),
