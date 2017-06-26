@@ -233,6 +233,7 @@ def set_mount(module, args):
                 (ld['src'] != escaped_args['src'] and
                 escaped_args['fstype'] == 'swap')):
             # added extra validation since swap repeats none as name
+            # for the rest would be valid if we use different filesystems
             to_write.append(line)
 
             continue
