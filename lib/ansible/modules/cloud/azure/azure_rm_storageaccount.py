@@ -359,8 +359,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                         self.fail("Failed to update account type: {0}".format(str(exc)))
 
         if self.custom_domain:
-            if not self.account_dict['custom_domain'] or \
-               self.account_dict['custom_domain'] != self.account_dict['custom_domain']:
+            if not self.account_dict['custom_domain'] or self.account_dict['custom_domain'] != self.custom_domain:
                 self.results['changed'] = True
                 self.account_dict['custom_domain'] = self.custom_domain
 
