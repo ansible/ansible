@@ -44,7 +44,7 @@ options:
     nic_name:
         description:
             - vmnic name to attach to vswitch
-        required: True
+        required: False
     number_of_ports:
         description:
             - Number of port to configure on vswitch
@@ -66,17 +66,24 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example from Ansible playbook
+- name: Add a VMware vSwitch
+  local_action:
+    module: vmware_vswitch
+    hostname: esxi_hostname
+    username: esxi_username
+    password: esxi_password
+    switch_name: vswitch_name
+    nic_name: vmnic_name
+    mtu: 9000
 
-    - name: Add a VMware vSwitch
-      local_action:
-        module: vmware_vswitch
-        hostname: esxi_hostname
-        username: esxi_username
-        password: esxi_password
-        switch_name: vswitch_name
-        nic_name: vmnic_name
-        mtu: 9000
+- name: Add a VMWare vSwitch without any physical NIC attached
+  vmware_vswitch:
+    hostname: 192.168.10.1
+    username: admin
+    password: password123
+    switch_name: vswitch_0001
+    mtu: 9000
+
 '''
 
 try:
@@ -138,7 +145,8 @@ class VMwareHostVirtualSwitch(object):
         vss_spec = vim.host.VirtualSwitch.Specification()
         vss_spec.numPorts = self.number_of_ports
         vss_spec.mtu = self.mtu
-        vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=[self.nic_name])
+        if self.nic_name:
+            vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=[self.nic_name])
         self.host_system.configManager.networkSystem.AddVirtualSwitch(vswitchName=self.switch_name, spec=vss_spec)
         self.module.exit_json(changed=True)
 
@@ -184,7 +192,7 @@ class VMwareHostVirtualSwitch(object):
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(switch_name=dict(required=True, type='str'),
-                         nic_name=dict(required=True, type='str'),
+                         nic_name=dict(required=False, type='str'),
                          number_of_ports=dict(required=False, type='int', default=128),
                          mtu=dict(required=False, type='int', default=1500),
                          state=dict(default='present', choices=['present', 'absent'], type='str')))
