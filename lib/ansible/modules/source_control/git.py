@@ -144,8 +144,14 @@ options:
         choices: [ "yes", "no" ]
         version_added: "1.4"
         description:
-            - if C(yes), repository will be created as a bare repo, otherwise
-              it will be a standard repo with a workspace.
+            - if C(yes), repository will be created as a bare repo
+    mirror:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        version_added: "2.4"
+        description:
+            - if C(yes), repository will be created as a mirror
     umask:
         required: false
         default: null
@@ -437,7 +443,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, verify_commit):
+          mirror, reference, refspec, verify_commit):
     ''' makes a new git repo if it does not already exist '''
 
     dest_dirname = os.path.dirname(dest)
@@ -449,6 +455,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
 
     if bare:
         cmd.append('--bare')
+    elif mirror:
+        cmd.append('--mirror')
     else:
         cmd.extend(['--origin', remote])
     if depth:
@@ -467,7 +475,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.extend(['--reference', str(reference)])
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
-    if bare:
+    if bare or mirror:
         if remote != 'origin':
             module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
@@ -482,8 +490,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         verify_commit_sign(git_path, module, dest, version)
 
 
-def has_local_mods(module, git_path, dest, bare):
-    if bare:
+def has_local_mods(module, git_path, dest, bare, mirror):
+    if bare or mirror:
         return False
 
     cmd = "%s status --porcelain" % (git_path)
@@ -504,14 +512,14 @@ def reset(git_path, module, dest):
     return module.run_command(cmd, check_rc=True, cwd=dest)
 
 
-def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
+def get_diff(module, git_path, dest, repo, remote, depth, bare, mirror, before, after):
     ''' Return the difference between 2 versions '''
     if before is None:
         return {'prepared': '>> Newly checked out %s' % after}
     elif before != after:
         # Ensure we have the object we are referring to during git diff !
         git_version_used = git_version(git_path, module)
-        fetch(git_path, module, repo, dest, after, remote, depth, bare, '', git_version_used)
+        fetch(git_path, module, repo, dest, after, remote, depth, bare, mirror, '', git_version_used)
         cmd = '%s diff %s %s' % (git_path, before, after)
         (rc, out, err) = module.run_command(cmd, cwd=dest)
         if rc == 0 and out:
@@ -525,7 +533,7 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
     return {}
 
 
-def get_remote_head(git_path, module, dest, version, remote, bare):
+def get_remote_head(git_path, module, dest, version, remote, bare, mirror):
     cloning = False
     cwd = None
     tag = False
@@ -538,7 +546,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
             # cloning the repo, just get the remote's HEAD version
             cmd = '%s ls-remote %s -h HEAD' % (git_path, remote)
         else:
-            head_branch = get_head_branch(git_path, module, dest, remote, bare)
+            head_branch = get_head_branch(git_path, module, dest, remote, bare, mirror)
             cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, head_branch)
     elif is_remote_branch(git_path, module, dest, remote, version):
         cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
@@ -629,7 +637,7 @@ def is_not_a_branch(git_path, module, dest):
     return False
 
 
-def get_head_branch(git_path, module, dest, remote, bare=False):
+def get_head_branch(git_path, module, dest, remote, bare=False, mirror=False):
     '''
     Determine what branch HEAD is associated with.  This is partly
     taken from lib/ansible/utils/__init__.py.  It finds the correct
@@ -637,7 +645,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     associated with.  In the case of a detached HEAD, this will look
     up the branch in .git/refs/remotes/<remote>/HEAD.
     '''
-    if bare:
+    if bare or mirror:
         repo_path = dest
     else:
         repo_path = os.path.join(dest, '.git')
@@ -701,7 +709,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
     return remote_url is not None
 
 
-def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used):
+def fetch(git_path, module, repo, dest, version, remote, depth, bare, mirror, refspec, git_version_used):
     ''' updates repo from remote sources '''
     set_remote_url(git_path, module, repo, dest, remote)
     commands = []
@@ -739,7 +747,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
     if not depth or not refspecs:
         # don't try to be minimalistic but do a full clone
         # also do this if depth is given, but version is something that can't be fetched directly
-        if bare:
+        if bare or mirror:
             refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
         else:
             # ensure all tags are fetched
@@ -1003,6 +1011,7 @@ def main():
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None, type='path'),
             bare=dict(default='no', type='bool'),
+            mirror=dict(default='no', type='bool'),
             recursive=dict(default='yes', type='bool'),
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
@@ -1021,6 +1030,7 @@ def main():
     update = module.params['update']
     allow_clone = module.params['clone']
     bare = module.params['bare']
+    mirror = module.params['mirror']
     verify_commit = module.params['verify_commit']
     reference = module.params['reference']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
@@ -1030,6 +1040,9 @@ def main():
     archive = module.params['archive']
 
     result = dict(changed=False, warnings=list())
+
+    if bare and mirror:
+        module.fail_json(msg="'bare' and 'mirror' are incompatible options. You must set one or the other.")
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
@@ -1056,7 +1069,7 @@ def main():
         module.fail_json(msg="the destination directory must be specified unless clone=no")
     elif dest:
         dest = os.path.abspath(dest)
-        if bare:
+        if bare or mirror:
             gitconfig = os.path.join(dest, 'config')
         else:
             gitconfig = os.path.join(dest, '.git', 'config')
@@ -1095,15 +1108,15 @@ def main():
         # * we're doing a check mode test
         # In those cases we do an ls-remote
         if module.check_mode or not allow_clone:
-            remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
+            remote_head = get_remote_head(git_path, module, dest, version, repo, bare, mirror)
             result.update(changed=True, after=remote_head)
             if module._diff:
-                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, mirror, result['before'], result['after'])
                 if diff:
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, mirror, reference, refspec, verify_commit)
         need_fetch = False
     elif not update:
         # Just return having found a repo already in the dest path
@@ -1114,7 +1127,7 @@ def main():
         module.exit_json(**result)
     else:
         # else do a pull
-        local_mods = has_local_mods(module, git_path, dest, bare)
+        local_mods = has_local_mods(module, git_path, dest, bare, mirror)
         result['before'] = get_version(module, git_path, dest)
         if local_mods:
             # failure should happen regardless of check mode
@@ -1134,27 +1147,27 @@ def main():
         result.update(remote_url_changed=remote_url_changed)
 
         if module.check_mode:
-            remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
+            remote_head = get_remote_head(git_path, module, dest, version, remote, bare, mirror)
             result.update(changed=(result['before'] != remote_head or remote_url_changed), after=remote_head)
             # FIXME: This diff should fail since the new remote_head is not fetched yet?!
             if module._diff:
-                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, mirror, result['before'], result['after'])
                 if diff:
                     result['diff'] = diff
             module.exit_json(**result)
         else:
-            fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used)
+            fetch(git_path, module, repo, dest, version, remote, depth, bare, mirror, refspec, git_version_used)
 
         result['after'] = get_version(module, git_path, dest)
 
     # switch to version specified regardless of whether
     # we got new revisions from the repository
-    if not bare:
+    if not (bare or mirror):
         switch_version(git_path, module, dest, remote, version, verify_commit, depth)
 
     # Deal with submodules
     submodules_updated = False
-    if recursive and not bare:
+    if recursive and not (bare or mirror):
         submodules_updated = submodules_fetch(git_path, module, remote, track_submodules, dest)
         if submodules_updated:
             result.update(submodules_changed=submodules_updated)
@@ -1172,7 +1185,7 @@ def main():
     if result['before'] != result['after'] or local_mods or submodules_updated or remote_url_changed:
         result.update(changed=True)
         if module._diff:
-            diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+            diff = get_diff(module, git_path, dest, repo, remote, depth, bare, mirror, result['before'], result['after'])
             if diff:
                 result['diff'] = diff
 
