@@ -447,7 +447,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         if PREREQ_IMPORT_ERROR:
             self.fail(PREREQ_IMPORT_ERROR)
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         if self.state == 'present':
