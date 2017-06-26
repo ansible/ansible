@@ -90,6 +90,7 @@ commands:
     - ip route 192.168.2.0 255.255.255.0 10.0.0.1
 """
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.ios import load_config, run_commands
@@ -126,7 +127,7 @@ def map_config_to_obj(module):
         for r in match.group(1).splitlines():
             splitted_line = r.split()
 
-            cidr = ip_network(unicode(splitted_line[1]))
+            cidr = ip_network(to_text(splitted_line[1]))
             prefix = str(cidr.network_address)
             mask = str(cidr.netmask)
             next_hop = splitted_line[4]
