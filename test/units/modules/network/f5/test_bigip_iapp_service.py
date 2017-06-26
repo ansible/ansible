@@ -197,6 +197,30 @@ class TestParameters(unittest.TestCase):
         assert p.tables[0]['rows'][0]['row'] == ['12.12.12.12', '80', '0']
         assert p.tables[0]['rows'][1]['row'] == ['13.13.13.13', '443', '10']
 
+    def test_module_template_same_partition(self):
+        args = dict(
+            template='foo',
+            partition='bar'
+        )
+        p = Parameters(args)
+        assert p.template == '/bar/foo'
+
+    def test_module_template_same_partition_full_path(self):
+        args = dict(
+            template='/bar/foo',
+            partition='bar'
+        )
+        p = Parameters(args)
+        assert p.template == '/bar/foo'
+
+    def test_module_template_different_partition_full_path(self):
+        args = dict(
+            template='/Common/foo',
+            partition='bar'
+        )
+        p = Parameters(args)
+        assert p.template == '/Common/foo'
+
 
 @patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
        return_value=True)
