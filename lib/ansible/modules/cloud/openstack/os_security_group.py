@@ -116,8 +116,9 @@ def main():
     description = module.params['description']
 
     try:
-        cloud = shade.openstack_cloud(**module.params)
-        secgroup = cloud.get_security_group(name)
+        cloud = shade.openstack_cloud(**module.params)        
+        filters = {'tenant_id': cloud.keystone_session.get_project_id()}
+        secgroup = cloud.get_security_group(name, filters=filters)
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, secgroup))
