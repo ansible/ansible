@@ -220,6 +220,7 @@ Ansible Changes By Release
   * win_defrag
   * win_dsc
   * win_firewall
+  * win_psmodule
   * win_route
 
 
