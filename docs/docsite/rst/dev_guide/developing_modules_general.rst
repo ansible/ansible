@@ -213,8 +213,8 @@ would resemble something similar to the following payload for a module accepting
 
 .. _module_provided_facts:
 
-Module Provided 'Facts
-----------------------
+Module Provided 'Facts'
+-----------------------
 
 The :ref:`setup` module that ships with Ansible provides many variables about a system that can be used in playbooks
 and templates.  However, it's possible to also add your own facts without modifying the system module.  To do
@@ -293,11 +293,12 @@ main() and AnsibleModule & argument_spec
         module = AnsibleModule(
             argument_spec=dict(
                 state=dict(default='present', choices=['present', 'absent']),
-                username=dict(type='str'),
+                username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
                 password=dict(no_log=True),
                 token=dict(no_log=True),
                 src=dict(type='path'),
                 priority=dict(type='int'),
+                src_options=dict(removed_in_version='2.4'),
             ),
             mutually_exclusive=(['password', 'token'],),
             required_together=(['username', 'password'],),
@@ -321,29 +322,37 @@ All arguments are optional unless otherwise specified.
       Only needed if True, as the default is False.
       If the option is only required sometimes see the conditional options such as ``mutually_exclusive``, ``required_together``, etc.
     :default:
-     FIXME
+      If not specified by the user what is the default value for this option.
     :fallback:
       If a value isn't specified in the playbook gives the ability to read from another source.
       Currently supports ``env_fallback``. In this case the environment variable of where Ansible is run is used.
+      You will need to add ``from ansible.module_utils.basic import env_fallback``
     :type:
       Optionally validate the format of the data.
       If you wish to add extra validation rules, see ``module_utils/basic.py``.
       The following types are built into Ansible.
 
         :str:
+          A string, this is the default, so can be skipped.
         :list:
+          A list.
+          Allows passing a YAML list in via the Playbook.
         :dict:
+          A dictionary.
         :bool:
           This option should accept the common terms for truth, such as "yes", "on", 1, True, etc.
           If you find yourself trying to create an option that access bool & other values then that's an indication that the design needs revisiting.
           Do not specify ``choices`` when using bool.
         :int:
+          An integer.
         :float:
+          A floating point.
         :path:
           Ensure option is a path where the playbook is executed.
         :raw:
+          FIXME details of when this would be useful.
         :jsonarg:
-          FIXME details of when this would be useful
+          FIXME details of when this would be useful.
         :json:
         :bytes: # example (human_to_bytes)
           # FIXME test and check return type
@@ -357,29 +366,18 @@ All arguments are optional unless otherwise specified.
     :no_log:
       Boolean to state if this option may contain sensitive data, such as passwords, or authentication tokens.
     :removed_in_version:
-      FIXME
+      In which version of Ansible this option will be removed.
+      A deprecation message will be printed if this option is used.
+      Should have a corresponding line in ``DOCUMENTATION`` block
 
 
-
-
-
-
-Things to document (same style RST field table?)
-* fallback env
-* reimoved_in_version
-
-
-* suboptions
+* suboptions - separate example
 
 * Link to how to document your module
 * Shared arguments (cloud, network)
 * add_file_common_args
 
 
-* mutually_exclusive
-* required_together
-* required_one_of
-* required_if
 * supports_check_mode
 * Naming of common options (verify_ssl)
 
