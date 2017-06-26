@@ -69,7 +69,7 @@ if [ $QUIET ]
 else
     eval $PYTHON_BIN setup.py egg_info
 end
-find . -type f -name "*.pyc" -delete
+find . -type f -name "*.pyc" -exec rm -f '{}' ';'
 popd
 
 
