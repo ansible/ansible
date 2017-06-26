@@ -4,6 +4,7 @@ Ansible Changes By Release
 ## 2.2.4 "The Battle of Evermore" - TBD
 * avoid vault view writing to logs
 * moved htpasswd module to use LooseVersion vs StrictVersion to make usable on Debian
+* fix for adhoc not obeying callback options
 
 ## 2.2.3 "The Battle of Evermore" - 05-09-2017
 
