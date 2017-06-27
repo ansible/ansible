@@ -512,10 +512,11 @@ class StrategyBase:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
                             for target_host in host_list:
-                                if original_task.action == 'set_fact':
-                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
-                                else:
+                                if original_task.cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
+
+                                # If we are setting a fact, it should populate non_persistent_facts as well
+                                self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
 

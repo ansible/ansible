@@ -49,4 +49,7 @@ class ActionModule(ActionBase):
             if self._task.action == 'setup':
                 results['_ansible_verbose_override'] = True
 
+            cacheable = self._task.args.get('cacheable', True)
+            self._task.cacheable = bool(cacheable)
+
         return results

@@ -35,6 +35,10 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
 
         facts = dict()
+
+        cacheable = self._task.args.get('cacheable', False)
+        self._task.cacheable = bool(cacheable)
+
         if self._task.args:
             for (k, v) in iteritems(self._task.args):
                 k = self._templar.template(k)
