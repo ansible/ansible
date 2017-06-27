@@ -88,12 +88,12 @@ from ansible.module_utils.basic import AnsibleModule
 def check_for_acl_int_present(module, name, intf, direction):
     command = ['show running-config aclmgr']
     body = run_commands(module, command)
-    body = body[0].encode('ascii', 'ignore')
+    body = str(body[0])
 
     seq = re.compile(r"^interface " + re.escape(intf) + r"\n  ip access-group (.*) (.*)", re.M | re.I)
     existing = False
     while True:
-        match = re.search(seq, str(body))
+        match = re.search(seq, body)
         if match:
             lname = match.group(1)
             ldir = match.group(2)
