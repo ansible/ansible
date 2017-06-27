@@ -152,7 +152,7 @@ You can conditionally execute a role. This is not generally recommended with the
 
     - hosts: webservers
       tasks:
-      - include_role: 
+      - include_role:
           name: some_role
         when: "ansible_os_family == 'RedHat'"
 
@@ -170,14 +170,14 @@ Or, again, using the newer syntax::
 
     - hosts: webservers
       tasks:
-      - import_role: 
+      - import_role:
           name: foo
         tags:
         - bar
         - baz
 
 .. note::
-    This *tags all of the tasks in that role with the tags specified*, overriding any tags that are specified inside the role. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
+    This *tags all of the tasks in that role with the tags specified*, appending to any tags that are specified inside the role. The tags in this example will *not* be added to tasks inside an ``include_role``. Tag the ``include_role`` task directly in order to apply tags to tasks in included roles. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
 
 Role Duplication and Execution
 ``````````````````````````````
@@ -190,7 +190,7 @@ Ansible will only allow a role to execute once, even if defined multiple times, 
       - foo
       - foo
 
-Given the above, the role ``foo`` will only be run once. 
+Given the above, the role ``foo`` will only be run once.
 
 To make roles run more than once, there are two options:
 
