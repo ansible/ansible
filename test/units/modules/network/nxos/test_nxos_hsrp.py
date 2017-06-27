@@ -41,7 +41,7 @@ class TestNxosHsrpModule(TestNxosModule):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         self.load_config.return_value = None
 
     def test_nxos_hsrp(self):

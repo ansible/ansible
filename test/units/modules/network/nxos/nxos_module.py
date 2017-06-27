@@ -36,8 +36,10 @@ fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
 
-def load_fixture(name):
-    path = os.path.join(fixture_path, name)
+def load_fixture(module_name, name, device=''):
+    path = os.path.join(fixture_path, module_name, device, name)
+    if not os.path.exists(path):
+        path = os.path.join(fixture_path, module_name, name)
 
     if path in fixture_data:
         return fixture_data[path]
@@ -64,9 +66,27 @@ class AnsibleFailJson(Exception):
 
 class TestNxosModule(unittest.TestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
+    def execute_module_devices(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
+        module_name = self.module.__name__.rsplit('.', 1)[1]
+        local_fixture_path = os.path.join(fixture_path, module_name)
 
-        self.load_fixtures(commands)
+        models = []
+        for path in os.listdir(local_fixture_path):
+            path = os.path.join(local_fixture_path, path)
+            if os.path.isdir(path):
+                models.append(os.path.basename(path))
+        if not models:
+            models = ['']
+
+        retvals = {}
+        for model in models:
+            retvals[model] = self.execute_module(failed, changed, commands, sort, device=model)
+
+        return retvals
+
+    def execute_module(self, failed=False, changed=False, commands=None, sort=True, device=''):
+
+        self.load_fixtures(commands, device=device)
 
         if failed:
             result = self.failed()
@@ -110,5 +130,5 @@ class TestNxosModule(unittest.TestCase):
         self.assertEqual(result['changed'], changed, result)
         return result
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         pass

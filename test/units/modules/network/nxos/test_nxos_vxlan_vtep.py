@@ -42,7 +42,7 @@ class TestNxosVxlanVtepVniModule(TestNxosModule):
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None, device=''):
-        self.get_config.return_value = load_fixture('nxos_vxlan_vtep/config.cfg')
+        self.get_config.return_value = load_fixture('nxos_vxlan_vtep', 'config.cfg')
         self.load_config.return_value = None
 
     def test_nxos_vxlan_vtep(self):

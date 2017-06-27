@@ -41,15 +41,14 @@ class TestNxosVpcModule(TestNxosModule):
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
 
             for command in commands:
                 filename = str(command).split(' | ')[0].replace(' ', '_')
-                filename = os.path.join('nxos_vpc', filename)
-                output.append(load_fixture(filename))
+                output.append(load_fixture('nxos_vpc', filename))
             return output
 
         self.load_config.return_value = None

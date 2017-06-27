@@ -41,7 +41,7 @@ class TestNxosOspfModule(TestNxosModule):
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         self.load_config.return_value = None
 
     def test_nxos_ospf_present(self):
