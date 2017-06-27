@@ -116,7 +116,6 @@ def main():
     check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
 
-
     splitted_ssm_range = module.params['ssm_range'].split('.')
     if len(splitted_ssm_range) != 4 and module.params['ssm_range'] != 'none':
         module.fail_json(msg="Valid ssm_range values are multicast addresses "
