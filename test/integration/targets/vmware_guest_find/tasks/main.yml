@@ -18,7 +18,7 @@
 
 - name: get a list of VMS from vcsim   
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=_VM' }}"
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
   register: vmlist
 
 - debug: var=vcsim_instance
