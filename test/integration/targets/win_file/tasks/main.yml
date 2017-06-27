@@ -1,4 +1,3 @@
-# Test code for the file module.
 # (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
 
 # This file is part of Ansible
@@ -16,506 +15,1063 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_file={{win_output_dir}}\\foo.txt
+- name: set output file fact
+  set_fact:
+    output_file: '{{test_win_file_path}}\foo.txt'
+
+- name: cleanup output dir before test
+  win_file:
+    path: '{{test_win_file_path}}'
+    state: absent
+
+- name: recreate output dir
+  win_file:
+    path: '{{test_win_file_path}}'
+    state: directory
 
 - name: prep with a basic win copy
-  win_copy: src=foo.txt dest={{output_file}}
+  win_copy:
+    content: foo.txt
+    dest: '{{output_file}}'
 
-- name: verify that we are checking a file and it is present
-  win_file: path={{output_file}} state=file
-  register: file_result
+- name: check a file that is present
+  win_file:
+    path: '{{output_file}}'
+    state: file
+  register: file_present_result
 
-- name: verify that the file was marked as changed
+- name: assert check of file caused no change
   assert:
     that:
-      - "file_result.changed == false"
-#      - "file_result.state == 'file'"
+    - not file_present_result|changed
 
-- name: verify that we are checking an absent file
-  win_file: path={{win_output_dir}}/bar.txt state=absent
-  register: file2_result
+- name: check an absent file
+  win_file:
+    path: '{{test_win_file_path}}\bar.txt'
+    state: absent
+  register: file_absent_missing
 
-- name: verify that the file was marked as changed
+- name: assert check of absent file caused no change
   assert:
     that:
-      - "file2_result.changed == false"
-#      - "file2_result.state == 'absent'"
+    - not file_absent_missing|changed
 
-- name: verify we can touch a file
-  win_file: path={{win_output_dir}}/baz.txt state=touch
-  register: file3_result
+- name: touch a file in check mode
+  win_file:
+    path: '{{test_win_file_path}}\baz.txt'
+    state: touch
+  register: touch_new_file_check
+  check_mode: True
 
-- name: verify that the file was marked as changed
+- name: get stat of touched file in check mode
+  win_stat:
+    path: '{{test_win_file_path}}\baz.tx'
+  register: touch_new_file_check_stat
+
+- name: assert that touch file in check mode changed but does not exist
   assert:
     that:
-      - "file3_result.changed == true"
-#      - "file3_result.state == 'file'"
-#      - "file3_result.mode == '0644'"
+    - touch_new_file_check|changed
+    - touch_new_file_check_stat.stat.exists == False
 
-- name: stat the touched file
-  win_stat: path={{win_output_dir}}/baz.txt state=touch
-  register: file3_stat_result
+- name: touch a file
+  win_file:
+    path: '{{test_win_file_path}}\baz.txt'
+    state: touch
+  register: touch_new_file
 
-- name: verify that the touched file exists and is size 0
+- name: get stat of touched file
+  win_stat:
+    path: '{{test_win_file_path}}\baz.txt'
+  register: touch_new_file_stat
+
+- name: assert that the touched file exists and its size is 0
   assert:
     that:
-      - "file3_stat_result.changed == false"
-      - "file3_stat_result.stat.size == 0"
-      - "file3_stat_result.stat.exists == true"
-#- name: change file mode
-#  win_file: path={{win_output_dir}}/baz.txt mode=0600
-#  register: file4_result
+    - touch_new_file|changed
+    - touch_new_file_stat.stat.exists
+    - touch_new_file_stat.stat.size == 0
 
-#- name: verify that the file was marked as changed
-#  assert:
-#    that:
-#      - "file4_result.changed == true"
-#      - "file4_result.mode == '0600'"
-#
-#- name: change ownership and group
-#  win_file: path={{win_output_dir}}/baz.txt owner=1234 group=1234
-#
-#- name: setup a tmp-like directory for ownership test
-#  win_file: path=/tmp/worldwritable mode=1777 state=directory
+- name: touch a file again
+  win_file:
+    path: '{{test_win_file_path}}\baz.txt'
+    state: touch
+  register: touch_new_file_again
 
-#- name: Ask to create a file without enough perms to change ownership
-#  win_file: path=/tmp/worldwritable/baz.txt state=touch owner=root
-#  become: yes
-#  become_user: nobody
-#  register: chown_result
-#  ignore_errors: True
+- name: get stat of touch file again
+  win_stat:
+    path: '{{test_win_file_path}}\baz.txt'
+  register: touch_new_file_again_stat
 
-#- name: Ask whether the new file exists
-#  win_stat: path=/tmp/worldwritable/baz.txt
-#  register: file_exists_result
+- name: assert touch file again changed and last write time is different
+  assert:
+    that:
+    - touch_new_file_again|changed
+    - touch_new_file_again_stat.stat.lastwritetime > touch_new_file_stat.stat.lastwritetime
+    - touch_new_file_again_stat.stat.lastaccesstime == touch_new_file_stat.stat.lastaccesstime
+    - touch_new_file_again_stat.stat.creationtime == touch_new_file_stat.stat.creationtime
 
-#- name: Verify that the file doesn't exist on failure
-#  assert:
-#    that:
-#      - "chown_result.failed == True"
-#      - "file_exists_result.stat.exists == False"
-#
-#- name: clean up
-#  win_file: path=/tmp/worldwritable state=absent
+- name: create a directory in check mode
+  win_file:
+    path: '{{test_win_file_path}}\foobar'
+    state: directory
+  register: create_directory_check
+  check_mode: True
 
-#- name: create soft link to file
-#  win_file: src={{output_file}} dest={{win_output_dir}}/soft.txt state=link
-#  register: file5_result
+- name: get stat of new directory in check mode
+  win_stat:
+    path: '{{test_win_file_path}}\foobar'
+  register: create_directory_check_stat
 
-#- name: verify that the file was marked as changed
-#  assert:
-#    that:
-#      - "file5_result.changed == true"
-#
-#- name: create hard link to file
-#  win_file: src={{output_file}} dest={{win_output_dir}}/hard.txt state=hard
-#  register: file6_result
-#
-#- name: verify that the file was marked as changed
-#  assert:
-#    that:
-#      - "file6_result.changed == true"
-#
+- name: assert that new directory in check mode changed but does not exist
+  assert:
+    that:
+    - create_directory_check|changed
+    - create_directory_check_stat.stat.exists == False
+
 - name: create a directory
-  win_file: path={{win_output_dir}}/foobar state=directory
-  register: file7_result
+  win_file:
+    path: '{{test_win_file_path}}\foobar'
+    state: directory
+  register: create_directory
 
-- debug: var=file7_result
+- name: get stat of new directory
+  win_stat:
+    path: '{{test_win_file_path}}\foobar'
+  register: create_directory_stat
 
-- name: verify that the file was marked as changed
+- name: assert create directory changed and directory exists
   assert:
     that:
-      - "file7_result.changed == true"
-#      - "file7_result.state == 'directory'"
+    - create_directory|changed
+    - create_directory_stat.stat.exists
+    - create_directory_stat.stat.isdir
 
-# windows and selinux unlikely to ever mix, removing these tests:
-#- name: determine if selinux is installed
-#  shell: which getenforce || exit 0
-#  register: selinux_installed
+- name: create directory again
+  win_file:
+    path: '{{test_win_file_path}}\foobar'
+    state: directory
+  register: create_directory_again
 
-#- name: determine if selinux is enabled
-#  shell: getenforce
-#  register: selinux_enabled
-#  when: selinux_installed.stdout != ""
-#  ignore_errors: true
-
-#- name: decide to include or not include selinux tests
-#  include: selinux_tests.yml
-#  when: selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
-
-- name: remote directory foobar
-  win_file: path={{win_output_dir}}/foobar state=absent
-
-- name: remove file foo.txt
-  win_file: path={{win_output_dir}}/foo.txt state=absent
-
-- name: remove file bar.txt
-  win_file: path={{win_output_dir}}/foo.txt state=absent
-
-- name: remove file baz.txt
-  win_file: path={{win_output_dir}}/foo.txt state=absent
-
-- name: win copy directory structure over
-  win_copy: src=foobar dest={{win_output_dir}}
-
-- name: remove directory foobar
-  win_file: path={{win_output_dir}}/foobar state=absent
-  register: file14_result
-
-- debug: var=file14_result
-
-- name: verify that the directory was removed
+- name: assert create directory again did not change
   assert:
     that:
-      - 'file14_result.changed == true'
-#      - 'file14_result.state == "absent"'
+    - not create_directory_again|changed
 
-- name: create a test sub-directory
-  win_file: dest={{win_output_dir}}/sub1 state=directory
-  register: file15_result
+- name: fail to convert directory to file
+  win_file:
+    path: '{{output_file}}'
+    state: directory
+  register: create_directory_from_file_fail
+  failed_when: create_directory_from_file_fail.msg != 'path ' + output_file + ' is not a directory'
 
-- name: verify that the new directory was created
+- name: fail to convert directory to file
+  win_file:
+    path: '{{test_win_file_path}}\foobar'
+    state: file
+  register: create_file_from_directory_fail
+  failed_when: create_file_from_directory_fail.msg != 'path ' + test_win_file_path + '\\foobar is not a file'
+
+- name: remove directory in check mode
+  win_file:
+    path: '{{test_win_file_path}}\foobar'
+    state: absent
+  register: remove_directory_check
+  check_mode: True
+
+- name: get stat of removed directory in check mode
+  win_stat:
+    path: '{{test_win_file_path}}\foobar'
+  register: remove_directory_check_stat
+
+- name: assert remove in check changed but directory still exists
   assert:
     that:
-      - 'file15_result.changed == true'
-#      - 'file15_result.state == "directory"'
+    - remove_directory_check|changed
+    - remove_directory_check_stat.stat.exists
+
+- name: remove directory
+  win_file:
+    path: '{{test_win_file_path}}\foobar'
+    state: absent
+  register: remove_directory
+
+- name: get stat of removed directory
+  win_stat:
+    path: '{{test_win_file_path}}\foobar'
+  register: remove_directory_stat
+
+- name: assert remove changed and directory is deleted
+  assert:
+    that:
+    - remove_directory|changed
+    - remove_directory_stat.stat.exists == False
+
+- name: remove directory again
+  win_file:
+    path: '{{test_win_file_path}}\foobar'
+    state: absent
+  register: remove_directory_again
+
+- name: assert remove again did not change
+  assert:
+    that:
+    - not remove_directory_again|changed
+
+- name: remove file in check mode
+  win_file:
+    path: '{{output_file}}'
+    state: absent
+  register: remove_file_check
+  check_mode: True
+
+- name: get stat of removed file in check mode
+  win_stat:
+    path: '{{output_file}}'
+  register: remove_file_check_stat
+
+- name: assert remove in check changed but file still exists
+  assert:
+    that:
+    - remove_file_check|changed
+    - remove_file_check_stat.stat.exists
+
+- name: remove file
+  win_file:
+    path: '{{output_file}}'
+    state: absent
+  register: remove_file
+
+- name: get stat of removed file
+  win_stat:
+    path: '{{output_file}}'
+  register: remove_file_stat
+
+- name: assert remove changed and file is deleted
+  assert:
+    that:
+    - remove_file|changed
+    - remove_file_stat.stat.exists == False
+
+- name: remove file again
+  win_file:
+    path: '{{output_file}}'
+    state: absent
+  register: remove_file_again
+
+- name: assert remove again did not change
+  assert:
+    that:
+    - not remove_file_again|changed
+
+- name: create directory with spaces and parens in the dir name in check
+  win_file:
+    path: '{{test_win_file_path}}/dir with spaces (and parens)'
+    state: directory
+  register: create_directory_special_chars_check
+  check_mode: True
+
+- name: get stat of directory with spaces and parens in the dir name check
+  win_stat:
+    path: '{{test_win_file_path}}/dir with spaces (and parens)'
+  register: create_directory_special_chars_check_stat
+
+- name: assert directory with special chars changed but not created in check
+  assert:
+    that:
+    - create_directory_special_chars_check|changed
+    - create_directory_special_chars_check_stat.stat.exists == False
+
+- name: create directory with spaces and parens in the dir name
+  win_file:
+    path: '{{test_win_file_path}}/dir with spaces (and parens)'
+    state: directory
+  register: create_directory_special_chars
+
+- name: get stat of directory with spaces and parens in the dir name
+  win_stat:
+    path: '{{test_win_file_path}}/dir with spaces (and parens)'
+  register: create_directory_special_chars_stat
+
+- name: assert directory with special chars changed and created
+  assert:
+    that:
+    - create_directory_special_chars|changed
+    - create_directory_special_chars_stat.stat.exists
+    - create_directory_special_chars_stat.stat.isdir
+
+- name: remove directory with special chars
+  win_file:
+    path: '{{test_win_file_path}}\dir with spaces (and parens)'
+    state: absent
+  register: remove_directory_special_chars
+
+- name: get stat of removed directory with special chars
+  win_stat:
+    path: '{{test_win_file_path}}\dir with spaces (and parens)'
+  register: remove_directory_special_chars_stat
+
+- name: assert remove directory with special chars changed and succeeded
+  assert:
+    that:
+    - remove_directory_special_chars|changed
+    - remove_directory_special_chars_stat.stat.exists == False
+
+- name: create nested directory in check mode
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir'
+    state: directory
+  register: create_sub_directory_check
+  check_mode: True
+
+- name: get stat of created nested directory in check mode
+  win_stat:
+    path: '{{test_win_file_path}}\dir\sub-dir'
+  register: create_sub_directory_check_stat
+
+- name: assert create sub directory in check changed but didn't run
+  assert:
+    that:
+    - create_sub_directory_check|changed
+    - create_sub_directory_check_stat.stat.exists == False
+
+- name: create nested directory
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir'
+    state: directory
+  register: create_sub_directory
+
+- name: get stat of created nested directory
+  win_stat:
+    path: '{{test_win_file_path}}\dir\sub-dir'
+  register: create_sub_directory_stat
+
+- name: assert create sub directory changed and exists
+  assert:
+    that:
+    - create_sub_directory|changed
+    - create_sub_directory_stat.stat.exists
+    - create_sub_directory_stat.stat.isdir
+
+- name: create nested directory again
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir'
+    state: directory
+  register: create_sub_directory_again
+
+- name: assert create sub directory again didn't change
+  assert:
+    that:
+    - not create_sub_directory_again|changed
 
 - name: create test files in the sub-directory
-  win_file: dest={{win_output_dir}}/sub1/{{item}} state=touch
+  win_file:
+    path: '{{test_win_file_path}}\dir\{{item}}'
+    state: touch
   with_items:
   - file1
   - file2
   - file3
-  register: file16_result
+  register: create_test_files_sub_dir
 
-- name: verify the files were created
+- name: assert files were created
+  win_stat:
+    path: '{{test_win_file_path}}\dir\{{item}}'
+  register: create_test_files_sub_dir_stat
+  failed_when: create_test_files_sub_dir_stat.stat.exists == False
+  with_items:
+  - file1
+  - file2
+  - file3
+
+- name: assert creation of file in sub dir changed
   assert:
     that:
-      - 'item.changed == true'
-#      - 'item.state == "file"'
-  with_items: "{{file16_result.results}}"
+    - item|changed
+  with_items: '{{create_test_files_sub_dir.results}}'
 
-#- name: try to force the sub-directory to a link
-#  win_file: src={{win_output_dir}}/testing dest={{win_output_dir}}/sub1 state=link force=yes
-#  register: file17_result
-#  ignore_errors: true
-
-#- name: verify the directory was not replaced with a link
-#  assert:
-#    that:
-#      - 'file17_result.failed == true'
-#      - 'file17_result.state == "directory"'
-
-#- name: create soft link to directory using absolute path
-#  win_file: src=/ dest={{win_output_dir}}/root state=link
-#  register: file18_result
-#
-#- name: verify that the result was marked as changed
-#  assert:
-#    that:
-#      - "file18_result.changed == true"
-#
-- name: create another test sub-directory
-  win_file: dest={{win_output_dir}}/sub2 state=directory
-  register: file19_result
-
-- name: verify that the new directory was created
-  assert:
-    that:
-      - 'file19_result.changed == true'
-#      - 'file19_result.state == "directory"'
-
-#- name: create soft link to relative file
-#  win_file: src=../sub1/file1 dest={{win_output_dir}}/sub2/link1 state=link
-#  register: file20_result
-#
-#- name: verify that the result was marked as changed
-#  assert:
-#    that:
-#      - "file20_result.changed == true"
-
-#- name: create soft link to relative directory
-#  win_file: src=sub1 dest={{win_output_dir}}/sub1-link state=link
-#  register: file21_result
-#
-#- name: verify that the result was marked as changed
-#  assert:
-#    that:
-#      - "file21_result.changed == true"
-#
-#- name: test file creation with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0777'
-
-#- name: modify symbolic mode for all
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=a=r
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0444'
-
-#- name: modify symbolic mode for owner
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u+w
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0644'
-
-#- name: modify symbolic mode for group
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g+w
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0664'
-#
-#- name: modify symbolic mode for world
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o+w
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0666'
-#
-#- name: modify symbolic mode for owner
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u+x
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0766'
-##
-#- name: modify symbolic mode for group
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g+x
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0776'
-#
-#- name: modify symbolic mode for world
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o+x
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0777'
-
-#- name: remove symbolic mode for world
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o-wx
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0774'
-#
-#- name: remove symbolic mode for group
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g-wx
-#  register: result
-#
-#- name: assert file mode
-###  assert:
-#    that:
-#    - result.mode == '0744'
-
-#- name: remove symbolic mode for owner
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u-wx
-#  register: result
-
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0444'
-#
-#- name: set sticky bit with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o+t
-#  register: result
-
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '01444'
-#
-#- name: remove sticky bit with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o-t
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0444'
-
-#- name: add setgid with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g+s
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '02444'
-#
-#- name: remove setgid with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g-s
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0444'
-
-#- name: add setuid with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u+s
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '04444'
-
-#- name: remove setuid with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u-s
-#  register: result
-#
-#- name: assert file mode
-#  assert:
-#    that:
-#    - result.mode == '0444'
-
-# test the file module using follow=yes, so that the target of a
-# symlink is modified, rather than the link itself
-
-#- name: create a test file
-#  win_copy: dest={{win_output_dir}}\test_follow content="this is a test file\n" mode=0666
-
-#- name: create a symlink to the test file
-#  win_file: path={{win_output_dir}}\test_follow_link src="./test_follow" state=link
-#
-#- name: modify the permissions on the link using follow=yes
-#  win_file: path={{win_output_dir}}\test_follow_link mode=0644 follow=yes
-#  register: result
-
-#- name: assert that the chmod worked
-#  assert:
-#    that:
-#    - result.changed
-#
-#- name: stat the link target
-#  win_stat: path={{win_output_dir}}/test_follow
-#  register: result
-#
-#- name: assert that the link target was modified correctly
-#  assert:
-#    that:
-##    - result.stat.mode == '0644'
-
-- name: create a directory
-  win_file: path={{win_output_dir}}/dirtest state=directory
-  register: file_result
-
-- name: stat the directory created
-  win_stat: path={{win_output_dir}}/dirtest
-  register: stat_result
-
-- name: assert the directory was created
-  assert:
-    that:
-       - file_result.changed
-       - stat_result.stat.exists
-       - stat_result.stat.isdir
-
-- name: re run create directory (bug 2147)
-  win_file: path={{win_output_dir}}/dirtest state=directory
-  register: file_result
-
-- name: stat the directory created again
-  win_stat: path={{win_output_dir}}/dirtest
-  register: stat_result
-
-- name: assert the directory exists but was not changed
-  assert:
-    that:
-       - file_result.changed == False
-       - stat_result.stat.exists
-       - stat_result.stat.isdir
-
-- name: remove empty dir we just created
-  win_file: path={{win_output_dir}}/dirtest state=absent
-  register: file_result
-
-- name: stat the removed directory
-  win_stat: path={{win_output_dir}}/dirtest
-  register: stat_result
-
-- name: assert the directory does not exist
-  assert:
-    that:
-       - file_result.changed
-       - "stat_result.stat.exists == False"
-
-- name: create dir with spaces and parens in the dir name
-  win_file: path="{{win_output_dir}}/dir with spaces (and parens)" state=directory
-  register: file_result
-
-- name: stat the directory with spaces and parens
-  win_stat: path="{{win_output_dir}}/dir with spaces (and parens)"
-  register: stat_result
-
-- name: check dir with spaces and parens in the dir name has been created
-  assert:
-    that:
-       - file_result.changed
-       - stat_result.stat.exists
-       - stat_result.stat.isdir
-
-- name: remove dir with spaces and parens in the dir name
-  win_file: path="{{win_output_dir}}/dir with spaces (and parens)" state=absent
-  register: file_result
-
-- name: stat the dir with spaces and parens in the dir name
-  win_stat: path="{{win_output_dir}}/dir with spaces (and parens)"
-  register: stat_result
-
-- name: assert dir with spaces and parens in the dir name was removed
-  assert:
-    that:
-       - file_result.changed
-       - "stat_result.stat.exists == False"
-
-- name: create folder to point set symbolic link for
+- name: create complex directory structure for link tests
   win_file:
-    path: "{{win_output_dir}}/link-test/link-target"
+    path: '{{test_win_file_path}}\{{item}}'
     state: directory
+  with_items:
+  - dir\sub-dir
+  - dir\sub-dir\test
+  - dir\sub-dir\test1
+  - dir\sub-dir\test2
+  - dir\hello\testing
+  - dir\another
 
-- name: create symbolic link
-  win_command: cmd.exe /c mklink /d "{{win_output_dir}}\link-test\link" "{{win_output_dir}}\link-test\link-target"
+- name: create complex file structure for link tests
+  win_copy:
+    dest: '{{test_win_file_path}}\{{item.path}}'
+    content: '{{item.content}}'
+  with_items:
+  - { path: test.txt, content: a }
+  - { path: dir\sub-dir\test\hard-file-source.txt, content: b }
+  - { path: dir\sub-dir\test1\file.txt, content: c }
+  - { path: dir\sub-dir\test2\file.txt, content: d }
+  - { path: dir\another\a.bc, content: e }
+  - { path: dir\def.ghi, content: f }
 
-- name: remove symbolic link target
+- name: create symbolic link to invalid target fail
   win_file:
-    path: "{{win_output_dir}}/link-test/link-target"
+    path: '{{test_win_file_path}}\symbolic-link'
+    src: '{{test_win_file_path}}\fake'
+    state: link
+  register: create_symbolic_directory_fail
+  failed_when: "create_symbolic_directory_fail.msg != 'Cannot create link at ' + test_win_file_path + '\\\\symbolic-link: link target ' + test_win_file_path + '\\\\fake does not exist'"
+
+- name: create hard link to invalid target fail
+  win_file:
+    path: '{{test_win_file_path}}\hard-link'
+    src: '{{test_win_file_path}}\fake'
+    state: hard
+  register: create_hard_link_fail
+  failed_when: "create_hard_link_fail.msg != 'Cannot create hard at ' + test_win_file_path + '\\\\hard-link: hard target ' + test_win_file_path + '\\\\fake does not exist'"
+
+- name: create junction point to invalid target fail
+  win_file:
+    path: '{{test_win_file_path}}\junction-point'
+    src: '{{test_win_file_path}}\fake'
+    state: junction
+  register: create_junction_point_fail
+  failed_when: "create_junction_point_fail.msg != 'Cannot create junction at ' + test_win_file_path + '\\\\junction-point: junction target ' + test_win_file_path + '\\\\fake does not exist'"
+
+- name: create hard link to directory fail
+  win_file:
+    path: '{{test_win_file_path}}\hard-link'
+    src: '{{test_win_file_path}}\dir'
+    state: hard
+  register: create_hard_link_to_directory_fail
+  failed_when: "create_hard_link_to_directory_fail.msg != 'Cannot create hard link ' + test_win_file_path + '\\\\hard-link: hard link target ' + test_win_file_path + '\\\\dir is not a file'"
+
+- name: create junction_point to file fail
+  win_file:
+    path: '{{test_win_file_path}}\junction-point'
+    src: '{{test_win_file_path}}\test.txt'
+    state: junction
+  register: create_junction_point_to_file_fail
+  failed_when: "create_junction_point_to_file_fail.msg != 'Cannot create junction point ' + test_win_file_path + '\\\\junction-point: junction point target ' + test_win_file_path + '\\\\test.txt is not a directory'"
+
+- name: create symbolic link folder check
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link'
+    src: '{{test_win_file_path}}\dir\sub-dir'
+    state: link
+  register: create_symbolic_directory_check
+  check_mode: True
+
+- name: get stat on created symbolic link folder check
+  win_stat:
+    path: '{{test_win_file_path}}\symbolic-link'
+  register: create_symbolic_directory_check_stat
+
+- name: assert create symbolic link folder check changed but didn't create
+  assert:
+    that:
+    - create_symbolic_directory_check|changed
+    - create_symbolic_directory_check_stat.stat.exists == False
+
+- name: create symbolic link folder
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link'
+    src: '{{test_win_file_path}}\dir\sub-dir'
+    state: link
+  register: create_symbolic_directory
+
+- name: get stat on created symbolic link folder
+  win_stat:
+    path: '{{test_win_file_path}}\symbolic-link'
+  register: create_symbolic_directory_stat
+
+- name: assert create symbolic link folder changed and was created
+  assert:
+    that:
+    - create_symbolic_directory|changed
+    - create_symbolic_directory_stat.stat.exists
+    - create_symbolic_directory_stat.stat.islnk
+    - create_symbolic_directory_stat.stat.lnk_source == test_win_file_path + '\dir\sub-dir'
+
+- name: create symbolic link folder again
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link'
+    src: '{{test_win_file_path}}\dir\sub-dir'
+    state: link
+  register: create_symbolic_directory_again
+
+- name: assert create symbolic link folder again did not change
+  assert:
+    that:
+    - not create_symbolic_directory_again|changed
+
+- name: set symbolic link path to another target check
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link'
+    src: '{{test_win_file_path}}\dir\another'
+    state: link
+  register: change_symbolic_directory_target_check
+  check_mode: True
+
+- name: get stat on changed symbolic link folder check
+  win_stat:
+    path: '{{test_win_file_path}}\symbolic-link'
+  register: change_symbolic_directory_target_check_stat
+
+- name: assert set symbolic link target changed but target still old check
+  assert:
+    that:
+    - change_symbolic_directory_target_check|changed
+    - change_symbolic_directory_target_check_stat.stat.islnk
+    - change_symbolic_directory_target_check_stat.stat.lnk_source == test_win_file_path + '\dir\sub-dir'
+
+- name: set symbolic link path to another target
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link'
+    src: '{{test_win_file_path}}\dir\another'
+    state: link
+  register: change_symbolic_directory_target
+
+- name: get stat on changed symbolic link folder
+  win_stat:
+    path: '{{test_win_file_path}}\symbolic-link'
+  register: change_symbolic_directory_target_stat
+
+- name: assert set symbolic link target changed
+  assert:
+    that:
+    - change_symbolic_directory_target|changed
+    - change_symbolic_directory_target_stat.stat.islnk
+    - change_symbolic_directory_target_stat.stat.lnk_source == test_win_file_path + '\\dir\\another'
+
+- name: create symbolic link file check
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link.txt'
+    src: '{{test_win_file_path}}\test.txt'
+    state: link
+  register: create_symbolic_file_check
+  check_mode: True
+
+- name: get stat on created symbolic link file check
+  win_stat:
+    path: '{{test_win_file_path}}\symbolic-link.txt'
+  register: create_symbolic_file_check_stat
+
+- name: assert create symbolic link file check changed but didn't create
+  assert:
+    that:
+    - create_symbolic_file_check|changed
+    - create_symbolic_file_check_stat.stat.exists == False
+
+- name: create symbolic link file
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link.txt'
+    src: '{{test_win_file_path}}\test.txt'
+    state: link
+  register: create_symbolic_file
+
+- name: get stat on created symbolic link file
+  win_stat:
+    path: '{{test_win_file_path}}\symbolic-link.txt'
+  register: create_symbolic_file_stat
+
+- name: assert create symbolic link file changed and was created
+  assert:
+    that:
+    - create_symbolic_file|changed
+    - create_symbolic_file_stat.stat.exists
+    - create_symbolic_file_stat.stat.islnk
+    - create_symbolic_file_stat.stat.lnk_source == test_win_file_path + '\\test.txt'
+
+- name: create symbolic link file again
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link.txt'
+    src: '{{test_win_file_path}}\test.txt'
+    state: link
+  register: create_symbolic_file_again
+
+- name: assert create symbolic link file again did not change
+  assert:
+    that:
+    - not create_symbolic_file_again|changed
+
+- name: set symbolic link file path to another target check
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link.txt'
+    src: '{{test_win_file_path}}\dir\sub-dir\test1\file.txt'
+    state: link
+  register: change_symbolic_file_target_check
+  check_mode: True
+
+- name: get stat on changed symbolic link file check
+  win_stat:
+    path: '{{test_win_file_path}}\symbolic-link.txt'
+  register: change_symbolic_file_target_check_stat
+
+- name: assert set symbolic link file target changed but target still old check
+  assert:
+    that:
+    - change_symbolic_file_target_check|changed
+    - change_symbolic_file_target_check_stat.stat.islnk
+    - change_symbolic_file_target_check_stat.stat.lnk_source == test_win_file_path + '\\test.txt'
+
+- name: set symbolic link file path to another target
+  win_file:
+    path: '{{test_win_file_path}}\symbolic-link.txt'
+    src: '{{test_win_file_path}}\dir\sub-dir\test1\file.txt'
+    state: link
+  register: change_symbolic_file_target
+
+- name: get stat on changed symbolic link file
+  win_stat:
+    path: '{{test_win_file_path}}\symbolic-link.txt'
+  register: change_symbolic_file_target_stat
+
+- name: assert set symbolic link file target changed
+  assert:
+    that:
+    - change_symbolic_file_target|changed
+    - change_symbolic_file_target_stat.stat.islnk
+    - change_symbolic_file_target_stat.stat.lnk_source == test_win_file_path + '\\dir\\sub-dir\\test1\\file.txt'
+
+- name: create junction point check
+  win_file:
+    path: '{{test_win_file_path}}\junction-point'
+    src: '{{test_win_file_path}}\dir\sub-dir'
+    state: junction
+  register: create_junction_point_check
+  check_mode: True
+
+- name: get stat on created junction point check
+  win_stat:
+    path: '{{test_win_file_path}}\junction-point'
+  register: create_junction_point_check_stat
+
+- name: assert create junction point check changed but didn't create
+  assert:
+    that:
+    - create_junction_point_check|changed
+    - create_junction_point_check_stat.stat.exists == False
+
+- name: create junction point
+  win_file:
+    path: '{{test_win_file_path}}\junction-point'
+    src: '{{test_win_file_path}}\dir\sub-dir'
+    state: junction
+  register: create_junction_point
+
+- name: get stat on created junction point
+  win_stat:
+    path: '{{test_win_file_path}}\junction-point'
+  register: create_junction_point_stat
+
+- name: assert create junction point changed and was created
+  assert:
+    that:
+    - create_junction_point|changed
+    - create_junction_point_stat.stat.exists
+    - create_junction_point_stat.stat.islnk
+    - create_junction_point_stat.stat.lnk_source == test_win_file_path + '\\dir\\sub-dir'
+
+- name: create junction point again
+  win_file:
+    path: '{{test_win_file_path}}\junction-point'
+    src: '{{test_win_file_path}}\dir\sub-dir'
+    state: junction
+  register: create_junction_point_again
+
+- name: assert create junction point again did not change
+  assert:
+    that:
+    - not create_junction_point_again|changed
+
+- name: set junction point path to another target check
+  win_file:
+    path: '{{test_win_file_path}}\junction-point'
+    src: '{{test_win_file_path}}\dir\another'
+    state: junction
+  register: change_junction_point_target_check
+  check_mode: True
+
+- name: get stat on changed junction point check
+  win_stat:
+    path: '{{test_win_file_path}}\junction-point'
+  register: change_junction_point_target_check_stat
+
+- name: assert set junction point target changed but target still old check
+  assert:
+    that:
+    - change_junction_point_target_check|changed
+    - change_junction_point_target_check_stat.stat.islnk
+    - change_junction_point_target_check_stat.stat.lnk_source == test_win_file_path + '\\dir\\sub-dir'
+
+- name: set junction point path to another target
+  win_file:
+    path: '{{test_win_file_path}}\junction-point'
+    src: '{{test_win_file_path}}\dir\another'
+    state: junction
+  register: change_junction_point_target
+
+- name: get stat on changed junction point folder
+  win_stat:
+    path: '{{test_win_file_path}}\junction-point'
+  register: change_junction_point_target_stat
+
+- name: assert set junction point target changed
+  assert:
+    that:
+    - change_junction_point_target|changed
+    - change_junction_point_target_stat.stat.islnk
+    - change_junction_point_target_stat.stat.lnk_source == test_win_file_path + '\\dir\\another'
+
+- name: create hard link file check
+  win_file:
+    path: '{{test_win_file_path}}\hard-link.txt'
+    src: '{{test_win_file_path}}\test.txt'
+    state: hard
+  register: create_hard_file_check
+  check_mode: True
+
+- name: get stat on created hard link file check
+  win_stat:
+    path: '{{test_win_file_path}}\hard-link.txt'
+  register: create_hard_file_check_stat
+
+- name: assert create hard link file check changed but didn't create
+  assert:
+    that:
+    - create_hard_file_check|changed
+    - create_hard_file_check_stat.stat.exists == False
+
+- name: create hard link file
+  win_file:
+    path: '{{test_win_file_path}}\hard-link.txt'
+    src: '{{test_win_file_path}}\test.txt'
+    state: hard
+  register: create_hard_file
+
+- name: get stat on created hard link file
+  win_stat:
+    path: '{{test_win_file_path}}\hard-link.txt'
+  register: create_hard_file_stat
+
+- name: assert create hard link file changed and was created
+  assert:
+    that:
+    - create_hard_file|changed
+    - create_hard_file_stat.stat.exists
+    - create_hard_file_stat.stat.checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8' # Until win_stat handles hard links we need to rely on a pre-set checksum
+
+- name: create hard link file again
+  win_file:
+    path: '{{test_win_file_path}}\hard-link.txt'
+    src: '{{test_win_file_path}}\test.txt'
+    state: hard
+  register: create_hard_file_again
+
+- name: assert create hard link file again did not change
+  assert:
+    that:
+    - not create_hard_file_again|changed
+
+- name: set hard link file path to another target check
+  win_file:
+    path: '{{test_win_file_path}}\hard-link.txt'
+    src: '{{test_win_file_path}}\dir\sub-dir\test\hard-file-source.txt'
+    state: hard
+  register: change_hard_file_target_check
+  check_mode: True
+
+- name: get stat on changed hard link file check
+  win_stat:
+    path: '{{test_win_file_path}}\hard-link.txt'
+  register: change_hard_file_target_check_stat
+
+- name: assert set hard link file target changed but target still old check
+  assert:
+    that:
+    - change_hard_file_target_check|changed
+    - change_hard_file_target_check_stat.stat.exists
+    - change_hard_file_target_check_stat.stat.checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8' # Until win_stat handles hard links we need to rely on a pre-set checksum
+
+- name: set hard link file path to another target
+  win_file:
+    path: '{{test_win_file_path}}\hard-link.txt'
+    src: '{{test_win_file_path}}\dir\sub-dir\test\hard-file-source.txt'
+    state: hard
+  register: change_hard_file_target
+
+- name: get stat on changed hard link file
+  win_stat:
+    path: '{{test_win_file_path}}\hard-link.txt'
+  register: change_hard_file_target_stat
+
+- name: assert set hard link file target changed
+  assert:
+    that:
+    - change_hard_file_target|changed
+    - change_hard_file_target_stat.stat.exists
+    - change_hard_file_target_stat.stat.checksum == 'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98' # Until win_stat handles hard links we need to rely on a pre-set checksum
+
+- name: create hard link in nested folder that doesn't exist
+  win_file:
+    path: '{{test_win_file_path}}\no-folder\hard-link.txt'
+    src: '{{test_win_file_path}}\test.txt'
+    state: hard
+  register: set_hard_file_nested
+
+- name: get stat on created nested hard link
+  win_stat:
+    path: '{{test_win_file_path}}\no-folder\hard-link.txt'
+  register: set_hard_file_nested_stat
+
+- name: assert hard link exists and was changed
+  assert:
+    that:
+    - set_hard_file_nested|changed
+    - set_hard_file_nested_stat.stat.exists
+    - set_hard_file_nested_stat.stat.checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8' # Until win_stat handles hard links we need to rely on a pre-set checksum
+
+- name: fail to change directory to symbolic link
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir\test2'
+    src: '{{test_win_file_path}}\dir\sub-dir\test1'
+    state: link
+  register: change_directory_to_symbolic_fail
+  failed_when: "change_directory_to_symbolic_fail.msg != 'Cannot create link at ' + test_win_file_path + '\\\\dir\\\\sub-dir\\\\test2: ' + test_win_file_path + '\\\\dir\\\\sub-dir\\\\test2 already exists and is not a link. Use force: True to override this'"
+
+- name: change directory to symbolic link with force check
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir\test2'
+    src: '{{test_win_file_path}}\dir\sub-dir\test1'
+    state: link
+    force: True
+  register: change_directory_to_symbolic_check
+  check_mode: True
+
+- name: get stat of change directory to symbolic link check
+  win_stat:
+    path: '{{test_win_file_path}}\dir\sub-dir\test2'
+  register: change_directory_to_symbolic_check_stat
+
+- name: assert change directory to symbolic link with force check
+  assert:
+    that:
+    - change_directory_to_symbolic_check|changed
+    - change_directory_to_symbolic_check_stat.stat.exists
+    - change_directory_to_symbolic_check_stat.stat.islnk == False
+    - change_directory_to_symbolic_check_stat.stat.isdir
+
+- name: change directory to symbolic link with force
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir\test2'
+    src: '{{test_win_file_path}}\dir\sub-dir\test1'
+    state: link
+    force: True
+  register: change_directory_to_symbolic
+
+- name: get stat of change directory to symbolic link
+  win_stat:
+    path: '{{test_win_file_path}}\dir\sub-dir\test2'
+  register: change_directory_to_symbolic_stat
+
+- name: assert change directory to symbolic link with force
+  assert:
+    that:
+    - change_directory_to_symbolic|changed
+    - change_directory_to_symbolic_stat.stat.exists
+    - change_directory_to_symbolic_stat.stat.islnk
+    - change_directory_to_symbolic_stat.stat.lnk_source == test_win_file_path + '\\dir\\sub-dir\\test1'
+
+- name: fail to change directory to symbolic link file
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir\test1'
+    src: '{{test_win_file_path}}\test.txt'
+    state: link
+  register: change_directory_to_symbolic_file_fail
+  failed_when: "change_directory_to_symbolic_file_fail.msg != 'Cannot create link at ' + test_win_file_path + '\\\\dir\\\\sub-dir\\\\test1: ' + test_win_file_path + '\\\\dir\\\\sub-dir\\\\test1 already exists and is not a link. Use force: True to override this'"
+
+- name: change directory to symbolic link file with force check
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir\test1'
+    src: '{{test_win_file_path}}\test.txt'
+    state: link
+    force: True
+  register: change_directory_to_symbolic_file_check
+  check_mode: True
+
+- name: get stat of change directory to symbolic link check
+  win_stat:
+    path: '{{test_win_file_path}}\dir\sub-dir\test1'
+  register: change_directory_to_symbolic_file_check_stat
+
+- name: assert change directory to symbolic link file with force check
+  assert:
+    that:
+    - change_directory_to_symbolic_file_check|changed
+    - change_directory_to_symbolic_file_check_stat.stat.exists
+    - change_directory_to_symbolic_file_check_stat.stat.islnk == False
+    - change_directory_to_symbolic_file_check_stat.stat.isdir
+
+- name: change directory to symbolic link file with force
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir\test1'
+    src: '{{test_win_file_path}}\test.txt'
+    state: link
+    force: True
+  register: change_directory_to_symbolic_file
+
+- name: get stat of change directory to symbolic link
+  win_stat:
+    path: '{{test_win_file_path}}\dir\sub-dir\test1'
+  register: change_directory_to_symbolic_file_stat
+
+- name: assert change directory to symbolic link with force
+  assert:
+    that:
+    - change_directory_to_symbolic_file|changed
+    - change_directory_to_symbolic_file_stat.stat.exists
+    # - change_directory_to_symbolic_file_stat.stat.isdir == False # Bug with win_stat making all ReparsePoints a directory
+    - change_directory_to_symbolic_file_stat.stat.islnk
+    - change_directory_to_symbolic_file_stat.stat.lnk_source == test_win_file_path + '\\test.txt'
+
+- name: fail to change symbolic link to junction point
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir\test'
+    src: '{{test_win_file_path}}\dir\another'
+    state: junction
+  register: change_symbolic_to_junction_fail
+  failed_when: "change_symbolic_to_junction_fail.msg != 'Cannot create junction at ' + test_win_file_path + '\\\\dir\\\\sub-dir\\\\test: ' + test_win_file_path + '\\\\dir\\\\sub-dir\\\\test already exists and is not a junction. Use force: True to override this'"
+
+- name: change symbolic link to junction point with force check
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir\test'
+    src: '{{test_win_file_path}}\dir\another'
+    state: junction
+    force: True
+  register: change_symbolic_to_junction_check
+  check_mode: True
+
+- name: get stat of change symbolic link to junction point check
+  win_stat:
+    path: '{{test_win_file_path}}\dir\sub-dir\test'
+  register: change_symbolic_to_junction_check_stat
+
+- name: assert change symbolic link to junction point with force check
+  assert:
+    that:
+    - change_symbolic_to_junction_check|changed
+    - change_symbolic_to_junction_check_stat.stat.exists
+    - change_symbolic_to_junction_check_stat.stat.islnk == False
+    - change_symbolic_to_junction_check_stat.stat.isdir
+
+- name: change symbolic link to junction point with force
+  win_file:
+    path: '{{test_win_file_path}}\dir\sub-dir\test'
+    src: '{{test_win_file_path}}\dir\another'
+    state: junction
+    force: True
+  register: change_symbolic_to_junction
+
+- name: get stat of change symbolic link to junction point
+  win_stat:
+    path: '{{test_win_file_path}}\dir\sub-dir\test'
+  register: change_symbolic_to_junction_stat
+
+- name: assert change symbolic link to junction point with force
+  assert:
+    that:
+    - change_symbolic_to_junction|changed
+    - change_symbolic_to_junction_stat.stat.exists
+    - change_symbolic_to_junction_stat.stat.isdir
+    - change_symbolic_to_junction_stat.stat.islnk
+    - change_symbolic_to_junction_stat.stat.lnk_source == test_win_file_path + '\\dir\\another'
+
+- name: fail to change directory to hard link
+  win_file:
+    path: '{{test_win_file_path}}\dir\hello\testing'
+    src: '{{test_win_file_path}}\dir\def.ghi'
+    state: hard
+  register: change_directory_to_hard_fail
+  failed_when: "change_directory_to_hard_fail.msg != 'Cannot create hard at ' + test_win_file_path + '\\\\dir\\\\hello\\\\testing: ' + test_win_file_path + '\\\\dir\\\\hello\\\\testing already exists and is not a hard. Use force: True to override this'"
+
+- name: change directory to hard link with force check
+  win_file:
+    path: '{{test_win_file_path}}\dir\hello\testing'
+    src: '{{test_win_file_path}}\dir\def.ghi'
+    state: hard
+    force: True
+  register: change_directory_to_hard_check
+  check_mode: True
+
+- name: get stat of change directory to hard link check
+  win_stat:
+    path: '{{test_win_file_path}}\dir\hello\testing'
+  register: change_directory_to_hard_check_stat
+
+- name: assert change directory to hard link with force check
+  assert:
+    that:
+    - change_directory_to_hard_check|changed
+    - change_directory_to_hard_check_stat.stat.exists
+    - change_directory_to_hard_check_stat.stat.islnk == False
+
+- name: change directory to hard link with force
+  win_file:
+    path: '{{test_win_file_path}}\dir\hello\testing'
+    src: '{{test_win_file_path}}\dir\def.ghi'
+    state: hard
+    force: True
+  register: change_directory_to_hard
+
+- name: get stat of change directory to hard link
+  win_stat:
+    path: '{{test_win_file_path}}\dir\hello\testing'
+  register: change_directory_to_hard_stat
+
+- name: assert change directory to hard link with force
+  assert:
+    that:
+    - change_directory_to_hard|changed
+    - change_directory_to_hard_stat.stat.exists
+    - change_directory_to_hard_stat.stat.checksum == '4a0a19218e082a343a1b17e5333409af9d98f0f5'
+
+- name: break an existing symbolic link and junction point
+  win_file:
+    path: '{{test_win_file_path}}\dir\another'
     state: absent
 
-- name: remove parent folder with broken link
+- name: remove output dir with various file states inside check
   win_file:
-    path: "{{win_output_dir}}/link-test"
+    path: '{{test_win_file_path}}'
     state: absent
+  register: delete_folder_check
+  check_mode: True
 
-- name: clean up sub1
-  win_file: path={{win_output_dir}}/sub1 state=absent
+- name: get stat on output dir after delete check
+  win_stat:
+    path: '{{test_win_file_path}}'
+  register: delete_folder_check_stat
 
-- name: clean up sub2
-  win_file: path={{win_output_dir}}/sub2 state=absent
+- name: assert folder delete changed but still exists in check
+  assert:
+    that:
+    - delete_folder_check|changed
+    - delete_folder_check_stat.stat.exists
+
+- name: remove output dir with various file states inside
+  win_file:
+    path: '{{test_win_file_path}}'
+    state: absent
+  register: delete_folder
+
+- name: get stat on output dir after delete check
+  win_stat:
+    path: '{{test_win_file_path}}'
+  register: delete_folder_stat
+
+- name: assert folder delete changed and has been deleted
+  assert:
+    that:
+    - delete_folder|changed
+    - delete_folder_stat.stat.exists == False
