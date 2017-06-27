@@ -474,6 +474,9 @@ class Rule:
             and self.policy == other.policy \
             and self.pattern == other.pattern
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __hash__(self):
         return (hash(self.scope) ^ hash(self.policy)) ^ hash(self.pattern)
 
@@ -506,6 +509,9 @@ class RuleCollection:
     def __eq__(self, other):
         return isinstance(other, self.__class__) \
             and set(self) == set(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __str__(self):
         return encode_rules_as_hcl_string(self)
