@@ -20,3 +20,4 @@
     - { role: nxos_interface, when: "limit_to in ['*', 'nxos_interface']" }
     - { role: nxos_user, when: "limit_to in ['*', 'nxos_user']" }
     - { role: nxos_banner, when: "limit_to in ['*', 'nxos_banner']" }
+    - { role: nxos_acl_interface, when: "limit_to in ['*', 'nxos_acl_interface']" }
