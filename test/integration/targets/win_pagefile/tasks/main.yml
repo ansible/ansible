@@ -1,0 +1,136 @@
+---
+# Test 1: Set c pagefile with inital and maximum size
+- name: Set C pagefile as 1024-2048MB
+  win_pagefile:
+    remove_all: yes
+    drive: C
+    initial_size: 1024
+    maximum_size: 2048
+    override: yes
+    state: present
+  register: c_pagefile
+
+- name: Test set c pagefile
+  assert:
+    that:
+    - c_pagefile.changed == true
+  
+- name: Query all pagefiles
+  win_pagefile:
+    state: query
+  register: pagefiles_query
+
+- name: Set fact for pagefile expected result
+  set_fact: 
+    expected:
+      pagefiles: 
+      - { caption: "C:\\ 'pagefile.sys'",
+          description: "'pagefile.sys' @ C:\\",
+          initial_size: 1024,
+          maximum_size: 2048,
+          name: "C:\\pagefile.sys" }
+
+- name: Test query - c pagefile 1024-2048
+  assert:
+    that:
+    - pagefiles_query.changed == false
+    - pagefiles_query.pagefiles == expected.pagefiles
+    - pagefiles_query.automatic_managed_pagefiles == false
+
+
+# Test 2: Remove c pagefile
+- name: Remove C pagefile
+  win_pagefile:
+    drive: C
+    state: absent
+  register: delete_c_pagefile
+
+- name: Test removal of c pagefile
+  assert:
+    that:
+      - delete_c_pagefile.changed == true
+
+- name: Query all pagefiles
+  win_pagefile:
+    state: query
+  register: pagefiles_query
+
+- name: Set fact for pagefile expected result
+  set_fact:
+    expected:
+      pagefiles: []
+
+- name: Test query - no c pagefile
+  assert:
+    that:
+      - pagefiles_query.changed == false
+      - pagefiles_query.pagefiles == expected.pagefiles
+      - pagefiles_query.automatic_managed_pagefiles == false
+
+
+# Test 3: Set automatic managed pagefile as true
+- name: Set automatic managed pagefiles as true
+  win_pagefile:
+    automatic: yes
+  register: set_automatic_true
+
+- name: Test removal of c pagefile
+  assert:
+    that:
+      - set_automatic_true.changed == true
+      - set_automatic_true.automatic_managed_pagefiles == true
+
+
+# Test 4: Set c pagefile as system managed pagefile
+- name: Set c pagefile as system managed pagefile
+  win_pagefile:
+    drive: C
+    system_managed: yes
+    state: present
+  register: c_pagefile_system_managed
+
+- name: Test set c pagefile as system managed
+  assert:
+    that:
+    - c_pagefile_system_managed.changed == true
+
+- name: Query all pagefiles
+  win_pagefile:
+    state: query
+  register: pagefiles_query
+
+- name: Set fact for pagefile expected result
+  set_fact:
+    expected:
+      pagefiles:
+      - { caption: "C:\\ 'pagefile.sys'",
+          description: "'pagefile.sys' @ C:\\",
+          initial_size: 0,
+          maximum_size: 0,
+          name: "C:\\pagefile.sys" }
+
+- name: Test query - c pagefile 0-0 (system managed)
+  assert:
+    that:
+    - pagefiles_query.changed == false
+    - pagefiles_query.pagefiles == expected.pagefiles
+    - pagefiles_query.automatic_managed_pagefiles == false
+
+
+# Test 5: Remove all pagefiles
+- name: Remove all pagefiles
+  win_pagefile:
+    remove_all: true
+  register: remove_all_pagefiles
+
+- name: Set fact for pagefile expected result
+  set_fact:
+    expected:
+      pagefiles: []
+
+- name: Test query - no pagefiles
+  assert:
+    that:
+      - remove_all_pagefiles.changed == true
+      - remove_all_pagefiles.pagefiles == expected.pagefiles
+      - pagefiles_query.automatic_managed_pagefiles == false
