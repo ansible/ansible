@@ -14,6 +14,9 @@ such as link references, you may install sphinx and build the documentation by r
 To include module documentation you'll need to run `make webdocs` at the top level of the repository.  The generated
 html files are in docsite/htmlout/.
 
+You can also build a single page of the documentation, or the documentation for one module by 
+running `bin\docs\ansible-makepage.sh` at the top level of the repository.
+
 If you do not want to learn the reStructuredText format, you can also [file issues] about
 documentation problems on the Ansible GitHub project.
 

@@ -4,7 +4,7 @@
 # A small script to make it easier to build a single documentation
 # page during development.
 
-PROG=`basename $0`
+PROG=$(basename $0)
 
 if [[ $# -gt 2 ]]; then
    USAGE="YES"
@@ -28,7 +28,7 @@ done
 
 if [ "$USAGE" == "YES" ] || [[ -z "$PAGE" ]]; then
   echo 
-  echo $PROG - build a single page of the ansible documentation.
+  echo "$PROG - build a single page of the ansible documentation."
   echo 
   echo "Usage: $PROG [-q|--quiet] module_name|file.rst" 
   echo "   [-q|--quiet]   do not sound terminal bell when complete."
@@ -46,7 +46,7 @@ fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-cd $DIR/../docsite
+cd "$DIR/../docsite"
 
 make clean modules staticmin
 
@@ -54,7 +54,7 @@ make clean modules staticmin
 
 cp _themes/srtd/static/css/theme.min.css ./_build/html/_static/css
 
-make htmlsingle rst=$FILE
+make htmlsingle rst="$FILE"
 
 
 if [ "$QUIET" != "YES" ]; then
