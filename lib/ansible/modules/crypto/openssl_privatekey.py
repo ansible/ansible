@@ -134,40 +134,62 @@ class PrivateKey(object):
         self.changed = True
         self.check_mode = module.check_mode
 
+        self._needs_generating = True
+        if self.type == 'RSA':
+            self._type_id = crypto.TYPE_RSA
+        else:
+            self._type_id = crypto.TYPE_DSA
 
     def generate(self, module):
         """Generate a keypair."""
 
-        if not os.path.exists(self.path) or self.force:
+        if self._needs_generating:
             self.privatekey = crypto.PKey()
 
-            if self.type == 'RSA':
-                crypto_type = crypto.TYPE_RSA
-            else:
-                crypto_type = crypto.TYPE_DSA
-
             try:
-                self.privatekey.generate_key(crypto_type, self.size)
+                self.privatekey.generate_key(self._type_id, self.size)
             except (TypeError, ValueError) as exc:
                 raise PrivateKeyError(exc)
 
             try:
-                privatekey_file = os.open(self.path,
-                                          os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                                          self.mode)
-
+                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, self.mode)
                 os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey))
                 os.close(privatekey_file)
             except IOError as exc:
                 self.remove()
                 raise PrivateKeyError(exc)
-        else:
-            self.changed = False
 
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
+    def check(self, module):
+        """check if keypair exists and complies with user values."""
+
+        self.changed = True
+        self._needs_generating = True
+
+        if not os.path.exists(self.path) or self.force:
+            return
+
+        try:
+            privatekey_content = open(self.path, 'r').read()
+            privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
+            if self._type_id != privatekey.type():
+                return
+            if self.size != privatekey.bits():
+                return
+        except (IOError, OSError) as exc:
+            raise PrivateKeyError(exc)
+
+        self._needs_generating = False
+
+        if module.check_mode:
+            file_args = module.load_file_common_arguments(module.params)
+            if module.set_fs_attributes_if_different(file_args, False):
+                return
+
+        self.changed = False
 
     def remove(self):
         """Remove the private key from the filesystem."""
@@ -179,7 +201,6 @@ class PrivateKey(object):
                 raise PrivateKeyError(exc)
             else:
                 self.changed = False
-
 
     def dump(self):
         """Serialize the object into a dictionary."""
@@ -197,15 +218,15 @@ class PrivateKey(object):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             size=dict(default=4096, type='int'),
             type=dict(default='RSA', choices=['RSA', 'DSA'], type='str'),
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
         ),
-        supports_check_mode = True,
-        add_file_common_args = True,
+        supports_check_mode=True,
+        add_file_common_args=True,
     )
 
     if not pyopenssl_found:
@@ -223,9 +244,13 @@ def main():
     private_key = PrivateKey(module)
     if private_key.state == 'present':
 
+        try:
+            private_key.check(module)
+        except PrivateKeyError as exc:
+            module.fail_json(msg=to_native(exc))
+
         if module.check_mode:
             result = private_key.dump()
-            result['changed'] = module.params['force'] or not os.path.exists(path)
             module.exit_json(**result)
 
         try:
