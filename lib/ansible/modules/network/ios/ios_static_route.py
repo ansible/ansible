@@ -102,17 +102,20 @@ import re
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
-    state = module.params['state']
-    prefix = module.params['prefix']
-    mask = module.params['mask']
-    next_hop = module.params['next_hop']
-    admin_distance = module.params['admin_distance']
 
-    if state == 'absent' and want in have:
-        commands.append('no ip route %s %s %s' % (prefix, mask, next_hop))
-    elif state == 'present' and want not in have:
-        commands.append('ip route %s %s %s %s' % (prefix, mask, next_hop,
-                                                  admin_distance))
+    for w in want:
+        prefix = w['prefix']
+        mask = w['mask']
+        next_hop = w['next_hop']
+        admin_distance = w['admin_distance']
+        state = w['state']
+        del w['state']
+
+        if state == 'absent' and w in have:
+            commands.append('no ip route %s %s %s' % (prefix, mask, next_hop))
+        elif state == 'present' and w not in have:
+            commands.append('ip route %s %s %s %s' % (prefix, mask, next_hop,
+                                                      admin_distance))
 
     return commands
 
@@ -141,35 +144,56 @@ def map_config_to_obj(module):
 
 
 def map_params_to_obj(module):
-    prefix = module.params['prefix'].strip()
-    mask = module.params['mask'].strip()
-    next_hop = module.params['next_hop'].strip()
-    admin_distance = str(module.params['admin_distance'])
+    obj = []
 
-    return {
-        'prefix': prefix,
-        'mask': mask,
-        'next_hop': next_hop,
-        'admin_distance': admin_distance,
-    }
+    if 'collection' in module.params and module.params['collection']:
+        for c in module.params['collection']:
+            d = c.copy()
+
+            if 'state' not in d:
+                d['state'] = module.params['state']
+            if 'admin_distance' not in d:
+                d['admin_distance'] = str(module.params['admin_distance'])
+
+            obj.append(d)
+    else:
+        prefix = module.params['prefix'].strip()
+        mask = module.params['mask'].strip()
+        next_hop = module.params['next_hop'].strip()
+        admin_distance = str(module.params['admin_distance'])
+        state = module.params['state']
+
+        obj.append({
+            'prefix': prefix,
+            'mask': mask,
+            'next_hop': next_hop,
+            'admin_distance': admin_distance,
+            'state': state
+        })
+
+    return obj
 
 
 def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        prefix=dict(required=True, type='str'),
-        mask=dict(required=True, type='str'),
-        next_hop=dict(required=True, type='str'),
+        prefix=dict(type='str'),
+        mask=dict(type='str'),
+        next_hop=dict(type='str'),
         admin_distance=dict(default=1, type='int'),
-        collections=dict(type='dict'),
+        collection=dict(type='list'),
         purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
     argument_spec.update(ios_argument_spec)
+    required_one_of = [['collection', 'prefix']]
+    required_together = [['prefix', 'mask', 'next_hop']]
 
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           required_together=required_together,
                            supports_check_mode=True)
 
     warnings = list()
