@@ -176,6 +176,71 @@ Looping over Fileglobs
 
 .. note:: When using a relative path with ``with_fileglob`` in a role, Ansible resolves the path relative to the `roles/<rolename>/files` directory.
 
+
+Looping over Filetrees
+``````````````````````
+
+``with_filetree`` matches all files in a tree recursively. So you can recurse of a tree of files within the task loop, and e.g. template a complete tree of files to a target system with little effort while retaining permissions and ownership.
+
+The ``filetree`` lookup-plugin supports directories, files and symlinks. But also SELinux and other file properties. Here is a complete list of what each file object consists of:
+
+* src
+* root
+* path
+* mode
+* state
+* owner
+* group
+* seuser
+* serole
+* setype
+* selevel
+* uid
+* gid
+* size
+* mtime
+* ctime
+
+And if you provide more than one path, it will implement a ``with_first_found`` logic, and will not process entries it already processed in previous paths. This enables the user to merge different trees in order of importance, or add e.g. role_vars specific paths to influence different instances of the same role.
+
+Here is an example of how we use with_filetree within a role. The ``web/`` path is relative to either ``roles/<role>/files/`` or ``files/``::
+
+    ---
+    - name: Create directories
+      file:
+        path: /web/{{ item.path }}
+        state: directory
+        mode: '{{ item.mode }}'
+      with_filetree: web/
+      when: item.state == 'directory'
+
+    - name: Template files
+      template:
+        src: '{{ item.src }}'
+        dest: /web/{{ item.path }}
+        mode: '{{ item.mode }}'
+      with_filetree: web/
+      when: item.state == 'file'
+
+    - name: Recreate symlinks
+      file:
+        src: '{{ item.src }}'
+        dest: /web/{{ item.path }}
+        state: link
+        force: yes
+        mode: '{{ item.mode }}'
+      with_filetree: web/
+      when: item.state == 'link'
+
+
+The following properties also have its special use:
+
+* ``root``: Makes it possible to filter by original location
+* ``path``: Is the relative path to root
+* ``uidi``, ``gid``: Makes it possible to force-create by exact id, rather than by name
+* ``size``, ``mtime``, ``ctime``: Makes it possible to filter out files by size, mtime or ctime
+
+
 Looping over Parallel Sets of Data
 ``````````````````````````````````
 
