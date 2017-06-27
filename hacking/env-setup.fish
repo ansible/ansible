@@ -59,19 +59,37 @@ end
 
 set -gx ANSIBLE_LIBRARY $ANSIBLE_HOME/library
 
+#
 # Generate egg_info so that pkg_resources works
-pushd $ANSIBLE_HOME
-if test -e $PREFIX_PYTHONPATH/ansible*.egg-info
-    rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
-end
-if [ $QUIET ]
-    eval $PYTHON_BIN setup.py -q egg_info
-else
-    eval $PYTHON_BIN setup.py egg_info
-end
-find . -type f -name "*.pyc" -exec rm -f '{}' ';'
-popd
+#
 
+# Do the work in a fuction
+function gen_egg_info
+
+    if test -e $PREFIX_PYTHONPATH/ansible*.egg-info
+        rm -rf "$PREFIX_PYTHONPATH/ansible*.egg-info"
+    end
+
+    if [ $QUIET ]
+        set options '-q'
+    end
+
+    eval $PYTHON_BIN setup.py $options egg_info
+
+end
+
+
+pushd $ANSIBLE_HOME
+
+if [ $QUIET ]
+    gen_egg_info ^ /dev/null
+    find . -type f -name "*.pyc" -exec rm -f '{}' ';' ^ /dev/null
+else
+    gen_egg_info
+    find . -type f -name "*.pyc" -exec rm -f '{}' ';'
+end
+
+popd
 
 if not [ $QUIET ]
     echo ""
