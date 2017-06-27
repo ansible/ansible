@@ -26,13 +26,15 @@ import traceback
 
 from jinja2.exceptions import TemplateNotFound
 
-# TODO: not needed if we use the cryptography library with its default RNG
-# engine
-HAS_ATFORK = True
+HAS_PYCRYPTO_ATFORK = False
 try:
     from Crypto.Random import atfork
-except ImportError:
-    HAS_ATFORK = False
+    HAS_PYCRYPTO_ATFORK = True
+except:
+    # We only need to call atfork if pycrypto is used because it will need to
+    # reinitialize its RNG.  Since old paramiko could be using pycrypto, we
+    # need to take charge of calling it.
+    pass
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
@@ -99,7 +101,7 @@ class WorkerProcess(multiprocessing.Process):
         # pr = cProfile.Profile()
         # pr.enable()
 
-        if HAS_ATFORK:
+        if HAS_PYCRYPTO_ATFORK:
             atfork()
 
         try:

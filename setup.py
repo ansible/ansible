@@ -25,6 +25,10 @@ with open('requirements.txt') as requirements_file:
 # knows about
 crypto_backend = os.environ.get('ANSIBLE_CRYPTO_BACKEND', None)
 if crypto_backend:
+    if crypto_backend.strip() == 'pycrypto':
+        # Attempt to set version requirements
+        crypto_backend = 'pycrypto >= 2.6'
+
     install_requirements = [r for r in install_requirements if not (r.lower().startswith('pycrypto') or r.lower().startswith('cryptography'))]
     install_requirements.append(crypto_backend)
 

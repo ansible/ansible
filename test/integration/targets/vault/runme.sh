@@ -11,6 +11,33 @@ echo "This is a test file" > "${TEST_FILE}"
 
 TEST_FILE_OUTPUT="${MYTMPDIR}/test_file_output"
 
+# old format
+ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
+
+ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_1_AES.yml
+
+# old format, wrong password
+echo "The wrong password tests are expected to return 1"
+ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_0_AES.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES256.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+set -eux
+
+# new format, view
+ansible-vault view "$@" --vault-password-file vault-password format_1_1_AES256.yml
+
 # encrypt it
 ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE}"
 

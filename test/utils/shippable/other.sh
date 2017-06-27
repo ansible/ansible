@@ -5,6 +5,10 @@ set -o pipefail
 retry.py apt-get update -qq
 retry.py apt-get install -qq \
     shellcheck \
+    libssl-dev \
+    libffi-dev \
+
+pip install cryptography
 
 retry.py pip install tox --disable-pip-version-check
 

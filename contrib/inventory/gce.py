@@ -74,7 +74,6 @@ Contributors: Matt Hite <mhite@hotmail.com>, Tom Melendez <supertom@google.com>
 Version: 0.0.3
 '''
 
-__requires__ = ['pycrypto>=2.6']
 try:
     import pkg_resources
 except ImportError:
