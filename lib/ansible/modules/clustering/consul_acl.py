@@ -469,8 +469,7 @@ class Rule:
         self.pattern = pattern
 
     def __eq__(self, other):
-        return other \
-            and isinstance(other, self.__class__) \
+        return isinstance(other, self.__class__) \
             and self.scope == other.scope \
             and self.policy == other.policy \
             and self.pattern == other.pattern
@@ -505,8 +504,7 @@ class RuleCollection:
         return count
 
     def __eq__(self, other):
-        return other \
-            and isinstance(other, self.__class__) \
+        return isinstance(other, self.__class__) \
             and set(self) == set(other)
 
     def __str__(self):
