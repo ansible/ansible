@@ -217,6 +217,7 @@ import traceback
 import ssl
 
 from httplib import HTTPSConnection
+from httplib import IncompleteRead
 
 try:
     from urllib.parse import urlparse
@@ -329,7 +330,7 @@ def download_disk_image(connection, module):
     def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
         disks_service = connection.system_service().disks_service()
         disk = disks_service.disk_service(module.params['id']).get()
-        size = disk.provisioned_size
+        size = disk.actual_size
         transfer_headers = {
             'Authorization': transfer_ticket,
         }
@@ -349,7 +350,11 @@ def download_disk_image(connection, module):
                 if r.status >= 300:
                     raise Exception("Error: %s" % r.read())
 
-                mydisk.write(r.read())
+                try:
+                    mydisk.write(r.read())
+                except IncompleteRead as e:
+                    mydisk.write(e.partial)
+                    break
                 pos += chunk_size
     return transfer(
         connection,
