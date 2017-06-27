@@ -55,7 +55,8 @@ begin {
     # stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
     # exec runspace, capture output, cleanup, return module output
 
-    $json_raw = ""
+    # NB: do not adjust the following line- it is replaced when doing non-streamed module output
+    $json_raw = ''
 }
 process {
     $input_as_string = [string]$input
@@ -1102,7 +1103,7 @@ class ShellModule(object):
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # pipelining bypass
         if cmd == '':
-            return ''
+            return '-'
 
         # non-pipelining
 
@@ -1194,15 +1195,22 @@ class ShellModule(object):
     def _encode_script(self, script, as_list=False, strict_mode=True, preserve_rc=True):
         '''Convert a PowerShell script to a single base64-encoded command.'''
         script = to_text(script)
-        if strict_mode:
-            script = u'Set-StrictMode -Version Latest\r\n%s' % script
-        # try to propagate exit code if present- won't work with begin/process/end-style scripts (ala put_file)
-        # NB: the exit code returned may be incorrect in the case of a successful command followed by an invalid command
-        if preserve_rc:
-            script = u'%s\r\nIf (-not $?) { If (Get-Variable LASTEXITCODE -ErrorAction SilentlyContinue) { exit $LASTEXITCODE } Else { exit 1 } }\r\n' % script
-        script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
-        encoded_script = base64.b64encode(script.encode('utf-16-le'))
-        cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
+
+        if script == u'-':
+            cmd_parts = _common_args + ['-']
+
+        else:
+            if strict_mode:
+                script = u'Set-StrictMode -Version Latest\r\n%s' % script
+            # try to propagate exit code if present- won't work with begin/process/end-style scripts (ala put_file)
+            # NB: the exit code returned may be incorrect in the case of a successful command followed by an invalid command
+            if preserve_rc:
+                script = u'%s\r\nIf (-not $?) { If (Get-Variable LASTEXITCODE -ErrorAction SilentlyContinue) { exit $LASTEXITCODE } Else { exit 1 } }\r\n'\
+                    % script
+            script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
+            encoded_script = base64.b64encode(script.encode('utf-16-le'))
+            cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
+
         if as_list:
             return cmd_parts
         return ' '.join(cmd_parts)

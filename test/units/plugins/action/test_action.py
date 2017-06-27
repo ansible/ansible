@@ -91,6 +91,7 @@ class TestActionBase(unittest.TestCase):
         # create our fake task
         mock_task = MagicMock()
         mock_task.action = "copy"
+        mock_task.async = 0
 
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
