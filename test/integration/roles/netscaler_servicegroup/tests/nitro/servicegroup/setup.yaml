@@ -1,0 +1,46 @@
+---
+
+- name: Setup servicegroup
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_servicegroup:
+
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: present
+
+    servicegroupname: service-group-1
+    servicetype: HTTP
+    cachetype: TRANSPARENT
+    maxclient: 100
+    maxreq: 100
+    cacheable: no
+    cip: ENABLED
+    cipheader: cip-header
+    usip: no
+    pathmonitor: no
+    pathmonitorindv: no
+    useproxyport: no
+    healthmonitor: no
+    sc: off
+    sp: off
+    rtspsessionidremap: off
+    clttimeout: 2000
+    svrtimeout: 2000
+    cka: yes
+    tcpb: yes
+    cmp: no
+    maxbandwidth: 5000
+    monthreshold: 100
+    downstateflush: DISABLED
+    comment: some comment
+    appflowlog: ENABLED
+    autoscale: POLICY
+    memberport: 80
+    graceful: no
+    servicemembers:
+      - ip: 10.78.78.78
+        port: 80
+        weight: 100
