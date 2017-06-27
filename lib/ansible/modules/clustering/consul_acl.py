@@ -324,7 +324,7 @@ def decode_rules_as_json(rules_as_json):
     """
     rules = RuleCollection()
     for scope in rules_as_json:
-        if isinstance(rules_as_json[scope], str):
+        if not isinstance(rules_as_json[scope], dict):
             rules.add(Rule(scope, rules_as_json[scope]))
         else:
             for pattern, policy in rules_as_json[scope].items():
