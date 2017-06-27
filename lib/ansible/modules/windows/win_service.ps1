@@ -24,7 +24,7 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name '_ansible_check_mode' -type 'bool' -default $false
 
-$dependencies = Get-AnsibleParam -obj $params -name 'dependencies' -default $null
+$dependencies = Get-AnsibleParam -obj $params -name 'dependencies' -type 'list' -default $null
 $dependency_action = Get-AnsibleParam -obj $params -name 'dependency_action' -type 'str' -default 'set' -validateset 'add','remove','set' 
 $description = Get-AnsibleParam -obj $params -name 'description' -type 'str'
 $desktop_interact = Get-AnsibleParam -obj $params -name 'desktop_interact' -type 'bool' -default $false
@@ -40,11 +40,6 @@ $username = Get-AnsibleParam -obj $params -name 'username' -type 'str'
 $result = @{
     changed = $false
     warnings = @()
-}
-
-# Check if dependencies is a string and convert to a list
-if ($dependencies -is [System.String]) {
-    $dependencies = @($dependencies)
 }
 
 if ($username -ne $null -and $password -eq $null) {
@@ -235,7 +230,9 @@ Function Set-ServiceDependencies($wmi_svc, $dependency_action, $dependencies) {
     [System.Collections.ArrayList]$new_dependencies = @()
 
     if ($dependency_action -eq 'set') {
-        $new_dependencies = $dependencies
+        foreach ($dependency in $dependencies) {
+            $new_dependencies.Add($dependency)
+        }
     } else {
         $new_dependencies = $existing_dependencies
         foreach ($dependency in $dependencies) {
