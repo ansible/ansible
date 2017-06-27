@@ -175,7 +175,8 @@ class PrivateKey(object):
         try:
             privatekey_content = open(self.path, 'r').read()
             privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
-            if self._type_id != privatekey.type():
+            type_id = privatekey.type()
+            if self._type_id != type_id:
                 return
             if self.size != privatekey.bits():
                 return
