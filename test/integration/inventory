@@ -47,3 +47,6 @@ overridden_in_parent=2000
 
 [amazon]
 localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
+
+[delegation_hosts]
+facthost[0:5]
