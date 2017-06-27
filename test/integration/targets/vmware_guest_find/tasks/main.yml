@@ -18,7 +18,7 @@
 
 - name: get a list of VMS from vcsim   
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=_VM' }}"
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
   register: vmlist
 
 - debug: var=vcsim_instance
@@ -54,3 +54,29 @@
         - "{{ 'folders' in item }}"
         - "{{ item['folders']|length == 1 }}"
   with_items: "{{ folders.results }}"
+
+# Testcase 2: Find VMS using UUID
+- name: get details about VMS from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_vm_info' }}"
+  register: vms_detail_list
+
+- name: find folders for each vm using UUID
+  vmware_guest_find:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    uuid: "{{ vms_detail_list['json'][item|basename]['UUID'] }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: folders_uuid
+
+- debug: var=item
+  with_items: "{{ folders_uuid.results }}"
+
+- assert:
+    that:
+        - "{{ 'folders' in item }}"
+        - "{{ item['folders']|length == 1 }}"
+  with_items: "{{ folders_uuid.results }}"

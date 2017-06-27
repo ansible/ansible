@@ -39,27 +39,37 @@ requirements:
 options:
    name:
         description:
-            - Name of the VM to work with
-        required: True
+            - Name of the VM to work with.
+            - This is required if uuid is not supplied.
    uuid:
         description:
-            - UUID of the instance to manage if known, this is VMware's uid.
+            - UUID of the instance to manage if known, this is VMware's BIOS UUID.
             - This is required if name is not supplied.
    datacenter:
         description:
-            - Destination datacenter for the deploy operation
+            - Destination datacenter for the deploy operation.
         required: True
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: Gather VM facts
+- name: Find Guest's Folder using name
   vmware_guest_find:
     hostname: 192.168.1.209
     username: administrator@vsphere.local
     password: vmware
     validate_certs: no
     name: testvm
+  register: vm_folder
+
+- name: Find Guest's Folder using UUID
+  vmware_guest_find:
+    hostname: 192.168.1.209
+    username: administrator@vsphere.local
+    password: vmware
+    validate_certs: no
+    uuid: 38c4c89c-b3d7-4ae6-ae4e-43c5118eae49
+  register: vm_folder
 '''
 
 RETURN = """
@@ -69,9 +79,8 @@ import os
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.vmware import connect_to_api, gather_vm_facts
-from ansible.module_utils.vmware import get_all_objs
+from ansible.module_utils._text import to_native
+from ansible.module_utils.vmware import connect_to_api, gather_vm_facts, get_all_objs
 
 
 HAS_PYVMOMI = False
@@ -102,7 +111,7 @@ class PyVmomiHelper(object):
         self.params = module.params
         self.content = connect_to_api(self.module)
 
-    def getvm_folder_paths(self, name=None, uuid=None, folder=None):
+    def getvm_folder_paths(self, name=None, uuid=None):
 
         results = []
 
@@ -115,8 +124,8 @@ class PyVmomiHelper(object):
             vobj = item[0]
             if not isinstance(vobj.parent, vim.Folder):
                 continue
-            # Match by name
-            if vobj.config.name == name:
+            # Match by name or uuid
+            if vobj.config.name == name or vobj.config.uuid == uuid:
                 folderpath = self.compile_folder_path_for_object(vobj)
                 results.append(folderpath)
 
@@ -254,7 +263,7 @@ def main():
                 default=os.environ.get('VMWARE_PASSWORD')
             ),
             validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=True, type='str'),
+            name=dict(required=False, type='str'),
             uuid=dict(required=False, type='str'),
             datacenter=dict(required=True, type='str'),
         ),
@@ -271,11 +280,15 @@ def main():
     if folders:
         try:
             module.exit_json(folders=folders)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Folder enumeration failed with exception %s" % e)
+        except Exception as exc:
+            module.fail_json(msg="Folder enumeration failed with exception %s" % to_native(exc))
     else:
-        module.fail_json(msg="Unable to find folders for VM %(name)s" % module.params)
+        msg = "Unable to find folders for VM "
+        if module.params['name']:
+            msg += "%(name)s" % module.params
+        elif module.params['uuid']:
+            msg += "%(uuid)s" % module.params
+        module.fail_json(msg=msg)
 
 if __name__ == '__main__':
     main()
