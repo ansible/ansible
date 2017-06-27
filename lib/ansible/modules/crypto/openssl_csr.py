@@ -201,7 +201,7 @@ class CertificateSigningRequest(object):
         if self.subjectAltName is None:
             self.subjectAltName = 'DNS:%s' % self.subject['CN']
 
-        self.subject = {k: v for k,v in self.subject.items() if v}
+        self.subject = {k: v for k, v in self.subject.items() if v}
 
     def generate(self, module):
         '''Generate the certificate signing request.'''
