@@ -33,37 +33,59 @@ Usage:
     {script_name} [options]
 
 Options:
-    -a API_VERSION --api-version=API_VERSION    The API version used to connect to GCE [default: v1]
-    -c CONFIG_FILE --config=CONFIG_FILE         Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
-    -l --list                                   List all hosts (needed by Ansible, but actually doesn't do anything)
-    -p PROJECT --project=PROJECT                The GCE project where you want to get the inventory
-    -z ZONE --zone=ZONE                         The GCE zone where you ant to get the inventory
+    --account ACCOUNT_NAME --account=ACCOUNT_NAME  Billing account name
+    -a API_VERSION --api-version=API_VERSION       The API version used to connect to GCE [default: v1]
+    -c CONFIG_FILE --config=CONFIG_FILE            Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
+    -l --list                                      List all hosts (needed by Ansible, but actually doesn't do anything)
+    -p PROJECT --project=PROJECT                   The GCE project where you want to get the inventory
+    -z ZONE --zone=ZONE                            The GCE zone where you ant to get the inventory
 
 All the parameters can also be set as environment variables using the 'GCE_' prefix (i.e. {envvar_prefix}API_VERSION=beta).
 """.format(script_name=basename(argv[0]), envvar_prefix=ENV_PREFIX)
 
 
-def get_all_projects(api_version='v1'):
+
+def get_all_billing_projects(billing_account_name, api_version='v1'):
     project_ids = []
 
     credentials = GoogleCredentials.get_application_default()
 
-    service = discovery.build('cloudresourcemanager', api_version,
+    service = discovery.build('cloudbilling', 
+                              version=api_version,
                               credentials=credentials)
     # pylint: disable=no-member
-    request = service.projects().list()
+    request = service.billingAccounts().projects().list(name=billing_account_name)
 
     while request is not None:
         response = request.execute()
 
-        for project in response['projects']:
-            project_ids.append(project['projectId'])
-
         # pylint: disable=no-member
-        request = service.projects().list_next(previous_request=request,
-                                               previous_response=response)
+        request = service.billingAccounts().projects().list_next(previous_request=request,
+                                                                 previous_response=response)
+
+        for projectbillinginfo in response['projectBillingInfo']:
+            if projectbillinginfo['billingEnabled']:
+                project_ids.append(projectBillingInfo['projectId'])
 
     return project_ids
+
+def get_all_zones_in_project(project, api_version='v1'):
+    zones = []
+
+    credentials = GoogleCredentials.get_application_default()
+    service = discovery.build('compute', api_version, credentials=credentials)
+
+    request = service.zones().list(project=project)
+    while request is not None:
+        response = request.execute()
+
+        for zone in response['items']:
+            # TODO: Change code below to process each `zone` resource:
+            zones.append(zone['name'])
+
+        request = service.zones().list_next(previous_request=request, previous_response=response)
+
+    return zones
 
 
 def get_instances(project_id, zone, api_version='v1'):
@@ -76,7 +98,10 @@ def get_instances(project_id, zone, api_version='v1'):
     request = service.instances().list(project=project_id, zone=zone)
 
     while request is not None:
-        response = request.execute()
+        try:
+            response = request.execute()
+        except:
+            break
 
         if 'items' in response:
             for instance in response['items']:
@@ -136,10 +161,15 @@ def main(args):
     project = args['--project']
     zone = args['--zone']
     api_version = args['--api-version']
+    billing_account_name = args['--account']
 
-    instances = get_instances(project_id=project,
+    instances = []
+    for project in get_all_billing_projects(billing_account_name):
+        for zone in get_all_zones_in_project(project):
+            for instance in get_instances(project_id=project,
                               zone=zone,
-                              api_version=api_version)
+                              api_version=api_version):
+                instances.append(instance)
 
     inventory_json = get_inventory(instances)
     print(json.dumps(inventory_json,
