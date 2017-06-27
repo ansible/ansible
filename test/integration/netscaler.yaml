@@ -1,3 +1,5 @@
+---
+
 - hosts: netscaler
 
   gather_facts: no
@@ -9,3 +11,4 @@
 
   roles:
     - { role: netscaler_service, when: "limit_to in ['*', 'netscaler_service']" }
+    - { role: netscaler_server, when: "limit_to in ['*', 'netscaler_server']" }
