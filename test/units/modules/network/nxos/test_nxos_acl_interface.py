@@ -41,7 +41,7 @@ class TestNxosAclInterfaceModule(TestNxosModule):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
@@ -52,9 +52,8 @@ class TestNxosAclInterfaceModule(TestNxosModule):
                     command = obj['command']
                 except ValueError:
                     command = item
-                filename = str(command).split(' | ')[0].replace(' ', '_')
-                filename = 'nxos_acl_interface/%s.txt' % filename
-                output.append(load_fixture(filename))
+                filename = '%s.txt' % str(command).split(' | ')[0].replace(' ', '_')
+                output.append(load_fixture('nxos_acl_interface', filename))
             return output
 
         self.run_commands.side_effect = load_from_file
