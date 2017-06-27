@@ -1,0 +1,2 @@
+local_tmp: '/tmp/ansible-local'
+remote_tmp: '/tmp/ansible-remote'
