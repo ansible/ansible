@@ -93,7 +93,6 @@ def check_for_acl_int_present(module, name, intf, direction):
         'output': 'text',
     }]
     body = run_commands(module, command)
-<<<<<<< HEAD
 
     if direction == 'ingress':
         mdir = 'in'
@@ -102,29 +101,6 @@ def check_for_acl_int_present(module, name, intf, direction):
 
     match = re.search('ip access-group {0} {1}'.format(name, mdir), str(body[0]))
     return bool(match)
-=======
-    body = body[0].encode('ascii', 'ignore')
-
-    seq = re.compile(r"^interface " + re.escape(intf) + r"\n  ip access-group (.*) (.*)", re.M | re.I)
-    existing = False
-    while True:
-        match = re.search(seq, str(body))
-        if match:
-            lname = match.group(1)
-            ldir = match.group(2)
-            if ldir == 'in':
-                mdir = 'ingress'
-            else:
-                mdir = 'egress'
-            if (match.group(1) == name and mdir == direction):
-                existing = True
-                break
-            else:
-                body = re.sub('  ip access-group ' + lname + ' ' + ldir + '\n?', '', body)
-        else:
-            break
-    return existing
->>>>>>> shippable error fix
 
 
 def apply_acl(proposed):
