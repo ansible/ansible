@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# (c) 2017 James Tanner (@jctanner) <tanner.jc@gmail.com>
+#          Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+#
+# Written by James Tanner <tanner.jc@gmail.com>
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import psutil
@@ -147,18 +166,87 @@ def spawn_vcsim():
 @app.route('/govc_find')
 def govc_find():
     """Run govc find and optionally filter results"""
-
-    global GOVCURL
-
     ofilter = request.args.get('filter') or None
+    stdout_lines = _get_all_objs(ofilter=ofilter)
+    return jsonify(stdout_lines)
+
+
+@app.route('/govc_vm_info')
+def get_govc_vm_info():
+    """Run govc vm info """
+    vm_name = request.args.get('vm_name') or None
+    vm_output = {}
+    if vm_name:
+        all_vms = [vm_name]
+    else:
+        # Get all VMs
+        all_vms = _get_all_objs(ofilter='VM')
+
+    for vm_name in all_vms:
+        vm_info = _get_vm_info(vm_name=vm_name)
+        name = vm_info.get('Name', vm_name)
+        vm_output[name] = vm_info
+
+    return jsonify(vm_output)
+
+
+def _get_vm_info(vm_name=None):
+    """
+    Get all information of VM from vcsim
+    :param vm_name: Name of VM
+    :return: Dictionary containing inforamtion about VM,
+             where KEY represent attributes and VALUE represent attribute's value
+    """
+    cmd = '%s vm.info %s 2>&1' % (GOVCPATH, vm_name)
+    so, se = run_cmd(cmd)
+    stdout_lines = so.splitlines()
+
+    vm_info = {}
+    if vm_name is None:
+        return vm_info
+
+    for line in stdout_lines:
+        if ":" in line:
+            key, value = line.split(":")
+            key = key.lstrip()
+            vm_info[key] = value.strip()
+
+    return vm_info
+
+
+def _get_all_objs(ofilter=None):
+    """
+    Get all VM Objects from vcsim
+    :param ofilter: Specify which object to get
+    :return: list of Object specified by ofilter
+    """
+    cmd = '%s find ' % GOVCPATH
+    filter_mapping = dict(VA='a', CCR='c', DC='d', F='f', DVP='g', H='h',
+                          VM='m', N='n', ON='o', RP='p', CR='r', D='s', DVS='w')
+    if ofilter:
+        type_filter = filter_mapping.get(ofilter, '')
+        if type_filter != '':
+            cmd += '-type %s ' % type_filter
+
+    cmd += "2>&1"
+    so, se = run_cmd(cmd)
+    stdout_lines = so.splitlines()
+    return stdout_lines
+
+
+def run_cmd(cmd):
+    """
+    Helper Function to run commands
+    :param cmd: Command string to execute
+    :return: StdOut and StdErr in string format
+    """
+    global GOVCURL
 
     env = {
         'GOPATH': GOPATH,
         'GOVC_URL': GOVCURL,
         'GOVC_INSECURE': '1'
     }
-
-    cmd = '%s find 2>&1' % GOVCPATH
 
     p = subprocess.Popen(
         cmd,
@@ -169,12 +257,7 @@ def govc_find():
     )
 
     (so, se) = p.communicate()
-    stdout_lines = so.split('\n')
-
-    if ofilter:
-        stdout_lines = [x for x in stdout_lines if ofilter in x]
-
-    return jsonify(stdout_lines)
+    return so, se
 
 
 if __name__ == "__main__":
