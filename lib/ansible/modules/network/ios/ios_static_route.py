@@ -190,6 +190,7 @@ def main():
     argument_spec.update(ios_argument_spec)
     required_one_of = [['collection', 'prefix']]
     required_together = [['prefix', 'mask', 'next_hop']]
+    mutually_exclusive = [['collection', 'prefix']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
