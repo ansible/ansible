@@ -37,8 +37,8 @@ requirements:
   - As this module used newer cmdlets like New-SmbShare this can only run on
     Windows 8 / Windows 2012 or newer.
   - This is due to the reliance on the WMI provider MSFT_SmbShare
-    U(https://msdn.microsoft.com/en-us/library/hh830471(v=vs.85).aspx) which
-    was only added with these Windows releases.
+    U(https://msdn.microsoft.com/en-us/library/hh830471) which was only added
+    with these Windows releases.
 options:
   name:
     description:
