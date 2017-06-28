@@ -289,6 +289,8 @@ class Parameters(AnsibleF5Parameters):
             return None
         if self._values['template'].startswith("/" + self.partition):
             return self._values['template']
+        elif self._values['template'].startswith("/"):
+            return self._values['template']
         else:
             return '/{0}/{1}'.format(
                 self.partition, self._values['template']
