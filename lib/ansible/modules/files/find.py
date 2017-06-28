@@ -125,14 +125,14 @@ EXAMPLES = r'''
 
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
 - find:
-    paths: /var/tmp
+    paths: /var/log
     patterns: '*.old,*.log.gz'
     size: 10m
 
 # Note that YAML double quotes require escaping backslashes but yaml single quotes do not.
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
 - find:
-    paths: /var/tmp
+    paths: /var/log
     patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: 10m
     use_regex: yes
