@@ -69,7 +69,6 @@ class Task(Base, Conditional, Taggable, Become):
     _action = FieldAttribute(isa='string')
 
     _async = FieldAttribute(isa='int', default=0)
-    _cacheable = FieldAttribute(isa='bool', default=True)
     _changed_when = FieldAttribute(isa='list', default=[])
     _delay = FieldAttribute(isa='int', default=5)
     _delegate_to = FieldAttribute(isa='string')
