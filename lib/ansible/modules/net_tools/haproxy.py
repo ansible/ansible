@@ -33,7 +33,7 @@ description:
     - Enable, disable, drain and set weights for HAProxy backend servers using socket
       commands.
 notes:
-    - Enable and disable and drained commands are restricted and can only be issued on
+    - Enable and disable and drain commands are restricted and can only be issued on
       sockets configured for level 'admin'. For example, you can add the line
       'stats socket /var/run/haproxy.sock level admin' to the general section of
       haproxy.cfg. See U(http://haproxy.1wt.eu/download/1.5/doc/configuration.txt).
@@ -67,7 +67,7 @@ options:
       - Desired state of the provided backend host.
     required: true
     default: null
-    choices: [ "enabled", "disabled", "drained" ]
+    choices: [ "enabled", "disabled", "drain" ]
   fail_on_not_found:
     description:
       - Fail whenever trying to enable/disable a backend host that does not exist
@@ -77,7 +77,7 @@ options:
   wait:
     description:
       - Wait until the server reports a status of 'UP' when `state=enabled`,
-        status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=drained`
+        status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=drain`
     required: false
     default: false
     version_added: "2.0"
@@ -176,7 +176,7 @@ EXAMPLES = '''
 
 # set the server in 'www' backend pool to drain mode
 - haproxy:
-    state: drained
+    state: drain
     host: '{{ inventory_hostname }}'
     socket: /var/run/haproxy.sock
     backend: www
@@ -190,7 +190,7 @@ from string import Template
 
 DEFAULT_SOCKET_LOCATION = "/var/run/haproxy.sock"
 RECV_SIZE = 1024
-ACTION_CHOICES = ['enabled', 'disabled', 'drained']
+ACTION_CHOICES = ['enabled', 'disabled', 'drain']
 WAIT_RETRIES = 25
 WAIT_INTERVAL = 5
 
@@ -343,9 +343,9 @@ class HAProxy(object):
             cmd += "; shutdown sessions server $pxname/$svname"
         self.execute_for_backends(cmd, backend, host, 'MAINT')
 
-    def drained(self, host, backend):
+    def drain(self, host, backend):
         """
-        Drained action, sets the server to DRAIN mode.
+        Drain action, sets the server to DRAIN mode.
         In this mode mode, the server will not accept any new connections
         other than those that are accepted via persistence.
         """
@@ -365,8 +365,8 @@ class HAProxy(object):
             self.enabled(self.host, self.backend, self.weight)
         elif self.state == 'disabled':
             self.disabled(self.host, self.backend, self.shutdown_sessions)
-        elif self.state == 'drained':
-            self.drained(self.host, self.backend)
+        elif self.state == 'drain':
+            self.drain(self.host, self.backend)
         else:
             self.module.fail_json(msg="unknown state specified: '%s'" % self.state)
 
