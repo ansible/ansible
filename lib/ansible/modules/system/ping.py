@@ -24,12 +24,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 ---
 module: ping
 version_added: historical
-short_description: Try to connect to host, verify a usable python and return C(pong) on success.
+short_description: Try to connect to host, verify a usable python and return C(pong) on success
 description:
    - A trivial test module, this module always returns C(pong) on successful
      contact. It does not make sense in playbooks, but it is useful from
@@ -38,15 +37,35 @@ description:
    - For Windows targets, use the M(ping) module instead.
 notes:
    - For Windows targets, use the M(ping) module instead.
-options: {}
+options:
+  data:
+    description:
+      - Data to return for the C(ping) return value.
+      - If this parameter is set to C(crash), the module will cause an exception.
+    default: pong
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''
 # Test we can logon to 'webservers' and execute python with json lib.
-ansible webservers -m ping
+# ansible webservers -m ping
+
+# Example from an Ansible Playbook
+- ping:
+
+# Induce an exception to see what happens
+- ping:
+    data: crash
+'''
+
+RETURN = '''
+ping:
+    description: value provided with the data parameter
+    returned: success
+    type: string
+    sample: pong
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -55,15 +74,18 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            data=dict(required=False, default=None),
+            data=dict(type='str', default='pong'),
         ),
         supports_check_mode=True
     )
-    result = dict(ping='pong')
-    if module.params['data']:
-        if module.params['data'] == 'crash':
-            raise Exception("boom")
-        result['ping'] = module.params['data']
+
+    if module.params['data'] == 'crash':
+        raise Exception("boom")
+
+    result = dict(
+        ping=module.params['data'],
+    )
+
     module.exit_json(**result)
 
 
