@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community',
+}
 
 
 DOCUMENTATION = '''
@@ -31,84 +33,51 @@ description:
     - Manages configuration of a Protocol Independent Multicast (PIM) instance.
 author: Gabriele Gerbino (@GGabriele)
 options:
-    ssm_range:
-        description:
-            - Configure group ranges for Source Specific Multicast (SSM).
-              Valid values are multicast addresses or the keyword 'none'.
-        required: true
+  ssm_range:
+    description:
+      - Configure group ranges for Source Specific Multicast (SSM).
+        Valid values are multicast addresses or the keyword 'none'.
+    required: true
 '''
 EXAMPLES = '''
 - nxos_pim:
     ssm_range: "232.0.0.0/8"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"ssm_range": "232.0.0.0/8"}
-existing:
-    description: k/v pairs of existing PIM configuration
-    returned: verbose mode
-    type: dict
-    sample: {"ssm_range": none}
-end_state:
-    description: k/v pairs of BGP configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"ssm_range": "232.0.0.0/8"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["ip pim ssm range 232.0.0.0/8"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
-
-import re
 
 
 PARAM_TO_COMMAND_KEYMAP = {
     'ssm_range': 'ip pim ssm range'
 }
-PARAM_TO_DEFAULT_KEYMAP = {}
-WARNINGS = []
-
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
-
-def get_value(arg, config, module):
-    REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-    value = ''
-    if PARAM_TO_COMMAND_KEYMAP[arg] in config:
-        value = REGEX.search(config).group('value')
-    return value
 
 
 def get_existing(module, args):
     existing = {}
     config = str(get_config(module))
+
     for arg in args:
-        existing[arg] = get_value(arg, config, module)
+        command = PARAM_TO_COMMAND_KEYMAP[arg]
+        has_command = re.match(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+
+        value = ''
+        if has_command:
+            value = has_command.group('value')
+        existing[arg] = value
     return existing
 
 
@@ -116,19 +85,14 @@ def apply_key_map(key_map, table):
     new_dict = {}
     for key, value in table.items():
         new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
+        if value:
+            new_dict[new_key] = value
     return new_dict
 
 
 def get_commands(module, existing, proposed, candidate):
     commands = list()
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
-    existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
     for key, value in proposed_commands.items():
         command = '{0} {1}'.format(key, value)
@@ -141,53 +105,39 @@ def get_commands(module, existing, proposed, candidate):
 def main():
     argument_spec = dict(
         ssm_range=dict(required=True, type='str'),
-        m_facts=dict(required=False, default=False, type='bool'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    result = {'changed': False, 'commands': [], 'warnings': warnings}
 
     splitted_ssm_range = module.params['ssm_range'].split('.')
     if len(splitted_ssm_range) != 4 and module.params['ssm_range'] != 'none':
         module.fail_json(msg="Valid ssm_range values are multicast addresses "
                              "or the keyword 'none'.")
 
-    args =  [
-        'ssm_range'
-    ]
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
 
-    existing = invoke('get_existing', module, args)
-    end_state = existing
+    existing = get_existing(module, args)
     proposed = dict((k, v) for k, v in module.params.items()
-                    if v is not None and k in args)
+                    if k in args and v != existing[k])
 
-    result = {}
     candidate = CustomNetworkConfig(indent=3)
-    invoke('get_commands', module, existing, proposed, candidate)
-    response = load_config(module, candidate)
-    result.update(response)
+    get_commands(module, existing, proposed, candidate)
 
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed
-
-    if WARNINGS:
-        result['warnings'] = WARNINGS
+    if candidate:
+        candidate = candidate.items_text()
+        result['commands'] = candidate
+        result['changed'] = True
+        load_config(module, candidate)
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-
