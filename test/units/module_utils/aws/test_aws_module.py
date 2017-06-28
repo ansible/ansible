@@ -47,12 +47,12 @@ class AWSModuleTestCase(unittest.TestCase):
         assert m, "module wasn't true!!"
         assert m_noretry_no_customargs, "module wasn't true!!"
 
-        m_params=m.params
-        m_no_defs_params=m_noretry_no_customargs.params
+        m_params = m.params
+        m_no_defs_params = m_noretry_no_customargs.params
         assert 'region' in m_params
         assert 'win' in m_params["win_string_arg"]
         assert 'success' in m_no_defs_params["success_string_arg"]
-        assert not 'aws_secret_key' in m_no_defs_params
+        assert 'aws_secret_key' not in m_no_defs_params
 
 
 class ErrorReportingTestcase(unittest.TestCase):
@@ -77,11 +77,13 @@ class ErrorReportingTestcase(unittest.TestCase):
                0), "failed to call fail_json when should have"
         assert(len(fail_json_double.mock_calls) <
                2), "called fail_json multiple times when once would do"
-        assert("test_botocore_exception_reports_nicely" in fail_json_double.mock_calls[0][2]["exception"]), \
+        assert("test_botocore_exception_reports_nicely"
+               in fail_json_double.mock_calls[0][2]["exception"]), \
             "exception traceback doesn't include correct function, fail call was actually: " \
             + str(fail_json_double.mock_calls[0])
 
-        assert("Fake failure for testing boto exception messages:" in fail_json_double.mock_calls[0][2]["msg"]), \
+        assert("Fake failure for testing boto exception messages:"
+               in fail_json_double.mock_calls[0][2]["msg"]), \
             "error message doesn't include the local message; was: " \
             + str(fail_json_double.mock_calls[0])
         assert("Could not find you" in fail_json_double.mock_calls[0][2]["msg"]), \
@@ -107,7 +109,7 @@ class ErrorReportingTestcase(unittest.TestCase):
                 raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
             except Exception as e:
                 print("exception is " + str(e))
-                module.fail_json_aws(e, msg="Fake failure for testing boto exception messages again")
+                module.fail_json_aws(e, msg="Fake failure for testing boto exception messages")
 
         assert(len(fail_json_double.mock_calls) > 0), "failed to call fail_json when should have"
         assert(len(fail_json_double.mock_calls) < 2), "called fail_json multiple times"
@@ -117,7 +119,8 @@ class ErrorReportingTestcase(unittest.TestCase):
             "exception traceback doesn't include correct function, fail call was actually: " \
             + str(fail_json_double.mock_calls[0])
 
-        assert("Fake failure for testing boto exception messages again:" in fail_json_double.mock_calls[0][2]["msg"]), \
+        assert("Fake failure for testing boto exception messages"
+               in fail_json_double.mock_calls[0][2]["msg"]), \
             "error message doesn't include the local message; was: " \
             + str(fail_json_double.mock_calls[0])
 

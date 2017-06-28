@@ -78,7 +78,7 @@ class AnsibleAWSModule(object):
             except KeyError:
                 local_settings[key] = AnsibleAWSModule.default_settings[key]
         self.settings = local_settings
-        
+
         if local_settings["default_args"]:
             # ec2_argument_spec contains the region so we use that; there's a patch coming which
             # will add it to aws_argument_spec so if that's accepted then later we should change
