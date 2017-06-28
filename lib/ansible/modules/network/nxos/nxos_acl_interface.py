@@ -97,7 +97,7 @@ def check_for_acl_int_present(module, name, intf, direction):
         mdir = 'out'
 
     match = re.search('ip access-group {0} {1}'.format(name, mdir), str(body[0]))
-    return True if match else False
+    return bool(match)
 
 
 def apply_acl(proposed):
