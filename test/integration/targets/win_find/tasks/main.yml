@@ -9,18 +9,20 @@
     path: "{{item}}"
     state: directory
   with_items:
-  - "{{win_find_dir}}\\nested"
-  - "{{win_find_dir}}\\single"
-  - "{{win_find_dir}}\\link-dest"
-  - "{{win_find_dir}}\\link-dest\\sub-link"
-  - "{{win_find_dir}}\\hard-link-dest"
-  - "{{win_find_dir}}\\junction-link-dest"
-  - "{{win_find_dir}}\\broken-link-dest"
-  - "{{win_find_dir}}\\nested\\sub-nest"
-  - "{{win_find_dir}}\\shared"
-  - "{{win_find_dir}}\\shared\\folder"
-  - "{{win_find_dir}}\\hidden"
-  - "{{win_find_dir}}\\date"
+  - '{{win_find_dir}}\nested'
+  - '{{win_find_dir}}\single'
+  - '{{win_find_dir}}\link-dest'
+  - '{{win_find_dir}}\link-dest\sub-link'
+  - '{{win_find_dir}}\hard-link-dest'
+  - '{{win_find_dir}}\junction-link-dest'
+  - '{{win_find_dir}}\broken-link-dest'
+  - '{{win_find_dir}}\nested\sub-nest'
+  - '{{win_find_dir}}\shared'
+  - '{{win_find_dir}}\shared\folder'
+  - '{{win_find_dir}}\hidden'
+  - '{{win_find_dir}}\date'
+  - '{{win_find_dir}}\emptynested\nest\dir1'
+  - '{{win_find_dir}}\emptynested\nest\dir2'
 
 - name: create empty test files
   win_file:
@@ -497,20 +499,20 @@
 - name: check directory count with recurse and follow is correct
   assert:
     that:
-    - actual.examined == 33
-    - actual.matched == 13
+    - actual.examined == 37
+    - actual.matched == 17
     - actual.files[0].filename == 'broken-link'
     - actual.files[0].islnk == True
-    - actual.files[2].filename == 'junction-link'
-    - actual.files[2].islnk == True
-    - actual.files[2].lnk_source == win_find_dir + '\\junction-link-dest'
-    - actual.files[7].filename == 'link'
-    - actual.files[7].islnk == True
-    - actual.files[7].lnk_source == win_find_dir + '\\link-dest'
-    - actual.files[11].filename == 'folder'
-    - actual.files[11].islnk == False
-    - actual.files[11].isshared == True
-    - actual.files[11].sharename == 'folder-share'
+    - actual.files[6].filename == 'junction-link'
+    - actual.files[6].islnk == True
+    - actual.files[6].lnk_source == win_find_dir + '\\junction-link-dest'
+    - actual.files[11].filename == 'link'
+    - actual.files[11].islnk == True
+    - actual.files[11].lnk_source == win_find_dir + '\\link-dest'
+    - actual.files[15].filename == 'folder'
+    - actual.files[15].islnk == False
+    - actual.files[15].isshared == True
+    - actual.files[15].sharename == 'folder-share'
 
 - name: filter files by size without byte specified
   win_find:
@@ -708,6 +710,17 @@
   assert:
     that:
     - actual_no_checksum.files[0].checksum is undefined
+
+# https://github.com/ansible/ansible/issues/26158
+- name: get list of files in an empty nested directory
+  win_find:
+    paths: '{{win_find_dir}}\emptynested'
+  register: actual_empty_nested
+
+- name: assert get list of files in an empty nested directory
+  assert:
+    that:
+    - actual_empty_nested.matched == 0
 
 - name: remove testing folder
   win_file:
