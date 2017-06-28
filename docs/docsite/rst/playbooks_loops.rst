@@ -180,7 +180,7 @@ Looping over Fileglobs
 Looping over Filetrees
 ``````````````````````
 
-``with_filetree`` matches all files in a tree recursively. So you can recurse of a tree of files within the task loop, and e.g. template a complete tree of files to a target system with little effort while retaining permissions and ownership.
+``with_filetree`` matches all files in a tree recursively. So you can recurse over a tree of files within the task loop, and e.g. template a complete tree of files to a target system with little effort while retaining permissions and ownership.
 
 The ``filetree`` lookup-plugin supports directories, files and symlinks. But also SELinux and other file properties. Here is a complete list of what each file object consists of:
 
