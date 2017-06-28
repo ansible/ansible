@@ -111,7 +111,7 @@ absent:
   returned: success
 # resize qemu image
 resize:
-  description: 
+  description:
     Returns the status of the qemu image that was resized
   type: string
   sample: "success"
@@ -126,14 +126,17 @@ from ansible.module_utils.pycompat24 import get_exception
 
 def main():
 
-    module = AnsibleModule(argument_spec=dict(
+    module = AnsibleModule(
+        argument_spec=dict(
             dest=dict(type='str', required=True),
             options=dict(type='str', default='preallocation=metadata'),
             format=dict(type='str', default='qcow2'),
             size=dict(type='str'),
             grow=dict(type="bool", default=True),
             shrink=dict(type="bool", default=False),
-            state=dict(type='str', choices=['absent', 'present'], default='present'),
+            state=dict(
+                type='str', choices=['absent', 'present'], default='present'
+            ),
         ),
         supports_check_mode=True,
         required_if=[
