@@ -124,8 +124,6 @@ def test_create_lambda_if_not_exist():
     set_module_args(base_module_args)
     (boto3_conn_double, lambda_client_double) = make_mock_no_connection_connection(code_change_lambda_config)
 
-    assert 0
-
     with patch.object(lda, 'boto3_conn', boto3_conn_double):
         try:
             lda.main()
