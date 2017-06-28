@@ -27,24 +27,16 @@ $msg_file = Get-AnsibleParam -obj $params -name "msg_file" -type "path"
 $start_sound_path = Get-AnsibleParam -obj $params -name "start_sound_path" -type "path"
 $end_sound_path = Get-AnsibleParam -obj $params -name "end_sound_path" -type "path"
 $voice = Get-AnsibleParam -obj $params -name "voice" -type "str"
-$speech_speed = Get-AnsibleParam -obj $params -name "speech_speed" -type "int"
+$speech_speed = Get-AnsibleParam -obj $params -name "speech_speed" -type "int" -default 0
 
 $result = @{
     changed = $false
 }
 
-$speed = 0
 $words = $null
 
-if ($speech_speed) {
-   try {
-      $speed = [convert]::ToInt32($speech_speed, 10)
-   } catch {
-      Fail-Json $result "speech_speed needs to a integer in the range -10 to 10.  The value $speech_speed could not be converted to an integer."
-   }
-   if ($speed -lt -10 -or $speed -gt 10) {
-      Fail-Json $result "speech_speed needs to a integer in the range -10 to 10.  The value $speech_speed is outside this range."
-   }
+f ($speech_speed -lt -10 -or $speech_speed -gt 10) {
+   Fail-Json $result "speech_speed needs to a integer in the range -10 to 10.  The value $speech_speed is outside this range."
 }
 
 if ($msg_file -and $msg) {
@@ -89,8 +81,8 @@ if ($words) {
    }
 
    $result.voice = $tts.Voice.Name
-   if ($speed -ne 0) {
-      $tts.Rate = $speed
+   if ($speech_speed -ne 0) {
+      $tts.Rate = $speech_speed
    }
    if (-not $check_mode) {
        $tts.Speak($words)
