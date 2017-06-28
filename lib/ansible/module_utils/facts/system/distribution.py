@@ -80,7 +80,7 @@ class DistributionFiles:
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
-        'ClearLinux': 'Clear Linux Software for Intel Architecture',
+        'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
@@ -386,7 +386,7 @@ class Distribution(object):
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
-        'ClearLinux': 'Clear Linux Software for Intel Architecture',
+        'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
