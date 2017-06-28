@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be>, Toshaan Bharvani <toshaan@vantosh.com>
+# (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be>
+#           Toshaan Bharvani <toshaan@vantosh.com>
 #
 # This file is part of Ansible
 #
@@ -18,9 +19,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = { 'status': ['preview'],
-                     'supported_by': 'community',
-                     'version': '1.0'}
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -116,26 +117,26 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
+
 def main():
 
-    module = AnsibleModule(
-        argument_spec = dict(
-            dest = dict(type='str', required=True),
-            options = dict(type='str', default='preallocation=metadata'),
-            format = dict(type='str', default='qcow2'),
-            size = dict(type='str'),
-            grow= dict(type="bool", default=True),
-            shrink = dict(type="bool", default=False),
-            state = dict(type='str', choices=['absent', 'present'], default='present'),
+    module = AnsibleModule(argument_spec=dict(
+            dest=dict(type='str', required=True),
+            options=dict(type='str', default='preallocation=metadata'),
+            format=dict(type='str', default='qcow2'),
+            size=dict(type='str'),
+            grow=dict(type="bool", default=True),
+            shrink=dict(type="bool", default=False),
+            state=dict(type='str', choices=['absent', 'present'], default='present'),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
         required_if=[
-            ( "state", "present", [ "size" ] ),
+            ("state", "present", ["size"]),
         ],
     )
 
     result = dict(
-        changed = False,
+        changed=False,
     )
 
     state = module.params['state']
@@ -175,12 +176,12 @@ def main():
             elif(size[:1] == '-'):
                 size_descrease = True
                 size = size[1:]
-            size = int(float(size)*float(unitmultiplier))
+            size = int(float(size) * float(unitmultiplier))
             rc, stdout, _ = module.run_command('%s info "%s"' % (qemu_img, dest), check_rc=True)
             current_size = None
             for line in stdout.splitlines():
                 if 'virtual size' in line:
-                    ### virtual size: 5.0M (5242880 bytes)
+                    # virtual size: 5.0M (5242880 bytes)
                     current_size = int(line.split('(')[1].split()[0])
             if not current_size:
                 module.fail_json(msg='Unable to read virtual disk size of %s' % (dest))
