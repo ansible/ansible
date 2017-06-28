@@ -1,7 +1,7 @@
 Python API
 ==========
 
-Warning: this document is out of date: 'ansible.parsing.dataloader' and 'ansible.runner' are not available on the current version of Ansible.
+.. note:: This document is out of date: 'ansible.parsing.dataloader' and 'ansible.runner' are not available in the current version of Ansible.
 
 .. contents:: Topics
 
