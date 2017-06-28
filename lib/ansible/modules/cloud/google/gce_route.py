@@ -114,10 +114,27 @@ next_hop:
         - vpn_instance
         - default
 state:
-    description: Whether the route is present or absent
+    description: whether the route is present or absent
     returned: success
     type: string
     sample: present
+self_link:
+    description: route resource uri on GCE
+    returned: success
+    type: string
+    sample: https://www.googleapis.com/compute/v1/projects/myproject/global/routes/myroute
+creation_time:
+    description: route creation/update timestamp
+    returned: success
+    type: string
+    sample: 2017-06-28T10:59:59.698-07:00
+next_hop_resource:
+    description: a resource uri or the IP address of the next hop
+    type: string
+    sample:
+        - https://www.googleapis.com/compute/v1/projects/myproject/zones/europe-west1-b/instances/my-instance
+        - https://www.googleapis.com/compute/v1/projects/myproject/global/gateways/default-internet-gateway
+        - 10.132.0.0
 '''
 
 ################################################################################
@@ -321,7 +338,7 @@ def main():
                     node = next_hop_node
 
                 # network is a global, the object of the params['network'], set in check_network_exists()
-                gce.ex_create_route(name=params['name'], dest_range=params['destination'],
+                gce_route = gce.ex_create_route(name=params['name'], dest_range=params['destination'],
                     priority=params['priority'], network=network, tags=params['instance_tags'],
                     next_hop=node, description=params['description'])
         # Existing rule, check if anything has changed
@@ -414,7 +431,7 @@ def main():
             if changed and not module.check_mode:
                 # GCE does not allow modifying routes. We delete and create a new one
                 gce.ex_destroy_route(gce_route)
-                gce.ex_create_route(name=gce_route.name, dest_range=gce_route.dest_range,
+                gce_route = gce.ex_create_route(name=gce_route.name, dest_range=gce_route.dest_range,
                     priority=gce_route.priority, network=gce_route.network,tags=gce_route.tags,
                     next_hop=gce_route.next_hop, description=gce_route.description)
 
@@ -439,6 +456,22 @@ def main():
     json_output = {'changed': changed}
     json_output.update(params)
     json_output['priority'] = int(params['priority'])
+
+    # add extra return values
+    extra = dict()
+    extra['self_Link'] = gce_route.extra['selfLink']
+    extra['creation_time'] = gce_route.extra['creationTimestamp']
+
+    if 'nextHopInstance' in gce_route.extra:
+        extra['next_hop_resource'] = gce_route.extra['nextHopInstance']
+    if 'nextHopIp' in gce_route.extra:
+        extra['next_hop_resource'] = gce_route.extra['nextHopIp']
+    if 'nextHopGateway' in gce_route.extra:
+        extra['next_hop_resource'] = gce_route.extra['nextHopGateway']
+    if 'warnings' in gce_route.extra:
+        extra['warnings'] = gce_route.extra.extra['warnings']
+    json_output.update(extra)
+
     module.exit_json(**json_output)
 
 if __name__ == '__main__':
