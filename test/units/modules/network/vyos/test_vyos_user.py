@@ -48,7 +48,7 @@ class TestVyosUserModule(TestVyosModule):
     def test_vyos_user_password(self):
         set_module_args(dict(name='ansible', password='test'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['set system login user ansible authentication encrypted-password test'])
+        self.assertEqual(result['commands'], ['set system login user ansible authentication plaintext-password test'])
 
     def test_vyos_user_delete(self):
         set_module_args(dict(name='ansible', state='absent'))
@@ -73,14 +73,14 @@ class TestVyosUserModule(TestVyosModule):
     def test_vyos_user_update_password_changed(self):
         set_module_args(dict(name='test', password='test', update_password='on_create'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['set system login user test authentication encrypted-password test'])
+        self.assertEqual(result['commands'], ['set system login user test authentication plaintext-password test'])
 
     def test_vyos_user_update_password_on_create_ok(self):
         set_module_args(dict(name='ansible', password='test', update_password='on_create'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['set system login user ansible authentication encrypted-password test'])
+        self.assertEqual(result['commands'], ['set system login user ansible authentication plaintext-password test'])
 
     def test_vyos_user_update_password_always(self):
         set_module_args(dict(name='ansible', password='test', update_password='always'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['set system login user ansible authentication encrypted-password test'])
+        self.assertEqual(result['commands'], ['set system login user ansible authentication plaintext-password test'])
