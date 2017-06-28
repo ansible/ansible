@@ -2,9 +2,10 @@
 *.py[co]
 build
 AUTHORS.TXT
-# Emacs backup files...
+# Emacs backup and autosave files...
 *~
 .\#*
+\#*
 # RPM stuff...
 MANIFEST
 dist
