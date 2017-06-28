@@ -66,12 +66,26 @@ options:
 '''
 
 EXAMPLES = '''
-# Create an A record.
-- gcdns_record:
-    record: 'www1.example.com'
-    zone: 'example.com'
-    type: A
-    value: '1.2.3.4'
+# Create a route with cidr destination and instace as next hop
+- gce_route:
+      name: myroute
+      network: default
+      destination: 10.200.0.0/20
+      priority: 1000
+      description: a description here
+      next_hop: an-instance
+
+# Create a route with single node destination and IP address as next hop
+- gce_route:
+      name: myroute
+      network: default
+      destination: 10.200.0.2
+      next_hop: 10.132.0.22
+
+# Create a route with the default gateway as next hop and all the other defaults
+- gce_route:
+      name: myroute
+      destination: 10.200.0.0/20
 '''
 
 RETURN = '''
