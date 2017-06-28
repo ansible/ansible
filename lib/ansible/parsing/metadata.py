@@ -162,19 +162,19 @@ def extract_metadata(module_data):
         if isinstance(child, ast.Assign):
             for target in child.targets:
                 if target.id == 'ANSIBLE_METADATA':
+                    metadata = ast.literal_eval(child.value)
+
+                    try:
+                        # Determine where the next node starts
+                        next_node = mod_ast_tree.body[root_idx + 1]
+                        next_lineno = next_node.lineno
+                        next_col_offset = next_node.col_offset
+                    except IndexError:
+                        # Metadata is defined in the last node of the file
+                        next_lineno = None
+                        next_col_offset = None
+
                     if isinstance(child.value, ast.Dict):
-                        metadata = ast.literal_eval(child.value)
-
-                        try:
-                            # Determine where the next node starts
-                            next_node = mod_ast_tree.body[root_idx + 1]
-                            next_lineno = next_node.lineno
-                            next_col_offset = next_node.col_offset
-                        except IndexError:
-                            # Metadata is defined in the last node of the file
-                            next_lineno = None
-                            next_col_offset = None
-
                         # Determine where the current metadata ends
                         end_line, end_col = seek_end_of_dict(module_data,
                                                              child.lineno - 1,
@@ -184,10 +184,18 @@ def extract_metadata(module_data):
 
                     elif isinstance(child.value, ast.Str):
                         metadata = yaml.safe_load(child.value.s)
-                        end_line = seek_end_of_string(module_data)
+                        end_line, end_col = seek_end_of_string(module_data,
+                                                               child.lineno - 1,
+                                                               child.col_offset,
+                                                               next_lineno,
+                                                               next_col_offset)
                     elif isinstance(child.value, ast.Bytes):
                         metadata = yaml.safe_load(to_text(child.value.s, errors='surrogate_or_strict'))
-                        end_line = seek_end_of_string(module_data)
+                        end_line, end_col = seek_end_of_string(module_data,
+                                                               child.lineno - 1,
+                                                               child.col_offset,
+                                                               next_lineno,
+                                                               next_col_offset)
                     else:
                         # Example:
                         #   ANSIBLE_METADATA = 'junk'
