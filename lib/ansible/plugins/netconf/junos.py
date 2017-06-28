@@ -20,14 +20,23 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import re
 
 from xml.etree.ElementTree import fromstring
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
 
-from ncclient.xml_ import new_ele
+try:
+    from ncclient import manager
+    from ncclient.operations import RPCError
+    from ncclient.transport.errors import SSHUnknownHostError
+    from ncclient.xml_ import to_ele, to_xml, new_ele
+except ImportError:
+    raise AnsibleError("ncclient is not installed")
 
 
 class Netconf(NetconfBase):
@@ -77,3 +86,29 @@ class Netconf(NetconfBase):
         result['client_capabilities'] = [c for c in self.m.client_capabilities]
         result['session_id'] = self.m.session_id
         return json.dumps(result)
+
+    @staticmethod
+    def guess_network_os(obj):
+
+        try:
+            m = manager.connect(
+                host=obj._play_context.remote_addr,
+                port=obj._play_context.port or 830,
+                username=obj._play_context.remote_user,
+                password=obj._play_context.password,
+                key_filename=str(obj.key_filename),
+                hostkey_verify=C.HOST_KEY_CHECKING,
+                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+                allow_agent=obj.allow_agent,
+                timeout=obj._play_context.timeout
+            )
+        except SSHUnknownHostError as exc:
+            raise AnsibleConnectionFailure(str(exc))
+
+        guessed_os = None
+        for c in m.server_capabilities:
+            if re.search('junos', c):
+                guessed_os = 'junos'
+
+        m.close_session()
+        return guessed_os
