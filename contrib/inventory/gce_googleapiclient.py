@@ -4,7 +4,7 @@
 from __future__ import print_function
 
 from os.path import basename
-from sys import argv, exit
+from sys import argv
 
 import collections
 import logging as log
@@ -108,7 +108,7 @@ def get_instances(project_id, zone, api_version='v1'):
     while request is not None:
         try:
             response = request.execute()
-        except HttpError as asx:
+        except HttpError as exc:
             log.info('Problem with retrieving instance: %s', str(exc))
             break
 
