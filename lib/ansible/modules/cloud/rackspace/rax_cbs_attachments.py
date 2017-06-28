@@ -31,7 +31,8 @@ version_added: 1.6
 options:
   device:
     description:
-      - The device path to attach the volume to, e.g. /dev/xvde
+      - The device path to attach the volume to, e.g. /dev/xvde.
+      - Before 2.4 this was a required field. Now it can be left to null to auto assign the device name.
     default: null
     required: false
   volume:
