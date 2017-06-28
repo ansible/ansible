@@ -27,7 +27,6 @@ sys.modules['hpOneView.oneview_client'] = Mock()
 sys.modules['hpOneView.exceptions'] = Mock()
 sys.modules['future'] = Mock()
 sys.modules['__future__'] = Mock()
-sys.modules['OrderedDict'] = Mock()
 
 ONEVIEW_MODULE_UTILS_PATH = 'ansible.module_utils.oneview'
 from ansible.module_utils.oneview import (HPOneViewException,

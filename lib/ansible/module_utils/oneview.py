@@ -24,9 +24,9 @@ from future import standard_library
 import json
 import logging
 import os
+import collections
 from ansible.module_utils.basic import AnsibleModule
 from copy import deepcopy
-from collections import OrderedDict
 
 standard_library.install_aliases()
 logger = logging.getLogger(__name__)
@@ -433,9 +433,9 @@ class ResourceMerger():
         if not original_list:
             return updated_list
 
-        items_map = OrderedDict([(i[key], i.copy()) for i in original_list])
+        items_map = collections.OrderedDict([(i[key], i.copy()) for i in original_list])
 
-        merged_items = OrderedDict()
+        merged_items = collections.OrderedDict()
 
         for item in updated_list:
             item_key = item[key]
@@ -555,7 +555,7 @@ class ServerProfileMerger(object):
 
     def _merge_san_storage_paths(self, merged_data, resource):
 
-        existing_volumes_map = OrderedDict([(i[SPKeys.ID], i) for i in resource[SPKeys.SAN][SPKeys.VOLUMES]])
+        existing_volumes_map = collections.OrderedDict([(i[SPKeys.ID], i) for i in resource[SPKeys.SAN][SPKeys.VOLUMES]])
         merged_volumes = merged_data[SPKeys.SAN][SPKeys.VOLUMES]
         for merged_volume in merged_volumes:
             volume_id = merged_volume[SPKeys.ID]
