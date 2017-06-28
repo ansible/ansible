@@ -39,36 +39,36 @@ author:
     - "Alejandro Gomez (@agmezr)"
 options:
   app:
-    type: "str"
+    type: string
     required: true
     aliases: ['name']
     description:
       - The app module. A name refers to a WSGI callable that should be found in the specified module.
   venv:
-    type: "path"
+    type: string
     aliases: ['virtualenv']
     description:
       - 'Path to the virtualenv directory.'
   config:
-    type: "path"
+    type: string
     description:
       - 'Path to the gunicorn configuration file.'
   chdir:
-    type: "path"
+    type: string
     description:
       - 'Chdir to specified directory before apps loading.'
   pid:
-    type: "path"
+    type: string
     description:
       - 'A filename to use for the PID file. If not set and not found on the configuration file a tmp
          pid file will be created to check a successful run of gunicorn.'
   worker:
     choices: ['sync', 'eventlet', 'gevent', 'tornado ', 'gthread', 'gaiohttp']
-    type: "str"
+    type: string
     description:
       - 'The type of workers to use. The default class (sync) should handle most “normal” types of workloads.'
   user:
-    type: "str"
+    type: string
     description:
       -  'Switch worker processes to run as this user.'
 notes:
@@ -108,7 +108,7 @@ EXAMPLES = '''
 RETURN = '''
 gunicorn:
     description: process id of gunicorn
-    returned: success
+    returned: changed
     type: string
     sample: "1234"
 '''
