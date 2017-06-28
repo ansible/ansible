@@ -270,7 +270,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                           'Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". '
                           'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
-                output = output + u": %s" % result['stdout']
+                output = output + u", stdout output: %s" % result['stdout']
+            if self._play_context.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
+                output += u", stderr output: %s" % result['stderr']
             raise AnsibleConnectionFailure(output)
         else:
             self._cleanup_remote_tmp = True
