@@ -122,7 +122,7 @@ commands:
   type: list
   sample:
     - set system login user test level operator
-    - set system login user authentication encrypted-password password
+    - set system login user authentication plaintext-password password
 """
 
 import re
@@ -163,7 +163,7 @@ def spec_to_commands(updates, module):
 
         if needs_update(want, have, 'password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'authentication encrypted-password %s' % want['password'])
+                add(commands, want, 'authentication plaintext-password %s' % want['password'])
 
     return commands
 
