@@ -21,7 +21,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -50,12 +50,12 @@ options:
     - The size of the image
   grow:
     choices: [ "yes", "no" ]
-    defaults: "yes"
+    default: "yes"
     description:
     - Whether the image is allowed grow
   shrink:
     choices: [ "yes", "no" ]
-    defaults: "no"
+    default: "no"
     description:
     - Whether the image is allowed shrink
   state:
@@ -97,16 +97,22 @@ EXAMPLES = '''
 RETURN = '''
 # create qemu image
 present:
+  description:
+    Returns the status of the qemu image that was created
   type: string
   sample: "success"
   returned: success
 # remove qemu image
 absent:
+  description:
+    Returns the status of the qemu image that was removed
   type: string
   sample: "success"
   returned: success
 # resize qemu image
 resize:
+  description: 
+    Returns the status of the qemu image that was resized
   type: string
   sample: "success"
   returned: success
