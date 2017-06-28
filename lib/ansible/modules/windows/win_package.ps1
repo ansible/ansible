@@ -1270,6 +1270,10 @@ $password = Get-AnsibleParam -obj $params -name "user_password"
 $return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "int" -default 0
 
 
+if ($arguments -ne $null)
+{
+    Add-DeprecationWarning -obj $result -message "'arguments' is being deprecated in favor of 'options'" -version "2.4.0"
+}
 if (($arguments -ne $null) -and ($options -ne $null))
 {
     fail-json $result "specify either arguments or options, not both"
