@@ -4,7 +4,7 @@
 from __future__ import print_function
 
 from os.path import basename
-from sys import argv
+from sys import argv, exit
 
 import collections
 import logging as log
@@ -15,6 +15,7 @@ from docoptcfg import DocoptcfgFileError
 
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
+from googleapiclient.errors import HttpError
 
 ENV_PREFIX = 'GCE_'
 
@@ -24,25 +25,33 @@ Google Cloud Engine Dynamic Inventory
 
 Before using:
 
-- Authentication: this script uses the same authentication as gcloud command line. So, set it up before.
-- Dependencies: it depends mainly on google-api-python-client and docoptcfg. So:
+- Authentication: this script uses the same authentication as
+                  gcloud command line. So, set it up before.
+- Dependencies: it depends mainly on google-api-python-client
+                and docoptcfg. So:
 
 $ pip install google-api-python-client docoptcfg
 
 Usage:
-    {script_name} [options]
+    {script_name} (--project=PROJECT... | --all-projects --billing-account=ACCOUNT_NAME)
+                  [--zone=ZONE...|--all-zones]
+                  [options]
+
 
 Options:
-    --account ACCOUNT_NAME --account=ACCOUNT_NAME  Billing account name
-    -a API_VERSION --api-version=API_VERSION       The API version used to connect to GCE [default: v1]
-    -c CONFIG_FILE --config=CONFIG_FILE            Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
-    -l --list                                      List all hosts (needed by Ansible, but actually doesn't do anything)
-    -p PROJECT --project=PROJECT                   The GCE project where you want to get the inventory
-    -z ZONE --zone=ZONE                            The GCE zone where you ant to get the inventory
+    --billing-account ACCOUNT_NAME --billing-account=ACCOUNT_NAME  Billing account name
+    --all-projects                                                 Looks for every avail project for billing account 
+    --all-zones                                                    Looks for each zone 
+    -a API_VERSION --api-version=API_VERSION                       The API version used to connect to GCE [default: v1]
+    -c CONFIG_FILE --config=CONFIG_FILE                            Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
+    -l --list                                                      List all hosts (needed by Ansible, but actually doesn't do anything)
+    -p PROJECT --project=PROJECT                                   The GCE project where you want to get the inventory
+    -z ZONE --zone=ZONE                                            The GCE zone where you ant to get the inventory
+    -h --help                                                      This message.
 
-All the parameters can also be set as environment variables using the 'GCE_' prefix (i.e. {envvar_prefix}API_VERSION=beta).
+All the parameters can also be set as environment variables
+using the 'GCE_' prefix (i.e. {envvar_prefix}API_VERSION=beta).
 """.format(script_name=basename(argv[0]), envvar_prefix=ENV_PREFIX)
-
 
 
 def get_all_billing_projects(billing_account_name, api_version='v1'):
@@ -50,24 +59,26 @@ def get_all_billing_projects(billing_account_name, api_version='v1'):
 
     credentials = GoogleCredentials.get_application_default()
 
-    service = discovery.build('cloudbilling', 
+    service = discovery.build('cloudbilling',
                               version=api_version,
                               credentials=credentials)
     # pylint: disable=no-member
-    request = service.billingAccounts().projects().list(name=billing_account_name)
+    request = service.billingAccounts().projects(). \
+        list(name=billing_account_name)
 
     while request is not None:
         response = request.execute()
 
         # pylint: disable=no-member
-        request = service.billingAccounts().projects().list_next(previous_request=request,
-                                                                 previous_response=response)
+        request = service.billingAccounts().projects(). \
+            list_next(previous_request=request, previous_response=response)
 
-        for projectbillinginfo in response['projectBillingInfo']:
-            if projectbillinginfo['billingEnabled']:
-                project_ids.append(projectBillingInfo['projectId'])
+        for project_billing_info in response['projectBillingInfo']:
+            if project_billing_info['billingEnabled']:
+                project_ids.append(project_billing_info['projectId'])
 
     return project_ids
+
 
 def get_all_zones_in_project(project, api_version='v1'):
     zones = []
@@ -80,27 +91,25 @@ def get_all_zones_in_project(project, api_version='v1'):
         response = request.execute()
 
         for zone in response['items']:
-            # TODO: Change code below to process each `zone` resource:
             zones.append(zone['name'])
 
-        request = service.zones().list_next(previous_request=request, previous_response=response)
+        request = service.zones().list_next(previous_request=request,
+                                            previous_response=response)
 
     return zones
 
 
 def get_instances(project_id, zone, api_version='v1'):
     instances = []
-
     credentials = GoogleCredentials.get_application_default()
-
     service = discovery.build('compute', api_version, credentials=credentials)
     # pylint: disable=no-member
     request = service.instances().list(project=project_id, zone=zone)
-
     while request is not None:
         try:
             response = request.execute()
-        except:
+        except HttpError as asx:
+            log.info('Problem with retrieving instance: %s', str(exc))
             break
 
         if 'items' in response:
@@ -120,8 +129,10 @@ def get_hostvars(instance):
         'gce_status': instance['status']
     }
 
-    if instance['networkInterfaces'] and instance['networkInterfaces'][0]['networkIP']:
-        hostvars['ansible_ssh_host'] = instance['networkInterfaces'][0]['networkIP']
+    if instance['networkInterfaces'] \
+            and instance['networkInterfaces'][0]['networkIP']:
+        hostvars['ansible_ssh_host'] = \
+            instance['networkInterfaces'][0]['networkIP']
 
     if 'labels' in instance:
         hostvars['gce_labels'] = instance['labels']
@@ -159,23 +170,42 @@ def get_inventory(instances):
 
 def main(args):
     project = args['--project']
+    all_projects = args['--all-projects']
     zone = args['--zone']
     api_version = args['--api-version']
-    billing_account_name = args['--account']
+    billing_account_name = args['--billing-account']
 
+    projects_list = []
+    zones_list = []
     instances = []
-    for project in get_all_billing_projects(billing_account_name):
-        for zone in get_all_zones_in_project(project):
-            for instance in get_instances(project_id=project,
-                              zone=zone,
-                              api_version=api_version):
-                instances.append(instance)
+
+    if project:
+        projects_list = [project_name for project_name in project]
+    elif all_projects or billing_account_name:
+        projects_list = get_all_billing_projects(billing_account_name)
+
+    for project in projects_list:
+        try:
+            if zone:
+                zones_list = [zone_name for zone_name in zone]
+            else:
+                zones_list = get_all_zones_in_project(project)
+
+            for zone_name in zones_list:
+                for instance in get_instances(project_id=project,
+                                              zone=zone_name,
+                                              api_version=api_version):
+                    instances.append(instance)
+        except HttpError as exc:
+            log.info('Problem with retrieving zones: %s', str(exc))
+            continue
 
     inventory_json = get_inventory(instances)
     print(json.dumps(inventory_json,
                      sort_keys=True,
                      indent=2,
                      separators=(',', ': ')))
+
 
 if __name__ == "__main__":
     log.basicConfig(filename='gce_googleapiclient.log')
@@ -187,10 +217,5 @@ if __name__ == "__main__":
     except DocoptcfgFileError as exc:
         log.info('Failed reading: %s', str(exc))
         ARGS = docoptcfg(DOCOPT_USAGE, env_prefix=ENV_PREFIX)
-
-    log.debug(ARGS)
-    if None in ARGS.values():
-        print(DOCOPT_USAGE)
-        exit(1)
 
     main(ARGS)
