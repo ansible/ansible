@@ -1,3 +1,6 @@
+- fail:
+    msg: "Expect this failure"
+
 - name: create a new acl token
   consul_acl:
     mgmt_token: '{{mgmt_token}}'
