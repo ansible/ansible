@@ -21,6 +21,15 @@ __metaclass__ = type
 
 import ast
 
+import yaml
+
+from ansible.module_utils._text import to_text
+
+
+class ParseError(Exception):
+    """Thrown when parsing a file fails"""
+    pass
+
 
 def seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_node_col):
     """Look for the end of a dict in a set of lines
