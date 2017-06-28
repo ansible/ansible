@@ -269,8 +269,8 @@ Function Get-FileStat($file) {
             $file_stat.sharename = $share_info.Name
         }
         
-        #$dir_files_sum = Get-ChildItem $file.FullName -Recurse | Measure-Object -property length -sum
-        $dir_files_sum = Get-ChildItem $file.FullName -Recurse
+        # only get the size of a directory if there are files (not directories) inside the folder
+        $dir_files_sum = Get-ChildItem $file.FullName -Recurse | Where-Object { -not $_.PSIsContainer }
 
         if ($dir_files_sum -eq $null -or ($dir_files_sum.PSObject.Properties.name -contains 'length' -eq $false)) {
             $file_stat.size = 0
