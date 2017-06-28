@@ -52,8 +52,12 @@ def get_argspec():
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in vyos_argument_spec:
-        if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+        if module._name == 'vyos_user':
+            if key not in ['password', 'provider'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key != 'provider' and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
     if provider:
         for param in ('password',):
