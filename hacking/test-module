@@ -183,7 +183,7 @@ def ansiballz_setup(modfile, modname, interpreters):
         print("*" * 35)
         print("INVALID OUTPUT FROM ANSIBALLZ MODULE WRAPPER")
         print(out)
-        sys.exit(1)
+        sys.exit(err)
     debug_dir = lines[1].strip()
 
     argsfile = os.path.join(debug_dir, 'args')
