@@ -25,7 +25,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_ping
@@ -38,11 +37,13 @@ description:
 options:
   data:
     description:
-      - Alternate data to return instead of 'pong'
-    default: 'pong'
+      - Alternate data to return instead of 'pong'.
+      - If this parameter is set to C(crash), the module will cause an exception.
+    default: pong
 notes:
   - For non-Windows targets, use the M(ping) module instead.
-author: "Chris Church (@cchurch)"
+author:
+- Chris Church (@cchurch)
 '''
 
 EXAMPLES = r'''
@@ -52,7 +53,15 @@ EXAMPLES = r'''
 # Example from an Ansible Playbook
 - win_ping:
 
-# Induce a crash to see what happens
+# Induce an exception to see what happens
 - win_ping:
     data: crash
+'''
+
+RETURN = '''
+ping:
+    description: value provided with the data parameter
+    returned: success
+    type: string
+    sample: pong
 '''
