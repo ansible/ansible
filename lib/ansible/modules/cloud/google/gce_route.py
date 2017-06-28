@@ -94,31 +94,37 @@ name:
     returned: success
     type: string
     sample: ids-route
+
 description:
     description: the description of the route
     returned: success
     type: string
     sample: As given in the task definition.
+
 network:
     description: the network the route applied to
     returned: success
     type: string
     sample: custom-net1
+
 destination:
     description: packet destination the route applied to
     returned: success
     type: string
     sample: 10.200.0.0/20
+
 priority:
     description: priority of the route
     returned: success
     type: integer
     sample: 700
+
 instance_tags:
     description: tags of instances the route applied to
     returned: success
     type: list
     sample: [vpn, ids]
+
 next_hop:
     description: where the route delivers traffic to
     returned: success
@@ -127,21 +133,25 @@ next_hop:
         - 10.138.0.13
         - vpn_instance
         - default
+
 state:
     description: whether the route is present or absent
     returned: success
     type: string
     sample: present
+
 self_link:
     description: route resource uri on GCE
     returned: success
     type: string
     sample: https://www.googleapis.com/compute/v1/projects/myproject/global/routes/myroute
+
 creation_time:
     description: route creation/update timestamp
     returned: success
     type: string
     sample: 2017-06-28T10:59:59.698-07:00
+
 next_hop_resource:
     description: a resource uri or the IP address of the next hop
     type: string
@@ -403,6 +413,8 @@ def main():
                     # if the gce_route is also the default, the 'nextHopGateway' key will be set.
                     # if not, other keys will exist and the below will raise an exception.
                     gce_route.extra['nextHopGateway']
+                # Using KeyError exceptions instead of "if 'key' in dict" to keep consinstency
+                # in the order in which checks are performed.
                 except KeyError:
                     changed = True
                     # Put values into the gce_route object directly for simplicity)
