@@ -79,11 +79,14 @@ def seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_no
             end_col = None
             # Step backwards through all the characters in the line
             for col_idx, char in reversed(tuple(enumerate(c for c in line))):
-                if char == '}' and end_col is None:
+                if not isinstance(char, bytes):
+                    # Python3 wart.  slicing a byte string yields integers
+                    char = bytes((char,))
+                if char == b'}' and end_col is None:
                     # Potentially found the end of the dict
                     end_col = col_idx
 
-                elif char == '#' and end_col is not None:
+                elif char == b'#' and end_col is not None:
                     # The previous '}' was part of a comment.  Keep trying
                     end_col = None
 
@@ -91,6 +94,8 @@ def seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_no
                 # Found the end!
                 end_line = start_line + line_idx
                 break
+        else:
+            raise ParseError('Unable to find the end of dictionary')
     else:
         # Harder cases involving multiple statements on one line
         # Good Ansible Module style doesn't do this so we're just going to
