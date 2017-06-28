@@ -74,6 +74,7 @@ options:
         required: false
         description:
             - SAN extension to attach to the certificate signing request
+            - This can either be a 'comma separated string' or a YAML list.
     countryName:
         required: false
         aliases: [ 'C' ]
@@ -165,7 +166,7 @@ subject:
 subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
-    type: string
+    type: list
     sample: 'DNS:www.ansible.com,DNS:m.ansible.com'
 '''
 
@@ -213,8 +214,8 @@ class CertificateSigningRequest(object):
             'emailAddress': module.params['emailAddress'],
         }
 
-        if self.subjectAltName is None:
-            self.subjectAltName = 'DNS:%s' % self.subject['CN']
+        if not self.subjectAltName:
+            self.subjectAltName = ['DNS:%s' % self.subject['CN']]
 
         self.subject = dict((k, v) for k, v in self.subject.items() if v)
 
@@ -229,8 +230,10 @@ class CertificateSigningRequest(object):
                 if value is not None:
                     setattr(subject, key, value)
 
-            if self.subjectAltName is not None:
-                req.add_extensions([crypto.X509Extension(b"subjectAltName", False, self.subjectAltName.encode('ascii'))])
+            altnames = self.subjectAltName[0]
+            if len(self.subjectAltName) > 1:
+                altnames = ', '.join(self.subjectAltName)
+            req.add_extensions([crypto.X509Extension(b"subjectAltName", False, altnames.encode('ascii'))])
 
             self.privatekey = crypto_utils.load_privatekey(
                 self.privatekey_path,
@@ -287,7 +290,7 @@ def main():
             privatekey_passphrase=dict(type='str', no_log=True),
             version=dict(default='3', type='int'),
             force=dict(default=False, type='bool'),
-            subjectAltName=dict(aliases=['subjectAltName'], type='str'),
+            subjectAltName=dict(aliases=['subjectAltName'], type='list'),
             path=dict(required=True, type='path'),
             countryName=dict(aliases=['C'], type='str'),
             stateOrProvinceName=dict(aliases=['ST'], type='str'),
