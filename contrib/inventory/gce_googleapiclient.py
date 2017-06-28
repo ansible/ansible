@@ -3,19 +3,21 @@
 
 from __future__ import print_function
 
+import collections
+import json
+import logging as log
+
 from os.path import basename
 from sys import argv
 
-import collections
-import logging as log
-import json
-
-from docoptcfg import docoptcfg
 from docoptcfg import DocoptcfgFileError
+from docoptcfg import docoptcfg
 
 from googleapiclient import discovery
-from oauth2client.client import GoogleCredentials
+
 from googleapiclient.errors import HttpError
+
+from oauth2client.client import GoogleCredentials
 
 ENV_PREFIX = 'GCE_'
 
@@ -40,8 +42,8 @@ Usage:
 
 Options:
     --billing-account ACCOUNT_NAME --billing-account=ACCOUNT_NAME  Billing account name
-    --all-projects                                                 Looks for every avail project for billing account 
-    --all-zones                                                    Looks for each zone 
+    --all-projects                                                 Looks for every avail project for billing account
+    --all-zones                                                    Looks for each zone
     -a API_VERSION --api-version=API_VERSION                       The API version used to connect to GCE [default: v1]
     -c CONFIG_FILE --config=CONFIG_FILE                            Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
     -l --list                                                      List all hosts (needed by Ansible, but actually doesn't do anything)
