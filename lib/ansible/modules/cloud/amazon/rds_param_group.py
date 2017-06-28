@@ -154,6 +154,10 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, get_aws_connection_info
+import re
+
 
 # returns a tuple: (whether or not a parameter was changed, the remaining parameters that weren't found in this parameter group)
 
@@ -176,6 +180,7 @@ INT_MODIFIERS = {
 }
 
 TRUE_VALUES = ('on', 'true', 'yes', '1',)
+
 
 def set_parameter(param, value, immediate):
     """
@@ -204,12 +209,36 @@ def set_parameter(param, value, immediate):
 
     elif param.type == 'boolean':
         if isinstance(value, basestring):
-            converted_value = value in TRUE_VALUES
+            converted_value = value.lower() in TRUE_VALUES
         else:
             converted_value = bool(value)
 
-    param.value = converted_value
+    param._value = verify_new_value(param, value)
     param.apply(immediate)
+
+
+# this patches a boto bug; can be removed once this module uses boto3
+def verify_new_value(param, value):
+    if isinstance(value, int) or isinstance(value, long):
+        if param.allowed_values:
+            matches = re.search('(-?\d+)-((-?\d+\.?\d*)+([eE][-+]?\d+)?)', param.allowed_values)
+            if matches:
+                minimum = matches.group(1)
+                maximum = matches.group(2)
+            else:
+                raise ValueError('The min and max of the range %s for parameter %s was not able to be determined.' % (param.allowed_values, param.name))
+            if value < float(minimum) or value > float(maximum):
+                raise ValueError('range is %s' % param.allowed_values)
+        return value
+    elif isinstance(value, str):
+        if param.allowed_values:
+            choices = param.allowed_values.split(',')
+            if value not in choices:
+                raise ValueError('value must be in %s' % param.allowed_values)
+        return value
+    elif isinstance(value, bool):
+        return value
+
 
 def modify_group(group, params, immediate=False):
     """ Set all of the params in a group to the provided new params. Raises NotModifiableError if any of the
@@ -233,11 +262,13 @@ def modify_group(group, params, immediate=False):
                 # way that bypasses the property functions
                 old_value = param._value
 
-            if old_value != new_value:
+            if str(old_value) != str(new_value):
                 if not param.is_modifiable:
                     raise NotModifiableError('Parameter %s is not modifiable.' % key)
 
-                changed[key] = {'old': old_value, 'new': new_value}
+                # new and old values should be displayed as the same type; without changing the type old_value is always a string
+                old_value = {"string": str(old_value), "integer": int(old_value), "boolean": old_value.lower() in TRUE_VALUES}
+                changed[key] = {'old': old_value[param.type], 'new': new_value}
 
                 set_parameter(param, new_value, immediate)
 
@@ -249,12 +280,12 @@ def modify_group(group, params, immediate=False):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state             = dict(required=True,  choices=['present', 'absent']),
-        name              = dict(required=True),
-        engine            = dict(required=False, choices=VALID_ENGINES),
-        description       = dict(required=False),
-        params            = dict(required=False, aliases=['parameters'], type='dict'),
-        immediate         = dict(required=False, type='bool'),
+        state=dict(required=True, choices=['present', 'absent']),
+        name=dict(required=True),
+        engine=dict(required=False, choices=VALID_ENGINES),
+        description=dict(required=False),
+        params=dict(required=False, aliases=['parameters'], type='dict'),
+        immediate=dict(required=False, type='bool'),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -262,32 +293,32 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    state                   = module.params.get('state')
-    group_name              = module.params.get('name').lower()
-    group_engine            = module.params.get('engine')
-    group_description       = module.params.get('description')
-    group_params            = module.params.get('params') or {}
-    immediate               = module.params.get('immediate') or False
+    state = module.params.get('state')
+    group_name = module.params.get('name').lower()
+    group_engine = module.params.get('engine')
+    group_description = module.params.get('description')
+    group_params = module.params.get('params') or {}
+    immediate = module.params.get('immediate') or False
 
     if state == 'present':
         for required in ['name', 'description', 'engine']:
             if not module.params.get(required):
-                module.fail_json(msg = str("Parameter %s required for state='present'" % required))
+                module.fail_json(msg=str("Parameter %s required for state='present'" % required))
     else:
         for not_allowed in ['description', 'engine', 'params']:
             if module.params.get(not_allowed):
-                module.fail_json(msg = str("Parameter %s not allowed for state='absent'" % not_allowed))
+                module.fail_json(msg=str("Parameter %s not allowed for state='absent'" % not_allowed))
 
     # Retrieve any AWS settings from the environment.
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     if not region:
-        module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
+        module.fail_json(msg=str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
 
     try:
         conn = connect_to_aws(boto.rds, region, **aws_connect_kwargs)
-    except boto.exception.BotoServerError as e:
-        module.fail_json(msg = e.error_message)
+    except BotoServerError as e:
+        module.fail_json(msg=e.error_message)
 
     group_was_added = False
 
@@ -299,7 +330,7 @@ def main():
             exists = len(all_groups) > 0
         except BotoServerError as e:
             if e.error_code != 'DBParameterGroupNotFound':
-                module.fail_json(msg = e.error_message)
+                module.fail_json(msg=e.error_message)
             exists = False
 
         if state == 'absent':
@@ -327,7 +358,7 @@ def main():
                     break
 
     except BotoServerError as e:
-        module.fail_json(msg = e.error_message)
+        module.fail_json(msg=e.error_message)
 
     except NotModifiableError as e:
         msg = e.error_message
@@ -335,12 +366,14 @@ def main():
             msg = '%s The group "%s" was added first.' % (msg, group_name)
         module.fail_json(msg=msg)
 
+    except ValueError as e:
+        msg = e.message
+        if group_was_added:
+            msg = '%s The group "%s" was added first.' % (msg, group_name)
+        module.fail_json(msg=msg)
+
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
-
