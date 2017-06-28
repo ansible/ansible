@@ -31,7 +31,7 @@ module: qemu_img
 short_description: Create qemu images
 description:
   - "This module creates images for qemu."
-version_added: "2.3"
+version_added: "2.4"
 options:
   dest:
     description:
@@ -60,7 +60,8 @@ options:
   state:
     choices: [ "absent", "present"]
     description:
-    - If the image should be present or absent - default present
+    - If the image should be present or absent
+    default: present
 notes:
   - This module does not change the type/format of the image
   - This module does not take snapshots, and should be implemented seperate
