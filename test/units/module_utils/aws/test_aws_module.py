@@ -34,18 +34,25 @@ class AWSModuleTestCase(unittest.TestCase):
 
     basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
 
-    def test_create_aws_module(self):
+    def test_create_aws_module_should_set_up_params(self):
         m = AnsibleAWSModule(argument_spec=dict(
-            fail_mode=dict(type='list', default=['success'])
+            win_string_arg=dict(type='list', default=['win'])
         ))
         m_noretry_no_customargs = AnsibleAWSModule(
-            autoretry=False, default_args=False,
+            auto_retry=False, default_args=False,
             argument_spec=dict(
-                fail_mode=dict(type='list', default=['success'])
+                success_string_arg=dict(type='list', default=['success'])
             )
         )
         assert m, "module wasn't true!!"
         assert m_noretry_no_customargs, "module wasn't true!!"
+
+        m_params=m.params
+        m_no_defs_params=m_noretry_no_customargs.params
+        assert 'region' in m_params
+        assert 'win' in m_params["win_string_arg"]
+        assert 'success' in m_no_defs_params["success_string_arg"]
+        assert not 'aws_secret_key' in m_no_defs_params
 
 
 class ErrorReportingTestcase(unittest.TestCase):
