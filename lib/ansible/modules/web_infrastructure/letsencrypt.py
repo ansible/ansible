@@ -529,7 +529,7 @@ class ACMEClient(object):
         _, out, _ = self.module.run_command(openssl_csr_cmd,check_rc=True)
 
         domains = set([])
-        common_name = re.search(r"Subject:.*? CN=([^\s,;/]+)", out.decode('utf8'))
+        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", out.decode('utf8'))
         if common_name is not None:
             domains.add(common_name.group(1))
         subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", out.decode('utf8'), re.MULTILINE|re.DOTALL)
