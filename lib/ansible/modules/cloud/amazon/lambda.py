@@ -303,7 +303,7 @@ def main():
                 account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
                 role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
             except Exception as e:
-                module.fail_json_aws(module, e, msg="getting account information")
+                module.fail_json_aws(e, msg="getting account information")
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
