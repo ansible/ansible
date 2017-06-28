@@ -59,6 +59,9 @@ Ansible Changes By Release
 * ensure prefix in plugin loading to avoid conflicts
 * fix for a small number of modules (tempfile, possibly copy) which could fail
   if the tempdir on the remote box was a symlink
++ fix non-pipelined code paths for Windows (eg, ANSIBLE_KEEP_REMOTE_FILES, non-pipelined connection plugins)
+* fix for win_updates where args and check mode were ignored due to common code change
+
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
