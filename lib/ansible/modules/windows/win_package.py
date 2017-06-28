@@ -58,15 +58,13 @@ options:
     aliases: [productid]
   arguments:
     description:
-      - Any arguments the installer needs
+      - Any arguments the installer needs. Will be deprecated, use options instead.
     default: null
-    required: false
   options:
     description:
-      - mutually exclusive with "arguments"
+      - Mutually exclusive with "arguments".
       - Similar to arguments, however using this instead of arguments will tell the module to attempt to normalize arguments.
-      - See examples below
-    required: false
+      - See examples below.
     version_added: "2.4"
   state:
     description:
@@ -75,20 +73,17 @@ options:
       - present
       - absent
     default: present
-    required: false
     aliases: [ensure]
   user_name:
     description:
       - Username of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
         Also specify user_password for this to function properly.
     default: null
-    required: false
   user_password:
     description:
       - Password of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
         Also specify user_name for this to function properly.
     default: null
-    required: false
   expected_return_code:
     description:
       - One or more return codes from the package installation that indicates success.
