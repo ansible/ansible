@@ -57,6 +57,8 @@ At the prompt you can quickly start using the Ansible devel branch by running th
 
 After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targeting systems using the plethora of available Windows modules.
 
+.. Note:: While you can access your Windows folder through ``/mnt/c/..`` Ansible does not play well with ``\r\n`` in files. Please ensure you clone the ansible repo from bash and run ``source hacking/env-setup`` from those files.
+
 .. Note:: Ansible is also reported to work on Cygwin, but this is more cumbersome and doesn't scale as well as WSL.
 
 
@@ -498,6 +500,8 @@ Windows Contributions
 Windows support in Ansible is still relatively new, and contributions are quite welcome, whether this is in the
 form of new modules, tweaks to existing modules, documentation, or something else.  Please stop by the ansible-devel mailing list if you would like to get involved and say hi.
 
+There is now an IRC chat channel ``#ansible-windows`` that you can join and ask your questions specific to Windows.
+
 .. seealso::
 
    :doc:`dev_guide/developing_modules`
@@ -510,3 +514,5 @@ form of new modules, tweaks to existing modules, documentation, or something els
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
+   `Ansible Windows irc.freenode.net <http://irc.freenode.net>`_
+       #ansible-windows IRC chat channel
