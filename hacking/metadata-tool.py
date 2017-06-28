@@ -28,10 +28,7 @@ from collections import defaultdict
 from distutils.version import StrictVersion
 from pprint import pformat, pprint
 
-import yaml
-
-from ansible.module_utils._text import to_text
-from ansible.parsing.metadata import extract_metadata
+from ansible.parsing.metadata import ParseError, extract_metadata
 from ansible.plugins import module_loader
 
 
@@ -41,11 +38,6 @@ NONMODULE_MODULE_NAMES = frozenset(os.path.splitext(p)[0] for p in NONMODULE_PY_
 
 # Default metadata
 DEFAULT_METADATA = {'metadata_version': '1.0', 'status': ['preview'], 'supported_by': 'community'}
-
-
-class ParseError(Exception):
-    """Thrown when parsing a file fails"""
-    pass
 
 
 class MissingModuleError(Exception):
