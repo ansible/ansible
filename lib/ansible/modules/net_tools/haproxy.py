@@ -33,7 +33,7 @@ description:
     - Enable, disable, drain and set weights for HAProxy backend servers using socket
       commands.
 notes:
-    - Enable and disable and drain commands are restricted and can only be issued on
+    - Enable, disable and drain commands are restricted and can only be issued on
       sockets configured for level 'admin'. For example, you can add the line
       'stats socket /var/run/haproxy.sock level admin' to the general section of
       haproxy.cfg. See U(http://haproxy.1wt.eu/download/1.5/doc/configuration.txt).
