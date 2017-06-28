@@ -133,20 +133,20 @@ EXAMPLES = '''
 # Insert or update a record in a table with positional arguments
 - postgresql_query:
     db: acme
-    user: django
-    password: ceec4eif7ya
+    login_user: django
+    login_password: ceec4eif7ya
     query: SELECT * FROM a_table WHERE a_column=%s AND b_column=%s
     positional_args:
-    - "positional string value 1"
-    - "positional string value 2"
+      - "positional string value 1"
+      - "positional string value 2"
 
 # Insert or update a record in a table with named arguments
 - postgresql_query:
     db: acme
-    user: django
-    password: ceec4eif7ya
+    login_user: django
+    login_password: ceec4eif7ya
     query: SELECT * FROM some_table WHERE a_column=%(a_value)s AND b_column=%(b_value)s
-    named_args:
+    positional_args:
       a_value: "positional string value 1"
       b_value: "positional string value 2"
 
@@ -154,20 +154,22 @@ EXAMPLES = '''
 # Run queries from a '.sql' file
 - postgresql_query:
     db: acme
-    user: django
-    password: ceec4eif7ya
+    login_user: django
+    login_password: ceec4eif7ya
     query: "{{playbook_dir}}/scripts/my_sql_query_file.sql"
     named_args:
       a_value: "positional string value 1"
       b_value: "positional string value 2"
 
-# Run queries from a '.sql' file and assign result in a fact available at
-# for the rest of the ansible runtime.
+# Run queries from a '.sql' file and assign result in a fact available for the
+# rest of the ansible runtime. Query inside scripts may contain 'named_args'
+# or 'positional_args'.
 - postgresql_query:
     db: acme
-    user: django
-    password: ceec4eif7ya
+    login_user: django
+    login_password: ceec4eif7ya
     query: SELECT * FROM some_table WHERE a_column=%(a_value)s AND b_column=%(b_value)s
+    query: /path/to/my/script.sql
     named_args:
       a_value: "positional string value 1"
       b_value: "positional string value 2"
