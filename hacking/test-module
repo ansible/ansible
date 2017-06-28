@@ -228,11 +228,11 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
     print(jsonify(results,format=True))
 
 
-def rundebug(debugger, modfile, argspath, modname, module_style):
+def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):
     """Run interactively with console debugger."""
 
     if module_style == 'ansiballz':
-        modfile, argspath = ansiballz_setup(modfile, modname)
+        modfile, argspath = ansiballz_setup(modfile, modname, interpreters)
 
     if argspath is not None:
         subprocess.call("%s %s %s" % (debugger, modfile, argspath), shell=True)
@@ -257,7 +257,7 @@ def main():
 
     if options.execute:
         if options.debugger:
-            rundebug(options.debugger, modfile, argspath, modname, module_style)
+            rundebug(options.debugger, modfile, argspath, modname, module_style, interpreters)
         else:
             runtest(modfile, argspath, modname, module_style, interpreters)
 
