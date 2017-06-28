@@ -86,29 +86,18 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def check_for_acl_int_present(module, name, intf, direction):
-    command = ['show running-config aclmgr']
+    # Need to Captitalize the interface name as the nxos
+    # output has capitalization
+    command = ['show running-config aclmgr | section {0}'.format(intf.title())]
     body = run_commands(module, command)
-    body = str(body[0])
 
-    seq = re.compile(r"^interface " + re.escape(intf) + r"\n  ip access-group (.*) (.*)", re.M | re.I)
-    existing = False
-    while True:
-        match = re.search(seq, body)
-        if match:
-            lname = match.group(1)
-            ldir = match.group(2)
-            if ldir == 'in':
-                mdir = 'ingress'
-            else:
-                mdir = 'egress'
-            if (match.group(1) == name and mdir == direction):
-                existing = True
-                break
-            else:
-                body = re.sub('  ip access-group ' + lname + ' ' + ldir + '\n?', '', body)
-        else:
-            break
-    return existing
+    if direction == 'ingress':
+        mdir = 'in'
+    elif direction == 'egress':
+        mdir = 'out'
+
+    match = re.search('ip access-group {0} {1}'.format(name, mdir), str(body[0]))
+    return True if match else False
 
 
 def apply_acl(proposed):
