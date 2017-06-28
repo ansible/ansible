@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community',
+}
 
 
 DOCUMENTATION = '''
@@ -28,129 +30,87 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Creates a Virtual Network Identifier member (VNI)
 description:
-    - Creates a Virtual Network Identifier member (VNI) for an NVE
-      overlay interface.
+  - Creates a Virtual Network Identifier member (VNI) for an NVE
+    overlay interface.
 author: Gabriele Gerbino (@GGabriele)
 notes:
-    - default, where supported, restores params default value.
+  - default, where supported, restores params default value.
 options:
-    interface:
-        description:
-            - Interface name for the VXLAN Network Virtualization Endpoint.
-        required: true
-    vni:
-        description:
-            - ID of the Virtual Network Identifier.
-        required: true
-    assoc_vrf:
-        description:
-            - This attribute is used to identify and separate processing VNIs
-              that are associated with a VRF and used for routing. The VRF
-              and VNI specified with this command must match the configuration
-              of the VNI under the VRF.
-        required: false
-        choices: ['true','false']
-        default: null
-    ingress_replication:
-        description:
-            - Specifies mechanism for host reachability advertisement.
-        required: false
-        choices: ['bgp','static']
-        default: null
-    multicast_group:
-        description:
-            - The multicast group (range) of the VNI. Valid values are
-              string and keyword 'default'.
-        required: false
-        default: null
-    peer_list:
-        description:
-            - Set the ingress-replication static peer list. Valid values
-              are an array, a space-separated string of ip addresses,
-              or the keyword 'default'.
-        required: false
-        default: null
-    suppress_arp:
-        description:
-            - Suppress arp under layer 2 VNI.
-        required: false
-        choices: ['true','false']
-        default: null
-    state:
-        description:
-            - Determines whether the config should be present or not
-              on the device.
-        required: false
-        default: present
-        choices: ['present','absent']
-    include_defaults:
-        description:
-            - Specify to use or not the complete running configuration
-              for module operations.
-        required: false
-        default: true
-        choices: ['true','true']
-    config:
-        description:
-            - Configuration string to be used for module operations. If not
-              specified, the module will use the current running configuration.
-        required: false
-        default: null
-    save:
-        description:
-            - Specify to save the running configuration after
-              module operations.
-        required: false
-        default: false
-        choices: ['true','false']
+  interface:
+    description:
+      - Interface name for the VXLAN Network Virtualization Endpoint.
+    required: true
+  vni:
+    description:
+      - ID of the Virtual Network Identifier.
+    required: true
+  assoc_vrf:
+    description:
+      - This attribute is used to identify and separate processing VNIs
+        that are associated with a VRF and used for routing. The VRF
+        and VNI specified with this command must match the configuration
+        of the VNI under the VRF.
+    required: false
+    choices: ['true','false']
+    default: null
+  ingress_replication:
+    description:
+      - Specifies mechanism for host reachability advertisement.
+    required: false
+    choices: ['bgp','static']
+    default: null
+  multicast_group:
+    description:
+      - The multicast group (range) of the VNI. Valid values are
+        string and keyword 'default'.
+    required: false
+    default: null
+  peer_list:
+    description:
+      - Set the ingress-replication static peer list. Valid values
+        are an array, a space-separated string of ip addresses,
+        or the keyword 'default'.
+    required: false
+    default: null
+  suppress_arp:
+    description:
+      - Suppress arp under layer 2 VNI.
+    required: false
+    choices: ['true','false']
+    default: null
+  state:
+    description:
+      - Determines whether the config should be present or not
+        on the device.
+    required: false
+    default: present
+    choices: ['present','absent']
 '''
 EXAMPLES = '''
 - nxos_vxlan_vtep_vni:
     interface: nve1
     vni: 6000
     ingress_replication: default
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"ingress_replication": "default", "interface": "nve1", "vni": "6000"}
-existing:
-    description: k/v pairs of existing configuration
-    returned: verbose mode
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"assoc_vrf": false, "ingress_replication": "", "interface": "nve1",
-             "multicast_group": "", "peer_list": [],
-             "suppress_arp": false, "vni": "6000"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface nve1", "member vni 6000"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
-BOOL_PARAMS = ['suppress_arp']
+BOOL_PARAMS = [
+    'assoc-vrf',
+    'suppress_arp',
+]
 PARAM_TO_COMMAND_KEYMAP = {
     'assoc_vrf': 'associate-vrf',
     'interface': 'interface',
@@ -160,69 +120,44 @@ PARAM_TO_COMMAND_KEYMAP = {
     'peer_list': 'peer-ip',
     'suppress_arp': 'suppress-arp'
 }
-PARAM_TO_DEFAULT_KEYMAP = {}
-WARNINGS = []
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
 
 
 def get_value(arg, config, module):
+    command = PARAM_TO_COMMAND_KEYMAP[arg]
+    command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
+
     if arg in BOOL_PARAMS:
-        REGEX = re.compile(r'\s+{0}\s*$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+        command_re = re.compile(r'\s+{0}\s*$'.format(command), re.M)
         value = False
-        try:
-            if REGEX.search(config):
-                value = True
-        except TypeError:
-            value = False
+        if command_re.search(config):
+            value = True
+    elif arg == 'peer_list':
+        has_command_val = command_val_re.findall(config, re.M)
+        value = []
+        if has_command_val:
+            value = has_command_val
     else:
-        REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
         value = ''
-        if PARAM_TO_COMMAND_KEYMAP[arg] in config:
-            value = REGEX.search(config).group('value')
+        has_command_val = command_val_re.search(config, re.M)
+        if has_command_val:
+            value = has_command_val.group('value')
     return value
 
 
 def check_interface(module, netcfg):
     config = str(netcfg)
 
-    REGEX = re.compile(r'(?:interface nve)(?P<value>.*)$', re.M)
+    has_interface = re.search(r'(?:interface nve)(?P<value>.*)$', config, re.M)
     value = ''
-    if 'interface nve' in config:
-        value = 'nve{0}'.format(REGEX.search(config).group('value'))
+    if has_interface:
+        value = 'nve{0}'.format(has_interface.group('value'))
 
-    return value
-
-
-def get_custom_value(arg, config, module):
-    splitted_config = config.splitlines()
-    if arg == 'assoc_vrf':
-        value = False
-        if 'associate-vrf' in config:
-            value = True
-    elif arg == 'peer_list':
-        value = []
-        REGEX = re.compile(r'(?:peer-ip\s)(?P<peer_value>.*)$', re.M)
-        for line in splitted_config:
-            peer_value = ''
-            if PARAM_TO_COMMAND_KEYMAP[arg] in line:
-                peer_value = REGEX.search(line).group('peer_value')
-            if peer_value:
-                value.append(peer_value)
     return value
 
 
 def get_existing(module, args):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
-
-    custom = [
-        'assoc_vrf',
-        'peer_list'
-        ]
 
     interface_exist = check_interface(module, netcfg)
     if interface_exist:
@@ -242,10 +177,7 @@ def get_existing(module, args):
         if config:
             for arg in args:
                 if arg not in ['interface', 'vni']:
-                    if arg in custom:
-                        existing[arg] = get_custom_value(arg, config, module)
-                    else:
-                        existing[arg] = get_value(arg, config, module)
+                    existing[arg] = get_value(arg, config, module)
             existing['interface'] = interface_exist
             existing['vni'] = module.params['vni']
 
@@ -257,11 +189,7 @@ def apply_key_map(key_map, table):
     for key, value in table.items():
         new_key = key_map.get(key)
         if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
+            new_dict[new_key] = value
     return new_dict
 
 
@@ -273,11 +201,9 @@ def state_present(module, existing, proposed, candidate):
     for key, value in proposed_commands.items():
         if key == 'associate-vrf':
             command = 'member vni {0} {1}'.format(module.params['vni'], key)
-
-            if value:
-                commands.append(command)
-            else:
-                commands.append('no {0}'.format(command))
+            if not value:
+                command = 'no {0}'.format(command)
+            commands.append(command)
 
         elif key == 'peer-ip' and value != 'default':
             for peer in value:
@@ -289,10 +215,8 @@ def state_present(module, existing, proposed, candidate):
 
         elif value is True:
             commands.append(key)
-
         elif value is False:
             commands.append('no {0}'.format(key))
-
         elif value == 'default':
             if existing_commands.get(key):
                 existing_value = existing_commands.get(key)
@@ -345,23 +269,17 @@ def main():
         multicast_group=dict(required=False, type='str'),
         peer_list=dict(required=False, type='list'),
         suppress_arp=dict(required=False, type='bool'),
-        ingress_replication=dict(required=False, type='str',
-                                     choices=['bgp', 'static', 'default']),
-        state=dict(choices=['present', 'absent'], default='present',
-                       required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        ingress_replication=dict(required=False, type='str', choices=['bgp', 'static', 'default']),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    result = {'changed': False, 'commands': [], 'warnings': warnings}
 
     if module.params['assoc_vrf']:
         mutually_exclusive_params = ['multicast_group',
@@ -384,74 +302,46 @@ def main():
                 module.params['peer_list'] = stripped_peer_list
 
     state = module.params['state']
-    args =  [
-        'assoc_vrf',
-        'interface',
-        'vni',
-        'ingress_replication',
-        'multicast_group',
-        'peer_list',
-        'suppress_arp'
-    ]
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
+    existing, interface_exist = get_existing(module, args)
 
-    existing, interface_exist = invoke('get_existing', module, args)
-    end_state = existing
+    if state == 'present':
+        if not interface_exist:
+            module.fail_json(msg="The proposed NVE interface does not exist. Use nxos_interface to create it first.")
+        elif interface_exist != module.params['interface']:
+            module.fail_json(msg='Only 1 NVE interface is allowed on the switch.')
+    elif state == 'absent':
+        if interface_exist != module.params['interface']:
+            module.exit_json(**result)
+        elif existing and existing['vni'] != module.params['vni']:
+            module.fail_json(
+                msg="ERROR: VNI delete failed: Could not find vni node for {0}".format(module.params['vni']),
+                existing_vni=existing['vni']
+            )
+
     proposed_args = dict((k, v) for k, v in module.params.items()
-                    if v is not None and k in args)
+                         if v is not None and k in args)
 
     proposed = {}
     for key, value in proposed_args.items():
-        if key != 'interface':
-            if str(value).lower() == 'default':
-                value = PARAM_TO_DEFAULT_KEYMAP.get(key)
-                if value is None:
-                    value = 'default'
-            if existing.get(key) or (not existing.get(key) and value):
-                proposed[key] = value
+        if key != 'interface' and existing.get(key) != value:
+            proposed[key] = value
 
-    result = {}
-    if state == 'present' or (state == 'absent' and existing):
-        if not interface_exist:
-            WARNINGS.append("The proposed NVE interface does not exist. "
-                            "Use nxos_interface to create it first.")
-        elif interface_exist != module.params['interface']:
-            module.fail_json(msg='Only 1 NVE interface is allowed on '
-                                 'the switch.')
-        elif (existing and state == 'absent' and
-                existing['vni'] != module.params['vni']):
-            module.fail_json(msg="ERROR: VNI delete failed: Could not find"
-                                 " vni node for {0}".format(
-                                     module.params['vni']),
-                                 existing_vni=existing['vni'])
-        else:
-            candidate = CustomNetworkConfig(indent=3)
-            invoke('state_%s' % state, module, existing, proposed, candidate)
-            result['changed'] = False
-            for k, v in proposed.items():
-                if k in existing:
-                    if existing[k] != proposed[k] or state == 'absent':
-                        result['changed'] = True
-                if k not in existing and state == 'present':
-                    result['changed'] = True
-            if module.check_mode:
-                module.exit_json(commands=candidate)
-            else:
-                load_config(module, candidate)
-    else:
-        result['updates'] = []
+    candidate = CustomNetworkConfig(indent=3)
+    if state == 'present':
+        state_present(module, existing, proposed, candidate)
+    elif state == 'absent':
+        state_absent(module, existing, proposed, candidate)
 
-    if module._verbosity > 0:
-        end_state, interface_exist = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed_args
-
-    if WARNINGS:
-        result['warnings'] = WARNINGS
+    if candidate:
+        candidate = candidate.items_text()
+        result['changed'] = True
+        result['commands'] = candidate
+        if not module.check_mode:
+            load_config(module, candidate)
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-
