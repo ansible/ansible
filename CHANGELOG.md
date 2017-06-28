@@ -26,6 +26,7 @@ Ansible Changes By Release
 * fixed corner case for delegate_to, loops and delegate_facts
 * fixed wait_for python2.4/2.5 compatibility (this is last version this is needed)
 * fix for adhoc not obeying callback options
+* fix for win_find where it fails to recursively scan empty nested directories
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
