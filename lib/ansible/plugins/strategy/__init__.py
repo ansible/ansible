@@ -511,7 +511,7 @@ class StrategyBase:
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
-                            cacheable = result_item.get('ansible_facts_cacheable', True)
+                            cacheable = result_item.pop('ansible_facts_cacheable', True)
                             for target_host in host_list:
                                 if cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
