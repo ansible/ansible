@@ -1,0 +1,85 @@
+---
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/setup.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/setup.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/setup.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/setup.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/update.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/update.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/update.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/update.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/remove.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/remove.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/remove.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/target_lb_vserver/remove.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
