@@ -30,6 +30,7 @@ description:
      Number of rows affected are returned as "row_count".
    - Can read queries from a .sql script files.
    - SQL scripts may be templated with ansible variables at execution time.
+   - Run queries in check_mode and then roll them back (autocommit must be disabled).
 version_added: "2.4"
 options:
   db:
