@@ -74,6 +74,7 @@ def run_service(module, args):
     bin_path = module.get_bin_path('service', required=True)
     return module.run_command([bin_path] + args)
 
+
 def service_is_enabled(module, name):
     rc, out, err = run_service(module, [name, 'enabled'])
     return rc == 0
