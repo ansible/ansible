@@ -46,7 +46,7 @@
           - 'not rds_result|failed'
           - 'not rds_instance_result|failed'
 
-  
+
     # note; we probably inherit the RDS from the previous test
     # which will be faster.
     - name: Given that I have created an RDS with the old rds module
