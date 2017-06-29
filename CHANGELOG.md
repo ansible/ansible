@@ -2,6 +2,12 @@ Ansible Changes By Release
 ==========================
 
 ## 2.3.2 "Ramble On" - 2017-08-04
+## 2.3.3 "Ramble On" - TBD
+
+### Bugfixes
+* Fix synchronize traceback with the docker connection plugin
+
+## 2.3.2 "Ramble On" - TBD
 
 ### Bugfixes
 * Fix partend i18n issues
