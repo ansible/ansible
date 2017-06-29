@@ -114,15 +114,6 @@ def get_existing(module, args):
     return existing
 
 
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            new_dict[new_key] = value
-    return new_dict
-
-
 def state_present(module, existing, proposed, candidate):
     address = module.params['rp_address']
     command = 'ip pim rp-address {0}'.format(address)
@@ -146,7 +137,7 @@ def state_absent(module, existing, candidate):
 
     command = 'no ip pim rp-address {0}'.format(address)
     if existing.get('group_list'):
-        commands = build_command(each, command)
+        commands = build_command(existing, command)
     else:
         commands = [command]
 
