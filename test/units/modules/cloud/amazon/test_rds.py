@@ -106,6 +106,7 @@ def test_await_should_wait_till_not_pending():
     # above values to check that the correct state has been waited for.
     mod_mock.params.get.return_value.__add__.return_value.__gt__.return_value = True
     mod_mock.params.get.return_value.__add__.return_value.__lt__.return_value = False
+    mod_mock.params.get.return_value.__add__.return_value.__le__.return_value = False
     with patch.object(time, 'sleep', sleeper_double):
         with patch.object(rds_i, 'get_db_instance', get_db_instance_double):
             rds_i.await_resource(MagicMock(), MagicMock(), "available", mod_mock,
