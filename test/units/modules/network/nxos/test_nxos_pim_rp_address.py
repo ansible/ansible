@@ -42,7 +42,7 @@ class TestNxosPimRpAddressModule(TestNxosModule):
         self.mock_get_config.stop()
 
     def load_fixtures(self, commands=None, device=''):
-        self.get_config.return_value = load_fixture('nxos_pim_rp_address/config.cfg')
+        self.get_config.return_value = load_fixture('nxos_pim_rp_address', 'config.cfg')
         self.load_config.return_value = None
 
     def test_nxos_pim_rp_address(self):
