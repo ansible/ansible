@@ -113,6 +113,12 @@ options:
     required: false
     default: None
     version_added: "2.3"
+  publish:
+    description:
+      - If set, then changes to configuration only will also be published.  Otherwise, only code changes are published and create new versions.
+    required: false
+    default: False
+    version_added: "2.3"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -247,6 +253,7 @@ def main():
         vpc_security_group_ids=dict(type='list', default=None),
         environment_variables=dict(type='dict', default=None),
         dead_letter_arn=dict(type='str', default=None),
+        publish=dict(type='bool', default=False),
         )
     )
 
@@ -278,6 +285,7 @@ def main():
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
     dead_letter_arn = module.params.get('dead_letter_arn')
+    publish = module.params.get('publish')
 
     check_mode = module.check_mode
     changed = False
@@ -419,6 +427,16 @@ def main():
                 changed = True
             except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
                 module.fail_json(msg=str(e))
+
+        if changed:
+            # if want to publish the config changes, must manually publish, no need if code change triggered a publish
+            if publish and current_version == '$LATEST':
+                response = client.publish_version(
+                    FunctionName=name,
+                    CodeSha256=response['CodeSha256'],
+                    Description=description,
+                )
+                current_version = response['Version']
 
         # Describe function code and configuration
         response = get_current_function(client, name, qualifier=current_version)
