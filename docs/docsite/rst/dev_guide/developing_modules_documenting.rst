@@ -344,6 +344,12 @@ Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` direc
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.
 
+You can speed up the time taken to build the module html page by using the command:
+``bin/docs/ansible-makepage.sh``.  This script will only build the documentation for
+one module (or one page of the documentation).   Be aware that links to other modules and 
+documentation may not work when using ``bin/docs/ansible-makepage.sh``, but all other
+rendering should be the same.
+
 To test your documentation against your ``argument_spec`` you can use ``validate-modules``. Note that this option isn't currently enabled in Shippable due to the time it takes to run.
 
 .. code-block:: bash
