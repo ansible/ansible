@@ -1,0 +1,45 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowApiGateway",
+            "Effect": "Allow",
+            "Action": [
+                "apigateway:*"
+            ],
+            "Resource": [
+                "arn:aws:apigateway:us-east-1::*"
+            ]
+        },
+        {
+            "Sid": "AllowGetUserForLambdaCreation",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetUser"
+            ],
+            "Resource": [
+                "arn:aws:iam::459030870916:user/ansible_integration_tests"
+            ]
+        },
+        {
+            "Sid": "AllowLambdaManagementxxxWildcardDoesntWorkRight",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:*"
+            ],
+            "Resource": [
+                "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:*"
+            ]
+        },
+        {
+            "Sid": "AllowLambdaRoleManagement",
+            "Effect": "Allow",
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::459030870916:role/ansible_lambda_role"
+            ]
+        }
+    ]
+}

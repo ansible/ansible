@@ -1,0 +1,23 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AlowS3AnsibleTestBuckets",
+            "Action": [
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:PutBucketAcl",
+                "s3:CreateBucket",
+                "s3:PutObject",
+                "s3:PutObjectAcl",
+                "s3:DeleteBucket",
+                "s3:DeleteObject"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::ansible_test_*",
+                "arn:aws:s3:::ansible_test_*/*"
+            ]
+        }
+    ]
+}

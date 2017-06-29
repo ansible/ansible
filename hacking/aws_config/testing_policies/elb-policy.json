@@ -1,0 +1,39 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowReadAllLoadBalancers",
+            "Effect": "Allow",
+            "Action": [
+                "elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DescribeLoadBalancerAttributes",
+                "elasticloadbalancing:DescribeInstanceHealth"
+            ],
+            "Resource": [
+                "arn:aws:elasticloadbalancing:{{aws_region}}:{{aws_account}}:loadbalancer/*"
+            ]
+        },
+        {
+            "Sid": "AllowManagementofOwnLoadBalancers",
+            "Effect": "Allow",
+            "Action": [
+                "elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:CreateLoadBalancer",
+                "elasticloadbalancing:DeleteLoadBalancer",
+                "elasticloadbalancing:ConfigureHealthCheck",
+                "elasticloadbalancing:DescribeLoadBalancerAttributes",
+                "elasticloadbalancing:ModifyLoadBalancerAttributes",
+                "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:DeleteLoadBalancerListeners",
+                "elasticloadbalancing:CreateLoadBalancerListeners",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:DescribeInstanceHealth"
+            ],
+            "Resource": [
+                "arn:aws:elasticloadbalancing:{{aws_region}}:{{aws_account}}:loadbalancer/ansible-testing-*"
+            ]
+        }
+    ]
+}
