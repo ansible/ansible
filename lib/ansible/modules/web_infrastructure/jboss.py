@@ -67,11 +67,32 @@ EXAMPLES = """
 import os
 import shutil
 import time
+import json
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
-def is_deployed(deploy_path, deployment):
-    return os.path.exists(os.path.join(deploy_path, "%s.deployed" % deployment))
+def is_deployed(module, deploy_path, deployment, hostname='localhost'):
+
+    data_dict = {
+        "operation": "read-resource",
+        "address": {
+            "deployment": deployment
+        }
+    }
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    data = json.dumps(data_dict)
+
+    resp,info = fetch_url(module, 'http://%s:9990/management' % hostname, data=data, headers=headers)
+
+    resp_data = resp.read()
+    resp_json = json.loads(resp_data)
+
+    return resp_json['result']['enabled']
 
 
 def is_undeployed(deploy_path, deployment):
@@ -89,6 +110,8 @@ def main():
             deployment=dict(required=True),
             deploy_path=dict(type='path', default='/var/lib/jbossas/standalone/deployments'),
             state=dict(choices=['absent', 'present'], default='present'),
+            url_password=dict(required=True),
+            url_username=dict(required=True)
         ),
         required_if=[('state', 'present', ('src',))]
     )
@@ -103,7 +126,7 @@ def main():
     if not os.path.exists(deploy_path):
         module.fail_json(msg="deploy_path does not exist.")
 
-    deployed = is_deployed(deploy_path, deployment)
+    deployed = is_deployed(module, deploy_path, deployment)
 
     if state == 'present' and not deployed:
         if not os.path.exists(src):
@@ -114,7 +137,7 @@ def main():
 
         shutil.copyfile(src, os.path.join(deploy_path, deployment))
         while not deployed:
-            deployed = is_deployed(deploy_path, deployment)
+            deployed = is_deployed(module, deploy_path, deployment)
             if is_failed(deploy_path, deployment):
                 module.fail_json(msg='Deploying %s failed.' % deployment)
             time.sleep(1)
@@ -126,7 +149,7 @@ def main():
             shutil.copyfile(src, os.path.join(deploy_path, deployment))
             deployed = False
             while not deployed:
-                deployed = is_deployed(deploy_path, deployment)
+                deployed = is_deployed(module, deploy_path, deployment)
                 if is_failed(deploy_path, deployment):
                     module.fail_json(msg='Deploying %s failed.' % deployment)
                 time.sleep(1)
