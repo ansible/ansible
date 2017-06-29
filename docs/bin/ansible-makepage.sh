@@ -4,7 +4,7 @@
 # A small script to make it easier to build a single documentation
 # page during development.
 
-PROG="$(basename $1)"
+PROG=$(basename "$0")
 
 if [[ $# -gt 2 ]]; then
    USAGE="YES"
