@@ -1036,7 +1036,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
             rc, out, err = [0, '', '']
 
         if len(will_update) > 0:     # update present
-            cmd = yum_basecmd + ['update'] + pkgs['update']
+            cmd = yum_basecmd + ['install'] + pkgs['update']
             rc2, out2, err2 = module.run_command(cmd)
             if not out2.strip().lower().endswith("no packages marked for update"):
                 res['changed'] = True
