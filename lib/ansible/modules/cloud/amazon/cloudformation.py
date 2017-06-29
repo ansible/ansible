@@ -240,7 +240,9 @@ stack_outputs:
   sample: {"MySg": "AnsibleModuleTestYAML-CFTestSg-C8UVS567B6NS"}
 '''  # NOQA
 
+import datetime
 import json
+import pytz
 import time
 import sys
 import traceback
@@ -271,7 +273,7 @@ def boto_exception(err):
     return error
 
 
-def get_stack_events(cfn, stack_name):
+def get_stack_events(cfn, stack_name, started_at):
     '''This event data was never correct, it worked as a side effect. So the v2.3 format is different.'''
     ret = {'events':[], 'log':[]}
 
@@ -287,15 +289,23 @@ def get_stack_events(cfn, stack_name):
         return ret
 
     for e in events.get('StackEvents', []):
-        eventline = 'StackEvent {ResourceType} {LogicalResourceId} {ResourceStatus}'.format(**e)
-        ret['events'].append(eventline)
+        if e['Timestamp'] > started_at:
+            # Reasons can be interesting even if status does not contain 'FAILED',
+            # e.g. `UPDATE_ROLLBACK_IN_PROGRESS The following resource(s) failed to update: [DNSRecord2,`
+            # the only problem - the property is not always set, so ensure default:
+            e.setdefault('ResourceStatusReason', '')
+            eventline = 'StackEvent {ResourceType} {LogicalResourceId} {ResourceStatus} {ResourceStatusReason}'.format(**e)
+            ret['events'].append(eventline)
 
-        if e['ResourceStatus'].endswith('FAILED'):
-            failline = '{ResourceType} {LogicalResourceId} {ResourceStatus}: {ResourceStatusReason}'.format(**e)
-            ret['log'].append(failline)
+            if e['ResourceStatus'].endswith('FAILED'):
+                failline = '{ResourceType} {LogicalResourceId} {ResourceStatus}: {ResourceStatusReason}'.format(**e)
+                ret['log'].append(failline)
 
     return ret
 
+def start_time():
+    """Return timezone aware timestamp, that can be compared with timestamps returned by AWS API"""
+    return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
 
 def create_stack(module, stack_params, cfn):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
@@ -305,8 +315,9 @@ def create_stack(module, stack_params, cfn):
     stack_params['DisableRollback'] = module.params['disable_rollback']
 
     try:
+        started_at = start_time()
         cfn.create_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'CREATE')
+        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', started_at)
     except Exception as err:
         error_msg = boto_exception(err)
         module.fail_json(msg=error_msg)
@@ -337,8 +348,9 @@ def create_changeset(module, stack_params, cfn):
             warning = 'WARNING: '+str(len(pending_changesets))+' pending changeset(s) exist(s) for this stack!'
             result = dict(changed=False, output='ChangeSet ' + changeset_name + ' already exists.', warnings=[warning])
         else:
+            started_at = start_time()
             cs = cfn.create_change_set(**stack_params)
-            result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
+            result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', started_at)
             result['warnings'] = [('Created changeset named ' + changeset_name + ' for stack ' + stack_params['StackName']),
                 ('You can execute it using: aws cloudformation execute-change-set --change-set-name ' + cs['Id']),
                 ('NOTE that dependencies on this stack might fail due to pending changes!')]
@@ -362,8 +374,9 @@ def update_stack(module, stack_params, cfn):
     # AWS will tell us if the stack template and parameters are the same and
     # don't need to be updated.
     try:
+        started_at = start_time()
         cfn.update_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
+        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', started_at)
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -375,7 +388,7 @@ def update_stack(module, stack_params, cfn):
     return result
 
 
-def stack_operation(cfn, stack_name, operation):
+def stack_operation(cfn, stack_name, operation, started_at):
     '''gets the status of a stack while it is created/updated/deleted'''
     existed = []
     while True:
@@ -386,15 +399,15 @@ def stack_operation(cfn, stack_name, operation):
             # If the stack previously existed, and now can't be found then it's
             # been deleted successfully.
             if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
-                ret = get_stack_events(cfn, stack_name)
+                ret = get_stack_events(cfn, stack_name, started_at)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
                 return {'changed': True, 'failed': True, 'output': 'Stack Not Found', 'exception': traceback.format_exc()}
-        ret = get_stack_events(cfn, stack_name)
+        ret = get_stack_events(cfn, stack_name, started_at)
         if not stack:
             if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
-                ret = get_stack_events(cfn, stack_name)
+                ret = get_stack_events(cfn, stack_name, started_at)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
