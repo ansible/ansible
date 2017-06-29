@@ -89,8 +89,8 @@ class TrackingDict(dict):
     def update(self, other, scope_name=None, scope_info=None):
         # If we are updating where other is a TrackingDict, try to merge its meta
         # info into ours so we preserve the origin scope_name/scope_info
-        #other_meta = getattr(other, 'meta', None)
-        #if other_meta:
+        # other_meta = getattr(other, 'meta', None)
+        # if other_meta:
         #    self.meta.update(other_meta)
 
         for key in other:
@@ -200,9 +200,10 @@ def merge_hash(a, b):
 
 def load_extra_vars(loader, options):
     extra_vars = {}
+
     if not hasattr(options, 'extra_vars'):
         return extra_vars
-        
+
     for extra_vars_opt in options.extra_vars:
         data = None
         extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
