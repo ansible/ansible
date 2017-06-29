@@ -57,7 +57,7 @@ ARGS_DEFAULT_VALUE = {
 OPERATION_LOOK_UP = {
     'absent': 'delete',
     'active': 'active',
-    'suspend': 'inactive'
+    'deactivate': 'inactive'
 }
 
 
@@ -289,17 +289,18 @@ def map_obj_to_ele(module, want, top, value_map=None):
             ele = SubElement(ele, item)
     container = ele
     state = module.params.get('state')
+    active = module.params.get('active')
+    if active:
+        oper = 'active'
+    else:
+        oper = 'inactive'
 
     # build xml subtree
     for obj in want:
-        oper = None
         if container.tag != top_ele[-1]:
             node = SubElement(container, top_ele[-1])
         else:
             node = container
-
-        if state and state != 'present':
-            oper = OPERATION_LOOK_UP.get(state)
 
         for xpath, attributes in obj.items():
             for attr in attributes:
@@ -309,16 +310,20 @@ def map_obj_to_ele(module, want, top, value_map=None):
                 is_key = attr.get('is_key', False)
                 value = attr.get('value')
 
-                # operation (delete/active/inactive) is added as element attribute
-                # only if it is key or tag only or leaf only node
-                if oper and not (is_key or tag_only or leaf_only):
+                # operation 'delete' is added as element attribute
+                # only if it is key or leaf only node
+                if state == 'absent' and not (is_key or leaf_only):
+                    continue
+
+                # for tag only node if value is false continue to next attr
+                if tag_only and not value:
                     continue
 
                 # convert param value to device specific value
                 if value_map and xpath in value_map:
                     value = value_map[xpath].get(value)
 
-                if value or tag_only or (leaf_only and value):
+                if value or tag_only or leaf_only:
                     ele = node
                     tags = xpath.split('/')
                     if value:
@@ -328,22 +333,39 @@ def map_obj_to_ele(module, want, top, value_map=None):
                         ele = SubElement(ele, item)
 
                     if tag_only:
-                        if not value:
-                            ele.set('delete', 'delete')
+                        if state == 'present':
+                            if not value:
+                                # if value of tag_only node is false, delete the node
+                                ele.set('delete', 'delete')
+
                     elif leaf_only:
-                        if oper:
+                        if state == 'present':
                             ele.set(oper, oper)
+                            ele.text = value
+                        else:
+                            ele.set('delete', 'delete')
+                            # Add value of leaf node if required while deleting.
+                            # in some cases if value is present while deleting, it
+                            # can result in error, hence the check
                             if is_value:
                                 ele.text = value
-                        else:
-                            ele.text = value
                     else:
                         ele.text = value
+
                         if HAS_LXML:
                             par = ele.getparent()
                         else:
                             module.fail_json(msg='lxml is not installed.')
-                        if is_key and oper and not par.attrib.get(oper):
-                            par.set(oper, oper)
+
+                        if state == 'present':
+                            # set replace attribute at parent node
+                            if not par.attrib.get('replace'):
+                                par.set('replace', 'replace')
+
+                            # set active/inactive at parent node
+                            if not par.attrib.get(oper):
+                                par.set(oper, oper)
+                        else:
+                            par.set('delete', 'delete')
 
     return root

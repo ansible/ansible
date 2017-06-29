@@ -18,14 +18,17 @@
     provider: "{{ netconf }}"
   register: result
 
-- debug:
-    msg: "{{ result }}"
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
 
 - assert:
     that:
       - "result.changed == true"
-      - "'<name>test-vlan</name>' in result.rpc"
-      - "'<vlan-id>100</vlan-id>' in result.rpc"
+      - "'<name>test-vlan</name>' in config.xml"
+      - "'<vlan-id>100</vlan-id>' in config.xml"
 
 - name: Create vlan again (idempotent)
   junos_vlan:
@@ -44,29 +47,42 @@
   junos_vlan:
     vlan_id: 100
     name: test-vlan
-    state: suspend
+    state: present
+    active: False
     provider: "{{ netconf }}"
   register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
 
 - assert:
     that:
       - "result.changed == true"
-      - "'<vlan inactive=\"inactive\">' in result.rpc"
-      - "'<name>test-vlan</name>' in result.rpc"
+      - "'<vlan inactive=\"inactive\">' in config.xml"
+      - "'<name>test-vlan</name>' in config.xml"
 
 - name: Activate vlan
   junos_vlan:
     vlan_id: 100
     name: test-vlan
-    state: active
+    state: present
+    active: True
     provider: "{{ netconf }}"
   register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
 
 - assert:
     that:
       - "result.changed == true"
-      - "'<vlan active=\"active\">' in result.rpc"
-      - "'<name>test-vlan</name>' in result.rpc"
+      - "'<name>test-vlan</name>' in config.xml"
 
 - name: Delete vlan
   junos_vlan:
@@ -76,8 +92,13 @@
     provider: "{{ netconf }}"
   register: result
 
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
 - assert:
     that:
       - "result.changed == true"
-      - "'<vlan delete=\"delete\">' in result.rpc"
-      - "'<name>test-vlan</name>' in result.rpc"
+      - "'<name>test-vlan</name>' not in config.xml"

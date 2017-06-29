@@ -65,7 +65,12 @@ options:
         configuration and when set to I(absent) the values should not be
         in the device active configuration
     default: present
-    choices: ['present', 'absent', 'active', 'suspend']
+    choices: ['present', 'absent']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -137,8 +142,8 @@ def main():
         domain_name=dict(),
         domain_search=dict(type='list'),
         name_servers=dict(type='list'),
-
-        state=dict(choices=['present', 'absent', 'active', 'suspend'], default='present')
+        state=dict(choices=['present', 'absent'], default='present'),
+        active=dict(default=True, type='bool')
     )
 
     argument_spec.update(junos_argument_spec)
@@ -164,12 +169,12 @@ def main():
     top = 'system'
 
     param_to_xpath_map = collections.OrderedDict()
-    param_to_xpath_map.update({
-        'hostname': {'xpath': 'host-name', 'leaf_only': True},
-        'domain_name': {'xpath': 'domain-name', 'leaf_only': True},
-        'domain_search': {'xpath': 'domain-search', 'leaf_only': True, 'value_req': True},
-        'name_servers': {'xpath': 'name-server/name', 'is_key': True}
-    })
+    param_to_xpath_map.update([
+        ('hostname', {'xpath': 'host-name', 'leaf_only': True}),
+        ('domain_name', {'xpath': 'domain-name', 'leaf_only': True}),
+        ('domain_search', {'xpath': 'domain-search', 'leaf_only': True, 'value_req': True}),
+        ('name_servers', {'xpath': 'name-server/name', 'is_key': True})
+    ])
 
     validate_param_values(module, param_to_xpath_map)
 
