@@ -1,0 +1,86 @@
+- name: download and install old version of hello
+  apt: "deb=https://launchpad.net/ubuntu/+archive/primary/+files/hello_{{ hello_old_version }}_amd64.deb"
+
+- name: freeze version for hello
+  dpkg_selections:
+    name: hello
+    selection: hold
+
+- name: get dpkg selections
+  shell: "dpkg --get-selections | grep hold"
+  register: result
+
+- debug: var=result
+
+- name: check that hello is marked as hold
+  assert:
+    that:
+      - "'hello' in result.stdout"
+
+- name: attempt to upgrade hello
+  apt:
+    upgrade: dist
+
+- name: check hello version
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: hello_version
+
+- name: ensure hello was not upgraded
+  assert:
+    that:
+      - "{{ hello_version.stdout }} == {{ hello_old_version }}"
+
+- name: remove version freeze
+  dpkg_selections:
+    name: hello
+    selection: install
+
+- name: upgrade hello
+  apt:
+    upgrade: dist
+
+- name: check hello version
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: hello_version
+
+- name: check that old version upgraded correctly
+  assert:
+    that:
+      - "{{ hello_version.stdout }}!={{ hello_old_version }}"
+
+- name: set hello to deinstall
+  dpkg_selections:
+    name: hello
+    selection: deinstall
+
+- name: get dpkg selections
+  shell: "dpkg --get-selections | grep deinstall"
+  register: result
+
+- debug: var=result
+
+- name: check that hello is marked as deinstall
+  assert:
+    that:
+      - "'hello' in result.stdout"
+
+- name: set hello to purge
+  dpkg_selections:
+    name: hello
+    selection: purge
+
+- name: get dpkg selections
+  shell: "dpkg --get-selections | grep purge"
+  register: result
+
+- debug: var=result
+
+- name: check that hello is marked as purge
+  assert:
+    that:
+      - "'hello' in result.stdout"
+
+- name: remove hello
+  apt:
+    name: hello
+    state: absent
