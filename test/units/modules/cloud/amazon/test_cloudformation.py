@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
 import pytest
 from mock import patch
 
@@ -80,7 +81,9 @@ def test_basic_s3_stack(maybe_sleep, placeboify):
         'TemplateBody': basic_yaml_tpl,
     }
     m = FakeModule(disable_rollback=False)
-    result = cfn_module.create_stack(m, params, connection)
+    faked_start_time = datetime.datetime(2017, 1, 1)
+    with patch('ansible.modules.cloud.amazon.cloudformation.start_time', return_value=faked_start_time):
+        result = cfn_module.create_stack(m, params, connection)
     assert result['changed']
     assert len(result['events']) > 1
     # require that the final recorded stack state was CREATE_COMPLETE
@@ -91,7 +94,7 @@ def test_basic_s3_stack(maybe_sleep, placeboify):
 
 def test_delete_nonexistent_stack(maybe_sleep, placeboify):
     connection = placeboify.client('cloudformation')
-    result = cfn_module.stack_operation(connection, 'ansible-test-nonexist', 'DELETE')
+    result = cfn_module.stack_operation(connection, 'ansible-test-nonexist', 'DELETE', cfn_module.start_time())
     assert result['changed']
     assert 'Stack does not exist.' in result['log']
 
