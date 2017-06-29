@@ -428,7 +428,7 @@ Function Nssm-Update-Credentials
             }
 
             If ($results -ne $fullUser) {
-                $cmd = "set ""$name"" ObjectName $fullUser $password"
+                $cmd = "set ""$name"" ObjectName $fullUser '$password'"
                 $results = Nssm-Invoke $cmd
 
                 if ($LastExitCode -ne 0)
