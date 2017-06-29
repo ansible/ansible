@@ -417,7 +417,7 @@ of our community members and want everyone to feel welcome at our events, both o
 offline.
 
 We expect all participants, organizers, speakers, and attendees to follow these policies at
-our all of our event venues and event-related social events.
+all of our event venues and event-related social events.
 
 The Ansible Community Code of Conduct is licensed under the Creative Commons
 Attribution-Share Alike 3.0 license. Our Code of Conduct was adapted from Codes of Conduct
