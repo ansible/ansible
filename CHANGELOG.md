@@ -5,6 +5,7 @@ Ansible Changes By Release
 
 ### Bugfixes
 * Fix synchronize traceback with the docker connection plugin
+* Python3 fixes for azure modules
 
 ## 2.3.2 "Ramble On" - TBD
 
