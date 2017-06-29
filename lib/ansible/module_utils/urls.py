@@ -174,7 +174,7 @@ if HAS_SSL:
         PROTOCOL = ssl.PROTOCOL_TLSv1_2
     else:
         # If we can't find extra tls methods, ssl.PROTOCOL_TLSv1 is sufficient
-        PROTOCOL = ssl.PROTOCOL_TLSv1_2
+        PROTOCOL = ssl.PROTOCOL_TLSv1
         try:
             import ctypes
             import ctypes.util
