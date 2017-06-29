@@ -95,17 +95,29 @@ cyberark_session:
     returned: success
     type: dict
     sample:
-        {
-            "api_base_url": "https://components.cyberark.local",
-            "token": "TOKEN",
-            "use_shared_logon_authentication": false,
-            "validate_certs": false
-        }
+        api_base_url:
+            description: Base URL for API calls. Returned in the cyberark_session, so it can be used in subsequent calls.
+            type: string
+            returned: always
+        token:
+            description: The token that identifies the session, encoded in BASE 64.
+            type: string
+            returned: always
+        use_shared_logon_authentication:
+            description: Whether or not Shared Logon Authentication was used to establish the session.
+            type: bool
+            returned: always
+        validate_certs:
+            description: Whether or not SSL certificates should be validated.
+            type: bool
+            returned: always
 '''
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
+from ansible.module_utils.six.moves.urllib.error import HTTPError
+import httplib
 import json
 
 
@@ -183,22 +195,25 @@ def processAuthentication(module):
             data=payload,
             validate_certs=validate_certs)
 
-    except httplib.HTTPException as e:
+    except (HTTPError, httplib.HTTPException) as http_exception:
 
         module.fail_json(
-            msg="end_point=%s%s" % (api_base_url, end_point),
+            msg=("Exception while performing authentication."
+                 "Please validate parameters provided, and ability to logon to CyberArk."
+                 "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
             payload=payload,
             headers=headers,
-            exception=to_text(e),
-            status_code=e.code)
+            exception=to_text(http_exception),
+            status_code=http_exception.code)
 
-    except Exception as e:
+    except Exception as unknown_exception:
 
         module.fail_json(
-            msg="end_point=%s%s" % (api_base_url, end_point),
+            msg=("Unknown exception while performing authentication."
+                 "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             payload=payload,
             headers=headers,
-            exception=to_text(e),
+            exception=to_text(unknown_exception),
             status_code=-1)
 
     if response.getcode() == 200:  # Success
