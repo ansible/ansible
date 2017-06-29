@@ -479,7 +479,6 @@ lib/ansible/modules/remote_management/hpilo/hpilo_boot.py
 lib/ansible/modules/remote_management/hpilo/hpilo_facts.py
 lib/ansible/modules/remote_management/hpilo/hponcfg.py
 lib/ansible/modules/remote_management/stacki/stacki_host.py
-lib/ansible/modules/remote_management/wakeonlan.py
 lib/ansible/modules/source_control/bzr.py
 lib/ansible/modules/source_control/gitlab_group.py
 lib/ansible/modules/source_control/gitlab_project.py
