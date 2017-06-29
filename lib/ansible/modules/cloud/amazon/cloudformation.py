@@ -292,13 +292,12 @@ def get_stack_events(cfn, stack_name, started_at):
             # e.g. `UPDATE_ROLLBACK_IN_PROGRESS The following resource(s) failed to update: [DNSRecord2,`
             # the only problem - the property is not always set, so ensure default:
             e.setdefault('ResourceStatusReason', '')
-            eventline = 'StackEvent {ResourceType} {LogicalResourceId} {ResourceStatus} {ResourceStatusReason}'.format(**e)
+            eventline = '{ResourceType} {LogicalResourceId} {ResourceStatus} {ResourceStatusReason}'.format(**e)
             ret['events'].append(eventline)
 
             if e['ResourceStatus'].endswith('FAILED'):
                 failline = '{ResourceType} {LogicalResourceId} {ResourceStatus}: {ResourceStatusReason}'.format(**e)
                 ret['log'].append(failline)
-
     return ret
 
 def start_time():
@@ -317,7 +316,7 @@ def start_time():
         utc = timezone.utc
     except ImportError:
         #Hi there python2 user
-        from datetime import tzinfo
+        from datetime import tzinfo, timedelta
         class UTC(tzinfo):
             def utcoffset(self, dt):
                 return timedelta(0)
@@ -326,10 +325,7 @@ def start_time():
             def dst(self, dt):
                 return timedelta(0)
         utc = UTC()
-
-    now = datetime.now()
-    now.replace(tzinfo=utc)
-    return now
+    return datetime.utcnow().replace(tzinfo=utc)
 
 def create_stack(module, stack_params, cfn):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
@@ -592,7 +588,7 @@ def main():
                 result = {'changed': False, 'output': 'Stack not found.'}
             else:
                 cfn.delete_stack(StackName=stack_params['StackName'])
-                result = stack_operation(cfn, stack_params['StackName'], 'DELETE')
+                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', started_at)
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
