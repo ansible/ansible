@@ -190,28 +190,73 @@ def get_govc_vm_info():
     return jsonify(vm_output)
 
 
+@app.route('/govc_host_info')
+def get_govc_host_info():
+    """ Run govc host.info """
+    host_name = request.args.get("host_name") or None
+    host_output = {}
+    if host_name:
+        all_hosts = [host_name]
+    else:
+        all_hosts = _get_all_objs(ofilter='H')
+    for host_system in all_hosts:
+        host_info = _get_host_info(host_name=host_system)
+        name = host_info.get('Name', host_system)
+        host_output[name] = host_info
+
+    return jsonify(host_output)
+
+
+def _get_host_info(host_name=None):
+    """
+    Get all information of host from vcsim
+    :param vm_name: Name of host
+    :return: Dictionary containing information about VM,
+             where KEY represent attributes and VALUE represent attribute's value
+    """
+    cmd = '%s host.info -host=%s 2>&1' % (GOVCPATH, host_name)
+
+    host_info = {}
+    if host_name is None:
+        return host_info
+    host_info = parse_govc_info(cmd)
+
+    return host_info
+
+
 def _get_vm_info(vm_name=None):
     """
     Get all information of VM from vcsim
     :param vm_name: Name of VM
-    :return: Dictionary containing inforamtion about VM,
+    :return: Dictionary containing information about VM,
              where KEY represent attributes and VALUE represent attribute's value
     """
     cmd = '%s vm.info %s 2>&1' % (GOVCPATH, vm_name)
-    so, se = run_cmd(cmd)
-    stdout_lines = so.splitlines()
 
     vm_info = {}
     if vm_name is None:
         return vm_info
-
-    for line in stdout_lines:
-        if ":" in line:
-            key, value = line.split(":")
-            key = key.lstrip()
-            vm_info[key] = value.strip()
+    vm_info = parse_govc_info(cmd)
 
     return vm_info
+
+
+def parse_govc_info(cmd):
+    """
+    Helper function to parse output of govc info commands
+    :param cmd: command variable to run and parse output for
+    :return: Dictionary containing information about object
+    """
+    so, se = run_cmd(cmd)
+    stdout_lines = so.splitlines()
+    info = {}
+    for line in stdout_lines:
+        if ":" in line:
+            key, value = line.split(":", 1)
+            key = key.lstrip()
+            info[key] = value.strip()
+
+    return info
 
 
 def _get_all_objs(ofilter=None):
