@@ -102,28 +102,28 @@ policy:
   returned: success
   type: string
   sample: '{
-        "Arn": "arn:aws:iam::aws:policy/AdministratorAccess "
-        "AttachmentCount": 0,
-        "CreateDate": "2017-03-01T15:42:55.981000+00:00",
-        "DefaultVersionId": "v1",
-        "IsAttachable": true,
-        "Path": "/",
-        "PolicyId": "ANPALM4KLDMTFXGOOJIHL",
-        "PolicyName": "AdministratorAccess",
-        "UpdateDate": "2017-03-01T15:42:55.981000+00:00"
+        "arn": "arn:aws:iam::aws:policy/AdministratorAccess "
+        "attachment_count": 0,
+        "create_date": "2017-03-01T15:42:55.981000+00:00",
+        "default_version_id": "v1",
+        "is_attachable": true,
+        "path": "/",
+        "policy_id": "ANPALM4KLDMTFXGOOJIHL",
+        "policy_name": "AdministratorAccess",
+        "update_date": "2017-03-01T15:42:55.981000+00:00"
   }'
 '''
+
 from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.ec2
-from ansible.module_utils.ec2 import sort_json_policy_dict
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
+from ansible.module_utils.ec2 import sort_json_policy_dict, camel_dict_to_snake_dict, HAS_BOTO3
 import json
+import traceback
 
 try:
-    import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by imported HAS_BOTO3
 
 
 def get_policy_by_name(iam, name, **kwargs):
@@ -220,7 +220,7 @@ def detach_all_entities(iam, policy, **kwargs):
 
 
 def main():
-    argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
+    argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         policy_name=dict(required=True),
         policy_description=dict(required=False, default=''),
@@ -253,17 +253,12 @@ def main():
         module.fail_json(msg='if state is present policy is required')
 
     try:
-        region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(
-            module, boto3=True)
-        iam = ansible.module_utils.ec2.boto3_conn(
-            module,
-            conn_type='client',
-            resource='iam',
-            region=region,
-            endpoint=ec2_url,
-            **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg=boto_exception(e))
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        iam = boto3_conn(module, conn_type='client', resource='iam',
+                         region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
+        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.",
+                         exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     p = get_policy_by_name(iam, name)
     if state == 'present':
@@ -275,7 +270,7 @@ def main():
                 PolicyDocument=policy,
                 Description=description
             )
-            module.exit_json(changed=True, policy=rvalue['Policy'])
+            module.exit_json(changed=True, policy=camel_dict_to_snake_dict(rvalue['Policy']))
         else:
             policy_version, changed = get_or_create_policy_version(
                 iam, p, policy)
@@ -286,7 +281,7 @@ def main():
             if changed:
                 p = iam.get_policy(PolicyArn=p['Arn'])['Policy']
 
-            module.exit_json(changed=changed, policy=p)
+            module.exit_json(changed=changed, policy=camel_dict_to_snake_dict(p))
     else:
         # Check for existing policy
         if p:
@@ -300,7 +295,7 @@ def main():
             # Delete policy
             iam.delete_policy(PolicyArn=p['Arn'])
             # This is the one case where we will return the old policy
-            module.exit_json(changed=True, policy=p)
+            module.exit_json(changed=True, policy=camel_dict_to_snake_dict(p))
         else:
             module.exit_json(changed=False, policy=None)
 # end main
