@@ -313,7 +313,7 @@ class GalaxyCLI(CLI):
             # the user needs to specify one of either --role-file, a single user/role name or a .tar.gz file
             raise AnsibleOptionsError("- you must specify a user/role name, a .tar.gz file or a roles file")
         elif len(self.args) == 1 and role_file is not None:
-            # using a role file is mutually exclusive of specifying the role name or the .tar.gz file on the command line 
+            # using a role file is mutually exclusive of specifying the role name or the .tar.gz file on the command line
             raise AnsibleOptionsError("- please specify only one: a user/role name, or a roles file, or a .tar.gz file")
 
         no_deps = self.options.no_deps
