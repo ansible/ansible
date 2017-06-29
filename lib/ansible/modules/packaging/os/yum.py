@@ -195,7 +195,7 @@ EXAMPLES = '''
     state: latest
 
 - name: upgrade all packages, excluding kernel & foo related packages
-  yum: 
+  yum:
     name: '*'
     state: latest
     exclude: kernel*,foo*
