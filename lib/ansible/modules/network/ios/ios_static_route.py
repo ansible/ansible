@@ -211,7 +211,7 @@ def main():
 
     if commands:
         if not module.check_mode:
-            response = load_config(module, commands)
+            load_config(module, commands)
 
         result['changed'] = True
 
