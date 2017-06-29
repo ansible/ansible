@@ -85,10 +85,12 @@ options:
       - Name of a database to create within the instance. If not specified then no database is created.
   engine_version:
     description:
-      - Version number of the database engine to use. If not specified then the current Amazon RDS default engine version is used.
+      - Version number of the database engine to use. If not specified then
+      - the current Amazon RDS default engine version is used.
   parameter_group:
     description:
-      - Name of the DB parameter group to associate with this instance. If omitted then the RDS default DBParameterGroup will be used.
+      - Name of the DB parameter group to associate with this instance. If omitted
+      - then the RDS default DBParameterGroup will be used.
     required: false
   license_model:
     description:
@@ -162,7 +164,8 @@ options:
     default: 300
   apply_immediately:
     description:
-      - If enabled, the modifications will be applied as soon as possible rather than waiting for the next preferred maintenance window.
+      - If enabled, the modifications will be applied as soon as possible rather
+      - than waiting for the next preferred maintenance window.
     default: no
     choices: [ "yes", "no" ]
   force_failover:
@@ -279,7 +282,9 @@ instance:
   returned: success
   type: dict
 operation:
-  description: The operation carried out on the DBM, e.g. create if a new DBM was created or modified if an existing one was changed.
+  description:
+     - The operation carried out on the DBM, e.g. create if a new DBM was created
+     - or modified if an existing one was changed.
   returned: success
   type: string
   sample:
@@ -287,13 +292,14 @@ operation:
 '''
 
 # from __future__ import (absolute_import, division, print_function)
+# import sys
 import time
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.rds import RDSDBInstance, get_db_instance
-# import sys
 
 try:
     import botocore
@@ -380,10 +386,10 @@ def await_resource(conn, resource, status, module, await_pending=None):
     # should we sleep first?
     resource = get_db_instance(conn, resource.name)
     eprint(str(resource))
-    assert 0
     eprint("wait is {0} {1} await_pending is {2} status is {3}".format(
         str(wait_timeout), str(time.time()), str(await_pending), str(resource.status)))
     rdat = resource.data["pending_modified_values"]
+    eprint("wait timeout repr: " + repr(wait_timeout) + "\n")
     while ((await_pending and rdat) or resource.status != status) and wait_timeout > time.time():
         time.sleep(5)
         # Temporary until all the rds2 commands have their responses parsed
@@ -395,8 +401,10 @@ def await_resource(conn, resource, status, module, await_pending=None):
             break
         rdat = resource.data["pending_modified_values"]
         eprint(str(resource))
-    if wait_timeout <= time.time() and resource.status != status:
-        module.fail_json(msg="Timeout waiting for RDS resource %s status is still %s should be %s" % (
+    # resource will be none if it has actually been removed - e.g. we were waiting for deleted
+    # status; maybe that should be an error in other situations?
+    if wait_timeout <= time.time() and resource is not None and resource.status != status:
+        module.fail_json(msg="Timeout waiting for RDS resource %s status is %s should be %s" % (
             resource.name, resource.status, status))
     return resource
 
