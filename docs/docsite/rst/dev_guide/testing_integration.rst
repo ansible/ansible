@@ -100,7 +100,7 @@ the Ansible continuous integration (CI) system is recommended.
 
 .. note:: Docker on non-Linux
 
-   Using Docker Engine to run Docker on a non-Linux (such as macOS) host is not recommended.
+   Using Docker Engine to run Docker on a non-Linux host (such as macOS) is not recommended.
    Some tests may fail, depending on the image used for testing.
    Using the ``--docker-privileged`` option may resolve the issue.
 
