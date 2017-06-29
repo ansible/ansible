@@ -156,94 +156,81 @@ def create_tags_container(tags):
     return tags_obj
 
 
-def compare_policy_statement_part(current, new):
-    """ Takes a matching part of a current policy statement and the
-        new policy statement and compares them. Ensures lists are
-        compared to other lists and calls itself recursively for dicts
-        so nesting structures are as expected.
-        Returns True if the policy has changed.
+def hashable_policy(policy, policy_list):
     """
-    if current != new:
-        if isinstance(current, dict):
-            if set(current.keys()) != set(new.keys()):
-                return True
-            for each in set(current.keys()):
-                current_inner = current[each]
-                new_inner = new[each]
-                # recursively checking each value in the dicts
-                if compare_policy_statement_part(current_inner, new_inner):
-                    return True
-        # The S3 API will automatically turn single-item lists into strings
-        # To account for this we have to ensure we compare lists to lists
-        if isinstance(current, list) and isinstance(new, string_types):
-            current = [to_text(each) for each in current]
-            new = [to_text(new)]
-        elif isinstance(current, string_types) and isinstance(new, list):
-            new = [to_text(each) for each in new]
-            current = [to_text(current)]
-        if not isinstance(current, dict) and current != new:
-            return True
+        Takes a policy and returns a list, the contents of which are all hashable and sorted.
+        Example input policy:
+        {'Version': '2012-10-17',
+         'Statement': [{'Action': ['s3:PutObject', 's3:PutObjectAcl'],
+                        'Sid': 'AddCannedAcl',
+                        'Resource': 'arn:aws:s3:::test_policy/*',
+                        'Effect': 'Allow',
+                        'Principal': {'AWS': 'arn:aws:iam::XXXXXXXXXXXX:user/username'}},
+                       {'Action': 's3:PutObjectAcl',
+                        'Sid': 'AddCannedAcl2',
+                        'Resource': 'arn:aws:s3:::test_policy/*',
+                        'Effect': 'Allow',
+                        'Principal': {'AWS': ['arn:aws:iam::XXXXXXXXXXXX:user/username1', 'arn:aws:iam::XXXXXXXXXXXX:user/username2']}
+                       }]
+        }
+        Returned value:
+        [('Statement',  (
+                            (
+                                ('Action', ((u's3:PutObject',), (u's3:PutObjectAcl',))),
+                                ('Effect', (u'Allow',)),
+                                ('Principal', ('AWS', (u'arn:aws:iam::XXXXXXXXXXXX:user/username',))),
+                                ('Resource', (u'arn:aws:s3:::test_policy/*',)),
+                                ('Sid', (u'AddCannedAcl',))
+                            ),
+                            (
+                                ('Action', (u's3:PutObjectAcl',)),
+                                ('Effect', (u'Allow',)),
+                                ('Principal', ('AWS', ((u'arn:aws:iam::XXXXXXXXXXXX:user/username1',), (u'arn:aws:iam::XXXXXXXXXXXX:user/username2',)))),
+                                ('Resource', (u'arn:aws:s3:::test_policy/*',)), ('Sid', (u'AddCannedAcl2',))
+                            )
+                        )),
+         ('Version', (u'2012-10-17',))
+        ]
 
-    return False
-
-
-def sort_policy_statement(current_policy, new_policy):
-    """ Takes two policies and looks for matching statement parts (since it is a list of dicts
-        and cannot be easily ordered).
-        Returns a list of tuple pairs that can then be given to
-        compare_policy_statement_part(); the return value is not a valid policy, it is only intended
-        for comparison purposes to determine if a change has been made to the existing policy.
-        Return sample:
-          [({
-             "Sid":"AddCannedAcl",
-             "Effect":"Allow",
-             "Principal": {
-               "AWS": "arn:aws:iam::XXXXXXXXXXXX:user/name"
-             },
-             "Action":["s3:PutObjectAcl"],
-             "Resource": "arn:aws:s3:::XXXXXXXX/*"
-           },
-            {
-             "Sid": "AddCannedAcl",
-             "Effect": "Allow",
-             "Principal": {
-                "AWS": ["arn:aws:iam::XXXXXXXXXXXX:user/name"]
-             },
-             "Action": "s3:PutObjectAcl",
-             "Resource": ["arn:aws:s3:::XXXXXXXX/*"]
-           })]
     """
-    policy_pairs = []
-    for policy_chunk in range(0, len(current_policy.get(u'Statement'))):
-        old_chunk = current_policy[u'Statement'][policy_chunk]
-        for chunk in range(0, len(current_policy.get(u'Statement'))):
-            this_chunk = new_policy[u'Statement'][chunk]
-            if old_chunk[u'Sid'] == this_chunk[u'Sid']:
-                policy_pairs.append((old_chunk, this_chunk))
-        if len(policy_pairs) != policy_chunk + 1:
-            # don't waste more time searching if a match wasn't found
-            return policy_pairs
-    return policy_pairs
+    if isinstance(policy, list):
+        for each in policy:
+            tupleified = hashable_policy(each, [])
+            if isinstance(tupleified, list):
+                tupleified = tuple(tupleified)
+            policy_list.append(tupleified)
+    elif isinstance(policy, string_types):
+        return [(to_text(policy))]
+    elif isinstance(policy, dict):
+        sorted_keys = list(policy.keys())
+        sorted_keys.sort()
+        for key in sorted_keys:
+            tupleified = hashable_policy(policy[key], [])
+            if isinstance(tupleified, list):
+                tupleified = tuple(tupleified)
+            policy_list.append((key, tupleified))
+
+    # ensure we aren't returning deeply nested structures of length 1
+    if len(policy_list) == 1 and isinstance(policy_list[0], tuple):
+        policy_list = policy_list[0]
+    if isinstance(policy_list, list):
+        policy_list.sort()
+    return policy_list
 
 
 def compare_policies(current_policy, new_policy):
     """ Compares the existing policy and the updated policy
         Returns True if there is a difference between policies.
     """
-    # check the easily spotted things
-    if set(current_policy.keys()) != set(new_policy.keys()):
+    # sort policies while making them hashable
+    fixed_new = hashable_policy(new_policy, [])
+    fixed_old = hashable_policy(current_policy, [])
+
+    if len(fixed_new) != len(fixed_old):
         return True
-    if current_policy.get(u'Version') != new_policy.get(u'Version'):
-        return True
-    if len(current_policy.get(u'Statement')) != len(new_policy.get(u'Statement')):
-        return True
-    # sort the policy statement
-    matches = sort_policy_statement(current_policy, new_policy)
-    if len(matches) < len(new_policy.get(u'Statement')):
-        return True
-    # look at each sorted piece of the policy
-    for policy_chunks in matches:
-        if compare_policy_statement_part(policy_chunks[0], policy_chunks[1]):
+
+    for each in range (0, len(fixed_new)):
+        if fixed_new[each] != fixed_old[each]:
             return True
     return False
 
