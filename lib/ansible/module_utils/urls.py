@@ -170,8 +170,8 @@ except ImportError:
 # Exclude insecure ssl protocols if possible
 
 if HAS_SSL:
-    # If we can't find extra tls methods, ssl.PROTOCOL_TLSv1 is sufficient
-    PROTOCOL = ssl.PROTOCOL_TLSv1
+    # If we can't find extra tls methods, ssl.PROTOCOL_TLSv1_2 is sufficient
+    PROTOCOL = ssl.PROTOCOL_TLSv1_2
 if not HAS_SSLCONTEXT and HAS_SSL:
     try:
         import ctypes
