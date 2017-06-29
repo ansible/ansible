@@ -1,8 +1,11 @@
-Ansible Development by Example
-==============================
+Ansible Module Development Walkthrough
+======================================
 
--  `Why? <#why>`__
--  `What is this? <#what-is-this>`__
+
+In this section, we will walk through developing, testing, and debugging an Ansible module. 
+
+What's covered in this section:
+
 -  `Environment setup <#environment-setup>`__
 -  `New module development <#new-module-development>`__
 -  `Local/direct module testing <#localdirect-module-testing>`__
@@ -15,23 +18,6 @@ Ansible Development by Example
    support <#communication-and-development-support>`__
 -  `Credit <#credit>`__
 
-Why?
-~~~~
-
-Ansible is an awesome tool for configuration management. It is also a
-highly utilized one, and there are so many ways to contribute as a
-community.
-
-What is this?
-~~~~~~~~~~~~~
-
-There is no doubt that Ansible is a complex tool, with lots of
-inner-workings, yet it is easy to work with as an end user. But on the
-other end of that, contributing to Ansible with code can sometimes be a
-daunting task.
-
-This documentation is a way to show step-by-step how to develop Ansible
-modules, both new module development as well as bug fixes and debugging.
 
 Environment setup
 =================
@@ -48,24 +34,11 @@ Environment setup
 6. Run the environment setup script for each new dev shell process:
    ``$ . hacking/env-setup``
 
-After the initial setup above, every time you are ready to start
+.. note:: After the initial setup above, every time you are ready to start
 developing Ansible you should be able to just run the following from the
 root of the Ansible repo:
 ``$ . venv/bin/activate && . hacking/env-setup``
 
-Starting new development now? Fixing a bug? Create a new branch:
-``$ git checkout -b my-new-branch``. If you are planning on contributing
-back to the main Ansible repostiry, fork the Ansible repository into
-your own GitHub account and developing against your new non-devel branch
-in your fork. When you believe you have a good working code change,
-submit a pull request to the Ansible repository.
-
-Submitting a new module to the upstream Ansible repo? Run
-through sanity checks first:
-``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME`` (this
-requires docker to be installed and running. If you'd rather not use a
-container for this you can choose to use ``--tox`` instead of
-``--docker``)
 
 New module development
 ======================
@@ -297,6 +270,28 @@ new: true register: testout
 $ pytest -r a --cov=. --cov-report=html --fulltrace --color yes
 test/units/modules/.../test\_my\_new\_test\_module.py \`\`\`
 
+Going Further
+=============
+
+If you are starting new development or fixing a bug, create a new branch:
+
+``$ git checkout -b my-new-branch``. 
+
+If you are planning on contributing
+back to the main Ansible repository, fork the Ansible repository into
+your own GitHub account and developing against the new non-devel branch
+in your fork. When you believe you have a good working code change,
+submit a pull request to the Ansible repository.
+
+If you want to submit a new module to the upstream Ansible repo, be sure
+to run through sanity checks first. For example:
+
+``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME`` 
+
+Note that this example requires docker to be installed and running. If you'd rather not use a
+container for this, you can choose to use ``--tox`` instead of ``--docker``.
+
+
 Communication and development support
 =====================================
 
@@ -309,5 +304,5 @@ use the ``#ansible`` channel.
 Credit
 ======
 
-A *huge* thank you to the Ansible team at Red Hat for providing not only
-a great product but also the willingness to help out contributors!
+Thank you to Thomas Stringer (`@tstring <https://github.com/tstringer>`_) for contributing source 
+material for this topic.
