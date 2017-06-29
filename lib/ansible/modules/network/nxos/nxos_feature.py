@@ -95,8 +95,11 @@ def get_available_features(feature, module):
 
     command = {'command': command, 'output': 'text'}
 
-    body = run_commands(module, [command])
-    split_body = body[0].splitlines()
+    try:
+        body = run_commands(module, [command])[0]
+        split_body = body.splitlines()
+    except (KeyError, AttributeError, IndexError):
+        return {}
 
     for line in split_body:
         try:
