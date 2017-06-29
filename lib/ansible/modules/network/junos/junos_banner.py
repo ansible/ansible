@@ -53,7 +53,12 @@ options:
       - Specifies whether or not the configuration is
         present in the current devices active running configuration.
     default: present
-    choices: ['present', 'absent', 'active', 'suspend']
+    choices: ['present', 'absent']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -79,12 +84,14 @@ EXAMPLES = """
 - name: deactivate the motd banner
   junos_banner:
     banner: motd
-    state: suspend
+    state: present
+    active: False
 
 - name: activate the motd banner
   junos_banner:
     banner: motd
-    state: active
+    state: present
+    active: True
 
 - name: Configure banner from file
   junos_banner:
@@ -133,7 +140,8 @@ def main():
     argument_spec = dict(
         banner=dict(required=True, choices=['login', 'motd']),
         text=dict(),
-        state=dict(default='present', choices=['present', 'absent', 'active', 'suspend'])
+        state=dict(default='present', choices=['present', 'absent']),
+        active=dict(default=True, type='bool')
     )
 
     argument_spec.update(junos_argument_spec)
@@ -156,10 +164,9 @@ def main():
 
     param_to_xpath_map = collections.OrderedDict()
 
-    param_to_xpath_map.update({
-        'text': {'xpath': 'message' if module.params['banner'] == 'login' else 'announcement',
-                 'leaf_only': True}
-    })
+    param_to_xpath_map.update([
+        ('text', {'xpath': 'message' if module.params['banner'] == 'login' else 'announcement', 'leaf_only': True})
+    ])
 
     validate_param_values(module, param_to_xpath_map)
 
