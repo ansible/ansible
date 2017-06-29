@@ -1,6 +1,9 @@
+# NXAPI is enabled differently on NX-OS platforms.
+# Try both commands to enable NXAPI and ignore any errors.
 - name: enable nxapi on remote device
-  nxos_nxapi:
-    http: yes
-    sandbox: yes
-    state: present
+  nxos_config:
+    lines:
+      - feature cli
+      - feature cli sandbox
     provider: "{{ cli }}"
+  ignore_errors: yes
