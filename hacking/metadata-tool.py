@@ -28,9 +28,7 @@ from collections import defaultdict
 from distutils.version import StrictVersion
 from pprint import pformat, pprint
 
-import yaml
-
-from ansible.module_utils._text import to_text
+from ansible.parsing.metadata import ParseError, extract_metadata
 from ansible.plugins import module_loader
 
 
@@ -40,11 +38,6 @@ NONMODULE_MODULE_NAMES = frozenset(os.path.splitext(p)[0] for p in NONMODULE_PY_
 
 # Default metadata
 DEFAULT_METADATA = {'metadata_version': '1.0', 'status': ['preview'], 'supported_by': 'community'}
-
-
-class ParseError(Exception):
-    """Thrown when parsing a file fails"""
-    pass
 
 
 class MissingModuleError(Exception):
@@ -85,183 +78,6 @@ def parse_args(arg_string):
         usage()
 
     return action, {'version': version, 'overwrite': overwrite, 'csvfile': csvfile}
-
-
-def seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_node_col):
-    """Look for the end of a dict in a set of lines
-
-    We know the starting position of the dict and we know the start of the
-    next code node but in between there may be multiple newlines and comments.
-    There may also be multiple python statements on the same line (separated
-    by semicolons)
-
-    Examples::
-        ANSIBLE_METADATA = {[..]}
-        DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = {[..]} # Optional comments with confusing junk => {}
-        # Optional comments {}
-        DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = {
-            [..]
-            }
-        # Optional comments {}
-        DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = {[..]} ; DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = {}EOF
-    """
-    if next_node_line is None:
-        # The dict is the last statement in the file
-        snippet = module_data.splitlines()[start_line:]
-        next_node_col = 0
-        # Include the last line in the file
-        last_line_offset = 0
-    else:
-        # It's somewhere in the middle so we need to separate it from the rest
-        snippet = module_data.splitlines()[start_line:next_node_line]
-        # Do not include the last line because that's where the next node
-        # starts
-        last_line_offset = 1
-
-    if next_node_col == 0:
-        # This handles all variants where there are only comments and blank
-        # lines between the dict and the next code node
-
-        # Step backwards through all the lines in the snippet
-        for line_idx, line in tuple(reversed(tuple(enumerate(snippet))))[last_line_offset:]:
-            end_col = None
-            # Step backwards through all the characters in the line
-            for col_idx, char in reversed(tuple(enumerate(c for c in line))):
-                if char == '}' and end_col is None:
-                    # Potentially found the end of the dict
-                    end_col = col_idx
-
-                elif char == '#' and end_col is not None:
-                    # The previous '}' was part of a comment.  Keep trying
-                    end_col = None
-
-            if end_col is not None:
-                # Found the end!
-                end_line = start_line + line_idx
-                break
-    else:
-        # Harder cases involving multiple statements on one line
-        # Good Ansible Module style doesn't do this so we're just going to
-        # treat this as an error for now:
-        raise ParseError('Multiple statements per line confuses the module metadata parser.')
-
-    return end_line, end_col
-
-
-def seek_end_of_string(module_data, start_line, start_col, next_node_line, next_node_col):
-    """
-    This is much trickier than finding the end of a dict.  A dict has only one
-    ending character, "}".  Strings have four potential ending characters.  We
-    have to parse the beginning of the string to determine what the ending
-    character will be.
-
-    Examples:
-        ANSIBLE_METADATA = '''[..]''' # Optional comment with confusing chars '''
-        # Optional comment with confusing chars '''
-        DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = '''
-            [..]
-            '''
-        DOCUMENTATIONS = [..]
-
-        ANSIBLE_METADATA = '''[..]''' ; DOCUMENTATION = [..]
-
-        SHORT_NAME = ANSIBLE_METADATA = '''[..]''' ; DOCUMENTATION = [..]
-
-    String marker variants:
-        * '[..]'
-        * "[..]"
-        * '''[..]'''
-        * \"\"\"[..]\"\"\"
-
-    Each of these come in u, r, and b variants:
-        * '[..]'
-        * u'[..]'
-        * b'[..]'
-        * r'[..]'
-        * ur'[..]'
-        * ru'[..]'
-        * br'[..]'
-        * b'[..]'
-        * rb'[..]'
-    """
-    raise NotImplementedError('Finding end of string not yet implemented')
-
-
-def extract_metadata(module_data):
-    """Extract the metadata from a module
-
-    :arg module_data: Byte string containing a module's code
-    :returns: a tuple of metadata (a dict), line the metadata starts on,
-        column the metadata starts on, line the metadata ends on, column the
-        metadata ends on, and the names the metadata is assigned to.  One of
-        the names the metadata is assigned to will be ANSIBLE_METADATA If no
-        metadata is found, the tuple will be (None, -1, -1, -1, -1, None)
-    """
-    metadata = None
-    start_line = -1
-    start_col = -1
-    end_line = -1
-    end_col = -1
-    targets = None
-    mod_ast_tree = ast.parse(module_data)
-    for root_idx, child in enumerate(mod_ast_tree.body):
-        if isinstance(child, ast.Assign):
-            for target in child.targets:
-                if target.id == 'ANSIBLE_METADATA':
-                    if isinstance(child.value, ast.Dict):
-                        metadata = ast.literal_eval(child.value)
-
-                        try:
-                            # Determine where the next node starts
-                            next_node = mod_ast_tree.body[root_idx + 1]
-                            next_lineno = next_node.lineno
-                            next_col_offset = next_node.col_offset
-                        except IndexError:
-                            # Metadata is defined in the last node of the file
-                            next_lineno = None
-                            next_col_offset = None
-
-                        # Determine where the current metadata ends
-                        end_line, end_col = seek_end_of_dict(module_data,
-                                                             child.lineno - 1,
-                                                             child.col_offset,
-                                                             next_lineno,
-                                                             next_col_offset)
-
-                    elif isinstance(child.value, ast.Str):
-                        metadata = yaml.safe_load(child.value.s)
-                        end_line = seek_end_of_string(module_data)
-                    elif isinstance(child.value, ast.Bytes):
-                        metadata = yaml.safe_load(to_text(child.value.s, errors='surrogate_or_strict'))
-                        end_line = seek_end_of_string(module_data)
-                    else:
-                        # Example:
-                        #   ANSIBLE_METADATA = 'junk'
-                        #   ANSIBLE_METADATA = { [..the real metadata..] }
-                        continue
-
-                    # Do these after the if-else so we don't pollute them in
-                    # case this was a false positive
-                    start_line = child.lineno - 1
-                    start_col = child.col_offset
-                    targets = [t.id for t in child.targets]
-                    break
-
-        if metadata is not None:
-            # Once we've found the metadata we're done
-            break
-
-    return metadata, start_line, start_col, end_line, end_col, targets
 
 
 def find_documentation(module_data):
