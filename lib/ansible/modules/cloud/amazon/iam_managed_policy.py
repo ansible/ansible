@@ -223,16 +223,17 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         policy_name=dict(required=True),
-        policy_description=dict(required=False, default=''),
-        policy=dict(type='json', required=False, default=None),
-        make_default=dict(type='bool', required=False, default=True),
-        only_version=dict(type='bool', required=False, default=False),
-        fail_on_delete=dict(type='bool', required=False, default=True),
-        state=dict(required=True, default=None, choices=['present', 'absent']),
+        policy_description=dict(default=''),
+        policy=dict(type='json'),
+        make_default=dict(type='bool', default=True),
+        only_version=dict(type='bool', default=False),
+        fail_on_delete=dict(type='bool', default=True),
+        state=dict(required=True, choices=['present', 'absent']),
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_if=[['state', 'present', ['policy']]]
     )
 
     if not HAS_BOTO3:
@@ -248,9 +249,6 @@ def main():
 
     if module.params.get('policy') is not None:
         policy = json.dumps(json.loads(module.params.get('policy')))
-
-    if state == 'present' and policy is None:
-        module.fail_json(msg='if state is present policy is required')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
