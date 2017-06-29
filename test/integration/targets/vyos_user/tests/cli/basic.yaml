@@ -10,8 +10,8 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set system login user" in result.commands'
-      - '"authentication plaintext-password" in result.commands'
+      - '"set system login user" in result.commands[0]'
+      - '"authentication plaintext-password" in result.commands[0]'
 
 - name: Collection of users (SetUp)
   vyos_user:
