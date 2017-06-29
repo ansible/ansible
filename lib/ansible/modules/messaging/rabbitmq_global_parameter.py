@@ -30,7 +30,7 @@ short_description: Adds or removes global parameters to RabbitMQ
 description:
   - Manage dynamic, cluster-wide global parameters for RabbitMQ
 version_added: "2.4"
-author: '"Juergen Kirschbaum (@gmail.com)"'
+author: '"Juergen Kirschbaum (@jgkirschbaum)"'
 options:
   name:
     description:
