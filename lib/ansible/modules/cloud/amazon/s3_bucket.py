@@ -161,36 +161,18 @@ def hashable_policy(policy, policy_list):
         Takes a policy and returns a list, the contents of which are all hashable and sorted.
         Example input policy:
         {'Version': '2012-10-17',
-         'Statement': [{'Action': ['s3:PutObject', 's3:PutObjectAcl'],
-                        'Sid': 'AddCannedAcl',
-                        'Resource': 'arn:aws:s3:::test_policy/*',
-                        'Effect': 'Allow',
-                        'Principal': {'AWS': 'arn:aws:iam::XXXXXXXXXXXX:user/username'}},
-                       {'Action': 's3:PutObjectAcl',
+         'Statement': [{'Action': 's3:PutObjectAcl',
                         'Sid': 'AddCannedAcl2',
                         'Resource': 'arn:aws:s3:::test_policy/*',
                         'Effect': 'Allow',
                         'Principal': {'AWS': ['arn:aws:iam::XXXXXXXXXXXX:user/username1', 'arn:aws:iam::XXXXXXXXXXXX:user/username2']}
-                       }]
-        }
+                       }]}
         Returned value:
-        [('Statement',  (
-                            (
-                                ('Action', ((u's3:PutObject',), (u's3:PutObjectAcl',))),
-                                ('Effect', (u'Allow',)),
-                                ('Principal', ('AWS', (u'arn:aws:iam::XXXXXXXXXXXX:user/username',))),
-                                ('Resource', (u'arn:aws:s3:::test_policy/*',)),
-                                ('Sid', (u'AddCannedAcl',))
-                            ),
-                            (
-                                ('Action', (u's3:PutObjectAcl',)),
-                                ('Effect', (u'Allow',)),
-                                ('Principal', ('AWS', ((u'arn:aws:iam::XXXXXXXXXXXX:user/username1',), (u'arn:aws:iam::XXXXXXXXXXXX:user/username2',)))),
-                                ('Resource', (u'arn:aws:s3:::test_policy/*',)), ('Sid', (u'AddCannedAcl2',))
-                            )
-                        )),
-         ('Version', (u'2012-10-17',))
-        ]
+        [('Statement',  ((('Action', (u's3:PutObjectAcl',)),
+                          ('Effect', (u'Allow',)),
+                          ('Principal', ('AWS', ((u'arn:aws:iam::XXXXXXXXXXXX:user/username1',), (u'arn:aws:iam::XXXXXXXXXXXX:user/username2',)))),
+                          ('Resource', (u'arn:aws:s3:::test_policy/*',)), ('Sid', (u'AddCannedAcl2',)))),
+         ('Version', (u'2012-10-17',)))]
 
     """
     if isinstance(policy, list):
@@ -222,16 +204,9 @@ def compare_policies(current_policy, new_policy):
     """ Compares the existing policy and the updated policy
         Returns True if there is a difference between policies.
     """
-    # sort policies while making them hashable
-    fixed_new = hashable_policy(new_policy, [])
-    fixed_old = hashable_policy(current_policy, [])
-
-    if len(fixed_new) != len(fixed_old):
+    if set(hashable_policy(new_policy, [])) != set(hashable_policy(current_policy, [])):
         return True
 
-    for each in range (0, len(fixed_new)):
-        if fixed_new[each] != fixed_old[each]:
-            return True
     return False
 
 
