@@ -49,6 +49,7 @@ parted_dict1 = {
         "end": 106.0,
         "size": 105.0,
         "fstype": "fat32",
+        "name": '',
         "flags": ["esp"],
         "unit": "mb"
     }, {
@@ -57,6 +58,7 @@ parted_dict1 = {
         "end": 368.0,
         "size": 262.0,
         "fstype": "ext2",
+        "name": '',
         "flags": [],
         "unit": "mb"
     }, {
@@ -65,6 +67,7 @@ parted_dict1 = {
         "end": 256061.0,
         "size": 255692.0,
         "fstype": "",
+        "name": '',
         "flags": [],
         "unit": "mb"
     }]
