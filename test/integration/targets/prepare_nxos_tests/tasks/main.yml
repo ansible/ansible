@@ -1,6 +1,30 @@
+---
+# NXAPI is enabled differently on NX-OS platforms.
+# Try both commands to enable NXAPI and ignore any errors.
 - name: enable nxapi on remote device
-  nxos_nxapi:
-    http: yes
-    sandbox: yes
-    state: present
+  nxos_config:
+    lines:
+      - feature nxapi
+      - feature nxapi sandbox
     provider: "{{ cli }}"
+  ignore_errors: yes
+
+# Gather the list of interfaces on this device and make the list
+# available for integration tests that need them.
+#
+# Usage in integration test playbook:
+#
+#   - set_fact: intname="{{ nxos_int_list[1] }}"
+#
+#   - name: "Interface selected for this test"
+#     debug: msg="{{ intname }}"
+#
+- name: "Collect interface list"
+  nxos_command:
+    commands: ['sh run | inc \"^interface Ethernet\"']
+    provider: "{{ nxapi }}"
+    timeout: 60
+  register: nxos_int_output
+
+- set_fact: intdataraw="{{ nxos_int_output.stdout_lines[0][0] | lower }}"
+- set_fact: nxos_int_list="{{ intdataraw.split(' ') }}"
