@@ -98,7 +98,7 @@ cloudflare: $(CREDENTIALS_FILE)
 	exit $$RC;
 
 cloudscale:
-	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook cloudscale.yml -i $(INVENTORY) -e @$(VARS_FILE) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
+	ansible-playbook cloudscale.yml -i $(INVENTORY) -e @$(VARS_FILE) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
 	RC=$$? ; \
 	exit $$RC;
 
