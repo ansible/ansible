@@ -47,6 +47,7 @@ options:
     default: yes
 notes:
     - This module is also supported for Windows targets.
+    - In order for custom stats to be displayed, you must set C(show_custom_stats) in C(ansible.cfg) or C(ANSIBLE_SHOW_CUSTOM_STATS) to C(true).
 version_added: "2.3"
 '''
 
