@@ -60,7 +60,7 @@ EXAMPLES = '''
   rc_service: name=nginx enabled=yes
 
 - name: Start nginx
-  rc_service name=nginx state=started
+  rc_service: name=nginx state=started
 
 - name: Start and enable nginx
   rc_service: name=nginx enabled=yes state=stopped
