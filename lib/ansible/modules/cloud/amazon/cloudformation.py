@@ -240,9 +240,7 @@ stack_outputs:
   sample: {"MySg": "AnsibleModuleTestYAML-CFTestSg-C8UVS567B6NS"}
 '''  # NOQA
 
-import datetime
 import json
-import pytz
 import time
 import sys
 import traceback
@@ -305,7 +303,33 @@ def get_stack_events(cfn, stack_name, started_at):
 
 def start_time():
     """Return timezone aware timestamp, that can be compared with timestamps returned by AWS API"""
-    return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+
+    # Solution for Python 2.7 and 3.x could be easy:
+    # import datetime
+    # import pytz
+    # return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+
+    # But since ansible aims for Python 2.6 support:
+    from datetime import datetime
+    utc = None
+    try:
+        from datetime import timezone
+        utc = timezone.utc
+    except ImportError:
+        #Hi there python2 user
+        from datetime import tzinfo
+        class UTC(tzinfo):
+            def utcoffset(self, dt):
+                return timedelta(0)
+            def tzname(self, dt):
+                return "UTC"
+            def dst(self, dt):
+                return timedelta(0)
+        utc = UTC()
+
+    now = datetime.now()
+    now.replace(tzinfo=utc)
+    return now
 
 def create_stack(module, stack_params, cfn):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
