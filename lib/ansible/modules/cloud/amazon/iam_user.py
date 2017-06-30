@@ -41,7 +41,7 @@ options:
     default: "/"
   managed_policy:
     description:
-      - A list of managed policy ARNs (can't use friendly names due to AWS API limitation) to attach to the user. To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
+      - A list of managed policy ARNs or friendly names to attach to the role. To embed an inline policy, use M(iam_policy).
     required: true
   groups:
     description:
@@ -122,12 +122,11 @@ iam_user:
             sample: /
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
 from ansible.module_utils.ec2 import HAS_BOTO3
 
 import traceback
-import json
 
 try:
     from botocore.exceptions import ClientError, ParamValidationError
@@ -248,16 +247,14 @@ def create_or_update_user(connection, module):
 
         changed = True
 
-
     user = get_user(connection, module, params['UserName'])
-
     module.exit_json(changed=changed, iam_user=camel_dict_to_snake_dict(user))
+
 
 def destroy_user(connection, module):
 
     params = dict()
     params['UserName'] = module.params.get('name')
-    groups = module.params.get('groups')
 
     if get_user(connection, module, params['UserName']):
 
@@ -333,6 +330,7 @@ def get_group(connection, module, name):
             return None
         else:
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+
 
 def main():
 
