@@ -32,9 +32,9 @@ module: win_pagefile
 version_added: "2.4"
 short_description: Query or change pagefile configuration
 description:
-    - Query current pagefile configuration
-    - Enable/Disable AutomaticManagedPagefile
-    - Create new or override pagefile configuration
+    - Query current pagefile configuration.
+    - Enable/Disable AutomaticManagedPagefile.
+    - Create new or override pagefile configuration.
 options:
   drive:
     description:

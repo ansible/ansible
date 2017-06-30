@@ -101,20 +101,18 @@ if ($state -eq "absent") {
     }
 
     # Make sure drive is accessible
-    if (!(Test-Path "${drive}:")) {
+    if (-not (Test-Path "${drive}:")) {
         Fail-Json $result "Unable to access '${drive}:' drive"
     }
 
     # Set pagefile
     try {
         if ((Get-Pagefile $fullPath) -eq $null) {
-            if (-not $check_mode) {
-                $pagefile = Set-WmiInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0}
-                if (!$systemManaged) {
-                    $pagefile.InitialSize = $initialSize
-                    $pagefile.MaximumSize = $maximumSize
-                    $pagefile.Put() | out-null
-                }
+            $pagefile = Set-WmiInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0} -WhatIf:$check_mode
+            if (-not ($systemManaged -or $check_mode)) {
+                $pagefile.InitialSize = $initialSize
+                $pagefile.MaximumSize = $maximumSize
+                $pagefile.Put() | out-null
             }
             $result.changed = $true
         }
