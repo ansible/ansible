@@ -162,12 +162,30 @@ def compare_group_members(current_group_members, new_group_members):
         return False
 
 
+def convert_friendly_names_to_arns(connection, module, policy_names):
+    if not any([not policy.startswith('arn:') for policy in policy_names if policy is not None]):
+        return policy_names
+    allpolicies = {}
+    paginator = connection.get_paginator('list_policies')
+    policies = paginator.paginate().build_full_result()['Policies']
+
+    for policy in policies:
+        allpolicies[policy['PolicyName']] = policy['Arn']
+        allpolicies[policy['Arn']] = policy['Arn']
+    try:
+        return [allpolicies[policy] for policy in policy_names]
+    except KeyError as e:
+        module.fail_json(msg="Couldn't find policy: " + str(e))
+
+
 def create_or_update_user(connection, module):
 
     params = dict()
     params['UserName'] = module.params.get('name')
     params['Path'] = module.params.get('path')
     managed_policies = module.params.get('managed_policy')
+    if managed_policies:
+        managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
     groups = module.params.get('groups')
     purge_policy = module.params.get('purge_policy')
     purge_groups = module.params.get('purge_groups')
