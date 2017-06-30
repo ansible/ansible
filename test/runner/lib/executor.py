@@ -671,6 +671,9 @@ def command_integration_role(args, target, start_at_task):
         if args.skip_tags:
             cmd += ['--skip-tags', args.skip_tags]
 
+        if args.diff:
+            cmd += ['--diff']
+
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
@@ -1317,6 +1320,7 @@ class IntegrationConfig(TestConfig):
         self.retry_on_error = args.retry_on_error  # type: bool
         self.tags = args.tags
         self.skip_tags = args.skip_tags
+        self.diff = args.diff
 
 
 class PosixIntegrationConfig(IntegrationConfig):
