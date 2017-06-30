@@ -19,9 +19,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+TODO: docs
+"""
+
 from __future__ import (absolute_import, division, print_function)
 
 import shlex
+import shutil
 
 import subprocess
 
@@ -50,7 +56,7 @@ class Connection(ConnectionBase):
     transport = 'buildah'
     has_pipelining = True
     # TODO: add support to change user which initiates commands inside the container,
-    #       seems like buildah doesn't support changing users
+    #       -- can be done via buildah config --user
     become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
@@ -58,11 +64,42 @@ class Connection(ConnectionBase):
 
         self._container_id = self._play_context.remote_addr
         self._connected = False
+        # container filesystem will be mounted here on host
+        self._mount_point = None
         # TODO: save actual user and print it
 
+    def _buildah(self, cmd, cmd_args=None, in_data=None):
+        """
+        run buildah executable
+
+        :param cmd: buildah's command to execute (str)
+        :param cmd_args: list of arguments to pass to the command (list of str/bytes)
+        :param in_data: data passed to buildah's stdin
+        :return: return code, stdout, stderr
+        """
+        local_cmd = ['buildah', cmd, '--', self._container_id]
+        if cmd_args:
+            local_cmd += cmd_args
+        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
+
+        display.vvv("RUN %s" % (local_cmd,), host=self._container_id)
+        p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        stdout, stderr = p.communicate(input=in_data)
+        stdout = to_bytes(stdout, errors='surrogate_or_strict')
+        stderr = to_bytes(stderr, errors='surrogate_or_strict')
+        return p.returncode, stdout, stderr
+
     def _connect(self):
-        """ no persistent connection is being maintained; just set _connected to True """
+        """
+        no persistent connection is being maintained, mount container's filesystem
+        so we can easily access it
+        """
         super(Connection, self)._connect()
+        rc, self._mount_point, stderr = self._buildah("mount")
+        self._mount_point = self._mount_point.strip()
+        display.vvvvv("MOUNTPOINT %s RC %s STDERR %r" % (self._mount_point, rc, stderr))
         self._connected = True
 
     @ensure_connect
@@ -73,55 +110,42 @@ class Connection(ConnectionBase):
         cmd_bytes = to_bytes(cmd, errors='surrogate_or_strict')
         cmd_args_list = shlex.split(cmd_bytes)
 
-        local_cmd = ['buildah', 'run', '--', self._container_id]
-        local_cmd += cmd_args_list
-        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
+        rc, stdout, stderr = self._buildah("run", cmd_args_list)
 
-        display.vvv("RUN %s" % (local_cmd,), host=self._container_id)
-        p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        stdout, stderr = p.communicate(in_data)
-        stdout = to_bytes(stdout, errors='surrogate_or_strict')
-        stderr = to_bytes(stderr, errors='surrogate_or_strict')
-        display.vvvvv("STDOUT %s STDERR %s" % (stderr, stderr))
-        return p.returncode, stdout, stderr
+        display.vvvvv("STDOUT %r STDERR %r" % (stderr, stderr))
+        return rc, stdout, stderr
 
     def put_file(self, in_path, out_path):
         """ Place a local file located in 'in_path' inside container at 'out_path' """
         super(Connection, self).put_file(in_path, out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._container_id)
 
-        local_cmd = ['buildah', 'copy', '--', self._container_id, in_path, out_path]
-        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
-
-        display.vvv("RUN %s" % (local_cmd,), host=self._container_id)
-        p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        stdout, stderr = p.communicate()
-        stdout = to_bytes(stdout, errors='surrogate_or_strict')
-        stderr = to_bytes(stderr, errors='surrogate_or_strict')
-        display.vvvvv("STDOUT %s STDERR %s" % (stdout, stderr))
+        real_out_path = self._mount_point + to_bytes(out_path, errors='surrogate_or_strict')
+        shutil.copyfile(
+            to_bytes(in_path, errors='surrogate_or_strict'),
+            to_bytes(real_out_path, errors='surrogate_or_strict')
+        )
+        # alternatively, this can be implemented using `buildah copy`:
+        # rc, stdout, stderr = self._buildah(
+        #     "copy",
+        #     [to_bytes(in_path, errors='surrogate_or_strict'),
+        #      to_bytes(out_path, errors='surrogate_or_strict')]
+        # )
 
     def fetch_file(self, in_path, out_path):
         """ obtain file specified via 'in_path' from the container and place it at 'out_path' """
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._container_id)
-        local_cmd = ['buildah', 'run', '--', self._container_id, 'cat',
-                     to_bytes(in_path, errors='surrogate_or_strict')]
 
-        display.vvv("RUN %s" % (local_cmd,), host=self._container_id)
-        with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb') as out_file:
-            p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
-                                 stdout=out_file, stderr=subprocess.PIPE)
-            _, stderr = p.communicate()
-
-        stderr = to_bytes(stderr, errors='surrogate_or_strict')
-        display.vvvvv("STDERR %s" % (stderr, ))
+        real_in_path = self._mount_point + to_bytes(in_path, errors='surrogate_or_strict')
+        shutil.copyfile(
+            to_bytes(real_in_path, errors='surrogate_or_strict'),
+            to_bytes(out_path, errors='surrogate_or_strict')
+        )
 
     def close(self):
-        """ no persistent connection is being maintained; just flip _connected to False """
+        """ unmount container's filesystem """
         super(Connection, self).close()
-        # TODO: we should probably get rid of ~/.ansible directory in the container
+        rc, stdout, stderr = self._buildah("umount")
+        display.vvvvv("RC %s STDOUT %r STDERR %r" % (rc, stdout, stderr))
         self._connected = False
