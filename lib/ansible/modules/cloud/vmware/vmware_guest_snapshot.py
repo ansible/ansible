@@ -71,6 +71,25 @@ options:
    description:
         description:
         - Define an arbitrary description to attach to snapshot.
+   quiesce:
+        description:
+            - If set to C(true) and virtual machine is powered on, it will quiesce the
+              file system in virtual machine.
+            - Note that VMWare Tools are required for this flag.
+            - If virtual machine is powered off or VMware Tools are not available, then
+              this flag is set to C(false).
+            - If virtual machine does not provide capability to take quiesce snapshot, then
+              this flag is set to C(false).
+        required: False
+        version_added: "2.4"
+   memory_dump:
+        description:
+            - If set to C(true), memory dump of virtual machine is also included in snapshot.
+            - Note that memory snapshots take time and resources, this will take longer time to create.
+            - If virtual machine does not provide capability to take memory snapshot, then
+              this flag is set to C(false).
+        required: False
+        version_added: "2.4"
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -113,6 +132,18 @@ EXAMPLES = '''
       password: vmware
       name: dummy_vm
       state: remove_all
+    delegate_to: localhost
+
+  - name: Take snapshot of a VM using quiesce and memory flag on
+    vmware_guest_snapshot:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      name: dummy_vm
+      state: present
+      snapshot_name: dummy_vm_snap_0001
+      quiesce: True
+      memory_dump: True
     delegate_to: localhost
 '''
 
@@ -207,11 +238,18 @@ class PyVmomiHelper(object):
         return snap_obj
 
     def snapshot_vm(self, vm):
-        dump_memory = False
+        memory_dump = False
         quiesce = False
+        # Check if Virtual Machine provides capabilities for Quiesce and Memory
+        # Snapshots
+        if vm.capability.quiescedSnapshotsSupported:
+            quiesce = self.module.params['quiesce']
+        if vm.capability.memorySnapshotsSupported:
+            memory_dump = self.module.params['memory_dump']
+
         return vm.CreateSnapshot(self.module.params["snapshot_name"],
                                  self.module.params["description"],
-                                 dump_memory,
+                                 memory_dump,
                                  quiesce)
 
     def remove_or_revert_snapshot(self, vm):
@@ -283,6 +321,8 @@ def main():
             datacenter=dict(required=True, type='str'),
             snapshot_name=dict(required=False, type='str'),
             description=dict(required=False, type='str', default=''),
+            quiesce=dict(type='bool', default=False),
+            memory_dump=dict(type='bool', default=False),
         ),
     )
 
