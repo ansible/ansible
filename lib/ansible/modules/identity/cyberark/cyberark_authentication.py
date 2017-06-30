@@ -198,7 +198,7 @@ def processAuthentication(module):
     except (HTTPError, httplib.HTTPException) as http_exception:
 
         module.fail_json(
-            msg=("Exception while performing authentication."
+            msg=("Error while performing authentication."
                  "Please validate parameters provided, and ability to logon to CyberArk."
                  "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
             payload=payload,
@@ -209,7 +209,7 @@ def processAuthentication(module):
     except Exception as unknown_exception:
 
         module.fail_json(
-            msg=("Unknown exception while performing authentication."
+            msg=("Unknown error while performing authentication."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             payload=payload,
             headers=headers,
@@ -230,7 +230,7 @@ def processAuthentication(module):
                     token = json.loads(response.read())["CyberArkLogonResult"]
             except Exception as e:
                 module.fail_json(
-                    msg="Exception obtaining token",
+                    msg="Error obtaining token",
                     payload=payload,
                     headers=headers,
                     exception=to_text(e),
