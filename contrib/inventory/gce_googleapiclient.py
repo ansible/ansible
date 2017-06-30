@@ -21,7 +21,6 @@ precedence, least to higher):
     The config file name can be overridden by using --config command line
     parameter or GCE_CONFIG environment variable.
 
-<<<<<<< HEAD
 2. Environment variables (prefixed by 'GCE_'):
     The variables needs to be set with the same names as the parameters, but
     with in UPPERCASE and underscore instead of dashes.
@@ -94,32 +93,15 @@ import shutil
 from StringIO import StringIO
 
 from Crypto import Random
-=======
-import collections
-import json
-import logging as log
-
-from os.path import basename
-from sys import argv
->>>>>>> PEP8 fixes (#5)
 
 from docoptcfg import DocoptcfgFileError
 from docoptcfg import docoptcfg
 
 from googleapiclient import discovery
-<<<<<<< HEAD
 from googleapiclient.errors import HttpError
 
 from oauth2client.client import GoogleCredentials
 from oauth2client.service_account import ServiceAccountCredentials
-=======
-
-from googleapiclient.errors import HttpError
-
-from oauth2client.client import GoogleCredentials
-
-ENV_PREFIX = 'GCE_'
->>>>>>> PEP8 fixes (#5)
 
 
 ENV_PREFIX = 'GCE_'
@@ -135,30 +117,9 @@ class GCloudAPI(object):
 
     def __init__(self, api_version=API_VERSION):
 
-<<<<<<< HEAD
         self.credentials = GCloudAPI._get_credentials()
         self.api_version = api_version
         self.services = {}
-=======
-Options:
-    --billing-account ACCOUNT_NAME --billing-account=ACCOUNT_NAME  Billing account name
-    --all-projects                                                 Looks for every avail project for billing account
-    --all-zones                                                    Looks for each zone
-    -a API_VERSION --api-version=API_VERSION                       The API version used to connect to GCE [default: v1]
-    -c CONFIG_FILE --config=CONFIG_FILE                            Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
-    -l --list                                                      List all hosts (needed by Ansible, but actually doesn't do anything)
-    -p PROJECT --project=PROJECT                                   The GCE project where you want to get the inventory
-    -z ZONE --zone=ZONE                                            The GCE zone where you ant to get the inventory
-    -h --help                                                      This message.
-
-All the parameters can also be set as environment variables
-using the 'GCE_' prefix (i.e. {envvar_prefix}API_VERSION=beta).
-""".format(script_name=basename(argv[0]), envvar_prefix=ENV_PREFIX)
-
-
-def get_all_billing_projects(billing_account_name, api_version='v1'):
-    project_ids = []
->>>>>>> PEP8 fixes (#5)
 
         for service_type in ['compute', 'cloudbilling']:
             self.get_service(service_type)
