@@ -202,7 +202,7 @@ class Server():
                 self.socket.close()
             if self.connection:
                 display.display('closing the connection', log_only=True)
-                self.close()
+                self.connection.close()
         except:
             pass
         finally:
