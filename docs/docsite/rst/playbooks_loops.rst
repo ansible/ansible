@@ -180,9 +180,9 @@ Looping over Fileglobs
 Looping over Filetrees
 ``````````````````````
 
-``with_filetree`` matches all files in a tree recursively. So you can recurse over a tree of files within the task loop, and e.g. template a complete tree of files to a target system with little effort while retaining permissions and ownership.
+``with_filetree`` recursively matches all files in a directory tree, enabling you to template a complete tree of files on a target system while retaining permissions and ownership.
 
-The ``filetree`` lookup-plugin supports directories, files and symlinks. But also SELinux and other file properties. Here is a complete list of what each file object consists of:
+The ``filetree`` lookup-plugin supports directories, files and symlinks, including SELinux and other file properties. Here is a complete list of what each file object consists of:
 
 * src
 * root
@@ -201,7 +201,7 @@ The ``filetree`` lookup-plugin supports directories, files and symlinks. But als
 * mtime
 * ctime
 
-And if you provide more than one path, it will implement a ``with_first_found`` logic, and will not process entries it already processed in previous paths. This enables the user to merge different trees in order of importance, or add e.g. role_vars specific paths to influence different instances of the same role.
+If you provide more than one path, it will implement a ``with_first_found`` logic, and will not process entries it already processed in previous paths. This enables the user to merge different trees in order of importance, or add role_vars specific paths to influence different instances of the same role.
 
 Here is an example of how we use with_filetree within a role. The ``web/`` path is relative to either ``roles/<role>/files/`` or ``files/``::
 
@@ -233,26 +233,24 @@ Here is an example of how we use with_filetree within a role. The ``web/`` path 
       when: item.state == 'link'
 
 
-The following properties also have its special use:
+The following properties are also available:
 
-* ``root``: Makes it possible to filter by original location
-* ``path``: Is the relative path to root
-* ``uidi``, ``gid``: Makes it possible to force-create by exact id, rather than by name
-* ``size``, ``mtime``, ``ctime``: Makes it possible to filter out files by size, mtime or ctime
+* ``root``: allows filtering by original location
+* ``path``: contains the relative path to root
+* ``uidi``, ``gid``: force-create by exact id, rather than by name
+* ``size``, ``mtime``, ``ctime``: filter out files by size, mtime or ctime
 
 
 Looping over Parallel Sets of Data
 ``````````````````````````````````
 
-.. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You probably won't be reaching for this one often.
-
-Suppose you have the following variable data was loaded in via somewhere::
+Suppose you have the following variable data::
 
     ---
     alpha: [ 'a', 'b', 'c', 'd' ]
     numbers:  [ 1, 2, 3, 4 ]
 
-And you want the set of '(a, 1)' and '(b, 2)' and so on.   Use 'with_together' to get this::
+...and you want the set of '(a, 1)' and '(b, 2)'.   Use 'with_together' to get this::
 
     tasks:
         - debug:
@@ -267,7 +265,7 @@ Looping over Subelements
 Suppose you want to do something like loop over a list of users, creating them, and allowing them to login by a certain set of
 SSH keys.
 
-How might that be accomplished?  Let's assume you had the following defined and loaded in via "vars_files" or maybe a "group_vars/all" file::
+In this example, we'll assume you have the following defined and loaded in via "vars_files" or maybe a "group_vars/all" file::
 
     ---
     users:
@@ -296,7 +294,7 @@ How might that be accomplished?  Let's assume you had the following defined and 
               - "*.*:SELECT"
               - "DB2.*:ALL"
 
-It might happen like so::
+You could loop over these subelements like this::
 
     - name: Create User
       user:
