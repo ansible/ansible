@@ -1,7 +1,7 @@
 - name: make sure pyvmomi is installed
   pip:
     name: pyvmomi
-    state: latest    
+    state: latest
 
 - name: store the vcenter container ip
   set_fact:
