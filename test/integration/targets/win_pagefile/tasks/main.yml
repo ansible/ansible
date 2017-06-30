@@ -1,4 +1,10 @@
 ---
+# Get current pagefiles status
+- name: Get original pagefile settings
+  win_pagefile:
+    state: query
+  register: original_pagefile_settings
+
 # Test 1: Set c pagefile with inital and maximum size
 - name: Set C pagefile as 1024-2048MB
   win_pagefile:
@@ -24,11 +30,11 @@
   set_fact: 
     expected:
       pagefiles: 
-      - { caption: "C:\\ 'pagefile.sys'",
-          description: "'pagefile.sys' @ C:\\",
-          initial_size: 1024,
-          maximum_size: 2048,
-          name: "C:\\pagefile.sys" }
+      - caption: "C:\\ 'pagefile.sys'"
+        description: "'pagefile.sys' @ C:\\"
+        initial_size: 1024
+        maximum_size: 2048
+        name: "C:\\pagefile.sys"
 
 - name: Test query - c pagefile 1024-2048
   assert:
@@ -103,11 +109,11 @@
   set_fact:
     expected:
       pagefiles:
-      - { caption: "C:\\ 'pagefile.sys'",
-          description: "'pagefile.sys' @ C:\\",
-          initial_size: 0,
-          maximum_size: 0,
-          name: "C:\\pagefile.sys" }
+      - caption: "C:\\ 'pagefile.sys'"
+        description: "'pagefile.sys' @ C:\\"
+        initial_size: 0
+        maximum_size: 0
+        name: "C:\\pagefile.sys"
 
 - name: Test query - c pagefile 0-0 (system managed)
   assert:
@@ -116,8 +122,71 @@
     - pagefiles_query.pagefiles == expected.pagefiles
     - pagefiles_query.automatic_managed_pagefiles == false
 
+# Test 5: Test no override
+- name: Set c pagefile 1024-1024, no override
+  win_pagefile:
+    drive: C
+    initial_size: 1024
+    maximum_size: 1024
+    override: no
+    state: present
+  register: c_pagefile_no_override
 
-# Test 5: Remove all pagefiles
+- name: Test set c pagefile no override
+  assert:
+    that:
+    - c_pagefile_no_override.changed == false
+
+- name: Query all pagefiles
+  win_pagefile:
+    state: query
+  register: pagefiles_query
+
+- name: Test query - c pagefile unchanged
+  assert:
+    that:
+    - pagefiles_query.changed == false
+    - pagefiles_query.pagefiles == expected.pagefiles
+    - pagefiles_query.automatic_managed_pagefiles == false
+
+
+# Test 6: Test override
+- name: Set c pagefile 1024-1024, override
+  win_pagefile:
+    drive: C
+    initial_size: 1024
+    maximum_size: 1024
+    state: present
+  register: c_pagefile_override
+
+- name: Test set c pagefile no override
+  assert:
+    that:
+    - c_pagefile_override.changed == true
+
+- name: Query all pagefiles
+  win_pagefile:
+    state: query
+  register: pagefiles_query
+
+- name: Set fact for pagefile expected result
+  set_fact:
+    expected:
+      pagefiles:
+      - caption: "C:\\ 'pagefile.sys'"
+        description: "'pagefile.sys' @ C:\\"
+        initial_size: 1024
+        maximum_size: 1024
+        name: "C:\\pagefile.sys"
+
+- name: Test query - c pagefile 1024-1024
+  assert:
+    that:
+    - pagefiles_query.changed == false
+    - pagefiles_query.pagefiles == expected.pagefiles
+    - pagefiles_query.automatic_managed_pagefiles == false
+
+# Test 7: Remove all pagefiles
 - name: Remove all pagefiles
   win_pagefile:
     remove_all: true
@@ -134,3 +203,18 @@
       - remove_all_pagefiles.changed == true
       - remove_all_pagefiles.pagefiles == expected.pagefiles
       - pagefiles_query.automatic_managed_pagefiles == false
+
+# Return all pagefile settings to its original state
+- name: Remove all pagefiles and return automatic to its original state
+  win_pagefile:
+    remove_all: yes
+    automatic: "{{ original_pagefile_settings.automatic_managed_pagefiles }}"
+
+- name: Return all previous pagefiles settings
+  win_pagefile:
+    drive: "{{ item.name[0] }}"
+    initial_size: "{{ item.initial_size }}"
+    maximum_size: "{{ item.maximum_size }}"
+    state: present
+  with_items: "{{ original_pagefile_settings.pagefiles }}"
+
