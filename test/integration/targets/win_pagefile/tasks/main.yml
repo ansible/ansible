@@ -217,4 +217,3 @@
     maximum_size: "{{ item.maximum_size }}"
     state: present
   with_items: "{{ original_pagefile_settings.pagefiles }}"
-
