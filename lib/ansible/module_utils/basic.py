@@ -142,6 +142,12 @@ except ImportError:
         print('\n{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
         sys.exit(1)
 
+from ansible.module_utils.simple_state_machine import StateMachine, TransitionError
+# This is so that developers who want to use this with AnsibleModuleFSM don't
+# have to know about the simple_state_machine package. The NOQA comment is
+# added to avoid linters from tripping on it.
+from ansible.module_utils.simple_state_machine import create_events, create_states  # NOQA
+
 AVAILABLE_HASH_ALGORITHMS = dict()
 try:
     import hashlib
@@ -2667,6 +2673,234 @@ class AnsibleModule(object):
 
     # In 2.0, moved from inside the module to the toplevel
     is_executable = is_executable
+
+
+class AnsibleModuleFSM(object):
+    """
+    A drop in replacement for AnsibleModule that provides state machine
+    capabilities.
+    """
+
+    def __init__(self, state_machine, render_path=None, **kwargs):
+        """
+        :param dict state_machine: A dict that contains arguments to configure
+            the underlying state machine. See state_machine keys below for a
+            description of valid keys and values.
+
+        :param str render_path: Optional. A valid path where you, the module
+            developer, would like to save a visual representation of the
+            state table. Note that setting this will cause the module to exit
+            immediately after rendering. This is to ensure that you don't
+            accidentally release your module with rendering turned on which
+            can negatively impact its performance. Users of your modules won't
+            be able to render your state machine but they rarely have any
+            reason to do that if at all.
+
+        Any other arguments that you provide aside from the above are forwarded
+        to the underlying AnsibleModule object.
+
+        state_machine Keys:
+            transitions: A dictionary representation of your state table. The
+                keys are expected to be tuples of (current_state, event) and
+                their corresponding values are expected to be tuples of
+                (next_state, function_name). The function provided is expected
+                to receive two arguments: the underlying AnsibleModule object
+                and a dictionary containing any data that your functions
+                want to share with each other. These same functions are also
+                expected to return two values: an event and the passed in data
+                which may or may not have been modified by the function. If
+                this seems like a lot to take in, it is. You might want to
+                pause for a bit and then check out the sample code below.
+            starting_state: A value taken from any of the 'current_states'
+                that you declared in your transitions argument. The underlying
+                state machine will start with this state.
+            starting_action: Any of the functions available in your module.
+                This may or may not be included in your transitions argument.
+                However, it must return an event that is paired with any of
+                the 'current_states' in your transitions argument otherwise
+                a TransitionError will be raised.
+            exit_event: An event that signals the end of the module's
+                execution. Once this event is received, no other functions will
+                be called and the module exits immediately. Do not put this
+                event in your transitions argument. If you do, the paired
+                (next_state, function_name) tuple will not be processed.
+
+        Example:
+
+        .. code-block:: python
+
+            #!/usr/bin/env python
+
+            # Note the additional imports, create_events and create_states.
+            # These are optional helper functions that allow you to define
+            # more descriptive events and states without too much boilerplate.
+            from ansible.module_utils.basic import \
+                AnsibleModuleFSM, create_events, create_states
+
+            # Use create_states to define descriptive state names/values.
+            # The following allows us to, for example, use S.initializing
+            # in our code below.
+            S = create_states('choosing_action',
+                              'creating',
+                              'deleting',
+                              'exiting',
+                              'initializing',
+                              'getting',
+                              'waiting')
+
+            # This allows us to define descriptive event names/values
+            E = create_events('create_started',
+                              'delete_started',
+                              'initialized',
+                              'exited',
+                              'found',
+                              'not_found',
+                              'must_wait',
+                              'must_create',
+                              'must_delete',
+                              'must_exit')
+
+
+            def main():
+                # Define the module's transitions. Note how we are using the
+                # states and events we defined above.
+                #
+                # Note how we pass in functions such as get_obj, choose_action,
+                # create_obj, etc. You will find the definition of these
+                # functions further down this example.
+                transitions = {
+                    (S.initializing, E.initialized): (S.getting, get_obj),
+
+                    (S.getting, E.found): (S.choosing_action, choose_action),
+                    (S.getting, E.not_found): (S.choosing_action, choose_action),
+
+                    (S.choosing_action, E.must_create): (S.creating, create_obj),
+                    (S.choosing_action, E.must_delete): (S.deleting, delete_obj),
+                    (S.choosing_action, E.must_exit): (S.exiting, exit_now),
+
+                    (S.creating, E.create_started): (S.waiting, wait),
+
+                    (S.deleting, E.delete_started): (S.waiting, wait),
+
+                    (S.waiting, E.must_wait): (S.waiting, wait),
+                    (S.waiting, E.must_exit): (S.exiting, exit_now)
+                }
+
+                # Instantiate the object.
+                AnsibleModuleFSM(
+                    # Uncomment this argument to make the module render
+                    # the state diagram and exit immediately. The file
+                    # extension will be appended automatically.
+                    # render_path="/tmp/mymodule",
+
+                    state_machine=dict(
+                        starting_state=S.initializing,
+                        starting_action=initialize,
+                        exit_event=E.exited,
+                        transitions=transitions
+                    ),
+
+                    argument_spec=dict(
+                        module_arg1=dict(required=True, type='str'),
+                        module_arg2=dict(required=False, default=100, type='int')
+                    )
+                )
+
+
+            # =======
+            # ACTIONS
+            # =======
+
+            def create_obj(module, data):
+                #
+                # Do stuff here
+                #
+
+                return E.create_started, data
+
+
+            def delete_obj(module, data):
+                #
+                # Do stuff here
+                #
+
+                return E.delete_started, data
+
+
+            def choose_action(module, data):
+                #
+                # Do stuff here
+                #
+
+                return E.must_create, data
+
+
+            def exit_now(module, data):
+                #
+                # Do stuff here
+                #
+                module.exit_json(msg="Done with the thing")
+                return E.exited, data
+
+
+            def get_obj(module, data):
+                #
+                # Do stuff here
+                #
+
+                return E.found, data
+
+
+            def initialize(module, data):
+                #
+                # Do stuff here
+                #
+
+                return E.initialized, data
+
+
+            def wait(module, data):
+                #
+                # Do stuff here
+                #
+
+                return E.must_exit, data
+
+            # ======
+
+            if __name__ == '__main__':
+                main()
+        """
+        try:
+            starting_state = state_machine["starting_state"]
+            starting_action = state_machine["starting_action"]
+            exit_event = state_machine["exit_event"]
+            transitions = state_machine["transitions"]
+        except KeyError:
+            err = sys.exc_info()[1]
+            raise TypeError("Missing key '%s' for state_machine argument" %
+                            err.args[0])
+
+        module = AnsibleModule(**kwargs)
+        machine = StateMachine(transitions, starting_state, starting_action)
+        data = dict()
+
+        if render_path:
+            machine.render(render_path)
+            # Fail immediately so that the module developer will always
+            # remember to remove the render_path argument. Having the module
+            # unintentionally render in production is a bad thing(tm)!
+            module.fail_json(msg="State chart saved to %s.png" % render_path)
+
+        event, data = starting_action(module, data)
+        while event != exit_event:
+            try:
+                action = machine.send_event(event)
+            except TransitionError:
+                err = sys.exc_info()[1]
+                module.fail_json(msg=err.message)
+
+            event, data = action(module, data)
 
 
 def get_module_path():
