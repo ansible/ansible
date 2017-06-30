@@ -13,6 +13,10 @@ python-memcached
 python-systemd
 cryptography
 pycrypto
+boto
 botocore
 boto3
 pytest
+pytest-xdist
+pytest-mock
+netaddr
