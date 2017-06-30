@@ -180,20 +180,27 @@ def get_or_create_policy_version(module, iam, policy, policy_document):
             return v, False
 
     # No existing version so create one
-    # Instead of testing the versions list for the magic number 5, we are
-    # going to attempt to create a version and catch the error
+    # There is a service limit (typically 5) of policy versions.
+    #
+    # Rather than assume that it is 5, we'll try to create the policy
+    # and if that doesn't work, delete the oldest non default policy version
+    # and try again.
     try:
         version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
         return version, True
     except botocore.exceptions.ClientError as e:
-        delete_oldest_non_default_version(module, iam, policy)
-        try:
-            version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
-            return version, True
-        except:
-            module.fail_json(msg="Couldn't create policy version: %s" % str(e),
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        if e['Error']['Code'] == 'LimitExceeded':
+            delete_oldest_non_default_version(module, iam, policy)
+            try:
+                version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
+                return version, True
+            except botocore.exceptions.ClientError as e:
+                pass
+        # Handle both when the exception isn't LimitExceeded or
+        # the second attempt still failed
+        module.fail_json(msg="Couldn't create policy version: %s" % str(e),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
 
 
 def set_if_default(module, iam, policy, policy_version, is_default):
