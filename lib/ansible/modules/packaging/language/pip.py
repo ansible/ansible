@@ -41,7 +41,9 @@ options:
     default: null
   version:
     description:
-      - The version number to install of the Python library specified in the I(name) parameter
+      - The version number to install of the Python library specified in the
+        I(name) parameter.
+      - As of ... you can use version comparisons in this parameter.
     required: false
     default: null
   requirements:
@@ -157,6 +159,11 @@ EXAMPLES = '''
     name: bottle
     version: 0.11
 
+# Install (Docker) python package with a complex version spec.
+- pip:
+    name: docker
+    version: >=2.2.0,!=2.4.0,!=2.4.1
+
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
@@ -246,11 +253,20 @@ def _get_cmd_options(module, cmd):
 
 
 def _get_full_name(name, version=None):
-    if version is None:
-        resp = name
-    else:
-        resp = name + '==' + version
-    return resp
+    if not version:
+        return name
+
+    # recast as string since we'll need the char index
+    version = str(version) if not isinstance(version, basestring) else version
+
+    # if the version starts with a number, it's not a version spec and we can
+    # assume they mean ==
+    if version[0].isdigit():
+        return name + '==' + version
+
+    # if the user passed in a version that doesn't begin with a number then
+    # it's probably a version spec. let's not muck with it.
+    return name + version
 
 
 def _get_packages(module, pip, chdir):
