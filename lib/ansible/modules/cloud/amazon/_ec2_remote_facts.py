@@ -14,7 +14,7 @@
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
+                    'status': ['deprecated'],
                     'supported_by': 'curated'}
 
 
@@ -22,6 +22,7 @@ DOCUMENTATION = '''
 ---
 module: ec2_remote_facts
 short_description: Gather facts about ec2 instances in AWS
+deprecated: Deprecated in 2.4. Use M(ec2_instance_facts) instead.
 description:
     - Gather facts about ec2 instances in AWS
 version_added: "2.0"
