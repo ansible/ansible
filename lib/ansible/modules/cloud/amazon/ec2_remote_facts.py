@@ -113,6 +113,8 @@ def get_instance_info(instance):
     instance_info = { 'id': instance.id,
                     'kernel': instance.kernel,
                     'instance_profile': instance_profile,
+                    'instance_type': instance.instance_type,
+                    'root_device_name': instance.root_device_name,
                     'root_device_type': instance.root_device_type,
                     'private_dns_name': instance.private_dns_name,
                     'public_dns_name': instance.public_dns_name,
@@ -142,6 +144,7 @@ def get_instance_info(instance):
                     'private_ip_address': instance.private_ip_address,
                     'public_ip_address': instance.ip_address,
                     'state': instance._state.name,
+                    'subnet_id': instance.subnet_id,
                     'vpc_id': instance.vpc_id,
                     'block_device_mapping': bdm_dict,
                   }
