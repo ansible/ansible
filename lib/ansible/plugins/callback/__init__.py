@@ -95,7 +95,13 @@ class CallbackBase:
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
-        return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        # make an attempt to serialize the result and convert to text on failure
+        try:
+            jdata = json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        except UnicodeError:
+            text_result = to_text(abridged_result)
+            jdata = json.dumps(text_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        return jdata
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
