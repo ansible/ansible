@@ -77,8 +77,7 @@ class TestVyosUserModule(TestVyosModule):
 
     def test_vyos_user_update_password_on_create_ok(self):
         set_module_args(dict(name='ansible', password='test', update_password='on_create'))
-        result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['set system login user ansible authentication plaintext-password test'])
+        self.execute_module()
 
     def test_vyos_user_update_password_always(self):
         set_module_args(dict(name='ansible', password='test', update_password='always'))

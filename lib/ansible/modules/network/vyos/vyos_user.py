@@ -159,7 +159,10 @@ def spec_to_commands(updates, module):
             continue
 
         if needs_update(want, have, 'level'):
-            add(commands, want, 'level %s' % want['level'])
+            add(commands, want, "level %s" % want['level'])
+
+        if needs_update(want, have, 'full_name'):
+            add(commands, want, "full-name %s" % want['full_name'])
 
         if needs_update(want, have, 'password'):
             if update_password == 'always' or not have:
@@ -168,24 +171,41 @@ def spec_to_commands(updates, module):
     return commands
 
 
+def parse_level(data):
+    match = re.search(r'level (\S+)', data, re.M)
+    if match:
+        level = match.group(1)[1:-1]
+        return level
+
+
+def parse_full_name(data):
+    match = re.search(r'full-name (\S+)', data, re.M)
+    if match:
+        full_name = match.group(1)[1:-1]
+        return full_name
+
+
 def config_to_dict(module):
     data = get_config(module)
-    instances = []
 
-    config = {'name': [], 'level': [], 'full_name': [], 'password': None, 'state': 'present'}
+    match = re.findall(r'^set system login user (\S+)', data, re.M)
+    if not match:
+        return list()
 
-    for line in data.split('\n'):
-        if line.startswith('set system login user'):
-            match = re.findall(r'user (\S+)', line, re.M)
-            config['name'].extend(match)
-            if 'level' in line:
-                match = re.findall(r'level (\S+)', line, re.M)
-                config['level'].extend(match)
-            if 'full-name' in line:
-                match = re.findall(r'full-name (\S+)', line, re.M)
-                config['full_name'].extend(match)
+    instances = list()
 
-    instances = [config]
+    for user in set(match):
+        regex = r' %s .+$' % user
+        cfg = re.findall(regex, data, re.M)
+        cfg = '\n'.join(cfg)
+        obj = {
+            'name': user,
+            'state': 'present',
+            'password': None,
+            'level': parse_level(cfg),
+            'full_name': parse_full_name(cfg)
+        }
+        instances.append(obj)
 
     return instances
 
@@ -234,6 +254,7 @@ def map_params_to_obj(module):
     for item in collection:
         get_value = partial(get_param_value, item=item, module=module)
         item['password'] = get_value('password')
+        item['full_name'] = get_value('full_name')
         item['level'] = get_value('level')
         item['state'] = get_value('state')
         objects.append(item)
@@ -243,7 +264,6 @@ def map_params_to_obj(module):
 
 def update_objects(want, have):
     updates = list()
-
     for entry in want:
         item = next((i for i in have if i['name'] == entry['name']), None)
         if item is None:
@@ -292,8 +312,7 @@ def main():
 
     if module.params['purge']:
         want_users = [x['name'] for x in want]
-        for x in have:
-            have_users = x['name']
+        have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             commands.append('delete system login user %s' % item)
 
