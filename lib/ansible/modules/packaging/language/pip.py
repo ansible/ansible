@@ -257,7 +257,9 @@ def _get_full_name(name, version=None):
         return name
 
     # recast as string since we'll need the char index
-    version = str(version) if not isinstance(version, basestring) else version
+    # py2/3 compatible basestring style string check
+    if not isinstance(version, ("".__class__, u"".__class__)):
+        version = str(version)
 
     # if the version starts with a number, it's not a version spec and we can
     # assume they mean to use '=='. otherwise, we'll depend on the user to
