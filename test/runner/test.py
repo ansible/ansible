@@ -182,7 +182,7 @@ def parse_args():
 
     integration.add_argument('--python',
                              metavar='VERSION',
-                             choices=SUPPORTED_PYTHON_VERSIONS,
+                             choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                              help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
     integration.add_argument('--start-at',
@@ -281,7 +281,7 @@ def parse_args():
 
     compiler.add_argument('--python',
                           metavar='VERSION',
-                          choices=COMPILE_PYTHON_VERSIONS,
+                          choices=COMPILE_PYTHON_VERSIONS + ('default',),
                           help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
 
     add_lint(compiler)
@@ -313,7 +313,7 @@ def parse_args():
 
     sanity.add_argument('--python',
                         metavar='VERSION',
-                        choices=SUPPORTED_PYTHON_VERSIONS,
+                        choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
     sanity.add_argument('--base-branch',
