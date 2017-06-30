@@ -1,6 +1,12 @@
 Ansible Changes By Release
 ==========================
 
+## 2.3.3 "Ramble On" - TBD
+
+### Bugfixes
+* Fix synchronize traceback with the docker connection plugin
+* Python3 fixes for azure modules
+
 ## 2.3.2 "Ramble On" - TBD
 
 ### Bugfixes
@@ -26,6 +32,10 @@ Ansible Changes By Release
 * fixed corner case for delegate_to, loops and delegate_facts
 * fixed wait_for python2.4/2.5 compatibility (this is last version this is needed)
 * fix for adhoc not obeying callback options
+* fix for win_find where it fails to recursively scan empty nested directories
++ fix non-pipelined code paths for Windows (eg, ANSIBLE_KEEP_REMOTE_FILES, non-pipelined connection plugins)
+* fix for win_updates where args and check mode were ignored due to common code change
+
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
