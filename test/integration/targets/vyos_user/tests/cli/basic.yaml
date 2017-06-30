@@ -33,6 +33,7 @@
     name: ansibletest1
     password: test
     state: present
+    update_password: on_create
     provider: "{{ cli }}"
   register: result
 
