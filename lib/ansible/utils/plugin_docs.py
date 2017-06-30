@@ -26,6 +26,7 @@ import yaml
 from collections import MutableMapping, MutableSet, MutableSequence
 
 from ansible.module_utils.six import string_types
+from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import fragment_loader
 
@@ -117,7 +118,8 @@ def get_docstring(filename, verbose=False):
     }
 
     try:
-        M = ast.parse(''.join(open(filename)))
+        b_module_data = open(filename, 'rb').read()
+        M = ast.parse(b_module_data)
         try:
             display.debug('Attempt first docstring is yaml docs')
             docstring = yaml.load(M.body[0].value.s)
@@ -145,7 +147,7 @@ def get_docstring(filename, verbose=False):
                             if isinstance(child.value, ast.Dict):
                                 data[varkey] = ast.literal_eval(child.value)
                             else:
-                                if theid in ['DOCUMENTATION', 'ANSIBLE_METADATA']:
+                                if theid == 'DOCUMENTATION':
                                     # string should be yaml
                                     data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                                 else:
@@ -153,6 +155,7 @@ def get_docstring(filename, verbose=False):
                                     data[varkey] = child.value.s
                             display.debug('assigned :%s' % varkey)
 
+        data['metadata'] = extract_metadata(b_module_data)[0]
         # add fragments to documentation
         if data['doc']:
             add_fragments(data['doc'], filename)

@@ -31,7 +31,7 @@ class ParseError(Exception):
     pass
 
 
-def seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_node_col):
+def _seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_node_col):
     """Look for the end of a dict in a set of lines
 
     We know the starting position of the dict and we know the start of the
@@ -105,7 +105,7 @@ def seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_no
     return end_line, end_col
 
 
-def seek_end_of_string(module_data, start_line, start_col, next_node_line, next_node_col):
+def _seek_end_of_string(module_data, start_line, start_col, next_node_line, next_node_col):
     """
     This is much trickier than finding the end of a dict.  A dict has only one
     ending character, "}".  Strings have four potential ending characters.  We
@@ -181,26 +181,26 @@ def extract_metadata(module_data):
 
                     if isinstance(child.value, ast.Dict):
                         # Determine where the current metadata ends
-                        end_line, end_col = seek_end_of_dict(module_data,
-                                                             child.lineno - 1,
-                                                             child.col_offset,
-                                                             next_lineno,
-                                                             next_col_offset)
+                        end_line, end_col = _seek_end_of_dict(module_data,
+                                                              child.lineno - 1,
+                                                              child.col_offset,
+                                                              next_lineno,
+                                                              next_col_offset)
 
                     elif isinstance(child.value, ast.Str):
                         metadata = yaml.safe_load(child.value.s)
-                        end_line, end_col = seek_end_of_string(module_data,
-                                                               child.lineno - 1,
-                                                               child.col_offset,
-                                                               next_lineno,
-                                                               next_col_offset)
+                        end_line, end_col = _seek_end_of_string(module_data,
+                                                                child.lineno - 1,
+                                                                child.col_offset,
+                                                                next_lineno,
+                                                                next_col_offset)
                     elif isinstance(child.value, ast.Bytes):
                         metadata = yaml.safe_load(to_text(child.value.s, errors='surrogate_or_strict'))
-                        end_line, end_col = seek_end_of_string(module_data,
-                                                               child.lineno - 1,
-                                                               child.col_offset,
-                                                               next_lineno,
-                                                               next_col_offset)
+                        end_line, end_col = _seek_end_of_string(module_data,
+                                                                child.lineno - 1,
+                                                                child.col_offset,
+                                                                next_lineno,
+                                                                next_col_offset)
                     else:
                         # Example:
                         #   ANSIBLE_METADATA = 'junk'
