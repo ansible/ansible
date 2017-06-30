@@ -33,15 +33,15 @@ develop a module. Ask the following questions:
 
 There are a lot of existing modules available, you should check out the list of existing modules at :doc:`../modules`
 
-2. Has someone already worked on a similar Pull Request
+2. Has someone already worked on a similar Pull Request?
 
-It's possible that someone has already started developing a PR. There are a few ways to find open module Pull Request.
+It's possible that someone has already started developing a similar PR. There are a few ways to find open module Pull Requests:
 
 * `GitHub new module PRs <https://github.com/ansible/ansible/labels/new_module>`_
 * `All updates to modules <https://github.com/ansible/ansible/labels/module>`_
 * `New module PRs listed by directory <https://ansible.sivel.net/pr/byfile.html>`_ search for `lib/ansible/modules/`
 
-If you find an existing PR that looks like it addresses the issue you are trying to solve we welcome your feedback on the PR, which will speed up getting the PR merged.
+If you find an existing PR that looks like it addresses the issue you are trying to solve, please provide feedback on the PR -  this will speed up getting the PR merged.
 
 3. Should you use or develop an action plugin instead?
 
