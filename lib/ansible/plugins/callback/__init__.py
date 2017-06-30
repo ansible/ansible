@@ -81,7 +81,7 @@ class CallbackBase:
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
-        abridged_result = strip_internal_keys(result)
+        abridged_result = to_text(strip_internal_keys(result))
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
@@ -94,9 +94,6 @@ class CallbackBase:
         # remove exception from screen output
         if 'exception' in abridged_result:
             del abridged_result['exception']
-
-        # ensure we don't hit decode errors on displaying errors
-        abridged_result = to_text(abridged_result)
 
         return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
