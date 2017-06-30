@@ -105,3 +105,8 @@
         that:
           - "'delegated' in testfact2"
       when: inventory_hostname == 'facthost2'
+
+    - assert:
+        that:
+          - testfact2 is not defined
+      when: inventory_hostname != 'facthost2'
