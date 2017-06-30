@@ -1,0 +1,164 @@
+# Test code for the vmware_dvswitch module.
+# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: make sure pyvmomi is installed
+  pip:
+    name: pyvmomi
+    state: latest
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+
+- name: start vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
+  register: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Datacenter from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
+  register: datacenters
+
+- debug: var=vcsim_instance
+- debug: var=datacenters
+
+# Testcase 0001: Add Distributed vSwitch
+- name: add distributed vSwitch
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter_name: "{{ item | basename }}"
+    state: present
+    switch_name: dvswitch_0001
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0001
+  with_items:
+    - "{{ datacenters['json'] }}"
+
+- name: ensure distributed vswitch is present
+  assert:
+    that:
+        - "{{ dvs_result_0001.changed == true }}"
+
+- name: get a list of distributed vswitch from vcsim after adding
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DVS' }}"
+  register: new_dvs_0001
+
+- debug:
+    msg: "{{ item | basename }}"
+  with_items: "{{ new_dvs_0001['json'] }}"
+
+- set_fact: new_dvs_name="{% for dvs in new_dvs_0001['json'] %} {{ True if (dvs | basename) == 'dvswitch_0001' else False }}{% endfor %}"
+
+- debug: var=new_dvs_name
+- assert:
+    that:
+      - "{{ 'True' in new_dvs_name }}"
+
+
+# Testcase 0002: Add Distributed vSwitch again
+- name: add distributed vSwitch again
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter_name: "{{ item | basename }}"
+    state: present
+    switch_name: dvswitch_0001
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0002
+  with_items:
+    - "{{ datacenters['json'] }}"
+
+- name: ensure distributed vswitch is present
+  assert:
+    that:
+        - "{{ dvs_result_0002.changed == false }}"
+
+
+# FIXME: Uncomment this testcase once vcsim supports distributed vswitch delete method
+# Currently, vcsim does not support distributed vswitch delete option,
+# Once this feature is available we can uncomment following testcase
+
+# Testcase 0003: Add Distributed vSwitch
+#- name: add distributed vSwitch
+#  vmware_dvswitch:
+#    validate_certs: False
+#    hostname: "{{ vcsim }}"
+#    username: root
+#    password: esxi@123
+#    datacenter_name: "{{ item | basename }}"
+#    state: absent
+#    switch_name: dvswitch_0001
+#    mtu: 9000
+#    uplink_quantity: 2
+#    discovery_proto: lldp
+#    discovery_operation: both
+#  with_items:
+#    - "{{ datacenters['json'] }}"
+#  register: dvs_result_0003
+
+#- name: ensure distributed vswitch is present
+#  assert:
+#    that:
+#        - "{{ dvs_result_0003.changed == true }}"
+
+#- name: get a list of Datacenter from vcsim after adding datacenter
+#  uri:
+#    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DVS' }}"
+#  register: del_dvs
+
+#- debug:
+#    msg: "{{ item | basename }}"
+#  with_items: "{{ del_dvs['json'] }}"
+
+#- set_fact: del_dvs_name="{% for i in del_dvs['json'] %} {{ True if (i | basename) == 'dvswitch_0001' else False }}{% endfor %}"
+
+#- debug: var=del_dvs_name
+#- assert:
+#    that:
+#      - "{{ 'True' not in del_dvs_name }}"
