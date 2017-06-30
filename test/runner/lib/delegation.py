@@ -211,6 +211,11 @@ def delegate_docker(args, exclude, require):
                 '--privileged=%s' % str(privileged).lower(),
             ]
 
+            docker_socket = '/var/run/docker.sock'
+
+            if os.path.exists(docker_socket):
+                test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
+
             if util_id:
                 test_options += [
                     '--link', '%s:ansible.http.tests' % util_id,
