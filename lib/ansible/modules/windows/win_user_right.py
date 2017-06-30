@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = r'''
 ---
-module: win_share
+module: win_user_right
 version_added: '2.4'
 short_description: Manage Windows User Rights
 description:
