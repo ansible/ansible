@@ -201,6 +201,10 @@ def parse_args():
                              metavar='TAGS',
                              help='only run plays and tasks whose tags do not match these values')
 
+    integration.add_argument('--diff',
+                             action='store_true',
+                             help='show diff output')
+
     integration.add_argument('--allow-destructive',
                              action='store_true',
                              help='allow destructive tests (--local and --tox only)')
