@@ -14,6 +14,114 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = '''
+---
+module: iam_user
+short_description: Manage AWS IAM users
+description:
+  - Manage AWS IAM roles
+version_added: "2.4"
+author: Maksym Postument, @infectsoldier
+options:
+  name:
+    description:
+      - The name of the user.
+    required: true
+  password:
+    description:
+      - The password of the user.
+  path:
+    description:
+      - The path to the user. For more information about paths, see U(http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
+    required: false
+    default: "/"
+  managed_policy:
+    description:
+      - A list of managed policy ARNs (can't use friendly names due to AWS API limitation) to attach to the user. To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
+    required: true
+  groups:
+    description:
+      -List of groups which should be assigned to user
+    required: false
+  state:
+    description:
+      - Create or remove the IAM user.
+    required: true
+    choices: [ 'present', 'absent' ]
+  purge_policy:
+    description:
+      - Deatach policy which not included in managed_policy list
+    required: false
+    default: false
+  purge_users:
+    description:
+      - Deatach users which not included in users list
+    required: false
+    default: false
+requirements: [ botocore, boto3 ]
+extends_documentation_fragment:
+  - aws
+'''
+
+EXAMPLES = '''
+# Note: These examples do not set authentication details, see the AWS Guide for details.
+# Create a user
+- iam_user:
+    name: test_user1
+    state: present
+# Create a user and attach a managed policy called "ReadOnlyAccess"
+- iam_user:
+    name:  test_user1
+    state: present
+    managed_policy:
+      - arn:aws:iam::aws:policy/ReadOnlyAccess
+# Keep the user created above but remove all managed policies
+- iam_user:
+    name: test_user1
+    state: present
+    purge_policy: true
+# Delete the user
+- iam_user:
+    name: test_user1
+    state: absent
+# Keep the user created above but remove all groups
+- iam_user:
+    name: test_user1
+    state: present
+    purge_groups: true
+'''
+RETURN = '''
+iam_user:
+    description: dictionary containing all the user information
+    returned: success
+    type: dictionary
+    contains:
+        arn:
+            description: the Amazon Resource Name (ARN) specifying the user
+            type: string
+            sample: "arn:aws:iam::1111111111:user/asdasds"
+        create_date:
+            description: the date and time, in ISO 8601 date-time format, when the user was created
+            type: string
+            sample: "2017-02-08T04:36:28+00:00"
+        user_id:
+            description: the stable and unique string identifying the user
+            type: string
+            sample: AGPAIDBWE12NSFINE55TM
+        user_name:
+            description: the friendly name that identifies the user
+            type: string
+            sample: testgroup1
+        path:
+            description: the path to the user
+            type: string
+            sample: /
+'''
+
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 from ansible.module_utils.ec2 import HAS_BOTO3
@@ -66,7 +174,7 @@ def create_or_update_user(connection, module):
     purge_groups = module.params.get('purge_groups')
     changed = False
 
-    # Get user
+    # Get role
     user = get_user(connection, module, params['UserName'])
 
     # If user is None, create it
@@ -143,19 +251,20 @@ def create_or_update_user(connection, module):
 
     user = get_user(connection, module, params['UserName'])
 
-    module.exit_json(changed=changed, iam_group=camel_dict_to_snake_dict(user))
+    module.exit_json(changed=changed, iam_user=camel_dict_to_snake_dict(user))
 
 def destroy_user(connection, module):
 
     params = dict()
     params['UserName'] = module.params.get('name')
+    groups = module.params.get('groups')
 
     if get_user(connection, module, params['UserName']):
 
         # Remove any attached policies otherwise deletion fails
         try:
             for policy in get_attached_policy_list(connection, module, params['UserName']):
-                connection.detach_user_policy(GroupName=params['UserName'], PolicyArn=policy['PolicyArn'])
+                connection.detach_user_policy(UserName=params['UserName'], PolicyArn=policy['PolicyArn'])
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
@@ -163,13 +272,13 @@ def destroy_user(connection, module):
             module.fail_json(msg=e.message, exception=traceback.format_exc())
 
         # Remove any groups otherwise deletion fails
-        current_group_members_list = []
         current_group_members = get_group(connection, module, params['UserName'])
-        for group in current_group_members:
-            current_group_members_list.append(member['UserName'])
-        for user in current_group_members_list:
+        current_group_members_list = []
+        for member in current_group_members:
+            current_group_members_list.append(member['GroupName'])
+        for group in current_group_members_list:
             try:
-                connection.remove_user_from_group(GroupName=params['GroupName'], UserName=user)
+                connection.remove_user_from_group(GroupName=group, UserName=params['UserName'])
             except ClientError as e:
                 module.fail_json(msg=e.message, exception=traceback.format_exc(),
                                  **camel_dict_to_snake_dict(e.response))
@@ -177,7 +286,7 @@ def destroy_user(connection, module):
                 module.fail_json(msg=e.message, exception=traceback.format_exc())
 
         try:
-            connection.delete_group(**params)
+            connection.delete_user(**params)
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
