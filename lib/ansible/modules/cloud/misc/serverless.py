@@ -38,6 +38,11 @@ options:
       - Goal state of given stage/project
     required: false
     default: present
+  serverless_bin_path:
+    description:
+      - The path of a serverless framework binary relative to the 'service_path' eg. node_module/.bin/serverless
+    required: false
+    version_added: "2.4"
   service_path:
     description:
       - The path to the root of the Serverless Service to be operated on.
@@ -94,6 +99,13 @@ EXAMPLES = """
     region: us-east-1
     stack_name: '{{ sls.service_name }}'
     stack_resources: true
+
+# Deploy a project but use a locally installed serverless binary instead of the global serverless binary
+- serverless:
+    stage: dev
+    region: us-east-1
+    service_path: '{{ project_dir }}'
+    serverless_bin_path: node_modules/.bin/serverless
 """
 
 RETURN = """
@@ -153,6 +165,7 @@ def main():
             region       = dict(default='', required=False),
             stage        = dict(default='', required=False),
             deploy       = dict(default=True, type='bool', required=False),
+            serverless_bin_path = dict(required=False, type='path')
         ),
     )
 
@@ -162,8 +175,13 @@ def main():
     region = module.params.get('region')
     stage = module.params.get('stage')
     deploy = module.params.get('deploy', True)
+    serverless_bin_path = module.params.get('serverless_bin_path')
 
-    command = "serverless "
+    if serverless_bin_path is not None:
+        command = serverless_bin_path + " "
+    else:
+        command = "serverless "
+
     if state == 'present':
         command += 'deploy '
     elif state == 'absent':
