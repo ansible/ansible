@@ -258,7 +258,7 @@ In the event you want to debug a module that is running on a remote target (i.e.
 - Navigate to ``./debug-dir`` (notice that unzipping has caused the generation of ``ansible_module_my_test_module.py``)
 - Modify or set a breakpoint in the unzipped module
 - Ensure that the unzipped module is executable: ``$ chmod 755 ansible_module_my_test_module.py``
-- Run the unzipped module directly passing the args file: ``$ ./ansible_module_my_test_module.py args`` (args is the file that contains the params that were originally passed. Good for repro and debugging)
+- Run the unzipped module directly passing the args file: ``$ ./ansible_module_my_test_module.py args`  ` (args is the file that contains the params that were originally passed. Good for repro and debugging)
 
 Unit testing
 ============
@@ -273,7 +273,7 @@ Unit tests for modules will be appropriately located in ``./test/units/modules``
 To run pytest against a single test module, you can do the following (provide the path to the test module appropriately):
 
 ``$ pytest -r a --cov=. --cov-report=html --fulltrace --color yes
-test/units/modules/.../test\my_new_test_module.py ``
+test/units/modules/.../test/my_new_test_module.py``
 
 Going Further
 =============
