@@ -45,6 +45,9 @@ Ansible Changes By Release
   module is deprecated and slated to go away in 2.8.  The functionality has been
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
 
+#### Deprecated Modules:
+* ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
+
 ### Minor Changes
 * removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
 * removed unused and deprecated config option `pattern`
@@ -109,6 +112,7 @@ Ansible Changes By Release
 
 - aix_lvol
 - amazon
+  * ec2_metadata_facts
   * ec2_vpc_endpoint
   * iam_cert_facts
   * lightsail
