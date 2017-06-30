@@ -198,7 +198,6 @@ def interface_is_portchannel(interface, module):
         True/False based on if interface is a member of a portchannel bundle
     """
     intf_type = get_interface_type(interface)
-    interface_table = {}
 
     if intf_type == 'ethernet':
         command = 'show interface ' + interface
@@ -394,7 +393,7 @@ def get_list_of_vlans(module):
         body = execute_show_command(command, module)[0]
         vlan_table = body['TABLE_vlanbrief']['ROW_vlanbrief']
     except (KeyError, AttributeError, IndexError):
-        return None
+        return []
 
     if isinstance(vlan_table, list):
         for vlan in vlan_table:

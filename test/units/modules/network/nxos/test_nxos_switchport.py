@@ -47,8 +47,7 @@ class TestNxosSwitchportModule(TestNxosModule):
             output = list()
             for command in commands:
                 filename = str(command).split(' | ')[0].replace(' ', '_')
-                if '2/1' in filename:
-                    filename = filename.replace('2/1', '')
+                filename = filename.replace('2/1', '')
                 output.append(load_fixture('nxos_switchport', filename))
             return output
 
