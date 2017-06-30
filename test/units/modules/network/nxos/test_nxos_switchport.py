@@ -41,19 +41,15 @@ class TestNxosSwitchportModule(TestNxosModule):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
             for command in commands:
                 filename = str(command).split(' | ')[0].replace(' ', '_')
                 if '2/1' in filename:
-                    file_name = filename.split('2/1')
-                    filename = "".join([file_name[0], file_name[1]])
-                    filename = os.path.join('nxos_switchport', filename)
-                else:
-                    filename = os.path.join('nxos_switchport', filename)
-                output.append(load_fixture(filename))
+                    filename = filename.replace('2/1', '')
+                output.append(load_fixture('nxos_switchport', filename))
             return output
 
         self.run_commands.side_effect = load_from_file
