@@ -162,7 +162,7 @@ EXAMPLES = '''
 # Install (Docker) python package with a complex version spec.
 - pip:
     name: docker
-    version: >=2.2.0,!=2.4.0,!=2.4.1
+    version: ">=2.2.0,!=2.4.0,!=2.4.1"
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
