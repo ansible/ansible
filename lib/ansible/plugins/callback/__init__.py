@@ -95,6 +95,9 @@ class CallbackBase:
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
+        # ensure we don't hit decode errors on displaying errors
+        abridged_result = to_text(abridged_result)
+
         return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _handle_warnings(self, res):
