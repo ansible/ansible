@@ -95,7 +95,6 @@ class CallbackBase:
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
-
         # make an attempt to serialize the result and convert to text on failure
         try:
             jdata = json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
