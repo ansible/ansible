@@ -96,7 +96,7 @@ EXAMPLES = r'''
 RETURN = r'''
 added:
   description: A list of accounts that were added to the right, this is empty
-    if no accounts were added.   
+    if no accounts were added.
   returned: success
   type: list
   sample: ["NT AUTHORITY\\SYSTEM", "DOMAIN\\User"]
