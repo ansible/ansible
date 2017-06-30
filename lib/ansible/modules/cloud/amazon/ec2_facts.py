@@ -127,6 +127,10 @@ ansible_facts:
             description: IAM info last updated time.
             type: string
             sample: "2017-05-12T02:42:27Z"
+        ansible_ec2_iam_instance_profile_role:
+            description: IAM instance role.
+            type: string
+            sample: "role_name"
         ansible_ec2_iam_security_credentials_<role name>:
             description:
                 - If there is an IAM role associated with the instance, role-name is the name of the role,
@@ -458,6 +462,8 @@ class Ec2Metadata(object):
         new_fields = {}
         for key, value in fields.items():
             split_fields = key[len(uri):].split('/')
+            if len(split_fields) == 3 and split_fields[0:2] == ['iam', 'security-credentials'] and '_' not in split_fields[2]:
+                new_fields[self._prefix % "iam-instance-profile-role"] = split_fields[2]
             if len(split_fields) > 1 and split_fields[1]:
                 new_key = "-".join(split_fields)
                 new_fields[self._prefix % new_key] = value
