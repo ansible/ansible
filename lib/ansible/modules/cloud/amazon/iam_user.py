@@ -98,7 +98,7 @@ RETURN = '''
 iam_user:
     description: dictionary containing all the user information
     returned: success
-    type: dictionary
+    type: complex
     contains:
         arn:
             description: the Amazon Resource Name (ARN) specifying the user
