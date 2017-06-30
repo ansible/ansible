@@ -31,9 +31,6 @@ options:
     description:
       - The name of the user.
     required: true
-  password:
-    description:
-      - The password of the user.
   path:
     description:
       - The path to the user. For more information about paths, see U(http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
