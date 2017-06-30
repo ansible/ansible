@@ -233,44 +233,47 @@ new: true register: testout
 
 ::
 
-    - Run the playbook and analyze the output: `$ ansible-playbook ./testmod.yml`
+- Run the playbook and analyze the output: `$ ansible-playbook ./testmod.yml`
 
-    # Debugging (local)
+Debugging (local)
+=================   
 
-    If you want to break into a module and step through with the debugger, locally running the module you can do:
+If you want to break into a module and step through with the debugger, locally running the module you can do:
 
-    1. Set a breakpoint in the module: `import pdb; pdb.set_trace()`
-    1. Run the module on the local machine: `$ python -m pdb ./my_new_test_module.py ./args.json`
+- Set a breakpoint in the module: `import pdb; pdb.set_trace()`
+- Run the module on the local machine: `$ python -m pdb ./my_new_test_module.py ./args.json`
 
-    # Debugging (remote)
+Debugging (remote)
+==================
 
-    In the event you want to debug a module that is running on a remote target (i.e. not localhost), one way to do this is the following:
+In the event you want to debug a module that is running on a remote target (i.e. not localhost), one way to do this is the following:
 
-    1. On your controller machine (running Ansible) set `ANSIBLE_KEEP_REMOTE_FILES=1` (this tells Ansible to retain the modules it sends to the remote machine instead of removing them)
-    1. Run your playbook targetting the remote machine and specify `-vvvv` (the verbose output will show you many things, including the remote location that Ansible uses for the modules)
-    1. Take note of the remote path Ansible used on the remote host
-    1. SSH into the remote target after the completion of the playbook
-    1. Navigate to the directory (most likely it is going to be your ansible remote user defined or implied from the playbook: `~/.ansible/tmp/ansible-tmp-...`)
-    1. Here you should see the module that you executed from your Ansible controller, but this is the zipped file that Ansible sent to the remote host. You can run this by specifying `python my_test_module.py` (not necessary)
-    1. To debug, though, we will want to extra this zip out to the original module format: `python my_test_module.py explode` (Ansible will expand the module into `./debug-dir`)
-    1. Navigate to `./debug-dir` (notice that unzipping has caused the generation of `ansible_module_my_test_module.py`)
-    1. Modify or set a breakpoint in the unzipped module
-    1. Ensure that the unzipped module is executable: `$ chmod 755 ansible_module_my_test_module.py`
-    1. Run the unzipped module directly passing the args file: `$ ./ansible_module_my_test_module.py args` (args is the file that contains the params that were originally passed. Good for repro and debugging)
+- On your controller machine (running Ansible) set `ANSIBLE_KEEP_REMOTE_FILES=1` (this tells Ansible to retain the modules it sends to the remote machine instead of removing them)
+- Run your playbook targetting the remote machine and specify ``-vvvv`` (the verbose output will show you many things, including the remote location that Ansible uses for the modules)
+- Take note of the remote path Ansible used on the remote host
+- SSH into the remote target after the completion of the playbook
+- Navigate to the directory (most likely it is going to be your ansible remote user defined or implied from the playbook: ``~/.ansible/tmp/ansible-tmp-...``)
+- Here you should see the module that you executed from your Ansible controller, but this is the zipped file that Ansible sent to the remote host. You can run this by specifying ``python my_test_module.py`` (not necessary)
+- To debug, though, we will want to extra this zip out to the original module format: ``python my_test_module.py explode`` (Ansible will expand the module into ``./debug-dir``)
+- Navigate to ``./debug-dir`` (notice that unzipping has caused the generation of ``ansible_module_my_test_module.py``)
+- Modify or set a breakpoint in the unzipped module
+- Ensure that the unzipped module is executable: ``$ chmod 755 ansible_module_my_test_module.py``
+- Run the unzipped module directly passing the args file: ``$ ./ansible_module_my_test_module.py args`` (args is the file that contains the params that were originally passed. Good for repro and debugging)
 
-    # Unit testing
+Unit testing
+============
 
-    Unit tests for modules will be appropriately located in `./test/units/modules`. You must first setup your testing environment. In my case, I'm using Python 3.5.
+Unit tests for modules will be appropriately located in ``./test/units/modules``. You must first setup your testing environment. In this example, we're using Python 3.5.
 
-    - Install the requirements (outside of your virtual environment): `$ pip3 install -r ./test/runner/requirements/units.txt`
-    - To run all tests do the following: `$ ansible-test units --python 3.5` (you must run `. hacking/env-setup` prior to this)
+- Install the requirements (outside of your virtual environment): ``$ pip3 install -r ./test/runner/requirements/units.txt``
+- To run all tests do the following: ``$ ansible-test units --python 3.5`` (you must run ``. hacking/env-setup`` prior to this)
 
-    :bulb: Ansible uses pytest for unit testing
+.. note:: Ansible uses pytest for unit testing.
 
-    To run pytest against a single test module, you can do the following (provide the path to the test module appropriately):
+To run pytest against a single test module, you can do the following (provide the path to the test module appropriately):
 
-$ pytest -r a --cov=. --cov-report=html --fulltrace --color yes
-test/units/modules/.../test\_my\_new\_test\_module.py \`\`\`
+``$ pytest -r a --cov=. --cov-report=html --fulltrace --color yes
+test/units/modules/.../test\my_new_test_module.py ``
 
 Going Further
 =============
