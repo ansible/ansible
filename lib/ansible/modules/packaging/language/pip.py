@@ -260,13 +260,13 @@ def _get_full_name(name, version=None):
     version = str(version) if not isinstance(version, basestring) else version
 
     # if the version starts with a number, it's not a version spec and we can
-    # assume they mean ==
-    if version[0].isdigit():
-        return name + '==' + version
+    # assume they mean to use '=='. otherwise, we'll depend on the user to
+    # supply a valid separator
+    sep = '==' if version[0].isdigit() else ''
 
-    # if the user passed in a version that doesn't begin with a number then
-    # it's probably a version spec. let's not muck with it.
-    return name + version
+    # if the version spec contains a comma, it *must* be quoted, so let's just
+    # play it safe and always quote it
+    return '"' + name + sep + version + '"'
 
 
 def _get_packages(module, pip, chdir):
