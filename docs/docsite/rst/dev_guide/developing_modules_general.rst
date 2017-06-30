@@ -37,9 +37,9 @@ Environment setup
    ``$ . hacking/env-setup``
 
 .. note:: After the initial setup above, every time you are ready to start
-developing Ansible you should be able to just run the following from the
-root of the Ansible repo:
-``$ . venv/bin/activate && . hacking/env-setup``
+   developing Ansible you should be able to just run the following from the
+   root of the Ansible repo:
+   ``$ . venv/bin/activate && . hacking/env-setup``
 
 
 New module development
