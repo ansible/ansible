@@ -103,6 +103,8 @@ class Ec2Metadata(object):
         new_fields = {}
         for key, value in fields.items():
             split_fields = key[len(uri):].split('/')
+            if len(split_fields) == 3 and split_fields[0:2] == ['iam', 'security-credentials']:
+                new_fields[self._prefix % "iam-instance-profile-role"] = split_fields[2]
             if len(split_fields) > 1 and split_fields[1]:
                 new_key = "-".join(split_fields)
                 new_fields[self._prefix % new_key] = value
@@ -162,6 +164,25 @@ class Ec2Metadata(object):
                     break
             data['ansible_ec2_placement_region'] = region
 
+    def add_ec2_instance_profile(self, data):
+        iam_info_str = data.get('ansible_ec2_iam_info')
+        if not iam_info_str:
+            return
+        try:
+            iam_info = json.loads(iam_info_str)
+        except ValueError:
+            return
+        arn = iam_info.get('InstanceProfileArn')
+        if arn:
+            data['ansible_ec2_iam_instance_profile_arn'] = arn
+            arn_value = arn.split(':')[-1]
+            if arn_value.startswith('instance-profile/'):
+                name = arn_value.lstrip('instance-profile/')
+                data['ansible_ec2_iam_instance_profile'] = name
+        id_ = iam_info.get('InstanceProfileId')
+        if id_:
+            data['ansible_ec2_iam_instance_profile_id'] = id_
+
     def run(self):
         self.fetch(self.uri_meta)  # populate _data
         data = self._mangle_fields(self._data, self.uri_meta)
@@ -169,6 +190,7 @@ class Ec2Metadata(object):
         data[self._prefix % 'public-key'] = self._fetch(self.uri_ssh)
         self.fix_invalid_varnames(data)
         self.add_ec2_region(data)
+        self.add_ec2_instance_profile(data)
         return data
 
 
