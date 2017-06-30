@@ -118,7 +118,7 @@ options:
       - If set, then changes to configuration only will also be published.  Otherwise, only code changes are published and create new versions.
     required: false
     default: False
-    version_added: "2.3"
+    version_added: "2.4"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
