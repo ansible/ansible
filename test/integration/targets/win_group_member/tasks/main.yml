@@ -1,0 +1,24 @@
+- name: Gather facts
+  setup:
+
+- name: Run tests for win_group_member across different local groups
+  block:
+
+  - name: Test in normal mode
+    include_tasks: tests.yml
+    vars:
+      win_local_group: "{{ item }}"
+      in_check_mode: no
+    with_items:
+      - Backup Operators
+      - Power Users
+
+  - name: Test in check-mode
+    include_tasks: tests.yml
+    vars:
+      win_local_group: "{{ item }}"
+      in_check_mode: yes
+    check_mode: yes
+    with_items:
+      - Backup Operators
+      - Power Users
