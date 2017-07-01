@@ -60,15 +60,14 @@ class RoleRequirement(RoleDefinition):
     @staticmethod
     def repo_url_to_role_name(repo_url):
         # gets the role name out of a repo like
-        # http://git.example.com/repos/repo.git" => "repo"
+        # "http://git.example.com/repos/repo.git" => "repo"
         # "/tmp/hello-test.tar.gz"                => "hello-test"
 
+        trailing_path = os.path.basename(repo_url)
         if '://' not in repo_url and '@' not in repo_url:
-            trailing_path = repo_url.split('/')[-1]
             if trailing_path.endswith('.tar.gz'):
                 return trailing_path[:-7]
             return repo_url
-        trailing_path = repo_url.split('/')[-1]
         if trailing_path.endswith('.git'):
             trailing_path = trailing_path[:-4]
         if trailing_path.endswith('.tar.gz'):
