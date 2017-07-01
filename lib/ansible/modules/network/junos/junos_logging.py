@@ -32,7 +32,7 @@ author: "Ganesh Nalawade (@ganeshrn)"
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
-    on network devices.
+    on Juniper JUNOS devices.
 options:
   dest:
     description:
@@ -81,10 +81,6 @@ options:
     description:
       - Number of files to be archived, this is applicable if value
         of I(dest) is C(file). The acceptable value is in range from 1 to 1000.
-    required: false
-  src_addr:
-    description:
-      - Use specified address as source in logs.
     required: false
 """
 
