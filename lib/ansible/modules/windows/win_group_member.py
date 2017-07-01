@@ -61,8 +61,8 @@ EXAMPLES = r'''
   win_group_member:
     name: Remote Desktop Users
     members:
-      - DOMAIN\TestUser
       - NewLocalAdmin
+      - DOMAIN\TestUser
     state: present
 
 - name: Remove a domain group and service user from a local group
@@ -85,7 +85,7 @@ added:
       empty if no members are added.
     returned: success and C(state) is C(present)
     type: list
-    sample: ["DOMAIN\\TestUser", "NewLocalAdmin"]
+    sample: ["NewLocalAdmin", "DOMAIN\\TestUser"]
 removed:
     description: A list of members removed when C(state) is C(absent); this is
       empty if no members are removed.
