@@ -141,8 +141,8 @@ function Get-GroupMember {
         }
         elseif ($split_adspath.Count -eq 1 -and $split_adspath[0] -like "S-1*") {
             # Broken SID
-            $parsed_member.username = $splitADsPath[0]
-            $parsed_member.combined = $splitADsPath[0]
+            $parsed_member.username = $split_adspath[0]
+            $parsed_member.combined = $split_adspath[0]
         }
         else {
             # Domain or service (i.e. NT AUTHORITY)
