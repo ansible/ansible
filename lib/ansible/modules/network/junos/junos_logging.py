@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: net_logging
+module: junos_logging
 version_added: "2.4"
 author: "Ganesh Nalawade (@ganeshrn)"
 short_description: Manage logging on network devices
