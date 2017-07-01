@@ -1009,7 +1009,7 @@ def main():
                     action_handler(set_masquerade_permanent, (zone, True))
                     changed=True
                 if not is_enabled_immediate:
-                    action_handler(set_masquerade_enabled, (zone))
+                    action_handler(set_masquerade_enabled, (zone,))
                     changed=True
                 if changed:
                     msgs.append("Added masquerade to zone %s" % (zone))
@@ -1022,7 +1022,7 @@ def main():
                     action_handler(set_masquerade_permanent, (zone, False))
                     changed=True
                 if is_enabled_immediate:
-                    action_handler(set_masquerade_disabled, (zone))
+                    action_handler(set_masquerade_disabled, (zone,))
                     changed=True
                 if changed:
                     msgs.append("Removed masquerade from zone %s" % (zone))
