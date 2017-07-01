@@ -3,11 +3,17 @@ import os
 import pickle
 import unittest
 import sys
+from nose.plugins.skip import SkipTest
+
+
+try:
+    from pyVmomi import vim, vmodl
+except ImportError:
+    raise SkipTest("test_vmware_inventory.py requires the python module 'pyVmomi'")
 
 try:
     from vmware_inventory import VMWareInventory
 except ImportError:
-    from nose.plugins.skip import SkipTest
     raise SkipTest("test_vmware_inventory.py requires the python module 'vmware_inventory'")
 
 # contrib's dirstruct doesn't contain __init__.py files

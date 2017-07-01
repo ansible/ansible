@@ -39,14 +39,12 @@ from six.moves import configparser
 from time import time
 from jinja2 import Environment
 
-HAS_PYVMOMI = False
-try:
-    from pyVmomi import vim
-    from pyVim.connect import SmartConnect, Disconnect
 
-    HAS_PYVMOMI = True
+try:
+    from pyVmomi import vim, vmodl
+    from pyVim.connect import SmartConnect, Disconnect
 except ImportError:
-    pass
+    sys.exit("ERROR: This inventory script required 'pyVmomi' Python module, it was not able to load it")
 
 try:
     import json
@@ -119,14 +117,12 @@ class VMWareInventory(object):
     env.filters['regex_match'] = regex_match
 
     # translation table for attributes to fetch for known vim types
-    if not HAS_PYVMOMI:
-        vimTable = {}
-    else:
-        vimTable = {
-            vim.Datastore: ['_moId', 'name'],
-            vim.ResourcePool: ['_moId', 'name'],
-            vim.HostSystem: ['_moId', 'name'],
-        }
+
+    vimTable = {
+        vim.Datastore: ['_moId', 'name'],
+        vim.ResourcePool: ['_moId', 'name'],
+        vim.HostSystem: ['_moId', 'name'],
+    }
 
     @staticmethod
     def _empty_inventory():
@@ -347,13 +343,21 @@ class VMWareInventory(object):
         ''' Make API calls '''
 
         instances = []
-        si = SmartConnect(**inkwargs)
+        try:
+            si = SmartConnect(**inkwargs)
+        except ssl.SSLError as connection_error:
+            if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(connection_error) and self.validate_certs:
+                sys.exit("Unable to connect to ESXi server due to %s, "
+                         "please specify validate_certs=False and try again" % connection_error)
+
+        except Exception as exc:
+            self.debugl("Unable to connect to ESXi server due to %s" % exc)
+            sys.exit("Unable to connect to ESXi server due to %s" % exc)
 
         self.debugl('retrieving all instances')
         if not si:
-            print("Could not connect to the specified host using specified "
-                  "username and password")
-            return -1
+            sys.exit("Could not connect to the specified host using specified "
+                     "username and password")
         atexit.register(Disconnect, si)
         content = si.RetrieveContent()
 
@@ -384,12 +388,16 @@ class VMWareInventory(object):
             instance_tuples.append((instance, ifacts))
         self.debugl('facts collected for all instances')
 
-        cfm = content.customFieldsManager
-        if cfm is not None and cfm.field:
-            for f in cfm.field:
-                if f.managedObjectType == vim.VirtualMachine:
-                    self.custom_fields[f.key] = f.name
-            self.debugl('%d custom fieds collected' % len(self.custom_fields))
+        try:
+            cfm = content.customFieldsManager
+            if cfm is not None and cfm.field:
+                for f in cfm.field:
+                    if f.managedObjectType == vim.VirtualMachine:
+                        self.custom_fields[f.key] = f.name
+                self.debugl('%d custom fields collected' % len(self.custom_fields))
+        except vmodl.RuntimeFault as exc:
+            self.debugl("Unable to gather custom fields due to %s" % exc.msg)
+
         return instance_tuples
 
     def instances_to_inventory(self, instances):
