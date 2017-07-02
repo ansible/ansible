@@ -165,12 +165,17 @@ def install_packages(module, pkgspec, root, force=True, no_recommends=True):
         rc, out, err = module.run_command(cmd)
 
         installed = True
+<<<<<<< HEAD
         for packages in pkgspec:
             if not query_package_provides(module, package, root):
                 installed = False
+=======
+        for package in pkgspec:
+            if not query_package_provides(module, package):
+                module.fail_json(msg="'urpmi %s' failed: %s" % (package, err))
+>>>>>>> - make urpmi module compatible with other packaging modules when using a packages list
 
-        # urpmi always have 0 for exit code if --force is used
-        if rc or not installed:
+        if rc:
             module.fail_json(msg="'urpmi %s' failed: %s" % (packages, err))
         else:
             module.exit_json(changed=True, msg="%s present(s)" % packages)
@@ -187,6 +192,7 @@ def root_option(root):
 
 def main():
     module = AnsibleModule(
+<<<<<<< HEAD
         argument_spec=dict(
             state=dict(type='str', default='installed', choices=['absent', 'installed', 'present', 'removed']),
             update_cache=dict(type='bool', default=False, aliases=['update-cache']),
@@ -196,6 +202,15 @@ def main():
             root=dict(type='str', aliases=['installroot']),
         ),
     )
+=======
+        argument_spec     = dict(
+            state         = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
+            update_cache  = dict(default=False, aliases=['update-cache'], type='bool'),
+            force         = dict(default=True, type='bool'),
+            no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
+            package       = dict(aliases=['pkg', 'name'], required=True, type='list')))
+
+>>>>>>> - make urpmi module compatible with other packaging modules when using a packages list
 
     if not os.path.exists(URPMI_PATH):
         module.fail_json(msg="cannot find urpmi, looking for %s" % (URPMI_PATH))
@@ -209,7 +224,7 @@ def main():
     if p['update_cache']:
         update_package_db(module)
 
-    packages = p['package'].split(',')
+    packages = p['package']
 
     if p['state'] in ['installed', 'present']:
         install_packages(module, packages, root, force_yes, no_recommends_yes)
