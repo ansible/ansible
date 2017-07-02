@@ -94,16 +94,22 @@ before_value:
   returned: success
   type: string
   sample: Guest
-section:
-  description: The section passed to the module to modify.
-  returned: success
+import_log:
+  description: The log of the SecEdit.exe /configure job that configured the
+    local policies. This is used for debugging purposes on failures.
+  returned: success and change occurred
   type: string
-  sample: System Access
+  sample: Completed 6 percent (0/15) \tProcess Privilege Rights area.
 key:
   description: The key in the section passed to the module to modify.
   returned: success
   type: string
   sample: NewGuestName
+section:
+  description: The section passed to the module to modify.
+  returned: success
+  type: string
+  sample: System Access
 value:
   description: The value passed to the module to modify to.
   returned: success
