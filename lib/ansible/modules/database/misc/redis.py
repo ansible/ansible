@@ -96,10 +96,11 @@ options:
     config_write:
         version_added: 2.4
         description:
-            - If set to yes, this module will issue a CONFIG REWRITE after changing configuration with the config command (i.e. the redis server will save its running conf) 
+            - If set to yes, this module will issue a CONFIG REWRITE after changing configuration with the config command
+              (i.e. the redis server will save its running conf)
         required: false
         default: no
-        
+
 
 
 notes:
