@@ -196,7 +196,8 @@ def main():
             db=dict(default=None, type='int'),
             flush_mode=dict(default='all', choices=['all', 'db']),
             name=dict(default=None),
-            value=dict(default=None)
+            value=dict(default=None),
+            config_write=dict(default=False, type='bool')
         ),
         supports_check_mode = True
     )
@@ -336,6 +337,8 @@ def main():
         else:
             try:
                 r.config_set(name, value)
+                if module.params['config_write']:
+                    r.config_rewrite()
             except Exception:
                 e = get_exception()
                 module.fail_json(msg="unable to write config: %s" % e)
