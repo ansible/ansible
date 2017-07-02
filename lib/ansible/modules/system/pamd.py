@@ -257,7 +257,7 @@ class PamdRule(object):
             pattern = re.compile(r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
                                       \[([A-Za-z0-9_=\s]+)\]\s*  # Rule Control
                                       ([A-Za-z0-9_\.]+)\s*       # Rule Path
-                                      ([A-Za-z0-9_\s]*)""",      # Rule Args
+                                      ([A-Za-z0-9_=<>\s]*)""",   # Rule Args
                                  re.X)
             complicated = True
         else:
