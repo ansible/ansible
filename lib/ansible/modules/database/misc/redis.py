@@ -49,6 +49,7 @@ options:
         required: false
         type: bool
         default: no
+        version_added: 2.4
     login_host:
         description:
             - The host running the database
