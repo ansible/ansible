@@ -64,9 +64,9 @@ options:
     default: /var/run/haproxy.sock
   state:
     description:
-      - Desired state of the provided backend host. 
-        Note that "drain" state is supported only by HAProxy version 1.5 or later, 
-        if used on versions < 1.5, it will be ignored. 
+      - Desired state of the provided backend host.
+        Note that "drain" state is supported only by HAProxy version 1.5 or later,
+        if used on versions < 1.5, it will be ignored.
     required: true
     default: null
     choices: [ "enabled", "disabled", "drain" ]
@@ -276,7 +276,6 @@ class HAProxy(object):
         data = self.execute('show info', 200, False)
         lines = data.splitlines()
         line = [x for x in lines if 'Version:' in x]
-        
         try:
             version_values = line[0].partition(':')[2].strip().split('.', 3)
             version = (int(version_values[0]), int(version_values[1]))
@@ -371,7 +370,7 @@ class HAProxy(object):
         haproxy_version = self.discover_version()
 
         # check if haproxy version suppots DRAIN state (starting with 1.5)
-        if haproxy_version and (1,5) <= haproxy_version: 
+        if haproxy_version and (1, 5) <= haproxy_version:
             cmd = "set server $pxname/$svname state drain"
             self.execute_for_backends(cmd, backend, host, 'DRAIN')
 
