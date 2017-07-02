@@ -92,7 +92,7 @@ RETURN = r'''
 before_value:
   description: The value of the key before the change.
   returned: success
-  type: string or int
+  type: string
   sample: Guest
 section:
   description: The section passed to the module to modify.
@@ -107,6 +107,6 @@ key:
 value:
   description: The value passed to the module to modify to.
   returned: success
-  type: string or int
+  type: string
   sample: Guest Account
 '''
