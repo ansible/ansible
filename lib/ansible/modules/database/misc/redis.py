@@ -43,6 +43,12 @@ options:
             - The password used to authenticate with (usually not used)
         required: false
         default: null
+    check_no_auth:
+        description:
+            - [config command] If connection failed with login_password, re-try with no password.
+        required: false
+        type: bool
+        default: no
     login_host:
         description:
             - The host running the database
@@ -188,6 +194,7 @@ def main():
         argument_spec = dict(
             command=dict(default=None, choices=['slave', 'flush', 'config']),
             login_password=dict(default=None, no_log=True),
+            check_no_auth=dict(default=False, type='bool'),
             login_host=dict(default='localhost'),
             login_port=dict(default=6379, type='int'),
             master_host=dict(default=None),
@@ -312,17 +319,29 @@ def main():
     elif command == 'config':
         name = module.params['name']
         value = module.params['value']
+        check_no_auth = module.params['check_no_auth']
 
         r = redis.StrictRedis(host=login_host,
                               port=login_port,
                               password=login_password)
-
+        fail_msg = None
         try:
             r.ping()
         except Exception:
             e = get_exception()
-            module.fail_json(msg="unable to connect to database: %s" % e)
+            fail_msg = "unable to connect to database: %s" % e
 
+        if fail_msg and not check_no_auth:
+            module.fail_json(msg=fail_msg)
+        if fail_msg and check_no_auth and login_password:  # try with no AUTH
+            r = redis.StrictRedis(host=login_host,
+                                  port=login_port,
+                                  password=None)
+            try:
+                r.ping()
+            except Exception:
+                e = get_exception()
+                module.fail_json(msg="unable to connect to database: %s" % e)
 
         try:
             old_value = r.config_get(name)[name]
