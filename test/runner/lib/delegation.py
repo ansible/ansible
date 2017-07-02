@@ -315,7 +315,7 @@ def delegate_remote(args, exclude, require):
             manage.ssh(cmd, ssh_options)
             success = True
         finally:
-            manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results')
+            manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results && chmod -R a+r /tmp/results')
             manage.download('/tmp/results', 'test')
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
