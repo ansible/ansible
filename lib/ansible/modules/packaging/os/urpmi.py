@@ -110,7 +110,7 @@ def query_package(module, name):
 def query_package_provides(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    cmd = "rpm -q --provides %s" % (name)
+    cmd = "rpm -q --whatprovides %s" % (name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return rc == 0
 
@@ -169,12 +169,11 @@ def install_packages(module, pkgspec, force=True, no_recommends=True):
         rc, out, err = module.run_command(cmd)
 
         installed = True
-        for packages in pkgspec:
+        for package in pkgspec:
             if not query_package_provides(module, package):
-                installed = False
+                module.fail_json(msg="'urpmi %s' failed: %s" % (package, err))
 
-        # urpmi always have 0 for exit code if --force is used
-        if rc or not installed:
+        if rc:
             module.fail_json(msg="'urpmi %s' failed: %s" % (packages, err))
         else:
             module.exit_json(changed=True, msg="%s present(s)" % packages)
@@ -189,7 +188,7 @@ def main():
             update_cache  = dict(default=False, aliases=['update-cache'], type='bool'),
             force         = dict(default=True, type='bool'),
             no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
-            package       = dict(aliases=['pkg', 'name'], required=True)))
+            package       = dict(aliases=['pkg', 'name'], required=True, type='list')))
 
 
     if not os.path.exists(URPMI_PATH):
@@ -203,7 +202,7 @@ def main():
     if p['update_cache']:
         update_package_db(module)
 
-    packages = p['package'].split(',')
+    packages = p['package']
 
     if p['state'] in [ 'installed', 'present' ]:
         install_packages(module, packages, force_yes, no_recommends_yes)
