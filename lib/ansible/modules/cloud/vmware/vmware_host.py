@@ -69,20 +69,18 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example from Ansible playbook
-
-    - name: Add ESXi Host to VCSA
-      local_action:
-        module: vmware_host
-        hostname: vcsa_host
-        username: vcsa_user
-        password: vcsa_pass
-        datacenter_name: datacenter_name
-        cluster_name: cluster_name
-        esxi_hostname: esxi_hostname
-        esxi_username: esxi_username
-        esxi_password: esxi_password
-        state: present
+- name: Add ESXi Host to VCSA
+  local_action:
+    module: vmware_host
+    hostname: vcsa_host
+    username: vcsa_user
+    password: vcsa_pass
+    datacenter_name: datacenter_name
+    cluster_name: cluster_name
+    esxi_hostname: esxi_hostname
+    esxi_username: esxi_username
+    esxi_password: esxi_password
+    state: present
 '''
 
 try:
@@ -90,6 +88,9 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+from ansible.module_utils.vmware import vmware_argument_spec, find_datacenter_by_name, connect_to_api
+from ansible.module_utils.vmware import find_cluster_by_name, wait_for_task, TaskError
+from ansible.module_utils.basic import AnsibleModule
 
 
 class VMwareHost(object):
@@ -131,7 +132,11 @@ class VMwareHost(object):
 
     def find_host_by_cluster_datacenter(self):
         self.dc = find_datacenter_by_name(self.content, self.datacenter_name)
-        self.cluster = find_cluster_by_name_datacenter(self.dc, self.cluster_name)
+        if self.dc is None:
+            self.module.fail_json(msg="Unable to find datacenter %s" % self.module.params['datacenter_name'])
+        self.cluster = find_cluster_by_name(self.content, self.cluster_name, datacenter=self.dc)
+        if self.cluster is None:
+            self.module.fail_json(msg="Unable to find cluster %s" % self.module.params['cluster_name'])
 
         for host in self.cluster.host:
             if host.name == self.esxi_hostname:
@@ -222,9 +227,6 @@ def main():
 
     vmware_host = VMwareHost(module)
     vmware_host.process_state()
-
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
