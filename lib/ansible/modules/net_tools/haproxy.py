@@ -64,7 +64,9 @@ options:
     default: /var/run/haproxy.sock
   state:
     description:
-      - Desired state of the provided backend host.
+      - Desired state of the provided backend host. 
+        Note that "drain" state is supported only by HAProxy version 1.5 or later, 
+        if used on versions < 1.5, it will be ignored. 
     required: true
     default: null
     choices: [ "enabled", "disabled", "drain" ]
@@ -266,6 +268,23 @@ class HAProxy(object):
         r = csv.DictReader(data.splitlines())
         return tuple(map(lambda d: d['pxname'], filter(lambda d: d['svname'] == 'BACKEND', r)))
 
+    def discover_version(self):
+        """
+        Attempt to extract the haproxy version.
+        Return a tuple containing major and minor version.
+        """
+        data = self.execute('show info', 200, False)
+        lines = data.splitlines()
+        line = [x for x in lines if 'Version:' in x]
+        
+        try:
+            version_values = line[0].partition(':')[2].strip().split('.', 3)
+            version = (int(version_values[0]), int(version_values[1]))
+        except (ValueError, TypeError, IndexError):
+            version = None
+
+        return version
+
     def execute_for_backends(self, cmd, pxname, svname, wait_for_status=None):
         """
         Run some command on the specified backends. If no backends are provided they will
@@ -349,8 +368,12 @@ class HAProxy(object):
         In this mode mode, the server will not accept any new connections
         other than those that are accepted via persistence.
         """
-        cmd = "set server $pxname/$svname state drain"
-        self.execute_for_backends(cmd, backend, host, 'DRAIN')
+        haproxy_version = self.discover_version()
+
+        # check if haproxy version suppots DRAIN state (starting with 1.5)
+        if haproxy_version and (1,5) <= haproxy_version: 
+            cmd = "set server $pxname/$svname state drain"
+            self.execute_for_backends(cmd, backend, host, 'DRAIN')
 
     def act(self):
         """
