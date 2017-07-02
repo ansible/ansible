@@ -45,7 +45,7 @@ options:
         default: null
     check_no_auth:
         description:
-            - [config command] If connection failed with login_password, re-try with no password.
+            - If connection failed with login_password, re-try with no password. [config command]
         required: false
         type: bool
         default: no
