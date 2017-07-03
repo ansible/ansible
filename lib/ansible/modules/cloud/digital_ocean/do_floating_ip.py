@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -27,7 +27,7 @@ module: do_floating_ip
 short_description: Manage DigitalOcean Floating IPs
 description:
      - Create/delete/assign a floating IP.
-version_added: "2.3"
+version_added: "2.4"
 author: "Patrick Marques (@patrickfmarques)"
 options:
   state:
@@ -260,12 +260,13 @@ def assign_floating_id_to_droplet(module, rest):
     status_code = response.status_code
     json = response.json
     if status_code == 201:
-        wait_action(module, rest, ip,  json['action']['id'])
+        wait_action(module, rest, ip, json['action']['id'])
 
         module.exit_json(changed=True, data=response.json)
     else:
         module.fail_json(msg="Error creating floating ip [{}: {}]".format(
             status_code, response.json["message"]), region=module.params['region'])
+
 
 def associate_floating_ips(module, rest):
     floating_ip = get_floating_ip_details(module, rest)
@@ -276,6 +277,7 @@ def associate_floating_ips(module, rest):
         module.exit_json(changed=False)
     else:
         assign_floating_id_to_droplet(module, rest)
+
 
 def create_floating_ips(module, rest):
     payload = {
@@ -311,7 +313,7 @@ def main():
             ),
         ),
         required_if=([
-            ('state','delete',['ip'])
+            ('state', 'delete', ['ip'])
         ]),
         mutually_exclusive=(
             ['region', 'droplet_id']
