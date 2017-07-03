@@ -114,22 +114,24 @@
       - not waitfor|changed
       - "waitfor.port == {{ http_port }}"
 
-# TODO: fix drain test for freebsd and macOS, ubuntu-py3
-- name: setup install psutil
+- name: install psutil using package (if available)
   package:
     name: python-psutil
-  when: ansible_system == "Linux" and not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "16.04")
+  ignore_errors: yes
+
+- name: install psutil using pip (if not already installed)
+  pip:
+    name: psutil
 
 - name: test wait for port drained
   wait_for:
     port: "{{ http_port }}"
     state: drained
   register: waitfor
-  when: ansible_system == "Linux" and not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "16.04")
+
 - name: verify test wait for port
   assert:
     that:
       - waitfor|success
       - not waitfor|changed
       - "waitfor.port == {{ http_port }}"
-  when: ansible_system == "Linux" and not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "16.04")
