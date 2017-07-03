@@ -259,7 +259,7 @@ Given the mysql hosts and privs subkey lists, you can also iterate over a list i
         priv: "{{ item.0.mysql.privs | join('/') }}"
       with_subelements:
         - "{{ users }}"
-        - "{{ mysql.hosts }}"
+        - mysql.hosts
 
 Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those
 records.
