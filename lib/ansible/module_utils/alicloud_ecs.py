@@ -27,7 +27,7 @@
 #
 
 import os
-
+from ansible.release import __version__
 import footmark.ecs
 import footmark.slb
 import footmark.vpc
@@ -113,7 +113,8 @@ def get_acs_connection_info(module):
             # in case security_token came in as empty string
             security_token = None
 
-    ecs_params = dict(acs_access_key_id=access_key, acs_secret_access_key=secret_key, security_token=security_token)
+    ecs_params = dict(acs_access_key_id=access_key, acs_secret_access_key=secret_key, security_token=security_token,
+                      user_agent='Ansible-v' + __version__)
 
     return region, ecs_params
 

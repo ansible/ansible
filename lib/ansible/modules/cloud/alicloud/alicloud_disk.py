@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright 2017 Alibaba Group Holding Limited.
+# Copyright (c) 2017 Alibaba Group Holding Limited. He Guimin <heguimin36@163.com.com>
 #
 # This file is part of Ansible
 #
@@ -145,8 +145,6 @@ EXAMPLES = '''
   hosts: localhost
   connection: local
   vars:
-    alicloud_access_key: xxxxxxxxxx
-    alicloud_secret_key: xxxxxxxxxx
     alicloud_region: cn-hongkong
     alicloud_zone: cn-hongkong-b
     disk_name: disk_1
@@ -158,8 +156,6 @@ EXAMPLES = '''
   tasks:
     - name: create disk
       alicloud_disk:
-        alicloud_access_key: '{{ alicloud_access_key }}'
-        alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
         alicloud_zone: '{{ alicloud_zone }}'
         disk_name: '{{ disk_name }}'
@@ -177,8 +173,6 @@ EXAMPLES = '''
   hosts: localhost
   connection: local
   vars:
-    alicloud_access_key: xxxxxxxxxx
-    alicloud_secret_key: xxxxxxxxxx
     status: present
     alicloud_region: us-west-1
     instance_id: xxxxxxxxxx
@@ -187,8 +181,6 @@ EXAMPLES = '''
   tasks:
     - name: Attach Disk to instance
       alicloud_disk:
-        alicloud_access_key: '{{ alicloud_access_key }}'
-        alicloud_secret_key: '{{ alicloud_secret_key }}'
         status: '{{ status }}'
         alicloud_region: '{{ alicloud_region }}'
         instance_id: '{{ instance_id }}'
@@ -203,16 +195,12 @@ EXAMPLES = '''
   hosts: localhost
   connection: local
   vars:
-    alicloud_access_key: xxxxxxxxxx
-    alicloud_secret_key: xxxxxxxxxx
     alicloud_region: us-west-1
     disk_id: xxxxxxxxxx
     status: present
   tasks:
     - name: detach disk
       alicloud_disk:
-        alicloud_access_key: '{{ alicloud_access_key }}'
-        alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
         id: '{{ disk_id }}'
         status: '{{ status }}'
@@ -225,16 +213,12 @@ EXAMPLES = '''
   hosts: localhost
   connection: local
   vars:
-    alicloud_access_key: xxxxxxxxxx
-    alicloud_secret_key: xxxxxxxxxx
     alicloud_region: us-west-1
     disk_id: xxxxxxxxxx
     status: absent
   tasks:
     - name: detach disk
       alicloud_disk:
-        alicloud_access_key: '{{ alicloud_access_key }}'
-        alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
         disk_id: '{{ disk_id }}'
         status: '{{ status }}'
@@ -467,7 +451,6 @@ def delete_disk(module, ecs, disk_id):
     try:
         changed, result = ecs.delete_disk(disk_id=disk_id)
         if 'error code' in (''.join(str(result))).lower():
-            # module.log()
             module.fail_json(msg="Deleting disk {0} got an error: {1}".format(disk_id, result))
 
     except ECSResponseError as e:
@@ -569,6 +552,9 @@ def main():
 
         changed, result = delete_disk(module=module, ecs=ecs, disk_id=disk_id)
         module.exit_json(changed=changed, disk_id=disk_id)
+
+    else:
+        module.fail_json(msg='The expected state: {0} and {1}, but got {2}.'.format("present", "absent", status))
 
 
 if __name__ == '__main__':
