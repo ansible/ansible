@@ -224,6 +224,7 @@ class DocCLI(CLI):
             if os.path.isdir(filename):
                 continue
 
+            doc = None
             try:
                 doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename)
             except:

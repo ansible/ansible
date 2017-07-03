@@ -20,9 +20,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.parsing import metadata as md
+import ast
 
 import pytest
+
+from ansible.parsing import metadata as md
+
 
 LICENSE = b"""# some license text boilerplate
 # That we have at the top of files
@@ -43,8 +46,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'core'}
 """
 
-STRING_STD_METADATA = b"""
-ANSIBLE_METADATA = '''
+TEXT_STD_METADATA = b"""
+ANSIBLE_METADATA = u'''
+metadata_version: '1.0'
+status:
+  - 'stableinterface'
+supported_by: 'core'
+'''
+"""
+
+BYTES_STD_METADATA = b"""
+ANSIBLE_METADATA = b'''
 metadata_version: '1.0'
 status:
   - 'stableinterface'
@@ -161,31 +173,67 @@ METADATA_EXAMPLES = (
      (HASH_SYMBOL_METADATA, 1, 0, 4, 42, ['ANSIBLE_METADATA'])),
 
     # Standard import with a junk ANSIBLE_METADATA as well
-    (LICENSE + FUTURE_IMPORTS + b"\nANSIBLE_METADAtA = 'junk'\n" + HASH_COMBO_METADATA + REGULAR_IMPORTS,
+    (LICENSE + FUTURE_IMPORTS + b"\nANSIBLE_METADATA = 10\n" + HASH_COMBO_METADATA + REGULAR_IMPORTS,
      (HASH_SYMBOL_METADATA, 7, 0, 10, 42, ['ANSIBLE_METADATA'])),
 )
 
 # FIXME: String/yaml metadata is not implemented yet.  Need more test cases once it is implemented
 STRING_METADATA_EXAMPLES = (
     # Standard import
-    (LICENSE + FUTURE_IMPORTS + STRING_STD_METADATA + REGULAR_IMPORTS,
+    (LICENSE + FUTURE_IMPORTS + TEXT_STD_METADATA + REGULAR_IMPORTS,
      (METADATA, 5, 0, 10, 3, ['ANSIBLE_METADATA'])),
     # Metadata at end of file
-    (LICENSE + FUTURE_IMPORTS + REGULAR_IMPORTS + STRING_STD_METADATA.rstrip(),
+    (LICENSE + FUTURE_IMPORTS + REGULAR_IMPORTS + TEXT_STD_METADATA.rstrip(),
      (METADATA, 8, 0, 13, 3, ['ANSIBLE_METADATA'])),
     # Metadata at beginning of file
-    (STRING_STD_METADATA + LICENSE + REGULAR_IMPORTS,
+    (TEXT_STD_METADATA + LICENSE + REGULAR_IMPORTS,
+     (METADATA, 1, 0, 6, 3, ['ANSIBLE_METADATA'])),
+
+    # Standard import
+    (LICENSE + FUTURE_IMPORTS + BYTES_STD_METADATA + REGULAR_IMPORTS,
+     (METADATA, 5, 0, 10, 3, ['ANSIBLE_METADATA'])),
+    # Metadata at end of file
+    (LICENSE + FUTURE_IMPORTS + REGULAR_IMPORTS + BYTES_STD_METADATA.rstrip(),
+     (METADATA, 8, 0, 13, 3, ['ANSIBLE_METADATA'])),
+    # Metadata at beginning of file
+    (BYTES_STD_METADATA + LICENSE + REGULAR_IMPORTS,
      (METADATA, 1, 0, 6, 3, ['ANSIBLE_METADATA'])),
 )
 
 
 @pytest.mark.parametrize("code, expected", METADATA_EXAMPLES)
-def test_extract_metadata(code, expected):
-    assert md.extract_metadata(code) == expected
+def test_dict_metadata(code, expected):
+    assert md.extract_metadata(module_data=code, offsets=True) == expected
 
 
 @pytest.mark.parametrize("code, expected", STRING_METADATA_EXAMPLES)
-def test_extract_string_metadata(code, expected):
+def test_string_metadata(code, expected):
     # FIXME: String/yaml metadata is not implemented yet.
     with pytest.raises(NotImplementedError):
-        assert md.extract_metadata(code) == expected
+        assert md.extract_metadata(module_data=code, offsets=True) == expected
+
+
+def test_required_params():
+    with pytest.raises(TypeError, message='One of module_ast or module_data must be given'):
+        assert md.extract_metadata()
+
+
+def test_module_data_param_given_with_offset():
+    with pytest.raises(TypeError, message='If offsets is True then module_data must also be given'):
+        assert md.extract_metadata(module_ast='something', offsets=True)
+
+
+def test_invalid_dict_metadata():
+    with pytest.raises(SyntaxError):
+        assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.0",\n' + REGULAR_IMPORTS)
+
+    with pytest.raises(md.ParseError, message='Unable to find the end of dictionary'):
+        assert md.extract_metadata(module_ast=ast.parse(LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.0"}\n' + REGULAR_IMPORTS),
+                                   module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.0",\n' + REGULAR_IMPORTS,
+                                   offsets=True)
+
+
+def test_multiple_statements_limitation():
+    with pytest.raises(md.ParseError, message='Multiple statements per line confuses the module metadata parser.'):
+        assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.0"}; a=b\n' + REGULAR_IMPORTS,
+                                   offsets=True)
