@@ -47,5 +47,5 @@
       iam_group:
         name: "{{ iam_group }}"
         state: present
-        managed_policy: "{{ iam_managed_policies | json_query('results[].policy.policy_name') }}"
+        managed_policy: "{{ iam_managed_policies | json_query('results[].policy.PolicyName') }}"
         profile: "{{ profile|default(omit) }}"
