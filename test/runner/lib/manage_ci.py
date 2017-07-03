@@ -78,7 +78,7 @@ class ManageNetworkCI(object):
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
         ]
 
-        name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '_'))
+        name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
 
         env = ansible_environment(self.core_ci.args)
         cmd = [

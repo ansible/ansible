@@ -327,7 +327,7 @@ def network_inventory(remotes):
 
         groups[remote.platform].append(
             '%s %s' % (
-                remote.name.replace('.', '_'),
+                remote.name.replace('.', '-'),
                 ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
             )
         )
