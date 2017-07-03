@@ -160,9 +160,8 @@ import time
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.vmware import connect_to_api
+from ansible.module_utils._text import to_native
 
 try:
     import json
@@ -247,10 +246,18 @@ class PyVmomiHelper(object):
         if vm.capability.memorySnapshotsSupported:
             memory_dump = self.module.params['memory_dump']
 
-        return vm.CreateSnapshot(self.module.params["snapshot_name"],
-                                 self.module.params["description"],
-                                 memory_dump,
-                                 quiesce)
+        task = None
+        try:
+            task = vm.CreateSnapshot(self.module.params["snapshot_name"],
+                                     self.module.params["description"],
+                                     memory_dump,
+                                     quiesce)
+        except vim.fault.RestrictedVersion as exc:
+            self.module.fail_json(msg="Failed to take snapshot due to VMware Licence: %s" % to_native(exc.msg))
+        except Exception as exc:
+            self.module.fail_json(msg="Failed to create snapshot of VM %s due to %s" % (self.module.params['name'], to_native(exc.msg)))
+
+        return task
 
     def remove_or_revert_snapshot(self, vm):
         if vm.snapshot is None:
