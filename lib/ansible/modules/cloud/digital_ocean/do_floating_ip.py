@@ -298,25 +298,22 @@ def create_floating_ips(module, rest):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(choices=['present', 'absent'], default='present'),
-            ip = dict(aliases=['id'], required=False),
-            region = dict(required=False),
-            droplet_id = dict(required=False),
-            oauth_token = dict(
+        argument_spec=dict(
+            state=dict(choices=['present', 'absent'], default='present'),
+            ip=dict(aliases=['id'], required=False),
+            region=dict(required=False),
+            droplet_id=dict(required=False),
+            oauth_token=dict(
                 no_log=True,
                 # Support environment variable for DigitalOcean OAuth Token
                 fallback=(env_fallback, ['DO_OAUTH_TOKEN']),
                 required=True,
             ),
         ),
-        # required_one_of = (
-        # ),
-        required_if = ([
+        required_if=([
             ('state','delete',['ip'])
         ]),
-        # required_together = (),
-        mutually_exclusive = (
+        mutually_exclusive=(
             ['region', 'droplet_id']
         ),
     )
