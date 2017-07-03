@@ -1,0 +1,11 @@
+cryptography
+jinja2
+mock
+pep8
+paramiko
+pylint
+pytest
+rstcheck
+sphinx
+voluptuous
+yamllint

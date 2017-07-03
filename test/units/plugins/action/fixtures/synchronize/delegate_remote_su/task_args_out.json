@@ -1,0 +1,6 @@
+{
+  "dest": "el6host:/tmp/deleteme", 
+  "src": "/tmp/deleteme", 
+  "rsync_path": "sudo rsync", 
+  "_local_rsync_path": "rsync"
+}

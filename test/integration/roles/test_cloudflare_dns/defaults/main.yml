@@ -1,0 +1,2 @@
+---
+cloudflare_dns_record: "{{ resource_prefix|lower }}"

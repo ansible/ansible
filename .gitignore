@@ -1,0 +1,92 @@
+# build products...
+*.py[co]
+build
+AUTHORS.TXT
+# Emacs backup and autosave files...
+*~
+.\#*
+\#*
+# RPM stuff...
+MANIFEST
+dist
+rpm-build
+# Eclipse/PyDev stuff...
+.project
+.pydevproject
+# PyCharm stuff...
+.idea
+#IntelliJ IDEA stuff..
+*.iml
+# Mac OS X stuff...
+.DS_Store
+# manpage build stuff...
+docs/man/man1/ansible*.1
+docs/man/man1/ansible*.1.asciidoc.in
+docs/man/man3/*
+# Sublime stuff
+*.sublime-project
+*.sublime-workspace
+# docsite stuff...
+docs/docsite/rst/modules_by_category.rst
+docs/docsite/rst/playbooks_directives.rst
+docs/docsite/rst/playbook_keywords.rst
+docs/docsite/rst/list_of_*.rst
+docs/docsite/rst/*_module.rst
+docs/docsite/*.html
+docs/docsite/_static/*.gif
+docs/docsite/_static/*.png
+docs/docsite/_static/websupport.js
+docs/docsite/searchindex.js
+docs/docsite/htmlout
+docs/docsite/_build
+docs/api/rst/
+docs/api/_build/
+# deb building stuff...
+/debian/
+deb-build
+# Vim swap files
+*.swp
+*.swo
+credentials.yml
+# test output
+*.retry
+*.out
+.tox
+.cache
+results.xml
+coverage.xml
+/test/units/cover-html
+/test/integration/targets/*/backup/
+# Development
+/test/develop
+venv
+Vagrantfile
+.vagrant
+ansible.egg-info/
+/shippable/
+# Release directory
+packaging/release/ansible_release
+/.cache/
+/test/results/coverage/*=coverage.*
+/test/results/coverage/coverage*
+/test/results/reports/coverage*.xml
+/test/results/reports/coverage*/
+/test/results/bot/*.json
+/test/results/junit/*.xml
+/test/results/logs/*.log
+/test/integration/inventory.remote
+/test/integration/inventory.networking
+/test/integration/inventory.winrm
+# old submodule dirs
+lib/ansible/modules/core
+lib/ansible/modules/extras
+# python 'rope' stuff
+.ropeproject
+# local 'ack' config files
+.ackrc
+# default 'coverage html' results
+htmlcov/
+# default 'coverage' tool data
+.coverage
+# ansible-test coverage results
+test/units/.coverage.*

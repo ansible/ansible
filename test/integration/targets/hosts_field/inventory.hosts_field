@@ -1,0 +1,1 @@
+42 ansible_host=127.0.0.42 ansible_connection=local

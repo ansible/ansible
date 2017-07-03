@@ -1,0 +1,74 @@
+# This is the configuration file for the Docker inventory script: docker_inventory.py.
+#
+# You can define the following in this file:
+#
+#   defaults
+#        Defines a default connection. Defaults will be taken from this and applied to any values not provided
+#        for a host defined in the hosts list.
+#
+#    hosts
+#        If you wish to get inventory from more than one Docker host, define a hosts list.
+#
+# For the default host and each host in the hosts list define the following attributes:
+#
+#  host:
+#      description: The URL or Unix socket path used to connect to the Docker API.
+#      required: yes
+#
+#  tls:
+#     description: Connect using TLS without verifying the authenticity of the Docker host server.
+#     default: false
+#     required: false
+#
+#  tls_verify:
+#     description: Connect using TLS without verifying the authenticity of the Docker host server.
+#     default: false
+#     required: false
+#
+#  cert_path:
+#     description: Path to the client's TLS certificate file.
+#     default: null
+#     required: false
+#
+#  cacert_path:
+#     description: Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+#     default: null
+#     required: false
+#
+#  key_path:
+#     description: Path to the client's TLS key file.
+#     default: null
+#     required: false
+#
+#  version:
+#     description: The Docker API version.
+#     required: false
+#     default: will be supplied by the docker-py module.
+#
+#  timeout:
+#     description: The amount of time in seconds to wait on an API response.
+#     required: false
+#     default: 60
+#
+#  default_ip:
+#     description: The IP address to assign to ansible_host when the container's SSH port is mapped to interface
+#     '0.0.0.0'.
+#     required: false
+#     default: 127.0.0.1
+#
+#  private_ssh_port:
+#     description: The port containers use for SSH
+#     required: false
+#     default: 22
+
+#defaults:
+#  host: unix:///var/run/docker.sock
+#  private_ssh_port: 22
+#  default_ip: 127.0.0.1
+
+#hosts:
+#  - host: tcp://10.45.5.16:4243
+#    private_ssh_port: 2022
+#    default_ip: 172.16.3.45
+#  - host: tcp://localhost:4243
+#    private_ssh_port: 2029

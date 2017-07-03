@@ -1,0 +1,6 @@
+---
+- name: notify some handlers from a role
+  command: uptime
+  notify:
+    - notify_listen_from_role
+    - notify_listen_in_role

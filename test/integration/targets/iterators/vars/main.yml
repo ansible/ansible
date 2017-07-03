@@ -1,0 +1,43 @@
+element_data:
+  - id: x
+    the_list:
+      - "f"
+      - "d"
+    the:
+      sub:
+        key:
+          list:
+            - "q"
+            - "r"
+  - id: y
+    the_list:
+      - "e"
+      - "f"
+    the:
+      sub:
+        key:
+          list:
+            - "i"
+            - "o"
+element_data_missing:
+  - id: x
+    the_list:
+      - "f"
+      - "d"
+    the:
+      sub:
+        key:
+          list:
+            - "k"
+            - "l"
+  - id: y
+    the_list:
+      - "f"
+      - "d"
+  - id: z
+    the_list:
+      - "e"
+      - "f"
+    the:
+      sub:
+        key:

@@ -1,0 +1,68 @@
+---
+ - name: Add policy
+   fortios_ipv4_policy:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     id: 42
+     src_addr: all
+     dst_addr: all
+     policy_action: accept
+     service: ALL
+     state: present
+   register: add_policy
+
+ - name: Assert
+   assert:
+     that:
+      - "add_policy.changed == true"
+
+ - name: Add existing policy 
+   fortios_ipv4_policy:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     id: 42
+     src_addr: all
+     dst_addr: all
+     policy_action: accept
+     service: ALL
+     state: present
+   register: add_policy
+
+ - name: Assert
+   assert:
+     that:
+      - "add_policy.changed == false"
+
+ - name: Delete existing policy
+   fortios_ipv4_policy:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     id: 42
+     src_addr: all
+     dst_addr: all
+     policy_action: accept
+     service: ALL
+     state: absent
+   register: del_policy
+
+ - name: Assert
+   assert:
+     that:
+      - "del_policy.changed == true"
+
+ - name: Delete not-existing policy
+   fortios_ipv4_policy:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     id: 42
+     src_addr: all
+     dst_addr: all
+     policy_action: accept
+     service: ALL
+     state: absent
+   register: del_policy
+
+ - name: Assert
+   assert:
+     that:
+      - "del_policy.changed == false"

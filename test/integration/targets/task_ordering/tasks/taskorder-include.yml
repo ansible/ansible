@@ -1,0 +1,10 @@
+# This test ensures that included tasks are run in order.
+# There have been regressions where included tasks and
+# nested blocks ran out of order...
+
+- shell:  printf one.{{ item }}. >> {{ temppath.stdout }}
+- block:
+  - shell: printf two.{{ item }}. >> {{ temppath.stdout }}
+  - block:
+    - shell: printf three.{{ item }}. >> {{ temppath.stdout }}
+- shell: printf four.{{ item }}. >> {{ temppath.stdout }}

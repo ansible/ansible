@@ -1,0 +1,75 @@
+# test code for the async keyword
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: notify the first handler
+  shell: echo
+  notify:
+    - set_handler_fact_1
+
+- name: force handler execution now
+  meta: "flush_handlers"
+
+- name: assert handler1 ran and not handler2
+  assert:
+    that:
+        - "handler1_called is defined"
+        - "handler2_called is not defined"
+
+- name: make a tempfile for counting
+  shell: mktemp
+  register: mktemp_out
+
+- name: register tempfile path
+  set_fact:
+    handler_countpath: "{{ mktemp_out.stdout }}"
+
+- name: notify the counting handler
+  shell: echo
+  notify:
+    - count_handler
+
+- name: notify the counting handler again
+  shell: echo
+  notify:
+    - count_handler
+
+- name: force handler execution now
+  meta: flush_handlers
+
+- name: get handler execution count
+  shell: cat {{ handler_countpath }} | grep -o . | wc -l
+  register: exec_count_out
+
+- debug: var=exec_count_out.stdout
+
+- name: ensure single execution
+  assert:
+    that:
+    - exec_count_out.stdout | int == 1
+
+- name: cleanup tempfile
+  file: path={{ handler_countpath }} state=absent
+
+- name: reset handler1_called
+  set_fact:
+    handler1_called: False
+
+- name: notify the second handler
+  shell: echo
+  notify:
+    - set_handler_fact_2

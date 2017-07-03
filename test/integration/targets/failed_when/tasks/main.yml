@@ -1,0 +1,68 @@
+# Test code for failed_when.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: command rc 0 failed_when_result undef
+  shell: exit 0
+  ignore_errors: True
+  register: result
+
+- assert:
+    that:
+      - "'failed' in result and not result.failed"
+
+- name: command rc 0 failed_when_result False
+  shell: exit 0
+  failed_when: false
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - "'failed' in result and not result.failed"
+      - "'failed_when_result' in result and not result.failed_when_result"
+
+- name: command rc 1 failed_when_result True
+  shell: exit 1
+  failed_when: true
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - "'failed' in result and result.failed"
+      - "'failed_when_result' in result and result.failed_when_result"
+
+- name: command rc 1 failed_when_result undef
+  shell: exit 1
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - "'failed' in result and result.failed"
+
+- name: command rc 1 failed_when_result False
+  shell: exit 1
+  failed_when: false
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - "'failed' in result and not result.failed"
+      - "'failed_when_result' in result and not result.failed_when_result"

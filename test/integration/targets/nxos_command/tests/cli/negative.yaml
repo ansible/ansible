@@ -1,0 +1,27 @@
+---
+- debug: msg="START cli/negative.yaml"
+
+- name: run 11 commands
+  nxos_command:
+    commands:
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+    provier: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - result.failed
+
+
+- debug: msg="END cli/negative.yaml"

@@ -1,0 +1,3 @@
+---
+dependencies:
+  - setup_postgresql_db

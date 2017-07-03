@@ -1,0 +1,521 @@
+# Test code for the file module.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_file={{win_output_dir}}\\foo.txt
+
+- name: prep with a basic win copy
+  win_copy: src=foo.txt dest={{output_file}}
+
+- name: verify that we are checking a file and it is present
+  win_file: path={{output_file}} state=file
+  register: file_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file_result.changed == false"
+#      - "file_result.state == 'file'"
+
+- name: verify that we are checking an absent file
+  win_file: path={{win_output_dir}}/bar.txt state=absent
+  register: file2_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file2_result.changed == false"
+#      - "file2_result.state == 'absent'"
+
+- name: verify we can touch a file
+  win_file: path={{win_output_dir}}/baz.txt state=touch
+  register: file3_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file3_result.changed == true"
+#      - "file3_result.state == 'file'"
+#      - "file3_result.mode == '0644'"
+
+- name: stat the touched file
+  win_stat: path={{win_output_dir}}/baz.txt state=touch
+  register: file3_stat_result
+
+- name: verify that the touched file exists and is size 0
+  assert:
+    that:
+      - "file3_stat_result.changed == false"
+      - "file3_stat_result.stat.size == 0"
+      - "file3_stat_result.stat.exists == true"
+#- name: change file mode
+#  win_file: path={{win_output_dir}}/baz.txt mode=0600
+#  register: file4_result
+
+#- name: verify that the file was marked as changed
+#  assert:
+#    that:
+#      - "file4_result.changed == true"
+#      - "file4_result.mode == '0600'"
+#
+#- name: change ownership and group
+#  win_file: path={{win_output_dir}}/baz.txt owner=1234 group=1234
+#
+#- name: setup a tmp-like directory for ownership test
+#  win_file: path=/tmp/worldwritable mode=1777 state=directory
+
+#- name: Ask to create a file without enough perms to change ownership
+#  win_file: path=/tmp/worldwritable/baz.txt state=touch owner=root
+#  become: yes
+#  become_user: nobody
+#  register: chown_result
+#  ignore_errors: True
+
+#- name: Ask whether the new file exists
+#  win_stat: path=/tmp/worldwritable/baz.txt
+#  register: file_exists_result
+
+#- name: Verify that the file doesn't exist on failure
+#  assert:
+#    that:
+#      - "chown_result.failed == True"
+#      - "file_exists_result.stat.exists == False"
+#
+#- name: clean up
+#  win_file: path=/tmp/worldwritable state=absent
+
+#- name: create soft link to file
+#  win_file: src={{output_file}} dest={{win_output_dir}}/soft.txt state=link
+#  register: file5_result
+
+#- name: verify that the file was marked as changed
+#  assert:
+#    that:
+#      - "file5_result.changed == true"
+#
+#- name: create hard link to file
+#  win_file: src={{output_file}} dest={{win_output_dir}}/hard.txt state=hard
+#  register: file6_result
+#
+#- name: verify that the file was marked as changed
+#  assert:
+#    that:
+#      - "file6_result.changed == true"
+#
+- name: create a directory
+  win_file: path={{win_output_dir}}/foobar state=directory
+  register: file7_result
+
+- debug: var=file7_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file7_result.changed == true"
+#      - "file7_result.state == 'directory'"
+
+# windows and selinux unlikely to ever mix, removing these tests:
+#- name: determine if selinux is installed
+#  shell: which getenforce || exit 0
+#  register: selinux_installed
+
+#- name: determine if selinux is enabled
+#  shell: getenforce
+#  register: selinux_enabled
+#  when: selinux_installed.stdout != ""
+#  ignore_errors: true
+
+#- name: decide to include or not include selinux tests
+#  include: selinux_tests.yml
+#  when: selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
+
+- name: remote directory foobar
+  win_file: path={{win_output_dir}}/foobar state=absent
+
+- name: remove file foo.txt
+  win_file: path={{win_output_dir}}/foo.txt state=absent
+
+- name: remove file bar.txt
+  win_file: path={{win_output_dir}}/foo.txt state=absent
+
+- name: remove file baz.txt
+  win_file: path={{win_output_dir}}/foo.txt state=absent
+
+- name: win copy directory structure over
+  win_copy: src=foobar dest={{win_output_dir}}
+
+- name: remove directory foobar
+  win_file: path={{win_output_dir}}/foobar state=absent
+  register: file14_result
+
+- debug: var=file14_result
+
+- name: verify that the directory was removed
+  assert:
+    that:
+      - 'file14_result.changed == true'
+#      - 'file14_result.state == "absent"'
+
+- name: create a test sub-directory
+  win_file: dest={{win_output_dir}}/sub1 state=directory
+  register: file15_result
+
+- name: verify that the new directory was created
+  assert:
+    that:
+      - 'file15_result.changed == true'
+#      - 'file15_result.state == "directory"'
+
+- name: create test files in the sub-directory
+  win_file: dest={{win_output_dir}}/sub1/{{item}} state=touch
+  with_items:
+  - file1
+  - file2
+  - file3
+  register: file16_result
+
+- name: verify the files were created
+  assert:
+    that:
+      - 'item.changed == true'
+#      - 'item.state == "file"'
+  with_items: "{{file16_result.results}}"
+
+#- name: try to force the sub-directory to a link
+#  win_file: src={{win_output_dir}}/testing dest={{win_output_dir}}/sub1 state=link force=yes
+#  register: file17_result
+#  ignore_errors: true
+
+#- name: verify the directory was not replaced with a link
+#  assert:
+#    that:
+#      - 'file17_result.failed == true'
+#      - 'file17_result.state == "directory"'
+
+#- name: create soft link to directory using absolute path
+#  win_file: src=/ dest={{win_output_dir}}/root state=link
+#  register: file18_result
+#
+#- name: verify that the result was marked as changed
+#  assert:
+#    that:
+#      - "file18_result.changed == true"
+#
+- name: create another test sub-directory
+  win_file: dest={{win_output_dir}}/sub2 state=directory
+  register: file19_result
+
+- name: verify that the new directory was created
+  assert:
+    that:
+      - 'file19_result.changed == true'
+#      - 'file19_result.state == "directory"'
+
+#- name: create soft link to relative file
+#  win_file: src=../sub1/file1 dest={{win_output_dir}}/sub2/link1 state=link
+#  register: file20_result
+#
+#- name: verify that the result was marked as changed
+#  assert:
+#    that:
+#      - "file20_result.changed == true"
+
+#- name: create soft link to relative directory
+#  win_file: src=sub1 dest={{win_output_dir}}/sub1-link state=link
+#  register: file21_result
+#
+#- name: verify that the result was marked as changed
+#  assert:
+#    that:
+#      - "file21_result.changed == true"
+#
+#- name: test file creation with symbolic mode
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0777'
+
+#- name: modify symbolic mode for all
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=a=r
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0444'
+
+#- name: modify symbolic mode for owner
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u+w
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0644'
+
+#- name: modify symbolic mode for group
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g+w
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0664'
+#
+#- name: modify symbolic mode for world
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o+w
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0666'
+#
+#- name: modify symbolic mode for owner
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u+x
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0766'
+##
+#- name: modify symbolic mode for group
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g+x
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0776'
+#
+#- name: modify symbolic mode for world
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o+x
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0777'
+
+#- name: remove symbolic mode for world
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o-wx
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0774'
+#
+#- name: remove symbolic mode for group
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g-wx
+#  register: result
+#
+#- name: assert file mode
+###  assert:
+#    that:
+#    - result.mode == '0744'
+
+#- name: remove symbolic mode for owner
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u-wx
+#  register: result
+
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0444'
+#
+#- name: set sticky bit with symbolic mode
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o+t
+#  register: result
+
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '01444'
+#
+#- name: remove sticky bit with symbolic mode
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o-t
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0444'
+
+#- name: add setgid with symbolic mode
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g+s
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '02444'
+#
+#- name: remove setgid with symbolic mode
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g-s
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0444'
+
+#- name: add setuid with symbolic mode
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u+s
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '04444'
+
+#- name: remove setuid with symbolic mode
+#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u-s
+#  register: result
+#
+#- name: assert file mode
+#  assert:
+#    that:
+#    - result.mode == '0444'
+
+# test the file module using follow=yes, so that the target of a
+# symlink is modified, rather than the link itself
+
+#- name: create a test file
+#  win_copy: dest={{win_output_dir}}\test_follow content="this is a test file\n" mode=0666
+
+#- name: create a symlink to the test file
+#  win_file: path={{win_output_dir}}\test_follow_link src="./test_follow" state=link
+#
+#- name: modify the permissions on the link using follow=yes
+#  win_file: path={{win_output_dir}}\test_follow_link mode=0644 follow=yes
+#  register: result
+
+#- name: assert that the chmod worked
+#  assert:
+#    that:
+#    - result.changed
+#
+#- name: stat the link target
+#  win_stat: path={{win_output_dir}}/test_follow
+#  register: result
+#
+#- name: assert that the link target was modified correctly
+#  assert:
+#    that:
+##    - result.stat.mode == '0644'
+
+- name: create a directory
+  win_file: path={{win_output_dir}}/dirtest state=directory
+  register: file_result
+
+- name: stat the directory created
+  win_stat: path={{win_output_dir}}/dirtest
+  register: stat_result
+
+- name: assert the directory was created
+  assert:
+    that:
+       - file_result.changed
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+
+- name: re run create directory (bug 2147)
+  win_file: path={{win_output_dir}}/dirtest state=directory
+  register: file_result
+
+- name: stat the directory created again
+  win_stat: path={{win_output_dir}}/dirtest
+  register: stat_result
+
+- name: assert the directory exists but was not changed
+  assert:
+    that:
+       - file_result.changed == False
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+
+- name: remove empty dir we just created
+  win_file: path={{win_output_dir}}/dirtest state=absent
+  register: file_result
+
+- name: stat the removed directory
+  win_stat: path={{win_output_dir}}/dirtest
+  register: stat_result
+
+- name: assert the directory does not exist
+  assert:
+    that:
+       - file_result.changed
+       - "stat_result.stat.exists == False"
+
+- name: create dir with spaces and parens in the dir name
+  win_file: path="{{win_output_dir}}/dir with spaces (and parens)" state=directory
+  register: file_result
+
+- name: stat the directory with spaces and parens
+  win_stat: path="{{win_output_dir}}/dir with spaces (and parens)"
+  register: stat_result
+
+- name: check dir with spaces and parens in the dir name has been created
+  assert:
+    that:
+       - file_result.changed
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+
+- name: remove dir with spaces and parens in the dir name
+  win_file: path="{{win_output_dir}}/dir with spaces (and parens)" state=absent
+  register: file_result
+
+- name: stat the dir with spaces and parens in the dir name
+  win_stat: path="{{win_output_dir}}/dir with spaces (and parens)"
+  register: stat_result
+
+- name: assert dir with spaces and parens in the dir name was removed
+  assert:
+    that:
+       - file_result.changed
+       - "stat_result.stat.exists == False"
+
+- name: create folder to point set symbolic link for
+  win_file:
+    path: "{{win_output_dir}}/link-test/link-target"
+    state: directory
+
+- name: create symbolic link
+  win_command: cmd.exe /c mklink /d "{{win_output_dir}}\link-test\link" "{{win_output_dir}}\link-test\link-target"
+
+- name: remove symbolic link target
+  win_file:
+    path: "{{win_output_dir}}/link-test/link-target"
+    state: absent
+
+- name: remove parent folder with broken link
+  win_file:
+    path: "{{win_output_dir}}/link-test"
+    state: absent
+
+- name: clean up sub1
+  win_file: path={{win_output_dir}}/sub1 state=absent
+
+- name: clean up sub2
+  win_file: path={{win_output_dir}}/sub2 state=absent

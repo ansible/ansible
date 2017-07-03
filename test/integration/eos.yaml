@@ -1,0 +1,20 @@
+---
+- hosts: eos
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+    - { role: eos_banner, when: "limit_to in ['*', 'eos_banner']" }
+    - { role: eos_command, when: "limit_to in ['*', 'eos_command']" }
+    - { role: eos_config, when: "limit_to in ['*', 'eos_config']" }
+    - { role: eos_template, when: "limit_to in ['*', 'eos_template']" }
+    - { role: eos_facts, when: "limit_to in ['*', 'eos_facts']" }
+    - { role: eos_eapi, debug: yes, when: "limit_to in ['*', 'eos_eapi']" }
+    - { role: eos_system, debug: yes, when: "limit_to in ['*', 'eos_system']" }
+    - { role: eos_user, when: "limit_to in ['*', 'eos_user']" }
+    - { role: eos_vlan, debug: yes, when: "limit_to in ['*', 'eos_vlan']" }
+    - { role: eos_vrf, debug: yes, when: "limit_to in ['*', 'eos_vrf']" }

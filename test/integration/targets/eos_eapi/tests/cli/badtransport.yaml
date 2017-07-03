@@ -1,0 +1,13 @@
+- debug: msg="START CLI/BADTRANSPORT.YAML"
+
+- name: Expect transport other than cli to fail
+  eos_eapi:
+    provider: "{{ eapi }}"
+  register: eos_eapi_output
+  connection: local
+  ignore_errors: yes
+
+- assert:
+    that: eos_eapi_output.failed == true
+
+- debug: msg="START CLI/BADTRANSPORT.YAML"

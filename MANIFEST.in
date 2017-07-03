@@ -1,0 +1,20 @@
+prune ticket_stubs
+prune hacking
+include README.md COPYING
+include requirements.txt
+include .coveragerc
+include .yamllint
+include examples/hosts
+include examples/ansible.cfg
+include lib/ansible/module_utils/powershell.ps1
+recursive-include lib/ansible/modules *
+recursive-include lib/ansible/galaxy/data *
+recursive-include docs *
+recursive-include packaging *
+recursive-include test *
+include Makefile
+include VERSION
+include MANIFEST.in
+include CHANGELOG.md
+include contrib/README.md
+recursive-include contrib/inventory *

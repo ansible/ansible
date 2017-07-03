@@ -1,0 +1,10 @@
+description     "ansible test daemon"
+
+start on runlevel [345]
+stop on runlevel [!345]
+
+expect daemon
+
+exec ansible_test_service
+
+manual

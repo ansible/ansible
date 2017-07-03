@@ -1,0 +1,39 @@
+---
+- debug: msg="START cli/toplevel_nonidempotent.yaml"
+
+- name: setup
+  dellos6_config:
+    lines: ['hostname {{ inventory_hostname_short }}']
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure top level command
+  dellos6_config:
+    lines: ['hostname foo']
+    provider: "{{ cli }}"
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+
+- name: configure top level command idempotent check
+  dellos6_config:
+    lines: ['hostname foo']
+    provider: "{{ cli }}"
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: teardown
+  dellos6_config:
+    lines: ['hostname {{ inventory_hostname_short }}']
+    provider: "{{ cli }}"
+    match: none
+
+- debug: msg="END cli/toplevel_nonidempotent.yaml"

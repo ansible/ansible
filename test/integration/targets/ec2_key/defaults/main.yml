@@ -1,0 +1,3 @@
+---
+# defaults file for test_ec2_key
+ec2_key_name: '{{resource_prefix}}'

@@ -1,0 +1,43 @@
+---
+- debug: msg="START cli/sublevel.yaml"
+
+- name: setup test
+  dellos9_config:
+    lines:
+      - 'no ip access-list extended test'
+      - 'no ip access-list standard test'
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure sub level command
+  dellos9_config:
+    lines: ['seq 5 permit ip any any log threshold-in-msgs 10 interval 5']
+    parents: ['ip access-list extended test']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list extended test' in result.updates"
+      - "'seq 5 permit ip any any log threshold-in-msgs 10 interval 5' in result.updates"
+
+- name: configure sub level command idempotent check
+  dellos9_config:
+    lines: ['seq 5 permit ip any any log threshold-in-msgs 10 interval 5']
+    parents: ['ip access-list extended test']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  dellos9_config:
+    lines:
+      - 'no ip access-list extended test'
+    provider: "{{ cli }}"
+    match: none
+
+- debug: msg="END cli/sublevel.yaml"

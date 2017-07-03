@@ -1,0 +1,34 @@
+# test code to assert mysql user
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+- name: run command to query for mysql user
+  command: mysql "-e SELECT User FROM mysql.user where user='{{ user_name }}';"
+  register: result
+
+- name: assert mysql user is present
+  assert: { that: "'{{ user_name }}' in result.stdout" }
+
+- name: run command to show privileges for user (expect privileges in stdout)
+  command: mysql "-e SHOW GRANTS FOR '{{ user_name }}'@'localhost';"
+  register: result
+  when: priv is defined
+
+- name: assert user has giving privileges
+  assert: { that: "'GRANT {{priv}} ON *.*' in result.stdout" }
+  when: priv is defined

@@ -1,0 +1,10 @@
+---
+- name: notify_listen_ran_4_3
+  set_fact:
+    notify_listen_ran_4_3: True
+  listen: notify_listen
+
+- name: notify_listen_in_role_4
+  set_fact:
+    notify_listen_in_role_4: True
+  listen: notify_listen_in_role

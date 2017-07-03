@@ -1,0 +1,16 @@
+# change these to some ansible owned test roles
+- src: briancoca.oracle_java7
+  name: oracle_java7
+
+- src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+  version: pr-10620
+
+- src: http://bitbucket.org/willthames/hg-ansible-galaxy
+  scm: hg
+
+- src: https://bitbucket.org/willthames/http-ansible-galaxy/get/master.tar.gz
+  name: http-role
+
+- src: git@github.com:geerlingguy/ansible-role-php.git
+  scm: git
+  name: php

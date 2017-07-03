@@ -1,0 +1,40 @@
+---
+- debug: msg="START cli/defaults.yaml"
+
+- name: setup
+  ios_config:
+    commands:
+      - no description
+      - shutdown
+    parents:
+      - interface Loopback999
+    match: none
+
+- name: configure device with defaults included
+  ios_config:
+    src: defaults/config.j2
+    defaults: yes
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - "result.changed == true"
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#    - "result.updates is not defined"
+
+- name: check device with defaults included
+  ios_config:
+    src: defaults/config.j2
+    defaults: yes
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.updates is not defined"
+
+- debug: msg="END cli/defaults.yaml"

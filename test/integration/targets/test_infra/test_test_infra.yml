@@ -1,0 +1,25 @@
+- hosts: testhost
+  gather_facts: no
+  tags:
+    - always
+  tasks:
+  - name: ensure fail action produces a failing result
+    fail:
+    ignore_errors: yes
+    register: fail_out
+
+  - debug:
+      msg: fail works ({{ fail_out.failed }})
+
+  - name: ensure assert produces a failing result
+    assert:
+      that: false
+    ignore_errors: yes
+    register: assert_out
+
+  - debug:
+      msg: assert works ({{ assert_out.failed }})
+
+  - name: EXPECTED FAILURE ensure fail action stops execution
+    fail:
+      msg: fail actually failed (this is expected)

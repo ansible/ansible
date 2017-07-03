@@ -1,0 +1,66 @@
+---
+- debug: msg="START cli/set_mtu.yaml"
+
+- name: setup
+  nxos_config:
+    lines:
+      - no switchport
+      - no mtu
+    parents: interface Ethernet3/1
+    match: none
+    provider: "{{ cli }}"
+
+- name: configure interface mtu
+  nxos_mtu:
+    interface: Ethernet3/1
+    mtu: 2000
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify interface mtu
+  nxos_mtu:
+    interface: Ethernet3/1
+    mtu: 2000
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: configure invalid (odd) interface mtu
+  nxos_mtu:
+    interface: Ethernet3/1
+    mtu: 2001
+    provider: "{{ cli }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+
+- name: configure invalid (large) mtu setting
+  nxos_mtu:
+    interface: Ethernet3/1
+    mtu: 100000
+    provider: "{{ cli }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+
+- name: teardown
+  nxos_config:
+    lines: no mtu
+    parents: interface Ethernet3/1
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/set_mtu.yaml"

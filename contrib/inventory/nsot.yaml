@@ -1,0 +1,22 @@
+---
+juniper_routers:
+  query: 'deviceType=ROUTER manufacturer=JUNIPER'
+  vars:
+    group: juniper_routers
+    netconf: true
+    os: junos
+
+cisco_asa:
+  query: 'manufacturer=CISCO deviceType=FIREWALL'
+  vars:
+    group: cisco_asa
+    routed_vpn: false
+    stateful: true
+
+old_cisco_asa:
+  query: 'manufacturer=CISCO deviceType=FIREWALL -softwareVersion=8.3+'
+  vars:
+    old_nat: true
+
+not_f10:
+  query: '-manufacturer=FORCE10'

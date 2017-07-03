@@ -1,0 +1,4 @@
+winter: coming
+etest: 'from role vars'
+role_var_beats_inventory: 'chevron 5 encoded'
+role_var_beats_default: 'chevron 6 encoded'

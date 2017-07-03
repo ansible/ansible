@@ -1,0 +1,563 @@
+# test code for the copy module and action plugin
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: remove win_output_dir
+  win_file: 
+    path: "{{win_output_dir}}"
+    state: absent
+
+- name: recreate win_output_dir
+  win_file: 
+    path: "{{win_output_dir}}"
+    state: directory
+
+- name: copy an empty file
+  win_copy:
+    src: empty.txt
+    dest: "{{win_output_dir}}\\empty.txt"
+  register: copy_empty_result
+
+- name: check copy empty result
+  assert:
+    that:
+    - copy_empty_result|changed
+    - copy_empty_result.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+
+- name: stat the empty file
+  win_stat:
+    path: "{{win_output_dir}}/empty.txt"
+  register: stat_empty_result
+
+- name: check that empty file really was created
+  assert:
+    that:
+    - stat_empty_result.stat.exists
+    - stat_empty_result.stat.size == 0
+
+- name: copy an empty file again
+  win_copy:
+    src: empty.txt
+    dest: "{{win_output_dir}}/empty.txt"
+  register: copy_empty_again_result
+
+- name: check copy empty again result
+  assert:
+    that:
+    - not copy_empty_again_result|changed
+    - copy_empty_again_result.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+
+- name: initiate a basic copy
+  win_copy:
+    src: foo.txt
+    dest: "{{win_output_dir}}\\foo.txt"
+  register: copy_result
+
+- name: check that the basic copy of the file was created
+  win_stat:
+    path: "{{win_output_dir}}\\foo.txt"
+  register: copy_result_stat
+
+- name: check basic copy result
+  assert:
+    that:
+    - copy_result|changed
+    - copy_result.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_result_stat.stat.exists == True
+
+- name: initiate a basic copy again
+  win_copy:
+    src: foo.txt
+    dest: "{{win_output_dir}}\\foo.txt"
+  register: copy_result_again
+
+- name: check basic copy result again
+  assert:
+    that:
+    - not copy_result_again|changed
+    - copy_result_again.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+
+- name: copy file that exists on remote but checksum different and force is False
+  win_copy:
+    src: empty.txt
+    dest: "{{win_output_dir}}\\foo.txt"
+    force: False
+  register: copy_result_no_force_different
+
+- name: get stat on remote file for assertion
+  win_stat:
+    path: "{{win_output_dir}}\\foo.txt"
+  register: copy_result_no_force_different_stat
+
+- name: check that nothing changed when not forcing file and dest exists
+  assert:
+    that:
+    - not copy_result_no_force_different|changed
+    - copy_result_no_force_different_stat.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+
+- name: copy file that doesn't exist on remote and force is False
+  win_copy:
+    src: empty.txt
+    dest: "{{win_output_dir}}\\no_force.txt"
+    force: False
+  register: copy_result_no_force
+
+- name: get stat on remote file for assertion
+  win_stat:
+    path: "{{win_output_dir}}\\no_force.txt"
+  register: copy_result_no_force_stat
+
+- name: check that there was a change when not forcing file and dest does not exist
+  assert:
+    that:
+    - copy_result_no_force|changed
+    - copy_result_no_force_stat.stat.exists == True
+    - copy_result_no_force_stat.stat.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+
+- name: make an output subdirectory
+  win_file:
+    path: "{{win_output_dir}}\\sub"
+    state: directory
+
+- name: test recursive copy to directory
+  win_copy:
+    src: subdir
+    dest: "{{win_output_dir}}\\sub"
+  register: recursive_copy_result
+
+- name: get stats on files within sub directory
+  win_find:
+    paths: "{{win_output_dir}}\\sub"
+    recurse: True
+  register: recurse_find_results
+
+- name: assert recursive copy worked
+  assert:
+    that:
+    - recursive_copy_result|changed
+    - recurse_find_results.examined == 7 # checks that it found 4 folders and 3 files
+
+- name: test recursive copy to directory again
+  win_copy:
+    src: subdir
+    dest: "{{win_output_dir}}\\sub"
+  register: recursive_copy_result_again
+
+- name: assert recursive copy worked
+  assert:
+    that:
+    - not recursive_copy_result_again|changed
+
+# Recursive folder copy with trailing slash (see issue 23559)
+
+
+- name: make an output subdirectory
+  win_file:
+    path: "{{win_output_dir}}\\subtrailing\\"
+    state: directory
+
+- name: test recursive copy to directory
+  win_copy:
+    src: subdir/
+    dest: "{{win_output_dir}}\\subtrailing\\"
+  register: recursive_copy_result2
+
+- name: get stats on files within sub directory
+  win_find:
+    paths: "{{win_output_dir}}\\subtrailing\\"
+    recurse: True
+  register: recurse_find_results2
+
+- name: assert recursive copy worked
+  assert:
+    that:
+    - recursive_copy_result2|changed
+    - recurse_find_results2.examined == 6 # checks that it found 3 folders and 3 files.  
+# Note this is different from the test above because, by including the trailing
+# slash on the source, we only get the *contents* of the source folder
+# without the trailing slash, we would get the source folder *and* its
+# contents.  
+# See 'src' parameter documentation 
+# here: http://docs.ansible.com/ansible/win_copy_module.html
+
+- name: test recursive copy to directory again with source slash
+  win_copy:
+    src: subdir/
+    dest: "{{win_output_dir}}\\subtrailing\\"
+  register: recursive_copy_result_again2
+
+- name: assert recursive copy worked
+  assert:
+    that:
+    - not recursive_copy_result_again2|changed
+
+# test 'content' parameter
+- name: create file with content
+  win_copy:
+    content: abc
+    dest: "{{win_output_dir}}\\content.txt"
+  register: content_result
+
+- name: get stat on creating file with content
+  win_stat:
+    path: "{{win_output_dir}}\\content.txt"
+  register: content_stat
+
+- name: assert content copy worked
+  assert:
+    that:
+    - content_result|changed
+    - content_stat.stat.exists == True
+    - content_stat.stat.checksum == 'a9993e364706816aba3e25717850c26c9cd0d89d'
+
+- name: create file with content again
+  win_copy:
+    content: abc
+    dest: "{{win_output_dir}}\\content.txt"
+  register: content_result_again
+
+- name: assert content copy again didn't change
+  assert:
+    that:
+    - not content_result_again|changed
+
+- name: copy file with different content
+  win_copy:
+    content: 123
+    dest: "{{win_output_dir}}\\content.txt"
+  register: content_different_result
+
+- name: get stat on file with different content
+  win_stat:
+    path: "{{win_output_dir}}\\content.txt"
+  register: content_different_stat
+
+- name: assert different content copy worked
+  assert:
+    that:
+    - content_different_result|changed
+    - content_different_stat.stat.checksum == '40bd001563085fc35165329ea1ff5c5ecbdbbeef'
+
+- name: copy remote file
+  win_copy:
+    src: "{{win_output_dir}}\\foo.txt"
+    dest: "{{win_output_dir}}\\foobar.txt"
+    remote_src: True
+  register: remote_file_result
+
+- name: get stat on new remote file
+  win_stat:
+    path: "{{win_output_dir}}\\foobar.txt"
+  register: remote_file_stat
+
+- name: assert remote copy worked
+  assert:
+    that:
+    - remote_file_result|changed
+    - remote_file_result.size == 8
+    - remote_file_result.src == '{{win_output_dir|regex_replace('\\', '\\\\')}}\\foo.txt'
+    - remote_file_result.dest == '{{win_output_dir|regex_replace('\\', '\\\\')}}\\foobar.txt'
+    - remote_file_result.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_file_result.operation == 'file_copy'
+    - remote_file_result.original_basename == 'foo.txt'
+    - remote_file_stat.stat.exists == True
+    - remote_file_stat.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+
+- name: copy remote file again
+  win_copy:
+    src: "{{win_output_dir}}\\foo.txt"
+    dest: "{{win_output_dir}}\\foobar.txt"
+    remote_src: True
+  register: remote_file_result_again
+
+- name: assert remote copy again did not change
+  assert:
+    that:
+    - not remote_file_result_again|changed
+
+- name: copy remote folder
+  win_copy:
+    src: "{{win_output_dir}}\\sub"
+    dest: "{{win_output_dir}}\\sub2"
+    remote_src: True
+  register: remote_folder_result
+
+- name: get stat on new remote folder contents
+  win_find:
+    paths: "{{win_output_dir}}\\sub2"
+    recurse: True
+  register: remote_folder_stat
+
+- name: assert remote copy worked
+  assert:
+    that:
+    - remote_folder_result|changed
+    - remote_folder_result.size == 11
+    - remote_folder_result.src == '{{win_output_dir|regex_replace('\\', '\\\\')}}\\sub'
+    - remote_folder_result.dest == '{{win_output_dir|regex_replace('\\', '\\\\')}}\\sub2'
+    - remote_folder_result.operation == 'folder_copy'
+    - remote_folder_stat.examined == 8 # 5 folders 3 files
+
+- name: copy remote folder again
+  win_copy:
+    src: "{{win_output_dir}}\\sub"
+    dest: "{{win_output_dir}}\\sub2"
+    remote_src: True
+  register: remote_folder_result_again
+
+- name: assert remote copy again did not change
+  assert:
+    that:
+    - not remote_folder_result_again|changed
+
+- name: fail to copy when source doesn't exist
+  win_copy:
+    src: false-file
+    dest: "{{win_output_dir}}\\fale-file.txt"
+  register: fail_missing_source
+  failed_when: fail_missing_source.msg != "Unable to find 'false-file' in expected paths."
+
+- name: fail when copying remote src file when src doesn't exist
+  win_copy:
+    src: "{{win_output_dir}}\\fake.txt"
+    dest: "{{win_output_dir}}\\real.txt"
+    remote_src: True
+  register: fail_remote_missing_src
+  failed_when: "fail_remote_missing_src.msg != 'Cannot copy src file: ' + win_output_dir + '\\\\fake.txt as it does not exist'"  
+
+- name: fail when copying remote src folder to file
+  win_copy:
+    src: "{{win_output_dir}}\\sub"
+    dest: "{{win_output_dir}}\\foo.txt"
+    remote_src: True
+  register: fail_remote_folder_to_file
+  failed_when: "'If src is a folder, dest must also be a folder. src' not in fail_remote_folder_to_file.msg"
+
+- name: fail when copying remote src file to folder
+  win_copy:
+    src: "{{win_output_dir}}\\foo.txt"
+    dest: "{{win_output_dir}}\\sub"
+    remote_src: True
+  register: fail_remote_file_to_folder
+  failed_when: "'If src is a file, dest must also be a file. src' not in fail_remote_file_to_folder.msg"
+
+- name: run check mode copy new file
+  win_copy:
+    src: foo.txt
+    dest: "{{win_output_dir}}\\foo-check.txt"
+  register: check_copy_file
+  check_mode: yes
+
+- name: get stat on new file
+  win_stat:
+    path: "{{win_output_dir}}\\foo-check.txt"
+  register: check_stat_file
+
+- name: assert check would change but file doesn't exist
+  assert:
+    that:
+    - check_copy_file|changed
+    - check_stat_file.stat.exists == False
+
+- name: run check mode copy existing file
+  win_copy:
+    src: foo.txt
+    dest: "{{win_output_dir}}\\foo.txt"
+  register: check_copy_file_existing
+  check_mode: yes
+
+- name: assert check wouldn't change existing file
+  assert:
+    that:
+    - not check_copy_file_existing|changed
+
+- name: run check mode copy existing file with force False
+  win_copy:
+    src: empty.txt
+    dest: "{{win_output_dir}}\\foo.txt"
+    force: False
+  register: check_copy_existing_no_force
+  check_mode: yes
+
+- name: assert check wouldn't change existing file
+  assert:
+    that:
+    - not check_copy_existing_no_force|changed
+
+- name: run check mode copy new file with force False
+  win_copy:
+    src: empty.txt
+    dest: "{{win_output_dir}}\\no-force-check.txt"
+    force: False
+  register: check_copy_no_force
+  check_mode: yes
+
+- name: get stat on new file
+  win_stat:
+    path: "{{win_output_dir}}\\no-force-check.txt"
+  register: check_copy_no_force_stat
+
+- name: assert check wouldn't create file but change registered
+  assert:
+    that:
+    - check_copy_no_force|changed
+    - check_copy_no_force_stat.stat.exists == False
+
+- name: run check mode copy new folder
+  win_copy:
+    src: subdir
+    dest: "{{win_output_dir}}\\sub-check"
+  register: check_copy_folder
+  check_mode: yes
+
+- name: get stat on new folder
+  win_stat:
+    path: "{{win_output_dir}}\\sub-check"
+  register: check_stat_folder
+
+- name: assert check would change but folder doesn't exist
+  assert:
+    that:
+    - check_copy_folder|changed
+    - check_stat_folder.stat.exists == False
+
+- name: run check mode copy existing folder
+  win_copy:
+    src: subdir
+    dest: "{{win_output_dir}}\\sub"
+  register: check_copy_folder_existing
+  check_mode: yes
+
+- name: assert check wouldn't change existing file
+  assert:
+    that:
+    - not check_copy_folder_existing|changed
+
+- name: run check mode copy new contents
+  win_copy:
+    content: abc
+    dest: "{{win_output_dir}}\\content-check.txt"
+  register: check_content_file
+  check_mode: yes
+
+- name: get stat on content file
+  win_stat:
+    path: "{{win_output_dir}}\\content-check.txt"
+  register: check_stat_content
+
+- name: assert check would change but content file doesn't exist
+  assert:
+    that:
+    - check_content_file|changed
+    - check_stat_content.stat.exists == False
+
+- name: run check mode copy existing contents
+  win_copy:
+    content: 123
+    dest: "{{win_output_dir}}\\content.txt"
+  register: check_content_file_existing
+  check_mode: yes
+
+- name: assert check wouldn't change exisitng content file
+  assert:
+    that:
+    - not check_content_file_existing|changed
+
+- name: run check mode copy new contents
+  win_copy:
+    content: abc
+    dest: "{{win_output_dir}}\\content.txt"
+  register: check_different_content_file
+
+- name: get stat on check mode file with different content
+  win_stat:
+    path: "{{win_output_dir}}\\content.txt"
+  register: check_different_content_stat
+
+- name: assert check content changed but file wasn't touched
+  assert:
+    that:
+    - check_different_content_file|changed
+
+- name: run check mode copy new file remote src
+  win_copy:
+    src: "{{win_output_dir}}\\foo.txt"
+    dest: "{{win_output_dir}}\\foo-check.txt"
+    remote_src: True
+  register: check_copy_file_remote
+  check_mode: yes
+
+- name: get stat on new file
+  win_stat:
+    path: "{{win_output_dir}}\\foo-check.txt"
+  register: check_stat_file_remote
+
+- name: assert check would change but file doesn't exist
+  assert:
+    that:
+    - check_copy_file_remote|changed
+    - check_stat_file_remote.stat.exists == False
+
+- name: run check mode copy existing file remote src
+  win_copy:
+    src: "{{win_output_dir}}\\foo.txt"
+    dest: "{{win_output_dir}}\\foo.txt"
+    remote_src: True
+  register: check_copy_file_remote_existing
+  check_mode: yes
+
+- name: assert check would change but file doesn't exist
+  assert:
+    that:
+    - not check_copy_file_remote_existing|changed
+
+- name: run check mode copy new folder remote src
+  win_copy:
+    src: "{{win_output_dir}}\\sub"
+    dest: "{{win_output_dir}}\\sub-check"
+    remote_src: True
+  register: check_copy_folder_remote
+  check_mode: yes
+
+- name: get stat on new file
+  win_stat:
+    path: "{{win_output_dir}}\\sub-check"
+  register: check_stat_folder_remote
+
+- name: assert check would change but folder doesn't exist
+  assert:
+    that:
+    - check_copy_folder_remote|changed
+    - check_stat_folder_remote.stat.exists == False
+
+- name: run check mode copy existing folder remote src
+  win_copy:
+    src: "{{win_output_dir}}\\sub"
+    dest: "{{win_output_dir}}\\sub2"
+    remote_src: True
+  register: check_copy_folder_remote_existing
+  check_mode: yes
+
+- name: assert check wouldn't change existing folder
+  assert:
+    that:
+    - not check_copy_folder_remote_existing|changed
+
+- name: cleanup output dir
+  win_file:
+    path: "{{win_output_dir}}"
+    state: absent
