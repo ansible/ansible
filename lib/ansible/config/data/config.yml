@@ -185,7 +185,7 @@ ANY_ERRORS_FATAL:
     env:
       - name: ANSIBLE_ANY_ERRORS_FATAL
     ini:
-      - section:  defauls
+      - section:  defaults
         key: any_errors_fatal
     value_type: boolean
     vars: []
