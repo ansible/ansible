@@ -17,7 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
+                    'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
