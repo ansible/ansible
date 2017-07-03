@@ -85,6 +85,8 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+from ansible.module_utils.vmware import vmware_argument_spec, find_dvs_by_name, find_hostsystem_by_name, connect_to_api, find_dvspg_by_name
+from ansible.module_utils.basic import AnsibleModule
 
 
 class VMwareMigrateVmk(object):
@@ -189,13 +191,11 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_PYVMOMI:
-        self.module.fail_json(msg='pyvmomi required for this module')
+        module.fail_json(msg='pyvmomi required for this module')
 
     vmware_migrate_vmk = VMwareMigrateVmk(module)
     vmware_migrate_vmk.process_state()
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
