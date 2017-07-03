@@ -80,3 +80,11 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
             changed=True, sort=False,
             commands=['router bgp 65535', 'neighbor 3.3.3.5', 'advertise-map my_advertise_map non-exist my_exist_map']
         )
+
+    def test_nxos_bgp_neighbor_af_max_prefix_limit_default(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4',
+                             safi='unicast', max_prefix_limit='default'))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'maximum-prefix default']
+        )

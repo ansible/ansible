@@ -694,9 +694,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['advertise_map_exist', 'advertise_map_non_exist']],
-        required_together=[['max_prefix_limit', 'max_prefix_interval'],
-                           ['max_prefix_limit', 'max_prefix_warning'],
-                           ['max_prefix_limit', 'max_prefix_threshold']],
         supports_check_mode=True,
     )
 
@@ -705,7 +702,11 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
-
+    for key in ['max_prefix_interval', 'max_prefix_warning', 'max_prefix_threshold']:
+        if module.params[key] and not module.params['max_prefix_limit']:
+            module.fail_json(
+                msg='max_prefix_limit is required when using %s' % key
+            )
     if module.params['vrf'] == 'default' and module.params['soo']:
         module.fail_json(msg='SOO is only allowed in non-default VRF')
 
