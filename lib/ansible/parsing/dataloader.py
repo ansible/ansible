@@ -43,6 +43,8 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+# Tries to determine if a path is inside a role, last dir must be 'tasks'
+# this is not perfect but people should really avoid 'tasks' dirs outside roles when using Ansible.
 RE_TASKS = re.compile(u'(?:^|%s)+tasks%s?$' % (os.path.sep, os.path.sep))
 
 
@@ -322,7 +324,8 @@ class DataLoader:
             is prepended to the source to form the path to search for.
         :arg source: A text string which is the filename to search for
         :rtype: A text string
-        :returns: An absolute path to the filename ``source`` or raises an AnsibleFileNotFound Exception
+        :returns: An absolute path to the filename ``source`` if found
+        :raises: An AnsibleFileNotFound Exception if the file is found to exist in the search paths
         '''
         b_dirname = to_bytes(dirname)
         b_source = to_bytes(source)
@@ -424,7 +427,7 @@ class DataLoader:
                         # since the decrypt function doesn't know the file name
                         data = f.read()
                         if not self._b_vault_password:
-                            raise AnsibleParserError("A vault password must be specified to decrypt %s" % to_text(file_path))
+                            raise AnsibleParserError("A vault password must be specified to decrypt %s" % to_native(file_path))
 
                         data = self._vault.decrypt(data, filename=real_path)
                         # Make a temp file
