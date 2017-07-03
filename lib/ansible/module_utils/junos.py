@@ -54,12 +54,6 @@ ARGS_DEFAULT_VALUE = {
     'timeout': 10
 }
 
-OPERATION_LOOK_UP = {
-    'absent': 'delete',
-    'active': 'active',
-    'deactivate': 'inactive'
-}
-
 
 def get_argspec():
     return junos_argument_spec
@@ -280,9 +274,12 @@ def map_params_to_obj(module, param_to_xpath_map):
 
 
 def map_obj_to_ele(module, want, top, value_map=None):
+    if not HAS_LXML:
+        module.fail_json(msg='lxml is not installed.')
+
+    root = Element('root')
     top_ele = top.split('/')
-    root = Element(top_ele[0])
-    ele = root
+    ele = SubElement(root, top_ele[0])
 
     if len(top_ele) > 1:
         for item in top_ele[1:-1]:
@@ -302,14 +299,14 @@ def map_obj_to_ele(module, want, top, value_map=None):
         else:
             node = container
 
-        for xpath, attributes in obj.items():
+        for fxpath, attributes in obj.items():
             for attr in attributes:
                 tag_only = attr.get('tag_only', False)
                 leaf_only = attr.get('leaf_only', False)
                 is_value = attr.get('value_req', False)
                 is_key = attr.get('is_key', False)
                 value = attr.get('value')
-
+                field_top = attr.get('top')
                 # operation 'delete' is added as element attribute
                 # only if it is key or leaf only node
                 if state == 'absent' and not (is_key or leaf_only):
@@ -320,12 +317,34 @@ def map_obj_to_ele(module, want, top, value_map=None):
                     continue
 
                 # convert param value to device specific value
-                if value_map and xpath in value_map:
-                    value = value_map[xpath].get(value)
+                if value_map and fxpath in value_map:
+                    value = value_map[fxpath].get(value)
 
                 if value or tag_only or leaf_only:
                     ele = node
-                    tags = xpath.split('/')
+                    if field_top:
+                        # eg: top = 'system/syslog/file'
+                        #     field_top = 'system/syslog/file/contents'
+                        # <file>
+                        #   <name>test</name>
+                        #   <contents>
+                        #   </contents>
+                        # </file>
+                        ele_list = root.xpath(top + '/' + field_top)
+
+                        if not len(ele_list):
+                            fields = field_top.split('/')
+                            ele = node
+                            for item in fields:
+                                inner_ele = root.xpath(top + '/' + item)
+                                if len(inner_ele):
+                                    ele = inner_ele[0]
+                                else:
+                                    ele = SubElement(ele, item)
+                        else:
+                            ele = ele_list[0]
+
+                    tags = fxpath.split('/')
                     if value:
                         value = to_text(value, errors='surrogate_then_replace')
 
@@ -349,13 +368,12 @@ def map_obj_to_ele(module, want, top, value_map=None):
                             # can result in error, hence the check
                             if is_value:
                                 ele.text = value
+                            if is_key:
+                                par = ele.getparent()
+                                par.set('delete', 'delete')
                     else:
                         ele.text = value
-
-                        if HAS_LXML:
-                            par = ele.getparent()
-                        else:
-                            module.fail_json(msg='lxml is not installed.')
+                        par = ele.getparent()
 
                         if state == 'present':
                             # set replace attribute at parent node
@@ -368,4 +386,4 @@ def map_obj_to_ele(module, want, top, value_map=None):
                         else:
                             par.set('delete', 'delete')
 
-    return root
+    return root.getchildren()[0]

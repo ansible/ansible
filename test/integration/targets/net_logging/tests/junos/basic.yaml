@@ -1,0 +1,124 @@
+---
+- debug: msg="START net_logging junos/basic.yaml"
+
+- name: setup - remove host logging
+  net_logging:
+    dest: host
+    name: 1.1.1.1
+    facility: pfe
+    level: critical
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create file logging
+  net_logging:
+    dest: host
+    name: 1.1.1.1
+    facility: pfe
+    level: critical
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.1</name>' in config.xml"
+      - "'<name>pfe</name>' in config.xml"
+      - "'<critical/>' in config.xml"
+
+- name: Create file logging (idempotent)
+  net_logging:
+    dest: host
+    name: 1.1.1.1
+    facility: pfe
+    level: critical
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete logging configuration
+  net_logging:
+    dest: host
+    name: 1.1.1.1
+    facility: pfe
+    level: critical
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.1</name>' not in config.xml"
+
+- name: Configure console logging
+  net_logging:
+    dest: console
+    facility: kernel
+    level: emergency
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<console>' in config.xml"
+      - "'<name>kernel</name>' in config.xml"
+      - "'<emergency/>' in config.xml"
+
+- name: Configure console logging (idempotent)
+  junos_logging:
+    dest: console
+    facility: kernel
+    level: emergency
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete console logging
+  net_logging:
+    dest: console
+    facility: kernel
+    level: emergency
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<console>' not in config.xml"
