@@ -19,22 +19,29 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'curated'}
 
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
 module: ec2_lc
+
 short_description: Create or delete AWS Autoscaling Launch Configurations
+
 description:
   - Can create or delete AWS Autoscaling Configurations
   - Works with the ec2_asg module to manage Autoscaling Groups
+
 notes:
   - Amazon ASG Autoscaling Launch Configurations are immutable once created,
     so modifying the configuration after it is changed will not modify the
     launch configuration on AWS. You must create a new config and assign it to
     the ASG instead.
   - encrypted volumes are supported on versions >= 2.4
+
 version_added: "1.6"
-author: "Gareth Rushgrove (@garethr)"
-        "Willem van Ketwich (@wilvk)"
+
+author:
+  - "Gareth Rushgrove (@garethr)"
+  - "Willem van Ketwich (@wilvk)"
+
 options:
   state:
     description:
@@ -98,6 +105,7 @@ options:
     description:
       - Whether instances in group are launched with detailed monitoring.
     default: false
+    required: false
   assign_public_ip:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon
@@ -137,14 +145,14 @@ options:
   vpc_id:
     description:
       - VPC ID, used when resolving security group names to IDs.
-        required: false
-        version_added: "2.4"
     required: false
+    version_added: "2.4"
   instance_id:
     description:
-      - The Id if a running instance to use as a basis for a launch
+      - The Id of a running instance to use as a basis for a launch
         configuration. Can be used in place of image_id and instance_type.
-        version_added: "2.4"
+    required: false
+    version_added: "2.4"
   advanced_instance_monitoring:
     description:
       - A boolean representing whether advanced instance monitoring is to be
@@ -158,13 +166,16 @@ options:
     required: false
     default: 'default'
     version_added: "2.4"
+
 extends_documentation_fragment:
     - aws
     - ec2
+
 requirements:
     - boto >= 3.0.0
     - python >= 2.6
-"""
+
+'''
 
 EXAMPLES = '''
 
@@ -187,7 +198,6 @@ EXAMPLES = '''
       ephemeral: ephemeral0
 
 # create a launch configuration using a running instance id as a basis
-
 - ec2_lc:
     name: special
     instance_id: i-00a48b207ec59e948
