@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -27,7 +27,7 @@ module: do_floating_ip_facts
 short_description: DigitalOcean Floating IPs facts
 description:
      - Fetch DigitalOcean Floating IPs facts.
-version_added: "2.3"
+version_added: "2.4"
 author: "Patrick Marques (@patrickfmarques)"
 options:
   oauth_token:
@@ -177,8 +177,8 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            oauth_token = dict(
+        argument_spec=dict(
+            oauth_token=dict(
                 no_log=True,
                 # Support environment variable for DigitalOcean OAuth Token
                 fallback=(env_fallback, ['DO_OAUTH_TOKEN']),
