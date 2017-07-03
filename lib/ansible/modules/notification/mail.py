@@ -312,6 +312,7 @@ def main():
                 try:
                     smtp.starttls()
                     smtp.ehlo()
+                    auth_flag = smtp.has_extn('AUTH')
                     secure_state = True
                 except smtplib.SMTPException:
                     e = get_exception()
