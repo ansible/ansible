@@ -44,8 +44,8 @@ options:
     default: null
   destination_cidrblock:
     description:
-      - The destination CIDR or Ip address of route entry. Such as: 192.168.0.0/24 or 192.168.0.1. There is not the same
-        destination cidr_block in the same route table. It is required when creating route entry.
+      - The destination CIDR or Ip address of route entry. Such as:192.168.0.0/24 or 192.168.0.1.
+        There is not the same destination cidr_block in the same route table. It is required when creating route entry.
     required: false
     default: null
     aliases: ['dest_cidrblock', 'cidr_block']
@@ -69,7 +69,6 @@ notes:
   - When status is 'list', the parameters 'route_table_id', 'destination_cidrblock' and 'nexthop_id' are optional.
 author:
   - "He Guimin (@xiaozhu36)"
-
 """
 
 EXAMPLES = """
@@ -183,6 +182,7 @@ destination_cidrblocks:
             "status": "Available",
             "type": "System"
         }
+    ]
 route_table_id:
     description: the ID of route table to which route entry belongs
     returned: on present and absent
@@ -255,7 +255,7 @@ def main():
     argument_spec = ecs_argument_spec()
     argument_spec.update(dict(
         status=dict(default='present', aliases=['state'], choices=['present', 'absent', 'list']),
-        destination_cidrblock=dict(aliases=['dest_cidrblock', 'cidr_block']),
+        destination_cidrblock=dict(type='str', aliases=['dest_cidrblock', 'cidr_block']),
         nexthop_type=dict(default='Instance', aliases=['hop_type'], choices=['Instance', 'Tunnel', 'HaVip', 'RouterInterface']),
         nexthop_id=dict(aliases=['hop_id']),
         router_id=dict(type='str', required=True),
@@ -312,7 +312,7 @@ def main():
             except VPCResponseError as e:
                 module.fail_json(msg='Unable to delete route entry, error: {0}'.format(e))
             module.exit_json(changed=changed, route_table_id=route_table_id, destination_cidrblock=destination_cidrblock)
-        
+
         module.exit_json(changed=changed, msg="Please specify a route entry by using 'destination_cidrblock',"
                                               "and expected vpcs: {0}".format(route_entries_basic))
 

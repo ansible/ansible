@@ -114,7 +114,7 @@ def get_acs_connection_info(module):
             security_token = None
 
     ecs_params = dict(acs_access_key_id=access_key, acs_secret_access_key=secret_key, security_token=security_token,
-                      user_agent='Ansible-v'+__version__)
+                      user_agent='Ansible-v' + __version__)
 
     return region, ecs_params
 
