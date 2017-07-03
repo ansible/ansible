@@ -14,11 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-"""
-This module was created because the code in this repository is shared with Ansible Core.
-So, to avoid merging issues, and maintaining the tests code equal, we create a unique file to
-configure the imports that change from ansible.modules.cloud.hpe.one repository to another.
-"""
 
 import sys
 from ansible.compat.tests.mock import patch, Mock
