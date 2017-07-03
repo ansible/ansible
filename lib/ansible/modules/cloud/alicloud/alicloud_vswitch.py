@@ -32,24 +32,27 @@ options:
   status:
     description:
       -  Whether or not to create, delete or query vswitch.
-    choices: ['present', 'absent', 'fetch']
+    choices: ['present', 'absent', 'list']
     required: false
     default: present
     aliases: [ 'state' ]
   alicloud_zone:
-    description: Aliyun availability zone ID which to launch the vswitch
-    required: true
+    description:
+      - Aliyun availability zone ID which to launch the vswitch or list vswitches.
+        It is required when creating a vswitch.
+    required: false
     default: null
     aliases: [ 'acs_zone', 'ecs_zone', 'zone_id', 'zone' ]
   vpc_id:
     description:
-      - The ID of a VPC to which that Vswitch belongs.
-    required: true
+      - The ID of a VPC to which that Vswitch belongs. It is required when creating a vswitch.
+    required: false
     default: null
   cidr_block:
     description:
       - The CIDR block representing the Vswitch e.g. 10.0.0.0/8. The value must be sub cidr_block of Vpc.
-    required: true
+        It is required when creating a vswitch.
+    required: false
     default: null
   vswitch_name:
     description:
@@ -64,29 +67,18 @@ options:
       - The description of vswitch, which is a string of 2 to 256 characters. It cannot begin with http:// or https://.
     required: false
     default: null
-  vswitch_ids:
+  vswitch_id:
     description:
-      - One VSwitch ID or list of VSwitch's IDs. It required when managing the existing VSwitch(es).
-        Such as deleting VSwitch(es) and querying VSwitch(es) attribute.
+      - VSwitch ID. It is used to manage the existing VSwitch. Such as modifying VSwitch's attribute or deleting VSwitch.
     required: false
     default: null
-    aliases: [ 'subnet_ids' ]
+    aliases: [ 'subnet_id' ]
   is_default:
     description:
       - When retrieving VSwitch, it can mark the VSwitch is created by system.
     required: false
     default: null
     type: bool
-  pagenumber:
-    description:
-      - Page number of the vswitch list. The start value is 1.
-    required: false
-    default: 1
-  pagesize:
-    description:
-      - The number of lines per page set for paging query. The maximum value is 50.
-    required: false
-    default: 10
 author:
   - "He Guimin (@xiaozhu36)"
 
@@ -125,16 +117,14 @@ EXAMPLES = """
   vars:
     alicloud_region: cn-hongkong
     vpc_id: xxxxxxxxxx
-    vswitch_ids:
-     - xxxxxxxxxx
-     - xxxxxxxxxx
+    vswitch_id: xxxxxxxxxx
     state: absent
   tasks:
     - name: delete vswitch
       alicloud_vswitch:
         alicloud_region: '{{ alicloud_region }}'
         vpc_id: '{{ vpc_id }}'
-        purge_vswitches: '{{ purge_vswitches }}'
+        vswitch_id: '{{ vswitch_id }}'
         state: '{{ state }}'
       register: result
     - debug: var=result
@@ -143,18 +133,23 @@ EXAMPLES = """
 
 RETURN = '''
 vpc_id:
-    description: the id of vpc to which vswitch(es) belongs
-    returned: when success
+    description: the id of vpc to which vswitch belongs
+    returned: on present
     type: string
     sample: "vpc-2zevlzpjz2dmkj0lgxa9j"
+vpc_ids:
+    description: the list ids of vpcs to which vswitches belongs
+    returned: on list
+    type: list
+    sample: ["vpc-2zevlzpjz2dmkj0lgxa9j", "vpc-2dseevlzpjz2dmkj0lgxj"]
 vswitch_id:
     description: the id of vswitch
-    returned: on present
+    returned: on present and absent
     type: string
     sample: "vsw-2ze330uee6e0zono3orri"
 vswitch_ids:
     description: the list ids of vswitches
-    returned: on fetch and absent
+    returned: on list
     type: list
     sample: [
             "vsw-2ze330uee6e0zono3orri",
@@ -177,8 +172,8 @@ vswitch:
         "zone_id": "cn-beijing-a"
     }
 vswitches:
-    description: Details about the ecs vswitches that were created.
-    returned: on fetch and absent
+    description: Details about the ecs vswitches that were created or retrieved.
+    returned: on list
     type: list
     sample: [
         {
@@ -206,9 +201,9 @@ vswitches:
             "zone_id": "cn-beijing-a"
         }
     ]
-total_count:
-    description: The number of all vswitches after fetching ecs vswitch.
-    returned: on fetch and absent
+total:
+    description: The number of all vswitches after listing ecs vswitch.
+    returned: on list
     type: int
     sample: 3
 '''
@@ -227,14 +222,22 @@ except ImportError:
     HAS_FOOTMARK = False
 
 
-def get_vswitch_dict(vswitch):
+def get_vswitch_basic(vswitch):
     """
     Format vpc result and returns it as a dictionary
     """
 
-    return ({'id': vswitch.id, 'cidr_block': vswitch.cidr_block, 'available_ip_count': vswitch.available_ip_address_count,
-             "creation_time": vswitch.creation_time, 'vpc_id': vswitch.vpc_id, 'zone_id': vswitch.zone_id,
-             'status': vswitch.status, 'name': vswitch.name, 'description': vswitch.description, 'is_default': vswitch.is_default})
+    return {'id': vswitch.id, 'cidr_block': vswitch.cidr_block, 'vpc_id': vswitch.vpc_id, 'name': vswitch.name}
+
+
+def get_vswitch_detail(vswitch):
+    """
+    Format vpc result and returns it as a dictionary
+    """
+
+    return {'id': vswitch.id, 'cidr_block': vswitch.cidr_block, 'available_ip_count': vswitch.available_ip_address_count,
+            'creation_time': vswitch.creation_time, 'vpc_id': vswitch.vpc_id, 'zone_id': vswitch.zone_id,
+            'status': vswitch.status, 'name': vswitch.name, 'description': vswitch.description, 'is_default': vswitch.is_default}
 
 
 def create_vswitch(module, vpc):
@@ -269,129 +272,23 @@ def create_vswitch(module, vpc):
     try:
         changed, vswitch = vpc.create_vswitch(zone_id=zone_id, vpc_id=vpc_id, cidr_block=cidr_block,
                                               vswitch_name=None, description=None)
-        return changed, get_vswitch_dict(vswitch)
+        return changed, vswitch
     except VPCResponseError as e:
         module.fail_json(msg='Unable to create Vswitch, error: {0}'.format(e))
 
     return changed, None
 
 
-def check_vswitch_vpc(module, vpc, vpc_id, vswitch_ids):
-    """
-    Delete VSwitch
-    :param module: Ansible module object
-    :param vpc: Authenticated vpc connection object
-    :param vpc_id: ID of Vpc
-    :param vswitch_ids: The IDs of the VSwitches to be deleted
-    :return: Return the list ID of deleted VSwitches.
-    """
-    vpc_obj = vpc.get_vpc_attribute(vpc_id)
-    if not vpc_obj:
-        module.fail_json(msg='The specified vpc is not found, vpc_id: {0}.'.format(vpc_id))
-
-    for vsw_id in vswitch_ids:
-        if vsw_id not in vpc_obj.vswitch_ids['vswitch_id']:
-            module.fail_json(msg='The specified vswitch: {0} is not found in the vpc: {1}.'.format(vsw_id, vpc_id))
-    return
-
-
-def delete_vswitch(module, vpc):
-    """
-    Delete VSwitch
-    :param module: Ansible module object
-    :param vpc: Authenticated vpc connection object
-    :param vpc_id: ID of Vpc
-    :param vswitch_ids: The IDs of the VSwitches to be deleted
-    :return: Return the list ID of deleted VSwitches.
-    """
-    vpc_id = module.params['vpc_id']
-    vswitch_ids = module.params['vswitch_ids']
-
-    if isinstance(vswitch_ids, str):
-        if not vswitch_ids.startswith("vsw"):
-            module.fail_json(msg='vswitch_ids: {0} is invalid ID of vswitch, aborting.'.format(vswitch_ids))
-        vswitch_ids = [vswitch_ids]
-
-    if vswitch_ids and not isinstance(vswitch_ids, list):
-        module.fail_json(msg='vswitch_ids: {0} should be a list of ids, aborting.'.format(vswitch_ids))
-
-    if vpc_id and vswitch_ids:
-        check_vswitch_vpc(module, vpc, vpc_id, vswitch_ids)
-        for vsw_id in vswitch_ids:
-            if not vpc.delete_vswitch(vsw_id):
-                module.fail_json(msg='Deleting the specified vswitch: {0} failed.'.format(vsw_id))
-        return vpc_id, vswitch_ids
-    elif vpc_id:
-        return vpc_id, vpc.delete_vswitch_with_vpc(vpc_id)
-    elif vswitch_ids:
-        vswitch = vpc.get_vswitch_attribute(vswitch_ids[0])
-        for vsw_id in vswitch_ids:
-            if not vpc.delete_vswitch(vsw_id):
-                module.fail_json(msg='Deleting the specified vswitch: {0} failed.'.format(vsw_id))
-        return vswitch.vpc_id, vswitch_ids
-    else:
-        module.fail_json(msg='When deleting vswitch, vpc_id or vswitch_ids must be specified.')
-
-    return None
-
-
-def retrieve_vswitches(module, vpc):
-    """
-    Retrieve VPC
-    :param module: Ansible module object
-    :param vpc: Authenticated vpc connection object
-    :return: Returns a list of VPC
-    """
-    vpc_id = module.params['vpc_id']
-    vswitch_ids = module.params['vswitch_ids']
-    zone_id = module.params['alicloud_zone']
-    is_default = module.params['is_default']
-    pagenumber = module.params['pagenumber']
-    pagesize = module.params['pagesize']
-
-    if isinstance(vswitch_ids, str):
-        if not vswitch_ids.startswith("vsw"):
-            module.fail_json(msg='vswitch_ids: {0} is invalid ID of vswitch, aborting.'.format(vswitch_ids))
-        vswitch_ids = [vswitch_ids]
-
-    if vswitch_ids and not isinstance(vswitch_ids, list):
-        module.fail_json(msg='vswitch_ids: {0} should be a list of ids, aborting.'.format(vswitch_ids))
-    try:
-        vswitches = []
-        if vpc_id and vswitch_ids:
-            check_vswitch_vpc(module, vpc, vpc_id, vswitch_ids)
-            results = vpc.get_all_vswitches(vpc_id=vpc_id, zone_id=zone_id, is_default=is_default, pagenumber=pagenumber, pagesize=pagesize)
-            for vsw in results:
-                if str(vsw.id) in vswitch_ids:
-                    vswitches.append(get_vswitch_dict(vsw))
-        elif vpc_id:
-            results = vpc.get_all_vswitches(vpc_id=vpc_id, zone_id=zone_id, is_default=is_default, pagenumber=pagenumber, pagesize=pagesize)
-            for vsw in results:
-                vswitches.append(get_vswitch_dict(vsw))
-        elif vswitch_ids:
-            for vsw_id in vswitch_ids:
-                vswitches.append(get_vswitch_dict(vpc.get_vswitch_attribute(str(vsw_id))))
-        else:
-            module.fail_json(msg='When fetching vswitch(es), vpc_id or vswitch_ids must be specified.')
-
-    except VPCResponseError as e:
-        module.fail_json(msg='Unable to retrieve vswitch, error: {0}'.format(e))
-
-    return vswitches
-
-
 def main():
     argument_spec = ecs_argument_spec()
     argument_spec.update(dict(
-        status=dict(default='present', aliases=['state'], choices=['present', 'absent', 'fetch']),
+        status=dict(default='present', aliases=['state'], choices=['present', 'absent', 'list']),
         cidr_block=dict(aliases=['cidr']),
         description=dict(),
         alicloud_zone=dict(aliases=['acs_zone', 'ecs_zone', 'zone_id', 'zone']),
         vpc_id=dict(),
         vswitch_name=dict(aliases=['name', 'subnet_name']),
-        vswitch_ids=dict(aliases=['subnet_ids']),
-        pagenumber=dict(type='int', default='1'),
-        pagesize=dict(type='int', default='10'),
+        vswitch_id=dict(aliases=['subnet_id']),
         is_default=dict(type='bool'),
     ))
 
@@ -400,27 +297,94 @@ def main():
 
     # Get values of variable
     status = module.params['status']
+    vpc_id = module.params['vpc_id']
+    vswitch_id = module.params['vswitch_id']
+    vswitch_name = module.params['vswitch_name']
+    cidr_block = module.params['cidr_block']
+    zone_id = module.params['alicloud_zone']
+    is_default = module.params['is_default']
+    description = module.params['description']
+
+    changed = False
+    vswitch = None
+    vswitches = []
+    vswitches_basic = []
+    vswitches_by_opts = []
+
+    try:
+        page = 1
+        pagesize = 50
+        while True:
+            vswitch_list = vpc.get_all_vswitches(vpc_id=vpc_id, zone_id=zone_id, is_default=is_default, pagenumber=page, pagesize=pagesize)
+            if vswitch_list is not None and len(vswitch_list) > 0:
+                for curVsw in vswitch_list:
+                    vswitches.append(curVsw)
+                    vswitches_basic.append(get_vswitch_basic(curVsw))
+
+                    if curVsw.id == vswitch_id:
+                        vswitch = curVsw
+                    elif cidr_block and curVsw.cidr_block == cidr_block:
+                        vswitch = curVsw
+
+                    if vswitch_name and description:
+                        if curVsw.name == vswitch_name and curVsw.description == description:
+                            vswitches_by_opts.append(curVsw)
+                    elif vswitch_name and curVsw.name == vswitch_name:
+                        vswitches_by_opts.append(curVsw)
+                    elif description and curVsw.description == description:
+                        vswitches_by_opts.append(curVsw)
+
+            if vswitch_list is None or len(vswitch_list) < pagesize:
+                break
+            page += 1
+
+    except VPCResponseError as e:
+        module.fail_json(msg='Unable to retrieve vswitch, error: {0}'.format(e))
+
+    if not vswitch and len(vswitches_by_opts) == 1:
+        vswitch = vswitches_by_opts[0]
+
+    if len(vswitches_by_opts) > 1:
+        vswitches = vswitches_by_opts
 
     if status == 'present':
-        changed, vswitch = create_vswitch(module, vpc)
-        module.exit_json(changed=changed, vpc_id=vswitch['vpc_id'], vswitch=vswitch, vswitch_id=vswitch['id'])
+        if not vswitch:
+            changed, vswitch = create_vswitch(module, vpc)
+        elif vswitch_name or description:
+            try:
+                vswitch = vswitch.update(name=vswitch_name, description=description)
+                changed = True
+            except VPCResponseError as e:
+                module.fail_json(msg='Unable to modify vswitch attribute, error: {0}'.format(e))
+
+        module.exit_json(changed=changed, vpc_id=vswitch.vpc_id, vswitch=get_vswitch_detail(vswitch), vswitch_id=vswitch.id)
 
     elif status == 'absent':
-        vpc_id, vswitch_ids = delete_vswitch(module, vpc)
+        if vswitch:
+            try:
+                changed = vswitch.delete()
+                module.exit_json(changed=changed, vswitch_id=vswitch.id)
+            except VPCResponseError as ex:
+                module.fail_json(msg='Unable to delete vswitch: {0}, error: {1}'.format(vswitch.id, ex))
 
-        module.exit_json(changed=True, vpc_id=vpc_id, vswitch_ids=vswitch_ids, total_count=len(vswitch_ids))
+        module.exit_json(changed=changed, msg="Please specify a vswitch by using 'vswitch_id', 'vswitch_name' or "
+                                              "'cidr_block', and expected vpcs: %s" % vswitches_basic)
 
-    elif status == 'fetch':
-        vswitches = retrieve_vswitches(module, vpc)
+    elif status == 'list':
         vswitch_ids = []
-        vpc_id = ""
+        vpc_ids = []
+        vswitches_detail = []
+        if vswitch:
+            module.exit_json(changed=False, vpc_ids=[vswitch.vpc_id], vswitches=[get_vswitch_detail(vswitch)], vswitch_ids=[vswitch.id], total=1)
+
         for vsw in vswitches:
-            vswitch_ids.append(vsw['id'])
-            vpc_id = vsw['vpc_id']
-        module.exit_json(changed=False, vpc_id=vpc_id, vswitches=vswitches, vswitch_ids=vswitch_ids, total_count=len(vswitches))
+            vswitch_ids.append(vsw.id)
+            vpc_ids.append(vsw.vpc_id)
+            vswitches_detail.append(get_vswitch_detail(vsw))
+        module.exit_json(changed=False, vpc_id=vpc_ids, vswitches=vswitches_detail, vswitch_ids=vswitch_ids, total=len(vswitches))
 
     else:
-        module.fail_json(msg='The expected state: {0}, {1} and {2}, but got {3}.'.format("present", "absent", "fetch", status))
+        module.fail_json(msg='The expected state: {0}, {1} and {2}, but got {3}.'.format("present", "absent", "list", status))
 
 
 if __name__ == '__main__':
