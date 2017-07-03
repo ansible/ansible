@@ -32,7 +32,7 @@ options:
   status:
     description:
       -  Whether or not to create, delete or query VPC.
-    choices: ['present', 'absent', 'fetch']
+    choices: ['present', 'absent', 'list']
     required: false
     default: present
     aliases: [ 'state' ]
@@ -51,7 +51,7 @@ options:
     default: null
   cidr_block:
     description:
-      - The CIDR block representing the vpc. The value can be subnet block of its choices.
+      - The CIDR block representing the vpc. The value can be subnet block of its choices. It is required when creating a vpc.
     required: false
     default: '172.16.0.0/12'
     choices: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']
@@ -72,16 +72,9 @@ options:
     required: false
     default: null
     type: bool
-  pagenumber:
-    description:
-      - Page number of the instance status list. The start value is 1.
-    required: false
-    default: 1
-  pagesize:
-    description:
-      - The number of lines per page set for paging query. The maximum value is 50.
-    required: false
-    default: 10
+notes:
+  - There will be launch a virtual router along with creating a vpc successfully.
+  - There is only one virtual router in one vpc and one route table in one virtual router.
 author:
   - "He Guimin (@xiaozhu36)"
 
@@ -132,13 +125,13 @@ EXAMPLES = """
 
 RETURN = '''
 vpc_id:
-    description: the id of vpc
+    description: id of the vpc
     returned: on present and absent
     type: string
     sample: "vpc-2zevlzpjz2dmkj0lgxa9j"
 vpc_ids:
-    description: the list ids of vpcs
-    returned: on fetch
+    description: list ids of vpcs
+    returned: on list
     type: list
     sample: ["vpc-2zevlzpjz2dmkj0lgxa9j", "vpc-3rvlzpjz2dmkj0lgxaxe"]
 vpc:
@@ -157,14 +150,14 @@ vpc:
        "user_cidrs": {
            "user_cidr": []
        },
-       "vrouter_id": "vrt-2ze89k29g4zn7afavd6tc",
+       "router_id": "vrt-2ze89k29g4zn7afavd6tc",
        "vswitch_ids": {
            "vswitch_id": []
        }
     }
 vpcs:
-    description: Details about the ecs vpcs that were created.
-    returned: on fetch
+    description: Details about the vpcs that were retrieved.
+    returned: on list
     type: list
     sample: [
         {
@@ -179,7 +172,7 @@ vpcs:
            "user_cidrs": {
                "user_cidr": []
            },
-           "vrouter_id": "vrt-2ze89k29g4zn7afavd6tc",
+           "router_id": "vrt-2ze89k29g4zn7afavd6tc",
            "vswitch_ids": {
                "vswitch_id": []
            }
@@ -196,15 +189,15 @@ vpcs:
            "user_cidrs": {
                "user_cidr": []
            },
-           "vrouter_id": "vrt-2ze89k29g4zn7afavd6tc",
+           "router_id": "vrt-2ze89k29g4zn7afavd6tc",
            "vswitch_ids": {
                "vswitch_id": []
            }
         }
     ]
-total_count:
-    description: The number of all vpcs after fetching ecs vpc.
-    returned: on fetch
+total:
+    description: The number of all vpcs after listing vpcs.
+    returned: on list
     type: int
     sample: 3
 '''
@@ -223,27 +216,47 @@ except ImportError:
     HAS_FOOTMARK = False
 
 
-def get_vpc_dict(vpc):
+def get_vpc_basic(vpc):
     """
-    Format vpc result and returns it as a dictionary
+    Format vpc basic information and returns it as a dictionary
     """
 
-    return ({'id': vpc.id, 'cidr_block': vpc.cidr_block, 'region': vpc.region_id, 'status': vpc.status,
-             'vswitch_ids': vpc.vswitch_ids, 'vrouter_id': vpc.vrouter_id, 'name': vpc.name, 'description': vpc.description,
-             'creation_time': vpc.creation_time, 'is_default': vpc.is_default, 'user_cidrs': vpc.user_cidrs})
+    return {'id': vpc.id, 'name': vpc.name, 'cidr_block': vpc.cidr_block}
 
 
-def create_vpc(module, vpc):
+def get_vpc_detail(vpc):
     """
-    Create Virtual Private Cloud
-    module: Ansible module object
-    vpc: Authenticated vpc connection object
-    return: Return details of created VPC
+    Format vpc detail information and returns it as a dictionary
     """
-    cidr_block = module.params['cidr_block']
-    user_cidr = module.params['user_cidr']
+
+    return {'id': vpc.id, 'cidr_block': vpc.cidr_block, 'region': vpc.region_id, 'status': vpc.status,
+            'vswitch_ids': vpc.vswitch_ids, 'router_id': vpc.router_id, 'name': vpc.name, 'description': vpc.description,
+            'creation_time': vpc.creation_time, 'is_default': vpc.is_default, 'user_cidrs': vpc.user_cidrs}
+
+
+def main():
+    argument_spec = ecs_argument_spec()
+    argument_spec.update(dict(
+        status=dict(default='present', aliases=['state'], choices=['present', 'absent', 'list']),
+        cidr_block=dict(default='172.16.0.0/16', aliases=['cidr']),
+        user_cidr=dict(),
+        vpc_name=dict(aliases=['name']),
+        description=dict(),
+        vpc_id=dict(),
+        is_default=dict(type='bool'),
+    ))
+
+    module = AnsibleModule(argument_spec=argument_spec)
+    vpc_conn = vpc_connect(module)
+
+    # Get values of variable
+    status = module.params['status']
+    vpc_id = module.params['vpc_id']
+    is_default = module.params['is_default']
     vpc_name = module.params['vpc_name']
     description = module.params['description']
+    cidr_block = module.params['cidr_block']
+    user_cidr = module.params['user_cidr']
 
     if str(description).startswith('http://') or str(description).startswith('https://'):
         module.fail_json(msg='description can not start with http:// or https://')
@@ -251,96 +264,80 @@ def create_vpc(module, vpc):
         module.fail_json(msg='vpc_name can not start with http:// or https://')
 
     changed = False
-    try:
-        changed, vpc = vpc.create_vpc(cidr_block=cidr_block, user_cidr=user_cidr, vpc_name=vpc_name, description=description)
-
-        return changed, get_vpc_dict(vpc)
-    except VPCResponseError as e:
-        module.fail_json(msg='Unable to create vpc, error: {0}'.format(e))
-
-    return changed, None
-
-
-def delete_vpc(module, vpc, vpc_id):
-    """
-    Delete VPC
-    :param module: Ansible module object
-    :param vpc: Authenticated vpc connection object
-    :param vpc_id: ID of Vpc
-    :return: Returns status of operation with RequestId
-    """
-    changed = False
-    try:
-        changed = vpc.delete_vpc(vpc_id=vpc_id)
-
-    except VPCResponseError as ex:
-        module.fail_json(msg='Unable to delete vpc: {0}, error: {1}'.format(vpc_id, ex))
-
-    return changed
-
-
-def retrieve_vpcs(module, vpc):
-    """
-    Retrieve VPC
-    :param module: Ansible module object
-    :param vpc: Authenticated vpc connection object
-    :return: Returns a list of VPC
-    """
-    vpc_id = module.params['vpc_id']
-    is_default = module.params['is_default']
-    pagenumber = module.params['pagenumber']
-    pagesize = module.params['pagesize']
-
+    vpc = None
     vpcs = []
+    vpcs_basic = []
+    vpcs_by_opts = []
+
     try:
-        results = vpc.get_all_vpcs(vpc_id=vpc_id, is_default=is_default, pagenumber=pagenumber, pagesize=pagesize)
-        for vpc in results:
-            vpcs.append(get_vpc_dict(vpc))
+        page = 1
+        pagesize = 50
+        while True:
+            vpc_list = vpc_conn.get_all_vpcs(vpc_id=vpc_id, is_default=is_default, pagenumber=page, pagesize=pagesize)
+            if vpc_list is not None and len(vpc_list) > 0:
+                for curVpc in vpc_list:
+                    vpcs.append(curVpc)
+                    vpcs_basic.append(get_vpc_basic(curVpc))
+
+                    if curVpc.id == vpc_id:
+                        vpc = curVpc
+                    if vpc_name and cidr_block:
+                        if curVpc.name == vpc_name and curVpc.cidr_block == cidr_block:
+                            vpcs_by_opts.append(curVpc)
+                    elif vpc_name and curVpc.name == vpc_name:
+                        vpcs_by_opts.append(curVpc)
+                    elif cidr_block and curVpc.cidr_block == cidr_block:
+                        vpcs_by_opts.append(curVpc)
+
+            if vpc_list is None or len(vpc_list) < pagesize:
+                break
+            page += 1
 
     except VPCResponseError as e:
         module.fail_json(msg='Unable to retrieve vpc, error: {0}'.format(e))
 
-    return vpcs
+    if not vpc and len(vpcs_by_opts) == 1:
+        vpc = vpcs_by_opts[0]
 
-
-def main():
-    argument_spec = ecs_argument_spec()
-    argument_spec.update(dict(
-        status=dict(default='present', aliases=['state'], choices=['present', 'absent', 'fetch']),
-        cidr_block=dict(default='172.16.0.0/16', aliases=['cidr']),
-        user_cidr=dict(),
-        vpc_name=dict(aliases=['name']),
-        description=dict(),
-        vpc_id=dict(),
-        pagenumber=dict(type='int', default='1'),
-        pagesize=dict(type='int', default='10'),
-        is_default=dict(type='bool'),
-    ))
-
-    module = AnsibleModule(argument_spec=argument_spec)
-    vpc = vpc_connect(module)
-
-    # Get values of variable
-    status = module.params['status']
+    if len(vpcs_by_opts) > 1:
+        vpcs = vpcs_by_opts
 
     if status == 'present':
-        changed, vpc = create_vpc(module, vpc)
-        module.exit_json(changed=changed, vpc_id=vpc['id'], vpc=vpc)
+        try:
+            if not vpc:
+                vpc = vpc_conn.create_vpc(cidr_block=cidr_block, user_cidr=user_cidr, vpc_name=vpc_name, description=description)
+            else:
+                vpc = vpc.update(name=vpc_name, description=description, user_cidr=user_cidr)
+            changed = True
+        except VPCResponseError as e:
+            module.fail_json(msg='Unable to create or modify vpc, error: {0}'.format(e))
+
+        module.exit_json(changed=changed, vpc_id=vpc.id, vpc=get_vpc_detail(vpc))
 
     elif status == 'absent':
-        vpc_id = module.params['vpc_id']
-        changed = delete_vpc(module, vpc, vpc_id)
-        module.exit_json(changed=changed, vpc_id=vpc_id)
+        if vpc:
+            try:
+                changed = vpc.delete()
+                module.exit_json(changed=changed, vpc_id=vpc.id)
+            except VPCResponseError as ex:
+                module.fail_json(msg='Unable to delete vpc: {0}, error: {1}'.format(vpc.id, ex))
 
-    elif status == 'fetch':
-        vpcs = retrieve_vpcs(module=module, vpc=vpc)
+        module.exit_json(changed=changed, msg="Please specify a vpc by using 'vpc_id', 'vpc_name' or 'cidr_block',"
+                                              "and expected vpcs: %s" % vpcs_basic)
+
+    elif status == 'list':
         vpc_ids = []
+        vpcs_detail = []
+        if vpc:
+            module.exit_json(changed=False, vpcs=[get_vpc_detail(vpc)], vpc_ids=[vpc.id], total=1)
+
         for vpc in vpcs:
-            vpc_ids.append(vpc['id'])
-        module.exit_json(changed=False, vpcs=vpcs, vpc_ids=vpc_ids, total_count=len(vpcs))
+            vpc_ids.append(vpc.id)
+            vpcs_detail.append(get_vpc_detail(vpc))
+        module.exit_json(changed=False, vpcs=vpcs_detail, vpc_ids=vpc_ids, total=len(vpcs))
 
     else:
-        module.fail_json(msg='The expected state: {0}, {1} and {2}, but got {3}.'.format("present", "absent", "fetch", status))
+        module.fail_json(msg='The expected state: {0}, {1} and {2}, but got {3}.'.format("present", "absent", "list", status))
 
 
 if __name__ == '__main__':
