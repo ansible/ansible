@@ -81,7 +81,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.utils import get_file_lines
 
 
-
 # getter subroutines
 def get_config_state(configfile):
     lines = get_file_lines(configfile)
