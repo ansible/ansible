@@ -329,7 +329,7 @@
     src: false-file
     dest: "{{win_output_dir}}\\fale-file.txt"
   register: fail_missing_source
-  failed_when: fail_missing_source.msg != "Unable to find 'false-file' in expected paths."
+  failed_when: not (fail_missing_source|failed)
 
 - name: fail when copying remote src file when src doesn't exist
   win_copy:
