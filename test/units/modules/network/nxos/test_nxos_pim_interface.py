@@ -41,6 +41,7 @@ class TestNxosIPInterfaceModule(TestNxosModule):
 
     def load_fixtures(self, commands=None, device=''):
         module_name = self.module.__name__.rsplit('.', 1)[1]
+
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()

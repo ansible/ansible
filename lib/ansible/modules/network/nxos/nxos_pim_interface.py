@@ -167,6 +167,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'neighbor_type': '',
 }
 
+
 def execute_show_command(command, module, text=False):
     if text is False:
         command += ' | json'
@@ -258,7 +259,7 @@ def get_pim_interface(module, interface):
 
         hello_interval = get_data.get('hello-interval-sec')
         if hello_interval:
-            hello_interval_msec = int(get_data.get('hello-interval-sec'))*1000
+            hello_interval_msec = int(get_data.get('hello-interval-sec')) * 1000
         pim_interface['hello_interval'] = str(hello_interval_msec)
         border = get_data.get('is-border')
 
@@ -379,13 +380,9 @@ def config_pim_interface(delta, existing, jp_bidir, isauth):
     if jp_bidir:
         if delta.get('jp_policy_in') or delta.get('jp_policy_out'):
             if existing.get('jp_type_in') == 'prefix':
-                command = 'no ip pim jp-policy prefix-list {0}'.format(
-                    existing.get('jp_policy_in')
-                    )
+                command = 'no ip pim jp-policy prefix-list {0}'.format(existing.get('jp_policy_in'))
             else:
-                command = 'no ip pim jp-policy {0}'.format(
-                    existing.get('jp_policy_in')
-                    )
+                command = 'no ip pim jp-policy {0}'.format(existing.get('jp_policy_in'))
             if command:
                 commands.append(command)
 
@@ -466,9 +463,7 @@ def default_pim_interface_policies(existing, jp_bidir):
     if jp_bidir:
         if existing.get('jp_policy_in') or existing.get('jp_policy_out'):
             if existing.get('jp_type_in') == 'prefix':
-                command = 'no ip pim jp-policy prefix-list {0}'.format(
-                    existing.get('jp_policy_in')
-                    )
+                command = 'no ip pim jp-policy prefix-list {0}'.format(existing.get('jp_policy_in'))
         if command:
             commands.append(command)
 
@@ -480,21 +475,21 @@ def default_pim_interface_policies(existing, jp_bidir):
                     if existing.get('jp_type_in') == 'prefix':
                         command = 'no ip pim jp-policy prefix-list {0} in'.format(
                             existing.get('jp_policy_in')
-                            )
+                        )
                     else:
                         command = 'no ip pim jp-policy {0} in'.format(
                             existing.get('jp_policy_in')
-                            )
+                        )
             elif k == 'jp_policy_out':
                 if existing.get('jp_policy_out'):
                     if existing.get('jp_type_out') == 'prefix':
                         command = 'no ip pim jp-policy prefix-list {0} out'.format(
                             existing.get('jp_policy_out')
-                            )
+                        )
                     else:
                         command = 'no ip pim jp-policy {0} out'.format(
                             existing.get('jp_policy_out')
-                            )
+                        )
             if command:
                 commands.append(command)
             command = None
@@ -548,7 +543,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
     results = {'changed': False, 'commands': [], 'warnings': warnings}
-
 
     state = module.params['state']
     interface = module.params['interface']
