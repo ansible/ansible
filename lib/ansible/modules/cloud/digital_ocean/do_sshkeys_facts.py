@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -154,8 +154,8 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            oauth_token = dict(
+        argument_spec=dict(
+            oauth_token=dict(
                 no_log=True,
                 # Support environment variable for DigitalOcean OAuth Token
                 fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY']),
