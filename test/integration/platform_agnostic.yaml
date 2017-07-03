@@ -16,3 +16,4 @@
     - { role: net_vrf, when: "limit_to in ['*', 'net_vrf']" }
     - { role: net_interface, when: "limit_to in ['*', 'net_interface']" }
     - { role: net_static_route, when: "limit_to in ['*', 'net_static_route']" }
+    - { role: net_logging, when: "limit_to in ['*', 'net_logging']" }
