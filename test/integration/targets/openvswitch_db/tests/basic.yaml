@@ -53,4 +53,3 @@
 - assert:
     that:
       - "result.changed == false"
-
