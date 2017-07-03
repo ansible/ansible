@@ -40,35 +40,90 @@ options:
     default: /var/lib/jbossas/standalone/deployments
     description:
       - The location in the filesystem where the deployment scanner listens
+  deployment_strategy:
+    required: false
+    choices: [ http, filesystem ]
+    default: filesystem
+    description:
+      - Whether the application should be deployed through the HTTP management API or filesystem
   state:
     required: false
-    choices: [ present, absent ]
-    default: "present"
+    choices: [ deployed, undeployed, present, absent ]
+    default: deployed
     description:
-      - Whether the application should be deployed or undeployed
+      - Whether the application should be deployed or undeployed. Present and absent have been deprecated.
+  url_username:
+    required: false
+    description:
+      - Username for JBoss management user
+  url_password:
+    required: false
+    description:
+      - Password for JBoss management user
+  hostname:
+    required: false
+    default: localhost
+    description:
+      - Hostname of JBoss instance running HTTP management API
+  port:
+    required: false
+    default: 9990
+    description:
+      - Port binding for HTTP management API
 notes:
-  - "The JBoss standalone deployment-scanner has to be enabled in standalone.xml"
+  - "The filesystem deployment strategy requires the deployment scanner to be enabled."
   - "Ensure no identically named application is deployed through the JBoss CLI"
+  - "At a minimum, url_password should be vaulted."
+  - "HTTP management API is supported in JBoss AS 7.1, Wildfly >= 8, and JBoss EAP >= 6."
+  - "JBoss 5 supports filesystem deployments only."
+  - "Filesystem deployments should be avoided in production environments where possible."
 author: "Jeroen Hoekx (@jhoekx)"
 """
 
 EXAMPLES = """
-# Deploy a hello world application
+# Deploy a hello world application using filesystem
 - jboss:
     src: /tmp/hello-1.0-SNAPSHOT.war
     deployment: hello.war
-    state: present
+    state: deployed
 
-# Update the hello world application
+# Update the hello world application using filesystem
 - jboss:
     src: /tmp/hello-1.1-SNAPSHOT.war
     deployment: hello.war
-    state: present
+    state: deployed
 
-# Undeploy the hello world application
+# Undeploy the hello world application using filesystem
 - jboss:
     deployment: hello.war
-    state: absent
+    state: undeployed
+
+# Deploy the hello world application using HTTP management API
+- jboss:
+    src: /tmp/hello-1.0-SNAPSHOT.war
+    deployment: hello.war
+    deployment_strategy: http
+    state: deployed
+    url_username: admin
+    url_password: admin
+
+# Update the hello world application using HTTP management API
+- jboss:
+    src: /tmp/hello-1.0-SNAPSHOT.war
+    deployment: hello.war
+    deployment_strategy: http
+    state: deployed
+    url_username: admin
+    url_password: admin
+
+# Undeploy the hello world application using HTTP management API
+- jboss:
+    deployment: hello.war
+    deployment_strategy: http
+    state: undeployed
+    url_username: admin
+    url_password: admin
+
 """
 
 import os
