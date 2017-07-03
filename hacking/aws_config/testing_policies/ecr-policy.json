@@ -2,14 +2,19 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "AllowCodeRepositories",
+            "Sid": "UnspecifiedCodeRepositories",
             "Effect": "Allow",
             "Action": [
                 "ecr:DescribeRepositories",
-                "ecr:CreateRepository",
-                "ecr:DescribeRepositories",
+                "ecr:CreateRepository"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SpecifiedCodeRepositories",
+            "Effect": "Allow",
+            "Action": [
                 "ecr:GetRepositoryPolicy",
-                "ecr:DescribeRepositories",
                 "ecr:SetRepositoryPolicy",
                 "ecr:DeleteRepository",
                 "ecr:DeleteRepositoryPolicy",
