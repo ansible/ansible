@@ -205,7 +205,8 @@ def write_metadata(filename, new_metadata, version=None, overwrite=False):
         module_data = f.read()
 
     try:
-        current_metadata, start_line, start_col, end_line, end_col, targets = extract_metadata(module_data)
+        current_metadata, start_line, start_col, end_line, end_col, targets = \
+            extract_metadata(module_data=module_data, offsets=True)
     except SyntaxError:
         if filename.endswith('.py'):
             raise
@@ -257,7 +258,7 @@ def return_metadata(plugins):
         if name not in metadata or metadata[name] is not None:
             with open(filename, 'rb') as f:
                 module_data = f.read()
-            metadata[name] = extract_metadata(module_data)[0]
+            metadata[name] = extract_metadata(module_data=module_data, offsets=True)[0]
     return metadata
 
 
@@ -408,7 +409,7 @@ def upgrade_metadata(version=None):
         # For each plugin, read the existing metadata
         with open(filename, 'rb') as f:
             module_data = f.read()
-        metadata = extract_metadata(module_data)[0]
+        metadata = extract_metadata(module_data=module_data, offsets=True)[0]
 
         # If the metadata isn't the requested version, convert it to the new
         # version

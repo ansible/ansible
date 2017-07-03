@@ -155,7 +155,7 @@ def get_docstring(filename, verbose=False):
                                     data[varkey] = child.value.s
                             display.debug('assigned :%s' % varkey)
 
-        data['metadata'] = extract_metadata(b_module_data)[0]
+        data['metadata'] = extract_metadata(module_ast=M)[0]
         # add fragments to documentation
         if data['doc']:
             add_fragments(data['doc'], filename)
@@ -165,7 +165,7 @@ def get_docstring(filename, verbose=False):
             for x in ('version', 'metadata_version'):
                 if x in data['metadata']:
                     del data['metadata'][x]
-    except:
+    except Exception as e:
         display.error("unable to parse %s" % filename)
         if verbose is True:
             display.display("unable to parse %s" % filename)

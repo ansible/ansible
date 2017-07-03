@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
+import sys
 
 import yaml
 
@@ -146,32 +147,53 @@ def _seek_end_of_string(module_data, start_line, start_col, next_node_line, next
     raise NotImplementedError('Finding end of string not yet implemented')
 
 
-def extract_metadata(module_data):
+def extract_metadata(module_ast=None, module_data=None, offsets=False):
     """Extract the metadata from a module
 
-    :arg module_data: Byte string containing a module's code
+    :kwarg module_ast: ast representation of the module.  At least one of this
+        or ``module_data`` must be given.  If the code calling
+        :func:`extract_metadata` has already parsed the module_data into an ast,
+        giving the ast here will save reparsing it.
+    :kwarg module_data: Byte string containing a module's code.  At least one
+        of this or ``module_ast`` must be given.
+    :kwarg offsets: If set to True, offests into the source code will be
+        returned.  This requires that ``module_data`` be set.
     :returns: a tuple of metadata (a dict), line the metadata starts on,
         column the metadata starts on, line the metadata ends on, column the
         metadata ends on, and the names the metadata is assigned to.  One of
-        the names the metadata is assigned to will be ANSIBLE_METADATA If no
-        metadata is found, the tuple will be (None, -1, -1, -1, -1, None)
+        the names the metadata is assigned to will be ANSIBLE_METADATA.  If no
+        metadata is found, the tuple will be (None, -1, -1, -1, -1, None).
+        If ``offsets`` is False then the tuple will consist of
+        (metadata, -1, -1, -1, -1, None).
+    :raises ansible.parsing.metadata.ParseError: if ``module_data`` does not parse
+    :raises SyntaxError: if ``module_data`` is needed but does not parse correctly
     """
+    if offsets and module_data is None:
+        raise TypeError('If offsets is True then module_data must also be given')
+
+    if module_ast is None and module_data is None:
+        raise TypeError('One of module_ast or module_data must be given')
+
     metadata = None
     start_line = -1
     start_col = -1
     end_line = -1
     end_col = -1
     targets = None
-    mod_ast_tree = ast.parse(module_data)
-    for root_idx, child in enumerate(mod_ast_tree.body):
+    if module_ast is None:
+        module_ast = ast.parse(module_data)
+
+    for root_idx, child in reversed(list(enumerate(module_ast.body))):
         if isinstance(child, ast.Assign):
             for target in child.targets:
                 if target.id == 'ANSIBLE_METADATA':
                     metadata = ast.literal_eval(child.value)
+                    if not offsets:
+                        continue
 
                     try:
                         # Determine where the next node starts
-                        next_node = mod_ast_tree.body[root_idx + 1]
+                        next_node = module_ast.body[root_idx + 1]
                         next_lineno = next_node.lineno
                         next_col_offset = next_node.col_offset
                     except IndexError:
@@ -202,10 +224,7 @@ def extract_metadata(module_data):
                                                                 next_lineno,
                                                                 next_col_offset)
                     else:
-                        # Example:
-                        #   ANSIBLE_METADATA = 'junk'
-                        #   ANSIBLE_METADATA = { [..the real metadata..] }
-                        continue
+                        raise ParseError('Ansible plugin metadata must be a dict')
 
                     # Do these after the if-else so we don't pollute them in
                     # case this was a false positive
