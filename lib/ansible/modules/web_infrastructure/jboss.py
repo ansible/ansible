@@ -68,17 +68,19 @@ import os
 import shutil
 import time
 import json
+import requests
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
 
-def is_deployed(module, deploy_path, deployment, hostname='localhost'):
+def is_deployed(module, deploy_path, deployment):
 
     data_dict = {
         "operation": "read-resource",
         "address": {
             "deployment": deployment
-        }
+        },
+        "include-runtime": True
     }
 
     headers = {
@@ -87,12 +89,17 @@ def is_deployed(module, deploy_path, deployment, hostname='localhost'):
 
     data = json.dumps(data_dict)
 
-    resp,info = fetch_url(module, 'http://%s:9990/management' % hostname, data=data, headers=headers)
+    resp, info = fetch_url(module, 'http://%s:9990/management' % module.params['hostname'], data=data, headers=headers)
+
+    try:
+        assert info['status'] == 200
+    except AssertionError:
+        return os.path.exists(os.path.join(deploy_path, "%s.deployed" % deployment))
 
     resp_data = resp.read()
     resp_json = json.loads(resp_data)
 
-    return resp_json['result']['enabled']
+    return resp_json['result']['status'] == "OK"
 
 
 def is_undeployed(deploy_path, deployment):
@@ -111,7 +118,8 @@ def main():
             deploy_path=dict(type='path', default='/var/lib/jbossas/standalone/deployments'),
             state=dict(choices=['absent', 'present'], default='present'),
             url_password=dict(required=True),
-            url_username=dict(required=True)
+            url_username=dict(required=True),
+            hostname=dict(default='localhost')
         ),
         required_if=[('state', 'present', ('src',))]
     )
@@ -122,6 +130,9 @@ def main():
     deployment = module.params['deployment']
     deploy_path = module.params['deploy_path']
     state = module.params['state']
+    hostname = module.params['hostname']
+    username = module.params['url_username']
+    password = module.params['url_password']
 
     if not os.path.exists(deploy_path):
         module.fail_json(msg="deploy_path does not exist.")
@@ -144,16 +155,60 @@ def main():
         result['changed'] = True
 
     if state == 'present' and deployed:
-        if module.sha1(src) != module.sha1(os.path.join(deploy_path, deployment)):
-            os.remove(os.path.join(deploy_path, "%s.deployed" % deployment))
-            shutil.copyfile(src, os.path.join(deploy_path, deployment))
-            deployed = False
-            while not deployed:
-                deployed = is_deployed(module, deploy_path, deployment)
-                if is_failed(deploy_path, deployment):
-                    module.fail_json(msg='Deploying %s failed.' % deployment)
-                time.sleep(1)
-            result['changed'] = True
+        data_dict = {
+            'operation': 'read-resource',
+            'address': {
+                'deployment': deployment
+            },
+            'include-runtime': True
+        }
+
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        data = json.dumps(data_dict)
+
+        resp, info = fetch_url(module, 'http://%s:9990/management' % hostname, data=data, headers=headers)
+
+        try:
+            assert info['status'] == 200
+        except AssertionError:
+            if info['status'] != -1:
+                module.fail_json(msg=info['msg'])
+            else:
+                if module.sha1(src) != module.sha1(os.path.join(deploy_path, deployment)):
+                    module.exit_json(**result)
+
+                    os.remove(os.path.join(deploy_path, "%s.deployed" % deployment))
+                    shutil.copyfile(src, os.path.join(deploy_path, deployment))
+                    deployed = False
+                    while not deployed:
+                        deployed = is_deployed(module, deploy_path, deployment)
+                        if is_failed(deploy_path, deployment):
+                            module.fail_json(msg='Deploying %s failed.' % deployment)
+                        time.sleep(1)
+                    result['changed'] = True
+                    module.exit_json(**result)
+
+        resp_json = json.loads(resp.read())
+
+        # Process existing deployment hash
+        deployment_hash_dict = (key for key in resp_json['result']['content'] if 'hash' in key).next()
+        deployment_hash_base64 = deployment_hash_dict['hash']['BYTES_VALUE']
+        deployment_hash_hex = deployment_hash_base64.decode('base64').encode('hex')
+
+        if module.sha1(src) != deployment_hash_hex:
+
+            resp = requests.post(
+                'http://%s/management/add-content',
+                files={'file': open(src, 'rb')},
+                auth=requests.auth.HTTPDigestAuth(username, password)
+            )
+
+            if resp.status_code < 400:
+                result['changed'] = True
+            else:
+                module.fail_json(msg={'status': 'HTTP %s %s' % (resp.status_code, resp.reason)})
 
     if state == 'absent' and deployed:
         os.remove(os.path.join(deploy_path, "%s.deployed" % deployment))
@@ -165,6 +220,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
