@@ -114,6 +114,7 @@ else:
 
 
 import os
+from ansible.module_utils._text import to_native
 
 
 class PrivateKeyError(Exception):
@@ -147,8 +148,8 @@ class PrivateKey(object):
 
             try:
                 self.privatekey.generate_key(crypto_type, self.size)
-            except (TypeError, ValueError):
-                raise PrivateKeyError(get_exception())
+            except (TypeError, ValueError) as exc:
+                raise PrivateKeyError(exc)
 
             try:
                 privatekey_file = os.open(self.path,
@@ -157,9 +158,9 @@ class PrivateKey(object):
 
                 os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey))
                 os.close(privatekey_file)
-            except IOError:
+            except IOError as exc:
                 self.remove()
-                raise PrivateKeyError(get_exception())
+                raise PrivateKeyError(exc)
         else:
             self.changed = False
 
@@ -173,10 +174,9 @@ class PrivateKey(object):
 
         try:
             os.remove(self.path)
-        except OSError:
-            e = get_exception()
-            if e.errno != errno.ENOENT:
-                raise PrivateKeyError(e)
+        except OSError as exc:
+            if exc.errno != errno.ENOENT:
+                raise PrivateKeyError(exc)
             else:
                 self.changed = False
 
@@ -230,9 +230,8 @@ def main():
 
         try:
             private_key.generate(module)
-        except PrivateKeyError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except PrivateKeyError as exc:
+            module.fail_json(msg=to_native(exc))
     else:
 
         if module.check_mode:
@@ -242,9 +241,8 @@ def main():
 
         try:
             private_key.remove()
-        except PrivateKeyError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except PrivateKeyError as exc:
+            module.fail_json(msg=to_native(exc))
 
     result = private_key.dump()
 
