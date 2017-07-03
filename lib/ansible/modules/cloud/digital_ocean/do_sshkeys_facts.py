@@ -27,7 +27,7 @@ module: do_sshkeys_facts
 short_description: DigitalOcean SSH keys facts
 description:
      - Fetch DigitalOcean SSH keys facts.
-version_added: "2.3"
+version_added: "2.4"
 author: "Patrick Marques (@pmarques)"
 options:
   oauth_token:
