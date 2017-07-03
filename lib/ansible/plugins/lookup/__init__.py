@@ -22,6 +22,7 @@ __metaclass__ = type
 from abc import ABCMeta, abstractmethod
 
 from ansible.module_utils.six import with_metaclass
+from ansible.errors import AnsibleFileNotFound
 
 try:
     from __main__ import display
@@ -112,8 +113,11 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         else:
             paths = self.get_basedir(myvars)
 
-        result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
-        if result is None and not ignore_missing:
-            self._display.warning("Unable to find '%s' in expected paths." % needle)
+        result = None
+        try:
+            result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
+        except AnsibleFileNotFound:
+            if not ignore_missing:
+                self._display.warning("Unable to find '%s' in expected paths." % needle)
 
         return result

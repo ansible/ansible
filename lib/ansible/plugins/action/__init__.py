@@ -981,9 +981,5 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # dwim already deals with playbook basedirs
         path_stack = self._task.get_search_path()
 
-        result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
-
-        if result is None:
-            raise AnsibleError("Unable to find '%s' in expected paths." % to_native(needle))
-
-        return result
+        # if missing it will return a file not found exception
+        return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
