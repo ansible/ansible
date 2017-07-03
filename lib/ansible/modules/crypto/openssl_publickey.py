@@ -99,6 +99,7 @@ else:
 
 
 import os
+from ansible.module_utils._text import to_native
 
 
 class PublicKeyError(Exception):
@@ -127,10 +128,9 @@ class PublicKey(object):
                 publickey_file = open(self.path, 'w')
                 publickey_file.write(crypto.dump_publickey(crypto.FILETYPE_PEM, privatekey))
                 publickey_file.close()
-            except (IOError, OSError):
-                e = get_exception()
-                raise PublicKeyError(e)
-            except AttributeError:
+            except (IOError, OSError) as exc:
+                raise PublicKeyError(exc)
+            except AttributeError as exc:
                 self.remove()
                 raise PublicKeyError('You need to have PyOpenSSL>=16.0.0 to generate public keys')
         else:
@@ -145,10 +145,9 @@ class PublicKey(object):
 
         try:
             os.remove(self.path)
-        except OSError:
-            e = get_exception()
-            if e.errno != errno.ENOENT:
-                raise PublicKeyError(e)
+        except OSError as exc:
+            if exc.errno != errno.ENOENT:
+                raise PublicKeyError(exc)
             else:
                 self.changed = False
 
@@ -205,9 +204,8 @@ def main():
 
         try:
             public_key.generate(module)
-        except PublicKeyError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except PublicKeyError as exc:
+            module.fail_json(msg=to_native(exc))
     else:
 
         if module.check_mode:
@@ -217,9 +215,8 @@ def main():
 
         try:
             public_key.remove()
-        except PublicKeyError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except PublicKeyError as exc:
+            module.fail_json(msg=to_native(exc))
 
     result = public_key.dump()
 
