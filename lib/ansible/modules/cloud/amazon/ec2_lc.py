@@ -180,6 +180,7 @@ requirements:
 EXAMPLES = '''
 
 # create a launch configuration using an AMI image and instance type as a basis
+
 - name: note that encrypted volumes are only supported in >= Ansible 2.4
   ec2_lc:
     name: special
@@ -198,6 +199,7 @@ EXAMPLES = '''
       ephemeral: ephemeral0
 
 # create a launch configuration using a running instance id as a basis
+
 - ec2_lc:
     name: special
     instance_id: i-00a48b207ec59e948
