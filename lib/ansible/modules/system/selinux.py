@@ -78,14 +78,8 @@ try:
 except ImportError:
     HAS_SELINUX = False
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.facts.utils import get_file_content
+from ansible.module_utils.facts.utils import get_file_lines
 
-
-# compatibilty function
-def get_file_lines(filename):
-    content = get_file_content(filename)
-    lines = content.split('\n')
-    return lines
 
 
 # getter subroutines
