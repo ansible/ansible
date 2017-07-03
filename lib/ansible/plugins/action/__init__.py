@@ -971,6 +971,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return diff
 
+    def _name_slug(self, action_type):
+        _name_slug = action_type
+
+        # _load_name is set by plugin loader, potentially after init or not at all if
+        # plugin loader isnt used
+        try:
+            _name_slug = '%s action' % self._load_name
+        except AttributeError:
+            pass
+        return _name_slug
+
     def _find_needle(self, dirname, needle):
         '''
             find a needle in haystack of paths, optionally using 'dirname' as a subdir.
@@ -981,9 +992,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # dwim already deals with playbook basedirs
         path_stack = self._task.get_search_path()
 
-        result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
+        b_candidate_paths = self._loader.get_path_dwim_relative_stack(path_stack, dirname, needle)
+        b_candidate_paths = self._loader.uniq_path_list(b_candidate_paths)
+
+        result = self._loader.path_dwim_relative_stack(b_candidate_paths, needle)
 
         if result is None:
-            raise AnsibleError("Unable to find '%s' in expected paths." % to_native(needle))
+            paths_msg = ','.join([to_native(b_path) for b_path in b_candidate_paths])
+            raise AnsibleError("%s unable to find '%s' in expected locations: %s" %
+                               (self._name_slug('Action'), to_native(needle), paths_msg))
 
         return result
