@@ -234,27 +234,28 @@ def core(module):
         module.fail_json(msg='Error creating ssh key [{}: {}]'.format(
             status_code, response.json['message']))
 
+
 def ssh_key_fingerprint(ssh_pub_key):
     key = ssh_pub_key.split(None, 2)[1]
     fingerprint = hashlib.md5(base64.decodestring(key)).hexdigest()
-    return ':'.join(a+b for a,b in zip(fingerprint[::2], fingerprint[1::2]))
+    return ':'.join(a + b for a, b in zip(fingerprint[::2], fingerprint[1::2]))
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(choices=['present', 'absent'], default='present'),
-            fingerprint = dict(aliases=['id'], required=False),
-            name = dict(required=False),
-            ssh_pub_key = dict(required=False),
-            oauth_token = dict(
+        argument_spec=dict(
+            state=dict(choices=['present', 'absent'], default='present'),
+            fingerprint=dict(aliases=['id'], required=False),
+            name=dict(required=False),
+            ssh_pub_key=dict(required=False),
+            oauth_token=dict(
                 no_log=True,
                 # Support environment variable for DigitalOcean OAuth Token
                 fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY']),
                 required=True,
             ),
         ),
-        required_one_of = (
+        required_one_of=(
             ('fingerprint', 'ssh_pub_key'),
         ),
         supports_check_mode=True,
