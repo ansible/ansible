@@ -19,7 +19,7 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
+                    'status': ['preview'],
                     'supported_by': 'community'}
 
 
@@ -182,12 +182,13 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
             'virtualmachineid': self.get_vm(key='id'),
             'networkid': self.get_network(key='id'),
         }
-        res = self.cs.addNicToVirtualMachine(**args)
-        if 'errortext' in res:
-            self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+        if not self.module.check_mode:
+            res = self.cs.addNicToVirtualMachine(**args)
+            if 'errortext' in res:
+                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
-        vm = self.poll_job(res, 'virtualmachine')
-        self.nic = vm['nic'][0]
+            vm = self.poll_job(res, 'virtualmachine')
+            self.nic = vm['nic'][0]
         return self.nic
 
     def remove_nic(self):
@@ -196,10 +197,11 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
             'virtualmachineid': self.get_vm(key='id'),
             'nicid': self.get_nic()['id'],
         }
-        res = self.cs.removeNicFromVirtualMachine(**args)
-        if 'errortext' in res:
-            self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-        self.nic = None
+        if not self.module.check_mode:
+            res = self.cs.removeNicFromVirtualMachine(**args)
+            if 'errortext' in res:
+                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+        return self.nic
 
     def present_nic(self):
         nic = self.get_nic()
@@ -210,7 +212,8 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
     def absent_nic(self):
         nic = self.get_nic()
         if nic:
-            self.remove_nic()
+            return self.remove_nic()
+        return self.nic
 
     def get_result(self, nic):
         super(AnsibleCloudStackInstanceNic, self).get_result(nic)
@@ -218,9 +221,6 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
             self.module.params['network'] = nic.get('networkid')
         self.result['network'] = self.get_network(key='name')
         self.result['vm'] = self.get_vm(key='name')
-        self.result['domain'] = self.get_domain(key='path')
-        self.result['account'] = self.get_account(key='name')
-        self.result['project'] = self.get_project(key='name')
         return self.result
 
 
