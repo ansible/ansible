@@ -21,7 +21,24 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-TODO: docs
+DOCUMENTATION:
+    connection: buildah
+    short_description: interact with an existing buildah container
+    description:
+        - Run commands or put/fetch files to an existing container using buildah tool.
+    author: Tomas Tomecek (ttomecek@redhat.com)
+    version_added: 2.4
+    options:
+        remote_user:
+            description:
+                - User specified via name or ID which is used to execute commands inside the container.
+            config:
+               - section: defaults
+                 key: remote_user
+            env_vars:
+               - ANSIBLE_REMOTE_USER
+            host_vars:
+               - ansible_user
 """
 
 from __future__ import (absolute_import, division, print_function)
@@ -55,8 +72,6 @@ class Connection(ConnectionBase):
     # String used to identify this Connection class from other classes
     transport = 'buildah'
     has_pipelining = True
-    # TODO: add support to change user which initiates commands inside the container,
-    #       -- can be done via buildah config --user
     become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
@@ -66,7 +81,12 @@ class Connection(ConnectionBase):
         self._connected = False
         # container filesystem will be mounted here on host
         self._mount_point = None
-        # TODO: save actual user and print it
+        # `buildah inspect` doesn't contain info about what the default user is -- if it's not
+        # set, it's empty
+        self.user = self._play_context.remote_user
+
+    def _set_user(self):
+        self._buildah(b"config", [b"--user=" + to_bytes(self.user, errors='surrogate_or_strict')])
 
     def _buildah(self, cmd, cmd_args=None, in_data=None):
         """
