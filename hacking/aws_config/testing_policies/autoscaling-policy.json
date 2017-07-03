@@ -11,7 +11,10 @@
                 "autoscaling:CreateAutoScalingGroup",
                 "autoscaling:UpdateAutoScalingGroup",
                 "autoscaling:DeleteAutoScalingGroup",
-                "autoscaling:DeleteLaunchConfiguration"
+                "autoscaling:DeleteLaunchConfiguration",
+                "autoscaling:DescribePolicies",
+                "autoscaling:PutScalingPolicy",
+                "autoscaling:DeletePolicy"
             ],
             "Resource": [
                 "arn:aws:autoscaling:{{aws_region}}:{{aws_account}}:*"
