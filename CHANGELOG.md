@@ -30,8 +30,18 @@ Ansible Changes By Release
 * fix non-pipelined code paths for Windows (eg, ANSIBLE_KEEP_REMOTE_FILES, non-pipelined connection plugins)
 * fix for win_updates where args and check mode were ignored due to common code change
 * fix for unprivileged users to Windows runas become method
-
 * fix starttls code path for mail module
+* fix missing LC_TYPE in parted module
+* fix CN parsing with OpenSSL 1.1 in letsencrypt module
+* fix params assignment in jabber module
+* fix TXT record type handling in exo_dns_record module
+* fix message queue message ttl can't be 0 in rabbitmq_queue module
+* CloudStack bugfixes:
+  * fix template upload for users in cs_template module, change default to is_routing=None
+  * several fixes in cs_host module fixes hypervisor handling
+  * fix network param ignored due typo in cs_nic module
+  * fix missing type bool in module cs_zone
+  * fix KeyError: 'sshkeypair' in cs_instance module for CloudStack v4.5 and before
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
