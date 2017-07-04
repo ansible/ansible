@@ -68,13 +68,13 @@ options:
     default: localhost
     description:
       - Hostname of JBoss instance running HTTP management API
-    version_added:2.4
+    version_added: 2.4
   port:
     required: false
     default: 9990
     description:
       - Port binding for HTTP management API
-    version_added:2.4
+    version_added: 2.4
 notes:
   - "The filesystem deployment strategy requires the deployment scanner to be enabled."
   - "The http deployment strategy requires the requests package to be installed on each host."
