@@ -78,22 +78,11 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device
-  returned: always
+  returned: always, except for the platforms that use Netconf transport to manage the device.
   type: list
   sample:
     - banner login
     - this is my login banner
     - that contains a multiline
     - string
-
-rpc:
-  description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
-  type: string
-  sample: >
-          <system>
-            <login>
-                <message>this is my login banner</message>
-            </login>
-          </system>"
 """

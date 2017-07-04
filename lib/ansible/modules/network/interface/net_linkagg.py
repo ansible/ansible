@@ -82,7 +82,7 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device
-  returned: always
+  returned: always, except for the platforms that use Netconf transport to manage the device.
   type: list
   sample:
     - set interfaces bonding bond0

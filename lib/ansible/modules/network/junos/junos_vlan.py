@@ -98,11 +98,15 @@ EXAMPLES = """
 """
 
 RETURN = """
-rpc:
-  description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+diff:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed.
   type: string
-  sample: "<vlans><vlan><name>test-vlan-4</name></vlan></vlans>"
+  sample: >
+         [edit vlans]
+         +   test-vlan-1 {
+         +       vlan-id 60;
+         +   }
 """
 import collections
 
@@ -181,8 +185,7 @@ def main():
     if diff:
         result.update({
             'changed': True,
-            'diff': {'prepared': diff},
-            'rpc': tostring(ele)
+            'diff': diff,
         })
 
     module.exit_json(**result)
