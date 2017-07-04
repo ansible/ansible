@@ -120,28 +120,30 @@ class InventoryModule(BaseFileInventoryPlugin):
             self.inventory.add_group(group)
 
             if isinstance(group_data, dict):
-                #make sure they are dicts
+                # make sure they are dicts
                 for section in ['vars', 'children', 'hosts']:
                     if section in group_data and isinstance(group_data[section], string_types):
                         group_data[section] = {group_data[section]: None}
 
-                if 'vars' in group_data:
+                if 'vars' in group_data and group_data['vars'] is not None:
                     for var in group_data['vars']:
                         self.inventory.set_variable(group, var, group_data['vars'][var])
 
-                if 'children' in group_data:
+                if 'children' in group_data and group_data['children'] is not None:
                     for subgroup in group_data['children']:
                         self._parse_group(subgroup, group_data['children'][subgroup])
                         self.inventory.add_child(group, subgroup)
 
-                if 'hosts' in group_data:
+                if 'hosts' in group_data and group_data['hosts'] is not None:
                     for host_pattern in group_data['hosts']:
                         hosts, port = self._parse_host(host_pattern)
+
                         # If hosts-list is a dictionary, add variables to hostvars, otherwise skip
                         if isinstance(group_data['hosts'], dict):
                             self.populate_host_vars(hosts, group_data['hosts'][host_pattern], group, port)
                         else:
                             self.populate_host_vars(hosts, None, group, port)
+
         else:
             self.display.warning("Skipping '%s' as this is not a valid group name" % group)
 
