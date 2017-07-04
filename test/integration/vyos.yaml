@@ -7,8 +7,45 @@
     limit_to: "*"
     debug: false
 
-  roles:
-    - { role: vyos_command, when: "limit_to in ['*', 'vyos_command']" }
-    - { role: vyos_config, when: "limit_to in ['*', 'vyos_config']" }
-    - { role: vyos_user, when: "limit_to in ['*', 'vyos_user']" }
-    - { role: vyos_banner, when: "limit_to in ['*', 'vyos_banner']" }
+
+  tasks:
+    - set_fact:
+        test_failed: false
+    - block:
+      - include_role:
+          name: vyos_command
+        when: "limit_to in ['*', 'vyos_command']"
+      rescue:
+        - set_fact: test_failed=true
+
+
+    - block:
+      - include_role:
+          name: vyos_config
+        when: "limit_to in ['*', 'vyos_config']"
+      rescue:
+        - set_fact: test_failed=true
+
+
+    - block:
+      - include_role:
+          name: vyos_user
+        when: "limit_to in ['*', 'vyos_user']"
+      rescue:
+        - set_fact: test_failed=true
+
+
+
+    - block:
+      - include_role:
+          name: vyos_banner
+        when: "limit_to in ['*', 'vyos_banner']"
+      rescue:
+        - set_fact: test_failed=true
+
+
+###########
+    - name: Has any previous test failed?
+      fail:
+        msg: "One or more tests failed, check log for details"
+      when: test_failed
