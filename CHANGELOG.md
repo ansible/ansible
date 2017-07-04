@@ -3,6 +3,8 @@ Ansible Changes By Release
 
 ## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
 
+Moving to Ansible 2.4 guide http://docs.ansible.com/ansible/porting_guide_2.4.html
+
 ### Major Changes
 
 * Support for Python-2.4 and Python-2.5 on the managed system's side was dropped. If you need to manage a system that ships with Python-2.4 or Python-2.5, you'll need to install Python-2.6 or better on the managed system or run Ansible-2.3 until you can upgrade the system.
@@ -284,6 +286,8 @@ Ansible Changes By Release
 
 
 ## 2.3 "Ramble On" - 2017-04-12
+
+Moving to Ansible 2.4 guide http://docs.ansible.com/ansible/porting_guide_2.3.html
 
 ### Major Changes
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
