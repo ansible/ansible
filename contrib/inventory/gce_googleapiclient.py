@@ -162,10 +162,8 @@ def get_hostvars(instance):
         'gce_status': instance['status']
     }
 
-    if instance['networkInterfaces'] \
-            and instance['networkInterfaces'][0]['networkIP']:
-        hostvars['ansible_ssh_host'] = \
-            instance['networkInterfaces'][0]['networkIP']
+    if instance['networkInterfaces'][0]['networkIP']:
+        hostvars['ansible_ssh_host'] = instance['networkInterfaces'][0]['networkIP']
 
     if 'labels' in instance:
         hostvars['gce_labels'] = instance['labels']
@@ -176,6 +174,28 @@ def get_hostvars(instance):
 
     if 'items' in instance['tags']:
         hostvars['gce_tags'] = instance['tags']['items']
+
+    hostvars['gce_machine_type'] = instance['machineType'].split('/')[-1]
+
+    hostvars['gce_project'] = instance['selfLink'].split('/')[6]
+
+    hostvars['gce_zone'] = instance['zone'].split('/')[-1]
+
+    hostvars['gce_network'] = instance['networkInterfaces'][0]['network'].split('/')[-1]
+
+    for interface in instance['networkInterfaces']:
+
+        hostvars['gce_subnetwork'] = interface['subnetwork'].split('/')[-1]
+
+        access_configs = interface.get('accessConfigs', [])
+
+        for access_config in access_configs:
+            hostvars['gce_public_ip'] = access_config.get('natIP', None)
+            break  # get only the first access config
+
+        hostvars['gce_private_ip'] = interface['networkIP']
+
+        break  # get only the first interface
 
     return hostvars
 
@@ -195,9 +215,24 @@ def get_inventory(instances):
 
             # create a group for every tag prefixed by 'tag_' and populate
             # accordingly
-            if 'items' in instance['tags']:
-                for tag in instance['tags']['items']:
-                    inventory['tag_{}'.format(tag)].append(instance['name'])
+            for tag in instance['tags'].get('items', []):
+                inventory['tag_{}'.format(tag)].append(instance['name'])
+
+            project = instance['selfLink'].split('/')[6]
+            inventory['project_{}'.format(project)].append(instance['name'])
+
+            # zone groups are not prefixed to be compatible with the previous gce.py
+            zone = instance['zone'].split('/')[-1]
+            inventory[zone].append(instance['name'])
+
+            network = instance['networkInterfaces'][0]['network'].split('/')[-1]
+            inventory['network_{}'.format(network)].append(instance['name'])
+
+            inventory['status_{}'.format(instance['status'].lower())].append(instance['name'])
+
+            # instance type groups are not prefixed to be compatible with the previous gce.py
+            instance_type = instance['machineType'].split('/')[-1]
+            inventory[instance_type].append(instance['name'])
 
     return inventory
 
@@ -265,8 +300,7 @@ def main(args):
     inventory_json = get_inventory(instances)
     print(json.dumps(inventory_json,
                      sort_keys=True,
-                     indent=2,
-                     separators=(',', ': ')))
+                     indent=2))
 
 
 if __name__ == "__main__":
