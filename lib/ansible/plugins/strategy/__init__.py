@@ -866,7 +866,8 @@ class StrategyBase:
         elif meta_action == 'clear_facts':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
-                    self._variable_manager.clear_facts(host)
+                    hostname = host.get_name()
+                    self._variable_manager.clear_facts(hostname)
                 msg = "facts cleared"
             else:
                 skipped = True
