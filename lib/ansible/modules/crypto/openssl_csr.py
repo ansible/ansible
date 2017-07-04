@@ -167,7 +167,7 @@ else:
     pyopenssl_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class CertificateSigningRequestError(Exception):
@@ -230,9 +230,8 @@ class CertificateSigningRequest(object):
                 csr_file = open(self.path, 'w')
                 csr_file.write(crypto.dump_certificate_request(crypto.FILETYPE_PEM, self.request))
                 csr_file.close()
-            except (IOError, OSError):
-                e = get_exception()
-                raise CertificateSigningRequestError(e)
+            except (IOError, OSError) as exc:
+                raise CertificateSigningRequestError(exc)
         else:
             self.changed = False
 
@@ -245,10 +244,9 @@ class CertificateSigningRequest(object):
 
         try:
             os.remove(self.path)
-        except OSError:
-            e = get_exception()
-            if e.errno != errno.ENOENT:
-                raise CertificateSigningRequestError(e)
+        except OSError as exc:
+            if exc.errno != errno.ENOENT:
+                raise CertificateSigningRequestError(exc)
             else:
                 self.changed = False
 
@@ -305,9 +303,8 @@ def main():
 
         try:
             csr.generate(module)
-        except CertificateSigningRequestError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except CertificateSigningRequestError as exc:
+            module.fail_json(msg=to_native(exc))
 
     else:
 
@@ -318,9 +315,8 @@ def main():
 
         try:
             csr.remove()
-        except CertificateSigningRequestError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except CertificateSigningRequestError as exc:
+            module.fail_json(msg=to_native(exc))
 
     result = csr.dump()
 

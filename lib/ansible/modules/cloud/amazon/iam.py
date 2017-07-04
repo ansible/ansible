@@ -245,7 +245,7 @@ def create_user(module, iam, name, pwd, path, key_state, key_count):
 
 
 def delete_user(module, iam, name):
-    del_meta = ''
+    changed = False
     try:
         current_keys = [ck['access_key_id'] for ck in
             iam.get_all_access_keys(name).list_access_keys_result.access_key_metadata]
@@ -256,17 +256,17 @@ def delete_user(module, iam, name):
         except boto.exception.BotoServerError as err:
             error_msg = boto_exception(err)
             if ('Cannot find Login Profile') in error_msg:
-                del_meta = iam.delete_user(name).delete_user_response
+                iam.delete_user(name)
         else:
             iam.delete_login_profile(name)
-            del_meta = iam.delete_user(name).delete_user_response
+            iam.delete_user(name)
     except Exception as ex:
         module.fail_json(changed=False, msg="delete failed %s" %ex)
         if ('must detach all policies first') in error_msg:
             for policy in iam.get_all_user_policies(name).list_user_policies_result.policy_names:
                 iam.delete_user_policy(name, policy)
             try:
-                del_meta = iam.delete_user(name)
+                iam.delete_user(name)
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must detach all policies first') in error_msg:
@@ -278,10 +278,11 @@ def delete_user(module, iam, name):
                     module.fail_json(changed=changed, msg=str(error_msg))
             else:
                 changed = True
-                return del_meta, name, changed
+        else:
+            module.fail_json(changed=changed, msg=str(error_msg))
     else:
         changed = True
-        return del_meta, name, changed
+    return name, changed
 
 
 def update_user(module, iam, name, new_name, new_path, key_state, key_count, keys, pwd, updated):
@@ -455,22 +456,24 @@ def delete_group(module=None, iam=None, name=None):
         iam.delete_group(name)
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
-        if ('must detach all policies first') in error_msg:
+        if ('must delete policies first') in error_msg:
             for policy in iam.get_all_group_policies(name).list_group_policies_result.policy_names:
                 iam.delete_group_policy(name, policy)
             try:
                 iam.delete_group(name)
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
-                if ('must detach all policies first') in error_msg:
+                if ('must delete policies first') in error_msg:
                     module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
                                                           "that %s has Managed Polices. This is not "
                                                           "currently supported by boto. Please detach the polices "
                                                           "through the console and try again." % name)
                 else:
-                    module.fail_json(changed=changed, msg=str(err))
+                    module.fail_json(changed=changed, msg=str(error_msg))
             else:
                 changed = True
+        else:
+            module.fail_json(changed=changed, msg=str(error_msg))
     else:
         changed = True
     return changed, name
@@ -738,7 +741,7 @@ def main():
             if user_exists:
                 try:
                     set_users_groups(module, iam, name, '')
-                    del_meta, name, changed = delete_user(module, iam, name)
+                    name, changed = delete_user(module, iam, name)
                     module.exit_json(deleted_user=name, changed=changed)
 
                 except Exception as ex:

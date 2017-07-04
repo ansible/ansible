@@ -103,6 +103,17 @@ def get_docstring(filename, verbose=False):
     directory.
     """
 
+    # FIXME: Should refactor this so that we have a docstring parsing
+    # function and a separate variable parsing function
+    # Can have a function one higher that invokes whichever is needed
+    #
+    # Should look roughly like this:
+    # get_plugin_doc(filename, verbose=False)
+    #   documentation = extract_docstring(plugin_ast, identifier, verbose=False)
+    #   if not documentation and not (filter or test):
+    #       documentation = extract_variables(plugin_ast)
+    #   documentation['metadata'] = extract_metadata(plugin_ast)
+
     data = {
         'doc': None,
         'plainexamples': None,
@@ -114,7 +125,6 @@ def get_docstring(filename, verbose=False):
         'DOCUMENTATION': 'doc',
         'EXAMPLES': 'plainexamples',
         'RETURN': 'returndocs',
-        'ANSIBLE_METADATA': 'metadata'
     }
 
     try:
@@ -155,7 +165,9 @@ def get_docstring(filename, verbose=False):
                                     data[varkey] = child.value.s
                             display.debug('assigned :%s' % varkey)
 
-        data['metadata'] = extract_metadata(b_module_data)[0]
+        # Metadata is per-file rather than per-plugin/function
+        data['metadata'] = extract_metadata(module_ast=M)[0]
+
         # add fragments to documentation
         if data['doc']:
             add_fragments(data['doc'], filename)
@@ -165,7 +177,7 @@ def get_docstring(filename, verbose=False):
             for x in ('version', 'metadata_version'):
                 if x in data['metadata']:
                     del data['metadata'][x]
-    except:
+    except Exception as e:
         display.error("unable to parse %s" % filename)
         if verbose is True:
             display.display("unable to parse %s" % filename)

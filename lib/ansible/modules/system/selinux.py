@@ -78,7 +78,7 @@ try:
 except ImportError:
     HAS_SELINUX = False
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.facts import get_file_lines
+from ansible.module_utils.facts.utils import get_file_lines
 
 
 # getter subroutines

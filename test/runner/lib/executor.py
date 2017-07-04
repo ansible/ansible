@@ -327,7 +327,7 @@ def network_inventory(remotes):
 
         groups[remote.platform].append(
             '%s %s' % (
-                remote.name.replace('.', '_'),
+                remote.name.replace('.', '-'),
                 ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
             )
         )
@@ -664,6 +664,15 @@ def command_integration_role(args, target, start_at_task):
 
         if start_at_task:
             cmd += ['--start-at-task', start_at_task]
+
+        if args.tags:
+            cmd += ['--tags', args.tags]
+
+        if args.skip_tags:
+            cmd += ['--skip-tags', args.skip_tags]
+
+        if args.diff:
+            cmd += ['--diff']
 
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
@@ -1309,6 +1318,9 @@ class IntegrationConfig(TestConfig):
         self.start_at_task = args.start_at_task  # type: str
         self.allow_destructive = args.allow_destructive if 'allow_destructive' in args else False  # type: bool
         self.retry_on_error = args.retry_on_error  # type: bool
+        self.tags = args.tags
+        self.skip_tags = args.skip_tags
+        self.diff = args.diff
 
 
 class PosixIntegrationConfig(IntegrationConfig):

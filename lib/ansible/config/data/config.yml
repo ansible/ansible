@@ -180,6 +180,16 @@ ANSIBLE_SSH_RETRIES:
   value_type: integer
   vars: []
   yaml: {key: ssh_connection.retries}
+ANY_ERRORS_FATAL:
+    default: False
+    env:
+      - name: ANSIBLE_ANY_ERRORS_FATAL
+    ini:
+      - section:  defaults
+        key: any_errors_fatal
+    value_type: boolean
+    vars: []
+    yaml: {key: errors.anyerrors_fatal}
 BECOME_ALLOW_SAME_USER:
   default: False
   desc: 'TODO: write it'

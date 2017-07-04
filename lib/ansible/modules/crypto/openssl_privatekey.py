@@ -101,9 +101,24 @@ filename:
     returned: changed or success
     type: string
     sample: /etc/ssl/private/ansible.com.pem
+fingerprint:
+    description: The fingerprint of the public key. Fingerprint will be generated for each hashlib.algorithms available.
+                 Requires PyOpenSSL >= 16.0 for meaningful output.
+    returned: changed or success
+    type: dict
+    sample:
+      md5: "84:75:71:72:8d:04:b5:6c:4d:37:6d:66:83:f5:4c:29"
+      sha1: "51:cc:7c:68:5d:eb:41:43:88:7e:1a:ae:c7:f8:24:72:ee:71:f6:10"
+      sha224: "b1:19:a6:6c:14:ac:33:1d:ed:18:50:d3:06:5c:b2:32:91:f1:f1:52:8c:cb:d5:75:e9:f5:9b:46"
+      sha256: "41:ab:c7:cb:d5:5f:30:60:46:99:ac:d4:00:70:cf:a1:76:4f:24:5d:10:24:57:5d:51:6e:09:97:df:2f:de:c7"
+      sha384: "85:39:50:4e:de:d9:19:33:40:70:ae:10:ab:59:24:19:51:c3:a2:e4:0b:1c:b1:6e:dd:b3:0c:d9:9e:6a:46:af:da:18:f8:ef:ae:2e:c0:9a:75:2c:9b:b3:0f:3a:5f:3d"
+      sha512: "fd:ed:5e:39:48:5f:9f:fe:7f:25:06:3f:79:08:cd:ee:a5:e7:b3:3d:13:82:87:1f:84:e1:f5:c7:28:77:53:94:86:56:38:69:f0:d9:35:22:01:1e:a6:60:...:0f:9b"
 '''
 
-from ansible.module_utils.basic import *
+import errno
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.crypto import get_fingerprint
+from ansible.module_utils.pycompat24 import get_exception
 
 try:
     from OpenSSL import crypto
@@ -112,8 +127,8 @@ except ImportError:
 else:
     pyopenssl_found = True
 
-
 import os
+from ansible.module_utils._text import to_native
 
 
 class PrivateKeyError(Exception):
@@ -131,6 +146,8 @@ class PrivateKey(object):
         self.path = module.params['path']
         self.mode = module.params['mode']
         self.changed = True
+        self.privatekey = None
+        self.fingerprint = {}
         self.check_mode = module.check_mode
 
 
@@ -147,8 +164,8 @@ class PrivateKey(object):
 
             try:
                 self.privatekey.generate_key(crypto_type, self.size)
-            except (TypeError, ValueError):
-                raise PrivateKeyError(get_exception())
+            except (TypeError, ValueError) as exc:
+                raise PrivateKeyError(exc)
 
             try:
                 privatekey_file = os.open(self.path,
@@ -157,12 +174,13 @@ class PrivateKey(object):
 
                 os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey))
                 os.close(privatekey_file)
-            except IOError:
+            except IOError as exc:
                 self.remove()
-                raise PrivateKeyError(get_exception())
+                raise PrivateKeyError(exc)
         else:
             self.changed = False
 
+        self.fingerprint = get_fingerprint(self.path)
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
@@ -173,10 +191,9 @@ class PrivateKey(object):
 
         try:
             os.remove(self.path)
-        except OSError:
-            e = get_exception()
-            if e.errno != errno.ENOENT:
-                raise PrivateKeyError(e)
+        except OSError as exc:
+            if exc.errno != errno.ENOENT:
+                raise PrivateKeyError(exc)
             else:
                 self.changed = False
 
@@ -189,6 +206,7 @@ class PrivateKey(object):
             'type': self.type,
             'filename': self.path,
             'changed': self.changed,
+            'fingerprint': self.fingerprint,
         }
 
         return result
@@ -230,9 +248,8 @@ def main():
 
         try:
             private_key.generate(module)
-        except PrivateKeyError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except PrivateKeyError as exc:
+            module.fail_json(msg=to_native(exc))
     else:
 
         if module.check_mode:
@@ -242,9 +259,8 @@ def main():
 
         try:
             private_key.remove()
-        except PrivateKeyError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except PrivateKeyError as exc:
+            module.fail_json(msg=to_native(exc))
 
     result = private_key.dump()
 

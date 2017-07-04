@@ -211,6 +211,11 @@ def delegate_docker(args, exclude, require):
                 '--privileged=%s' % str(privileged).lower(),
             ]
 
+            docker_socket = '/var/run/docker.sock'
+
+            if os.path.exists(docker_socket):
+                test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
+
             if util_id:
                 test_options += [
                     '--link', '%s:ansible.http.tests' % util_id,
@@ -310,7 +315,7 @@ def delegate_remote(args, exclude, require):
             manage.ssh(cmd, ssh_options)
             success = True
         finally:
-            manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results')
+            manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results && chmod -R a+r /tmp/results')
             manage.download('/tmp/results', 'test')
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):

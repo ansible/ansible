@@ -21,7 +21,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
 from ansible.utils.hashing import checksum_s
@@ -44,7 +44,7 @@ class ActionModule(ActionBase):
                 dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
         except AnsibleError as e:
-            return dict(failed=True, msg=to_native(e))
+            return dict(failed=True, msg=to_text(e))
 
         return dest_stat['checksum']
 
@@ -88,7 +88,7 @@ class ActionModule(ActionBase):
                 source = self._find_needle('templates', source)
             except AnsibleError as e:
                 result['failed'] = True
-                result['msg'] = to_native(e)
+                result['msg'] = to_text(e)
 
         if 'failed' in result:
             return result
@@ -156,7 +156,7 @@ class ActionModule(ActionBase):
             self._templar.set_available_variables(old_vars)
         except Exception as e:
             result['failed'] = True
-            result['msg'] = type(e).__name__ + ": " + str(e)
+            result['msg'] = "%s: %s" % (type(e).__name__, to_text(e))
             return result
         finally:
             self._loader.cleanup_tmp_file(tmp_source)
