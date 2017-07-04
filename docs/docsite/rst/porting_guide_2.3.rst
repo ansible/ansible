@@ -1,3 +1,5 @@
+.. _porting_2.1_guide:
+
 *************************
 Ansible 2.3 Porting Guide
 *************************
@@ -8,6 +10,8 @@ It is intended to assist in updating your playbooks, plugins, etc so they will w
 
 
 We suggest you read this page along with https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#23-ramble-on---2017-04-12 before upgrading Ansible to understand what, if any updates you will need to make.
+
+This document is part of a collection on porting, the rest can be found at :ref:`porting_guides:` <Porting Guides>`.
 
 .. contents:: Topics
 
@@ -29,7 +33,6 @@ In 2.4, the default will be to merge and you can enable the old overwriting beha
 In 2.5, multiple ``--tags`` options will be merged with no way to go back to the old behaviour.
 
 
-
 Other caveats
 -------------
 
@@ -37,7 +40,7 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
 * The version and release facts for OpenBSD hosts were reversed. This has been changed so that version has the numeric portion and release has the name of the release.
 
-* made any_errors_fatal inheritable from play to task and all other objects in between.
+* made ``any_errors_fatal`` inheritable from play to task and all other objects in between.
 
 Modules
 =======
