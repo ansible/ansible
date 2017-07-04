@@ -39,7 +39,7 @@ options:
     - The ID of the resource to operate on.
   resource_type:
     description:
-    - The type of resource to operate on. Currently only tagging of
+    - The type of resource to operate on. Currently, only tagging of
       droplets is supported.
     default: droplet
     choices: ['droplet']
@@ -153,7 +153,7 @@ class Rest(object):
             path = path[1:]
         return '%s/%s' % (self.baseurl, path)
 
-    def send(self, method, path, data=None, headers=None):
+    def send(self, method, path, data=None):
         url = self._url_builder(path)
         data = self.module.jsonify(data)
 
@@ -161,17 +161,17 @@ class Rest(object):
 
         return Response(resp, info)
 
-    def get(self, path, data=None, headers=None):
-        return self.send('GET', path, data, headers)
+    def get(self, path, data=None):
+        return self.send('GET', path, data)
 
-    def put(self, path, data=None, headers=None):
-        return self.send('PUT', path, data, headers)
+    def put(self, path, data=None):
+        return self.send('PUT', path, data)
 
-    def post(self, path, data=None, headers=None):
-        return self.send('POST', path, data, headers)
+    def post(self, path, data=None):
+        return self.send('POST', path, data)
 
-    def delete(self, path, data=None, headers=None):
-        return self.send('DELETE', path, data, headers)
+    def delete(self, path, data=None):
+        return self.send('DELETE', path, data)
 
 
 def core(module):
@@ -186,57 +186,77 @@ def core(module):
     resource_id = module.params['resource_id']
     resource_type = module.params['resource_type']
 
-    rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
+    rest = Rest(module, {'Authorization': 'Bearer {0}'.format(api_token),
                          'Content-type': 'application/json'})
 
-    if state in ('present'):
-        if name is None:
-            module.fail_json(msg='parameter `name` is missing')
-
-        # Ensure Tag exists
-        response = rest.post("tags", data={'name': name})
+    # Check if api_token is valid or not
+    response = rest.get('account')
+    if response.status_code == 401:
+        module.fail_json(msg='Failed to login using api_token, please verify '
+                             'validity of api_token')
+    if state == 'present':
+        response = rest.get('tags/{0}'.format(name))
         status_code = response.status_code
-        json = response.json
-        if status_code == 201:
-            changed = True
-        elif status_code == 422:
+        resp_json = response.json
+        changed = False
+        if status_code == 200 and resp_json['tag']['name'] == name:
             changed = False
         else:
-            module.exit_json(changed=False, data=json)
+            # Ensure Tag exists
+            response = rest.post("tags", data={'name': name})
+            status_code = response.status_code
+            resp_json = response.json
+            if status_code == 201:
+                changed = True
+            elif status_code == 422:
+                changed = False
+            else:
+                module.exit_json(changed=False, data=resp_json)
 
         if resource_id is None:
             # No resource defined, we're done.
-            if json is None:
-                module.exit_json(changed=changed, data=json)
-            else:
-                module.exit_json(changed=changed, data=json)
+            module.exit_json(changed=changed, data=resp_json)
         else:
-            # Tag a resource
-            url = "tags/{}/resources".format(name)
-            payload = {
-                'resources': [{
-                    'resource_id': resource_id,
-                    'resource_type': resource_type}]}
-            response = rest.post(url, data=payload)
-            if response.status_code == 204:
-                module.exit_json(changed=True)
+            # Check if resource is already tagged or not
+            found = False
+            url = "{0}?tag_name={1}".format(resource_type, name)
+            response = rest.get(url)
+            status_code = response.status_code
+            resp_json = response.json
+            if status_code == 200:
+                for resource in resp_json['droplets']:
+                    if not found and resource['id'] == int(resource_id):
+                        found = True
+                        break
+                if not found:
+                    # If resource is not tagged, tag a resource
+                    url = "tags/{0}/resources".format(name)
+                    payload = {
+                        'resources': [{
+                            'resource_id': resource_id,
+                            'resource_type': resource_type}]}
+                    response = rest.post(url, data=payload)
+                    if response.status_code == 204:
+                        module.exit_json(changed=True)
+                    else:
+                        module.fail_json(msg="error tagging resource '{0}': {1}".format(resource_id, response.json["message"]))
+                else:
+                    # Already tagged resource
+                    module.exit_json(changed=False)
             else:
-                module.fail_json(msg="error tagging resource '{}': {}".format(
-                    resource_id, response.json["message"]))
+                # Unable to find resource specified by user
+                module.fail_json(msg=resp_json['message'])
 
-    elif state in ('absent'):
-        if name is None:
-            module.fail_json(msg='parameter `name` is missing')
-
+    elif state == 'absent':
         if resource_id:
-            url = "tags/{}/resources".format(name)
+            url = "tags/{0}/resources".format(name)
             payload = {
                 'resources': [{
                     'resource_id': resource_id,
                     'resource_type': resource_type}]}
             response = rest.delete(url, data=payload)
         else:
-            url = "tags/{}".format(name)
+            url = "tags/{0}".format(name)
             response = rest.delete(url)
         if response.status_code == 204:
             module.exit_json(changed=True)
