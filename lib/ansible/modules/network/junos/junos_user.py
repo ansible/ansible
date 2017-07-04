@@ -118,6 +118,16 @@ EXAMPLES = """
 """
 
 RETURN = """
+diff:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed.
+  type: string
+  sample: >
+          [edit system login]
+          +    user test-user {
+          +        uid 2005;
+          +        class read-only;
+          +    }
 """
 from functools import partial
 
@@ -265,7 +275,7 @@ def main():
     if diff:
         result.update({
             'changed': True,
-            'diff': {'prepared': diff}
+            'diff': diff
         })
 
     module.exit_json(**result)

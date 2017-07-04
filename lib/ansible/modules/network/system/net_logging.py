@@ -84,22 +84,8 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device
-  returned: always
+  returned: always, except for the platforms that use Netconf transport to manage the device.
   type: list
   sample:
     - logging console critical
-
-rpc:
-  description: load-configuration RPC send to the device
-  returned: C(rpc) is returned only for junos device
-            when configuration is changed on device
-  type: string
-  sample: >
-         <system>
-            <syslog>
-                <console replace=\"replace\" active=\"active\">
-                    <name>pfe</name><error/>
-                </console>
-            </syslog>
-         </system>
 """
