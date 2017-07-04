@@ -46,6 +46,7 @@ options:
     default: filesystem
     description:
       - Whether the application should be deployed through the HTTP management API or filesystem
+    version_added: 2.4
   state:
     required: false
     choices: [ deployed, undeployed, present, absent ]
@@ -56,20 +57,24 @@ options:
     required: false
     description:
       - Username for JBoss management user
+    version_added: 2.4
   url_password:
     required: false
     description:
       - Password for JBoss management user
+    version_added: 2.4
   hostname:
     required: false
     default: localhost
     description:
       - Hostname of JBoss instance running HTTP management API
+    version_added:2.4
   port:
     required: false
     default: 9990
     description:
       - Port binding for HTTP management API
+    version_added:2.4
 notes:
   - "The filesystem deployment strategy requires the deployment scanner to be enabled."
   - "The http deployment strategy requires the requests package to be installed on each host."
@@ -131,7 +136,10 @@ import os
 import shutil
 import time
 import json
+<<<<<<< HEAD
 import requests
+=======
+>>>>>>> Added version_added for new options, moved imports back
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
