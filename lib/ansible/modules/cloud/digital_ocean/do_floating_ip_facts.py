@@ -43,7 +43,7 @@ requirements:
 
 
 EXAMPLES = '''
-- name: "Create a Floating IP in regigin lon1"
+- name: "Create a Floating IP in region lon1"
   do_floating_ip_facts:
     register: result
 '''
