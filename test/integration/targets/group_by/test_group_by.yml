@@ -185,3 +185,21 @@
   tasks:
     - name: check group_vars variable overrides for camelus
       assert: { that: ["uno == 1", "dos == 'two'", "tres == 3"] }
+
+- name: Nested group validation
+  hosts: lama
+  gather_facts: false
+  tasks:
+    - name: group by genus with parent
+      group_by: key=vicugna-{{ genus }} parents=vicugna
+    - name: check group_vars variable overrides for vicugna-lama
+      assert: { that: ["uno == 1", "dos == 2", "tres == 'three'"] }
+
+    - name: group by genus with nonexistent parent
+      group_by:
+        key: "{{ genus }}"
+        parents:
+          - oxydactylus
+          - stenomylus
+    - name: check parent groups
+      assert: { that: ["'oxydactylus' in group_names", "'stenomylus' in group_names"] }
