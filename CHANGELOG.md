@@ -31,6 +31,7 @@ Ansible Changes By Release
 * fix for win_updates where args and check mode were ignored due to common code change
 * fix for unprivileged users to Windows runas become method
 
+* fix starttls code path for mail module
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
