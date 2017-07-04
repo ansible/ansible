@@ -440,6 +440,32 @@
     that:
       - "check72_result.changed == false"
 
+# test expandstring
+
+- name: set an unexpanded reference to an environment variable
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: envrionment_variable
+    data: "%PATH%"
+    datatype: expandstring
+  register: check81_result
+
+- assert:
+    that:
+      - "check81_result.changed == true"
+
+- name: check that setting the same unexpanded environment variable is not changed
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: envrionment_variable
+    data: "%PATH%"
+    datatype: expandstring
+  register: check82_result
+
+- assert:
+    that:
+      - "check82_result.changed == false"
+
 # tear down
 
 - name: remove registry key used for testing
