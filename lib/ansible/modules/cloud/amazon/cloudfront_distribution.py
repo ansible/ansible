@@ -471,6 +471,12 @@ options:
           Valid for both distributions and streaming distributions.
       choices: ['yes', 'no']
       default: 'no'
+    wait_until_processed:
+      description:
+        - Specifies whether the module waits until the distribution has
+          completed processing the creation or update.
+      choices: ['yes', 'no']
+      default: 'yes'
 
 '''
 
@@ -633,6 +639,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 import datetime
+import time
 from functools import partial
 import json
 import traceback
@@ -1749,6 +1756,39 @@ class CloudFrontValidationManager(object):
                 "reference, alias and aliases - " + str(e) + "\n" +
                 traceback.format_exc())
 
+    def validate_distribution_exists(self, distribution_id,
+                                     streaming_distribution_id,
+                                     streaming_distribution):
+        if not streaming_distribution:
+            distributions = self.__cloudfront_facts_mgr.list_distributions(False)
+        else:
+            distributions = self.__cloudfront_facts_mgr.list_streaming_distributions(False)
+        distribution_ids = [dist.get('Id') for dist in distributions]
+        if not streaming_distribution:
+            return distribution_id in distribution_ids
+        else:
+            return streaming_distribution_id in distribution_ids
+
+    def wait_until_processed(self, streaming_distribution, distribution_id,
+                             streaming_distribution_id, caller_reference):
+        try:
+            generic_id = (streaming_distribution_id if streaming_distribution
+                          else distribution_id)
+
+            if generic_id is None:
+                generic_id = self.validate_distribution_id_from_caller_reference(
+                    caller_reference=caller_reference,
+                    streaming=streaming_distribution)
+
+            while True:
+                distribution = self.__cloudfront_facts_mgr.get_distribution(
+                        generic_id)
+                if distribution.get('Distribution').get('Status') == "Deployed":
+                    return
+                time.sleep(15)
+        except Exception as e:
+            return
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -1796,7 +1836,8 @@ def main():
                                            type='str'),
         default_streaming_s3_origin_access_identity=dict(required=False,
                                                          default=None,
-                                                         type='str')
+                                                         type='str'),
+        wait_until_processed=dict(required=False, default=True, type='bool')
     ))
 
     result = {}
@@ -1882,6 +1923,7 @@ def main():
         'default_s3_origin_domain_name')
     default_streaming_s3_origin_access_identity = module.params.get(
         'default_streaming_s3_origin_access_identity')
+    wait_until_processed = module.params.get('wait_until_processed')
 
     (distribution_id, streaming_distribution_id) = (
         validation_mgr.validate_id_from_alias_aliases_caller_reference(
@@ -1928,12 +1970,18 @@ def main():
     if create and config is None:
         config = {}
 
-    if update_delete_distribution:
+    distribution_exists = validation_mgr.validate_distribution_exists(
+        distribution_id, streaming_distribution_id, streaming_distribution)
+
+    if update and not distribution_exists:
+        module.fail_json(msg="no matching distribution exists")
+
+    if update_delete_distribution and distribution_exists:
         (distribution_id,
             config, e_tag) = validation_mgr.validate_distribution_id_etag(
             alias, distribution_id, config, e_tag)
 
-    if update_delete_streaming_distribution:
+    if update_delete_streaming_distribution and distribution_exists:
         (streaming_distribution_id,
             config,
             e_tag) = validation_mgr.validate_streaming_distribution_id_etag(
@@ -1942,7 +1990,7 @@ def main():
     if create or update:
         valid_tags = validation_mgr.validate_tags(tags)
 
-    if create or update or delete:
+    if create or update or delete and config is not None:
         config = helpers.pascal_dict_to_snake_dict(config, True)
 
     if create or update:
@@ -1982,7 +2030,8 @@ def main():
             viewer_certificate)
         config = helpers.merge_validation_into_config(
             config, valid_viewer_certificate, 'viewer_certificate')
-    elif create_update_streaming_distribution:
+
+    if create_update_streaming_distribution:
         config = validation_mgr.validate_streaming_distribution_config_parameters(
             config, comment, trusted_signers, s3_origin,
             default_s3_origin_domain_name,
@@ -2002,23 +2051,35 @@ def main():
         result = service_mgr.generate_presigned_url(
             distribution_id, pem_key_path, pem_key_password,
             cloudfront_url_to_sign, validated_pem_expire_date)
-    elif create_distribution:
+
+    if create_distribution:
         result = service_mgr.create_distribution(config, valid_tags)
-    elif delete_distribution:
-        result = service_mgr.delete_distribution(distribution_id, e_tag)
-    elif update_distribution:
+
+    if delete_distribution:
+        if distribution_exists:
+            result = service_mgr.delete_distribution(distribution_id, e_tag)
+        else:
+            changed = False
+
+    if update_distribution:
         identical = validation_mgr.validate_distribution_requires_update(
             config, distribution_id)
         changed = not identical
         if not identical:
             result = service_mgr.update_distribution(
                 config, distribution_id, e_tag)
-    elif create_streaming_distribution:
+
+    if create_streaming_distribution:
         result = service_mgr.create_streaming_distribution(config, valid_tags)
-    elif delete_streaming_distribution:
-        result = service_mgr.delete_streaming_distribution(
-            streaming_distribution_id, e_tag)
-    elif update_streaming_distribution:
+
+    if delete_streaming_distribution:
+        if distribution_exists:
+            result = service_mgr.delete_streaming_distribution(
+                streaming_distribution_id, e_tag)
+        else:
+            changed = False
+
+    if update_streaming_distribution:
         identical = validation_mgr.validate_distribution_requires_update(
             config, streaming_distribution_id, True)
         changed = not identical
@@ -2031,6 +2092,12 @@ def main():
         changed |= service_mgr.update_tags(
             valid_tags, purge_tags, arn, alias, distribution_id,
             streaming_distribution_id)
+
+    if state is not None and wait_until_processed and (create or update):
+        validation_mgr.wait_until_processed(streaming_distribution,
+                                            distribution_id,
+                                            streaming_distribution_id,
+                                            config.get('CallerReference'))
 
     module.exit_json(changed=changed, **helpers.pascal_dict_to_snake_dict(result))
 
