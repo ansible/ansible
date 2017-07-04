@@ -349,7 +349,7 @@ def main():
     interval = module.params['interval']
     match = module.params['match']
 
-    while retries >= 0:
+    while retries > 0:
         responses = rpc(module, items)
 
         transformed = list()
