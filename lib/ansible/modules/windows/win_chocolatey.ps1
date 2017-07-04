@@ -156,7 +156,7 @@ Function Choco-Upgrade
         throw "$package is not installed, you cannot upgrade"
     }
 
-    $cmd = "$executable upgrade -dv -y $package -timeout $timeout"
+    $cmd = "$executable upgrade -dv -y $package -timeout $timeout --failonunfound"
 
     if ($check_mode)
     {
@@ -268,7 +268,7 @@ Function Choco-Install
         }
     }
 
-    $cmd = "$executable install -dv -y $package -timeout $timeout"
+    $cmd = "$executable install -dv -y $package -timeout $timeout --failonunfound"
 
     if ($check_mode)
     {
