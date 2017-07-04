@@ -33,6 +33,12 @@ options:
     description:
     - The variables whose values will be used as groups
     required: true
+  parents:
+    description:
+    - The list of the parent groups
+    required: false
+    default: "all"
+    version_added: "2.4"
 author: "Jeroen Hoekx (@jhoekx)"
 notes:
   - Spaces in group names are converted to dashes '-'.
@@ -47,4 +53,11 @@ EXAMPLES = '''
 # Create groups like 'kvm-host'
 - group_by:
     key: virt_{{ ansible_virtualization_type }}_{{ ansible_virtualization_role }}
+
+# Create nested groups
+- group_by:
+    key: el{{ ansible_distribution_major_version }}-{{ ansible_architecture }}
+    parents:
+      - el{{ ansible_distribution_major_version }}
+
 '''
