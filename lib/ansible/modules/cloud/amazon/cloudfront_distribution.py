@@ -1782,7 +1782,7 @@ class CloudFrontValidationManager(object):
 
             while True:
                 distribution = self.__cloudfront_facts_mgr.get_distribution(
-                        generic_id)
+                    generic_id)
                 if distribution.get('Distribution').get('Status') == "Deployed":
                     return
                 time.sleep(15)
