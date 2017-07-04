@@ -440,6 +440,28 @@
     that:
       - "check72_result.changed == false"
 
+# https://github.com/ansible/ansible/issues/26049
+# module reports change on dword with hex value even with same value
+- name: create hex value with prepending 0x
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: full_hex_dword
+    data: 0xffffffff
+    datatype: dword
+  register: dword_create
+
+- name: change hex value and report no changes
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: full_hex_dword
+    data: 0xffffffff
+    datatype: dword
+  register: dword_create_again
+
+- assert:
+    that:
+    - not dword_create_again|changed
+
 # tear down
 
 - name: remove registry key used for testing
