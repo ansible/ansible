@@ -30,10 +30,10 @@ version_added: "1.9"
 short_description: Enable, disable, and set weights for HAProxy backend servers using socket commands.
 author: "Ravi Bhure (@ravibhure)"
 description:
-    - Enable, disable, and set weights for HAProxy backend servers using socket
+    - Enable, disable, drain and set weights for HAProxy backend servers using socket
       commands.
 notes:
-    - Enable and disable commands are restricted and can only be issued on
+    - Enable, disable and drain commands are restricted and can only be issued on
       sockets configured for level 'admin'. For example, you can add the line
       'stats socket /var/run/haproxy.sock level admin' to the general section of
       haproxy.cfg. See U(http://haproxy.1wt.eu/download/1.5/doc/configuration.txt).
@@ -65,9 +65,11 @@ options:
   state:
     description:
       - Desired state of the provided backend host.
+        Note that "drain" state is supported only by HAProxy version 1.5 or later,
+        if used on versions < 1.5, it will be ignored.
     required: true
     default: null
-    choices: [ "enabled", "disabled" ]
+    choices: [ "enabled", "disabled", "drain" ]
   fail_on_not_found:
     description:
       - Fail whenever trying to enable/disable a backend host that does not exist
@@ -76,8 +78,8 @@ options:
     version_added: "2.2"
   wait:
     description:
-      - Wait until the server reports a status of 'UP' when `state=enabled`, or
-        status of 'MAINT' when `state=disabled`.
+      - Wait until the server reports a status of 'UP' when `state=enabled`,
+        status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=drain`
     required: false
     default: false
     version_added: "2.0"
@@ -173,6 +175,13 @@ EXAMPLES = '''
     socket: /var/run/haproxy.sock
     weight: 10
     backend: www
+
+# set the server in 'www' backend pool to drain mode
+- haproxy:
+    state: drain
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    backend: www
 '''
 
 import socket
@@ -183,7 +192,7 @@ from string import Template
 
 DEFAULT_SOCKET_LOCATION = "/var/run/haproxy.sock"
 RECV_SIZE = 1024
-ACTION_CHOICES = ['enabled', 'disabled']
+ACTION_CHOICES = ['enabled', 'disabled', 'drain']
 WAIT_RETRIES = 25
 WAIT_INTERVAL = 5
 
@@ -258,6 +267,22 @@ class HAProxy(object):
         data = self.execute('show stat', 200, False).lstrip('# ')
         r = csv.DictReader(data.splitlines())
         return tuple(map(lambda d: d['pxname'], filter(lambda d: d['svname'] == 'BACKEND', r)))
+
+    def discover_version(self):
+        """
+        Attempt to extract the haproxy version.
+        Return a tuple containing major and minor version.
+        """
+        data = self.execute('show info', 200, False)
+        lines = data.splitlines()
+        line = [x for x in lines if 'Version:' in x]
+        try:
+            version_values = line[0].partition(':')[2].strip().split('.', 3)
+            version = (int(version_values[0]), int(version_values[1]))
+        except (ValueError, TypeError, IndexError):
+            version = None
+
+        return version
 
     def execute_for_backends(self, cmd, pxname, svname, wait_for_status=None):
         """
@@ -336,6 +361,19 @@ class HAProxy(object):
             cmd += "; shutdown sessions server $pxname/$svname"
         self.execute_for_backends(cmd, backend, host, 'MAINT')
 
+    def drain(self, host, backend):
+        """
+        Drain action, sets the server to DRAIN mode.
+        In this mode mode, the server will not accept any new connections
+        other than those that are accepted via persistence.
+        """
+        haproxy_version = self.discover_version()
+
+        # check if haproxy version suppots DRAIN state (starting with 1.5)
+        if haproxy_version and (1, 5) <= haproxy_version:
+            cmd = "set server $pxname/$svname state drain"
+            self.execute_for_backends(cmd, backend, host, 'DRAIN')
+
     def act(self):
         """
         Figure out what you want to do from ansible, and then do it.
@@ -349,6 +387,8 @@ class HAProxy(object):
             self.enabled(self.host, self.backend, self.weight)
         elif self.state == 'disabled':
             self.disabled(self.host, self.backend, self.shutdown_sessions)
+        elif self.state == 'drain':
+            self.drain(self.host, self.backend)
         else:
             self.module.fail_json(msg="unknown state specified: '%s'" % self.state)
 
