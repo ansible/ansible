@@ -8,7 +8,7 @@ This section discusses the changes between Ansible 1.x and 2.0.
 
 It is intended to assist in updating your playbooks, plugins, etc so they will work with this version of Ansible.
 
-This document is part of a collection on porting, the rest can be found at :ref:`porting_guides:` <Porting Guides>`
+This document is part of a collection on porting, the rest can be found at :ref:`porting_guides <Porting Guides>`
 
 .. contents:: Topics
 

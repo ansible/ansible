@@ -11,7 +11,7 @@ It is intended to assist in updating your playbooks, plugins, etc so they will w
 
 We suggest you read this page along with https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#23-ramble-on---2017-04-12 before upgrading Ansible to understand what, if any updates you will need to make.
 
-This document is part of a collection on porting, the rest can be found at :ref:`porting_guides:` <Porting Guides>`.
+This document is part of a collection on porting, the rest can be found at :ref:`porting_guides <Porting Guides>`.
 
 .. contents:: Topics
 
