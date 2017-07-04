@@ -43,6 +43,7 @@ Ansible Changes By Release
   * fix missing type bool in module cs_zone
   * fix KeyError: 'sshkeypair' in cs_instance module for CloudStack v4.5 and before
 * fix for win_chocolatey where trying to upgrade all the packages as per the example docs fails
+* fix for win_chocolatey where it did not fail if the version set did not exist
 * fix for win_regedit always changing a reg key if the dword values set is a hex
 
 ## 2.3.1 "Ramble On" - 2017-06-01
