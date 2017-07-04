@@ -29,7 +29,7 @@ from oauth2client.client import GoogleCredentials
 
 
 ENV_PREFIX = 'GCE_'
-DEFAULT_API_VERSION='v1'
+DEFAULT_API_VERSION = 'v1'
 
 DOCOPT_USAGE = """
 Google Cloud Engine Dynamic Inventory
