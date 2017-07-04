@@ -27,8 +27,9 @@ Ansible Changes By Release
 * fixed wait_for python2.4/2.5 compatibility (this is last version this is needed)
 * fix for adhoc not obeying callback options
 * fix for win_find where it fails to recursively scan empty nested directories
-+ fix non-pipelined code paths for Windows (eg, ANSIBLE_KEEP_REMOTE_FILES, non-pipelined connection plugins)
+* fix non-pipelined code paths for Windows (eg, ANSIBLE_KEEP_REMOTE_FILES, non-pipelined connection plugins)
 * fix for win_updates where args and check mode were ignored due to common code change
+* fix for unprivileged users to Windows runas become method
 
 
 ## 2.3.1 "Ramble On" - 2017-06-01
