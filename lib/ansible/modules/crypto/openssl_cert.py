@@ -340,7 +340,7 @@ else:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class CertificateError(Exception):
@@ -390,8 +390,11 @@ class Certificate(object):
             self.module.fail_json(msg='The certificate at %s does not exist' % self.dest)
 
         # pyOpenSSL checks:
-        with open(self.dest, "r") as certfile:
-            cert = crypto.load_certificate(crypto.FILETYPE_PEM, certfile.read())
+        try:
+            with open(self.dest, "r") as certfile:
+                cert = crypto.load_certificate(crypto.FILETYPE_PEM, certfile.read())
+        except EnvironmentError:
+            self.module.fail_json(msg='Could not read file at %s' % self.dest)
 
         if self.signature_algorithms is not None:
             if cert.get_signature_algorithm() not in self.signature_algorithms:
@@ -427,8 +430,11 @@ class Certificate(object):
                     msg='Invalid certificate version number (got %s, expected %s)' % (cert_version, self.version))
 
         if self.privatekey_path is not None:
-            with open(self.privatekey_path, "r") as private_key_file:
-                privkey = crypto.load_privatekey(crypto.FILETYPE_PEM, private_key_file.read())
+            try:
+                with open(self.privatekey_path, "r") as private_key_file:
+                    privkey = crypto.load_privatekey(crypto.FILETYPE_PEM, private_key_file.read())
+            except EnvironmentError:
+                self.module.fail_json(msg='Could not read file at %s' % self.privatekey_path)
             try:
                 pubkey = privkey.to_cryptography_key().public_key()
                 cert_pubkey = cert.get_pubkey().to_cryptography_key()
@@ -793,14 +799,18 @@ class SelfSignedCertificate(Certificate):
 
     def load_privatekey(self):
         '''Load the privatekey object from buffer.'''
-
-        privatekey_content = open(self.privatekey_path).read()
+        try:
+            privatekey_content = open(self.privatekey_path).read()
+        except EnvironmentError:
+            self.module.fail_json(msg='Could not read file at %s' % self.privatekey_path)
         return crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
 
     def load_csr(self):
         '''Load the certificate signing request object from buffer.'''
-
-        csr_content = open(self.csr_path).read()
+        try:
+            csr_content = open(self.csr_path).read()
+        except EnvironmentError:
+                self.module.fail_json(msg='Could not read file at %s' % self.csr_path)
         return crypto.load_certificate_request(crypto.FILETYPE_PEM, csr_content)
 
     def generate(self):
@@ -819,8 +829,7 @@ class SelfSignedCertificate(Certificate):
         try:
             # NOTE: This is only available starting from pyOpenSSL >= 0.15
             cert.add_extensions(self.request.get_extensions())
-        except:
-            e = get_exception()
+        except NameError as e:
             raise CertificateError(e)
         cert.sign(self.privatekey, self.selfsigned_digest)
         self.certificate = cert
@@ -829,9 +838,11 @@ class SelfSignedCertificate(Certificate):
         if self.changed and not self.module.check_mode:
             if self.backup and os.path.exists(self.dest):
                 backupdest = module.backup_local(self.dest)
-            cert_file = open(self.dest, 'w')
-            cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.certificate))
-            cert_file.close()
+            try:
+                with open(self.dest, 'w') as cert_file:
+                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.certificate))
+            except EnvironmentError:
+                self.module.fail_json(msg='Could not write to file at %s' % self.dest)
 
     def dump(self):
 
@@ -891,8 +902,7 @@ class LetsEncryptCertificate(Certificate):
             # with the acme protocol through python-acme
             try:
                 os.system('acme-tiny --account-key %s --csr %s --acme-dir %s > %s' % (self.accountkey, self.csr_path, self.challenge_path, self.dest))
-            except:
-                e = get_exception()
+            except OSError as e:
                 raise CertificateError(e)
 
     def dump(self):
@@ -980,8 +990,8 @@ def main():
         try:
             if not module.check_mode:
                 cert.generate()
-        except CertificateError:
-            module.fail_json(msg='An error occured while generating the certificate')
+        except CertificateError as exc:
+            module.fail_json(msg='An error occured while generating the certificate. More details: %s' % to_native(exc))
         cert.check()
     else:
         if not module.check_mode:
