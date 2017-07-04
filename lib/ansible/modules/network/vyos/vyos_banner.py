@@ -100,11 +100,9 @@ def spec_to_commands(updates, module):
             commands.append('delete system login banner %s' % module.params['banner'])
 
     elif state == 'present':
-        if want['text'] and (want['text'] != have.get('text')):
+        if want['text'] and want['text'].encode().decode('unicode_escape') != have.get('text'):
             banner_cmd = 'set system login banner %s ' % module.params['banner']
-            banner_cmd += "'"
             banner_cmd += want['text'].strip()
-            banner_cmd += "'"
             commands.append(banner_cmd)
 
     return commands
@@ -119,9 +117,8 @@ def config_to_dict(module):
         if line.startswith('set system login banner %s' % obj['banner']):
             match = re.findall(r'%s (.*)' % obj['banner'], line, re.M)
             output = match
-
     if output:
-        obj['text'] = output[0][1:-1]
+        obj['text'] = output[0].encode().decode('unicode_escape')
         obj['state'] = 'present'
 
     return obj
@@ -130,7 +127,7 @@ def config_to_dict(module):
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
-        text = str(text).strip()
+        text = "%r" % (str(text).strip())
 
     return {
         'banner': module.params['banner'],
