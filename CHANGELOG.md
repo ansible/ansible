@@ -42,6 +42,7 @@ Ansible Changes By Release
   * fix network param ignored due typo in cs_nic module
   * fix missing type bool in module cs_zone
   * fix KeyError: 'sshkeypair' in cs_instance module for CloudStack v4.5 and before
+* fix for win_chocolatey where trying to upgrade all the packages as per the example docs fails
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
