@@ -42,7 +42,7 @@ options:
       - The location in the filesystem where the deployment scanner listens
   deployment_strategy:
     required: false
-    choices: [ http, filesystem ]
+    choices: [ http, filesystem, jboss-cli ]
     default: filesystem
     description:
       - Whether the application should be deployed through the HTTP management API or filesystem
@@ -137,31 +137,38 @@ from ansible.module_utils.urls import fetch_url
 
 def is_deployed(module):
 
-    data_dict = {
-        "operation": "read-resource",
-        "address": {
-            "deployment": module.params['deployment']
-        },
-        "include-runtime": True
-    }
+    if module.params['deployment_strategy'] == 'http':
+        data_dict = {
+            "operation": "read-resource",
+            "address": {
+                "deployment": module.params['deployment']
+            },
+            "include-runtime": True
+        }
 
-    headers = {
-        'Content-Type': 'application/json'
-    }
+        headers = {
+            'Content-Type': 'application/json'
+        }
 
-    data = json.dumps(data_dict)
+        data = json.dumps(data_dict)
 
-    resp, info = fetch_url(module, 'http://%s:9990/management' % module.params['hostname'], data=data, headers=headers)
+        resp, info = fetch_url(module, 'http://%s:9990/management' % module.params['hostname'], data=data, headers=headers)
 
-    try:
-        assert info['status'] == 200
-    except AssertionError:
+        return info['status'] == 200
+
+    elif module.params['deployment_strategy'] == 'filesystem':
         return os.path.exists(os.path.join(module.params['deploy_path'], "%s.deployed" % module.params['deployment']))
+    else:
+        rc, stdout, stderr = module.run_command([module.params['cli_path'], '--connect', '--commands=deploy-info'])
 
-    resp_data = resp.read()
-    resp_json = json.loads(resp_data)
+        if rc != 0:
+            return False
 
-    return resp_json['result']['status'] == "OK"
+        lines = stdout.split()
+        for line in lines:
+            if module.params['deployment'] in line:
+                return True
+        return False
 
 
 def is_undeployed(deploy_path, deployment):
@@ -330,6 +337,22 @@ def http_undeploy(module, deployed):
     return True
 
 
+def cli_deploy(module, deployed):
+    rc, stdout, stderr = module.run_command([module.params['cli_path'], '--connect', '--commands=deploy %s --force' % module.params['src']])
+    if rc == 0:
+        return True
+    else:
+        module.fail_json(msg=stderr)
+
+
+def cli_undeploy(module, deployed):
+    rc, stdout, stderr = module.run_command([module.params['cli_path'], '--connect', '--commands=undeploy %s' % module.params['deployment']])
+    if rc == 0:
+        return True
+    else:
+        module.fail_json(msg=stderr)
+
+
 DEPLOY_CALLABLES = {
     'http': {
         'deployed': http_deploy,
@@ -342,6 +365,12 @@ DEPLOY_CALLABLES = {
         'present': fs_deploy,
         'undeployed': fs_undeploy,
         'absent': fs_undeploy
+    },
+    'jboss-cli': {
+        'deployed': cli_deploy,
+        'present': cli_deploy,
+        'undeployed': cli_undeploy,
+        'absent': cli_undeploy
     }
 }
 
@@ -352,16 +381,18 @@ def main():
             src=dict(type='path'),
             deployment=dict(required=True),
             deploy_path=dict(type='path', default='/var/lib/jbossas/standalone/deployments'),
-            deployment_strategy=dict(choices=['http', 'filesystem'], default='filesystem'),
+            deployment_strategy=dict(choices=['http', 'filesystem', 'jboss-cli'], default='filesystem'),
             state=dict(choices=['deployed', 'undeployed', 'present', 'absent'], default='deployed'),
             url_username=dict(required=True),
             url_password=dict(required=True),
             hostname=dict(default='localhost'),
-            port=dict(default=9990)
+            port=dict(default=9990),
+            cli_path=dict(type='path')
         ),
         required_if=[
             ('state', ('deployed', 'present'), ('src',), True),
-            ('deployment_strategy', ('http'), ('hostname', 'port'))
+            ('deployment_strategy', ('http',), ('hostname', 'port')),
+            ('deployment_strategy', ('jboss-cli',), ('cli_path'))
         ]
     )
 
