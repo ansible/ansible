@@ -7,6 +7,9 @@
     limit_to: "*"
     debug: false
 
+# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
+
 
   tasks:
     - set_fact:
@@ -18,7 +21,6 @@
       rescue:
         - set_fact: test_failed=true
 
-
     - block:
       - include_role:
           name: vyos_config
@@ -26,15 +28,12 @@
       rescue:
         - set_fact: test_failed=true
 
-
     - block:
       - include_role:
           name: vyos_user
         when: "limit_to in ['*', 'vyos_user']"
       rescue:
         - set_fact: test_failed=true
-
-
 
     - block:
       - include_role:
