@@ -7,7 +7,36 @@
     limit_to: "*"
     debug: false
 
-  roles:
-    - { role: asa_command, when: "limit_to in ['*', 'asa_command']" }
-    - { role: asa_config, when: "limit_to in ['*', 'asa_config']" }
-    - { role: asa_acl, when: "limit_to in ['*', 'asa_acl']" }
+# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
+
+
+  tasks:
+    - set_fact:
+        test_failed: false
+    - block:
+      - include_role:
+          name: asa_command
+        when: "limit_to in ['*', 'asa_command']"
+      rescue:
+        - set_fact: test_failed=true
+
+    - block:
+      - include_role:
+          name: asa_config
+        when: "limit_to in ['*', 'asa_config']"
+      rescue:
+        - set_fact: test_failed=true
+
+    - block:
+      - include_role:
+          name: asa_acl
+        when: "limit_to in ['*', 'asa_acl']"
+      rescue:
+        - set_fact: test_failed=true
+
+###########
+    - name: Has any previous test failed?
+      fail:
+        msg: "One or more tests failed, check log for details"
+      when: test_failed
