@@ -72,6 +72,7 @@ options:
       - Port binding for HTTP management API
 notes:
   - "The filesystem deployment strategy requires the deployment scanner to be enabled."
+  - "The http deployment strategy requires the requests package to be installed on each host."
   - "Ensure no identically named application is deployed through the JBoss CLI"
   - "At a minimum, url_password should be vaulted."
   - "HTTP management API is supported in JBoss AS 7.1, Wildfly >= 8, and JBoss EAP >= 6."
