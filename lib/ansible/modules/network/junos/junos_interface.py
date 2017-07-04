@@ -129,17 +129,15 @@ EXAMPLES = """
 """
 
 RETURN = """
-rpc:
-  description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+diff:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed.
   type: string
   sample: >
-            <interfaces>
-                <interface>
-                    <name>ge-0/0/0</name>
-                    <description>test interface</description>
-                </interface>
-            </interfaces>
+        [edit interfaces]
+        +   ge-0/0/1 {
+        +       description test-interface;
+        +   }
 """
 import collections
 
@@ -240,8 +238,7 @@ def main():
     if diff:
         result.update({
             'changed': True,
-            'diff': {'prepared': diff},
-            'rpc': tostring(ele)
+            'diff': diff,
         })
 
     module.exit_json(**result)

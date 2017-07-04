@@ -107,22 +107,9 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
-  returned: always
+  returned: always, except for the platforms that use Netconf transport to manage the device.
   type: list
   sample:
     - interface 20
     - name test-interface
-
-rpc:
-  description: load-configuration RPC send to the device
-  returned: C(rpc) is returned only for junos device
-            when configuration is changed on device
-  type: string
-  sample: >
-            <interfaces>
-                <interface>
-                    <name>ge-0/0/0</name>
-                    <description>test interface</description>
-                </interface>
-            </interfaces>
 """

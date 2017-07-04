@@ -111,18 +111,17 @@ EXAMPLES = """
 """
 
 RETURN = """
-rpc:
-  description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+diff:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed.
   type: string
   sample: >
-         <system>
-            <syslog>
-                <console replace=\"replace\" active=\"active\">
-                    <name>pfe</name><error/>
-                </console>
-            </syslog>
-         </system>
+          [edit system syslog]
+          +    [edit system syslog]
+               file interactive-commands { ... }
+          +    file test {
+          +        pfe critical;
+          +    }
 """
 import collections
 
@@ -186,11 +185,8 @@ def main():
                    ('dest', 'user', ['name', 'facility', 'level']),
                    ('dest', 'console', ['facility', 'level'])]
 
-    mutually_exclusive = [('console', 'name')]
-
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
-                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -240,8 +236,7 @@ def main():
     if diff:
         result.update({
             'changed': True,
-            'diff': {'prepared': diff},
-            'rpc': tostring(ele)
+            'diff': diff,
         })
 
     module.exit_json(**result)
