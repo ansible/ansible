@@ -75,7 +75,7 @@ EXAMPLES = '''
 
 - name: "Delete a Floating IP with ip 1.2.3.4"
   do_floating_ip:
-    state: present
+    state: absent
     ip: "1.2.3.4"
 
 '''
