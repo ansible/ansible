@@ -1,7 +1,8 @@
 Ansible Changes By Release
 ==========================
+<a id="active-development"></a>
 
-## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
+## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT <a id="24"></a>
 
 Moving to Ansible 2.4 guide http://docs.ansible.com/ansible/porting_guide_2.4.html
 
@@ -285,9 +286,9 @@ Moving to Ansible 2.4 guide http://docs.ansible.com/ansible/porting_guide_2.4.ht
   * win_wakeonlan
 
 
-## 2.3 "Ramble On" - 2017-04-12
+## 2.3 "Ramble On" - 2017-04-12 <a id="23"></a>
 
-Moving to Ansible 2.4 guide http://docs.ansible.com/ansible/porting_guide_2.3.html
+Moving to Ansible 2.3 guide http://docs.ansible.com/ansible/porting_guide_2.3.html
 
 ### Major Changes
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
@@ -633,7 +634,7 @@ Moving to Ansible 2.4 guide http://docs.ansible.com/ansible/porting_guide_2.3.ht
 * Inserted some checks for jinja2-2.9, which can cause some issues with Ansible currently.
 
 
-## 2.2 "The Battle of Evermore" - 2016-11-01
+## 2.2 "The Battle of Evermore" - 2016-11-01 <a id="22"></a>
 
 ### Major Changes:
 
@@ -1304,7 +1305,7 @@ Module fixes:
   this might cause an error if settings environment on play depending on 'ansible_env'
   which was previouslly ignored
 
-## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
+## 2.0 "Over the Hills and Far Away" - Jan 12, 2016 <a id="20"></a>
 
 ### Major Changes:
 
