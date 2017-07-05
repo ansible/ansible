@@ -59,7 +59,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(changed=False, invocation=empty_invocation))
+        self.assertEquals(return_val, dict(invocation=empty_invocation))
 
     def test_exit_json_args_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -70,7 +70,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(msg="message", changed=False, invocation=empty_invocation))
+        self.assertEquals(return_val, dict(msg="message", invocation=empty_invocation))
 
     def test_fail_json_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -81,7 +81,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 1)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(msg="message", changed=False, failed=True, invocation=empty_invocation))
+        self.assertEquals(return_val, dict(msg="message", failed=True, invocation=empty_invocation))
 
     def test_exit_json_proper_changed(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -98,7 +98,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here'),
             dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
-                 not_secret='following the leader', changed=False, msg='here',
+                 not_secret='following the leader', msg='here',
                  invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
         ),
         (
@@ -106,7 +106,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here'),
             dict(one=1, pwd='$ecret k3y', url='https://username:********@foo.com/login/',
-                 not_secret='following the leader', changed=False, msg='here',
+                 not_secret='following the leader', msg='here',
                  invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
         ),
         (
@@ -114,7 +114,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             dict(one=1, pwd='$ecret k3y', url='https://username:$ecret k3y@foo.com/login/',
                  not_secret='following the leader', msg='here'),
             dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
-                 not_secret='following the leader', changed=False, msg='here',
+                 not_secret='following the leader', msg='here',
                  invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
         ),
     )

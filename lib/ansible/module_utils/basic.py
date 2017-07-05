@@ -2118,9 +2118,6 @@ class AnsibleModule(object):
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
 
-        if 'changed' not in kwargs:
-            kwargs['changed'] = False
-
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(0)
@@ -2130,9 +2127,6 @@ class AnsibleModule(object):
 
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
-
-        if 'changed' not in kwargs:
-            kwargs['changed'] = False
 
         # add traceback if debug or high verbosity and it is missing
         # Note: badly named as exception, it is really always been 'traceback'

@@ -432,52 +432,6 @@ def extract(item, container, morekeys=None):
     return value
 
 
-def failed(*a, **kw):
-    ''' Test if task result yields failed '''
-    item = a[0]
-    if not isinstance(item, MutableMapping):
-        raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc', 0)
-    failed = item.get('failed', False)
-    if rc != 0 or failed:
-        return True
-    else:
-        return False
-
-
-def success(*a, **kw):
-    ''' Test if task result yields success '''
-    return not failed(*a, **kw)
-
-
-def changed(*a, **kw):
-    ''' Test if task result yields changed '''
-    item = a[0]
-    if not isinstance(item, MutableMapping):
-        raise errors.AnsibleFilterError("|changed expects a dictionary")
-    if 'changed' not in item:
-        changed = False
-        if (
-            'results' in item and   # some modules return a 'results' key
-            isinstance(item['results'], MutableSequence) and
-            isinstance(item['results'][0], MutableMapping)
-        ):
-            for result in item['results']:
-                changed = changed or result.get('changed', False)
-    else:
-        changed = item.get('changed', False)
-    return changed
-
-
-def skipped(*a, **kw):
-    ''' Test if task result yields skipped '''
-    item = a[0]
-    if not isinstance(item, MutableMapping):
-        raise errors.AnsibleFilterError("|skipped expects a dictionary")
-    skipped = item.get('skipped', False)
-    return skipped
-
-
 @environmentfilter
 def do_groupby(environment, value, attribute):
     """Overridden groupby filter for jinja2, to address an issue with
@@ -592,20 +546,6 @@ class FilterModule(object):
 
             # array and dict lookups
             'extract': extract,
-
-            # failure testing
-            'failed': failed,
-            'failure': failed,
-            'success': success,
-            'succeeded': success,
-
-            # changed testing
-            'changed': changed,
-            'change': changed,
-
-            # skip testing
-            'skipped': skipped,
-            'skip': skipped,
 
             # debug
             'type_debug': lambda o: o.__class__.__name__,
