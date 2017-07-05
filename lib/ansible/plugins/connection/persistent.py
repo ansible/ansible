@@ -23,7 +23,7 @@ import pty
 import subprocess
 import sys
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six.moves import cPickle
 from ansible.plugins.connection import ConnectionBase
 
@@ -84,5 +84,11 @@ class Connection(ConnectionBase):
         self._connected = False
 
     def run(self):
+        """Returns the path of the persistent connection socket.
+
+        Attempts to ensure (within playcontext.timeout seconds) that the
+        socket path exists. If the path exists (or the timeout has expired),
+        returns the socket path.
+        """
         rc, out, err = self._do_it('RUN:')
-        return out
+        return to_text(out, errors='surrogate_or_strict')
