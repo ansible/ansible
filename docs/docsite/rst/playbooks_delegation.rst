@@ -171,7 +171,7 @@ In case you have to specify more arguments you can use the following syntax::
           module: mail
           subject: "Summary Mail"
           to: "{{ mail_recipient }}"
-          body" "{{ mail_body }}"
+          body: "{{ mail_body }}"
         run_once: True
           
 The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/paramiko plugins) reflects the host a task is delegated to.
