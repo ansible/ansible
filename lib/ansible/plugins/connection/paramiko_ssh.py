@@ -27,7 +27,6 @@ __metaclass__ = type
 import warnings
 import os
 import socket
-import logging
 import tempfile
 import traceback
 import fcntl
@@ -68,7 +67,6 @@ with warnings.catch_warnings():
     try:
         import paramiko
         HAVE_PARAMIKO = True
-        logging.getLogger("paramiko").setLevel(logging.WARNING)
     except ImportError:
         pass
 
