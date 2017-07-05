@@ -23,7 +23,7 @@ import pty
 import subprocess
 import sys
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six.moves import cPickle
 from ansible.plugins.connection import ConnectionBase
 
@@ -85,4 +85,4 @@ class Connection(ConnectionBase):
 
     def run(self):
         rc, out, err = self._do_it('RUN:')
-        return out
+        return to_text(out, errors='surrogate_or_strict')
