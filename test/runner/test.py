@@ -363,7 +363,11 @@ def parse_args():
                                                      help='generate console coverage report')
 
     coverage_report.set_defaults(func=lib.cover.command_coverage_report,
-                                 config=lib.cover.CoverageConfig)
+                                 config=lib.cover.CoverageReportConfig)
+
+    coverage_report.add_argument('--show-missing',
+                                 action='store_true',
+                                 help='show line numbers of statements not executed')
 
     add_extra_coverage_options(coverage_report)
 
