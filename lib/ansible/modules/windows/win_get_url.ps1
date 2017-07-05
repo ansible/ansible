@@ -24,7 +24,8 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-$skip_certificate_validation = Get-AnsibleParam -obj $params -name "skip_certificate_validation" -type "bool" -default $false
+$skip_certificate_validation = Get-AnsibleParam -obj $params -name "skip_certificate_validation" -type "bool"
+$validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $username = Get-AnsibleParam -obj $params -name "username" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 $proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
@@ -40,7 +41,13 @@ $result = @{
     }
 }
 
-if($skip_certificate_validation){
+# If skip_certificate_validation was specified, use validate_certs
+if ($skip_certificate_validation -ne $null) {
+    Add-DeprecationWarning -obj $result -msg "The parameter 'skip_vertificate_validation' is being replaced with 'validate_certs'" -version 2.8
+    $validate_certs = -not $skip_certificate_validation
+}
+
+if (-not $validate_certs) {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 }
 
