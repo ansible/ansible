@@ -40,7 +40,7 @@ import datetime
 import errno
 
 from ansible import constants as C
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.connection import send_data, recv_data
@@ -141,7 +141,7 @@ class Server():
                     signal.signal(signal.SIGALRM, self.command_timeout)
                     signal.alarm(self.play_context.timeout)
 
-                    op = data.split(':')[0]
+                    op = to_text(data.split(b':')[0])
                     display.display('socket operation is %s' % op, log_only=True)
 
                     method = getattr(self, 'do_%s' % op, None)
