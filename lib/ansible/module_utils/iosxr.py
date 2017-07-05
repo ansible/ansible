@@ -137,6 +137,9 @@ def load_config(module, commands, warnings, commit=False, replace=False, comment
     else:
         cmd = 'abort'
         diff = None
-    exec_command(module, cmd)
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        exec_command(module, 'abort')
+        module.fail_json(msg=err, commands=commands, rc=rc)
 
     return to_text(diff, errors='surrogate_or_strict')
