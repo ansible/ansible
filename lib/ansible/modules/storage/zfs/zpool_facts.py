@@ -140,6 +140,9 @@ class ZPoolFacts(object):
         self._pools = defaultdict(dict)
         self.facts = []
 
+        self.is_freebsd = os.uname()[0] == 'FreeBSD'
+        self.is_sunos = os.uname()[0] == 'SunOS'
+
     def pool_exists(self):
         cmd = [self.module.get_bin_path('zpool')]
 
@@ -157,11 +160,15 @@ class ZPoolFacts(object):
         cmd = [self.module.get_bin_path('zpool')]
 
         cmd.append('get')
-        cmd.append('-H')
+        if not self.is_sunos:
+            # solaris 11 does not support -H
+            cmd.append('-H')
         if self.parsable:
             cmd.append('-p')
-        cmd.append('-o')
-        cmd.append('name,property,value')
+        if self.is_freebsd:
+            # freebsd does not support -o
+            cmd.append('-o')
+            cmd.append('name,property,value')
         cmd.append(self.properties)
         if self.name:
             cmd.append(self.name)
@@ -170,7 +177,14 @@ class ZPoolFacts(object):
 
         if rc == 0:
             for line in out.splitlines():
-                pool, property, value = line.split('\t')
+		print "DEBUG line: {0}".format(line)
+                if self.is_sunos:
+                    line = "\t".join(line.split())
+                if self.is_freebsd:
+                    pool, property, value = line.split('\t')
+                else:
+                    pool, property, value, source = line.split('\t')
+                    if pool == "NAME": continue
 
                 self._pools[pool].update({property: value})
 
