@@ -262,6 +262,8 @@ def rpc(module, items):
 
         elif xattrs['format'] == 'set':
             data = reply.find('.//configuration-set')
+            if data is None:
+                module.fail_json(msg="Display format 'set' is not supported by remote device.")
             responses.append(data.text.strip())
 
         else:
