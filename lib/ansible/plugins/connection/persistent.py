@@ -84,5 +84,11 @@ class Connection(ConnectionBase):
         self._connected = False
 
     def run(self):
+        """Returns the path of the persistent connection socket.
+
+        Attempts to ensure (within playcontext.timeout seconds) that the
+        socket path exists. If the path exists (or the timeout has expired),
+        returns the socket path.
+        """
         rc, out, err = self._do_it('RUN:')
         return to_text(out, errors='surrogate_or_strict')
