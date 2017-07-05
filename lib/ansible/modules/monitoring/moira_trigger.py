@@ -35,7 +35,7 @@ description:
     - Edit existing triggers parameters.
     - Delete triggers.
 version_added:
-    - '2.3'
+    - 2.3
 author:
     - SKB Kontur
 requirements:
