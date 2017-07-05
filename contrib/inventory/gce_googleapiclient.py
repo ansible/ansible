@@ -158,6 +158,7 @@ def get_instances(projects_zones_queue_in, instances_queue_out, api_version=DEFA
 
 def get_hostvars(instance):
     hostvars = {
+        'gce_name': instance['name'],
         'gce_id': instance['id'],
         'gce_status': instance['status']
     }
@@ -267,9 +268,10 @@ def main(args):
 
         if all_zones:
             for _ in range(0, num_threads):
-                project_thread = threading.Thread(target=get_all_zones_in_project, args=(projects_queue,
-                                                                                         projects_zones_queue,
-                                                                                         api_version))
+                project_thread = threading.Thread(target=get_all_zones_in_project,
+                                                  args=(projects_queue,
+                                                        projects_zones_queue,
+                                                        api_version))
 
                 threads.append(project_thread)
                 project_thread.start()
@@ -285,9 +287,10 @@ def main(args):
     if not projects_zones_queue.empty():
         threads = []
         for _ in range(0, num_threads):
-            zone_thread = threading.Thread(target=get_instances, args=(projects_zones_queue,
-                                                                       instances_queue,
-                                                                       api_version))
+            zone_thread = threading.Thread(target=get_instances,
+                                           args=(projects_zones_queue,
+                                                 instances_queue,
+                                                 api_version))
             threads.append(zone_thread)
             zone_thread.start()
 
