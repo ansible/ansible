@@ -55,6 +55,10 @@ class ActionModule(ActionBase):
                 self._remove_tmp_path(tmp)
                 return dict(skipped=True, msg=("skipped, since %s does not exist" % removes))
 
+        chdir = self._task.args.get('chdir')
+        if chdir:
+            chdir = os.path.abspath(chdir)
+
         # the script name is the first item in the raw params, so we split it
         # out now so we know the file name we need to transfer to the remote,
         # and everything else is an argument to the script which we need later
@@ -86,7 +90,7 @@ class ActionModule(ActionBase):
         if self._connection.transport == "winrm":
             exec_data = self._connection._create_raw_wrapper_payload(script_cmd, env_dict)
 
-        result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True))
+        result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
 
         # clean up after
         self._remove_tmp_path(tmp)
