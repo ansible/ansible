@@ -210,6 +210,8 @@ class Neighbors(FactsBase):
                 if values:
                     parsed.append(values)
                 values = line
+        if values:
+            parsed.append(values)
         return parsed
 
     def parse_neighbors(self, data):
