@@ -243,7 +243,10 @@ class TCPConnectionInfo(object):
     def get_active_connections_count(self):
         active_connections = 0
         for p in psutil.process_iter():
-            connections = p.get_connections(kind='inet')
+            if hasattr(p, 'get_connections'):
+                connections = p.get_connections(kind='inet')
+            else:
+                connections = p.connections(kind='inet')
             for conn in connections:
                 if conn.status not in self.module.params['active_connection_states']:
                     continue
