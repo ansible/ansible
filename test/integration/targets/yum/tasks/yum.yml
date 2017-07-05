@@ -83,8 +83,8 @@
         - "not yum_result.changed"
 
 # Multiple packages
-- name: uninstall sos and sharutils
-  yum: name=sos,sharutils state=removed
+- name: uninstall sos and bc
+  yum: name=sos,bc state=removed
   register: yum_result
 
 - name: check sos with rpm
@@ -92,19 +92,19 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check bc with rpm
+  shell: rpm -q bc
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_bc_result
 
 - name: verify packages installed
   assert:
     that:
         - "rpm_sos_result.rc != 0"
-        - "rpm_sharutils_result.rc != 0"
+        - "rpm_bc_result.rc != 0"
 
-- name: install sos and sharutils as comma separated
-  yum: name=sos,sharutils state=present
+- name: install sos and bc as comma separated
+  yum: name=sos,bc state=present
   register: yum_result
 
 - name: check sos with rpm
@@ -112,10 +112,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check bc with rpm
+  shell: rpm -q bc
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_bc_result
 
 - name: verify packages installed
   assert:
@@ -123,17 +123,17 @@
         - "yum_result.rc == 0"
         - "yum_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_bc_result.rc == 0"
 
-- name: uninstall sos and sharutils
-  yum: name=sos,sharutils state=removed
+- name: uninstall sos and bc
+  yum: name=sos,bc state=removed
   register: yum_result
 
-- name: install sos and sharutils as list
+- name: install sos and bc as list
   yum:
     name:
       - sos
-      - sharutils
+      - bc
     state: present
   register: yum_result
 
@@ -142,10 +142,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check bc with rpm
+  shell: rpm -q bc
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_bc_result
 
 - name: verify packages installed
   assert:
@@ -153,15 +153,15 @@
         - "yum_result.rc == 0"
         - "yum_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_bc_result.rc == 0"
 
-- name: uninstall sos and sharutils
-  yum: name=sos,sharutils state=removed
+- name: uninstall sos and bc
+  yum: name=sos,bc state=removed
   register: yum_result
 
-- name: install sos and sharutils as comma separated with spaces
+- name: install sos and bc as comma separated with spaces
   yum:
-    name: "sos, sharutils"
+    name: "sos, bc"
     state: present
   register: yum_result
 
@@ -171,9 +171,9 @@
   register: rpm_sos_result
 
 - name: check sos with rpm
-  shell: rpm -q sharutils
+  shell: rpm -q bc
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_bc_result
 
 - name: verify packages installed
   assert:
@@ -181,10 +181,10 @@
         - "yum_result.rc == 0"
         - "yum_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_bc_result.rc == 0"
 
-- name: uninstall sos and sharutils
-  yum: name=sos,sharutils state=removed
+- name: uninstall sos and bc
+  yum: name=sos,bc state=removed
 
 - name: install non-existent rpm 
   yum: name="{{ item }}"
