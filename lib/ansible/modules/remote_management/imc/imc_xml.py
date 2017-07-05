@@ -364,8 +364,8 @@ def main():
 
         # Perform actual request
         resp, info = fetch_url(module, url, data=data, method='POST', timeout=timeout)
-        if resp is None or auth['status'] != 200:
-            module.fail_json(msg='Task failed with error %(status)s: %(msg)s' % auth, **result)
+        if resp is None or info['status'] != 200:
+            module.fail_json(msg='Task failed with error %(status)s: %(msg)s' % info, **result)
 
         # Merge results with previous results
         rawoutput = resp.read()
