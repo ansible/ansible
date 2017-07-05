@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
