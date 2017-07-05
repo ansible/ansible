@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = """
 ---
 module: net_l2_interface
@@ -38,7 +37,8 @@ options:
     description:
       - Name of the interface excluding any logical unit number.
   collection:
-    description: List of Layer-2 interface definitions.
+    description:
+      - List of Layer-2 interface definitions.
   mode:
     description:
       - Mode in which interface needs to be configured.
@@ -48,11 +48,14 @@ options:
     description:
       - Configure given VLAN in access port.
   trunk_vlans:
-    description: List of VLANs to be configured in trunk port.
-  native_vlan
-    description: Native VLAN to be configured in trunk port.
-  trunk_allowed_vlans
-    description: List of allowed VLAN's in a given trunk port.
+    description:
+      - List of VLANs to be configured in trunk port.
+  native_vlan:
+    description:
+      - Native VLAN to be configured in trunk port.
+  trunk_allowed_vlans:
+    description:
+      - List of allowed VLAN's in a given trunk port.
   state:
     description:
       - State of the Layer-2 Interface configuration.
@@ -63,13 +66,13 @@ options:
 EXAMPLES = """
 - name: configure Layer-2 interface
   net_l2_interface:
-    name:  gigabitethernet0/0/1
+    name: gigabitethernet0/0/1
     mode: access
     access_vlan: 30
 
 - name: remove Layer-2 interface configuration
   net_l2_interface:
-    name:  gigabitethernet0/0/1
+    name: gigabitethernet0/0/1
     state: absent
 """
 
