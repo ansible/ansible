@@ -204,11 +204,12 @@ def create_private(conn, matching_zones, vpc_id, vpc_region, zone_in, record):
             changed = False
             return changed, record
 
-    result = conn.create_hosted_zone(zone_in, **record)
-    hosted_zone = result['CreateHostedZoneResponse']['HostedZone']
-    zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
-    record['zone_id'] = zone_id
-    record['name'] = zone_in
+    if not module.check_mode:
+        result = conn.create_hosted_zone(zone_in, **record)
+        hosted_zone = result['CreateHostedZoneResponse']['HostedZone']
+        zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
+        record['zone_id'] = zone_id
+        record['name'] = zone_in
     changed = True
     return changed, record
 
@@ -219,8 +220,9 @@ def create_public(conn, matching_zones, zone_in, record):
             list(matching_zones)[0])['GetHostedZoneResponse']['HostedZone']
         changed = False
     else:
-        result = conn.create_hosted_zone(zone_in, **record)
-        zone_details = result['CreateHostedZoneResponse']['HostedZone']
+        if not module.check_mode:
+            result = conn.create_hosted_zone(zone_in, **record)
+            zone_details = result['CreateHostedZoneResponse']['HostedZone']
         changed = True
 
     record['zone_id'] = zone_details['Id'].replace('/hostedzone/', '')
@@ -235,7 +237,8 @@ def delete_private(conn, matching_zones, vpc_id, vpc_region):
         zone_details = conn.get_hosted_zone(z)['GetHostedZoneResponse']
         if isinstance(zone_details['VPCs'], dict):
             if zone_details['VPCs']['VPC']['VPCId'] == vpc_id and vpc_region == zone_details['VPCs']['VPC']['VPCRegion']:
-                conn.delete_hosted_zone(z)
+                if not module.check_mode:
+                    conn.delete_hosted_zone(z)
                 changed = True
                 msg = "Successfully deleted %s" % matching_zones[z]
                 break
@@ -243,7 +246,8 @@ def delete_private(conn, matching_zones, vpc_id, vpc_region):
                 changed = False
         else:
             if vpc_id in [v['VPCId'] for v in zone_details['VPCs']] and vpc_region in [v['VPCRegion'] for v in zone_details['VPCs']]:
-                conn.delete_hosted_zone(z)
+                if not module.check_mode:
+                    conn.delete_hosted_zone(z)
                 changed = True
                 msg = "Successfully deleted %s" % matching_zones[z]
                 break
@@ -261,7 +265,8 @@ def delete_public(conn, matching_zones):
         msg = "There are multiple zones that match. Use hosted_zone_id to specify the correct zone."
     else:
         for z in matching_zones:
-            conn.delete_hosted_zone(z)
+            if not module.check_mode:
+                conn.delete_hosted_zone(z)
             changed = True
             msg = "Successfully deleted %s" % matching_zones[z]
     return changed, msg
@@ -272,11 +277,13 @@ def delete_hosted_id(conn, hosted_zone_id, matching_zones):
         deleted = []
         for z in matching_zones:
             deleted.append(z)
-            conn.delete_hosted_zone(z)
+            if not module.check_mode:
+                conn.delete_hosted_zone(z)
         changed = True
         msg = "Successfully deleted zones: %s" % deleted
     elif hosted_zone_id in matching_zones:
-        conn.delete_hosted_zone(hosted_zone_id)
+        if not module.check_mode:
+            conn.delete_hosted_zone(hosted_zone_id)
         changed = True
         msg = "Successfully deleted zone: %s" % hosted_zone_id
     else:
@@ -321,7 +328,8 @@ def main():
         vpc_region=dict(default=None),
         comment=dict(default=''),
         hosted_zone_id=dict()))
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
