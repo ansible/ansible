@@ -177,7 +177,6 @@ class ZPoolFacts(object):
 
         if rc == 0:
             for line in out.splitlines():
-		print "DEBUG line: {0}".format(line)
                 if self.is_sunos:
                     line = "\t".join(line.split())
                 if self.is_freebsd:
