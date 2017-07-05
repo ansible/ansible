@@ -29,13 +29,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: moira_trigger
-short_description: Working with large number of triggers in Moira
+short_description: Working with large number of triggers in Moira.
 description:
-    - Create new triggers
-    - Edit existing triggers parameters
-    - Delete triggers
+    - Create new triggers.
+    - Edit existing triggers parameters.
+    - Delete triggers.
 version_added:
-    - 2.3.0.0
+    - '2.3'
 author:
     - SKB Kontur
 requirements:
@@ -45,24 +45,20 @@ options:
   api_url:
     description:
       - Url of Moira API.
-    type: 'str'
     required: True
   login:
     description:
       - Auth Login.
-    type: 'str'
     required: False
     default: None
   auth_user:
     description:
       - Auth User.
-    type: 'str'
     required: False
     default: None
   auth_pass:
     description:
       - Auth Password.
-    type: 'str'
     required: False
     default: None
   state:
@@ -70,66 +66,55 @@ options:
       - Desired state of a trigger.
       - Use state 'present' to create and edit existing triggers.
       - Use state 'absent' to delete triggers.
-    type: 'str'
     required: True
     choices: ['present', 'absent']
   name:
     description:
       - Trigger name.
-    type: 'str'
     required: True
   desc:
     description:
       - Trigger description.
-    type: 'str'
     required: False
     default: ''
   ttl:
     description:
       - Time To Live.
-    type: 'str'
     required: False
     default: '600'
   ttl_state:
     description:
       - Trigger state at the expiration of TTL.
-    type: 'str'
     required: False
     default: 'NODATA'
     choices: ['NODATA', 'ERROR', 'WARN', 'OK']
   expression:
     description:
       - Python expression.
-    type: 'str'
     required: False
     default: ''
   disabled_days:
     description:
       - Days for trigger to be in silent mode.
-    type: 'dict'
     required: False
     default: {}
   targets:
     description:
       - List of trigger targets.
-    type: 'list'
     required: True
   tags:
     description:
       - List of trigger tags.
-    type: 'list'
     required: False
     default: []
   warn_value:
     description:
       - Value to set WARN status.
-    type: 'int'
     required: False
     default: None
   error_value:
     description:
       - Value to set ERROR status.
-    type: 'int'
     required: False
     default: None
 notes:
