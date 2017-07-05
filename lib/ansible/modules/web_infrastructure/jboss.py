@@ -392,15 +392,15 @@ def main():
             deploy_path=dict(type='path', default='/var/lib/jbossas/standalone/deployments'),
             deployment_strategy=dict(choices=['http', 'filesystem', 'jboss-cli'], default='filesystem'),
             state=dict(choices=['deployed', 'undeployed', 'present', 'absent'], default='deployed'),
-            url_username=dict(required=True),
-            url_password=dict(required=True),
+            url_username=dict(default='admin'),
+            url_password=dict(default='admin'),
             hostname=dict(default='localhost'),
             port=dict(default=9990),
             cli_path=dict(type='path')
         ),
         required_if=[
             ('state', ('deployed', 'present'), ('src',), True),
-            ('deployment_strategy', ('http',), ('hostname', 'port')),
+            ('deployment_strategy', ('http',), ('hostname', 'port', 'url_username', 'url_password')),
             ('deployment_strategy', ('jboss-cli',), ('cli_path'))
         ]
     )
