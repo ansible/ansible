@@ -1,17 +1,17 @@
-.. _porting_2.1_guide:
+.. _porting_2.3_guide:
 
 *************************
 Ansible 2.3 Porting Guide
 *************************
 
-This section discusses the changes to how you use Ansible between Ansible 2.2 and Ansible 2.3.
+This section discusses the behavioral changes between Ansible 2.2 and Ansible 2.3.
 
-It is intended to assist in updating your playbooks, plugins, etc so they will work with this version of Ansible.
+It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
 
 We suggest you read this page along with https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#23-ramble-on---2017-04-12 before upgrading Ansible to understand what, if any updates you will need to make.
 
-This document is part of a collection on porting, the rest can be found at :ref:`porting_guides <Porting Guides>`.
+This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting_guides <Porting Guides>`.
 
 .. contents:: Topics
 
@@ -36,7 +36,7 @@ In 2.5, multiple ``--tags`` options will be merged with no way to go back to the
 Other caveats
 -------------
 
-Here are some corner cases encountered when updating, these are mostly caused by the more stringent parser validation and the capture of errors that were previously ignored.
+Here are some rare cases that might be encountered when updating. These are mostly caused by the more stringent parser validation and the capture of errors that were previously ignored.
 
 * The version and release facts for OpenBSD hosts were reversed. This has been changed so that version has the numeric portion and release has the name of the release.
 
@@ -57,7 +57,7 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-Notice had been given that the following modules will be removed in Ansible 2.5, we suggest updating your Playbooks at your earliest convenience.
+The following modules will be removed in Ansible 2.5. Please update your playbooks accordingly.
 
 * :ref:`ec2_vpc <ec2_vpc>`
 * :ref:`cl_bond <cl_bond>`
@@ -104,7 +104,7 @@ Networking
 
 There have been a number of changes to number of changes to how Networking Modules operate.
 
-Playbooks should still use ``connection: local``
+Playbooks should still use ``connection: local``.
 
 The following changes apply to:
 
