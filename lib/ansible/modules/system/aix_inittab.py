@@ -235,8 +235,7 @@ def main():
                             [mkitab, new_entry])
 
                 if rc != 0:
-                    module.fail_json(
-                        "could not adjust inittab", rc=rc, err=err)
+                    module.fail_json(msg="could not adjust inittab", rc=rc, err=err)
                 result['msg'] = "add inittab entry" + " " + module.params['name']
                 result['changed'] = True
 
