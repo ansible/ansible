@@ -280,7 +280,7 @@ communication channel that leverages Windows remoting::
 
 If you haven't done anything to prep your systems yet, this won't work yet.  This is covered in a later
 section about how to enable PowerShell remoting - and if necessary - how to upgrade PowerShell to
-a version that is 3 or higher.
+a version that is 3.0 or higher.
 
 You'll run this command again later though, to make sure everything is working.
 
@@ -341,7 +341,7 @@ To troubleshoot the ``ConfigureRemotingForAnsible.ps1`` writes every change it m
 Getting to PowerShell 3.0 or higher
 ```````````````````````````````````
 
-PowerShell 3.0 or higher is needed for most provided Ansible modules for Windows, and is also required to run the above setup script. Note that PowerShell 3.0 is only supported on Windows 7 SP1, Windows Server 2008 SP1, and later releases of Windows.
+PowerShell 3.0 or higher is required by Ansible to manage Windows and to run the above setup script. Note that PowerShell 3.0 is only supported on Windows 7 SP1, Windows Server 2008 SP1, and later releases of Windows. Ansible will not work on hosts that have versions of PowerShell older than 3.0.
 
 Looking at an Ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a PowerShell console as an administrator.  You will now be running PowerShell 3 and can try connectivity again using the ``win_ping`` technique referenced above.
 
