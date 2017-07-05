@@ -1,0 +1,4 @@
+ip access-list ANSIBLE_OUT
+  10 permit tcp 1.1.1.1/24 any
+interface Ethernet1/41
+  ip access-group copp-system-p-acl-bgp out
