@@ -47,6 +47,7 @@
   assert:
     that:
     - shellout|failed
+    - shellout.failed == true # check the failure key explicitly, since failed does magic with RC
     - shellout|changed
     - shellout.cmd == 'bogus_command1234'
     - shellout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
@@ -147,6 +148,7 @@
   assert:
     that:
     - shellout|failed
+    - shellout.failed == True # check the failure key explicitly, since failed does magic with RC
     - shellout.rc == 254
 
 - name: run something via cmd that will fail in powershell

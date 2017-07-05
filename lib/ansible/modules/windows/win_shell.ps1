@@ -168,6 +168,10 @@ $proc.WaitForExit() | Out-Null
 
 $result.rc = $proc.ExitCode
 
+If ($result.rc -ne 0) {
+    $result.failed = $true
+}
+
 $end_datetime = [DateTime]::UtcNow
 
 $result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
