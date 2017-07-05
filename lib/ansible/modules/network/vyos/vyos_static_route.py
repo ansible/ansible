@@ -85,11 +85,10 @@ commands:
 
 import re
 
-from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vyos import get_config, load_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
-from ipaddress import ip_network
+
 
 def spec_to_commands(updates, module):
     commands = list()
@@ -100,6 +99,17 @@ def spec_to_commands(updates, module):
         next_hop = w['next_hop']
         admin_distance = w['admin_distance']
         state = w['state']
+        del w['state']
+
+        if state == 'absent' and w in have:
+            commands.append('delete protocols static route %s next-hop %s' % (prefix, next_hop))
+        elif state == 'present' and w not in have:
+            cmd = 'set protocols static route %s next-hop %s' % (prefix, next_hop)
+            if admin_distance != 'None':
+                cmd += ' distance %s' % (admin_distance)
+            commands.append(cmd)
+
+    return commands
 
 
 def config_to_dict(module):
@@ -108,16 +118,22 @@ def config_to_dict(module):
 
     for line in data.split('\n'):
         if line.startswith('set protocols static route'):
-            match = re.search(r'static route (\S+)', s, re.M)
+            match = re.search(r'static route (\S+)', line, re.M)
             prefix = match.group(1)
             if 'next-hop' in line:
-                match = re.search(r'next-hop (\S+)', s, re.M)
-                next_hop = match.group(1)[1:-1]
+                match = re.search(r'next-hop (\S+)', line, re.M)
+                next_hop = match.group(1)
             if 'distance' in line:
-                match = re.search(r'distance (\S+)', s, re.M)
+                match = re.search(r'distance (\S+)', line, re.M)
                 admin_distance = match.group(1)[1:-1]
 
-        obj.append({'prefix': prefix, 'next_hop': next_hop, 'admin_distance': admin_distance})
+                if admin_distance is not None:
+                    obj.append({'prefix': prefix,
+                                'next_hop': next_hop,
+                                'admin_distance': admin_distance})
+                else:
+                    obj.append({'prefix': prefix,
+                                'next_hop': next_hop})
 
     return obj
 
@@ -157,7 +173,7 @@ def main():
     argument_spec = dict(
         prefix=dict(type='str'),
         next_hop=dict(type='str'),
-        admin_distance=dict(default=1, type='int'),
+        admin_distance=dict(type='int'),
         collection=dict(type='list'),
         purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
