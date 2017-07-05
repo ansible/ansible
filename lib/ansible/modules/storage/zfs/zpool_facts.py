@@ -166,7 +166,7 @@ class ZPoolFacts(object):
         if self.parsable:
             cmd.append('-p')
         if self.is_freebsd:
-            # freebsd does not support -o
+            # -o is supported on freebsd
             cmd.append('-o')
             cmd.append('name,property,value')
         cmd.append(self.properties)
