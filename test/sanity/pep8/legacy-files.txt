@@ -323,7 +323,6 @@ lib/ansible/modules/network/iosxr/iosxr_command.py
 lib/ansible/modules/network/iosxr/iosxr_config.py
 lib/ansible/modules/network/iosxr/iosxr_facts.py
 lib/ansible/modules/network/iosxr/iosxr_system.py
-lib/ansible/modules/net_tools/ipify_facts.py
 lib/ansible/modules/net_tools/ipinfoio_facts.py
 lib/ansible/modules/network/lenovo/cnos_conditional_template.py
 lib/ansible/modules/network/lenovo/cnos_template.py
