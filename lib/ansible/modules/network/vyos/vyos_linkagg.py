@@ -157,7 +157,6 @@ def map_config_to_obj(module):
             mode = splitted_line[1]
             state = splitted_line[2]
 
-
             if len(splitted_line) > 4:
                 members = splitted_line[4:]
             else:
