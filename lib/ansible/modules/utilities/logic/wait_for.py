@@ -250,10 +250,16 @@ class TCPConnectionInfo(object):
             for conn in connections:
                 if conn.status not in self.module.params['active_connection_states']:
                     continue
-                (local_ip, local_port) = conn.local_address
+                if hasattr(conn, 'local_address'):
+                    (local_ip, local_port) = conn.local_address
+                else:
+                    (local_ip, local_port) = conn.laddr
                 if self.port != local_port:
                     continue
-                (remote_ip, remote_port) = conn.remote_address
+                if hasattr(conn, 'remote_address'):
+                    (remote_ip, remote_port) = conn.remote_address
+                else:
+                    (remote_ip, remote_port) = conn.raddr
                 if (conn.family, remote_ip) in self.exclude_ips:
                     continue
                 if any((
