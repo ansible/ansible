@@ -108,11 +108,11 @@
   args:
     chdir: '{{ checkout_dir }}'
 
-- name: make sure the old commit was not fetched
+- name: "make sure the old commit was not fetched, task is 'forced success'"
   assert:
     that:
       - 'checkout_shallow.rc != 0'
-      - checkout_shallow|failed
+      - checkout_shallow|success
   when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 
 - name: clear checkout_dir

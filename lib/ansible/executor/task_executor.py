@@ -572,7 +572,11 @@ class TaskExecutor:
 
             # set the failed property if it was missing.
             if 'failed' not in result:
-                result['failed'] = False
+                # rc is here for backwards compatibility and modules that use it instead of 'failed'
+                if 'rc' in result and result['rc'] not in [0, "0"]:
+                    result['failed'] = True
+                else:
+                    result['failed'] = False
 
             # set the changed property if it was missing.
             if 'changed' not in result:
