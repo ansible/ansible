@@ -20,6 +20,8 @@ Playbook
 
 Before upgrading Ansible to understand what, if any updates you will need to make.
 
+.. code-block:: yaml
+
     # Syntax in 1.9.x
     - debug:
         msg: "{{ 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') }}"
@@ -209,7 +211,7 @@ Here are some corner cases encountered when updating. These are mostly caused by
 
     with_items: "{{var1 + var2}}"
 
-  The bare feature itself is deprecated as an undefined variable is indistiguishable from a string which makes it difficult to display a proper error.
+  The bare feature itself is deprecated as an undefined variable is indistinguishable from a string which makes it difficult to display a proper error.
 
 Porting plugins
 ===============
@@ -390,5 +392,5 @@ Connection plugins
 Porting custom scripts
 ======================
 
-Custom scripts that used the ``ansible.runner.Runner`` API in 1.x have to be ported in 2.x.  Please refer to: :doc:`dev_guide//developing_api`
+Custom scripts that used the ``ansible.runner.Runner`` API in 1.x have to be ported in 2.x.  Please refer to: :doc:`dev_guide/developing_api`
 
