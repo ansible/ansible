@@ -25,7 +25,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_get_url
@@ -73,9 +72,19 @@ options:
     default: null
   skip_certificate_validation:
     description:
-      - Skip SSL certificate validation if true
-    required: false
-    default: false
+    - This option is deprecated since v2.4, please use C(validate_certs) instead.
+    - If C(yes), SSL certificates will not be validated. This should only be used
+      on personally controlled sites using self-signed certificates.
+    default: 'no'
+    type: bool
+  validate_certs:
+    description:
+    - If C(no), SSL certificates will not be validated. This should only be used
+      on personally controlled sites using self-signed certificates.
+    - If C(skip_certificate_validation) was set, it overrides this option.
+    default: 'yes'
+    type: bool
+    version_added: '2.4'
   proxy_url:
     description:
       - The full URL of the proxy server to download through.
