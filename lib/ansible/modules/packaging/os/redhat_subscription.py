@@ -196,11 +196,11 @@ EXAMPLES = '''
     autosubscribe: yes
 '''
 
-import os
 import re
 import types
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.redhat import remove_redhat_repo, update_plugin_conf
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
 
@@ -208,50 +208,11 @@ from ansible.module_utils.six.moves import configparser
 SUBMAN_CMD = None
 
 
-class RegistrationBase(object):
+class Rhsm(object):
     def __init__(self, module, username=None, password=None):
         self.module = module
         self.username = username
         self.password = password
-
-    def configure(self):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
-    def enable(self):
-        # Remove any existing redhat.repo
-        redhat_repo = '/etc/yum.repos.d/redhat.repo'
-        if os.path.isfile(redhat_repo):
-            os.unlink(redhat_repo)
-
-    def register(self):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
-    def unregister(self):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
-    def unsubscribe(self):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
-    def update_plugin_conf(self, plugin, enabled=True):
-        plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
-        if os.path.isfile(plugin_conf):
-            cfg = configparser.ConfigParser()
-            cfg.read([plugin_conf])
-            if enabled:
-                cfg.set('main', 'enabled', 1)
-            else:
-                cfg.set('main', 'enabled', 0)
-            fd = open(plugin_conf, 'rwa+')
-            cfg.write(fd)
-            fd.close()
-
-    def subscribe(self, **kwargs):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
-
-class Rhsm(RegistrationBase):
-    def __init__(self, module, username=None, password=None):
-        RegistrationBase.__init__(self, module, username, password)
         self.config = self._read_config()
         self.module = module
 
@@ -285,9 +246,9 @@ class Rhsm(RegistrationBase):
             This involves updating affected yum plugins and removing any
             conflicting yum repositories.
         '''
-        RegistrationBase.enable(self)
-        self.update_plugin_conf('rhnplugin', False)
-        self.update_plugin_conf('subscription-manager', True)
+        remove_redhat_repo()
+        update_plugin_conf('rhnplugin', False)
+        update_plugin_conf('subscription-manager', True)
 
     def configure(self, **kwargs):
         '''

@@ -33,7 +33,7 @@ from ansible.module_utils.six.moves import configparser
 def update_plugin_conf(plugin, enabled=True):
     plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
     if os.path.isfile(plugin_conf):
-        cfg = ConfigParser.ConfigParser()
+        cfg = configparser.ConfigParser()
         cfg.read([plugin_conf])
         if enabled:
             cfg.set('main', 'enabled', 1)
