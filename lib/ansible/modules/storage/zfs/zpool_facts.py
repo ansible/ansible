@@ -183,7 +183,8 @@ class ZPoolFacts(object):
                     pool, property, value = line.split('\t')
                 else:
                     pool, property, value, source = line.split('\t')
-                    if pool == "NAME": continue
+                    if pool == "NAME":
+                        continue
 
                 self._pools[pool].update({property: value})
 
