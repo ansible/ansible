@@ -137,7 +137,7 @@ def command_coverage_combine(args):
 
 def command_coverage_report(args):
     """
-    :type args: CoverageConfig
+    :type args: CoverageReportConfig
     """
     output_files = command_coverage_combine(args)
 
@@ -145,9 +145,14 @@ def command_coverage_report(args):
         if args.group_by or args.stub:
             display.info('>>> Coverage Group: %s' % ' '.join(os.path.basename(output_file).split('=')[1:]))
 
+        options = []
+
+        if args.show_missing:
+            options.append('--show-missing')
+
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
-        run_command(args, env=env, cmd=['coverage', 'report'])
+        run_command(args, env=env, cmd=['coverage', 'report'] + options)
 
 
 def command_coverage_html(args):
@@ -252,3 +257,14 @@ class CoverageConfig(EnvironmentConfig):
         self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: frozenset[str]
         self.all = args.all if 'all' in args else False  # type: bool
         self.stub = args.stub if 'stub' in args else False  # type: bool
+
+
+class CoverageReportConfig(CoverageConfig):
+    """Configuration for the coverage report command."""
+    def __init__(self, args):
+        """
+        :type args: any
+        """
+        super(CoverageReportConfig, self).__init__(args)
+
+        self.show_missing = args.show_missing  # type: bool
