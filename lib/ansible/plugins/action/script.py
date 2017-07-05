@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import re
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
@@ -26,6 +27,10 @@ from ansible.plugins.action import ActionBase
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
+
+    # On Windows platform, absolute paths begin with a (back)slash
+    # after chopping off a potential drive letter.
+    windows_absolute_path_detection = re.compile(r'^(?:[a-zA-Z]\:)?(\\|\/)')
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
@@ -54,6 +59,18 @@ class ActionModule(ActionBase):
             if not self._remote_file_exists(removes):
                 self._remove_tmp_path(tmp)
                 return dict(skipped=True, msg=("skipped, since %s does not exist" % removes))
+
+        # The chdir must be absolute, because a relative path would rely on
+        # remote node behaviour & user config.
+        chdir = self._task.args.get('chdir')
+        if chdir:
+            # Powershell is the only Windows-path aware shell
+            if self._connection._shell.SHELL_FAMILY == 'powershell' and \
+                    not self.windows_absolute_path_detection.matches(chdir):
+                return dict(failed=True, msg='chdir %s must be an absolute path for a Windows remote node' % chdir)
+            # Every other shell is unix-path-aware.
+            if self._connection._shell.SHELL_FAMILY != 'powershell' and not chdir.startswith('/'):
+                return dict(failed=True, msg='chdir %s must be an absolute path for a Unix-aware remote node' % chdir)
 
         # the script name is the first item in the raw params, so we split it
         # out now so we know the file name we need to transfer to the remote,
@@ -86,7 +103,7 @@ class ActionModule(ActionBase):
         if self._connection.transport == "winrm":
             exec_data = self._connection._create_raw_wrapper_payload(script_cmd, env_dict)
 
-        result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True))
+        result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
 
         # clean up after
         self._remove_tmp_path(tmp)

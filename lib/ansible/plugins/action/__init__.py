@@ -842,7 +842,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['rc'] = res['rc']
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace'):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -855,6 +855,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             used as a key or is going to be written back out to a file
             verbatim, then this won't work.  May have to use some sort of
             replacement strategy (python3 could use surrogateescape)
+        :kwarg chdir: cd into this directory before executing the command.
         '''
 
         display.debug("_low_level_execute_command(): starting")
@@ -862,6 +863,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 #            # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
 #            display.debug("_low_level_execute_command(): no command, exiting")
 #           return dict(stdout='', stderr='', rc=254)
+
+        if chdir:
+            display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
+            cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
         allow_same_user = C.BECOME_ALLOW_SAME_USER
         same_user = self._play_context.become_user == self._play_context.remote_user
