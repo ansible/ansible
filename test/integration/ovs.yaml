@@ -18,6 +18,7 @@
     - block:
       - include_role:
           name: openvswitch_db
+          _raw_params: openvswitch_db
         when: "limit_to in ['*', 'openvswitch_db']"
       rescue:
         - set_fact: test_failed=true
