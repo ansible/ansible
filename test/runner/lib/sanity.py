@@ -38,6 +38,9 @@ from lib.executor import (
     install_command_requirements,
     SUPPORTED_PYTHON_VERSIONS,
     intercept_command,
+)
+
+from lib.config import (
     SanityConfig,
 )
 

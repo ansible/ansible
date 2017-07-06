@@ -12,11 +12,14 @@ import lib.thread
 
 from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
+    create_shell_command,
+)
+
+from lib.config import (
     IntegrationConfig,
     ShellConfig,
     SanityConfig,
     UnitsConfig,
-    create_shell_command,
 )
 
 from lib.test import (
