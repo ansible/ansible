@@ -78,6 +78,13 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: net_linkagg
+        when: "limit_to in ['*', 'net_linkagg']"
+      rescue:
+        - set_fact: test_failed=true
+
 ###########
     - name: Has any previous test failed?
       fail:
