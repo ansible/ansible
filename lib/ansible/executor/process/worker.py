@@ -26,6 +26,8 @@ import traceback
 
 from jinja2.exceptions import TemplateNotFound
 
+from ansible.module_utils.six import PY3
+
 HAS_PYCRYPTO_ATFORK = False
 try:
     from Crypto.Random import atfork
@@ -77,7 +79,10 @@ class WorkerProcess(multiprocessing.Process):
                 fileno = sys.stdin.fileno()
                 if fileno is not None:
                     try:
-                        self._new_stdin = os.fdopen(os.dup(fileno))
+                        if PY3: # needed for recognizing Enter in 'pause' module
+                            self._new_stdin = os.fdopen(os.dup(fileno), newline='\r\n')
+                        else:
+                            self._new_stdin = os.fdopen(os.dup(fileno))
                     except OSError:
                         # couldn't dupe stdin, most likely because it's
                         # not a valid file descriptor, so we just rely on
