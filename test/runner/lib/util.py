@@ -435,53 +435,6 @@ class CommonConfig(object):
         self.debug = args.debug  # type: bool
 
 
-class EnvironmentConfig(CommonConfig):
-    """Configuration common to all commands which execute in an environment."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        """
-        super(EnvironmentConfig, self).__init__(args)
-
-        self.command = command
-
-        self.local = args.local is True
-
-        if args.tox is True or args.tox is False or args.tox is None:
-            self.tox = args.tox is True
-            self.tox_args = 0
-            self.python = args.python if 'python' in args else None  # type: str
-        else:
-            self.tox = True
-            self.tox_args = 1
-            self.python = args.tox  # type: str
-
-        self.docker = docker_qualify_image(args.docker)  # type: str
-        self.remote = args.remote  # type: str
-
-        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
-        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
-
-        self.tox_sitepackages = args.tox_sitepackages  # type: bool
-
-        self.remote_stage = args.remote_stage  # type: str
-        self.remote_aws_region = args.remote_aws_region  # type: str
-        self.remote_terminate = args.remote_terminate  # type: str
-
-        self.requirements = args.requirements  # type: bool
-
-        if self.python == 'default':
-            self.python = '.'.join(str(i) for i in sys.version_info[:2])
-
-        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
-
-        self.delegate = self.tox or self.docker or self.remote
-
-        if self.delegate:
-            self.requirements = True
-
-
 def docker_qualify_image(name):
     """
     :type name: str

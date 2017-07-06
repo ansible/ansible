@@ -27,6 +27,13 @@ from lib.executor import (
     command_shell,
     SUPPORTED_PYTHON_VERSIONS,
     COMPILE_PYTHON_VERSIONS,
+    ApplicationWarning,
+    Delegate,
+    generate_pip_install,
+    check_startup,
+)
+
+from lib.config import (
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
     NetworkIntegrationConfig,
@@ -34,10 +41,6 @@ from lib.executor import (
     UnitsConfig,
     CompileConfig,
     ShellConfig,
-    ApplicationWarning,
-    Delegate,
-    generate_pip_install,
-    check_startup,
 )
 
 from lib.sanity import (
