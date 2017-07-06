@@ -137,7 +137,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --user=%s" % pipes.quote(user)
     if password is not None:
         # do not quote password to avoid passing quotes to mysql auth
-        cmd += " --password=%s" % pipes.quote(password)
+        cmd += " --password=%s" % password
     if ssl_cert is not None:
         cmd += " --ssl-cert=%s" % pipes.quote(ssl_cert)
     if ssl_key is not None:
