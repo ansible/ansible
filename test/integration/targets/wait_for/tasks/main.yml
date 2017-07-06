@@ -30,7 +30,7 @@
     that:
       - waitfor|success
       - "waitfor.path == '/tmp/wait_for_file'"
-      - waitfor.elapsed >= 9
+      - waitfor.elapsed >= 5
       - waitfor.elapsed <= 15
 
 - name: setup create a file after 10s
@@ -48,7 +48,7 @@
     that:
       - waitfor|success
       - "waitfor.path == '/tmp/wait_for_file'"
-      - waitfor.elapsed >= 9
+      - waitfor.elapsed >= 5
       - waitfor.elapsed <= 15
 
 - name: setup write keyword to file after 10s
@@ -67,7 +67,7 @@
     that:
       - waitfor|success
       - "waitfor.search_regex == 'completed'"
-      - waitfor.elapsed >= 9
+      - waitfor.elapsed >= 5
       - waitfor.elapsed <= 15
 
 - name: test wait for port timeout
