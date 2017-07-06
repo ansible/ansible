@@ -30,8 +30,8 @@
     that:
       - waitfor|success
       - "waitfor.path == '/tmp/wait_for_file'"
-      - waitfor.elapsed <= 10
-      - waitfor.elapsed > 0
+      - waitfor.elapsed >= 9
+      - waitfor.elapsed <= 15
 
 - name: setup create a file after 10s
   shell: sleep 10 && touch /tmp/wait_for_file
@@ -48,8 +48,8 @@
     that:
       - waitfor|success
       - "waitfor.path == '/tmp/wait_for_file'"
-      - waitfor.elapsed <= 10
-      - waitfor.elapsed > 0
+      - waitfor.elapsed >= 9
+      - waitfor.elapsed <= 15
 
 - name: setup write keyword to file after 10s
   shell: rm -f /tmp/wait_for_keyword && sleep 10 && echo completed > /tmp/wait_for_keyword
@@ -67,8 +67,8 @@
     that:
       - waitfor|success
       - "waitfor.search_regex == 'completed'"
-      - waitfor.elapsed <= 10
-      - waitfor.elapsed > 0
+      - waitfor.elapsed >= 9
+      - waitfor.elapsed <= 15
 
 - name: test wait for port timeout
   wait_for:
