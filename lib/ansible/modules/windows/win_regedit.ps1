@@ -133,13 +133,6 @@ Function Test-RegistryProperty($path, $name) {
     }
 }
 
-Function Get-RegistryType($path, $name) {
-    # will return the registry property type
-    $registry_key = Get-Item -Path $path
-    $property_type = $registry_key.GetValueKind($name)
-    $property_type
-}
-
 Function Compare-RegistryProperties($existing, $new) {
     $mismatch = $false
     if ($existing -is [Array]) {
