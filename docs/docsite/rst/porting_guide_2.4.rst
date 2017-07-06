@@ -11,7 +11,7 @@ It is intended to assist in updating your playbooks, plugins and other parts of 
 
 We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#2.4>`_ to understand what updates you may need to make.
 
-This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting_guides <Porting Guides>`.
+This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
 .. contents:: Topics
 
@@ -68,14 +68,14 @@ In 2.5, multiple ``--tags`` options will be merged with no way to go back to the
    ======================
 
 
+.. Placeholder, detail will be added later
+   Networking
+   ==========
 
-Networking
-==========
+   There have been a number of changes to how Networking Modules operate.
 
-There have been a number of changes to how Networking Modules operate.
+   Playbooks should still use ``connection: local``.
 
-Playbooks should still use ``connection: local``.
+   The following changes apply to:
 
-The following changes apply to:
-
-* TBD List modules that have been ported to new framework in 2.4 - Link back to 2.3 porting guide
+   * TBD List modules that have been ported to new framework in 2.4 - Link back to 2.3 porting guide
