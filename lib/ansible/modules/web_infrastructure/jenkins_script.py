@@ -73,7 +73,7 @@ options:
     version_added: "2.4"
   args:
     description:
-      - A dict of key-value pairs used in formatting the script.
+      - A dict of key-value pairs used in formatting the script using string.Template (see https://docs.python.org/2/library/string.html#template-strings).
     required: false
     default: null
 
