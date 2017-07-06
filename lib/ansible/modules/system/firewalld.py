@@ -750,7 +750,10 @@ def main():
     )
 
     if import_failure:
-        module.fail_json(msg='firewalld and its python 2 module are required for this module, version 2.0.11 or newer required (3.0.9 or newer for offline operations) \n %s' % e)
+        module.fail_json(
+            msg='firewalld and its python 2 module are required for this module, version 2.0.11 or newer required (3.0.9 or newer for offline operations) \n %s'
+            % e
+        )
 
     if fw_offline:
         # Pre-run version checking
