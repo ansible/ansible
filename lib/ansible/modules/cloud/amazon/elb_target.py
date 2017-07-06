@@ -51,6 +51,8 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+notes:
+  - If you specified a port override when you registered a target, you must specify both the target ID and the port when you deregister it.
 '''
 
 EXAMPLES = '''
@@ -167,7 +169,42 @@ def register_target(connection, module):
 
 def deregister_target(connection, module):
 
-    pass
+    """
+    Deregisters a target to a target group
+
+    :param module: ansible module object
+    :param connection: boto3 connection
+    :return:
+    """
+
+    target_group_arn = module.params.get("target_group_arn")
+    target_id = module.params.get("target_id")
+    target_port = module.params.get("target_port")
+    changed = False
+
+    if not target_group_arn:
+        target_group_arn = convert_tg_name_to_arn(connection, module, module.params.get("target_group_name"))
+
+    target = dict(Id=target_id)
+    if target_port:
+        target['Port'] = target_port
+
+    try:
+        target_description = describe_targets(connection, module, target_group_arn, [target])
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+    if target_description['TargetHealth']['Reason'] != "Target.NotRegistered":
+        try:
+            connection.deregister_targets(TargetGroupArn=target_group_arn, Targets=[target])
+            changed = True
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+    # Get all targets for the target group
+    target_descriptions = describe_targets(connection, module, target_group_arn, [])
+
+    module.exit_json(changed=changed, target_health_descriptions=camel_dict_to_snake_dict(target_descriptions), target_group_arn=target_group_arn)
 
 
 def main():
