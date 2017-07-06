@@ -136,6 +136,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     if user is not None:
         cmd += " --user=%s" % pipes.quote(user)
     if password is not None:
+        # do not quote password to avoid passing quotes to mysql auth
         cmd += " --password=%s" % pipes.quote(password)
     if ssl_cert is not None:
         cmd += " --ssl-cert=%s" % pipes.quote(ssl_cert)
@@ -187,7 +188,8 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     if user:
         cmd.append("--user=%s" % pipes.quote(user))
     if password:
-        cmd.append("--password=%s" % pipes.quote(password))
+        # do not quote password to avoid passing quotes to mysql auth
+        cmd.append("--password=%s" % password)
     if ssl_cert is not None:
         cmd.append("--ssl-cert=%s" % pipes.quote(ssl_cert))
     if ssl_key is not None:
@@ -217,7 +219,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         (stdout2, stderr2) = p2.communicate()
         p1.stdout.close()
         p1.wait()
-        if p1.returncode != 0:
+        if p1.returncode != 0 and p2.returncode == 0:
             stderr1 = p1.stderr.read()
             return p1.returncode, '', stderr1
         else:
