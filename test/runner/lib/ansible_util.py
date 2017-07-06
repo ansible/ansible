@@ -5,7 +5,7 @@ from __future__ import absolute_import, print_function
 import os
 
 from lib.util import common_environment
-
+from lib.config import IntegrationConfig
 
 def ansible_environment(args, color=True):
     """
@@ -35,5 +35,9 @@ def ansible_environment(args, color=True):
 
     if args.debug:
         env.update(dict(ANSIBLE_DEBUG='true'))
+
+    if isinstance(args, IntegrationConfig):
+        if args.debug_strategy:
+            env.update(dict(ANSIBLE_STRATEGY='debug'))
 
     return env
