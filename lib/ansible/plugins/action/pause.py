@@ -25,6 +25,8 @@ import tty
 
 from os import isatty
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import PY3
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 
 try:
@@ -85,7 +87,7 @@ class ActionModule(ActionBase):
 
             except ValueError as e:
                 result['failed'] = True
-                result['msg'] = "non-integer value given for prompt duration:\n%s" % str(e)
+                result['msg'] = u"non-integer value given for prompt duration:\n%s" % to_text(e)
                 return result
 
         # Is 'prompt' a key in 'args'?
@@ -102,8 +104,8 @@ class ActionModule(ActionBase):
         # Begin the hard work!
 
         start = time.time()
-        result['start'] = str(datetime.datetime.now())
-        result['user_input'] = ''
+        result['start'] = to_text(datetime.datetime.now())
+        result['user_input'] = b''
 
         fd = None
         old_settings = None
@@ -122,9 +124,13 @@ class ActionModule(ActionBase):
 
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
+            if PY3:
+                stdin = self._connection._new_stdin.buffer
+            else:
+                stdin = self._connection._new_stdin
             fd = None
             try:
-                fd = self._connection._new_stdin.fileno()
+                fd = stdin.fileno()
             except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
                 # AttributeError: someone is using a null file descriptor as stdin on windoez
@@ -136,12 +142,12 @@ class ActionModule(ActionBase):
 
                     # flush the buffer to make sure no previous key presses
                     # are read in below
-                    termios.tcflush(self._connection._new_stdin, termios.TCIFLUSH)
+                    termios.tcflush(stdin, termios.TCIFLUSH)
             while True:
                 try:
                     if fd is not None:
-                        key_pressed = self._connection._new_stdin.read(1)
-                        if key_pressed == '\x03':
+                        key_pressed = stdin.read(1)
+                        if key_pressed == b'\x03':
                             raise KeyboardInterrupt
 
                     if not seconds:
@@ -149,7 +155,7 @@ class ActionModule(ActionBase):
                             display.warning("Not waiting from prompt as stdin is not interactive")
                             break
                         # read key presses and act accordingly
-                        if key_pressed == '\r':
+                        if key_pressed in (b'\r', b'\n'):
                             break
                         else:
                             result['user_input'] += key_pressed
@@ -158,7 +164,7 @@ class ActionModule(ActionBase):
                     if seconds is not None:
                         signal.alarm(0)
                     display.display("Press 'C' to continue the play or 'A' to abort \r"),
-                    if self._c_or_a():
+                    if self._c_or_a(stdin):
                         break
                     else:
                         raise AnsibleError('user requested abort!')
@@ -174,7 +180,7 @@ class ActionModule(ActionBase):
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
             duration = time.time() - start
-            result['stop'] = str(datetime.datetime.now())
+            result['stop'] = to_text(datetime.datetime.now())
             result['delta'] = int(duration)
 
             if duration_unit == 'minutes':
@@ -183,12 +189,13 @@ class ActionModule(ActionBase):
                 duration = round(duration, 2)
             result['stdout'] = "Paused for %s %s" % (duration, duration_unit)
 
+        result['user_input'] = to_text(result['user_input'], errors='surrogate_or_strict')
         return result
 
-    def _c_or_a(self):
+    def _c_or_a(self, stdin):
         while True:
-            key_pressed = self._connection._new_stdin.read(1)
-            if key_pressed.lower() == 'a':
+            key_pressed = stdin.read(1)
+            if key_pressed.lower() == b'a':
                 return False
-            elif key_pressed.lower() == 'c':
+            elif key_pressed.lower() == b'c':
                 return True
