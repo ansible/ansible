@@ -686,6 +686,8 @@ class Ec2Inventory(object):
                 del c['EarliestRestorableTime']
             if 'LatestRestorableTime' in c:
                 del c['LatestRestorableTime']
+            if 'ClusterCreateTime' in c:
+                del c['ClusterCreateTime']
 
             if self.ec2_instance_filters == {}:
                 matches_filter = True
