@@ -19,7 +19,7 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -31,6 +31,7 @@ description:
     - Add and remove secondary IPs to and from a NIC.
 version_added: "2.3"
 author: "René Moser (@resmo)"
+deprecated: Deprecated in 2.4. Use M(cs_instance_nic_secondaryip) instead.
 options:
   vm:
     description:
