@@ -1,0 +1,21 @@
+- name: Install Docker pre-reqs
+  yum:
+    name: "{{ item }}"
+    state: present
+  items:
+    - yum-utils
+    - device-mapper-persistent-data
+    - lvm2
+    - python-crypto
+    - libseccomp
+
+- name: Add repository
+  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Update cache
+  command: yum -y makecache fast
+
+- name: Install docker
+  yum:
+    name: docker-ce
+    state: present
