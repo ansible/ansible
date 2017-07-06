@@ -49,6 +49,13 @@
 #      rescue:
 #        - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: vyos_static_route
+        when: "limit_to in ['*', 'vyos_static_route']"
+      rescue:
+        - set_fact: test_failed=true
+
 
 ###########
     - name: Has any previous test failed?

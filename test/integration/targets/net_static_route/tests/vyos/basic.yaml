@@ -1,0 +1,126 @@
+---
+- name: create static route
+  net_static_route:
+    prefix: 172.16.31.0
+    next_hop: 10.0.0.8
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set protocols static route prefix 172.16.31.0 next-hop 10.0.0.8" in result.commands' 
+
+- name: create static route again (idempotent)
+  net_static_route:
+    prefix: 172.16.31.0
+    next_hop: 10.0.0.8
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: modify admin distance of static route
+  net_static_route:
+    prefix: 172.16.31.0
+    next_hop: 10.0.0.8
+    admin_distance: 2
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set protocols static route 172.16.31.0 next-hop 10.0.0.8 2 distance 2" in result.commands'
+
+- name: modify admin distance of static route again (idempotent)
+  net_static_route:
+    prefix: 172.16.31.0
+    next_hop: 10.0.0.8
+    admin_distance: 2
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: delete static route
+  net_static_route:
+    prefix: 172.16.31.0
+    next_hop: 10.0.0.8
+    admin_distance: 2
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete protocols static route 172.16.31.0 next-hop 10.0.0.8" in result.commands'
+
+- name: delete static route again (idempotent)
+  net_static_route:
+    prefix: 172.16.31.0
+    next_hop: 10.0.0.8
+    admin_distance: 2
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Add static route collections
+  net_static_route:
+    collection:
+      - { prefix: 172.16.32.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.33.0, next_hop: 10.0.0.8 }
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set protocols static route 172.16.32.0 next-hop 10.0.0.8" in result.commands'
+      - '"set protocols static route 172.16.33.0 next-hop 10.0.0.8" in result.commands'
+
+- name: Add and remove static route collections with overrides
+  net_static_route:
+    collection:
+      - { prefix: 172.16.32.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.33.0, next_hop: 10.0.0.8, state: absent }
+      - { prefix: 172.16.34.0, next_hop: 10.0.0.8 }
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete protocols static route 172.16.33.0 next-hop 10.0.0.8" in result.commands'
+      - '"set protocols static route 172.16.34.0 next-hop 10.0.0.8" in result.commands'
+
+- name: Remove static route collections
+  net_static_route:
+    collection:
+      - { prefix: 172.16.32.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.33.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.34.0, next_hop: 10.0.0.8 }
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete protocols static route 172.16.32.0 next-hop 10.0.0.8" in result.commands'
+      - '"delete protocols static route 172.16.34.0 next-hop 10.0.0.8" in result.commands'

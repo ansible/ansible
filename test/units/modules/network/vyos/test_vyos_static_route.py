@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.vyos import vyos_static_route
 from .vyos_module import TestVyosModule, load_fixture, set_module_args
