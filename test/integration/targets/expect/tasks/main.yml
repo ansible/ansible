@@ -70,10 +70,10 @@
 
 - name: test timeout option
   expect:
-    command: "cat"
+    command: "sleep 10"
     responses:
       foo: bar
-    timeout: 0
+    timeout: 1
   ignore_errors: true
   register: timeout_result
 
