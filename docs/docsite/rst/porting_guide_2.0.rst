@@ -18,7 +18,7 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-This section duscusses any changes you may need to make to your playbooks.
+This section discusses any changes you may need to make to your playbooks.
 
 .. code-block:: yaml
 
@@ -100,7 +100,7 @@ uses key=value escaping which has not changed.  The other option is to check for
 * dnf module has been rewritten. Some minor changes in behavior may be observed.
 * win_updates has been rewritten and works as expected now.
 * from 2.0.1 onwards, the implicit setup task from gather_facts now correctly inherits everything from play, but this might cause issues for those setting
-  `environment` at the play level and depending on `ansible_env` existing. Previouslly this was ignored but now might issue an 'Undefined' error.
+  `environment` at the play level and depending on `ansible_env` existing. Previously this was ignored but now might issue an 'Undefined' error.
 
 Deprecated
 ----------
