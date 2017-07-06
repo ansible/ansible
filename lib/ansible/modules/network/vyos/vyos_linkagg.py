@@ -41,7 +41,9 @@ options:
   mode:
     description:
       - Mode of the link aggregation group.
-    choices: ['on']
+    choices: ['802.3ad', 'active-backup', 'broadcast',
+              'round-robin', 'transmit-load-balance',
+              'adaptive-load-balance', 'xor-hash', 'on']
   members:
     description:
       - List of members of the link aggregation group.
@@ -99,7 +101,6 @@ def search_obj_in_list(name, lst):
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
-    state = module.params['state']
 
     for w in want:
         name = w['name']
@@ -213,6 +214,7 @@ def main():
     argument_spec.update(vyos_argument_spec)
 
     required_one_of = [['name', 'collection']]
+    mutually_exclusive = [['name', 'collection']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            supports_check_mode=True)
