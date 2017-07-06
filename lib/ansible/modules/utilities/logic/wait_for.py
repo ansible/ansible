@@ -232,14 +232,23 @@ class TCPConnectionInfo(object):
     def get_active_connections_count(self):
         active_connections = 0
         for p in psutil.process_iter():
-            connections = p.get_connections(kind='inet')
+            if hasattr(p, 'get_connections'):
+                connections = p.get_connections(kind='inet')
+            else:
+                connections = p.connections(kind='inet')
             for conn in connections:
                 if conn.status not in self.module.params['active_connection_states']:
                     continue
-                (local_ip, local_port) = conn.local_address
+                if hasattr(conn, 'local_address'):
+                    (local_ip, local_port) = conn.local_address
+                else:
+                    (local_ip, local_port) = conn.laddr
                 if self.port != local_port:
                     continue
-                (remote_ip, remote_port) = conn.remote_address
+                if hasattr(conn, 'remote_address'):
+                    (remote_ip, remote_port) = conn.remote_address
+                else:
+                    (remote_ip, remote_port) = conn.raddr
                 if (conn.family, remote_ip) in self.exclude_ips:
                     continue
                 if any((
