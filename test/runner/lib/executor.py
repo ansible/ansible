@@ -864,6 +864,7 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
+    :type target_name: str
     :type capture: bool
     :type env: dict[str, str] | None
     :type data: str | None

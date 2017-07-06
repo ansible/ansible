@@ -179,7 +179,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
         """
         super(NetworkIntegrationConfig, self).__init__(args, 'network-integration')
 
-        self.platform = args.platform  # type list [str]
+        self.platform = args.platform  # type: list [str]
 
 
 class UnitsConfig(TestConfig):
@@ -210,7 +210,7 @@ class CoverageConfig(EnvironmentConfig):
         """
         super(CoverageConfig, self).__init__(args, 'coverage')
 
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: frozenset[str]
+        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: frozenset [str]
         self.all = args.all if 'all' in args else False  # type: bool
         self.stub = args.stub if 'stub' in args else False  # type: bool
 
