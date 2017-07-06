@@ -68,8 +68,8 @@ Ansible Changes By Release
 * Experimentally added pmrun become method.
 * Enable the docker connection plugin to use su as a become method
 * Add an encoding parameter for the replace module so that it can operate on non-utf-8 files
-* By default, Ansible now uses the cryptography module to implement vault
-  instead of the older pycrypto module.
+* By default, Ansible now uses the cryptography module to implement vault instead of the older pycrypto module.
+* Changed task state resulting from both 'rc' and 'failed' fields returned, 'rc' no longer overrides 'failed'. Test plugins have also been updated accordingly.
 
 #### New Callbacks:
 - profile_roles
