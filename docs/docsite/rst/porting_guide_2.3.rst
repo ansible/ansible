@@ -9,7 +9,7 @@ This section discusses the behavioral changes between Ansible 2.2 and Ansible 2.
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
 
-We suggest you read this page along with https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#23-ramble-on---2017-04-12 before upgrading Ansible to understand what, if any updates you will need to make.
+We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#2.3>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting_guides <Porting Guides>`.
 
@@ -29,7 +29,7 @@ Use of multiple tags
 
 Specifying ``--tags`` (or ``--skip-tags``) multiple times on the command line currently leads to the last one overriding all the previous ones. This behaviour is deprecated. In the future, if you specify --tags multiple times the tags will be merged together. From now on, using ``--tags`` multiple times on one command line will emit a deprecation warning. Setting the ``merge_multiple_cli_tags`` option to True in the ``ansible.cfg`` file will enable the new behaviour.
 
-In 2.4, the default will be to merge and you can enable the old overwriting behaviour via the config option.
+In 2.4, the default will be to merge the tags. You can enable the old overwriting behavior via the config option.
 In 2.5, multiple ``--tags`` options will be merged with no way to go back to the old behaviour.
 
 
@@ -45,7 +45,7 @@ Here are some rare cases that might be encountered when updating. These are most
 Modules
 =======
 
-Major changes in popular modules are detailed here
+Major changes in popular modules are detailed here.
 
 Modules removed
 ---------------
@@ -91,13 +91,14 @@ Mount
 
 Mount: Some fixes so bind mounts are not mounted each time the playbook runs.
 
-Plugins
-=======
+.. Nothing currently in this section so commented out 
+   Placeholder left to keep consistent formatting with porting_guide_2.3.rst 
 
+   Plugins
+   =======
 
-
-Porting custom scripts
-======================
+   Porting custom scripts
+   ======================
 
 Networking
 ==========
