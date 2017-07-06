@@ -114,21 +114,10 @@
       - not waitfor|changed
       - "waitfor.port == {{ http_port }}"
 
-- name: install psutil for python 2 using package (if available)
-  package:
-    name: python-psutil
-  when: ansible_python_version | version_compare('3', '<')
-  ignore_errors: yes
-
-- name: install psutil for python 3 using package (if available)
-  package:
-    name: python3-psutil
-  when: ansible_python_version | version_compare('3', '>=')
-  ignore_errors: yes
-
-- name: install psutil using pip (if not already installed)
+- name: install psutil using pip (non-Linux only)
   pip:
     name: psutil
+  when: ansible_system != 'Linux'
 
 - name: test wait for port drained
   wait_for:
