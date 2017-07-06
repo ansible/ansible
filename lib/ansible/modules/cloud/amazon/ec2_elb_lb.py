@@ -718,7 +718,7 @@ class ElbManager(object):
         # True if succeeds, exception raised if not
         # this will skip deletion in check mode, but doesn't check if a change needs to happen - self.changed will always be true
         result = True
-        if not module.check_mode:
+        if not self.module.check_mode:
             result = self.elb_conn.delete_load_balancer(name=self.name)
         if result:
             self.changed = True
@@ -727,7 +727,7 @@ class ElbManager(object):
     def _create_elb(self):
         listeners = [self._listener_as_tuple(l) for l in self.listeners]
         # this will skip creation in check mode, but doesn't check if a change needs to happen - self.changed will always be true
-        if not module.check_mode:
+        if not self.module.check_mode:
             self.elb = self.elb_conn.create_load_balancer(name=self.name,
                                                           zones=self.zones,
                                                           security_groups=self.security_group_ids,
@@ -753,7 +753,7 @@ class ElbManager(object):
 
     def _create_elb_listeners(self, listeners):
         """Takes a list of listener tuples and creates them"""
-        if not module.check_mode:
+        if not self.module.check_mode:
             # True if succeeds, exception raised if not
             self.changed = self.elb_conn.create_load_balancer_listeners(self.name,
                                                                         complex_listeners=listeners)
@@ -764,7 +764,7 @@ class ElbManager(object):
         """Takes a list of listener tuples and deletes them from the elb"""
         ports = [l[0] for l in listeners]
 
-        if not module.check_mode:
+        if not self.module.check_mode:
             # True if succeeds, exception raised if not
             self.changed = self.elb_conn.delete_load_balancer_listeners(self.name,
                                                                         ports)
@@ -823,12 +823,12 @@ class ElbManager(object):
                 listeners_to_remove.append(existing_listener_tuple)
 
         if listeners_to_remove:
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self._delete_elb_listeners(listeners_to_remove)
             self.changed = True
 
         if listeners_to_add:
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self._create_elb_listeners(listeners_to_add)
             self.changed = True
 
@@ -863,7 +863,7 @@ class ElbManager(object):
         return tuple(listener_list)
 
     def _enable_zones(self, zones):
-        if not module.check_mode:
+        if not self.module.check_mode:
             try:
                 self.elb.enable_zones(zones)
             except boto.exception.BotoServerError as e:
@@ -872,7 +872,7 @@ class ElbManager(object):
         self.changed = True
 
     def _disable_zones(self, zones):
-        if not module.check_mode:
+        if not self.module.check_mode:
             try:
                 self.elb.disable_zones(zones)
             except boto.exception.BotoServerError as e:
@@ -880,12 +880,12 @@ class ElbManager(object):
         self.changed = True
 
     def _attach_subnets(self, subnets):
-        if not module.check_mode:
+        if not self.module.check_mode:
             self.elb_conn.attach_lb_to_subnets(self.name, subnets)
         self.changed = True
 
     def _detach_subnets(self, subnets):
-        if not module.check_mode:
+        if not self.module.check_mode:
             self.elb_conn.detach_lb_from_subnets(self.name, subnets)
         self.changed = True
 
@@ -933,7 +933,7 @@ class ElbManager(object):
 
     def _set_security_groups(self):
         if self.security_group_ids is not None and set(self.elb.security_groups) != set(self.security_group_ids):
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self.elb_conn.apply_security_groups_to_lb(self.name, self.security_group_ids)
             self.changed = True
 
@@ -964,7 +964,7 @@ class ElbManager(object):
                     update_health_check = True
 
             if update_health_check:
-                if not module.check_mode:
+                if not self.module.check_mode:
                     self.elb.configure_health_check(self.elb.health_check)
                 self.changed = True
 
@@ -981,7 +981,7 @@ class ElbManager(object):
             if attributes.cross_zone_load_balancing.enabled:
                 self.changed = True
             attributes.cross_zone_load_balancing.enabled = False
-        if not module.check_mode:
+        if not self.module.check_mode:
             self.elb_conn.modify_lb_attribute(self.name, 'CrossZoneLoadBalancing',
                                               attributes.cross_zone_load_balancing.enabled)
 
@@ -1004,13 +1004,13 @@ class ElbManager(object):
                     setattr(attributes.access_log, attr, desired_value)
                     update_access_logs_config = True
             if update_access_logs_config:
-                if not module.check_mode:
+                if not self.module.check_mode:
                     self.elb_conn.modify_lb_attribute(self.name, 'AccessLog', attributes.access_log)
                 self.changed = True
         elif attributes.access_log.enabled:
             attributes.access_log.enabled = False
             self.changed = True
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self.elb_conn.modify_lb_attribute(self.name, 'AccessLog', attributes.access_log)
 
     def _set_connection_draining_timeout(self):
@@ -1021,13 +1021,13 @@ class ElbManager(object):
                 self.changed = True
             attributes.connection_draining.enabled = True
             attributes.connection_draining.timeout = self.connection_draining_timeout
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self.elb_conn.modify_lb_attribute(self.name, 'ConnectionDraining', attributes.connection_draining)
         else:
             if attributes.connection_draining.enabled:
                 self.changed = True
             attributes.connection_draining.enabled = False
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self.elb_conn.modify_lb_attribute(self.name, 'ConnectionDraining', attributes.connection_draining)
 
     def _set_idle_timeout(self):
@@ -1036,7 +1036,7 @@ class ElbManager(object):
             if attributes.connecting_settings.idle_timeout != self.idle_timeout:
                 self.changed = True
             attributes.connecting_settings.idle_timeout = self.idle_timeout
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self.elb_conn.modify_lb_attribute(self.name, 'ConnectingSettings', attributes.connecting_settings)
 
     def _policy_name(self, policy_type):
@@ -1061,17 +1061,17 @@ class ElbManager(object):
         for p in getattr(elb_info.policies, policy_attrs['attr']):
             if str(p.__dict__['policy_name']) == str(policy[0]):
                 if str(p.__dict__[policy_attrs['dict_key']]) != str(policy_attrs['param_value'] or 0):
-                    if not module.check_mode:
+                    if not self.module.check_mode:
                         self._set_listener_policy(listeners_dict)
                         self._update_policy(policy_attrs['param_value'], policy_attrs['method'], policy_attrs['attr'], policy[0])
                     self.changed = True
                 break
         else:
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self._create_policy(policy_attrs['param_value'], policy_attrs['method'], policy[0])
             self.changed = True
 
-        if not module.check_mode:
+        if not self.module.check_mode:
             self._set_listener_policy(listeners_dict, policy)
 
     def select_stickiness_policy(self):
@@ -1106,7 +1106,7 @@ class ElbManager(object):
                     }
                     policy.append(self._policy_name(policy_attrs['type']))
 
-                    if not module.check_mode:
+                    if not self.module.check_mode:
                         self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
                 elif not self.module.boolean(self.stickiness['enabled']):
                     if len(elb_info.policies.lb_cookie_stickiness_policies):
@@ -1114,7 +1114,7 @@ class ElbManager(object):
                             self.changed = True
                     else:
                         self.changed = False
-                    if not module.check_mode:
+                    if not self.module.check_mode:
                         self._set_listener_policy(listeners_dict)
                         self._delete_policy(self.elb.name, self._policy_name(policy_type))
 
@@ -1134,18 +1134,18 @@ class ElbManager(object):
                         'param_value': self.stickiness['cookie']
                     }
                     policy.append(self._policy_name(policy_attrs['type']))
-                    if not module.check_mode:
+                    if not self.module.check_mode:
                         self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
                 elif not self.module.boolean(self.stickiness['enabled']):
                     if len(elb_info.policies.app_cookie_stickiness_policies):
                         if elb_info.policies.app_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
-                    if not module.check_mode:
+                    if not self.module.check_mode:
                         self._set_listener_policy(listeners_dict)
                         self._delete_policy(self.elb.name, self._policy_name(policy_type))
 
             else:
-                if not module.check_mode:
+                if not self.module.check_mode:
                     self._set_listener_policy(listeners_dict)
 
     def _get_backend_policies(self):
@@ -1181,12 +1181,12 @@ class ElbManager(object):
 
         # enable or disable proxy protocol
         if ensure_proxy_protocol:
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self._set_proxy_protocol_policy()
 
         # Make the backend policies so
         for item in replace:
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self.elb_conn.set_lb_policies_of_backend_server(self.elb.name, item['port'], item['policies'])
             self.changed = True
 
@@ -1204,7 +1204,7 @@ class ElbManager(object):
         proxy_policy = self._get_proxy_protocol_policy()
 
         if proxy_policy is None:
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self.elb_conn.create_lb_policy(
                     self.elb.name, 'ProxyProtocol-policy', 'ProxyProtocolPolicyType', {'ProxyProtocol': True}
                 )
@@ -1234,14 +1234,14 @@ class ElbManager(object):
 
         add_instances = self._diff_list(assert_instances, has_instances)
         if add_instances:
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self.elb_conn.register_instances(self.elb.name, add_instances)
             self.changed = True
 
         if self.purge_instance_ids:
             remove_instances = self._diff_list(has_instances, assert_instances)
             if remove_instances:
-                if not module.check_mode:
+                if not self.module.check_mode:
                     self.elb_conn.deregister_instances(self.elb.name, remove_instances)
                 self.changed = True
 
@@ -1268,7 +1268,7 @@ class ElbManager(object):
                 params['Tags.member.%d.Key' % (i + 1)] = key
                 params['Tags.member.%d.Value' % (i + 1)] = dictact[key]
 
-            if not module.check_mode:
+            if not self.module.check_mode:
                 self.elb_conn.make_request('AddTags', params)
             self.changed=True
 
@@ -1278,7 +1278,7 @@ class ElbManager(object):
             for i, key in enumerate(dictact):
                 params['Tags.member.%d.Key' % (i + 1)] = key
 
-            if not module.check_mode:
+              if not self.module.check_mode:
                 self.elb_conn.make_request('RemoveTags', params)
             self.changed=True
 
