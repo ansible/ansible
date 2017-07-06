@@ -166,16 +166,16 @@ def core(module):
     name = module.params['name']
     ssh_pub_key = module.params['ssh_pub_key']
 
-    rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
+    rest = Rest(module, {'Authorization': 'Bearer {0}'.format(api_token),
                          'Content-type': 'application/json'})
 
     fingerprint = fingerprint or ssh_key_fingerprint(ssh_pub_key)
-    response = rest.get('account/keys/{}'.format(fingerprint))
+    response = rest.get('account/keys/{0}'.format(fingerprint))
     status_code = response.status_code
     json = response.json
 
     if status_code not in (200, 404):
-        module.fail_json(msg='Error getting ssh key [{}: {}]'.format(
+        module.fail_json(msg='Error getting ssh key [{0}: {1}]'.format(
             status_code, response.json['message']), fingerprint=fingerprint)
 
     if state in ('present'):
@@ -195,7 +195,7 @@ def core(module):
             if status_code == 201:
                 module.exit_json(changed=True, data=json)
 
-            module.fail_json(msg='Error creating ssh key [{}: {}]'.format(
+            module.fail_json(msg='Error creating ssh key [{0}: {1}]'.format(
                 status_code, response.json['message']))
 
         elif status_code == 200:
@@ -209,13 +209,13 @@ def core(module):
             payload = {
                 'name': name,
             }
-            response = rest.put('account/keys/{}'.format(fingerprint), data=payload)
+            response = rest.put('account/keys/{0}'.format(fingerprint), data=payload)
             status_code = response.status_code
             json = response.json
             if status_code == 200:
                 module.exit_json(changed=True, data=json)
 
-            module.fail_json(msg='Error updating ssh key name [{}: {}]'.format(
+            module.fail_json(msg='Error updating ssh key name [{0}: {1}]'.format(
                 status_code, response.json['message']), fingerprint=fingerprint)
 
     elif state in ('absent'):
@@ -225,13 +225,13 @@ def core(module):
         if module.check_mode:
             module.exit_json(changed=True)
 
-        response = rest.delete('account/keys/{}'.format(fingerprint))
+        response = rest.delete('account/keys/{0}'.format(fingerprint))
         status_code = response.status_code
         json = response.json
         if status_code == 204:
             module.exit_json(changed=True)
 
-        module.fail_json(msg='Error creating ssh key [{}: {}]'.format(
+        module.fail_json(msg='Error creating ssh key [{0}: {1}]'.format(
             status_code, response.json['message']))
 
 
