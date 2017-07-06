@@ -29,7 +29,7 @@ module: vmware_host_facts
 short_description: Gathers facts about remote vmware host
 description:
     - Gathers facts about remote vmware host
-version_added: 2.4
+version_added: 2.3
 author:
     - Wei Gao
 notes:
@@ -177,4 +177,3 @@ from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
-
