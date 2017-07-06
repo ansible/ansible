@@ -1,0 +1,34 @@
+- name: Install packages for Trusty
+  apt:
+    name: "{{ item }"
+    state: present
+    update_cache: yes
+  with_items:
+  - "linux-image-extra-{{ ansible_distribution_version }}"
+  - linux-image-extra-virtual 
+  when: ansible_distribution_release == 'trusty'
+
+- name: Install pre-reqs
+  apt:
+    name: "{{ item }}""
+    state: present
+    update_cache: yes
+  with_items:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common
+
+- name: Add gpg key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+    validate_certs: no
+
+- name: Add Docker repo
+  shell: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"  
+
+- name: Install Docker CE
+  apt:
+    name: docker-ce
+    state: present
