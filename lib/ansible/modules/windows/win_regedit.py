@@ -137,7 +137,7 @@ EXAMPLES = r'''
   win_regedit:
     path: HKCU:\Software\MyCompany
     name: hello
-    data: %appdata%\local
+    data: '%appdata%\local'
     type: expandstring
 
 - name: Add or update registry path MyCompany, with multi string entry 'hello'

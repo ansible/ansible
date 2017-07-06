@@ -169,10 +169,12 @@ if ($type -in @("binary", "none")) {
     # convert the data from string to byte array if in hex: format
     if ($data -is [String]) {
         $data = [byte[]](Convert-RegExportHexStringToByteArray -string $data)
-    }
-
-    # convert from list of ints
-    if ($data -is [Array]) {
+    } elseif ($data -is [Int]) {
+        if ($data -gt 255) {
+            Fail-Json $result "cannot convert binary data '$data' to byte array, please specify this value as a yaml byte array or a comma separate hex value string"
+        }
+        $data = [byte[]]@([byte]$data)
+    } elseif ($data -is [Array]) {
         $data = [byte[]]$data
     }
 } elseif ($type -in @("dword", "qword")) {
