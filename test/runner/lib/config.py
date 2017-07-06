@@ -3,15 +3,96 @@
 from __future__ import absolute_import, print_function
 
 import os
+import sys
 
 from lib.util import (
-    EnvironmentConfig,
+    CommonConfig,
     is_shippable,
+    docker_qualify_image,
 )
 
-from lib.test import (
-    TestConfig,
+from lib.metadata import (
+    Metadata,
 )
+
+
+class EnvironmentConfig(CommonConfig):
+    """Configuration common to all commands which execute in an environment."""
+    def __init__(self, args, command):
+        """
+        :type args: any
+        """
+        super(EnvironmentConfig, self).__init__(args)
+
+        self.command = command
+
+        self.local = args.local is True
+
+        if args.tox is True or args.tox is False or args.tox is None:
+            self.tox = args.tox is True
+            self.tox_args = 0
+            self.python = args.python if 'python' in args else None  # type: str
+        else:
+            self.tox = True
+            self.tox_args = 1
+            self.python = args.tox  # type: str
+
+        self.docker = docker_qualify_image(args.docker)  # type: str
+        self.remote = args.remote  # type: str
+
+        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
+        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
+        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
+
+        self.tox_sitepackages = args.tox_sitepackages  # type: bool
+
+        self.remote_stage = args.remote_stage  # type: str
+        self.remote_aws_region = args.remote_aws_region  # type: str
+        self.remote_terminate = args.remote_terminate  # type: str
+
+        self.requirements = args.requirements  # type: bool
+
+        if self.python == 'default':
+            self.python = '.'.join(str(i) for i in sys.version_info[:2])
+
+        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
+
+        self.delegate = self.tox or self.docker or self.remote
+
+        if self.delegate:
+            self.requirements = True
+
+
+class TestConfig(EnvironmentConfig):
+    """Configuration common to all test commands."""
+    def __init__(self, args, command):
+        """
+        :type args: any
+        :type command: str
+        """
+        super(TestConfig, self).__init__(args, command)
+
+        self.coverage = args.coverage  # type: bool
+        self.coverage_label = args.coverage_label  # type: str
+        self.include = args.include  # type: list [str]
+        self.exclude = args.exclude  # type: list [str]
+        self.require = args.require  # type: list [str]
+
+        self.changed = args.changed  # type: bool
+        self.tracked = args.tracked  # type: bool
+        self.untracked = args.untracked  # type: bool
+        self.committed = args.committed  # type: bool
+        self.staged = args.staged  # type: bool
+        self.unstaged = args.unstaged  # type: bool
+        self.changed_from = args.changed_from  # type: str
+        self.changed_path = args.changed_path  # type: list [str]
+
+        self.lint = args.lint if 'lint' in args else False  # type: bool
+        self.junit = args.junit if 'junit' in args else False  # type: bool
+        self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
+
+        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
+        self.metadata_path = None
 
 
 class ShellConfig(EnvironmentConfig):

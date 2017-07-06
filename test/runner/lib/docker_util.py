@@ -12,10 +12,13 @@ from lib.executor import (
 
 from lib.util import (
     ApplicationError,
-    EnvironmentConfig,
     run_command,
     common_environment,
     display,
+)
+
+from lib.config import (
+    EnvironmentConfig,
 )
 
 BUFFER_SIZE = 256 * 256

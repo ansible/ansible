@@ -16,14 +16,12 @@ from lib.executor import (
 )
 
 from lib.config import (
+    TestConfig,
+    EnvironmentConfig,
     IntegrationConfig,
     ShellConfig,
     SanityConfig,
     UnitsConfig,
-)
-
-from lib.test import (
-    TestConfig,
 )
 
 from lib.core_ci import (
@@ -36,7 +34,6 @@ from lib.manage_ci import (
 
 from lib.util import (
     ApplicationError,
-    EnvironmentConfig,
     run_command,
     common_environment,
     pass_vars,

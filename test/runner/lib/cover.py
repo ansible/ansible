@@ -13,9 +13,12 @@ from lib.target import (
 from lib.util import (
     display,
     ApplicationError,
-    EnvironmentConfig,
     run_command,
     common_environment,
+)
+
+from lib.config import (
+    EnvironmentConfig,
 )
 
 from lib.executor import (

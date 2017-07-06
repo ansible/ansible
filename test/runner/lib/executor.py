@@ -37,7 +37,6 @@ from lib.cloud import (
 )
 
 from lib.util import (
-    EnvironmentConfig,
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
@@ -50,10 +49,6 @@ from lib.util import (
     is_binary_file,
     find_executable,
     raw_command,
-)
-
-from lib.test import (
-    TestConfig,
 )
 
 from lib.ansible_util import (
@@ -85,6 +80,8 @@ from lib.classification import (
 )
 
 from lib.config import (
+    TestConfig,
+    EnvironmentConfig,
     CompileConfig,
     IntegrationConfig,
     NetworkIntegrationConfig,
