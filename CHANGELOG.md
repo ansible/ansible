@@ -45,6 +45,7 @@ Ansible Changes By Release
 * fix for win_chocolatey where trying to upgrade all the packages as per the example docs fails
 * fix for win_chocolatey where it did not fail if the version set did not exist
 * fix for win_regedit always changing a reg key if the dword values set is a hex
+* fix for wait_for on non-Linux systems with newer versions of psutil
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
