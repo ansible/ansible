@@ -91,6 +91,12 @@ options:
     required: false
     default: present
     choices: ['present', 'absent']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
+    version_added: "2.4"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -160,6 +166,11 @@ def map_obj_to_ele(want):
         SubElement(user, 'name').text = item['name']
 
         if operation == 'replace':
+            if item['active']:
+                user.set('active', 'active')
+            else:
+                user.set('inactive', 'inactive')
+
             SubElement(user, 'class').text = item['role']
 
             if item.get('full_name'):
@@ -220,7 +231,8 @@ def map_params_to_obj(module):
             'full_name': get_value('full_name'),
             'role': get_value('role'),
             'sshkey': get_value('sshkey'),
-            'state': get_value('state')
+            'state': get_value('state'),
+            'active': get_value('active')
         })
 
         for key, value in iteritems(item):
@@ -247,7 +259,8 @@ def main():
 
         purge=dict(type='bool'),
 
-        state=dict(choices=['present', 'absent'], default='present')
+        state=dict(choices=['present', 'absent'], default='present'),
+        active=dict(default=True, type='bool')
     )
 
     mutually_exclusive = [('users', 'name')]

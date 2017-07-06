@@ -92,6 +92,13 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: junos_user
+        when: "limit_to in ['*', 'junos_user']"
+      rescue:
+        - set_fact: test_failed=true
+
 ###########
     - name: Has any previous test failed?
       fail:
