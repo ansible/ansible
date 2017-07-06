@@ -96,6 +96,7 @@ options:
       - Specifies whether or not the configuration is active or deactivated
     default: True
     choices: [True, False]
+    version_added: "2.4"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
