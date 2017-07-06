@@ -93,7 +93,6 @@ from ansible.module_utils.vyos import vyos_argument_spec, check_args
 def spec_to_commands(updates, module):
     commands = list()
     want, have = updates
-
     for w in want:
         prefix = w['prefix']
         next_hop = w['next_hop']
@@ -121,11 +120,14 @@ def config_to_dict(module):
             match = re.search(r'static route (\S+)', line, re.M)
             prefix = match.group(1)
             if 'next-hop' in line:
-                match = re.search(r'next-hop (\S+)', line, re.M)
-                next_hop = match.group(1)
-            if 'distance' in line:
-                match = re.search(r'distance (\S+)', line, re.M)
-                admin_distance = match.group(1)[1:-1]
+                match_hop = re.search(r'next-hop (\S+)', line, re.M)
+                next_hop = match_hop.group(1).strip("'")
+
+                match_distance = re.search(r'distance (\S+)', line, re.M)
+                if match_distance is not None:
+                    admin_distance = match_distance.group(1)[1:-1]
+                else:
+                    admin_distance = None
 
                 if admin_distance is not None:
                     obj.append({'prefix': prefix,
@@ -133,7 +135,8 @@ def config_to_dict(module):
                                 'admin_distance': admin_distance})
                 else:
                     obj.append({'prefix': prefix,
-                                'next_hop': next_hop})
+                                'next_hop': next_hop,
+                                'admin_distance': 'None'})
 
     return obj
 
