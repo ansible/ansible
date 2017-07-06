@@ -1,0 +1,71 @@
+---
+- debug: msg="START net_static_route junos/basic.yaml"
+
+- name: setup - remove static route
+  net_static_route:
+    address: 1.1.1.0/24
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Confgiure static route
+  net_static_route:
+    prefix: 1.1.1.0/24
+    next_hop: 3.3.3.3
+    admin_distance: 10
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.0/24</name>' in config.xml"
+      - "'<next-hop>3.3.3.3</next-hop>' in config.xml"
+
+- name: Confgiure static route (idempotent)
+  net_static_route:
+    prefix: 1.1.1.0/24
+    next_hop: 3.3.3.3
+    admin_distance: 10
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete static route
+  net_static_route:
+    prefix: 1.1.1.0/24
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.0/24</name>' not in config.xml"
+
+- name: Delete static route (idempotent)
+  net_static_route:
+    prefix: 1.1.1.0/24
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
