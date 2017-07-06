@@ -14,6 +14,7 @@ import stat
 import random
 import string
 import atexit
+import hashlib
 
 import lib.pytar
 import lib.thread
@@ -1199,6 +1200,7 @@ class EnvironmentDescription(object):
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
         pip_versions = dict((v, self.get_version([pip_paths[v], '--version'])) for v in sorted(pip_paths) if pip_paths[v])
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
+        known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 
         self.data = dict(
             python_paths=python_paths,
@@ -1206,6 +1208,7 @@ class EnvironmentDescription(object):
             pip_paths=pip_paths,
             pip_versions=pip_versions,
             pip_interpreters=pip_interpreters,
+            known_hosts_hash=known_hosts_hash,
         )
 
     def __str__(self):
@@ -1259,6 +1262,22 @@ class EnvironmentDescription(object):
         """
         with open(path) as script_fd:
             return script_fd.readline()
+
+    @staticmethod
+    def get_hash(path):
+        """
+        :type path: str
+        :rtype: str | None
+        """
+        if not os.path.exists(path):
+            return None
+
+        file_hash = hashlib.md5()
+
+        with open(path, 'rb') as file_fd:
+            file_hash.update(file_fd.read())
+
+        return file_hash.hexdigest()
 
 
 class NoChangesDetected(ApplicationWarning):
