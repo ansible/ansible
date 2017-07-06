@@ -64,7 +64,7 @@ def get_cpu_facts(host):
         'ansible_processor_vcpus': host.summary.hardware.numCpuThreads
     }
     return facts
-    
+
 
 def get_memory_facts(host):
     facts = {
@@ -80,8 +80,8 @@ def get_datastore_facts(host):
     for store in host.datastore:
         _tmp = {
             'name': store.summary.name,
-            'total': store.summary.capacity,
-            'free': store.summary.freeSpace
+            'total': sizeof_fmt(store.summary.capacity),
+            'free': sizeof_fmt(store.summary.freeSpace)
         }
         facts['ansible_datastore'].append(_tmp)
     return facts
@@ -119,6 +119,20 @@ def get_system_facts(host):
         'ansible_bios_version': host.hardware.biosInfo.biosVersion
     }
     return facts
+
+
+def sizeof_fmt(num):
+    """
+    Returns the human readable version of a file size
+
+    :param num:
+    :return:
+    """
+    for item in ['bytes', 'KB', 'MB', 'GB']:
+        if num < 1024.0:
+            return "%3.1f%s" % (num, item)
+        num /= 1024.0
+    return "%3.1f%s" % (num, 'TB')
 
 
 def get_obj(content, vimtype, name=None):
