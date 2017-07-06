@@ -13,9 +13,13 @@ from lib.target import (
 from lib.util import (
     display,
     ApplicationError,
-    EnvironmentConfig,
     run_command,
     common_environment,
+)
+
+from lib.config import (
+    CoverageConfig,
+    CoverageReportConfig,
 )
 
 from lib.executor import (
@@ -244,27 +248,3 @@ def get_coverage_group(args, coverage_file):
             group += '=%s' % names[part]
 
     return group
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: frozenset[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool
-
-
-class CoverageReportConfig(CoverageConfig):
-    """Configuration for the coverage report command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageReportConfig, self).__init__(args)
-
-        self.show_missing = args.show_missing  # type: bool
