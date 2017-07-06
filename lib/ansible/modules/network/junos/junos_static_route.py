@@ -101,12 +101,18 @@ EXAMPLES = """
 - name: deactivate static route configuration
   junos_static_route:
     address: 192.168.2.0/24
+    next_hop: 10.0.0.1
+    qualified_next_hop: 10.0.0.2
+    qualified_preference: 3
     state: present
     active: False
 
 - name: activate static route configuration
   junos_static_route:
     address: 192.168.2.0/24
+    next_hop: 10.0.0.1
+    qualified_next_hop: 10.0.0.2
+    qualified_preference: 3
     state: present
     active: True
 """
@@ -117,10 +123,15 @@ diff:
   returned: when configuration is changed.
   type: string
   sample: >
-         [edit vlans]
-         +   test-vlan-1 {
-         +       vlan-id 60;
-         +   }
+          [edit routing-options static]
+               route 2.2.2.0/24 { ... }
+          +    route 4.4.4.0/24 {
+                  next-hop 3.3.3.3;
+                  qualified-next-hop 5.5.5.5 {
+          +            preference 30;
+                   }
+          +        preference 10;
+          +    }
 """
 import collections
 
