@@ -5,7 +5,7 @@
 
 - name: Install docker 17
   zypper:
-    name: docker-17.04.0_ce-203.6.x86_64
+    name: docker-17.04.0_ce
     force: yes
     disable_gpg_check: yes
     update_cache: yes
