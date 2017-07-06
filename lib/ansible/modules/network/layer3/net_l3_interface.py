@@ -31,7 +31,7 @@ version_added: "2.4"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 short_description: Manage L3 interfaces on network devices
 description:
-  - This module provides declarative management of L3 interfaces 
+  - This module provides declarative management of L3 interfaces
     on network devices.
 options:
   name:
