@@ -66,6 +66,9 @@ options:
         default: "no"
         choices: [ "yes", "no" ]
 notes:  []
+requirements:
+    - opkg
+    - python
 '''
 EXAMPLES = '''
 - opkg:

@@ -59,7 +59,7 @@ options:
 notes:
     - One option other than name is required.
 requirements:
-    - An OpenWrt system
+    - An OpenWrt system (with python)
 '''
 
 EXAMPLES = '''
