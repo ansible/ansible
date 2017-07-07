@@ -400,7 +400,8 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
             'version': 'host_version',
             'gpugroup': 'gpu_group',
         }
-        self.allocation_states = {
+        # States only usable by the updateHost API
+        self.allocation_states_for_update = {
             'enabled': 'Enable',
             'disabled': 'Disable',
         }
@@ -438,12 +439,6 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
             return None
         return ','.join(host_tags)
 
-    def get_allocation_state(self):
-        allocation_state = self.module.params.get('allocation_state')
-        if allocation_state is None:
-            return None
-        return self.allocation_states[allocation_state]
-
     def get_host(self, refresh=False):
         if self.host is not None and not refresh:
             return self.host
@@ -459,12 +454,53 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
                     self.host = h
         return self.host
 
+    def _handle_allocation_state(self, host):
+        allocation_state = self.module.params.get('allocation_state')
+        if not allocation_state:
+            return host
+
+        host = self._set_host_allocation_state(host)
+
+        # In case host in maintenance and target is maintenance
+        if host['allocationstate'].lower() == allocation_state and allocation_state == 'maintenance':
+            return host
+
+        # Cancel maintenance if target state is enabled/disabled
+        elif allocation_state in list(self.allocation_states_for_update.keys()):
+            host = self.disable_maintenance(host)
+            host = self._update_host(host, self.allocation_states_for_update[allocation_state])
+
+        # Only an enabled host can put in maintenance
+        elif allocation_state == 'maintenance':
+            host = self._update_host(host, 'Enable')
+            host = self.enable_maintenance(host)
+
+        return host
+
+    def _set_host_allocation_state(self, host):
+        if host is None:
+            host['allocationstate'] = 'Enable'
+
+        # Set host allocationstate to be disabled/enabled
+        elif host['resourcestate'].lower() in list(self.allocation_states_for_update.keys()):
+                host['allocationstate'] = self.allocation_states_for_update[host['resourcestate'].lower()]
+
+        else:
+            host['allocationstate'] = host['resourcestate']
+
+        return host
+
     def present_host(self):
         host = self.get_host()
+
         if not host:
             host = self._create_host(host)
         else:
             host = self._update_host(host)
+
+        if host:
+            host = self._handle_allocation_state(host)
+
         return host
 
     def _get_url(self):
@@ -491,7 +527,6 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
             'podid': self.get_pod(key='id'),
             'zoneid': self.get_zone(key='id'),
             'clusterid': self.get_cluster(key='id'),
-            'allocationstate': self.get_allocation_state(),
             'hosttags': self.get_host_tags(),
         }
         if not self.module.check_mode:
@@ -501,13 +536,16 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
             host = host['host'][0]
         return host
 
-    def _update_host(self, host):
+    def _update_host(self, host, allocation_state=None):
         args = {
             'id': host['id'],
             'hosttags': self.get_host_tags(),
-            'allocationstate': self.get_allocation_state()
+            'allocationstate': allocation_state,
         }
-        host['allocationstate'] = self.allocation_states[host['resourcestate'].lower()]
+
+        if allocation_state is not None:
+            host = self._set_host_allocation_state(host)
+
         if self.has_changed(args, host):
             self.result['changed'] = True
             if not self.module.check_mode:
@@ -526,15 +564,14 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
                 'id': host['id'],
             }
             if not self.module.check_mode:
-                res = self.enable_maintenance()
+                res = self.enable_maintenance(host)
                 if res:
                     res = self.cs.deleteHost(**args)
                     if 'errortext' in res:
                         self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
         return host
 
-    def enable_maintenance(self):
-        host = self.get_host()
+    def enable_maintenance(self, host):
         if host['resourcestate'] not in ['PrepareForMaintenance', 'Maintenance']:
             self.result['changed'] = True
             args = {
@@ -544,8 +581,21 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
                 res = self.cs.prepareHostForMaintenance(**args)
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.poll_job(res, 'host')
+                host = self._poll_for_maintenance()
+        return host
+
+    def disable_maintenance(self, host):
+        if host['resourcestate'] in ['PrepareForMaintenance', 'Maintenance']:
+            self.result['changed'] = True
+            args = {
+                'id': host['id'],
+            }
+            if not self.module.check_mode:
+                res = self.cs.cancelHostMaintenance(**args)
+                if 'errortext' in res:
+                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 host = self.poll_job(res, 'host')
-                self._poll_for_maintenance()
         return host
 
     def _poll_for_maintenance(self):
@@ -571,14 +621,14 @@ def main():
     argument_spec.update(dict(
         name=dict(required=True, aliases=['ip_address']),
         url=dict(),
-        password=dict(default=None, no_log=True),
-        username=dict(default=None),
-        hypervisor=dict(choices=CS_HYPERVISORS, default=None),
-        allocation_state=dict(default=None),
-        pod=dict(default=None),
-        cluster=dict(default=None),
-        host_tags=dict(default=None, type='list'),
-        zone=dict(default=None),
+        password=dict(no_log=True),
+        username=dict(),
+        hypervisor=dict(choices=CS_HYPERVISORS),
+        allocation_state=dict(choices=['enabled', 'disabled', 'maintenance']),
+        pod=dict(),
+        cluster=dict(),
+        host_tags=dict(type='list'),
+        zone=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 
