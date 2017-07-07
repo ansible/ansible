@@ -88,6 +88,12 @@ options:
      required: false
      default: false
      version_added: "2.1"
+  quote_value:
+    description:
+     - Add quotation marks (") around the provided value.
+    required: false
+    default: false
+    version_added: "2.4"
   create:
      required: false
      choices: [ "yes", "no" ]
@@ -151,7 +157,8 @@ def match_active_opt(option, line):
 # do_ini
 
 def do_ini(module, filename, section=None, option=None, value=None,
-        state='present', backup=False, no_extra_spaces=False, create=True):
+        state='present', backup=False, no_extra_spaces=False, create=True,
+        quote_value=False):
 
     diff = {'before': '',
             'after': '',
@@ -193,9 +200,15 @@ def do_ini(module, filename, section=None, option=None, value=None,
     section_start = 0
     msg = 'OK'
     if no_extra_spaces:
-        assignment_format = '%s=%s\n'
+        if quote_value:
+            assignment_format = '%s="%s"\n'
+        else:
+            assignment_format = '%s=%s\n'
     else:
-        assignment_format = '%s = %s\n'
+        if quote_value:
+            assignment_format = '%s = "%s"\n'
+        else:
+            assignment_format = '%s = %s\n'
 
     for index, line in enumerate(ini_lines):
         if line.startswith('[%s]' % section):
@@ -287,6 +300,7 @@ def main():
             backup = dict(default='no', type='bool'),
             state = dict(default='present', choices=['present', 'absent']),
             no_extra_spaces = dict(required=False, default=False, type='bool'),
+            quote_value = dict(required=False, default=False, type='bool'),
             create=dict(default=True, type='bool')
         ),
         add_file_common_args = True,
@@ -301,8 +315,10 @@ def main():
     backup = module.params['backup']
     no_extra_spaces = module.params['no_extra_spaces']
     create = module.params['create']
+    quote_value = module.params['quote_value']
 
-    (changed,backup_file,diff,msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create)
+    (changed,backup_file,diff,msg) = do_ini(module, path, section, option,
+        value, state, backup, no_extra_spaces, create, quote_value)
 
     if not module.check_mode and os.path.exists(path):
         file_args = module.load_file_common_arguments(module.params)
