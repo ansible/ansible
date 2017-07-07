@@ -212,6 +212,10 @@ import re
 from distutils.version import StrictVersion
 from hashlib import md5
 
+from ansible.module_utils.basic import get_exception, AnsibleModule
+from ansible.module_utils.database import pg_quote_identifier, SQLParseError
+
+
 try:
     import psycopg2
     import psycopg2.extras
@@ -227,7 +231,9 @@ FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN'
 FLAGS_BY_VERSION = {'BYPASSRLS': '9.5.0'}
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
-                   database=frozenset(('CREATE', 'CONNECT', 'TEMPORARY', 'TEMP', 'ALL')),)
+                   database=frozenset(
+                       ('CREATE', 'CONNECT', 'TEMPORARY', 'TEMP', 'ALL')),
+                   )
 
 # map to cope with idiosyncracies of SUPERUSER and LOGIN
 PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
@@ -259,9 +265,11 @@ def user_exists(cursor, user):
 
 def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
     """Create a new database user (role)."""
-    # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a literal
+    # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
+    # literal
     query_password_data = dict(password=password, expires=expires)
-    query = ['CREATE USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+    query = ['CREATE USER %(user)s' %
+             {"user": pg_quote_identifier(user, 'role')}]
     if password is not None:
         query.append("WITH %(crypt)s" % {"crypt": encrypted})
         query.append("PASSWORD %(password)s")
@@ -273,11 +281,44 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
     return True
 
 
-def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
+def user_should_we_change_password(current_role_attrs, user, password, encrypted):
+    """Check if we should change the user's password.
+
+    Compare the proposed password with the existing one, comparing
+    hashes if encrypted. If we can't access it assume yes.
+    """
+
+    if current_role_attrs is None:
+        # on some databases, E.g. AWS RDS instances, there is no access to
+        # the pg_authid relation to check the pre-existing password, so we
+        # just assume password is different
+        return True
+
+    # Do we actually need to do anything?
+    pwchanging = False
+    if password is not None:
+        # 32: MD5 hashes are represented as a sequence of 32 hexadecimal digits
+        #  3: The size of the 'md5' prefix
+        # When the provided password looks like a MD5-hash, value of
+        # 'encrypted' is ignored.
+        if ((password.startswith('md5') and len(password) == 32 + 3) or encrypted == 'UNENCRYPTED'):
+            if password != current_role_attrs['rolpassword']:
+                pwchanging = True
+        elif encrypted == 'ENCRYPTED':
+            hashed_password = 'md5{0}'.format(md5(to_bytes(password) + to_bytes(user)).hexdigest())
+            if hashed_password != current_role_attrs['rolpassword']:
+                pwchanging = True
+
+    return pwchanging
+
+
+def user_alter(db_connection, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
-    # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a literal
+    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
+    # literal
     if user == 'PUBLIC':
         if password is not None:
             module.fail_json(msg="cannot change the password for PUBLIC user")
@@ -289,25 +330,16 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
     # Handle passwords.
     if not no_password_changes and (password is not None or role_attr_flags != '' or expires is not None):
         # Select password and all flag-like columns in order to verify changes.
-        select = "SELECT * FROM pg_authid where rolname=%(user)s"
-        cursor.execute(select, {"user": user})
-        # Grab current role attributes.
-        current_role_attrs = cursor.fetchone()
+        try:
+            select = "SELECT * FROM pg_authid where rolname=%(user)s"
+            cursor.execute(select, {"user": user})
+            # Grab current role attributes.
+            current_role_attrs = cursor.fetchone()
+        except psycopg2.ProgrammingError:
+            current_role_attrs = None
+            db_connection.rollback()
 
-        # Do we actually need to do anything?
-        pwchanging = False
-        if password is not None:
-            # 32: MD5 hashes are represented as a sequence of 32 hexadecimal digits
-            #  3: The size of the 'md5' prefix
-            # When the provided password looks like a MD5-hash, value of
-            # 'encrypted' is ignored.
-            if ((password.startswith('md5') and len(password) == 32 + 3) or encrypted == 'UNENCRYPTED'):
-                if password != current_role_attrs['rolpassword']:
-                    pwchanging = True
-            elif encrypted == 'ENCRYPTED':
-                hashed_password = 'md5{0}'.format(md5(to_bytes(password) + to_bytes(user)).hexdigest())
-                if hashed_password != current_role_attrs['rolpassword']:
-                    pwchanging = True
+        pwchanging = user_should_we_change_password(current_role_attrs, user, password, encrypted)
 
         role_attr_flags_changing = False
         if role_attr_flags:
@@ -381,7 +413,8 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         if not role_attr_flags_changing:
             return False
 
-        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+        alter = ['ALTER USER %(user)s' %
+                 {"user": pg_quote_identifier(user, 'role')}]
         if role_attr_flags:
             alter.append('WITH %s' % role_attr_flags)
 
@@ -533,8 +566,10 @@ def revoke_privileges(cursor, user, privs):
     if privs is None:
         return False
 
-    revoke_funcs = dict(table=revoke_table_privileges, database=revoke_database_privileges)
-    check_funcs = dict(table=has_table_privileges, database=has_database_privileges)
+    revoke_funcs = dict(table=revoke_table_privileges,
+                        database=revoke_database_privileges)
+    check_funcs = dict(table=has_table_privileges,
+                       database=has_database_privileges)
 
     changed = False
     for type_ in privs:
@@ -552,8 +587,10 @@ def grant_privileges(cursor, user, privs):
     if privs is None:
         return False
 
-    grant_funcs = dict(table=grant_table_privileges, database=grant_database_privileges)
-    check_funcs = dict(table=has_table_privileges, database=has_database_privileges)
+    grant_funcs = dict(table=grant_table_privileges,
+                       database=grant_database_privileges)
+    check_funcs = dict(table=has_table_privileges,
+                       database=has_database_privileges)
 
     changed = False
     for type_ in privs:
@@ -631,11 +668,13 @@ def parse_privs(privs, db):
         if ':' not in token:
             type_ = 'database'
             name = db
-            priv_set = frozenset(x.strip().upper() for x in token.split(',') if x.strip())
+            priv_set = frozenset(x.strip().upper()
+                                 for x in token.split(',') if x.strip())
         else:
             type_ = 'table'
             name, privileges = token.split(':', 1)
-            priv_set = frozenset(x.strip().upper() for x in privileges.split(',') if x.strip())
+            priv_set = frozenset(x.strip().upper()
+                                 for x in privileges.split(',') if x.strip())
 
         if not priv_set.issubset(VALID_PRIVS[type_]):
             raise InvalidPrivsError('Invalid privs specified for %s: %s' %
@@ -681,6 +720,7 @@ def get_valid_flags_by_version(cursor):
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -699,7 +739,8 @@ def main():
             encrypted=dict(type='bool', default='no'),
             no_password_changes=dict(type='bool', default='no'),
             expires=dict(default=None),
-            ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_mode=dict(default='prefer', choices=[
+                          'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None)
         ),
         supports_check_mode=True
@@ -745,16 +786,19 @@ def main():
         kw["host"] = module.params["login_unix_socket"]
 
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+        module.fail_json(
+            msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
 
     try:
         db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = db_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor)
 
     except TypeError:
         e = get_exception()
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+            module.fail_json(
+                msg='Postgresql server must be at least version 8.4 to support sslrootcert')
         module.fail_json(msg="unable to connect to database: %s" % e)
 
     except Exception:
@@ -774,13 +818,15 @@ def main():
     if state == "present":
         if user_exists(cursor, user):
             try:
-                changed = user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes)
+                changed = user_alter(db_connection, module, user, password,
+                                     role_attr_flags, encrypted, expires, no_password_changes)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
         else:
             try:
-                changed = user_add(cursor, user, password, role_attr_flags, encrypted, expires)
+                changed = user_add(cursor, user, password,
+                                   role_attr_flags, encrypted, expires)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
@@ -816,10 +862,6 @@ def main():
     kw['changed'] = changed
     module.exit_json(**kw)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
 
 if __name__ == '__main__':
     main()
