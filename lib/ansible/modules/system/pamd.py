@@ -90,7 +90,9 @@ options:
       after an existing rule matching type, control and module_path.  With
       either 'before' or 'after' new_type, new_control, and new_module_path
       must all be specified.  If state is 'args_absent' or 'args_present',
-      new_type, new_control, and new_module_path will be ignored.
+      new_type, new_control, and new_module_path will be ignored.  State
+      'absent' will remove the rule.  The 'absent' state was added in version
+      2.4 and is only available in Ansible versions >= 2.4.
   path:
     default: /etc/pam.d/
     description:
@@ -125,9 +127,8 @@ EXAMPLES = """
     new_module_path: pam_faillock.so
     state: before
 
-- name:
-  - Insert a new rule pam_wheel.so with argument 'use_uid' after an
-    existing rule pam_rootok.so
+- name: Insert a new rule pam_wheel.so with argument 'use_uid' after an \
+        existing rule pam_rootok.so
   pamd:
     name: su
     type: auth
@@ -194,11 +195,13 @@ change_count:
     type: int
     sample: 1
     returned: success
+    version_added: 2.4
 new_rule:
     description: The changes to the rule
     type: string
     sample: None      None None sha512 shadow try_first_pass use_authtok
     returned: success
+    version_added: 2.4
 updated_rule_(n):
     description: The rule(s) that was/were changed
     type: string
@@ -206,7 +209,8 @@ updated_rule_(n):
     - password      sufficient  pam_unix.so sha512 shadow try_first_pass
       use_authtok
     returned: success
-result:
+    version_added: 2.4
+action:
     description:
     - "That action that was taken and is one of: update_rule,
       insert_before_rule, insert_after_rule, args_present, args_absent,
@@ -214,12 +218,22 @@ result:
     returned: always
     type: string
     sample: "update_rule"
+    version_added: 2.4
+dest:
+    description:
+    - "Path to pam.d service that was changed.  This is only available in
+      Ansible version 2.3 and was removed in 2.4."
+    returned: success
+    type: string
+    sample: "/etc/pam.d/system-auth"
 ...
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import os
 import re
+import time
 
 
 # The PamdRule class encapsulates a rule in a pam.d service
@@ -254,18 +268,20 @@ class PamdRule(object):
         complicated = False
 
         if '[' in stringline:
-            pattern = re.compile(r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
-                                      \[([A-Za-z0-9_=\s]+)\]\s*  # Rule Control
-                                      ([A-Za-z0-9_\.]+)\s*       # Rule Path
-                                      ([A-Za-z0-9_=<>\s]*)""",   # Rule Args
-                                 re.X)
+            pattern = re.compile(
+                r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
+                    \[([A-Za-z0-9_=\s]+)\]\s*   # Rule Control
+                    ([A-Za-z0-9_\.]+)\s*        # Rule Path
+                    ([A-Za-z0-9_=<>\-\s]*)""",  # Rule Args
+                re.X)
             complicated = True
         else:
-            pattern = re.compile(r"""([\-A-Za-z0-9_]+)\s*       # Rule Type
-                                      ([A-Za-z0-9_]+)\s*        # Rule Control
-                                      ([A-Za-z0-9_\.]+)\s*      # Rule Path
-                                      ([A-Za-z0-9_=<>\s]*)""",  # Rule Args
-                                 re.X)
+            pattern = re.compile(
+                r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
+                    ([A-Za-z0-9_]+)\s*          # Rule Control
+                    ([A-Za-z0-9_\.]+)\s*        # Rule Path
+                    ([A-Za-z0-9_=<>\-\s]*)""",  # Rule Args
+                re.X)
 
         result = pattern.match(stringline)
 
@@ -320,7 +336,7 @@ class PamdService(object):
                 stringline += '\n'
             self.load_rules_from_string(stringline)
 
-        except Exception:
+        except IOError:
             e = get_exception()
             self.ansible.fail_json(msg='Unable to open/read PAM module \
                                    file %s with error %s.  And line %s' %
@@ -339,9 +355,18 @@ class PamdService(object):
     def write(self):
         if self.fname is None:
             self.fname = self.path + "/" + self.name
-        f = open(self.fname, 'w')
-        f.write(str(self))
-        f.close()
+        # If the file is a symbollic link, we'll write to the source.
+        pamd_file = os.path.realpath(self.fname)
+        temp_file = "/tmp/" + self.name + "_" + time.strftime("%y%m%d%H%M%S")
+        try:
+            f = open(temp_file, 'w')
+            f.write(str(self))
+            f.close()
+        except IOError:
+            self.ansible.fail_json(msg='Unable to create temporary \
+                                   file %s' % self.temp_file)
+
+        self.ansible.atomic_move(temp_file, pamd_file)
 
     def __str__(self):
         stringvalue = ''
@@ -423,7 +448,9 @@ def insert_before_rule(service, old_rule, new_rule):
                     new_rule.rule_control !=
                     service.rules[index - 1].rule_control or
                     new_rule.rule_module_path !=
-                    service.rules[index - 1].rule_module_path):
+                    service.rules[index - 1].rule_module_path or
+                    new_rule.rule_module_args !=
+                    service.rules[index - 1].rule_module_args):
                 service.rules.insert(index, new_rule)
                 changed = True
             if changed:
@@ -448,7 +475,9 @@ def insert_after_rule(service, old_rule, new_rule):
                     new_rule.rule_control !=
                     service.rules[index + 1].rule_control or
                     new_rule.rule_module_path !=
-                    service.rules[index + 1].rule_module_path):
+                    service.rules[index + 1].rule_module_path or
+                    new_rule.rule_module_args !=
+                    service.rules[index + 1].rule_module_args):
                 service.rules.insert(index + 1, new_rule)
                 changed = True
             if changed:
@@ -597,37 +626,33 @@ def main():
                         new_module_path,
                         module_arguments)
 
-    try:
-        if state == 'updated':
-            change, result = update_rule(pamd,
-                                         old_rule,
-                                         new_rule)
-        elif state == 'before':
-            change, result = insert_before_rule(pamd,
-                                                old_rule,
-                                                new_rule)
-        elif state == 'after':
-            change, result = insert_after_rule(pamd,
-                                               old_rule,
-                                               new_rule)
-        elif state == 'args_absent':
-            change, result = remove_module_arguments(pamd,
-                                                     old_rule,
-                                                     module_arguments)
-        elif state == 'args_present':
-            change, result = add_module_arguments(pamd,
-                                                  old_rule,
-                                                  module_arguments)
-        elif state == 'absent':
-            change, result = remove_rule(pamd,
-                                         old_rule)
+    if state == 'updated':
+        change, result = update_rule(pamd,
+                                     old_rule,
+                                     new_rule)
+    elif state == 'before':
+        change, result = insert_before_rule(pamd,
+                                            old_rule,
+                                            new_rule)
+    elif state == 'after':
+        change, result = insert_after_rule(pamd,
+                                           old_rule,
+                                           new_rule)
+    elif state == 'args_absent':
+        change, result = remove_module_arguments(pamd,
+                                                 old_rule,
+                                                 module_arguments)
+    elif state == 'args_present':
+        change, result = add_module_arguments(pamd,
+                                              old_rule,
+                                              module_arguments)
+    elif state == 'absent':
+        change, result = remove_rule(pamd,
+                                     old_rule)
 
-        if not module.check_mode and change:
-            pamd.write()
+    if not module.check_mode and change:
+        pamd.write()
 
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg='error running changing pamd: %s' % str(e))
     facts = {}
     facts['pamd'] = {'changed': change, 'result': result}
 
