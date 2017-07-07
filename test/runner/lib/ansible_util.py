@@ -7,6 +7,7 @@ import os
 from lib.util import common_environment
 from lib.config import IntegrationConfig
 
+
 def ansible_environment(args, color=True):
     """
     :type args: CommonConfig
