@@ -41,3 +41,11 @@
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
+  register: poweroff_d1_c1_f1
+
+- debug: var=poweroff_d1_c1_f1
+
+- name: make sure no changes were made
+  assert:
+    that:
+        - "poweroff_d1_c1_f1.results|map(attribute='changed')|unique|list == [False]"
