@@ -18,7 +18,7 @@
 - name: Install test requirements
   pip:
     name: pexpect
-    state: latest
+    state: present
 
 - name: record the test_command file
   set_fact: test_command_file={{output_dir | expanduser}}/test_command.py
