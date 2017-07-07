@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2017, Marc-Aurèle Brothier @marcaurele
+# (c) 2017, René Moser <mail@renemoser.net>
 #
 # This file is part of Ansible
 #
@@ -30,7 +31,9 @@ short_description: Manages NICs of an instance on Apache CloudStack based clouds
 description:
     - Add and remove nic to and from network
 version_added: "2.4"
-author: "Marc-Aurèle Brothier (@marcaurele)"
+author:
+  - "Marc-Aurèle Brothier (@marcaurele)"
+  - "René Moser (@resmo)"
 options:
   vm:
     description:
@@ -41,6 +44,11 @@ options:
     description:
       - Name of the network.
     required: true
+  ip_address:
+    description:
+      - IP address to be used for the nic.
+    required: false
+    default: null
   vpc:
     description:
       - Name of the VPC the C(vm) is related to.
@@ -86,6 +94,13 @@ EXAMPLES = '''
 - local_action:
     module: cs_instance_nic
     vm: privnet
+    network: privNetForBasicZone
+
+# Ensure IP address on a nic
+- local_action:
+    module: cs_instance_nic
+    vm: privnet
+    ip_address: 10.10.11.32
     network: privNetForBasicZone
 
 # Remove a secondary nic
@@ -176,44 +191,78 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
             return self.nic
         return None
 
+    def get_nic_from_result(self, result):
+        for nic in result.get('nic') or []:
+            if nic['networkid'] == self.get_network(key='id'):
+                return nic
+
     def add_nic(self):
         self.result['changed'] = True
         args = {
             'virtualmachineid': self.get_vm(key='id'),
             'networkid': self.get_network(key='id'),
+            'ipaddress': self.module.params.get('ip_address'),
         }
         if not self.module.check_mode:
             res = self.cs.addNicToVirtualMachine(**args)
             if 'errortext' in res:
                 self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
-            vm = self.poll_job(res, 'virtualmachine')
-            self.nic = vm['nic'][0]
+            if self.module.params.get('poll_async'):
+                vm = self.poll_job(res, 'virtualmachine')
+                self.nic = self.get_nic_from_result(result=vm)
         return self.nic
 
-    def remove_nic(self):
+    def update_nic(self, nic):
+        # Do not try to update if no IP address is given
+        ip_address = self.module.params.get('ip_address')
+        if not ip_address:
+            return nic
+
+        args = {
+            'nicid': nic['id'],
+            'ipaddress': ip_address,
+        }
+        if self.has_changed(args, nic, ['ipaddress']):
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                res = self.cs.updateVmNicIp(**args)
+                if 'errortext' in res:
+                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
+                if self.module.params.get('poll_async'):
+                    vm = self.poll_job(res, 'virtualmachine')
+                    self.nic = self.get_nic_from_result(result=vm)
+        return self.nic
+
+    def remove_nic(self, nic):
         self.result['changed'] = True
         args = {
             'virtualmachineid': self.get_vm(key='id'),
-            'nicid': self.get_nic()['id'],
+            'nicid': nic['id'],
         }
         if not self.module.check_mode:
             res = self.cs.removeNicFromVirtualMachine(**args)
             if 'errortext' in res:
                 self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-        return self.nic
+
+            if self.module.params.get('poll_async'):
+                self.poll_job(res, 'virtualmachine')
+        return nic
 
     def present_nic(self):
         nic = self.get_nic()
-        if nic:
-            return nic
-        return self.add_nic()
+        if not nic:
+            nic = self.add_nic()
+        else:
+            nic = self.update_nic(nic)
+        return nic
 
     def absent_nic(self):
         nic = self.get_nic()
         if nic:
-            return self.remove_nic()
-        return self.nic
+            return self.remove_nic(nic)
+        return nic
 
     def get_result(self, nic):
         super(AnsibleCloudStackInstanceNic, self).get_result(nic)
@@ -230,6 +279,7 @@ def main():
         vm=dict(required=True, aliases=['name']),
         network=dict(required=True),
         vpc=dict(default=None),
+        ip_address=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
         domain=dict(default=None),
         account=dict(default=None),
@@ -260,6 +310,7 @@ def main():
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
