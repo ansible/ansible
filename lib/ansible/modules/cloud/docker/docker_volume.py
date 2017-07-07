@@ -17,7 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -48,6 +47,10 @@ options:
       - >
         Dictionary of volume settings. Consult docker docs for valid options and values:
         U(https://docs.docker.com/engine/reference/commandline/volume_create/#driver-specific-options)
+
+  labels:
+    descriptions:
+      - List of labels to set for the volume
 
   force:
     description:
@@ -104,7 +107,9 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.six import iteritems
+from docker.errors import APIError
+
+from ansible.module_utils.six import iteritems, text_type
 from ansible.module_utils.docker_common import DockerBaseClass, AnsibleDockerClient
 
 
@@ -145,7 +150,11 @@ class DockerVolumeManager(object):
             self.absent()
 
     def get_existing_volume(self):
-        volumes = self.client.volumes()
+        try:
+            volumes = self.client.volumes()
+        except APIError as e:
+            self.client.fail(text_type(e))
+
         for volume in volumes[u'Volumes']:
             if volume['Name'] == self.parameters.volume_name:
                 return volume
@@ -181,12 +190,14 @@ class DockerVolumeManager(object):
     def create_volume(self):
         if not self.existing_volume:
             if not self.check_mode:
-                resp = self.client.create_volume(self.parameters.volume_name,
-                                                 driver=self.parameters.driver,
-                                                 driver_opts=self.parameters.driver_options,
-                                                 labels=self.parameters.labels)
-
-                self.existing_volume = self.client.inspect_volume(resp['Name'])
+                try:
+                    resp = self.client.create_volume(self.parameters.volume_name,
+                                                     driver=self.parameters.driver,
+                                                     driver_opts=self.parameters.driver_options,
+                                                     labels=self.parameters.labels)
+                    self.existing_volume = self.client.inspect_volume(resp['Name'])
+                except APIError as e:
+                    self.client.fail(text_type(e))
 
             self.results['actions'].append("Created volume %s with driver %s" % (self.parameters.volume_name, self.parameters.driver))
             self.results['changed'] = True
@@ -194,7 +205,10 @@ class DockerVolumeManager(object):
     def remove_volume(self):
         if self.existing_volume:
             if not self.check_mode:
-                self.client.remove_volume(self.parameters.volume_name)
+                try:
+                    self.client.remove_volume(self.parameters.volume_name)
+                except APIError as e:
+                    self.client.fail(text_type(e))
 
             self.results['actions'].append("Removed volume %s" % self.parameters.volume_name)
             self.results['changed'] = True
@@ -228,7 +242,7 @@ def main():
         state=dict(type='str', default='present', choices=['present', 'absent']),
         driver=dict(type='str', default='local'),
         driver_options=dict(type='dict', default={}),
-        labels=dict(type='dict', default={}),
+        labels=dict(type='list'),
         force=dict(type='bool', default=False),
         debug=dict(type='bool', default=False)
     )
