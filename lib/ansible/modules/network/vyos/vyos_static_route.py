@@ -37,13 +37,17 @@ options:
   prefix:
     description:
       - Network prefix of the static route.
+        C(mask) param should be ignored if C(prefix) is provided
+        with C(mask) value: C(prefix/mask).
+  mask:
+    description:
+      - Network prefix mask of the static route.
   next_hop:
     description:
       - Next hop IP of the static route.
   admin_distance:
     description:
       - Admin distance of the static route.
-    default: 1
   collection:
     description: List of static route definitions
   purge:
@@ -61,17 +65,24 @@ EXAMPLES = """
 - name: configure static route
   vyos_static_route:
     prefix: 192.168.2.0
+    mask: 24
+    next_hop: 10.0.0.1
+- name: configure static route prefix/mask
+  vyos_static_route:
+    prefix: 192.168.2.0/16
     next_hop: 10.0.0.1
 - name: remove configuration
   vyos_static_route:
     prefix: 192.168.2.0
+    mask: 16
     next_hop: 10.0.0.1
     state: absent
 - name: configure collections of static routes
   vyos_static_route:
     collection:
-      - { prefix: 192.168.2.0, next_hop: 10.0.0.1 }
-      - { prefix: 192.168.3.0, next_hop: 10.0.2.1 }
+      - { prefix: 192.168.2.0, mask: 24, next_hop: 10.0.0.1 }
+      - { prefix: 192.168.3.0, mask: 16, next_hop: 10.0.2.1 }
+      - { prefix: 192.168.3.0/16, next_hop: 10.0.2.1 }
 """
 
 RETURN = """
@@ -80,7 +91,7 @@ commands:
   returned: always
   type: list
   sample:
-    - set protocols static route 192.168.2.0 next-hop 10.0.0.1
+    - set protocols static route 192.168.2.0/16 next-hop 10.0.0.1
 """
 
 import re
@@ -95,15 +106,16 @@ def spec_to_commands(updates, module):
     want, have = updates
     for w in want:
         prefix = w['prefix']
+        mask = w['mask']
         next_hop = w['next_hop']
         admin_distance = w['admin_distance']
         state = w['state']
         del w['state']
 
         if state == 'absent' and w in have:
-            commands.append('delete protocols static route %s next-hop %s' % (prefix, next_hop))
+            commands.append('delete protocols static route %s/%s next-hop %s' % (prefix, mask, next_hop))
         elif state == 'present' and w not in have:
-            cmd = 'set protocols static route %s next-hop %s' % (prefix, next_hop)
+            cmd = 'set protocols static route %s/%s next-hop %s' % (prefix, mask, next_hop)
             if admin_distance != 'None':
                 cmd += ' distance %s' % (admin_distance)
             commands.append(cmd)
@@ -118,7 +130,8 @@ def config_to_dict(module):
     for line in data.split('\n'):
         if line.startswith('set protocols static route'):
             match = re.search(r'static route (\S+)', line, re.M)
-            prefix = match.group(1)
+            prefix = match.group(1).split('/')[0]
+            mask = match.group(1).split('/')[1]
             if 'next-hop' in line:
                 match_hop = re.search(r'next-hop (\S+)', line, re.M)
                 next_hop = match_hop.group(1).strip("'")
@@ -131,10 +144,12 @@ def config_to_dict(module):
 
                 if admin_distance is not None:
                     obj.append({'prefix': prefix,
+                                'mask': mask,
                                 'next_hop': next_hop,
                                 'admin_distance': admin_distance})
                 else:
                     obj.append({'prefix': prefix,
+                                'mask': mask,
                                 'next_hop': next_hop,
                                 'admin_distance': 'None'})
 
@@ -147,6 +162,9 @@ def map_params_to_obj(module):
     if 'collection' in module.params and module.params['collection']:
         for c in module.params['collection']:
             d = c.copy()
+            if '/' in d['prefix']:
+                d['mask'] = d['prefix'].split('/')[1]
+                d['prefix'] = d['prefix'].split('/')[0]
 
             if 'state' not in d:
                 d['state'] = module.params['state']
@@ -156,12 +174,18 @@ def map_params_to_obj(module):
             obj.append(d)
     else:
         prefix = module.params['prefix'].strip()
+        if '/' in prefix:
+            mask = prefix.split('/')[1]
+            prefix = prefix.split('/')[0]
+        else:
+            mask = module.params['mask'].strip()
         next_hop = module.params['next_hop'].strip()
         admin_distance = str(module.params['admin_distance'])
         state = module.params['state']
 
         obj.append({
             'prefix': prefix,
+            'mask': mask,
             'next_hop': next_hop,
             'admin_distance': admin_distance,
             'state': state
@@ -175,6 +199,7 @@ def main():
     """
     argument_spec = dict(
         prefix=dict(type='str'),
+        mask=dict(type='str'),
         next_hop=dict(type='str'),
         admin_distance=dict(type='int'),
         collection=dict(type='list'),
