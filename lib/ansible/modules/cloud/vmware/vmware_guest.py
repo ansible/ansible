@@ -1158,7 +1158,7 @@ class PyVmomiHelper(object):
                 elif self.params['esxi_hostname'] or self.params['cluster']:
                     relospec.pool = self.select_resource_pool_by_host(self.select_host())
                 else:
-                    self.module.fail_json(msg='Either esxi_hostname or cluster must be specified when cloning from a template and not specifying a resource_pool')
+                    self.module.fail_json(msg='esxi_hostname or cluster must be specified when cloning from a template and not specifying a resource_pool')
 
                 if self.params['snapshot_src'] is not None and self.params['linked_clone']:
                     relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
