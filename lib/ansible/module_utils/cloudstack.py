@@ -406,7 +406,6 @@ class AnsibleCloudStack(object):
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
-            'networkid': self.get_network(key='id'),
         }
         vms = self.cs.listVirtualMachines(**args)
         if vms:
