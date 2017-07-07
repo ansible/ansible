@@ -56,7 +56,7 @@ $result.runtime_seconds = $stopwatch.Elapsed.TotalSeconds
 $result.sent_localtime = $endsend_at.Trim()
 
 if ($result.rc -ne 0 ) {
-    Fail-Json $result "$output"
+    Fail-Json -obj $result -message "$output"
 }
   
 Exit-Json $result
