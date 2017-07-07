@@ -10,6 +10,7 @@ ACCELERATE_CONNECT_TIMEOUT:
   ini:
   - {key: accelerate_connect_timeout, section: accelerate}
   value_type: float
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_connect_timeout}
   version_added: "1.4"
@@ -23,12 +24,14 @@ ACCELERATE_DAEMON_TIMEOUT:
   ini:
   - {key: accelerate_daemon_timeout, section: accelerate}
   value_type: integer
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_daemon_timeout}
   version_added: "1.6"
 ACCELERATE_KEYS_DIR:
   default: ~/.fireball.keys
-  desc: 'TODO: write it'
+  desc: ''
+  deprecated: True
   env: [{name: ACCELERATE_KEYS_DIR}]
   ini:
   - {key: accelerate_keys_dir, section: accelerate}
@@ -40,6 +43,7 @@ ACCELERATE_KEYS_DIR_PERMS:
   env: [{name: ACCELERATE_KEYS_DIR_PERMS}]
   ini:
   - {key: accelerate_keys_dir_perms, section: accelerate}
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_keys_dir_perms}
 ACCELERATE_KEYS_FILE_PERMS:
@@ -48,6 +52,7 @@ ACCELERATE_KEYS_FILE_PERMS:
   env: [{name: ACCELERATE_KEYS_FILE_PERMS}]
   ini:
   - {key: accelerate_keys_file_perms, section: accelerate}
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_keys_file_perms}
 ACCELERATE_MULTI_KEY:
@@ -57,6 +62,7 @@ ACCELERATE_MULTI_KEY:
   ini:
   - {key: accelerate_multi_key, section: accelerate}
   value_type: boolean
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_multi_key}
 ACCELERATE_PORT:
@@ -66,6 +72,7 @@ ACCELERATE_PORT:
   ini:
   - {key: accelerate_port, section: accelerate}
   value_type: integer
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_port}
 ACCELERATE_TIMEOUT:
@@ -75,20 +82,24 @@ ACCELERATE_TIMEOUT:
   ini:
   - {key: accelerate_timeout, section: accelerate}
   value_type: integer
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_timeout}
 ALLOW_WORLD_READABLE_TMPFILES:
   default: False
-  desc: 'TODO: write it'
+  desc:
+    - This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task.
+    - It is useful when becoming an unprivileged user.
   env: []
   ini:
   - {key: allow_world_readable_tmpfiles, section: defaults}
   value_type: boolean
   vars: []
   yaml: {key: defaults.allow_world_readable_tmpfiles}
+  version_added: "2.1"
 ANSIBLE_COW_SELECTION:
   default: default
-  desc: 'TODO: write it'
+  desc: This allows you to chose a specific cowsay stencil for the banners or use 'random' to cycle through them.
   env: [{name: ANSIBLE_COW_SELECTION}]
   ini:
   - {key: cow_selection, section: defaults}
@@ -96,7 +107,7 @@ ANSIBLE_COW_SELECTION:
   yaml: {key: defaults.cow_selection}
 ANSIBLE_COW_WHITELIST:
   default: ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant', 'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep', 'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder', 'vader-koala', 'vader', 'www']
-  desc: 'TODO: write it'
+  desc: White list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
   env: [{name: ANSIBLE_COW_WHITELIST}]
   ini:
   - {key: cow_whitelist, section: defaults}
@@ -104,8 +115,8 @@ ANSIBLE_COW_WHITELIST:
   vars: []
   yaml: {key: defaults.cow_whitelist}
 ANSIBLE_FORCE_COLOR:
-  default: 
-  desc: 'TODO: write it'
+  default: False
+  desc: This options forces color mode even when running without a TTY
   env: [{name: ANSIBLE_FORCE_COLOR}]
   ini:
   - {key: force_color, section: defaults}
@@ -113,8 +124,8 @@ ANSIBLE_FORCE_COLOR:
   vars: []
   yaml: {key: defaults.force_color}
 ANSIBLE_NOCOLOR:
-  default: 
-  desc: 'TODO: write it'
+  default: False
+  desc: This setting allows suppressing colorizing output, which is used to give a better indication of failure and status information.
   env: [{name: ANSIBLE_NOCOLOR}]
   ini:
   - {key: nocolor, section: defaults}
@@ -122,8 +133,8 @@ ANSIBLE_NOCOLOR:
   vars: []
   yaml: {key: defaults.nocolor}
 ANSIBLE_NOCOWS:
-  default: 
-  desc: 'TODO: write it'
+  default: False
+  desc: If you have cowsay installed but want to avoid the 'cows' (why????), use this.
   env: [{name: ANSIBLE_NOCOWS}]
   ini:
   - {key: nocows, section: defaults}
@@ -132,15 +143,22 @@ ANSIBLE_NOCOWS:
   yaml: {key: defaults.nocows}
 ANSIBLE_SSH_ARGS:
   default: -C -o ControlMaster=auto -o ControlPersist=60s
-  desc: 'TODO: write it'
+  desc:
+    - If set, this will override the Ansible default ssh arguments.
+    - In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may be appropriate.
+    - Be aware that if `-o ControlPath` is set in ssh_args, the control path setting is not used.
   env: [{name: ANSIBLE_SSH_ARGS}]
   ini:
   - {key: ssh_args, section: ssh_connection}
   vars: []
   yaml: {key: ssh_connection.ssh_args}
 ANSIBLE_SSH_CONTROL_PATH:
-  default: 
-  desc: 'TODO: write it'
+  default: null
+  desc:
+    - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
+    - Since 2.3, if null, ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
+    - Before 2.3 it defaulted to `control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r`.
+    - Be aware that this setting is ignored if `-o ControlPath` is set in ssh args.
   env: [{name: ANSIBLE_SSH_CONTROL_PATH}]
   ini:
   - {key: control_path, section: ssh_connection}
@@ -148,7 +166,9 @@ ANSIBLE_SSH_CONTROL_PATH:
   yaml: {key: ssh_connection.control_path}
 ANSIBLE_SSH_CONTROL_PATH_DIR:
   default: ~/.ansible/cp
-  desc: 'TODO: write it'
+  desc:
+    - This sets the directory to use for ssh control path if the control path setting is null.
+    - Also, provides the `%(directory)s` variable for the control path setting.
   env: [{name: ANSIBLE_SSH_CONTROL_PATH_DIR}]
   ini:
   - {key: control_path_dir, section: ssh_connection}
@@ -156,15 +176,23 @@ ANSIBLE_SSH_CONTROL_PATH_DIR:
   yaml: {key: ssh_connection.control_path_dir}
 ANSIBLE_SSH_EXECUTABLE:
   default: ssh
-  desc: 'TODO: write it'
+  desc:
+    - This defines the location of the ssh binary. It defaults to `ssh` which will use the first ssh binary available in $PATH.
+    - This option is usually not required, it might be useful when access to system ssh is restricted,
+      or when using ssh wrappers to connect to remote hosts.
   env: [{name: ANSIBLE_SSH_EXECUTABLE}]
   ini:
   - {key: ssh_executable, section: ssh_connection}
   vars: []
   yaml: {key: ssh_connection.ssh_executable}
+  version_added: "2.2"
 ANSIBLE_SSH_PIPELINING:
   default: False
-  desc: 'TODO: write it'
+  desc:
+    - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
+      by executing many Ansible modules without actual file transfer.
+    - This can result in a very significant performance improvement when enabled.
+    - However this conflicts with privilege escalation (become). For example, when using “sudo:” operations you must first disable ‘requiretty’ in /etc/sudoers on all managed hosts, which is why it is disabled by default.
   env: [{name: ANSIBLE_SSH_PIPELINING}]
   ini:
   - {key: pipelining, section: ssh_connection}
@@ -1310,22 +1338,22 @@ PERSISTENT_CONNECT_TIMEOUT:
   yaml: {key: persistent_connection.connect_timeout}
 RETRY_FILES_ENABLED:
   default: True
-  desc: 'TODO: write it'
+  desc: This controls whether a failed Ansible playbook should create a .retry file.
   env: [{name: ANSIBLE_RETRY_FILES_ENABLED}]
   ini:
   - {key: retry_files_enabled, section: defaults}
   value_type: boolean
   vars: []
-  yaml: {key: defaults.retry_files_enabled}
+  yaml: {key: errors.retry.enabled}
 RETRY_FILES_SAVE_PATH:
   default: ~
-  desc: 'TODO: write it'
+  desc: This sets the path in which Ansible will save .retry files when a playbook fails and retry files are enabled.
   env: [{name: ANSIBLE_RETRY_FILES_SAVE_PATH}]
   ini:
   - {key: retry_files_save_path, section: defaults}
   value_type: path
   vars: []
-  yaml: {key: defaults.retry_files_save_path}
+  yaml: {key: errors.retry.path}
 SHOW_CUSTOM_STATS:
   default: False
   desc: 'TODO: write it'
