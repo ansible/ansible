@@ -64,6 +64,11 @@ options:
       - Remove all pagefiles in the system, not including automatic managed.
     type: bool
     default: 'no'
+  test_path:
+    description:
+      - Use Test-Path on the drive to make sure the drive is accessible before creating the pagefile.
+    type: bool
+    default: 'yes'
   state:
     description:
       - State of the pagefile.

@@ -45,6 +45,7 @@ $override =  Get-AnsibleParam -obj $params -name "override" -type "bool" -defaul
 $removeAll = Get-AnsibleParam -obj $params -name "remove_all" -type "bool" -default $false
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "query" -validateset "present","absent","query"
 $systemManaged = Get-AnsibleParam -obj $params -name "system_managed" -type "bool" -default $false
+$testPath = Get-AnsibleParam -obj $params -name "test_path" -type "bool" -default $true
 
 $result = @{
     changed = $false
@@ -101,7 +102,7 @@ if ($state -eq "absent") {
     }
 
     # Make sure drive is accessible
-    if (-not (Test-Path "${drive}:")) {
+    if (($test_path) -and (-not (Test-Path "${drive}:"))) {
         Fail-Json $result "Unable to access '${drive}:' drive"
     }
 
