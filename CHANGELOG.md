@@ -6,6 +6,7 @@ Ansible Changes By Release
 ### Bugfixes
 * Fix synchronize traceback with the docker connection plugin
 * Python3 fixes for azure modules
+* Python3 fix for pause module
 * Do not escape backslashes in the template lookup plugin to mirror what the template module does
 
 ## 2.3.2 "Ramble On" - TBD
