@@ -480,15 +480,11 @@ class PyVmomiHelper(object):
             # get all objects for this path ...
             f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
 
-
             if f_obj:
                 if isinstance(f_obj, vim.Datacenter):
                     f_obj = f_obj.vmFolder
 
                 for c_obj in f_obj.childEntity:
-
-                    if hasattr(c_obj, 'childEntity'):
-                        import q; q(c_obj.childEntity)
 
                     if not isinstance(c_obj, vim.VirtualMachine):
                         continue
