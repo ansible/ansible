@@ -43,13 +43,6 @@ options:
     description:
       - Next hop IP of the static route.
     required: true
-  admin_distance:
-    description:
-      - Admin distance of the static route.
-  next_hop:
-    description:
-      - Next hop IP of the static route.
-    required: true
   qualified_next_hop:
     description:
       - Qualified next hop IP of the static route. Qualified next hops allow
