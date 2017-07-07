@@ -34,6 +34,8 @@ options:
   src:
     description:
     - Executable or URL the shortcut points to.
+    - The executable needs to be in your PATH, or has to be an absolute
+      path to the executable.
   description:
     description:
     - Description for the shortcut.
@@ -42,7 +44,7 @@ options:
     description:
     - Destination file for the shortcuting file.
     - File name should have a C(.lnk) or C(.url) extension.
-    required: true
+    required: yes
   args:
     description:
     - Additional arguments for the executable defined in C(src).
@@ -51,7 +53,7 @@ options:
     - Working directory for executable defined in C(src).
   icon:
     description:
-    - Icon used for the shortcut
+    - Icon used for the shortcut.
     - File name should have a C(.ico) extension.
     - The file name is followed by a comma and the number in the library file (.dll) or use 0 for an image file.
   hotkey:
@@ -61,50 +63,56 @@ options:
     description:
     - Influences how the application is displayed when it is launched.
     choices:
-    - default
     - maximized
     - minimized
+    - normal
   state:
     description:
     - When C(present), creates or updates the shortcut.  When C(absent),
       removes the shortcut if it exists.
     choices:
-    - present
     - absent
-    default: 'present'
-author: Dag Wieers (@dagwieers)
+    - present
+    default: present
+author:
+- Dag Wieers (@dagwieers)
 notes:
 - 'The following options can include Windows environment variables: C(dest), C(args), C(description), C(dest), C(directory), C(icon) C(src)'
 - 'Windows has two types of shortcuts: Application and URL shortcuts. URL shortcuts only consists of C(dest) and C(src)'
 '''
 
 EXAMPLES = r'''
-# Create an application shortcut on the desktop
-- win_shortcut:
+- name: Create an application shortcut on the desktop
+  win_shortcut:
     src: C:\Program Files\Mozilla Firefox\Firefox.exe
     dest: C:\Users\Public\Desktop\Mozilla Firefox.lnk
     icon: C:\Program Files\Mozilla Firefox\Firefox.exe,0
 
-# Create the same shortcut using environment variables
-- win_shortcut:
+- name: Create the same shortcut using environment variables
+  win_shortcut:
     description: The Mozilla Firefox web browser
-    src: '%PROGRAMFILES%\Mozilla Firefox\Firefox.exe'
-    dest: '%PUBLIC%\Desktop\Mozilla Firefox.lnk'
-    icon: '%PROGRAMFILES\Mozilla Firefox\Firefox.exe,0'
-    directory: '%PROGRAMFILES%\Mozilla Firefox'
+    src: '%ProgramFiles%\Mozilla Firefox\Firefox.exe'
+    dest: '%Public%\Desktop\Mozilla Firefox.lnk'
+    icon: '%ProgramFiles\Mozilla Firefox\Firefox.exe,0'
+    directory: '%ProgramFiles%\Mozilla Firefox'
 
-# Create a URL shortcut to the Ansible website
-- win_shortcut:
-    src: 'https://ansible.com/'
-    dest: '%PUBLIC%\Desktop\Ansible website.url'
+- name: Create an application shortcut for an executable in PATH to your desktop
+  win_shortcut:
+    src: cmd.exe
+    dest: Desktop\Command prompt.lnk
 
-# Create an application shortcut for the Ansible website
-- win_shortcut:
-    src: '%PROGRAMFILES%\Google\Chrome\Application\chrome.exe'
-    dest: '%PUBLIC%\Desktop\Ansible website.lnk'
-    args: '--new-window https://ansible.com/'
-    directory: '%PROGRAMFILES%\Google\Chrome\Application'
-    icon: '%PROGRAMFILES%\Google\Chrome\Application\chrome.exe,0'
+- name: Create an application shortcut for the Ansible website
+  win_shortcut:
+    src: '%ProgramFiles%\Google\Chrome\Application\chrome.exe'
+    dest: '%UserProfile%\Desktop\Ansible website.lnk'
+    args: --new-window https://ansible.com/
+    directory: '%ProgramFiles%\Google\Chrome\Application'
+    icon: '%ProgramFiles%\Google\Chrome\Application\chrome.exe,0'
+
+- name: Create a URL shortcut for the Ansible website
+  win_shortcut:
+    src: https://ansible.com/
+    dest: '%Public%\Desktop\Ansible website.url'
 '''
 
 RETURN = '''

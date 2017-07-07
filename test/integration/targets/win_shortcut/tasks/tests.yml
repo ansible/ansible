@@ -1,0 +1,249 @@
+# Test code for the file module.
+# (c) 2017, Dag Wieers <dag@wieers.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Add Ansible website link on the desktop
+  win_shortcut:
+    src: https://ansible.com/
+    dest: '%UserProfile%\Desktop\Ansible website.url'
+    state: present
+  register: ansible_website_link_add
+
+- name: Check there was a change
+  assert:
+    that:
+    - ansible_website_link_add.changed == true
+    - ansible_website_link_add.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_add.src == 'https://ansible.com/'
+
+- name: Add Ansible website link on the desktop again
+  win_shortcut:
+    src: https://ansible.com/
+    dest: '%UserProfile%\Desktop\Ansible website.url'
+    state: present
+  register: ansible_website_link_add_again
+
+- name: Check there was no change (normal mode)
+  assert:
+    that:
+    - ansible_website_link_add_again.changed == false
+    - ansible_website_link_add_again.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_add_again.src == 'https://ansible.com/'
+  when: not in_check_mode
+
+- name: Check there was a change (check-mode)
+  assert:
+    that:
+    - ansible_website_link_add_again.changed == true
+    - ansible_website_link_add_again.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_add_again.src == 'https://ansible.com/'
+  when: in_check_mode
+
+- name: Remove link
+  win_shortcut:
+    dest: '%UserProfile%\Desktop\Ansible website.url'
+    state: absent
+  register: ansible_website_link_remove
+
+- name: Check there was a change (normal mode)
+  assert:
+    that:
+    - ansible_website_link_remove.changed == true
+    - ansible_website_link_remove.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+  when: not in_check_mode
+
+- name: Check there was no change (check-mode)
+  assert:
+    that:
+    - ansible_website_link_remove.changed == false
+    - ansible_website_link_remove.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+  when: in_check_mode
+
+- name: Remove link again
+  win_shortcut:
+    dest: '%UserProfile%\Desktop\Ansible website.url'
+    state: absent
+  register: ansible_website_link_remove_again
+
+- name: Check there was no change
+  assert:
+    that:
+    - ansible_website_link_remove_again.changed == false
+    - ansible_website_link_remove_again.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+
+- name: Add a regedit shortcut on the desktop
+  win_shortcut:
+    description: "Registry Editor"
+    src: regedit.exe
+    dest: '%Public%\Desktop\Registry Editor.lnk'
+    state: present
+  register: regedit_shortcut_add
+
+- name: Check there was a change
+  assert:
+    that:
+    - regedit_shortcut_add.changed == true
+    - regedit_shortcut_add.description == 'Registry Editor'
+    - regedit_shortcut_add.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+    - regedit_shortcut_add.src == 'C:\\Windows\\regedit.exe'
+
+- name: Add a regedit shortcut on the desktop again
+  win_shortcut:
+    description: "Registry Editor"
+    src: regedit.exe
+    dest: '%Public%\Desktop\Registry Editor.lnk'
+    state: present
+  register: regedit_shortcut_add_again
+
+- name: Check there was no change (normal mode)
+  assert:
+    that:
+    - regedit_shortcut_add_again.changed == false
+    - regedit_shortcut_add_again.description == 'Registry Editor'
+    - regedit_shortcut_add_again.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+    - regedit_shortcut_add_again.src == 'C:\\Windows\\regedit.exe'
+  when: not in_check_mode
+
+- name: Check there was a change (check-mode)
+  assert:
+    that:
+    - regedit_shortcut_add_again.changed == true
+    - regedit_shortcut_add_again.description == 'Registry Editor'
+    - regedit_shortcut_add_again.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+    - regedit_shortcut_add_again.src == 'C:\\Windows\\regedit.exe'
+  when: in_check_mode
+
+- name: Update a regedit shortcut on the desktop
+  win_shortcut:
+    description: "Registry Editor"
+    src: C:\BogusPath\regedit.exe
+    dest: '%Public%\Desktop\Registry Editor.lnk'
+    state: present
+  register: regedit_shortcut_update
+
+- name: Check there was a change
+  assert:
+    that:
+    - regedit_shortcut_update.changed == true
+    - regedit_shortcut_update.description == 'Registry Editor'
+    - regedit_shortcut_update.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+    - regedit_shortcut_update.src == 'C:\\BogusPath\\regedit.exe'
+
+- name: Update a regedit shortcut on the desktop again
+  win_shortcut:
+    description: "Registry Editor"
+    src: C:\BogusPath\regedit.exe
+    dest: '%Public%\Desktop\Registry Editor.lnk'
+    state: present
+  register: regedit_shortcut_update_again
+
+- name: Check there was no change (normal mode)
+  assert:
+    that:
+    - regedit_shortcut_update_again.changed == false
+    - regedit_shortcut_update_again.description == 'Registry Editor'
+    - regedit_shortcut_update_again.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+    - regedit_shortcut_update_again.src == 'C:\\BogusPath\\regedit.exe'
+  when: not in_check_mode
+
+- name: Check there was a change (check-mode)
+  assert:
+    that:
+    - regedit_shortcut_update_again.changed == true
+    - regedit_shortcut_update_again.description == 'Registry Editor'
+    - regedit_shortcut_update_again.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+    - regedit_shortcut_update_again.src == 'C:\\BogusPath\\regedit.exe'
+  when: in_check_mode
+
+- name: Add an (explicit) icon
+  win_shortcut:
+    description: "Registry Editor"
+    src: C:\Windows\regedit.exe
+    dest: '%Public%\Desktop\Registry Editor.lnk'
+    icon: 'C:\Windows\regedit.exe,0'
+    state: present
+  register: regedit_shortcut_add_icon
+
+- name: Check there was a change
+  assert:
+    that:
+    - regedit_shortcut_add_icon.changed == true
+    - regedit_shortcut_add_icon.description == 'Registry Editor'
+    - regedit_shortcut_add_icon.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+    - regedit_shortcut_add_icon.icon == 'C:\\Windows\\regedit.exe,0'
+    - regedit_shortcut_add_icon.src == 'C:\\Windows\\regedit.exe'
+
+- name: Add an (explicit) icon again
+  win_shortcut:
+    description: "Registry Editor"
+    src: C:\Windows\regedit.exe
+    dest: '%Public%\Desktop\Registry Editor.lnk'
+    icon: 'C:\Windows\regedit.exe,0'
+    state: present
+  register: regedit_shortcut_add_icon_again
+
+- name: Check there was no change (normal mode)
+  assert:
+    that:
+    - regedit_shortcut_add_icon_again.changed == false
+    - regedit_shortcut_add_icon_again.description == 'Registry Editor'
+    - regedit_shortcut_add_icon_again.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+    - regedit_shortcut_add_icon_again.icon == 'C:\\Windows\\regedit.exe,0'
+    - regedit_shortcut_add_icon_again.src == 'C:\\Windows\\regedit.exe'
+  when: not in_check_mode
+
+- name: Check there was a change (check-mode)
+  assert:
+    that:
+    - regedit_shortcut_add_icon_again.changed == true
+    - regedit_shortcut_add_icon_again.description == 'Registry Editor'
+    - regedit_shortcut_add_icon_again.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+    - regedit_shortcut_add_icon_again.icon == 'C:\\Windows\\regedit.exe,0'
+    - regedit_shortcut_add_icon_again.src == 'C:\\Windows\\regedit.exe'
+  when: in_check_mode
+
+- name: Remove shortcut
+  win_shortcut:
+    dest: '%Public%\Desktop\Registry Editor.lnk'
+    state: absent
+  register: regedit_shortcut_remove
+
+- name: Check there was a change (normal mode)
+  assert:
+    that:
+    - regedit_shortcut_remove.changed == true
+    - regedit_shortcut_remove.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+  when: not in_check_mode
+
+- name: Check there was no change (check-mode)
+  assert:
+    that:
+    - regedit_shortcut_remove.changed == false
+    - regedit_shortcut_remove.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+  when: in_check_mode
+
+- name: Remove shortcut again
+  win_shortcut:
+    dest: '%Public%\Desktop\Registry Editor.lnk'
+    state: absent
+  register: regedit_shortcut_remove_again
+
+- name: Check there was no change
+  assert:
+    that:
+    - regedit_shortcut_remove_again.changed == false
+    - regedit_shortcut_remove_again.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
