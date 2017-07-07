@@ -34,9 +34,8 @@ description:
     - Create new triggers.
     - Edit existing triggers parameters.
     - Delete triggers.
-version_added: '2.3'
-author:
-    - SKB Kontur
+version_added: '2.4'
+author: 'SKB Kontur'
 requirements:
     - 'python >= 2.7'
     - 'moira-client >= 0.4'
@@ -117,7 +116,7 @@ options:
     required: False
     default: None
 notes:
-    - View https://github.com/moira-alert/ansible-module for more details.
+    - More details at https://github.com/moira-alert/ansible-module.
 '''
 
 EXAMPLES = '''
@@ -249,7 +248,7 @@ class MoiraAnsible(object):
         '''
 
         desc = 'API Unavailable'
-        components = {'pattern', 'tag', 'trigger'}
+        components = 'pattern', 'tag', 'trigger'
 
         for component in components:
 
@@ -541,19 +540,18 @@ def main():
                            'pip install moira-client'
 
     api = {}
-    api_parameters = {
-        'api_url', 'login', 'auth_user', 'auth_pass'}
+    api_parameters = 'api_url', 'login', 'auth_user', 'auth_pass'
 
     for parameter in api_parameters:
         if module.params[parameter]:
             api.update({parameter: module.params[parameter]})
 
     trigger = {}
-    trigger_parameters_static = {
-        'name', 'ttl', 'ttl_state',
-        'targets', 'warn_value', 'error_value'}
-    trigger_parameters_dynamic = {
-        'expression', 'disabled_days', 'desc', 'tags'}
+    trigger_parameters_static = 'name', 'ttl', 'ttl_state', \
+                                'targets', 'warn_value', 'error_value'
+
+    trigger_parameters_dynamic = 'expression', 'disabled_days', \
+                                 'desc', 'tags'
 
     for parameter in trigger_parameters_static:
         if module.params[parameter]:
