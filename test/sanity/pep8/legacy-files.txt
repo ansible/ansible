@@ -15,7 +15,6 @@ lib/ansible/modules/cloud/amazon/ec2_ami.py
 lib/ansible/modules/cloud/amazon/ec2_ami_copy.py
 lib/ansible/modules/cloud/amazon/ec2_ami_find.py
 lib/ansible/modules/cloud/amazon/ec2_customer_gateway.py
-lib/ansible/modules/cloud/amazon/ec2_eip.py
 lib/ansible/modules/cloud/amazon/ec2_elb.py
 lib/ansible/modules/cloud/amazon/ec2_elb_facts.py
 lib/ansible/modules/cloud/amazon/ec2_elb_lb.py
