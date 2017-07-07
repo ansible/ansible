@@ -109,8 +109,8 @@ def get_network_facts(host):
         _tmp = {
             'device': device,
             'ipv4': {
-                 'address': nic.spec.ip.ipAddress,
-                 'netmask': nic.spec.ip.subnetMask
+                'address': nic.spec.ip.ipAddress,
+                'netmask': nic.spec.ip.subnetMask
             },
             'macaddress': nic.spec.mac,
             'mtu': nic.spec.mtu
