@@ -1,0 +1,12 @@
+#- name: make sure pyvmomi is installed
+#  pip:
+#    name: pyvmomi
+#    state: latest
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
+
+- include: poweroff_d1_c1_f0.yml
+- include: poweroff_d1_c1_f1.yml

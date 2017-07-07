@@ -213,6 +213,16 @@ def find_host_portgroup_by_name(host, portgroup_name):
     return None
 
 
+def _get_vm_prop(vm, expression):
+    """Safely get a property or return None"""
+    result = None
+    try:
+        result = eval(expression)
+    except:
+        pass
+    return result
+
+
 def gather_vm_facts(content, vm):
     """ Gather facts from vim.VirtualMachine object. """
     facts = {
@@ -225,8 +235,10 @@ def gather_vm_facts(content, vm):
         'hw_processor_count': vm.config.hardware.numCPU,
         'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
-        'guest_tools_status': vm.guest.toolsRunningStatus,
-        'guest_tools_version': vm.guest.toolsVersion,
+        #'guest_tools_status': vm.guest.toolsRunningStatus,
+        'guest_tools_status': _get_vm_prop(vm, 'vm.guest.toolsRunningStatus'),
+        #'guest_tools_version': vm.guest.toolsVersion,
+        'guest_tools_version': _get_vm_prop(vm, 'vm.guest.toolsVersion'),
         'ipv4': None,
         'ipv6': None,
         'annotation': vm.config.annotation,
@@ -249,8 +261,10 @@ def gather_vm_facts(content, vm):
         facts['customvalues'][kn] = value_obj.value
 
     net_dict = {}
-    for device in vm.guest.net:
-        net_dict[device.macAddress] = list(device.ipAddress)
+    vmnet = _get_vm_prop(vm, 'vm.guest.net')
+    if vmnet:
+        for device in vm.guest.net:
+            net_dict[device.macAddress] = list(device.ipAddress)
 
     for k, v in iteritems(net_dict):
         for ipaddress in v:
@@ -317,6 +331,9 @@ def get_current_snap_obj(snapshots, snapob):
 
 def list_snapshots(vm):
     result = {}
+    snapshot = _get_vm_prop(vm, 'vm.snapshot')
+    if not snapshot:
+        return result
     if vm.snapshot is None:
         return result
 
