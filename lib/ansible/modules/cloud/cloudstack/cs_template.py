@@ -59,7 +59,9 @@ options:
       - Zone is required when using direct http upload.
       - Compatible with CloudStack 4.6 and above.
     version_added: '2.4'
-    requirements: [ requests, requests_toolbelt ]
+    requirements:
+        - requests
+        - requests_toolbelt
     required: false
     default: null
   snapshot:
