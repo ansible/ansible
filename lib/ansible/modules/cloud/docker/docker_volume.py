@@ -49,7 +49,7 @@ options:
         U(https://docs.docker.com/engine/reference/commandline/volume_create/#driver-specific-options)
 
   labels:
-    descriptions:
+    description:
       - List of labels to set for the volume
 
   force:
