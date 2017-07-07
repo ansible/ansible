@@ -372,30 +372,34 @@ def create_launch_config(connection, module):
             launch_configs = connection.describe_launch_configurations(
                 LaunchConfigurationNames=[name]).get('LaunchConfigurations')
             changed = True
+            if len(launch_configs) > 0:
+                launch_config = launch_configs[0]
+            else:
+                module.fail_json(msg="error creating launch configuration. " +
+                                 "no launch configuration returned from boto3")
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
 
-    if len(launch_configs) > 0:
-        result = dict(
-                     ((a[0], a[1]) for a in launch_configs[0].items()
-                      if a[0] not in ('connection', 'created_time',
-                                      'instance_monitoring',
-                                      'block_device_mappings'))
-        )
+    result = dict(
+                 ((a[0], a[1]) for a in launch_config.items()
+                  if a[0] not in ('connection', 'created_time',
+                                  'instance_monitoring',
+                                  'block_device_mappings'))
+    )
 
-    result['CreatedTime'] = str(launch_configs[0].get('CreatedTime'))
+    result['CreatedTime'] = str(launch_config.get('CreatedTime'))
 
-    if launch_configs[0].get('InstanceMonitoring') is True:
+    if launch_config.get('InstanceMonitoring') is True:
         result['InstanceMonitoring'] = True
     else:
         try:
-            result['InstanceMonitoring'] = module.boolean(launch_configs[0].get(
+            result['InstanceMonitoring'] = module.boolean(launch_config.get(
                 'InstanceMonitoring').get('Enabled'))
         except AttributeError:
             result['InstanceMonitoring'] = False
-    if launch_configs[0].get('BlockDeviceMappings') is not None:
+    if launch_config.get('BlockDeviceMappings') is not None:
         result['BlockDeviceMappings'] = []
-        for bdm in launch_configs[0].get('BlockDeviceMappings'):
+        for bdm in launch_config.get('BlockDeviceMappings'):
             result['BlockDeviceMappings'].append(dict(device_name=bdm.get(
                 'DeviceName'), virtual_name=bdm.get('VirtualName')))
             if bdm.get('Ebs') is not None:
@@ -420,16 +424,20 @@ def create_launch_config(connection, module):
 
 
 def delete_launch_config(connection, module):
-    name = module.params.get('name')
-    launch_configs = connection.describe_launch_configurations(
-        LaunchConfigurationNames=[name]).get('LaunchConfigurations')
-    if launch_configs and len(launch_configs) > 0:
-        connection.delete_launch_configuration(
-            LaunchConfigurationName=launch_configs[0].get(
-                'LaunchConfigurationName'))
-        module.exit_json(changed=True)
-    else:
-        module.exit_json(changed=False)
+    try:
+        name = module.params.get('name')
+        launch_configs = connection.describe_launch_configurations(
+            LaunchConfigurationNames=[name]).get('LaunchConfigurations')
+        if launch_configs and len(launch_configs) > 0:
+            connection.delete_launch_configuration(
+                LaunchConfigurationName=launch_configs[0].get(
+                    'LaunchConfigurationName'))
+            module.exit_json(changed=True)
+        else:
+            module.exit_json(changed=False)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=str(e))
+
 
 
 def main():
