@@ -111,7 +111,7 @@ class TestIosxrConfigModule(TestIosxrModule):
         lines = ['username admin', 'group root-system', 'secret P@ssw0rd']
         set_module_args(dict(lines=lines, admin=True))
         self.execute_module(changed=True, commands=lines)
- 
+
     def test_iosxr_config_match_none(self):
         lines = ['ip address 1.2.3.4 255.255.255.0', 'description test string']
         parents = ['interface GigabitEthernet0/0']
