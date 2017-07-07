@@ -107,8 +107,13 @@ project:
   sample: example project
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
@@ -117,45 +122,42 @@ class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
         super(AnsibleCloudStackInstanceGroup, self).__init__(module)
         self.instance_group = None
 
-
     def get_instance_group(self):
         if self.instance_group:
             return self.instance_group
 
         name = self.module.params.get('name')
 
-        args                = {}
-        args['account']     = self.get_account('name')
-        args['domainid']    = self.get_domain('id')
-        args['projectid']   = self.get_project('id')
-
+        args = {
+            'account': self.get_account('name'),
+            'domainid': self.get_domain('id'),
+            'projectid': self.get_project('id'),
+        }
         instance_groups = self.cs.listInstanceGroups(**args)
         if instance_groups:
             for g in instance_groups['instancegroup']:
-                if name in [ g['name'], g['id'] ]:
+                if name in [g['name'], g['id']]:
                     self.instance_group = g
                     break
         return self.instance_group
-
 
     def present_instance_group(self):
         instance_group = self.get_instance_group()
         if not instance_group:
             self.result['changed'] = True
 
-            args                = {}
-            args['name']        = self.module.params.get('name')
-            args['account']     = self.get_account('name')
-            args['domainid']    = self.get_domain('id')
-            args['projectid']   = self.get_project('id')
-
+            args = {
+                'name': self.module.params.get('name'),
+                'account': self.get_account('name'),
+                'domainid': self.get_domain('id'),
+                'projectid': self.get_project('id'),
+            }
             if not self.module.check_mode:
                 res = self.cs.createInstanceGroup(**args)
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 instance_group = res['instancegroup']
         return instance_group
-
 
     def absent_instance_group(self):
         instance_group = self.get_instance_group()
@@ -171,11 +173,11 @@ class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        state = dict(default='present', choices=['present', 'absent']),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
+        name=dict(required=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
     ))
 
     module = AnsibleModule(
@@ -200,7 +202,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
