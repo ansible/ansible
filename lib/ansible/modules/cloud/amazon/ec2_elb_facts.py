@@ -208,7 +208,6 @@ class ElbInformation(object):
                 elb_info['instances_inservice_percent'] = 0.
         return elb_info
 
-
     def list_elbs(self):
         elb_array, token = [], None
         get_elb_with_backoff = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)
