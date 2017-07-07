@@ -595,6 +595,9 @@ def integration_environment(args, target, cmd):
         ANSIBLE_CALLBACK_WHITELIST='junit',
     )
 
+    if args.debug_strategy:
+        env.update(dict(ANSIBLE_STRATEGY='debug'))
+
     env.update(integration)
 
     cloud_environment = get_cloud_environment(args, target)
