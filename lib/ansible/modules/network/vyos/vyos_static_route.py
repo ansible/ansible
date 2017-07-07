@@ -38,7 +38,7 @@ options:
     description:
       - Network prefix of the static route.
         C(mask) param should be ignored if C(prefix) is provided
-        with C(mask) value: C(prefix/mask).
+        with C(mask) value C(prefix/mask).
   mask:
     description:
       - Network prefix mask of the static route.
