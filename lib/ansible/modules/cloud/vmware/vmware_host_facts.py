@@ -29,9 +29,9 @@ module: vmware_host_facts
 short_description: Gathers facts about remote vmware host
 description:
     - Gathers facts about remote vmware host
-version_added: 2.3
+version_added: 2.4
 author:
-    - Wei Gao
+    - Wei Gao (@woshihaoren)
 notes:
     - Tested on vSphere 5.5
 requirements:
@@ -49,6 +49,17 @@ EXAMPLES = '''
     password: password
 '''
 
+RETURN = '''
+instance:
+    description: system info about the host machine
+    returned: always
+    type: dict
+    sample: None
+'''
+
+from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec
+from ansible.module_utils.basic import AnsibleModule
+
 try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
@@ -58,9 +69,9 @@ except ImportError:
 
 def get_cpu_facts(host):
     facts = {
-        'ansible_processor': host.summary.hardware.cpuModel, 
-        'ansible_processor_cores': host.summary.hardware.numCpuCores, 
-        'ansible_processor_count': host.summary.hardware.numCpuPkgs, 
+        'ansible_processor': host.summary.hardware.cpuModel,
+        'ansible_processor_cores': host.summary.hardware.numCpuCores,
+        'ansible_processor_count': host.summary.hardware.numCpuPkgs,
         'ansible_processor_vcpus': host.summary.hardware.numCpuThreads
     }
     return facts
@@ -68,8 +79,8 @@ def get_cpu_facts(host):
 
 def get_memory_facts(host):
     facts = {
-        'ansible_memfree_mb': host.hardware.memorySize // 1024 // 1024 - host.summary.quickStats.overallMemoryUsage, 
-        'ansible_memtotal_mb': host.hardware.memorySize // 1024 // 1024, 
+        'ansible_memfree_mb': host.hardware.memorySize // 1024 // 1024 - host.summary.quickStats.overallMemoryUsage,
+        'ansible_memtotal_mb': host.hardware.memorySize // 1024 // 1024,
     }
     return facts
 
@@ -100,7 +111,7 @@ def get_network_facts(host):
             'ipv4': {
                  'address': nic.spec.ip.ipAddress,
                  'netmask': nic.spec.ip.subnetMask
-             },
+            },
             'macaddress': nic.spec.mac,
             'mtu': nic.spec.mtu
         }
@@ -191,8 +202,6 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
