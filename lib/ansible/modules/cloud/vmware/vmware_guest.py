@@ -1099,16 +1099,11 @@ class PyVmomiHelper(object):
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
 
         destfolder = None
-        if not self.params['folder'].startswith('/'):
-            #self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
-            pass
 
-        #f_obj = self.content.searchIndex.FindByInventoryPath('/%(datacenter)s%(folder)s' % self.params)
         f_obj = self.content.searchIndex.FindByInventoryPath('%(folder)s' % self.params)
         if f_obj is None:
             self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
         destfolder = f_obj
-        import q; q(destfolder)
 
         if self.params['template']:
             # FIXME: need to search for this in the same way as guests to ensure accuracy
@@ -1117,7 +1112,6 @@ class PyVmomiHelper(object):
                 self.module.fail_json(msg="Could not find a template named %(template)s" % self.params)
         else:
             vm_obj = None
-        import q; q(vm_obj)
 
         if self.params['resource_pool']:
             resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
@@ -1127,8 +1121,6 @@ class PyVmomiHelper(object):
 
         # set the destination datastore for VM & disks
         (datastore, datastore_name) = self.select_datastore(vm_obj)
-        import q; q(datastore)
-        import q; q(datastore_name)
 
         self.configspec = vim.vm.ConfigSpec(cpuHotAddEnabled=True, memoryHotAddEnabled=True)
         self.configspec.deviceChange = []
