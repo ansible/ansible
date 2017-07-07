@@ -8,6 +8,7 @@ Ansible Changes By Release
 * Python3 fixes for azure modules
 * Python3 fix for pause module
 * Do not escape backslashes in the template lookup plugin to mirror what the template module does
+* Fix the expires option of the postgresq_user module
 
 ## 2.3.2 "Ramble On" - TBD
 
