@@ -215,5 +215,6 @@
     drive: "{{ item.name[0] }}"
     initial_size: "{{ item.initial_size }}"
     maximum_size: "{{ item.maximum_size }}"
+    test_path: no
     state: present
   with_items: "{{ original_pagefile_settings.pagefiles }}"
