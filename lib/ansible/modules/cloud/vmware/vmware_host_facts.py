@@ -57,7 +57,7 @@ instance:
     sample: None
 '''
 
-from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec
+from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec, find_obj
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -151,29 +151,8 @@ def sizeof_fmt(num):
     return "%3.1f%s" % (num, 'TB')
 
 
-def get_obj(content, vimtype, name=None):
-    """
-    Return an object by name, if name is None the
-    first found object is returned
-    """
-    obj = None
-    container = content.viewManager.CreateContainerView(
-        content.rootFolder, vimtype, True)
-    for c in container.view:
-        if name:
-            if c.name == name:
-                obj = c
-                break
-        else:
-            obj = c
-            break
-
-    container.Destroy()
-    return obj
-
-
 def all_facts(content):
-    host = get_obj(content, [vim.HostSystem])
+    host = find_obj(content, [vim.HostSystem], None)
     ansible_facts = {}
     ansible_facts.update(get_cpu_facts(host))
     ansible_facts.update(get_memory_facts(host))
