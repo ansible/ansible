@@ -42,12 +42,12 @@
       rescue:
         - set_fact: test_failed=true
 
-#    - block:
-#      - include_role:
-#          name: vyos_linkagg
-#        when: "limit_to in ['*', 'vyos_linkagg']"
-#      rescue:
-#        - set_fact: test_failed=true
+    - block:
+      - include_role:
+          name: vyos_linkagg
+        when: "limit_to in ['*', 'vyos_linkagg']"
+      rescue:
+        - set_fact: test_failed=true
 
 
 ###########
