@@ -2,4 +2,3 @@
   gather_facts: yes
   roles:
     - { role: filters }
-
