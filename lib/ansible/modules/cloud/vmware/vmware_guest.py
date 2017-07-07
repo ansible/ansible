@@ -1155,6 +1155,8 @@ class PyVmomiHelper(object):
 
                 if self.params['resource_pool']:
                     relospec.pool = resource_pool
+                else:
+                    relospec.pool = self.select_resource_pool_by_host(self.select_host())
 
                 if self.params['snapshot_src'] is not None and self.params['linked_clone']:
                     relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
