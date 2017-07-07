@@ -376,7 +376,8 @@ def create_launch_config(connection, module):
                 launch_config = launch_configs[0]
             else:
                 module.fail_json(msg="error creating launch configuration. " +
-                                 "no launch configuration returned from boto3")
+                                 "no launch configuration returned from boto3" +
+                                 " after create.")
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
 
