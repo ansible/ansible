@@ -75,7 +75,20 @@ options:
   folder:
     description:
     - Destination folder, absolute or relative path to find an existing guest or create the new guest.
-    default: /
+    - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+    - 'Examples:'
+    - '   folder: /ha-datacenter/vm'
+    - '   folder: ha-datacenter/vm'
+    - '   folder: /datacenter1/vm'
+    - '   folder: datacenter1/vm'
+    - '   folder: /datacenter1/vm/folder1'
+    - '   folder: datacenter1/vm/folder1'
+    - '   folder: /folder1/datacenter1/vm'
+    - '   folder: folder1/datacenter1/vm'
+    - '   folder: /folder1/datacenter1/vm/folder2'
+    - '   folder: vm/folder2'
+    - '   fodler: folder2'
+    default: /vm
   hardware:
     description:
     - Manage some VM hardware attributes.
