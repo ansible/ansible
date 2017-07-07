@@ -17,7 +17,8 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview']}
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
