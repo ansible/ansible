@@ -1346,8 +1346,6 @@ def main():
 
     # Check if the VM exists before continuing
     vm = pyv.getvm(name=module.params['name'], folder=module.params['folder'], uuid=module.params['uuid'])
-    if not vm:
-        module.fail_json(msg="nope")
 
     # VM already exists
     if vm:
