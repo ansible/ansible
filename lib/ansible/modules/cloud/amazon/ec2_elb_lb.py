@@ -18,7 +18,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'curated'}
 
-
 DOCUMENTATION = """
 ---
 module: ec2_elb_lb
@@ -1278,8 +1277,8 @@ class ElbManager(object):
             for i, key in enumerate(dictact):
                 params['Tags.member.%d.Key' % (i + 1)] = key
 
-              if not self.module.check_mode:
-                self.elb_conn.make_request('RemoveTags', params)
+                if not self.module.check_mode:
+                    self.elb_conn.make_request('RemoveTags', params)
             self.changed=True
 
     def _get_health_check_target(self):
