@@ -216,6 +216,10 @@ def parse_args():
                              action='store_true',
                              help='retry failed test with increased verbosity')
 
+    integration.add_argument('--debug-strategy',
+                             action='store_true',
+                             help='run test playbooks using the debug strategy')
+
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
 
