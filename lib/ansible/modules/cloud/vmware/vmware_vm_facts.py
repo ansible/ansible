@@ -72,7 +72,7 @@ def get_all_virtual_machines(content):
         for dev in vm.config.hardware.device:
             if isinstance(dev, vim.vm.device.VirtualEthernetCard):
                 _mac_address.append(dev.macAddress)
-                
+
         virtual_machine = {
             summary.config.name: {
                 "guest_fullname": summary.config.guestFullName,
