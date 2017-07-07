@@ -437,7 +437,6 @@ def delete_launch_config(connection, module):
         module.fail_json(msg=str(e))
 
 
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
