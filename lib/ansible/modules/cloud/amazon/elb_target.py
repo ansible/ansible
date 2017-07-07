@@ -69,7 +69,7 @@ EXAMPLES = '''
     target_group_name: mytargetgroup
     target_id: i-1234567
     state: absent
-    
+
 # Modify a target to use a different port
 # Register a target to a target group
 - elb_target:
@@ -77,7 +77,7 @@ EXAMPLES = '''
     target_id: i-1234567
     target_port: 8080
     state: present
-    
+
 '''
 
 RETURN = '''
@@ -86,7 +86,7 @@ RETURN = '''
 
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
+from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
                                       ec2_argument_spec, get_aws_connection_info)
 
 try:
