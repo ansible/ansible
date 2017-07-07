@@ -220,7 +220,8 @@ from ansible.module_utils.ec2 import (get_aws_connection_info,
                                       ec2_connect,
                                       camel_dict_to_snake_dict,
                                       get_ec2_security_group_ids_from_names,
-                                      boto3_conn, HAS_BOTO3)
+                                      boto3_conn, snake_dict_to_camel_dict,
+                                      HAS_BOTO3)
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -282,8 +283,6 @@ def create_block_device_meta(module, volume):
 
 def create_launch_config(connection, module):
     name = module.params.get('name')
-    image_id = module.params.get('image_id')
-    key_name = module.params.get('key_name')
     vpc_id = module.params.get('vpc_id')
     try:
         security_groups = get_ec2_security_group_ids_from_names(
@@ -292,27 +291,28 @@ def create_launch_config(connection, module):
     except ValueError as e:
         module.fail_json(msg=str(e))
     user_data = module.params.get('user_data')
-    instance_id = module.params.get('instance_id')
     user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']
-    instance_type = module.params.get('instance_type')
-    spot_price = module.params.get('spot_price')
     instance_monitoring = module.params.get('instance_monitoring')
     advanced_instance_monitoring = module.params.get(
         'advanced_instance_monitoring')
     assign_public_ip = module.params.get('assign_public_ip')
-    kernel_id = module.params.get('kernel_id')
-    ramdisk_id = module.params.get('ramdisk_id')
     instance_profile_name = module.params.get('instance_profile_name')
     ebs_optimized = module.params.get('ebs_optimized')
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
     classic_link_vpc_security_groups = module.params.get(
         'classic_link_vpc_security_groups')
-    associate_public_ip_address = module.params.get(
-        'associate_public_ip_address')
-    placement_tenancy = module.params.get('placement_tenancy')
+    security_groups = module.params.get('security_groups')
 
     bdm = {}
+
+    convert_list = ['image_id', 'instance_type', 'instance_type', 'instance_id',
+                    'placement_tenancy', 'key_name', 'kernel_id', 'ramdisk_id',
+                    'instance_profile_name', 'spot_price']
+
+    launch_config = (snake_dict_to_camel_dict(dict((k.capitalize(), str(v))
+                     for k, v in module.params.items() if v is not None and k in
+                     convert_list)))
 
     if user_data_path:
         try:
@@ -335,20 +335,10 @@ def create_launch_config(connection, module):
     changed = False
     result = {}
 
-    launch_config = {
-        'LaunchConfigurationName': name,
-        'EbsOptimized': ebs_optimized,
-        'PlacementTenancy': placement_tenancy
-    }
+    launch_config['LaunchConfigurationName'] = name
 
-    if image_id is not None:
-        launch_config['ImageId'] = image_id
-
-    if instance_type is not None:
-        launch_config['InstanceType'] = instance_type
-
-    if instance_id is not None:
-        launch_config['InstanceId'] = instance_id
+    if security_groups is not None:
+        launch_config['SecurityGroups'] = security_groups
 
     if classic_link_vpc_id is not None:
         launch_config['ClassicLinkVPCId'] = classic_link_vpc_id
@@ -357,39 +347,24 @@ def create_launch_config(connection, module):
         launch_config['InstanceMonitoring'] = {
             'Enabled': advanced_instance_monitoring}
 
-    if placement_tenancy is not None:
-        launch_config['PlacementTenancy'] = placement_tenancy
-
     if classic_link_vpc_security_groups is not None:
         launch_config['ClassicLinkVPCSecurityGroups'] = (
             classic_link_vpc_security_groups)
 
-    if key_name is not None:
-        launch_config['KeyName'] = key_name
-
     if bdm is not None:
         launch_config['BlockDeviceMappings'] = [bdm]
 
-    if security_groups is not None:
-        launch_config['SecurityGroups'] = security_groups
-
-    if kernel_id is not None:
-        launch_config['KernelId'] = kernel_id
-
-    if ramdisk_id is not None:
-        launch_config['RamdiskId'] = ramdisk_id
-
     if instance_profile_name is not None:
         launch_config['IamInstanceProfile'] = instance_profile_name
-
-    if spot_price is not None:
-        launch_config['SpotPrice'] = str(spot_price)
 
     if assign_public_ip is not None:
         launch_config['AssociatePublicIpAddress'] = assign_public_ip
 
     if user_data is not None:
         launch_config['UserData'] = user_data
+
+    if ebs_optimized is not None:
+        launch_config['EbsOptimized'] = ebs_optimized
 
     if len(launch_configs) == 0:
         try:
