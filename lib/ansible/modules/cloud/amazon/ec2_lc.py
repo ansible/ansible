@@ -380,12 +380,9 @@ def create_launch_config(connection, module):
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
 
-    result = dict(
-                 ((a[0], a[1]) for a in launch_config.items()
-                  if a[0] not in ('connection', 'created_time',
-                                  'instance_monitoring',
-                                  'block_device_mappings'))
-    )
+    result = (dict((k, v) for k, v in launch_config.items()
+              if k not in ['connection', 'created_time', 'instance_monitoring',
+              'block_device_mappings']))
 
     result['CreatedTime'] = str(launch_config.get('CreatedTime'))
 
