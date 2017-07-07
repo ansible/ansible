@@ -33,4 +33,3 @@ from ansible.module_utils.oneview import (HPOneViewException,
                                           ResourceComparator)
 
 from ansible.modules.cloud.hpe.oneview_fc_network import FcNetworkModule
-from ansible.modules.cloud.hpe.oneview_fc_network_facts import FcNetworkFactsModule
