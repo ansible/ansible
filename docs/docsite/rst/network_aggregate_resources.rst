@@ -15,16 +15,16 @@ Overview
 
 Consider the case if you wanted to ensure a set of vlans are present on a switch. Although at a high level thia sounds like a simple request, there in a slight nuance:
 
-* Should these vlans be in *addition* to the existing configuration?  - *non aggregate*
-* Should these vlans be the *only* ones present? - *aggregate*
+* Should these vlans be in *addition* to the existing configuration?  - *additive*
+* Should these vlans be the *only* osnes present? - *aggregate*
 
 
 .. versionadded:: 2.4
 
    The ``aggregate:`` module options were added in Ansible 2.4 and are only available in certain modules, see the modules documentation to see if the feature is available.
 
-Nonaggregated resources
-=========================
+Additive resources
+===================
 
 Continuing our vlan example, the following task ensure that vlans ``1``, ``2`` and ``3`` are in the states specified in the task.
 
@@ -44,7 +44,7 @@ This task *will not* change any vlans already configured on the switch.
 
 
 The *additive* format can be useful in a number of cases:
-* When Ansible isn't your Single Source of truth; and therefore doesn't 
+* When Ansible isn't your Single Source of truth; and therefore doesn't ...
 
 Aggregate resources
 ===================
@@ -61,7 +61,13 @@ Aggregate resources
          - { vlan_id: 3, state: suspend }
        state: active
 
+
+* purge
+
+  * Default False - WHY
+  * What this does
 FIXME When you would need this
+* WARNING if purge & NOT-aggregate
 
 
 When would you use aggregate resources?
