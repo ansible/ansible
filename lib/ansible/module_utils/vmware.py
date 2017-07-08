@@ -213,13 +213,16 @@ def find_host_portgroup_by_name(host, portgroup_name):
     return None
 
 
-def _get_vm_prop(vm, expression):
+def _get_vm_prop(vm, attributes):
     """Safely get a property or return None"""
-    result = None
-    try:
-        result = eval(expression)
-    except:
-        pass
+    result = vm
+    for attribute in attributes:
+        try:
+            result = getattr(result, attribute)
+        except AttributeError:
+            return None
+        except IndexError:
+            return None
     return result
 
 
@@ -235,8 +238,8 @@ def gather_vm_facts(content, vm):
         'hw_processor_count': vm.config.hardware.numCPU,
         'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
-        'guest_tools_status': _get_vm_prop(vm, 'vm.guest.toolsRunningStatus'),
-        'guest_tools_version': _get_vm_prop(vm, 'vm.guest.toolsVersion'),
+        'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
+        'guest_tools_version': _get_vm_prop(vm, ('guest', 'toolsVersion')),
         'ipv4': None,
         'ipv6': None,
         'annotation': vm.config.annotation,
