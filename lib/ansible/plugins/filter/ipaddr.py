@@ -98,7 +98,7 @@ def _bool_ipaddr_query(v):
 
 
 def _broadcast_query(v):
-    if v.size > 1:
+    if v.size > 2:
         return str(v.broadcast)
 
 
@@ -112,6 +112,44 @@ def _cidr_lookup_query(v, iplist, value):
             return value
     except:
         return False
+
+def _first_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size == 2:
+            return str(netaddr.IPAddress(int(v.network)))
+        elif v.size > 1:
+            return str(netaddr.IPAddress(int(v.network) + 1))
+
+def _last_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size == 2:
+            return str(netaddr.IPAddress(int(v.network) + 1))
+        elif v.size > 1:
+            return str(netaddr.IPAddress(int(v.broadcast) - 1))
+
+def _next_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size == 2:
+            first_usable = int(netaddr.IPAddress(int(v.network)))
+            last_usable = int(netaddr.IPAddress(int(v.network) + 1))
+            next_ip = int(netaddr.IPAddress(int(v.ip) + 1))
+            if next_ip >= first_usable and next_ip <= last_usable:
+                return str(netaddr.IPAddress(int(v.ip) + 1))
+        elif v.size > 1:
+            first_usable = int(netaddr.IPAddress(int(v.network) + 1))
+            last_usable = int(netaddr.IPAddress(int(v.broadcast) - 1))
+            next_ip = int(netaddr.IPAddress(int(v.ip) + 1))
+            if next_ip >= first_usable and next_ip <= last_usable:
+                return str(netaddr.IPAddress(int(v.ip) + 1))
 
 
 def _host_query(v):
@@ -183,8 +221,8 @@ def _netmask_query(v):
 
 
 def _network_query(v):
-    if v.size > 1:
-        return str(v.network)
+    '''Return the network of a given IP or subnet'''
+    return str(v.network)
 
 
 def _prefix_query(v):
@@ -297,6 +335,9 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
 
     query_func_extra_args = {
         '': ('vtype',),
+        'first_usable': ('vtype',),
+        'last_usable': ('vtype',),
+        'next_usable': ('vtype',),
         '6to4': ('vtype', 'value'),
         'cidr_lookup': ('iplist', 'value'),
         'int': ('vtype',),
@@ -314,6 +355,9 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
 
     query_func_map = {
         '': _empty_ipaddr_query,
+        'first_usable': _first_usable_query,
+        'last_usable': _last_usable_query,
+        'next_usable': _next_usable_query,
         '6to4': _6to4_query,
         'address': _ip_query,
         'address/prefix': _gateway_query,

@@ -33,3 +33,83 @@ class TestNetmask(unittest.TestCase):
     def test_32_cidr(self):
         address = '1.12.1.34/32'
         self.assertEqual(ipaddr(address, 'netmask'), '255.255.255.255')
+
+    def test_network(self):
+        address = '1.12.1.34/32'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.34/255.255.255.255'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.34'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.35/31'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.34/24'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.0')
+
+    def test_broadcast(self):
+        address = '1.12.1.34/24'
+        self.assertEqual(ipaddr(address, 'broadcast'), '1.12.1.255')
+        address = '1.12.1.34/16'
+        self.assertEqual(ipaddr(address, 'broadcast'), '1.12.255.255')
+        address = '1.12.1.34/27'
+        self.assertEqual(ipaddr(address, 'broadcast'), '1.12.1.63')
+        address = '1.12.1.34/32'
+        self.assertEqual(ipaddr(address, 'broadcast'), None)
+        address = '1.12.1.35/31'
+        self.assertEqual(ipaddr(address, 'broadcast'), None)
+
+    def test_first_usable(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'first_usable'), '1.12.1.1')
+        address = '1.12.1.36/24'
+        self.assertEqual(ipaddr(address, 'first_usable'), '1.12.1.1')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'first_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'first_usable'), '1.12.1.33')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'first_usable'), '1.12.1.33')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'first_usable'), '1.12.1.36')
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'first_usable'), '1.12.1.36')
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'first_usable'), None)
+
+    def test_last_usable(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'last_usable'), '1.12.1.254')
+        address = '1.12.1.36/24'
+        self.assertEqual(ipaddr(address, 'last_usable'), '1.12.1.254')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'last_usable'), '1.12.1.46')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'last_usable'), '1.12.1.46')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'last_usable'), '1.12.1.37')
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'last_usable'), '1.12.1.37')
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'last_usable'), None)
+
+    def test_next_usable(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'next_usable'), '1.12.1.1')
+        address = '1.12.1.36/24'
+        self.assertEqual(ipaddr(address, 'next_usable'), '1.12.1.37')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'next_usable'), '1.12.1.37')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'next_usable'), '1.12.1.37')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'next_usable'), '1.12.1.37')
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'next_usable'), None)
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'next_usable'), None)
+        address = '1.12.1.254/24'
+        self.assertEqual(ipaddr(address, 'next_usable'), None)
