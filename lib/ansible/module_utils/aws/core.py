@@ -35,10 +35,14 @@ module as shown below.
                             mutually_exclusive=list1, required_together=list2)
 
 The 'AnsibleAWSModule' module provides similar, but more restricted,
-interfaces to the normal Ansible module.  It also includes the following additional methods.
+interfaces to the normal Ansible module.  It also includes the
+additional methods for connecting to AWS using the standard module arguments
 
-  m.fail_json_aws(Exception) # - take an exception and make a decent failure
-  m.get_conn() # - get an AWS connection.
+  try:
+      m.aws_connect(resource='lambda') # - get an AWS connection.
+  except Exception:
+      m.fail_json_aws(Exception, msg="trying to connect") # - take an exception and make a decent failure
+
 
 """
 
@@ -73,8 +77,7 @@ class AnsibleAWSModule(object):
         local_settings = {}
         for key in AnsibleAWSModule.default_settings:
             try:
-                local_settings[key] = kwargs[key]
-                del kwargs[key]
+                local_settings[key] = kwargs.pop(key)
             except KeyError:
                 local_settings[key] = AnsibleAWSModule.default_settings[key]
         self.settings = local_settings

@@ -21,7 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 from pytest import importorskip
 import unittest
 from ansible.module_utils import basic
-from ansible.module_utils.aws import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils._text import to_bytes
 from ansible.compat.tests.mock import Mock, patch
 import json
