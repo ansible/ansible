@@ -96,7 +96,7 @@ lambda_facts.function.TheName:
     type: dict
 '''
 
-from ansible.module_utils.aws import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
 import json
 import datetime
