@@ -23,6 +23,7 @@ import time
 import re
 import logging
 
+
 class SPBMClient(object):
 
     def __init__(self, vc_si, hostname, version="version2"):
@@ -76,15 +77,14 @@ class SPBMClient(object):
         :return: list of Storage Profiles on vCenter
         """
         pm = self.get_profilemgr()
-        profileIds = pm.PbmQueryProfile(resourceType=pbm.profile.ResourceType(
-        resourceType="STORAGE"), profileCategory="REQUIREMENT")
+        profileIds = pm.PbmQueryProfile(resourceType=pbm.profile.ResourceType(resourceType="STORAGE"), profileCategory="REQUIREMENT")
 
         profiles = []
         if len(profileIds) > 0:
             return pm.PbmRetrieveContent(profileIds=profileIds)
         return None
 
-    def return_cap_meta_data(self,metadatas,keyname):
+    def return_cap_meta_data(self, metadatas, keyname):
         """
         Return Storage Profile capability metadata
         """
@@ -94,9 +94,9 @@ class SPBMClient(object):
                     return capabilityMetadata
         return None
 
-    def buildCapability(self,capabilityName,value):
+    def buildCapability(self, capabilityName, value):
         metadatas = self.get_profilemgr().FetchCapabilityMetadata()
-        capabilityMeta = self.return_cap_meta_data(metadatas=metadatas,keyname=capabilityName)
+        capabilityMeta = self.return_cap_meta_data(metadatas=metadatas, keyname=capabilityName)
         if capabilityMeta is None:
             raise Exception('capabilityMeta is None')
         prop = pbm.PbmCapabilityPropertyInstance()
@@ -119,13 +119,11 @@ class SPBMClient(object):
             if profile.name == profile_name:
                 return self.get_profilemgr().PbmDelete(profileId=[profile.profileId])
 
-    def check_compliance_vm(self,vm):
+    def check_compliance_vm(self, vm):
         """
         Checks if a VM is compliant with attached profile
         """
-        pbm_object_ref = pbm.ServerObjectRef(key=str(vm._moId),
-                            objectType="virtualMachine",
-                            serverUuid=self.vc_si.content.about.instanceUuid)
+        pbm_object_ref = pbm.ServerObjectRef(key=str(vm._moId), objectType="virtualMachine", serverUuid=self.vc_si.content.about.instanceUuid)
         compliance_status = {}
         compliance_status['vm_name'] = vm.name
         results = self.get_compliancemgr().PbmCheckRollupCompliance(entity=[pbm_object_ref])
@@ -144,18 +142,17 @@ class SPBMClient(object):
         compliance_status['result'] = compliance_result
         return compliance_status
 
-    def get_ds_default_profile(self,ds):
+    def get_ds_default_profile(self, ds):
         """
         Get Default Profile for a datastore
         """
-        placementhub = pbm.placement.PlacementHub(hubId=ds._moId,hubType='Datastore')
+        placementhub = pbm.placement.PlacementHub(hubId=ds._moId, hubType='Datastore')
         default_profile = self.get_profilemgr().PbmQueryDefaultRequirementProfile(hub=placementhub)
         if default_profile:
             return default_profile
         return None
 
-    def create_storage_profile(self,profile_name=None,\
-                   description="Sample Storage Profile",rules=[]):
+    def create_storage_profile(self, profile_name=None, description="Sample Storage Profile", rules=[]):
         """
         Creates a Storage Profile
         """
@@ -164,18 +161,16 @@ class SPBMClient(object):
         # Only supported resurce type is storage
         res_type = res_types[0]
         create_spec = pbm.profile.CapabilityBasedProfileCreateSpec()
-        create_spec.name=profile_name
+        create_spec.name = profile_name
         create_spec.description = description
         create_spec.resourceType = res_type
-
-
         constraints = pbm.PbmCapabilitySubProfileConstraints()
         rule_number = 1
         for rule in rules:
             ruleSet = pbm.PbmCapabilitySubProfile()
             capabilities = []
             for key in rule.keys():
-                capabilities.append(self.buildCapability(key,rule[key]))
+                capabilities.append(self.buildCapability(key, rule[key]))
             ruleSet.capability.extend(capabilities)
             ruleSet.name = 'Rule-Set ' + str(rule_number)
             rule_number = rule_number + 1

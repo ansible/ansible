@@ -1,4 +1,22 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Prasanna Nanda <pnanda@cloudsimple.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -10,7 +28,7 @@ module: vmware_vm_sp
 short_description: VM Storage Profile Utilities
 description:
     - Attach/Detach a Storage Profile to a VM
-version_added: 2.3
+version_added: 2.4
 author:
     - Prasanna Nanda <pnanda@cloudsimple.com>
 notes:
@@ -22,11 +40,11 @@ options:
     vmname:
         description:
             - Name of the VM to which Storage Profile will be attached/detached/check
-        reequired: True
+        required: True
     profilename:
         description:
             - Name of the Storage Profile which will be attached/detached
-        reequired: True
+        required: True
     action:
         description:
             - Valid values are attach/detach/check
@@ -34,9 +52,8 @@ options:
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAPMPLES = '''
-# Attach a VM to a Storage Profile
-  - name: Attach a VM to a Storage Profile
+EXAMPLES = '''
+  - name: Attach/Detach a VM to a Storage Profile or Check Compliance
     vmware_vm_sp:
       hostname: A vCenter host
       username: vCenter username
@@ -46,6 +63,8 @@ EXAPMPLES = '''
       action: attach|detach|check
 '''
 
+RETURN = ''' # '''
+
 try:
     from pyVmomi import vim, pbm, vmodl
     from pyVim.connect import SoapStubAdapter
@@ -54,18 +73,21 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
-from  ansible.module_utils.SPBMClient import SPBMClient
 import time
+from ansible.module_utils.vmware import vmware_argument_spec, connect_to_api
+import ssl
+import atexit
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.SPBMClient import SPBMClient
+
 
 class vmware_vm_sp(object):
-    def __init__(self,module):
-        self.module         = module
-        self.vmname         = module.params['vmname']
-        self.profilename    = module.params['profilename']
-        self.action         = module.params['action']
-        self.profile        = None
+    def __init__(self, module):
+        self.module = module
+        self.vmname = module.params['vmname']
+        self.profilename = module.params['profilename']
+        self.action = module.params['action']
+        self.profile = None
         try:
             context = None
             context = ssl._create_unverified_context()
@@ -75,7 +97,7 @@ class vmware_vm_sp(object):
                               port=443,
                               sslContext=context)
             atexit.register(Disconnect, si)
-            self.spbmclient = SPBMClient(vc_si=si,hostname=module.params['hostname'])
+            self.spbmclient = SPBMClient(vc_si=si, hostname=module.params['hostname'])
             self.content = si.content
         except vmodl.RuntimeFault as runtime_fault:
             module.fail_json(msg=runtime_fault.msg)
@@ -86,14 +108,14 @@ class vmware_vm_sp(object):
         atexit.register(Disconnect, si)
 
     def findVirtualMachine(self):
-        return self.get_obj([vim.VirtualMachine],self.vmname)
+        return self.get_obj([vim.VirtualMachine], self.vmname)
 
-    def findDataStore(self,dsName):
-        return self.get_obj([vim.Datastore],dsName)
+    def findDataStore(self, dsName):
+        return self.get_obj([vim.Datastore], dsName)
 
     def get_obj(self, vimtype, entity_name):
         obj = None
-        rootFolder=None
+        rootFolder = None
         if rootFolder is None:
             rootFolder = self.content.rootFolder
         container = self.content.viewManager.CreateContainerView(rootFolder, vimtype, True)
@@ -102,7 +124,8 @@ class vmware_vm_sp(object):
                 obj = c
                 break
         return obj
-    def wait_for_task(self,task):
+
+    def wait_for_task(self, task):
         """ wait for a vCenter task to finish """
         task_done = False
         while not task_done:
@@ -112,24 +135,24 @@ class vmware_vm_sp(object):
             elif task.info.state == 'error':
                 if task.info.error:
                     task_done = True
-                    return (False,task.info.error.msg)
+                    return (False, task.info.error.msg)
             else:
                 time.sleep(2)
 
     def attach_sp_to_vm(self):
         profiles = self.spbmclient.get_profiles()
         if not profiles:
-            self.module.fail_json(changed=False,msg="Could not retreive Storage Profile Information from vCenter")
+            self.module.fail_json(changed=False, msg="Could not retreive Storage Profile Information from vCenter")
         else:
             for profile in profiles:
                 if self.module.params['profilename'] == profile.name:
                     self.profile = profile
                     break
             if self.profile is None:
-                self.module.fail_json(changed=False,msg="Did not Find Storage Profile {} in vCenter".format(self.profilename))
+                self.module.fail_json(changed=False, msg="Did not Find Storage Profile {} in vCenter".format(self.profilename))
             vm = self.findVirtualMachine()
             if vm is None:
-                self.module.fail_json(changed=False,msg="Did not Find VM {} in vCenter".format(self.vmname))
+                self.module.fail_json(changed=False, msg="Did not Find VM {} in vCenter".format(self.vmname))
             # For attaching a storage Profile to a VM, you need to attach the
             # profile to VM Home and individual disks.
             disks = []
@@ -141,27 +164,27 @@ class vmware_vm_sp(object):
             device_change = []
             for disk in disks:
                 profile = vim.VirtualMachineDefinedProfileSpec(profileId=self.profile.profileId.uniqueId)
-                device_change.append(vim.VirtualDeviceConfigSpec(device=disk,operation=vim.VirtualDeviceConfigSpecOperation.edit,profile=[profile]))
+                device_change.append(vim.VirtualDeviceConfigSpec(device=disk, operation=vim.VirtualDeviceConfigSpecOperation.edit, profile=[profile]))
             profile = vim.VirtualMachineDefinedProfileSpec(profileId=self.profile.profileId.uniqueId)
-            vmSpec = vim.VirtualMachineConfigSpec(vmProfile=[profile],deviceChange=device_change)
-            state,error = self.wait_for_task(vm.ReconfigVM_Task(spec=vmSpec))
+            vmSpec = vim.VirtualMachineConfigSpec(vmProfile=[profile], deviceChange=device_change)
+            state, error = self.wait_for_task(vm.ReconfigVM_Task(spec=vmSpec))
             if state:
-                self.module.exit_json(changed=True,msg="Attached Profile {} to VM {}".format(self.profilename,self.vmname))
+                self.module.exit_json(changed=True, msg="Attached Profile {} to VM {}".format(self.profilename, self.vmname))
             else:
-                self.module.fail_json(changed=False,msg="Failed to attach Profile {} to VM {}. Error {}".format(self.profilename,self.vmname,error))
+                self.module.fail_json(changed=False, msg="Failed to attach Profile {} to VM {}. Error {}".format(self.profilename, self.vmname, error))
 
     def reset_sp_vm(self):
         profiles = self.spbmclient.get_profiles()
         if not profiles:
-            self.module.fail_json(changed=False,msg="Could not retreive Storage Profile Information from vCenter")
+            self.module.fail_json(changed=False, msg="Could not retreive Storage Profile Information from vCenter")
         else:
             vm = self.findVirtualMachine()
             if vm is None:
-                self.module.fail_json(changed=False,msg="Did not Find VM {} in vCenter".format(self.vmname))
+                self.module.fail_json(changed=False, msg="Did not Find VM {} in vCenter".format(self.vmname))
 
             # Find Where VM Home is Residing
             vmPathName = vm.config.files.vmPathName
-            vmx_datastore = vmPathName.partition(']')[0].replace('[','')
+            vmx_datastore = vmPathName.partition(']')[0].replace('[', '')
             vmx_profile = self.spbmclient.get_ds_default_profile(self.findDataStore(vmx_datastore))
 
             disks = []
@@ -174,30 +197,30 @@ class vmware_vm_sp(object):
             for disk in disks:
                 datastore_profile = self.spbmclient.get_ds_default_profile(disk.backing.datastore)
                 profile = vim.VirtualMachineDefinedProfileSpec(profileId=datastore_profile.uniqueId)
-                device_change.append(vim.VirtualDeviceConfigSpec(device=disk,operation=vim.VirtualDeviceConfigSpecOperation.edit,profile=[profile]))
+                device_change.append(vim.VirtualDeviceConfigSpec(device=disk, operation=vim.VirtualDeviceConfigSpecOperation.edit, profile=[profile]))
             profile = vim.VirtualMachineDefinedProfileSpec(profileId=vmx_profile.uniqueId)
-            vmSpec = vim.VirtualMachineConfigSpec(vmProfile=[profile],deviceChange=device_change)
-            state,error = self.wait_for_task(vm.ReconfigVM_Task(spec=vmSpec))
+            vmSpec = vim.VirtualMachineConfigSpec(vmProfile=[profile], deviceChange=device_change)
+            state, error = self.wait_for_task(vm.ReconfigVM_Task(spec=vmSpec))
             if state:
-                self.module.exit_json(changed=True,msg="Detached Profile {} from VM {} and Reset Back to datastore default".format(self.profilename,self.vmname))
+                self.module.exit_json(changed=True, msg="Detached Profile {} from VM {}".format(self.profilename, self.vmname))
             else:
-                self.module.fail_json(changed=False,msg="Failed to Detach Profile from VM {}. Error {}".format(self.vmname,error))
+                self.module.fail_json(changed=False, msg="Failed to Detach Profile from VM {}. Error {}".format(self.vmname, error))
 
     def check_compliance_vm(self):
             profiles = self.spbmclient.get_profiles()
             if not profiles:
-                self.module.fail_json(changed=False,msg="Could not retreive Storage Profile Information from vCenter")
+                self.module.fail_json(changed=False, msg="Could not retreive Storage Profile Information from vCenter")
             else:
                 for profile in profiles:
                     print(profile.name)
             vm = self.findVirtualMachine()
             if vm is None:
-                self.module.fail_json(changed=False,msg="Did not Find VM {} in vCenter".format(self.vmname))
+                self.module.fail_json(changed=False, msg="Did not Find VM {} in vCenter".format(self.vmname))
             compliance_status = self.spbmclient.check_compliance_vm(vm)
             if compliance_status is None:
-                self.module.fail_json(changed=False,msg="Failed to find compliance status for VM {}".format(self.vmname))
+                self.module.fail_json(changed=False, msg="Failed to find compliance status for VM {}".format(self.vmname))
             else:
-                self.module.exit_json(changed=False,compliance_status=compliance_status)
+                self.module.exit_json(changed=False, compliance_status=compliance_status)
 
 
 def main():
@@ -215,8 +238,6 @@ def main():
         spbm.check_compliance_vm()
     if module.params['action'] == 'detach':
         spbm.reset_sp_vm()
-
-    #module.exit_json(changed=True)
 
 if __name__ == '__main__':
     main()
