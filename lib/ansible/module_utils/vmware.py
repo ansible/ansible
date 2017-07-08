@@ -338,7 +338,7 @@ def vmware_argument_spec():
     )
 
 
-def connect_to_api(module, disconnect_atexit=True):
+def connect_to_api(module, disconnect_atexit=True, return_service_instance=False):
 
     hostname = module.params['hostname']
     username = module.params['username']
@@ -370,6 +370,8 @@ def connect_to_api(module, disconnect_atexit=True):
     # Also removal significantly speeds up the return of the module
     if disconnect_atexit:
         atexit.register(connect.Disconnect, service_instance)
+    if return_service_instance:
+        return service_instance, service_instance.RetrieveContent()
     return service_instance.RetrieveContent()
 
 
