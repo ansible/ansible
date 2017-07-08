@@ -29,8 +29,6 @@ if [ "${platform}" = "freebsd" ]; then
         sudo \
         zip
 elif [ "${platform}" = "rhel" ]; then
-    yum update -y
-
     yum install -y \
         gcc \
         git \
