@@ -25,8 +25,6 @@ if [ "${platform}" = "freebsd" ]; then
 
     pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
 elif [ "${platform}" = "rhel" ]; then
-    yum update -y
-
     yum install -y \
         gcc \
         git \
