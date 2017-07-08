@@ -9,25 +9,21 @@ env
 cd ~/
 
 if [ "${platform}" = "freebsd" ]; then
-    pkg install -y curl
-
-    if [ ! -f bootstrap.sh ]; then
-        curl "https://raw.githubusercontent.com/mattclay/ansible-hacking/master/bootstrap.sh" -o bootstrap.sh -#
-    fi
-
-    chmod +x bootstrap.sh
-    ./bootstrap.sh pip -y -q
-
     pkg install -y \
         bash \
+        curl \
         devel/ruby-gems \
+        git \
         gtar \
         mercurial \
+        python \
         rsync \
         ruby \
         subversion \
         sudo \
-        zip
+        zip \
+
+    pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
 elif [ "${platform}" = "rhel" ]; then
     yum update -y
 
