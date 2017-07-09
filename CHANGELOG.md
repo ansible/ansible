@@ -225,6 +225,7 @@ Ansible Changes By Release
   * win_firewall
   * win_psmodule
   * win_route
+  * win_wakeonlan
 
 
 ## 2.3 "Ramble On" - 2017-04-12
