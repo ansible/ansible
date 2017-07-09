@@ -190,6 +190,33 @@ def _range_usable_query(v, vtype):
             last_usable = str(netaddr.IPAddress(int(v.broadcast) - 1))
             return "{}-{}".format(first_usable, last_usable)
 
+def _ip_prefix_query(v):
+    if v.size == 2:
+        return str(v.ip) + '/' + str(v.prefixlen)
+    elif v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + '/' + str(v.prefixlen)
+
+def _ip_netmask_query(v):
+    if v.size == 2:
+        return str(v.ip) + ' ' + str(v.netmask)
+    elif v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + ' ' + str(v.netmask)
+
+'''
+def _ip_wildcard_query(v):
+    if v.size == 2:
+        return str(v.ip) + ' ' + str(v.hostmask)
+    elif v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + ' ' + str(v.hostmask)
+'''
+
+def _address_prefix_query(v):
+    if v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + '/' + str(v.prefixlen)
 
 def _host_query(v):
     if v.size == 1:
@@ -261,7 +288,8 @@ def _netmask_query(v):
 
 def _network_query(v):
     '''Return the network of a given IP or subnet'''
-    return str(v.network)
+    if v.size > 1:
+        return str(v.network)
 
 
 def _prefix_query(v):
@@ -403,9 +431,16 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'wildcard': _hostmask_query,
         'size_usable': _size_usable_query,
         'range_usable': _range_usable_query,
+        'ip/prefix': _ip_prefix_query,
+        'ip_netmask': _ip_netmask_query,
+       # 'ip_wildcard': _ip_wildcard_query,
+        #'subnet': _subnet_query,
+        #'subnet/prefix': _subnet_prefix_query,
+        #'subnet_netmask': _subnet_netmask_query,
+        #'subnet_wildcard': _subnet_wildcard_query,
         '6to4': _6to4_query,
         'address': _ip_query,
-        'address/prefix': _gateway_query,
+        'address/prefix': _address_prefix_query,
         'bool': _bool_ipaddr_query,
         'broadcast': _broadcast_query,
         'cidr': _cidr_query,
@@ -413,7 +448,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'gateway': _gateway_query,
         'gw': _gateway_query,
         'host': _host_query,
-        'host/prefix': _gateway_query,
+        'host/prefix': _address_prefix_query,
         'hostmask': _hostmask_query,
         'hostnet': _gateway_query,
         'int': _int_query,
