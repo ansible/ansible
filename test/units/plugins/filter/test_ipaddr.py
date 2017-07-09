@@ -18,19 +18,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
-from ansible.plugins.filter.ipaddr import ipaddr, _netmask_query
+from ansible.plugins.filter.ipaddr import ipaddr, _netmask_query, nthhost, next_nth_usable, previous_nth_usable
 
 
 class TestNetmask(unittest.TestCase):
-    def test_whole_octets(self):
+    def test_netmask(self):
         address = '1.1.1.1/24'
         self.assertEqual(ipaddr(address, 'netmask'), '255.255.255.0')
-
-    def test_partial_octet(self):
         address = '1.1.1.1/25'
         self.assertEqual(ipaddr(address, 'netmask'), '255.255.255.128')
-
-    def test_32_cidr(self):
         address = '1.12.1.34/32'
         self.assertEqual(ipaddr(address, 'netmask'), '255.255.255.255')
 
@@ -113,3 +109,63 @@ class TestNetmask(unittest.TestCase):
         self.assertEqual(ipaddr(address, 'next_usable'), None)
         address = '1.12.1.254/24'
         self.assertEqual(ipaddr(address, 'next_usable'), None)
+
+    def test_previous_usable(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'previous_usable'), None)
+        address = '1.12.1.36/24'
+        self.assertEqual(ipaddr(address, 'previous_usable'), '1.12.1.35')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'previous_usable'), '1.12.1.35')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'previous_usable'), '1.12.1.35')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'previous_usable'), None)
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'previous_usable'), '1.12.1.36')
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'previous_usable'), None)
+        address = '1.12.1.254/24'
+        self.assertEqual(ipaddr(address, 'previous_usable'), '1.12.1.253')
+
+    def test_next_nth_usable(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(next_nth_usable(address, 5), '1.12.1.5')
+        address = '1.12.1.36/24'
+        self.assertEqual(next_nth_usable(address, 10), '1.12.1.46')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(next_nth_usable(address, 4), '1.12.1.40')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(next_nth_usable(address, 4), '1.12.1.40')
+        address = '1.12.1.36/31'
+        self.assertEqual(next_nth_usable(address, 1), '1.12.1.37')
+        address = '1.12.1.37/31'
+        self.assertEqual(next_nth_usable(address, 1), None)
+        address = '1.12.1.36/32'
+        self.assertEqual(next_nth_usable(address, 1), None)
+        address = '1.12.1.254/24'
+        self.assertEqual(next_nth_usable(address, 2), None)
+
+    def test_previous_nth_usable(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(previous_nth_usable(address, 5), None)
+        address = '1.12.1.36/24'
+        self.assertEqual(previous_nth_usable(address, 10), '1.12.1.26')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(previous_nth_usable(address, 2), '1.12.1.34')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(previous_nth_usable(address, 2), '1.12.1.34')
+        address = '1.12.1.36/31'
+        self.assertEqual(previous_nth_usable(address, 1), None)
+        address = '1.12.1.37/31'
+        self.assertEqual(previous_nth_usable(address, 1), '1.12.1.36')
+        address = '1.12.1.36/32'
+        self.assertEqual(previous_nth_usable(address, 1), None)
+        address = '1.12.1.254/24'
+        self.assertEqual(previous_nth_usable(address, 2), '1.12.1.252')

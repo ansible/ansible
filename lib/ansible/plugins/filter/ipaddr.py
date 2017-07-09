@@ -151,6 +151,24 @@ def _next_usable_query(v, vtype):
             if next_ip >= first_usable and next_ip <= last_usable:
                 return str(netaddr.IPAddress(int(v.ip) + 1))
 
+def _previous_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size == 2:
+            first_usable = int(netaddr.IPAddress(int(v.network)))
+            last_usable = int(netaddr.IPAddress(int(v.network) + 1))
+            previous_ip = int(netaddr.IPAddress(int(v.ip) - 1))
+            if previous_ip >= first_usable and previous_ip <= last_usable:
+                return str(netaddr.IPAddress(int(v.ip) - 1))
+        elif v.size > 1:
+            first_usable = int(netaddr.IPAddress(int(v.network) + 1))
+            last_usable = int(netaddr.IPAddress(int(v.broadcast) - 1))
+            previous_ip = int(netaddr.IPAddress(int(v.ip) - 1))
+            if previous_ip >= first_usable and previous_ip <= last_usable:
+                return str(netaddr.IPAddress(int(v.ip) - 1))
+
 
 def _host_query(v):
     if v.size == 1:
@@ -338,6 +356,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'first_usable': ('vtype',),
         'last_usable': ('vtype',),
         'next_usable': ('vtype',),
+        'previous_usable': ('vtype',),
         '6to4': ('vtype', 'value'),
         'cidr_lookup': ('iplist', 'value'),
         'int': ('vtype',),
@@ -358,6 +377,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'first_usable': _first_usable_query,
         'last_usable': _last_usable_query,
         'next_usable': _next_usable_query,
+        'previous_usable': _previous_usable_query,
         '6to4': _6to4_query,
         'address': _ip_query,
         'address/prefix': _gateway_query,
@@ -674,6 +694,64 @@ def nthhost(value, query=''):
 
     return False
 
+# Returns the next nth usable ip within a network described by value.
+def next_nth_usable(value, offset):
+    ''' Get the nth host within a given network '''
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        v = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if type(offset) != int:
+        raise errors.AnsibleFilterError('Must pass in an interger')
+    if v.size == 2:
+        first_usable = int(netaddr.IPAddress(int(v.network)))
+        last_usable = int(netaddr.IPAddress(int(v.network) + 1))
+        nth_ip = int(netaddr.IPAddress(int(v.ip) + offset))
+        if nth_ip >= first_usable and nth_ip <= last_usable:
+            return str(netaddr.IPAddress(int(v.ip) + offset))
+    elif v.size > 1:
+        first_usable = int(netaddr.IPAddress(int(v.network) + 1))
+        last_usable = int(netaddr.IPAddress(int(v.broadcast) - 1))
+        nth_ip = int(netaddr.IPAddress(int(v.ip) + offset))
+        if nth_ip >= first_usable and nth_ip <= last_usable:
+            return str(netaddr.IPAddress(int(v.ip) + offset))
+
+
+# Returns the next nth usable ip within a network described by value.
+def previous_nth_usable(value, offset):
+    ''' Get the nth host within a given network '''
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        v = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if type(offset) != int:
+        raise errors.AnsibleFilterError('Must pass in an interger')
+    if v.size == 2:
+        first_usable = int(netaddr.IPAddress(int(v.network)))
+        last_usable = int(netaddr.IPAddress(int(v.network) + 1))
+        nth_ip = int(netaddr.IPAddress(int(v.ip) - offset))
+        if nth_ip >= first_usable and nth_ip <= last_usable:
+            return str(netaddr.IPAddress(int(v.ip) - offset))
+    elif v.size > 1:
+        first_usable = int(netaddr.IPAddress(int(v.network) + 1))
+        last_usable = int(netaddr.IPAddress(int(v.broadcast) - 1))
+        nth_ip = int(netaddr.IPAddress(int(v.ip) - offset))
+        if nth_ip >= first_usable and nth_ip <= last_usable:
+            return str(netaddr.IPAddress(int(v.ip) - offset))
 
 # Returns the SLAAC address within a network for a given HW/MAC address.
 # Usage:
