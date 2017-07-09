@@ -88,9 +88,9 @@ $frequency = Get-AnsibleParam -obj $params -name "frequency" -type "str" -valida
 $time = Get-AnsibleParam -obj $params -name "time" -type "str" -failifempty $present
 
 $user = Get-AnsibleParam -obj $params -name "user" -default "$env:USERDOMAIN\$env:USERNAME" -type "str"
-$password = Get-AnsibleParam -obj $params -name "password" -default $null -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str"
 $runlevel = Get-AnsibleParam -obj $params -name "runlevel" -default "limited" -type "str" -validateset "limited", "highest"
-$do_not_store_password = Get-AnsibleParam -obj $params -name "do_not_store_password" -default $false -type "bool"
+$store_password = Get-AnsibleParam -obj $params -name "store_password" -default $true -type "bool"
 
 $weekly = $frequency -eq "weekly"
 $days_of_week = Get-AnsibleParam -obj $params -name "days_of_week" -type "str" -failifempty $weekly
@@ -169,7 +169,7 @@ try {
 
     # Handle RunAs/RunLevel options for the task
 
-    if ($do_not_store_password) {
+    if (!$store_password) {
         # Create a ScheduledTaskPrincipal for the task to run under
         $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel $runlevel -Id Author
         $registerRunOptionParams = @{Principal = $principal}
@@ -218,7 +218,7 @@ try {
         # Check task path prior to registering
         $pathResults = Invoke-TaskPathCheck -Path $path
 
-        if (($do_not_store_password -and $task.Principal.LogonType -in @("S4U", "ServiceAccount")) -or (!$do_not_store_password -and $task.Principal.LogonType -notin @("S4U", "Password") -and !$password)) {
+        if ((!$store_password -and $task.Principal.LogonType -in @("S4U", "ServiceAccount")) -or ($store_password -and $task.Principal.LogonType -notin @("S4U", "Password") -and !$password)) {
             $passwordStoreConsistent = $true
         }
         else {
