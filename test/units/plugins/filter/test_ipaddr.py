@@ -18,7 +18,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
-from ansible.plugins.filter.ipaddr import ipaddr, _netmask_query, nthhost, next_nth_usable, previous_nth_usable
+from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
+                                           previous_nth_usable, ip_in_subnet)
 
 
 class TestNetmask(unittest.TestCase):
@@ -232,6 +233,85 @@ class TestNetmask(unittest.TestCase):
         address = '1.12.1.254/24'
         self.assertEqual(ipaddr(address, 'ip_wildcard'), '1.12.1.254 0.0.0.255')
     '''
+    def test_network_id(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'network_id'), '1.12.1.0')
+        address = '1.12.1.0/25'
+        self.assertEqual(ipaddr(address, 'network_id'), '1.12.1.0')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'network_id'), '1.12.1.32')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'network_id'), '1.12.1.32')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'network_id'), '1.12.1.36')
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'network_id'), '1.12.1.36')
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'network_id'), '1.12.1.36')
+        address = '1.12.1.254/24'
+        self.assertEqual(ipaddr(address, 'network_id'), '1.12.1.0')
+
+    def test_network_prefix(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'network/prefix'), '1.12.1.0/24')
+        address = '1.12.1.0/25'
+        self.assertEqual(ipaddr(address, 'network/prefix'), '1.12.1.0/25')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'network/prefix'), '1.12.1.32/28')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'network/prefix'), '1.12.1.32/28')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'network/prefix'), '1.12.1.36/31')
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'network/prefix'), '1.12.1.36/31')
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'network/prefix'), '1.12.1.36/32')
+        address = '1.12.1.254/24'
+        self.assertEqual(ipaddr(address, 'network/prefix'), '1.12.1.0/24')
+
+    def test_network_netmask(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'network_netmask'), '1.12.1.0 255.255.255.0')
+        address = '1.12.1.0/25'
+        self.assertEqual(ipaddr(address, 'network_netmask'), '1.12.1.0 255.255.255.128')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'network_netmask'), '1.12.1.32 255.255.255.240')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'network_netmask'), '1.12.1.32 255.255.255.240')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'network_netmask'), '1.12.1.36 255.255.255.254')
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'network_netmask'), '1.12.1.36 255.255.255.254')
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'network_netmask'), '1.12.1.36 255.255.255.255')
+        address = '1.12.1.254/24'
+        self.assertEqual(ipaddr(address, 'network_netmask'), '1.12.1.0 255.255.255.0')
+
+    def test_network_wildcard(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'network_wildcard'), '1.12.1.0 0.0.0.255')
+        address = '1.12.1.0/25'
+        self.assertEqual(ipaddr(address, 'network_wildcard'), '1.12.1.0 0.0.0.127')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'network_wildcard'), '1.12.1.32 0.0.0.15')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'network_wildcard'), '1.12.1.32 0.0.0.15')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'network_wildcard'), '1.12.1.36 0.0.0.1')
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'network_wildcard'), '1.12.1.36 0.0.0.1')
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'network_wildcard'), '1.12.1.36 0.0.0.0')
+        address = '1.12.1.254/24'
+        self.assertEqual(ipaddr(address, 'network_wildcard'), '1.12.1.0 0.0.0.255')
 
     def test_next_usable(self):
         address = '1.12.1.0/24'
@@ -312,3 +392,32 @@ class TestNetmask(unittest.TestCase):
         self.assertEqual(previous_nth_usable(address, 1), None)
         address = '1.12.1.254/24'
         self.assertEqual(previous_nth_usable(address, 2), '1.12.1.252')
+
+    def test_ip_in_subnet(self):
+        subnet = '1.12.1.0/24'
+        address = '1.12.1.10'
+        self.assertEqual(ip_in_subnet(subnet, address), True)
+        subnet = '1.12.1.0/24'
+        address = '1.12.0.10'
+        self.assertEqual(ip_in_subnet(subnet, address), False)
+        #subnet = '1.12.1.34'
+        #self.assertFalse(ipaddr(subnet, 'last_usable'), 'Not a network subnet')
+        subnet = '1.12.1.32/28'
+        address = '1.12.1.36'
+        self.assertEqual(ip_in_subnet(subnet, address), True)
+        subnet = '1.12.1.32/255.255.255.240'
+        address = '1.12.1.31'
+        self.assertEqual(ip_in_subnet(subnet, address), False)
+        subnet = '1.12.1.36/31'
+        address = '1.12.1.36'
+        self.assertEqual(ip_in_subnet(subnet, address), True)
+        subnet = '1.12.1.37/31'
+        address = '1.12.1.35'
+        self.assertEqual(ip_in_subnet(subnet, address), False)
+        subnet = '1.12.1.36/32'
+        address = '1.12.1.36'
+        self.assertEqual(ip_in_subnet(subnet, address), True)
+        subnet = '1.12.1.0/24'
+        address = '1.12.2.0'
+        self.assertEqual(ip_in_subnet(subnet, address), False)
+

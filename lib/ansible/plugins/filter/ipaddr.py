@@ -213,6 +213,16 @@ def _ip_wildcard_query(v):
             return str(v.ip) + ' ' + str(v.hostmask)
 '''
 
+def _network_id_query(v):
+    '''Return the network of a given IP or subnet'''
+    return str(v.network)
+
+def _network_netmask_query(v):
+    return str(v.network) +  ' ' + str(v.netmask)
+
+def _network_wildcard_query(v):
+    return str(v.network) +  ' ' + str(v.hostmask)
+
 def _address_prefix_query(v):
     if v.size > 1:
         if v.ip != v.network:
@@ -434,10 +444,10 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'ip/prefix': _ip_prefix_query,
         'ip_netmask': _ip_netmask_query,
        # 'ip_wildcard': _ip_wildcard_query,
-        #'subnet': _subnet_query,
-        #'subnet/prefix': _subnet_prefix_query,
-        #'subnet_netmask': _subnet_netmask_query,
-        #'subnet_wildcard': _subnet_wildcard_query,
+        'network_id': _network_id_query,
+        'network/prefix': _subnet_query,
+        'network_netmask': _network_netmask_query,
+        'network_wildcard': _network_wildcard_query,
         '6to4': _6to4_query,
         'address': _ip_query,
         'address/prefix': _address_prefix_query,
@@ -813,6 +823,53 @@ def previous_nth_usable(value, offset):
         if nth_ip >= first_usable and nth_ip <= last_usable:
             return str(netaddr.IPAddress(int(v.ip) - offset))
 
+# Returns the next nth usable ip within a network described by value.
+def ip_in_subnet(value, ip):
+    ''' Get the nth host within a given network '''
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        v = netaddr.IPNetwork(v)
+
+        wtype = ipaddr(ip, 'type')
+        if wtype == 'address':
+            w = ipaddr(ip, 'cidr')
+        elif vtype == 'network':
+            w = ipaddr(ip, 'subnet')
+        w = netaddr.IPNetwork(w)
+    except:
+        return False
+
+    #if type(offset) != int:
+    #    raise errors.AnsibleFilterError('Must pass in an interger')
+    if v.size == 2:
+        first_usable = int(netaddr.IPAddress(int(v.network)))
+        last_usable = int(netaddr.IPAddress(int(v.network) + 1))
+        ip_check = int(netaddr.IPAddress(int(w.ip)))
+        if ip_check >= first_usable and ip_check <= last_usable:
+            return True
+        else:
+            return False
+    elif v.size > 1:
+        first_usable = int(netaddr.IPAddress(int(v.network) + 1))
+        last_usable = int(netaddr.IPAddress(int(v.broadcast) - 1))
+        ip_check = int(netaddr.IPAddress(int(w.ip)))
+        if ip_check >= first_usable and ip_check <= last_usable:
+            return True
+        else:
+            return False
+    elif v.size == 1:
+        subnet = int(netaddr.IPAddress(int(v.ip)))
+        ip_check = int(netaddr.IPAddress(int(w.ip)))
+        if subnet == ip_check:
+            return True
+        else:
+            return False
+
 # Returns the SLAAC address within a network for a given HW/MAC address.
 # Usage:
 #
@@ -914,6 +971,8 @@ class FilterModule(object):
         'nthhost': nthhost,
         'slaac': slaac,
         'ip4_hex': ip4_hex,
+        'next_nth_usable': next_nth_usable,
+        'previous_nth_usable': previous_nth_usable,
 
         # MAC / HW addresses
         'hwaddr': hwaddr,
