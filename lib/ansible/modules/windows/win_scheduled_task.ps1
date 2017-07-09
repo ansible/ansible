@@ -169,12 +169,7 @@ try {
 
     # Handle RunAs/RunLevel options for the task
 
-    if (!$store_password) {
-        # Create a ScheduledTaskPrincipal for the task to run under
-        $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel $runlevel -Id Author
-        $registerRunOptionParams = @{Principal = $principal}
-    }
-    else {
+    if ($store_password) {
         # Specify direct credential and run-level values to add to Register-ScheduledTask
         $registerRunOptionParams = @{
             User = $user
@@ -183,6 +178,11 @@ try {
         if ($password) {
             $registerRunOptionParams.Password = $password
         }
+    }
+    else {
+        # Create a ScheduledTaskPrincipal for the task to run under
+        $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel $runlevel -Id Author
+        $registerRunOptionParams = @{Principal = $principal}
     }
 
     if ($enabled){

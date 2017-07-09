@@ -57,13 +57,13 @@ options:
       - absent
   user:
     description:
-      - User to run the scheduled task as; defaults to the current user.  When only a user is set without specifying C(password) or
-        C(store_password), and the user is not a Windows built-in service account, the task is set to run only when the user
-        is logged in.
+      - User to run the scheduled task as; defaults to the current user
     default: DOMAIN\user
   password:
     description:
-      - Password for the user account to run the scheduled task as
+      - Password for the user account to run the scheduled task as.  This is required for running a task without the user being
+        logged in, excluding Windows built-in service accounts.  This should be used for specifying credentials during initial
+        task creation, and changing stored user credentials, as setting this value will cause the task to be recreated.
     version_added: "2.4"
   runlevel:
     description:
@@ -75,7 +75,7 @@ options:
     version_added: "2.4"
   store_password:
     description:
-      - Store the password for the user running the task.  If C(false), the task will only have access to local resources
+      - Store the password for the user running the task.  If C(false), the task will only have access to local resources.
     default: true
     version_added: "2.4"
   executable:
