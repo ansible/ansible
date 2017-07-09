@@ -118,8 +118,13 @@ class Rest(object):
     def send(self, method, path, data=None, headers=None):
         url = self._url_builder(path)
         data = self.module.jsonify(data)
+        timeout = self.module.params['timeout']
 
-        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method)
+        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method, timeout=timeout)
+
+        # Exceptions in fetch_url may result in a status -1, the ensures a
+        if info['status'] == -1:
+            self.module.fail_json(msg=info['msg'])
 
         return Response(resp, info)
 
@@ -161,6 +166,8 @@ def main():
                 fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN']),
                 required=True,
             ),
+            validate_certs=dict(type='bool', default=True),
+            timeout=dict(type='int', default=30),
         ),
         supports_check_mode=True,
     )
