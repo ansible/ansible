@@ -1095,6 +1095,40 @@ class PyVmomiHelper(object):
                     self.module.fail_json(msg="hardware.scsi attribute should be 'paravirtual' or 'lsilogic'")
         return disk_controller_type
 
+    def find_folder(self, searchpath):
+        """ Walk inventory objects one position of the searchpath at a time """
+
+        # split the searchpath so we can iterate through it
+        paths = [x.replace('/', '') for x in searchpath.split('/')]
+        paths = [x.strip() for x in paths if x.strip()]
+        paths_total = len(paths) - 1
+        position = 0
+
+        # recursive walk while looking for next element in searchpath
+        root = self.content.rootFolder
+        while root and position <= paths_total:
+            change = False
+            if hasattr(root, 'childEntity'):
+                for child in root.childEntity:
+                    if child.name == paths[position]:
+                        root = child
+                        position += 1
+                        change = True
+                        break
+            elif isinstance(root, vim.Datacenter):
+                if hasattr(root, 'vmFolder'):
+                    if root.vmFolder.name == paths[position]:
+                        root = root.vmFolder
+                        position += 1
+                        change = True
+            else:
+                root = None
+
+            if not change:
+                root = None
+
+        return root
+
     def deploy_vm(self):
         # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/clone_vm.py
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.CloneSpec.html
@@ -1113,7 +1147,15 @@ class PyVmomiHelper(object):
 
         destfolder = None
 
+        # make an attempt with findinventorybypath, although this works poorly
+        # when datacenters are nested under folders
         f_obj = self.content.searchIndex.FindByInventoryPath('%(folder)s' % self.params)
+
+        # retry by walking down the object tree
+        if f_obj is None:
+            f_obj = self.find_folder(self.params['folder'])
+
+        # abort if no strategy was successful
         if f_obj is None:
             self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
         destfolder = f_obj
