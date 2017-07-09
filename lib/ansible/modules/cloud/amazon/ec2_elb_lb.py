@@ -108,6 +108,9 @@ options:
   scheme:
     description:
       - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'.
+        If you choose to update your scheme with a different value the ELB will be destroyed and
+        recreated. To update scheme you must use the option wait.
+    choices: ["internal", "internet-facing"]
     required: false
     default: 'internet-facing'
     version_added: "1.7"
@@ -403,11 +406,14 @@ except ImportError:
     HAS_BOTO = False
 
 import time
+import traceback
 import random
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, AnsibleAWSError
 from ansible.module_utils.ec2 import get_aws_connection_info
+from ansible.module_utils.six import string_types
+
 
 def _throttleable_operation(max_retries):
     def _operation_wrapper(op):
@@ -477,7 +483,12 @@ class ElbManager(object):
         self.changed = False
         self.status = 'gone'
         self.elb_conn = self._get_elb_connection()
-        self.elb = self._get_elb()
+
+        try:
+            self.elb = self._get_elb()
+        except boto.exception.BotoServerError as e:
+            module.fail_json(msg='unable to get all load balancers: %s' % e.message, exception=traceback.format_exc())
+
         self.ec2_conn = self._get_ec2_connection()
 
     @_throttleable_operation(_THROTTLING_RETRIES)
@@ -487,10 +498,15 @@ class ElbManager(object):
             # Zones and listeners will be added at creation
             self._create_elb()
         else:
-            self._set_zones()
-            self._set_security_groups()
-            self._set_elb_listeners()
-            self._set_subnets()
+            if self._get_scheme():
+                # the only way to change the scheme is by recreating the resource
+                self.ensure_gone()
+                self._create_elb()
+            else:
+                self._set_zones()
+                self._set_security_groups()
+                self._set_elb_listeners()
+                self._set_subnets()
         self._set_health_check()
         # boto has introduced support for some ELB attributes in
         # different versions, so we check first before trying to
@@ -832,20 +848,15 @@ class ElbManager(object):
         try:
             self.elb.enable_zones(zones)
         except boto.exception.BotoServerError as e:
-            if "Invalid Availability Zone" in e.error_message:
-                self.module.fail_json(msg=e.error_message)
-            else:
-                self.module.fail_json(msg="an unknown server error occurred, please try again later")
+            self.module.fail_json(msg='unable to enable zones: %s' % e.message, exception=traceback.format_exc())
+
         self.changed = True
 
     def _disable_zones(self, zones):
         try:
             self.elb.disable_zones(zones)
         except boto.exception.BotoServerError as e:
-            if "Invalid Availability Zone" in e.error_message:
-                self.module.fail_json(msg=e.error_message)
-            else:
-                self.module.fail_json(msg="an unknown server error occurred, please try again later")
+            self.module.fail_json(msg='unable to disable zones: %s' % e.message, exception=traceback.format_exc())
         self.changed = True
 
     def _attach_subnets(self, subnets):
@@ -870,6 +881,15 @@ class ElbManager(object):
                 self._attach_subnets(subnets_to_attach)
             if subnets_to_detach:
                 self._detach_subnets(subnets_to_detach)
+
+    def _get_scheme(self):
+        """Determine if the current scheme is different than the scheme of the ELB"""
+        if self.scheme:
+            if self.elb.scheme != self.scheme:
+                if not self.wait:
+                    self.module.fail_json(msg="Unable to modify scheme without using the wait option")
+                return True
+        return False
 
     def _set_zones(self):
         """Determine which zones need to be enabled or disabled on the ELB"""
@@ -1244,7 +1264,7 @@ def main():
         health_check={'default': None, 'required': False, 'type': 'dict'},
         subnets={'default': None, 'required': False, 'type': 'list'},
         purge_subnets={'default': False, 'required': False, 'type': 'bool'},
-        scheme={'default': 'internet-facing', 'required': False},
+        scheme={'default': 'internet-facing', 'required': False, 'choices': ['internal', 'internet-facing']},
         connection_draining_timeout={'default': None, 'required': False, 'type': 'int'},
         idle_timeout={'default': None, 'type': 'int', 'required': False},
         cross_az_load_balancing={'default': None, 'type': 'bool', 'required': False},
@@ -1313,14 +1333,13 @@ def main():
             grp_details = ec2.get_all_security_groups(filters=filters)
 
             for group_name in security_group_names:
-                if isinstance(group_name, basestring):
+                if isinstance(group_name, string_types):
                     group_name = [group_name]
 
                 group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
                 security_group_ids.extend(group_id)
         except boto.exception.NoAuthHandlerFound as e:
             module.fail_json(msg = str(e))
-
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,
@@ -1330,7 +1349,6 @@ def main():
                          access_logs, stickiness, wait, wait_timeout, tags,
                          region=region, instance_ids=instance_ids, purge_instance_ids=purge_instance_ids,
                          **aws_connect_params)
-
 
     # check for unsupported attributes for this version of boto
     if cross_az_load_balancing and not elb_man._check_attribute_support('cross_zone_load_balancing'):

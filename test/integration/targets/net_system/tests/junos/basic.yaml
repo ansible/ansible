@@ -1,0 +1,248 @@
+---
+- debug: msg="START net_system junos/basic.yaml"
+
+- name: setup - remove hostname
+  net_system:
+    hostname: vsrx01
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Set hostname
+  net_system:
+    hostname: vsrx01
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<host-name>vsrx01</host-name>' in config.xml"
+
+- name: Set hostname (idempotent)
+  net_system:
+    hostname: vsrx01
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete hostname configuration
+  net_system:
+    hostname: vsrx01
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<host-name>vsrx01</host-name>' not in config.xml"
+
+- name: Teardown - set hostname
+  net_system:
+    hostname: vsrx01
+    state: present
+    provider: "{{ netconf }}"
+
+- name: setup - remove domain name
+  net_system:
+    domain_name: ansible.com
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Set domain name
+  net_system:
+    domain_name: ansible.com
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-name>ansible.com</domain-name>' in config.xml"
+
+- name: Set domain name (idempotent)
+  net_system:
+    domain_name: ansible.com
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete domain name
+  net_system:
+    domain_name: ansible.com
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-name>ansible.com</domain-name>' not in config.xml"
+
+- name: Teardown - set domain name
+  net_system:
+    domain_name: ansible.com
+    state: present
+    provider: "{{ netconf }}"
+
+- name: Setup - delete domain search
+  net_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Set domain search
+  net_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-search>test.com</domain-search>' in config.xml"
+      - "'<domain-search>sample.com</domain-search>' in config.xml"
+
+- name: Set domain search
+  net_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete domain search
+  net_system:
+    domain_search:
+      - test.com
+      - sample.com
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<domain-search>test.com</domain-search>' not in config.xml"
+      - "'<domain-search>sample.com</domain-search>' not in config.xml"
+
+- name: Setup - delete name servers
+  net_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Set name servers
+  net_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>8.8.8.8</name>' in config.xml"
+      - "'<name>8.8.4.4</name>' in config.xml"
+
+- name: Set name servers (idempotent)
+  net_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete name servers
+  net_system:
+    name_servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>8.8.8.8</name>' not in config.xml"
+      - "'<name>8.8.4.4</name>' not in config.xml"

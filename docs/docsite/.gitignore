@@ -12,4 +12,5 @@ ansible*.xml
 objects.inv
 .doctrees
 rst/modules/*.rst
+rst/playbooks_keywords.rst
 *.min.css

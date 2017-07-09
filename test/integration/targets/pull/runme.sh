@@ -12,9 +12,8 @@ pull_dir="${temp_dir}/pull"
 temp_log="${temp_dir}/pull.log"
 
 cp -av "pull-integration-test" "${repo_dir}"
-
+cd "${repo_dir}"
 (
-    cd "${repo_dir}"
     git init
     git config user.email "ansible@ansible.com"
     git config user.name  "Ansible Test Runner"

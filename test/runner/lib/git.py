@@ -84,7 +84,7 @@ class Git(object):
         """
         output = self.run_git(cmd).strip(separator)
 
-        if len(output) == 0:
+        if not output:
             return []
 
         return output.split(separator)

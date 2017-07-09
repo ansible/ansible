@@ -818,25 +818,25 @@ class DockerInventory(object):
         parser = argparse.ArgumentParser(
             description='Return Ansible inventory for one or more Docker hosts.')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List all containers (default: True)')
+                            help='List all containers (default: True)')
         parser.add_argument('--debug', action='store_true', default=False,
-                           help='Send debug messages to STDOUT')
+                            help='Send debug messages to STDOUT')
         parser.add_argument('--host', action='store',
                             help='Only get information for a specific container.')
         parser.add_argument('--pretty', action='store_true', default=False,
-                           help='Pretty print JSON output(default: False)')
+                            help='Pretty print JSON output(default: False)')
         parser.add_argument('--config-file', action='store', default=default_config,
                             help="Name of the config file to use. Default is %s" % (default_config))
         parser.add_argument('--docker-host', action='store', default=None,
                             help="The base url or Unix sock path to connect to the docker daemon. Defaults to %s"
-                                  % (DEFAULT_DOCKER_HOST))
+                                 % (DEFAULT_DOCKER_HOST))
         parser.add_argument('--tls-hostname', action='store', default='localhost',
                             help="Host name to expect in TLS certs. Defaults to 'localhost'")
         parser.add_argument('--api-version', action='store', default=None,
                             help="Docker daemon API version. Defaults to %s" % (DEFAULT_DOCKER_API_VERSION))
         parser.add_argument('--timeout', action='store', default=None,
                             help="Docker connection timeout in seconds. Defaults to %s"
-                                  % (DEFAULT_TIMEOUT_SECONDS))
+                                 % (DEFAULT_TIMEOUT_SECONDS))
         parser.add_argument('--cacert-path', action='store', default=None,
                             help="Path to the TLS certificate authority pem file.")
         parser.add_argument('--cert-path', action='store', default=None,

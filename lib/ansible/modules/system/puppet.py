@@ -169,7 +169,7 @@ def main():
             show_diff=dict(
                 # internal code to work with --diff, do not use
                 default=False, aliases=['show-diff'], type='bool'),
-            facts=dict(default=None),
+            facts=dict(default=None, type='dict'),
             facter_basename=dict(default='ansible'),
             environment=dict(required=False, default=None),
             certname=dict(required=False, default=None),

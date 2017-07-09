@@ -62,7 +62,7 @@ class ActionModule(ActionBase):
             return path
 
         # If using docker, do not add user information
-        if self._remote_transport not in [ 'docker' ] and user:
+        if self._remote_transport not in ['docker'] and user:
             user_prefix = '%s@' % (user, )
 
         if self._host_is_ipv6_address(host):
@@ -308,20 +308,12 @@ class ActionModule(ActionBase):
         src = _tmp_args.get('src', None)
         dest = _tmp_args.get('dest', None)
         if src is None or dest is None:
-            return dict(failed=True,
-                    msg="synchronize requires both src and dest parameters are set")
+            return dict(failed=True, msg="synchronize requires both src and dest parameters are set")
 
+        # Determine if we need a user@
+        user = None
         if not dest_is_local:
-            # Private key handling
-            private_key = self._play_context.private_key_file
-
-            if private_key is not None:
-                private_key = os.path.expanduser(private_key)
-                _tmp_args['private_key'] = private_key
-
             # Src and dest rsync "path" handling
-            # Determine if we need a user@
-            user = None
             if boolean(_tmp_args.get('set_remote_user', 'yes')):
                 if use_delegate:
                     user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_ssh_user', None)
@@ -330,6 +322,13 @@ class ActionModule(ActionBase):
 
                 else:
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+
+            # Private key handling
+            private_key = self._play_context.private_key_file
+
+            if private_key is not None:
+                private_key = os.path.expanduser(private_key)
+                _tmp_args['private_key'] = private_key
 
             # use the mode to define src and dest's url
             if _tmp_args.get('mode', 'push') == 'pull':
@@ -384,7 +383,7 @@ class ActionModule(ActionBase):
 
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
-        if self._remote_transport in [ 'docker' ]:
+        if self._remote_transport in ['docker']:
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
                 tmp_rsync_opts = _tmp_args.get('rsync_opts', [])

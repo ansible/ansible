@@ -20,10 +20,14 @@ __metaclass__ = type
 
 import os
 import logging
+import json
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.plugins import netconf_loader
 from ansible.plugins.connection import ConnectionBase, ensure_connect
+from ansible.utils.jsonrpc import Rpc
 
 try:
     from ncclient import manager
@@ -42,8 +46,8 @@ except ImportError:
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
 
-class Connection(ConnectionBase):
-    ''' NetConf connections '''
+class Connection(Rpc, ConnectionBase):
+    """NetConf connections"""
 
     transport = 'netconf'
     has_pipelining = False
@@ -62,16 +66,24 @@ class Connection(ConnectionBase):
 
         display.display('ssh connection done, stating ncclient', log_only=True)
 
-        allow_agent = True
+        self.allow_agent = True
         if self._play_context.password is not None:
-            allow_agent = False
+            self.allow_agent = False
 
-        key_filename = None
+        self.key_filename = None
         if self._play_context.private_key_file:
-            key_filename = os.path.expanduser(self._play_context.private_key_file)
+            self.key_filename = os.path.expanduser(self._play_context.private_key_file)
 
-        if not self._network_os:
-            raise AnsibleConnectionFailure('network_os must be set for netconf connections')
+        network_os = self._play_context.network_os
+
+        if not network_os:
+            for cls in netconf_loader.all(class_only=True):
+                network_os = cls.guess_network_os(self)
+                if network_os:
+                    display.display('discovered network_os %s' % network_os, log_only=True)
+
+        if not network_os:
+            raise AnsibleConnectionFailure('Unable to automatically determine host network os. Please ansible_network_os value')
 
         try:
             self._manager = manager.connect(
@@ -79,23 +91,31 @@ class Connection(ConnectionBase):
                 port=self._play_context.port or 830,
                 username=self._play_context.remote_user,
                 password=self._play_context.password,
-                key_filename=str(key_filename),
+                key_filename=str(self.key_filename),
                 hostkey_verify=C.HOST_KEY_CHECKING,
                 look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
-                allow_agent=allow_agent,
+                allow_agent=self.allow_agent,
                 timeout=self._play_context.timeout,
-                device_params={'name': self._network_os}
+                device_params={'name': network_os}
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(str(exc))
 
         if not self._manager.connected:
-            return (1, '', 'not connected')
+            return 1, b'', b'not connected'
 
         display.display('ncclient manager object created successfully', log_only=True)
 
         self._connected = True
-        return (0, self._manager.session_id, '')
+
+        self._netconf = netconf_loader.get(network_os, self)
+        if self._netconf:
+            self._rpc.add(self._netconf)
+            display.display('loaded netconf plugin for network_os %s' % network_os, log_only=True)
+        else:
+            display.display('unable to load netconf for network_os %s' % network_os)
+
+        return 0, to_bytes(self._manager.session_id, errors='surrogate_or_strict'), b''
 
     def close(self):
         if self._manager:
@@ -106,20 +126,37 @@ class Connection(ConnectionBase):
     @ensure_connect
     def exec_command(self, request):
         """Sends the request to the node and returns the reply
+        The method accepts two forms of request.  The first form is as a byte
+        string that represents xml string be send over netconf session.
+        The second form is a json-rpc (2.0) byte string.
         """
-        if request == 'open_session()':
-            return (0, 'ok', '')
+        try:
+            obj = json.loads(to_text(request, errors='surrogate_or_strict'))
+
+            if 'jsonrpc' in obj:
+                if self._netconf:
+                    out = self._exec_rpc(obj)
+                else:
+                    out = self.internal_error("netconf plugin is not supported for network_os %s" % self._play_context.network_os)
+                return 0, to_bytes(out, errors='surrogate_or_strict'), b''
+            else:
+                err = self.invalid_request(obj)
+                return 1, b'', to_bytes(err, errors='surrogate_or_strict')
+
+        except (ValueError, TypeError):
+            # to_ele operates on native strings
+            request = to_native(request, errors='surrogate_or_strict')
 
         req = to_ele(request)
         if req is None:
-            return (1, '', 'unable to parse request')
+            return 1, b'', b'unable to parse request'
 
         try:
             reply = self._manager.rpc(req)
         except RPCError as exc:
-            return (1, '', to_xml(exc.xml))
+            return 1, b'', to_bytes(to_xml(exc.xml), errors='surrogate_or_strict')
 
-        return (0, reply.data_xml, '')
+        return 0, to_bytes(reply.data_xml, errors='surrogate_or_strict'), b''
 
     def put_file(self, in_path, out_path):
         """Transfer a file from local to remote"""

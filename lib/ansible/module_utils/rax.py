@@ -245,14 +245,14 @@ def rax_argument_spec():
     return dict(
         api_key=dict(type='str', aliases=['password'], no_log=True),
         auth_endpoint=dict(type='str'),
-        credentials=dict(type='str', aliases=['creds_file']),
+        credentials=dict(type='path', aliases=['creds_file']),
         env=dict(type='str'),
         identity_type=dict(type='str', default='rackspace'),
         region=dict(type='str'),
         tenant_id=dict(type='str'),
         tenant_name=dict(type='str'),
         username=dict(type='str'),
-        verify_ssl=dict(choices=BOOLEANS, type='bool'),
+        verify_ssl=dict(type='bool'),
     )
 
 

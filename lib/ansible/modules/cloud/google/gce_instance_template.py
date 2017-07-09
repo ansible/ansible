@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: gce_instance_template
 version_added: "2.3"
-short_description: create or destroy intance templates of Compute Engine of GCP.
+short_description: create or destroy instance templates of Compute Engine of GCP.
 description:
      - Creates or destroy Google instance templates
        of Compute Engine of Google Cloud Platform.
@@ -87,7 +87,7 @@ options:
         If C(ephemeral), a new non-static address will be
         used.  If C(None), then no external address will
         be used.  To use an existing static IP address
-        specify adress name.
+        specify address name.
     default: "ephemeral"
   service_account_email:
     description:
@@ -152,6 +152,11 @@ options:
   credentials_file:
     description:
       - path to the JSON file associated with the service account email
+    default: null
+  subnetwork_region:
+    version_added: "2.4"
+    description:
+      - Region that subnetwork resides in. (Required for subnetwork to successfully complete)
     default: null
 requirements:
     - "python >= 2.6"
@@ -254,6 +259,7 @@ def create_instance_template(module, gce):
     disk_auto_delete = module.params.get('disk_auto_delete')
     network = module.params.get('network')
     subnetwork = module.params.get('subnetwork')
+    subnetwork_region = module.params.get('subnetwork_region')
     can_ip_forward = module.params.get('can_ip_forward')
     external_ip = module.params.get('external_ip')
     service_account_email = module.params.get('service_account_email')
@@ -266,7 +272,6 @@ def create_instance_template(module, gce):
     metadata = module.params.get('metadata')
     description = module.params.get('description')
     disks = module.params.get('disks')
-
     changed = False
 
     # args of ex_create_instancetemplate
@@ -314,7 +319,7 @@ def create_instance_template(module, gce):
     gce_args['network'] = gce_network
 
     if subnetwork is not None:
-        gce_args['subnetwork'] = subnetwork
+        gce_args['subnetwork'] = gce.ex_get_subnetwork(subnetwork, region=subnetwork_region)
 
     if can_ip_forward is not None:
         gce_args['can_ip_forward'] = can_ip_forward
@@ -495,7 +500,7 @@ def check_if_system_state_would_be_changed(module, gce):
             output = 'nothing to do for instance template {} '.format(name)
     if current_state == "present":
         if changed:
-            output = 'instance template {} will be detroyed'.format(name)
+            output = 'instance template {} will be destroyed'.format(name)
         else:
             output = 'nothing to do for instance template {} '.format(name)
 
@@ -529,6 +534,7 @@ def main():
             project_id=dict(),
             pem_file=dict(type='path'),
             credentials_file=dict(type='path'),
+            subnetwork_region=dict()
         ),
         mutually_exclusive=[['source', 'image']],
         required_one_of=[['image', 'image_family']],

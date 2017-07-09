@@ -19,7 +19,7 @@ It is recommended to look at `Example Playbooks <https://github.com/ansible/ansi
    :maxdepth: 2
 
    playbooks_intro
-   playbooks_roles
+   playbooks_reuse
    playbooks_variables
    playbooks_templating
    playbooks_conditionals

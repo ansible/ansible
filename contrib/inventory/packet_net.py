@@ -63,10 +63,11 @@ except ImportError:
 
 ini_section = 'packet'
 
+
 class PacketInventory(object):
 
     def _empty_inventory(self):
-        return {"_meta" : {"hostvars" : {}}}
+        return {"_meta": {"hostvars": {}}}
 
     def __init__(self):
         ''' Main execution path '''
@@ -100,7 +101,6 @@ class PacketInventory(object):
                 data_to_print = self.json_format_dict(self.inventory, True)
 
         print(data_to_print)
-
 
     def is_cache_valid(self):
         ''' Determines if the cache files have expired, or if it is still valid '''
@@ -224,13 +224,12 @@ class PacketInventory(object):
 
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Packet')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List Devices (default: True)')
+                            help='List Devices (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all the variables about a specific device')
+                            help='Get all the variables about a specific device')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
-                           help='Force refresh of cache by making API requests to Packet (default: False - use cache files)')
+                            help='Force refresh of cache by making API requests to Packet (default: False - use cache files)')
         self.args = parser.parse_args()
-
 
     def do_api_calls_update_cache(self):
         ''' Do API calls to each region, and save data in cache files '''
@@ -244,7 +243,7 @@ class PacketInventory(object):
 
     def connect(self):
         ''' create connection to api server'''
-        token=os.environ.get('PACKET_API_TOKEN')
+        token = os.environ.get('PACKET_API_TOKEN')
         if token is None:
             raise Exception("Error reading token from environment (PACKET_API_TOKEN)!")
         manager = packet.Manager(auth_token=token)
@@ -270,7 +269,7 @@ class PacketInventory(object):
 
         try:
             manager = self.connect()
-            devices = manager.list_devices(project_id=project.id, params = params)
+            devices = manager.list_devices(project_id=project.id, params=params)
 
             for device in devices:
                 self.add_device(device, project)
@@ -306,7 +305,6 @@ class PacketInventory(object):
         for ip_address in device.ip_addresses:
             if ip_address['public'] is True and ip_address['address_family'] == 4:
                 dest = ip_address['address']
-
 
         if not dest:
             # Skip devices we cannot address (e.g. private VPC subnet)
@@ -373,7 +371,6 @@ class PacketInventory(object):
 
         self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_device(device)
 
-
     def get_host_info_dict_from_device(self, device):
         device_vars = {}
         for key in vars(device):
@@ -403,9 +400,9 @@ class PacketInventory(object):
                     device_vars[key] = k
             else:
                 pass
-                #print key
-                #print type(value)
-                #print value
+                # print key
+                # print type(value)
+                # print value
 
         return device_vars
 
@@ -416,10 +413,10 @@ class PacketInventory(object):
             # Need to load index from cache
             self.load_index_from_cache()
 
-        if not self.args.host in self.index:
+        if self.args.host not in self.index:
             # try updating the cache
             self.do_api_calls_update_cache()
-            if not self.args.host in self.index:
+            if self.args.host not in self.index:
                 # host might not exist anymore
                 return self.json_format_dict({}, True)
 
@@ -455,14 +452,12 @@ class PacketInventory(object):
         json_inventory = cache.read()
         return json_inventory
 
-
     def load_index_from_cache(self):
         ''' Reads the index from the cache file sets self.index '''
 
         cache = open(self.cache_path_index, 'r')
         json_index = cache.read()
         self.index = json.loads(json_index)
-
 
     def write_to_cache(self, data, filename):
         ''' Writes data in JSON format to a file '''

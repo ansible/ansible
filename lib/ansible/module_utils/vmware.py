@@ -17,8 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import iteritems
 import atexit
+import os
 import ssl
 import time
 
@@ -52,6 +54,30 @@ def wait_for_task(task):
             time.sleep(15)
 
 
+def find_obj(content, vimtype, name, first=True):
+    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
+    obj_list = container.view
+    container.Destroy()
+
+    # Backward compatible with former get_obj() function
+    if name is None:
+        if obj_list:
+            return obj_list[0]
+        return None
+
+    # Select the first match
+    if first is True:
+        for obj in obj_list:
+            if obj.name == name:
+                return obj
+
+        # If no object found, return None
+        return None
+
+    # Return all matching objects if needed
+    return [obj for obj in obj_list if obj.name == name]
+
+
 def find_dvspg_by_name(dv_switch, portgroup_name):
 
     portgroups = dv_switch.portgroup
@@ -70,7 +96,7 @@ def find_entity_child_by_path(content, entityRootFolder, path):
     paths = path.split("/")
     try:
         for path in paths:
-            entity = searchIndex.FindChild (entity, path)
+            entity = searchIndex.FindChild(entity, path)
 
         if entity.name == paths[-1]:
             return entity
@@ -114,6 +140,7 @@ def find_datacenter_by_name(content, datacenter_name):
             return dc
 
     return None
+
 
 def find_datastore_by_name(content, datastore_name):
 
@@ -238,13 +265,19 @@ def gather_vm_facts(content, vm):
         if not hasattr(entry, 'macAddress'):
             continue
 
+        if entry.macAddress:
+            mac_addr = entry.macAddress
+            mac_addr_dash = mac_addr.replace(':', '-')
+        else:
+            mac_addr = mac_addr_dash = None
+
         factname = 'hw_eth' + str(ethernet_idx)
         facts[factname] = {
             'addresstype': entry.addressType,
             'label': entry.deviceInfo.label,
-            'macaddress': entry.macAddress,
+            'macaddress': mac_addr,
             'ipaddresses': net_dict.get(entry.macAddress, None),
-            'macaddress_dash': entry.macAddress.replace(':', '-'),
+            'macaddress_dash': mac_addr_dash,
             'summary': entry.deviceInfo.summary,
         }
         facts['hw_interfaces'].append('eth' + str(ethernet_idx))
@@ -351,8 +384,7 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     return obj
 
 
-def fetch_file_from_guest(content, vm, username, password, src, dest):
-
+def fetch_file_from_guest(module, content, vm, username, password, src, dest):
     """ Use VMWare's filemanager api to fetch a file over http """
 
     result = {'failed': False}
@@ -376,7 +408,7 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
     result['url'] = fti.url
 
     # Use module_utils to fetch the remote url returned from the api
-    rsp, info = fetch_url(self.module, fti.url, use_proxy=False,
+    rsp, info = fetch_url(module, fti.url, use_proxy=False,
                           force=True, last_mod_time=None,
                           timeout=10, headers=None)
 
@@ -400,8 +432,7 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
     return result
 
 
-def push_file_to_guest(content, vm, username, password, src, dest, overwrite=True):
-
+def push_file_to_guest(module, content, vm, username, password, src, dest, overwrite=True):
     """ Use VMWare's filemanager api to fetch a file over http """
 
     result = {'failed': False}
@@ -437,7 +468,7 @@ def push_file_to_guest(content, vm, username, password, src, dest, overwrite=Tru
                                     filesize, overwrite)
 
     # PUT the filedata to the url ...
-    rsp, info = fetch_url(self.module, url, method="put", data=fdata,
+    rsp, info = fetch_url(module, url, method="put", data=fdata,
                           use_proxy=False, force=True, last_mod_time=None,
                           timeout=10, headers=None)
 
@@ -456,7 +487,7 @@ def run_command_in_guest(content, vm, username, password, program_path, program_
 
     tools_status = vm.guest.toolsStatus
     if (tools_status == 'toolsNotInstalled' or
-                tools_status == 'toolsNotRunning'):
+            tools_status == 'toolsNotRunning'):
         result['failed'] = True
         result['msg'] = "VMwareTools is not installed or is not running in the guest"
         return result

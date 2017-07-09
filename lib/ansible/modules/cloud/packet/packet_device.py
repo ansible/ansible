@@ -335,7 +335,7 @@ def listify_string_name_or_id(s):
 
 def get_hostname_list(module):
     # hostname is a list-typed param, so I guess it should return list
-    # (and it does, in Ansbile 2.2.1) but in order to be defensive,
+    # (and it does, in Ansible 2.2.1) but in order to be defensive,
     # I keep here the code to convert an eventual string to list
     hostnames = module.params.get('hostnames')
     count = module.params.get('count')

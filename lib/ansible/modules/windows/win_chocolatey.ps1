@@ -66,7 +66,7 @@ Function Chocolatey-Install-Upgrade
     if ($ChocoAlreadyInstalled -eq $null)
     {
 
-        #We need to install chocolatey
+        # We need to install chocolatey
         $install_output = (new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1") | powershell -
         if ($LASTEXITCODE -ne 0)
         {
@@ -75,6 +75,7 @@ Function Chocolatey-Install-Upgrade
         }
         $result.changed = $true
         $script:executable = "C:\ProgramData\chocolatey\bin\choco.exe"
+        Add-Warning $result 'Chocolatey was missing from this system, so it was installed during this task run.'
 
     }
     else
@@ -99,6 +100,10 @@ Function Choco-IsInstalled
         [Parameter(Mandatory=$true, Position=1)]
         [string]$package
     )
+
+    if ($package -eq "all") {
+        return $true
+    }
 
     $cmd = "$executable list --local-only --exact $package"
     $output = invoke-expression $cmd
@@ -152,7 +157,7 @@ Function Choco-Upgrade
         throw "$package is not installed, you cannot upgrade"
     }
 
-    $cmd = "$executable upgrade -dv -y $package -timeout $timeout"
+    $cmd = "$executable upgrade -dv -y $package -timeout $timeout --failonunfound"
 
     if ($check_mode)
     {
@@ -264,7 +269,7 @@ Function Choco-Install
         }
     }
 
-    $cmd = "$executable install -dv -y $package -timeout $timeout"
+    $cmd = "$executable install -dv -y $package -timeout $timeout --failonunfound"
 
     if ($check_mode)
     {

@@ -21,6 +21,7 @@ short_description: Load variables from files, dynamically within a task.
 description:
     - Loads variables from a YAML/JSON files dynamically from within a file or from a directory recursively during task runtime. If loading a directory,
       the files are sorted alphabetically before being loaded.
+    - This module is also supported for Windows targets.
 version_added: "1.4"
 options:
   file:
@@ -65,6 +66,8 @@ options:
     description:
         - This module allows you to specify the 'file' option directly w/o any other options.
           There is no 'free-form' option, this is just an indicator, see example below.
+notes:
+    - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = """
@@ -117,3 +120,17 @@ EXAMPLES = """
     ignore_files: 'bastion.yml'
     extensions: ['yml']
 """
+
+RETURN = '''
+ansible_facts:
+  description: Variables that were included and their values
+  returned: success
+  type: dict
+  sample: {'variable': 'value'}
+ansible_included_var_files:
+  description: A list of files that were successfully included
+  returned: success
+  type: list
+  sample: [ '/path/to/file.yml', '/path/to/file.json' ]
+  version_added: 2.4
+'''

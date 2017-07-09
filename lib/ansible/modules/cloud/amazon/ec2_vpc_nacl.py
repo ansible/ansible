@@ -29,11 +29,19 @@ options:
   name:
     description:
       - Tagged name identifying a network ACL.
-    required: true
+      - One and only one of the I(name) or I(nacl_id) is required.
+    required: false
+  nacl_id:
+    description:
+      - NACL id identifying a network ACL.
+      - One and only one of the I(name) or I(nacl_id) is required.
+    required: false
+    version_added: "2.4"
   vpc_id:
     description:
       - VPC id of the requesting VPC.
-    required: true
+      - Required when state present.
+    required: false
   subnets:
     description:
       - The list of subnets that should be associated with the network ACL.
@@ -118,6 +126,11 @@ EXAMPLES = '''
     vpc_id: vpc-12345678
     name: prod-dmz-nacl
     state: absent
+
+- name: "Delete nacl by its id"
+  ec2_vpc_nacl:
+    nacl_id: acl-33b4ee5b
+    state: absent
 '''
 RETURN = '''
 task:
@@ -145,8 +158,8 @@ DEFAULT_RULE_FIELDS = {
     'Protocol': '-1'
 }
 
-DEFAULT_INGRESS = dict(DEFAULT_RULE_FIELDS.items() + [('Egress', False)])
-DEFAULT_EGRESS = dict(DEFAULT_RULE_FIELDS.items() + [('Egress', True)])
+DEFAULT_INGRESS = dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', False)])
+DEFAULT_EGRESS = dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', True)])
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
@@ -343,10 +356,10 @@ def setup_network_acl(client, module):
 def remove_network_acl(client, module):
     changed = False
     result = dict()
-    vpc_id = module.params.get('vpc_id')
     nacl = describe_network_acl(client, module)
     if nacl['NetworkAcls']:
         nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
+        vpc_id = nacl['NetworkAcls'][0]['VpcId']
         associations = nacl['NetworkAcls'][0]['Associations']
         assoc_ids = [a['NetworkAclAssociationId'] for a in associations]
         default_nacl_id = find_default_vpc_nacl(vpc_id, client, module)
@@ -369,7 +382,10 @@ def remove_network_acl(client, module):
 #Boto3 client methods
 def create_network_acl(vpc_id, client, module):
     try:
-        nacl = client.create_network_acl(VpcId=vpc_id)
+        if module.check_mode:
+            nacl = dict(NetworkAcl=dict(NetworkAclId="nacl-00000000"))
+        else:
+            nacl = client.create_network_acl(VpcId=vpc_id)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
     return nacl
@@ -377,37 +393,41 @@ def create_network_acl(vpc_id, client, module):
 
 def create_network_acl_entry(params, client, module):
     try:
-        result = client.create_network_acl_entry(**params)
+        if not module.check_mode:
+            client.create_network_acl_entry(**params)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
-    return result
 
 
 def create_tags(nacl_id, client, module):
     try:
         delete_tags(nacl_id, client, module)
-        client.create_tags(Resources=[nacl_id], Tags=load_tags(module))
+        if not module.check_mode:
+            client.create_tags(Resources=[nacl_id], Tags=load_tags(module))
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
 
 def delete_network_acl(nacl_id, client, module):
     try:
-        client.delete_network_acl(NetworkAclId=nacl_id)
+        if not module.check_mode:
+            client.delete_network_acl(NetworkAclId=nacl_id)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
 
 def delete_network_acl_entry(params, client, module):
     try:
-        client.delete_network_acl_entry(**params)
+        if not module.check_mode:
+            client.delete_network_acl_entry(**params)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
 
 def delete_tags(nacl_id, client, module):
     try:
-        client.delete_tags(Resources=[nacl_id])
+        if not module.check_mode:
+            client.delete_tags(Resources=[nacl_id])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
@@ -427,9 +447,14 @@ def describe_acl_associations(subnets, client, module):
 
 def describe_network_acl(client, module):
     try:
-        nacl = client.describe_network_acls(Filters=[
-            {'Name': 'tag:Name', 'Values': [module.params.get('name')]}
-        ])
+        if module.params.get('nacl_id'):
+            nacl = client.describe_network_acls(Filters=[
+                {'Name': 'network-acl-id', 'Values': [module.params.get('nacl_id')]}
+            ])
+        else:
+            nacl = client.describe_network_acls(Filters=[
+                {'Name': 'tag:Name', 'Values': [module.params.get('name')]}
+            ])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
     return nacl
@@ -472,7 +497,8 @@ def replace_network_acl_association(nacl_id, subnets, client, module):
     for association in describe_acl_associations(subnets, client, module):
         params['AssociationId'] = association
         try:
-            client.replace_network_acl_association(**params)
+            if not module.check_mode:
+                client.replace_network_acl_association(**params)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
 
@@ -483,14 +509,16 @@ def replace_network_acl_entry(entries, Egress, nacl_id, client, module):
         params = entry
         params['NetworkAclId'] = nacl_id
         try:
-            client.replace_network_acl_entry(**params)
+            if not module.check_mode:
+                client.replace_network_acl_entry(**params)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
 
 
 def restore_default_acl_association(params, client, module):
     try:
-        client.replace_network_acl_association(**params)
+        if not module.check_mode:
+            client.replace_network_acl_association(**params)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
@@ -517,8 +545,9 @@ def subnets_to_associate(nacl, client, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        vpc_id=dict(required=True),
-        name=dict(required=True),
+        vpc_id=dict(),
+        name=dict(),
+        nacl_id=dict(),
         subnets=dict(required=False, type='list', default=list()),
         tags=dict(required=False, type='dict'),
         ingress=dict(required=False, type='list', default=list()),
@@ -526,7 +555,10 @@ def main():
         state=dict(default='present', choices=['present', 'absent']),
         ),
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True,
+                           required_one_of=[['name', 'nacl_id']],
+                           required_if=[['state', 'present', ['vpc_id']]])
 
     if not HAS_BOTO3:
         module.fail_json(msg='json, botocore and boto3 are required.')

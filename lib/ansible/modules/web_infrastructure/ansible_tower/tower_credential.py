@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -125,7 +125,7 @@ options:
       description:
         - Become method to Use for privledge escalation.
       required: False
-      choices: ["None", "sudo", "su", "pbrun", "pfexec"]
+      choices: ["None", "sudo", "su", "pbrun", "pfexec", "pmrun"]
       default: "None"
     become_username:
       description:
@@ -213,38 +213,38 @@ except ImportError:
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            user = dict(),
-            team = dict(),
-            kind = dict(required=True,
-                        choices=["ssh", "net", "scm", "aws", "rax", "vmware", "satellite6",
-                                 "cloudforms", "gce", "azure", "azure_rm", "openstack"]),
-            host = dict(),
-            username = dict(),
-            password = dict(no_log=True),
-            ssh_key_data = dict(no_log=True),
-            ssh_key_unlock = dict(no_log=True),
-            authorize = dict(type='bool', default=False),
-            authorize_password = dict(no_log=True),
-            client = dict(),
-            secret = dict(),
-            tenant = dict(),
-            subscription = dict(),
-            domain = dict(),
-            become_method = dict(),
-            become_username = dict(),
-            become_password = dict(no_log=True),
-            vault_password = dict(no_log=True),
-            description = dict(),
-            organization = dict(required=True),
-            project = dict(),
-            tower_host = dict(),
-            tower_username = dict(),
-            tower_password = dict(no_log=True),
-            tower_verify_ssl = dict(type='bool', default=True),
-            tower_config_file = dict(type='path'),
-            state = dict(choices=['present', 'absent'], default='present'),
+        argument_spec=dict(
+            name=dict(required=True),
+            user=dict(),
+            team=dict(),
+            kind=dict(required=True,
+                      choices=["ssh", "net", "scm", "aws", "rax", "vmware", "satellite6",
+                               "cloudforms", "gce", "azure", "azure_rm", "openstack"]),
+            host=dict(),
+            username=dict(),
+            password=dict(no_log=True),
+            ssh_key_data=dict(no_log=True),
+            ssh_key_unlock=dict(no_log=True),
+            authorize=dict(type='bool', default=False),
+            authorize_password=dict(no_log=True),
+            client=dict(),
+            secret=dict(),
+            tenant=dict(),
+            subscription=dict(),
+            domain=dict(),
+            become_method=dict(),
+            become_username=dict(),
+            become_password=dict(no_log=True),
+            vault_password=dict(no_log=True),
+            description=dict(),
+            organization=dict(required=True),
+            project=dict(),
+            tower_host=dict(),
+            tower_username=dict(),
+            tower_password=dict(no_log=True),
+            tower_verify_ssl=dict(type='bool', default=True),
+            tower_config_file=dict(type='path'),
+            state=dict(choices=['present', 'absent'], default='present'),
         ),
         supports_check_mode=True
     )

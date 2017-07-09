@@ -69,7 +69,7 @@ EXAMPLES = '''
     message=deployed {{ target }}
 '''
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 BASE_URL = 'https://grove.io/api/notice/%s/'
 
@@ -85,7 +85,7 @@ def do_notify_grove(module, channel_token, service, message, url=None, icon_url=
     if icon_url is not None:
         my_data['icon_url'] = icon_url
 
-    data = urllib.urlencode(my_data)
+    data = urlencode(my_data)
     response, info = fetch_url(module, my_url, data=data)
     if info['status'] != 200:
         module.fail_json(msg="failed to send notification: %s" % info['msg'])

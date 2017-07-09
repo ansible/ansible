@@ -405,9 +405,7 @@ $common_inject = {
 # source the common code into the current scope so we can call it
 . $common_inject
 
-$parsed_args = Parse-Args $args $true
-# grr, why use PSCustomObject for args instead of just native hashtable?
-$parsed_args.psobject.properties | foreach -begin {$job_args=@{}} -process {$job_args."$($_.Name)" = $_.Value} -end {$job_args}
+$job_args = Parse-Args $args $true
 
 # set the log_path for the global log function we injected earlier
 $log_path = $job_args['log_path']

@@ -22,8 +22,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: slurp
 version_added: historical
@@ -31,27 +30,26 @@ short_description: Slurps a file from remote nodes
 description:
      - This module works like M(fetch). It is used for fetching a base64-
        encoded blob containing the data in a remote file.
+     - This module is also supported for Windows targets.
 options:
   src:
     description:
       - The file on the remote system to fetch. This I(must) be a file, not a
         directory.
     required: true
-    default: null
-    aliases: []
 notes:
    - This module returns an 'in memory' base64 encoded version of the file, take into account that this will require at least twice the RAM as the
      original file size.
+   - This module is also supported for Windows targets.
    - "See also: M(fetch)"
-requirements: []
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
+    - Ansible Core Team
+    - Michael DeHaan (@mpdehaan)
 '''
 
-EXAMPLES = '''
-# Find out what the remote machine's mounts are:
-- slurp:
+EXAMPLES = r'''
+- name: Find out what the remote machine's mounts are
+  slurp:
     src: /proc/mounts
   register: mounts
 
@@ -71,13 +69,17 @@ EXAMPLES = '''
 '''
 
 import base64
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            src = dict(required=True, aliases=['path'], type='path'),
+        argument_spec=dict(
+            src=dict(type='path', required=True, aliases=['path']),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
     source = module.params['src']
 
@@ -90,9 +92,6 @@ def main():
 
     module.exit_json(content=data, source=source, encoding='base64')
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
-

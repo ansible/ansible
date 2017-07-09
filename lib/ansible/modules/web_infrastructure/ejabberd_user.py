@@ -79,11 +79,13 @@ EXAMPLES = '''
 
 import syslog
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
+
 
 class EjabberdUserException(Exception):
     """ Base exception for EjabberdUser class object """
     pass
+
 
 class EjabberdUser(object):
     """ This object represents a user resource for an ejabberd server.   The
@@ -181,22 +183,23 @@ class EjabberdUser(object):
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             host=dict(default=None, type='str'),
             username=dict(default=None, type='str'),
             password=dict(default=None, type='str', no_log=True),
             state=dict(default='present', choices=['present', 'absent']),
             logging=dict(default=False, type='bool')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     obj = EjabberdUser(module)
 
     rc = None
-    result = dict()
+    result = dict(changed=False)
 
     if obj.state == 'absent':
         if obj.exists:

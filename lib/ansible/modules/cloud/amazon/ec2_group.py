@@ -32,7 +32,15 @@ options:
   name:
     description:
       - Name of the security group.
-    required: true
+      - One of and only one of I(name) or I(group_id) is required.
+      - Required if I(state=present).
+    required: false
+  group_id:
+    description:
+      - Id of group to delete (works only with absent).
+      - One of and only one of I(name) or I(group_id) is required.
+    required: false
+    version_added: "2.4"
   description:
     description:
       - Description of the security group. Required when C(state) is C(present).
@@ -45,12 +53,15 @@ options:
     description:
       - List of firewall inbound rules to enforce in this group (see example). If none are supplied,
         no inbound rules will be enabled. Rules list may include its own name in `group_name`.
-        This allows idempotent loopback additions (e.g. allow group to acccess itself).
+        This allows idempotent loopback additions (e.g. allow group to access itself).
+        Rule sources list support was added in version 2.4. This allows to define multiple sources per
+        source type as well as multiple source types per rule. Prior to 2.4 an individual source is allowed.
     required: false
   rules_egress:
     description:
       - List of firewall outbound rules to enforce in this group (see example). If none are supplied,
         a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
+        Rule Egress sources list support was added in version 2.4.
     required: false
     version_added: "1.6"
   state:
@@ -169,8 +180,14 @@ EXAMPLES = '''
           - 172.16.17.0/24
         group_id:
           - sg-edcd9784
+
+- name: "Delete group by its id"
+  ec2_group:
+    group_id: sg-33b4ee5b
+    state: absent
 '''
 
+import json
 import re
 import time
 from ansible.module_utils.basic import AnsibleModule
@@ -185,6 +202,13 @@ except ImportError:
     HAS_BOTO = False
 
 import traceback
+
+
+def deduplicate_rules_args(rules):
+    """Returns unique rules"""
+    if rules is None:
+        return None
+    return list(dict(zip((json.dumps(r, sort_keys=True) for r in rules), rules)).values())
 
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
@@ -203,10 +227,10 @@ def make_rule_key(prefix, rule, group_id, cidr_ip):
     return key.lower().replace('-none', '-None')
 
 
-def addRulesToLookup(rules, prefix, dict):
+def addRulesToLookup(rules, prefix, rules_dict):
     for rule in rules:
         for grant in rule.grants:
-            dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
+            rules_dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
 
 
 def validate_rule(module, rule):
@@ -253,7 +277,7 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
         module.fail_json(msg="Specify group_name OR cidr_ip, not both")
     elif 'group_id' in rule and 'group_name' in rule:
         module.fail_json(msg="Specify group_id OR group_name, not both")
-    elif 'group_id' in rule and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
+    elif rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
         group_instance = SecurityGroup(owner_id=owner_id, name=group_name, id=group_id)
@@ -360,9 +384,10 @@ def rules_expand_sources(rules):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        name=dict(type='str', required=True),
-        description=dict(type='str', required=False),
-        vpc_id=dict(type='str'),
+        name=dict(),
+        group_id=dict(),
+        description=dict(),
+        vpc_id=dict(),
         rules=dict(type='list'),
         rules_egress=dict(type='list'),
         state=dict(default='present', type='str', choices=['present', 'absent']),
@@ -374,16 +399,19 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_one_of=[['name', 'group_id']],
+        required_if=[['state', 'present', ['name']]],
     )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
     name = module.params['name']
+    group_id = module.params['group_id']
     description = module.params['description']
     vpc_id = module.params['vpc_id']
-    rules = rules_expand_sources(rules_expand_ports(module.params['rules']))
-    rules_egress = rules_expand_sources(rules_expand_ports(module.params['rules_egress']))
+    rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules'])))
+    rules_egress = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules_egress'])))
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
@@ -413,8 +441,12 @@ def main():
         else:
             groups[curGroup.name] = curGroup
 
-        if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
-            group = curGroup
+        if group_id:
+            if curGroup.id == group_id:
+                group = curGroup
+        else:
+            if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
+                group = curGroup
 
     # Ensure requested group is absent
     if state == 'absent':
@@ -486,10 +518,7 @@ def main():
                 # If rule already exists, don't later delete it
                 for thisip in ip:
                     ruleId = make_rule_key('in', rule, group_id, thisip)
-                    if ruleId in groupRules:
-                        del groupRules[ruleId]
-                    # Otherwise, add new rule
-                    else:
+                    if ruleId not in groupRules:
                         grantGroup = None
                         if group_id:
                             grantGroup = groups[group_id]
@@ -497,6 +526,8 @@ def main():
                         if not module.check_mode:
                             group.authorize(rule['proto'], rule['from_port'], rule['to_port'], thisip, grantGroup)
                         changed = True
+                    else:
+                        del groupRules[ruleId]
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:

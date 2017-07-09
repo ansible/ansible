@@ -124,13 +124,10 @@ updates:
 """
 import re
 
-from functools import partial
-
 from ansible.module_utils.nxos import run_commands, load_config
 from ansible.module_utils.nxos import nxos_argument_spec
 from ansible.module_utils.nxos import check_args as nxos_check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.six import iteritems
 
 def check_args(module, warnings):
@@ -159,11 +156,15 @@ def check_args(module, warnings):
         if module.params[key]:
             warnings.append('argument %s is deprecated and will be ignored' % key)
 
+    for key in ['http_port', 'https_port']:
+        if module.params[key] is not None:
+            if not 1 <= module.params[key] <= 65535:
+                module.fail_json(msg='%s must be between 1 and 65535' % key)
+
     return warnings
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(want, have, module):
     commands = list()
-    want, have = updates
 
     needs_update = lambda x: want.get(x) is not None and (want.get(x) != have.get(x))
 
@@ -172,14 +173,14 @@ def map_obj_to_commands(updates, module):
             return ['no feature nxapi']
         commands.append('feature nxapi')
 
-    if any((needs_update('http'), needs_update('http_port'))):
+    if needs_update('http') or (have.get('http') and needs_update('http_port')):
         if want['http'] is True or (want['http'] is None and have['http'] is True):
             port = want['http_port'] or 80
             commands.append('nxapi http port %s' % port)
         elif want['http'] is False:
             commands.append('no nxapi http')
 
-    if any((needs_update('https'), needs_update('https_port'))):
+    if needs_update('https') or (have.get('https') and needs_update('https_port')):
         if want['https'] is True or (want['https'] is None and have['https'] is True):
             port = want['https_port'] or 443
             commands.append('nxapi https port %s' % port)
@@ -195,32 +196,42 @@ def map_obj_to_commands(updates, module):
     return commands
 
 def parse_http(data):
-    match = re.search('HTTP Port:\s+(\d+)', data, re.M)
-    if match:
-        return {'http': True, 'http_port': int(match.group(1))}
-    else:
-        return {'http': False, 'http_port': None}
+    http_res = [r'HTTP Port:\s+(\d+)', r'HTTP Listen on port (\d+)']
+    http_port = None
+
+    for regex in http_res:
+        match = re.search(regex, data, re.M)
+        if match:
+            http_port = int(match.group(1))
+            break
+
+    return {'http': http_port is not None, 'http_port': http_port}
 
 def parse_https(data):
-    match = re.search('HTTPS Port:\s+(\d+)', data, re.M)
-    if match:
-        return {'https': True, 'https_port': int(match.group(1))}
-    else:
-        return {'https': False, 'https_port': None}
+    https_res = [r'HTTPS Port:\s+(\d+)', r'HTTPS Listen on port (\d+)']
+    https_port = None
+
+    for regex in https_res:
+        match = re.search(regex, data, re.M)
+        if match:
+            https_port = int(match.group(1))
+            break
+
+    return {'https': https_port is not None, 'https_port': https_port}
 
 def parse_sandbox(data):
-    match = re.search('Sandbox:\s+(.+)$', data, re.M)
-    value = None
+    match = re.search(r'Sandbox:\s+(.+)$', data, re.M)
+    value = False
     if match:
         value = match.group(1) == 'Enabled'
     return {'sandbox': value}
 
 def map_config_to_obj(module):
-    out = run_commands(module, ['show nxapi'], check_rc=False)
-    if out[0] == '':
+    out = run_commands(module, ['show nxapi'], check_rc=False)[0]
+    if out == '':
         return {'state': 'absent'}
 
-    out = str(out[0]).strip()
+    out = str(out).strip()
 
     obj = {'state': 'present'}
     obj.update(parse_http(out))
@@ -228,14 +239,6 @@ def map_config_to_obj(module):
     obj.update(parse_sandbox(out))
 
     return obj
-
-def validate_http_port(value, module):
-    if not 1 <= module.params['http_port'] <= 65535:
-        module.fail_json(msg='http_port must be between 1 and 65535')
-
-def validate_https_port(value, module):
-    if not 1 <= module.params['https_port'] <= 65535:
-        module.fail_json(msg='https_port must be between 1 and 65535')
 
 def map_params_to_obj(module):
     obj = {
@@ -246,12 +249,6 @@ def map_params_to_obj(module):
         'sandbox': module.params['sandbox'],
         'state': module.params['state']
     }
-
-    for key, value in iteritems(obj):
-        if value:
-            validator = globals().get('validate_%s' % key)
-            if validator:
-                validator(value, module)
 
     return obj
 
@@ -279,16 +276,16 @@ def main():
                            supports_check_mode=True)
 
 
-    result = {'changed': False}
 
     warnings = list()
     check_args(module, warnings)
-    result['warnings'] = warnings
+
+    result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
     if commands:

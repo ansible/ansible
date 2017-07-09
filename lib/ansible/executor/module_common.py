@@ -37,7 +37,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import module_utils_loader
-from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec
+from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
@@ -50,12 +50,12 @@ except ImportError:
     display = Display()
 
 
-REPLACER          = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
-REPLACER_VERSION  = b"\"<<ANSIBLE_VERSION>>\""
-REPLACER_COMPLEX  = b"\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
-REPLACER_WINDOWS  = b"# POWERSHELL_COMMON"
+REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
+REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
+REPLACER_COMPLEX = b"\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
+REPLACER_WINDOWS = b"# POWERSHELL_COMMON"
 REPLACER_JSONARGS = b"<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
-REPLACER_SELINUX  = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
+REPLACER_SELINUX = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
 
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
@@ -345,7 +345,7 @@ if __name__ == '__main__':
     finally:
         try:
             shutil.rmtree(temp_path)
-        except OSError:
+        except (NameError, OSError):
             # tempdir creation probably failed
             pass
     sys.exit(exitcode)
@@ -502,7 +502,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                     break
                 try:
                     module_info = imp.find_module(py_module_name[-idx],
-                            [os.path.join(p, *py_module_name[:-idx]) for p in module_utils_paths])
+                                                  [os.path.join(p, *py_module_name[:-idx]) for p in module_utils_paths])
                     break
                 except ImportError:
                     continue
@@ -561,7 +561,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                 py_pkg_name = py_module_name[:-i] + ('__init__',)
                 if py_pkg_name not in py_module_names:
                     pkg_dir_info = imp.find_module(py_pkg_name[-1],
-                            [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
+                                                   [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
                     normalized_modules.add(py_pkg_name)
                     py_module_cache[py_pkg_name] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
 
@@ -578,7 +578,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
         py_module_file_name = '%s.py' % py_module_path
 
         zf.writestr(os.path.join("ansible/module_utils",
-                py_module_file_name), py_module_cache[py_module_name][0])
+                    py_module_file_name), py_module_cache[py_module_name][0])
         display.vvv("Using module_utils file %s" % py_module_cache[py_module_name][1])
 
     # Add the names of the files we're scheduling to examine in the loop to
@@ -598,7 +598,8 @@ def _is_binary(b_module_data):
     return bool(start.translate(None, textchars))
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression):
+def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression, async_timeout, become,
+                       become_method, become_user, become_password, environment):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -683,14 +684,14 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     # Note: If we need to import from release.py first,
                     # remember to catch all exceptions: https://github.com/ansible/ansible/issues/16523
                     zf.writestr('ansible/__init__.py',
-                            b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n__version__="' +
-                            to_bytes(__version__) + b'"\n__author__="' +
-                            to_bytes(__author__) + b'"\n')
+                                b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n__version__="' +
+                                to_bytes(__version__) + b'"\n__author__="' +
+                                to_bytes(__author__) + b'"\n')
                     zf.writestr('ansible/module_utils/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n')
 
                     zf.writestr('ansible_module_%s.py' % module_name, b_module_data)
 
-                    py_module_cache = { ('__init__',): (b'', '[builtin]') }
+                    py_module_cache = {('__init__',): (b'', '[builtin]')}
                     recursive_finder(module_name, b_module_data, py_module_names, py_module_cache, zf)
                     zf.close()
                     zipdata = base64.b64encode(zipoutput.getvalue())
@@ -721,8 +722,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                 try:
                     zipdata = open(cached_module_filename, 'rb').read()
                 except IOError:
-                    raise AnsibleError('A different worker process failed to create module file.'
-                    ' Look at traceback for that process for debugging information.')
+                    raise AnsibleError('A different worker process failed to create module file. '
+                                       'Look at traceback for that process for debugging information.')
         zipdata = to_text(zipdata, errors='surrogate_or_strict')
 
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
@@ -734,7 +735,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         interpreter_parts = interpreter.split(u' ')
         interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
 
-        now=datetime.datetime.utcnow()
+        now = datetime.datetime.utcnow()
         output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
@@ -758,8 +759,55 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # Windows text editors
         shebang = u'#!powershell'
 
-        # powershell wrapper build is currently handled in build_windows_module_payload, called in action
-        # _configure_module after this function returns.
+        exec_manifest = dict(
+            module_entry=to_text(base64.b64encode(b_module_data)),
+            powershell_modules=dict(),
+            module_args=module_args,
+            actions=['exec'],
+            environment=environment
+        )
+
+        exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
+
+        if async_timeout > 0:
+            exec_manifest["actions"].insert(0, 'async_watchdog')
+            exec_manifest["async_watchdog"] = to_text(base64.b64encode(to_bytes(async_watchdog)))
+            exec_manifest["actions"].insert(0, 'async_wrapper')
+            exec_manifest["async_wrapper"] = to_text(base64.b64encode(to_bytes(async_wrapper)))
+            exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
+            exec_manifest["async_timeout_sec"] = async_timeout
+
+        if become and become_method == 'runas':
+            exec_manifest["actions"].insert(0, 'become')
+            exec_manifest["become_user"] = become_user
+            exec_manifest["become_password"] = become_password
+            exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
+
+        lines = b_module_data.split(b'\n')
+        module_names = set()
+
+        requires_module_list = re.compile(r'(?i)^#requires \-module(?:s?) (.+)')
+
+        for line in lines:
+            # legacy, equivalent to #Requires -Modules powershell
+            if REPLACER_WINDOWS in line:
+                module_names.add(b'powershell')
+                # TODO: add #Requires checks for Ansible.ModuleUtils.X
+
+        for m in module_names:
+            m = to_text(m)
+            exec_manifest["powershell_modules"][m] = to_text(
+                base64.b64encode(
+                    to_bytes(
+                        _slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))
+                    )
+                )
+            )
+
+        # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
+        module_json = json.dumps(exec_manifest)
+
+        b_module_data = exec_wrapper.replace(b"$json_raw = ''", b"$json_raw = @'\r\n%s\r\n'@" % to_bytes(module_json))
 
     elif module_substyle == 'jsonargs':
         module_args_json = to_bytes(json.dumps(module_args))
@@ -783,7 +831,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     return (b_module_data, module_style, shebang)
 
 
-def modify_module(module_name, module_path, module_args, task_vars=dict(), module_compression='ZIP_STORED'):
+def modify_module(module_name, module_path, module_args, task_vars=dict(), module_compression='ZIP_STORED', async_timeout=0, become=False,
+                  become_method=None, become_user=None, become_password=None, environment=dict()):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -809,7 +858,10 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
         # read in the module source
         b_module_data = f.read()
 
-    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression)
+    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression,
+                                                                async_timeout=async_timeout, become=become, become_method=become_method,
+                                                                become_user=become_user, become_password=become_password,
+                                                                environment=environment)
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
@@ -836,48 +888,3 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
         shebang = to_bytes(shebang, errors='surrogate_or_strict')
 
     return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
-
-def build_windows_module_payload(module_name, module_path, b_module_data, module_args, task_vars, task, play_context, environment):
-    exec_manifest = dict(
-        module_entry=base64.b64encode(b_module_data),
-        powershell_modules=dict(),
-        module_args=module_args,
-        actions=['exec'],
-        environment=environment
-    )
-
-    exec_manifest['exec'] = base64.b64encode(to_bytes(leaf_exec))
-
-    if task.async > 0:
-        exec_manifest["actions"].insert(0, 'async_watchdog')
-        exec_manifest["async_watchdog"] = base64.b64encode(to_bytes(async_watchdog))
-        exec_manifest["actions"].insert(0, 'async_wrapper')
-        exec_manifest["async_wrapper"] = base64.b64encode(to_bytes(async_wrapper))
-        exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
-        exec_manifest["async_timeout_sec"] = task.async
-
-    if play_context.become and play_context.become_method=='runas':
-        exec_manifest["actions"].insert(0, 'become')
-        exec_manifest["become_user"] = play_context.become_user
-        exec_manifest["become_password"] = play_context.become_pass
-        exec_manifest["become"] = base64.b64encode(to_bytes(become_wrapper))
-
-    lines = b_module_data.split(b'\n')
-    module_names = set()
-
-    requires_module_list = re.compile(r'(?i)^#requires \-module(?:s?) (.+)')
-
-    for line in lines:
-        # legacy, equivalent to #Requires -Modules powershell
-        if REPLACER_WINDOWS in line:
-            module_names.add(b'powershell')
-            # TODO: add #Requires checks for Ansible.ModuleUtils.X
-
-    for m in module_names:
-        exec_manifest["powershell_modules"][m] = base64.b64encode(
-            to_bytes(_slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))))
-
-    # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
-    b_module_data = json.dumps(exec_manifest)
-
-    return b_module_data

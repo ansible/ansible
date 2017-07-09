@@ -27,6 +27,7 @@ import urlparse
 from ansible.module_utils._text import to_text
 from ansible.plugins.action.iosxr import ActionModule as _ActionModule
 
+
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
@@ -100,4 +101,3 @@ class ActionModule(_ActionModule):
         searchpath.append(os.path.dirname(source))
         self._templar.environment.loader.searchpath = searchpath
         self._task.args['src'] = self._templar.template(template_data)
-

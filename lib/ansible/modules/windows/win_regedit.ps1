@@ -45,7 +45,7 @@ if ($diff_support) {
 
 # Fix HCCC:\ PSDrive for pre-2.3 compatibility
 if ($path -match "^HCCC:\\") {
-    Add-Warning("Please use path: HKCC:\... instead of path: $path")
+    Add-Warning $result "Please use path: HKCC:\... instead of path: $path"
     $path = $path -replace "HCCC:\\","HKCC:\\"
 }
 
@@ -82,14 +82,14 @@ Function Compare-Data {
         } else {
             return $false
         }
-    } elseif ($ReferenceData -is [string] -or $ReferenceData -is [int]) {
-        if ($ReferenceData -eq $DifferenceData) {
+    } elseif ($ReferenceData -is [object[]]) {
+        if (@(Compare-Object $ReferenceData $DifferenceData -SyncWindow 0).Length -eq 0) {
             return $true
         } else {
             return $false
         }
-    } elseif ($ReferenceData -is [object[]]) {
-        if (@(Compare-Object $ReferenceData $DifferenceData -SyncWindow 0).Length -eq 0) {
+    } else {
+        if ($ReferenceData -ceq $DifferenceData) {
             return $true
         } else {
             return $false

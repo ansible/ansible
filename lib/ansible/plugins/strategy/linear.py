@@ -71,7 +71,7 @@ class StrategyModule(StrategyBase):
         display.debug("done building task lists")
 
         num_setups = 0
-        num_tasks  = 0
+        num_tasks = 0
         num_rescue = 0
         num_always = 0
 
@@ -84,7 +84,7 @@ class StrategyModule(StrategyBase):
             try:
                 lowest_cur_block = min(
                     (s.cur_block for h, (s, t) in host_tasks_to_run
-                    if s.run_state != PlayIterator.ITERATING_COMPLETE))
+                     if s.run_state != PlayIterator.ITERATING_COMPLETE))
             except ValueError:
                 lowest_cur_block = None
         else:
@@ -192,7 +192,7 @@ class StrategyModule(StrategyBase):
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
 
                 # skip control
-                skip_rest   = False
+                skip_rest = False
                 choose_step = True
 
                 # flag set if task is set to any_errors_fatal
@@ -245,7 +245,7 @@ class StrategyModule(StrategyBase):
                                 break
 
                         display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
@@ -303,7 +303,7 @@ class StrategyModule(StrategyBase):
                                 loop_var = hr._task.loop_control.loop_var or 'item'
                             include_results = hr._result.get('results', [])
                         else:
-                            include_results = [ hr._result ]
+                            include_results = [hr._result]
 
                         for include_result in include_results:
                             if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
@@ -355,7 +355,6 @@ class StrategyModule(StrategyBase):
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
-                                    loader=self._loader,
                                     play=iterator._play,
                                     task=included_file._task,
                                 )
@@ -364,7 +363,7 @@ class StrategyModule(StrategyBase):
                                 display.debug("done filtering new block on tags")
 
                                 noop_block = Block(parent_block=task._parent)
-                                noop_block.block  = [noop_task for t in new_block.block]
+                                noop_block.block = [noop_task for t in new_block.block]
                                 noop_block.always = [noop_task for t in new_block.always]
                                 noop_block.rescue = [noop_task for t in new_block.rescue]
 
@@ -399,7 +398,7 @@ class StrategyModule(StrategyBase):
                 failed_hosts = []
                 unreachable_hosts = []
                 for res in results:
-                    if res.is_failed():
+                    if res.is_failed() and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)

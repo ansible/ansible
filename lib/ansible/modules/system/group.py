@@ -32,6 +32,7 @@ short_description: Add or remove groups
 requirements: [ groupadd, groupdel, groupmod ]
 description:
     - Manage presence of groups on a host.
+    - For Windows targets, use the M(win_group) module instead.
 options:
     name:
         required: true
@@ -53,7 +54,8 @@ options:
         choices: [ "yes", "no" ]
         description:
             - If I(yes), indicates that the group created is a system group.
-
+notes:
+    - For Windows targets, use the M(win_group) module instead.
 '''
 
 EXAMPLES = '''

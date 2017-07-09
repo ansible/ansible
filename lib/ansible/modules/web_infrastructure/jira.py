@@ -247,6 +247,7 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 from ansible.module_utils.pycompat24 import get_exception
 
+
 def request(url, user, passwd, timeout, data=None, method=None):
     if data:
         data = json.dumps(data)
@@ -260,8 +261,8 @@ def request(url, user, passwd, timeout, data=None, method=None):
     # the requests as authorized for this user.
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     response, info = fetch_url(module, url, data=data, method=method, timeout=timeout,
-                               headers={'Content-Type':'application/json',
-                                        'Authorization':"Basic %s" % auth})
+                               headers={'Content-Type': 'application/json',
+                                        'Authorization': "Basic %s" % auth})
 
     if info['status'] not in (200, 201, 204):
         module.fail_json(msg=info['msg'])
@@ -273,11 +274,14 @@ def request(url, user, passwd, timeout, data=None, method=None):
     else:
         return {}
 
+
 def post(url, user, passwd, timeout, data):
     return request(url, user, passwd, timeout, data=data, method='POST')
 
+
 def put(url, user, passwd, timeout, data):
     return request(url, user, passwd, timeout, data=data, method='PUT')
+
 
 def get(url, user, passwd, timeout):
     return request(url, user, passwd, timeout)
@@ -285,10 +289,10 @@ def get(url, user, passwd, timeout):
 
 def create(restbase, user, passwd, params):
     createfields = {
-        'project': { 'key': params['project'] },
+        'project': {'key': params['project']},
         'summary': params['summary'],
         'description': params['description'],
-        'issuetype': { 'name': params['issuetype'] }}
+        'issuetype': {'name': params['issuetype']}}
 
     # Merge in any additional or overridden fields
     if params['fields']:
@@ -306,7 +310,7 @@ def create(restbase, user, passwd, params):
 def comment(restbase, user, passwd, params):
     data = {
         'body': params['comment']
-        }
+    }
 
     url = restbase + '/issue/' + params['issue'] + '/comment'
 
@@ -318,11 +322,11 @@ def comment(restbase, user, passwd, params):
 def edit(restbase, user, passwd, params):
     data = {
         'fields': params['fields']
-        }
+    }
 
     url = restbase + '/issue/' + params['issue']
 
-    ret = put(url, user, passwd, params['timeout'],data)
+    ret = put(url, user, passwd, params['timeout'], data)
 
     return ret
 
@@ -350,18 +354,19 @@ def transition(restbase, user, passwd, params):
 
     # Perform it
     url = restbase + '/issue/' + params['issue'] + "/transitions"
-    data = { 'transition': { "id" : tid },
-             'fields': params['fields']}
+    data = {'transition': {"id": tid},
+            'fields': params['fields']}
 
     ret = post(url, user, passwd, params['timeout'], data)
 
     return ret
 
+
 def link(restbase, user, passwd, params):
     data = {
-        'type': { 'name': params['linktype'] },
-        'inwardIssue': { 'key': params['inwardissue'] },
-        'outwardIssue': { 'key': params['outwardissue'] },
+        'type': {'name': params['linktype']},
+        'inwardIssue': {'key': params['inwardissue']},
+        'outwardIssue': {'key': params['outwardissue']},
     }
 
     url = restbase + '/issueLink/'
@@ -377,6 +382,7 @@ OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    fetch=['issue'],
                    transition=['status'],
                    link=['linktype', 'inwardissue', 'outwardissue'])
+
 
 def main():
 
@@ -420,10 +426,10 @@ def main():
     user = module.params['username']
     passwd = module.params['password']
     if module.params['assignee']:
-        module.params['fields']['assignee'] = { 'name': module.params['assignee'] }
+        module.params['fields']['assignee'] = {'name': module.params['assignee']}
 
     if not uri.endswith('/'):
-        uri = uri+'/'
+        uri = uri + '/'
     restbase = uri + 'rest/api/2'
 
     # Dispatch
@@ -439,7 +445,6 @@ def main():
     except Exception:
         e = get_exception()
         return module.fail_json(msg=e.message)
-
 
     module.exit_json(changed=True, meta=ret)
 

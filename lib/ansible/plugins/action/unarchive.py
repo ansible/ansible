@@ -38,8 +38,8 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        source  = self._task.args.get('src', None)
-        dest    = self._task.args.get('dest', None)
+        source = self._task.args.get('src', None)
+        dest = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', False))
         creates = self._task.args.get('creates', None)
         decrypt = self._task.args.get('decrypt', True)
@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
                 return result
             # We will take the information from copy and store it in
             # the remote_src var to use later in this file.
-            remote_src = not boolean(self._task.args.get('copy'))
+            self._task.args['remote_src'] = remote_src = not boolean(self._task.args.pop('copy'))
 
         if source is None or dest is None:
             result['failed'] = True
@@ -73,7 +73,7 @@ class ActionModule(ActionBase):
                 self._remove_tmp_path(tmp)
                 return result
 
-        dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
+        dest = self._remote_expand_user(dest)  # CCTODO: Fix path for Windows hosts.
         source = os.path.expanduser(source)
 
         if not remote_src:
@@ -128,7 +128,7 @@ class ActionModule(ActionBase):
             )
 
         # remove action plugin only key
-        for key in ('remote_src', 'decrypt'):
+        for key in ('decrypt',):
             if key in new_module_args:
                 del new_module_args[key]
 

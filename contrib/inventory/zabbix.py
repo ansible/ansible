@@ -24,10 +24,12 @@ Zabbix Server external inventory script.
 ========================================
 
 Returns hosts and hostgroups from Zabbix Server.
+If you want to run with --limit against a host group with space in the
+name, use asterisk. For example --limit="Linux*servers".
 
 Configuration is read from `zabbix.ini`.
 
-Tested with Zabbix Server 2.0.6.
+Tested with Zabbix Server 2.0.6 and 3.2.3.
 """
 
 from __future__ import print_function
@@ -48,6 +50,7 @@ try:
     import json
 except:
     import simplejson as json
+
 
 class ZabbixInventory(object):
 
@@ -96,10 +99,13 @@ class ZabbixInventory(object):
             for group in host['groups']:
                 groupname = group['name']
 
-                if not groupname in data:
+                if groupname not in data:
                     data[groupname] = self.hoststub()
 
                 data[groupname]['hosts'].append(hostname)
+
+        # Prevents Ansible from calling this script for each server with --host
+        data['_meta'] = {'hostvars': self.meta}
 
         return data
 
@@ -109,6 +115,7 @@ class ZabbixInventory(object):
         self.zabbix_server = None
         self.zabbix_username = None
         self.zabbix_password = None
+        self.meta = {}
 
         self.read_settings()
         self.read_cli()

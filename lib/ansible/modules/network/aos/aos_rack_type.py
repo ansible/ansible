@@ -149,7 +149,7 @@ def rack_type_absent(module, aos, my_rack_type):
         try:
             my_rack_type.delete()
         except:
-            module.fail_json(msg="An error occured, while trying to delete the Rack Type")
+            module.fail_json(msg="An error occurred, while trying to delete the Rack Type")
 
     module.exit_json( changed=True,
                       name=my_rack_type.name,

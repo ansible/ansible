@@ -25,6 +25,7 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_command
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
+
 class TestNxosCommandModule(TestNxosModule):
 
     module = nxos_command
@@ -36,7 +37,7 @@ class TestNxosCommandModule(TestNxosModule):
     def tearDown(self):
         self.mock_run_commands.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
@@ -47,9 +48,8 @@ class TestNxosCommandModule(TestNxosModule):
                     command = obj['command']
                 except ValueError:
                     command = item['command']
-                filename = str(command).replace(' ', '_')
-                filename = 'nxos_command/%s.txt' % filename
-                output.append(load_fixture(filename))
+                filename = '%s.txt' % str(command).replace(' ', '_')
+                output.append(load_fixture('nxos_command', filename))
             return output
 
         self.run_commands.side_effect = load_from_file

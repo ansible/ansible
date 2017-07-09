@@ -101,6 +101,14 @@ options:
     default: present
     description:
       - The target state of the entry.
+  validate_certs:
+    required: false
+    choices: ['yes', 'no']
+    default: 'yes'
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be
+        used on sites using self-signed certificates.
+    version_added: "2.4"
 """
 
 
@@ -171,6 +179,7 @@ class LdapEntry(object):
         self.server_uri = self.module.params['server_uri']
         self.start_tls = self.module.params['start_tls']
         self.state = self.module.params['state']
+        self.verify_cert = self.module.params['validate_certs']
 
         # Add the objectClass into the list of attributes
         self.module.params['attributes']['objectClass'] = (
@@ -234,6 +243,9 @@ class LdapEntry(object):
         return is_present
 
     def _connect_to_ldap(self):
+        if not self.verify_cert:
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+
         connection = ldap.initialize(self.server_uri)
 
         if self.start_tls:
@@ -268,17 +280,18 @@ def main():
             'server_uri': dict(default='ldapi:///'),
             'start_tls': dict(default=False, type='bool'),
             'state': dict(default='present', choices=['present', 'absent']),
+            'validate_certs': dict(default=True, type='bool'),
         },
         supports_check_mode=True,
     )
 
     if not HAS_LDAP:
         module.fail_json(
-            msg="Missing requried 'ldap' module (pip install python-ldap).")
+            msg="Missing required 'ldap' module (pip install python-ldap).")
 
     state = module.params['state']
 
-    # Chek if objectClass is present when needed
+    # Check if objectClass is present when needed
     if state == 'present' and module.params['objectClass'] is None:
         module.fail_json(msg="At least one objectClass must be provided.")
 

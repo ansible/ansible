@@ -183,7 +183,7 @@ def ansiballz_setup(modfile, modname, interpreters):
         print("*" * 35)
         print("INVALID OUTPUT FROM ANSIBALLZ MODULE WRAPPER")
         print(out)
-        sys.exit(1)
+        sys.exit(err)
     debug_dir = lines[1].strip()
 
     argsfile = os.path.join(debug_dir, 'args')
@@ -228,11 +228,11 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
     print(jsonify(results,format=True))
 
 
-def rundebug(debugger, modfile, argspath, modname, module_style):
+def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):
     """Run interactively with console debugger."""
 
     if module_style == 'ansiballz':
-        modfile, argspath = ansiballz_setup(modfile, modname)
+        modfile, argspath = ansiballz_setup(modfile, modname, interpreters)
 
     if argspath is not None:
         subprocess.call("%s %s %s" % (debugger, modfile, argspath), shell=True)
@@ -248,7 +248,7 @@ def main():
 
     argspath = None
     if module_style not in ('new', 'ansiballz'):
-        if module_style == 'non_native_want_json':
+        if module_style in ('non_native_want_json', 'binary'):
             argspath = write_argsfile(options.module_args, json=True)
         elif module_style == 'old':
             argspath = write_argsfile(options.module_args, json=False)
@@ -257,7 +257,7 @@ def main():
 
     if options.execute:
         if options.debugger:
-            rundebug(options.debugger, modfile, argspath, modname, module_style)
+            rundebug(options.debugger, modfile, argspath, modname, module_style, interpreters)
         else:
             runtest(modfile, argspath, modname, module_style, interpreters)
 

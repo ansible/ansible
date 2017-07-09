@@ -146,8 +146,7 @@ import time
 
 try:
     import boto
-    from boto.elasticache.layer1 import ElastiCacheConnection
-    from boto.regioninfo import RegionInfo
+    from boto.elasticache import connect_to_region
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -430,10 +429,8 @@ class ElastiCacheManager(object):
     def _get_elasticache_connection(self):
         """Get an elasticache connection"""
         try:
-            endpoint = "elasticache.%s.amazonaws.com" % self.region
-            connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            return ElastiCacheConnection(
-                region=connect_region,
+            return connect_to_region(
+                region_name=self.region,
                 **self.aws_connect_kwargs
             )
         except boto.exception.NoAuthHandlerFound as e:

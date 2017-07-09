@@ -4,7 +4,7 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
-# Avi Version: 16.3.8
+# Avi Version: 17.1.1
 #
 #
 # This file is part of Ansible
@@ -26,7 +26,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -57,6 +56,7 @@ options:
     failed_checks:
         description:
             - Number of continuous failed health checks before the server is marked down.
+            - Allowed values are 1-50.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
     http_monitor:
         description:
@@ -68,6 +68,8 @@ options:
         description:
             - Use this port instead of the port defined for the server in the pool.
             - If the monitor succeeds to this port, the load balanced traffic will still be sent to the port of the server defined within the pool.
+            - Allowed values are 1-65535.
+            - Special values are 0 - 'use server port'.
     name:
         description:
             - A user friendly name for this health monitor.
@@ -77,14 +79,17 @@ options:
             - A valid response from the server is expected within the receive timeout window.
             - This timeout must be less than the send interval.
             - If server status is regularly flapping up and down, consider increasing this value.
+            - Allowed values are 1-300.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
     send_interval:
         description:
             - Frequency, in seconds, that monitors are sent to a server.
+            - Allowed values are 1-3600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
     successful_checks:
         description:
             - Number of continuous successful health checks before server is marked up.
+            - Allowed values are 1-50.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
     tcp_monitor:
         description:
@@ -95,6 +100,8 @@ options:
     type:
         description:
             - Type of the health monitor.
+            - Enum options - HEALTH_MONITOR_PING, HEALTH_MONITOR_TCP, HEALTH_MONITOR_HTTP, HEALTH_MONITOR_HTTPS, HEALTH_MONITOR_EXTERNAL, HEALTH_MONITOR_UDP,
+            - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB.
         required: true
     udp_monitor:
         description:
@@ -136,7 +143,6 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -171,11 +177,10 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'healthmonitor',
                            set([]))
-
 
 if __name__ == '__main__':
     main()

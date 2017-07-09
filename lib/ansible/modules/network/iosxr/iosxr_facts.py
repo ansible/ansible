@@ -239,6 +239,8 @@ class Interfaces(FactsBase):
 
     def populate_ipv6_interfaces(self, data):
         for key, value in iteritems(data):
+            if key in ['No', 'RPF'] or key.startswith('IP'):
+                continue
             self.facts['interfaces'][key]['ipv6'] = list()
             addresses = re.findall(r'\s+(.+), subnet', value, re.M)
             subnets = re.findall(r', subnet is (.+)$', value, re.M)

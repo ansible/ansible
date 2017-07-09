@@ -34,6 +34,7 @@ short_description:  Manage services.
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
+    - For Windows targets, use the M(win_service) module instead.
 options:
     name:
         required: true
@@ -87,6 +88,8 @@ options:
             - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
         default: 'auto'
         version_added: 2.2
+notes:
+    - For Windows targets, use the M(win_service) module instead.
 '''
 
 EXAMPLES = '''
@@ -490,7 +493,7 @@ class LinuxService(Service):
             self.upstart_version = LooseVersion('0.0.0')
             try:
                 version_re = re.compile(r'\(upstart (.*)\)')
-                rc,stdout,stderr = self.module.run_command('initctl version')
+                rc,stdout,stderr = self.module.run_command('%s version' % location['initctl'])
                 if rc == 0:
                     res = version_re.search(stdout)
                     if res:
@@ -498,9 +501,7 @@ class LinuxService(Service):
             except:
                 pass  # we'll use the default of 0.0.0
 
-            if location.get('start', False):
-                # upstart -- rather than being managed by one command, start/stop/restart are actual commands
-                self.svc_cmd = ''
+            self.svc_cmd = location['initctl']
 
         elif location.get('rc-service', False):
             # service is managed by OpenRC
@@ -853,13 +854,13 @@ class LinuxService(Service):
             return
 
         #
-        # insserv (Debian 7)
+        # insserv (Debian <=7, SLES, others)
         #
         if self.enable_cmd.endswith("insserv"):
             if self.enable:
-                (rc, out, err) = self.execute_command("%s -n %s" % (self.enable_cmd, self.name))
+                (rc, out, err) = self.execute_command("%s -n -v %s" % (self.enable_cmd, self.name))
             else:
-                (rc, out, err) = self.execute_command("%s -nr %s" % (self.enable_cmd, self.name))
+                (rc, out, err) = self.execute_command("%s -n -r -v %s" % (self.enable_cmd, self.name))
 
             self.changed = False
             for line in err.splitlines():
@@ -922,8 +923,13 @@ class LinuxService(Service):
         arguments = self.arguments
         if self.svc_cmd:
             if not self.svc_cmd.endswith("systemctl"):
-                # SysV and OpenRC take the form <cmd> <name> <action>
-                svc_cmd = "%s %s" % (self.svc_cmd, self.name)
+                if self.svc_cmd.endswith("initctl"):
+                    # initctl commands take the form <cmd> <action> <name>
+                    svc_cmd = self.svc_cmd
+                    arguments = "%s %s" % (self.name, arguments)
+                else:
+                    # SysV and OpenRC take the form <cmd> <name> <action>
+                    svc_cmd = "%s %s" % (self.svc_cmd, self.name)
             else:
                 # systemd commands take the form <cmd> <action> <name>
                 svc_cmd = self.svc_cmd

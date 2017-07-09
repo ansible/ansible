@@ -32,6 +32,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
+
 class MDTInventory(object):
 
     def __init__(self):
@@ -95,7 +96,7 @@ class MDTInventory(object):
         '''
         Create empty inventory dictionary
         '''
-        return {"_meta" : {"hostvars" : {}}}
+        return {"_meta": {"hostvars": {}}}
 
     def read_settings(self):
         '''
@@ -118,7 +119,6 @@ class MDTInventory(object):
         # Group name in Tower
         if config.has_option('tower', 'groupname'):
             self.mdt_groupname = config.get('tower', 'groupname')
-
 
     def parse_cli_args(self):
         '''

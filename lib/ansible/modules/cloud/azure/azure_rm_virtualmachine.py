@@ -555,7 +555,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         # make sure options are lower case
@@ -1090,7 +1090,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                        self.image['offer'],
                                                                        self.image['sku'])
         except Exception as exc:
-            self.fail("Error fetching image {0} {1} {2} - {4}".format(self.image['publisher'],
+            self.fail("Error fetching image {0} {1} {2} - {3}".format(self.image['publisher'],
                                                                       self.image['offer'],
                                                                       self.image['sku'],
                                                                       str(exc)))

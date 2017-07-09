@@ -27,13 +27,13 @@ from io import BytesIO, StringIO
 
 import pytest
 
-from ansible.module_utils.six import PY3
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
+from ansible.module_utils.six import PY3
+import ansible.module_utils.basic
 
 from units.mock.procenv import swap_stdin_and_argv
 
-import ansible.module_utils.basic
 
 class OpenBytesIO(BytesIO):
     """BytesIO with dummy close() method
@@ -68,7 +68,7 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
             if path.startswith('/'):
                 return path
             else:
-                return self.os.getcwd.return_value + '/' +  path
+                return self.os.getcwd.return_value + '/' + path
 
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
@@ -207,4 +207,3 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         else:
             self.assertEqual(stdout.decode('utf-8'), u'Žarn§')
             self.assertEqual(stderr.decode('utf-8'), u'لرئيسية')
-

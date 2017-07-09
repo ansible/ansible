@@ -1,0 +1,83 @@
+---
+
+- command: ovs-vsctl add-br br-test
+
+- name: Create bridge
+  openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: true
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Create bridge again (idempotent)
+  openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: true
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Change column value
+  openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: false
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Change column value again (idempotent)
+  openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: false
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Remove bridge
+  openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: false
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Remove bridge again (idempotent)
+  openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: false
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"

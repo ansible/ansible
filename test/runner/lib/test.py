@@ -7,11 +7,10 @@ import json
 
 from lib.util import (
     display,
-    EnvironmentConfig,
 )
 
-from lib.metadata import (
-    Metadata,
+from lib.config import (
+    TestConfig,
 )
 
 
@@ -53,37 +52,6 @@ def calculate_confidence(path, line, metadata):
 
     # changes were made to the same file and the line number is different
     return 50
-
-
-class TestConfig(EnvironmentConfig):
-    """Configuration common to all test commands."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        super(TestConfig, self).__init__(args, command)
-
-        self.coverage = args.coverage  # type: bool
-        self.include = args.include  # type: list [str]
-        self.exclude = args.exclude  # type: list [str]
-        self.require = args.require  # type: list [str]
-
-        self.changed = args.changed  # type: bool
-        self.tracked = args.tracked  # type: bool
-        self.untracked = args.untracked  # type: bool
-        self.committed = args.committed  # type: bool
-        self.staged = args.staged  # type: bool
-        self.unstaged = args.unstaged  # type: bool
-        self.changed_from = args.changed_from  # type: str
-        self.changed_path = args.changed_path  # type: list [str]
-
-        self.lint = args.lint if 'lint' in args else False  # type: bool
-        self.junit = args.junit if 'junit' in args else False  # type: bool
-        self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
-
-        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path = None
 
 
 class TestResult(object):
@@ -192,14 +160,6 @@ class TestResult(object):
 
 class TestSuccess(TestResult):
     """Test success."""
-    def __init__(self, command, test, python_version=None):
-        """
-        :type command: str
-        :type test: str
-        :type python_version: str
-        """
-        super(TestSuccess, self).__init__(command, test, python_version)
-
     def write_junit(self, args):
         """
         :type args: TestConfig
@@ -211,14 +171,6 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
-    def __init__(self, command, test, python_version=None):
-        """
-        :type command: str
-        :type test: str
-        :type python_version: str
-        """
-        super(TestSkipped, self).__init__(command, test, python_version)
-
     def write_console(self):
         """Write results to console."""
         display.info('No tests applicable.', verbosity=1)

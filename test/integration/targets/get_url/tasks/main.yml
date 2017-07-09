@@ -111,7 +111,7 @@
 - name: Assert that the file was not downloaded
   assert:
     that:
-      - "result.failed == true"
+      - "result|failed"
       - "'Failed to validate the SSL certificate' in result.msg"
       - "stat_result.stat.exists == false"
 
@@ -150,14 +150,13 @@
   assert:
     that:
       - 'data_result.rc == 0'
-      - '"failed" not in get_url_result'
   when: "{{ python_has_ssl_context }}"
 
 # If the client doesn't support SNI then get_url should have failed with a certificate mismatch
 - name: Assert that hostname verification failed because SNI is not supported on this version of python
   assert:
     that:
-      - 'get_url_result["failed"]'
+      - 'get_url_result|failed'
   when: "{{ not python_has_ssl_context }}"
 
 # These tests are just side effects of how the site is hosted.  It's not
@@ -178,14 +177,14 @@
   assert:
     that:
       - 'data_result.rc == 0'
-      - '"failed" not in get_url_result'
+      - 'not get_url_result|failed'
   when: "{{ python_has_ssl_context }}"
 
 # If the client doesn't support SNI then get_url should have failed with a certificate mismatch
 - name: Assert that hostname verification failed because SNI is not supported on this version of python
   assert:
     that:
-      - 'get_url_result["failed"]'
+      - 'get_url_result|failed'
   when: "{{ not python_has_ssl_context }}"
 # End hacky SNI test section
 

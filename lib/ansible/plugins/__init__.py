@@ -62,11 +62,11 @@ class PluginLoader:
 
     def __init__(self, class_name, package, config, subdir, aliases={}, required_base_class=None):
 
-        self.class_name         = class_name
-        self.base_class         = required_base_class
-        self.package            = package
-        self.subdir             = subdir
-        self.aliases            = aliases
+        self.class_name = class_name
+        self.base_class = required_base_class
+        self.package = package
+        self.subdir = subdir
+        self.aliases = aliases
 
         if config and not isinstance(config, list):
             config = [config]
@@ -82,8 +82,8 @@ class PluginLoader:
         if class_name not in PLUGIN_PATH_CACHE:
             PLUGIN_PATH_CACHE[class_name] = defaultdict(dict)
 
-        self._module_cache      = MODULE_CACHE[class_name]
-        self._paths             = PATH_CACHE[class_name]
+        self._module_cache = MODULE_CACHE[class_name]
+        self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
 
         self._extra_dirs = []
@@ -95,10 +95,10 @@ class PluginLoader:
         '''
 
         class_name = data.get('class_name')
-        package    = data.get('package')
-        config     = data.get('config')
-        subdir     = data.get('subdir')
-        aliases    = data.get('aliases')
+        package = data.get('package')
+        config = data.get('config')
+        subdir = data.get('subdir')
+        aliases = data.get('aliases')
         base_class = data.get('base_class')
 
         PATH_CACHE[class_name] = data.get('PATH_CACHE')
@@ -114,16 +114,16 @@ class PluginLoader:
         '''
 
         return dict(
-            class_name        = self.class_name,
-            base_class        = self.base_class,
-            package           = self.package,
-            config            = self.config,
-            subdir            = self.subdir,
-            aliases           = self.aliases,
-            _extra_dirs       = self._extra_dirs,
-            _searched_paths   = self._searched_paths,
-            PATH_CACHE        = PATH_CACHE[self.class_name],
-            PLUGIN_PATH_CACHE = PLUGIN_PATH_CACHE[self.class_name],
+            class_name=self.class_name,
+            base_class=self.base_class,
+            package=self.package,
+            config=self.config,
+            subdir=self.subdir,
+            aliases=self.aliases,
+            _extra_dirs=self._extra_dirs,
+            _searched_paths=self._searched_paths,
+            PATH_CACHE=PATH_CACHE[self.class_name],
+            PLUGIN_PATH_CACHE=PLUGIN_PATH_CACHE[self.class_name],
         )
 
     def format_paths(self, paths):
@@ -145,7 +145,7 @@ class PluginLoader:
         for root, subdirs, files in os.walk(dir, followlinks=True):
             if '__init__.py' in files:
                 for x in subdirs:
-                    results.append(os.path.join(root,x))
+                    results.append(os.path.join(root, x))
         return results
 
     def _get_package_paths(self, subdirs=True):
@@ -271,7 +271,7 @@ class PluginLoader:
 
                 # HACK: We have no way of executing python byte
                 # compiled files as ansible modules so specifically exclude them
-                ### FIXME: I believe this is only correct for modules and
+                # FIXME: I believe this is only correct for modules and
                 # module_utils.  For all other plugins we want .pyc and .pyo should
                 # bew valid
                 if full_path.endswith(('.pyc', '.pyo')):
@@ -313,10 +313,10 @@ class PluginLoader:
             if alias_name in pull_cache:
                 if not ignore_deprecated and not os.path.islink(pull_cache[alias_name]):
                     display.deprecated('%s is kept for backwards compatibility '
-                              'but usage is discouraged. The module '
-                              'documentation details page may explain '
-                              'more about this rationale.' %
-                              name.lstrip('_'))
+                                       'but usage is discouraged. The module '
+                                       'documentation details page may explain '
+                                       'more about this rationale.' %
+                                       name.lstrip('_'))
                 return pull_cache[alias_name]
 
         return None
@@ -378,6 +378,9 @@ class PluginLoader:
                     return None
                 raise
 
+        # set extra info on the module, in case we want it later
+        setattr(obj, '_original_path', path)
+        setattr(obj, '_load_name', name)
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -433,8 +436,7 @@ class PluginLoader:
                 if not issubclass(obj, plugin_class):
                     continue
 
-            self._display_plugin_load(self.class_name, name, self._searched_paths, path,
-                                      found_in_cache=found_in_cache, class_only=class_only)
+            self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
             if not class_only:
                 try:
                     obj = obj(*args, **kwargs)
@@ -443,6 +445,7 @@ class PluginLoader:
 
             # set extra info on the module, in case we want it later
             setattr(obj, '_original_path', path)
+            setattr(obj, '_load_name', name)
             yield obj
 
 action_loader = PluginLoader(
@@ -505,13 +508,6 @@ lookup_loader = PluginLoader(
     required_base_class='LookupBase',
 )
 
-vars_loader = PluginLoader(
-    'VarsModule',
-    'ansible.plugins.vars',
-    C.DEFAULT_VARS_PLUGIN_PATH,
-    'vars_plugins',
-)
-
 filter_loader = PluginLoader(
     'FilterModule',
     'ansible.plugins.filter',
@@ -548,3 +544,25 @@ terminal_loader = PluginLoader(
     'terminal_plugins'
 )
 
+vars_loader = PluginLoader(
+    'VarsModule',
+    'ansible.plugins.vars',
+    C.DEFAULT_VARS_PLUGIN_PATH,
+    'vars_plugins',
+)
+
+cliconf_loader = PluginLoader(
+    'Cliconf',
+    'ansible.plugins.cliconf',
+    'cliconf_plugins',
+    'cliconf_plugins',
+    required_base_class='CliconfBase'
+)
+
+netconf_loader = PluginLoader(
+    'Netconf',
+    'ansible.plugins.netconf',
+    'netconf_plugins',
+    'netconf_plugins',
+    required_base_class='NetconfBase'
+)

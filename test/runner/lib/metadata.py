@@ -9,7 +9,6 @@ from lib.util import (
 
 from lib.diff import (
     parse_diff,
-    FileDiff,
 )
 
 
@@ -18,6 +17,7 @@ class Metadata(object):
     def __init__(self):
         """Initialize metadata."""
         self.changes = {}  # type: dict [str, tuple[tuple[int, int]]
+        self.cloud_config = None  # type: dict [str, str]
 
     def populate_changes(self, diff):
         """
@@ -46,6 +46,7 @@ class Metadata(object):
         """
         return dict(
             changes=self.changes,
+            cloud_config=self.cloud_config,
         )
 
     def to_file(self, path):
@@ -78,5 +79,6 @@ class Metadata(object):
         """
         metadata = Metadata()
         metadata.changes = data['changes']
+        metadata.cloud_config = data['cloud_config']
 
         return metadata

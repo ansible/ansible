@@ -21,19 +21,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from io import StringIO
-
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
 
 from ansible import constants as C
 from ansible.compat.selectors import SelectorKey, EVENT_READ
+from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
-from ansible.module_utils._text import to_bytes
 
 
 class TestConnectionBaseClass(unittest.TestCase):
@@ -91,10 +90,10 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         conn = ssh.Connection(pc, new_stdin)
 
-        conn.check_password_prompt    = MagicMock()
-        conn.check_become_success     = MagicMock()
+        conn.check_password_prompt = MagicMock()
+        conn.check_become_success = MagicMock()
         conn.check_incorrect_password = MagicMock()
-        conn.check_missing_password   = MagicMock()
+        conn.check_missing_password = MagicMock()
 
         def _check_password_prompt(line):
             if b'foo' in line:
@@ -116,17 +115,17 @@ class TestConnectionBaseClass(unittest.TestCase):
                 return True
             return False
 
-        conn.check_password_prompt.side_effect    = _check_password_prompt
-        conn.check_become_success.side_effect     = _check_become_success
+        conn.check_password_prompt.side_effect = _check_password_prompt
+        conn.check_become_success.side_effect = _check_become_success
         conn.check_incorrect_password.side_effect = _check_incorrect_password
-        conn.check_missing_password.side_effect   = _check_missing_password
+        conn.check_missing_password.side_effect = _check_missing_password
 
         # test examining output for prompt
         conn._flags = dict(
-            become_prompt = False,
-            become_success = False,
-            become_error = False,
-            become_nopasswd_error = False,
+            become_prompt=False,
+            become_success=False,
+            become_error=False,
+            become_nopasswd_error=False,
         )
 
         pc.prompt = True
@@ -140,10 +139,10 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test examining output for become prompt
         conn._flags = dict(
-            become_prompt = False,
-            become_success = False,
-            become_error = False,
-            become_nopasswd_error = False,
+            become_prompt=False,
+            become_success=False,
+            become_error=False,
+            become_nopasswd_error=False,
         )
 
         pc.prompt = False
@@ -158,10 +157,10 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test examining output for become failure
         conn._flags = dict(
-            become_prompt = False,
-            become_success = False,
-            become_error = False,
-            become_nopasswd_error = False,
+            become_prompt=False,
+            become_success=False,
+            become_error=False,
+            become_nopasswd_error=False,
         )
 
         pc.prompt = False
@@ -176,10 +175,10 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test examining output for missing password
         conn._flags = dict(
-            become_prompt = False,
-            become_success = False,
-            become_error = False,
-            become_nopasswd_error = False,
+            become_prompt=False,
+            become_success=False,
+            become_error=False,
+            become_nopasswd_error=False,
         )
 
         pc.prompt = False
@@ -236,8 +235,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'put',
-            to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
-            to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+                                      to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
+                                      to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -292,8 +291,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'get',
-            to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
-            to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+                                      to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
+                                      to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 

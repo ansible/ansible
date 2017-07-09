@@ -1,0 +1,11 @@
+- name: Template repo
+  template:
+    src: virt.repo.j2
+    dest: /etc/zypp/repos.d/virt.repo
+
+- name: Install docker 17
+  zypper:
+    name: docker-17.04.0_ce
+    force: yes
+    disable_gpg_check: yes
+    update_cache: yes

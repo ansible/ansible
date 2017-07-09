@@ -37,7 +37,7 @@ def _parse_params(term):
         params[k] = ''
 
     thiskey = 'key'
-    for idp,phrase in enumerate(term.split()):
+    for idp, phrase in enumerate(term.split()):
         for k in keys:
             if ('%s=' % k) in phrase:
                 thiskey = k
@@ -81,7 +81,7 @@ class LookupModule(LookupBase):
 
         basedir = self.get_basedir(variables)
         self.basedir = basedir
-        self.cp      = configparser.ConfigParser()
+        self.cp = configparser.ConfigParser()
 
         ret = []
         for term in terms:
@@ -89,11 +89,11 @@ class LookupModule(LookupBase):
             key = params[0]
 
             paramvals = {
-                'file'     : 'ansible.ini',
-                're'       : False,
-                'default'  : None,
-                'section'  : "global",
-                'type'     : "ini",
+                'file': 'ansible.ini',
+                're': False,
+                'default': None,
+                'section': "global",
+                'type': "ini",
             }
 
             # parameters specified?

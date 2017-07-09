@@ -30,6 +30,8 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+
+# DEPRECATED 2.4, potential removal in 2.6+
 $restart = Get-AnsibleParam -obj $params -name "restart" -type "bool" -default $false
 $includesubfeatures = Get-AnsibleParam -obj $params -name "include_sub_features" -type "bool" -default $false
 $includemanagementtools = Get-AnsibleParam -obj $params -name "include_management_tools" -type "bool" -default $false
@@ -37,6 +39,9 @@ $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 
 $name = $name -split ',' | % { $_.Trim() }
 
+If ($restart) {
+    Add-DeprecationWarning -obj $result -message "The 'restart' parameter causes instability. Use the 'win_reboot' action conditionally on 'reboot_required' return value instead" -version 2.6
+}
 
 # Determine which cmdlets we need to work with. Then we can set options appropriate for the cmdlet
 $installWF= $false
@@ -133,9 +138,12 @@ If ($featureresult.FeatureResult)
             id = $item.Id
             display_name = $item.DisplayName
             message = $message
-            restart_needed = $item.RestartNeeded.ToString() | ConvertTo-Bool
+            reboot_required = $item.RestartNeeded.ToString() | ConvertTo-Bool
             skip_reason = $item.SkipReason.ToString()
             success = $item.Success.ToString() | ConvertTo-Bool
+
+            # DEPRECATED 2.4, potential removal in 2.6+ (standardize naming to "reboot_required")
+            restart_needed = $item.RestartNeeded.ToString() | ConvertTo-Bool
         }
     }
     $result.changed = $true
@@ -144,7 +152,10 @@ If ($featureresult.FeatureResult)
 $result.feature_result = $installed_features
 $result.success = ($featureresult.Success.ToString() | ConvertTo-Bool)
 $result.exitcode = $featureresult.ExitCode.ToString()
-$result.restart_needed = ($featureresult.RestartNeeded.ToString() | ConvertTo-Bool)
+$result.reboot_required = ($featureresult.RestartNeeded.ToString() | ConvertTo-Bool)
+
+# DEPRECATED 2.4, potential removal in 2.6+ (standardize naming to "reboot_required")
+$result.restart_needed = $result.reboot_required
 
 If ($result.success) {
     Exit-Json $result

@@ -3,14 +3,6 @@ Installation
 
 .. contents:: Topics
 
-.. _getting_ansible:
-
-Getting Ansible
-```````````````
-
-You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
-you have a GitHub account.  This is also where we keep the issue tracker for sharing
-bugs and feature ideas.
 
 .. _what_will_be_installed:
 
@@ -304,12 +296,14 @@ open source projects.
    If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (like ``apt/yum``) or ``pip`` to install a stable version.
 
 
-To install from source.
+To install from source, clone the Ansible git repository:
 
 .. code-block:: bash
 
     $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
+
+Once git has cloned the Ansible repository, setup the Ansible environment:
 
 Using Bash:
 
@@ -372,6 +366,16 @@ Now let's test things with a ping command:
     $ ansible all -m ping --ask-pass
 
 You can also use "sudo make install".
+
+.. _getting_ansible:
+
+Ansible on GitHub
+`````````````````
+
+You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
+you have a GitHub account.  This is also where we keep the issue tracker for sharing
+bugs and feature ideas.
+
 
 .. seealso::
 

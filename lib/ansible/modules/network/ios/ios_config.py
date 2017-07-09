@@ -382,8 +382,10 @@ def main():
 
     if module.params['save']:
         if not module.check_mode:
-            run_commands(module, ['copy running-config startup-config\r'])
-        result['changed'] = True
+            response = run_commands(module, ['show archive config differences'])
+            if response[0].find('!No changes were found') < 0:
+                run_commands(module, ['copy running-config startup-config\r'])
+                result['changed'] = True
 
     module.exit_json(**result)
 

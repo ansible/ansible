@@ -101,6 +101,14 @@ options:
       - The value(s) to add or remove. This can be a string or a list of
         strings. The complex argument format is required in order to pass
         a list of strings (see examples).
+  validate_certs:
+    required: false
+    choices: ['yes', 'no']
+    default: 'yes'
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be
+        used on sites using self-signed certificates.
+    version_added: "2.4"
 """
 
 
@@ -208,6 +216,7 @@ class LdapAttr(object):
         self.server_uri = self.module.params['server_uri']
         self.start_tls = self.module.params['start_tls']
         self.state = self.module.params['state']
+        self.verify_cert = self.module.params['validate_certs']
 
         # Normalize values
         if isinstance(self.module.params['values'], list):
@@ -276,6 +285,9 @@ class LdapAttr(object):
         return not self._is_value_present(value)
 
     def _connect_to_ldap(self):
+        if not self.verify_cert:
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+
         connection = ldap.initialize(self.server_uri)
 
         if self.start_tls:
@@ -312,13 +324,14 @@ def main():
                 default='present',
                 choices=['present', 'absent', 'exact']),
             'values': dict(required=True, type='raw'),
+            'validate_certs': dict(default=True, type='bool'),
         },
         supports_check_mode=True,
     )
 
     if not HAS_LDAP:
         module.fail_json(
-            msg="Missing requried 'ldap' module (pip install python-ldap)")
+            msg="Missing required 'ldap' module (pip install python-ldap)")
 
     # Update module parameters with user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):

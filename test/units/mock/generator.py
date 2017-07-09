@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from collections import Mapping
 
+
 def make_method(func, args, kwargs):
 
     def test_method(self):

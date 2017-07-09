@@ -1,0 +1,50 @@
+# Test code for the systemd module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+##
+## systemctl
+##
+
+- name: check for systemctl command
+  shell: which systemctl
+  failed_when: False
+  register: systemctl_check
+
+- block:
+    - name: get a list of running services
+      shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.' | egrep ^[a-z]
+      register: running_names
+    - debug: var=running_names
+
+    - name: check running state
+      systemd:
+          name: "{{ running_names.stdout_lines|random }}"
+          state: started
+      register: systemd_test0
+    - debug: var=systemd_test0
+    - name: validate results for test0
+      assert:
+          that:
+              - 'systemd_test0.changed is defined'
+              - 'systemd_test0.name is defined'
+              - 'systemd_test0.state is defined'
+              - 'systemd_test0.status is defined'
+              - 'not systemd_test0.changed'
+              - 'systemd_test0.state == "started"'
+
+  when: 'systemctl_check.rc == 0'

@@ -178,7 +178,13 @@ domain:
 '''
 
 # import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackAccount(AnsibleCloudStack):
@@ -190,8 +196,8 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
         }
         self.account = None
         self.account_types = {
-            'user':         0,
-            'root_admin':   1,
+            'user': 0,
+            'root_admin': 1,
             'domain_admin': 2,
         }
 
@@ -336,14 +342,14 @@ def main():
         name=dict(required=True),
         state=dict(choices=['present', 'absent', 'enabled', 'disabled', 'locked', 'unlocked'], default='present'),
         account_type=dict(choices=['user', 'root_admin', 'domain_admin'], default='user'),
-        network_domain=dict(default=None),
+        network_domain=dict(),
         domain=dict(default='ROOT'),
-        email=dict(default=None),
-        first_name=dict(default=None),
-        last_name=dict(default=None),
-        username=dict(default=None),
-        password=dict(default=None, no_log=True),
-        timezone=dict(default=None),
+        email=dict(),
+        first_name=dict(),
+        last_name=dict(),
+        username=dict(),
+        password=dict(no_log=True),
+        timezone=dict(),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -380,7 +386,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

@@ -32,6 +32,7 @@ short_description: Interacts with webservices
 description:
   - Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE
     HTTP authentication mechanisms.
+  - For Windows targets, use the M(win_uri) module instead.
 version_added: "1.1"
 options:
   url:
@@ -174,6 +175,7 @@ options:
     version_added: 2.4
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1
+  - For Windows targets, use the M(win_uri) module instead.
 author: "Romeo Theriault (@romeotheriault)"
 '''
 
@@ -471,7 +473,7 @@ def main():
     else:
         changed = False
 
-    # Transmogrify the headers, replacing '-' with '_', since variables dont
+    # Transmogrify the headers, replacing '-' with '_', since variables don't
     # work with dashes.
     # In python3, the headers are title cased.  Lowercase them to be
     # compatible with the python2 behaviour.

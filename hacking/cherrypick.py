@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
 import os
+import sh
 import sys
 import tempfile
 
-import sh
+REPO_PATH = {
+    'extras': '/srv/ansible/stable-2.2/lib/ansible/modules/extras',
+    'core': '/srv/ansible/stable-2.2/lib/ansible/modules/core'
+}
 
-REPO_PATH = {'extras': '/srv/ansible/stable-2.2/lib/ansible/modules/extras',
-        'core': '/srv/ansible/stable-2.2/lib/ansible/modules/core'}
 
 if __name__ == '__main__':
     commit_hash = sys.argv[1]
@@ -49,4 +51,3 @@ if __name__ == '__main__':
         print("Problem occurred.  Patch saved in: {}".format(patchfilename))
     else:
         os.remove(patchfilename)
-

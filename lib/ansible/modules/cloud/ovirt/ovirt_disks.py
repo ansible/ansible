@@ -62,7 +62,7 @@ options:
     upload_image_path:
         description:
             - "Path to disk image, which should be uploaded."
-            - "Note that currently we support only compability version 0.10 of the qcow disk."
+            - "Note that currently we support only compatibility version 0.10 of the qcow disk."
             - "Note that you must have an valid oVirt/RHV engine CA in your system trust store
                or you must provide it in C(ca_file) parameter."
             - "Note that there is no reliable way to achieve idempotency, so
@@ -133,6 +133,11 @@ options:
             - "Note that this parameter isn't idempotent, as it's not possible
                to check if the disk should be or should not be sparsified."
         version_added: "2.4"
+    openstack_volume_type:
+        description:
+            - "Name of the openstack volume type. This is valid when working
+               with cinder."
+        version_added: "2.4"
 extends_documentation_fragment: ovirt
 '''
 
@@ -194,14 +199,14 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 disk:
     description: "Dictionary of all the disk attributes. Disk attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/disk."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/disk."
     returned: "On success if disk is found and C(vm_id) or C(vm_name) wasn't passed."
     type: dict
 
 disk_attachment:
     description: "Dictionary of all the disk attachment attributes. Disk attachment attributes can be found
                   on your oVirt/RHV instance at following url:
-                  https://ovirt.example.com/ovirt-engine/api/model#types/disk_attachment."
+                  http://ovirt.github.io/ovirt-engine-api-model/master/#types/disk_attachment."
     returned: "On success if disk is found and C(vm_id) or C(vm_name) was passed and VM was found."
     type: dict
 '''
@@ -212,6 +217,7 @@ import traceback
 import ssl
 
 from httplib import HTTPSConnection
+from httplib import IncompleteRead
 
 try:
     from urllib.parse import urlparse
@@ -308,7 +314,7 @@ def transfer(connection, module, direction, transfer_func):
             otypes.ImageTransferPhase.CANCELLED,
         ]:
             raise Exception(
-                "Error occured while uploading image. The transfer is in %s" % transfer.phase
+                "Error occurred while uploading image. The transfer is in %s" % transfer.phase
             )
         if module.params.get('logical_unit'):
             disks_service = connection.system_service().disks_service()
@@ -324,7 +330,7 @@ def download_disk_image(connection, module):
     def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
         disks_service = connection.system_service().disks_service()
         disk = disks_service.disk_service(module.params['id']).get()
-        size = disk.provisioned_size
+        size = disk.actual_size
         transfer_headers = {
             'Authorization': transfer_ticket,
         }
@@ -344,7 +350,11 @@ def download_disk_image(connection, module):
                 if r.status >= 300:
                     raise Exception("Error: %s" % r.read())
 
-                mydisk.write(r.read())
+                try:
+                    mydisk.write(r.read())
+                except IncompleteRead as e:
+                    mydisk.write(e.partial)
+                    break
                 pos += chunk_size
     return transfer(
         connection,
@@ -398,6 +408,9 @@ class DisksModule(BaseModule):
                 self._module.params.get('format')
             ) if self._module.params.get('format') else None,
             sparse=self._module.params.get('format') != 'raw',
+            openstack_volume_type=otypes.OpenStackVolumeType(
+                name=self.param('openstack_volume_type')
+            ) if self.param('openstack_volume_type') else None,
             provisioned_size=convert_to_bytes(
                 self._module.params.get('size')
             ),
@@ -522,6 +535,7 @@ def main():
         upload_image_path=dict(default=None, aliases=['image_path']),
         force=dict(default=False, type='bool'),
         sparsify=dict(default=None, type='bool'),
+        openstack_volume_type=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -571,12 +585,14 @@ def main():
                 downloaded = download_disk_image(connection, module)
                 ret['changed'] = ret['changed'] or downloaded
 
-            # Disk sparsify:
-            ret = disks_module.action(
-                action='sparsify',
-                action_condition=lambda d: module.params['sparsify'],
-                wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
-            )
+            # Disk sparsify, only if disk is of image type:
+            disk = disks_service.disk_service(module.params['id']).get()
+            if disk.storage_type == otypes.DiskStorageType.IMAGE:
+                ret = disks_module.action(
+                    action='sparsify',
+                    action_condition=lambda d: module.params['sparsify'],
+                    wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+                )
         elif state == 'absent':
             ret = disks_module.remove()
 

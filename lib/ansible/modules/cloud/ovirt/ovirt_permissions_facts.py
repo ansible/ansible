@@ -38,10 +38,10 @@ notes:
 options:
     user_name:
         description:
-            - "Username of the the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
+            - "Username of the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
     group_name:
         description:
-            - "Name of the the group to manage."
+            - "Name of the group to manage."
     authz_name:
         description:
             - "Authorization provider of the user/group. In previous versions of oVirt/RHV known as domain."
@@ -69,7 +69,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_permissions:
     description: "List of dictionaries describing the permissions. Permission attribues are mapped to dictionary keys,
-                  all permissions attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/permission."
+                  all permissions attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/permission."
     returned: On success.
     type: list
 '''

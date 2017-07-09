@@ -451,7 +451,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         if PREREQ_IMPORT_ERROR:
             self.fail(PREREQ_IMPORT_ERROR)
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         if self.state == 'present':
@@ -568,7 +568,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                                                                                       nested_deployment)
                     except CloudError as exc:
                         self.fail("List nested deployment operations failed with status code: %s and message: %s" %
-                                 (e.status_code, e.message))
+                                 (exc.status_code, exc.message))
                     new_nested_operations = self._get_failed_nested_operations(nested_operations)
                     new_operations += new_nested_operations
         return new_operations

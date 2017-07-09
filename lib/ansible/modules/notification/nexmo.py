@@ -76,7 +76,7 @@ EXAMPLES = """
   delegate_to: localhost
 """
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 NEXMO_API = 'https://rest.nexmo.com/sms/json'
 
@@ -92,7 +92,7 @@ def send_msg(module):
     }
     for number in module.params.get('dest'):
         msg['to'] = number
-        url = "%s?%s" % (NEXMO_API, urllib.urlencode(msg))
+        url = "%s?%s" % (NEXMO_API, urlencode(msg))
 
         headers = dict(Accept='application/json')
         response, info = fetch_url(module, url, headers=headers)

@@ -82,7 +82,7 @@ class Cli(CliBase):
 
         self.execute(command)
 
-    ### Config methods ###
+    # Config methods
 
     def configure(self, commands):
         cmds = ['configure terminal']

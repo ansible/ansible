@@ -15,8 +15,11 @@ RUN apt-get update -y && \
     dpkg-dev \
     fakeroot \
     gawk \
+    gcc \
     git \
     iproute2 \
+    libffi-dev \
+    libssl-dev \
     libxml2-utils \
     locales \
     lsb-release \
@@ -25,11 +28,13 @@ RUN apt-get update -y && \
     mysql-server \
     openssh-client \
     openssh-server \
-    python-coverage \
+    python-cryptography \
+    python-dev \
     python-dbus \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \
+    python-lxml \
     python-mock \
     python-mysqldb \
     python-nose \
@@ -43,8 +48,10 @@ RUN apt-get update -y && \
     reprepro \
     rsync \
     ruby \
+    sshpass \
     subversion \
     sudo \
+    tzdata \
     unzip \
     virtualenv \
     xsltproc \
@@ -60,6 +67,6 @@ RUN ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
     cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys && \
     for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
 VOLUME /sys/fs/cgroup /run/lock /run /tmp
-RUN pip install junit-xml
+RUN pip install coverage junit-xml
 ENV container=docker
 CMD ["/sbin/init"]

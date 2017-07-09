@@ -157,7 +157,7 @@ class Hg(object):
     def get_remote_revision(self):
         (rc, out, err) = self._command(['id', self.repo])
         if rc != 0:
-            self.module_fail_json(msg=err)
+            self.module.fail_json(msg=err)
         else:
             return to_native(out).strip('\n')
 

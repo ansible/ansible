@@ -69,9 +69,10 @@ class TestIosConfigModule(TestIosModule):
         self.assertIn('__backup__', result)
 
     def test_ios_config_save(self):
+        self.run_commands.return_value = "Hostname foo"
         set_module_args(dict(save=True))
         self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 1)
+        self.assertEqual(self.run_commands.call_count, 2)
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.load_config.call_count, 0)
         args = self.run_commands.call_args[0][1]
@@ -88,19 +89,19 @@ class TestIosConfigModule(TestIosModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_ios_config_before(self):
-        set_module_args(dict(lines=['hostname foo'], before=['test1','test2']))
+        set_module_args(dict(lines=['hostname foo'], before=['test1', 'test2']))
         commands = ['test1', 'test2', 'hostname foo']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_config_after(self):
-        set_module_args(dict(lines=['hostname foo'], after=['test1','test2']))
+        set_module_args(dict(lines=['hostname foo'], after=['test1', 'test2']))
         commands = ['hostname foo', 'test1', 'test2']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_config_before_after_no_change(self):
         set_module_args(dict(lines=['hostname router'],
                              before=['test1', 'test2'],
-                             after=['test3','test4']))
+                             after=['test3', 'test4']))
         self.execute_module()
 
     def test_ios_config_config(self):

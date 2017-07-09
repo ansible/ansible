@@ -35,6 +35,7 @@ description:
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), C(";") and C("&") will not work (use the M(shell)
        module if you need these features).
+     - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
     description:
@@ -76,6 +77,7 @@ notes:
        The C(command) module is much more secure as it's not affected by the user's environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
+    - For Windows targets, use the M(win_command) module instead.
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -119,7 +121,7 @@ def check_command(commandline):
                   'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                   'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
                   'dnf': 'dnf', 'zypper': 'zypper' }
-    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas' ]
+    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun' ]
     warnings = list()
     command = os.path.basename(commandline.split()[0])
     if command in arguments:
@@ -204,7 +206,7 @@ def main():
     if err is None:
         err = b('')
 
-    module.exit_json(
+    result = dict(
         cmd      = args,
         stdout   = out.rstrip(b("\r\n")),
         stderr   = err.rstrip(b("\r\n")),
@@ -215,6 +217,12 @@ def main():
         changed  = True,
         warnings = warnings
     )
+
+    if rc != 0:
+        module.fail_json(msg='non-zero return code', **result)
+
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

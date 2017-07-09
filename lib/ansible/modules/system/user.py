@@ -33,8 +33,10 @@ notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
     are present at runtime. If they are not, a descriptive error message will be shown.
+  - For Windows targets, use the M(win_user) module instead.
 description:
     - Manage user accounts and user attributes.
+    - For Windows targets, use the M(win_user) module instead.
 options:
     name:
         required: true
@@ -400,7 +402,7 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-            cmd.append('--expiredate')
+            cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password is not None:
@@ -513,7 +515,7 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-            cmd.append('--expiredate')
+            cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
@@ -719,7 +721,7 @@ class User(object):
             os.chown(path, uid, gid)
             for root, dirs, files in os.walk(path):
                 for d in dirs:
-                    os.chown(path, uid, gid)
+                    os.chown(os.path.join(root, d), uid, gid)
                 for f in files:
                     os.chown(os.path.join(root, f), uid, gid)
         except OSError:
@@ -1028,7 +1030,7 @@ class OpenBSDUser(User):
         if self.groups is not None:
             current_groups = self.user_group_membership()
             groups_need_mod = False
-            groups_option = '-G'
+            groups_option = '-S'
             groups = []
 
             if self.groups == '':
@@ -1042,7 +1044,7 @@ class OpenBSDUser(User):
                     if self.append:
                         for g in groups:
                             if g in group_diff:
-                                groups_option = '-S'
+                                groups_option = '-G'
                                 groups_need_mod = True
                                 break
                     else:
@@ -1652,7 +1654,7 @@ class DarwinUser(User):
     def _update_system_user(self):
         '''Hide or show user on login window according SELF.SYSTEM.
 
-        Returns 0 if a change has been made, None otherwhise.'''
+        Returns 0 if a change has been made, None otherwise.'''
 
         plist_file = '/Library/Preferences/com.apple.loginwindow.plist'
 
@@ -2068,20 +2070,17 @@ class HPUX(User):
                     if self.append:
                         for g in groups:
                             if g in group_diff:
-                                if has_append:
-                                    cmd.append('-a')
                                 groups_need_mod = True
                                 break
                     else:
                         groups_need_mod = True
 
             if groups_need_mod:
-                if self.append and not has_append:
-                    cmd.append('-A')
-                    cmd.append(','.join(group_diff))
-                else:
-                    cmd.append('-G')
-                    cmd.append(','.join(groups))
+                cmd.append('-G')
+                new_groups = groups
+                if self.append:
+                    new_groups = groups | set(current_groups)
+                cmd.append(','.join(new_groups))
 
 
         if self.comment is not None and info[4] != self.comment:

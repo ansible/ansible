@@ -95,5 +95,3 @@ class TestEosUserModule(TestEosModule):
         set_module_args(dict(username='ansible', password='test', update_password='always'))
         commands = ['username ansible secret test']
         self.execute_module(changed=True, commands=commands)
-
-

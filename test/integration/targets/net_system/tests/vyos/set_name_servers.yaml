@@ -1,0 +1,66 @@
+---
+- debug: msg="START vyos/set_name_servers.yaml"
+
+- name: setup
+  vyos_config:
+    lines:
+      - no ip name-server 1.1.1.1
+      - no ip name-server 2.2.2.2
+      - no ip name-server 3.3.3.3
+    match: none
+    provider: "{{ cli }}"
+
+- name: configure name_servers
+  vyos_system:
+    name_servers:
+      - 1.1.1.1
+      - 2.2.2.2
+      - 3.3.3.3
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 3
+      - "'ip name-server 1.1.1.1' in result.commands"
+      - "'ip name-server 2.2.2.2' in result.commands"
+      - "'ip name-server 3.3.3.3' in result.commands"
+
+- name: verify name_servers
+  vyos_system:
+    name_servers:
+      - 1.1.1.1
+      - 2.2.2.2
+      - 3.3.3.3
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: remove one
+  vyos_system:
+    name_servers:
+      - 1.1.1.1
+      - 2.2.2.2
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 1
+      - "'no ip name-server 3.3.3.3' in result.commands"
+
+- name: teardown
+  vyos_config:
+    lines:
+      - no ip lookup source-interface
+    match: none
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  # FIXME Copied from iosxr, not sure what we need here
+
+- debug: msg="END vyos/set_name_servers.yaml"

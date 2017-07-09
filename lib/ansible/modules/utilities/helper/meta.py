@@ -31,6 +31,7 @@ description:
     - Meta tasks are a special kind of task which can influence Ansible internal execution or state. Prior to Ansible 2.0,
       the only meta option available was `flush_handlers`. As of 2.2, there are five meta tasks which can be used.
       Meta tasks can be used anywhere within your playbook.
+    - This module is also supported for Windows targets.
 options:
   free_form:
     description:
@@ -46,11 +47,11 @@ options:
         - "C(clear_host_errors) (added in 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts."
         - "C(end_play) (added in 2.2) causes the play to end without failing the host."
         - "C(reset_connection) (added in 2.3) interrupts a persistent connection (i.e. ssh + control persist)"
-    choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors', 'end_play']
+    choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection']
     required: true
-    default: null
 notes:
-    - meta is not really a module nor action_plugin as such it cannot be overwritten.
+    - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
+    - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
 '''

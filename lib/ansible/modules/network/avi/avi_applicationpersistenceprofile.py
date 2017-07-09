@@ -4,7 +4,7 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
-# Avi Version: 16.3.8
+# Avi Version: 17.1.1
 #
 #
 # This file is part of Ansible
@@ -26,7 +26,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -67,11 +66,14 @@ options:
     persistence_type:
         description:
             - Method used to persist clients to the same server for a duration of time or a session.
+            - Enum options - PERSISTENCE_TYPE_CLIENT_IP_ADDRESS, PERSISTENCE_TYPE_HTTP_COOKIE, PERSISTENCE_TYPE_TLS, PERSISTENCE_TYPE_CLIENT_IPV6_ADDRESS,
+            - PERSISTENCE_TYPE_CUSTOM_HTTP_HEADER, PERSISTENCE_TYPE_APP_COOKIE, PERSISTENCE_TYPE_GSLB_SITE.
             - Default value when not specified in API or module is interpreted by Avi Controller as PERSISTENCE_TYPE_CLIENT_IP_ADDRESS.
         required: true
     server_hm_down_recovery:
         description:
             - Specifies behavior when a persistent server has been marked down by a health monitor.
+            - Enum options - HM_DOWN_PICK_NEW_SERVER, HM_DOWN_ABORT_CONNECTION, HM_DOWN_CONTINUE_PERSISTENT_SERVER.
             - Default value when not specified in API or module is interpreted by Avi Controller as HM_DOWN_PICK_NEW_SERVER.
     tenant_ref:
         description:
@@ -117,7 +119,6 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -146,11 +147,10 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'applicationpersistenceprofile',
                            set([]))
-
 
 if __name__ == '__main__':
     main()

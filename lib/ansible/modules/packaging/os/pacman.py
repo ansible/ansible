@@ -143,10 +143,7 @@ EXAMPLES = '''
     force: yes
 '''
 
-import shlex
-import os
 import re
-import sys
 
 def get_version(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the Version"""
@@ -212,8 +209,6 @@ def upgrade(module, pacman_path):
 
     if rc == 0:
         regex = re.compile('([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
-        b = []
-        a = []
         for p in data:
             m = regex.search(p)
             packages.append(m.group(1))
@@ -378,17 +373,18 @@ def expand_package_groups(module, pacman_path, pkgs):
     expanded = []
 
     for pkg in pkgs:
-        cmd = "%s -Sgq %s" % (pacman_path, pkg)
-        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        if pkg: # avoid empty strings
+            cmd = "%s -Sgq %s" % (pacman_path, pkg)
+            rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
-        if rc == 0:
-            # A group was found matching the name, so expand it
-            for name in stdout.split('\n'):
-                name = name.strip()
-                if name:
-                    expanded.append(name)
-        else:
-            expanded.append(pkg)
+            if rc == 0:
+                # A group was found matching the name, so expand it
+                for name in stdout.split('\n'):
+                    name = name.strip()
+                    if name:
+                        expanded.append(name)
+            else:
+                expanded.append(pkg)
 
     return expanded
 
@@ -432,7 +428,9 @@ def main():
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
-            if re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
+            if not pkg: # avoid empty strings
+                continue
+            elif re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
                 # it and store the filename
                 pkg_files.append(pkg)

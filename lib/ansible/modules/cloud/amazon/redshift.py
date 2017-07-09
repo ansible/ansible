@@ -436,7 +436,7 @@ def main():
         elastic_ip                          = dict(required=False),
         new_cluster_identifier              = dict(aliases=['new_identifier']),
         wait                                = dict(type='bool', default=False),
-        wait_timeout                        = dict(default=300),
+        wait_timeout                        = dict(type='int', default=300),
     )
     )
 

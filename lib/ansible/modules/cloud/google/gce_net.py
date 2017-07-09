@@ -65,20 +65,20 @@ options:
     description:
       - the source IPv4 address range in CIDR notation
     required: false
-    default: null
+    default: []
     aliases: ['src_cidr']
   src_tags:
     description:
       - the source instance tags for creating a firewall rule
     required: false
-    default: null
+    default: []
     aliases: []
   target_tags:
     version_added: "1.9"
     description:
       - the target instance tags for creating a firewall rule
     required: false
-    default: null
+    default: []
     aliases: []
   state:
     description:
@@ -325,9 +325,9 @@ def main():
             ipv4_range = dict(),
             fwname = dict(),
             name = dict(),
-            src_range = dict(type='list'),
-            src_tags = dict(type='list'),
-            target_tags = dict(type='list'),
+            src_range = dict(default=[], type='list'),
+            src_tags = dict(default=[], type='list'),
+            target_tags = dict(default=[], type='list'),
             state = dict(default='present'),
             service_account_email = dict(),
             pem_file = dict(type='path'),

@@ -115,7 +115,7 @@ changed:
     returned: success
     type: string
 lease:
-    description: dictionnary containing host informations
+    description: dictionary containing host information
     returned: success
     type: complex
     contains:

@@ -229,18 +229,18 @@ def _list_into_cache(regions):
     try:
         # Ansible 2.3+
         networks = get_config(p, 'rax', 'access_network',
-                'RAX_ACCESS_NETWORK', 'public', value_type='list')
+                              'RAX_ACCESS_NETWORK', 'public', value_type='list')
     except TypeError:
         # Ansible 2.2.x and below
         networks = get_config(p, 'rax', 'access_network',
-                'RAX_ACCESS_NETWORK', 'public', islist=True)
+                              'RAX_ACCESS_NETWORK', 'public', islist=True)
     try:
         try:
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
-                'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
+                                              'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
         except TypeError:
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
-                'RAX_ACCESS_IP_VERSION', 4, islist=True))
+                                              'RAX_ACCESS_IP_VERSION', 4, islist=True))
     except:
         ip_versions = [4]
     else:
@@ -434,11 +434,11 @@ def setup():
         try:
             # Ansible 2.3+
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
-                    value_type='list')
+                                     value_type='list')
         except TypeError:
             # Ansible 2.2.x and below
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
-                    islist=True)
+                                     islist=True)
 
         for region in region_list:
             region = region.strip().upper()

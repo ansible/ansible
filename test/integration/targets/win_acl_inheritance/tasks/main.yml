@@ -1,0 +1,173 @@
+---
+ # Test setup
+- name: remove test folder for baseline
+  win_file:
+    path: '{{test_win_acl_inheritance_path}}'
+    state: absent
+
+- name: create test folders
+  win_file:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+    state: directory
+
+- name: create test files
+  win_copy:
+    dest: '{{test_win_acl_inheritance_path}}\folder\file.txt'
+    content: a
+
+# Run tests
+- name: remove inheritance check
+  win_acl_inheritance:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+    reorganize: True
+    state: absent
+  register: remove_check
+  check_mode: True
+
+- name: get actual remove inheritance check
+  test_get_acl:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+  register: actual_remove_check
+
+- name: assert remove inheritance check
+  assert:
+    that:
+    - remove_check|changed
+    - actual_remove_check.inherited == True
+
+- name: remove inheritance
+  win_acl_inheritance:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+    reorganize: True
+    state: absent
+  register: remove
+
+- name: get actual remove inheritance
+  test_get_acl:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+  register: actual_remove
+
+- name: assert remove inheritance
+  assert:
+    that:
+    - remove|changed
+    - actual_remove.inherited == False
+    - actual_remove.user_details['BUILTIN/Administrators'].isinherited == False
+    - actual_remove.user_details['BUILTIN/Administrators'].isnotinherited == True
+    - actual_remove.user_details['BUILTIN/Users'].isinherited == False
+    - actual_remove.user_details['BUILTIN/Users'].isnotinherited == True
+    - actual_remove.user_details['CREATOR OWNER'].isinherited == False
+    - actual_remove.user_details['CREATOR OWNER'].isnotinherited == True
+    - actual_remove.user_details['NT AUTHORITY/SYSTEM'].isinherited == False
+    - actual_remove.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == True
+
+- name: remove inheritance again
+  win_acl_inheritance:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+    reorganize: True
+    state: absent
+  register: remove_again
+
+- name: get actual remove inheritance again
+  test_get_acl:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+  register: actual_remove_again
+
+- name: assert remove inheritance again
+  assert:
+    that:
+    - not remove_again|changed
+    - actual_remove_again.inherited == False
+    - actual_remove.user_details['BUILTIN/Administrators'].isinherited == False
+    - actual_remove.user_details['BUILTIN/Administrators'].isnotinherited == True
+    - actual_remove.user_details['BUILTIN/Users'].isinherited == False
+    - actual_remove.user_details['BUILTIN/Users'].isnotinherited == True
+    - actual_remove.user_details['CREATOR OWNER'].isinherited == False
+    - actual_remove.user_details['CREATOR OWNER'].isnotinherited == True
+    - actual_remove.user_details['NT AUTHORITY/SYSTEM'].isinherited == False
+    - actual_remove.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == True
+
+- name: add inheritance check
+  win_acl_inheritance:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+    reorganize: True
+    state: present
+  register: add_check
+  check_mode: True
+
+- name: get actual add inheritance check
+  test_get_acl:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+  register: actual_add_check
+
+- name: assert add inheritance check
+  assert:
+    that:
+    - add_check|changed
+    - actual_add_check.inherited == False
+    - actual_add_check.user_details['BUILTIN/Administrators'].isinherited == False
+    - actual_add_check.user_details['BUILTIN/Administrators'].isnotinherited == True
+    - actual_add_check.user_details['BUILTIN/Users'].isinherited == False
+    - actual_add_check.user_details['BUILTIN/Users'].isnotinherited == True
+    - actual_add_check.user_details['CREATOR OWNER'].isinherited == False
+    - actual_add_check.user_details['CREATOR OWNER'].isnotinherited == True
+    - actual_add_check.user_details['NT AUTHORITY/SYSTEM'].isinherited == False
+    - actual_add_check.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == True
+
+- name: add inheritance
+  win_acl_inheritance:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+    reorganize: True
+    state: present
+  register: add
+
+- name: get actual add inheritance
+  test_get_acl:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+  register: actual_add
+
+- name: assert add inheritance
+  assert:
+    that:
+    - add|changed
+    - actual_add.inherited == True
+    - actual_add.user_details['BUILTIN/Administrators'].isinherited == True
+    - actual_add.user_details['BUILTIN/Administrators'].isnotinherited == False
+    - actual_add.user_details['BUILTIN/Users'].isinherited == True
+    - actual_add.user_details['BUILTIN/Users'].isnotinherited == True # Bug in win_acl_inheritance, resetting inheritance doubles up entries
+    - actual_add.user_details['CREATOR OWNER'].isinherited == True
+    - actual_add.user_details['CREATOR OWNER'].isnotinherited == False
+    - actual_add.user_details['NT AUTHORITY/SYSTEM'].isinherited == True
+    - actual_add.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == False
+
+- name: add inheritance again
+  win_acl_inheritance:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+    reorganize: True
+    state: present
+  register: add_again
+
+- name: get actual add inheritance again
+  test_get_acl:
+    path: '{{test_win_acl_inheritance_path}}\folder'
+  register: actual_add_again
+
+- name: assert add inheritance again
+  assert:
+    that:
+    - not add_again|changed
+    - actual_add_again.inherited == True
+    - actual_add_again.user_details['BUILTIN/Administrators'].isinherited == True
+    - actual_add_again.user_details['BUILTIN/Administrators'].isnotinherited == False
+    - actual_add_again.user_details['BUILTIN/Users'].isinherited == True
+    - actual_add_again.user_details['BUILTIN/Users'].isnotinherited == True # Bug in win_acl_inheritance, resetting inheritance doubles up entries
+    - actual_add_again.user_details['CREATOR OWNER'].isinherited == True
+    - actual_add_again.user_details['CREATOR OWNER'].isnotinherited == False
+    - actual_add_again.user_details['NT AUTHORITY/SYSTEM'].isinherited == True
+    - actual_add_again.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == False
+
+# Test cleanup
+- name: remove test folder
+  win_file:
+    path: '{{test_win_acl_inheritance_path}}'
+    state: absent

@@ -13,7 +13,7 @@ This section covers all of these features.  For examples of these items in use, 
 
 You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.  
 
-You'll also want to read up on :doc:`playbooks_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules. 
+You'll also want to read up on :doc:`playbooks_reuse_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules. 
 
 .. _rolling_update_batch_size:
 
@@ -108,9 +108,9 @@ Delegation
 This isn't actually rolling update specific but comes up frequently in those cases.
 
 If you want to perform a task on one host with reference to other hosts, use the 'delegate_to' keyword on a task.
-This is ideal for placing nodes in a load balanced pool, or removing them.  It is also very useful for controlling
-outage windows.  Using this with the 'serial' keyword to control the number of hosts executing at one time is also
-a good idea::
+This is ideal for placing nodes in a load balanced pool, or removing them.  It is also very useful for controlling outage windows.
+Be aware that it does not make sense to delegate all tasks, debug, add_host, include, etc always get executed on the controller.
+Using this with the 'serial' keyword to control the number of hosts executing at one time is also a good idea::
 
     ---
 

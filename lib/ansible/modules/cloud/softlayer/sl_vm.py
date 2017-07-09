@@ -64,7 +64,7 @@ options:
     default: false
   dedicated:
     description:
-      - Falg to determine if the instance should be deployed in dedicated space
+      - Flag to determine if the instance should be deployed in dedicated space
     required: false
     default: false
   local_disk:
