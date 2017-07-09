@@ -22,7 +22,7 @@ from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next
                                            previous_nth_usable, ip_in_subnet)
 
 
-class TestNetmask(unittest.TestCase):
+class TestIpFilter(unittest.TestCase):
     def test_netmask(self):
         address = '1.1.1.1/24'
         self.assertEqual(ipaddr(address, 'netmask'), '255.255.255.0')
