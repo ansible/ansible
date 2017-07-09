@@ -110,6 +110,66 @@ class TestNetmask(unittest.TestCase):
         address = '1.12.1.254/24'
         self.assertEqual(ipaddr(address, 'next_usable'), None)
 
+    def test_wildcard(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'wildcard'), '0.0.0.255')
+        address = '1.12.1.0/25'
+        self.assertEqual(ipaddr(address, 'wildcard'), '0.0.0.127')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'wildcard'), '0.0.0.15')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'wildcard'), '0.0.0.15')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'wildcard'), '0.0.0.1')
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'wildcard'), '0.0.0.1')
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'wildcard'), '0.0.0.0')
+        address = '1.12.1.254/24'
+        self.assertEqual(ipaddr(address, 'wildcard'), '0.0.0.255')
+
+    def test_size_usable(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'size_usable'), 254)
+        address = '1.12.1.0/25'
+        self.assertEqual(ipaddr(address, 'size_usable'), 126)
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'size_usable'), 14)
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'size_usable'), 14)
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'size_usable'), 2)
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'size_usable'), 2)
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'size_usable'), 0)
+        address = '1.12.1.254/24'
+        self.assertEqual(ipaddr(address, 'size_usable'), 254)
+
+    def test_range_usable(self):
+        address = '1.12.1.0/24'
+        self.assertEqual(ipaddr(address, 'range_usable'), '1.12.1.1-1.12.1.254')
+        address = '1.12.1.0/25'
+        self.assertEqual(ipaddr(address, 'range_usable'), '1.12.1.1-1.12.1.126')
+        #address = '1.12.1.34'
+        #self.assertFalse(ipaddr(address, 'last_usable'), 'Not a network address')
+        address = '1.12.1.36/28'
+        self.assertEqual(ipaddr(address, 'range_usable'), '1.12.1.33-1.12.1.46')
+        address = '1.12.1.36/255.255.255.240'
+        self.assertEqual(ipaddr(address, 'range_usable'), '1.12.1.33-1.12.1.46')
+        address = '1.12.1.36/31'
+        self.assertEqual(ipaddr(address, 'range_usable'), '1.12.1.36-1.12.1.37')
+        address = '1.12.1.37/31'
+        self.assertEqual(ipaddr(address, 'range_usable'), '1.12.1.36-1.12.1.37')
+        address = '1.12.1.36/32'
+        self.assertEqual(ipaddr(address, 'range_usable'), None)
+        address = '1.12.1.254/24'
+        self.assertEqual(ipaddr(address, 'range_usable'), '1.12.1.1-1.12.1.254')
+
     def test_previous_usable(self):
         address = '1.12.1.0/24'
         self.assertEqual(ipaddr(address, 'previous_usable'), None)

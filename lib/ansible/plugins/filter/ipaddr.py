@@ -169,6 +169,27 @@ def _previous_usable_query(v, vtype):
             if previous_ip >= first_usable and previous_ip <= last_usable:
                 return str(netaddr.IPAddress(int(v.ip) - 1))
 
+def _size_usable_query(v):
+    if v.size == 1:
+        return 0
+    elif v.size == 2:
+        return 2
+    return v.size - 2
+
+def _range_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size == 2:
+            first_usable = str(netaddr.IPAddress(int(v.network)))
+            last_usable = str(netaddr.IPAddress(int(v.network) + 1))
+            return "{}-{}".format(first_usable, last_usable)
+        elif v.size > 1:
+            first_usable = str(netaddr.IPAddress(int(v.network) + 1))
+            last_usable = str(netaddr.IPAddress(int(v.broadcast) - 1))
+            return "{}-{}".format(first_usable, last_usable)
+
 
 def _host_query(v):
     if v.size == 1:
@@ -357,6 +378,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'last_usable': ('vtype',),
         'next_usable': ('vtype',),
         'previous_usable': ('vtype',),
+        'range_usable': ('vtype',),
         '6to4': ('vtype', 'value'),
         'cidr_lookup': ('iplist', 'value'),
         'int': ('vtype',),
@@ -378,6 +400,9 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'last_usable': _last_usable_query,
         'next_usable': _next_usable_query,
         'previous_usable': _previous_usable_query,
+        'wildcard': _hostmask_query,
+        'size_usable': _size_usable_query,
+        'range_usable': _range_usable_query,
         '6to4': _6to4_query,
         'address': _ip_query,
         'address/prefix': _gateway_query,
