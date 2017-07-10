@@ -615,6 +615,10 @@ def main():
                     rule['from_port'] = None
                     rule['to_port'] = None
 
+                # rule may have empty cidr_id/group_id/group_name in which case a real rule won't be created
+                if not (rule.get('group_id') and rule.get('group_name') and rule.get('cidr_ip')):
+                    continue
+
                 if group_id:
                     rule_id = make_rule_key('in', rule, group.id, group_id)
                     if rule_id in groupRules:
@@ -679,6 +683,10 @@ def main():
                     rule['proto'] = -1
                     rule['from_port'] = None
                     rule['to_port'] = None
+
+                # rule may have empty cidr_id/group_id/group_name in which case a real rule won't be created
+                if not (rule.get('group_id') and rule.get('group_name') and rule.get('cidr_ip')):
+                    continue
 
                 if group_id:
                     rule_id = make_rule_key('out', rule, group.id, group_id)
