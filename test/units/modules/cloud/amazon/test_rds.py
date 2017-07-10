@@ -24,7 +24,7 @@ from ansible.compat.tests.mock import MagicMock, patch, ANY
 # present.  Individual test cases should then be ready to skip if their
 # pre-requisites are not present.
 import ansible.modules.cloud.amazon.rds_instance as rds_i
-import ansible.module_utils.rds as rds_u
+import ansible.module_utils.aws.rds as rds_u
 
 from ansible.module_utils.basic import AnsibleModule
 import ansible.module_utils.basic as basic
