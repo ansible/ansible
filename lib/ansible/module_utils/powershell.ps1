@@ -205,6 +205,10 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
         if ($type -eq "path") {
             # Expand environment variables on path-type
             $value = Expand-Environment($value)
+            # Test if a valid path is provided
+            if (-not (Test-Path -IsValid $value)) {
+                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
+            }
         } elseif ($type -eq "str") {
             # Convert str types to real Powershell strings
             $value = $value.ToString()
