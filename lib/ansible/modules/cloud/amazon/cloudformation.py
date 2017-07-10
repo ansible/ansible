@@ -518,7 +518,7 @@ def main():
     if state == 'present':
         if not stack_info:
             result = create_stack(module, stack_params, cfn)
-        elif create_changeset:
+        elif module.params.get('create_changeset'):
             result = create_changeset(module, stack_params, cfn)
         else:
             result = update_stack(module, stack_params, cfn)
