@@ -206,6 +206,7 @@ Ansible Changes By Release
   * gcp_healthcheck
   * gcp_target_proxy
   * gcp_url_map
+- gunicorn
 - purestorage
   * purefa_host
   * purefa_volume
