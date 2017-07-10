@@ -317,11 +317,11 @@ def _range_usable_query(v, vtype):
         if v.size == 2:
             first_usable = str(netaddr.IPAddress(int(v.network)))
             last_usable = str(netaddr.IPAddress(int(v.network) + 1))
-            return "{}-{}".format(first_usable, last_usable)
+            return "{0}-{1}".format(first_usable, last_usable)
         elif v.size > 1:
             first_usable = str(netaddr.IPAddress(int(v.network) + 1))
             last_usable = str(netaddr.IPAddress(int(v.broadcast) - 1))
-            return "{}-{}".format(first_usable, last_usable)
+            return "{0}-{1}".format(first_usable, last_usable)
 
 
 def _revdns_query(v):
