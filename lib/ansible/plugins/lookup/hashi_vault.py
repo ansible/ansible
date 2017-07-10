@@ -158,6 +158,7 @@ class HashiVault:
         else:
             return arg
 
+
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         if not HAS_HVAC:
