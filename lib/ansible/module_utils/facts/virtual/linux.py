@@ -92,7 +92,7 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
-        if product_name == 'VMware Virtual Platform':
+        if product_name in ['VMware Virtual Platform', 'VMware7,1']:
             virtual_facts['virtualization_type'] = 'VMware'
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
