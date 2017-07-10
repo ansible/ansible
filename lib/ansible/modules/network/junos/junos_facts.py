@@ -84,11 +84,11 @@ ansible_facts:
   type: dict
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.junos import junos_argument_spec, check_args, get_param
 from ansible.module_utils.junos import get_configuration
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.netconf import send_request
+from ansible.module_utils.six import iteritems
 
 try:
     from lxml.etree import Element, SubElement, tostring

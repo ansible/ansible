@@ -40,12 +40,16 @@ options:
     required: true
   mode:
     description:
-      - Mode of the link aggregation group.
+      - Mode of the link aggregation group. A value of C(on) will enable LACP.
+        C(active) configures the link to actively information about the state of the link,
+        or it can be configured in C(passive) mode ie. send link state information only when
+        received them from another link.
     default: on
     choices: ['on', 'active', 'passive']
   members:
     description:
-      - List of members of the link aggregation group.
+      - List of members interfaces of the link aggregation group. The value can be
+        single interface or list of interfaces.
     required: true
   min_links:
     description:
