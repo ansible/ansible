@@ -63,16 +63,19 @@ if ($automatic -ne $null) {
     # change autmoatic managed pagefile 
     try {
         $computerSystem = Get-WmiObject -Class win32_computersystem -EnableAllPrivileges
-    
-        if ($computerSystem.AutomaticManagedPagefile -ne $automatic) {
-            $computerSystem.AutomaticManagedPagefile = $automatic
-            if (-not $check_mode) {
-            	$computerSystem.Put() | Out-Null
-            }
-            $result.changed = $true
-        }
     } catch {
-        Fail-Json $result "Failed to set AutomaticManagedPagefile $($_.Exception.Message)"
+        Fail-Json $result "Failed to query WMI computer system object $($_.Exception.Message)"
+    }
+    if ($computerSystem.AutomaticManagedPagefile -ne $automatic) {
+        $computerSystem.AutomaticManagedPagefile = $automatic
+        if (-not $check_mode) {
+            try {
+            	$computerSystem.Put() | Out-Null
+            } catch {
+                Fail-Json $result "Failed to set AutomaticManagedPagefile $($_.Exception.Message)"
+            }
+        }
+        $result.changed = $true
     }
 }
 
@@ -82,10 +85,10 @@ if ($state -eq "absent") {
     {
         try {
             Remove-Pagefile $fullPath -whatif:$check_mode
-            $result.changed = $true
         } catch {
             Fail-Json $result "Failed to remove pagefile $($_.Exception.Message)"
         }
+        $result.changed = $true
     }
 } elseif ($state -eq "present") {   
     # Remove current pagefile
@@ -94,10 +97,10 @@ if ($state -eq "absent") {
         {
             try {
                 Remove-Pagefile $fullPath -whatif:$check_mode
-                $result.changed = $true
             } catch {
                 Fail-Json $result "Failed to remove current pagefile $($_.Exception.Message)"
             }
+            $result.changed = $true
         }
     }
 
@@ -107,47 +110,57 @@ if ($state -eq "absent") {
     }
 
     # Set pagefile
-    try {
-        if ((Get-Pagefile $fullPath) -eq $null) {
+    if ((Get-Pagefile $fullPath) -eq $null) {
+        try {
             $pagefile = Set-WmiInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0} -WhatIf:$check_mode
-            if (-not ($systemManaged -or $check_mode)) {
-                $pagefile.InitialSize = $initialSize
-                $pagefile.MaximumSize = $maximumSize
-                $pagefile.Put() | out-null
-            }
-            $result.changed = $true
+        } catch {
+            Fail-Json $result "Failed to create pagefile $($_.Exception.Message)"
         }
-    } catch {
-        Fail-Json $result "Failed to set pagefile $($_.Exception.Message)"
+        if (-not ($systemManaged -or $check_mode)) {
+            $pagefile.InitialSize = $initialSize
+            $pagefile.MaximumSize = $maximumSize
+            try {
+                $pagefile.Put() | out-null
+            } catch {
+                Fail-Json $result "Failed to set pagefile size $($_.Exception.Message)"
+            }
+        }
+        $result.changed = $true
     }
 } elseif ($state -eq "query") {
-    try {
+    $result.pagefiles = @()
 
-        $result.pagefiles = @()
-
-        if ($drive -eq $null) {
+    if ($drive -eq $null) {
+        try {
             $pagefiles = Get-WmiObject Win32_PageFileSetting
-        } else {
+        } catch {
+            Fail-Json $result "Failed to query all pagefiles $($_.Exception.Message)"
+        }
+    } else {
+        try {
             $pagefiles = Get-Pagefile $fullPath
+        } catch {
+            Fail-Json $result "Failed to query specific pagefile $($_.Exception.Message)"
         }
+    }
 
-        # Get all pagefiles
-        foreach ($currentPagefile in $pagefiles) {
-            $currentPagefileObject = @{
-                name = $currentPagefile.Name
-                initial_size = $currentPagefile.InitialSize
-                maximum_size = $currentPagefile.MaximumSize
-                caption = $currentPagefile.Caption
-                description = $currentPagefile.Description
-            }
-
-            $result.pagefiles += $currentPagefileObject
+    # Get all pagefiles
+    foreach ($currentPagefile in $pagefiles) {
+        $currentPagefileObject = @{
+            name = $currentPagefile.Name
+            initial_size = $currentPagefile.InitialSize
+            maximum_size = $currentPagefile.MaximumSize
+            caption = $currentPagefile.Caption
+            description = $currentPagefile.Description
         }
+        $result.pagefiles += $currentPagefileObject
+    }
 
-        # Get automatic managed pagefile state
+    # Get automatic managed pagefile state
+    try {
         $result.automatic_managed_pagefiles = (Get-WmiObject -Class win32_computersystem).AutomaticManagedPagefile
     } catch {
-        Fail-Json $result "Failed to query current pagefiles $($_.Exception.Message)"
+        Fail-Json $result "Failed to query automatic managed pagefile state $($_.Exception.Message)"
     }
 }
 Exit-Json $result
