@@ -72,7 +72,7 @@ if ($automatic -ne $null) {
             $result.changed = $true
         }
     } catch {
-        Fail-Json $result "Failed to set AutomaticManagedPagefile $_.Exception.Message"
+        Fail-Json $result "Failed to set AutomaticManagedPagefile $($_.Exception.Message)"
     }
 }
 
@@ -84,7 +84,7 @@ if ($state -eq "absent") {
             Remove-Pagefile $fullPath -whatif:$check_mode
             $result.changed = $true
         } catch {
-            Fail-Json $result "Failed to remove pagefile $_.Exception.Message"
+            Fail-Json $result "Failed to remove pagefile $($_.Exception.Message)"
         }
     }
 } elseif ($state -eq "present") {   
@@ -96,7 +96,7 @@ if ($state -eq "absent") {
                 Remove-Pagefile $fullPath -whatif:$check_mode
                 $result.changed = $true
             } catch {
-                Fail-Json $result "Failed to remove current pagefile $_.Exception.Message"
+                Fail-Json $result "Failed to remove current pagefile $($_.Exception.Message)"
             }
         }
     }
@@ -118,7 +118,7 @@ if ($state -eq "absent") {
             $result.changed = $true
         }
     } catch {
-        Fail-Json $result "Failed to set pagefile $_.Exception.Message"
+        Fail-Json $result "Failed to set pagefile $($_.Exception.Message)"
     }
 } elseif ($state -eq "query") {
     try {
@@ -147,7 +147,7 @@ if ($state -eq "absent") {
         # Get automatic managed pagefile state
         $result.automatic_managed_pagefiles = (Get-WmiObject -Class win32_computersystem).AutomaticManagedPagefile
     } catch {
-        Fail-Json $result "Failed to query current pagefiles $_.Exception.Message"
+        Fail-Json $result "Failed to query current pagefiles $($_.Exception.Message)"
     }
 }
 Exit-Json $result
