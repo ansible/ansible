@@ -28,7 +28,7 @@ import ansible.module_utils.rds as rds_u
 
 from ansible.module_utils.basic import AnsibleModule
 import ansible.module_utils.basic as basic
-from ansible.module_utils.rds import RDSDBInstance
+from ansible.module_utils.aws.rds import RDSDBInstance
 from ansible.module_utils._text import to_bytes
 import pytest
 import time
