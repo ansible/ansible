@@ -1,5 +1,5 @@
 [testgroup]
-A
+A testvar=testvalue
 B
 C
 D

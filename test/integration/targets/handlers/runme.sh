@@ -54,3 +54,6 @@ grep -q "ERROR! The requested handler 'notify_inexistent_handler' was not found 
 # Notify inexistent handlers without errors when ANSIBLE_ERROR_ON_MISSING_HANDLER=false
 ANSIBLE_ERROR_ON_MISSING_HANDLER=false ansible-playbook test_handlers_inexistent_notify.yml -i inventory.handlers -v "$@"
 
+# Check that host variables are available while evaluating handler names
+[ "$(ansible-playbook test_current_host_variables_availability.yml -i inventory.handlers -v "$@" -l A \
+| egrep -o 'RUNNING HANDLER \[test handler: .*?]')" = "RUNNING HANDLER [test handler: {{ testvar }}]" ]
