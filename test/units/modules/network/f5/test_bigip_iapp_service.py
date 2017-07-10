@@ -83,6 +83,10 @@ class TestParameters(unittest.TestCase):
         assert p.name == 'http_example'
         assert p.partition == 'Common'
         assert p.template == '/Common/f5.http'
+        assert p.deviceGroup == 'none'
+        assert p.inheritedTrafficGroup == 'true'
+        assert p.inheritedDevicegroup == 'true'
+        assert p.trafficGroup == '/Common/traffic-group-local-only'
 
     def test_module_parameters_lists(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
@@ -196,6 +200,34 @@ class TestParameters(unittest.TestCase):
         assert 'row' in p.tables[0]['rows'][1]
         assert p.tables[0]['rows'][0]['row'] == ['12.12.12.12', '80', '0']
         assert p.tables[0]['rows'][1]['row'] == ['13.13.13.13', '443', '10']
+
+    def test_api_parameters_device_group(self):
+        args = dict(
+            deviceGroup='none'
+        )
+        p = Parameters(args)
+        assert p.deviceGroup == 'none'
+
+    def test_api_parameters_inherited_traffic_group(self):
+        args = dict(
+            inheritedTrafficGroup='true'
+        )
+        p = Parameters(args)
+        assert p.inheritedTrafficGroup == 'true'
+
+    def test_api_parameters_inherited_devicegroup(self):
+        args = dict(
+            inheritedDevicegroup='true'
+        )
+        p = Parameters(args)
+        assert p.inheritedDevicegroup == 'true'
+
+    def test_api_parameters_traffic_group(self):
+        args = dict(
+            trafficGroup='/Common/traffic-group-local-only'
+        )
+        p = Parameters(args)
+        assert p.trafficGroup == '/Common/traffic-group-local-only'
 
     def test_module_template_same_partition(self):
         args = dict(
