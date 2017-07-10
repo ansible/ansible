@@ -323,7 +323,6 @@ lib/ansible/modules/network/illumos/dladm_linkprop.py
 lib/ansible/modules/network/ios/_ios_template.py
 lib/ansible/modules/network/ios/ios_banner.py
 lib/ansible/modules/network/ios/ios_command.py
-lib/ansible/modules/network/ios/ios_config.py
 lib/ansible/modules/network/ios/ios_facts.py
 lib/ansible/modules/network/ios/ios_system.py
 lib/ansible/modules/network/ios/ios_vrf.py
