@@ -271,11 +271,11 @@ class StrategyBase:
             else:
                 return self._inventory.get_host(host_name)
 
-        def search_handler_blocks_by_name(handler_name, handler_blocks):
+        def search_handler_blocks_by_name(handler_name, handler_blocks, host):
             for handler_block in handler_blocks:
                 for handler_task in handler_block.block:
                     if handler_task.name:
-                        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
+                        handler_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler_task)
                         templar = Templar(loader=self._loader, variables=handler_vars)
                         try:
                             # first we check with the full result of get_name(), which may
@@ -447,7 +447,7 @@ class StrategyBase:
                                 # dependency chain of the current task (if it's from a role), otherwise
                                 # we just look through the list of handlers in the current play/all
                                 # roles and use the first one that matches the notify name
-                                target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
+                                target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers, original_host)
                                 if target_handler is not None:
                                     found = True
                                     if original_host not in self._notified_handlers[target_handler._uuid]:
