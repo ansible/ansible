@@ -299,7 +299,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
-from ansible.module_utils.rds import RDSDBInstance, get_db_instance
+from ansible.module_utils.aws.rds import RDSDBInstance, get_db_instance
 
 try:
     import botocore
