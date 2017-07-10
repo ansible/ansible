@@ -257,10 +257,15 @@ debian: sdist
 
 deb: deb-src
 	@for DIST in $(DEB_DIST) ; do \
+	    if test $${DIST} = trusty ; then \
+	        CRYPTO_BACKEND=pycrypto ; \
+	    else \
+	        CRYPTO_BACKEND=cryptography ; \
+	    fi ; \
 	    PBUILDER_OPTS="$(PBUILDER_OPTS) --distribution $${DIST} --basetgz $(PBUILDER_CACHE_DIR)/$${DIST}-$(PBUILDER_ARCH)-base.tgz --buildresult $(CURDIR)/deb-build/$${DIST}" ; \
 	    $(PBUILDER_BIN) create $${PBUILDER_OPTS} --othermirror "deb http://archive.ubuntu.com/ubuntu $${DIST} universe" ; \
 	    $(PBUILDER_BIN) update $${PBUILDER_OPTS} ; \
-	    $(PBUILDER_BIN) build $${PBUILDER_OPTS} deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}.dsc ; \
+	    (export ANSIBLE_CRYPTO_BACKEND=$${CRYPTO_BACKEND} && $(PBUILDER_BIN) build $${PBUILDER_OPTS} deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}.dsc) ; \
 	done
 	@echo "#############################################"
 	@echo "Ansible DEB artifacts:"
