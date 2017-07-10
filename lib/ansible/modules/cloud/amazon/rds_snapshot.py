@@ -92,7 +92,7 @@ import time
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
-from ansible.module_utils.rds import RDSSnapshot, get_db_snapshot
+from ansible.module_utils.aws.rds import RDSSnapshot, get_db_snapshot
 
 # FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
 
