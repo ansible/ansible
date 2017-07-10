@@ -111,6 +111,14 @@ EXAMPLES = '''
     kms_key_id: arn:aws:kms:eu-central-1:XXXXXXXXXXXX:key/746de6ea-50a4-4bcb-8fbc-e3b29f2d367b
 '''
 
+RETURN = '''
+snapshot_id:
+    description: snapshot id of the newly created snapshot
+    returned: when snapshot copy is successful
+    type: string
+    sample: "snap-e9095e8c"
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info)
 
