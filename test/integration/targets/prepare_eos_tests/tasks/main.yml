@@ -4,6 +4,7 @@
      enable_https: yes
      enable_local_http: yes
      enable_socket: yes
+     authorize: yes
      provider: "{{ cli }}"
    register: eos_eapi_output
    connection: local
