@@ -204,6 +204,28 @@ except ImportError:
     pass  # protected by AnsibleAWSModule
 
 
+def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
+    """return the account id we are currently working on
+
+    get_account_id tries too find out the account that we are working
+    on.  It's not guaranteed that this will be easy so we try in
+    several different ways.  Giving either IAM or STS privilages to
+    the account should be enough to permit this.
+    """
+    try:
+        sts_client = boto3_conn(module, conn_type='client', resource='sts',
+                                region=region, endpoint=endpoint, **aws_connect_kwargs)
+        account_id = sts_client.get_caller_identity().get('Account')
+    except ClientError:
+        try:
+            iam_client = boto3_conn(module, conn_type='client', resource='iam',
+                                    region=region, endpoint=endpoint, **aws_connect_kwargs)
+            account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
+        except Exception as e:
+            module.fail_json_aws(e, msg="getting account information")
+    return account_id
+
+
 def get_current_function(connection, function_name, qualifier=None):
     try:
         if qualifier is not None:
@@ -297,13 +319,8 @@ def main():
             role_arn = role
         else:
             # get account ID and assemble ARN
-            try:
-                iam_client = boto3_conn(module, conn_type='client', resource='iam',
-                                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
-                account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
-                role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
-            except Exception as e:
-                module.fail_json_aws(e, msg="getting account information")
+            account_id = module.get_account_id()
+            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
