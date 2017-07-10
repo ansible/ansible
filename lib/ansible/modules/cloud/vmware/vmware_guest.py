@@ -435,30 +435,128 @@ class PyVmomiDeviceHelper(object):
 
 class PyVmomiCache(object):
     """ This class caches references to objects which are requested multiples times but not modified """
-    def __init__(self, content):
+    def __init__(self, content, dc_name=None):
         self.content = content
+        self.dc_name = dc_name
         self.networks = {}
         self.clusters = {}
         self.esx_hosts = {}
+        self.parent_datacenters = {}
+
+    def find_obj(self, content, types, name, confine_to_datacenter=True):
+        """ Wrapper around find_obj to set datacenter context """
+        result = find_obj(content, types, name)
+        if result and confine_to_datacenter:
+            if self.get_parent_datacenter(result).name != self.dc_name:
+                objects = self.get_all_objs(content, types, confine_to_datacenter=True)
+                for obj in objects:
+                    if obj.name == name:
+                        return obj
+
+        return result
+
+    def get_all_objs(self, content, types, confine_to_datacenter=True):
+        """ Wrapper around get_all_objs to set datacenter context """
+        objects = get_all_objs(content, [vim.Datastore])
+        if confine_to_datacenter:
+            if hasattr(objects, 'items'):
+                # resource pools come back as a dictionary
+                for k,v in objects.items():
+                    parent_dc = self.get_parent_datacenter(k)
+                    if parent_dc.name != self.dc_name:
+                        objects.pop(k, None)
+            else:
+                # everything else should be a list
+                objects = [x for x in objects if self.get_parent_datacenter(x).name == self.dc_name]
+
+        return objects
 
     def get_network(self, network):
         if network not in self.networks:
-            self.networks[network] = find_obj(self.content, [vim.Network], network)
+            self.networks[network] = self.find_obj(self.content, [vim.Network], network)
 
         return self.networks[network]
 
     def get_cluster(self, cluster):
         if cluster not in self.clusters:
-            self.clusters[cluster] = find_obj(self.content, [vim.ClusterComputeResource], cluster)
+            self.clusters[cluster] = self.find_obj(self.content, [vim.ClusterComputeResource], cluster)
 
         return self.clusters[cluster]
 
     def get_esx_host(self, host):
         if host not in self.esx_hosts:
-            self.esx_hosts[host] = find_obj(self.content, [vim.HostSystem], host)
+            self.esx_hosts[host] = self.find_obj(self.content, [vim.HostSystem], host)
 
         return self.esx_hosts[host]
 
+    def get_parent_datacenter(self, obj):
+        """ Walk the parent tree to find the objects datacenter """
+        if isinstance(obj, vim.Datacenter):
+            return obj
+        if obj in self.parent_datacenters:
+            return self.parent_datacenters[obj]
+        datacenter = None
+        while True:
+            if not hasattr(obj, 'parent'):
+                break
+            obj = obj.parent
+            if isinstance(obj, vim.Datacenter):
+                datacenter = obj
+                break
+        self.parent_datacenters[obj] = datacenter
+        return datacenter
+
+    def serialize_spec(self, clonespec):
+        data = {}
+        attrs = dir(clonespec)
+        attrs = [x for x in attrs if not x.startswith('_')]
+        for x in attrs:
+            xo = getattr(clonespec, x)
+            if callable(xo):
+                continue
+            xt = type(xo)
+            if xo is None or issubclass(xt, type(None)):
+                data[x] = None
+            elif issubclass(xt, list):
+                data[x] = []
+                for xe in xo:
+                    data[x].append(self.serialize_spec(xe))
+            elif issubclass(xt, str):
+                data[x] = xo
+            elif issubclass(xt, unicode):
+                data[x] = xo
+            elif issubclass(xt, int):
+                data[x] = xo
+            elif issubclass(xt, float):
+                data[x] = xo
+            elif issubclass(xt, long):
+                data[x] = xo
+            elif issubclass(xt, bool):
+                data[x] = xo
+            elif issubclass(xt, dict):
+                data[x] = {}
+                for k,v in xo.items():
+                    data[x][k] = self.serialize_spec(v)
+            elif isinstance(xo, vim.vm.ConfigSpec):
+                data[x] = self.serialize_spec(xo)
+            elif isinstance(xo, vim.vm.RelocateSpec):
+                data[x] = self.serialize_spec(xo)
+            elif isinstance(xo, vim.vm.device.VirtualDisk):
+                data[x] = self.serialize_spec(xo)
+            elif isinstance(xo, vim.Description):
+                data[x] = {
+                    'dynamicProperty': self.serialize_spec(xo.dynamicProperty),
+                    'dynamicType': self.serialize_spec(xo.dynamicType),
+                    'label': self.serialize_spec(xo.label),
+                    'summary': self.serialize_spec(xo.summary),
+                }
+            elif hasattr(xo, 'name'):
+                data[x] = str(xo) + ':' + xo.name
+            elif isinstance(xo, vim.vm.ProfileSpec):
+                import q; q(dir(xo))
+            else:
+                data[x] = str(xt)
+        return data
 
 class PyVmomiHelper(object):
     def __init__(self, module):
@@ -474,7 +572,7 @@ class PyVmomiHelper(object):
         self.change_detected = False
         self.customspec = None
         self.current_vm_obj = None
-        self.cache = PyVmomiCache(self.content)
+        self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
 
     def getvm(self, name=None, uuid=None, folder=None):
 
@@ -663,7 +761,7 @@ class PyVmomiHelper(object):
                     self.module.fail_json(msg="Network '%(name)s' does not exists" % network)
 
             elif 'vlan' in network:
-                dvps = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
+                dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
                 for dvp in dvps:
                     if hasattr(dvp.config.defaultPortConfig, 'vlan') and dvp.config.defaultPortConfig.vlan.vlanId == network['vlan']:
                         network['name'] = dvp.config.name
@@ -1007,13 +1105,32 @@ class PyVmomiHelper(object):
 
         return hostsystem
 
+    def autoselect_datastore(self):
+        datastore = None
+        datastore_name = None
+        datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
+
+        if datastores is None or len(datastores) == 0:
+            self.module.fail_json(msg="Unable to find a datastore list when autoselecting")
+
+        datastore_freespace = 0
+        for ds in datastores:
+            if ds.summary.freeSpace > datastore_freespace:
+                datastore = ds
+                datastore_name = datastore.name
+                datastore_freespace = ds.summary.freeSpace
+
+        return datastore
+
     def select_datastore(self, vm_obj=None):
         datastore = None
         datastore_name = None
+
         if len(self.params['disk']) != 0:
             # TODO: really use the datastore for newly created disks
             if 'autoselect_datastore' in self.params['disk'][0] and self.params['disk'][0]['autoselect_datastore']:
-                datastores = get_all_objs(self.content, [vim.Datastore])
+                datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
+                datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
                 if datastores is None or len(datastores) == 0:
                     self.module.fail_json(msg="Unable to find a datastore list when autoselecting")
 
@@ -1032,14 +1149,23 @@ class PyVmomiHelper(object):
 
             elif 'datastore' in self.params['disk'][0]:
                 datastore_name = self.params['disk'][0]['datastore']
-                datastore = find_obj(self.content, [vim.Datastore], datastore_name)
+                datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
             else:
                 self.module.fail_json(msg="Either datastore or autoselect_datastore should be provided to select datastore")
+
         if not datastore and self.params['template']:
             # use the template's existing DS
             disks = [x for x in vm_obj.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
-            datastore = disks[0].backing.datastore
-            datastore_name = datastore.name
+            if disks:
+                datastore = disks[0].backing.datastore
+                datastore_name = datastore.name
+            # validation
+            if datastore:
+                dc = self.cache.get_parent_datacenter(datastore)
+                if dc.name != self.params['datacenter']:
+                    datastore = self.autoselect_datastore()
+                    datastore_name = datastore.name
+
         if not datastore:
             self.module.fail_json(msg="Failed to find a matching datastore")
 
@@ -1058,13 +1184,13 @@ class PyVmomiHelper(object):
                 return False
 
     def select_resource_pool_by_name(self, resource_pool_name):
-        resource_pool = find_obj(self.content, [vim.ResourcePool], resource_pool_name)
+        resource_pool = self.cache.find_obj(self.content, [vim.ResourcePool], resource_pool_name)
         if resource_pool is None:
             self.module.fail_json(msg='Could not find resource_pool "%s"' % resource_pool_name)
         return resource_pool
 
     def select_resource_pool_by_host(self, host):
-        resource_pools = get_all_objs(self.content, [vim.ResourcePool])
+        resource_pools = self.cache.get_all_objs(self.content, [vim.ResourcePool])
         for rp in resource_pools.items():
             if not rp[0]:
                 continue
@@ -1141,7 +1267,7 @@ class PyVmomiHelper(object):
         #   - static IPs
 
         # datacenters = get_all_objs(self.content, [vim.Datacenter])
-        datacenter = find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
+        datacenter = self.cache.find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
         if datacenter is None:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
 
@@ -1168,8 +1294,13 @@ class PyVmomiHelper(object):
         else:
             vm_obj = None
 
-        if self.params['resource_pool']:
-            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+        # need a resource pool if cloning from template
+        if self.params['resource_pool'] or self.params['template']:
+            if self.params['esxi_hostname']:
+                host = self.select_host()
+                resource_pool = self.select_resource_pool_by_host(host)
+            else:
+                resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
 
             if resource_pool is None:
                 self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
@@ -1196,6 +1327,8 @@ class PyVmomiHelper(object):
         if len(self.params['customization']) > 0 or network_changes is True:
             self.customize_vm(vm_obj=vm_obj)
 
+        clonespec = None
+        clone_method = None
         try:
             if self.params['template']:
                 # create the relocation spec
@@ -1206,8 +1339,9 @@ class PyVmomiHelper(object):
                     relospec.host = self.select_host()
                 relospec.datastore = datastore
 
-                if self.params['resource_pool']:
-                    relospec.pool = resource_pool
+                # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
+                # > pool: For a clone operation from a template to a virtual machine, this argument is required. 
+                relospec.pool = resource_pool
 
                 if self.params['snapshot_src'] is not None and self.params['linked_clone']:
                     relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
@@ -1224,6 +1358,7 @@ class PyVmomiHelper(object):
                     clonespec.snapshot = snapshot[0].snapshot
 
                 clonespec.config = self.configspec
+                clone_method = 'Clone'
                 task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
                 self.change_detected = True
             else:
@@ -1234,6 +1369,7 @@ class PyVmomiHelper(object):
                                                         suspendDirectory=None,
                                                         vmPathName="[" + datastore_name + "] " + self.params["name"])
 
+                clone_method = 'CreateVM_Task'
                 task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
                 self.change_detected = True
             self.wait_for_task(task)
@@ -1244,7 +1380,12 @@ class PyVmomiHelper(object):
         if task.info.state == 'error':
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2021361
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2173
-            return {'changed': self.change_detected, 'failed': True, 'msg': task.info.error.msg}
+
+            # provide these to the user for debugging
+            clonespec_json = self.cache.serialize_spec(clonespec)
+            configspec_json = self.cache.serialize_spec(self.configspec)
+
+            return {'changed': self.change_detected, 'failed': True, 'msg': task.info.error.msg, 'clonespec': clonespec_json, 'configspec': configspec_json, 'clone_method': clone_method}
         else:
             # set annotation
             vm = task.info.result
