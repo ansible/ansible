@@ -103,11 +103,6 @@ EXAMPLES = '''
     url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
     state: present
 
-# Remove an Apt signing key, uses whichever key is at the URL
-- apt_key:
-    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
-    state: absent
-
 # Remove a Apt specific signing key, leading 0x is valid
 - apt_key:
     id: 0x473041FA
