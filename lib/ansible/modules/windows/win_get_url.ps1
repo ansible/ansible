@@ -1,24 +1,14 @@
 #!powershell
 # This file is part of Ansible.
 #
-# (c) 2015, Paul Durivage <paul.durivage@rackspace.com>, Tal Auslander <tal@cloudshare.com>
-# (c) 2017, Dag Wieers <dag@wieers.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Paul Durivage <paul.durivage@rackspace.com>, Tal Auslander <tal@cloudshare.com>
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # WANT_JSON
 # POWERSHELL_COMMON
+
+$ErrorActionPreference = 'Stop'
 
 
 Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
@@ -78,15 +68,17 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
         Fail-Json -obj $result -message "The path '$dest_parent' does not exist for destination '$dest', or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs."
     }
 
+    # TODO: Replace this with WebRequest
     $webClient = New-Object System.Net.WebClient
 
     foreach ($header in $headers.GetEnumerator()) {
         $webClient.Headers.Add($header.Name, $header.Value)
     }
 
-    if ($timeout) {
-        $webClient.Timeout = $timeout * 1000
-    }
+# FIXME: WebClient has no Timeout property ? Should be replaced with WebRequest
+#    if ($timeout) {
+#        $webClient.Timeout = $timeout * 1000
+#    }
 
     if (-not $use_proxy) {
         # Ignore the system proxy settings
@@ -110,7 +102,7 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
     } Catch {
         Fail-Json -obj $result -message "Unknown error downloading '$url' to '$dest'. $($_.Exception.Message)"
     }
-    # FIXME: Reimplement DownloadFile() so we get the real information
+    # FIXME: Reimplement DownloadFile() using WebRequest so we get the real information
     $result.status_code = 200
     $result.msg = 'OK'
     $result.dest = $dest
@@ -123,7 +115,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 10
-$headers = Get-AnsibleParam -obj $params -name "headers" -type "dict"
+$headers = Get-AnsibleParam -obj $params -name "headers" -type "dict" -default @{}
 $skip_certificate_validation = Get-AnsibleParam -obj $params -name "skip_certificate_validation" -type "bool"
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $url_username = Get-AnsibleParam -obj $params -name "url_username" -type "str" -aliases "username"
@@ -203,7 +195,7 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 if ($force -or -not (Test-Path -LiteralPath $dest)) {
 
     Download-File -result $result -url $url -dest $dest -credentials $credentials `
-                  -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy_server $proxy_server `
+                  -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy `
                   -whatif $check_mode
 
 } else {
