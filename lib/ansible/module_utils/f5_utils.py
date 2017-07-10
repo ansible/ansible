@@ -292,7 +292,7 @@ class AnsibleF5Client(object):
         :return:
         :raises iControlUnexpectedHTTPError
         """
-        self.client.api = self._get_mgmt_root(
+        self.api = self._get_mgmt_root(
             self.f5_product_name, **self._connect_params
         )
 
