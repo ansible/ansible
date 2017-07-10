@@ -399,7 +399,10 @@ class Ec2Inventory(object):
         if self.boto_profile:
             cache_dir = os.path.join(cache_dir, 'profile_' + self.boto_profile)
         if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
+            try:
+                os.makedirs(cache_dir)
+            except(OSError):
+                print "Cache directory already exists. Skipping the step..."
 
         cache_name = 'ansible-ec2'
         cache_id = self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID', self.credentials.get('aws_access_key_id'))
