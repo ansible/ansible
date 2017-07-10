@@ -11,6 +11,7 @@ The following is a list of module_utils files and a general description. The mod
 - a10.py - Utilities used by the a10_server module to manage A10 Networks devices.
 - api.py - Adds shared support for generic API modules.
 - aos.py - Module support utilities for managing Apstra AOS Server.
+- aruba.py - Helper functions for modules working with Aruba networking devices.
 - asa.py - Module support utilities for managing Cisco ASA network devices.
 - azure_rm_common.py - Definitions and utilities for Microsoft Azure Resource Manager template deployments.
 - basic.py - General definitions and helper utilities for Ansible modules.
