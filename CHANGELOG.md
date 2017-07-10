@@ -47,6 +47,8 @@ Ansible Changes By Release
 * Those using ansible as a library should note that the `ansible.vars.unsafe_proxy`
   module is deprecated and slated to go away in 2.8.  The functionality has been
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
+* The win_get_url module has the dictionary 'win_get_url' in its results deprecated,
+  its content is now also available directly in the resulting output, like other modules.
 
 #### Deprecated Modules (to be removed in 2.8):
 * ec2_facts: replaced by ec2_metadata_facts
