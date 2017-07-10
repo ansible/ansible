@@ -137,6 +137,14 @@ options:
     default: merge
     choices: ['merge', 'override', 'replace']
     version_added: "2.3"
+  confirm_commit:
+    description:
+      - This argument will execute commit operation on remote device.
+        It can be used to confirm a previous commit.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.4"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -173,6 +181,7 @@ EXAMPLES = """
 
 - name: confirm a previous commit
   junos_config:
+    confirm_commit: yes
     provider: "{{ netconf }}"
 """
 
@@ -308,6 +317,7 @@ def main():
 
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
+        confirm_commit=dict(type='bool', default=False),
 
         # config operations
         backup=dict(type='bool', default=False),
@@ -344,14 +354,14 @@ def main():
         result['__backup__'] = match.text.strip()
 
     if module.params['rollback']:
-        if not commit:
+        if commit:
             diff = rollback(module)
             if module._diff:
                 result['diff'] = {'prepared': diff}
         result['changed'] = True
 
     elif module.params['zeroize']:
-        if not commit:
+        if commit:
             zeroize(module)
         result['changed'] = True
 
@@ -378,7 +388,7 @@ def main():
                     if module._diff:
                         result['diff'] = {'prepared': diff}
 
-        else:
+        elif module.params['confirm_commit']:
             with locked_config(module):
                 # confirm a previous commit
                 commit_configuration(module)
