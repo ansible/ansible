@@ -32,6 +32,7 @@
     that:
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso"
 
 - name: test download iso idempotence
   cs_iso:
@@ -44,6 +45,47 @@
     that:
     - not iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso"
+
+- name: test update iso in check mdoe
+  cs_iso:
+    name: "{{ cs_resource_prefix }}-iso"
+    url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
+    os_type: CentOS 7
+  register: iso
+  check_mode: true
+- name: verify test update iso in check mode
+  assert:
+    that:
+    - iso|changed
+    - iso.name == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso"
+
+- name: test update iso
+  cs_iso:
+    name: "{{ cs_resource_prefix }}-iso"
+    url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
+    os_type: CentOS 7
+  register: iso
+- name: verify test update iso
+  assert:
+    that:
+    - iso|changed
+    - iso.name == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso"
+
+- name: test update iso idempotence
+  cs_iso:
+    name: "{{ cs_resource_prefix }}-iso"
+    url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
+    os_type: CentOS 7
+  register: iso
+- name: verify test update iso idempotence
+  assert:
+    that:
+    - not iso|changed
+    - iso.name == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso"
 
 - name: test remove iso in check mode
   cs_iso:
@@ -56,6 +98,7 @@
     that:
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso"
 
 - name: test remove iso
   cs_iso:
@@ -67,6 +110,7 @@
     that:
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso"
 
 - name: test remove iso idempotence
   cs_iso:
