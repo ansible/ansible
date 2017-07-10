@@ -33,11 +33,11 @@ from ansible.module_utils.network_common import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
 
-DEFAULT_IGNORE_LINES_RE = set(
+DEFAULT_IGNORE_LINES_RE = seta[(
     re.compile("Using \d+ out of \d+ bytes"),
     re.compile("Building configuration"),
     re.compile("Current configuration : \d+ bytes")
-)
+])
 
 
 class ConfigLine(object):
