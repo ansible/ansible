@@ -47,6 +47,8 @@ Ansible Changes By Release
 * removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
 * removed unused and deprecated config option `pattern`
 * Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
+* The include_dir var is not a global anymore, as we now allow mulitple inventory sources, it is now host dependant.
+  This means it cannot be used wherever host vars are not permittied, for example in task/handler names.
 * Fixed a cornercase with ini inventory vars.  Previously, if an inventory var
   was a quoted string with hash marks ("#") in it then the parsed string
   included the quotes.  Now the string will not be quoted.  Previously, if the
