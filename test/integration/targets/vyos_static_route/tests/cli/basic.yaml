@@ -1,8 +1,8 @@
 ---
 - name: create static route
   vyos_static_route:
-    prefix: 172.24.0.0/16
-    next_hop: 10.0.0.11
+    prefix: 172.24.0.0/24
+    next_hop: 192.168.42.64
     state: present
     provider: "{{ cli }}"
   register: result
@@ -10,13 +10,13 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set protocols static route prefix 172.24.0.0/16 next-hop 10.0.0.11" in result.commands' 
+      - '"set protocols static route prefix 172.24.0.0/24 next-hop 192.168.42.64" in result.commands'
 
 - name: create static route again (idempotent)
   vyos_static_route:
     prefix: 172.24.0.0
-    mask: 16
-    next_hop: 10.0.0.11
+    mask: 24
+    next_hop: 192.168.42.64
     state: present
     provider: "{{ cli }}"
   register: result
@@ -27,8 +27,8 @@
 
 - name: modify admin distance of static route
   vyos_static_route:
-    prefix: 172.24.0.0/16
-    next_hop: 10.0.0.11
+    prefix: 172.24.0.0/24
+    next_hop: 192.168.42.64
     admin_distance: 1
     state: present
     provider: "{{ cli }}"
@@ -37,13 +37,13 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set protocols static route 172.24.0.0/16 next-hop 10.0.0.11 distance 1" in result.commands'
+      - '"set protocols static route 172.24.0.0/24 next-hop 192.168.42.64 distance 1" in result.commands'
 
 - name: modify admin distance of static route again (idempotent)
   vyos_static_route:
     prefix: 172.24.0.0
-    mask: 16
-    next_hop: 10.0.0.11
+    mask: 24
+    next_hop: 192.168.42.64
     admin_distance: 1
     state: present
     provider: "{{ cli }}"
@@ -55,8 +55,8 @@
 
 - name: delete static route
   vyos_static_route:
-    prefix: 172.24.0.0/16
-    next_hop: 10.0.0.11
+    prefix: 172.24.0.0/24
+    next_hop: 192.168.42.64
     admin_distance: 1
     state: absent
     provider: "{{ cli }}"
@@ -65,12 +65,12 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"delete protocols static route 172.24.0.0/16 next-hop 10.0.0.11 distance 1" in result.commands'
+      - '"delete protocols static route 172.24.0.0/24" in result.commands'
 
 - name: delete static route again (idempotent)
   vyos_static_route:
-    prefix: 172.24.0.0/16
-    next_hop: 10.0.0.11
+    prefix: 172.24.0.0/24
+    next_hop: 192.168.42.64
     admin_distance: 1
     state: absent
     provider: "{{ cli }}"
@@ -83,8 +83,8 @@
 - name: Add static route collections
   vyos_static_route:
     collection:
-      - { prefix: 172.24.0.0/16, next_hop: 10.0.0.8 }
-      - { prefix: 172.24.0.0, mask: 24, next_hop: 10.0.0.11 }
+      - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
+      - { prefix: 172.24.2.0, mask: 24, next_hop: 192.168.42.64 }
     state: present
     provider: "{{ cli }}"
   register: result
@@ -92,15 +92,15 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set protocols static route 172.24.0.0/16 next-hop 10.0.0.8" in result.commands'
-      - '"set protocols static route 172.24.0.0/24 next-hop 10.0.0.11" in result.commands'
+      - '"set protocols static route 172.24.1.0/24 next-hop 192.168.42.64" in result.commands'
+      - '"set protocols static route 172.24.2.0/24 next-hop 192.168.42.64" in result.commands'
 
 - name: Add and remove static route collections with overrides
   vyos_static_route:
     collection:
-      - { prefix: 172.24.0.0/24, next_hop: 10.0.0.11 }
-      - { prefix: 172.24.0.0/16, next_hop: 10.0.0.8, state: absent }
-      - { prefix: 172.24.0.0/24, next_hop: 10.0.0.8 }
+      - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
+      - { prefix: 172.24.2.0/24, next_hop: 192.168.42.64, state: absent }
+      - { prefix: 172.24.3.0/24, next_hop: 192.168.42.64 }
     state: present
     provider: "{{ cli }}"
   register: result
@@ -108,14 +108,14 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"delete protocols static route 172.24.0.0/16 next-hop 10.0.0.8" in result.commands'
-      - '"set protocols static route 172.24.0.0/24 next-hop 10.0.0.8" in result.commands'
+      - '"delete protocols static route 172.24.2.0/24" in result.commands'
+      - '"set protocols static route 172.24.3.0/24 next-hop 192.168.42.64" in result.commands'
 
 - name: Remove static route collections
   vyos_static_route:
     collection:
-      - { prefix: 172.24.0.0/24, next_hop: 10.0.0.8 }
-      - { prefix: 172.24.0.0/24, next_hop: 10.0.0.11 }
+      - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
+      - { prefix: 172.24.3.0/24, next_hop: 192.168.42.64 }
     state: absent
     provider: "{{ cli }}"
   register: result
@@ -123,5 +123,5 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"delete protocols static route 172.24.0.0/24 next-hop 10.0.0.8" in result.commands'
-      - '"delete protocols static route 172.24.0.0/24 next-hop 10.0.0.11" in result.commands'
+      - '"delete protocols static route 172.24.1.0/24" in result.commands'
+      - '"delete protocols static route 172.24.3.0/24" in result.commands'
