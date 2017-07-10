@@ -91,10 +91,12 @@ def _gateway_query(v):
         if v.ip != v.network:
             return str(v.ip) + '/' + str(v.prefixlen)
 
+
 def _address_prefix_query(v):
     if v.size > 1:
         if v.ip != v.network:
             return str(v.ip) + '/' + str(v.prefixlen)
+
 
 def _bool_ipaddr_query(v):
     if v:
@@ -117,6 +119,7 @@ def _cidr_lookup_query(v, iplist, value):
     except:
         return False
 
+
 def _first_usable_query(v, vtype):
     if vtype == 'address':
         "Does it make sense to raise an error"
@@ -127,6 +130,7 @@ def _first_usable_query(v, vtype):
         elif v.size > 1:
             return str(netaddr.IPAddress(int(v.network) + 1))
 
+
 def _host_query(v):
     if v.size == 1:
         return str(v)
@@ -134,8 +138,10 @@ def _host_query(v):
         if v.ip != v.network:
             return str(v.ip) + '/' + str(v.prefixlen)
 
+
 def _hostmask_query(v):
     return str(v.hostmask)
+
 
 def _int_query(v, vtype):
     if vtype == 'address':
@@ -143,12 +149,14 @@ def _int_query(v, vtype):
     elif vtype == 'network':
         return str(int(v.ip)) + '/' + str(int(v.prefixlen))
 
+
 def _ip_prefix_query(v):
     if v.size == 2:
         return str(v.ip) + '/' + str(v.prefixlen)
     elif v.size > 1:
         if v.ip != v.network:
             return str(v.ip) + '/' + str(v.prefixlen)
+
 
 def _ip_netmask_query(v):
     if v.size == 2:
@@ -166,6 +174,7 @@ def _ip_wildcard_query(v):
             return str(v.ip) + ' ' + str(v.hostmask)
 '''
 
+
 def _ipv4_query(v, value):
     if v.version == 6:
         try:
@@ -182,6 +191,7 @@ def _ipv6_query(v, value):
     else:
         return value
 
+
 def _last_usable_query(v, vtype):
     if vtype == 'address':
         "Does it make sense to raise an error"
@@ -191,6 +201,7 @@ def _last_usable_query(v, vtype):
             return str(netaddr.IPAddress(int(v.network) + 1))
         elif v.size > 1:
             return str(netaddr.IPAddress(int(v.broadcast) - 1))
+
 
 def _link_local_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
@@ -213,28 +224,35 @@ def _multicast_query(v, value):
     if v.is_multicast():
         return value
 
+
 def _net_query(v):
     if v.size > 1:
         if v.ip == v.network:
             return str(v.network) + '/' + str(v.prefixlen)
 
+
 def _netmask_query(v):
     return str(v.netmask)
+
 
 def _network_query(v):
     '''Return the network of a given IP or subnet'''
     if v.size > 1:
         return str(v.network)
 
+
 def _network_id_query(v):
     '''Return the network of a given IP or subnet'''
     return str(v.network)
 
+
 def _network_netmask_query(v):
-    return str(v.network) +  ' ' + str(v.netmask)
+    return str(v.network) + ' ' + str(v.netmask)
+
 
 def _network_wildcard_query(v):
-    return str(v.network) +  ' ' + str(v.hostmask)
+    return str(v.network) + ' ' + str(v.hostmask)
+
 
 def _next_usable_query(v, vtype):
     if vtype == 'address':
@@ -254,8 +272,10 @@ def _next_usable_query(v, vtype):
             if next_ip >= first_usable and next_ip <= last_usable:
                 return str(netaddr.IPAddress(int(v.ip) + 1))
 
+
 def _prefix_query(v):
     return int(v.prefixlen)
+
 
 def _previous_usable_query(v, vtype):
     if vtype == 'address':
@@ -275,9 +295,11 @@ def _previous_usable_query(v, vtype):
             if previous_ip >= first_usable and previous_ip <= last_usable:
                 return str(netaddr.IPAddress(int(v.ip) - 1))
 
+
 def _private_query(v, value):
     if v.is_private():
         return value
+
 
 def _public_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
@@ -285,6 +307,7 @@ def _public_query(v, value):
             not v_ip.is_loopback() and not v_ip.is_netmask() and
             not v_ip.is_hostmask()):
         return value
+
 
 def _range_usable_query(v, vtype):
     if vtype == 'address':
@@ -300,12 +323,15 @@ def _range_usable_query(v, vtype):
             last_usable = str(netaddr.IPAddress(int(v.broadcast) - 1))
             return "{}-{}".format(first_usable, last_usable)
 
+
 def _revdns_query(v):
     v_ip = netaddr.IPAddress(str(v.ip))
     return v_ip.reverse_dns
 
+
 def _size_query(v):
     return v.size
+
 
 def _size_usable_query(v):
     if v.size == 1:
@@ -313,6 +339,7 @@ def _size_usable_query(v):
     elif v.size == 2:
         return 2
     return v.size - 2
+
 
 def _subnet_query(v):
     return str(v.cidr)
@@ -327,12 +354,15 @@ def _type_query(v):
         else:
             return 'network'
 
+
 def _unicast_query(v, value):
     if v.is_unicast():
         return value
 
+
 def _version_query(v):
     return v.version
+
 
 def _wrap_query(v, vtype, value):
     if v.version == 6:
@@ -419,23 +449,23 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         '': _empty_ipaddr_query,
         '6to4': _6to4_query,
         'address': _ip_query,
-        'address/prefix': _address_prefix_query, # deprecate
+        'address/prefix': _address_prefix_query,  # deprecate
         'bool': _bool_ipaddr_query,
         'broadcast': _broadcast_query,
         'cidr': _cidr_query,
         'cidr_lookup': _cidr_lookup_query,
         'first_usable': _first_usable_query,
-        'gateway': _gateway_query, # deprecate
-        'gw': _gateway_query, # deprecate
+        'gateway': _gateway_query,  # deprecate
+        'gw': _gateway_query,  # deprecate
         'host': _host_query,
-        'host/prefix': _address_prefix_query, # deprecate
+        'host/prefix': _address_prefix_query,  # deprecate
         'hostmask': _hostmask_query,
-        'hostnet': _gateway_query, # deprecate
+        'hostnet': _gateway_query,  # deprecate
         'int': _int_query,
         'ip': _ip_query,
         'ip/prefix': _ip_prefix_query,
         'ip_netmask': _ip_netmask_query,
-       # 'ip_wildcard': _ip_wildcard_query, built then could not think of use case
+        # 'ip_wildcard': _ip_wildcard_query, built then could not think of use case
         'ipv4': _ipv4_query,
         'ipv6': _ipv6_query,
         'last_usable': _last_usable_query,
@@ -457,7 +487,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'public': _public_query,
         'range_usable': _range_usable_query,
         'revdns': _revdns_query,
-        'router': _gateway_query, # deprecate
+        'router': _gateway_query,  # deprecate
         'size': _size_query,
         'size_usable': _size_usable_query,
         'subnet': _subnet_query,
@@ -747,6 +777,7 @@ def nthhost(value, query=''):
 
     return False
 
+
 # Returns the next nth usable ip within a network described by value.
 def next_nth_usable(value, offset):
     ''' Get the nth host within a given network '''
@@ -806,6 +837,7 @@ def previous_nth_usable(value, offset):
         if nth_ip >= first_usable and nth_ip <= last_usable:
             return str(netaddr.IPAddress(int(v.ip) - offset))
 
+
 # Returns the next nth usable ip within a network described by value.
 def ip_in_subnet(value, ip):
     ''' Get the nth host within a given network '''
@@ -827,8 +859,6 @@ def ip_in_subnet(value, ip):
     except:
         return False
 
-    #if type(offset) != int:
-    #    raise errors.AnsibleFilterError('Must pass in an interger')
     if v.size == 2:
         first_usable = int(netaddr.IPAddress(int(v.network)))
         last_usable = int(netaddr.IPAddress(int(v.network) + 1))
@@ -852,6 +882,7 @@ def ip_in_subnet(value, ip):
             return True
         else:
             return False
+
 
 # Returns the SLAAC address within a network for a given HW/MAC address.
 # Usage:
