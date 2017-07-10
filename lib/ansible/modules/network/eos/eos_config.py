@@ -197,6 +197,15 @@ options:
     default: session
     choices: ['startup', 'running', 'intended', 'session']
     version_added: "2.4"
+  diff_ignore_lines:
+    description:
+      - Use this argument to specify one or more lines that should be
+        ignored during the diff.  This is used for lines in the configuration
+        that are automatically updated by the system.  This argument takes
+        a list of regular expressions or exact line matches.
+    required: false
+    type: list
+    version_added: "2.4"
   intended_config:
     description:
       - The C(intended_config) provides the master configuration that
@@ -280,12 +289,11 @@ def get_running_config(module, config=None):
     contents = module.params['running_config']
     if not contents:
         if not module.params['defaults'] and config:
-            contents, banners = extract_banners(config.config_text)
+            contents = config
         else:
             flags = ['all']
             contents = get_config(module, flags=flags)
-    contents, banners = extract_banners(contents)
-    return NetworkConfig(indent=2, contents=contents), banners
+    return NetworkConfig(indent=3, contents=contents)
 
 
 def main():
@@ -307,7 +315,9 @@ def main():
         backup=dict(type='bool', default=False),
 
         save_when=dict(choices=['always', 'never', 'changed'], default='never'),
+
         diff_against=dict(choices=['startup', 'session', 'intended', 'running'], default='session'),
+        diff_ignore_lines=dict(type='list'),
 
         running_config=dict(aliases=['config']),
         intended_config=dict(),
@@ -401,11 +411,13 @@ def main():
     running_config = None
     startup_config = None
 
+    diff_ignore_lines = module.params['diff_ignore_lines']
+
     if module.params['save_when'] != 'never':
         output = run_commands(module, ['show running-config', 'show startup-config'])
 
-        running_config = NetworkConfig(indent=3, contents=output[0])
-        startup_config = NetworkConfig(indent=3, contents=output[1])
+        running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
+        startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
 
         if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
             result['changed'] = True
@@ -420,7 +432,12 @@ def main():
     if module._diff:
         if not running_config:
             output = run_commands(module, 'show running-config')
-            running_config = NetworkConfig(indent=3, contents=output[0])
+            contents = output[0]
+        else:
+            contents = running_config.config_text
+
+        # recreate the object in order to process diff_ignore_lines
+        running_config = NetworkConfig(indent=1, contents=config_text, ignore_lines=diff_ignore_lines)
 
         if module.params['diff_against'] == 'running':
             if module.check_mode:
@@ -440,7 +457,7 @@ def main():
             contents = module.params['intended_config']
 
         if contents is not None:
-            base_config = NetworkConfig(indent=3, contents=contents)
+            base_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
 
             if running_config.sha1 != base_config.sha1:
                 result.update({

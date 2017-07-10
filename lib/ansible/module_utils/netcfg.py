@@ -33,11 +33,12 @@ from ansible.module_utils.network_common import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
 
-IGNORE_LINES_RE = frozenset((
+DEFAULT_IGNORE_LINES_RE = set(
     re.compile("Using \d+ out of \d+ bytes"),
     re.compile("Building configuration"),
     re.compile("Current configuration : \d+ bytes")
-))
+)
+
 
 
 class ConfigLine(object):
@@ -151,10 +152,16 @@ def dumps(objects, output='block', comments=False):
 
 class NetworkConfig(object):
 
-    def __init__(self, indent=1, contents=None):
+    def __init__(self, indent=1, contents=None, ignore_lines=None):
         self._indent = indent
         self._items = list()
         self._config_text = None
+
+        if ignore_lines:
+            for item in ignore_lines:
+                if not isinstance(item, re._pattern_type):
+                    item = re.compile(item)
+                IGNORE_LINES_RE.add(item)
 
         if contents:
             self.load(contents)
