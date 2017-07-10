@@ -90,8 +90,7 @@ options:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
               subscription and location. Check your subscription for available choices.
-        default: Standard_D1
-        required: false
+        required: true
     admin_username:
         description:
             - Admin username used to access the host after it is created. Required when creating a VM.
@@ -487,7 +486,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             location=dict(type='str'),
             short_hostname=dict(type='str'),
-            vm_size=dict(type='str', choices=[], default='Standard_D1'),
+            vm_size=dict(type='str', required=True),
             admin_username=dict(type='str'),
             admin_password=dict(type='str', no_log=True),
             ssh_password_enabled=dict(type='bool', default=True),
@@ -510,9 +509,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
         )
-
-        for key in VirtualMachineSizeTypes:
-            self.module_arg_spec['vm_size']['choices'].append(getattr(key, 'value'))
 
         self.resource_group = None
         self.name = None
