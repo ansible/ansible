@@ -1,0 +1,155 @@
+# create and kill an RDS
+
+# Improvements expected in later versions of this test case
+
+# use present instead of create
+# use absent instead of delete
+# use SSD
+
+
+# Start with creation - N.B. if the RDS already exists from a previous run this
+# may not change anything so we don't insist on that
+
+  - name: create RDS
+    tags: test_amazon_rds
+    local_action:
+      module: rds
+      region: "{{ ec2_region }}"
+      command: create
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 10
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+      publicly_accessible: no
+      wait: yes
+      wait_timeout: 1200 # 600 doesn't cut it!!
+    environment:
+      EC2_REGION: '{{ec2_region}}'
+      EC2_ACCESS_KEY: '{{ec2_access_key}}'
+      EC2_SECRET_KEY: '{{ec2_secret_key}}'
+    register: result
+
+  - name: assert the test rds instance was created correctly
+    tags: test_amazon_rds
+    assert:
+      that:
+#        - 'result.changed'
+        - '"failed" not in result'
+
+
+# modify RDS
+
+  - name: modify RDS
+    tags: test_amazon_rds
+    local_action:
+      module: rds
+      region: "{{ ec2_region }}"
+      command: modify
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 18
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+#      publicly_accessible: no
+      wait: yes
+      wait_timeout: 600
+    environment:
+      EC2_REGION: '{{ec2_region}}'
+      EC2_ACCESS_KEY: '{{ec2_access_key}}'
+      EC2_SECRET_KEY: '{{ec2_secret_key}}'
+    register: result
+
+  - name: assert the test rds instance was modified correctly
+    tags: test_amazon_rds
+    assert:
+      that:
+        - 'result.changed'
+        - '"failed" not in result'
+
+
+# idempotency test 1 - try modify RDS but actually do nothing
+
+  - name: don't modify RDS if already there
+    tags: test_amazon_rds
+    local_action:
+      module: rds
+      region: "{{ ec2_region }}"
+      command: modify
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 18
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+#      publicly_accessible: no
+      wait: yes
+      wait_timeout: 600
+    environment:
+      EC2_REGION: '{{ec2_region}}'
+      EC2_ACCESS_KEY: '{{ec2_access_key}}'
+      EC2_SECRET_KEY: '{{ec2_secret_key}}'
+    register: result
+    when: 'xfail is defined and xfail == True'
+
+  - name: assert the test rds instance was modified correctly
+    tags: test_amazon_rds
+    assert:
+      that:
+        - 'result.changed == False'
+        - '"failed" not in result'
+    when: 'xfail is defined and xfail == True'
+
+# idempotency test 1 - try modify RDS but actually do nothing
+
+  - name: don't create RDS if already there
+    tags: test_amazon_rds
+    local_action:
+      module: rds
+      region: "{{ ec2_region }}"
+      command: create
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 18
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+#      publicly_accessible: no
+      wait: yes
+      wait_timeout: 600
+    environment:
+      EC2_REGION: '{{ec2_region}}'
+      EC2_ACCESS_KEY: '{{ec2_access_key}}'
+      EC2_SECRET_KEY: '{{ec2_secret_key}}'
+    register: result
+
+  - name: assert the test rds instance was modified correctly
+    tags: test_amazon_rds
+    assert:
+      that:
+        - 'result.changed == False'
+        - '"failed" not in result'
+
+
+  - name: delete RDS
+    tags: test_amazon_rds
+    local_action:
+      module: rds
+      region: "{{ ec2_region }}"
+      command: delete
+      instance_name: "{{ resource_prefix }}-rds"
+    environment:
+      EC2_REGION: '{{ec2_region}}'
+      EC2_ACCESS_KEY: '{{ec2_access_key}}'
+      EC2_SECRET_KEY: '{{ec2_secret_key}}'
+    register: result
+
+
+  - name: assert the test rds was deleted correctly
+    tags: test_amazon_rds
+    assert:
+      that:
+        - 'result.changed == True'
+        - '"failed" not in result'
