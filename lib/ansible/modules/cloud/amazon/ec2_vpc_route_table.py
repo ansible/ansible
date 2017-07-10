@@ -269,11 +269,14 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
 
         to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
         if to_delete and not add_only:
+            changed = True
             if not check_mode:
                 vpc_conn.delete_tags(resource_id, to_delete)
 
         to_add = dict((k, tags[k]) for k in tags if k not in cur_tags)
-        if to_add and not check_mode:
+        if to_add:
+            changed = True
+            if not check_mode:
                 vpc_conn.create_tags(resource_id, to_add)
 
         latest_tags = get_resource_tags(vpc_conn, resource_id)
@@ -351,6 +354,8 @@ def index_of_matching_route(route_spec, routes_to_match):
 
 def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
                   check_mode, purge_routes):
+    if check_mode and not route_table:
+            return {'changed': True}
     routes_to_match = list(route_table.routes)
     route_specs_to_create = []
     for route_spec in route_specs:
@@ -379,12 +384,15 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
     changed = bool(routes_to_delete or route_specs_to_create)
     if changed and not check_mode:
         for route in routes_to_delete:
-            vpc_conn.delete_route(route_table.id,
-                                  route.destination_cidr_block)
-
+            if not check_mode:
+                vpc_conn.delete_route(route_table.id,
+                                      route.destination_cidr_block)
+            changed = True
         for route_spec in route_specs_to_create:
-            vpc_conn.create_route(route_table.id,
-                                  **route_spec)
+            if not check_mode:
+                vpc_conn.create_route(route_table.id,
+                                      **route_spec)
+            changed = True
 
     return {'changed': bool(changed)}
 
@@ -567,7 +575,8 @@ def ensure_route_table_present(connection, module):
     # If no route table returned then create new route table
     if route_table is None:
         try:
-            route_table = connection.create_route_table(vpc_id, module.check_mode)
+            if not module.check_mode:
+                route_table = connection.create_route_table(vpc_id)
             changed = True
         except EC2ResponseError as e:
             module.fail_json(msg="Failed to create route table: {0}".format(e.message),
@@ -590,10 +599,13 @@ def ensure_route_table_present(connection, module):
         changed = changed or result['changed']
 
     if not tags_valid and tags is not None:
-        result = ensure_tags(connection, route_table.id, tags,
-                             add_only=True, check_mode=module.check_mode)
-        route_table.tags = result['tags']
-        changed = changed or result['changed']
+        if module.check_mode and not route_table:
+            changed = changed or True
+        else:
+            result = ensure_tags(connection, route_table.id, tags,
+                                 add_only=True, check_mode=module.check_mode)
+            route_table.tags = result['tags']
+            changed = changed or result['changed']
 
     if subnets:
         associated_subnets = []
@@ -618,6 +630,18 @@ def ensure_route_table_present(connection, module):
                 .format(route_table, e),
                 error_traceback=traceback.format_exc()
             )
+
+    if module.check_mode:
+        check_mode_results = {}
+        if not route_table:
+            check_mode_results['id'] = 'rtb-XXXXXXXX'
+            check_mode_results['tags'] = tags or {}
+        else:
+            check_mode_results['id'] = route_table.id
+            check_mode_results['tags'] = route_table.tags
+        check_mode_results['routes'] = routes or []
+        check_mode_results['vpc_id'] = vpc_id
+        module.exit_json(changed=changed, route_table=check_mode_results)
 
     module.exit_json(changed=changed, route_table=get_route_table_info(route_table))
 
