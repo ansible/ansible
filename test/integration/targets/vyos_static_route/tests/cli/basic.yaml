@@ -10,7 +10,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set protocols static route prefix 172.24.0.0/24 next-hop 192.168.42.64" in result.commands'
+      - '"set protocols static route 172.24.0.0/24 next-hop 192.168.42.64" in result.commands'
 
 - name: create static route again (idempotent)
   vyos_static_route:
