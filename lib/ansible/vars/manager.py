@@ -316,12 +316,15 @@ class VariableManager:
 
             # finally, the facts caches for this host, if it exists
             try:
-                host_facts = wrap_var(self._fact_cache.get(host.name, dict()))
-                if not C.NAMESPACE_FACTS:
+                host_facts = wrap_var(self._fact_cache.get(host.name, {}))
+                if not C.ONLY_NAMESPACE_FACTS:
                     # allow facts to polute main namespace
                     all_vars = combine_vars(all_vars, host_facts)
-                # always return namespaced facts
+                # always return namespaced facts (which dont require ansible_ anymore)
+                for k in tuple(host_facts):
+                    host_facts[k.replace('ansible_', '', 1)] = host_facts.pop(k)
                 all_vars = combine_vars(all_vars, {'ansible_facts': host_facts})
+
             except KeyError:
                 pass
 
