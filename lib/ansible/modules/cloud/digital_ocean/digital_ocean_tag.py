@@ -115,6 +115,7 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
 
 
 class Response(object):
@@ -129,10 +130,10 @@ class Response(object):
     def json(self):
         if not self.body:
             if "body" in self.info:
-                return json.loads(self.info["body"])
+                return json.loads(to_text(self.info["body"], errors='surrogate_or_strict'))
             return None
         try:
-            return json.loads(self.body)
+            return json.loads(to_text(self.body, errors='surrogate_or_strict'))
         except ValueError:
             return None
 
