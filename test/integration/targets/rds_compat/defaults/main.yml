@@ -1,0 +1,3 @@
+---
+# defaults file for test_ec2_key
+rds_instance_name: '{{resource_prefix}}-rds'
