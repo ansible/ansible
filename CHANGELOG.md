@@ -7,52 +7,52 @@ Ansible Changes By Release
 
 * Support for Python-2.4 and Python-2.5 on the managed system's side was dropped. If you need to manage a system that ships with Python-2.4 or Python-2.5, you'll need to install Python-2.6 or better on the managed system or run Ansible-2.3 until you can upgrade the system.
 * New import/include keywords to replace the old bare `include` directives. The use of `static: {yes|no}` on such includes is now deprecated.
-    - Using import_* (import_playbook, import_tasks, import_role) directives are static.
-    - Using include_* (include_tasks, include_role) directives are dynamic.
-* Added fact namespacing, from now on facts will be available under 'ansible_facts' namespace (i.e. `ansible_facts.ansible_os_distribution`), they will still also be added into the main namespace directly but now also having a configuration toggle to disable this. Eventually this will be on by default. This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
-* new 'order' play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
-* Users can now set group merge priority for groups of the same depth (parent child relationship), using the new `ansible_group_priority` variable, when values are the same or don't exist it will fallback to the previous 'sorting by name'.
+    - Using `import_*` (`import_playbook`, `import_tasks`, `import_role`) directives are static.
+    - Using `include_*` (`include_tasks`, `include_role`) directives are dynamic.
+* Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.ansible_os_distribution`), they will still also be added into the main namespace directly but now also having a configuration toggle to disable this. Eventually this will be on by default. This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
+* new `order` play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
+* Users can now set group merge priority for groups of the same depth (parent child relationship), using the new `ansible_group_priority` variable, when values are the same or don't exist it will fallback to the previous sorting by name'.
 * Inventory has been revamped:
-	- Inventory  classes have been split to allow for better management and deduplication
-	- Logic that each inventory source duplicated is now common and pushed up to reconciliation
-	- VariableManager has been updated for better interaction with inventory
-	- Updated CLI with helper method to initialize base objects for plays
-	- New Inventory plugins for creating inventory
-    - Old inventory formats are still supported via plugins
-	- Inline host_list is also an inventory plugin, an example alternative 'advanced_host_list' is also provided (it supports ranges)
-	- New configuration option to list enabled plugins and precedence order: 'whitelist_inventory' in ansible.cfg
-    - vars_plugins have been reworked, they are now run from Vars manager and API has changed (need docs)
-	- Loading group_vars/host_vars is now a vars plugin and can be overridden
-	- It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)
-	- Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
-	- Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
-	- Improved warnings and error messages across the board
+  - Inventory  classes have been split to allow for better management and deduplication
+  - Logic that each inventory source duplicated is now common and pushed up to reconciliation
+  - VariableManager has been updated for better interaction with inventory
+  - Updated CLI with helper method to initialize base objects for plays
+  - New Inventory plugins for creating inventory
+  - Old inventory formats are still supported via plugins
+  - Inline host_list is also an inventory plugin, an example alternative `advanced_host_list` is also provided (it supports ranges)
+  - New configuration option to list enabled plugins and precedence order: `whitelist_inventory` in ansible.cfg
+  - vars_plugins have been reworked, they are now run from Vars manager and API has changed (need docs)
+  - Loading group_vars/host_vars is now a vars plugin and can be overridden
+  - It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)
+  - Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
+  - Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
+  - Improved warnings and error messages across the board
 * Configuration has been changed from a hardcoded into the constants module to dynamically loaded from yaml definitions
-	- Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
-	- TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
+  - Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
+  - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 
 ### Deprecations
-* The behaviour when specifying --tags (or --skip-tags) multiple times on the command line
+* The behaviour when specifying `--tags` (or `--skip-tags`) multiple times on the command line
   has changed so that the tags are merged together by default.  See the
   documentation for how to temporarily use the old behaviour if needed:
   https://docs.ansible.com/ansible/intro_configuration.html#merge-multiple-cli-tags
-* The fetch module's validate_md5 parameter has been deprecated and will be
+* The `fetch` module's `validate_md5` parameter has been deprecated and will be
   removed in 2.8.  If you wish to disable post-validation of the downloaded
   file, use validate_checksum instead.
-* Those using ansible as a library should note that the ansible.vars.unsafe_proxy
+* Those using ansible as a library should note that the `ansible.vars.unsafe_proxy`
   module is deprecated and slated to go away in 2.8.  The functionality has been
-  moved to ansible.utils.unsafe_proxy to avoid a circular import.
+  moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
 
 ### Minor Changes
-* removed previously deprecated config option 'hostfile' and env var 'ANSIBLE_HOSTS'
-* removed unused and deprecated config option 'pattern'
+* removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
+* removed unused and deprecated config option `pattern`
 * Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
 * Fixed a cornercase with ini inventory vars.  Previously, if an inventory var
   was a quoted string with hash marks ("#") in it then the parsed string
   included the quotes.  Now the string will not be quoted.  Previously, if the
   quoting ended before the string finished and then the hash mark appeared, the
   hash mark was included as part of the string.  Now it is treated as
-  a trailing comment::
+  a trailing comment:
 
       # Before:
       var1="string#comment"   ===>  var1: "\"string#comment\""
@@ -64,12 +64,12 @@ Ansible Changes By Release
   The new behaviour mirrors how the variables would appear if there was no hash
   mark in the string.
 * As of 2.4.0, the fetch module fails if there are errors reading the remote file.
-  Use ignore_errors or failed_when in playbooks if you wish to ignore errors.
+  Use `ignore_errors` or `failed_when` in playbooks if you wish to ignore errors.
 * Experimentally added pmrun become method.
 * Enable the docker connection plugin to use su as a become method
 * Add an encoding parameter for the replace module so that it can operate on non-utf-8 files
 * By default, Ansible now uses the cryptography module to implement vault instead of the older pycrypto module.
-* Changed task state resulting from both 'rc' and 'failed' fields returned, 'rc' no longer overrides 'failed'. Test plugins have also been updated accordingly.
+* Changed task state resulting from both `rc` and `failed` fields returned, 'rc' no longer overrides 'failed'. Test plugins have also been updated accordingly.
 
 #### New Callbacks:
 - profile_roles
