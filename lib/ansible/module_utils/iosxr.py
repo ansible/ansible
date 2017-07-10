@@ -102,9 +102,12 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
-def load_config(module, commands, warnings, commit=False, replace=False, comment=None):
+def load_config(module, commands, warnings, commit=False, replace=False, comment=None, admin=False):
+    cmd = 'configure terminal'
+    if admin:
+        cmd = 'admin ' + cmd
 
-    rc, out, err = exec_command(module, 'configure terminal')
+    rc, out, err = exec_command(module, cmd)
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', err=to_text(err, errors='surrogate_or_strict'))
 
@@ -137,6 +140,7 @@ def load_config(module, commands, warnings, commit=False, replace=False, comment
     else:
         cmd = 'abort'
         diff = None
+
     rc, out, err = exec_command(module, cmd)
     if rc != 0:
         exec_command(module, 'abort')

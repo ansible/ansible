@@ -146,6 +146,14 @@ options:
     required: false
     default: 'configured by iosxr_config'
     version_added: "2.2"
+  admin:
+    description:
+      - Enters into administration configuration mode for making config
+        changes to the device.
+    required: false
+    default: false
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
 """
 
 EXAMPLES = """
@@ -218,6 +226,7 @@ def run(module, result):
     replace_config = replace == 'config'
     path = module.params['parents']
     comment = module.params['comment']
+    admin = module.params['admin']
     check_mode = module.check_mode
 
     candidate = get_candidate(module)
@@ -243,7 +252,7 @@ def run(module, result):
             result['commands'] = commands
 
         diff = load_config(module, commands, result['warnings'],
-                           not check_mode, replace_config, comment)
+                           not check_mode, replace_config, comment, admin)
         if diff:
             result['diff'] = dict(prepared=diff)
             result['changed'] = True
@@ -270,6 +279,7 @@ def main():
         config=dict(),
         backup=dict(type='bool', default=False),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
+        admin=dict(type='bool', default=False)
     )
 
     argument_spec.update(iosxr_argument_spec)
