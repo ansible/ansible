@@ -23,6 +23,12 @@
 #
 # The mount_point param defaults to ldap, so is only required if you have a custom mount point.
 #
+# To use a ssl Vault add verify param:
+#
+# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 verify=False')}}
+#
+# The verify param posible values are: True, False or ca certificate file path.
+#
 # You can skip setting the url if you set the VAULT_ADDR environment variable
 # or if you want it to default to localhost:8200
 #
@@ -38,6 +44,7 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.six import string_types
 
 HAS_HVAC = False
 try:
@@ -45,6 +52,7 @@ try:
     HAS_HVAC = True
 except ImportError:
     HAS_HVAC = False
+
 
 ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
 
@@ -101,7 +109,9 @@ class HashiVault:
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
-            self.client = hvac.Client(url=self.url, token=self.token)
+            self.verify = self.boolean_or_cacert(kwargs.get('verify'))
+
+            self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
 
         if not self.client.is_authenticated():
             raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup")
@@ -135,6 +145,18 @@ class HashiVault:
 
         self.client.auth_ldap(username, password, mount_point)
 
+    def boolean_or_cacert(self, arg):
+        ''' return a bool for the arg '''
+        if arg is None or type(arg) == bool:
+            return arg
+        if isinstance(arg, string_types):
+            argtxt = arg.lower()
+        if argtxt in ['yes', 'on', '1', 'true', 1]:
+            return True
+        elif argtxt in ['no', 'off', '0', 'false', 0]:
+            return False
+        else:
+            return arg
 
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
