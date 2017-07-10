@@ -319,7 +319,7 @@ def main():
             role_arn = role
         else:
             # get account ID and assemble ARN
-            account_id = module.get_account_id()
+            account_id = get_account_id(module,region=region,endpoint=ec2_url, **aws_connect_kwargs)
             role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
 
     # Get function configuration if present, False otherwise
