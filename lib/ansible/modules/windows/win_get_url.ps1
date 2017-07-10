@@ -51,7 +51,23 @@ if (-not $validate_certs) {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 }
 
+
 Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $proxy_username, $proxy_password) {
+    # use last part of url for dest file name if a directory is supplied for $dest
+    If ( Test-Path -PathType Container $dest ) {
+       $url_basename = Split-Path -leaf $url
+       If ( $url_basename.Length -gt 0 ) {
+          $dest = Join-Path -Path $dest -ChildPath $url_basename
+          $result.win_get_url.actual_dest = $dest
+       }
+    }
+    # check $dest parent folder exists before attempting download, which avoids unhelpful generic error message.
+    $dest_parent = Split-Path -Path $dest
+    $result.win_get_url.dest_parent = $dest_parent
+    If ( -not (Test-Path -Path $dest_parent -PathType Container)) {
+        $result.changed = $false
+        Fail-Json $result "The path '$dest_parent' does not exist for destination '$dest', or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs."
+    }
     $webClient = New-Object System.Net.WebClient
     if($proxy_url) {
         $proxy_server = New-Object System.Net.WebProxy($proxy_url, $true)
@@ -75,11 +91,11 @@ Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $
     Catch {
         Fail-Json $result "Error downloading $url to $dest $($_.Exception.Message)"
     }
-
 }
 
 
 If ($force -or -not (Test-Path -Path $dest)) {
+    
     Download-File -result $result -url $url -dest $dest -username $username -password $password -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
 }
 Else {
@@ -119,4 +135,4 @@ Else {
 
 }
 
-Exit-Json $result;
+Exit-Json $result
