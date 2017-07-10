@@ -24,7 +24,8 @@ module: rds_snapshot_facts
 version_added: "2.4"
 short_description: obtain facts about one or more RDS snapshots
 description:
-  - obtain facts about one or more RDS snapshots
+  - obtain facts about one or more RDS snapshots.  This does not currently include
+  - Aurora snapshots but may in future change to include them.
 options:
   name:
     description:
