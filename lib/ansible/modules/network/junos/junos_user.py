@@ -140,7 +140,7 @@ from functools import partial
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import commit_configuration, discard_changes
-from ansible.module_utils.junos import load_config,locked_config
+from ansible.module_utils.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
 try:
@@ -280,7 +280,7 @@ def main():
     want = map_params_to_obj(module)
     ele = map_obj_to_ele(want)
 
-    kwargs ={}
+    kwargs = {}
     if module.params['purge']:
         kwargs['action'] = 'replace'
 

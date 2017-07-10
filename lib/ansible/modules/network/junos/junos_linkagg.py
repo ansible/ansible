@@ -184,6 +184,7 @@ except ImportError:
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_linkagg'
 
+
 def validate_device_count(value, module):
     if value and not 1 <= value <= 128:
         module.fail_json(msg='device_count must be between 1 and 128')
@@ -268,6 +269,7 @@ def configure_member_params(module, warnings, diff=None):
             diff = load_config(module, tostring(ele), warnings)
 
     return diff
+
 
 def main():
     """ main entry point for module execution
