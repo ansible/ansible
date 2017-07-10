@@ -419,7 +419,7 @@ def main():
 
     if module.params['save']:
         module.warn('The save argument is deprecated, please use save_when: always instead')
-        modue.params['save_when'] = 'always'
+        module.params['save_when'] = 'always'
 
     result = {'changed': False}
 

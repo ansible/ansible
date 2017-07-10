@@ -33,7 +33,7 @@ from ansible.module_utils.network_common import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
 
-DEFAULT_IGNORE_LINES_RE = seta[(
+DEFAULT_IGNORE_LINES_RE = set([
     re.compile("Using \d+ out of \d+ bytes"),
     re.compile("Building configuration"),
     re.compile("Current configuration : \d+ bytes")
@@ -104,7 +104,7 @@ def ignore_line(text, tokens=None):
     for item in (tokens or DEFAULT_COMMENT_TOKENS):
         if text.startswith(item):
             return True
-    for regex in IGNORE_LINES_RE:
+    for regex in DEFAULT_IGNORE_LINES_RE:
         if regex.match(text):
             return True
 
@@ -160,7 +160,7 @@ class NetworkConfig(object):
             for item in ignore_lines:
                 if not isinstance(item, re._pattern_type):
                     item = re.compile(item)
-                IGNORE_LINES_RE.add(item)
+                DEFAULT_IGNORE_LINES_RE.add(item)
 
         if contents:
             self.load(contents)
