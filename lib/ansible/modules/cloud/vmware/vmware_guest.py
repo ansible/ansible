@@ -461,7 +461,7 @@ class PyVmomiCache(object):
         if confine_to_datacenter:
             if hasattr(objects, 'items'):
                 # resource pools come back as a dictionary
-                for k,v in objects.items():
+                for k, v in objects.items():
                     parent_dc = self.get_parent_datacenter(k)
                     if parent_dc.name != self.dc_name:
                         objects.pop(k, None)
@@ -535,7 +535,7 @@ class PyVmomiCache(object):
                 data[x] = xo
             elif issubclass(xt, dict):
                 data[x] = {}
-                for k,v in xo.items():
+                for k, v in xo.items():
                     data[x][k] = self.serialize_spec(v)
             elif isinstance(xo, vim.vm.ConfigSpec):
                 data[x] = self.serialize_spec(xo)
@@ -553,10 +553,11 @@ class PyVmomiCache(object):
             elif hasattr(xo, 'name'):
                 data[x] = str(xo) + ':' + xo.name
             elif isinstance(xo, vim.vm.ProfileSpec):
-                import q; q(dir(xo))
+                pass
             else:
                 data[x] = str(xt)
         return data
+
 
 class PyVmomiHelper(object):
     def __init__(self, module):
@@ -1340,7 +1341,7 @@ class PyVmomiHelper(object):
                 relospec.datastore = datastore
 
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
-                # > pool: For a clone operation from a template to a virtual machine, this argument is required. 
+                # > pool: For a clone operation from a template to a virtual machine, this argument is required.
                 relospec.pool = resource_pool
 
                 if self.params['snapshot_src'] is not None and self.params['linked_clone']:
@@ -1384,8 +1385,16 @@ class PyVmomiHelper(object):
             # provide these to the user for debugging
             clonespec_json = self.cache.serialize_spec(clonespec)
             configspec_json = self.cache.serialize_spec(self.configspec)
+            kwargs = {
+                'changed': self.change_detected,
+                'failed': True,
+                'msg': task.info.error.msg,
+                'clonespec': clonespec_json,
+                'configspec': configspec_json,
+                'clone_method': clone_method
+            }
 
-            return {'changed': self.change_detected, 'failed': True, 'msg': task.info.error.msg, 'clonespec': clonespec_json, 'configspec': configspec_json, 'clone_method': clone_method}
+            return kwargs
         else:
             # set annotation
             vm = task.info.result
