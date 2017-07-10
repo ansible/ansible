@@ -1,0 +1,12 @@
+---
+- hosts: A
+  gather_facts: false
+  tasks:
+    - assert:
+        that: 'testvar == "testvalue"'
+      changed_when: true
+      notify: 'test handler: testvalue'
+  handlers:
+    - name: 'test handler: {{ testvar }}'
+      debug:
+        msg: 'handler "test handler: testvalue" called'
