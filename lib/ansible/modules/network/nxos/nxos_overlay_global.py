@@ -175,12 +175,13 @@ def main():
     candidate = CustomNetworkConfig(indent=3)
     get_commands(module, existing, proposed, candidate)
 
-    if not module.check_mode:
-        if candidate:
-            candidate = candidate.items_text()
-            result['commands'] = candidate
-            result['changed'] = True
+    if candidate:
+        candidate = candidate.items_text()
+        result['commands'] = candidate
+
+        if not module.check_mode:
             load_config(module, candidate)
+            result['changed'] = True
 
     module.exit_json(**result)
 
