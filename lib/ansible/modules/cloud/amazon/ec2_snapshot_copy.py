@@ -130,7 +130,6 @@ def copy_snapshot(module, ec2):
     ec2: ec2 connection object
     """
 
-
     params = {
         'SourceRegion': module.params.get('source_region'),
         'SourceSnapshotId': module.params.get('source_snapshot_id'),
