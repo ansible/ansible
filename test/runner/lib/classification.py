@@ -12,6 +12,7 @@ from lib.target import (
     walk_compile_targets,
     walk_sanity_targets,
     load_integration_prefixes,
+    analyze_integration_target_dependencies,
 )
 
 from lib.util import (
@@ -125,6 +126,7 @@ class PathMapper(object):
                                                   if 'network/' in t.aliases for m in t.modules)
 
         self.prefixes = load_integration_prefixes()
+        self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
 
         self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
 
@@ -138,6 +140,9 @@ class PathMapper(object):
         if path.startswith('lib/ansible/module_utils/'):
             if ext == '.py':
                 return self.get_python_module_utils_usage(path)
+
+        if path.startswith('test/integration/targets/'):
+            return self.get_integration_target_usage(path)
 
         return []
 
@@ -162,6 +167,16 @@ class PathMapper(object):
             name = name[:-9]
 
         return sorted(self.python_module_utils_imports[name])
+
+    def get_integration_target_usage(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        target_name = path.split('/')[3]
+        dependents = [os.path.join('test/integration/targets/%s/' % target) for target in sorted(self.integration_dependencies.get(target_name, set()))]
+
+        return dependents
 
     def classify(self, path):
         """
@@ -339,6 +354,9 @@ class PathMapper(object):
             target = self.integration_targets_by_name[path.split('/')[3]]
 
             if 'hidden/' in target.aliases:
+                if target.type == 'role':
+                    return minimal  # already expanded using get_dependent_paths
+
                 return {
                     'integration': 'all',
                     'windows-integration': 'all',
