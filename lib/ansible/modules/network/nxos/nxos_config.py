@@ -203,7 +203,6 @@ options:
         that are automatically updated by the system.  This argument takes
         a list of regular expressions or exact line matches.
     required: false
-    type: list
     version_added: "2.4"
   intended_config:
     description:

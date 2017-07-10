@@ -40,7 +40,6 @@ DEFAULT_IGNORE_LINES_RE = set(
 )
 
 
-
 class ConfigLine(object):
 
     def __init__(self, raw):
