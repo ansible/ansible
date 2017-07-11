@@ -50,6 +50,7 @@
 - name: test update iso in check mdoe
   cs_iso:
     name: "{{ cs_resource_prefix }}-iso"
+    display_text: "{{ cs_resource_prefix }}-iso display_text"
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: CentOS 7
   register: iso
@@ -64,6 +65,7 @@
 - name: test update iso
   cs_iso:
     name: "{{ cs_resource_prefix }}-iso"
+    display_text: "{{ cs_resource_prefix }}-iso display_text"
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: CentOS 7
   register: iso
@@ -72,7 +74,7 @@
     that:
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
-    - iso.display_text == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
 
 - name: test update iso idempotence
   cs_iso:
@@ -85,7 +87,7 @@
     that:
     - not iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
-    - iso.display_text == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
 
 - name: test remove iso in check mode
   cs_iso:
@@ -98,7 +100,7 @@
     that:
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
-    - iso.display_text == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
 
 - name: test remove iso
   cs_iso:
@@ -110,7 +112,7 @@
     that:
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
-    - iso.display_text == "{{ cs_resource_prefix }}-iso"
+    - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
 
 - name: test remove iso idempotence
   cs_iso:
