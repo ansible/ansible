@@ -278,7 +278,10 @@ def boto_fix_security_token_in_profile(conn, profile_name):
 
 
 def connect_to_aws(aws_module, region, **params):
-    conn = aws_module.connect_to_region(region, **params)
+    try:
+        conn = aws_module.connect_to_region(region, **params)
+    except(boto.provider.ProfileNotFoundError):
+        raise AnsibleAWSError("Profile given for AWS was not found.  Please fix and retry.")
     if not conn:
         if region not in [aws_module_region.name for aws_module_region in aws_module.regions()]:
             raise AnsibleAWSError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade "
@@ -300,13 +303,13 @@ def ec2_connect(module):
     if region:
         try:
             ec2 = connect_to_aws(boto.ec2, region, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError, boto.provider.ProfileNotFoundError) as e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     elif ec2_url:
         try:
             ec2 = boto.connect_ec2_endpoint(ec2_url, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError, boto.provider.ProfileNotFoundError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="Either region or ec2_url must be specified")
