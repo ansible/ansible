@@ -29,6 +29,7 @@ import re
 import hashlib
 
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.network_common import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
@@ -176,7 +177,7 @@ class NetworkConfig(object):
     @property
     def sha1(self):
         sha1 = hashlib.sha1()
-        sha1.update(str(self))
+        sha1.update(to_bytes(str(self), errros='surrogate_or_strict'))
         return sha1.digest()
 
     def __getitem__(self, key):
