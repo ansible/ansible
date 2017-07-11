@@ -124,9 +124,9 @@ EXAMPLES = """
 """
 
 RETURN = """
-diff:
+diff.prepared:
   description: Configuration difference before and after applying change.
-  returned: when configuration is changed.
+  returned: when configuration is changed and diff option is enabled.
   type: string
   sample: >
           [edit system login]
@@ -137,9 +137,10 @@ diff:
 """
 from functools import partial
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import load_config
+from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import commit_configuration, discard_changes
+from ansible.module_utils.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
 try:
@@ -279,17 +280,23 @@ def main():
     want = map_params_to_obj(module)
     ele = map_obj_to_ele(want)
 
-    kwargs = {'commit': not module.check_mode}
+    kwargs = {}
     if module.params['purge']:
         kwargs['action'] = 'replace'
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+    with locked_config(module):
+        diff = load_config(module, tostring(ele), warnings, **kwargs)
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': diff
-        })
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
+
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 
