@@ -95,12 +95,18 @@
   win_command: powershell.exe "Start-Sleep -Seconds 5; Remove-Item -Path '{{test_win_wait_for_path}}\test.txt' -Force"
   async: 30
   poll: 0
+  register: async_1
 
 - name: wait for file to not exist - existing file
   win_wait_for:
     path: '{{test_win_wait_for_path}}\test.txt'
     state: absent
   register: wait_remove_existing_file
+  failed_when: False
+
+- name: async result 1
+  async_status:
+    jid: '{{async_1.ansible_job_id}}'
 
 - name: assert wait for file to not exist - existing file
   assert:
@@ -111,12 +117,18 @@
   win_command: powershell.exe "Start-Sleep -Seconds 5; New-Item -Path '{{test_win_wait_for_path}}\test.txt' -Type File"
   async: 30
   poll: 0
+  register: async_2
 
 - name: wait for file to exist - non existing file
   win_wait_for:
     path: '{{test_win_wait_for_path}}\test.txt'
     state: present
   register: wait_new_missing_file
+  failed_when: False
+
+- name: async result 2
+  async_status:
+    jid: '{{async_2.ansible_job_id}}'
 
 - name: assert wait for file to exist - non existing file
   assert:
@@ -153,6 +165,7 @@
   win_command: powershell.exe "Start-Sleep -Seconds 5; Set-Content -Path '{{test_win_wait_for_path}}\test.txt' -Value 'hello world`r`nfile contents`r`nEnd line'"
   async: 30
   poll: 0
+  register: async_3
 
 - name: wait for file contents to match regex - empty file
   win_wait_for:
@@ -160,6 +173,11 @@
     state: present
     search_regex: file c.*
   register: wait_regex_match_new
+  failed_when: False
+
+- name: async result 3
+  async_status:
+    jid: '{{async_3.ansible_job_id}}'
 
 - name: assert wait for file contents to match regex - empty file
   assert:
@@ -182,6 +200,7 @@
   win_command: powershell.exe "Start-Sleep -Seconds 5; Set-Content -Path '{{test_win_wait_for_path}}\test.txt' -Value 'hello world`r`nother contents for file`r`nEnd line'"
   async: 30
   poll: 0
+  register: async_4
 
 - name: wait for file content to not match regex
   win_wait_for:
@@ -189,6 +208,11 @@
     state: absent
     search_regex: file c.*
   register: wait_regex_match_absent_remove
+  failed_when: False
+
+- name: async result 4
+  async_status:
+    jid: '{{async_4.ansible_job_id}}'
 
 - name: assert wait for file content to not match regex
   assert:
@@ -244,12 +268,18 @@
   win_command: powershell.exe -ExecutionPolicy Unrestricted "Start-Sleep -Seconds 5; {{test_win_wait_for_path}}\http-server.ps1"
   async: 30
   poll: 0
+  register: async_5
 
 - name: wait for port to come online
   win_wait_for:
     port: '{{test_win_wait_for_port}}'
     state: started
   register: wait_for_port_to_start
+  failed_when: False
+
+- name: async result 5
+  async_status:
+    jid: '{{async_5.ansible_job_id}}'
 
 - name: assert wait for port to come online
   assert:
@@ -260,12 +290,18 @@
   win_command: powershell.exe -ExecutionPolicy Unrestricted -File {{test_win_wait_for_path}}\http-server.ps1
   async: 30
   poll: 0
+  register: async_6
 
 - name: wait for port that is already online
   win_wait_for:
     port: '{{test_win_wait_for_port}}'
     state: started
   register: wait_for_port_already_started
+  failed_when: False
+
+- name: async result 6
+  async_status:
+    jid: '{{async_6.ansible_job_id}}'
 
 - name: assert wait for port that is already online
   assert:
@@ -287,12 +323,18 @@
   win_command: powershell.exe -ExecutionPolicy Unrestricted -File {{test_win_wait_for_path}}\http-server.ps1
   async: 30
   poll: 0
+  register: async_7
 
 - name: wait for port to go offline
   win_wait_for:
     port: '{{test_win_wait_for_port}}'
     state: stopped
   register: wait_for_port_to_be_stopped
+  failed_when: False
+
+- name: async result 7
+  async_status:
+    jid: '{{async_7.ansible_job_id}}'
 
 - name: assert wait for port to go offline
   assert:
