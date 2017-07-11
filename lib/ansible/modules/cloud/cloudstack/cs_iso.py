@@ -203,6 +203,36 @@ is_ready:
   returned: success
   type: boolean
   sample: true
+is_public:
+  description: True if the ISO is public.
+  returned: success
+  type: boolean
+  sample: true
+  version_added: "2.4"
+bootable:
+  description: True if the ISO is bootable.
+  returned: success
+  type: boolean
+  sample: true
+  version_added: "2.4"
+is_featured:
+  description: True if the ISO is featured.
+  returned: success
+  type: boolean
+  sample: true
+  version_added: "2.4"
+format:
+  description: Format of the ISO.
+  returned: success
+  type: string
+  sample: ISO
+  version_added: "2.4"
+os_type:
+  description: Typo of the OS.
+  returned: success
+  type: string
+  sample: CentOS 6.5 (64-bit)
+  version_added: "2.4"
 checksum:
   description: MD5 checksum of the ISO.
   returned: success
@@ -234,6 +264,12 @@ project:
   returned: success
   type: string
   sample: example project
+tags:
+  description: List of resource tags associated with the ISO.
+  returned: success
+  type: dict
+  sample: '[ { "key": "foo", "value": "bar" } ]'
+  version_added: "2.4"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -254,6 +290,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             'status': 'status',
             'isready': 'is_ready',
             'crossZones': 'cross_zones',
+            'format': 'format',
+            'ostypename': 'os_type',
+            'isfeatured': 'is_featured',
+            'bootable': 'bootable',
+            'ispublic': 'is_public',
 
         }
         self.iso = None
