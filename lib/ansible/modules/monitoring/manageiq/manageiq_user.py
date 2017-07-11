@@ -100,7 +100,6 @@ class ManageIQUser(object):
     """
 
     def __init__(self, manageiq):
-        self.changed = False
         self.manageiq = manageiq
 
     def delete_user(self, userid):
@@ -112,13 +111,12 @@ class ManageIQUser(object):
         user = self.manageiq.find_collection_resource_by('users', userid=userid)
         if not user:  # user doesn't exist
             return dict(
-                changed=self.changed,
+                changed=False,
                 msg="User {userid} does not exist in manageiq".format(userid=userid))
         try:
             url = '{api_url}/users/{user_id}'.format(api_url=self.manageiq.api_url, user_id=user['id'])
             result = self.manageiq.client.post(url, action='delete')
-            self.changed = True
-            return dict(changed=self.changed, msg=result['message'])
+            return dict(changed=True, msg=result['message'])
         except Exception as e:
             self.manageiq.module.fail_json(msg="Failed to delete user {userid}: {error}".format(userid=userid, error=e))
 
@@ -143,7 +141,7 @@ class ManageIQUser(object):
         """
         if not self.user_update_required(user, username, group_id, email):
             return dict(
-                changed=self.changed,
+                changed=False,
                 msg="User {userid} already exist, no need for updates".format(userid=userid))
         url = '{api_url}/users/{user_id}'.format(api_url=self.manageiq.api_url, user_id=user.id)
         resource = {'userid': userid, 'name': username, 'password': password,
@@ -152,9 +150,8 @@ class ManageIQUser(object):
             result = self.manageiq.client.post(url, action='edit', resource=resource)
         except Exception as e:
             self.manageiq.module.fail_json(msg="Failed to update user {userid}: {error}".format(userid=userid, error=e))
-        self.changed = True
         return dict(
-            changed=self.changed,
+            changed=True,
             msg="Successfully updated the user {userid}: {user_details}".format(userid=userid, user_details=result))
 
     def create_user(self, userid, username, group_id, password, email):
@@ -171,9 +168,8 @@ class ManageIQUser(object):
             result = self.manageiq.client.post(url, action='create', resource=resource)
         except Exception as e:
             self.manageiq.module.fail_json(msg="Failed to create user {userid}: {error}".format(userid=userid, error=e))
-        self.changed = True
         return dict(
-            changed=self.changed,
+            changed=True,
             msg="Successfully created the user {userid}: {user_details}".format(userid=userid, user_details=result['results']))
 
     def create_or_update_user(self, userid, username, password, group, email):
