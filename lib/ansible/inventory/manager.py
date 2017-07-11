@@ -506,7 +506,7 @@ class InventoryManager(object):
 
         results = []
         # check if pattern matches group
-        matching_groups= self._match_list(self._inventory.groups, pattern)
+        matching_groups = self._match_list(self._inventory.groups, pattern)
         if matching_groups:
             for groupname in matching_groups:
                 results.extend(self._inventory.groups[groupname].get_hosts())
