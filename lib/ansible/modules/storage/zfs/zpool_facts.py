@@ -160,8 +160,6 @@ class ZPoolFacts(object):
         cmd.append('-H')
         if self.parsable:
             cmd.append('-p')
-        cmd.append('-o')
-        cmd.append('name,property,value')
         cmd.append(self.properties)
         if self.name:
             cmd.append(self.name)
@@ -170,7 +168,7 @@ class ZPoolFacts(object):
 
         if rc == 0:
             for line in out.splitlines():
-                pool, property, value = line.split('\t')
+                pool, property, value, source = line.split('\t')
 
                 self._pools[pool].update({property: value})
 
