@@ -178,11 +178,12 @@ options:
         startup-config
     required: false
     default: never
+    choices: ['always', 'never', 'changed']
     version_added: "2.4"
   diff_against:
     description:
-      - When using the I(--diff) command line argument the module can
-        generate diffs against different sources.
+      - When using the C(ansible-playbook --diff) command line argument the i
+        module can generate diffs against different sources.
       - When this option is configure as I(startup), the module will return
         the diff of the running-config against the startup-config.
       - When this option is configured as I(intended), the module will
@@ -321,11 +322,11 @@ def main():
         running_config=dict(aliases=['config']),
         intended_config=dict(),
 
-        # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool'),
-
         # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool')
+        save=dict(default=False, type='bool', removed_in_version='2.4'),
+
+        # force argument deprecated in ans2.2
+        force=dict(default=False, type='bool', removed_in_version='2.2')
     )
 
     argument_spec.update(eos_argument_spec)
@@ -343,14 +344,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
-
-    if module.params['force'] is True:
-        module.warn('The force argument is deprecated, please use match: none instead')
-        module.params['match'] = 'none'
-
-    if module.params['save']:
-        module.warn('The save argument is deprecated, please use save_when: always instead')
-        module.params['save_when'] = 'always'
 
     warnings = list()
     check_args(module, warnings)
