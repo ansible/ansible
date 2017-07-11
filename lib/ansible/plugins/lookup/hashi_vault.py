@@ -25,9 +25,12 @@
 #
 # To use a ssl Vault add verify param:
 #
-# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 verify=False')}}
+# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 validate_certs=False')}}
 #
-# The verify param posible values are: True, False or ca certificate file path.
+# The validate_certs param posible values are: True or False. By default it's in True. If False no verify of ssl will be done.
+# To use ca certificate file you can specify the path as parameter cacert
+#
+# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}
 #
 # You can skip setting the url if you set the VAULT_ADDR environment variable
 # or if you want it to default to localhost:8200
@@ -44,7 +47,7 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.six import string_types
+from ansible.constants import mk_boolean as boolean
 
 HAS_HVAC = False
 try:
@@ -109,7 +112,7 @@ class HashiVault:
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
-            self.verify = self.boolean_or_cacert(kwargs.get('verify'))
+            self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
 
             self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
 
@@ -145,18 +148,16 @@ class HashiVault:
 
         self.client.auth_ldap(username, password, mount_point)
 
-    def boolean_or_cacert(self, arg):
-        ''' return a bool for the arg '''
-        if arg is None or type(arg) == bool:
-            return arg
-        if isinstance(arg, string_types):
-            argtxt = arg.lower()
-        if argtxt in ['yes', 'on', '1', 'true', 1]:
-            return True
-        elif argtxt in ['no', 'off', '0', 'false', 0]:
-            return False
+    def boolean_or_cacert(self, validate_certs, cacert):
+        validate_certs = boolean(validate_certs)
+        '''' return a bool or cacert '''
+        if validate_certs is True:
+            if cacert != '':
+                return cacert
+            else:
+                return True
         else:
-            return arg
+            return False
 
 
 class LookupModule(LookupBase):
