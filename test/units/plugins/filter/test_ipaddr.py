@@ -19,7 +19,7 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
-                                           previous_nth_usable, ip_in_subnet)
+                                           previous_nth_usable, network_in_usable, network_in_network)
 
 
 class TestIpFilter(unittest.TestCase):
@@ -391,30 +391,66 @@ class TestIpFilter(unittest.TestCase):
         address = '1.12.1.254/24'
         self.assertEqual(previous_nth_usable(address, 2), '1.12.1.252')
 
-    def test_ip_in_subnet(self):
+    def test_network_in_usable(self):
         subnet = '1.12.1.0/24'
         address = '1.12.1.10'
-        self.assertEqual(ip_in_subnet(subnet, address), True)
+        self.assertEqual(network_in_usable(subnet, address), True)
         subnet = '1.12.1.0/24'
         address = '1.12.0.10'
-        self.assertEqual(ip_in_subnet(subnet, address), False)
-        # subnet = '1.12.1.34'
-        # self.assertFalse(ipaddr(subnet, 'last_usable'), 'Not a network subnet')
+        self.assertEqual(network_in_usable(subnet, address), False)
         subnet = '1.12.1.32/28'
         address = '1.12.1.36'
-        self.assertEqual(ip_in_subnet(subnet, address), True)
+        self.assertEqual(network_in_usable(subnet, address), True)
+        subnet = '1.12.1.32/28'
+        address = '1.12.1.36/31'
+        self.assertEqual(network_in_usable(subnet, address), True)
+        subnet = '1.12.1.32/28'
+        address = '1.12.1.48/31'
+        self.assertEqual(network_in_usable(subnet, address), False)
         subnet = '1.12.1.32/255.255.255.240'
         address = '1.12.1.31'
-        self.assertEqual(ip_in_subnet(subnet, address), False)
+        self.assertEqual(network_in_usable(subnet, address), False)
         subnet = '1.12.1.36/31'
         address = '1.12.1.36'
-        self.assertEqual(ip_in_subnet(subnet, address), True)
+        self.assertEqual(network_in_usable(subnet, address), True)
         subnet = '1.12.1.37/31'
         address = '1.12.1.35'
-        self.assertEqual(ip_in_subnet(subnet, address), False)
+        self.assertEqual(network_in_usable(subnet, address), False)
         subnet = '1.12.1.36/32'
         address = '1.12.1.36'
-        self.assertEqual(ip_in_subnet(subnet, address), True)
+        self.assertEqual(network_in_usable(subnet, address), True)
         subnet = '1.12.1.0/24'
         address = '1.12.2.0'
-        self.assertEqual(ip_in_subnet(subnet, address), False)
+        self.assertEqual(network_in_usable(subnet, address), False)
+
+    def test_network_in_network(self):
+        subnet = '1.12.1.0/24'
+        address = '1.12.1.0'
+        self.assertEqual(network_in_network(subnet, address), True)
+        subnet = '1.12.1.0/24'
+        address = '1.12.0.10'
+        self.assertEqual(network_in_network(subnet, address), False)
+        subnet = '1.12.1.32/28'
+        address = '1.12.1.32/28'
+        self.assertEqual(network_in_network(subnet, address), True)
+        subnet = '1.12.1.32/28'
+        address = '1.12.1.47'
+        self.assertEqual(network_in_network(subnet, address), True)
+        subnet = '1.12.1.32/28'
+        address = '1.12.1.48/31'
+        self.assertEqual(network_in_network(subnet, address), False)
+        subnet = '1.12.1.32/255.255.255.240'
+        address = '1.12.1.31'
+        self.assertEqual(network_in_network(subnet, address), False)
+        subnet = '1.12.1.36/31'
+        address = '1.12.1.36'
+        self.assertEqual(network_in_network(subnet, address), True)
+        subnet = '1.12.1.37/31'
+        address = '1.12.1.35'
+        self.assertEqual(network_in_network(subnet, address), False)
+        subnet = '1.12.1.36/32'
+        address = '1.12.1.36'
+        self.assertEqual(network_in_network(subnet, address), True)
+        subnet = '1.12.1.0/24'
+        address = '1.12.2.0'
+        self.assertEqual(network_in_network(subnet, address), False)
