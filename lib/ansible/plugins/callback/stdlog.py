@@ -38,7 +38,11 @@ from ansible.plugins.callback import CallbackBase
 # that want it.
 
 DEBUG_LOG_FORMAT = "%(asctime)s [%(name)s %(levelname)s %(hostname)s %(playbook)s] pid=%(process)d %(funcName)s:%(lineno)d - %(message)s"
-CONTEXT_DEBUG_LOG_FORMAT = "%(asctime)s [%(name)s %(levelname)s %(hostname)s] [playbook=%(playbook)s:%(playbook_uuid)s play=%(play)s:%(play_uuid)s task=%(task)s:%(task_uuid)s] (%(process)d):%(funcName)s:%(lineno)d - %(message)s"
+CONTEXT_DEBUG_LOG_FORMAT = \
+    "%(asctime)s [%(name)s %(levelname)s %(hostname)s] " \
+    "[playbook=%(playbook)s:%(playbook_uuid)s " \
+    "play=%(play)s:%(play_uuid)s task=%(task)s:%(task_uuid)s] " \
+    "(%(process)d):%(funcName)s:%(lineno)d - %(message)s"
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(process)d @%(filename)s:%(lineno)d - %(message)s"
 MIN_LOG_FORMAT = "%(asctime)s %(funcName)s:%(lineno)d - %(message)s"
 
@@ -184,7 +188,7 @@ class CallbackModule(CallbackBase):
 
     log_level = logging.DEBUG
     log_name = 'ansible_stdlog'
-    #log_format = CONTEXT_DEBUG_LOG_FORMAT
+    log_format = CONTEXT_DEBUG_LOG_FORMAT
     # log_format = LOG_FORMAT
     # log_format = MIN_LOG_FORMAT
     log_format = DEBUG_LOG_FORMAT
