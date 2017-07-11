@@ -209,18 +209,20 @@ ANSIBLE_SSH_RETRIES:
   vars: []
   yaml: {key: ssh_connection.retries}
 ANY_ERRORS_FATAL:
-    default: False
-    env:
-      - name: ANSIBLE_ANY_ERRORS_FATAL
-    ini:
-      - section:  defaults
-        key: any_errors_fatal
-    value_type: boolean
-    vars: []
-    yaml: {key: errors.anyerrors_fatal}
+  default: False
+  desc: Sets the default value for the any_errors_fatal keyword
+  env:
+    - name: ANSIBLE_ANY_ERRORS_FATAL
+  ini:
+    - section:  defaults
+      key: any_errors_fatal
+  value_type: boolean
+  vars: []
+  yaml: {key: errors.anyerrors_fatal}
+  version_added: "2.4"
 BECOME_ALLOW_SAME_USER:
   default: False
-  desc: 'TODO: write it'
+  desc: This setting controls if become is skipped when remote user and become user are the same.
   env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
   ini:
   - {key: become_allow_same_user, section: privilege_escalation}
@@ -229,15 +231,15 @@ BECOME_ALLOW_SAME_USER:
   yaml: {key: privilege_escalation.become_allow_same_user}
 CACHE_PLUGIN:
   default: memory
-  desc: 'TODO: write it'
+  desc: Chooses which cache plugin to use
   env: [{name: ANSIBLE_CACHE_PLUGIN}]
   ini:
   - {key: fact_caching, section: defaults}
   vars: []
   yaml: {key: defaults.fact_caching}
 CACHE_PLUGIN_CONNECTION:
-  default: 
-  desc: 'TODO: write it'
+  default:
+  desc: Defines connection or path information for the cache plugin
   env: [{name: ANSIBLE_CACHE_PLUGIN_CONNECTION}]
   ini:
   - {key: fact_caching_connection, section: defaults}
@@ -245,7 +247,7 @@ CACHE_PLUGIN_CONNECTION:
   yaml: {key: defaults.fact_caching_connection}
 CACHE_PLUGIN_PREFIX:
   default: ansible_facts
-  desc: 'TODO: write it'
+  desc: Prefix to use for cache plugin files/tables
   env: [{name: ANSIBLE_CACHE_PLUGIN_PREFIX}]
   ini:
   - {key: fact_caching_prefix, section: defaults}
@@ -253,7 +255,7 @@ CACHE_PLUGIN_PREFIX:
   yaml: {key: defaults.fact_caching_prefix}
 CACHE_PLUGIN_TIMEOUT:
   default: 86400
-  desc: 'TODO: write it'
+  desc: Expiration timeout for the cache plugin data
   env: [{name: ANSIBLE_CACHE_PLUGIN_TIMEOUT}]
   ini:
   - {key: fact_caching_timeout, section: defaults}
@@ -262,15 +264,15 @@ CACHE_PLUGIN_TIMEOUT:
   yaml: {key: defaults.fact_caching_timeout}
 COLOR_CHANGED:
   default: yellow
-  desc: 'TODO: write it'
+  desc: Defines the color to use on 'Changed' status
   env: [{name: ANSIBLE_COLOR_CHANGED}]
   ini:
   - {key: changed, section: colors}
   vars: []
-  yaml: {key: colors.changed}
+  yaml: {key: display.colors.changed}
 COLOR_DEBUG:
   default: dark gray
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting debug messages
   env: [{name: ANSIBLE_COLOR_DEBUG}]
   ini:
   - {key: debug, section: colors}
@@ -278,7 +280,7 @@ COLOR_DEBUG:
   yaml: {key: colors.debug}
 COLOR_DEPRECATE:
   default: purple
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting deprecation messages
   env: [{name: ANSIBLE_COLOR_DEPRECATE}]
   ini:
   - {key: deprecate, section: colors}
@@ -286,7 +288,7 @@ COLOR_DEPRECATE:
   yaml: {key: colors.deprecate}
 COLOR_DIFF_ADD:
   default: green
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing added lines in diffs
   env: [{name: ANSIBLE_COLOR_DIFF_ADD}]
   ini:
   - {key: diff_add, section: colors}
@@ -294,7 +296,7 @@ COLOR_DIFF_ADD:
   yaml: {key: colors.diff_add}
 COLOR_DIFF_LINES:
   default: cyan
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing diffs
   env: [{name: ANSIBLE_COLOR_DIFF_LINES}]
   ini:
   - {key: diff_lines, section: colors}
@@ -302,7 +304,7 @@ COLOR_DIFF_LINES:
   yaml: {key: colors.diff_lines}
 COLOR_DIFF_REMOVE:
   default: red
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing removed lines in diffs
   env: [{name: ANSIBLE_COLOR_DIFF_REMOVE}]
   ini:
   - {key: diff_remove, section: colors}
@@ -310,7 +312,7 @@ COLOR_DIFF_REMOVE:
   yaml: {key: colors.diff_remove}
 COLOR_ERROR:
   default: red
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting error messages
   env: [{name: ANSIBLE_COLOR_ERROR}]
   ini:
   - {key: error, section: colors}
@@ -326,7 +328,7 @@ COLOR_HIGHLIGHT:
   yaml: {key: colors.highlight}
 COLOR_OK:
   default: green
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing 'OK' status
   env: [{name: ANSIBLE_COLOR_OK}]
   ini:
   - {key: ok, section: colors}
@@ -334,7 +336,7 @@ COLOR_OK:
   yaml: {key: colors.ok}
 COLOR_SKIP:
   default: cyan
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing 'Skipped' status
   env: [{name: ANSIBLE_COLOR_SKIP}]
   ini:
   - {key: skip, section: colors}
@@ -342,7 +344,7 @@ COLOR_SKIP:
   yaml: {key: colors.skip}
 COLOR_UNREACHABLE:
   default: bright red
-  desc: 'TODO: write it'
+  desc: Defines the color to use on 'Unreachable' status
   env: [{name: ANSIBLE_COLOR_UNREACHABLE}]
   ini:
   - {key: unreachable, section: colors}
@@ -350,7 +352,7 @@ COLOR_UNREACHABLE:
   yaml: {key: colors.unreachable}
 COLOR_VERBOSE:
   default: blue
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting verbose messages
   env: [{name: ANSIBLE_COLOR_VERBOSE}]
   ini:
   - {key: verbose, section: colors}
@@ -358,7 +360,7 @@ COLOR_VERBOSE:
   yaml: {key: colors.verbose}
 COLOR_WARN:
   default: bright purple
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting warning messages
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
@@ -1196,34 +1198,34 @@ HOST_KEY_CHECKING:
   yaml: {key: defaults.host_key_checking}
 INVENTORY_ENABLED:
   default: [host_list, script, yaml, ini]
-  desc: 'TODO: write it'
+  desc: List of enabled inventory plugins, it also determines the order in which they are used.
   env: [{name: ANSIBLE_INVENTORY_ENABLED}]
   ini:
   - {key: inventory_enabled, section: defaults}
   value_type: list
   vars: []
-  yaml: {key: defaults.inventory_enabled}
+  yaml: {key: inventory.enabled_plugins}
 INVENTORY_IGNORE_EXTS:
-  default: ['.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.orig', '.ini', '.cfg', '.retry']
-  desc: 'TODO: write it'
+  default: BLACKLIST_EXTS + [ '~', '.orig', '.ini', '.cfg', '.retry']
+  desc: List of extensions to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:
   - {key: inventory_ignore_extensions, section: defaults}
   value_type: list
   vars: []
-  yaml: {key: defaults.inventory_ignore_extensions}
+  yaml: {key: inventory.ignore_extensions}
 INVENTORY_IGNORE_PATTERNS:
   default: []
-  desc: 'TODO: write it'
+  desc: List of patterns to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE_REGEX}]
   ini:
   - {key: inventory_ignore_patterns, section: defaults}
   value_type: list
   vars: []
-  yaml: {key: defaults.inventory_ignore_patterns}
+  yaml: {key: inventory.ignore_patterns}
 MAX_FILE_SIZE_FOR_DIFF:
   default: 104448
-  desc: 'TODO: write it'
+  desc: Maximum size of files to be considered for diff display
   env: [{name: ANSIBLE_MAX_DIFF_SIZE}]
   ini:
   - {key: max_diff_size, section: defaults}
