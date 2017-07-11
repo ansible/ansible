@@ -260,6 +260,8 @@ def tags_match(match_tags, candidate_tags):
 
 def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
     changed = False
+    if not resource_id and check_mode:
+        return {'changed': True, 'tags': tags}
     try:
         cur_tags = get_resource_tags(vpc_conn, resource_id)
         if tags == cur_tags:
@@ -279,7 +281,11 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
             if not check_mode:
                 vpc_conn.create_tags(resource_id, to_add)
 
-        latest_tags = get_resource_tags(vpc_conn, resource_id)
+        if check_mode:
+            latest_tags = dict((k, cur_tags[k]) for k in cur_tags if k not in to_delete)
+            latest_tags.update(to_add)
+        else:
+            latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': changed, 'tags': latest_tags}
     except EC2ResponseError as e:
         raise AnsibleTagCreationException(
@@ -355,7 +361,7 @@ def index_of_matching_route(route_spec, routes_to_match):
 def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
                   check_mode, purge_routes):
     if check_mode and not route_table:
-            return {'changed': True}
+            return {'changed': True, 'routes': route_specs}
     routes_to_match = list(route_table.routes)
     route_specs_to_create = []
     for route_spec in route_specs:
@@ -384,17 +390,19 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
     changed = bool(routes_to_delete or route_specs_to_create)
     if changed and not check_mode:
         for route in routes_to_delete:
-            if not check_mode:
-                vpc_conn.delete_route(route_table.id,
-                                      route.destination_cidr_block)
-            changed = True
+            vpc_conn.delete_route(route_table.id,
+                                  route.destination_cidr_block)
         for route_spec in route_specs_to_create:
-            if not check_mode:
-                vpc_conn.create_route(route_table.id,
-                                      **route_spec)
-            changed = True
+            vpc_conn.create_route(route_table.id,
+                                  **route_spec)
 
-    return {'changed': bool(changed)}
+    # calculate current routes for check mode
+    if purge_routes:
+        current_routes = set(route_table.routes) - set(routes_to_delete)
+    else:
+        current_routes = set(route_table.routes)
+    current_routes.update(['Route:%s' % route['destination_cidr_block'] for route in route_specs_to_create])
+    return {'changed': bool(changed), 'routes': list(current_routes)}
 
 
 def ensure_subnet_association(vpc_conn, vpc_id, route_table_id, subnet_id,
@@ -545,6 +553,11 @@ def ensure_route_table_present(connection, module):
     subnets = module.params.get('subnets')
     tags = module.params.get('tags')
     vpc_id = module.params.get('vpc_id')
+
+    # This holds the result of running in check mode if the route table does not yet exist.
+    # If the route table does exist the exit_json data is determined from its attributes.
+    end_state_of_route_table = {}
+
     try:
         routes = create_route_spec(connection, module, vpc_id)
     except AnsibleIgwSearchException as e:
@@ -582,12 +595,23 @@ def ensure_route_table_present(connection, module):
             module.fail_json(msg="Failed to create route table: {0}".format(e.message),
                              exception=traceback.format_exc())
 
+    # If running in check mode and the route table has yet to be created
+    if not route_table and module.check_mode:
+        end_state_of_route_table['id'] = 'rtb-XXXXXXXX'
+        end_state_of_route_table['vpc_id'] = vpc_id
+    # This should never happen
+    elif not route_table:
+        module.fail_json(msg="Error creating route table.")
+
     if routes is not None:
         try:
             result = ensure_routes(connection, route_table, routes,
                                    propagating_vgw_ids, module.check_mode,
                                    purge_routes)
             changed = changed or result['changed']
+            if route_table:
+                route_table.routes = result['routes']
+            end_state_of_route_table['routes'] = result['routes']
         except EC2ResponseError as e:
             module.fail_json(msg="Error while updating routes: {0}".format(e.message),
                              exception=traceback.format_exc())
@@ -600,12 +624,15 @@ def ensure_route_table_present(connection, module):
 
     if not tags_valid and tags is not None:
         if module.check_mode and not route_table:
-            changed = changed or True
+            identifier = None
         else:
-            result = ensure_tags(connection, route_table.id, tags,
-                                 add_only=True, check_mode=module.check_mode)
+            identifier = route_table.id
+        result = ensure_tags(connection, identifier, tags,
+                             add_only=True, check_mode=module.check_mode)
+        if route_table:
             route_table.tags = result['tags']
-            changed = changed or result['changed']
+        end_state_of_route_table['tags'] = result['tags']
+        changed = changed or result['changed']
 
     if subnets:
         associated_subnets = []
@@ -631,19 +658,10 @@ def ensure_route_table_present(connection, module):
                 error_traceback=traceback.format_exc()
             )
 
-    if module.check_mode:
-        check_mode_results = {}
-        if not route_table:
-            check_mode_results['id'] = 'rtb-XXXXXXXX'
-            check_mode_results['tags'] = tags or {}
-        else:
-            check_mode_results['id'] = route_table.id
-            check_mode_results['tags'] = route_table.tags
-        check_mode_results['routes'] = routes or []
-        check_mode_results['vpc_id'] = vpc_id
-        module.exit_json(changed=changed, route_table=check_mode_results)
-
-    module.exit_json(changed=changed, route_table=get_route_table_info(route_table))
+    if route_table:
+        module.exit_json(changed=changed, route_table=get_route_table_info(route_table))
+    else:
+        module.exit_json(changed=changed, route_table=end_state_of_route_table)
 
 
 def main():
