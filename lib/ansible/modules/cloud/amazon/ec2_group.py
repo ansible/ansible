@@ -616,7 +616,7 @@ def main():
                     rule['to_port'] = None
 
                 # rule may have empty cidr_id/group_id/group_name in which case a real rule won't be created
-                if not (rule.get('group_id') and rule.get('group_name') and rule.get('cidr_ip')):
+                if not (rule.get('group_id') or rule.get('group_name') or rule.get('cidr_ip')):
                     continue
 
                 if group_id:
@@ -685,7 +685,7 @@ def main():
                     rule['to_port'] = None
 
                 # rule may have empty cidr_id/group_id/group_name in which case a real rule won't be created
-                if not (rule.get('group_id') and rule.get('group_name') and rule.get('cidr_ip')):
+                if not (rule.get('group_id') or rule.get('group_name') or rule.get('cidr_ip')):
                     continue
 
                 if group_id:
