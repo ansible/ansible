@@ -16,8 +16,8 @@ Python 2.4 and 2.5 support discontinuation
 - Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore.
   Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
 
-Python 3 and beyond
--------------------
+Python 3
+--------
 - Ansible Core Engine and Core modules will be tested on Python 3
 - Communicate with Linux distros to provide Ansible running on Python 3
 - Check for Python 3 tests on core modules and create any missing
@@ -34,14 +34,14 @@ Ansible-Config
 - Proposal found in ansible/proposals issue `#35 <https://github.com/ansible/proposals/issues/35>`_.
 - Initial PR of code found in ansible/ansible PR `#12797 <https://github.com/ansible/ansible/pull/12797>`_.
 
-Inventory Overhaul
-------------------
+Inventory
+---------
 - Current inventory is overly complex, non modular and mostly still a legacy from inception.
 - We also want to add a common set of features to most inventory sources but are hampered by the current code base.
 - Proposal found in ansible/proposals issue `#41 <https://github.com/ansible/proposals/issues/41>`_.
 
-Facts Refreshening
-------------------
+Facts
+-----
 - Configurable list of ‘fact modules’ for ``gather_facts``
 - Fact gathering policy finer grained
 - Make ``setup.py``/``facts`` more pluggable
@@ -49,8 +49,8 @@ Facts Refreshening
 - Namespacing fact variables (via a config option) implemented in ansible/ansible PR `#18445 <https://github.com/ansible/ansible/pull/18445>`_.
   Proposal found in ansible/proposals issue `#17 <https://github.com/ansible/proposals/issues/17>`_.
 
-PluginLoader Refactor
----------------------
+PluginLoader
+------------
 - Over the past couple releases we've had some thoughts about how
   PluginLoader might be better structured
 
@@ -76,8 +76,8 @@ Static Loop Keyword
 - Remove complexity from loops, lookups are still available to users
 - Less confusing having a static directive vs a one that is dynamic depending on plugins loaded.
 
-Vault Extensibility
--------------------
+Vault
+-----
 - Support for multiple vault passwords
 
   - Each decrypted item should know which secret to request
@@ -91,8 +91,8 @@ Globalize Callbacks
 - Would allow for ‘full formatting’ of output (see JSON callback)
 - Fixes static ‘include’ display problem
 
-Document Plugins
-----------------
+Plugins
+-------
 - Allow plugins to have embedded docs (like modules)
 - Update ansible-doc and website to generate docs from these ansible/ansible PR `#22796 <https://github.com/ansible/ansible/pull/22796>`_.
 
@@ -118,8 +118,8 @@ Disambiguate Includes
 
   - Any directives apply to the ‘include’  itself
 
-Windows Support
----------------
+Windows
+-------
 - New PS/.NET module API
 - Windows Nano Server support
 - Windows module_utils pluginloader
@@ -141,33 +141,31 @@ Windows Support
   - win_package changes required to deprecate win_msi
   - win_copy re-write
 
-Cloud Provider Support
-----------------------
-- AWS
+AWS
+---
+- Focus on pull requests for various modules
+- Triage existing merges for modules
+- Module work
 
-  - Focus on pull requests for various modules
-  - Triage existing merges for modules
-  - Module work
+  - elb-target-groups
+  - alb*
+  - ecs
+  - Data Pipelines
+  - VPN
+  - DirectConnect
 
-    - elb-target-groups
-    - alb*
-    - ecs
-    - Data Pipelines
-    - VPN
-    - DirectConnect
+Azure
+-----
+- Expose endpoint overrides
+- Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks)
+- Add load balancer module
+- Add Azure Functions module
 
-- Azure
-
-  - Expose endpoint overrides
-  - Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks)
-  - Add load balancer module
-  - Add Azure Functions module
-
-- Google Cloud Platform
-
-  - New Module: DataProc
-  - Support for Cross-Region HTTP Load Balancing
-  - New Module: GKE
+Google Cloud Platform
+---------------------
+- New Module: DataProc
+- Support for Cross-Region HTTP Load Balancing
+- New Module: GKE
 
 Network Roadmap
 ---------------
