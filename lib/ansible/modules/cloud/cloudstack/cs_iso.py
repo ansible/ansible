@@ -101,9 +101,17 @@ options:
     default: null
   zone:
     description:
-      - Name of the zone you wish the ISO to be registered or deleted from. If not specified, first zone found will be used.
+      - Name of the zone you wish the ISO to be registered or deleted from.
+      - If not specified, first zone found will be used.
     required: false
     default: null
+  cross_zones:
+    description:
+      - Whether the ISO should be synced or removed across zones.
+      - Mutually exclusive with C(zone).
+    required: false
+    default: false
+    version_added: "2.4"
   iso_filter:
     description:
       - Name of the filter used to search for the ISO.
@@ -205,6 +213,12 @@ created:
   returned: success
   type: string
   sample: 2015-03-29T14:57:06+0200
+cross_zones:
+  description: true if the ISO is managed across all zones, false otherwise.
+  returned: success
+  type: boolean
+  sample: false
+  version_added: "2.4"
 domain:
   description: Domain the ISO is related to.
   returned: success
@@ -239,6 +253,8 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             'checksum': 'checksum',
             'status': 'status',
             'isready': 'is_ready',
+            'crossZones': 'cross_zones',
+
         }
         self.iso = None
 
@@ -254,7 +270,6 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
     def register_iso(self):
         args = self._get_common_args()
         args.update({
-            'zoneid': self.get_zone('id'),
             'domainid': self.get_domain('id'),
             'account': self.get_account('name'),
             'projectid': self.get_project('id'),
@@ -262,6 +277,12 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             'isfeatured': self.module.params.get('is_featured'),
             'ispublic': self.module.params.get('is_public'),
         })
+
+        if not self.module.params.get('cross_zones'):
+            args['zoneid'] = self.get_zone(key='id')
+        else:
+            args['zoneid'] = -1
+
         if args['bootable'] and not args['ostypeid']:
             self.module.fail_json(msg="OS type 'os_type' is requried if 'bootable=true'.")
 
@@ -296,6 +317,14 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
         })
         if self.has_changed(args, iso):
             self.result['changed'] = True
+
+            if not self.module.params.get('cross_zones'):
+                args['zoneid'] = self.get_zone(key='id')
+            else:
+                # Workaround API does not return cross_zones=true
+                self.result['cross_zones'] = True
+                args['zoneid'] = -1
+
             if not self.module.check_mode:
                 res = self.cs.updateIso(**args)
                 if 'errortext' in res:
@@ -311,8 +340,10 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 'domainid': self.get_domain('id'),
                 'account': self.get_account('name'),
                 'projectid': self.get_project('id'),
-                'zoneid': self.get_zone('id'),
             }
+
+            if not self.module.params.get('cross_zones'):
+                args['zoneid'] = self.get_zone(key='id')
 
             # if checksum is set, we only look on that.
             checksum = self.module.params.get('checksum')
@@ -338,8 +369,10 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             args = {
                 'id': iso['id'],
                 'projectid': self.get_project('id'),
-                'zoneid': self.get_zone('id'),
             }
+
+            if not self.module.params.get('cross_zones'):
+                args['zoneid'] = self.get_zone(key='id')
 
             if not self.module.check_mode:
                 res = self.cs.deleteIso(**args)
@@ -350,6 +383,15 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                     self.poll_job(res, 'iso')
         return iso
 
+    def get_result(self, iso):
+        super(AnsibleCloudStackIso, self).get_result(iso)
+        # Workaround API does not return cross_zones=true
+        if self.module.params.get('cross_zones'):
+            self.result['cross_zones'] = True
+            if 'zone' in self.result:
+                del self.result['zone']
+        return self.result
+
 
 def main():
     argument_spec = cs_argument_spec()
@@ -359,6 +401,7 @@ def main():
         url=dict(),
         os_type=dict(),
         zone=dict(),
+        cross_zones=dict(type='bool', default=False),
         iso_filter=dict(default='self', choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
         domain=dict(),
         account=dict(),
@@ -376,6 +419,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
+        mutually_exclusive=(
+            ['zone', 'cross_zones'],
+        ),
         supports_check_mode=True
     )
 
