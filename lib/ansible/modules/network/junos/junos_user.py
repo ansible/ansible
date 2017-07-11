@@ -34,9 +34,9 @@ description:
     defined accounts
 extends_documentation_fragment: junos
 options:
-  users:
+  aggregate:
     description:
-      - The C(users) argument defines a list of users to be configured
+      - The C(aggregate) argument defines a list of users to be configured
         on the remote device.  The list of users will be compared against
         the current users and only changes will be added or removed from
         the device configuration.  This argument is mutually exclusive with
@@ -48,7 +48,7 @@ options:
       - The C(name) argument defines the username of the user to be created
         on the system.  This argument must follow appropriate usernaming
         conventions for the target device running JUNOS.  This argument is
-        mutually exclusive with the C(users) argument.
+        mutually exclusive with the C(aggregate) argument.
     required: false
     default: null
   full_name:
@@ -206,8 +206,8 @@ def get_param_value(key, item, module):
 
 
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
         elif not module.params['name']:
@@ -216,7 +216,7 @@ def map_params_to_obj(module):
             collection = [{'name': module.params['name']}]
     else:
         collection = list()
-        for item in users:
+        for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'username': item})
             elif 'name' not in item:
@@ -251,7 +251,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', aliases=['collection', 'aggregate']),
+        aggregate=dict(type='list', aliases=['collection', 'users']),
         name=dict(),
 
         full_name=dict(),
@@ -264,7 +264,7 @@ def main():
         active=dict(default=True, type='bool')
     )
 
-    mutually_exclusive = [('users', 'name')]
+    mutually_exclusive = [('aggregate', 'name')]
 
     argument_spec.update(junos_argument_spec)
 

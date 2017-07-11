@@ -35,7 +35,7 @@ description:
     configuration that are not explicitly defined.
 extends_documentation_fragment: eos
 options:
-  users:
+  aggregate:
     description:
       - The set of username objects to be configured on the remote
         Arista EOS device.  The list entries can either be the username
@@ -45,7 +45,7 @@ options:
     description:
       - The username to be configured on the remote Arista EOS
         device.  This argument accepts a stringv value and is mutually
-        exclusive with the C(users) argument.
+        exclusive with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
   password:
     description:
@@ -115,7 +115,7 @@ EXAMPLES = """
 
 - name: set multiple users to privilege level 15
   eos_user:
-    users:
+    aggregate:
       - username: netop
       - username: netend
     privilege: 15
@@ -263,8 +263,8 @@ def get_param_value(key, item, module):
     return value
 
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['username'] and module.params['purge']:
             return list()
         elif not module.params['username']:
@@ -273,7 +273,7 @@ def map_params_to_obj(module):
             collection = [{'username': module.params['username']}]
     else:
         collection = list()
-        for item in users:
+        for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'username': item})
             elif all(u not in item for u in ['username', 'name']):
@@ -315,7 +315,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', aliases=['collection', 'aggregate']),
+        aggregate=dict(type='list', aliases=['collection', 'users']),
         username=dict(aliases=['name']),
 
         password=dict(no_log=True),
@@ -332,7 +332,7 @@ def main():
     )
 
     argument_spec.update(eos_argument_spec)
-    mutually_exclusive = [('username', 'users')]
+    mutually_exclusive = [('username', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
