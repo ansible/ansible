@@ -177,7 +177,7 @@ class NetworkConfig(object):
     @property
     def sha1(self):
         sha1 = hashlib.sha1()
-        sha1.update(to_bytes(str(self), errros='surrogate_or_strict'))
+        sha1.update(to_bytes(str(self), errors='surrogate_or_strict'))
         return sha1.digest()
 
     def __getitem__(self, key):
