@@ -54,6 +54,7 @@ import traceback
 # We will also export HAS_BOTO3 so end user modules can use it.
 __all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
 
+
 class AnsibleAWSModule(object):
     """An ansible module class for AWS modules
 
