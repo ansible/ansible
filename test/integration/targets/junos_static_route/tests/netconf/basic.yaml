@@ -71,7 +71,7 @@
     that:
       - "result.changed == true"
       - "'<route inactive=\"inactive\">' in config.xml"
-      - "'inactive: route 1.1.1.0/24' in result.diff"
+      - "'inactive: route 1.1.1.0/24' in result.diff.prepared"
 
 - name: Activate static route
   junos_static_route:

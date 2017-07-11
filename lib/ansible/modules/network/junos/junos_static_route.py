@@ -82,6 +82,7 @@ EXAMPLES = """
   junos_static_route:
     address: 192.168.2.0/24
     next_hop: 10.0.0.1
+    preference: 10
     qualified_next_hop: 10.0.0.2
     qualified_preference: 3
     state: present
@@ -95,6 +96,7 @@ EXAMPLES = """
   junos_static_route:
     address: 192.168.2.0/24
     next_hop: 10.0.0.1
+    preference: 10
     qualified_next_hop: 10.0.0.2
     qualified_preference: 3
     state: present
@@ -104,6 +106,7 @@ EXAMPLES = """
   junos_static_route:
     address: 192.168.2.0/24
     next_hop: 10.0.0.1
+    preference: 10
     qualified_next_hop: 10.0.0.2
     qualified_preference: 3
     state: present
@@ -111,9 +114,9 @@ EXAMPLES = """
 """
 
 RETURN = """
-diff:
+diff.prepared:
   description: Configuration difference before and after applying change.
-  returned: when configuration is changed.
+  returned: when configuration is changed and diff option is enabled.
   type: string
   sample: >
           [edit routing-options static]
@@ -128,9 +131,10 @@ diff:
 """
 import collections
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
 try:
     from lxml.etree import tostring
@@ -197,20 +201,22 @@ def main():
 
     validate_param_values(module, param_to_xpath_map)
 
-    want = list()
-    want.append(map_params_to_obj(module, param_to_xpath_map))
+    want = map_params_to_obj(module, param_to_xpath_map)
     ele = map_obj_to_ele(module, want, top)
 
-    kwargs = {'commit': not module.check_mode}
-    kwargs['action'] = 'replace'
+    with locked_config(module):
+        diff = load_config(module, tostring(ele), warnings, action='replace')
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': diff,
-        })
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

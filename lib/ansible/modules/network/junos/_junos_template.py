@@ -112,6 +112,7 @@ EXAMPLES = """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import check_args, junos_argument_spec
 from ansible.module_utils.junos import get_configuration, load_config
+from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_template'
@@ -153,11 +154,17 @@ def main():
             module.fail_json(msg='unable to retrieve device configuration')
         result['__backup__'] = str(match.text).strip()
 
-    diff = load_config(module, src, warnings, action=action, commit=commit, format=fmt)
-    if diff:
-        result['changed'] = True
-        if module._diff:
-            result['diff'] = {'prepared': diff}
+    with locked_config(module):
+        diff = load_config(module, src, warnings, action=action, format=fmt)
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
+
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

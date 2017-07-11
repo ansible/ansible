@@ -31,6 +31,16 @@
     that:
       - "result.changed == false"
 
+- name: confirm previous commit
+  junos_config:
+    confirm_commit: yes
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
 - name: teardown
   junos_config:
     lines:

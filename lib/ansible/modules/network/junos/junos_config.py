@@ -137,6 +137,14 @@ options:
     default: merge
     choices: ['merge', 'override', 'replace']
     version_added: "2.3"
+  confirm_commit:
+    description:
+      - This argument will execute commit operation on remote device.
+        It can be used to confirm a previous commit.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.4"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -173,6 +181,7 @@ EXAMPLES = """
 
 - name: confirm a previous commit
   junos_config:
+    confirm_commit: yes
     provider: "{{ netconf }}"
 """
 
@@ -185,10 +194,10 @@ backup_path:
 """
 import re
 import json
-import sys
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import get_diff, load_config, get_configuration
+from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
@@ -266,20 +275,9 @@ def filter_delete_statements(module, candidate):
     return modified_candidate
 
 
-def configure_device(module, warnings):
-    candidate = module.params['lines'] or module.params['src']
+def configure_device(module, warnings, candidate):
 
-    kwargs = {
-        'comment': module.params['comment'],
-        'commit': not module.check_mode
-    }
-
-    if module.params['confirm'] > 0:
-        kwargs.update({
-            'confirm': True,
-            'confirm_timeout': module.params['confirm']
-        })
-
+    kwargs = {}
     config_format = None
 
     if module.params['src']:
@@ -319,6 +317,7 @@ def main():
 
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
+        confirm_commit=dict(type='bool', default=False),
 
         # config operations
         backup=dict(type='bool', default=False),
@@ -338,6 +337,9 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
+    candidate = module.params['lines'] or module.params['src']
+    commit = not module.check_mode
+
     result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
@@ -352,22 +354,45 @@ def main():
         result['__backup__'] = match.text.strip()
 
     if module.params['rollback']:
-        if not module.check_mode:
+        if commit:
             diff = rollback(module)
             if module._diff:
                 result['diff'] = {'prepared': diff}
         result['changed'] = True
 
     elif module.params['zeroize']:
-        if not module.check_mode:
+        if commit:
             zeroize(module)
         result['changed'] = True
 
     else:
-        diff = configure_device(module, warnings)
-        if diff:
-            if module._diff:
-                result['diff'] = {'prepared': diff}
+        if candidate:
+            with locked_config(module):
+                diff = configure_device(module, warnings, candidate)
+                if diff:
+                    if commit:
+                        kwargs = {
+                            'comment': module.params['comment']
+                        }
+
+                        if module.params['confirm'] > 0:
+                            kwargs.update({
+                                'confirm': True,
+                                'confirm_timeout': module.params['confirm']
+                            })
+                        commit_configuration(module, **kwargs)
+                    else:
+                        discard_changes(module)
+                    result['changed'] = True
+
+                    if module._diff:
+                        result['diff'] = {'prepared': diff}
+
+        elif module.params['confirm_commit']:
+            with locked_config(module):
+                # confirm a previous commit
+                commit_configuration(module)
+
             result['changed'] = True
 
     module.exit_json(**result)

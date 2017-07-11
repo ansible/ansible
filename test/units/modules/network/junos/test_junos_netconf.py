@@ -34,8 +34,20 @@ class TestJunosCommandModule(TestJunosModule):
         self.mock_exec_command = patch('ansible.modules.network.junos.junos_netconf.exec_command')
         self.exec_command = self.mock_exec_command.start()
 
+        self.mock_lock_configuration = patch('ansible.module_utils.junos.lock_configuration')
+        self.lock_configuration = self.mock_lock_configuration.start()
+
+        self.mock_unlock_configuration = patch('ansible.module_utils.junos.unlock_configuration')
+        self.unlock_configuration = self.mock_unlock_configuration.start()
+
+        self.mock_commit_configuration = patch('ansible.modules.network.junos.junos_netconf.commit_configuration')
+        self.commit_configuration = self.mock_commit_configuration.start()
+
     def tearDown(self):
         self.mock_exec_command.stop()
+        self.mock_lock_configuration.stop()
+        self.mock_unlock_configuration.stop()
+        self.mock_commit_configuration.stop()
 
     def test_junos_netconf_enable(self):
         self.exec_command.return_value = 0, '', None
