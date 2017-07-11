@@ -3,9 +3,12 @@ Ansible by Red Hat, Core 2.4
 ============================
 **Target: Aug/Mid-September 2017**
 
+.. toctree::
+
 Administrivia and Process
 -------------------------
 - Starting with 2.4, all items that are deprecated will be removed in 4 major releases unless otherwise stated.
+
   - For example: A module that is deprecated in 2.4 will be removed in 2.8
 
 Python 2.4 and 2.5 support discontinuation
@@ -22,7 +25,8 @@ Python 3 and beyond
 Ansible-Config
 --------------
 - New yaml format for config
-- Extend the ability of the current config system by adding an ansible-config command and add the following:
+- Extend the ability of the current config system by adding an ``ansible-config`` command and add the following:
+
   - Dump existing config settings
   - Update / write a config entry
   - Show available options (ini entry, yaml, env var, etc)
