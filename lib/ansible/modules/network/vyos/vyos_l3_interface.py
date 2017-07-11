@@ -101,9 +101,13 @@ def map_obj_to_commands(updates, module):
 
         obj_in_have = search_obj_in_list(name, have)
         if state == 'absent' and obj_in_have:
-            if (obj_in_have.get('ipv4') != '-' and
-                    obj_in_have.get('ipv6') != '-'):
+            if not ipv4 and not ipv6 and (obj_in_have['ipv4'] or obj_in_have['ipv6']):
                 commands.append('delete interfaces ethernet ' + name + ' address')
+            else:
+                if ipv4 and obj_in_have['ipv4']:
+                    commands.append('delete interfaces ethernet ' + name + ' address ' + ipv4)
+                if ipv6 and obj_in_have['ipv6']:
+                    commands.append('delete interfaces ethernet ' + name + ' address ' + ipv6)
         elif (state == 'present' and obj_in_have):
             if ipv4 and ipv4 != obj_in_have['ipv4']:
                 commands.append('set interfaces ethernet ' + name + ' address ' +
@@ -129,7 +133,10 @@ def map_config_to_obj(module):
                 name = splitted_line[0]
                 address = splitted_line[1]
 
-                if ':' not in address:
+                if address == '-':
+                    address = None
+
+                if address is not None and ':' not in address:
                     obj.append({'name': name,
                                 'ipv4': address,
                                 'ipv6': None})
