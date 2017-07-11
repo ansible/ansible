@@ -317,6 +317,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs
+from ansible.module_utils.vmware import serialize_spec
 
 try:
     import json
@@ -505,58 +506,6 @@ class PyVmomiCache(object):
                 break
         self.parent_datacenters[obj] = datacenter
         return datacenter
-
-    def serialize_spec(self, clonespec):
-        data = {}
-        attrs = dir(clonespec)
-        attrs = [x for x in attrs if not x.startswith('_')]
-        for x in attrs:
-            xo = getattr(clonespec, x)
-            if callable(xo):
-                continue
-            xt = type(xo)
-            if xo is None:
-                data[x] = None
-            elif issubclass(xt, list):
-                data[x] = []
-                for xe in xo:
-                    data[x].append(self.serialize_spec(xe))
-            elif issubclass(xt, str):
-                data[x] = xo
-            elif issubclass(xt, unicode):
-                data[x] = xo
-            elif issubclass(xt, int):
-                data[x] = xo
-            elif issubclass(xt, float):
-                data[x] = xo
-            elif issubclass(xt, long):
-                data[x] = xo
-            elif issubclass(xt, bool):
-                data[x] = xo
-            elif issubclass(xt, dict):
-                data[x] = {}
-                for k, v in xo.items():
-                    data[x][k] = self.serialize_spec(v)
-            elif isinstance(xo, vim.vm.ConfigSpec):
-                data[x] = self.serialize_spec(xo)
-            elif isinstance(xo, vim.vm.RelocateSpec):
-                data[x] = self.serialize_spec(xo)
-            elif isinstance(xo, vim.vm.device.VirtualDisk):
-                data[x] = self.serialize_spec(xo)
-            elif isinstance(xo, vim.Description):
-                data[x] = {
-                    'dynamicProperty': self.serialize_spec(xo.dynamicProperty),
-                    'dynamicType': self.serialize_spec(xo.dynamicType),
-                    'label': self.serialize_spec(xo.label),
-                    'summary': self.serialize_spec(xo.summary),
-                }
-            elif hasattr(xo, 'name'):
-                data[x] = str(xo) + ':' + xo.name
-            elif isinstance(xo, vim.vm.ProfileSpec):
-                pass
-            else:
-                data[x] = str(xt)
-        return data
 
 
 class PyVmomiHelper(object):
@@ -1382,8 +1331,8 @@ class PyVmomiHelper(object):
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2173
 
             # provide these to the user for debugging
-            clonespec_json = self.cache.serialize_spec(clonespec)
-            configspec_json = self.cache.serialize_spec(self.configspec)
+            clonespec_json = serialize_spec(clonespec)
+            configspec_json = serialize_spec(self.configspec)
             kwargs = {
                 'changed': self.change_detected,
                 'failed': True,
