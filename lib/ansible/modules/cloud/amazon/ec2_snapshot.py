@@ -197,14 +197,12 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
 
     if instance_id:
         try:
-            volumes = ec2.get_all_volumes(
-                filters={'attachment.instance-id': instance_id, 'attachment.device': device_name})
+            volumes = ec2.get_all_volumes(filters={'attachment.instance-id': instance_id, 'attachment.device': device_name})
         except boto.exception.BotoServerError as e:
             module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
         if not volumes:
-            module.fail_json(
-                msg="Could not find volume with name %s attached to instance %s" % (device_name, instance_id))
+            module.fail_json(msg="Could not find volume with name %s attached to instance %s" % (device_name, instance_id))
 
         volume_id = volumes[0].id
 
