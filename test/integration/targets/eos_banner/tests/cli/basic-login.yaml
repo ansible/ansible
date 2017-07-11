@@ -1,43 +1,65 @@
 ---
-
-- name: setup - remove login
-  eos_banner:
-    banner: login
-    state: absent
+- name: Remove previous login banner
+  eos_config:
+    lines: no banner login
     authorize: yes
     provider: "{{ cli }}"
 
-- name: Set login
+- name: Create login banner
   eos_banner:
     banner: login
     text: |
-      this is my login banner
-      that has a multiline
-      string
+      Junk login banner
+      over multiple lines
     state: present
     authorize: yes
     provider: "{{ cli }}"
   register: result
 
-- debug:
-    msg: "{{ result }}"
+- assert:
+    that:
+      - "result.changed == true"
+      - "'banner login' in result.commands[0]" # does this break due to "contains?"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Create login banner again (idempotent)
+  eos_banner:
+    banner: login
+    text: |
+      Junk login banner
+      over multiple lines
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name is not defined"
+  
+- name: remove login
+  eos_banner:
+    banner: login
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
 
 - assert:
     that:
       - "result.changed == true"
-      - "'this is my login banner' in result.commands"
-      - "'that has a multiline' in result.commands"
+      - "'no banner login' in result.commands" # does this break due to "contains?"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
-- name: Set login again (idempotent)
+- name: remove login (idempotent)
   eos_banner:
     banner: login
-    text: |
-      this is my login banner
-      that has a multiline
-      string
-    state: present
+    state: absent
     authorize: yes
     provider: "{{ cli }}"
   register: result
