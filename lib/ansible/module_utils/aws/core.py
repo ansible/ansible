@@ -52,8 +52,7 @@ from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_ar
 import traceback
 
 # We will also export HAS_BOTO3 so end user modules can use it.
-HAS_BOTO3 = HAS_BOTO3
-
+__all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
 
 class AnsibleAWSModule(object):
     """An ansible module class for AWS modules
