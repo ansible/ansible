@@ -2,7 +2,7 @@
 Aggregate Resources in Networking
 *********************************
 
-.. toctree::
+.. contents:: Topics
 
 This section explores how and when `Aggregate Resources` can be used within Ansible Networking.
 
