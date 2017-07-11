@@ -9,6 +9,7 @@ Ansible Changes By Release
 * Python3 fix for pause module
 * Do not escape backslashes in the template lookup plugin to mirror what the template module does
 * Fix the expires option of the postgresq_user module
+* Fix for win_acl when settings permissions on registry objects that use `ALL APPLICATION PACKAGES` and `ALL RESTRICTED APPLICATION PACKAGES`
 
 ## 2.3.2 "Ramble On" - TBD
 
