@@ -115,6 +115,7 @@ changed:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import string_types
 import traceback
 
 try:
@@ -157,9 +158,9 @@ def make_current_modifiable_param_dict(module, conn, name):
 
     for param in parameters:
         if param["IsModifiable"]:
-            modifiable_params[param["ParameterName"]] = [param["AllowedValues"]] if "AllowedValues" in param else [None]
+            modifiable_params[param["ParameterName"]] = [param.get("AllowedValues")]
             modifiable_params[param["ParameterName"]].append(param["DataType"])
-            modifiable_params[param["ParameterName"]].append(param["ParameterValue"] if "ParameterValue" in param else None)
+            modifiable_params[param["ParameterName"]].append(param.get("ParameterValue"))
     return modifiable_params
 
 
@@ -175,7 +176,7 @@ def check_valid_modification(module, values, modifiable_params):
             module.fail_json(msg="%s is not a modifiable parameter. Valid parameters to modify are: %s." % (parameter, modifiable_params.keys()))
 
         # check allowed datatype for modified parameters
-        str_to_type = {"integer": int, "string": str}
+        str_to_type = {"integer": int, "string": string_types}
         expected_type = str_to_type[modifiable_params[parameter][1]]
         if not isinstance(new_value, expected_type):
             if expected_type == str:
@@ -196,7 +197,7 @@ def check_valid_modification(module, values, modifiable_params):
         # check allowed values for modifiable parameters
         choices = modifiable_params[parameter][0]
         if choices:
-            if to_text(new_value) not in choices and not isinstance(new_value, int):
+            if not (to_text(new_value) in choices or isinstance(new_value, int)):
                 module.fail_json(msg="%s is not an allowed value for the parameter %s. Valid parameters are: %s." %
                                      (new_value, parameter, choices))
 
@@ -313,7 +314,7 @@ def main():
     exists = get_info(connection, parameter_group_name)
 
     # check that the needed requirements are available
-    if state == 'present' and not exists and not parameter_group_family:
+    if state == 'present' and not (exists or parameter_group_family):
         module.fail_json(msg="Creating a group requires a family group.")
     elif state == 'reset' and not exists:
         module.fail_json(msg="No group %s to reset. Please create the group before using the state 'reset'." % parameter_group_name)
