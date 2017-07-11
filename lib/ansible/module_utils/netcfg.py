@@ -189,7 +189,7 @@ class NetworkConfig(object):
         return iter(self._items)
 
     def __str__(self):
-        return '%s\n' % '\n'.join([c.raw for c in self.items])
+        return '\n'.join([c.raw for c in self.items])
 
     def __len__(self):
         return len(self._items)
