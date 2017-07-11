@@ -290,27 +290,20 @@ class InventoryManager(object):
         self._inventory = InventoryData()
         self.parse_sources(cache=False)
 
-    def _match(self, string, pattern_str):
-        try:
-            if pattern_str.startswith('~'):
-                return re.search(pattern_str[1:], string)
-            else:
-                return fnmatch.fnmatch(string, pattern_str)
-        except Exception as e:
-            raise AnsibleError('invalid host pattern (%s): %s' % (pattern_str, str(e)))
-
-    def _match_list(self, items, item_attr, pattern_str):
-        results = []
+    def _match_list(self, items, pattern_str):
+        # compile patterns
         try:
             if not pattern_str.startswith('~'):
                 pattern = re.compile(fnmatch.translate(pattern_str))
             else:
                 pattern = re.compile(pattern_str[1:])
         except Exception:
-            raise AnsibleError('invalid host list pattern: %s' % pattern_str)
+            raise AnsibleError('Invalid host list pattern: %s' % pattern_str)
 
+        # apply patterns
+        results = []
         for item in items:
-            if pattern.match(getattr(item, item_attr)):
+            if pattern.match(item):
                 results.append(item)
         return results
 
@@ -383,12 +376,11 @@ class InventoryManager(object):
             else:
                 that = self._match_one_pattern(p)
                 if p.startswith("!"):
-                    hosts = [h for h in hosts if h not in that]
+                    hosts = [h for h in hosts if h not in frozenset(that)]
                 elif p.startswith("&"):
-                    hosts = [h for h in hosts if h in that]
+                    hosts = [h for h in hosts if h in frozenset(that)]
                 else:
-                    to_append = [h for h in that if h.name not in [y.name for y in hosts]]
-                    hosts.extend(to_append)
+                    hosts.extend([h for h in that if h.name not in frozenset([y.name for y in hosts])])
         return hosts
 
     def _match_one_pattern(self, pattern):
@@ -513,33 +505,25 @@ class InventoryManager(object):
         """
 
         results = []
-
-        def __append_host_to_results(host):
-            if host.name not in results:
-                if not host.implicit:
-                    results.append(host)
-
-        matched = False
-        for group in self._inventory.groups.values():
-            if self._match(to_text(group.name), pattern):
-                matched = True
-                for host in group.get_hosts():
-                    __append_host_to_results(host)
-            else:
-                matching_hosts = self._match_list(group.get_hosts(), 'name', pattern)
-                if matching_hosts:
-                    matched = True
-                    for host in matching_hosts:
-                        __append_host_to_results(host)
+        # check if pattern matches group
+        matching_groups = self._match_list(self._inventory.groups, pattern)
+        if matching_groups:
+            for groupname in matching_groups:
+                results.extend(self._inventory.groups[groupname].get_hosts())
+        else:
+            # pattern might match host
+            matching_hosts = self._match_list(self._inventory.hosts, pattern)
+            if matching_hosts:
+                for hostname in matching_hosts:
+                    results.append(self._inventory.hosts[hostname])
 
         if not results and pattern in C.LOCALHOST:
             # get_host autocreates implicit when needed
             implicit = self._inventory.get_host(pattern)
             if implicit:
                 results.append(implicit)
-                matched = True
 
-        if not matched:
+        if not results:
             display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
         return results
 
