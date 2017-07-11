@@ -41,6 +41,7 @@ options:
         the current users and only changes will be added or removed from
         the device configuration.  This argument is mutually exclusive with
         the name argument.
+    version_added: "2.4"
     required: False
     default: null
   name:

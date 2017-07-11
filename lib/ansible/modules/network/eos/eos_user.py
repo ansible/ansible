@@ -41,6 +41,7 @@ options:
         Arista EOS device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
         exclusive with the C(username) argument.
+    version_added: "2.4"
   username:
     description:
       - The username to be configured on the remote Arista EOS

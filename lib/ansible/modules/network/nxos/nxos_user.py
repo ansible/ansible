@@ -41,6 +41,7 @@ options:
         Cisco Nexus device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
         exclusive with the C(name) argument.
+    version_added: "2.4"
     required: false
     default: null
   name:
