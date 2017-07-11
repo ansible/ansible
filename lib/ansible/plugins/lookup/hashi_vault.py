@@ -23,6 +23,15 @@
 #
 # The mount_point param defaults to ldap, so is only required if you have a custom mount point.
 #
+# To use a ssl Vault add verify param:
+#
+# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 validate_certs=False')}}
+#
+# The validate_certs param posible values are: True or False. By default it's in True. If False no verify of ssl will be done.
+# To use ca certificate file you can specify the path as parameter cacert
+#
+# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}
+#
 # You can skip setting the url if you set the VAULT_ADDR environment variable
 # or if you want it to default to localhost:8200
 #
@@ -38,6 +47,7 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.constants import mk_boolean as boolean
 
 HAS_HVAC = False
 try:
@@ -45,6 +55,7 @@ try:
     HAS_HVAC = True
 except ImportError:
     HAS_HVAC = False
+
 
 ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
 
@@ -101,7 +112,9 @@ class HashiVault:
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
-            self.client = hvac.Client(url=self.url, token=self.token)
+            self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
+
+            self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
 
         if not self.client.is_authenticated():
             raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup")
@@ -134,6 +147,17 @@ class HashiVault:
             mount_point = 'ldap'
 
         self.client.auth_ldap(username, password, mount_point)
+
+    def boolean_or_cacert(self, validate_certs, cacert):
+        validate_certs = boolean(validate_certs)
+        '''' return a bool or cacert '''
+        if validate_certs is True:
+            if cacert != '':
+                return cacert
+            else:
+                return True
+        else:
+            return False
 
 
 class LookupModule(LookupBase):
