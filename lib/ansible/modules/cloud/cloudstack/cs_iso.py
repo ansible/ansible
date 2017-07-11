@@ -36,6 +36,13 @@ options:
     description:
       - Name of the ISO.
     required: true
+  display_text:
+    description:
+      - Display text of the ISO.
+      - If not specified, C(name) will be used.
+    required: false
+    default: null
+    version_added: "2.4"
   url:
     description:
       - URL where the ISO can be downloaded from. Required if C(state) is present.
@@ -238,7 +245,7 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
     def _get_common_args(self):
         return {
             'name': self.module.params.get('name'),
-            'displaytext': self.module.params.get('name'),
+            'displaytext': self.get_or_fallback('display_text', 'name'),
             'isdynamicallyscalable': self.module.params.get('is_dynamically_scalable'),
             'ostypeid': self.get_os_type('id'),
             'bootable': self.module.params.get('bootable'),
@@ -348,6 +355,7 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
+        display_text=dict(),
         url=dict(),
         os_type=dict(),
         zone=dict(),
