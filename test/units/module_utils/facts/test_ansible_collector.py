@@ -25,6 +25,8 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 
 from ansible.module_utils.facts import collector
+from ansible.module_utils.facts import ansible_collector
+from ansible.module_utils.facts import namespace
 
 from ansible.module_utils.facts.other.facter import FacterFactCollector
 from ansible.module_utils.facts.other.ohai import OhaiFactCollector
@@ -48,10 +50,6 @@ from ansible.module_utils.facts.system.user import UserFactCollector
 # from ansible.module_utils.facts.hardware.base import HardwareCollector
 from ansible.module_utils.facts.network.base import NetworkCollector
 from ansible.module_utils.facts.virtual.base import VirtualCollector
-
-# module under test
-from ansible.modules.system import setup
-
 
 ALL_COLLECTOR_CLASSES = \
     [PlatformFactCollector,
@@ -109,11 +107,14 @@ def _collectors(module,
 
     # Add a collector that knows what gather_subset we used so it it can provide a fact
     collector_meta_data_collector = \
-        setup.CollectorMetaDataCollector(gather_subset=gather_subset,
-                                         module_setup=True)
+        ansible_collector.CollectorMetaDataCollector(gather_subset=gather_subset,
+                                                     module_setup=True)
     collectors.append(collector_meta_data_collector)
 
     return collectors
+
+
+ns = namespace.PrefixFactNamespace('ansible_facts', 'ansible_')
 
 
 # FIXME: this is brute force, but hopefully enough to get some refactoring to make facts testable
@@ -136,15 +137,14 @@ class TestInPlace(unittest.TestCase):
                                       all_collector_classes=all_collector_classes)
 
         fact_collector = \
-            setup.AnsibleFactCollector(collectors=collectors)
+            ansible_collector.AnsibleFactCollector(collectors=collectors,
+                                                   namespace=ns)
 
         res = fact_collector.collect(module=mock_module)
         self.assertIsInstance(res, dict)
-        self.assertIn('ansible_facts', res)
-        self.assertIsInstance(res['ansible_facts'], dict)
-        self.assertIn('env', res['ansible_facts'])
-        self.assertIn('gather_subset', res['ansible_facts'])
-        self.assertEqual(res['ansible_facts']['gather_subset'], ['all'])
+        self.assertIn('env', res)
+        self.assertIn('gather_subset', res)
+        self.assertEqual(res['gather_subset'], ['all'])
 
     def test1(self):
         gather_subset = ['all']
@@ -152,14 +152,14 @@ class TestInPlace(unittest.TestCase):
         collectors = self._collectors(mock_module)
 
         fact_collector = \
-            setup.AnsibleFactCollector(collectors=collectors)
+            ansible_collector.AnsibleFactCollector(collectors=collectors,
+                                                   namespace=ns)
 
         res = fact_collector.collect(module=mock_module)
         self.assertIsInstance(res, dict)
-        self.assertIn('ansible_facts', res)
         # just assert it's not almost empty
         # with run_command and get_file_content mock, many facts are empty, like network
-        self.assertGreater(len(res['ansible_facts']), 20)
+        self.assertGreater(len(res), 20)
 
     def test_empty_all_collector_classes(self):
         mock_module = self._mock_module()
@@ -169,13 +169,13 @@ class TestInPlace(unittest.TestCase):
                                       all_collector_classes=all_collector_classes)
 
         fact_collector = \
-            setup.AnsibleFactCollector(collectors=collectors)
+            ansible_collector.AnsibleFactCollector(collectors=collectors,
+                                                   namespace=ns)
 
         res = fact_collector.collect()
         self.assertIsInstance(res, dict)
-        self.assertIn('ansible_facts', res)
         # just assert it's not almost empty
-        self.assertLess(len(res['ansible_facts']), 3)
+        self.assertLess(len(res), 3)
 
 #    def test_facts_class(self):
 #        mock_module = self._mock_module()
@@ -207,7 +207,8 @@ class TestCollectedFacts(unittest.TestCase):
         collectors = self._collectors(mock_module)
 
         fact_collector = \
-            setup.AnsibleFactCollector(collectors=collectors)
+            ansible_collector.AnsibleFactCollector(collectors=collectors,
+                                                   namespace=ns)
         self.facts = fact_collector.collect(module=mock_module)
 
     def _collectors(self, module,
@@ -228,47 +229,33 @@ class TestCollectedFacts(unittest.TestCase):
 
     def _assert_basics(self, facts):
         self.assertIsInstance(facts, dict)
-        self.assertIn('ansible_facts', facts)
         # just assert it's not almost empty
-        self.assertGreaterEqual(len(facts['ansible_facts']), self.min_fact_count)
+        self.assertGreaterEqual(len(facts), self.min_fact_count)
         # and that is not huge number of keys
-        self.assertLess(len(facts['ansible_facts']), self.max_fact_count)
+        self.assertLess(len(facts), self.max_fact_count)
 
     # everything starts with ansible_ namespace
     def _assert_ansible_namespace(self, facts):
-        subfacts = facts['ansible_facts']
 
         # FIXME: kluge for non-namespace fact
-        subfacts.pop('module_setup', None)
-        subfacts.pop('gather_subset', None)
+        facts.pop('module_setup', None)
+        facts.pop('gather_subset', None)
 
-        for fact_key in subfacts:
+        for fact_key in facts:
             self.assertTrue(fact_key.startswith('ansible_'),
                             'The fact name "%s" does not startwith "ansible_"' % fact_key)
 
     def _assert_expected_facts(self, facts):
-        subfacts = facts['ansible_facts']
 
-        import pprint
-        pprint.pprint(subfacts)
-        subfacts_keys = sorted(subfacts.keys())
+        facts_keys = sorted(facts.keys())
         for expected_fact in self.expected_facts:
-            self.assertIn(expected_fact, subfacts_keys)
-        #    self.assertIsInstance(subfacts['ansible_env'], dict)
-
-        # self.assertIsInstance(subfacts['ansible_env'], dict)
-
-        # self._assert_ssh_facts(subfacts)
+            self.assertIn(expected_fact, facts_keys)
 
     def _assert_not_expected_facts(self, facts):
-        subfacts = facts['ansible_facts']
 
-        subfacts_keys = sorted(subfacts.keys())
+        facts_keys = sorted(facts.keys())
         for not_expected_fact in self.not_expected_facts:
-            self.assertNotIn(not_expected_fact, subfacts_keys)
-
-    def _assert_ssh_facts(self, subfacts):
-        self.assertIn('ssh_host_key_rsa_public', subfacts.keys())
+            self.assertNotIn(not_expected_fact, facts_keys)
 
 
 class ExceptionThrowingCollector(collector.BaseFactCollector):
