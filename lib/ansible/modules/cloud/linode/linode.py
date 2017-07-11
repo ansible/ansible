@@ -371,7 +371,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
         if not servers:
             for arg in (name, plan, distribution, datacenter):
                 if not arg:
-                    module.fail_json(msg='%s is required for active state' % arg)
+                    module.fail_json(msg='%s is required for %s state' % (arg, state))
             # Create linode entity
             new_server = True
 
@@ -407,7 +407,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
         if not disks:
             for arg in (name, linode_id, distribution):
                 if not arg:
-                    module.fail_json(msg='%s is required for active state' % arg)
+                    module.fail_json(msg='%s is required for %s state' % (arg, state))
             # Create disks (1 from distrib, 1 for SWAP)
             new_server = True
             try:
@@ -423,11 +423,14 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                     res = api.linode_disk_createfromdistribution(
                         LinodeId=linode_id, DistributionID=distribution,
                         rootPass=password, rootSSHKey=ssh_pub_key,
-                        Label='%s data disk (lid: %s)' % (name, linode_id), Size=size)
+                        Label='%s data disk (lid: %s)' % (name, linode_id),
+                        Size=size)
                 else:
                     res = api.linode_disk_createfromdistribution(
-                        LinodeId=linode_id, DistributionID=distribution, rootPass=password,
-                        Label='%s data disk (lid: %s)' % (name, linode_id), Size=size)
+                        LinodeId=linode_id, DistributionID=distribution,
+                        rootPass=password,
+                        Label='%s data disk (lid: %s)' % (name, linode_id),
+                        Size=size)
                 jobs.append(res['JobID'])
                 # Create SWAP disk
                 res = api.linode_disk_create(LinodeId=linode_id, Type='swap',
@@ -449,7 +452,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
         if not configs:
             for arg in (name, linode_id, distribution):
                 if not arg:
-                    module.fail_json(msg='%s is required for active state' % arg)
+                    module.fail_json(msg='%s is required for %s state' % (arg, state))
 
             # Check architecture
             for distrib in api.avail_distributions():
@@ -535,12 +538,11 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
             instances.append(instance)
 
     elif state in ('stopped'):
-        for arg in (name, linode_id):
-            if not arg:
-                module.fail_json(msg='%s is required for active state' % arg)
+        if not linode_id:
+            module.fail_json(msg='linode_id is required for stopped state')
 
         if not servers:
-            module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
+            module.fail_json(msg = 'Server (lid: %s) not found' % (linode_id))
 
         for server in servers:
             instance = getInstanceDetails(api, server)
@@ -556,12 +558,11 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
             instances.append(instance)
 
     elif state in ('restarted'):
-        for arg in (name, linode_id):
-            if not arg:
-                module.fail_json(msg='%s is required for active state' % arg)
+        if not linode_id:
+            module.fail_json(msg='linode_id is required for restarted state')
 
         if not servers:
-            module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
+            module.fail_json(msg = 'Server (lid: %s) not found' % (linode_id))
 
         for server in servers:
             instance = getInstanceDetails(api, server)
@@ -587,6 +588,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
     # Ease parsing if only 1 instance
     if len(instances) == 1:
         module.exit_json(changed=changed, instance=instances[0])
+
     module.exit_json(changed=changed, instances=instances)
 
 def main():
