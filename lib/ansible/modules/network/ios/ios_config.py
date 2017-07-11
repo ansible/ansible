@@ -343,7 +343,7 @@ def get_running_config(module, current_config=None):
         if not module.params['defaults'] and current_config:
             contents, banners = extract_banners(current_config.config_text)
         else:
-            flags = get_defaults_flag(module)
+            flags = get_defaults_flag(module) if module.params['defaults'] else None
             contents = get_config(module, flags=flags)
     contents, banners = extract_banners(contents)
     return NetworkConfig(indent=1, contents=contents), banners
@@ -489,8 +489,7 @@ def main():
         if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
             result['changed'] = True
             if not module.check_mode:
-                cmd = {'command': 'copy running-config startup-config', 'output': 'text'}
-                run_commands(module, [cmd])
+                run_commands(module, 'copy running-config startup-config')
             else:
                 module.warn('Skipping command `copy running-config startup-config` '
                             'due to check_mode.  Configuration not copied to '

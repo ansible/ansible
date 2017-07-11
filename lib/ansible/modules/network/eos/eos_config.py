@@ -362,10 +362,10 @@ def main():
     config = None
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
-        output = run_commands(module, 'show running-config')
-        config = NetworkConfig(indent=2, contents=output[0])
+        contents = get_config(module)
+        config = NetworkConfig(indent=2, contents=contents)
         if module.params['backup']:
-            result['__backup__'] = output[0]
+            result['__backup__'] = contents
 
     if any((module.params['src'], module.params['lines'])):
         match = module.params['match']
