@@ -219,9 +219,7 @@ def _get_vm_prop(vm, attributes):
     for attribute in attributes:
         try:
             result = getattr(result, attribute)
-        except AttributeError:
-            return None
-        except IndexError:
+        except (AttributeError, IndexError):
             return None
     return result
 
