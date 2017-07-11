@@ -20,7 +20,7 @@ description:
      - Create/delete an SSH key.
 version_added: "1.6"
 author: "Michael Gregson (@mgregson)"
-deprecated: Deprecated in 2.4. Use do_sshkeys instead
+deprecated: Deprecated in 2.4. Use digital_ocean_sshkeys instead
 options:
   state:
     description:
