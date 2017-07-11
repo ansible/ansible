@@ -89,7 +89,11 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.manageiq as manageiq_utils
+from ansible.module_utils.manageiq import (
+    check_client,
+    manageiq_argument_spec,
+    ManageIQ,
+)
 
 
 class ManageIQUser(object):
@@ -196,7 +200,7 @@ class ManageIQUser(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            manageiq_utils.manageiq_argument_spec(),
+            manageiq_argument_spec(),
             name=dict(required=True, type='str'),
             fullname=dict(required=False, type='str'),
             password=dict(required=False, type='str', no_log=True),
@@ -209,6 +213,7 @@ def main():
             ('state', 'present', ['fullname', 'group', 'password'])
         ],
     )
+    check_client(module)
 
     name = module.params['name']
     fullname = module.params['fullname']
@@ -217,7 +222,7 @@ def main():
     email = module.params['email']
     state = module.params['state']
 
-    manageiq = manageiq_utils.ManageIQ(module)
+    manageiq = ManageIQ(module)
     manageiq_user = ManageIQUser(manageiq)
     if state == "present":
         res_args = manageiq_user.create_or_update_user(name, fullname,

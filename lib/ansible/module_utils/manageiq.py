@@ -28,7 +28,19 @@
 
 
 import os
-from manageiq_client.api import ManageIQClient
+
+try:
+    from manageiq_client.api import ManageIQClient
+    HAS_CLIENT = True
+except ImportError:
+    HAS_CLIENT = False
+
+
+def check_client(module):
+    if not HAS_CLIENT:
+        module.fail_json(
+            msg='manageiq_client.api is required for this module'
+        )
 
 
 def manageiq_argument_spec():
