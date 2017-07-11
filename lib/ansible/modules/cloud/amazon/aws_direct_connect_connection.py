@@ -43,13 +43,12 @@ options:
     description:
       - The name of the Direct Connect connection. This is required to create a
         new connection. To recreate or delete a connection I(name) or I(connection_id)
-        is required. Modifying attributes of a connection with I(force_update) will
-        result in a new Direct Connect connection.
+        is required.
   connection_id:
     description:
       - The ID of the Direct Connect connection. I(name) or I(connection_id) is
         required to recreate or delete a connection. Modifying attributes of a
-        connection with I(force_update) will result in a new Direct Connect connection.
+        connection with I(force_update) will result in a new Direct Connect connection ID.
   location:
     description:
       -  Where the Direct Connect connection is located. Required when I(state=present).
@@ -164,7 +163,7 @@ def connection_exists(client, connection_id=None, connection_name=None, verify=T
     if len(response.get('connections', [])) == 1 and connection_id:
         if response['connections'][0]['connectionState'] != 'deleted':
             match.append(response['connections'][0]['connectionId'])
-            connection.append(response['connections'][0])
+            connection.extend(response['connections'])
 
     for each in response.get('connections', []):
         if connection_name == each['connectionName'] and each['connectionState'] != 'deleted':
@@ -176,13 +175,10 @@ def connection_exists(client, connection_id=None, connection_name=None, verify=T
         return match[0]
     elif verify:
         return False
-
     # not verifying if the connection exists; just return current connection info
-    else:
-        if len(connection) == 1:
-            return {'connection': connection[0]}
-        else:
-            return {'connection': {}}
+    elif len(connection) == 1:
+        return {'connection': connection[0]}
+    return {'connection': {}}
 
 
 @AWSRetry.backoff(**retry_params)
@@ -207,15 +203,10 @@ def create_connection(client, location, bandwidth, name, lag_id):
 
 
 def changed_properties(current_status, location, bandwidth):
-    changed = False
-
     current_bandwidth = current_status['bandwidth']
     current_location = current_status['location']
 
-    if (current_bandwidth != bandwidth or current_location != location):
-        changed = True
-
-    return changed
+    return (current_bandwidth != bandwidth or current_location != location)
 
 
 @AWSRetry.backoff(**retry_params)
@@ -246,8 +237,7 @@ def ensure_present(client, connection_id, connection_name, location, bandwidth, 
                                                     lag_id=lag_id,
                                                     forced_update=forced_update)
         elif update_associations(client, latest_state, connection_id, lag_id):
-            changed = True
-            latest_state = connection_status(client, connection_id=connection_id)['connection']
+            return True, connection_id
 
     # no connection found; create a new one
     else:
@@ -264,7 +254,7 @@ def ensure_absent(client, connection_id):
         delete_connection(client, connection_id)
         changed = True
 
-    return changed, {}
+    return changed
 
 
 def main():
@@ -312,7 +302,8 @@ def main():
                                                     forced_update=module.params.get('forced_update'))
             response = connection_status(connection, connection_id)
         elif state == 'absent':
-            changed, response = ensure_absent(connection, connection_id)
+            changed = ensure_absent(connection, connection_id)
+            response = {}
     except DirectConnectError as e:
         if e.response:
             module.fail_json(msg=e.msg, exception=e.last_traceback, **e.response)
