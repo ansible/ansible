@@ -144,8 +144,14 @@ class ManageIQUser(object):
                 changed=False,
                 msg="User {userid} already exist, no need for updates".format(userid=userid))
         url = '{api_url}/users/{user_id}'.format(api_url=self.manageiq.api_url, user_id=user.id)
-        resource = {'userid': userid, 'name': username, 'password': password,
-                    'group': {'id': group_id}, 'email': email}
+        resource = {'userid': userid, 'group': {'id': group_id}}
+        if username is not None:
+            resource['name'] = username
+        if password is not None:
+            resource['password'] = password
+        if email is not None:
+            resource['email'] = email
+
         try:
             result = self.manageiq.client.post(url, action='edit', resource=resource)
         except Exception as e:
