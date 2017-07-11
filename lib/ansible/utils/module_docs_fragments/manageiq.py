@@ -24,28 +24,25 @@ class ModuleDocFragment(object):
 options:
   miq_url:
     description:
-      - The ManageIQ environment url
-    default: MIQ_URL env var if set. otherwise, it is required to pass it
+      - ManageIQ environment url. C(MIQ_URL) env var if set. otherwise, it is required to pass it.
   miq_username:
     description:
-      - ManageIQ username
-    default: MIQ_USERNAME env var if set. otherwise, it is required to pass it
+      - ManageIQ username. C(MIQ_USERNAME) env var if set. otherwise, it is required to pass it.
   miq_password:
     description:
-      - ManageIQ password
-    default: MIQ_PASSWORD env var if set. otherwise, it is required to pass it
+      - ManageIQ password. C(MIQ_PASSWORD) env var if set. otherwise, it is required to pass it.
   validate_certs:
     required: False
     description:
-      - Whether SSL certificates should be verified for HTTPS requests
+      - Whether SSL certificates should be verified for HTTPS requests.
     default: True
     choices: ['True', 'False']
   ca_bundle_path:
     required: False
     description:
-      - The path to a CA_BUNDLE file or directory with certificates
+      - The path to a C(CA_BUNDLE) file or directory with certificates.
     default: null
 
 requirements:
-  - 'manageiq-client (source: https://github.com/ManageIQ/manageiq-api-client-python/)'
+  - 'manageiq-client U(https://github.com/ManageIQ/manageiq-api-client-python/)'
 """

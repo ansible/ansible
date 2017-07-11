@@ -36,35 +36,34 @@ description:
 options:
   name:
     description:
-      - The unique userid in manageiq, often mentioned as username
+      - The unique userid in manageiq, often mentioned as username.
     required: true
-    default: null
   fullname:
     description:
-      - The users' full name
+      - The users' full name.
     required: false
     default: null
   password:
     description:
-      - The users' password
+      - The users' password.
     required: false
     default: null
   group:
     description:
-      - The name of the group to which the user belongs
+      - The name of the group to which the user belongs.
     required: false
     default: null
   email:
     description:
-      - The users' E-mail address
+      - The users' E-mail address.
     required: false
     default: null
   state:
     description:
       - The state of the user
-      - On present, it will create the user if it does not exist or update the
-        user if the associated data is different
-      - On absent, it will delete the user if it exists
+      - On C(present), it will create the user if it does not exist or update the
+        user if the associated data is different.
+      - On C(absent), it will delete the user if it exists.
     required: False
     choices: ['present', 'absent']
     default: 'present'
@@ -73,16 +72,16 @@ options:
 EXAMPLES = '''
 - name: Create a new user in ManageIQ
   manageiq_user:
-    name: 'dkorn'
-    fullname: 'Daniel Korn'
-    password: '******'
+    name: 'jdoe'
+    fullname: 'Jane Doe'
+    password: 'VerySecret'
     group: 'EvmGroup-user'
-    email: 'dkorn@redhat.com'
-    state: 'present'
-    miq_url: 'http://localhost:3000'
+    email: 'someone@example.com'
+    miq_url: 'http://example.com:3000'
     miq_username: 'admin'
-    miq_password: '******'
+    miq_password: 'smartvm'
     validate_certs: False
+    state: 'present'
 '''
 
 RETURN = '''
