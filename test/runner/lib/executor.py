@@ -1262,7 +1262,11 @@ class EnvironmentDescription(object):
         :type command: list[str]
         :rtype: str
         """
-        stdout, stderr = raw_command(command, capture=True, cmd_verbosity=2)
+        try:
+            stdout, stderr = raw_command(command, capture=True, cmd_verbosity=2)
+        except SubprocessError:
+            return None  # all failures are equal, we don't care why it failed, only that it did
+
         return (stdout or '').strip() + (stderr or '').strip()
 
     @staticmethod
