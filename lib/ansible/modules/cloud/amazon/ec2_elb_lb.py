@@ -741,7 +741,7 @@ class ElbManager(object):
                                                           scheme=self.scheme)
         else:
             self.changed = True
-            self.staus = 'created'
+            self.status = 'created'
         if self.elb:
             # HACK: Work around a boto bug in which the listeners attribute is
             # always set to the listeners argument to create_load_balancer, and
@@ -1115,8 +1115,7 @@ class ElbManager(object):
                         self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
                 elif not self.module.boolean(self.stickiness['enabled']):
                     if len(elb_info.policies.lb_cookie_stickiness_policies):
-                        if elb_info.policies.lb_cookie_stickiness_policies[0].policy_name == self._policy_name(
-                                policy_type):
+                        if elb_info.policies.lb_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
                     else:
                         self.changed = False
@@ -1144,8 +1143,7 @@ class ElbManager(object):
                         self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
                 elif not self.module.boolean(self.stickiness['enabled']):
                     if len(elb_info.policies.app_cookie_stickiness_policies):
-                        if elb_info.policies.app_cookie_stickiness_policies[0].policy_name == self._policy_name(
-                                policy_type):
+                        if elb_info.policies.app_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
                     if not self.module.check_mode:
                         self._set_listener_policy(listeners_dict)
