@@ -233,6 +233,7 @@ EXAMPLES = '''
         - storage-full
         - taskqueue
         - bigquery
+        - https://www.googleapis.com/auth/ndev.clouddns.readwrite
       service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
       credentials_file: "/path/to/your-key.json"
       project_id: "your-project-name"
@@ -463,7 +464,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
     bad_perms = []
     if service_account_permissions:
         for perm in service_account_permissions:
-            if perm not in gce.SA_SCOPES_MAP:
+            if perm not in gce.SA_SCOPES_MAP and not perm.startswith('https://www.googleapis.com/auth'):
                 bad_perms.append(perm)
         if len(bad_perms) > 0:
             module.fail_json(msg='bad permissions: %s' % str(bad_perms))
