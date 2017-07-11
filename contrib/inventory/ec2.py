@@ -402,7 +402,7 @@ class Ec2Inventory(object):
             try:
                 os.makedirs(cache_dir)
             except(OSError):
-                print('Cache directory already exists. Skipping the step...')
+                pass
 
         cache_name = 'ansible-ec2'
         cache_id = self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID', self.credentials.get('aws_access_key_id'))
