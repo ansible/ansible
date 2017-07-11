@@ -205,7 +205,7 @@ def regex_search(value, regex, *args, **kwargs):
 
 def ternary(value, true_val, false_val):
     '''  value ? true_val : false_val '''
-    if value:
+    if bool(value):
         return true_val
     else:
         return false_val
