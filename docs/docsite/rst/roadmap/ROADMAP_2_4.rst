@@ -3,7 +3,7 @@ Ansible by Red Hat, Core 2.4
 ============================
 **Target: Aug/Mid-September 2017**
 
-.. toctree::
+.. contents:: Topics
 
 Administrivia and Process
 -------------------------
