@@ -86,6 +86,7 @@ import tempfile
 import traceback
 import grp
 import pwd
+import pipes
 import platform
 import errno
 import datetime
@@ -651,6 +652,45 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     return int(round(num * limit))
 
 
+def censor_args(args, no_log_values):
+    """create a printable version of the command for use
+    in reporting later, which strips out things like
+    passwords from the args list"""
+
+    to_clean_args = args
+
+    if PY2:
+        if isinstance(args, text_type):
+            to_clean_args = args.encode('utf-8')
+    else:
+        if isinstance(args, binary_type):
+            to_clean_args = args.decode('utf-8', errors='replace')
+
+    if isinstance(args, (text_type, binary_type)):
+        to_clean_args = shlex.split(to_clean_args)
+
+    clean_args = []
+    is_passwd = False
+
+    for arg in to_clean_args:
+        if is_passwd:
+            is_passwd = False
+            clean_args.append('********')
+            continue
+
+        if PASSWD_ARG_RE.match(arg):
+            sep_idx = arg.find('=')
+            if sep_idx > -1:
+                clean_args.append('%s=********' % arg[:sep_idx])
+                continue
+            else:
+                is_passwd = True
+
+        arg = heuristic_log_sanitize(arg, no_log_values)
+        clean_args.append(arg)
+    clean_args = ' '.join(pipes.quote(arg) for arg in clean_args)
+    return clean_args
+
 def is_executable(path):
     '''is the given path executable?
 
@@ -1046,6 +1086,7 @@ class AnsibleModule(object):
             f.close()
         except:
             return (False, None)
+
         path_mount_point = self.find_mount_point(path)
         for line in mount_data:
             (device, mount_point, fstype, options, rest) = line.split(' ', 4)
@@ -2499,36 +2540,7 @@ class AnsibleModule(object):
             if not os.environ['PYTHONPATH']:
                 del os.environ['PYTHONPATH']
 
-        # create a printable version of the command for use
-        # in reporting later, which strips out things like
-        # passwords from the args list
-        to_clean_args = args
-        if PY2:
-            if isinstance(args, text_type):
-                to_clean_args = to_bytes(args)
-        else:
-            if isinstance(args, binary_type):
-                to_clean_args = to_text(args)
-        if isinstance(args, (text_type, binary_type)):
-            to_clean_args = shlex.split(to_clean_args)
-
-        clean_args = []
-        is_passwd = False
-        for arg in to_clean_args:
-            if is_passwd:
-                is_passwd = False
-                clean_args.append('********')
-                continue
-            if PASSWD_ARG_RE.match(arg):
-                sep_idx = arg.find('=')
-                if sep_idx > -1:
-                    clean_args.append('%s=********' % arg[:sep_idx])
-                    continue
-                else:
-                    is_passwd = True
-            arg = heuristic_log_sanitize(arg, self.no_log_values)
-            clean_args.append(arg)
-        clean_args = ' '.join(shlex_quote(arg) for arg in clean_args)
+        clean_args = censor_args(args, self.no_log_values)
 
         if data:
             st_in = subprocess.PIPE
