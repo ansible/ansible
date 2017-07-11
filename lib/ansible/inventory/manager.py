@@ -515,9 +515,8 @@ class InventoryManager(object):
         results = []
 
         def __append_host_to_results(host):
-            if host.name not in results:
-                if not host.implicit:
-                    results.append(host)
+            if not host.implicit:
+                results.append(host)
 
         matched = False
         for group in self._inventory.groups.values():
