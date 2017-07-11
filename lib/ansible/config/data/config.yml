@@ -700,6 +700,15 @@ DEFAULT_LOG_PATH:
   value_type: path
   vars: []
   yaml: {key: defaults.log_path}
+DEFAULT_LOG_ONLY:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_LOG_ONLY}]
+  ini:
+  - {key: log_only, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.log_only}
 DEFAULT_LOOKUP_PLUGIN_PATH:
   default: ~/.ansible/plugins/lookup:/usr/share/ansible/plugins/lookup
   desc: 'TODO: write it'
