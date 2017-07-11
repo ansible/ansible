@@ -1227,7 +1227,6 @@ class PyVmomiHelper(object):
 
         # split the searchpath so we can iterate through it
         paths = [x.replace('/', '') for x in searchpath.split('/')]
-        paths = [x.strip() for x in paths if x.strip()]
         paths_total = len(paths) - 1
         position = 0
 

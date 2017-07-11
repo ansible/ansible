@@ -262,9 +262,9 @@ def gather_vm_facts(content, vm):
         facts['customvalues'][kn] = value_obj.value
 
     net_dict = {}
-    vmnet = _get_vm_prop(vm, 'vm.guest.net')
+    vmnet = _get_vm_prop(vm, ('guest', 'net'))
     if vmnet:
-        for device in vm.guest.net:
+        for device in vmnet:
             net_dict[device.macAddress] = list(device.ipAddress)
 
     for k, v in iteritems(net_dict):
@@ -332,7 +332,7 @@ def get_current_snap_obj(snapshots, snapob):
 
 def list_snapshots(vm):
     result = {}
-    snapshot = _get_vm_prop(vm, 'vm.snapshot')
+    snapshot = _get_vm_prop(vm, ('vm', 'snapshot'))
     if not snapshot:
         return result
     if vm.snapshot is None:
@@ -378,7 +378,7 @@ def connect_to_api(module, disconnect_atexit=True):
             service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
         else:
             module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
-    except Exception as e:
+    except:
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         context.verify_mode = ssl.CERT_NONE
         service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
