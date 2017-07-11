@@ -34,7 +34,7 @@ from ansible.utils.path import makedirs_safe
 
 
 DEFAULT_LENGTH = 20
-VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
+VALID_PARAMS = frozenset(('length', 'encrypt', 'rounds', 'chars'))
 
 
 def _parse_parameters(term):
@@ -72,6 +72,7 @@ def _parse_parameters(term):
     # Set defaults
     params['length'] = int(params.get('length', DEFAULT_LENGTH))
     params['encrypt'] = params.get('encrypt', None)
+    params['rounds'] = params.get('rounds', None)
 
     params['chars'] = params.get('chars', None)
     if params['chars']:
@@ -249,7 +250,7 @@ class LookupModule(LookupBase):
                 _write_password_file(b_path, content)
 
             if params['encrypt']:
-                password = do_encrypt(plaintext_password, params['encrypt'], salt=salt)
+                password = do_encrypt(plaintext_password, params['encrypt'], salt=salt, rounds=params['rounds'])
                 ret.append(password)
             else:
                 ret.append(plaintext_password)

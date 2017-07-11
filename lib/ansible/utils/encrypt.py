@@ -73,23 +73,28 @@ __all__ = ['do_encrypt']
 _LOCK = multiprocessing.Lock()
 
 
-def do_encrypt(result, encrypt, salt_size=None, salt=None):
+def do_encrypt(result, encrypt, salt_size=None, salt=None, rounds=None):
     if PASSLIB_AVAILABLE:
         try:
             crypt = getattr(passlib.hash, encrypt)
         except:
             raise AnsibleError("passlib does not support '%s' algorithm" % encrypt)
 
+        cryptargs = dict()
+
         if salt_size:
-            result = crypt.encrypt(result, salt_size=salt_size)
+            cryptargs['salt_size'] = salt_size
         elif salt:
             if crypt._salt_is_bytes:
                 salt = to_bytes(salt, encoding='ascii', errors='strict')
             else:
                 salt = to_text(salt, encoding='ascii', errors='strict')
-            result = crypt.encrypt(result, salt=salt)
-        else:
-            result = crypt.encrypt(result)
+            cryptargs['salt'] = salt
+
+        if rounds:
+            cryptargs['rounds'] = int(rounds)
+
+        result = crypt.encrypt(result, **cryptargs)
     else:
         raise AnsibleError("passlib must be installed to encrypt vars_prompt values")
 
