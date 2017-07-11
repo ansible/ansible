@@ -78,8 +78,9 @@ options:
     default: 0
   state:
     description:
-      - If C(mounted) or C(unmounted), the device will be actively mounted or
-        unmounted as needed and appropriately configured in I(fstab).
+      - If C(mounted), the device will be actively mounted and appropriately
+        configured in I(fstab).
+      - If C(unmounted), the device will be unmounted without changing I(fstab).
       - C(absent) and C(present) only deal with I(fstab) but will not affect
         current mounting.
       - If specifying C(mounted) and the mount point is not present, the mount
