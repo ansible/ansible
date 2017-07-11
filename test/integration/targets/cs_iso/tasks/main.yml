@@ -14,6 +14,7 @@
     name: "{{ cs_resource_prefix }}-iso"
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: Debian GNU/Linux 7(64-bit)
+    cross_zones: true
   register: iso
   check_mode: true
 - name: verify test download iso in check mode
@@ -26,6 +27,7 @@
     name: "{{ cs_resource_prefix }}-iso"
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: Debian GNU/Linux 7(64-bit)
+    cross_zones: true
   register: iso
 - name: verify test download iso
   assert:
@@ -33,12 +35,14 @@
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso"
+    - iso.cross_zones == true
 
 - name: test download iso idempotence
   cs_iso:
     name: "{{ cs_resource_prefix }}-iso"
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: Debian GNU/Linux 7(64-bit)
+    cross_zones: true
   register: iso
 - name: verify test download iso idempotence
   assert:
@@ -46,6 +50,7 @@
     - not iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso"
+    - iso.cross_zones == true
 
 - name: test update iso in check mdoe
   cs_iso:
@@ -53,6 +58,7 @@
     display_text: "{{ cs_resource_prefix }}-iso display_text"
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: CentOS 7
+    cross_zones: true
   register: iso
   check_mode: true
 - name: verify test update iso in check mode
@@ -61,6 +67,7 @@
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso"
+    - iso.cross_zones == true
 
 - name: test update iso
   cs_iso:
@@ -68,6 +75,7 @@
     display_text: "{{ cs_resource_prefix }}-iso display_text"
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: CentOS 7
+    cross_zones: true
   register: iso
 - name: verify test update iso
   assert:
@@ -75,12 +83,15 @@
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
+    - iso.cross_zones == true
 
 - name: test update iso idempotence
   cs_iso:
     name: "{{ cs_resource_prefix }}-iso"
+    display_text: "{{ cs_resource_prefix }}-iso display_text"
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: CentOS 7
+    cross_zones: true
   register: iso
 - name: verify test update iso idempotence
   assert:
@@ -88,11 +99,13 @@
     - not iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
+    - iso.cross_zones == true
 
 - name: test remove iso in check mode
   cs_iso:
     name: "{{ cs_resource_prefix }}-iso"
     state: absent
+    cross_zones: true
   register: iso
   check_mode: true
 - name: verify test remove iso in check mode
@@ -101,11 +114,13 @@
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
+    - iso.cross_zones == true
 
 - name: test remove iso
   cs_iso:
     name: "{{ cs_resource_prefix }}-iso"
     state: absent
+    cross_zones: true
   register: iso
 - name: verify test remove iso
   assert:
@@ -113,11 +128,13 @@
     - iso|changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
+    - iso.cross_zones == true
 
 - name: test remove iso idempotence
   cs_iso:
     name: "{{ cs_resource_prefix }}-iso"
     state: absent
+    cross_zones: true
   register: iso
 - name: verify test remove iso idempotence
   assert:
