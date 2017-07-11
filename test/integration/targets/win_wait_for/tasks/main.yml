@@ -93,7 +93,7 @@
 
 - name: run async task to remove file after a timeout
   win_command: powershell.exe "Start-Sleep -Seconds 5; Remove-Item -Path '{{test_win_wait_for_path}}\test.txt' -Force"
-  async: 10
+  async: 30
   poll: 0
 
 - name: wait for file to not exist - existing file
@@ -109,7 +109,7 @@
 
 - name: run async task to create file after a timeout
   win_command: powershell.exe "Start-Sleep -Seconds 5; New-Item -Path '{{test_win_wait_for_path}}\test.txt' -Type File"
-  async: 10
+  async: 30
   poll: 0
 
 - name: wait for file to exist - non existing file
@@ -151,7 +151,7 @@
 
 - name: run async task to populate file contents
   win_command: powershell.exe "Start-Sleep -Seconds 5; Set-Content -Path '{{test_win_wait_for_path}}\test.txt' -Value 'hello world`r`nfile contents`r`nEnd line'"
-  async: 10
+  async: 30
   poll: 0
 
 - name: wait for file contents to match regex - empty file
@@ -180,7 +180,7 @@
 
 - name: run async task to clear file contents
   win_command: powershell.exe "Start-Sleep -Seconds 5; Set-Content -Path '{{test_win_wait_for_path}}\test.txt' -Value 'hello world`r`nother contents for file`r`nEnd line'"
-  async: 10
+  async: 30
   poll: 0
 
 - name: wait for file content to not match regex
@@ -242,7 +242,7 @@
 
 - name: run async task to start web server
   win_command: powershell.exe -ExecutionPolicy Unrestricted "Start-Sleep -Seconds 5; {{test_win_wait_for_path}}\http-server.ps1"
-  async: 10
+  async: 30
   poll: 0
 
 - name: wait for port to come online
@@ -258,7 +258,7 @@
 
 - name: start web server
   win_command: powershell.exe -ExecutionPolicy Unrestricted -File {{test_win_wait_for_path}}\http-server.ps1
-  async: 10
+  async: 30
   poll: 0
 
 - name: wait for port that is already online
@@ -285,7 +285,7 @@
 
 - name: start web server for offline port test
   win_command: powershell.exe -ExecutionPolicy Unrestricted -File {{test_win_wait_for_path}}\http-server.ps1
-  async: 10
+  async: 30
   poll: 0
 
 - name: wait for port to go offline
