@@ -51,8 +51,7 @@ options:
   group:
     description:
       - The name of the group to which the user belongs.
-    required: false
-    default: null
+    required: true
   email:
     description:
       - The users' E-mail address.
@@ -203,7 +202,7 @@ def main():
             name=dict(required=True, type='str'),
             fullname=dict(required=False, type='str'),
             password=dict(required=False, type='str', no_log=True),
-            group=dict(required=False, type='str'),
+            group=dict(required=True, type='str'),
             email=dict(required=False, type='str'),
             state=dict(required=False, type='str',
                        choices=['present', 'absent'], defualt='present'),
