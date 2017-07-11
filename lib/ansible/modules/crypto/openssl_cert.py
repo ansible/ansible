@@ -47,10 +47,10 @@ options:
         choices: [ present, absent ]
         description:
             - Whether the certificate should exist or not, taking action if the state is different from what is stated.
-    dest:
+    path:
         required: true
         default: null
-        aliases: [ 'path', 'destfile' ]
+        aliases: [ 'dest', 'destfile' ]
         description:
             - Remote absolute path where the generated certificate file should be created or is already located.
     provider:
@@ -71,7 +71,7 @@ options:
         choices: [ True, False ]
         description:
             - Create a backup file including timestamp information in case you were overwriting an existing certificate.
-    csr:
+    csr_path:
         required: false
         description:
             - Path to the Certificate Signing Request (CSR) used to generate this certificate. This is not required in 'assertonly' mode.
@@ -81,7 +81,7 @@ options:
         description:
             - list of algorithms that you would accept the certificate to be signed with
               (e.g. ['sha256WithRSAEncryption', 'sha512WithRSAEncryption']).
-    privatekey:
+    privatekey_path:
         required: false
         description:
             - Path to the private key to use when signing the certificate.
@@ -204,23 +204,23 @@ notes:
 EXAMPLES = '''
 - name: Generate a Self Signed OpenSSL certificate
   openssl_cert:
-    dest: /etc/ssl/crt/ansible.com.crt
-    privatekey: /etc/ssl/private/ansible.com.pem
-    csr: /etc/ssl/csr/ansible.com.csr
+    path: /etc/ssl/crt/ansible.com.crt
+    privatekey_path: /etc/ssl/private/ansible.com.pem
+    csr_path: /etc/ssl/csr/ansible.com.csr
     provider: selfsigned
 
 - name: Generate a Let's Encrypt Certificate
   openssl_cert:
-    dest: /etc/ssl/crt/ansible.com.crt
-    csr: /etc/ssl/csr/ansible.com.csr
+    path: /etc/ssl/crt/ansible.com.crt
+    csr_path: /etc/ssl/csr/ansible.com.csr
     provider: letsencrypt
     letsencrypt_accountkey: /etc/ssl/private/ansible.com.pem
     letsencrypt_challenge_path: /etc/ssl/challenges/ansible.com/
 
 - name: Force (re-)generate a new Let's Encrypt Certificate
   openssl_cert:
-    dest: /etc/ssl/crt/ansible.com.crt
-    csr: /etc/ssl/csr/ansible.com.csr
+    path: /etc/ssl/crt/ansible.com.crt
+    csr_path: /etc/ssl/csr/ansible.com.csr
     provider: letsencrypt
     letsencrypt_accountkey: /etc/ssl/private/ansible.com.pem
     letsencrypt_challenge_path: /etc/ssl/challenges/ansible.com/
@@ -229,7 +229,7 @@ EXAMPLES = '''
 # Examples for some checks one could use the assertonly provider for:
 - name: Verify that an existing certificate was issued by the Let's Encrypt CA and is currently still valid
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
+    path: /etc/ssl/crt/example.com.crt
     provider: assertonly
     issuer:
       O: Let's Encrypt
@@ -237,7 +237,7 @@ EXAMPLES = '''
 
 - name: Ensure that a certificate uses a modern signature algorithm (no SHA1, MD5 or DSA)
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
+    path: /etc/ssl/crt/example.com.crt
     provider: assertonly
     signature_algorithms:
       - sha224WithRSAEncryption
@@ -251,32 +251,32 @@ EXAMPLES = '''
 
 - name: Ensure that the existing certificate belongs to the specified private key
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
-    privatekey: /etc/ssl/private/example.com.pem
+    path: /etc/ssl/crt/example.com.crt
+    privatekey_path: /etc/ssl/private/example.com.pem
     provider: assertonly
 
 - name: Ensure that the existing certificate is still valid at the winter solstice 2017
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
+    path: /etc/ssl/crt/example.com.crt
     provider: assertonly
     valid_at: 2017-12-21T16:28:00Z
 
 - name: Ensure that the existing certificate is still valid 2 weeks (1209600 seconds) from now
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
+    path: /etc/ssl/crt/example.com.crt
     provider: assertonly
     valid_in: 1209600
 
 - name: Ensure that the existing certificate does not use Diffie-Hellman
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
+    path: /etc/ssl/crt/example.com.crt
     provider: assertonly
     keyUsage_contains:
       - key_agreement: False
 
 - name: Ensure that the existing certificate is only used for digital signatures and encrypting other keys
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
+    path: /etc/ssl/crt/example.com.crt
     provider: assertonly
     keyUsage_only:
       - digital_signature: True
@@ -284,14 +284,14 @@ EXAMPLES = '''
 
 - name: Ensure that the existing certificate can be used for client authentication
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
+    path: /etc/ssl/crt/example.com.crt
     provider: assertonly
     extendedKeyUsage_contains:
       - clientAuth
 
 - name: Ensure that the existing certificate can only be used for client authentication and time stamping
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
+    path: /etc/ssl/crt/example.com.crt
     provider: assertonly
     extendedKeyUsage_only:
       - clientAuth
@@ -299,7 +299,7 @@ EXAMPLES = '''
 
 - name: Ensure that the existing certificate has a certain domain in its subjectAltName
   openssl_cert:
-    dest: /etc/ssl/crt/example.com.crt
+    path: /etc/ssl/crt/example.com.crt
     provider: assertonly
     subjectAltName_contains:
       - www.example.com
@@ -351,16 +351,16 @@ class Certificate(object):
 
     def __init__(self, module):
         self.state = module.params['state']
-        self.dest = module.params['dest']
+        self.path = module.params['path']
         self.force = module.params['force']
         self.provider = module.params['provider']
         self.signature_algorithms = module.params['signature_algorithms']
-        self.privatekey_path = module.params['privatekey']
+        self.privatekey_path = module.params['privatekey_path']
         self.issuer = module.params['issuer']
         self.subject = module.params['subject']
         self.has_expired = module.params['has_expired']
         self.version = module.params['version']
-        self.csr_path = module.params['csr']
+        self.csr_path = module.params['csr_path']
         self.module = module
         self.changed = True
         self.warnings = []
@@ -374,7 +374,7 @@ class Certificate(object):
         '''Remove the certificate'''
 
         try:
-            os.remove(self.dest)
+            os.remove(self.path)
         except OSError:
             self.changed = False
 
@@ -386,15 +386,15 @@ class Certificate(object):
     def check(self):
         '''Check properties of the generated certificate.'''
 
-        if not os.path.exists(self.dest):
-            self.module.fail_json(msg='The certificate at %s does not exist' % self.dest)
+        if not os.path.exists(self.path):
+            self.module.fail_json(msg='The certificate at %s does not exist' % self.path)
 
         # pyOpenSSL checks:
         try:
-            with open(self.dest, "r") as certfile:
+            with open(self.path, "r") as certfile:
                 cert = crypto.load_certificate(crypto.FILETYPE_PEM, certfile.read())
         except EnvironmentError:
-            self.module.fail_json(msg='Could not read file at %s' % self.dest)
+            self.module.fail_json(msg='Could not read file at %s' % self.path)
 
         if self.signature_algorithms is not None:
             if cert.get_signature_algorithm() not in self.signature_algorithms:
@@ -436,11 +436,16 @@ class Certificate(object):
             except EnvironmentError:
                 self.module.fail_json(msg='Could not read file at %s' % self.privatekey_path)
             try:
-                pubkey = privkey.to_cryptography_key().public_key()
-                cert_pubkey = cert.get_pubkey().to_cryptography_key()
-                if pubkey != cert_pubkey:
+                pubkey_e = privkey.to_cryptography_key().public_key().public_numbers().e
+                cert_pubkey_e = cert.get_pubkey().to_cryptography_key().public_numbers().e
+                if pubkey_e != cert_pubkey_e:
                     self.module.fail_json(
-                        msg="Certificate doesn't match the provided private key.")
+                        msg="Certificate public modulus doesn't match the provided private key.")
+                pubkey_n = privkey.to_cryptography_key().public_key().public_numbers().n
+                cert_pubkey_n = cert.get_pubkey().to_cryptography_key().public_numbers().n
+                if pubkey_n != cert_pubkey_n:
+                    self.module.fail_json(
+                        msg="Certificate public exponent doesn't match the provided private key.")
             except:
                 # The OpenSSL.crypto.PKey.to_cryptography_key() function is only available in pyOpenSSL >= 0.16.1
                 if self.module.params['warn']:
@@ -452,7 +457,7 @@ class Certificate(object):
         # TODO: re-evaluate in a few years if pyOpenSSL can be dropped as a requirement.
         use_cryptography = False
         try:
-            with open(self.dest, "rb") as certfile:
+            with open(self.path, "rb") as certfile:
                 crypto_cert = x509.load_pem_x509_certificate(certfile.read(), default_backend())
             use_cryptography = True
         except:
@@ -815,7 +820,7 @@ class SelfSignedCertificate(Certificate):
 
     def generate(self):
 
-        if not self.force and os.path.exists(self.dest):
+        if not self.force and os.path.exists(self.path):
             self.changed = False
             return
 
@@ -834,25 +839,25 @@ class SelfSignedCertificate(Certificate):
         cert.sign(self.privatekey, self.selfsigned_digest)
         self.certificate = cert
 
-        backupdest = ""
+        self.backupdest = ""
         if self.changed and not self.module.check_mode:
-            if self.backup and os.path.exists(self.dest):
-                backupdest = module.backup_local(self.dest)
+            if self.backup and os.path.exists(self.path):
+                self.backupdest = module.backup_local(self.path)
             try:
-                with open(self.dest, 'w') as cert_file:
+                with open(self.path, 'w') as cert_file:
                     cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.certificate))
             except EnvironmentError:
-                self.module.fail_json(msg='Could not write to file at %s' % self.dest)
+                self.module.fail_json(msg='Could not write to file at %s' % self.path)
 
     def dump(self):
 
         result = {
             'changed': self.changed,
-            'cert_path': self.dest,
+            'cert_path': self.path,
             'notBefore': self.notBefore,
             'notAfter': self.notAfter,
             'serial_number': self.serial_number,
-            'backup': backupdest,
+            'backup': self.backupdest,
             'warnings': self.warnings,
         }
 
@@ -867,13 +872,15 @@ class AssertOnlyCertificate(Certificate):
 
     def generate(self):
         '''Don't generate anything'''
-        pass
+
+        # This provider can not change anything, it only reads data
+        self.changed = False
 
     def dump(self):
 
         result = {
             'changed': self.changed,
-            'cert_path': self.dest,
+            'cert_path': self.path,
             'warnings': self.warnings,
         }
 
@@ -886,22 +893,29 @@ class LetsEncryptCertificate(Certificate):
     def __init__(self, module):
         Certificate.__init__(self, module)
         self.accountkey = module.params['letsencrypt_accountkey']
-        self.challenge_path = module.params['letsencrypt_challenge']
+        self.challenge_path = module.params['letsencrypt_challenge_path']
 
     def generate(self):
-        if not self.force and os.path.exists(self.dest):
+        if not self.force and os.path.exists(self.path):
             self.changed = False
             return
 
-        backupdest = ""
+        self.backupdest = ""
         if self.changed and not self.module.check_mode:
-            if self.backup and os.path.exists(self.dest):
-                backupdest = module.backup_local(self.dest)
+            if self.backup and os.path.exists(self.path):
+                self.backupdest = module.backup_local(self.path)
 
             # TODO (spredzy): Ugly part should be done directly by interacting
             # with the acme protocol through python-acme
             try:
-                os.system('acme-tiny --account-key %s --csr %s --acme-dir %s > %s' % (self.accountkey, self.csr_path, self.challenge_path, self.dest))
+                p = subprocess.Popen([
+                    'acme-tiny',
+                    '--account-key', self.accountkey,
+                    '--csr', self.csr_path,
+                    '--acme-dir', self.challenge_path], stdout=subprocess.PIPE)
+                crt = p.communicate()[0]
+                with open(self.path, 'w') as certfile:
+                    certfile.write(str(crt))
             except OSError as e:
                 raise CertificateError(e)
 
@@ -909,9 +923,9 @@ class LetsEncryptCertificate(Certificate):
 
         result = {
             'changed': self.changed,
-            'cert_path': self.dest,
+            'cert_path': self.path,
             'account_key': self.accountkey,
-            'backup': backupdest,
+            'backup': self.backupdest,
             'warnings': self.warnings,
         }
 
@@ -922,14 +936,14 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            dest=dict(required=True, aliases=['path', 'destfile'], type='path'),
+            path=dict(required=True, aliases=['dest', 'destfile'], type='path'),
             provider=dict(required=True, choices=['selfsigned', 'assertonly', 'letsencrypt'], type='str'),
             force=dict(default=False, type='bool'),
             backup=dict(default=False, type='bool'),
-            csr=dict(type='str'),
+            csr_path=dict(type='path'),
 
             # General properties of a certificate
-            privatekey=dict(type='path'),
+            privatekey_path=dict(type='path'),
             signature_algorithms=dict(type='list'),
             issuer=dict(type='dict'),
             subject=dict(type='dict'),
@@ -954,7 +968,7 @@ def main():
             selfsigned_notAfter=dict(default=315360000, type='int'),
 
             # provider: letsencrypt
-            letsencrypt_accountkey=dict(type='str'),
+            letsencrypt_accountkey=dict(type='path'),
             letsencrypt_challenge_path=dict(type='path'),
         ),
         mutually_exclusive=[
@@ -972,11 +986,11 @@ def main():
 
     provider = module.params['provider']
     if provider == 'selfsigned':
-        if module.params['csr'] is None:
+        if module.params['csr_path'] is None:
             module.fail_json(msg='No csr provided for selfsigned provider')
         cert = SelfSignedCertificate(module)
     elif provider == 'letsencrypt':
-        if module.params['csr'] is None:
+        if module.params['csr_path'] is None:
             module.fail_json(msg='No csr provided for letsencrypt provider')
         if module.params['letsencrypt_accountkey'] is None:
             module.fail_json(msg='No letsencrypt_accountkey provided for letsencrypt provider')
