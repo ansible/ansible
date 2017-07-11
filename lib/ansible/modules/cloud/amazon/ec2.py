@@ -673,9 +673,9 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
             except:
                 pass
 
-        # if int, we need to convert to a string
-        if isinstance(tags, int):
-            tags = str(tags)
+        # if not a string type, convert and make sure it's a text string
+        if not isinstance(tags, string_types):
+            tags = to_text(tags)
 
         # if string, we only care that a tag of that name exists
         if isinstance(tags, str):
@@ -696,7 +696,7 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
             filters.update(dict(("tag:" + tn, tv) for (tn, tv) in tags.items()))
 
         # lets check to see if the filters dict is empty, if so then stop
-        if bool(filters) is False:
+        if not filters:
             module.fail_json(msg="Filters based on tag is empty => tags: %s" % (tags))
 
     if state:
