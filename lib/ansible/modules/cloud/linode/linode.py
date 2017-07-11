@@ -334,6 +334,7 @@ def getInstanceDetails(api, server):
                                         'ip_id': ip['IPADDRESSID']})
     return instance
 
+
 def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_threshold, alert_bwout_enabled, alert_bwout_threshold,
                   alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled, alert_cpu_threshold, alert_diskio_enabled,
                   alert_diskio_threshold,backupweeklyday, backupwindow, displaygroup, plan, additional_disks, distribution,
@@ -368,10 +369,10 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
         #  - need config_id for linode_id - create config (need kernel)
 
         # Any create step triggers a job that need to be waited for.
+        # if no linode_id is provided, we assume that you would like to create a new linode
         if not servers:
-            for arg in (name, plan, distribution, datacenter):
-                if not arg:
-                    module.fail_json(msg='%s is required for active state' % arg)
+            # Any creation step requires a name, plan, distribution and datacenter
+            module.fail_on_missing_params(["name", "plan", "distribution", "datacenter"])
             # Create linode entity
             new_server = True
 
@@ -379,7 +380,8 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
             used_disk_space = 0 if additional_disks is None else sum(disk['Size'] for disk in additional_disks)
 
             try:
-                res = api.linode_create(DatacenterID=datacenter, PlanID=plan,
+                res = api.linode_create(DatacenterID=datacenter,
+                                        PlanID=plan,
                                         PaymentTerm=payment_term)
                 linode_id = res['LinodeID']
                 # Update linode Label to match name
@@ -397,7 +399,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
             except Exception as e:
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
-        #Add private IP to Linode
+        # Add private IP to Linode
         if private_ip:
             try:
                 res = api.linode_ip_addprivate(LinodeID=linode_id)
@@ -405,11 +407,10 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not disks:
-            for arg in (name, linode_id, distribution):
-                if not arg:
-                    module.fail_json(msg='%s is required for active state' % arg)
-            # Create disks (1 from distrib, 1 for SWAP)
-            new_server = True
+            if new_server:
+                module.fail_on_missing_params(["name", "distribution"])
+            else:
+                module.fail_on_missing_params(["name", "linode_id", "distribution"])
             try:
                 if not password:
                     # Password is required on creation, if not provided generate one
@@ -447,10 +448,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not configs:
-            for arg in (name, linode_id, distribution):
-                if not arg:
-                    module.fail_json(msg='%s is required for active state' % arg)
-
+            module.fail_on_missing_params(["name", "distribution"])
             # Check architecture
             for distrib in api.avail_distributions():
                 if distrib['DISTRIBUTIONID'] != distribution:
@@ -535,9 +533,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
             instances.append(instance)
 
     elif state in ('stopped'):
-        for arg in (name, linode_id):
-            if not arg:
-                module.fail_json(msg='%s is required for active state' % arg)
+        module.fail_on_missing_params(["linode_id"])
 
         if not servers:
             module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
@@ -556,12 +552,10 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
             instances.append(instance)
 
     elif state in ('restarted'):
-        for arg in (name, linode_id):
-            if not arg:
-                module.fail_json(msg='%s is required for active state' % arg)
+        module.fail_on_missing_params(["linode_id"])
 
         if not servers:
-            module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
+            module.fail_json(msg = 'Server with linode_ID %s not found' % (linode_id))
 
         for server in servers:
             instance = getInstanceDetails(api, server)
