@@ -67,7 +67,6 @@ options:
     description:
       - By default the module will not upload a certificate that is already uploaded into AWS.
         If set to True, it will upload the certificate as long as the name is unique.
-    required: false
     default: False
 
 
@@ -233,12 +232,12 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
 
 def load_data(cert, key, cert_chain):
     # if paths are provided rather than lookups read the files and return the contents
-    if os.path.isfile(cert):
+    if cert and os.path.isfile(cert):
         cert = open(cert, 'r').read().rstrip()
-    if os.path.isfile(key):
+    if key and os.path.isfile(key):
         key = open(key, 'r').read().rstrip()
-    if os.path.isfile(cert_chain):
-        cert_chain = open(module.params.get('cert_chain'), 'r').read()
+    if cert_chain and os.path.isfile(cert_chain):
+        cert_chain = open(cert_chain, 'r').read()
     return cert, key, cert_chain
 
 
@@ -251,9 +250,9 @@ def main():
         key=dict(no_log=True),
         cert_chain=dict(),
         new_name=dict(),
-        path=dict(default='/', required=False),
-        new_path=dict(required=False),
-        dup_ok=dict(required=False, type='bool')
+        path=dict(default='/'),
+        new_path=dict(),
+        dup_ok=dict(type='bool')
     )
     )
 
