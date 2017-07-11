@@ -515,7 +515,7 @@ class PyVmomiCache(object):
             if callable(xo):
                 continue
             xt = type(xo)
-            if xo is None or issubclass(xt, type(None)):
+            if xo is None:
                 data[x] = None
             elif issubclass(xt, list):
                 data[x] = []
