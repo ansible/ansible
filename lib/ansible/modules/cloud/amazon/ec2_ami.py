@@ -475,16 +475,14 @@ def create_image(module, ec2):
             elif img.state == 'failed':
                 module.fail_json(msg="AMI creation failed, please see the AWS console for more details")
         except boto.exception.EC2ResponseError as e:
-            if (
-                    'InvalidAMIID.NotFound' not in e.error_code and 'InvalidAMIID.Unavailable' not in e.error_code) and wait and i == wait_timeout - 1:
+            if (('InvalidAMIID.NotFound' not in e.error_code and 'InvalidAMIID.Unavailable' not in e.error_code) and wait and i == wait_timeout - 1):
                 module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer "
                                      "wait_timeout may help. %s: %s" % (e.error_code, e.error_message))
         finally:
             time.sleep(1)
 
     if img.state != 'available':
-        module.fail_json(
-            msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help.")
+        module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help.")
 
     if tags:
         try:
@@ -577,13 +575,11 @@ def update_image(module, ec2, image_id):
             if (('user_ids' in launch_permissions and launch_permissions['user_ids']) or
                     ('group_names' in launch_permissions and launch_permissions['group_names'])):
                 res = img.set_launch_permissions(**launch_permissions)
-            elif ('user_ids' in set_permissions and set_permissions['user_ids']) or (
-                    'group_names' in set_permissions and set_permissions['group_names']):
+            elif ('user_ids' in set_permissions and set_permissions['user_ids']) or ('group_names' in set_permissions and set_permissions['group_names']):
                 res = img.remove_launch_permissions(**set_permissions)
             else:
                 module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False)
-            module.exit_json(msg="AMI launch permissions updated", launch_permissions=launch_permissions,
-                             set_perms=set_permissions, changed=True)
+            module.exit_json(msg="AMI launch permissions updated", launch_permissions=launch_permissions, set_perms=set_permissions, changed=True)
         else:
             module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False)
 
@@ -635,8 +631,7 @@ def main():
 
         # Changed is always set to true when provisioning new AMI
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
-            module.fail_json(
-                msg='instance_id or device_mapping (register from ebs snapshot) parameter is required for new image')
+            module.fail_json(msg='instance_id or device_mapping (register from ebs snapshot) parameter is required for new image')
         if not module.params.get('name'):
             module.fail_json(msg='name parameter is required for new image')
         create_image(module, ec2)
