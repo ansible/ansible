@@ -45,11 +45,11 @@ options:
     description:
       - List of interfaces to check the VRF has been
         configured correctly.
-  collection:
+  aggregate:
     description: List of VRFs definitions
   purge:
     description:
-      - Purge VRFs not defined in the collections parameter.
+      - Purge VRFs not defined in the aggregates parameter.
     default: no
   state:
     description:
@@ -154,7 +154,7 @@ def main():
         name=dict(required=True),
         interfaces=dict(type='list'),
         rd=dict(),
-        collection=dict(),
+        aggregate=dict(),
         purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )

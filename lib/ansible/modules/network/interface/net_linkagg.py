@@ -55,11 +55,11 @@ options:
     description:
       - Minimum members that should be up
         before bringing up the link aggregation group.
-  collection:
+  aggregate:
     description: List of link aggregation definitions.
   purge:
     description:
-      - Purge link aggregation groups not defined in the collections parameter.
+      - Purge link aggregation groups not defined in the aggregates parameter.
     default: no
   state:
     description:

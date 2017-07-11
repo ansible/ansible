@@ -64,11 +64,11 @@ options:
   rx_rate:
     description:
       - Receiver rate
-  collection:
+  aggregate:
     description: List of Interfaces definitions.
   purge:
     description:
-      - Purge Interfaces not defined in the collections parameter.
+      - Purge Interfaces not defined in the aggregates parameter.
         This applies only for logical interface.
     default: no
   state:

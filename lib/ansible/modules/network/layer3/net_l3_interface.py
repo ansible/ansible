@@ -43,11 +43,11 @@ options:
   ipv6:
     description:
       - IPv6 of the L3 interface.
-  collection:
+  aggregate:
     description: List of L3 interfaces definitions
   purge:
     description:
-      - Purge L3 interfaces not defined in the collections parameter.
+      - Purge L3 interfaces not defined in the aggregates parameter.
     default: no
   state:
     description:

@@ -315,7 +315,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', aliases=['collection']),
+        users=dict(type='list', aliases=['collection', 'aggregate']),
         username=dict(aliases=['name']),
 
         password=dict(no_log=True),

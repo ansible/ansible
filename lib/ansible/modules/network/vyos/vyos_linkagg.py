@@ -47,11 +47,11 @@ options:
   members:
     description:
       - List of members of the link aggregation group.
-  collection:
+  aggregate:
     description: List of link aggregation definitions.
   purge:
     description:
-      - Purge link aggregation groups not defined in the collections parameter.
+      - Purge link aggregation groups not defined in the aggregates parameter.
     default: no
   state:
     description:
@@ -174,8 +174,8 @@ def map_config_to_obj(module):
 def map_params_to_obj(module):
     obj = []
 
-    if 'collection' in module.params and module.params['collection']:
-        for c in module.params['collection']:
+    if 'aggregate' in module.params and module.params['aggregate']:
+        for c in module.params['aggregate']:
             d = c.copy()
 
             if 'state' not in d:
@@ -205,7 +205,7 @@ def main():
                            'adaptive-load-balance', 'xor-hash', 'on'],
                   default='802.3ad'),
         members=dict(type='list'),
-        collection=dict(type='list'),
+        aggregate=dict(type='list'),
         purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
@@ -213,8 +213,8 @@ def main():
 
     argument_spec.update(vyos_argument_spec)
 
-    required_one_of = [['name', 'collection']]
-    mutually_exclusive = [['name', 'collection']]
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            supports_check_mode=True)

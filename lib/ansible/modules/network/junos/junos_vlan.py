@@ -49,11 +49,11 @@ options:
     description:
       - List of interfaces to check the VLAN has been
         configured correctly.
-  collection:
+  aggregate:
     description: List of VLANs definitions.
   purge:
     description:
-      - Purge VLANs not defined in the collections parameter.
+      - Purge VLANs not defined in the aggregates parameter.
     default: no
   state:
     description:
@@ -144,7 +144,7 @@ def main():
         vlan_id=dict(required=True, type='int'),
         description=dict(),
         interfaces=dict(),
-        collection=dict(),
+        aggregate=dict(),
         purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')

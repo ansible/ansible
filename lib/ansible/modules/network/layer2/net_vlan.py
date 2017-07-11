@@ -43,11 +43,11 @@ options:
   interfaces:
     description:
       - List of interfaces the VLAN should be configured on.
-  collection:
+  aggregate:
     description: List of VLANs definitions.
   purge:
     description:
-      - Purge VLANs not defined in the collections parameter.
+      - Purge VLANs not defined in the aggregates parameter.
     default: no
   state:
     description:
