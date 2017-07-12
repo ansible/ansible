@@ -427,7 +427,7 @@ def extract(item, container, morekeys=None):
         try:
             value = reduce(lambda d, k: d[k], morekeys, value)
         except KeyError:
-            value = Undefined()
+            value = None
 
     return value
 
