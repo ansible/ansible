@@ -50,19 +50,16 @@ options:
     default: "/"
   cert_chain:
     description:
-      - The path to the CA certificate chain in PEM encoded format.
-        As of 2.4 this can also be accomplished using a lookup plugin.
-        See examples.
+      - The path to, or content of the CA certificate chain in PEM encoded format.
+        As of 2.4 content is accepted. If the parameter is not a file, it is assumed to be content.
   cert:
     description:
-      - The path to the certificate body in PEM encoded format.
-        As of 2.4 this can also be accomplished using a lookup plugin.
-        See examples.
+      - The path to, or content of the certificate body in PEM encoded format.
+        As of 2.4 content is accepted. If the parameter is not a file, it is assumed to be content.
   key:
     description:
-      - The path to the private key of the certificate in PEM encoded format.
-        As of 2.4 this can also be accomplished using a lookup plugin.
-        See examples.
+      - The path to, or content of the private key in PEM encoded format.
+        As of 2.4 content is accepted. If the parameter is not a file, it is assumed to be content.
   dup_ok:
     description:
       - By default the module will not upload a certificate that is already uploaded into AWS.
