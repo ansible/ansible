@@ -8,14 +8,20 @@
    register: eos_eapi_output
    connection: local
 
- - name: enable ethernet interfaces
-   eos_config:
-     lines:
-       - int Ethernet1
-       - no shutdown
-       - no switchport
-       - int Ethernet2
-       - no shutdown
-       - no switchport
-     provider: "{{ cli }}"
-   connection: local
+- name: Enable Ethernet1 interface and disable switchport
+  eos_config:
+    lines:
+      - no shutdown
+      - no switchport
+    parents: int Ethernet1
+    authorize: yes
+  connection: local
+
+- name: Enable Ethernet2 interface and disable switchport
+  eos_config:
+    lines:
+      - no shutdown
+      - no switchport
+    parents: int Ethernet2
+    authorize: yes
+  connection: local
