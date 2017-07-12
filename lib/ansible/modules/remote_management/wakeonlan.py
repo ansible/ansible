@@ -102,18 +102,20 @@ def wakeonlan(module, mac, broadcast, port):
     for i in range(0, len(padding), 2):
         data = b''.join([data, struct.pack('B', int(padding[i: i + 2], 16))])
 
+    # Broadcast payload to network
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
     if not module.check_mode:
 
-        # Broadcast payload to network
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         try:
             sock.sendto(data, (broadcast, port))
         except socket.error:
             e = get_exception()
             sock.close()
             module.fail_json(msg=str(e))
-        sock.close()
+
+    sock.close()
 
 
 def main():
