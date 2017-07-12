@@ -5,7 +5,6 @@ Ansible Core 2.1
 
 .. contents:: Topics
 
-
 Windows
 -------
 - General
