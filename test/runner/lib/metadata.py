@@ -5,6 +5,7 @@ import json
 
 from lib.util import (
     display,
+    is_shippable,
 )
 
 from lib.diff import (
@@ -18,6 +19,11 @@ class Metadata(object):
         """Initialize metadata."""
         self.changes = {}  # type: dict [str, tuple[tuple[int, int]]
         self.cloud_config = None  # type: dict [str, str]
+
+        if is_shippable():
+            self.ci_provider = 'shippable'
+        else:
+            self.ci_provider = ''
 
     def populate_changes(self, diff):
         """
@@ -47,6 +53,7 @@ class Metadata(object):
         return dict(
             changes=self.changes,
             cloud_config=self.cloud_config,
+            ci_provider=self.ci_provider,
         )
 
     def to_file(self, path):
@@ -80,5 +87,6 @@ class Metadata(object):
         metadata = Metadata()
         metadata.changes = data['changes']
         metadata.cloud_config = data['cloud_config']
+        metadata.ci_provider = data['ci_provider']
 
         return metadata
