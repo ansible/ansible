@@ -2,20 +2,7 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "AllowOldRDSModule",
-            "Effect": "Allow",
-            "Action": [
-                "rds:DescribeDBInstances",
-                "rds:CreateDBInstance",
-                "rds:ModifyDBInstance",
-                "rds:DeleteDBInstance"
-            ],
-            "Resource": [
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:ansible-testing*"
-            ]
-        },
-        {
-            "Sid": "AllowRDSModuleCompatibilityTests",
+            "Sid": "AllowRDSModuleTests",
             "Effect": "Allow",
             "Action": [
                 "rds:DescribeDBInstances",
