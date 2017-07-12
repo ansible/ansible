@@ -35,15 +35,12 @@ class OpenSSLObjectError(Exception):
     pass
 
 
-def get_fingerprint(path, passphrase):
+def get_fingerprint(path, passphrase=None):
     """Generate the fingerprint of the public key. """
 
     fingerprint = {}
 
-    privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                        open(path, 'rb').read(),
-                                        passphrase)
-
+    privatekey = load_privatekey(path, passphrase)
     try:
         publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
         for algo in hashlib.algorithms:
@@ -63,10 +60,14 @@ def load_privatekey(path, passphrase=None):
     """Load the specified OpenSSL private key."""
 
     try:
-        privatekey_content = open(path, 'rb').read()
-        privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                            privatekey_content,
-                                            passphrase)
+        if passphrase:
+            privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                                open(path, 'rb').read(),
+                                                passphrase)
+        else:
+            privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                                open(path, 'rb').read())
+
         return privatekey
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
