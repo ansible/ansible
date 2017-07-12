@@ -63,6 +63,13 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: vyos_logging
+        when: "limit_to in ['*', 'vyos_logging']"
+      rescue:
+        - set_fact: test_failed=true
+
 
 ###########
     - name: Has any previous test failed?
