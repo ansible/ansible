@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: do_floating_ip_facts
+module: digital_ocean_floating_ip_facts
 short_description: DigitalOcean Floating IPs facts
 description:
      - Fetch DigitalOcean Floating IPs facts.
@@ -44,7 +44,7 @@ requirements:
 
 EXAMPLES = '''
 - name: "Create a Floating IP in region lon1"
-  do_floating_ip_facts:
+  digital_ocean_floating_ip_facts:
     register: result
 '''
 
