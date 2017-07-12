@@ -5,7 +5,6 @@
   nxos_config:
     lines:
       - feature nxapi
-      - feature nxapi sandbox
     provider: "{{ cli }}"
   ignore_errors: yes
 
