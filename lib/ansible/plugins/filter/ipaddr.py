@@ -46,6 +46,17 @@ def _empty_ipaddr_query(v, vtype):
             return str(v)
 
 
+def _first_last(v):
+    if v.size == 2:
+        first_usable = int(netaddr.IPAddress(v.first))
+        last_usable = int(netaddr.IPAddress(v.last))
+        return first_usable, last_usable
+    elif v.size > 1:
+        first_usable = int(netaddr.IPAddress(v.first + 1))
+        last_usable = int(netaddr.IPAddress(v.last - 1))
+        return first_usable, last_usable
+
+
 def _6to4_query(v, vtype, value):
     if v.version == 4:
 
@@ -92,13 +103,19 @@ def _gateway_query(v):
             return str(v.ip) + '/' + str(v.prefixlen)
 
 
+def _address_prefix_query(v):
+    if v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + '/' + str(v.prefixlen)
+
+
 def _bool_ipaddr_query(v):
     if v:
         return True
 
 
 def _broadcast_query(v):
-    if v.size > 1:
+    if v.size > 2:
         return str(v.broadcast)
 
 
@@ -112,6 +129,17 @@ def _cidr_lookup_query(v, iplist, value):
             return value
     except:
         return False
+
+
+def _first_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size == 2:
+            return str(netaddr.IPAddress(int(v.network)))
+        elif v.size > 1:
+            return str(netaddr.IPAddress(int(v.network) + 1))
 
 
 def _host_query(v):
@@ -133,6 +161,31 @@ def _int_query(v, vtype):
         return str(int(v.ip)) + '/' + str(int(v.prefixlen))
 
 
+def _ip_prefix_query(v):
+    if v.size == 2:
+        return str(v.ip) + '/' + str(v.prefixlen)
+    elif v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + '/' + str(v.prefixlen)
+
+
+def _ip_netmask_query(v):
+    if v.size == 2:
+        return str(v.ip) + ' ' + str(v.netmask)
+    elif v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + ' ' + str(v.netmask)
+
+'''
+def _ip_wildcard_query(v):
+    if v.size == 2:
+        return str(v.ip) + ' ' + str(v.hostmask)
+    elif v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + ' ' + str(v.hostmask)
+'''
+
+
 def _ipv4_query(v, value):
     if v.version == 6:
         try:
@@ -148,6 +201,16 @@ def _ipv6_query(v, value):
         return str(v.ipv6())
     else:
         return value
+
+
+def _last_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size > 1:
+            first_usable, last_usable = _first_last(v)
+            return str(netaddr.IPAddress(last_usable))
 
 
 def _link_local_query(v, value):
@@ -183,12 +246,50 @@ def _netmask_query(v):
 
 
 def _network_query(v):
+    '''Return the network of a given IP or subnet'''
     if v.size > 1:
         return str(v.network)
 
 
+def _network_id_query(v):
+    '''Return the network of a given IP or subnet'''
+    return str(v.network)
+
+
+def _network_netmask_query(v):
+    return str(v.network) + ' ' + str(v.netmask)
+
+
+def _network_wildcard_query(v):
+    return str(v.network) + ' ' + str(v.hostmask)
+
+
+def _next_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size > 1:
+            first_usable, last_usable = _first_last(v)
+            next_ip = int(netaddr.IPAddress(int(v.ip) + 1))
+            if next_ip >= first_usable and next_ip <= last_usable:
+                return str(netaddr.IPAddress(int(v.ip) + 1))
+
+
 def _prefix_query(v):
     return int(v.prefixlen)
+
+
+def _previous_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size > 1:
+            first_usable, last_usable = _first_last(v)
+            previous_ip = int(netaddr.IPAddress(int(v.ip) - 1))
+            if previous_ip >= first_usable and previous_ip <= last_usable:
+                return str(netaddr.IPAddress(int(v.ip) - 1))
 
 
 def _private_query(v, value):
@@ -204,6 +305,18 @@ def _public_query(v, value):
         return value
 
 
+def _range_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size > 1:
+            first_usable, last_usable = _first_last(v)
+            first_usable = str(netaddr.IPAddress(first_usable))
+            last_usable = str(netaddr.IPAddress(last_usable))
+            return "{0}-{1}".format(first_usable, last_usable)
+
+
 def _revdns_query(v):
     v_ip = netaddr.IPAddress(str(v.ip))
     return v_ip.reverse_dns
@@ -211,6 +324,14 @@ def _revdns_query(v):
 
 def _size_query(v):
     return v.size
+
+
+def _size_usable_query(v):
+    if v.size == 1:
+        return 0
+    elif v.size == 2:
+        return 2
+    return v.size - 2
 
 
 def _subnet_query(v):
@@ -299,16 +420,21 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         '': ('vtype',),
         '6to4': ('vtype', 'value'),
         'cidr_lookup': ('iplist', 'value'),
+        'first_usable': ('vtype',),
         'int': ('vtype',),
         'ipv4': ('value',),
         'ipv6': ('value',),
+        'last_usable': ('vtype',),
         'link-local': ('value',),
         'loopback': ('value',),
         'lo': ('value',),
         'multicast': ('value',),
+        'next_usable': ('vtype',),
+        'previous_usable': ('vtype',),
         'private': ('value',),
         'public': ('value',),
         'unicast': ('value',),
+        'range_usable': ('vtype',),
         'wrap': ('vtype', 'value'),
     }
 
@@ -316,40 +442,54 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         '': _empty_ipaddr_query,
         '6to4': _6to4_query,
         'address': _ip_query,
-        'address/prefix': _gateway_query,
+        'address/prefix': _address_prefix_query,  # deprecate
         'bool': _bool_ipaddr_query,
         'broadcast': _broadcast_query,
         'cidr': _cidr_query,
         'cidr_lookup': _cidr_lookup_query,
-        'gateway': _gateway_query,
-        'gw': _gateway_query,
+        'first_usable': _first_usable_query,
+        'gateway': _gateway_query,  # deprecate
+        'gw': _gateway_query,  # deprecate
         'host': _host_query,
-        'host/prefix': _gateway_query,
+        'host/prefix': _address_prefix_query,  # deprecate
         'hostmask': _hostmask_query,
-        'hostnet': _gateway_query,
+        'hostnet': _gateway_query,  # deprecate
         'int': _int_query,
         'ip': _ip_query,
+        'ip/prefix': _ip_prefix_query,
+        'ip_netmask': _ip_netmask_query,
+        # 'ip_wildcard': _ip_wildcard_query, built then could not think of use case
         'ipv4': _ipv4_query,
         'ipv6': _ipv6_query,
+        'last_usable': _last_usable_query,
         'link-local': _link_local_query,
         'lo': _loopback_query,
         'loopback': _loopback_query,
         'multicast': _multicast_query,
         'net': _net_query,
+        'next_usable': _next_usable_query,
         'netmask': _netmask_query,
         'network': _network_query,
+        'network_id': _network_id_query,
+        'network/prefix': _subnet_query,
+        'network_netmask': _network_netmask_query,
+        'network_wildcard': _network_wildcard_query,
         'prefix': _prefix_query,
+        'previous_usable': _previous_usable_query,
         'private': _private_query,
         'public': _public_query,
+        'range_usable': _range_usable_query,
         'revdns': _revdns_query,
-        'router': _gateway_query,
+        'router': _gateway_query,  # deprecate
         'size': _size_query,
+        'size_usable': _size_usable_query,
         'subnet': _subnet_query,
         'type': _type_query,
         'unicast': _unicast_query,
         'v4': _ipv4_query,
         'v6': _ipv6_query,
         'version': _version_query,
+        'wildcard': _hostmask_query,
         'wrap': _wrap_query,
     }
 
@@ -631,6 +771,135 @@ def nthhost(value, query=''):
     return False
 
 
+# Returns the next nth usable ip within a network described by value.
+def next_nth_usable(value, offset):
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        v = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if type(offset) != int:
+        raise errors.AnsibleFilterError('Must pass in an interger')
+    if v.size > 1:
+        first_usable, last_usable = _first_last(v)
+        nth_ip = int(netaddr.IPAddress(int(v.ip) + offset))
+        if nth_ip >= first_usable and nth_ip <= last_usable:
+            return str(netaddr.IPAddress(int(v.ip) + offset))
+
+
+# Returns the previous nth usable ip within a network described by value.
+def previous_nth_usable(value, offset):
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        v = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if type(offset) != int:
+        raise errors.AnsibleFilterError('Must pass in an interger')
+    if v.size > 1:
+        first_usable, last_usable = _first_last(v)
+        nth_ip = int(netaddr.IPAddress(int(v.ip) - offset))
+        if nth_ip >= first_usable and nth_ip <= last_usable:
+            return str(netaddr.IPAddress(int(v.ip) - offset))
+
+
+def _range_checker(ip_check, first, last):
+    '''
+    Tests whether an ip address is within the bounds of the first and last address.
+
+    :param ip_check: The ip to test if it is within first and last.
+    :param first: The first IP in the range to test against.
+    :param last: The last IP in the range to test against.
+
+    :return: bool
+    '''
+    if ip_check >= first and ip_check <= last:
+        return True
+    else:
+        return False
+
+
+def _address_normalizer(value):
+    '''
+    Used to validate an address or network type and return it in a consistent format.
+    This is being used for future use cases not currently available such as an address range.
+
+    :param value: The string representation of an address or network.
+
+    :return: The address or network in the normalized form.
+    '''
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address' or vtype == "network":
+            v = ipaddr(value, 'subnet')
+    except:
+        return False
+
+    return v
+
+
+def network_in_usable(value, test):
+    '''
+    Checks whether 'test' is a useable address or addresses in 'value'
+
+    :param: value: The string representation of an address or network to test against.
+    :param test: The string representation of an address or network to validate if it is within the range of 'value'.
+
+    :return: bool
+    '''
+    # normalize value and test variables into an ipaddr
+    v = _address_normalizer(value)
+    w = _address_normalizer(test)
+
+    # get first and last addresses as integers to compare value and test; or cathes value when case is /32
+    v_first = ipaddr(ipaddr(v, 'first_usable') or ipaddr(v, 'address'), 'int')
+    v_last = ipaddr(ipaddr(v, 'last_usable') or ipaddr(v, 'address'), 'int')
+    w_first = ipaddr(ipaddr(w, 'network') or ipaddr(w, 'address'), 'int')
+    w_last = ipaddr(ipaddr(w, 'broadcast') or ipaddr(w, 'address'), 'int')
+
+    if _range_checker(w_first, v_first, v_last) and _range_checker(w_last, v_first, v_last):
+        return True
+    else:
+        return False
+
+
+def network_in_network(value, test):
+    '''
+    Checks whether the 'test' address or addresses are in 'value', including broadcast and network
+
+    :param: value: The network address or range to test against.
+    :param test: The address or network to validate if it is within the range of 'value'.
+
+    :return: bool
+    '''
+    # normalize value and test variables into an ipaddr
+    v = _address_normalizer(value)
+    w = _address_normalizer(test)
+
+    # get first and last addresses as integers to compare value and test; or cathes value when case is /32
+    v_first = ipaddr(ipaddr(v, 'network') or ipaddr(v, 'address'), 'int')
+    v_last = ipaddr(ipaddr(v, 'broadcast') or ipaddr(v, 'address'), 'int')
+    w_first = ipaddr(ipaddr(w, 'network') or ipaddr(w, 'address'), 'int')
+    w_last = ipaddr(ipaddr(w, 'broadcast') or ipaddr(w, 'address'), 'int')
+
+    if _range_checker(w_first, v_first, v_last) and _range_checker(w_last, v_first, v_last):
+        return True
+    else:
+        return False
+
+
 # Returns the SLAAC address within a network for a given HW/MAC address.
 # Usage:
 #
@@ -726,12 +995,16 @@ class FilterModule(object):
         # IP addresses and networks
         'ipaddr': ipaddr,
         'ipwrap': ipwrap,
+        'ip4_hex': ip4_hex,
         'ipv4': ipv4,
         'ipv6': ipv6,
         'ipsubnet': ipsubnet,
+        'next_nth_usable': next_nth_usable,
+        'network_in_network': network_in_network,
+        'network_in_usable': network_in_usable,
         'nthhost': nthhost,
+        'previous_nth_usable': previous_nth_usable,
         'slaac': slaac,
-        'ip4_hex': ip4_hex,
 
         # MAC / HW addresses
         'hwaddr': hwaddr,
