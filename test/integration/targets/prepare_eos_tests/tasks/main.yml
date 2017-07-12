@@ -7,3 +7,10 @@
      provider: "{{ cli }}"
    register: eos_eapi_output
    connection: local
+
+ - name: enable ethernet interfaces
+   eos_config:
+     int Ethernet1
+     no shutdown
+     int Ethernet2
+     no shutdown
