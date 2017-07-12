@@ -1,0 +1,2 @@
+- set_fact:
+    canary_fact: '{{ canary2 }}'
