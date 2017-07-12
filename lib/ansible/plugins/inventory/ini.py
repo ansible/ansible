@@ -63,7 +63,7 @@ EXAMPLES:
       # other example config
       host1 # this is 'ungrouped'
 
-      # both hsots have same IP but diff ports, also 'ungrouped'
+      # both hosts have same IP but diff ports, also 'ungrouped'
       host2 ansible_host=127.0.0.1 ansible_port=44
       host3 ansible_host=127.0.0.1 ansible_port=45
 
