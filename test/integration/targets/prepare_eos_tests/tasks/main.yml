@@ -10,7 +10,10 @@
 
  - name: enable ethernet interfaces
    eos_config:
-     int Ethernet1
-     no shutdown
-     int Ethernet2
-     no shutdown
+     lines:
+       - int Ethernet1
+       - no shutdown
+       - int Ethernet2
+       - no shutdown
+   provider: "{{ cli }}"
+   connection: local
