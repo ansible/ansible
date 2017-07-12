@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: do_sshkeys_facts
+module: digital_ocean_sshkey_facts
 short_description: DigitalOcean SSH keys facts
 description:
      - Fetch DigitalOcean SSH keys facts.
@@ -44,7 +44,7 @@ requirements:
 
 EXAMPLES = '''
 - name: "List all sshkeys"
-  do_sshkeys_facts:
+  digital_ocean_sshkey_facts:
     register: result
 '''
 
