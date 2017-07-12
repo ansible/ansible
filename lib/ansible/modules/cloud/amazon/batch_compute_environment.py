@@ -460,7 +460,7 @@ def main():
             compute_resource_type=dict(required=True, default=None, choices=['EC2', 'SPOT']),
             minv_cpus=dict(type='int', required=True, default=None),
             maxv_cpus=dict(type='int', required=True, default=None),
-            desiredv_cpus=dict(type='int', required=True, default=None),
+            desiredv_cpus=dict(type='int', default=None),
             instance_types=dict(type='list', required=True, default=None),
             image_id=dict(default=None),
             subnets=dict(type='list', required=True, default=None),
