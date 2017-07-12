@@ -13,7 +13,9 @@
      lines:
        - int Ethernet1
        - no shutdown
+       - no switchport
        - int Ethernet2
        - no shutdown
+       - no switchport
    provider: "{{ cli }}"
    connection: local
