@@ -16,6 +16,5 @@
        - no switchport
        - int Ethernet2
        - no shutdown
-       - no switchport
-   provider: "{{ cli }}"
+     provider: "{{ cli }}"
    connection: local
