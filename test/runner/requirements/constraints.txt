@@ -5,3 +5,4 @@ sphinx < 1.6 ; python_version < '2.7' # sphinx 1.6 and later require python 2.7 
 yamllint != 1.8.0 ; python_version < '2.7' # yamllint 1.8.0 requires python 2.7+ while earlier/later versions do not
 isort < 4.2.8 # 4.2.8 changes import sort order requirements which breaks previously passing pylint tests
 pycrypto >= 2.6 # Need features found in 2.6 and greater
+ncclient >= 0.5.2 # Need features added in 0.5.2 and greater
