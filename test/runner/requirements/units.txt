@@ -24,4 +24,4 @@ f5-icontrol-rest ; python_version >= '2.7'
 deepdiff
 
 # requirement for modules using Netconf protocol
-ncclient >= '0.5.2'
+ncclient
