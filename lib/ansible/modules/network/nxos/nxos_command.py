@@ -249,8 +249,7 @@ def main():
                         break
                     conditionals.remove(item)
             except FailedConditionalError:
-                exc = get_exception()
-                module.fail_json(msg=str(exc))
+                pass
 
         if not conditionals:
             break
