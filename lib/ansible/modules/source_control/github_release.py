@@ -212,7 +212,7 @@ def main():
             draft=dict(required=False, type='bool', default=False),
             prerelease=dict(type='bool', default=False)
         ),
-        supports_check_mode=True,
+        supports_check_mode=False,
         required_one_of=(('password', 'token'),),
         mutually_exclusive=(
             ('password', 'token'),
