@@ -47,7 +47,7 @@ parent:
 Use:
 
     $ ./hacking/test-module -m module \
-        -a "{"parent": {"child": [{"item": "first", "val": "foo"}, {"item": "second", "val": "bar"}]}}"
+        -a '{"parent": {"child": [{"item": "first", "val": "foo"}, {"item": "second", "val": "bar"}]}}'
 
 Module-formatter
 ----------------
