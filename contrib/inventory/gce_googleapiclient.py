@@ -1,10 +1,82 @@
 #!/usr/bin/env python
-"""Usage provided by docoptcfg using the global DOCOPT_USAGE constant"""
+"""
+Google Cloud Engine Dynamic Inventory
+=====================================
+
+Before using:
+
+- Authentication: this script uses the same authentication as gcloud command
+  line. So, set it up before according to:
+        https://cloud.google.com/ml-engine/docs/quickstarts/command-line
+
+- Dependencies: it depends on google-api-python-client and docoptcfg. To
+  install them, run:
+        $ pip install google-api-python-client docoptcfg
+
+All parameters can be set in the following 3 different ways (in the order of
+precedence, least to higher):
+
+1. gce_googleapiclient.ini file:
+    Check included gce_googleapiclient.ini on how to use it.
+    The config file name can be overridden by using --config command line
+    parameter or GCE_CONFIG environment variable.
+
+2. Environment variables (prefixed by 'GCE_'):
+    The variables needs to be set with the same names as the parameters, but
+    with in UPPERCASE and underscore (_) instead of dashes (-)
+    Ex: to set --billing-account using environment variables you'd need to
+        create one called GCE_BILLING_ACCOUNT
+
+3. Command line arguments:
+
+Usage:
+    gce_googleapiclient.py [--project=PROJECT]... [--zone=ZONE]...
+        [--api-version=API_VERSION] [--billing-account=ACCOUNT_NAME]
+        [--config=CONFIG_FILE] [--num-threads=NUM_THREADS]
+        [options]
+
+Arguments:
+    -a API_VERSION --api-version=API_VERSION    The API version used to connect to GCE [default: v1]
+    -b ACCOUNT_NAME --billing-account=ACCOUNT_NAME The billing account associated with the projects you want to get
+                                                information. It is only needed to get the list of the projects
+                                                (when --project parameter isn' set)
+    -c CONFIG_FILE --config=CONFIG_FILE         Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
+    -p PROJECT --project PROJECT                Google Cloud projects to search for instances
+    -t NUM_THREADS --num-threads=NUM_THREADS    Enable multi-threading, set it to NUM_THREADS [default: 4]
+    -z ZONE --zone ZONE                         Google Cloud zones to search for instances
+
+Options:
+    -d --debug                                  Set debugging level to DEBUG on log file
+    -h --help                                   Prints the application help
+    -l --list                                   Needed by Ansible, but actually doesn't change anything
+
+Setting multiple values parameters:
+    Some parameters can have multiple values (ZONE and PROJECT) and to set them
+    use:
+
+1. Command line:
+    $ ./gce_googleapiclient.py (...) --zone zone1 --zone zone2 (...)
+
+2. Environment variables:
+    $ (...) GCE_ZONE0=zone1 GCE_ZONE1=zone2 (...) ./gce_googleapiclient.py
+        Obs: from docoptcfg documentation "(...) can set PREFIX_KEY=one,
+    PREFIX_KEY0=two, and so on (up to 99 is supported). They can also start at
+    1: PREFIX_KEY=one, PREFIX_KEY1=two, PREFIX_KEY2=three. They can even skip
+    the integer-less variable and do PREFIX_KEY0=one, PREFIX_KEY1=two and so
+    on. The first variable must start either integer-less or with 0."
+
+3. Config ini file:
+    [gce_googleapiclient.py]
+    (...)
+    zone = zone1
+           zone2
+    (...)
+        Obs: It is important to have at least one space or tab char before 'zone2'
+"""
 
 from __future__ import print_function
 
-from os.path import basename
-from sys import argv, version_info
+from sys import version_info, stderr
 
 import collections
 import json
@@ -30,42 +102,6 @@ from oauth2client.client import GoogleCredentials
 
 ENV_PREFIX = 'GCE_'
 DEFAULT_API_VERSION = 'v1'
-
-DOCOPT_USAGE = """
-Google Cloud Engine Dynamic Inventory
-=====================================
-
-Before using:
-
-- Authentication: this script uses the same authentication as
-                  gcloud command line. So, set it up before.
-- Dependencies: it depends mainly on google-api-python-client
-                and docoptcfg. So:
-
-$ pip install google-api-python-client docoptcfg
-
-Usage:
-    {script_name} (--project=PROJECT... | --all-projects --billing-account=ACCOUNT_NAME)
-                  [--zone=ZONE...|--all-zones]
-                  [--max-threads=NUM_THREADS]
-                  [options]
-
-
-Options:
-    --billing-account ACCOUNT_NAME --billing-account=ACCOUNT_NAME  Billing account name
-    --all-projects                                                 Looks for every avail project for billing account
-    --all-zones                                                    Looks for each zone
-    -a API_VERSION --api-version=API_VERSION                       The API version used to connect to GCE [default: {default_api_version}]
-    -c CONFIG_FILE --config=CONFIG_FILE                            Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
-    -l --list                                                      List all hosts (needed by Ansible, but actually doesn't do anything)
-    -t --num-threads NUM_THREADS                                   Enable multi-threading, set it to NUM_THREADS [default: 4]
-    -p PROJECT --project=PROJECT                                   The GCE project where you want to get the inventory
-    -z ZONE --zone=ZONE                                            The GCE zone where you ant to get the inventory
-    -h --help                                                      This message.
-
-All the parameters can also be set as environment variables
-using the 'GCE_' prefix (i.e. {envvar_prefix}API_VERSION=beta).
-""".format(script_name=basename(argv[0]), envvar_prefix=ENV_PREFIX, default_api_version=DEFAULT_API_VERSION)
 
 
 def get_all_billing_projects(billing_account_name, api_version=DEFAULT_API_VERSION):
@@ -239,22 +275,31 @@ def get_inventory(instances):
 
 
 def main(args):
+
+    if args['--debug']:
+        log.basicConfig(filename='gce_googleapiclient.log', level=log.DEBUG)
+    else:
+        log.basicConfig(level=log.ERROR)
+
     project_list = args['--project']
-    all_projects = args['--all-projects']
-    all_zones = args['--all-zones']
     zone_list = args['--zone']
     api_version = args['--api-version']
     billing_account_name = args['--billing-account']
     num_threads = int(args['--num-threads'])
 
+    if not project_list and not billing_account_name:
+        print("ERROR: You didn't specified any project (parameter: --project) which means you want all projects."
+              " However, to get the list of all projects, we need the billing account name (parameter: "
+              " --billing-account, format: billingAccounts/XXXXXX-XXXXXX-XXXXXX)", file=stderr)
+        exit(1)
+
     if num_threads < 1:
         num_threads = 1
 
-    instances = []
-
-    if all_projects and billing_account_name:
+    if not project_list:
         project_list = get_all_billing_projects(billing_account_name)
 
+    instances = []
     projects_queue = queue.Queue()
     projects_zones_queue = queue.Queue()
     instances_queue = queue.Queue()
@@ -266,7 +311,7 @@ def main(args):
         log.info('Spawning {} threads to get zone list on each project'.format(num_threads))
         threads = []
 
-        if all_zones:
+        if not zone_list:
             for _ in range(0, num_threads):
                 project_thread = threading.Thread(target=get_all_zones_in_project,
                                                   args=(projects_queue,
@@ -305,16 +350,15 @@ def main(args):
                      sort_keys=True,
                      indent=2))
 
-
 if __name__ == "__main__":
-    log.basicConfig(filename='gce_googleapiclient.log')
+    log.basicConfig(filename='gce_googleapiclient.log', level=log.DEBUG)
 
     try:
-        ARGS = docoptcfg(DOCOPT_USAGE,
+        ARGS = docoptcfg(__doc__,
                          config_option='--config',
                          env_prefix=ENV_PREFIX)
     except DocoptcfgFileError as exc:
         log.info('Failed reading: %s', str(exc))
-        ARGS = docoptcfg(DOCOPT_USAGE, env_prefix=ENV_PREFIX)
+        ARGS = docoptcfg(__doc__, env_prefix=ENV_PREFIX)
 
     main(ARGS)
