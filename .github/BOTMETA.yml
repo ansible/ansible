@@ -737,15 +737,16 @@ files:
   $modules/web_infrastructure/rundeck_project.py: nerzhul
   $modules/web_infrastructure/supervisorctl.py: inetfuture mattupstate
   $modules/web_infrastructure/taiga_issue.py: lekum
+  $modules/windows/: $team_windows
   $modules/windows/async_status.ps1: $team_windows
   $modules/windows/async_wrapper.ps1: $team_windows
   $modules/windows/setup.ps1: $team_ansible
   $modules/windows/slurp.ps1: $team_ansible
-  $modules/windows/win_acl.ps1: schwartzmx trondhindenes
+  $modules/windows/win_acl.ps1: h0nIg schwartzmx trondhindenes
   $modules/windows/win_acl.py: h0nIg schwartzmx trondhindenes
-  $modules/windows/win_acl_inheritance.ps1: $team_windows
+  $modules/windows/win_acl_inheritance.ps1: h0nIg
   $modules/windows/win_acl_inheritance.py: h0nIg
-  $modules/windows/win_chocolatey.ps1: nitzmahone smadam813
+  $modules/windows/win_chocolatey.ps1: elventear nitzmahone petemounce smadam813 trondhindenes
   $modules/windows/win_chocolatey.py: elventear nitzmahone petemounce smadam813 trondhindenes
   $modules/windows/win_command.ps1: $team_windows
   $modules/windows/win_command.py: $team_windows
@@ -753,15 +754,15 @@ files:
   $modules/windows/win_copy.py: jhawkesworth
   $modules/windows/win_defrag.ps1: $team_windows
   $modules/windows/win_defrag.py: $team_windows
-  $modules/windows/win_disk_image.ps1: $team_windows
+  $modules/windows/win_disk_image.ps1: nitzmahone
   $modules/windows/win_disk_image.py: nitzmahone
-  $modules/windows/win_dns_client.ps1: $team_windows
+  $modules/windows/win_dns_client.ps1: nitzmahone
   $modules/windows/win_dns_client.py: nitzmahone
-  $modules/windows/win_domain.ps1: $team_windows
+  $modules/windows/win_domain.ps1: nitzmahone
   $modules/windows/win_domain.py: nitzmahone
-  $modules/windows/win_domain_controller.ps1: $team_windows
+  $modules/windows/win_domain_controller.ps1: nitzmahone
   $modules/windows/win_domain_controller.py: nitzmahone
-  $modules/windows/win_domain_membership.ps1: $team_windows
+  $modules/windows/win_domain_membership.ps1: nitzmahone
   $modules/windows/win_domain_membership.py: nitzmahone
   $modules/windows/win_dotnet_ngen.ps1: petemounce
   $modules/windows/win_dotnet_ngen.py: petemounce
@@ -770,6 +771,7 @@ files:
   $modules/windows/win_environment.ps1: jhawkesworth
   $modules/windows/win_environment.py: jhawkesworth
   $modules/windows/win_feature.ps1: trondhindenes
+  $modules/windows/win_feature.py: trondhindenes
   $modules/windows/win_file.ps1: jhawkesworth
   $modules/windows/win_file.py: jhawkesworth
   $modules/windows/win_file_version.ps1: SamLiu79
@@ -780,7 +782,7 @@ files:
   $modules/windows/win_firewall.py: if-meaton
   $modules/windows/win_firewall_rule.ps1: TimothyVandenbrande ar7z1
   $modules/windows/win_firewall_rule.py: TimothyVandenbrande ar7z1
-  $modules/windows/win_get_url.ps1: jhawkesworth
+  $modules/windows/win_get_url.ps1: angstwad jhawkesworth
   $modules/windows/win_get_url.py: angstwad jhawkesworth
   $modules/windows/win_group.ps1: chrishoffman
   $modules/windows/win_group.py: chrishoffman
@@ -800,15 +802,15 @@ files:
   $modules/windows/win_msg.py: $team_windows
   $modules/windows/win_msi.ps1: sivel
   $modules/windows/win_msi.py: sivel
-  $modules/windows/win_nssm.ps1: smadam813
+  $modules/windows/win_nssm.ps1: georgefrank h0nIg smadam813
   $modules/windows/win_nssm.py: georgefrank h0nIg smadam813
-  $modules/windows/win_owner.ps1: jborean93
+  $modules/windows/win_owner.ps1: h0nIg jborean93
   $modules/windows/win_owner.py: h0nIg jborean93
   $modules/windows/win_package.ps1: trondhindenes
   $modules/windows/win_package.py: trondhindenes
-  $modules/windows/win_path.ps1: $team_windows
+  $modules/windows/win_path.ps1: nitzmahone
   $modules/windows/win_path.py: nitzmahone
-  $modules/windows/win_ping.ps1: nitzmahone
+  $modules/windows/win_ping.ps1: cchurch nitzmahone
   $modules/windows/win_ping.py: cchurch nitzmahone
   $modules/windows/win_psexec.ps1: dagwieers
   $modules/windows/win_psexec.py: dagwieers
@@ -833,13 +835,13 @@ files:
   $modules/windows/win_scheduled_task.py: petemounce
   $modules/windows/win_service.ps1: chrishoffman
   $modules/windows/win_service.py: chrishoffman
-  $modules/windows/win_share.ps1: jborean93
+  $modules/windows/win_share.ps1: daBONDi h0nIg jborean93
   $modules/windows/win_share.py: daBONDi h0nIg jborean93
-  $modules/windows/win_shell.ps1: $team_windows
+  $modules/windows/win_shell.ps1: nitzmahone
   $modules/windows/win_shell.py: nitzmahone
   $modules/windows/win_shortcut.ps1: dagwieers
   $modules/windows/win_shortcut.py: dagwieers
-  $modules/windows/win_stat.ps1: nitzmahone
+  $modules/windows/win_stat.ps1: cchurch nitzmahone
   $modules/windows/win_stat.py: cchurch nitzmahone
   $modules/windows/win_tempfile.ps1: dagwieers
   $modules/windows/win_tempfile.py: dagwieers
@@ -851,10 +853,11 @@ files:
   $modules/windows/win_updates.ps1: nitzmahone
   $modules/windows/win_updates.py: nitzmahone
   $modules/windows/win_uri.ps1: blakfeld
-  $modules/windows/win_user.ps1: nitzmahone
+  $modules/windows/win_uri.py: blakfeld
+  $modules/windows/win_user.ps1: angstwad cchurch nitzmahone
   $modules/windows/win_user.py: angstwad cchurch nitzmahone
-  $modules/windows/win_wakeonlan.ps1: $team_windows
-  $modules/windows/win_wakeonlan.py: $team_windows
+  $modules/windows/win_wakeonlan.ps1: dagwieers
+  $modules/windows/win_wakeonlan.py: dagwieers
   $modules/windows/win_webpicmd.ps1: petemounce
   $modules/windows/win_webpicmd.py: petemounce
   contrib/inventory:
