@@ -150,10 +150,12 @@ except ImportError:
 import time
 from ansible.module_utils.basic import AnsibleModule, get_exception
 
+
 def find_release(module, repository):
     tag_name = module.params.get('tag_name')
 
     return repository.release_from_tag(tag_name)
+
 
 def create_release(module, repository):
     params = module.params
@@ -167,13 +169,14 @@ def create_release(module, repository):
 
     return repository.create_release(tag_name, target_commitish, name, body, draft, prerelease)
 
+
 def update_release(module, release):
     params = module.params
 
-    requires_update=False
+    requires_update = False
     for attr_name in ['tag_name', 'target_commitish', 'name', 'body', 'draft', 'prerelease']:
         if getattr(release, attr_name) != params.get(attr_name):
-            requires_update=True
+            requires_update = True
             break
 
     if requires_update:
@@ -188,8 +191,10 @@ def update_release(module, release):
     else:
         return None
 
+
 def delete_release(_module, release):
     return release.delete()
+
 
 def main():
     module = AnsibleModule(
@@ -279,7 +284,7 @@ def main():
                 if update is None:
                     module.exit_json(changed=False, release=release.as_dict())
                 elif update:
-                    time.sleep(1) # Remote change is quick, but not immediate
+                    time.sleep(1)  # Remote change is quick, but not immediate
                     release = find_release(module, repository)
                     module.exit_json(changed=True, updated=True, release=release.as_dict())
                 else:
