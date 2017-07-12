@@ -45,10 +45,10 @@ options:
   record_type:
     description:
     - The type of DNS record name
-    - Currently, 'A', 'AAAA' is supported
+    - Currently, 'A', 'AAAA', and 'PTR' are supported
     required: false
     default: 'A'
-    choices: ['A', 'AAAA']
+    choices: ['A', 'AAAA', 'PTR']
   record_ip:
     description:
     - Manage DNS record name with this IP address.
@@ -99,6 +99,16 @@ EXAMPLES = '''
     record_type: 'AAAA'
     record_ip: '::1'
 
+# Ensure a PTR record is present
+- ipa_dnsrecord:
+    ipa_host: spider.example.com
+    ipa_pass: Passw0rd!
+    state: present
+    zone_name: 2.168.192.in-addr.arpa
+    record_name: 5
+    record_type: 'PTR'
+    record_ip: 'internal.ipa.example.com'
+
 # Ensure that dns record is removed
 - ipa_dnsrecord:
     name: host01
@@ -136,6 +146,8 @@ class DNSRecordIPAClient(IPAClient):
             item.update(a_part_ip_address=details['record_ip'])
         elif details['record_type'] == 'AAAA':
             item.update(aaaa_part_ip_address=details['record_ip'])
+        elif details['record_type'] == 'PTR':
+            item.update(ptr_part_hostname=details['record_ip'])
 
         return self._post_json(method='dnsrecord_add', name=zone_name, item=item)
 
@@ -156,6 +168,8 @@ def get_dnsrecord_dict(details=None):
         module_dnsrecord.update(arecord=details['record_ip'])
     elif details['record_type'] == 'AAAA' and details['record_ip']:
         module_dnsrecord.update(aaaarecord=details['record_ip'])
+    elif details['record_type'] == 'PTR' and details['record_ip']:
+        module_dnsrecord.update(ptrrecord=details['record_ip'])
     return module_dnsrecord
 
 
@@ -201,7 +215,7 @@ def ensure(module, client):
 
 
 def main():
-    record_types = ['A', 'AAAA']
+    record_types = ['A', 'AAAA', 'PTR']
     module = AnsibleModule(
         argument_spec=dict(
             zone_name=dict(type='str', required=True),
