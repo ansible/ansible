@@ -17,7 +17,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: ec2_elb_facts
@@ -93,6 +92,7 @@ try:
     import boto.ec2.elb
     from boto.ec2.tag import Tag
     from boto.exception import BotoServerError
+
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
