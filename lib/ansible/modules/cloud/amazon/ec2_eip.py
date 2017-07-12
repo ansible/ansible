@@ -317,12 +317,12 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                     raise EIPException("You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
             # Associate address object (provided or allocated) with instance
             assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id,
-                                                 check_mode)
+                                                   check_mode)
         else:
             instance = find_device(ec2, module, device_id, isinstance=False)
             # Associate address object (provided or allocated) with instance
             assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id,
-                                                 check_mode, isinstance=False)
+                                                   check_mode, isinstance=False)
 
         if instance.vpc_id:
             domain = 'vpc'
@@ -340,10 +340,10 @@ def ensure_absent(ec2, domain, address, device_id, check_mode, isinstance=True):
     if device_id:
         if isinstance:
             return disassociate_ip_and_device(ec2, address, device_id,
-                                                check_mode)
+                                              check_mode)
         else:
             return disassociate_ip_and_device(ec2, address, device_id,
-                                                check_mode, isinstance=False)
+                                              check_mode, isinstance=False)
     # releasing address
     else:
         return release_address(ec2, address, check_mode)
@@ -409,7 +409,7 @@ def main():
         if state == 'present':
             if device_id:
                 result = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
-                                    reuse_existing_ip_allowed, module.check_mode, isinstance=is_instance)
+                                        reuse_existing_ip_allowed, module.check_mode, isinstance=is_instance)
             else:
                 address = allocate_address(ec2, domain, reuse_existing_ip_allowed)
                 result = {'changed': True, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}
