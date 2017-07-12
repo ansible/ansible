@@ -449,16 +449,16 @@ class PyVmomiCache(object):
         result = find_obj(content, types, name)
         if result and confine_to_datacenter:
             if self.get_parent_datacenter(result).name != self.dc_name:
+                result = None
                 objects = self.get_all_objs(content, types, confine_to_datacenter=True)
                 for obj in objects:
-                    if obj.name == name:
+                    if name is None or obj.name == name:
                         return obj
-
         return result
 
     def get_all_objs(self, content, types, confine_to_datacenter=True):
         """ Wrapper around get_all_objs to set datacenter context """
-        objects = get_all_objs(content, [vim.Datastore])
+        objects = get_all_objs(content, types)
         if confine_to_datacenter:
             if hasattr(objects, 'items'):
                 # resource pools come back as a dictionary
