@@ -224,7 +224,6 @@ def upgrade_packages(module, available):
 def install_packages(module, names, state):
     upgrade = False
     to_install = []
-    to_upgrade = []
     for name in names:
         # Check if virtual package
         if query_virtual(module, name):
@@ -232,17 +231,17 @@ def install_packages(module, names, state):
             dependencies = get_dependencies(module, name)
             for dependency in dependencies:
                 if state == 'latest' and not query_latest(module, dependency):
-                    to_upgrade.append(dependency)
+                    upgrade = True
+                    to_install.append(dependency)
         else:
             if not query_package(module, name):
                 to_install.append(name)
             elif state == 'latest' and not query_latest(module, name):
-                to_upgrade.append(name)
-    if to_upgrade:
-        upgrade = True
-    if not to_install and not upgrade:
+                upgrade = True
+                to_install.append(name)
+    if not to_install:
         module.exit_json(changed=False, msg="package(s) already installed")
-    packages = " ".join(to_install) + " ".join(to_upgrade)
+    packages = " ".join(to_install)
     if upgrade:
         if module.check_mode:
             cmd = "%s add --upgrade --simulate %s" % (APK_PATH, packages)
