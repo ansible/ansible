@@ -83,7 +83,7 @@ EXAMPLES = '''
     key: "{{ lookup('file', 'path/to/key') }}"
     cert_chain: "{{ lookup('file', 'path/to/certchain') }}"
 
-# Basic server certificate upload without lookups
+# Basic server certificate upload
 - iam_cert:
     name: very_ssl
     state: present
