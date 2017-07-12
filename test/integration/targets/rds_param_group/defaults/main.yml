@@ -1,6 +1,6 @@
 ---
 rds_param_group:
-  name: rds-test-param-group
+  name: "{{ resource_prefix}}rds-param-group"
   description: "Test group for rds_param_group Ansible module"
   engine: postgres9.6
 
