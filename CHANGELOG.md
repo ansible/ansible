@@ -9,7 +9,7 @@ Ansible Changes By Release
 * New import/include keywords to replace the old bare `include` directives. The use of `static: {yes|no}` on such includes is now deprecated.
     - Using `import_*` (`import_playbook`, `import_tasks`, `import_role`) directives are static.
     - Using `include_*` (`include_tasks`, `include_role`) directives are dynamic.
-* Added fact namespacing, from now on facts will be available under `ansible_facts` namespace, without the `ansible_` prefix (i.e. `ansible_facts.os_distribution` vs `ansible_os_distribution`).
+* Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.ansible_os_distribution`).
   They will continue to be added into the main namespace directly, but now a configuration toggle to disable this, currently off my default, in the future it will be on by default.
   This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
 * new `order` play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
