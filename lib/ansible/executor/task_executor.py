@@ -566,9 +566,7 @@ class TaskExecutor:
                 return failed_when_result
 
             if 'ansible_facts' in result:
-                if not C.NAMESPACE_FACTS:
-                    vars_copy.update(result['ansible_facts'])
-                vars_copy.update({'ansible_facts': result['ansible_facts']})
+                vars_copy.update(result['ansible_facts'])
 
             # set the failed property if it was missing.
             if 'failed' not in result:
@@ -614,9 +612,7 @@ class TaskExecutor:
             variables[self._task.register] = wrap_var(result)
 
         if 'ansible_facts' in result:
-            if not C.NAMESPACE_FACTS:
-                variables.update(result['ansible_facts'])
-            variables.update({'ansible_facts': result['ansible_facts']})
+            variables.update(result['ansible_facts'])
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification

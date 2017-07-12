@@ -812,7 +812,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # then we remove them (except for ssh host keys)
         for r_key in remove_keys:
             if not r_key.startswith('ansible_ssh_host_key_'):
-                display.warning("Removed restricted key from module data: %s = %s" % (r_key, data[r_key]))
+                try:
+                    r_val = to_text(data[r_key])
+                    if len(r_val) > 24:
+                        r_val = '%s ... %s' % (r_val[:13], r_val[-6:])
+                except:
+                    r_val = ' <failed to convert value to a string> '
+                display.warning("Removed restricted key from module data: %s = %s" % (r_key, r_val))
                 del data[r_key]
 
         self._remove_internal_keys(data)
