@@ -36,7 +36,7 @@ $packageparams = Get-AnsibleParam -obj $params -name "params" -type "str"
 $allowemptychecksums = Get-AnsibleParam -obj $params -name "allow_empty_checksums" -type "bool" -default $false
 $ignorechecksums = Get-AnsibleParam -obj $params -name "ignore_checksums" -type "bool" -default $false
 $ignoredependencies = Get-AnsibleParam -obj $params -name "ignore_dependencies" -type "bool" -default $false
-$skipscripts Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
+$skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
 
 $result = @{
     changed = $false
@@ -152,7 +152,7 @@ Function Choco-Upgrade
         [Parameter(Mandatory=$false, Position=9)]
         [bool]$ignoredependencies,
         [Parameter(Mandatory=$false, Position=10)]
-        [int]$timeout
+        [int]$timeout,
         [Parameter(Mandatory=$false, Position=11)]
         [bool]$skipscripts
     )
@@ -259,7 +259,7 @@ Function Choco-Install
         [Parameter(Mandatory=$false, Position=10)]
         [bool]$ignoredependencies,
         [Parameter(Mandatory=$false, Position=11)]
-        [int]$timeout
+        [int]$timeout,
         [Parameter(Mandatory=$false, Position=12)]
         [bool]$skipscripts
     )
@@ -358,7 +358,7 @@ Function Choco-Uninstall
         [Parameter(Mandatory=$false, Position=3)]
         [bool]$force,
         [Parameter(Mandatory=$false, Position=4)]
-        [int]$timeout
+        [int]$timeout,
         [Parameter(Mandatory=$false, Position=5)]
         [bool]$skipscripts
 
