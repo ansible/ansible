@@ -291,6 +291,8 @@ def main():
         sys.stderr.write(traceback.format_exc())
         sys.exit("FAIL: %s" % e)
 
+    # disable logging on stdout, to avoid spurious debug logs to
+    # be outputted on stdout.
     C.DEFAULT_LOG_ONLY = True
 
     ssh = connection_loader.get('ssh', class_only=True)
