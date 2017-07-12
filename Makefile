@@ -319,3 +319,6 @@ docs: generate_asciidoc
 
 alldocs: docs webdocs
 
+version:
+	@echo $(VERSION)
+
