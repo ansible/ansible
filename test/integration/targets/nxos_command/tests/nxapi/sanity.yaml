@@ -1,0 +1,74 @@
+---
+- debug: msg="START TRANSPORT:NXAPI nxos_command sanity test"
+
+- name: "Disable feature BGP"
+  nxos_feature:
+    feature: bgp
+    state: disabled
+    provider: "{{ nxapi }}"
+
+- block:
+  - name: "Run show running-config bgp - should fail"
+    nxos_command:
+      commands:
+        - sh running-config bgp
+      provider: "{{ nxapi }}"
+    ignore_errors: yes
+    register: result
+
+  - assert: &fail
+      that:
+        - "result.failed == true"
+        - "'Input CLI command error' in result.msg"
+
+  - name: "Enable feature BGP"
+    nxos_feature:
+      feature: bgp
+      state: enabled
+      provider: "{{ nxapi }}"
+
+  - name: "Configure BGP defaults"
+    nxos_bgp: &configure_default
+      asn: 65535
+      router_id: 1.1.1.1
+      state: present
+      provider: "{{ nxapi }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Run show running-config bgp - should pass"
+    nxos_command:
+      commands:
+        - sh running-config bgp
+      provider: "{{ nxapi }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == false"
+        - "'65535' in result.stdout[0]"
+
+  - name: "Run an invalid command - should fail"
+    nxos_command:
+      commands:
+        - show interface bief
+      provider: "{{ nxapi }}"
+    ignore_errors: yes
+    register: result
+
+  - assert: *fail
+
+  rescue:
+  - debug: msg="nxos_command sanity test failure detected"
+
+  always:
+  - name: "Disable feature bgp"
+    nxos_feature:
+      feature: bgp
+      state: disabled
+      provider: "{{ nxapi }}"
+
+  - debug: msg="END TRANSPORT:NXAPI nxos_command sanity test"
