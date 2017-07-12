@@ -13,16 +13,6 @@ interface Ethernet1
 !
 interface Ethernet2
 !
-interface Ethernet3
-!
-interface Ethernet4
-!
-interface Ethernet5
-!
-interface Ethernet6
-!
-interface Ethernet7
-!
 !
 no ip routing
 !
