@@ -18,7 +18,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'curated'}
 
-
 DOCUMENTATION = '''
 ---
 module: ec2_tag
@@ -120,9 +119,9 @@ EXAMPLES = '''
     msg: '{{ ec2_tags.tags.Name }} {{ ec2_tags.tags.env }}'
 '''
 
-
 try:
     import boto.ec2
+
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -131,9 +130,9 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        resource = dict(required=True),
-        tags = dict(type='dict'),
-        state = dict(default='present', choices=['present', 'absent', 'list']),
+        resource=dict(required=True),
+        tags=dict(type='dict'),
+        state=dict(default='present', choices=['present', 'absent', 'list']),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -149,7 +148,7 @@ def main():
 
     # We need a comparison here so that we can accurately report back changed status.
     # Need to expand the gettags return format and compare with "tags" and then tag or detag as appropriate.
-    filters = {'resource-id' : resource}
+    filters = {'resource-id': resource}
     gettags = ec2.get_all_tags(filters=filters)
 
     dictadd = {}
@@ -163,14 +162,14 @@ def main():
         if not tags:
             module.fail_json(msg="tags argument is required when state is present")
         if set(tags.items()).issubset(set(tagdict.items())):
-            module.exit_json(msg="Tags already exists in %s." %resource, changed=False)
+            module.exit_json(msg="Tags already exists in %s." % resource, changed=False)
         else:
             for (key, value) in set(tags.items()):
                 if (key, value) not in set(tagdict.items()):
                     dictadd[key] = value
         if not module.check_mode:
             ec2.create_tags(resource, dictadd)
-        module.exit_json(msg="Tags %s created for resource %s." % (dictadd,resource), changed=True)
+        module.exit_json(msg="Tags %s created for resource %s." % (dictadd, resource), changed=True)
 
     if state == 'absent':
         if not tags:
@@ -185,10 +184,11 @@ def main():
                 dictremove[key] = value
         if not module.check_mode:
             ec2.delete_tags(resource, dictremove)
-        module.exit_json(msg="Tags %s removed for resource %s." % (dictremove,resource), changed=True)
+        module.exit_json(msg="Tags %s removed for resource %s." % (dictremove, resource), changed=True)
 
     if state == 'list':
         module.exit_json(changed=False, tags=tagdict)
+
 
 # import module snippets
 from ansible.module_utils.basic import *
