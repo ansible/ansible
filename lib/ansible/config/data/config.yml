@@ -1241,15 +1241,6 @@ MERGE_MULTIPLE_CLI_TAGS:
   value_type: boolean
   vars: []
   yaml: {key: defaults.merge_multiple_cli_tags}
-NAMESPACE_FACTS:
-  default: False
-  desc: 'TODO: write it'
-  env: [{name: ANSIBLE_RESTRICT_FACTS}]
-  ini:
-  - {key: restrict_facts_namespace, section: defaults}
-  value_type: boolean
-  vars: []
-  yaml: {key: defaults.restrict_facts_namespace}
 NETWORK_GROUP_MODULES:
   default: [eos, nxos, ios, iosxr, junos, ce, vyos, sros, dellos9, dellos10, dellos6]
   desc: 'TODO: write it'
@@ -1259,6 +1250,18 @@ NETWORK_GROUP_MODULES:
   value_type: list
   vars: []
   yaml: {key: defaults.network_group_modules}
+ONLY_NAMESPACE_FACTS:
+  default: False
+  desc:
+    - Facts normally get injected as top level variables, this setting prevents that.
+    - Facts are still available in the `ansible_facts` variable w/o the `ansible_` prefix.
+  env: [{name: ANSIBLE_RESTRICT_FACTS}]
+  ini:
+  - {key: restrict_facts_namespace, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.restrict_facts_namespace}
+  version_added: "2.4"
 PARAMIKO_HOST_KEY_AUTO_ADD:
   default: False
   desc: 'TODO: write it'
