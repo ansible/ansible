@@ -77,7 +77,7 @@ options:
   subnets:
     description:
       - "An array of subnets to add to this route table. Subnets may be specified by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'."
-    required: true
+    required: false
   tags:
     description:
       - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are
