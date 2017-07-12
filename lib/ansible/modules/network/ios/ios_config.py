@@ -495,7 +495,7 @@ def main():
             contents = running_config.config_text
 
         # recreate the object in order to process diff_ignore_lines
-        running_config = NetworkConfig(indent=1, contents=config_text, ignore_lines=diff_ignore_lines)
+        running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
 
         if module.params['diff_against'] == 'running':
             if module.check_mode:
