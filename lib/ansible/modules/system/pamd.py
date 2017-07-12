@@ -448,9 +448,7 @@ def insert_before_rule(service, old_rule, new_rule):
                     new_rule.rule_control !=
                     service.rules[index - 1].rule_control or
                     new_rule.rule_module_path !=
-                    service.rules[index - 1].rule_module_path or
-                    new_rule.rule_module_args !=
-                    service.rules[index - 1].rule_module_args):
+                    service.rules[index - 1].rule_module_path):
                 service.rules.insert(index, new_rule)
                 changed = True
             if changed:
@@ -475,9 +473,7 @@ def insert_after_rule(service, old_rule, new_rule):
                     new_rule.rule_control !=
                     service.rules[index + 1].rule_control or
                     new_rule.rule_module_path !=
-                    service.rules[index + 1].rule_module_path or
-                    new_rule.rule_module_args !=
-                    service.rules[index + 1].rule_module_args):
+                    service.rules[index + 1].rule_module_path):
                 service.rules.insert(index + 1, new_rule)
                 changed = True
             if changed:
