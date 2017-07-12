@@ -305,8 +305,8 @@ PARAM_TO_COMMAND_KEYMAP = {
     'neighbor': 'neighbor',
     'additional_paths_receive': 'capability additional-paths receive',
     'additional_paths_send': 'capability additional-paths send',
-    'advertise_map_exist': 'advertise-map',
-    'advertise_map_non_exist': 'advertise-map',
+    'advertise_map_exist': 'advertise-map exist',
+    'advertise_map_non_exist': 'advertise-map non-exist',
     'allowas_in': 'allowas-in',
     'allowas_in_max': 'allowas-in',
     'as_override': 'as-override',
@@ -599,7 +599,7 @@ def state_present(module, existing, proposed, candidate):
                 command += ' disable'
             commands.append(command)
         elif key.startswith('advertise-map'):
-            direction = key.split()[0]
+            direction = key.split()[1]
             commands.append('advertise-map {1} {0} {2}'.format(direction, *value))
         elif key in ['filter-list', 'prefix-list', 'route-map']:
             commands.append('{0} {1} {2}'.format(key, *value))
