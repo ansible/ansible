@@ -59,32 +59,32 @@ options:
         description:
             - Release tag name
             - Used when state=present|absent for release look up
-	version_added: "2.4"
+        version_added: "2.4"
     state:
         required: false
         description:
             - Desired state of the release
             - Must not be used with `action`
         choices: [ 'absent', 'present' ]
-	version_added: "2.4"
+        version_added: "2.4"
     target_commitish:
         required: false
         description:
             - Commit/branch ref
             - Required when state=present|absent
-	version_added: "2.4"
+        version_added: "2.4"
     draft:
         required: false
         default: False
         description:
             - Specifies draft status for release (see GitHub release docs)
-	version_added: "2.4"
+        version_added: "2.4"
     prerelease:
         required: false
         default: False
         description:
             - Specifies prerelease status for release (see GitHub release docs)
-	version_added: "2.4"
+        version_added: "2.4"
 
 author:
     - "Adrian Moisey (@adrianmoisey)"
