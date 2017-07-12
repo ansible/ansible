@@ -375,11 +375,9 @@ def to_command(module, commands):
 
     commands = transform(to_list(commands))
 
-    for index, item in enumerate(commands):
+    for item in commands:
         if is_json(item['command']):
             item['output'] = 'json'
-        elif is_text(item['command']):
-            item['output'] = 'text'
 
     return commands
 
