@@ -37,7 +37,12 @@ $resourcename = Get-AnsibleParam -obj $params -name "resource_name" -type "str" 
 $module_version = Get-AnsibleParam -obj $params -name "module_version" -type "str" -default "latest"
 
 #From Ansible 2.3 onwards, params is now a Hash Array
-$Attributes = $params.GetEnumerator() | where {$_.key -ne "resource_name"} | where {$_.key -notlike "_ansible_*"}
+$Attributes = $params.GetEnumerator() | 
+    Where-Object {
+        $_.key -ne "resource_name" -and
+        $_.key -ne "module_version" -and
+        $_.key -notlike "_ansible_*"
+    }
 
 if (!($Attributes))
 {
@@ -91,7 +96,15 @@ if (!$Resource)
 
 #Get the Module that provides the resource. Will be used as
 #mandatory argument for Invoke-DscResource
-$Module = $Resource.ModuleName
+$Module =  @{ 
+    ModuleName = $Resource.ModuleName
+    ModuleVersion = $Resource.Version
+}
+
+# Binary resources are not working very well with that approach - need to guesstimate module name/version
+if ( -not ($Module.ModuleName -or $Module.ModuleVersion)) {
+    $Module = 'PSDesiredStateConfiguration'
+}
 
 #grab the module version if we can
 try {
