@@ -593,6 +593,7 @@ def integration_environment(args, target, cmd):
     integration = dict(
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
         ANSIBLE_CALLBACK_WHITELIST='junit',
+        ANSIBLE_TEST_CI=args.metadata.ci_provider,
     )
 
     if args.debug_strategy:
