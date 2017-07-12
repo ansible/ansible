@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: do_floating_ip
+module: digital_ocean_floating_ip
 short_description: Manage DigitalOcean Floating IPs
 description:
      - Create/delete/assign a floating IP.
@@ -64,17 +64,17 @@ requirements:
 
 EXAMPLES = '''
 - name: "Create a Floating IP in regigin lon1"
-  do_floating_ip:
+  digital_ocean_floating_ip:
     state: present
     region: lon1
 
 - name: "Create a Floating IP assigned to Droplet ID 123456"
-  do_floating_ip:
+  digital_ocean_floating_ip:
     state: present
     droplet_id: 123456
 
 - name: "Delete a Floating IP with ip 1.2.3.4"
-  do_floating_ip:
+  digital_ocean_floating_ip:
     state: absent
     ip: "1.2.3.4"
 
