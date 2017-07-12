@@ -321,10 +321,8 @@ class VariableManager:
                     # allow facts to polute main namespace
                     all_vars = combine_vars(all_vars, host_facts)
 
-                # always return namespaced facts (which dont require ansible_ anymore)
+                # always return namespaced facts
                 all_vars = combine_vars(all_vars, {'ansible_facts': host_facts})
-                for k in tuple(host_facts):
-                    all_vars['ansible_facts'][k.replace('ansible_', '', 1)] = all_vars['ansible_facts'].pop(k)
 
             except KeyError:
                 pass
