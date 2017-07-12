@@ -128,16 +128,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-action: latest_release
----
 latest_release:
     description: Version of the latest release
     type: string
     returned: success
     sample: 1.1.0
-
-state: present
----
 release:
     description: Release details provided by GitHub
     type: dict
