@@ -22,10 +22,10 @@ __metaclass__ = type
 import string
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 
 from ansible.inventory.manager import InventoryManager, split_host_pattern
-from ansible.vars.manager import VariableManager
 
 from units.mock.loader import DictDataLoader
 
@@ -109,7 +109,7 @@ class TestInventory(unittest.TestCase):
             )
 
 
-class InventoryDefaultGroup(unittest.TestCase):
+class IniInventory(unittest.TestCase):
 
     def test_empty_inventory(self):
         inventory = self._get_inventory('')
@@ -141,6 +141,20 @@ class InventoryDefaultGroup(unittest.TestCase):
             host4
             host5
             """)
+
+    def test_ini_variables_stringify(self):
+        values = ['string', 'no', 'No', 'false', 'FALSE', [], False, 0]
+
+        inventory_content = "host1 "
+        inventory_content += ' '.join(['var%s=%s' % (i, to_text(x)) for i, x in enumerate(values)])
+        inventory = self._get_inventory(inventory_content)
+
+        variables = inventory.get_host('host1').vars
+        for i in range(len(values)):
+            if isinstance(values[i], string_types):
+                self.assertIsInstance(variables['var%s' % i], string_types)
+            else:
+                self.assertIsInstance(variables['var%s' % i], type(values[i]))
 
     def _get_inventory(self, inventory_content):
 
