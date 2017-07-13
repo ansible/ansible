@@ -132,13 +132,13 @@ if ($state -eq "absent") {
                 try {
                     $pagingFilesValues = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management").PagingFiles
                 } catch {
-                    Fail-Json $result "Failed to get pagefile settings from registry for workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
+                    Fail-Json $result "Failed to get pagefile settings from the registry for workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
                 }
                 $pagingFilesValues += "$fullPath $initialSize $maximumSize"
                 try {
                     Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" "PagingFiles" $pagingFilesValues
                 } catch {
-                    Fail-Json $result "Failed to set pagefile settings to registry for workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
+                    Fail-Json $result "Failed to set pagefile settings to the registry for workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
                 }
             }
         }
