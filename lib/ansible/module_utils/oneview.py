@@ -20,7 +20,12 @@ from __future__ import (absolute_import,
                         print_function,
                         unicode_literals)
 
-from future import standard_library
+try:
+    from future import standard_library
+    HAS_FUTURE = True
+except:
+    HAS_FUTURE = False
+    pass
 import json
 import logging
 import os
@@ -28,7 +33,9 @@ import collections
 from ansible.module_utils.basic import AnsibleModule
 from copy import deepcopy
 
-standard_library.install_aliases()
+if HAS_FUTURE:
+    standard_library.install_aliases()
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -50,6 +57,7 @@ class OneViewModuleBase(object):
     MSG_ALREADY_PRESENT = 'Resource is already present.'
     MSG_ALREADY_ABSENT = 'Resource is already absent.'
     HPE_ONEVIEW_SDK_REQUIRED = 'HPE OneView Python SDK is required for this module.'
+    FUTURE_PACKAGE_REQUIRED = 'The Future Python package is required for this module.'
 
     ONEVIEW_COMMON_ARGS = dict(
         config=dict(required=False, type='str')
@@ -107,6 +115,8 @@ class OneViewModuleBase(object):
     def __check_hpe_oneview_sdk(self):
         if not HAS_HPE_ONEVIEW:
             self.module.fail_json(msg=self.HPE_ONEVIEW_SDK_REQUIRED)
+        if not HAS_FUTURE:
+            self.module.fail_json(msg=self.FUTURE_PACKAGE_REQUIRED)
 
     def __create_oneview_client(self):
         if not self.module.params['config']:
@@ -554,8 +564,8 @@ class ServerProfileMerger(object):
         return merged_data
 
     def _merge_san_storage_paths(self, merged_data, resource):
-
-        existing_volumes_map = collections.OrderedDict([(i[SPKeys.ID], i) for i in resource[SPKeys.SAN][SPKeys.VOLUMES]])
+        existing_volumes_map = collections.OrderedDict([(i[SPKeys.ID], i) for i in resource[
+            SPKeys.SAN][SPKeys.VOLUMES]])
         merged_volumes = merged_data[SPKeys.SAN][SPKeys.VOLUMES]
         for merged_volume in merged_volumes:
             volume_id = merged_volume[SPKeys.ID]
