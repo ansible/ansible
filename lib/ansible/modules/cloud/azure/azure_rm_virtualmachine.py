@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
-#                    Chris Houseknecht, <house@redhat.com>
+# Copyright (c) 2016 Obezimnaka Boms, <t-ozboms@microsoft.com>
 #
 # This file is part of Ansible
 #
@@ -1228,13 +1227,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 try:
                     self.network_client.virtual_networks.list(self.virtual_network_resource_group, self.virtual_network_name)
                     virtual_network_name = self.virtual_network_name
-                except Exception as exc:
+                except CloudError:
                     self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
             else:
                 try:
                     self.network_client.virtual_networks.list(self.resource_group, self.virtual_network_name)
                     virtual_network_name = self.virtual_network_name
-                except Exception as exc:
+                except CloudError:
                     self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
         else:
             # Find a virtual network
