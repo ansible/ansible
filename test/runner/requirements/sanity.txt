@@ -7,5 +7,6 @@ pylint
 pytest
 rstcheck
 sphinx
+virtualenv
 voluptuous
 yamllint
