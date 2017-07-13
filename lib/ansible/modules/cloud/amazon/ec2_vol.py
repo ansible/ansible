@@ -609,8 +609,8 @@ def main():
     if not volume_size and not (id or name or snapshot):
         module.fail_json(msg="You must specify volume_size or identify an existing volume by id, name, or snapshot")
 
-    if volume_size and (id or snapshot):
-        module.fail_json(msg="Cannot specify volume_size together with id or snapshot")
+    if volume_size and id:
+        module.fail_json(msg="Cannot specify volume_size together with id")
 
     if state == 'present':
         volume, changed = create_volume(module, ec2, zone)
