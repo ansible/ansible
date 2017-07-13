@@ -122,7 +122,24 @@ if ($state -eq "absent") {
             try {
                 $pagefile.Put() | out-null
             } catch {
-                Fail-Json $result "Failed to set pagefile size $($_.Exception.Message)"
+                $originalExceptionMessage = $($_.Exception.Message)
+                # Try workaround before failing
+                try {
+                    Remove-Pagefile $fullPath -whatif:$check_mode
+                } catch {
+                    Fail-Json $result "Failed to remove pagefile before workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
+                }
+                try {
+                    $pagingFilesValues = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management").PagingFiles
+                } catch {
+                    Fail-Json $result "Failed to get pagefile settings from registry for workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
+                }
+                $pagingFilesValues += "$fullPath $initialSize $maximumSize"
+                try {
+                    Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" "PagingFiles" $pagingFilesValues
+                } catch {
+                    Fail-Json $result "Failed to set pagefile settings to registry for workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
+                }
             }
         }
         $result.changed = $true
