@@ -27,7 +27,7 @@ description:
     - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
 version_added: "2.0"
 author: Mark Chance(@Java1Guy)
-requirements: [ json, boto, botocore, boto3 ]
+requirements: [ botocore, boto3 ]
 options:
     state:
         description:
@@ -114,14 +114,9 @@ taskdefinition:
     type: dict
     returned: always
 '''
-try:
-    import boto
-    import botocore
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
 
 try:
+    import botocore
     import boto3
     HAS_BOTO3 = True
 except ImportError:
@@ -141,8 +136,8 @@ class EcsTaskManager:
             if not region:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg="Can't authorize connection - " % str(e))
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Unable to create connection.")
 
     def describe_task(self, task_name):
         try:
@@ -230,9 +225,6 @@ def main():
         volumes=dict(required=False, type='list')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
