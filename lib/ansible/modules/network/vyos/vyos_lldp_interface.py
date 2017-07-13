@@ -169,8 +169,8 @@ def main():
     )
 
     argument_spec.update(vyos_argument_spec)
-    required_one_of= [['name', 'aggregate']]
-    mutually_exclusive= [['name', 'aggregate']]
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
