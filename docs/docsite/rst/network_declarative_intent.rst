@@ -17,6 +17,9 @@ State what you want the end result to be, not how go get there
 This results in easier to understand playbooks, which internally deal with the differences between Network OS versions.
 
 
+Reminder: Ansible isn't a monitoring tool.
+
+
 
 Without declarative intent
 ==========================
@@ -87,18 +90,169 @@ Declarative intent modules also take a set of options that allow playbook design
 
    The `declarative intent modules` are new in Ansible 2.4 and is available in certain modules, see the modules documentation to see if the feature is available.
 
+Use cases
+==========
+
+Replacing ``wait_for``
+---------------------
+
+**Before:**
 
 
+.. code-block:: yaml
 
+   - name: configure interface
+
+**After:**
+
+
+.. code-block:: yaml
+
+   - name: configure interface
+
+
+**Advantages**
+
+* Cleaner playbooks
+* Easier to write
+* Q: Why else
+
+Q: Any disadvantages?
+* not all modules support declaritive_intent - raise an issue
+
+
+Physical then configuration
+---------------------------
+
+**Overview**
+
+* No point making configuration changes if someone hasn't plugged in the cable - simple case
+  * Checking the routing between connection - not just plugged in, but a route exists to the correct location - avoid cabling errors
+
+.. code-block:: yaml
+
+   - name: FIXME
+
+**When would this be useful**
+
+*
+
+**When would this not be useful**
+
+*
+
+Configuration then physical
+---------------------------
+
+Q: What would this look like
+
+**Overview**
+
+
+.. code-block:: yaml
+
+   - name: FIXME
+
+**When would this be useful**
+
+*
+
+**When would this not be useful**
+
+*
+
+Checking state only
+-------------------
+Q: What would this look like
+
+**Overview**
+
+
+.. code-block:: yaml
+
+   - name: FIXME
+
+**When would this be useful**
+
+*
+
+**When would this not be useful**
+
+*
+
+Configuration, cabling, check
+Q: What would this look like
+
+**Overview**
+
+
+.. code-block:: yaml
+
+   - name: FIXME
+
+**When would this be useful**
+
+*
+
+**When would this not be useful**
+
+*
+
+
+Rolling back: dealing with failure
+----------------------------------
+
+Block & Rescue
+
+* Roll back configuration?
+* Send (slack) notification that "{{ port }}" isn't configured, check cabling
+
+Q: What would this look like
+
+**Overview**
+
+
+.. code-block:: yaml
+
+   - name: FIXME
+
+**When would this be useful**
+
+*
+
+**When would this not be useful**
+
+*
+
+Implementation details
+======================
+
+``delay:`` option
+-----------------
+
+ ``delay:``
+
+* Why this option exists
+* is a wait, not a poll
+* When you might need to change the value - How might you tell
+* Only used when a change is made, therefore second runs are quicker
+
+If configuration fails
+------------------------
+
+* task with config & state - If config fails we never look at state, we will instantly fail. 
 
 
 
 FIXME
 =====
 
-The following need discussing further
-
 * Think about layout and readability
+
+
+Content
+-------
+
 * How to identify intended state options in docs (web or ansible-doc)
 
   * Marker in in text, colour & link to this page in web?
@@ -106,53 +260,29 @@ The following need discussing further
 
 * *configuration* vs *state* vs *physical*?
 * ``delay:``
-
-  * is a wait, not a poll
-  * Only used when a change is made
 * State options do not make configuration changes
   * wait_for is ugly and requires you to know the structure of returned data
 
 
-* **Short** description of the problem - Needs writing
-* **Example** showing the issue & solution
-* **Terms** - define them
-* **Detailed explanation** - Base on Peter's
-* **Use Cases**
-
-  * Replacing ``wait_for``
-  * Physical then configuration
-  * Configuration then physical
-  * Checking state only
-  * Rolling back: dealing with failure (block & rescue)
-
-* **Implementation details**
-
-  * ``delay:``
-
-    * is a wait, not a poll
-    * Only used when a change is made
 
 * Simplier playbooks (that using ``wait_for``)
 
 * Use Cases:
-  * Using Ansible to ensure physical connections
-
-    * No point making configuration changes if someone hasn't plugged in the cable - simple case
-    * Checking the routing between connection - not just plugged in, but a route exists to the correct location - avoid cabling errors
-
-  * Cabling then configuration
-  * Configuration, cabling, check
   * Reminder: Ansible isn't a monitoring tool
-  * task with config & state - If config fails we never look at state, we will instantly fail. 
+  * task with config & state - If config fails we never look at state, we will instantly fail.
   * Can be used without config just to check state
 
-  * Block & rescue
 
-    * Roll back configuration?
-    * Send (slack) notification that "{{ port }}" isn't configured
+Module index
+-------------
 
-
-
+TOC
+Cisco ASA
+Cisco IOS
+..
+Arista EOS
+Platform agnostic layer 2
+Platform agnostic layer 2
 
 
 
