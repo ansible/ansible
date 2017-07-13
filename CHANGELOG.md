@@ -13,6 +13,7 @@ Ansible Changes By Release
   * asorted azure modules
   * pause module
   * hacking/env-setup script
+  * Fix traceback when checking for passwords in logged strings when logging executed commands.
 
 ## 2.3.2 "Ramble On" - TBD
 
