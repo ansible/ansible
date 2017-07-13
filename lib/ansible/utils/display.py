@@ -113,7 +113,7 @@ class Display:
         if color:
             msg = stringc(msg, color)
 
-        if not log_only:
+        if not log_only and not C.DEFAULT_LOG_ONLY:
             if not msg.endswith(u'\n'):
                 msg2 = msg + u'\n'
             else:
