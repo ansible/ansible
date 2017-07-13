@@ -83,4 +83,3 @@ RESTRICTED_RESULT_KEYS = ['ansible_rsync_path', 'ansible_playbook_python']
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
-YAML_FILENAME_EXTENSIONS = [".yml", ".yaml", ".json"]  # check all of these extensions when looking for 'variable' files which should be YAML or JSON.
