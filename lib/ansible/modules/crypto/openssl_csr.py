@@ -201,9 +201,7 @@ class CertificateSigningRequest(object):
         if self.subjectAltName is None:
             self.subjectAltName = 'DNS:%s' % self.subject['CN']
 
-        for (key, value) in self.subject.items():
-            if value is None:
-                del self.subject[key]
+        self.subject = dict((k, v) for k, v in self.subject.items() if v)
 
     def generate(self, module):
         '''Generate the certificate signing request.'''
@@ -217,7 +215,7 @@ class CertificateSigningRequest(object):
                     setattr(subject, key, value)
 
             if self.subjectAltName is not None:
-                req.add_extensions([crypto.X509Extension("subjectAltName", False, self.subjectAltName)])
+                req.add_extensions([crypto.X509Extension(b"subjectAltName", False, self.subjectAltName.encode('ascii'))])
 
             privatekey_content = open(self.privatekey_path).read()
             self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
@@ -227,7 +225,7 @@ class CertificateSigningRequest(object):
             self.request = req
 
             try:
-                csr_file = open(self.path, 'w')
+                csr_file = open(self.path, 'wb')
                 csr_file.write(crypto.dump_certificate_request(crypto.FILETYPE_PEM, self.request))
                 csr_file.close()
             except (IOError, OSError) as exc:
@@ -285,6 +283,9 @@ def main():
         supports_check_mode=True,
         required_one_of=[['commonName', 'subjectAltName']],
     )
+
+    if not pyopenssl_found:
+        module.fail_json(msg='the python pyOpenSSL module is required')
 
     path = module.params['path']
     base_dir = os.path.dirname(module.params['path'])
