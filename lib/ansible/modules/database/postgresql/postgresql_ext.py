@@ -30,6 +30,7 @@ options:
       - version of the extension to add or remove (or update to)
     required: false
     default: null
+    version_added: "2.4"
   db:
     description:
       - name of the database to add or remove the extension to/from
@@ -101,9 +102,9 @@ class NotSupportedError(Exception):
 
 def ext_exists(cursor, ext, ver=None):
     if ver:
-      query = "SELECT * FROM pg_extension WHERE extname=%(ext)s and extversion=$(ver)s"
+        query = "SELECT * FROM pg_extension WHERE extname=%(ext)s and extversion=$(ver)s"
     else:
-      query = "SELECT * FROM pg_extension WHERE extname=%(ext)s"
+        query = "SELECT * FROM pg_extension WHERE extname=%(ext)s"
     cursor.execute(query, {'ext': ext, 'ver': ver})
     return cursor.rowcount == 1
 
@@ -118,15 +119,15 @@ def ext_delete(cursor, ext):
 def ext_create(cursor, ext, ver=None):
     if not ext_exists(cursor, ext):
         if ver:
-          query = 'CREATE EXTENSION "%s" VERSION "%s"' % ext % ver
+            query = 'CREATE EXTENSION "%s" VERSION "%s"' % ext % ver
         else:
-          query = 'CREATE EXTENSION "%s"' % ext
+            query = 'CREATE EXTENSION "%s"' % ext
         cursor.execute(query)
         return True
     else:
         if ver:
-          if not ext_exists(cursor, ext, ver):
-            query = 'ALTER EXTENSION "%s" UPDATE TO "%s"' % ext % ver
+            if not ext_exists(cursor, ext, ver):
+                query = 'ALTER EXTENSION "%s" UPDATE TO "%s"' % ext % ver
             cursor.execute(query)
             return True
         return False
