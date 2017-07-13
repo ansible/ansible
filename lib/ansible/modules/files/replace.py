@@ -56,7 +56,7 @@ options:
       - Does not use DOTALL, which means the C(.) special character matches
         any character I(except newlines). A common mistake is to assume that
         a negated character set like C([^#]) will also not match newlines.
-        In order to exclude newlines, they must be added to the set like C([^#\n]).
+        In order to exclude newlines, they must be added to the set like C([^#\\n]).
       - Note that, as of ansible 2, short form tasks should have any escape
         sequences backslash-escaped in order to prevent them being parsed
         as string literal escapes. See the examples.
