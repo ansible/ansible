@@ -34,7 +34,9 @@ description:
   - This module provides declarative management of LLDP interfaces
     configuration on VyOS network devices.
 options:
-  name: Name of the interface LLDP should be configured on.
+  name: 
+    description:
+      - Name of the interface LLDP should be configured on.
   aggregate:
     description: List of interfaces LLDP should be configured on.
   purge:
