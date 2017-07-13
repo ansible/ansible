@@ -28,6 +28,13 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils.six import with_metaclass
 
 try:
+    from scp import SCPClient
+    HAS_SCP = True
+except ImportError:
+    HAS_SCP = False
+
+
+try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
@@ -181,8 +188,16 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
 
     def put_file(self, source, destination):
         """Copies file over scp to remote device"""
-        pass
+        if not HAS_SCP:
+            self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
+        ssh = self._connection._connect_uncached()
+        with SCPClient(ssh.get_transport()) as scp:
+            scp.put(source, destination)
 
     def fetch_file(self, source, destination):
         """Fetch file over scp from remote device"""
-        pass
+        if not HAS_SCP:
+            self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
+        ssh = self._connection._connect_uncached()
+        with SCPClient(ssh.get_transport()) as scp:
+            scp.get(source, destination)
