@@ -46,7 +46,7 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_model'] = match.group(1)
 
-        reply = self.get(b'show version')
+        reply = self.get(b'show hostname')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'^Hostname is (.+)', data, re.M)
