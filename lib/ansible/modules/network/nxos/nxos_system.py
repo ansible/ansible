@@ -87,10 +87,6 @@ EXAMPLES = """
   nxos_system:
     state: absent
 
-- name: configure DNS lookup sources
-  nxos_system:
-    lookup_source: Management1
-
 - name: configure name servers
   nxos_system:
     name_servers:
@@ -335,7 +331,7 @@ def main():
         name_servers=dict(type='list'),
 
         system_mtu=dict(type='int'),
-
+        lookup_source=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
