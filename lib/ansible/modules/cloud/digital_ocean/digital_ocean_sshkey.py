@@ -40,6 +40,7 @@ options:
      - This is a unique identifier for the SSH key used to delete a key
     required: false
     default: None
+    version_added: 2.4
   name:
     description:
      - The name for the SSH key
@@ -54,6 +55,7 @@ options:
     description:
      - DigitalOcean OAuth token.
     required: true
+    version_added: 2.4
 
 notes:
   - Version 2 of DigitalOcean API is used.
