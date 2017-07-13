@@ -119,7 +119,7 @@ def ext_delete(cursor, ext):
 def ext_create(cursor, ext, ver=None):
     if not ext_exists(cursor, ext):
         if ver:
-            query = 'CREATE EXTENSION "%s" VERSION "%s"' % ext % ver
+            query = 'CREATE EXTENSION "%s" VERSION "%s"' % ( ext, ver)
         else:
             query = 'CREATE EXTENSION "%s"' % ext
         cursor.execute(query)
@@ -127,7 +127,7 @@ def ext_create(cursor, ext, ver=None):
     else:
         if ver:
             if not ext_exists(cursor, ext, ver):
-                query = 'ALTER EXTENSION "%s" UPDATE TO "%s"' % ext % ver
+                query = 'ALTER EXTENSION "%s" UPDATE TO "%s"' % ( ext, ver )
             cursor.execute(query)
             return True
         return False
@@ -156,7 +156,7 @@ def main():
 
     db = module.params["db"]
     ext = module.params["ext"]
-    ver = module.params["ver"]
+    ver = module.params["version"]
     port = module.params["port"]
     state = module.params["state"]
     changed = False
