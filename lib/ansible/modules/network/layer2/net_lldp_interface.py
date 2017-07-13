@@ -26,29 +26,46 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: net_lldp
+module: net_lldp_interface
 version_added: "2.4"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Manage LLDP service configuration on network devices
+short_description: Manage LLDP interfaces configuration on network devices
 description:
-  - This module provides declarative management of LLDP service configuration
+  - This module provides declarative management of LLDP interfaces configuration
     on network devices.
 options:
+  name:
+    description: Name of the interface LLDP should be configured on.
+  aggregate:
+    description: List of interfaces LLDP should be configured on.
+  purge:
+    description:
+      - Purge interfaces not defined in the interfaces parameter.
+    default: no
   state:
     description:
-      - State of the LLDP service configuration.
+      - State of the LLDP configuration.
     default: present
     choices: ['present', 'absent']
 """
 
 EXAMPLES = """
-- name: Enable LLDP service
-  net_lldp:
+- name: Enable LLDP on specific interface
+  net_lldp_interface:
+    name:  eth1
     state: present
 
-- name: Disable LLDP service
-  net_lldp:
-    state: lldp
+- name: Disable LLDP on specific interface
+  net_lldp_interface:
+    name:  eth1
+    state: absent
+
+- name: Enable LLDP on list of interfaces
+  net_lldp_interface:
+    aggregate:
+      - { name: eth1 }
+      - { name: eth2, state: absent }
+    state: present
 """
 
 RETURN = """
@@ -57,5 +74,6 @@ commands:
   returned: always, except for the platforms that use Netconf transport to manage the device.
   type: list
   sample:
-    - set service lldp
+    - set service lldp eth1
+    - set service lldp eth2
 """
