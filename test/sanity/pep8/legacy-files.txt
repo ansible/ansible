@@ -349,7 +349,6 @@ lib/ansible/modules/network/nxos/nxos_aaa_server.py
 lib/ansible/modules/network/nxos/nxos_aaa_server_host.py
 lib/ansible/modules/network/nxos/nxos_command.py
 lib/ansible/modules/network/nxos/nxos_config.py
-lib/ansible/modules/network/nxos/nxos_facts.py
 lib/ansible/modules/network/nxos/nxos_gir.py
 lib/ansible/modules/network/nxos/nxos_gir_profile_management.py
 lib/ansible/modules/network/nxos/nxos_igmp.py
