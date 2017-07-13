@@ -126,7 +126,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                     if section in group_data and isinstance(group_data[section], string_types):
                         group_data[section] = {group_data[section]: None}
 
-                if  group_data.get('vars', False):
+                if group_data.get('vars', False):
                     for var in group_data['vars']:
                         self.inventory.set_variable(group, var, group_data['vars'][var])
 
