@@ -77,6 +77,13 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: vyos_lldp_interface
+        when: "limit_to in ['*', 'vyos_lldp_interface']"
+      rescue:
+        - set_fact: test_failed=true
+
 
 ###########
     - name: Has any previous test failed?
