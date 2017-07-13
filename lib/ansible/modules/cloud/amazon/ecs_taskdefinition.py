@@ -125,6 +125,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 
+
 class EcsTaskManager:
     """Handles ECS Tasks"""
 
@@ -177,7 +178,7 @@ class EcsTaskManager:
     def describe_task_definitions(self, family):
         data = {
             "taskDefinitionArns": [],
-            "nextToken":  None
+            "nextToken": None
         }
 
         def fetch():
@@ -277,6 +278,13 @@ def main():
 
                             for list_val in left_list:
                                 if list_val not in right_list:
+                                    # if list_val is the port mapping, the key 'protocol' may be absent (but defaults to 'tcp')
+                                    # fill in that default if absent and see if it is in right_list then
+                                    if isinstance(list_val, dict) and not list_val.get('protocol'):
+                                        modified_list_val = dict(list_val)
+                                        modified_list_val.update(protocol='tcp')
+                                        if modified_list_val in right_list:
+                                            continue
                                     return False
                         else:
                             return False
@@ -284,7 +292,11 @@ def main():
                 # Make sure right doesn't have anything that left doesn't
                 for k, v in right.items():
                     if v and k not in left:
-                        return False
+                        # 'essential' defaults to True when not specified
+                        if k == 'essential' and v is True:
+                            pass
+                        else:
+                            return False
 
                 return True
 
@@ -292,7 +304,7 @@ def main():
                 if td['status'] != "ACTIVE":
                     return None
 
-                existing_volumes = td.get('volumes', []) or []
+                existing_volumes = td.get('volumes', [])
 
                 if len(requested_volumes) != len(existing_volumes):
                     # Nope.
@@ -334,7 +346,6 @@ def main():
                 requested_volumes = module.params.get('volumes', []) or []
                 requested_containers = module.params.get('containers', []) or []
                 existing = _task_definition_matches(requested_volumes, requested_containers, td)
-
                 if existing:
                     break
 
@@ -361,8 +372,7 @@ def main():
         if module.params['state'] == 'absent':
             if 'arn' in module.params and module.params['arn'] is not None:
                 task_to_describe = module.params['arn']
-            elif 'family' in module.params and module.params['family'] is not None and 'revision' in module.params and \
-                            module.params['revision'] is not None:
+            elif 'family' in module.params and module.params['family'] is not None and 'revision' in module.params and module.params['revision'] is not None:
                 task_to_describe = module.params['family'] + ":" + str(module.params['revision'])
             else:
                 module.fail_json(msg="To use task definitions, an arn or family and revision must be specified")
