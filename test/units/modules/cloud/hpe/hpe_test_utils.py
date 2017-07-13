@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import importlib
 import yaml
 from mock import Mock, patch
 from oneview_module_loader import ONEVIEW_MODULE_UTILS_PATH
@@ -66,7 +65,10 @@ class OneViewBaseTestCase(object):
             mock_run.assert_called_once()
 
     def __set_module_examples(self):
-        self.testing_module = importlib.import_module(self.testing_class.__module__)
+        # Load scenarios from module examples (Also checks if it is a valid yaml)
+        ansible = __import__('ansible')
+        testing_module = self.testing_class.__module__.split('.')[-1]
+        self.testing_module = getattr(ansible.modules.cloud.hpe, testing_module)
 
         try:
             # Load scenarios from module examples (Also checks if it is a valid yaml)

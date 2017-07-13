@@ -1,6 +1,5 @@
 boto
 boto3
-hpOneView
 placebo
 cryptography
 pycrypto

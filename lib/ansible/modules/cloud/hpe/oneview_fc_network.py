@@ -109,7 +109,7 @@ class FcNetworkModule(OneViewModuleBase):
 
         if self.state == 'present':
             return self.resource_present(resource, self.RESOURCE_FACT_NAME)
-        elif self.state == 'absent':
+        else:
             return self.resource_absent(resource)
 
 

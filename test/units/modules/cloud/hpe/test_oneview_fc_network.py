@@ -126,7 +126,3 @@ class FcNetworkModuleSpec(unittest.TestCase,
             changed=False,
             msg=FcNetworkModule.MSG_ALREADY_ABSENT
         )
-
-
-if __name__ == '__main__':
-    unittest.main()
