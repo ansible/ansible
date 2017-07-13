@@ -60,7 +60,7 @@ commands:
     - set service lldp
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vyos import get_config, load_config, run_commands
+from ansible.module_utils.vyos import get_config, load_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
 
