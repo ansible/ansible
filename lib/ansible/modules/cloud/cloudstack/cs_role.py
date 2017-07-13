@@ -171,11 +171,11 @@ class AnsibleCloudStackRole(AnsibleCloudStack):
                 res = self.cs.updateRole(**args)
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-            # The API as in 4.9 does not return an updated role yet
-            if 'role' not in res:
-                role = self.get_role()
-            else:
-                role = res['role']
+                # The API as in 4.9 does not return an updated role yet
+                if 'role' not in res:
+                    role = self.get_role()
+                else:
+                    role = res['role']
         return role
 
     def absent_role(self):
