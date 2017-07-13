@@ -115,7 +115,7 @@ policy:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
 from ansible.module_utils.ec2 import sort_json_policy_dict, camel_dict_to_snake_dict, HAS_BOTO3
 import json
 import traceback
@@ -126,9 +126,15 @@ except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 
-def get_policy_by_name(module, iam, name, **kwargs):
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def list_policies_with_backoff(iam):
+    paginator = iam.get_paginator('list_policies')
+    return paginator.paginate(Scope='Local').build_full_result()
+
+
+def get_policy_by_name(module, iam, name):
     try:
-        response = iam.list_policies(Scope='Local', **kwargs)
+        response = list_policies_with_backoff(iam)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Couldn't list policies: %s" % str(e),
                          exception=traceback.format_exc(),
@@ -136,8 +142,6 @@ def get_policy_by_name(module, iam, name, **kwargs):
     for policy in response['Policies']:
         if policy['PolicyName'] == name:
             return policy
-    if response['IsTruncated']:
-        return get_policy_by_name(module, iam, name, marker=response['marker'])
     return None
 
 
