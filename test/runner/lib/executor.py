@@ -864,7 +864,7 @@ def compile_version(args, python_version, include, exclude):
     return TestSuccess(command, test, python_version=python_version)
 
 
-def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None):
+def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
@@ -874,6 +874,7 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     :type data: str | None
     :type cwd: str | None
     :type python_version: str | None
+    :type path: str | None
     :rtype: str | None, str | None
     """
     if not env:
@@ -883,7 +884,7 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     inject_path = get_coverage_path(args)
     config_path = os.path.join(inject_path, 'injector.json')
     version = python_version or args.python_version
-    interpreter = find_executable('python%s' % version)
+    interpreter = find_executable('python%s' % version, path=path)
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 
