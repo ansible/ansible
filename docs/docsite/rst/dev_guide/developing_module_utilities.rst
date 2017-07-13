@@ -15,6 +15,7 @@ The following is a list of module_utils files and a general description. The mod
 - asa.py - Module support utilities for managing Cisco ASA network devices.
 - azure_rm_common.py - Definitions and utilities for Microsoft Azure Resource Manager template deployments.
 - basic.py - General definitions and helper utilities for Ansible modules.
+- ciscowlc.py - Helper functions for modules working with Cisco WLC network devices.
 - cloudstack.py  - Utilities for CloudStack modules.
 - database.py - Miscellaneous helper functions for PostGRES and MySQL
 - docker_common.py - Definitions and helper utilities for modules working with Docker.
