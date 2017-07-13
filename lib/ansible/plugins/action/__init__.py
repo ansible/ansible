@@ -241,11 +241,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             use_system_tmp = True
 
         tmp_mode = 0o700
-
-        if use_system_tmp:
-            tmpdir = None
-        else:
-            tmpdir = self._remote_expand_user(C.DEFAULT_REMOTE_TMP, sudoable=False)
+        tmpdir = self._remote_expand_user(self._play_context.remote_tmp_dir, sudoable=False)
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode, tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)

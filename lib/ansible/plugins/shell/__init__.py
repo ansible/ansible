@@ -110,14 +110,16 @@ class ShellBase(object):
         # /var/tmp is not).
 
         if system:
-            if C.DEFAULT_REMOTE_TMP.startswith('/var/tmp'):
+            # FIXME: create 'system tmp dirs' config/var and check tmpdir is in those values to allow for /opt/tmp, etc
+            if tmpdir.startswith('/var/tmp'):
                 basetmpdir = '/var/tmp'
             else:
                 basetmpdir = '/tmp'
-        elif tmpdir is None:
-            basetmpdir = C.DEFAULT_REMOTE_TMP
         else:
-            basetmpdir = tmpdir
+            if tmpdir is None:
+                basetmpdir = C.DEFAULT_REMOTE_TMP
+            else:
+                basetmpdir = tmpdir
 
         basetmp = self.join_path(basetmpdir, basefile)
 
