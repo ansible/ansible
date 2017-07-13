@@ -143,7 +143,7 @@ def map_params_to_obj(module):
     obj = []
 
     if module.params['aggregate']:
-        for i in aggregate:
+        for i in module.params['aggregate']:
             d = i.copy()
 
             if 'state' not in d:
