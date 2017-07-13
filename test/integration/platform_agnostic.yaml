@@ -85,6 +85,13 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: net_lldp
+        when: "limit_to in ['*', 'net_lldp']"
+      rescue:
+        - set_fact: test_failed=true
+
 ###########
     - name: Has any previous test failed?
       fail:

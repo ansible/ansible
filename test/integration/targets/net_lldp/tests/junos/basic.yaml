@@ -1,0 +1,181 @@
+---
+- debug: msg="START net_linkagg junos/basic.yaml"
+
+- name: setup - remove linkagg
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: active
+    device_count: 4
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: configure linkagg
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: active
+    device_count: 4
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>ae0</name>' in config.xml"
+      - "'<device-count>4</device-count>' in config.xml"
+      - "'<bundle>ae0</bundle>' in config.xml"
+      - "'<active/>' in config.xml"
+      - "'<description>configured by junos_linkagg</description>' in config.xml"
+
+- name: configure linkagg (idempotent)
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: active
+    device_count: 4
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: configure lacp in passive
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: passive
+    device_count: 4
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<passive/>' in config.xml"
+
+- name: delete lacp
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: off
+    device_count: 4
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<lacp/>' not in config.xml"
+
+- name: Disable linkagg interface
+  net_linkagg:
+    name: ae0
+    state: down
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<disable/>' in config.xml"
+      - "'+   disable;' in result.diff.prepared"
+
+- name: Enable linkagg interface
+  net_linkagg:
+    name: ae0
+    state: up
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<disable/>' not in config.xml"
+
+- name: Delete linkagg
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: active
+    device_count: 4
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<active/>' not in config.xml"
+      - "'<bundle>ae0</bundle>' not in config.xml"
+      - "'<device-count>4</device-count>' not in config.xml"
+      - "'<name>ae0</name>' not in config.xml"
+
+- name: Delete linkagg (idempotent)
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: active
+    device_count: 4
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
