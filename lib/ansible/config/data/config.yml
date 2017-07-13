@@ -1405,3 +1405,13 @@ VARIABLE_PRECEDENCE:
   value_type: list
   vars: []
   yaml: {key: defaults.precedence}
+YAML_FILENAME_EXTENSIONS:
+  default: [".yml", ".yaml", ".json"]
+  desc: "check all of these extensions when looking for 'variable' files which should be YAML or JSON or vaulted versions of theses."
+  env:
+    - name: ANSIBLE_YAML_FILENAME_EXT
+  ini:
+    - {key: defaults, section: yaml_valid_extensions}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.yaml_valid_extensions}
