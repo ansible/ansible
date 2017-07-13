@@ -95,6 +95,15 @@ EXAMPLES = '''
     record: "ansible"
     value: "192.168.1.1"
 
+- name: Add or modify ansible.example.org A to 192.168.1.1, 192.168.1.2 and 192.168.1.3"
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    zone: "example.org"
+    record: "ansible"
+    value: ["192.168.1.1", "192.168.1.2", "192.168.1.3"]
+
 - name: Remove puppet.example.org CNAME
   nsupdate:
     key_name: "nsupdate"
