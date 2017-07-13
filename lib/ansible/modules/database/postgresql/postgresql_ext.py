@@ -25,6 +25,11 @@ options:
       - name of the extension to add or remove
     required: true
     default: null
+  version:
+    description:
+      - version of the extension to add or remove (or update to)
+    required: false
+    default: null
   db:
     description:
       - name of the database to add or remove the extension to/from
@@ -94,9 +99,12 @@ class NotSupportedError(Exception):
 # PostgreSQL module specific support methods.
 #
 
-def ext_exists(cursor, ext):
-    query = "SELECT * FROM pg_extension WHERE extname=%(ext)s"
-    cursor.execute(query, {'ext': ext})
+def ext_exists(cursor, ext, ver=None):
+    if ver:
+      query = "SELECT * FROM pg_extension WHERE extname=%(ext)s and extversion=$(ver)s"
+    else:
+      query = "SELECT * FROM pg_extension WHERE extname=%(ext)s"
+    cursor.execute(query, {'ext': ext, 'ver': ver})
     return cursor.rowcount == 1
 
 def ext_delete(cursor, ext):
@@ -107,12 +115,20 @@ def ext_delete(cursor, ext):
     else:
         return False
 
-def ext_create(cursor, ext):
+def ext_create(cursor, ext, ver=None):
     if not ext_exists(cursor, ext):
-        query = 'CREATE EXTENSION "%s"' % ext
+        if ver:
+          query = 'CREATE EXTENSION "%s" VERSION "%s"' % ext % ver
+        else:
+          query = 'CREATE EXTENSION "%s"' % ext
         cursor.execute(query)
         return True
     else:
+        if ver:
+          if not ext_exists(cursor, ext, ver):
+            query = 'ALTER EXTENSION "%s" UPDATE TO "%s"' % ext % ver
+            cursor.execute(query)
+            return True
         return False
 
 # ===========================================
@@ -128,6 +144,7 @@ def main():
             port=dict(default="5432"),
             db=dict(required=True),
             ext=dict(required=True, aliases=['name']),
+            version=dict(default="", aliases=['version']),
             state=dict(default="present", choices=["absent", "present"]),
         ),
         supports_check_mode = True
@@ -138,6 +155,8 @@ def main():
 
     db = module.params["db"]
     ext = module.params["ext"]
+    ver = module.params["ver"]
+    port = module.params["port"]
     state = module.params["state"]
     changed = False
 
@@ -169,15 +188,15 @@ def main():
     try:
         if module.check_mode:
             if state == "present":
-                changed = not ext_exists(cursor, ext)
+                changed = not ext_exists(cursor, ext, ver)
             elif state == "absent":
-                changed = ext_exists(cursor, ext)
+                changed = ext_exists(cursor, ext, ver)
         else:
             if state == "absent":
                 changed = ext_delete(cursor, ext)
 
             elif state == "present":
-                changed = ext_create(cursor, ext)
+                changed = ext_create(cursor, ext, ver)
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except Exception as e:
