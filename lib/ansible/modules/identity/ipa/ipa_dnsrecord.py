@@ -49,9 +49,11 @@ options:
     required: false
     default: 'A'
     choices: ['A', 'AAAA', 'PTR']
-  record_ip:
+  record_value:
     description:
-    - Manage DNS record name with this IP address.
+    - Manage DNS record name with this value.
+    - In the case of 'A' or 'AAAA' record types, this will be the IP address.
+    - In the case of 'PTR' record type, this will be the hostname.
     required: true
   state:
     description: State to ensure
@@ -97,7 +99,7 @@ EXAMPLES = '''
     zone_name: example.com
     record_name: vm-001
     record_type: 'AAAA'
-    record_ip: '::1'
+    record_value: '::1'
 
 # Ensure a PTR record is present
 - ipa_dnsrecord:
@@ -107,14 +109,14 @@ EXAMPLES = '''
     zone_name: 2.168.192.in-addr.arpa
     record_name: 5
     record_type: 'PTR'
-    record_ip: 'internal.ipa.example.com'
+    record_value: 'internal.ipa.example.com'
 
 # Ensure that dns record is removed
 - ipa_dnsrecord:
     name: host01
     zone_name: example.com
     record_type: 'AAAA'
-    record_ip: '::1'
+    record_value: '::1'
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
@@ -143,11 +145,11 @@ class DNSRecordIPAClient(IPAClient):
     def dnsrecord_add(self, zone_name=None, record_name=None, details=None):
         item = dict(idnsname=record_name)
         if details['record_type'] == 'A':
-            item.update(a_part_ip_address=details['record_ip'])
+            item.update(a_part_ip_address=details['record_value'])
         elif details['record_type'] == 'AAAA':
-            item.update(aaaa_part_ip_address=details['record_ip'])
+            item.update(aaaa_part_ip_address=details['record_value'])
         elif details['record_type'] == 'PTR':
-            item.update(ptr_part_hostname=details['record_ip'])
+            item.update(ptr_part_hostname=details['record_value'])
 
         return self._post_json(method='dnsrecord_add', name=zone_name, item=item)
 
@@ -164,12 +166,12 @@ class DNSRecordIPAClient(IPAClient):
 
 def get_dnsrecord_dict(details=None):
     module_dnsrecord = dict()
-    if details['record_type'] == 'A' and details['record_ip']:
-        module_dnsrecord.update(arecord=details['record_ip'])
-    elif details['record_type'] == 'AAAA' and details['record_ip']:
-        module_dnsrecord.update(aaaarecord=details['record_ip'])
-    elif details['record_type'] == 'PTR' and details['record_ip']:
-        module_dnsrecord.update(ptrrecord=details['record_ip'])
+    if details['record_type'] == 'A' and details['record_value']:
+        module_dnsrecord.update(arecord=details['record_value'])
+    elif details['record_type'] == 'AAAA' and details['record_value']:
+        module_dnsrecord.update(aaaarecord=details['record_value'])
+    elif details['record_type'] == 'PTR' and details['record_value']:
+        module_dnsrecord.update(ptrrecord=details['record_value'])
     return module_dnsrecord
 
 
@@ -185,7 +187,7 @@ def ensure(module, client):
 
     ipa_dnsrecord = client.dnsrecord_find(zone_name, record_name)
     module_dnsrecord = dict(record_type=module.params['record_type'],
-                            record_ip=module.params['record_ip'])
+                            record_value=module.params['record_value'])
 
     changed = False
     if state == 'present':
@@ -221,7 +223,7 @@ def main():
             zone_name=dict(type='str', required=True),
             record_name=dict(type='str', required=True, aliases=['name']),
             record_type=dict(type='str', required=False, default='A', choices=record_types),
-            record_ip=dict(type='str', required=True),
+            record_value=dict(type='str', required=True),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
             ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
             ipa_host=dict(type='str', required=False, default='ipa.example.com'),
