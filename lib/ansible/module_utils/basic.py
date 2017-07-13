@@ -2360,7 +2360,7 @@ class AnsibleModule(object):
 
         clean_args = []
         is_passwd = False
-        for arg in to_clean_args:
+        for arg in (to_native(a) for a in to_clean_args):
             if is_passwd:
                 is_passwd = False
                 clean_args.append('********')
