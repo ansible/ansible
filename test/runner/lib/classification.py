@@ -373,6 +373,9 @@ class PathMapper(object):
             if self.prefixes.get(name) == 'network' and ext == '.yaml':
                 return minimal  # network integration test playbooks are not used by ansible-test
 
+            if filename == 'platform_agnostic.yaml':
+                return minimal  # network integration test playbook not used by ansible-test
+
             return {
                 'integration': 'all',
                 'windows-integration': 'all',
