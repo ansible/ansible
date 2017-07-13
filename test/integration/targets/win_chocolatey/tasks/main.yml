@@ -16,46 +16,53 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: install sysinternals
+- name: simple failure smoke test # NB: this is the only test that runs under shippable until others can use non-internet endpoints
   win_chocolatey:
-    name: sysinternals
-    state: present
-  register: install_sysinternals
+  register: choco_fail
+  failed_when: "not choco_fail.msg | regex_search('Missing required argument: name')"
 
-- name: verify install sysinternals
-  assert:
-    that:
-    - 'install_sysinternals.changed == true'
+- when: lookup('env', 'ANSIBLE_TEST_CI') != 'shippable'
+  block:
+  - name: install sysinternals
+    win_chocolatey:
+      name: sysinternals
+      state: present
+    register: install_sysinternals
 
-- name: install sysinternals again
-  win_chocolatey:
-    name: sysinternals
-    state: present
-  register: install_sysinternals_again
+  - name: verify install sysinternals
+    assert:
+      that:
+      - 'install_sysinternals.changed == true'
 
-- name: verify install sysinternals again
-  assert:
-    that:
-    - 'install_sysinternals_again.changed == false'
+  - name: install sysinternals again
+    win_chocolatey:
+      name: sysinternals
+      state: present
+    register: install_sysinternals_again
 
-- name: remove sysinternals
-  win_chocolatey:
-    name: sysinternals
-    state: absent
-  register: remove_sysinternals
+  - name: verify install sysinternals again
+    assert:
+      that:
+      - 'install_sysinternals_again.changed == false'
 
-- name: verify remove sysinternals
-  assert:
-    that:
-    - 'remove_sysinternals.changed == true'
+  - name: remove sysinternals
+    win_chocolatey:
+      name: sysinternals
+      state: absent
+    register: remove_sysinternals
 
-- name: remove sysinternals again
-  win_chocolatey:
-    name: sysinternals
-    state: absent
-  register: remove_sysinternals_again
+  - name: verify remove sysinternals
+    assert:
+      that:
+      - 'remove_sysinternals.changed == true'
 
-- name: verify remove sysinternals again
-  assert:
-    that:
-    - 'remove_sysinternals_again.changed == false'
+  - name: remove sysinternals again
+    win_chocolatey:
+      name: sysinternals
+      state: absent
+    register: remove_sysinternals_again
+
+  - name: verify remove sysinternals again
+    assert:
+      that:
+      - 'remove_sysinternals_again.changed == false'
