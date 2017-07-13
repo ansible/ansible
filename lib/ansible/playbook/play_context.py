@@ -57,6 +57,7 @@ MAGIC_VARIABLE_MAPPING = dict(
     connection=('ansible_connection', ),
     remote_addr=('ansible_ssh_host', 'ansible_host'),
     remote_user=('ansible_ssh_user', 'ansible_user'),
+    remote_tmp_dir=('ansible_remote_tmp', ),
     port=('ansible_ssh_port', 'ansible_port'),
     timeout=('ansible_ssh_timeout', 'ansible_timeout'),
     ssh_executable=('ansible_ssh_executable', ),
@@ -168,6 +169,7 @@ class PlayContext(Base):
     # (connection, port, remote_user, environment, no_log)
     _docker_extra_args = FieldAttribute(isa='string')
     _remote_addr = FieldAttribute(isa='string')
+    _remote_tmp_dir = FieldAttribute(isa='string', default=C.DEFAULT_REMOTE_TMP)
     _password = FieldAttribute(isa='string')
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)

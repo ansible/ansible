@@ -847,7 +847,8 @@ DEFAULT_REMOTE_TMP:
   env: [{name: ANSIBLE_REMOTE_TEMP}]
   ini:
   - {key: remote_tmp, section: defaults}
-  vars: []
+  vars:
+    - name: ansible_remote_tmp
   yaml: {key: defaults.remote_tmp}
 DEFAULT_REMOTE_USER:
   default: 
