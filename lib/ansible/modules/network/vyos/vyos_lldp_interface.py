@@ -34,7 +34,7 @@ description:
   - This module provides declarative management of LLDP interfaces
     configuration on VyOS network devices.
 options:
-  name: 
+  name:
     description:
       - Name of the interface LLDP should be configured on.
   aggregate:
@@ -169,8 +169,8 @@ def main():
     )
 
     argument_spec.update(vyos_argument_spec)
-    required_one_of=[['name', 'aggregate']]
-    mutually_exclusive=[['name', 'aggregate']]
+    required_one_of= [['name', 'aggregate']]
+    mutually_exclusive= [['name', 'aggregate']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
