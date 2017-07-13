@@ -47,6 +47,7 @@ ARGS_DEFAULT_VALUE = {
     'timeout': 10
 }
 
+
 def get_argspec():
     return aruba_argument_spec
 
