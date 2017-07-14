@@ -311,7 +311,7 @@ def map_obj_to_ele(module, want, top, value_map=None):
             if value_map and fxpath in value_map:
                 value = value_map[fxpath].get(value)
 
-            if value or tag_only or leaf_only:
+            if (value is not None) or tag_only or leaf_only:
                 ele = node
                 if field_top:
                     # eg: top = 'system/syslog/file'
@@ -336,7 +336,7 @@ def map_obj_to_ele(module, want, top, value_map=None):
                         ele = ele_list[0]
 
                 tags = fxpath.split('/')
-                if value:
+                if value is not None:
                     value = to_text(value, errors='surrogate_then_replace')
 
                 for item in tags:
