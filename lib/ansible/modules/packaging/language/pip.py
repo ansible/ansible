@@ -519,8 +519,6 @@ def main():
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
                 module.exit_json(changed=True)
-            elif has_vcs:
-                module.exit_json(changed=True)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
 
@@ -549,10 +547,9 @@ def main():
                         break
             module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
 
+        out_freeze_before = None
         if requirements or has_vcs:
             _, out_freeze_before, _ = _get_packages(module, pip, chdir)
-        else:
-            out_freeze_before = None
 
         rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
@@ -569,11 +566,8 @@ def main():
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip
             else:
-                if out_freeze_before is None:
-                    changed = 'Successfully installed' in out_pip
-                else:
-                    _, out_freeze_after, _ = _get_packages(module, pip, chdir)
-                    changed = out_freeze_before != out_freeze_after
+                _, out_freeze_after, _ = _get_packages(module, pip, chdir)
+                changed = out_freeze_before != out_freeze_after
 
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                          state=state, requirements=requirements, virtualenv=env,
