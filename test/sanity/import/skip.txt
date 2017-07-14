@@ -41,7 +41,6 @@ lib/ansible/modules/cloud/cloudstack/cs_vpn_gateway.py
 lib/ansible/modules/cloud/cloudstack/cs_zone.py
 lib/ansible/modules/cloud/cloudstack/cs_zone_facts.py
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_network.py
-lib/ansible/modules/cloud/docker/docker_secret.py
 lib/ansible/modules/cloud/google/gc_storage.py
 lib/ansible/modules/cloud/google/gcdns_record.py
 lib/ansible/modules/cloud/google/gcdns_zone.py
