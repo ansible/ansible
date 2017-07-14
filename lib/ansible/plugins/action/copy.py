@@ -24,9 +24,9 @@ import os
 import stat
 import tempfile
 
-from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
 
@@ -43,11 +43,11 @@ class ActionModule(ActionBase):
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
         dest = self._task.args.get('dest', None)
-        raw = boolean(self._task.args.get('raw', 'no'))
-        force = boolean(self._task.args.get('force', 'yes'))
-        remote_src = boolean(self._task.args.get('remote_src', False))
-        follow = boolean(self._task.args.get('follow', False))
-        decrypt = boolean(self._task.args.get('decrypt', True))
+        raw = boolean(self._task.args.get('raw', 'no'), strict=False)
+        force = boolean(self._task.args.get('force', 'yes'), strict=False)
+        remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
+        follow = boolean(self._task.args.get('follow', False), strict=False)
+        decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
 
         result['failed'] = True
         if (source is None and content is None) or dest is None:

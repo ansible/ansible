@@ -28,10 +28,6 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-BOOLEANS_TRUE = ['y', 'yes', 'on', '1', 'true', 1, True]
-BOOLEANS_FALSE = ['n', 'no', 'off', '0', 'false', 0, False]
-BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
-
 SIZE_RANGES = {
     'Y': 1 << 80,
     'Z': 1 << 70,
@@ -178,6 +174,8 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
@@ -1658,8 +1656,7 @@ class AnsibleModule(object):
                         lowered_choices = None
                         if param[k] == 'False':
                             lowered_choices = _lenient_lowercase(choices)
-                            FALSEY = frozenset(BOOLEANS_FALSE)
-                            overlap = FALSEY.intersection(choices)
+                            overlap = BOOLEANS_FALSE.intersection(choices)
                             if len(overlap) == 1:
                                 # Extract from a set
                                 (param[k],) = overlap
@@ -1667,8 +1664,7 @@ class AnsibleModule(object):
                         if param[k] == 'True':
                             if lowered_choices is None:
                                 lowered_choices = _lenient_lowercase(choices)
-                            TRUTHY = frozenset(BOOLEANS_TRUE)
-                            overlap = TRUTHY.intersection(choices)
+                            overlap = BOOLEANS_TRUE.intersection(choices)
                             if len(overlap) == 1:
                                 (param[k],) = overlap
 
@@ -2045,16 +2041,13 @@ class AnsibleModule(object):
 
     def boolean(self, arg):
         ''' return a bool for the arg '''
-        if arg is None or isinstance(arg, bool):
+        if arg is None:
             return arg
-        if isinstance(arg, string_types):
-            arg = arg.lower()
-        if arg in BOOLEANS_TRUE:
-            return True
-        elif arg in BOOLEANS_FALSE:
-            return False
-        else:
-            self.fail_json(msg='%s is not a valid boolean. Valid booleans include: %s' % (to_text(arg), ','.join(['%s' % x for x in BOOLEANS])))
+
+        try:
+            return boolean(arg)
+        except TypeError as e:
+            self.fail_json(msg=to_native(e))
 
     def jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
