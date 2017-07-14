@@ -212,10 +212,10 @@ Ansible Changes By Release
   * gcp_url_map
 - gunicorn
 - purestorage
-  * purefa_host
-  * purefa_volume
   * purefa_hg
+  * purefa_host
   * purefa_pg
+  * purefa_volume
 - imc
   * imc_xml
 - rundeck
@@ -230,6 +230,7 @@ Ansible Changes By Release
   * win_firewall
   * win_psmodule
   * win_route
+  * win_security_policy
   * win_wakeonlan
 
 
