@@ -9,33 +9,43 @@ env
 cd ~/
 
 if [ "${platform}" = "freebsd" ]; then
-    pkg install -y \
-        bash \
-        curl \
-        devel/ruby-gems \
-        git \
-        gtar \
-        mercurial \
-        python \
-        rsync \
-        ruby \
-        subversion \
-        sudo \
-        zip \
+    while true; do
+        pkg install -y \
+            bash \
+            curl \
+            devel/ruby-gems \
+            git \
+            gtar \
+            mercurial \
+            python \
+            rsync \
+            ruby \
+            subversion \
+            sudo \
+            zip \
+         && break
+         echo "Failed to install packages. Sleeping before trying again..."
+         sleep 10
+    done
 
     pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
 elif [ "${platform}" = "rhel" ]; then
-    yum install -y \
-        gcc \
-        git \
-        mercurial \
-        python-devel \
-        python-jinja2 \
-        python-virtualenv \
-        python2-cryptography \
-        rubygems \
-        subversion \
-        unzip \
+    while true; do
+        yum install -y \
+            gcc \
+            git \
+            mercurial \
+            python-devel \
+            python-jinja2 \
+            python-virtualenv \
+            python2-cryptography \
+            rubygems \
+            subversion \
+            unzip \
+         && break
+         echo "Failed to install packages. Sleeping before trying again..."
+         sleep 10
+    done
 
     pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
 fi
