@@ -229,7 +229,6 @@ lib/ansible/modules/messaging/rabbitmq_user.py
 lib/ansible/modules/monitoring/airbrake_deployment.py
 lib/ansible/modules/monitoring/bigpanda.py
 lib/ansible/modules/monitoring/boundary_meter.py
-lib/ansible/modules/monitoring/circonus_annotation.py
 lib/ansible/modules/monitoring/datadog_event.py
 lib/ansible/modules/monitoring/honeybadger_deployment.py
 lib/ansible/modules/monitoring/icinga2_feature.py

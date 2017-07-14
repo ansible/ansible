@@ -102,7 +102,7 @@ def post_annotation(annotation, api_key):
     base_url = 'https://api.circonus.com/v2'
     anootate_post_endpoint = '/annotation'
     resp = requests.post(base_url + anootate_post_endpoint,
-            headers=build_headers(api_key), data=json.dumps(annotation))
+                         headers=build_headers(api_key), data=json.dumps(annotation))
     resp.raise_for_status()
     return resp
 
@@ -118,7 +118,7 @@ def create_annotation(module):
     if module.params['stop'] is not None:
         stop = module.params['stop']
     else:
-        stop = int(time.time())+ duration
+        stop = int(time.time()) + duration
     annotation['start'] = start
     annotation['stop'] = stop
     annotation['category'] = module.params['category']
@@ -130,8 +130,8 @@ def create_annotation(module):
 def build_headers(api_token):
     '''Takes api token, returns headers with it included.'''
     headers = {'X-Circonus-App-Name': 'ansible',
-        'Host': 'api.circonus.com', 'X-Circonus-Auth-Token': api_token,
-        'Accept': 'application/json'}
+               'Host': 'api.circonus.com', 'X-Circonus-Auth-Token': api_token,
+               'Accept': 'application/json'}
     return headers
 
 
@@ -146,8 +146,9 @@ def main():
             description=dict(required=True),
             duration=dict(default=0, type='int'),
             api_key=dict(required=True, no_log=True)
-            )
         )
+    )
+
     annotation = create_annotation(module)
     try:
         resp = post_annotation(annotation, module.params['api_key'])
