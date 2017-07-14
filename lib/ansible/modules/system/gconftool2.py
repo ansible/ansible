@@ -104,8 +104,7 @@ RETURN = '''
 ...
 '''
 
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule
 
 
 class GConf2Preference(object):
@@ -165,8 +164,7 @@ class GConf2Preference(object):
             else:
                 changed = True
 
-        except OSError:
-            exception = get_exception()
+        except OSError as exception:
             self.ansible.fail_json(msg='gconftool-2 failed with exception: '
                                        '%s' % exception)
         return changed, out.rstrip()
@@ -193,7 +191,6 @@ def main():
 
     state_values = {"present": "set", "absent": "unset", "get": "get"}
 
-    direct = False
     # Assign module values to dictionary values
     key = module.params['key']
     value_type = module.params['value_type']
@@ -205,8 +202,7 @@ def main():
         value = module.params['value']
 
     state = state_values[module.params['state']]
-    if module.params['direct'] in BOOLEANS_TRUE:
-        direct = True
+    direct = module.params['direct']
     config_source = module.params['config_source']
 
     # Initialize some variables for later
