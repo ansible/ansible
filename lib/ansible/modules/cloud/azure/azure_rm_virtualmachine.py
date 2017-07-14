@@ -19,6 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'curated'}
@@ -44,6 +45,11 @@ options:
         description:
             - Name of the resource group containing the virtual machine.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
+        version_added: "2.4"
     name:
         description:
             - Name of the virtual machine.
@@ -128,6 +134,11 @@ options:
               a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
         default: null
         required: false
+    storage_endpoint_suffix:
+        description:
+            - The endpoint suffix for storage endpoing API (e.g. core.windows.net)
+        required: false
+        version_added: "2.4"
     storage_container_name:
         description:
             - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
@@ -457,6 +468,7 @@ try:
     from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
     from azure.mgmt.storage.models.storage_management_client_enums import Kind, SkuTier, SkuName
     from azure.mgmt.compute.models.compute_management_client_enums import VirtualMachineSizeTypes, DiskCreateOptionTypes
+    from azure.storage._constants import SERVICE_HOST_BASE
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -482,6 +494,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
+            resource=dict(type='str', default=None),
             name=dict(type='str', required=True),
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             location=dict(type='str'),
@@ -493,6 +506,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             ssh_public_keys=dict(type='list'),
             image=dict(type='dict'),
             storage_account_name=dict(type='str', aliases=['storage_account']),
+            storage_endpoint_suffix=dict(type='str', default=None),
             storage_container_name=dict(type='str', aliases=['storage_container'], default='vhds'),
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
             os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
@@ -507,7 +521,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             subnet_name=dict(type='str', aliases=['subnet']),
             allocated=dict(type='bool', default=True),
             restarted=dict(type='bool', default=False),
-            started=dict(type='bool', default=True),
+            started=dict(type='bool', default=True)
         )
 
         self.resource_group = None
@@ -524,6 +538,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.storage_account_name = None
         self.storage_container_name = None
         self.storage_blob_name = None
+        self.storage_endpoint_suffix = SERVICE_HOST_BASE
         self.os_type = None
         self.os_disk_caching = None
         self.network_interface_names = None
@@ -608,7 +623,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if self.storage_account_name:
                 self.get_storage_account(self.storage_account_name)
 
-                requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(self.storage_account_name,
+                requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(self.storage_account_name,
+                                                                                       self.storage_endpoint_suffix,
                                                                                        self.storage_container_name,
                                                                                        self.storage_blob_name)
 
@@ -723,8 +739,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         storage_account = self.create_default_storage_account()
                         self.log("storage account:")
                         self.log(self.serialize_obj(storage_account, 'StorageAccount'), pretty_print=True)
-                        requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(
+                        requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(
                             storage_account.name,
+                            self.storage_endpoint_suffix,
                             self.storage_container_name,
                             self.storage_blob_name)
 

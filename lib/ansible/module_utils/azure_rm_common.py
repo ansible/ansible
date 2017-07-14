@@ -38,6 +38,7 @@ AZURE_COMMON_ARGS = dict(
     tenant=dict(type='str', no_log=True),
     ad_user=dict(type='str', no_log=True),
     password=dict(type='str', no_log=True),
+    resource=dict(type='str', default=None),
     # debug=dict(type='bool', default=False),
 )
 
@@ -95,7 +96,6 @@ try:
     from azure.mgmt.resource.resources.resource_management_client import ResourceManagementClient
     from azure.mgmt.storage.storage_management_client import StorageManagementClient
     from azure.mgmt.compute.compute_management_client import ComputeManagementClient
-    from azure.storage.cloudstorageaccount import CloudStorageAccount
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -149,7 +149,8 @@ class AzureRMModuleBase(object):
                                     required_one_of=required_one_of,
                                     add_file_common_args=add_file_common_args,
                                     supports_check_mode=supports_check_mode,
-                                    required_if=merged_required_if)
+                                    required_if=merged_required_if
+                                    )
 
         if not HAS_MSRESTAZURE:
             self.fail("Do you have msrestazure installed? Try `pip install msrestazure`"
@@ -165,6 +166,13 @@ class AzureRMModuleBase(object):
         self._compute_client = None
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
+        self.resource = self.module.params.get('resource')
+        if self.resource:
+            self.resource.rstrip('\/')
+            self.resource += '/'
+
+        self.storage_endpoint_suffix = self.module.params.get('storage_endpoint_suffix')
+
         # self.debug = self.module.params.get('debug')
 
         # authenticate
@@ -181,11 +189,20 @@ class AzureRMModuleBase(object):
         if self.credentials.get('client_id') is not None and \
            self.credentials.get('secret') is not None and \
            self.credentials.get('tenant') is not None:
-            self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
+            if self.resource:
+                self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
                                                                  secret=self.credentials['secret'],
-                                                                 tenant=self.credentials['tenant'])
+                                                                 tenant=self.credentials['tenant'],
+                                                                 resource=self.resource)
+            else:
+                self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
+                                                                     secret=self.credentials['secret'],
+                                                                     tenant=self.credentials['tenant'])
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
-            self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
+            if self.resource:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], resource=self.resource)
+            else:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password.")
@@ -460,7 +477,8 @@ class AzureRMModuleBase(object):
 
         try:
             self.log('Create blob service')
-            return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
+            from azure.storage.blob.blockblobservice import BlockBlobService
+            return BlockBlobService(storage_account_name, account_keys.keys[0].value, endpoint_suffix=self.storage_endpoint_suffix)
         except Exception as exc:
             self.fail("Error creating blob service client for storage account {0} - {1}".format(storage_account_name,
                                                                                                 str(exc)))
@@ -591,7 +609,7 @@ class AzureRMModuleBase(object):
         self.log('Getting storage client...')
         if not self._storage_client:
             self.check_client_version('storage', storage_client_version, AZURE_EXPECTED_VERSIONS['storage_client_version'])
-            self._storage_client = StorageManagementClient(self.azure_credentials, self.subscription_id)
+            self._storage_client = StorageManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
             self._register('Microsoft.Storage')
         return self._storage_client
 
@@ -600,7 +618,7 @@ class AzureRMModuleBase(object):
         self.log('Getting network client')
         if not self._network_client:
             self.check_client_version('network', network_client_version, AZURE_EXPECTED_VERSIONS['network_client_version'])
-            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id)
+            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -609,7 +627,7 @@ class AzureRMModuleBase(object):
         self.log('Getting resource manager client')
         if not self._resource_client:
             self.check_client_version('resource', resource_client_version, AZURE_EXPECTED_VERSIONS['resource_client_version'])
-            self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id)
+            self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
         return self._resource_client
 
     @property
@@ -617,6 +635,6 @@ class AzureRMModuleBase(object):
         self.log('Getting compute client')
         if not self._compute_client:
             self.check_client_version('compute', compute_client_version, AZURE_EXPECTED_VERSIONS['compute_client_version'])
-            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id)
+            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
             self._register('Microsoft.Compute')
         return self._compute_client
