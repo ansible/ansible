@@ -22,9 +22,7 @@ description:
 author: "Nick Harring (@NickatEpic)"
 version_added: 2.0
 requirements:
-    - urllib3
-    - requests
-    - time
+    - requests (either >= 2.0.0 for Python 3, or >= 1.0.0 for Python 2)
 notes:
     - Check mode isn’t supported.
 options:
@@ -143,7 +141,11 @@ import json
 import time
 import traceback
 
-import requests
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -200,6 +202,9 @@ def main():
             api_key=dict(required=True, no_log=True)
         )
     )
+
+    if not HAS_REQUESTS:
+        module.fail_json(msg='requests is required for this module')
 
     annotation = create_annotation(module)
     try:
