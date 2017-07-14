@@ -59,7 +59,6 @@ lib/ansible/modules/clustering/consul_kv.py
 lib/ansible/modules/messaging/rabbitmq_binding.py
 lib/ansible/modules/messaging/rabbitmq_exchange.py
 lib/ansible/modules/messaging/rabbitmq_queue.py
-lib/ansible/modules/monitoring/circonus_annotation.py
 lib/ansible/modules/network/cloudengine/ce_file_copy.py
 lib/ansible/modules/network/cumulus/_cl_img_install.py
 lib/ansible/modules/network/f5/bigip_command.py
