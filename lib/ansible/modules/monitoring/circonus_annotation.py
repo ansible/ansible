@@ -110,10 +110,7 @@ def post_annotation(annotation, api_key):
 def create_annotation(module):
     ''' Takes ansible module object '''
     annotation = {}
-    if module.params['duration'] is not None:
-        duration = module.params['duration']
-    else:
-        duration = 0
+    duration = module.params['duration']
     if module.params['start'] is not None:
         start = module.params['start']
     else:
@@ -122,8 +119,8 @@ def create_annotation(module):
         stop = module.params['stop']
     else:
         stop = int(time.time())+ duration
-    annotation['start'] = int(start)
-    annotation['stop'] = int(stop)
+    annotation['start'] = start
+    annotation['stop'] = stop
     annotation['category'] = module.params['category']
     annotation['description'] = module.params['description']
     annotation['title'] = module.params['title']
@@ -142,12 +139,12 @@ def main():
     '''Main function, dispatches logic'''
     module = AnsibleModule(
         argument_spec=dict(
-            start=dict(required=False, type='int'),
-            stop=dict(required=False, type='int'),
+            start=dict(type='int'),
+            stop=dict(type='int'),
             category=dict(required=True),
             title=dict(required=True),
             description=dict(required=True),
-            duration=dict(required=False, type='int'),
+            duration=dict(default=0, type='int'),
             api_key=dict(required=True, no_log=True)
             )
         )
