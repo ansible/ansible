@@ -24,16 +24,16 @@ from string import ascii_letters, digits
 from ansible.module_utils._text import to_text
 from ansible.config.manager import ConfigManager
 
-config = ConfigManager()
+_config = ConfigManager()
 
 # Generate constants from config
-for setting in config.data.get_settings():
+for setting in _config.data.get_settings():
     vars()[setting.name] = setting.value
 
 
 def mk_boolean(value):
     ''' moved '''
-    return config.make_boolean(value)
+    return _config.make_boolean(value)
 
 
 # ### CONSTANTS ### yes, actual ones
@@ -60,7 +60,7 @@ BECOME_MISSING_STRINGS = {
     'ksu': 'No password given',
     'pmrun': ''
 }  # FIXME: deal with i18n
-BOOL_TRUE = config.data.BOOL_TRUE
+BOOL_TRUE = _config.data.BOOL_TRUE
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS = None
