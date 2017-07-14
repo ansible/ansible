@@ -145,27 +145,6 @@ class PyVmomiHelper(object):
         return gather_vm_facts(self.content, vm)
 
 
-def get_obj(content, vimtype, name):
-    """
-    Return an object by name, if name is None the
-    first found object is returned
-    """
-    obj = None
-    container = content.viewManager.CreateContainerView(
-        content.rootFolder, vimtype, True)
-    for c in container.view:
-        if name:
-            if c.name == name:
-                obj = c
-                break
-        else:
-            obj = c
-            break
-
-    container.Destroy()
-    return obj
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
