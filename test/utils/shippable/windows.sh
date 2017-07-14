@@ -2,9 +2,6 @@
 
 set -o pipefail
 
-declare -a args
-IFS='/:' read -ra args <<< "${TEST}"
-
 # python versions to test in order
 # python 2.7 runs full tests while other versions run minimal tests
 python_versions=(
@@ -64,5 +61,5 @@ for version in "${python_versions[@]}"; do
 
     # shellcheck disable=SC2086
     ansible-test windows-integration --color -v --retry-on-error "${ci}" --tox --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
-        "${platforms[@]}"
+        "${platforms[@]}" --changed-all-target "${changed_all_target}"
 done
