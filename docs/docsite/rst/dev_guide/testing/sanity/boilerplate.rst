@@ -1,7 +1,7 @@
 Sanity Tests » boilerplate
 ==========================
 
-Most python files other than those under ``lib/ansible/modules/`` should include the following boilerplate:
+Most Python files other than those under ``lib/ansible/modules/`` should include the following boilerplate:
 
 .. code-block:: python
 

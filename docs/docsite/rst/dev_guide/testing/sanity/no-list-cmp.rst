@@ -1,7 +1,7 @@
 Sanity Tests » no-list-cmp
 ==========================
 
-The ``cmp`` function has been removed in python 3.
+The ``cmp`` function has been removed in Python 3.
 
 See `When sorting, use key instead of cmp`_.
 

@@ -1,7 +1,7 @@
 Sanity Tests » no-dict-itervalues
 =================================
 
-The ``dict.itervalues`` method has been removed in python 3. There are two recommended alternatives:
+The ``dict.itervalues`` method has been removed in Python 3. There are two recommended alternatives:
 
 .. code-block:: python
 
