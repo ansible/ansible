@@ -97,7 +97,8 @@ commands:
   returned: always
   type: list
   sample:
-    - 'logging facility local7', 'logging host 172.16.0.1'
+    - logging facility local7
+    - logging host 172.16.0.1
 """
 
 import re
@@ -128,8 +129,10 @@ def map_obj_to_commands(updates, module):
         if state == 'absent' and w in have:
             if dest == 'host':
                 commands.append('no logging host {}'.format(name))
-            else:
+            elif dest in ('console', 'monitor', 'buffered', 'on'):
                 commands.append('no logging {}'.format(dest))
+            else:
+                pass
 
             if facility:
                 commands.append('no logging facility {}'.format(facility))
