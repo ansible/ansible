@@ -1062,7 +1062,6 @@ class PyVmomiHelper(object):
             elif 'datastore' in self.params['disk'][0]:
                 datastore_name = self.params['disk'][0]['datastore']
                 datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
-                datastore = find_obj(self.content, [vim.Datastore], datastore_name)
             else:
                 self.module.fail_json(msg="Either datastore or autoselect_datastore should be provided to select datastore")
 
