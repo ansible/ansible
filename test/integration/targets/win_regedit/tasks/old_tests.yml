@@ -1,0 +1,473 @@
+# test code for the win_regedit module
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# clear the area of the registry we are using for tests
+
+# test mangled registry key gets caught following https://github.com/ansible/ansible-modules-extras/issues/2412
+
+- name: test mangled registry key is caught (avoids bizare error message from powershell)
+  win_regedit:
+    key: HKCU\Software
+    value: invalid_key
+    data: invalid_key
+    datatype: string
+  register: check00_result
+  ignore_errors: True
+
+- assert:
+    that:
+      - "check00_result.failed == true"
+      - "check00_result.msg == 'path: HKCU\\Software is not a valid powershell path, see module documentation for examples.'"
+
+- name: remove setting
+  win_regedit:
+    key: 'HKCU:\SOFTWARE\Cow Corp'
+    state: absent
+
+- name: check basic set works
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hello
+    data: world
+  register: check01_result
+
+- assert:
+    that:
+      - "check01_result.changed == true"
+
+- name: check that setting the same again is not changed
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hello
+    data: world
+  register: check02_result
+
+- assert:
+    that:
+      - "check02_result.changed == false"
+
+# binary mode checks
+# tests with 'hex:' prefix (as intended)
+
+- name: check binary with hex(colon) prefix
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: hex:be,ef,be,ef,be,ef,be,ef,be,ef
+    datatype: binary
+  register: check03_result
+
+- assert:
+    that:
+      - "check03_result.changed == true"
+
+- name: check binary with hex(colon) prefix not modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: hex:be,ef,be,ef,be,ef,be,ef,be,ef
+    datatype: binary
+  register: check04_result
+
+- assert:
+    that:
+      - "check04_result.changed == false"
+
+- name: check binary with hex(colon) prefix modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: hex:de,ad,be,ef,de,ad,be,ef,de,ad,be,ef
+    datatype: binary
+  register: check05_result
+
+- assert:
+    that:
+      - "check05_result.changed == true"
+
+# reset
+- name: reset test
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    state: absent
+  register: check06_result
+
+- assert:
+    that:
+      - "check06_result.changed == true"
+
+# check without hex(colon) prefix
+
+# tests without 'hex:' prefix (optional)
+- name: check binary with hex(colon) prefix
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: be,ef,be,ef,be,ef,be,ef,be,ef
+    datatype: binary
+  register: check13_result
+
+- assert:
+    that:
+      - "check13_result.changed == true"
+
+- name: check binary without hex(colon) prefix not modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: be,ef,be,ef,be,ef,be,ef,be,ef
+    datatype: binary
+  register: check14_result
+
+- assert:
+    that:
+      - "check14_result.changed == false"
+
+- name: check binary without hex(colon) prefix modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: de,ad,be,ef,de,ad,be,ef,de,ad,be,ef
+    datatype: binary
+  register: check15_result
+
+- assert:
+    that:
+      - "check15_result.changed == true"
+
+# reset
+- name: reset test
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    state: absent
+  register: check16_result
+
+- assert:
+    that:
+      - "check16_result.changed == true"
+
+# check mixed case hex values with hex: prefix
+
+- name: check mixed case binary with hex(colon) prefix
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: hex:be,EF,be,EF,be,EF,be,EF,be,EF
+    datatype: binary
+  register: check23_result
+
+- assert:
+    that:
+      - "check23_result.changed == true"
+
+- name: check mixed case binary with hex(colon) prefix not modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: hex:be,EF,be,EF,be,EF,be,EF,be,EF
+    datatype: binary
+  register: check24_result
+
+- assert:
+    that:
+      - "check24_result.changed == false"
+
+- name: check mixed case binary with hex(colon) prefix modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: hex:DE,ad,be,EF,DE,ad,be,EF,DE,ad,be,EF
+    datatype: binary
+  register: check25_result
+
+- assert:
+    that:
+      - "check25_result.changed == true"
+
+# reset
+- name: reset test
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    state: absent
+  register: check26_result
+
+- assert:
+    that:
+      - "check26_result.changed == true"
+
+# check mixed case without hex: prefix
+
+# tests without 'hex:' prefix (optional)
+- name: check mixed case binary without hex(colon) prefix
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: be,EF,be,EF,be,EF,be,EF,be,EF
+    datatype: binary
+  register: check33_result
+
+- assert:
+    that:
+      - "check33_result.changed == true"
+
+- name: check mixed case binary without hex(colon) prefix not modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: be,EF,be,EF,be,EF,be,EF,be,EF
+    datatype: binary
+  register: check34_result
+
+- assert:
+    that:
+      - "check34_result.changed == false"
+
+- name: check mixed case binary without hex(colon) prefix modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: DE,ad,be,EF,DE,ad,be,EF,DE,ad,be,EF
+    datatype: binary
+  register: check35_result
+
+- assert:
+    that:
+      - "check35_result.changed == true"
+
+# reset
+- name: reset test
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    state: absent
+  register: check36_result
+
+- assert:
+    that:
+      - "check36_result.changed == true"
+
+# check colon separated hex values with hex: prefix
+
+- name: check colon separated hex values with hex(colon) prefix
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: hex:be:ef:be:ef:be:ef:be:ef:be:ef
+    datatype: binary
+  register: check43_result
+
+- assert:
+    that:
+      - "check43_result.changed == true"
+
+- name: check colon separated binary with hex(colon) prefix not modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: hex:be:ef:be:ef:be:ef:be:ef:be:ef
+    datatype: binary
+  register: check44_result
+
+- assert:
+    that:
+      - "check44_result.changed == false"
+
+- name: check colon separated binary with hex(colon) prefix modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: hex:de:ad:be:ef:de:ad:be:ef:de:ad:be:ef
+    datatype: binary
+  register: check45_result
+
+- assert:
+    that:
+      - "check45_result.changed == true"
+
+# reset
+- name: reset test
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    state: absent
+  register: check46_result
+
+- assert:
+    that:
+      - "check46_result.changed == true"
+
+# check colon separated hex values without hex(colon) prefix
+
+# tests without 'hex:' prefix (optional)
+- name: check colon separated binary with hex(colon) prefix
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: be:ef:be:ef:be:ef:be:ef:be:ef
+    datatype: binary
+  register: check53_result
+
+- assert:
+    that:
+      - "check53_result.changed == true"
+
+- name: check colon separated binary without hex(colon) prefix not modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: be:ef:be:ef:be:ef:be:ef:be:ef
+    datatype: binary
+  register: check54_result
+
+- assert:
+    that:
+      - "check54_result.changed == false"
+
+- name: check colon separated binary without hex(colon) prefix modified
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    data: de:ad:be:ef:de:ad:be:ef:de:ad:be:ef
+    datatype: binary
+  register: check55_result
+
+- assert:
+    that:
+      - "check55_result.changed == true"
+
+# reset
+- name: reset test
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hellobinary
+    state: absent
+  register: check56_result
+
+- assert:
+    that:
+      - "check56_result.changed == true"
+
+# test empty data value (some things depend on this, having no data is not equivalent)
+
+- name: set an empty data value
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: helloempty
+    data: ""
+  register: check61_result
+
+- assert:
+    that:
+      - "check61_result.changed == true"
+
+- name: set an empty data value again (should not change)
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: helloempty
+    data: ""
+  register: check62_result
+
+- assert:
+    that:
+      - "check62_result.changed == false"
+
+# check can use yaml array of bytes as input 
+- name: regedit binary data using yaml syntax 
+  win_regedit:
+      key: 'HKCU:\SOFTWARE\Cow Corp'
+      value: hellobinaryfromyaml
+      data: [0x21, 0xb3, 0x33, 0xf9, 0x0d, 0xff, 0xd0, 0x01]
+      datatype: binary
+  register: check63_result
+
+- assert:
+    that:
+      - "check63_result.changed == true"
+
+- name: regedit binary data using yaml syntax again
+  win_regedit:
+      key: 'HKCU:\SOFTWARE\Cow Corp'
+      value: hellobinaryfromyaml
+      data: [0x21, 0xb3, 0x33, 0xf9, 0x0d, 0xff, 0xd0, 0x01]
+      datatype: binary
+  register: check64_result
+
+- assert:
+    that:
+      - "check64_result.changed == false"
+
+# test dword
+
+- name: check basic set dword works
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hello_dword
+    data: 00000000
+    datatype: dword
+  register: check71_result
+
+- assert:
+    that:
+      - "check71_result.changed == true"
+
+- name: check that setting the same dword again is not changed
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hello_dword
+    data: 00000000
+    datatype: dword
+  register: check72_result
+
+- assert:
+    that:
+      - "check72_result.changed == false"
+
+# https://github.com/ansible/ansible/issues/26049
+# module reports change on dword with hex value even with same value
+- name: create hex value with prepending 0x
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: full_hex_dword
+    data: 0xffffffff
+    datatype: dword
+  register: dword_create
+
+- name: change hex value and report no changes
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: full_hex_dword
+    data: 0xffffffff
+    datatype: dword
+  register: dword_create_again
+
+- assert:
+    that:
+    - not dword_create_again|changed
+
+# tear down
+
+- name: remove registry key used for testing
+  win_regedit:
+    key: 'HKCU:\SOFTWARE\Cow Corp'
+    state: absent
+
+
+# END OF win_regedit tests
