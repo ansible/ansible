@@ -19,17 +19,19 @@
 from ansible.compat.tests import unittest
 from ansible.module_utils.ec2 import _camel_to_snake
 
-EXPECTED_CAMELIZATION = {
+EXPECTED_SNAKIFICATION = {
     'alllower': 'alllower',
     'TwoWords': 'two_words',
     'AllUpperAtEND': 'all_upper_at_end',
     'AllUpperButPLURALs': 'all_upper_but_plurals',
     'TargetGroupARNs': 'target_group_arns',
+    'HTTPEndpoints': 'http_endpoints',
+    'PLURALs': 'plurals'
 }
 
 
 class CamelToSnakeTestCase(unittest.TestCase):
 
     def test_camel_to_snake(self):
-        for (k, v) in EXPECTED_CAMELIZATION.items():
+        for (k, v) in EXPECTED_SNAKIFICATION.items():
             self.assertEqual(_camel_to_snake(k), v)

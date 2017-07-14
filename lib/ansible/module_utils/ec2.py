@@ -346,9 +346,12 @@ def _camel_to_snake(name):
 
     import re
     # Cope with pluralized abbreviations such as TargetGroupARNs
-    # that would otherwise be rendered target_group_arns
+    # that would otherwise be rendered target_group_ar_ns
     plural_pattern = r'[A-Z]{3,}s$'
     s1 = re.sub(plural_pattern, prepend_underscore_and_lower, name)
+    # Handle when there was nothing before the plural_pattern
+    if s1.startswith("_") and not name.startswith("_"):
+        s1 = s1[1:]
     # Remainder of solution seems to be https://stackoverflow.com/a/1176023
     first_cap_pattern = r'(.)([A-Z][a-z]+)'
     all_cap_pattern = r'([a-z0-9])([A-Z]+)'
