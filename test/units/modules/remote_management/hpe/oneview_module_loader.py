@@ -32,4 +32,4 @@ from ansible.module_utils.oneview import (HPOneViewException,
                                           ServerProfileReplaceNamesByUris,
                                           ResourceComparator)
 
-from ansible.modules.cloud.hpe.oneview_fc_network import FcNetworkModule
+from ansible.modules.remote_management.hpe.oneview_fc_network import FcNetworkModule
