@@ -54,14 +54,23 @@ EXAMPLES = '''
       - mordred
 '''
 
-import os_client_config
-from os_client_config import exceptions
+
+try:
+    import os_client_config
+    from os_client_config import exceptions
+    HAS_OS_CLIENT_CONFIG = True
+except ImportError:
+    HAS_OS_CLIENT_CONFIG = False
 
 
 def main():
     module = AnsibleModule(argument_spec=dict(
         clouds=dict(required=False, type='list', default=[]),
     ))
+
+    if not HAS_OS_CLIENT_CONFIG:
+        module.fail_json(msg='os-client-config is required for this module')
+
     p = module.params
 
     try:
