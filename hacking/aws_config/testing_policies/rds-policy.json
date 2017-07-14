@@ -52,6 +52,7 @@
             "Effect": "Allow",
             "Action": [
                 "rds:DescribeDBParameterGroups",
+                "rds:DescribeDBParameters",
                 "rds:CreateDBParameterGroup",
                 "rds:DeleteDBParameterGroup",
                 "rds:ModifyDBParameterGroup",

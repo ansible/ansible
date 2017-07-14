@@ -220,6 +220,8 @@ def convert_parameter(param, value):
     elif param['DataType'] == 'boolean':
         if isinstance(value, string_types):
             converted_value = to_native(value) in BOOLEANS_TRUE
+        # convert True/False to 1/0
+        converted_value = 1 if converted_value else 0
     return str(converted_value)
 
 

@@ -72,11 +72,11 @@
       register: result
       ignore_errors: true
 
-    - name: assert tagging existing group changes it and adds tags
+    - name: adding numeric tag just silently converts
       assert:
         that:
-           - 'result.failed'
-           - '"Invalid type for parameter" in result.msg'
+           - 'result.changed'
+           - 'result.tags.Test == "123"'
 
     # ============================================================
     - name: test tagging existing group
@@ -88,6 +88,7 @@
         tags:
           Environment: test
           Test: "123"
+          NewTag: "hello"
         region: "{{ ec2_region }}"
         ec2_access_key: '{{ aws_access_key }}'
         ec2_secret_key: '{{ aws_secret_key }}'
@@ -99,7 +100,7 @@
       assert:
         that:
            - 'result.changed'
-           - 'result.tags.Test == "123"'
+           - 'result.tags.NewTag == "hello"'
 
     # ============================================================
     - name: test repeating tagging existing group
@@ -111,6 +112,7 @@
         tags:
           Environment: test
           Test: "123"
+          NewTag: "hello"
         region: "{{ ec2_region }}"
         ec2_access_key: '{{ aws_access_key }}'
         ec2_secret_key: '{{ aws_secret_key }}'
@@ -137,6 +139,7 @@
         ec2_access_key: '{{ aws_access_key }}'
         ec2_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
+        purge_tags: yes
       register: result
       ignore_errors: true
 
@@ -145,6 +148,7 @@
         that:
            - 'result.changed'
            - 'result.tags.Environment == "test"'
+           - '"NewTag" not in result.tags'
 
     # ============================================================
     - name: test state=absent with engine defined (expect changed=true)
@@ -241,7 +245,7 @@
            - 'result.changed'
 
     # ============================================================
-    - name: test state=absent with engine defined (expect changed=true)
+    - name: test repeating state=absent (expect changed=false)
       rds_param_group:
         name: "{{ rds_param_group.name }}"
         engine: "{{ rds_param_group.engine }}"
@@ -253,10 +257,10 @@
       register: result
       ignore_errors: true
 
-    - name: assert state=absent with engine defined (expect changed=true)
+    - name: assert repeating state=absent (expect changed=false)
       assert:
         that:
-           - 'result.changed'
+           - 'not result.changed'
 
     # ============================================================
     - name: test creating group with more than 20 parameters
@@ -264,7 +268,7 @@
         name: "{{ rds_param_group.name }}"
         engine: "{{ rds_param_group.engine }}"
         description: "{{ rds_param_group.description }}"
-        params: "{{ rds_lots_of_parameters }}"
+        params: "{{ rds_long_param_list }}"
         state: present
         region: "{{ ec2_region }}"
         ec2_access_key: '{{ aws_access_key }}'
@@ -284,7 +288,7 @@
         name: "{{ rds_param_group.name }}"
         engine: "{{ rds_param_group.engine }}"
         description: "{{ rds_param_group.description }}"
-        params: "{{ rds_lots_of_parameters }}"
+        params: "{{ rds_long_param_list }}"
         region: "{{ ec2_region }}"
         state: present
         ec2_access_key: '{{ aws_access_key }}'
@@ -311,7 +315,7 @@
       register: result
       ignore_errors: true
 
-    - name: assert state=absent with key_material (expect changed=false)
+    - name: assert state=absent (expect changed=false)
       assert:
         that:
            - 'result.changed'
