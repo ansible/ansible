@@ -1086,7 +1086,7 @@ class PyVmomiHelper(object):
 
                 datastore_freespace = 0
                 for ds in datastores:
-                    if ds.summary.freeSpace > datastore_freespace:
+                    if (ds.summary.freeSpace > datastore_freespace) or (ds.summary.freeSpace == datastore_freespace and not datastore):
                         # If datastore field is provided, filter destination datastores
                         if 'datastore' in self.params['disk'][0] and \
                                 isinstance(self.params['disk'][0]['datastore'], str) and \
@@ -1100,6 +1100,7 @@ class PyVmomiHelper(object):
             elif 'datastore' in self.params['disk'][0]:
                 datastore_name = self.params['disk'][0]['datastore']
                 datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
+                datastore = find_obj(self.content, [vim.Datastore], datastore_name)
             else:
                 self.module.fail_json(msg="Either datastore or autoselect_datastore should be provided to select datastore")
 
