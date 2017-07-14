@@ -426,8 +426,8 @@ def get_listener(connection, module, elb_arn, listener_port):
     """
     Get a listener based on the port provided.
 
-    :param connection:
-    :param module:
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
     :param listener_port:
     :return:
     """
@@ -480,9 +480,14 @@ def ensure_listeners_default_action_has_arn(connection, module, listeners):
     If a listener DefaultAction has been passed with a Target Group Name instead of ARN, lookup the ARN and
     replace the name.
 
-    :param listeners:
-    :return:
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
+    :param listeners: a list of listener dicts
+    :return: the same list of dicts ensuring that each listener DefaultActions dict has TargetGroupArn key. If a TargetGroupName key exists, it is removed.
     """
+
+    if not listeners:
+        listeners = []
 
     for listener in listeners:
         if 'TargetGroupName' in listener['DefaultActions'][0]:
@@ -497,10 +502,10 @@ def ensure_rules_action_has_arn(connection, module, rules):
     If a rule Action has been passed with a Target Group Name instead of ARN, lookup the ARN and
     replace the name.
 
-    :param connection:
-    :param module:
-    :param rules:
-    :return:
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
+    :param rules: a list of rule dicts
+    :return: the same list of dicts ensuring that each rule Actions dict has TargetGroupArn key. If a TargetGroupName key exists, it is removed.
     """
 
     for rule in rules:
@@ -705,7 +710,7 @@ def create_or_update_elb_listeners(connection, module, elb):
     purge_listeners = module.params.get("purge_listeners")
 
     # Does the ELB have any listeners exist?
-    current_listeners = get_elb_listeners(connection, module, elb['LoadBalancerArn'] or [])
+    current_listeners = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
 
     listeners_to_add, listeners_to_modify, listeners_to_delete = compare_listeners(connection, module, current_listeners, deepcopy(listeners), purge_listeners)
 
