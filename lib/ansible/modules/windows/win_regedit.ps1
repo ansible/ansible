@@ -28,8 +28,8 @@ $diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool"
 $path = Get-AnsibleParam -obj $params -name "path" -type "string" -failifempty $true -aliases "key"
 $name = Get-AnsibleParam -obj $params -name "name" -type "string" -aliases "entry","value"
 $data = Get-AnsibleParam -obj $params -name "data"
-$type = Get-AnsibleParam -obj $params -name "type" -type "string" -validateSet "none","binary","dword","expandstring","multistring","string","qword" -aliases "datatype" -default "string"
-$state = Get-AnsibleParam -obj $params -name "state" -type "string" -validateSet "present","absent" -default "present"
+$type = Get-AnsibleParam -obj $params -name "type" -type "string" -default "string" -validateSet "none","binary","dword","expandstring","multistring","string","qword" -aliases "datatype"
+$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateSet "absent","present"
 
 $result = @{
     changed = $false
@@ -94,6 +94,10 @@ Function Compare-Data {
         } else {
             return $false
         }
+    } elseif ($ReferenceData -eq $DifferenceData) {
+        return $true
+    } else {
+        return $false
     }
 }
 
@@ -143,7 +147,6 @@ if (-not (Test-Path HKCC:\)) {
     New-PSDrive -Name HKCC -PSProvider Registry -Root HKEY_CURRENT_CONFIG
 }
 
-
 # Convert HEX string to binary if type binary
 if ($type -eq "binary" -and $data -ne $null -and $data -is [string]) {
     $data = Convert-RegExportHexStringToByteArray($data)
@@ -157,6 +160,12 @@ if ($name -eq "" -or ($name -ne $null -and $name.ToLower() -eq "(default)")) {
     }
     $name = "(default)"
     $type = "string"
+}
+
+# For expandstring we need to compare with an expanded string
+$orig_data = $data
+if ($type -eq "expandstring" -and $data -ne $null -and $data -is [string]) {
+    $data = Expand-Environment($data)
 }
 
 # Support REG_NONE with empty value
@@ -185,17 +194,17 @@ if ($state -eq "present") {
 
             if ($type -ne $old_type) {
                 # Changes Data and DataType
-                if (-not $check_mode) {
-                    try {
-                        if ($name.ToLower() -eq "(default)") {
+                try {
+                    if ($name.ToLower() -eq "(default)") {
+                        if (-not $check_mode) {
                             $null = $(Get-Item -Path $path -ErrorAction 'Stop').OpenSubKey('','ReadWriteSubTree').SetValue($null,$data)
-                        } else {
-                            Remove-ItemProperty -Path $path -Name $name
-                            New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type -Force | Out-Null
                         }
-                    } catch {
-                        Fail-Json $result $_.Exception.Message
+                    } else {
+                        Remove-ItemProperty -Path $path -Name $name -WhatIf:$check_mode
+                        New-ItemProperty -Path $path -Name $name -Value $orig_data -PropertyType $type -WhatIf:$check_mode -Force | Out-Null
                     }
+                } catch {
+                    Fail-Json $result $_.Exception.Message
                 }
                 $result.changed = $true
                 $result.data_changed = $true
@@ -210,19 +219,21 @@ if ($state -eq "present") {
                 }
 
             # FIXME: Compare-Data fails to work for null-length byte arrays
+            } elseif ($type -eq "none") {
+                # Do nothing
             } elseif (-not (Compare-Data -ReferenceData $old_data -DifferenceData $data)) {
                 # Changes Only Data
-                if (-not $check_mode) {
-                    try {
-                        if ($type -eq "none") {
-                            Remove-ItemProperty -Path $path -Name $name
-                            New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type -Force | Out-Null
-                        } else {
-                            Set-ItemProperty -Path $path -Name $name -Value $data
-                        }
-                    } catch {
-                        Fail-Json $result $_.Exception.Message
-                    }
+                try {
+#                    if ($type -eq "none") {
+#                        Remove-ItemProperty -Path $path -Name $name -WhatIf:$check_mode
+#                        New-ItemProperty -Path $path -Name $name -Value $orig_data -PropertyType $type -WhatIf:$check_mode -Force | Out-Null
+#                        $type = 'hex(0)'
+#                    } else {
+#                        Set-ItemProperty -Path $path -Name $name -Value $orig_data -WhatIf:$check_mode
+#                    }
+                    Set-ItemProperty -Path $path -Name $name -Value $orig_data -WhatIf:$check_mode
+                } catch {
+                    Fail-Json $result $_.Exception.Message
                 }
                 $result.changed = $true
                 $result.data_changed = $true
@@ -241,14 +252,16 @@ if ($state -eq "present") {
 
         } else {
             # Add missing entry
-            if (-not $check_mode) {
-                try {
-                    New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type | Out-Null
-                } Catch {
-                    Fail-Json $result $_.Exception.Message
-                }
+            try {
+                New-ItemProperty -Path $path -Name $name -Value $orig_data -PropertyType $type -WhatIf:$check_mode | Out-Null
+            } Catch {
+                Fail-Json $result $_.Exception.Message
             }
             $result.changed = $true
+
+            if ($type -eq "none") {
+                $type = "hex(0)"
+            }
 
             if ($diff_support) {
                 $result.diff.prepared += @"
@@ -261,17 +274,18 @@ if ($state -eq "present") {
 
     } elseif (-not (Test-Path $path)) {
 
-        if (-not $check_mode) {
-            try {
-                $new_path = New-Item $path -Type directory -Force
-                if ($name -ne $null) {
-                    $new_path | New-ItemProperty -Name $name -Value $data -PropertyType $type -Force | Out-Null
-                }
-            } catch {
-                Fail-Json $result $_.Exception.Message
+        try {
+            $new_path = New-Item $path -Type directory -WhatIf:$check_mode -Force
+            if ($name -ne $null) {
+                $new_path | New-ItemProperty -Name $name -Value $orig_data -PropertyType $type -WhatIf:$check_mode -Force | Out-Null
             }
+        } catch {
+            Fail-Json $result $_.Exception.Message
         }
         $result.changed = $true
+        if ($type -eq "none") {
+            $type = "hex(0)"
+        }
 
         if ($diff_support) {
             $result.diff.prepared += @"
@@ -291,12 +305,10 @@ if ($state -eq "present") {
     if (Test-Path $path) {
         if ($name -eq $null) {
 
-            if (-not $check_mode) {
-                try {
-                    Remove-Item -Path $path -Recurse
-                } catch {
-                    Fail-Json $result $_.Exception.Message
-                }
+            try {
+                Remove-Item -Path $path -Recurse -WhatIf:$check_mode
+            } catch {
+                Fail-Json $result $_.Exception.Message
             }
             $result.changed = $true
 
@@ -309,12 +321,10 @@ if ($state -eq "present") {
 
         } elseif (Test-ValueData -Path $path -Name $name) {
 
-            if (-not $check_mode) {
-                try {
-                    Remove-ItemProperty -Path $path -Name $name
-                } catch {
-                    Fail-Json $result $_.Exception.Message
-                }
+            try {
+                Remove-ItemProperty -Path $path -Name $name -WhatIf:$check_mode
+            } catch {
+                Fail-Json $result $_.Exception.Message
             }
             $result.changed = $true
 
