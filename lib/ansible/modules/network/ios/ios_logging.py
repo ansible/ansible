@@ -142,10 +142,7 @@ def map_obj_to_commands(updates, module):
                 commands.append('logging facility {}'.format(facility))
 
             if dest == 'host':
-                host_cmd = 'logging host {}'.format(name)
-                if formatting:
-                    host_cmd += ' {}'.format(formatting)
-                commands.append(host_cmd)
+                commands.append('logging host {}'.format(name))
 
             elif dest == 'on':
                 commands.append('logging on')
@@ -163,55 +160,87 @@ def map_obj_to_commands(updates, module):
     return commands
 
 
-def map_config_to_obj(module):
-    obj = []
-    level = ('emergencies', 'alerts', 'critical', 'errors', 'warnings',
-             'notifications', 'informational', 'debugging')
+def parse_facility(line):
+    match = re.search(r'logging facility (\S+)', line, re.M)
+    if match:
+        return match.group(1)
 
-    data = get_config(module, flags=['| section logging'])
-    for line in data.split('\n'):
-        match = re.search(r'logging (\S+)', line, re.M)
-        if match.group(1) == 'facility':
-            facility_match = re.search(r'logging facility (\S+)', line, re.M)
-            facility = facility_match.group(1)
-        else:
-            dest = match.group(1)
 
-        if dest == 'host':
-            match = re.search(r'logging host (\S+)', line, re.M)
-            name = match.group(1)
-            size = None
-            level = None
-        else:
-            match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
-            if match.group(1) in level:
-                level = match.group(1)
-                name = None
-                size = None
-            if dest == 'buffered':
-                match = re.search(r'logging buffered (\S+)', line, re.M)
-                try:
-                    int_size = int(match.group(1))
-                except ValueError:
-                    int_size = None
+def parse_size(line, dest):
+    if dest == 'buffered':
+        match = re.search(r'logging buffered (\S+)', line, re.M)
+        if match:
+            try:
+                int_size = int(match.group(1))
+            except ValueError:
+                int_size = None
 
-                if int_size:
-                    if isinstance(int_size, int):
-                        size = str(match.group(1))
+            if int_size:
+                if isinstance(int_size, int):
+                    size = str(match.group(1))
                 else:
                     size = None
+    else:
+        size = None
 
-                obj.append({'dest': dest,
-                            'name': name,
-                            'size': size,
-                            'facility': facility,
-                            'level': level})
+    return size
+
+
+def parse_name(line, dest):
+    if dest == 'host':
+        match = re.search(r'logging host (\S+)', line, re.M)
+        if match:
+            name = match.group(1)
+    else:
+        name = None
+
+    return name
+
+
+def parse_level(line, dest):
+    level_group = ('emergencies', 'alerts', 'critical', 'errors', 'warnings',
+                   'notifications', 'informational', 'debugging')
+
+    if dest == 'host':
+        level = None
+
+    else:
+        match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
+        if match:
+            if match.group(1) in level_group:
+                level = match.group(1)
+            else:
+                level = None
+        else:
+            level = None
+
+    return level
+
+
+def map_config_to_obj(module):
+    obj = []
+    dest_group = ('console', 'host', 'monitor', 'buffered', 'on')
+
+    data = get_config(module, flags=['| section logging'])
+
+    for line in data.split('\n'):
+        match = re.search(r'logging (\S+)', line, re.M)
+
+        if match.group(1) in dest_group:
+            dest = match.group(1)
+        else:
+            pass
+
+        obj.append({'dest': dest,
+                    'name': parse_name(line, dest),
+                    'size': parse_size(line, dest),
+                    'facility': parse_facility(line),
+                    'level': parse_level(line, dest)})
 
     return obj
 
 
 def map_params_to_obj(module):
-
     obj = []
 
     if 'collection' in module.params and module.params['collection']:
