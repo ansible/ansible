@@ -241,6 +241,11 @@ def main():
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
 
+    for container in module.params['containers']:
+        if 'environment' in container:
+            for environment in container['environment']:
+                environment['value'] = str(environment['value'])
+
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
             module.fail_json(msg="To use task definitions, a list of containers must be specified")
@@ -353,10 +358,6 @@ def main():
             if not module.check_mode:
                 # Doesn't exist. create it.
                 volumes = module.params.get('volumes', []) or []
-                for container in module.params['containers']:
-                    if 'environment' in container:
-                        for environment in container['environment']:
-                            environment['value'] = str(environment['value'])
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
                                                                    module.params['task_role_arn'],
                                                                    module.params['network_mode'],
