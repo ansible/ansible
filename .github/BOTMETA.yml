@@ -802,8 +802,12 @@ files:
   $modules/windows/win_msg.py: $team_windows
   $modules/windows/win_msi.ps1: sivel
   $modules/windows/win_msi.py: sivel
-  $modules/windows/win_nssm.ps1: georgefrank h0nIg smadam813
-  $modules/windows/win_nssm.py: georgefrank h0nIg smadam813
+  $modules/windows/win_nssm.ps1:
+    maintainers: smadam813
+    ignored: georgefrank h0nIg
+  $modules/windows/win_nssm.py:
+    maintainers: smadam813
+    ignored: georgefrank h0nIg
   $modules/windows/win_owner.ps1: h0nIg jborean93
   $modules/windows/win_owner.py: h0nIg jborean93
   $modules/windows/win_package.ps1: trondhindenes
