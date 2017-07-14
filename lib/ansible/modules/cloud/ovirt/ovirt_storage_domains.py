@@ -33,12 +33,17 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage storage domains in oVirt/RHV"
 options:
+    id:
+        description:
+            - "Id of the storage domain to be imported."
+        version_added: "2.4"
     name:
         description:
             - "Name of the storage domain to manage."
     state:
         description:
-            - "Should the storage domain be present/absent/maintenance/unattached"
+            - "Should the storage domain be present/absent/maintenance/unattached/imported"
+            - "I(imported) is supported since version 2.4."
         choices: ['present', 'absent', 'maintenance', 'unattached']
         default: present
     description:
@@ -256,6 +261,8 @@ class StorageDomainModule(BaseModule):
             name=self._module.params['name'],
             description=self._module.params['description'],
             comment=self._module.params['comment'],
+            import_=True if (self._module.params['state'] == 'imported' and storage_type in ['iscsi', 'fcp']) else None,
+            id=self._module.params['id'] if (self._module.params['state'] == 'imported' and storage_type in ['iscsi', 'fcp']) else None,
             type=otypes.StorageDomainType(
                 self._module.params['domain_function']
             ),
@@ -423,9 +430,10 @@ def control_state(sd_module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'maintenance', 'unattached'],
+            choices=['present', 'absent', 'maintenance', 'unattached', 'imported'],
             default='present',
         ),
+        id=dict(default=None),
         name=dict(required=True),
         description=dict(default=None),
         comment=dict(default=None),
@@ -465,7 +473,7 @@ def main():
                 format=module.params['format'],
                 host=module.params['host'],
             )
-        elif state == 'present':
+        elif state == 'present' or state == 'imported':
             sd_id = storage_domains_module.create()['id']
             storage_domains_module.post_create_check(sd_id)
             ret = storage_domains_module.action(
