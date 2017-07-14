@@ -1,4 +1,10 @@
 ---
+- debug: msg="START cli/contains.yaml"
 
 - include: "{{ role_path }}/tests/eos/basic.yaml"
   when: hostvars[inventory_hostname]['ansible_network_os'] == 'eos'
+
+- include: "{{ role_path }}/tests/vyos/basic.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'vyos'
+
+- debug: msg="END cli/contains.yaml"

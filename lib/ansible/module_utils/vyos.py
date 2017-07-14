@@ -113,7 +113,11 @@ def load_config(module, commands, commit=False, comment=None):
         cmd = 'commit'
         if comment:
             cmd += ' comment "%s"' % comment
-        exec_command(module, cmd)
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            # discard any changes in case of failure
+            exec_command(module, 'exit discard')
+            module.fail_json(msg='commit failed: %s' % err)
 
     if not commit:
         exec_command(module, 'exit discard')
