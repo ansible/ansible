@@ -252,10 +252,23 @@ def command_network_integration(args):
     """
     :type args: NetworkIntegrationConfig
     """
-    filename = 'test/integration/inventory.networking'
+    default_filename = 'test/integration/inventory.networking'
 
-    if not args.explain and not args.platform and not os.path.isfile(filename):
-        raise ApplicationError('Use the --platform option or provide an inventory file (see %s.template).' % filename)
+    if args.inventory:
+        filename = os.path.join('test/integration', args.inventory)
+    else:
+        filename = default_filename
+
+    if not args.explain and not args.platform and not os.path.exists(filename):
+        if args.inventory:
+            filename = os.path.abspath(filename)
+
+        raise ApplicationError(
+            'Inventory not found: %s\n'
+            'Use --inventory to specify the inventory path.\n'
+            'Use --platform to provision resources and generate an inventory file.\n'
+            'See also inventory template: %s.template' % (filename, default_filename)
+        )
 
     internal_targets = command_integration_filter(args, walk_network_integration_targets())
     platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
@@ -500,6 +513,8 @@ def command_integration_filtered(args, targets):
     :type targets: tuple[IntegrationTarget]
     """
     found = False
+    passed = []
+    failed = []
 
     targets_iter = iter(targets)
 
@@ -568,7 +583,14 @@ def command_integration_filtered(args, targets):
                     display.verbosity = args.verbosity = 6
 
             original_environment.validate(target.name, throw=True)
-        except:
+            passed.append(target)
+        except Exception as ex:
+            failed.append(target)
+
+            if args.continue_on_error:
+                display.error(ex)
+                continue
+
             display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
 
             next_target = next(targets_iter, None)
@@ -579,6 +601,10 @@ def command_integration_filtered(args, targets):
             raise
         finally:
             display.verbosity = args.verbosity = verbosity
+
+    if failed:
+        raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
+            len(failed), len(passed) + len(failed), '\n'.join(target.name for target in failed)))
 
 
 def integration_environment(args, target, cmd):
@@ -642,7 +668,7 @@ def command_integration_role(args, target, start_at_task):
         hosts = 'windows'
         gather_facts = False
     elif isinstance(args, NetworkIntegrationConfig):
-        inventory = 'inventory.networking'
+        inventory = args.inventory or 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
         if hosts == 'net':
