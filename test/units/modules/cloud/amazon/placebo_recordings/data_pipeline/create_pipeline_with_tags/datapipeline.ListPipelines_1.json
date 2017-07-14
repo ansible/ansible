@@ -1,18 +1,23 @@
 {
+    "status_code": 200,
     "data": {
-        "pipelineIdList": [],
+        "pipelineIdList": [
+            {
+                "name": "ansible-test-create-pipeline",
+                "id": "df-0590406117G8DPQZY2HA"
+            }
+        ],
         "hasMoreResults": false,
         "ResponseMetadata": {
-            "HTTPStatusCode": 200,
-            "RetryAttempts": 0,
-            "RequestId": "bf91a166-2521-11e7-9ece-3f56b00ecdd3",
+            "RequestId": "aeec5b7d-68c9-11e7-8d5f-8781ccf20ee6",
             "HTTPHeaders": {
-                "content-length": "44",
-                "x-amzn-requestid": "bf91a166-2521-11e7-9ece-3f56b00ecdd3",
+                "date": "Fri, 14 Jul 2017 19:21:48 GMT",
+                "x-amzn-requestid": "aeec5b7d-68c9-11e7-8d5f-8781ccf20ee6",
                 "content-type": "application/x-amz-json-1.1",
-                "date": "Wed, 19 Apr 2017 17:00:52 GMT"
-            }
+                "content-length": "114"
+            },
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200
         }
-    },
-    "status_code": 200
+    }
 }

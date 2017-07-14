@@ -1,21 +1,21 @@
 {
+    "status_code": 400,
     "data": {
         "Error": {
             "Message": "Pipeline with id: df-015440025PF7YGLDK47C does not exist",
             "Code": "PipelineDeletedException"
         },
         "ResponseMetadata": {
-            "HTTPStatusCode": 400,
-            "RetryAttempts": 0,
-            "RequestId": "d6166692-2521-11e7-89ab-4382f212930a",
+            "RequestId": "bdfe3c7d-68c9-11e7-8d5f-8781ccf20ee6",
             "HTTPHeaders": {
+                "date": "Fri, 14 Jul 2017 19:22:13 GMT",
+                "x-amzn-requestid": "bdfe3c7d-68c9-11e7-8d5f-8781ccf20ee6",
                 "content-length": "106",
-                "x-amzn-requestid": "d6166692-2521-11e7-89ab-4382f212930a",
                 "cneonction": "close",
-                "content-type": "application/x-amz-json-1.1",
-                "date": "Wed, 19 Apr 2017 17:01:30 GMT"
-            }
+                "content-type": "application/x-amz-json-1.1"
+            },
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 400
         }
-    },
-    "status_code": 400
+    }
 }
