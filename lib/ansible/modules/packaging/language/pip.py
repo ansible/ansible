@@ -223,6 +223,17 @@ import re
 import os
 import sys
 
+from distutils.version import LooseVersion
+try:
+    import json
+except ImportError:
+    import simplejson as json
+try:
+    import pip
+    HAS_PIP = True
+except ImportError:
+    HAS_PIP = False
+
 from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
@@ -253,16 +264,48 @@ def _get_full_name(name, version=None):
     return resp
 
 
-def _get_packages(module, pip, chdir):
-    '''Return results of pip command to get packages.'''
-    # Try 'pip list' command first.
-    command = '%s list' % pip
-    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
-    rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
+def _get_pip_version():
+    '''Return installed pip version, if available.'''
+    # This should work from 1.2 onwards.
+    if pip.__version__:
+        pip_version = LooseVersion(pip.__version__)
+    else:
+        pip_version = LooseVersion('0')
+    return pip_version
 
-    # If there was an error (pip version too old) then use 'pip freeze'.
-    if rc != 0:
-        command = '%s freeze' % pip
+
+def _has_list_command():
+    '''Return whether or not pip supports the list command.'''
+    pip_version = _get_pip_version()
+
+    if pip_version >= LooseVersion('1.3.0'):
+        return True
+
+    return False
+
+
+def _has_json_output():
+    '''Return whether or not the JSON format specifier is supported by pip.'''
+    pip_version = _get_pip_version()
+
+    if pip_version >= LooseVersion('9.0.0'):
+        return True
+
+    return False
+
+
+def _get_packages(module, pip_binary, chdir):
+    '''Return results of pip command to get packages.'''
+    if _has_json_output():
+        command = '%s list --format=json' % pip_binary
+        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
+    elif _has_list_command():
+        command = '%s list' % pip_binary
+        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
+    else:
+        command = '%s freeze' % pip_binary
         rc, out, err = module.run_command(command, cwd=chdir)
         if rc != 0:
             _fail(module, command, out, err)
@@ -270,24 +313,24 @@ def _get_packages(module, pip, chdir):
     return (command, out, err)
 
 
-def _is_present(name, version, installed_pkgs, pkg_command):
+def _is_present(name, version, installed_pkgs):
     '''Return whether or not package is installed.'''
     for pkg in installed_pkgs:
         # Package listing will be different depending on which pip
-        # command was used ('pip list' vs. 'pip freeze').
-        if 'list' in pkg_command:
+        # command was used ('pip list --format=json' vs. 'pip list' vs. 'pip freeze').
+        if _has_json_output():
+            pkg_name, pkg_version = pkg['name'], pkg['version']
+        elif _has_list_command():
             pkg = pkg.replace('(', '').replace(')', '')
             if ',' in pkg:
                 pkg_name, pkg_version, _ = pkg.replace(',', '').split(' ')
             else:
                 pkg_name, pkg_version = pkg.split(' ')
-        elif 'freeze' in pkg_command:
+        else:
             if '==' in pkg:
                 pkg_name, pkg_version = pkg.split('==')
             else:
                 continue
-        else:
-            continue
 
         if pkg_name == name and (version is None or version == pkg_version):
             return True
@@ -305,21 +348,21 @@ def _get_pip(module, env=None, executable=None):
         # pip under python3 installs the "/usr/bin/pip3" name
         candidate_pip_basenames = ('pip3',)
 
-    pip = None
+    pip_binary = None
     if executable is not None:
         if os.path.isabs(executable):
-            pip = executable
+            pip_binary = executable
         else:
             # If you define your own executable that executable should be the only candidate.
             # As noted in the docs, executable doesn't work with virtualenvs.
             candidate_pip_basenames = (executable,)
 
-    if pip is None:
+    if pip_binary is None:
         if env is None:
             opt_dirs = []
             for basename in candidate_pip_basenames:
-                pip = module.get_bin_path(basename, False, opt_dirs)
-                if pip is not None:
+                pip_binary = module.get_bin_path(basename, False, opt_dirs)
+                if pip_binary is not None:
                     break
             else:
                 # For-else: Means that we did not break out of the loop
@@ -334,7 +377,7 @@ def _get_pip(module, env=None, executable=None):
             for basename in candidate_pip_basenames:
                 candidate = os.path.join(venv_dir, basename)
                 if os.path.exists(candidate) and is_executable(candidate):
-                    pip = candidate
+                    pip_binary = candidate
                     break
             else:
                 # For-else: Means that we did not break out of the loop
@@ -344,7 +387,7 @@ def _get_pip(module, env=None, executable=None):
                         ' present in the virtualenv.' % (env,
                             ', '.join(candidate_pip_basenames)))
 
-    return pip
+    return pip_binary
 
 
 def _fail(module, cmd, out, err):
@@ -411,6 +454,9 @@ def main():
         supports_check_mode=True
     )
 
+    if not HAS_PIP:
+        module.fail_json(changed=False, msg="pip is required for this module")
+
     state = module.params['state']
     name = module.params['name']
     version = module.params['version']
@@ -423,7 +469,7 @@ def main():
     if umask and not isinstance(umask, int):
         try:
             umask = int(umask, 8)
-        except Exception:
+        except (TypeError, ValueError):
             module.fail_json(msg="umask must be an octal integer",
                              details=to_native(sys.exc_info()[1]))
 
@@ -488,9 +534,9 @@ def main():
                 if rc != 0:
                     _fail(module, cmd, out, err)
 
-        pip = _get_pip(module, env, module.params['executable'])
+        pip_binary = _get_pip(module, env, module.params['executable'])
 
-        cmd = '%s %s' % (pip, state_map[state])
+        cmd = '%s %s' % (pip_binary, state_map[state])
 
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
@@ -500,7 +546,7 @@ def main():
         # in run_command by setting path_prefix here.
         path_prefix = None
         if env:
-            path_prefix = "/".join(pip.split('/')[:-1])
+            path_prefix = "/".join(pip_binary.split('/')[:-1])
 
         # Automatically apply -e option to extra_args when source is a VCS url. VCS
         # includes those beginning with svn+, git+, hg+ or bzr+
@@ -536,19 +582,22 @@ def main():
             elif has_vcs:
                 module.exit_json(changed=True)
 
-            pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
+            pkg_cmd, out_pip, err_pip = _get_packages(module, pip_binary, chdir)
 
             out += out_pip
             err += err_pip
 
             changed = False
             if name:
-                pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
+                if _has_json_output():
+                    pkg_list = json.loads(out)
+                else:
+                    pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
 
-                if pkg_cmd.endswith(' freeze') and ('pip' in name or 'setuptools' in name):
+                if not _has_list_command() and ('pip' in name or 'setuptools' in name):
                     # Older versions of pip (pre-1.3) do not have pip list.
                     # pip freeze does not list setuptools or pip in its output
-                    # So we need to get those via a specialcase
+                    # So we need to get those via a special case
                     for pkg in ('setuptools', 'pip'):
                         if pkg in name:
                             formatted_dep = _get_package_info(module, pkg, env)
@@ -557,14 +606,14 @@ def main():
                                 out += '%s\n' % formatted_dep
 
                 for pkg in name:
-                    is_present = _is_present(pkg, version, pkg_list, pkg_cmd)
+                    is_present = _is_present(pkg, version, pkg_list)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
             module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
 
         if requirements or has_vcs:
-            _, out_freeze_before, _ = _get_packages(module, pip, chdir)
+            _, out_freeze_before, _ = _get_packages(module, pip_binary, chdir)
         else:
             out_freeze_before = None
 
@@ -586,7 +635,7 @@ def main():
                 if out_freeze_before is None:
                     changed = 'Successfully installed' in out_pip
                 else:
-                    _, out_freeze_after, _ = _get_packages(module, pip, chdir)
+                    _, out_freeze_after, _ = _get_packages(module, pip_binary, chdir)
                     changed = out_freeze_before != out_freeze_after
 
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
