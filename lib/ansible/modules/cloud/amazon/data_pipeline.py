@@ -50,41 +50,36 @@ options:
   objects:
     description:
       - A list of pipeline object definitions, each of which is a dict that takes the keys C(id), C(name) and C(fields).
-    type: list
+    type: complex
     suboptions:
       id:
         description:
           - The ID of the object.
-        type: str
       name:
         description:
           - The name of the object.
-        type: str
       fields:
         description:
           - A list of dicts that take the keys C(key) and C(stringValue)/C(refValue).
             The value is specified as a reference to another object C(refValue) or as a string value C(stringValue)
             but not as both.
-        type: list
   parameters:
     description:
       - A list of parameter objects (dicts) in the pipeline definition.
-    type: list
+    type: complex
     suboptions:
       id:
         description:
           - The ID of the parameter object.
-        type: str
       attributes:
         description:
           - A list of attributes (dicts) of the parameter object. Each attribute takes the keys C(key) and C(stringValue) both
             of which are strings.
-        type: list
   values:
     description:
       - A list of parameter values (dicts) in the pipeline definition. Each dict takes the keys C(id) and C(stringValue) both
         of which are strings.
-    type: list
+    type: complex
   timeout:
     description:
       - Time in seconds to wait for the pipeline to transition to the requested state, fail otherwise.
@@ -97,7 +92,7 @@ options:
   tags:
     description:
       - A dict of key:value pair(s) to add to the pipeline.
-    type: dict
+    type: complex
     default: null
 '''
 
@@ -157,29 +152,21 @@ RETURN = '''
 changed:
   description: whether the data pipeline has been modified
   type: bool
+  returned: always
   sample:
     changed: true
 result:
   description: the data pipeline and return message
+  returned: always
   type: dict
   data_pipeline:
-    description: datapipeline data - if exists, will contain description, name, id, state, tags, unique_id - else an empty dict
-    type: dict
-    sample:
-      description: pipeline description
-      name: my_pipeline
-      pipeline_id: df-0669972GNI1WO9T4NFZ
-      pipeline_state: PENDING
-      tags:
-        - key: mykey
-          value: myvalue
-        - key: mykey2
-          value: myvalue2
-      unique_id: my_pipeline-1
-    returned: always
+    description:
+      - The data pipeline data. If the data pipeline exists, it will contain the keys description, name, pipeline_id,
+        state, tags, and unique_id. If the data pipeline does not exist this will be an empty dict.
   msg:
     description: describes status of the operation
     type: string
+    returned: always
     sample:
       msg: "Data Pipeline my_pipeline created"
 '''
@@ -320,7 +307,7 @@ def check_dp_status(client, dp_id, status):
     :returns: True or False
 
     """
-    assert type(status) == list
+    assert isinstance(status, list)
     if pipeline_field(client, dp_id, field="@pipelineState") in status:
         return True
     else:
