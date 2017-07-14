@@ -204,7 +204,7 @@ def compare_policies(current_policy, new_policy):
     """ Compares the existing policy and the updated policy
         Returns True if there is a difference between policies.
     """
-    return set(hashable_policy(new_policy, [])) != set(hashable_policy(current_policy, [])):
+    return set(hashable_policy(new_policy, [])) != set(hashable_policy(current_policy, []))
 
 
 def _create_or_update_bucket(connection, module, location):
