@@ -216,7 +216,6 @@ class VMwareResourcePool(object):
             if name in [c.name, c._GetMoId()]:
                 if return_all is False:
                     return c
-                    break
                 else:
                     obj.append(c)
 
