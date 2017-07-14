@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: kms_facts
+module: aws_kms_facts
 short_description: Gather facts about AWS KMS keys
 description:
     - Gather facts about AWS KMS keys including tags and grants
