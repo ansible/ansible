@@ -327,7 +327,7 @@ def main():
                 module.fail_json(dest=dest, msg='Error deleting some source files: ' + str(e), files=errors)
 
         # Rudimentary check: If size changed then file changed. Not perfect, but easy.
-        if os.path.getsize(dest) != size:
+        if not check_mode and os.path.getsize(dest) != size:
             changed = True
 
         if len(successes) and state != 'incomplete':
@@ -405,7 +405,8 @@ def main():
     params['path'] = dest
     file_args = module.load_file_common_arguments(params)
 
-    changed = module.set_fs_attributes_if_different(file_args, changed)
+    if not check_mode:
+        changed = module.set_fs_attributes_if_different(file_args, changed)
 
     module.exit_json(archived=successes, dest=dest, changed=changed, state=state, arcroot=arcroot, missing=missing, expanded_paths=expanded_paths)
 
