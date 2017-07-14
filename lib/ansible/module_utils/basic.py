@@ -781,6 +781,8 @@ class AnsibleModule(object):
         common code for quickly building an ansible module in Python
         (although you can write modules in anything that can return JSON)
         see library/* for examples
+
+        Changes to this class should be documented in developing_modules_general.rst
         '''
 
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options

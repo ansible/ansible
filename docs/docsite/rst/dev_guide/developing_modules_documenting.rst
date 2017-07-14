@@ -125,6 +125,7 @@ Include it in your module file like this:
     # ... snip ...
     '''
 
+# FIXME Better example that shows every option
 
 The following fields can be used and are all required unless specified otherwise:
 
@@ -215,6 +216,8 @@ If the module returns facts that are often needed, an example of how to use them
 
 RETURN Block
 ------------
+
+FIXME Example that shows RETURN block
 
 The RETURN section documents what the module returns, and is required for all new modules.
 
