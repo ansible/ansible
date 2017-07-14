@@ -975,7 +975,7 @@ def get_changes_filter(args):
     if not paths:
         raise NoChangesDetected()
 
-    commands = categorize_changes(paths, args.command)
+    commands = categorize_changes(args, paths, args.command)
 
     targets = commands.get(args.command)
 
