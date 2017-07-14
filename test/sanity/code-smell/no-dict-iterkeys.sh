@@ -7,6 +7,7 @@ ITERKEYS_USERS=$(grep -r -I iterkeys . \
     --exclude-dir docsite \
     --exclude-dir results \
     | grep -v \
+    -e 'metadata-.*.json:' \
     -e lib/ansible.egg-info/ \
     -e lib/ansible/module_utils/six/_six.py \
     -e docs/docsite/rst/dev_guide/testing/sanity/ \
