@@ -146,7 +146,6 @@ from ansible.module_utils.f5_utils import (
     iteritems,
     defaultdict
 )
-from ansible.module_utils.basic import BOOLEANS
 
 
 class Parameters(AnsibleF5Parameters):

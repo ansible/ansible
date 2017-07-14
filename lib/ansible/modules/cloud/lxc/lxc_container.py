@@ -431,7 +431,13 @@ lxc_container:
             sample: True
 """
 
+import os
+import os.path
 import re
+import shutil
+import subprocess
+import tempfile
+import time
 
 try:
     import lxc
@@ -439,6 +445,10 @@ except ImportError:
     HAS_LXC = False
 else:
     HAS_LXC = True
+
+# import module bits
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
 
 # LXC_COMPRESSION_MAP is a map of available compression types when creating
@@ -562,11 +572,6 @@ def create_script(command):
     :type command: ``str``
     """
 
-    import os
-    import os.path as path
-    import subprocess
-    import tempfile
-
     (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
     f = os.fdopen(fd, 'wb')
     try:
@@ -682,7 +687,7 @@ class LxcContainerManagement(object):
             variables.pop(v, None)
 
         return_dict = dict()
-        false_values = [None, ''] + BOOLEANS_FALSE
+        false_values = BOOLEANS_FALSE.union([None, ''])
         for k, v in variables.items():
             _var = self.module.params.get(k)
             if _var not in false_values:
@@ -1761,7 +1766,5 @@ def main():
     lxc_manage.run()
 
 
-# import module bits
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

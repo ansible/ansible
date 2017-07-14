@@ -118,8 +118,10 @@ EXAMPLES = '''
 
 import os
 import tempfile
-from ansible.module_utils.basic import get_platform, get_exception, AnsibleModule, BOOLEANS_TRUE, BOOLEANS_FALSE
+
+from ansible.module_utils.basic import get_platform, AnsibleModule
 from ansible.module_utils.six import string_types
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
 
 class SysctlModule(object):
@@ -309,8 +311,7 @@ class SysctlModule(object):
                 f = open(self.sysctl_file, "r")
                 lines = f.readlines()
                 f.close()
-            except IOError:
-                e = get_exception()
+            except IOError as e:
                 self.module.fail_json(msg="Failed to open %s: %s" % (self.sysctl_file, str(e)))
 
         for line in lines:
@@ -335,7 +336,7 @@ class SysctlModule(object):
                 self.fixed_lines.append(line)
                 continue
             tmpline = line.strip()
-            k, v = line.split('=',1)
+            k, v = tmpline.split('=',1)
             k = k.strip()
             v = v.strip()
             if k not in checked:
@@ -360,8 +361,7 @@ class SysctlModule(object):
         try:
             for l in self.fixed_lines:
                 f.write(l.strip() + "\n")
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
         f.flush()
         f.close()
