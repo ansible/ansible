@@ -228,7 +228,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
                 # Convert string type to real Powershell array
                 $value = $value.Split(",").Trim()
             } else {
-                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter $name is not a YAML list."
+                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' is not a YAML list."
             }
         }
     }
