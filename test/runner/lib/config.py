@@ -143,9 +143,13 @@ class IntegrationConfig(TestConfig):
         self.continue_on_error = args.continue_on_error  # type: bool
         self.debug_strategy = args.debug_strategy  # type: bool
         self.changed_all_target = args.changed_all_target  # type: str
+        self.list_targets = args.list_targets  # type: bool
         self.tags = args.tags
         self.skip_tags = args.skip_tags
         self.diff = args.diff
+
+        if self.list_targets:
+            self.explain = True
 
 
 class PosixIntegrationConfig(IntegrationConfig):
