@@ -134,7 +134,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
-Installing Multiple Roles From Multiple Files
+Installing multiple roles from multiple files
 =============================================
 
 At a basic level, including requirements files allows you to break up bits of roles into smaller files. Role includes pull in roles from other files.
