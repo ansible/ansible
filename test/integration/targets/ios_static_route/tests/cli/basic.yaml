@@ -90,9 +90,9 @@
     that:
       - 'result.changed == false'
 
-- name: Add static route collections
+- name: Add static route aggregates
   ios_static_route:
-    collection:
+    aggregate:
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: present
@@ -105,9 +105,9 @@
       - 'result.changed == true'
       - 'result.commands == ["ip route 172.16.32.0 255.255.255.0 10.0.0.8 1", "ip route 172.16.33.0 255.255.255.0 10.0.0.8 1"]'
 
-- name: Add and remove static route collections with overrides
+- name: Add and remove static route aggregates with overrides
   ios_static_route:
-    collection:
+    aggregate:
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8, state: absent }
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
@@ -121,9 +121,9 @@
       - 'result.changed == true'
       - 'result.commands == ["no ip route 172.16.33.0 255.255.255.0 10.0.0.8", "ip route 172.16.34.0 255.255.255.0 10.0.0.8 1"]'
 
-- name: Remove static route collections
+- name: Remove static route aggregates
   ios_static_route:
-    collection:
+    aggregate:
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
