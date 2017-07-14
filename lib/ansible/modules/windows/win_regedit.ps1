@@ -63,13 +63,14 @@ if ($path -notmatch "^HK(CC|CR|CU|LM|U):\\") {
 }
 
 # Create the required PSDrives if missing
-if (-not (Test-Path HKCR:\)) {
+$registry_hive = Split-Path -Path $path -Qualifier
+if ($registry_hive -eq "HKCR:" -and (-not (Test-Path HKCR:\))) {
     New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT
 }
-if (-not (Test-Path HKU:\)) {
+if ($registry_hive -eq "HKU:" -and (-not (Test-Path HKU:\))) {
     New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS
 }
-if (-not (Test-Path HKCC:\)) {
+if ($registry_hive -eq "HKCC:" -and (-not (Test-Path HKCC:\))) {
     New-PSDrive -Name HKCC -PSProvider Registry -Root HKEY_CURRENT_CONFIG
 }
 
@@ -83,7 +84,7 @@ Function Convert-RegExportHexStringToByteArray($string) {
     $string = $string.ToLower() -replace '^hex\:',''
 
     # Remove whitespace and any other non-hex crud.
-    $string = $string.ToLower() -replace '[^a-f0-9\\,x\-\:]',''
+    $string = $string -replace '[^a-f0-9\\,x\-\:]',''
 
     # Turn commas into colons
     $string = $string -replace ',',':'
@@ -105,29 +106,18 @@ Function Convert-RegExportHexStringToByteArray($string) {
     }
 }
 
-Function Get-ValueType($type) {
-    switch ($type) {
-        "none" { [Microsoft.Win32.RegistryValueKind]::None }
-        "binary" { [Microsoft.Win32.RegistryValueKind]::Binary }
-        "dword" { [Microsoft.Win32.RegistryValueKind]::DWord }
-        "expandstring" { [Microsoft.Win32.RegistryValueKind]::ExpandString }
-        "multistring" { [Microsoft.Win32.RegistryValueKind]::MultiString }
-        "string" { [Microsoft.Win32.RegistryValueKind]::String }
-        "qword" { [Microsoft.Win32.RegistryValueKind]::QWord }
-    }
-}
-
 Function Test-RegistryProperty($path, $name) {
     # will validate if the registry key contains the property, returns true
     # if the property exists and false if the property does not
     try {
         $value = (Get-Item -Path $path).GetValue($name)
+        # need to do it this way return ($value -eq $null) does not work
         if ($value -eq $null) {
             return $false
         } else {
             return $true
         }
-    } catch {
+    } catch [System.Management.Automation.ItemNotFoundException] {
         # key didn't exist so the property mustn't
         return $false
     }
@@ -145,7 +135,7 @@ Function Compare-RegistryProperties($existing, $new) {
         }
     }
 
-    $mismatch
+    return $mismatch
 }
 
 # convert property names "" to $null as "" refers to (Default)
@@ -164,14 +154,14 @@ if ($type -in @("binary", "none")) {
         $data = [byte[]](Convert-RegExportHexStringToByteArray -string $data)
     } elseif ($data -is [Int]) {
         if ($data -gt 255) {
-            Fail-Json $result "cannot convert binary data '$data' to byte array, please specify this value as a yaml byte array or a comma separate hex value string"
+            Fail-Json $result "cannot convert binary data '$data' to byte array, please specify this value as a yaml byte array or a comma separated hex value string"
         }
         $data = [byte[]]@([byte]$data)
     } elseif ($data -is [Array]) {
         $data = [byte[]]$data
     }
 } elseif ($type -in @("dword", "qword")) {
-    # dwords and qwords don't have the concept of a null value, will set to 0
+    # dword's and dword's don't allow null values, set to 0
     if ($data -eq $null) {
         $data = 0
     }
@@ -184,20 +174,22 @@ if ($type -in @("binary", "none")) {
         $data = [UInt64]$data
     }
 
-    # convert the input variable from Int64 to Int32 when dealing with dwords
-    if ($type -eq "dword" -and $data -gt [Int32]::MaxValue) {
-        # when dealing with larger ints (> 2147483647 or 0x7FFFFFFF) we need to
-        # convert it to the hex format and then signed int. We cannot just cast it
-        # as powershell automatically converts larger unsigned ints to a signed
-        # int64 value and cannot easily parse back
-
-        $data = "0x$("{0:x}" -f $data)"
+    if ($type -eq "dword") {
+        if ($data -gt [UInt32]::MaxValue) {
+            Fail-Json $result "data cannot be larger than 0xffffffff when type is dword"
+        } elseif ($data -gt [Int32]::MaxValue) {
+            # when dealing with larger int32 (> 2147483647 or 0x7FFFFFFF) powershell
+            # automatically converts it to a signed int64. We need to convert this to
+            # signed int32 by parsing the hex string value.
+            $data = "0x$("{0:x}" -f $data)"
+        }
         $data = [Int32]$data
-    }
-
-    # same as the above but for qwords and Int64
-    if ($type -eq "qword" -and $data -gt [Int64]::MaxValue) {
-        $data = "0x$("{0:x}" -f $data)"
+    } else {
+        if ($data -gt [UInt64]::MaxValue) {
+            Fail-Json $result "data cannot be larger than 0xffffffffffffffff when type is qword"
+        } elseif ($data -gt [Int64]::MaxValue) {
+            $data = "0x$("{0:x}" -f $data)"
+        }
         $data = [Int64]$data
     }
 } elseif ($type -in @("string", "expandstring")) {
@@ -211,13 +203,12 @@ if ($type -in @("binary", "none")) {
         $data = [String[]]@()
     } elseif ($data -isnot [Array]) {
         $new_data = New-Object -TypeName String[] -ArgumentList 1
-        $new_data[0] = [String]$data
+        $new_data[0] = $data.ToString([CultureInfo]::InvariantCulture)
         $data = $new_data
     } else {
         $new_data = New-Object -TypeName String[] -ArgumentList $data.Count
-        $new_type = $new_data.GetType()
         foreach ($entry in $data) {
-            $new_data[$data.IndexOf($entry)] = [String]$entry
+            $new_data[$data.IndexOf($entry)] = $entry.ToString([CultureInfo]::InvariantCulture)
         }
         $data = $new_data
     }
@@ -225,7 +216,7 @@ if ($type -in @("binary", "none")) {
 
 
 # convert the type string to the .NET class
-$type = Get-ValueType -type $type
+$type = [System.Enum]::Parse([Microsoft.Win32.RegistryValueKind], $type, $true)
 
 if ($state -eq "present") {
     if (-not (Test-Path -path $path)) {
@@ -254,13 +245,13 @@ if ($state -eq "present") {
         if ($type -ne $existing_type) {
             $change_value = $true
             $result.data_type_changed = $true
-            $data_mistmatch = Compare-RegistryProperties -existing $existing_data -new $data
-            if ($data_mistmatch) {
+            $data_mismatch = Compare-RegistryProperties -existing $existing_data -new $data
+            if ($data_mismatch) {
                 $result.data_changed = $true
             }
         } else {
-            $data_mistmatch = Compare-RegistryProperties -existing $existing_data -new $data
-            if ($data_mistmatch) {
+            $data_mismatch = Compare-RegistryProperties -existing $existing_data -new $data
+            if ($data_mismatch) {
                 $change_value = $true
                 $result.data_changed = $true
             }

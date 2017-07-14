@@ -1,4 +1,24 @@
 ---
+- name: fail run win_regedit with larger dword
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: test
+    data: 0xffffffff1
+    type: dword
+    state: present
+  register: large_dword
+  failed_when: large_dword.msg != 'data cannot be larger than 0xffffffff when type is dword'
+
+- name: fail run win_regedit with larger qword
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: test
+    data: 0xffffffffffffffff1
+    type: qword
+    state: present
+  register: large_qword
+  failed_when: large_qword.msg != 'data cannot be larger than 0xffffffffffffffff when type is qword'
+
 - name: run win_regedit with invalid path
   win_regedit:
     path: ABCD:\efg
