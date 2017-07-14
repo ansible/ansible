@@ -531,7 +531,10 @@ import socket
 import sys
 import types
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import open_url
+
 
 HAS_LIB_JSON = True
 try:
@@ -604,8 +607,7 @@ class LogicMonitor(object):
                 self.fail(msg="Error: " + resp["errmsg"])
             else:
                 return raw
-        except IOError:
-            ioe = get_exception()
+        except IOError as ioe:
             self.fail(msg="Error: Exception making RPC call to " +
                           "https://" + self.company + "." + self.lm_url +
                           "/rpc/" + action + "\nException" + str(ioe))
@@ -633,8 +635,7 @@ class LogicMonitor(object):
                 "https://" + self.company + "." + self.lm_url +
                 "/do/" + action + "?" + param_str)
             return f.read()
-        except IOError:
-            ioe = get_exception()
+        except IOError as ioe:
             self.fail(msg="Error: Exception making RPC call to " +
                           "https://" + self.company + "." + self.lm_url +
                           "/do/" + action + "\nException" + str(ioe))
@@ -2171,7 +2172,7 @@ def main():
             duration=dict(required=False, default=30),
             properties=dict(required=False, default={}, type="dict"),
             groups=dict(required=False, default=[], type="list"),
-            alertenable=dict(required=False, default="true", choices=BOOLEANS)
+            alertenable=dict(required=False, default="true", type="bool")
         ),
         supports_check_mode=True
     )
@@ -2180,11 +2181,6 @@ def main():
         module.fail_json(msg="Unable to load JSON library")
 
     selector(module)
-
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.urls import open_url
 
 
 if __name__ == "__main__":

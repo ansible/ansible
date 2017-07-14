@@ -107,6 +107,9 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
 CL_LICENSE_PATH='/usr/cumulus/bin/cl-license'
 
 def install_license(module):
@@ -121,8 +124,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             src=dict(required=True, type='str'),
-            force=dict(type='bool', choices=BOOLEANS,
-                default=False)
+            force=dict(type='bool', default=False)
         ),
     )
 
@@ -141,10 +143,6 @@ def main():
         module.changed = True
     module.exit_json(changed=module.changed, msg=module.msg)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-# from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
