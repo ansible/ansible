@@ -104,9 +104,9 @@ options:
     version_added: "1.0"
   editable:
     description:
-      - Pass the editable flag for versioning URLs.
+      - Pass the editable flag.
     required: false
-    default: yes
+    default: false
     version_added: "2.0"
   chdir:
     description:
@@ -161,10 +161,9 @@ EXAMPLES = '''
 - pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
 
-# Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
+# Install MyApp using one of the remote protocols (bzr+,hg+,git+).
 - pip:
     name: git+http://myrepo/app/MyApp
-    editable: false
 
 # Install (MyApp) from local tarball
 - pip:
@@ -401,7 +400,7 @@ def main():
             virtualenv_python=dict(type='str'),
             use_mirrors=dict(default=True, type='bool'),
             extra_args=dict(),
-            editable=dict(default=True, type='bool'),
+            editable=dict(default=False, type='bool'),
             chdir=dict(type='path'),
             executable=dict(type='path'),
             umask=dict(),
@@ -511,7 +510,7 @@ def main():
                     has_vcs = True
                     break
 
-        if has_vcs and module.params['editable']:
+        if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
             if extra_args:
                 args_list = extra_args.split(' ')
@@ -532,8 +531,6 @@ def main():
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
-                module.exit_json(changed=True)
-            elif has_vcs:
                 module.exit_json(changed=True)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
@@ -563,10 +560,9 @@ def main():
                         break
             module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
 
+        out_freeze_before = None
         if requirements or has_vcs:
             _, out_freeze_before, _ = _get_packages(module, pip, chdir)
-        else:
-            out_freeze_before = None
 
         rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
@@ -583,11 +579,8 @@ def main():
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip
             else:
-                if out_freeze_before is None:
-                    changed = 'Successfully installed' in out_pip
-                else:
-                    _, out_freeze_after, _ = _get_packages(module, pip, chdir)
-                    changed = out_freeze_before != out_freeze_after
+                _, out_freeze_after, _ = _get_packages(module, pip, chdir)
+                changed = out_freeze_before != out_freeze_after
 
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                          state=state, requirements=requirements, virtualenv=env,
