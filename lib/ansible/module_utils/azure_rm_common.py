@@ -174,7 +174,7 @@ class AzureRMModuleBase(object):
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
             if tenant is not None:
-                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], tenant=tenant)          
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], tenant=tenant)
             else:
                 self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
         else:
