@@ -1,0 +1,2 @@
+test_win_regedit_local_key: HKLM:\Software\Cow Corp
+test_win_regedit_classes_key: HKCR:\.test-ansible
