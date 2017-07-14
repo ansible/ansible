@@ -1,0 +1,77 @@
+{# Only certain lambda actions can be restricted to a specific resource #}
+{# http://docs.aws.amazon.com/lambda/latest/dg/lambda-api-permissions-ref.html #}
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowApiGateway",
+            "Effect": "Allow",
+            "Action": [
+                "apigateway:*"
+            ],
+            "Resource": [
+                "arn:aws:apigateway:{{aws_region}}::/*"
+            ]
+        },
+        {
+            "Sid": "AllowGetUserForLambdaCreation",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetUser"
+            ],
+            "Resource": [
+                "arn:aws:iam::{{aws_account}}:user/ansible_integration_tests"
+            ]
+        },
+        {
+            "Sid": "AllowLambdaManagementWithoutResource",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:CreateEventSourceMapping",
+                "lambda:GetAccountSettings",
+                "lambda:GetEventSourceMapping",
+                "lambda:ListEventSourceMappings",
+                "lambda:ListFunctions",
+                "lambda:ListTags",
+                "lambda:TagResource",
+                "lambda:UntagResource"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowLambdaManagementWithResource",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:AddPermission",
+                "lambda:CreateAlias",
+                "lambda:CreateFunction",
+                "lambda:DeleteAlias",
+                "lambda:DeleteFunction",
+                "lambda:GetAlias",
+                "lambda:GetFunction",
+                "lambda:GetFunctionConfiguration",
+                "lambda:GetPolicy",
+                "lambda:InvokeFunction",
+                "lambda:ListAliases",
+                "lambda:ListVersionsByFunction",
+                "lambda:PublishVersion",
+                "lambda:RemovePermission",
+                "lambda:UpdateAlias",
+                "lambda:UpdateEventSourceMapping",
+                "lambda:UpdateFunctionCode",
+                "lambda:UpdateFunctionConfiguration"
+            ],
+            "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:*"
+        },
+        {
+            "Sid": "AllowLambdaRoleManagement",
+            "Effect": "Allow",
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::{{aws_account}}:role/ansible_lambda_role"
+            ]
+        }
+    ]
+}
