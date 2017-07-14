@@ -62,7 +62,47 @@ Function Run-SecEdit($arguments) {
         rc = $LASTEXITCODE
     }
 
-    $return
+    return $return
+}
+
+Function Export-SecEdit() {
+    $secedit_ini_path = [IO.Path]::GetTempFileName()
+    # while this will technically make a change to the system in check mode by
+    # creating a new file, we need these values to be able to do anything
+    # substantial in check mode
+    $export_result = Run-SecEdit -arguments @("/export", "/cfg", $secedit_ini_path, "/quiet")
+
+    # check the return code and if the file has been populated, otherwise error out
+    if (($export_result.rc -ne 0) -or ((Get-Item -Path $secedit_ini_path).Length -eq 0)) {
+        Remove-Item -Path $secedit_ini_path -Force
+        $result.rc = $export_result.rc
+        $result.stdout = $export_result.stdout
+        $result.stderr = $export_result.stderr
+        Fail-Json $result "Failed to export secedit.ini file to $($secedit_ini_path)"
+    }
+    $secedit_ini = ConvertFrom-Ini -file_path $secedit_ini_path
+
+    return $secedit_ini
+}
+
+Function Import-SecEdit($ini) {
+    $secedit_ini_path = [IO.Path]::GetTempFileName()
+    $secedit_db_path = [IO.Path]::GetTempFileName()
+    Remove-Item -Path $secedit_db_path -Force # needs to be deleted for SecEdit.exe /import to work
+
+    $ini_contents = ConvertTo-Ini -ini $ini
+    Set-Content -Path $secedit_ini_path -Value $ini_contents
+    $result.changed = $true
+
+    $import_result = Run-SecEdit -arguments @("/configure", "/db", $secedit_db_path, "/cfg", $secedit_ini_path, "/quiet")
+    $result.import_log = $import_result.log
+    Remove-Item -Path $secedit_ini_path -Force
+    if ($import_result.rc -ne 0) {
+        $result.rc = $import_result.rc
+        $result.stdout = $import_result.stdout
+        $result.stderr = $import_result.stderr
+        Fail-Json $result "Failed to import secedit.ini file from $($secedit_ini_path)"
+    }
 }
 
 Function ConvertTo-Ini($ini) {
@@ -82,7 +122,7 @@ Function ConvertTo-Ini($ini) {
         }
     }
 
-    $content -join "`r`n"
+    return $content -join "`r`n"
 }
 
 Function ConvertFrom-Ini($file_path) {
@@ -105,31 +145,17 @@ Function ConvertFrom-Ini($file_path) {
         }
     }
 
-    $ini
+    return $ini
 }
 
-$secedit_ini_path = [IO.Path]::GetTempFileName()
-# while this will technically make a change to the system in check mode by
-# creating a new file, we need these values to be able to do anything
-# substantial in check mode
-$export_result = Run-SecEdit -arguments @("/export", "/cfg", $secedit_ini_path, "/quiet")
-
-# check the return code and if the file has been populated, otherwise error out
-if (($export_result.rc -ne 0) -or ((Get-Item -Path $secedit_ini_path).Length -eq 0)) {
-    Remove-Item -Path $secedit_ini_path -Force
-    Fail-Json $result "Failed to export secedit.ini file to $($secedit_ini_path).`nRC: $($export_result.rc)`nSTDOUT: $($export_result.stdout)`nSTDERR: $($export_result.stderr)`nLOG: $($export_result.log)"
-}
-$secedit_ini = ConvertFrom-Ini -file_path $secedit_ini_path
-Remove-Item -Path $secedit_ini_path -Force
-
+$will_change = $false
+$secedit_ini = Export-SecEdit
 if (-not ($secedit_ini.ContainsKey($section))) {
     Fail-Json $result "The section '$section' does not exist in SecEdit.exe output ini"
 }
 
-$will_change = $false
 if ($secedit_ini.$section.ContainsKey($key)) {
     $current_value = $secedit_ini.$section.$key
-    $result.before_value = $current_value
 
     if ($current_value -cne $value) {
         if ($diff_mode) {
@@ -150,40 +176,19 @@ if ($secedit_ini.$section.ContainsKey($key)) {
 +$key = $value        
 "@
     }
-    $result.before_value = $null
     $secedit_ini.$section.$key = $value
     $will_change = $true
 }
 
-if ($will_change) {
-    $ini_contents = ConvertTo-Ini -ini $secedit_ini
-    Set-Content -Path $secedit_ini_path -Value $ini_contents -WhatIf:$check_mode
+if ($will_change -eq $true) {
     $result.changed = $true
-
     if (-not $check_mode) {
-        $secedit_db_path = [IO.Path]::GetTempFileName()
-        Remove-Item -Path $secedit_db_path -Force # needs to be deleted for SecEdit.exe /import to work
-
-        $import_result = Run-SecEdit -arguments @("/configure", "/db", $secedit_db_path, "/cfg", $secedit_ini_path, "/quiet")
-        $result.import_log = $import_result.log
-        Remove-Item -Path $secedit_ini_path -Force
-        if ($import_result.rc -ne 0) {
-            Fail-Json $result "Failed to import secedit.ini file from $($secedit_ini_path).`nRC: $($import_result.rc)`nSTDOUT: $($import_result.stdout)`nSTDERR: $($import_result.stderr)`nLOG: $($import_result.log)"
-        }
+        Import-SecEdit -ini $secedit_ini
 
         # secedit doesn't error out on improper entries, re-export and verify
         # the changes occurred
-        $export_result = Run-SecEdit -arguments @("/export", "/cfg", $secedit_ini_path, "/quiet")
-
-        # check the return code and if the file has been populated, otherwise error out
-        if (($export_result.rc -ne 0) -or ((Get-Item -Path $secedit_ini_path).Length -eq 0)) {
-            Remove-Item -Path $secedit_ini_path -Force # file is empty and we don't need it
-            Fail-Json $result "Failed to export secedit.ini file to $($secedit_ini_path).`nRC: $($export_result.rc)`nSTDOUT: $($export_result.stdout)`nSTDERR: $($export_result.stderr)`nLOG: $($export_result.log)"
-        }
-        $secedit_ini = ConvertFrom-Ini -file_path $secedit_ini_path
-        Remove-Item -Path $secedit_ini_path -Force
-
-        $new_section_values = $secedit_ini.$section
+        $verification_ini = Export-SecEdit
+        $new_section_values = $verification_ini.$section
         if ($new_section_values.ContainsKey($key)) {
             $new_value = $new_section_values.$key
             if ($new_value -cne $value) {
@@ -193,7 +198,6 @@ if ($will_change) {
             Fail-Json $result "The key '$key' in section '$section' is not a valid key, cannot set this value"
         }
     }
-
 }
 
 Exit-Json $result

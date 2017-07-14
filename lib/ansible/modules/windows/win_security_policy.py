@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = r'''
 ---
-module: win_secedit
+module: win_security_policy
 version_added: '2.4'
 short_description: changes local security policy settings
 description:
@@ -89,15 +89,27 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-before_value:
-  description: The value of the key before the change.
-  returned: success
+rc:
+  description: The return code after a failure when running SecEdit.exe.
+  returned: failure with secedit calls
+  type: int
+  sample: -1
+stdout:
+  description: The output of the STDOUT buffer after a failure when running
+    SecEdit.exe.
+  returned: failure with secedit calls
   type: string
-  sample: Guest
+  sample: check log for error details
+stderr:
+  description: The output of the STDERR buffer after a failure when running
+    SecEdit.exe.
+  returned: failure with secedit calls
+  type: string
+  sample: failed to import security policy
 import_log:
   description: The log of the SecEdit.exe /configure job that configured the
     local policies. This is used for debugging purposes on failures.
-  returned: success and change occurred
+  returned: secedit.exe /import run and change occurred
   type: string
   sample: Completed 6 percent (0/15) \tProcess Privilege Rights area.
 key:
