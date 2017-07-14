@@ -7,8 +7,10 @@ ITERKEYS_USERS=$(grep -r -I iterkeys . \
     --exclude-dir docsite \
     --exclude-dir results \
     | grep -v \
+    -e lib/ansible.egg-info/ \
     -e lib/ansible/module_utils/six/_six.py \
-    -e test/sanity/code-smell/no-iterkeys.sh \
+    -e docs/docsite/rst/dev_guide/testing/sanity/ \
+    -e test/sanity/code-smell/no-dict-iterkeys.sh \
     -e '^[^:]*:#'
     )
 
