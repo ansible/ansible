@@ -1,7 +1,7 @@
 ---
 - name: Install Nuage VSD API Simulator
   pip:
-    name: git+https://github.com/pdellaert/nuage-vsd-sim
+    name: nuage-vsd-sim
 
 - name: Start Nuage VSD API Simulator
   shell: "(cd /; nuage-vsd-sim >/dev/null 2>&1 &)"
