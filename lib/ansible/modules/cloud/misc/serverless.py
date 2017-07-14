@@ -69,7 +69,7 @@ options:
     default: true
 notes:
    - Currently, the `serverless` command must be in the path of the node executing the task. In the future this may be a flag.
-requirements: [ "serverless" ]
+requirements: [ "serverless", "yaml" ]
 author: "Ryan Scott Brown @ryansb"
 '''
 
@@ -128,7 +128,12 @@ command:
 
 import os
 import traceback
-import yaml
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 
 def read_serverless_config(module):
@@ -168,6 +173,9 @@ def main():
             serverless_bin_path = dict(required=False, type='path')
         ),
     )
+
+    if not HAS_YAML:
+        module.fail_json(msg='yaml is required for this module')
 
     service_path = module.params.get('service_path')
     state = module.params.get('state')
