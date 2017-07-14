@@ -90,6 +90,12 @@ options:
               this flag is set to C(false).
         required: False
         version_added: "2.4"
+   remove_children:
+        description:
+            - If set to C(true) and state is set to C(absent), then entire snapshot subtree is set
+              for removal.
+        required: False
+        version_added: "2.4"
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -144,6 +150,17 @@ EXAMPLES = '''
       snapshot_name: dummy_vm_snap_0001
       quiesce: True
       memory_dump: True
+    delegate_to: localhost
+
+  - name: Remove a snapshot and snapshot subtree
+    vmware_guest_snapshot:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      name: dummy_vm
+      state: remove
+      remove_children: True
+      snapshot_name: snap1
     delegate_to: localhost
 '''
 
@@ -269,7 +286,9 @@ class PyVmomiHelper(object):
         if len(snap_obj) == 1:
             snap_obj = snap_obj[0].snapshot
             if self.module.params["state"] == "absent":
-                task = snap_obj.RemoveSnapshot_Task(True)
+                # Remove subtree depending upon the user input
+                remove_children = self.module.params.get('remove_children', False)
+                task = snap_obj.RemoveSnapshot_Task(remove_children)
             elif self.module.params["state"] == "revert":
                 task = snap_obj.RevertToSnapshot_Task()
         else:
@@ -330,6 +349,7 @@ def main():
             description=dict(required=False, type='str', default=''),
             quiesce=dict(type='bool', default=False),
             memory_dump=dict(type='bool', default=False),
+            remove_children=dict(type='bool', default=False),
         ),
     )
 
