@@ -122,9 +122,9 @@ import os
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
 
 
@@ -145,7 +145,7 @@ class LookupModule(LookupBase):
                 if isinstance(term, dict):
                     files = term.get('files', [])
                     paths = term.get('paths', [])
-                    skip = boolean(term.get('skip', False))
+                    skip = boolean(term.get('skip', False), strict=False)
 
                     filelist = files
                     if isinstance(files, string_types):

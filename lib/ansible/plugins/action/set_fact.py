@@ -18,8 +18,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.constants import mk_boolean as boolean
 from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
 
@@ -46,7 +46,7 @@ class ActionModule(ActionBase):
                     return result
 
                 if isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
-                    v = boolean(v)
+                    v = boolean(v, strict=False)
                 facts[k] = v
 
         result['changed'] = False

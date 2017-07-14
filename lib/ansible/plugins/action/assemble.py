@@ -25,9 +25,9 @@ import os.path
 import re
 import tempfile
 
-from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 
@@ -101,7 +101,7 @@ class ActionModule(ActionBase):
             result['msg'] = "src and dest are required"
             return result
 
-        if boolean(remote_src):
+        if boolean(remote_src, strict=False):
             result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
             return result
         else:

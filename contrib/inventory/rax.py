@@ -168,7 +168,8 @@ except ImportError:
 
 from time import time
 
-from ansible.constants import get_config, mk_boolean
+from ansible.constants import get_config
+from ansible.module_utils.parsing.convert_bool import boolean
 
 
 NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
@@ -288,7 +289,7 @@ def _list_into_cache(regions):
                 if not cbs_attachments[region]:
                     cbs = pyrax.connect_to_cloud_blockstorage(region)
                     for vol in cbs.list():
-                        if mk_boolean(vol.bootable):
+                        if boolean(vol.bootable, strict=False):
                             for attachment in vol.attachments:
                                 metadata = vol.volume_image_metadata
                                 server_id = attachment['server_id']

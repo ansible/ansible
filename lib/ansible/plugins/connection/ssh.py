@@ -111,15 +111,13 @@ from functools import wraps
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils.basic import BOOLEANS
 from ansible.compat import selectors
 from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.path import unfrackpath, makedirs_safe
-
-boolean = C.mk_boolean
 
 try:
     from __main__ import display
@@ -791,7 +789,7 @@ class Connection(ConnectionBase):
             if not isinstance(scp_if_ssh, bool):
                 scp_if_ssh = scp_if_ssh.lower()
                 if scp_if_ssh in BOOLEANS:
-                    scp_if_ssh = boolean(scp_if_ssh)
+                    scp_if_ssh = boolean(scp_if_ssh, strict=False)
                 elif scp_if_ssh != 'smart':
                     raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
             if scp_if_ssh == 'smart':

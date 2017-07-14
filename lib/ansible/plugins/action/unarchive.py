@@ -21,10 +21,9 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.constants import mk_boolean as boolean
 
 
 class ActionModule(ActionBase):
@@ -40,7 +39,7 @@ class ActionModule(ActionBase):
 
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
-        remote_src = boolean(self._task.args.get('remote_src', False))
+        remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         creates = self._task.args.get('creates', None)
         decrypt = self._task.args.get('decrypt', True)
 
@@ -53,7 +52,7 @@ class ActionModule(ActionBase):
                 return result
             # We will take the information from copy and store it in
             # the remote_src var to use later in this file.
-            self._task.args['remote_src'] = remote_src = not boolean(self._task.args.pop('copy'))
+            self._task.args['remote_src'] = remote_src = not boolean(self._task.args.pop('copy'), strict=False)
 
         if source is None or dest is None:
             result['failed'] = True
@@ -79,17 +78,17 @@ class ActionModule(ActionBase):
         if not remote_src:
             try:
                 source = self._loader.get_real_file(self._find_needle('files', source), decrypt=decrypt)
-            except AnsibleError:
+            except AnsibleError as e:
                 result['failed'] = True
-                result['msg'] = to_native(get_exception())
+                result['msg'] = to_text(e)
                 self._remove_tmp_path(tmp)
                 return result
 
         try:
             remote_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=True)
-        except AnsibleError:
+        except AnsibleError as e:
             result['failed'] = True
-            result['msg'] = to_native(get_exception())
+            result['msg'] = to_text(e)
             self._remove_tmp_path(tmp)
             return result
 

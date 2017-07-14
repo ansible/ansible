@@ -46,8 +46,8 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
-from ansible.constants import mk_boolean as boolean
 
 HAS_HVAC = False
 try:
@@ -149,7 +149,7 @@ class HashiVault:
         self.client.auth_ldap(username, password, mount_point)
 
     def boolean_or_cacert(self, validate_certs, cacert):
-        validate_certs = boolean(validate_certs)
+        validate_certs = boolean(validate_certs, strict=False)
         '''' return a bool or cacert '''
         if validate_certs is True:
             if cacert != '':
