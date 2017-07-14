@@ -142,6 +142,7 @@ At a basic level, including requirements files allows you to break up bits of ro
 Use the following command to install roles includes in *requirements.yml*  + *webserver,yml*
 
 ::
+
     ansible-galaxy install -r requirements.yml
 
 Content of the *requirements.yml* file:
