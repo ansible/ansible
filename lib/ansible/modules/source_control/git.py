@@ -43,9 +43,7 @@ options:
         required: true
         description:
             - The path of where the repository should be checked out. This
-              parameter is required, unless C(clone) is set to C(no). This
-              change was made in version 1.8.3. Prior to this version, the
-              C(dest) parameter was always required.
+              parameter is required, unless C(clone) is set to C(no).
     version:
         required: false
         default: "HEAD"
