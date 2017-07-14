@@ -22,6 +22,7 @@ __metaclass__ = type
 from string import ascii_letters, digits
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.config.manager import ConfigManager
 
 _config = ConfigManager()
@@ -32,8 +33,14 @@ for setting in _config.data.get_settings():
 
 
 def mk_boolean(value):
-    ''' moved '''
-    return _config.make_boolean(value)
+    ''' moved to module_utils'''
+    try:
+        from __main__ import display
+    except:
+        pass
+    else:
+        display.deprecated('ansible.constants.mk_boolean() is deprecated.  Use ansible.module_utils.parsing.convert_bool.boolean() instead', version='2.8')
+    return boolean(value, strict=False)
 
 
 # ### CONSTANTS ### yes, actual ones
@@ -60,7 +67,7 @@ BECOME_MISSING_STRINGS = {
     'ksu': 'No password given',
     'pmrun': ''
 }  # FIXME: deal with i18n
-BOOL_TRUE = _config.data.BOOL_TRUE
+BOOL_TRUE = BOOLEANS_TRUE
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS = None

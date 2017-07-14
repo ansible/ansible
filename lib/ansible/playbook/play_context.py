@@ -33,20 +33,20 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.utils.ssh_functions import check_for_controlpersist
 
-
-boolean = C.mk_boolean
-
-__all__ = ['PlayContext']
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+
+__all__ = ['PlayContext']
 
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the PlayContext
@@ -289,7 +289,7 @@ class PlayContext(Base):
         self.become_method = options.become_method
         self.become_user = options.become_user
 
-        self.check_mode = boolean(options.check)
+        self.check_mode = boolean(options.check, strict=False)
 
         # get ssh options FIXME: make these common to all connections
         for flag in ['ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:

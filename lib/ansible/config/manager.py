@@ -29,6 +29,7 @@ from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.utils.path import unfrackpath
 from ansible.utils.path import makedirs_safe
@@ -41,6 +42,7 @@ def resolve_path(path):
 
     return unfrackpath(path, follow=False)
 
+
 def get_ini_config(p, entries):
     ''' returns the value of last ini entry found '''
     value = None
@@ -52,7 +54,6 @@ def get_ini_config(p, entries):
                 pass
 
     return value
-
 
 
 class ConfigManager(object):
@@ -179,14 +180,6 @@ class ConfigManager(object):
 
         return path
 
-    def make_boolean(self, value):
-        ret = value
-        if not isinstance(value, bool):
-            if value is None:
-                ret = False
-            ret = (to_text(value).lower() in self.data.BOOL_TRUE)
-        return ret
-
     def ensure_type(self, value, value_type):
         ''' return a configuration variable with casting
         :arg value: The value to ensure correct typing of
@@ -205,7 +198,7 @@ class ConfigManager(object):
                 each part for environment variables and tildes.
         '''
         if value_type == 'boolean':
-            value = self.make_boolean(value)
+            value = boolean(value, strict=False)
 
         elif value:
             if value_type == 'integer':

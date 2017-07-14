@@ -28,8 +28,8 @@ from functools import partial
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.constants import mk_boolean as boolean
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
 from ansible.module_utils._text import to_text
 from ansible.playbook.attribute import Attribute, FieldAttribute
@@ -388,7 +388,7 @@ class Base(with_metaclass(BaseMeta, object)):
                     elif attribute.isa == 'float':
                         value = float(value)
                     elif attribute.isa == 'bool':
-                        value = boolean(value)
+                        value = boolean(value, strict=False)
                     elif attribute.isa == 'percent':
                         # special value, which may be an integer or float
                         # with an optional '%' at the end
