@@ -15,9 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -199,6 +201,8 @@ EXAMPLES = '''
 import os
 import re
 import types
+import shutil
+import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
@@ -234,16 +238,22 @@ class RegistrationBase(object):
 
     def update_plugin_conf(self, plugin, enabled=True):
         plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
+
         if os.path.isfile(plugin_conf):
+            tmpfd, tmpfile = tempfile.mkstemp()
+            shutil.copy2(plugin_conf, tmpfile)
             cfg = configparser.ConfigParser()
-            cfg.read([plugin_conf])
+            cfg.read([tmpfile])
+
             if enabled:
                 cfg.set('main', 'enabled', 1)
             else:
                 cfg.set('main', 'enabled', 0)
-            fd = open(plugin_conf, 'rwa+')
+
+            fd = open(tmpfile, 'w+')
             cfg.write(fd)
             fd.close()
+            self.module.atomic_move(tmpfile, plugin_conf)
 
     def subscribe(self, **kwargs):
         raise NotImplementedError("Must be implemented by a sub-class")
@@ -538,6 +548,7 @@ class RhsmPools(object):
     """
         This class is used for manipulating pools subscriptions with RHSM
     """
+
     def __init__(self, module, consumed=False):
         self.module = module
         self.products = self._load_product_list(consumed)
