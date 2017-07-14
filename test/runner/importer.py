@@ -38,13 +38,13 @@ def main():
                 source = path
                 message += ' (in %s:%d)' % (results[-1][0], results[-1][1])
             elif isinstance(ex, SyntaxError):
-                if ex.filename.endswith(path):
+                if ex.filename.endswith(path):  # pylint: disable=locally-disabled, no-member
                     # A SyntaxError in the source we're importing will have the correct path, line and offset.
                     # However, the traceback will report the path to this importer.py script instead.
                     # We'll use the details from the SyntaxError in this case, as it's more accurate.
                     source = path
-                    line = ex.lineno
-                    offset = ex.offset
+                    line = ex.lineno  # pylint: disable=locally-disabled, no-member
+                    offset = ex.offset  # pylint: disable=locally-disabled, no-member
                     message = str(ex)
 
                     # Hack to remove the filename and line number from the message, if present.
