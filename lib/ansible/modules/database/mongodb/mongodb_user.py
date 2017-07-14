@@ -434,11 +434,12 @@ def main():
             module.fail_json(msg='password parameter required when adding a user unless update_password is set to on_create')
 
         try:
-            uinfo = user_find(client, user, db_name)
-            if update_password != 'always' and uinfo:
-                password = None
-                if not check_if_roles_changed(uinfo, roles, db_name):
-                    module.exit_json(changed=False, user=user)
+            if update_password != 'always':
+                uinfo = user_find(client, user, db_name)
+                if uinfo:
+                    password = None
+                    if not check_if_roles_changed(uinfo, roles, db_name):
+                        module.exit_json(changed=False, user=user)
 
             if module.check_mode:
                 module.exit_json(changed=True, user=user)
