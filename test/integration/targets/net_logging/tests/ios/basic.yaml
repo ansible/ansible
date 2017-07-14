@@ -83,7 +83,7 @@
 
 - name: remove logging as collection tearDown
   net_logging:
-    collection:
+    aggregate:
       - { dest: console, level: warnings, state: absent }
       - { dest: monitor, level: debuggning, state: absent }
     authorize: yes

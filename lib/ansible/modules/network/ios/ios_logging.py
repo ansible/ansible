@@ -109,7 +109,7 @@ from ansible.module_utils.ios import ios_argument_spec, check_args
 
 
 def validate_size(value, module):
-    if value and not 4096 <= value <= 4294967295:
+    if value and not int(4096) <= value <= int(4294967295):
         module.fail_json(msg='size must be between 4096 and 4294967295')
 
 
@@ -118,18 +118,18 @@ def map_obj_to_commands(updates, module):
     want, have = updates
 
     for w in want:
-        dest = module.params['dest']
-        name = module.params['name']
-        size = module.params['size']
-        facility = module.params['facility']
-        level = module.params['level']
-        state = module.params['state']
+        dest = w['dest']
+        name = w['name']
+        size = w['size']
+        facility = w['facility']
+        level = w['level']
+        state = w['state']
         del w['state']
 
         if state == 'absent' and w in have:
             if dest == 'host':
                 commands.append('no logging host {}'.format(name))
-            elif dest in ('console', 'monitor', 'buffered', 'on'):
+            elif dest:
                 commands.append('no logging {}'.format(dest))
             else:
                 module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
@@ -163,7 +163,7 @@ def map_obj_to_commands(updates, module):
 def parse_facility(line):
     match = re.search(r'logging facility (\S+)', line, re.M)
     if match:
-        facility =  match.group(1)
+        facility = match.group(1)
     else:
         facility = 'local7'
 
@@ -247,10 +247,10 @@ def map_config_to_obj(module):
 def map_params_to_obj(module):
     obj = []
 
-    if 'collection' in module.params and module.params['collection']:
-        for c in module.params['collection']:
+    if 'aggregate' in module.params and module.params['aggregate']:
+        for c in module.params['aggregate']:
             d = c.copy()
-            if dest != 'host':
+            if d['dest'] != 'host':
                 d['name'] = None
 
             if 'state' not in d:
@@ -260,9 +260,16 @@ def map_params_to_obj(module):
             if 'level' not in d:
                 d['level'] = module.params['level']
 
-            if dest == 'buffered':
-                if 'size' not in d:
+            if d['dest'] != 'buffered':
+                d['size'] = None
+
+            elif d['dest'] is 'buffered':
+                if 'size' in d:
+                    d['size'] = str(d['size'])
+                elif 'size' not in d:
                     d['size'] = str(4096)
+                else:
+                    pass
 
             obj.append(d)
 
@@ -276,14 +283,25 @@ def map_params_to_obj(module):
         else:
             module.params['size'] = None
 
-        obj.append({
-            'dest': module.params['dest'],
-            'name': module.params['name'],
-            'size': module.params['size'],
-            'facility': module.params['facility'],
-            'level': module.params['level'],
-            'state': module.params['state']
-        })
+        if module.params['size'] == None:
+            obj.append({
+                'dest': module.params['dest'],
+                'name': module.params['name'],
+                'size': module.params['size'],
+                'facility': module.params['facility'],
+                'level': module.params['level'],
+                'state': module.params['state']
+            })
+
+        else:
+            obj.append({
+                'dest': module.params['dest'],
+                'name': module.params['name'],
+                'size': str(module.params['size']),
+                'facility': module.params['facility'],
+                'level': module.params['level'],
+                'state': module.params['state']
+            })
 
     return obj
 
@@ -294,11 +312,11 @@ def main():
     argument_spec = dict(
         dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
         name=dict(type='str'),
-        size=dict(type=int),
+        size=dict(type='int'),
         facility=dict(type='str', default='local7'),
         level=dict(type='str', default='debugging'),
         state=dict(default='present', choices=['present', 'absent']),
-        collection=dict(type='list'),
+        aggregate=dict(type='list'),
         purge=dict(default=False, type='bool')
     )
 

@@ -83,7 +83,7 @@
 
 - name: remove logging as collection tearDown
   ios_logging:
-    collection:
+    aggregate:
       - { dest: console, level: warnings, state: absent }
       - { dest: buffered, size: 8000, state: absent }
     authorize: yes
