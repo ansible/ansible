@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: net_l3_interface
+module: junos_l3_interface
 version_added: "2.4"
 author: "Ganesh Nalawade (@ganeshrn)"
 short_description: Manage L3 interfaces on Juniper JUNOS network devices
