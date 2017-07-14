@@ -64,25 +64,25 @@ author:
 
 EXAMPLES = r'''
 - name: change the guest account name
-  win_secedit:
+  win_security_policy:
     section: System Access
     key: NewGuestName
     value: Guest Account
 
 - name: set the maximum password age
-  win_secedit:
+  win_security_policy:
     section: System Access
     key: MaximumPasswordAge
     value: 15
 
 - name: do not store passwords using reversible encryption
-  win_secedit:
+  win_security_policy:
     section: System Access
     key: ClearTextPassword
     value: 0
 
 - name: enable system events
-  win_secedit:
+  win_security_policy:
     section: Event Audit
     key: AuditSystemEvents
     value: 1
