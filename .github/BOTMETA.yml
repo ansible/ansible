@@ -575,7 +575,7 @@ files:
     ignored: chrishoffman
     maintainers: shane-walker
   $modules/packaging/language/pear.py:
-  $modules/packaging/language/pip.py: mattupstate
+  $modules/packaging/language/pip.py: lujeni robinro
   $modules/packaging/os/apk.py: kbrebanov tdtrask
   $modules/packaging/os/apt.py: $team_ansible mgwilliams
   $modules/packaging/os/apt_key.py: jvantuyl
