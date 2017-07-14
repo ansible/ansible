@@ -156,7 +156,7 @@ from ansible.module_utils.azure_rm_common import *
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.storage.cloudstorageaccount import CloudStorageAccount
-    from azure.common import AzureMissingResourceHttpError, AzureHttpError
+    from azure.common import AzureMissingResourceHttpError
     from azure.mgmt.storage.models.storage_management_client_enums import ProvisioningState, SkuName, SkuTier, Kind
     from azure.mgmt.storage.models import StorageAccountUpdateParameters, CustomDomain, \
                                           StorageAccountCreateParameters, Sku
@@ -251,7 +251,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         self.log('Checking name availability for {0}'.format(self.name))
         try:
             response = self.storage_client.storage_accounts.check_name_availability(self.name)
-        except AzureHttpError as e:
+        except CloudError as e:
             self.log('Error attempting to validate name.')
             self.fail("Error checking name availability: {0}".format(str(e)))
         if not response.name_available:
@@ -400,7 +400,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         try:
             poller = self.storage_client.storage_accounts.create(self.resource_group, self.name, parameters)
             self.get_poller_result(poller)
-        except AzureHttpError as e:
+        except CloudError as e:
             self.log('Error creating storage account.')
             self.fail("Failed to create account: {0}".format(str(e)))
         # the poller doesn't actually return anything
@@ -418,7 +418,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 status = self.storage_client.storage_accounts.delete(self.resource_group, self.name)
                 self.log("delete status: ")
                 self.log(str(status))
-            except AzureHttpError as e:
+            except CloudError as e:
                 self.fail("Failed to delete the account: {0}".format(str(e)))
         return True
 

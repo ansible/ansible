@@ -386,7 +386,6 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from itertools import chain
-    from azure.common.credentials import ServicePrincipalCredentials
     from azure.common.exceptions import CloudError
     from azure.mgmt.resource.resources.models import (DeploymentProperties,
                                                       ParametersLink,
