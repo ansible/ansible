@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2016 Obezimnaka Boms, <t-ozboms@microsoft.com>
+# Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
+#                    Chris Houseknecht, <house@redhat.com>
 #
 # This file is part of Ansible
 #
@@ -1222,19 +1223,19 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         self.log("NIC {0} does not exist.".format(network_interface_name))
 
+        virtual_network_resource_group = None
+        if self.virtual_network_resource_group:
+            virtual_network_resource_group = self.virtual_network_resource_group
+        else:
+            virtual_network_resource_group = self.resource_group
+
         if self.virtual_network_name:
-            if self.virtual_network_resource_group:
-                try:
-                    self.network_client.virtual_networks.list(self.virtual_network_resource_group, self.virtual_network_name)
-                    virtual_network_name = self.virtual_network_name
-                except CloudError:
-                    self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
-            else:
-                try:
-                    self.network_client.virtual_networks.list(self.resource_group, self.virtual_network_name)
-                    virtual_network_name = self.virtual_network_name
-                except CloudError:
-                    self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
+            try:
+                self.network_client.virtual_networks.list(virtual_network_resource_group, self.virtual_network_name)
+                virtual_network_name = self.virtual_network_name
+            except CloudError:
+                self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
+
         else:
             # Find a virtual network
             no_vnets_msg = "Error: unable to find virtual network in resource group {0}. A virtual network " \
@@ -1268,16 +1269,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                              "machine.".format(virtual_network_name)
 
             subnet_id = None
-            if self.virtual_network_resource_group:
-                try:
-                    subnets = self.network_client.subnets.list(self.virtual_network_resource_group, virtual_network_name)
-                except CloudError:
-                    self.fail(no_subnets_msg)
-            else:
-                try:
-                    subnets = self.network_client.subnets.list(self.resource_group, virtual_network_name)
-                except CloudError:
-                    self.fail(no_subnets_msg)
+            try:
+                subnets = self.network_client.subnets.list(virtual_network_resource_group, virtual_network_name)
+            except CloudError:
+                self.fail(no_subnets_msg)
 
             for subnet in subnets:
                 subnet_id = subnet.id
