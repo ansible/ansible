@@ -216,6 +216,10 @@ def parse_args():
                              action='store_true',
                              help='retry failed test with increased verbosity')
 
+    integration.add_argument('--continue-on-error',
+                             action='store_true',
+                             help='continue after failed test')
+
     integration.add_argument('--debug-strategy',
                              action='store_true',
                              help='run test playbooks using the debug strategy')
@@ -250,6 +254,10 @@ def parse_args():
                                      metavar='PLATFORM',
                                      action='append',
                                      help='network platform/version').completer = complete_network_platform
+
+    network_integration.add_argument('--inventory',
+                                     metavar='PATH',
+                                     help='path to inventory used for tests')
 
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
