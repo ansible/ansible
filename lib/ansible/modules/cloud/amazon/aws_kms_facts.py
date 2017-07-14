@@ -57,123 +57,127 @@ EXAMPLES = '''
 
 RETURN = '''
 keys:
-  key_id:
-    description: ID of key
-    type: str
-    returned: always
-    sample: abcd1234-abcd-1234-5678-ef1234567890
-  key_arn:
-    description: ARN of key
-    type: str
-    returned: always
-    sample: arn:aws:kms:ap-southeast-2:123456789012:key/abcd1234-abcd-1234-5678-ef1234567890
-  key_state:
-    description: The state of the key
-    type: str
-    returned: always
-    sample: PendingDeletion
-  key_usage:
-    description: The cryptographic operations for which you can use the key.
-    type: str
-    returned: always
-    sample: ENCRYPT_DECRYPT
-  origin:
+  description: list of keys
+  type: complex
+  returned: always
+  contains:
+    key_id:
+      description: ID of key
+      type: str
+      returned: always
+      sample: abcd1234-abcd-1234-5678-ef1234567890
+    key_arn:
+      description: ARN of key
+      type: str
+      returned: always
+      sample: arn:aws:kms:ap-southeast-2:123456789012:key/abcd1234-abcd-1234-5678-ef1234567890
+    key_state:
+      description: The state of the key
+      type: str
+      returned: always
+      sample: PendingDeletion
+    key_usage:
+      description: The cryptographic operations for which you can use the key.
+      type: str
+      returned: always
+      sample: ENCRYPT_DECRYPT
+    origin:
+      description:
+        The source of the key's key material. When this value is C(AWS_KMS),
+        AWS KMS created the key material. When this value is C(EXTERNAL), the
+        key material was imported or the CMK lacks key material.
+      type: str
+      returned: always
+      sample: AWS_KMS
+    aws_account_id:
+      description: The AWS Account ID that the key belongs to
+      type: str
+      returned: always
+      sample: 1234567890123
+    creation_date:
+      description: Date of creation of the key
+      type: str
+      returned: always
+      sample: 2017-04-18T15:12:08.551000+10:00
     description:
-      The source of the key's key material. When this value is C(AWS_KMS),
-      AWS KMS created the key material. When this value is C(EXTERNAL), the
-      key material was imported or the CMK lacks key material.
-    type: str
-    returned: always
-    sample: AWS_KMS
-  aws_account_id:
-    description: The AWS Account ID that the key belongs to
-    type: str
-    returned: always
-    sample: 1234567890123
-  creation_date:
-    description: Date of creation of the key
-    type: str
-    returned: always
-    sample: 2017-04-18T15:12:08.551000+10:00
-  description:
-    description: Description of the key
-    type: str
-    returned: always
-    sample: "My Key for Protecting important stuff"
-  enabled:
-    description: Whether the key is enabled. True if C(KeyState) is true.
-    type: str
-    returned: always
-    sample: false
-  aliases:
-    description: list of aliases associated with the key
-    type: list
-    returned: always
-    sample:
-      - aws/acm
-      - aws/ebs
-  tags:
-    description: dictionary of tags applied to the key
-    type: dict
-    returned: always
-    sample:
-      Name: myKey
-      Purpose: protecting_stuff
-  grants:
-    description: list of grants associated with a key
-    type: complex
-    returned: always
-    contains:
-      constraints:
-        description: Constraints on the encryption context that the grant allows.
-          See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html) for further details
-        type: dict
-        returned: always
-        sample:
-          encryption_context_equals:
-             "aws:lambda:_function_arn": "arn:aws:lambda:ap-southeast-2:012345678912:function:xyz"
-      creation_date:
-        description: Date of creation of the grant
-        type: str
-        returned: always
-        sample: 2017-04-18T15:12:08+10:00
-      grant_id:
-        description: The unique ID for the grant
-        type: str
-        returned: always
-        sample: abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234
-      grantee_principal:
-        description: The principal that receives the grant's permissions
-        type: str
-        returned: always
-        sample: arn:aws:sts::0123456789012:assumed-role/lambda_xyz/xyz
-      issuing_account:
-        description: The AWS account under which the grant was issued
-        type: str
-        returned: always
-        sample: arn:aws:iam::01234567890:root
-      key_id:
-        description: The key ARN to which the grant applies.
-        type: str
-        returned: always
-        sample: arn:aws:kms:ap-southeast-2:123456789012:key/abcd1234-abcd-1234-5678-ef1234567890
-      name:
-        description: The friendly name that identifies the grant
-        type: str
-        returned: always
-        sample: xyz
-      operations:
-        description: The list of operations permitted by the grant
-        type: list
-        returned: always
-        sample:
-          - Decrypt
-          - RetireGrant
-      retiring_principal:
-        description: The principal that can retire the grant
-        type: str
-        returned: always
-        sample: arn:aws:sts::0123456789012:assumed-role/lambda_xyz/xyz
+      description: Description of the key
+      type: str
+      returned: always
+      sample: "My Key for Protecting important stuff"
+    enabled:
+      description: Whether the key is enabled. True if C(KeyState) is true.
+      type: str
+      returned: always
+      sample: false
+    aliases:
+      description: list of aliases associated with the key
+      type: list
+      returned: always
+      sample:
+        - aws/acm
+        - aws/ebs
+    tags:
+      description: dictionary of tags applied to the key
+      type: dict
+      returned: always
+      sample:
+        Name: myKey
+        Purpose: protecting_stuff
+    grants:
+      description: list of grants associated with a key
+      type: complex
+      returned: always
+      contains:
+        constraints:
+          description: Constraints on the encryption context that the grant allows.
+            See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html) for further details
+          type: dict
+          returned: always
+          sample:
+            encryption_context_equals:
+               "aws:lambda:_function_arn": "arn:aws:lambda:ap-southeast-2:012345678912:function:xyz"
+        creation_date:
+          description: Date of creation of the grant
+          type: str
+          returned: always
+          sample: 2017-04-18T15:12:08+10:00
+        grant_id:
+          description: The unique ID for the grant
+          type: str
+          returned: always
+          sample: abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234
+        grantee_principal:
+          description: The principal that receives the grant's permissions
+          type: str
+          returned: always
+          sample: arn:aws:sts::0123456789012:assumed-role/lambda_xyz/xyz
+        issuing_account:
+          description: The AWS account under which the grant was issued
+          type: str
+          returned: always
+          sample: arn:aws:iam::01234567890:root
+        key_id:
+          description: The key ARN to which the grant applies.
+          type: str
+          returned: always
+          sample: arn:aws:kms:ap-southeast-2:123456789012:key/abcd1234-abcd-1234-5678-ef1234567890
+        name:
+          description: The friendly name that identifies the grant
+          type: str
+          returned: always
+          sample: xyz
+        operations:
+          description: The list of operations permitted by the grant
+          type: list
+          returned: always
+          sample:
+            - Decrypt
+            - RetireGrant
+        retiring_principal:
+          description: The principal that can retire the grant
+          type: str
+          returned: always
+          sample: arn:aws:sts::0123456789012:assumed-role/lambda_xyz/xyz
 '''
 
 
@@ -189,6 +193,9 @@ try:
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
+# Caching lookup for aliases
+_aliases = dict()
+
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_kms_keys_with_backoff(connection):
@@ -199,17 +206,20 @@ def get_kms_keys_with_backoff(connection):
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_kms_aliases_with_backoff(connection):
     paginator = connection.get_paginator('list_aliases')
-    aliases = paginator.paginate().build_full_result()['Aliases']
-    result = dict()
-    for alias in aliases:
-        # Not all aliases are actually associated with a key
-        if 'TargetKeyId' in alias:
-            # strip off leading 'alias/' and add it to key's aliases
-            if alias['TargetKeyId'] in result:
-                result[alias['TargetKeyId']].append(alias['AliasName'][6:])
-            else:
-                result[alias['TargetKeyId']] = [alias['AliasName'][6:]]
-    return result
+    return paginator.paginate().build_full_result()
+
+
+def get_kms_aliases_lookup(connection):
+    if not _aliases:
+        for alias in get_kms_aliases_with_backoff(connection)['Aliases']:
+            # Not all aliases are actually associated with a key
+            if 'TargetKeyId' in alias:
+                # strip off leading 'alias/' and add it to key's aliases
+                if alias['TargetKeyId'] in _aliases:
+                    _aliases[alias['TargetKeyId']].append(alias['AliasName'][6:])
+                else:
+                    _aliases[alias['TargetKeyId']] = [alias['AliasName'][6:]]
+    return _aliases
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
@@ -293,7 +303,7 @@ def get_key_details(connection, module, key_id, tokens=[]):
     tags = get_kms_tags(connection, module, key_id)
 
     try:
-        aliases = get_kms_aliases_with_backoff(connection)
+        aliases = get_kms_aliases_lookup(connection)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to obtain aliases",
                          exception=traceback.format_exc(),
