@@ -181,11 +181,18 @@ class AzureRMModuleBase(object):
         if self.credentials.get('client_id') is not None and \
            self.credentials.get('secret') is not None and \
            self.credentials.get('tenant') is not None:
-            self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
-                                                                 secret=self.credentials['secret'],
-                                                                 tenant=self.credentials['tenant'])
+            try:
+                self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
+                                                                     secret=self.credentials['secret'],
+                                                                     tenant=self.credentials['tenant'])
+            except Exception as exc:
+                self.fail("Failed to authenticate with provided credentials : %s" % exc.message)
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
-            self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
+            try:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'],
+                                                             self.credentials['password'])
+            except Exception as exc:
+                self.fail("Failed to authenticate with provided credentials : %s" % exc.message)
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password.")
