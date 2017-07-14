@@ -1,4 +1,18 @@
 #!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -90,9 +104,15 @@ health_check_type:
   description:
     - "he service to use for the health check."
   required: false
-i_am_role:
+iam_role_name:
   description:
-    - "The instance profile iamRole"
+    - "The instance profile iamRole name"
+    - "Only use iam_role_arn, or iam_role_name"
+  required: false
+iam_role_arn:
+  description:
+    - "The instance profile iamRole arn"
+    - "Only use iam_role_arn, or iam_role_name"
   required: false
 ignore_changes:
   choices:
@@ -289,7 +309,7 @@ EXAMPLES = '''
           availability_vs_cost: balanced
           availability_zones:
             - name: us-west-2a
-              subnetId: subnet-2b68a15c
+              subnet_id: subnet-2b68a15c
           image_id: ami-f173cc91
           key_pair: spotinst-oregon
           max_size: 15
@@ -488,7 +508,8 @@ def expand_ebs_volume_pool(eg_compute, ebs_volumes_list):
 def expand_launch_spec(eg_compute, module, is_update, do_not_update):
     user_data = module.params.get('user_data')
     key_pair = module.params.get('key_pair')
-    i_am_role = module.params.get('i_am_role')
+    iam_role_name = module.params.get('iam_role_name')
+    iam_role_arn = module.params.get('iam_role_arn')
     tenancy = module.params.get('tenancy')
     shutdown_script = module.params.get('shutdown_script')
     monitoring = module.params.get('monitoring')
@@ -526,8 +547,16 @@ def expand_launch_spec(eg_compute, module, is_update, do_not_update):
     if ebs_optimized is not None:
         eg_launch_spec.ebs_optimized = ebs_optimized
 
-    if i_am_role is not None:
-        eg_launch_spec.i_am_role = i_am_role
+    if iam_role_name or iam_role_arn is not None:
+        eg_iam_role = spotinst.aws_elastigroup.IamRole()
+
+        if iam_role_name is not None:
+            eg_iam_role.name = iam_role_name
+        elif iam_role_arn is not None:
+            eg_iam_role.arn = iam_role_arn
+
+        if eg_iam_role.name is not None or eg_iam_role.arn is not None:
+            eg_launch_spec.iam_role = eg_iam_role
 
     if key_pair is not None:
         eg_launch_spec.key_pair = key_pair
@@ -1052,7 +1081,8 @@ def main():
         product=dict(type='str'),
         user_data=dict(type='str'),
         key_pair=dict(type='str'),
-        i_am_role=dict(type='str'),
+        iam_role_name=dict(type='str'),
+        iam_role_arn=dict(type='str'),
         tenancy=dict(type='str'),
         shutdown_script=dict(type='str'),
         monitoring=dict(type='str'),
@@ -1092,6 +1122,7 @@ def main():
         signals=dict(type='list'),
         multai_load_balancers=dict(type='list'),
         multai_token=dict(type='str'),
+        account_id=dict(type='str'),
         up_scaling_policies=dict(type='list'),
         down_scaling_policies=dict(type='list')
     )
@@ -1100,7 +1131,13 @@ def main():
 
     creds = retrieve_creds()
     token = creds["token"]
+
     client = spotinst.SpotinstClient(auth_token=token, print_output=False)
+
+    eg_account_id = module.params.get('account_id')
+
+    if eg_account_id is not None:
+        client = spotinst.SpotinstClient(auth_token=token, print_output=False, account_id=eg_account_id)
 
     group_id, message, has_changed = handle_elastigroup(client=client, module=module)
 
