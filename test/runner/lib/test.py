@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 import datetime
 import json
+import os
 
 from lib.util import (
     display,
@@ -260,6 +261,7 @@ class TestFailure(TestResult):
         """
         message = self.format_title()
         output = self.format_block()
+        docs = self.find_docs()
 
         if self.messages:
             verified = all((m.confidence or 0) >= 50 for m in self.messages)
@@ -268,6 +270,7 @@ class TestFailure(TestResult):
 
         bot_data = dict(
             verified=verified,
+            docs=docs,
             results=[
                 dict(
                     message=message,
@@ -306,6 +309,25 @@ class TestFailure(TestResult):
             command += ' --python %s' % self.python_version
 
         return command
+
+    def find_docs(self):
+        """
+        :rtype: str
+        """
+        testing_docs_url = 'https://docs.ansible.com/ansible/devel/dev_guide/testing'
+        testing_docs_dir = 'docs/docsite/rst/dev_guide/testing'
+
+        url = '%s/%s/' % (testing_docs_url, self.command)
+        path = os.path.join(testing_docs_dir, self.command)
+
+        if self.test:
+            url += '%s.html' % self.test
+            path = os.path.join(path, '%s.rst' % self.test)
+
+        if os.path.exists(path):
+            return url
+
+        return None
 
     def format_title(self):
         """
