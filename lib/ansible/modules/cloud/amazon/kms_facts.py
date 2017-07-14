@@ -32,7 +32,7 @@ options:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         The filters aren't natively supported by boto3, but are supported to provide similar
         functionality to other modules. Standard tag filters (C(tag-key), C(tag-value) and
-        C(tag:tagName)) are available, as is C(key-id)
+        C(tag:tagName)) are available, as are C(key-id) and C(alias)
 extends_documentation_fragment:
     - aws
     - ec2
@@ -105,6 +105,13 @@ keys:
     type: str
     returned: always
     sample: false
+  aliases:
+    description: list of aliases associated with the key
+    type: list
+    returned: always
+    sample:
+      - aws/acm
+      - aws/ebs
   tags:
     description: dictionary of tags applied to the key
     type: dict
@@ -125,8 +132,8 @@ keys:
         sample:
           encryption_context_equals:
              "aws:lambda:_function_arn": "arn:aws:lambda:ap-southeast-2:012345678912:function:xyz"
-      creation_date: Date of creation of the grant
-        description:
+      creation_date:
+        description: Date of creation of the grant
         type: str
         returned: always
         sample: 2017-04-18T15:12:08+10:00
@@ -190,6 +197,22 @@ def get_kms_keys_with_backoff(connection):
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def get_kms_aliases_with_backoff(connection):
+    paginator = connection.get_paginator('list_aliases')
+    aliases = paginator.paginate().build_full_result()['Aliases']
+    result = dict()
+    for alias in aliases:
+        # Not all aliases are actually associated with a key
+        if 'TargetKeyId' in alias:
+            # strip off leading 'alias/' and add it to key's aliases
+            if alias['TargetKeyId'] in result:
+                result[alias['TargetKeyId']].append(alias['AliasName'][6:])
+            else:
+                result[alias['TargetKeyId']] = [alias['AliasName'][6:]]
+    return result
+
+
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_kms_tags_with_backoff(connection, key_id, **kwargs):
     return connection.list_resource_tags(KeyId=key_id, **kwargs)
 
@@ -219,25 +242,30 @@ def get_kms_tags(connection, module, key_id):
             tag_response = get_kms_tags_with_backoff(connection, key_id, **kwargs)
             tags.extend(tag_response['Tags'])
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to obtain key tags",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            if e.response['Error']['Code'] != 'AccessDeniedException':
+                module.fail_json(msg="Failed to obtain key tags",
+                                 exception=traceback.format_exc(),
+                                 **camel_dict_to_snake_dict(e.response))
+            else:
+                tag_response = {}
         if tag_response.get('NextMarker'):
             kwargs['Marker'] = tag_response['NextMarker']
         else:
             more = False
-    return boto3_tag_list_to_ansible_dict(tags)
+    return tags
 
 
 def key_matches_filter(key, filtr):
     if filtr[0] == 'key-id':
-        return filtr[1] == key['KeyId']
+        return filtr[1] == key['key_id']
     if filtr[0] == 'tag-key':
-        return filtr[1] in key['Tags']
+        return filtr[1] in key['tags']
     if filtr[0] == 'tag-value':
-        return filtr[1] in key['Tags'].values()
+        return filtr[1] in key['tags'].values()
+    if filtr[0] == 'alias':
+        return filtr[1] in key['aliases']
     if filtr[0].startswith('tag:'):
-        return key['Tags'][filtr[0][4:]] == filtr[1]
+        return key['tags'][filtr[0][4:]] == filtr[1]
 
 
 def key_matches_filters(key, filters):
@@ -248,24 +276,32 @@ def key_matches_filters(key, filters):
 
 
 def get_key_details(connection, module, key_id, tokens=[]):
-    result = dict()
     try:
-        metadata = get_kms_metadata_with_backoff(connection, key_id)['KeyMetadata']
+        result = get_kms_metadata_with_backoff(connection, key_id)['KeyMetadata']
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to obtain key metadata",
                          exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
-    del(metadata['KeyId'])
-    del(metadata['Arn'])
-    result.update(metadata)
+    result['KeyArn'] = result.pop('Arn')
 
-    result['Tags'] = get_kms_tags(connection, module, key_id)
     try:
-        result['Grants'] = get_kms_grants_with_backoff(connection, key_id, tokens=tokens)['Grants']
+        result['grants'] = get_kms_grants_with_backoff(connection, key_id, tokens=tokens)['Grants']
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to obtain key grants",
                          exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
+    tags = get_kms_tags(connection, module, key_id)
+
+    try:
+        aliases = get_kms_aliases_with_backoff(connection)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Failed to obtain aliases",
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+    result['aliases'] = aliases.get(result['KeyId'], [])
+
+    result = camel_dict_to_snake_dict(result)
+    result['tags'] = boto3_tag_list_to_ansible_dict(tags, 'TagKey', 'TagValue')
     return result
 
 
@@ -277,10 +313,7 @@ def get_kms_facts(connection, module):
                          exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
 
-    for key in keys:
-        key.update(get_key_details(connection, module, key['KeyId']))
-
-    return keys
+    return [get_key_details(connection, module, key['KeyId']) for key in keys]
 
 
 def main():
@@ -305,8 +338,7 @@ def main():
         module.fail_json(msg="region must be specified")
 
     all_keys = get_kms_facts(connection, module)
-    filtered = [key for key in all_keys if key_matches_filters(key, module.params['filters'])]
-    module.exit_json(keys=[camel_dict_to_snake_dict(key) for key in filtered])
+    module.exit_json(keys=[key for key in all_keys if key_matches_filters(key, module.params['filters'])])
 
 
 if __name__ == '__main__':
