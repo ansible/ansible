@@ -626,6 +626,34 @@ def command_sanity_rstcheck(args, targets):
     return SanitySuccess(test)
 
 
+# noinspection PyUnusedLocal
+def command_sanity_sanity_docs(args, targets):  # pylint: disable=locally-disabled, unused-argument
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    :rtype: SanityResult
+    """
+    test = 'sanity-docs'
+
+    sanity_dir = 'docs/docsite/rst/dev_guide/testing/sanity'
+    sanity_docs = set(part[0] for part in (os.path.splitext(name) for name in os.listdir(sanity_dir)) if part[1] == '.rst')
+    sanity_tests = set(sanity_test.name for sanity_test in sanity_get_tests())
+
+    missing = sanity_tests - sanity_docs
+
+    results = []
+
+    results += [SanityMessage(
+        message='missing docs for ansible-test sanity --test %s' % r,
+        path=os.path.join(sanity_dir, '%s.rst' % r),
+    ) for r in sorted(missing)]
+
+    if results:
+        return SanityFailure(test, messages=results)
+
+    return SanitySuccess(test)
+
+
 def command_sanity_ansible_doc(args, targets, python_version):
     """
     :type args: SanityConfig
@@ -856,6 +884,7 @@ SANITY_TESTS = (
     SanityFunc('pylint', command_sanity_pylint, intercept=False),
     SanityFunc('yamllint', command_sanity_yamllint, intercept=False),
     SanityFunc('rstcheck', command_sanity_rstcheck, intercept=False),
+    SanityFunc('sanity-docs', command_sanity_sanity_docs, intercept=False),
     SanityFunc('validate-modules', command_sanity_validate_modules, intercept=False),
     SanityFunc('ansible-doc', command_sanity_ansible_doc),
     SanityFunc('import', command_sanity_import),

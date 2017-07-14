@@ -1,6 +1,7 @@
 OS := $(shell uname -s)
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"):
 FORMATTER=../bin/plugin_formatter.py
+TESTING_FORMATTER=../bin/testing_formatter.sh
 DUMPER=../bin/dump_keywords.py
 ifeq ($(shell echo $(OS) | egrep -ic 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
@@ -17,7 +18,7 @@ all: docs
 
 docs: clean htmldocs
 
-htmldocs: keywords modules staticmin
+htmldocs: testing keywords modules staticmin
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 webdocs: docs
@@ -50,6 +51,9 @@ keywords: $(FORMATTER) ../templates/playbooks_keywords.rst.j2
 
 modules: $(FORMATTER) ../templates/plugin.rst.j2
 	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/
+
+testing:
+	$(TESTING_FORMATTER)
 
 staticmin:
 	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
