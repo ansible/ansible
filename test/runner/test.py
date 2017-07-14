@@ -220,6 +220,11 @@ def parse_args():
                              action='store_true',
                              help='run test playbooks using the debug strategy')
 
+    integration.add_argument('--changed-all-target',
+                             metavar='TARGET',
+                             default='all',
+                             help='target to run when all tests are needed')
+
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
 

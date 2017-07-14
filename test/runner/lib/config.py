@@ -141,6 +141,7 @@ class IntegrationConfig(TestConfig):
         self.allow_destructive = args.allow_destructive if 'allow_destructive' in args else False  # type: bool
         self.retry_on_error = args.retry_on_error  # type: bool
         self.debug_strategy = args.debug_strategy  # type: bool
+        self.changed_all_target = args.changed_all_target  # type: str
         self.tags = args.tags
         self.skip_tags = args.skip_tags
         self.diff = args.diff
