@@ -50,7 +50,6 @@ options:
   objects:
     description:
       - A list of pipeline object definitions, each of which is a dict that takes the keys C(id), C(name) and C(fields).
-    type: complex
     suboptions:
       id:
         description:
@@ -66,7 +65,6 @@ options:
   parameters:
     description:
       - A list of parameter objects (dicts) in the pipeline definition.
-    type: complex
     suboptions:
       id:
         description:
@@ -79,7 +77,6 @@ options:
     description:
       - A list of parameter values (dicts) in the pipeline definition. Each dict takes the keys C(id) and C(stringValue) both
         of which are strings.
-    type: complex
   timeout:
     description:
       - Time in seconds to wait for the pipeline to transition to the requested state, fail otherwise.
@@ -92,7 +89,6 @@ options:
   tags:
     description:
       - A dict of key:value pair(s) to add to the pipeline.
-    type: complex
     default: null
 '''
 
@@ -156,19 +152,13 @@ changed:
   sample:
     changed: true
 result:
-  description: the data pipeline and return message
+  description:
+    - Contains the data pipeline data (data_pipeline) and a return message (msg).
+      If the data pipeline exists data_pipeline will contain the keys description, name,
+      pipeline_id, state, tags, and unique_id. If the data pipeline does not exist then
+      data_pipeline will be an empty dict. The msg describes the status of the operation.
   returned: always
   type: dict
-  data_pipeline:
-    description:
-      - The data pipeline data. If the data pipeline exists, it will contain the keys description, name, pipeline_id,
-        state, tags, and unique_id. If the data pipeline does not exist this will be an empty dict.
-  msg:
-    description: describes status of the operation
-    type: string
-    returned: always
-    sample:
-      msg: "Data Pipeline my_pipeline created"
 '''
 
 import hashlib
