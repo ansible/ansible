@@ -132,7 +132,7 @@ def map_obj_to_commands(updates, module):
             elif dest in ('console', 'monitor', 'buffered', 'on'):
                 commands.append('no logging {}'.format(dest))
             else:
-                pass
+                module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
                 commands.append('no logging facility {}'.format(facility))
@@ -163,7 +163,11 @@ def map_obj_to_commands(updates, module):
 def parse_facility(line):
     match = re.search(r'logging facility (\S+)', line, re.M)
     if match:
-        return match.group(1)
+        facility =  match.group(1)
+    else:
+        facility = 'local7'
+
+    return facility
 
 
 def parse_size(line, dest):
@@ -179,7 +183,7 @@ def parse_size(line, dest):
                 if isinstance(int_size, int):
                     size = str(match.group(1))
                 else:
-                    size = None
+                    size = str(4096)
     else:
         size = None
 
@@ -202,7 +206,7 @@ def parse_level(line, dest):
                    'notifications', 'informational', 'debugging')
 
     if dest == 'host':
-        level = None
+        level = 'debugging'
 
     else:
         match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
@@ -210,9 +214,9 @@ def parse_level(line, dest):
             if match.group(1) in level_group:
                 level = match.group(1)
             else:
-                level = None
+                level = 'debugging'
         else:
-            level = None
+            level = 'debugging'
 
     return level
 
