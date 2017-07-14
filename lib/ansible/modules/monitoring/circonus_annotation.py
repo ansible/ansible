@@ -54,16 +54,16 @@ options:
         required: true
     start:
         description:
-            - Unix timestamp of event start, defaults to now
-        required: false
+            - Unix timestamp of event start
+        default: I(now)
     stop:
         description:
-            - Unix timestamp of event end, defaults to now + duration
-        required: false
+            - Unix timestamp of event end
+        default: I(now) + I(duration)
     duration:
         description:
-            - Duration in seconds of annotation, defaults to 0
-        required: false
+            - Duration in seconds of annotation
+        default: 0
 '''
 EXAMPLES = '''
 # Create a simple annotation event with a source, defaults to start and end time of now
