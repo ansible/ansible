@@ -195,6 +195,7 @@ def main():
     mutually_exclusive = [['name', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
