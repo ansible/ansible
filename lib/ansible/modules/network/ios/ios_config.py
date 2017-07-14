@@ -174,15 +174,15 @@ options:
         changes are not copied to non-volatile storage by default.  Using
         this argument will change that before.  If the argument is set to
         I(always), then the running-config will always be copied to the
-        startup-config and the I(changed) flag will always be set to
-        True.  If the argument is set to I(changed), then the running-config
+        startup-config and the I(modified) flag will always be set to
+        True.  If the argument is set to I(modified), then the running-config
         will only be copied to the startup-config if it has changed since
         the last save to startup-config.  If the argument is set to
         I(never), the running-config will never be copied to the the
         startup-config
     required: false
     default: never
-    choices: ['always', 'never', 'changed']
+    choices: ['always', 'never', 'modified']
     version_added: "2.4"
   diff_against:
     description:
@@ -255,9 +255,9 @@ EXAMPLES = """
     diff_ignore_lines:
       - ntp clock .*
 
-- name: save running to startup when changed
+- name: save running to startup when modified
   ios_config:
-    save_when: changed
+    save_when: modified
 """
 
 RETURN = """
@@ -386,7 +386,7 @@ def main():
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
 
-        save_when=dict(choices=['always', 'never', 'changed'], default='never'),
+        save_when=dict(choices=['always', 'never', 'modified'], default='never'),
 
         diff_against=dict(choices=['startup', 'intended', 'running']),
         diff_ignore_lines=dict(type='list'),
