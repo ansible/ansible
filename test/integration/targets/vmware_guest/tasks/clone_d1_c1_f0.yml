@@ -1,0 +1,40 @@
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+- name: start vcsim with no folders
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
+  register: vcsim_instance
+
+- name: get a list of VMS from vcsim   
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
+  register: vmlist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+- name: set state to poweroff on all VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    template: "{{ item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    disk:
+        - size: 0gb
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0
+
+- debug: var=clone_d1_c1_f0
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
