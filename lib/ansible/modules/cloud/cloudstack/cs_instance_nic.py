@@ -164,7 +164,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (AnsibleCloudStack,
                                              cs_argument_spec,
                                              cs_required_together)
-from cs import CloudStackException
 
 
 class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
@@ -185,7 +184,7 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
             'virtualmachineid': self.get_vm(key='id'),
             'networkid': self.get_network(key='id'),
         }
-        nics = self.cs.listNics(**args)
+        nics = self.query_api('listNics', **args)
         if nics:
             self.nic = nics['nic'][0]
             return self.nic
@@ -204,7 +203,7 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
             'ipaddress': self.module.params.get('ip_address'),
         }
         if not self.module.check_mode:
-            res = self.cs.addNicToVirtualMachine(**args)
+            res = self.query_api('addNicToVirtualMachine', **args)
             if 'errortext' in res:
                 self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
@@ -226,9 +225,7 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
         if self.has_changed(args, nic, ['ipaddress']):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.updateVmNicIp(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateVmNicIp', **args)
 
                 if self.module.params.get('poll_async'):
                     vm = self.poll_job(res, 'virtualmachine')
@@ -242,9 +239,7 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
             'nicid': nic['id'],
         }
         if not self.module.check_mode:
-            res = self.cs.removeNicFromVirtualMachine(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('removeNicFromVirtualMachine', **args)
 
             if self.module.params.get('poll_async'):
                 self.poll_job(res, 'virtualmachine')
@@ -278,13 +273,13 @@ def main():
     argument_spec.update(dict(
         vm=dict(required=True, aliases=['name']),
         network=dict(required=True),
-        vpc=dict(default=None),
+        vpc=dict(),
         ip_address=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
-        domain=dict(default=None),
-        account=dict(default=None),
-        project=dict(default=None),
-        zone=dict(default=None),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        zone=dict(),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -294,20 +289,15 @@ def main():
         supports_check_mode=True,
     )
 
-    try:
-        acs_nic = AnsibleCloudStackInstanceNic(module)
+    acs_nic = AnsibleCloudStackInstanceNic(module)
 
-        state = module.params.get('state')
+    state = module.params.get('state')
+    if state == 'absent':
+        nic = acs_nic.absent_nic()
+    else:
+        nic = acs_nic.present_nic()
 
-        if state == 'absent':
-            nic = acs_nic.absent_nic()
-        else:
-            nic = acs_nic.present_nic()
-
-        result = acs_nic.get_result(nic)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_nic.get_result(nic)
 
     module.exit_json(**result)
 
