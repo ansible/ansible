@@ -22,36 +22,32 @@ description:
 version_added: "1.1"
 author: "Vincent Van der Kussen (@vincentvdk)"
 notes:
-    - this module fetches the system id from RHN.
-requirements:
-    - none
+    - This module fetches the system id from RHN.
+    - This module doesn't support I(check_mode).
 options:
     name:
         description:
-            - name of the software channel
+            - Name of the software channel.
         required: true
-        default: null
     sysname:
         description:
-            - name of the system as it is known in RHN/Satellite
+            - Name of the system as it is known in RHN/Satellite.
         required: true
-        default: null
     state:
         description:
-            - whether the channel should be present or not
-        required: false
+            - Whether the channel should be present or not, taking action if the state is different from what is stated.
         default: present
     url:
         description:
-            - The full url to the RHN/Satellite api
+            - The full URL to the RHN/Satellite API.
         required: true
     user:
         description:
-            - RHN/Satellite user
+            - RHN/Satellite login
         required: true
     password:
         description:
-            - "the user's password"
+            - RHN/Satellite password
         required: true
 '''
 
