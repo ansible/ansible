@@ -27,7 +27,10 @@ options:
     default: null
   version:
     description:
-      - version of the extension to add or remove (or update to)
+      - version of the extension to add or remove (or update to),
+        has no effect when requested state is "absent", when not
+        specified (with state "present") it will add latest
+        available version
     required: false
     default: null
     version_added: "2.4"
