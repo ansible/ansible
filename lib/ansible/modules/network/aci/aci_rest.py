@@ -273,7 +273,6 @@ def main():
             validate_certs=dict(type='bool', default=True),
         ),
         mutually_exclusive=[['content', 'src']],
-        required_one_of=[['content', 'src']],
         supports_check_mode=True,
     )
 
@@ -315,23 +314,29 @@ def main():
     else:
         module.fail_json(msg='Failed to find REST API content type (neither .xml nor .json).')
 
-    # Set protocol
+    # Set protocol for further use
     if use_ssl:
         protocol = 'https'
     else:
         protocol = 'http'
 
     # Perform login first
-    url = '%s://%s/api/aaaLogin.json' % (protocol, host)
+    url = '%s://%s/api/aaaLogin.json' % (protocol, hostname)
     payload = {'aaaUser': {'attributes': {'name': username, 'pwd': password}}}
     resp, auth = fetch_url(module, url, data=json.dumps(payload), method='POST', timeout=timeout)
 
+    # Connection or authentication failed
     if resp is None or auth['status'] != 200:
+
         if 'body' in auth:
+            # Authentication failed
             result.update(aci_response(auth['body'], 'json'))
             result['msg'] = 'Authentication failed: %(error_code)s %(error_text)s' % result
         else:
+            # Connection failed
             result['msg'] = '%(msg)s for %(url)s' % auth
+
+        # Return normal Ansible URL related module responses
         result['response'] = auth['msg']
         result['status'] = auth['status'],
         module.fail_json(**result)
@@ -356,7 +361,7 @@ def main():
         result['changed'] = False
 
     # Perform actual request using auth cookie
-    url = '%s://%s/%s' % (protocol, host, path.lstrip('/'))
+    url = '%s://%s/%s' % (protocol, hostname, path.lstrip('/'))
     headers = dict(Cookie=resp.headers['Set-Cookie'])
 
     resp, info = fetch_url(module, url, data=result['data'], method=method.upper(), timeout=timeout, headers=headers)
