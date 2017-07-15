@@ -37,7 +37,7 @@ options:
   name:
     aliases: [ 'host' ]
     description:
-      - The host to add or remove (must match a host specified in key)
+      - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
     required: true
     default: null
   key:
@@ -101,7 +101,7 @@ def enforce_state(module, params):
     Add or remove key.
     """
 
-    host = params["name"]
+    host = params["name"].lower()
     key = params.get("key", None)
     port = params.get("port", None)
     path = params.get("path")
