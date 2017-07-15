@@ -272,8 +272,9 @@ def main():
             use_ssl=dict(type='bool', default=True),
             validate_certs=dict(type='bool', default=True),
         ),
-        supports_check_mode=True,
         mutually_exclusive=[['content', 'src']],
+        required_one_of=[['content', 'src']],
+        supports_check_mode=True,
     )
 
     hostname = module.params['hostname']
