@@ -57,6 +57,13 @@ options:
       - Name of the project the router is related to.
     required: false
     default: null
+  zone:
+    description:
+      - Name of the zone the router is deployed in.
+      - If not set, all zones are used.
+    required: false
+    default: null
+    version_added: "2.4"
   state:
     description:
       - State of the router.
@@ -205,6 +212,8 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
             args['projectid'] = self.get_project(key='id')
             args['account'] = self.get_account(key='name')
             args['domainid'] = self.get_domain(key='id')
+            if self.module.params.get('zone'):
+                args['zoneid'] = self.get_zone(key='id')
             args['listall'] = True
 
             routers = self.cs.listRouters(**args)
@@ -349,6 +358,7 @@ def main():
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
+        zone=dict(),
         poll_async = dict(type='bool', default=True),
     ))
 
