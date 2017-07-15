@@ -79,8 +79,8 @@ options:
     required: false
     default: null
     description:
-      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  
-        The qualifier may be empty for some types, but the type and perms are always required. '-' can be used as placeholder 
+      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.
+        The qualifier may be empty for some types, but the type and perms are always required. '-' can be used as placeholder
         when you do not care about permissions. This is now superseded by entity, type and permissions fields.
 
   recursive:
@@ -90,7 +90,7 @@ options:
     choices: [ 'yes', 'no' ]
     description:
       - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
-   
+
   no_mask:
     version_added: "2.3.1.0"
     required: false
