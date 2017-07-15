@@ -102,7 +102,7 @@ class NotSupportedError(Exception):
 
 def ext_exists(cursor, ext, ver=None):
     if ver:
-        query = "SELECT * FROM pg_extension WHERE extname=%(ext)s and extversion=$(ver)s"
+        query = "SELECT * FROM pg_extension WHERE extname=%(ext)s and extversion=%(ver)s"
     else:
         query = "SELECT * FROM pg_extension WHERE extname=%(ext)s"
     cursor.execute(query, {'ext': ext, 'ver': ver})
@@ -119,16 +119,16 @@ def ext_delete(cursor, ext):
 def ext_create(cursor, ext, ver=None):
     if not ext_exists(cursor, ext):
         if ver:
-            query = 'CREATE EXTENSION "%s" VERSION "%s"' % ( ext, ver)
+            query = 'CREATE EXTENSION "%(ext)s" VERSION "%(ver)s"'
         else:
-            query = 'CREATE EXTENSION "%s"' % ext
-        cursor.execute(query)
+            query = 'CREATE EXTENSION "%(ext)s"'
+        cursor.execute(query, {'ext': ext, 'ver': ver})
         return True
     else:
         if ver:
             if not ext_exists(cursor, ext, ver):
-                query = 'ALTER EXTENSION "%s" UPDATE TO "%s"' % ( ext, ver )
-            cursor.execute(query)
+                query = 'ALTER EXTENSION "%(ext)s" UPDATE TO "%(ver)s"'
+            cursor.execute(query, {'ext': ext, 'ver': ver})
             return True
         return False
 
