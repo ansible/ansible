@@ -205,6 +205,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
             args['projectid'] = self.get_project(key='id')
             args['account'] = self.get_account(key='name')
             args['domainid'] = self.get_domain(key='id')
+            args['listall'] = True
 
             routers = self.cs.listRouters(**args)
             if routers:
@@ -271,9 +272,9 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
             if 'errortext' in res:
                 self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
-                poll_async = self.module.params.get('poll_async')
-                if poll_async:
-                    router = self.poll_job(res, 'router')
+            poll_async = self.module.params.get('poll_async')
+            if poll_async:
+                router = self.poll_job(res, 'router')
         return router
 
     def absent_router(self):
