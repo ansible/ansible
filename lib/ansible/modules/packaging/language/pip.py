@@ -380,6 +380,11 @@ def main():
     virtualenv_python = module.params['virtualenv_python']
     chdir = module.params['chdir']
     umask = module.params['umask']
+    env = module.params['virtualenv']
+
+    venv_created = False
+    if chdir:
+        env = os.path.join(chdir, env)
 
     if umask and not isinstance(umask, int):
         try:
@@ -402,8 +407,6 @@ def main():
         err = ''
         out = ''
 
-        env = module.params['virtualenv']
-        venv_created = False
         if env:
             if not os.path.exists(os.path.join(env, 'bin', 'activate')):
                 venv_created = True
