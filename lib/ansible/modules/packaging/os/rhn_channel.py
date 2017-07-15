@@ -64,9 +64,8 @@ EXAMPLES = '''
     password: guessme
 '''
 
-import xmlrpclib
-from operator import itemgetter
-import re
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
 # ------------------------------------------------------- #
@@ -137,8 +136,8 @@ def main():
     user = module.params['user']
     password = module.params['password']
 
-    #initialize connection
-    client = xmlrpclib.Server(saturl, verbose=0)
+    # initialize connection
+    client = xmlrpc_client(saturl)
     session = client.auth.login(user, password)
 
     # get systemid
@@ -164,9 +163,6 @@ def main():
 
     client.auth.logout(session)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
