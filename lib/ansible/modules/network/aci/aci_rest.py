@@ -45,7 +45,7 @@ options:
     aliases: [ host ]
   username:
     description:
-    - Username used to login to the switch.
+    - The username to use for authentication.
     required: true
     default: admin
     aliases: [ user ]
@@ -55,7 +55,10 @@ options:
     required: true
   method:
     description:
-    - The HTTP method of the request or response.
+    - The HTTP method of the request.
+    - Using C(delete) is typically used for deleting objects.
+    - Using C(get) is typically used for querying objects.
+    - Using C(post) is typically used for modifying objects.
     required: true
     default: get
     choices: [ delete, get, post ]
@@ -66,24 +69,24 @@ options:
     - Must end in C(.xml) or C(.json).
     required: true
     aliases: [ uri ]
+  content:
+    description:
+    - When used instead of C(src), sets the content of the API request directly.
+    - This may be convenient to template simple requests, for anything complex use the M(template) module.
   src:
     description:
     - Name of the absolute path of the filname that includes the body
       of the http request being sent to the ACI fabric.
     aliases: [ config_file ]
-  content:
+  timeout:
     description:
-    - When used instead of C(src), sets the content of the API request directly.
-    - This may be convenient to template simple requests, for anything complex use the M(template) module.
+    - The socket level timeout in seconds.
+    default: 30
   use_ssl:
     description:
     - If C(no), an HTTP connection will be used instead of the default HTTPS connection.
     type: bool
     default: 'yes'
-  timeout:
-    description:
-    - The socket level timeout in seconds.
-    default: 30
   validate_certs:
     description:
     - If C(no), SSL certificates will not be validated.
@@ -91,7 +94,7 @@ options:
     type: bool
     default: 'yes'
 notes:
-- When using inline-JSON (using C(content)), YAML requires to start with a blank line.
+- When using inline-JSON (using C(content)), YAML requires to start with a blank line. Otherwise the JSON statement will be parsed as a YAML mapping (dictionary) and translated into invalid JSON as a result.
 - XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
 '''
 
@@ -101,7 +104,7 @@ EXAMPLES = r'''
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
-    method: POST
+    method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/aci_config.xml
   delegate_to: localhost
@@ -111,7 +114,7 @@ EXAMPLES = r'''
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
-    method: GET
+    method: get
     path: /api/node/class/fvTenant.json
   delegate_to: localhost
 
@@ -120,7 +123,7 @@ EXAMPLES = r'''
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
-    method: POST
+    method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/contract_config.xml
   delegate_to: localhost
@@ -131,7 +134,7 @@ EXAMPLES = r'''
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: no
-    method: POST
+    method: post
     path: /api/mo/uni/controller/nodeidentpol.xml
     content: |
       <fabricNodeIdentPol>
