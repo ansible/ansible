@@ -222,7 +222,7 @@ class Role(Base, Become, Conditional, Taggable):
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=handler_data, orig_exc=e)
 
-        directories = [directory for directory in os.listdir(self._role_path) if directory not in ('tasks', 'handlers', 'meta')]
+        directories = [directory for directory in self._loader.list_directory(self._role_path) if directory not in ('tasks', 'handlers', 'meta')]
         if not any((metadata, task_data, handler_data, directories)):
             raise AnsibleParserError("The role %s does not contain any data" % self._role_name)
 
