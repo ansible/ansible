@@ -146,7 +146,7 @@ try:
     from f5.bigiq import ManagementRoot as BigIqMgmt
 
     from f5.iworkflow import ManagementRoot as iWorkflowMgmt
-    from icontrol.session import iControlUnexpectedHTTPError
+    from icontrol.exceptions import iControlUnexpectedHTTPError
     HAS_F5SDK = True
 except ImportError:
     HAS_F5SDK = False
