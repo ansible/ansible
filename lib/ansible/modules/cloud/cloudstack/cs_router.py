@@ -175,7 +175,6 @@ account:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -203,7 +202,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
             'issystem': True
         }
 
-        service_offerings = self.cs.listServiceOfferings(**args)
+        service_offerings = self.query_api('listServiceOfferings', **args)
         if service_offerings:
             for s in service_offerings['serviceoffering']:
                 if service_offering in [s['name'], s['id']]:
@@ -224,7 +223,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
             if self.module.params.get('zone'):
                 args['zoneid'] = self.get_zone(key='id')
 
-            routers = self.cs.listRouters(**args)
+            routers = self.query_api('listRouters', **args)
             if routers:
                 for r in routers['router']:
                     if router.lower() in [r['name'].lower(), r['id']]:
@@ -245,9 +244,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
             }
 
             if not self.module.check_mode:
-                res = self.cs.startRouter(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('startRouter', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -267,9 +264,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
             }
 
             if not self.module.check_mode:
-                res = self.cs.stopRouter(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('stopRouter', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -288,9 +283,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
         }
 
         if not self.module.check_mode:
-            res = self.cs.rebootRouter(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('rebootRouter', **args)
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -307,10 +300,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
             }
 
             if not self.module.check_mode:
-                res = self.cs.destroyRouter(**args)
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('destroyRouter', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -336,10 +326,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
                 current_state = router['state'].lower()
 
                 self.stop_router()
-                router = self.cs.changeServiceForRouter(**args)
-
-                if 'errortext' in router:
-                    self.module.fail_json(msg="Failed: '%s'" % router['errortext'])
+                router = self.query_api('changeServiceForRouter', **args)
 
                 if state in ['restarted', 'started']:
                     router = self.start_router()
@@ -380,19 +367,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_router = AnsibleCloudStackRouter(module)
+    acs_router = AnsibleCloudStackRouter(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            router = acs_router.absent_router()
-        else:
-            router = acs_router.present_router()
+    state = module.params.get('state')
+    if state in ['absent']:
+        router = acs_router.absent_router()
+    else:
+        router = acs_router.present_router()
 
-        result = acs_router.get_result(router)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_router.get_result(router)
 
     module.exit_json(**result)
 
