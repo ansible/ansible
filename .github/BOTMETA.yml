@@ -837,6 +837,8 @@ files:
   $modules/windows/win_say.py: jhawkesworth
   $modules/windows/win_scheduled_task.ps1: petemounce
   $modules/windows/win_scheduled_task.py: petemounce
+  $modules/windows/win_security_policy.ps1: jborean93 rndmh3ro defionscode
+  $modules/windows/win_security_policy.py: jborean93 rndmh3ro defionscode
   $modules/windows/win_service.ps1: chrishoffman
   $modules/windows/win_service.py: chrishoffman
   $modules/windows/win_share.ps1: daBONDi h0nIg jborean93
