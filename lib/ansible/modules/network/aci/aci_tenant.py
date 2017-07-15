@@ -231,6 +231,5 @@ def main():
     result.update(aci_response(resp.read(), rest_type))
     module.exit_json(**result)
 
-
 if __name__ == "__main__":
     main()
