@@ -1,0 +1,52 @@
+#!/bin/sh
+#  pre-commit.sample is part of git, GPL2 licensed so can't be included directly in Ansible.
+#  so we call the version that git puts automatically in the directory.
+
+#  This file is licensed under the GPLv3 as for the rest of Ansible code.
+
+sh .git/hooks/pre-commit.sample
+
+# part inspired from
+# https://stackoverflow.com/questions/20479794/how-do-i-properly-git-stash-pop-in-pre-commit-hooks-to-get-a-clean-working-tree
+
+old_stash=$(git rev-parse -q --verify refs/stash)
+git stash save -q --keep-index
+new_stash=$(git rev-parse -q --verify refs/stash)
+
+if [ "$old_stash" = "$new_stash" ]; then
+    echo "pre-commit script: no changes to test"
+    exit 0
+fi
+
+status=0
+
+#Note; git diff-index --name-only should correctly quote weird filenames which is
+#very nice!
+if [ "x$allowflakefail" != 'xyes' ]
+then
+    for file in `git diff-index --cached --name-only HEAD`
+    do
+        case "$file" in
+            lib/ansible/modules/*.py)
+                ./test/sanity/validate-modules/validate-modules "$file"
+                # this flake8 is more agressive than the tests included in validate-modules
+                # so run it second to allow skipping only after the other tests pass
+                flake8 --ignore=W503,E402,E501 "$file" ;;
+            *.py)
+                flake8 --ignore=W503,E402,E501 "$file" ;;
+            *.yaml | *.yml )
+                yamllint "$file" ;;
+        esac
+        newstat=$?
+        if [ $newstat > $status ]
+        then
+            status=$newstat
+        fi
+    done
+fi
+             
+# Restore changes
+git reset --hard -q && git stash apply --index -q && git stash drop -q
+
+# Exit with status from test-run: nonzero prevents commit
+exit $status
