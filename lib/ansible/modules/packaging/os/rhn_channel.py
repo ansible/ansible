@@ -131,22 +131,22 @@ def main():
     # get channels for system
     chans = base_channels(client, session, sys_id)
 
+    try:
+        if state == 'present':
+            if channelname in chans:
+                module.exit_json(changed=False, msg="Channel %s already exists" % channelname)
+            else:
+                subscribe_channels(channelname, client, session, systname, sys_id)
+                module.exit_json(changed=True, msg="Channel %s added" % channelname)
 
-    if state == 'present':
-        if channelname in chans:
-            module.exit_json(changed=False, msg="Channel %s already exists" % channelname)
-        else:
-            subscribe_channels(channelname, client, session, systname, sys_id)
-            module.exit_json(changed=True, msg="Channel %s added" % channelname)
-
-    if state == 'absent':
-        if not channelname in chans:
-            module.exit_json(changed=False, msg="Not subscribed to channel %s." % channelname)
-        else:
-            unsubscribe_channels(channelname, client, session, systname, sys_id)
-            module.exit_json(changed=True, msg="Channel %s removed" % channelname)
-
-    client.auth.logout(session)
+        if state == 'absent':
+            if not channelname in chans:
+                module.exit_json(changed=False, msg="Not subscribed to channel %s." % channelname)
+            else:
+                unsubscribe_channels(channelname, client, session, systname, sys_id)
+                module.exit_json(changed=True, msg="Channel %s removed" % channelname)
+    finally:
+        client.auth.logout(session)
 
 
 if __name__ == '__main__':
