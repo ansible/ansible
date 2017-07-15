@@ -220,8 +220,46 @@ try:
 except ImportError:
     HAS_XMLJSON_COBRA = False
 
+#from ansible.module_utils.aci import aci_login
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+
+
+aci_argument_spec = dict(
+    hostname=dict(type='str', required=True, aliases=['host']),
+    username=dict(type='str', default='admin', aliases=['user']),
+    password=dict(type='str', required=True, no_log=True),
+    protocol=dict(type='str'), # Deprecated in v2.8
+    timeout=dict(type='int', default=30),
+    use_ssl=dict(type='bool', default=True),
+    validate_certs=dict(type='bool', default=True),
+)
+
+
+def aci_login(module, result=dict()):
+    ''' Log in to APIC '''
+
+    # Set protocol based on use_ssl parameter
+    if module.params['protocol'] is None:
+        module.params['protocol'] = 'https' if module.params.get('use_ssl', True) else 'http'
+
+    # Perform login request
+    url = '%(protocol)s://%(host)s/api/aaaLogin.json' % module.params
+    data = {'aaaUser': {'attributes': {'name': module.params['username'], 'pwd': module.params['password']}}}
+    resp, auth = fetch_url(module, url, data=json.dumps(data), method="POST", timeout=module.params['timeout'])
+
+    # Handle APIC response
+    if auth['status'] != 200:
+        try:
+            result.update(aci_response(auth['body'], 'json'))
+            result['msg'] = 'Authentication failed: %(error_code)s %(error_text)s' % result
+        except KeyError:
+            result['msg'] = '%(msg)s for %(url)s' % auth
+        result['response'] = auth['msg']
+        result['status_code'] = auth['status']
+        module.fail_json(**result)
+
+    return resp
 
 
 def aci_response(rawoutput, rest_type='xml'):
@@ -271,21 +309,17 @@ def aci_response(rawoutput, rest_type='xml'):
 
 
 def main():
+    argument_spec = dict(
+        path=dict(type='str', required=True, aliases=['uri']),
+        method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
+        src=dict(type='path', aliases=['config_file']),
+        content=dict(type='str'),
+    )
+
+    argument_spec.update(aci_argument_spec)
 
     module = AnsibleModule(
-        argument_spec=dict(
-            hostname=dict(type='str', required=True, aliases=['host']),
-            username=dict(type='str', default='admin', aliases=['user']),
-            password=dict(type='str', required=True, no_log=True),
-            path=dict(type='str', required=True, aliases=['uri']),
-            method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
-            src=dict(type='path', aliases=['config_file']),
-            content=dict(type='str'),
-            protocol=dict(type='str'),
-            timeout=dict(type='int', default=30),
-            use_ssl=dict(type='bool', default=True),
-            validate_certs=dict(type='bool', default=True),
-        ),
+        argument_spec=argument_spec,
         mutually_exclusive=[['content', 'src']],
         supports_check_mode=True,
     )
@@ -330,33 +364,12 @@ def main():
 
     # Set protocol for further use
     if protocol is None:
-        if use_ssl:
-            protocol = 'https'
-        else:
-            protocol = 'http'
+        protocol = 'https' if use_ssl else 'http'
     else:
         module.deprecate("Parameter 'protocol' is deprecated, please use 'use_ssl' instead.", 2.8)
 
     # Perform login first
-    url = '%s://%s/api/aaaLogin.json' % (protocol, hostname)
-    payload = {'aaaUser': {'attributes': {'name': username, 'pwd': password}}}
-    resp, auth = fetch_url(module, url, data=json.dumps(payload), method='POST', timeout=timeout)
-
-    # Connection or authentication failed
-    if resp is None or auth['status'] != 200:
-
-        if 'body' in auth:
-            # Authentication failed
-            result.update(aci_response(auth['body'], 'json'))
-            result['msg'] = 'Authentication failed: %(error_code)s %(error_text)s' % result
-        else:
-            # Connection failed
-            result['msg'] = '%(msg)s for %(url)s' % auth
-
-        # Return normal Ansible URL related module responses
-        result['response'] = auth['msg']
-        result['status_code'] = auth['status'],
-        module.fail_json(**result)
+    auth = aci_login(module, result)
 
     # Prepare request data
     if content:
@@ -381,7 +394,7 @@ def main():
 
     # Perform actual request using auth cookie
     url = '%s://%s/%s' % (protocol, hostname, path.lstrip('/'))
-    headers = dict(Cookie=resp.headers['Set-Cookie'])
+    headers = dict(Cookie=auth.headers['Set-Cookie'])
 
     resp, info = fetch_url(module, url, data=result['payload'], method=method.upper(), timeout=timeout, headers=headers)
     result['response'] = info['msg']
@@ -389,8 +402,11 @@ def main():
 
     # Report failure
     if info['status'] != 200:
-        result.update(aci_response(info['body'], rest_type))
-        result['msg'] = 'Task failed: %(error_code)s %(error_text)s' % result
+        try:
+            result.update(aci_response(info['body'], rest_type))
+            result['msg'] = 'Task failed: %(error_code)s %(error_text)s' % result
+        except KeyError:
+            result['msg'] = '%(msg)s for %(url)s' % info
         module.fail_json(**result)
 
     # Report success
