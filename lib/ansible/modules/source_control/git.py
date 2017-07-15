@@ -816,7 +816,7 @@ def submodule_update(git_path, module, dest, track_submodules, force=False):
     # skip submodule commands if .gitmodules is not present
     if not os.path.exists(os.path.join(dest, '.gitmodules')):
         return (0, '', '')
-    cmd = [git_path, 'submodule', 'sync']
+    cmd = [git_path, 'submodule', 'sync', '--recursive']
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     if 'remote' in params and track_submodules:
         cmd = [git_path, 'submodule', 'update', '--init', '--recursive', '--remote']
