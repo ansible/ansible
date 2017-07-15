@@ -99,6 +99,13 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: net_l3_interface
+        when: "limit_to in ['*', 'net_l3_interface']"
+      rescue:
+        - set_fact: test_failed=true
+
 ###########
     - name: Has any previous test failed?
       fail:
