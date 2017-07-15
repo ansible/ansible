@@ -624,3 +624,18 @@ def serialize_spec(clonespec):
             data[x] = str(xt)
 
     return data
+
+
+def find_host_by_cluster_datacenter(module, content, datacenter_name, cluster_name, host_name):
+    dc = find_datacenter_by_name(content, datacenter_name)
+    if dc is None:
+        module.fail_json(msg="Unable to find datacenter with name %s" % datacenter_name)
+    cluster = find_cluster_by_name(content, cluster_name, datacenter=dc)
+    if cluster is None:
+        module.fail_json(msg="Unable to find cluster with name %s" % cluster_name)
+
+    for host in cluster.host:
+        if host.name == host_name:
+            return host, cluster
+
+    return None, cluster
