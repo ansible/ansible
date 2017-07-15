@@ -1,36 +1,42 @@
 # Guidelines for AWS modules
 
+The Ansible AWS modules and these guidelines are maintained by the
+Ansible AWS Working Group.  For further information see
+[the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).
+If you are planning to contribute AWS modules to Ansible then getting in touch with the the working
+group will be a good way to start, especially because a similar module may already be under
+development.
+
 ## Getting Started
 
-Since Ansible 2.0, it is required that all new AWS modules are written to use boto3.
+Since Ansible 2.0, it is required that all new AWS modules are written to use boto3.  Please do not
+add new dependencies to the old boto library.
 
-Prior to 2.0, modules may have been written in boto or boto3. The effort to port all modules to boto3 has begun.
+Prior to 2.0, modules may have been written in boto or boto3. The effort to port all modules to boto3 has begun.   From Ansible 2.4 it is permissible for modules which previously required boto to start to require boto3 in order to deliver the functionality previously supported with boto.
 
 ## Bug fixing
 
-Bug fixes to code that relies on boto will still be accepted. When possible, the code should be ported to use boto3. 
+Bug fixes to code that relies on boto will still be accepted. When possible, the code should be
+ported to use boto3.
 
 ## Naming your module
 
-Base the name of the module on the part of AWS that
-you actually use. (A good rule of thumb is to take
-whatever module you use with boto as a starting point).
+Base the name of the module on the part of AWS that you actually use. (A good rule of thumb is to
+take whatever module you use with boto as a starting point).  Don't further abbreviate names - if
+something is a well known abbreviation due to it being a major component of AWS, that's fine, but
+don't create new ones independently (e.g. VPC, ELB, etc. are fine).
 
-Don't further abbreviate names - if something is a well
-known abbreviation due to it being a major component of
-AWS, that's fine, but don't create new ones independently
-(e.g. VPC, ELB, etc. are fine)
+Unless the name of your service is quite unique, please consider using "aws_" as a prefix.  For
+example "aws_lambda".
 
 ## Adding new features
 
-Try to keep backward compatibility with relatively recent
-versions of boto3. That means that if you want to implement some
-functionality that uses a new feature of boto3, it should only
-fail if that feature actually needs to be run, with a message
-saying which version of boto3 is needed.
+Try to keep backward compatibility with relatively recent versions of boto3. That means that if you
+want to implement some functionality that uses a new feature of boto3, it should only fail if that
+feature actually needs to be run, with a message saying which version of boto3 is needed.
 
-Use feature testing (e.g. `hasattr('boto3.module', 'shiny_new_method')`)
-to check whether boto3 supports a feature rather than version checking
+Use feature testing (e.g. `hasattr('boto3.module', 'shiny_new_method')`) to check whether boto3
+supports a feature rather than version checking
 
 e.g. from the `ec2` module:
 ```python
@@ -41,11 +47,18 @@ else:
         module.fail_json(msg="instance_profile_name parameter requires boto version 2.5.0 or higher")
 ```
 
-## Using boto and boto3
+## Using botocore and boto3
 
 ### Importing
 
-Wrap import statements in a try block and fail the module later if the import fails
+The `ansible.module_utils.ec2` module and `ansible.module_utils.core.aws` modules will both
+automatically import boto3 and botocore.  If boto3 is missing from the system then the variable
+HAS_BOTO3 will be set to false.  Normally, this means that modules don't need to import either
+botocore or boto3 directly.
+
+If you want to import the modules anyway (for example `from botocore.exception import
+ClientError`) Wrap import statements in a try block and fail the module later using HAS_BOTO3 if
+the import fails.
 
 #### boto
 
@@ -66,37 +79,30 @@ def main():
 #### boto3
 
 ```python
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+from ansible.module_utils.aws.core import HAS_BOTO3
 
 def main():
 
     if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+        module.fail_json(msg='boto3 and botocore are required for this module')
 ```
 
 #### boto and boto3 combined
 
-Ensure that you clearly document if a new parameter requires requires a specific version. Import boto3 at the top of the
-module as normal and then use the HAS_BOTO3 bool when necessary, before the new feature.
+Ensure that you clearly document if a new parameter requires requires a specific version. Import
+boto3 at the top of the module as normal and then use the HAS_BOTO3 bool when necessary, before the
+new feature.
 
 ```python
+from ansible.module_utils.ec2 import HAS_BOTO3
+
 try:
     import boto
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-if my_new_feauture_Parameter_is_set:
+if my_new_feature_Parameter_is_set:
     if HAS_BOTO3:
         # do feature
     else:
@@ -107,9 +113,11 @@ if my_new_feauture_Parameter_is_set:
 
 To connect to AWS, you should use `get_aws_connection_info` and then `boto3_conn`.
 
-These functions handle some of the more esoteric connection options, such as security tokens and boto profiles.
+These functions handle some of the more esoteric connection options, such as security tokens and
+boto profiles.
 
-Some boto services require that the region is specified. You should check for the region parameter if required.
+Some boto services require that the region is specified. You should check for the region parameter
+if required.
 
 #### boto
 
@@ -139,10 +147,11 @@ else:
     module.fail_json(msg="region must be specified")
 ```
 
-### Exception Handling
+### Exception Handling for boto
 
-You should wrap any boto call in a try block. If an exception is thrown, it is up to you decide how to handle it
-but usually calling fail_json with the error or helpful message and traceback will suffice.
+You should wrap any boto call in a try block. If an exception is thrown, it is up to you decide how
+to handle it but usually calling fail_json with the error or helpful message and traceback will
+suffice.
 
 #### boto
 
@@ -166,9 +175,61 @@ except BotoServerError as e:
                      **camel_dict_to_snake_dict(e.message))
 ```
 
-#### boto3
+### Exception Handling for boto3 and botocore
+
+You should wrap any boto3 or botocore call in a try block. If an exception is thrown, then there
+are a number of possibilities for handling it.
+
+* use aws_module.fail_json_aws() to report the module failure in a standard way
+* retry using AWSRetry
+* use fail_json() to report the failure without using `ansible.module_utils.aws.core`
+* do something custom in the case where you know how to handle the exception
 
 For more information on botocore exception handling see [http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling]
+
+#### using fail_json_aws()
+
+_fail_json_aws() is a new method and may be subject to change.  You can use it in modules which are
+being contributed back to Ansible, however if you are publishing your module separately please
+don't use it before the start of 2018 / Ansible 2.4_
+
+In the AnsibleAWSModule there is a special method, `module.fail_json.aws()` for nice reporting of
+exceptions.  Call this on your exception and it will report the error together with a traceback for
+use in Ansible verbose mode.
+
+```python
+from ansible.module_utils.aws.core import HAS_BOTO3, AnsibleAWSModule
+
+# Set up module parameters
+...
+
+# Connect to AWS
+...
+
+# Make a call to AWS
+try:
+    result = connection.aws_call()
+except Exception as e:
+    module.fail_json_aws(e, msg="trying to do aws_call")
+```
+
+Note that it should normally be acceptable to catch all normal exceptions here, however if you
+expect anything other than botocore exceptions you should test everything works as expected.
+
+If you need to perform an action based on the error boto3 returned, use the error code.
+
+```python
+# Make a call to AWS
+try:
+    result = connection.aws_call()
+except ClientError, e:
+    if e.response['Error']['Code'] == 'NoSuchEntity':
+        return None
+    else:
+        module.fail_json_aws(e, msg="trying to do aws_call")
+```
+
+#### using fail_json() and avoiding ansible.module_utils.aws.core
 
 Boto3 provides lots of useful info when an exception is thrown so pass this to the user along with the message.
 
@@ -207,17 +268,18 @@ except ClientError as e:
 
 ### Returning Values
 
-When you make a call using boto3, you will probably get back some useful information that you should return in the module.
+When you make a call using boto3, you will probably get back some useful information that you
+should return in the module.
 
-As well as information related to the call itself, you will also have some response metadata.  It is OK to return this to
-the user as well as they may find it useful.
+As well as information related to the call itself, you will also have some response metadata.  It
+is OK to return this to the user as well as they may find it useful.
 
-Boto3 returns all values CamelCased.  Ansible follows Python standards for variable names and uses snake_case. There is a
-helper function in module_utils/ec2.py called `camel_dict_to_snake_dict` that allows you to easily convert the boto3
-response to snake_case.
+Boto3 returns all values CamelCased.  Ansible follows Python standards for variable names and uses
+snake_case. There is a helper function in module_utils/ec2.py called `camel_dict_to_snake_dict`
+that allows you to easily convert the boto3 response to snake_case.
 
-You should use this helper function and avoid changing the names of values returned by Boto3.  E.g. if boto3 returns a
-value called 'SecretAccessKey' do not change it to 'AccessKey'.
+You should use this helper function and avoid changing the names of values returned by Boto3.
+E.g. if boto3 returns a value called 'SecretAccessKey' do not change it to 'AccessKey'.
 
 ```python
 # Make a call to AWS
@@ -285,7 +347,7 @@ any boto3 _facts modules.
 #### boto3_tag_list_to_ansible_dict
 
 Converts a boto3 tag list to an Ansible dict. Boto3 returns tags as a list of dicts containing keys called
-'Key' and 'Value' by default.  This key names can be overriden when calling the function.  For example, if you have already
+'Key' and 'Value' by default.  This key names can be overridden when calling the function.  For example, if you have already
 camel_cased your list of tags you may want to pass lowercase key names instead i.e. 'key' and 'value'.
 
 This function converts the list in to a single dict where the dict key is the tag key and the dict value is the tag value.
