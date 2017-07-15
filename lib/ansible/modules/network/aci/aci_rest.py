@@ -27,9 +27,9 @@ DOCUMENTATION = r'''
 module: aci_rest
 short_description: Direct access to the Cisco APIC REST API
 description:
-- Enables the management of the Cisco ACI fabric through direct access to the Cisco APIC REST
+- Enables the management of the Cisco ACI fabric through direct access to the Cisco APIC REST API.
 - More information regarding the Cisco APIC REST API is available from
-  U(http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html)
+  U(http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html).
 author:
 - Jason Edelman (@jedelman8)
 - Dag Wieers (@dagwieers)
@@ -53,13 +53,12 @@ options:
     description:
     - The password to use for authentication.
     required: true
-    default: C1sco12345
   method:
     description:
-    - The HTTP method of the request or response. It MUST be uppercase.
+    - The HTTP method of the request or response.
     required: true
-    default: GET
-    choices: [ DELETE, GET, POST ]
+    default: get
+    choices: [ delete, get, post ]
     aliases: [ action ]
   path:
     description:
@@ -76,11 +75,11 @@ options:
     description:
     - When used instead of C(src), sets the content of the API request directly.
     - This may be convenient to template simple requests, for anything complex use the M(template) module.
-  protocol:
+  use_ssl:
     description:
-    - Connection protocol to use.
-    default: https
-    choices: [ http, https ]
+    - If C(no), an HTTP connection will be used instead of the default HTTPS connection.
+    type: bool
+    default: 'yes'
   timeout:
     description:
     - The socket level timeout in seconds.
@@ -227,7 +226,7 @@ def aci_response(rawoutput, rest_type='xml'):
     )
 
     output = dict(
-        imdata=dict()
+        imdata=dict(),
     )
 
     if rest_type == 'json':
@@ -264,13 +263,13 @@ def main():
         argument_spec=dict(
             hostname=dict(type='str', required=True, aliases=['host']),
             username=dict(type='str', default='admin', aliases=['user']),
-            password=dict(type='str', default='C1sco12345', no_log=True),
+            password=dict(type='str', required=True, no_log=True),
             path=dict(type='str', required=True, aliases=['uri']),
-            method=dict(type='str', default='GET', choices=['DELETE', 'GET', 'POST'], aliases=['action']),
+            method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
             src=dict(type='path', aliases=['config_file']),
             content=dict(type='str'),
-            protocol=dict(type='str', default='https', choices=['http', 'https']),
             timeout=dict(type='int', default=30),
+            use_ssl=dict(type='bool', default=True),
             validate_certs=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
@@ -285,7 +284,7 @@ def main():
     content = module.params['content']
     src = module.params['src']
 
-    protocol = module.params['protocol']
+    use_ssl = module.params['use_ssl']
     method = module.params['method']
     timeout = module.params['timeout']
 
@@ -315,12 +314,16 @@ def main():
     else:
         module.fail_json(msg='Failed to find REST API content type (neither .xml nor .json).')
 
+    # Set protocol
+    if use_ssl:
+        protocol = 'https'
+    else:
+        protocol = 'http'
+
     # Perform login first
-    # url = '%s://%s/api/aaaLogin.xml' % (protocol, host)
-    # data = "<aaaUser name='%s' pwd='%s'/>" % (username, password)
     url = '%s://%s/api/aaaLogin.json' % (protocol, host)
-    data = '{"aaaUser": {"attributes": {"name": "%s", "pwd": "%s"}}}' % (username, password)
-    resp, auth = fetch_url(module, url, data=data, method="POST", timeout=timeout)
+    data = {'aaaUser': {'attributes': {'name': username, 'pwd': password}}}
+    resp, auth = fetch_url(module, url, data=json.dumps(data), method='POST', timeout=timeout)
 
     if resp is None or auth['status'] != 200:
         if 'body' in auth:
@@ -340,21 +343,22 @@ def main():
             result['data'] = config_object.read()
 
     # Ensure changes are reported
-    if method in ('DELETE', 'POST'):
+    if method in ('delete', 'post'):
         # FIXME: Hardcoding changed is not idempotent
         result['changed'] = True
 
         # In check_mode we assume it works, but we don't actually perform the requested change
+        # TODO: Could we turn this request in a GET instead ?
         if module.check_mode:
             module.exit_json(response='OK (Check mode)', status=200, **result)
     else:
         result['changed'] = False
 
-    # Perform actual request
+    # Perform actual request using auth cookie
     url = '%s://%s/%s' % (protocol, host, path.lstrip('/'))
     headers = dict(Cookie=resp.headers['Set-Cookie'])
 
-    resp, info = fetch_url(module, url, data=result['data'], method=method, timeout=timeout, headers=headers)
+    resp, info = fetch_url(module, url, data=result['data'], method=method.upper(), timeout=timeout, headers=headers)
     result['response'] = info['msg']
     result['status'] = info['status']
 
