@@ -9,13 +9,13 @@
   win_domain_group:
     name: '{{test_win_domain_group_name}}'
     state: absent
-    force: True
+    ignore_protection: True
 
 - name: fail pass in an invalid path
   win_domain_group:
     name: '{{test_win_domain_group_name}}'
     state: present
-    path: OU=fakeou,{{test_win_domain_group_ldap_base}}
+    organizational_unit: OU=fakeou,{{test_win_domain_group_ldap_base}}
   register: fail_invalid_path
   failed_when: fail_invalid_path.msg != 'the group path OU=fakeou,' + test_win_domain_group_ldap_base + ' does not exist, please specify a valid LDAP path'
 
@@ -129,7 +129,7 @@
     description: Group Description
     display_name: Group Display Name
     managed_by: Domain Admins
-    path: '{{test_win_domain_group_ou_path}}'
+    organizational_unit: '{{test_win_domain_group_ou_path}}'
     category: distribution
     scope: domainlocal
     attributes:
@@ -157,7 +157,7 @@
     description: Group Description
     display_name: Group Display Name
     managed_by: Domain Admins
-    path: '{{test_win_domain_group_ou_path}}'
+    organizational_unit: '{{test_win_domain_group_ou_path}}'
     category: distribution
     scope: domainlocal
     attributes:
@@ -196,7 +196,7 @@
     description: Group Description
     display_name: Group Display Name
     managed_by: Domain Admins
-    path: '{{test_win_domain_group_ou_path}}'
+    organizational_unit: '{{test_win_domain_group_ou_path}}'
     category: distribution
     scope: domainlocal
     attributes:
@@ -213,9 +213,9 @@
   win_domain_group:
     name: '{{test_win_domain_group_name}}'
     state: present
-    path: CN=Users,{{test_win_domain_group_ldap_base}}
+    organizational_unit: CN=Users,{{test_win_domain_group_ldap_base}}
   register: fail_move_with_protection
-  failed_when: fail_move_with_protection.msg != 'cannot move group ' + test_win_domain_group_name + ' when ProtectedFromAccidentalDeletion is turned on, run this module with force=true to override this'
+  failed_when: fail_move_with_protection.msg != 'cannot move group ' + test_win_domain_group_name + ' when ProtectedFromAccidentalDeletion is turned on, run this module with ignore_protection=true to override this'
 
 - name: modify existing group check
   win_domain_group:
@@ -224,12 +224,12 @@
     description: New Description
     display_name: New Display Name
     managed_by: Administrator
-    path: 'CN=Users,{{test_win_domain_group_ldap_base}}'
+    organizational_unit: 'CN=Users,{{test_win_domain_group_ldap_base}}'
     category: security
     scope: global
     attributes:
       mail: anothertest@email.com
-    force: True
+    ignore_protection: True
   register: modify_existing_check
   check_mode: yes
 
@@ -250,13 +250,13 @@
     description: New Description
     display_name: New Display Name
     managed_by: Administrator
-    path: CN=Users,{{test_win_domain_group_ldap_base}}
+    organizational_unit: CN=Users,{{test_win_domain_group_ldap_base}}
     category: security
     scope: global
     attributes:
       mail: anothertest@email.com
     protect:  True
-    force: True
+    ignore_protection: True
   register: modify_existing
 
 - name: get actual of modify existing group
@@ -287,13 +287,13 @@
     description: New Description
     display_name: New Display Name
     managed_by: Administrator
-    path: CN=Users,{{test_win_domain_group_ldap_base}}
+    organizational_unit: CN=Users,{{test_win_domain_group_ldap_base}}
     category: Security
     scope: global
     attributes:
       mail: anothertest@email.com
     protect:  True
-    force: True
+    ignore_protection: True
   register: modify_existing_again
 
 - name: assert modify existing group again
@@ -315,13 +315,13 @@
     name: '{{test_win_domain_group_name}}'
     state: absent
   register: fail_delete_with_protection
-  failed_when: fail_delete_with_protection.msg != 'cannot delete group ' + test_win_domain_group_name + ' when ProtectedFromAccidentalDeletion is turned on, run this module with force=true to override this'
+  failed_when: fail_delete_with_protection.msg != 'cannot delete group ' + test_win_domain_group_name + ' when ProtectedFromAccidentalDeletion is turned on, run this module with ignore_protection=true to override this'
 
 - name: delete group with protection mode on
   win_domain_group:
     name: '{{test_win_domain_group_name}}'
     state: absent
-    force: True
+    ignore_protection: True
   register: delete_with_force
 
 - name: get actual delete group with protection mode on
@@ -339,4 +339,4 @@
   win_domain_group:
     name: '{{test_win_domain_group_name}}'
     state: absent
-    force: True
+    ignore_protection: True

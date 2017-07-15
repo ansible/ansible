@@ -29,17 +29,17 @@ $diff_mode = Get-AnsibleParam -obj $Params -name "_ansible_diff" -type "bool" -d
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $display_name = Get-AnsibleParam -obj $params -name "display_name" -type "str"
-$username = Get-AnsibleParam -obj $params -name "username" -type "str"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($username -ne $null)
+$domain_username = Get-AnsibleParam -obj $params -name "domain_username" -type "str"
+$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($domain_username -ne $null)
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $category = Get-AnsibleParam -obj $params -name "category" -type "str" -validateset "distribution","security"
 $scope = Get-AnsibleParam -obj $params -name "scope" -type "str" -validateset "domainlocal","global","universal"
 $managed_by = Get-AnsibleParam -obj $params -name "managed_by" -type "str"
 $attributes = Get-AnsibleParam -obj $params -name "attributes"
-$path = Get-AnsibleParam -obj $params -name "path" -type "str"
+$organizational_unit = Get-AnsibleParam -obj $params -name "organizational_unit" -type "str" -aliases "ou","path"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 $protect = Get-AnsibleParam -obj $params -name "protect" -type "bool"
-$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
+$ignore_protection = Get-AnsibleParam -obj $params -name "ignore_protection" -type "bool" -default $false
 
 $result = @{
     changed = $false
@@ -55,9 +55,9 @@ if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
 Import-Module ActiveDirectory
 
 $extra_args = @{}
-if ($username -ne $null) {
-    $domain_password = ConvertTo-SecureString $password -AsPlainText -Force
-    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $domain_password
+if ($domain_username -ne $null) {
+    $domain_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
+    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
     $extra_args.Credential = $credential
 }
 
@@ -70,10 +70,10 @@ try {
 }
 if ($state -eq "absent") {
     if ($group -ne $null) {
-        if ($group.ProtectedFromAccidentalDeletion -eq $true -and $force -eq $true) {
+        if ($group.ProtectedFromAccidentalDeletion -eq $true -and $ignore_protection -eq $true) {
             $group = $group | Set-ADObject -ProtectedFromAccidentalDeletion $false -WhatIf:$check_mode -PassThru @extra_args
-        } elseif ($group.ProtectedFromAccidentalDeletion -eq $true -and $force -eq $false) {
-            Fail-Json $result "cannot delete group $name when ProtectedFromAccidentalDeletion is turned on, run this module with force=true to override this"
+        } elseif ($group.ProtectedFromAccidentalDeletion -eq $true -and $ignore_protection -eq $false) {
+            Fail-Json $result "cannot delete group $name when ProtectedFromAccidentalDeletion is turned on, run this module with ignore_protection=true to override this"
         }
 
         try {
@@ -89,11 +89,11 @@ if ($state -eq "absent") {
     }
 } else {
     # validate that path is an actual path
-    if ($path -ne $null) {
+    if ($organizational_unit -ne $null) {
         try {
-            Get-ADObject -Identity $path @extra_args | Out-Null
+            Get-ADObject -Identity $organizational_unit @extra_args | Out-Null
         } catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
-            Fail-Json $result "the group path $path does not exist, please specify a valid LDAP path"
+            Fail-Json $result "the group path $organizational_unit does not exist, please specify a valid LDAP path"
         }
     }
 
@@ -103,30 +103,30 @@ if ($state -eq "absent") {
         $diff_text += "[$name]`n"
 
         # change the path of the group
-        if ($path -ne $null) {
+        if ($organizational_unit -ne $null) {
             $group_cn = $group.CN
             $existing_path = $group.DistinguishedName -replace "^CN=$group_cn,",''
-            if ($existing_path -ne $path) {
+            if ($existing_path -ne $organizational_unit) {
                 $protection_disabled = $false
-                if ($group.ProtectedFromAccidentalDeletion -eq $true -and $force -eq $true) {
+                if ($group.ProtectedFromAccidentalDeletion -eq $true -and $ignore_protection -eq $true) {
                     $group | Set-ADObject -ProtectedFromAccidentalDeletion $false -WhatIf:$check_mode -PassThru @extra_args | Out-Null
                     $protection_disabled = $true
-                } elseif ($group.ProtectedFromAccidentalDeletion -eq $true -and $force -eq $false) {
-                    Fail-Json $result "cannot move group $name when ProtectedFromAccidentalDeletion is turned on, run this module with force=true to override this"
+                } elseif ($group.ProtectedFromAccidentalDeletion -eq $true -and $ignore_protection -eq $false) {
+                    Fail-Json $result "cannot move group $name when ProtectedFromAccidentalDeletion is turned on, run this module with ignore_protection=true to override this"
                 }
 
                 try {
-                    $group = $group | Move-ADObject -Targetpath $path -WhatIf:$check_mode -PassThru @extra_args
+                    $group = $group | Move-ADObject -Targetpath $organizational_unit -WhatIf:$check_mode -PassThru @extra_args
                 } catch {
+                    Fail-Json $result "failed to move group from $existing_path to $($organizational_unit): $($_.Exception.Message)"
+                } finally {
                     if ($protection_disabled -eq $true) {
                         $group | Set-ADObject -ProtectedFromAccidentalDeletion $true -WhatIf:$check_mode -PassThru @extra_args | Out-Null
                     }
-                    
-                    Fail-Json $result "failed to move group from $existing_path to $($path): $($_.Exception.Message)"
                 }
                 
                 $result.changed = $true
-                $diff_text += "-DistinguishedName = CN=$group_cn,$existing_path`n+DistinguishedName = CN=$group_cn,$path`n"
+                $diff_text += "-DistinguishedName = CN=$group_cn,$existing_path`n+DistinguishedName = CN=$group_cn,$organizational_unit`n"
 
                 if ($protection_disabled -eq $true) {
                     $group | Set-ADObject -ProtectedFromAccidentalDeletion $true -WhatIf:$check_mode @extra_args | Out-Null
@@ -290,9 +290,9 @@ if ($state -eq "absent") {
             }
         }
 
-        if ($path -ne $null) {
-            $add_args.Path = $path
-            $diff_text += "+Path = $path`n"
+        if ($organizational_unit -ne $null) {
+            $add_args.Path = $organizational_unit
+            $diff_text += "+Path = $organizational_unit`n"
         }
 
         try {

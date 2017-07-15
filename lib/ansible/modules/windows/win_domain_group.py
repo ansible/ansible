@@ -31,68 +31,33 @@ description:
 - Creates, modifies or removes groups in Active Directory.
 - For local groups, use the M(win_group) module instead.
 options:
-  name:
+  attributes:
     description:
-    - The name of the group to create, modify or remove.
-    - This value can be in the forms C(Distinguished Name), C(objectGUID),
-      C(objectSid) or C(sAMAccountName), see examples for more details.
-    required: yes
-  display_name:
-    description:
-    - The value to assign to the LDAP C(displayName) attribute.
-  username:
-    description:
-    - The username to use when interacting with AD.
-    - If this is not set then the user Ansible used to log in with will be
-      used instead.
-  password:
-    description:
-    - The password for C(username).
-  description:
-    description:
-    - The value to assigned to the LDAP C(description) attribute.
+    - A dict of custom LDAP attributes to set on the group.
+    - This can be used to set custom attributes that are not exposed as module
+      parameters, e.g. C(mail).
+    - See the examples on how to format this parameter.
   category:
     description:
     - The category of the group, this is the value to assign to the LDAP
       C(groupType) attribute.
-    - If a new group is created then C(security) will be used.
+    - If a new group is created then C(security) will be used by default.
     choices: [ distribution, security ]
-  scope:
+  description:
     description:
-    - The scope of the group.
-    - If C(state=present) and the group doesn't exist then this must be set.
-    choices: [domainlocal, global, universal]
-  managed_by:
+    - The value to be assigned to the LDAP C(description) attribute.
+  display_name:
     description:
-    - The value to be assigned to the LDAP C(managedBy) attribute.
-    - This value can be in the forms C(Distinguished Name), C(objectGUID),
-      C(objectSid) or C(sAMAccountName), see examples for more details.
-  attributes:
+    - The value to assign to the LDAP C(displayName) attribute.
+  domain_username:
     description:
-    - A dict of custom LDAP attributes to set on the group.
-    - You can use this to set custom attributes that are not exposed as module
-      parameters like C(mail).
-    - See the examples on how to setup this parameter.
-  path:
+    - The username to use when interacting with AD.
+    - If this is not set then the user Ansible used to log in with will be
+      used instead.
+  domain_password:
     description:
-    - The full LDAP path to create or move the group to.
-    - This should be the path to the parent object to create or move the group
-      to.
-    - See examples for details of how this path is formed.
-  state:
-    description:
-    - If C(state=present) this module will ensure the group is created and is
-      configured accordingly.
-    - If C(state=absent) this module will delete the group if it exists
-    default: present
-    choices: [ absent, present ]
-  protect:
-    description:
-    - Will set the C(ProtectedFromAccidentalDeletion) flag based on this value.
-    - This flag stops a user from deleting or moving a group to a different
-      path.
-    type: bool
-  force:
+    - The password for C(username).
+  ignore_protection:
     description:
     - Will ignore the C(ProtectedFromAccidentalDeletion) flag when deleting or
       moving a group.
@@ -100,6 +65,42 @@ options:
       is set to no.
     type: bool
     default: 'no'
+  managed_by:
+    description:
+    - The value to be assigned to the LDAP C(managedBy) attribute.
+    - This value can be in the forms C(Distinguished Name), C(objectGUID),
+      C(objectSid) or C(sAMAccountName), see examples for more details.
+  name:
+    description:
+    - The name of the group to create, modify or remove.
+    - This value can be in the forms C(Distinguished Name), C(objectGUID),
+      C(objectSid) or C(sAMAccountName), see examples for more details.
+    required: yes
+  organizational_unit:
+    description:
+    - The full LDAP path to create or move the group to.
+    - This should be the path to the parent object to create or move the group
+      to.
+    - See examples for details of how this path is formed.
+    aliases: [ ou, path ]
+  protect:
+    description:
+    - Will set the C(ProtectedFromAccidentalDeletion) flag based on this value.
+    - This flag stops a user from deleting or moving a group to a different
+      path.
+    type: bool
+  scope:
+    description:
+    - The scope of the group.
+    - If C(state=present) and the group doesn't exist then this must be set.
+    choices: [domainlocal, global, universal]
+  state:
+    description:
+    - If C(state=present) this module will ensure the group is created and is
+      configured accordingly.
+    - If C(state=absent) this module will delete the group if it exists
+    default: present
+    choices: [ absent, present ]
 notes:
 - This must be run on a host that has the ActiveDirectory powershell module
   installed.
@@ -133,13 +134,13 @@ EXAMPLES = r'''
     attributes:
       mail: helpdesk@ansible.com
       wWWHomePage: www.ansible.com
-    protect: yes
+    ignore_protection: yes
 
-- name: change the path of a group using the SID and ignore the protection flag
+- name: change the OU of a group using the SID and ignore the protection flag
   win_domain_group:
     name: S-1-5-21-2171456218-3732823212-122182344-1189
     scope: global
-    path: CN=Devs,OU=groups,DC=ansible,DC=local
+    organizational_unit: OU=groups,DC=ansible,DC=local
     force: True
 
 - name: add managed_by user
@@ -164,7 +165,7 @@ canonical_name:
   type: string
   sample: ansible.local/groups/Cow
 category:
-  description: The Group type value fo the group.
+  description: The Group type value of the group, i.e. Security or Distribution.
   returned: group exists
   type: string
   sample: Security
