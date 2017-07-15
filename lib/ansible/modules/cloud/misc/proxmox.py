@@ -95,9 +95,8 @@ options:
   cores:
     description:
       - Specify number of cores per socket.
-      - 0 is unlimited.
     required: false
-    default: 0
+    default: 1
     version_added: 2.4
   cpus:
     description:
@@ -464,7 +463,7 @@ def main():
             hostname=dict(),
             ostemplate=dict(),
             disk=dict(type='str', default='3'),
-            cores=dict(type='int', default=0),
+            cores=dict(type='int', default=1),
             cpus=dict(type='int', default=1),
             memory=dict(type='int', default=512),
             swap=dict(type='int', default=0),
@@ -544,7 +543,7 @@ def main():
                                  % (module.params['ostemplate'], node, template_store))
 
             create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout,
-                            cores=module.params['cores'] or None,
+                            cores=module.params['cores'],
                             pool=module.params['pool'],
                             password=module.params['password'],
                             hostname=module.params['hostname'],
