@@ -50,7 +50,8 @@ options:
     default: no
     choices: [ 'yes', 'no' ]
     description:
-      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if name is a file.
+      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory.
+        It causes an error if name is a file.
 
   entity:
     version_added: "1.5"
@@ -78,7 +79,9 @@ options:
     required: false
     default: null
     description:
-      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
+      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  
+        The qualifier may be empty for some types, but the type and perms are always required. '-' can be used as placeholder 
+        when you do not care about permissions. This is now superseded by entity, type and permissions fields.
 
   recursive:
     version_added: "2.0"
@@ -88,12 +91,12 @@ options:
     description:
       - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
    
-    no_mask:
-      version_added: "2.3.1.0"
-      required: false
-      default: null
-      description:
-        - Added feature to not recalculate the effective rights mask by default (setfacl -n, --no-mask).
+  no_mask:
+    version_added: "2.3.1.0"
+    required: false
+    default: null
+    description:
+      - Added feature to not recalculate the effective rights mask by default (setfacl -n, --no-mask).
 
 author:
     - "Brian Coca (@bcoca)"
@@ -179,7 +182,7 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
 def build_command(module, mode, path, follow, default, recursive, no_mask, entry=''):
     '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
-        if no_mask == True:
+        if no_mask:
             cmd = [module.get_bin_path('setfacl', True)]
             cmd.append('-n -m "%s"' % entry)
         else:
@@ -322,7 +325,7 @@ def main():
             module.fail_json(msg="'entry' MUST NOT be set when 'state=query'.")
 
         default_flag, etype, entity, permissions = split_entry(entry)
-        if default_flag != None:
+        if default_flag is None:
             default = default_flag
 
     if get_platform().lower() == 'freebsd':
