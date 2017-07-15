@@ -225,13 +225,25 @@ class AnsibleCloudStack(object):
             self.fail_json(msg="Something went wrong: %s not found" % key)
         return my_dict
 
+    def query_api(self, command, **args):
+        try:
+            res = getattr(self.cs, command)(**args)
+
+            if 'errortext' in res:
+                self.fail_json(msg="Failed: '%s'" % res['errortext'])
+
+        except CloudStackException as e:
+            self.fail_json(msg='CloudStackException: %s' % str(e))
+
+        return res
+
     def get_network_acl(self, key=None):
         if self.network_acl is None:
             args = {
                 'name': self.module.params.get('network_acl'),
                 'vpcid': self.get_vpc(key='id'),
             }
-            network_acls = self.cs.listNetworkACLLists(**args)
+            network_acls = self.query_api('listNetworkACLLists', **args)
             if network_acls:
                 self.network_acl = network_acls['networkacllist'][0]
                 self.result['network_acl'] = self.network_acl['name']
@@ -257,7 +269,7 @@ class AnsibleCloudStack(object):
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
         }
-        vpcs = self.cs.listVPCs(**args)
+        vpcs = self.query_api('listVPCs', **args)
         if not vpcs:
             self.fail_json(msg="No VPCs available.")
 
@@ -283,7 +295,7 @@ class AnsibleCloudStack(object):
                 'projectid': self.get_project(key='id'),
                 'zoneid': self.get_zone(key='id'),
             }
-            vpcs = self.cs.listVPCs(**args)
+            vpcs = self.query_api('listVPCs', **args)
             self._vpc_networks_ids = []
             if vpcs:
                 for vpc in vpcs['vpc']:
@@ -310,7 +322,7 @@ class AnsibleCloudStack(object):
             'zoneid': self.get_zone(key='id'),
             'vpcid': self.get_vpc(key='id')
         }
-        networks = self.cs.listNetworks(**args)
+        networks = self.query_api('listNetworks', **args)
         if not networks:
             self.fail_json(msg="No networks available.")
 
@@ -337,7 +349,7 @@ class AnsibleCloudStack(object):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id')
         }
-        projects = self.cs.listProjects(**args)
+        projects = self.query_api('listProjects', **args)
         if projects:
             for p in projects['project']:
                 if project.lower() in [p['name'].lower(), p['id']]:
@@ -361,7 +373,8 @@ class AnsibleCloudStack(object):
             'projectid': self.get_project(key='id'),
             'vpcid': self.get_vpc(key='id'),
         }
-        ip_addresses = self.cs.listPublicIpAddresses(**args)
+
+        ip_addresses = self.query_api('listPublicIpAddresses', **args)
 
         if not ip_addresses:
             self.fail_json(msg="IP address '%s' not found" % args['ipaddress'])
@@ -385,7 +398,7 @@ class AnsibleCloudStack(object):
         if self.vm_default_nic:
             return self.vm_default_nic
 
-        nics = self.cs.listNics(virtualmachineid=self.get_vm(key='id'))
+        nics = self.query_api('listNics', virtualmachineid=self.get_vm(key='id'))
         if nics:
             for n in nics['nic']:
                 if n['isdefault']:
@@ -407,7 +420,7 @@ class AnsibleCloudStack(object):
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
         }
-        vms = self.cs.listVirtualMachines(**args)
+        vms = self.query_api('listVirtualMachines', **args)
         if vms:
             for v in vms['virtualmachine']:
                 if vm.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
@@ -422,7 +435,7 @@ class AnsibleCloudStack(object):
         zone = self.module.params.get('zone')
         if not zone:
             zone = os.environ.get('CLOUDSTACK_ZONE')
-        zones = self.cs.listZones()
+        zones = self.query_api('listZones')
 
         if not zones:
             self.fail_json(msg="No zones available. Please create a zone first")
@@ -449,7 +462,7 @@ class AnsibleCloudStack(object):
         if not os_type:
             return None
 
-        os_types = self.cs.listOsTypes()
+        os_types = self.query_api('listOsTypes')
         if os_types:
             for o in os_types['ostype']:
                 if os_type in [o['description'], o['id']]:
@@ -462,7 +475,7 @@ class AnsibleCloudStack(object):
             return self.hypervisor
 
         hypervisor = self.module.params.get('hypervisor')
-        hypervisors = self.cs.listHypervisors()
+        hypervisors = self.query_api('listHypervisors')
 
         # use the first hypervisor if no hypervisor param given
         if not hypervisor:
@@ -494,7 +507,7 @@ class AnsibleCloudStack(object):
             'domainid': self.get_domain(key='id'),
             'listall': True
         }
-        accounts = self.cs.listAccounts(**args)
+        accounts = self.query_api('listAccounts', **args)
         if accounts:
             self.account = accounts['account'][0]
             self.result['account'] = self.account['name']
@@ -514,7 +527,7 @@ class AnsibleCloudStack(object):
         args = {
             'listall': True,
         }
-        domains = self.cs.listDomains(**args)
+        domains = self.query_api('listDomains', **args)
         if domains:
             for d in domains['domain']:
                 if d['path'].lower() in [domain.lower(), "root/" + domain.lower(), "root" + domain.lower()]:
@@ -528,7 +541,7 @@ class AnsibleCloudStack(object):
             'resourceids': resource['id'],
             'resourcetype': resource_type,
         }
-        tags = self.cs.listTags(**args)
+        tags = self.query_api('listTags', **args)
         return self.get_tags(resource=tags, key='tag')
 
     def get_tags(self, resource=None, key='tags'):
@@ -547,9 +560,9 @@ class AnsibleCloudStack(object):
                     'tags': tags,
                 }
                 if operation == "create":
-                    response = self.cs.createTags(**args)
+                    response = self.query_api('createTags', **args)
                 else:
-                    response = self.cs.deleteTags(**args)
+                    response = self.query_api('deleteTags', **args)
                 self.poll_job(response)
 
     def _tags_that_should_exist_or_be_updated(self, resource, tags):
@@ -575,19 +588,22 @@ class AnsibleCloudStack(object):
     def get_capabilities(self, key=None):
         if self.capabilities:
             return self._get_by_key(key, self.capabilities)
-        capabilities = self.cs.listCapabilities()
+        capabilities = self.query_api('listCapabilities')
         self.capabilities = capabilities['capability']
         return self._get_by_key(key, self.capabilities)
 
     def poll_job(self, job=None, key=None):
         if 'jobid' in job:
             while True:
-                res = self.cs.queryAsyncJobResult(jobid=job['jobid'])
+                res = self.query_api('queryAsyncJobResult', jobid=job['jobid'])
                 if res['jobstatus'] != 0 and 'jobresult' in res:
+
                     if 'errortext' in res['jobresult']:
                         self.fail_json(msg="Failed: '%s'" % res['jobresult']['errortext'])
+
                     if key and key in res['jobresult']:
                         job = res['jobresult'][key]
+
                     break
                 time.sleep(2)
         return job
