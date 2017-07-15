@@ -374,7 +374,7 @@ def main():
     url = '%s://%s/%s' % (protocol, hostname, path.lstrip('/'))
     headers = dict(Cookie=resp.headers['Set-Cookie'])
 
-    resp, info = fetch_url(module, url, data=result['data'], method=method.upper(), timeout=timeout, headers=headers)
+    resp, info = fetch_url(module, url, data=result['payload'], method=method.upper(), timeout=timeout, headers=headers)
     result['response'] = info['msg']
     result['status_code'] = info['status']
 
