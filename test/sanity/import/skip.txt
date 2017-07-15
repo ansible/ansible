@@ -47,7 +47,6 @@ lib/ansible/modules/cloud/google/gcdns_record.py
 lib/ansible/modules/cloud/google/gcdns_zone.py
 lib/ansible/modules/cloud/misc/serverless.py
 lib/ansible/modules/cloud/openstack/os_client_config.py
-lib/ansible/modules/cloud/openstack/os_ironic.py
 lib/ansible/modules/cloud/ovirt/ovirt_disks.py
 lib/ansible/modules/cloud/univention/udm_user.py
 lib/ansible/modules/cloud/vmware/vca_nat.py
