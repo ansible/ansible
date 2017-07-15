@@ -553,7 +553,7 @@ def command_integration_filtered(args, targets):
 
         cloud_environment = get_cloud_environment(args, target)
 
-        original_environment = EnvironmentDescription()
+        original_environment = EnvironmentDescription(args)
 
         display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
 
@@ -1231,8 +1231,16 @@ def get_integration_remote_filter(args, targets):
 
 class EnvironmentDescription(object):
     """Description of current running environment."""
-    def __init__(self):
-        """Initialize snapshot of environment configuration."""
+    def __init__(self, args):
+        """Initialize snapshot of environment configuration.
+        :type args: IntegrationConfig
+        """
+        self.args = args
+
+        if self.args.explain:
+            self.data = {}
+            return
+
         versions = ['']
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
@@ -1266,7 +1274,7 @@ class EnvironmentDescription(object):
         :type throw: bool
         :rtype: bool
         """
-        current = EnvironmentDescription()
+        current = EnvironmentDescription(self.args)
 
         original_json = str(self)
         current_json = str(current)
