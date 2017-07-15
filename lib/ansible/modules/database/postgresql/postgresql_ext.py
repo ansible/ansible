@@ -131,7 +131,7 @@ def ext_create(cursor, ext, ver=None):
         if ver:
             if not ext_exists(cursor, ext, ver):
                 query = 'ALTER EXTENSION "%(ext)s" UPDATE TO "%(ver)s"'
-            cursor.execute(query, {'ext': ext, 'ver': ver})
+                cursor.execute(query, {'ext': ext, 'ver': ver})
             return True
         return False
 
@@ -159,7 +159,7 @@ def main():
 
     db = module.params["db"]
     ext = module.params["ext"]
-    ver = module.params["version"]
+    version = module.params["version"]
     port = module.params["port"]
     state = module.params["state"]
     changed = False
@@ -192,15 +192,15 @@ def main():
     try:
         if module.check_mode:
             if state == "present":
-                changed = not ext_exists(cursor, ext, ver)
+                changed = not ext_exists(cursor, ext, version)
             elif state == "absent":
-                changed = ext_exists(cursor, ext, ver)
+                changed = ext_exists(cursor, ext, version)
         else:
             if state == "absent":
                 changed = ext_delete(cursor, ext)
 
             elif state == "present":
-                changed = ext_create(cursor, ext, ver)
+                changed = ext_create(cursor, ext, version)
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except Exception as e:
