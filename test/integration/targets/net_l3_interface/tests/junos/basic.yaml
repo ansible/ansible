@@ -1,0 +1,82 @@
+---
+- debug: msg="START net_l3_interface junos/basic.yaml"
+
+- name: setup - remove interface address
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Configure interface address
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.1/32</name>' in config.xml"
+      - "'<name>fd5d:12c9:2201:1::1/128</name>' in config.xml"
+      - "'+       address 1.1.1.1/32;' in result.diff.prepared"
+      - "'+       address fd5d:12c9:2201:1::1/128;' in result.diff.prepared"
+
+- name: Configure interface address (idempotent)
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete interface address
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.1/32</name>' not in config.xml"
+      - "'<name>fd5d:12c9:2201:1::1/128</name>' not in config.xml"
+      - "'-       address 1.1.1.1/32;' in result.diff.prepared"
+      - "'-       address fd5d:12c9:2201:1::1/128;' in result.diff.prepared"
+
+- name: Delete interface address (idempotent)
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
