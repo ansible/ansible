@@ -162,7 +162,7 @@ def install_command_requirements(args):
 
     extras = []
 
-    if isinstance(args, TestConfig):
+    if isinstance(args, IntegrationConfig):
         extras += ['cloud.%s' % cp for cp in get_cloud_platforms(args)]
 
     cmd = generate_pip_install(args.command, packages, extras)
@@ -520,7 +520,7 @@ def command_integration_filtered(args, targets):
 
     test_dir = os.path.expanduser('~/ansible_testing')
 
-    if any('needs/ssh/' in target.aliases for target in targets):
+    if not args.explain and any('needs/ssh/' in target.aliases for target in targets):
         max_tries = 20
         display.info('SSH service required for tests. Checking to make sure we can connect.')
         for i in range(1, max_tries + 1):
@@ -544,12 +544,16 @@ def command_integration_filtered(args, targets):
             if not found:
                 continue
 
+        if args.list_targets:
+            print(target.name)
+            continue
+
         tries = 2 if args.retry_on_error else 1
         verbosity = args.verbosity
 
         cloud_environment = get_cloud_environment(args, target)
 
-        original_environment = EnvironmentDescription()
+        original_environment = EnvironmentDescription(args)
 
         display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
 
@@ -1227,8 +1231,16 @@ def get_integration_remote_filter(args, targets):
 
 class EnvironmentDescription(object):
     """Description of current running environment."""
-    def __init__(self):
-        """Initialize snapshot of environment configuration."""
+    def __init__(self, args):
+        """Initialize snapshot of environment configuration.
+        :type args: IntegrationConfig
+        """
+        self.args = args
+
+        if self.args.explain:
+            self.data = {}
+            return
+
         versions = ['']
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
@@ -1262,7 +1274,7 @@ class EnvironmentDescription(object):
         :type throw: bool
         :rtype: bool
         """
-        current = EnvironmentDescription()
+        current = EnvironmentDescription(self.args)
 
         original_json = str(self)
         current_json = str(current)
