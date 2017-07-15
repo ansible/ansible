@@ -17,12 +17,12 @@ from lib.util import (
     load_plugins,
 )
 
-from lib.test import (
-    TestConfig,
-)
-
 from lib.target import (
     TestTarget,
+)
+
+from lib.config import (
+    IntegrationConfig,
 )
 
 PROVIDERS = {}
@@ -39,10 +39,13 @@ def initialize_cloud_plugins():
 
 def get_cloud_platforms(args, targets=None):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget] | None
     :rtype: list[str]
     """
+    if args.list_targets:
+        return []
+
     if targets is None:
         cloud_platforms = set(args.metadata.cloud_config or [])
     else:
@@ -76,7 +79,7 @@ def get_cloud_platform(target):
 
 def get_cloud_providers(args, targets=None):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget] | None
     :rtype: list[CloudProvider]
     """
@@ -85,7 +88,7 @@ def get_cloud_providers(args, targets=None):
 
 def get_cloud_environment(args, target):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type target: IntegrationTarget
     :rtype: CloudEnvironment
     """
@@ -99,7 +102,7 @@ def get_cloud_environment(args, target):
 
 def cloud_filter(args, targets):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
     :return: list[str]
     """
@@ -116,7 +119,7 @@ def cloud_filter(args, targets):
 
 def cloud_init(args, targets):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
     """
     if args.metadata.cloud_config is not None:
@@ -139,7 +142,7 @@ class CloudBase(object):
 
     def __init__(self, args):
         """
-        :type args: TestConfig
+        :type args: IntegrationConfig
         """
         self.args = args
         self.platform = self.__module__.split('.')[2]
@@ -209,7 +212,7 @@ class CloudProvider(CloudBase):
 
     def __init__(self, args, config_extension='.yml'):
         """
-        :type args: TestConfig
+        :type args: IntegrationConfig
         :type config_extension: str
         """
         super(CloudProvider, self).__init__(args)
