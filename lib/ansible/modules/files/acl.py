@@ -92,7 +92,7 @@ options:
       - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
 
   no_mask:
-    version_added: "2.3"
+    version_added: "2.4"
     required: false
     default: null
     description:
