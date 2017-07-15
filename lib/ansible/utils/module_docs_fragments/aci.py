@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2017 Dag Wieers <dag@wieers.com>
-
-# This file is part of Ansible by Red Hat
+#
+# This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
