@@ -94,7 +94,8 @@ options:
     type: bool
     default: 'yes'
 notes:
-- When using inline-JSON (using C(content)), YAML requires to start with a blank line. Otherwise the JSON statement will be parsed as a YAML mapping (dictionary) and translated into invalid JSON as a result.
+- When using inline-JSON (using C(content)), YAML requires to start with a blank line.
+  Otherwise the JSON statement will be parsed as a YAML mapping (dictionary) and translated into invalid JSON as a result.
 - XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
 '''
 
@@ -280,6 +281,7 @@ def main():
             method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
             src=dict(type='path', aliases=['config_file']),
             content=dict(type='str'),
+            protocol=dict(type='str'),
             timeout=dict(type='int', default=30),
             use_ssl=dict(type='bool', default=True),
             validate_certs=dict(type='bool', default=True),
@@ -296,6 +298,7 @@ def main():
     content = module.params['content']
     src = module.params['src']
 
+    protocol = module.params['protocol']
     use_ssl = module.params['use_ssl']
     method = module.params['method']
     timeout = module.params['timeout']
@@ -326,10 +329,13 @@ def main():
         module.fail_json(msg='Failed to find REST API content type (neither .xml nor .json).')
 
     # Set protocol for further use
-    if use_ssl:
-        protocol = 'https'
+    if protocol is None:
+        if use_ssl:
+            protocol = 'https'
+        else:
+            protocol = 'http'
     else:
-        protocol = 'http'
+        module.deprecate("Parameter 'protocol' is deprecated, please use 'use_ssl' instead.", 2.8)
 
     # Perform login first
     url = '%s://%s/api/aaaLogin.json' % (protocol, hostname)
