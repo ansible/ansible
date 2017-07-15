@@ -145,7 +145,7 @@ def main():
             port=dict(default="5432"),
             db=dict(required=True),
             ext=dict(required=True, aliases=['name']),
-            version=dict(default="", aliases=['version']),
+            version=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
         ),
         supports_check_mode = True
