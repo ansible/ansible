@@ -92,6 +92,12 @@ options:
       - hard disk size in GB for instance
     default: 3
     required: false
+  cores:
+    description:
+      - Specify number of cores per socket.
+    required: false
+    default: 1
+    version_added: 2.4
   cpus:
     description:
       - numbers of allocated cpus for instance
@@ -264,6 +270,18 @@ EXAMPLES = '''
     hostname: example.org
     ostemplate: local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
     mounts: '{"mp0":"local:8,mp=/mnt/test/"}'
+
+# Create new container with minimal options defining a cpu core limit
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    cores: 2
 
 # Start container
 - proxmox:
@@ -445,6 +463,7 @@ def main():
             hostname=dict(),
             ostemplate=dict(),
             disk=dict(type='str', default='3'),
+            cores=dict(type='int', default=1),
             cpus=dict(type='int', default=1),
             memory=dict(type='int', default=512),
             swap=dict(type='int', default=0),
@@ -524,6 +543,7 @@ def main():
                                  % (module.params['ostemplate'], node, template_store))
 
             create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout,
+                            cores=module.params['cores'],
                             pool=module.params['pool'],
                             password=module.params['password'],
                             hostname=module.params['hostname'],
