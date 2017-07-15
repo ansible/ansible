@@ -239,10 +239,10 @@ def aci_response(rawoutput, rest_type='xml'):
         # Reformat as ACI does for JSON API output
         if 'children' in imdata['imdata']:
             output['imdata'] = imdata['imdata']['children']
-        output['totalCount'] = int(imdata['imdata']['attributes']['totalCount'])
+        output['totalCount'] = imdata['imdata']['attributes']['totalCount']
 
     if 'imdata' in output:
-        if output['totalCount'] > 0 and 'error' in output['imdata'][0]:
+        if int(output['totalCount']) > 0 and 'error' in output['imdata'][0]:
             result['error_code'] = output['imdata'][0]['error']['attributes']['code']
             result['error_text'] = output['imdata'][0]['error']['attributes']['text']
         else:
@@ -323,8 +323,8 @@ def main():
 
     # Perform login first
     url = '%s://%s/api/aaaLogin.json' % (protocol, host)
-    data = {'aaaUser': {'attributes': {'name': username, 'pwd': password}}}
-    resp, auth = fetch_url(module, url, data=json.dumps(data), method='POST', timeout=timeout)
+    payload = {'aaaUser': {'attributes': {'name': username, 'pwd': password}}}
+    resp, auth = fetch_url(module, url, data=json.dumps(payload), method='POST', timeout=timeout)
 
     if resp is None or auth['status'] != 200:
         if 'body' in auth:
