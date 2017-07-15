@@ -172,8 +172,14 @@ account:
   sample: admin
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+)
+
 
 class AnsibleCloudStackRouter(AnsibleCloudStack):
 
@@ -188,19 +194,19 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
         }
         self.router = None
 
-
     def get_service_offering_id(self):
         service_offering = self.module.params.get('service_offering')
         if not service_offering:
             return None
 
-        args = {}
-        args['issystem'] = True
+        args = {
+            'issystem': True
+        }
 
         service_offerings = self.cs.listServiceOfferings(**args)
         if service_offerings:
             for s in service_offerings['serviceoffering']:
-                if service_offering in [ s['name'], s['id'] ]:
+                if service_offering in [s['name'], s['id']]:
                     return s['id']
         self.module.fail_json(msg="Service offering '%s' not found" % service_offering)
 
@@ -208,18 +214,20 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
         if not self.router:
             router = self.module.params.get('name')
 
-            args = {}
-            args['projectid'] = self.get_project(key='id')
-            args['account'] = self.get_account(key='name')
-            args['domainid'] = self.get_domain(key='id')
+            args = {
+                'projectid': self.get_project(key='id'),
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'listall': True
+            }
+
             if self.module.params.get('zone'):
                 args['zoneid'] = self.get_zone(key='id')
-            args['listall'] = True
 
             routers = self.cs.listRouters(**args)
             if routers:
                 for r in routers['router']:
-                    if router.lower() in [ r['name'].lower(), r['id']]:
+                    if router.lower() in [r['name'].lower(), r['id']]:
                         self.router = r
                         break
         return self.router
@@ -232,8 +240,9 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
         if router['state'].lower() != "running":
             self.result['changed'] = True
 
-            args = {}
-            args['id'] = router['id']
+            args = {
+                'id': router['id'],
+            }
 
             if not self.module.check_mode:
                 res = self.cs.startRouter(**args)
@@ -253,8 +262,9 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
         if router['state'].lower() != "stopped":
             self.result['changed'] = True
 
-            args = {}
-            args['id'] = router['id']
+            args = {
+                'id': router['id'],
+            }
 
             if not self.module.check_mode:
                 res = self.cs.stopRouter(**args)
@@ -273,8 +283,9 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
         self.result['changed'] = True
 
-        args = {}
-        args['id'] = router['id']
+        args = {
+            'id': router['id'],
+        }
 
         if not self.module.check_mode:
             res = self.cs.rebootRouter(**args)
@@ -291,8 +302,9 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
         if router:
             self.result['changed'] = True
 
-            args = {}
-            args['id'] = router['id']
+            args = {
+                'id': router['id'],
+            }
 
             if not self.module.check_mode:
                 res = self.cs.destroyRouter(**args)
@@ -305,15 +317,15 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
                     self.poll_job(res, 'router')
             return router
 
-
     def present_router(self):
         router = self.get_router()
         if not router:
             self.module.fail_json(msg="Router can not be created using the API, see cs_network.")
 
-        args = {}
-        args['id'] = router['id']
-        args['serviceofferingid'] = self.get_service_offering_id()
+        args = {
+            'id': router['id'],
+            'serviceofferingid': self.get_service_offering_id(),
+        }
 
         state = self.module.params.get('state')
 
@@ -329,7 +341,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
                 if 'errortext' in router:
                     self.module.fail_json(msg="Failed: '%s'" % router['errortext'])
 
-                if state in [ 'restarted', 'started' ]:
+                if state in ['restarted', 'started']:
                     router = self.start_router()
 
                 # if state=present we get to the state before the service
@@ -352,14 +364,14 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        service_offering = dict(default=None),
-        state = dict(choices=['present', 'started', 'stopped', 'restarted', 'absent'], default="present"),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
+        name=dict(required=True),
+        service_offering=dict(),
+        state=dict(choices=['present', 'started', 'stopped', 'restarted', 'absent'], default="present"),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
         zone=dict(),
-        poll_async = dict(type='bool', default=True),
+        poll_async=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -384,7 +396,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
