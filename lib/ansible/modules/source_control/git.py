@@ -807,7 +807,7 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
     return changed
 
 
-def submodule_update(git_path, module, dest, track_submodules, force=False):
+def submodule_update(git_path, module, dest, track_submodules, force=False, sync_recursive=False):
     ''' init and update any submodules '''
 
     # get the valid submodule params
@@ -816,7 +816,9 @@ def submodule_update(git_path, module, dest, track_submodules, force=False):
     # skip submodule commands if .gitmodules is not present
     if not os.path.exists(os.path.join(dest, '.gitmodules')):
         return (0, '', '')
-    cmd = [git_path, 'submodule', 'sync', '--recursive']
+    cmd = [git_path, 'submodule', 'sync']
+    if sync_recursive:
+        cmd.append('--recursive')
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     if 'remote' in params and track_submodules:
         cmd = [git_path, 'submodule', 'update', '--init', '--recursive', '--remote']
@@ -1155,7 +1157,10 @@ def main():
                 module.exit_json(**result)
 
             # Switch to version specified
-            submodule_update(git_path, module, dest, track_submodules, force=force)
+            if git_version_used < LooseVersion('2.6.5'):
+                submodule_update(git_path, module, dest, track_submodules, force=force, sync_recursive=False)
+            else:
+                submodule_update(git_path, module, dest, track_submodules, force=force, sync_recursive=True)
 
     # determine if we changed anything
     result['after'] = get_version(module, git_path, dest)
