@@ -44,7 +44,7 @@ then
         fi
     done
 fi
-             
+
 # Restore changes
 git reset --hard -q && git stash apply --index -q && git stash drop -q
 

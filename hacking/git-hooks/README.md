@@ -24,4 +24,3 @@ The post checkout hook deletes all .pyc files.  This ensures that if
 you check out an older version of a python file than the one you had
 been using python will recompile it and you won't get strange and
 difficult to debug errors.
-

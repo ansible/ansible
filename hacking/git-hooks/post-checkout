@@ -1,1 +1,1 @@
-find . -name '*.pyc' -print0 | xargs -0r rm 
+find . -name '*.pyc' -print0 | xargs -0r rm
