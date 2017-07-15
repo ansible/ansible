@@ -15,11 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
-
-
 DOCUMENTATION = '''
 ---
 module: acl
@@ -28,12 +23,12 @@ short_description: Sets and retrieves file ACL information.
 description:
     - Sets and retrieves file ACL information.
 options:
-  path:
+  name:
     required: true
     default: null
     description:
       - The full path of the file or object.
-    aliases: ['name']
+    aliases: ['path']
 
   state:
     required: false
@@ -55,8 +50,7 @@ options:
     default: no
     choices: [ 'yes', 'no' ]
     description:
-      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if
-        path is a file.
+      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if name is a file.
 
   entity:
     version_added: "1.5"
@@ -72,6 +66,7 @@ options:
     description:
       - the entity type of the ACL to apply, see setfacl documentation for more info.
 
+
   permissions:
     version_added: "1.5"
     required: false
@@ -83,9 +78,7 @@ options:
     required: false
     default: null
     description:
-      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for
-        some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now
-        superseded by entity, type and permissions fields.
+      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
 
   recursive:
     version_added: "2.0"
@@ -94,50 +87,44 @@ options:
     choices: [ 'yes', 'no' ]
     description:
       - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
+   
+    no_mask:
+      version_added: "2.3.1.0"
+      required: false
+      default: null
+      description:
+        - Added feature to not recalculate the effective rights mask by default (setfacl -n, --no-mask).
+
 author:
     - "Brian Coca (@bcoca)"
     - "Jérémie Astori (@astorije)"
 notes:
     - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
     - As of Ansible 2.0, this module only supports Linux distributions.
-    - As of Ansible 2.3, the I(name) option has been changed to I(path) as default, but I(name) still works as well.
 '''
 
 EXAMPLES = '''
 # Grant user Joe read access to a file
-- acl:
-    path: /etc/foo.conf
-    entity: joe
-    etype: user
-    permissions: r
-    state: present
+- acl: name=/etc/foo.conf entity=joe etype=user permissions="r" state=present
 
 # Removes the acl for Joe on a specific file
-- acl:
-    path: /etc/foo.conf
-    entity: joe
-    etype: user
-    state: absent
+- acl: name=/etc/foo.conf entity=joe etype=user state=absent
 
 # Sets default acl for joe on foo.d
-- acl:
-    path: /etc/foo.d
-    entity: joe
-    etype: user
-    permissions: rw
-    default: yes
-    state: present
+- acl: name=/etc/foo.d entity=joe etype=user permissions=rw default=yes state=present
 
 # Same as previous but using entry shorthand
-- acl:
-    path: /etc/foo.d
-    entry: "default:user:joe:rw-"
-    state: present
+- acl: name=/etc/foo.d entry="default:user:joe:rw-" state=present
 
 # Obtain the acl for a specific file
-- acl:
-    path: /etc/foo.conf
+- acl: name=/etc/foo.conf
   register: acl_info
+
+# Sets default acl for joe on foo.d and not recalculate the effective rights mask
+- acl: name=/etc/foo.d entity=joe etype=user permissions=rw default=no recursive=yes no_mask=no state=present
+
+# Sets default acl for joe on foo.d and recalculate the effective rights mask
+- acl: name=/etc/foo.d entity=joe etype=user permissions=rw default=no recursive=yes no_mask=yes state=present
 '''
 
 RETURN = '''
@@ -148,11 +135,6 @@ acl:
     sample: [ "user::rwx", "group::rwx", "other::rwx" ]
 '''
 
-import os
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule, get_platform
-from ansible.module_utils.pycompat24 import get_exception
 
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
@@ -194,11 +176,15 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
         return etype + ':' + entity
 
 
-def build_command(module, mode, path, follow, default, recursive, entry=''):
+def build_command(module, mode, path, follow, default, recursive, no_mask, entry=''):
     '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
-        cmd = [module.get_bin_path('setfacl', True)]
-        cmd.append('-m "%s"' % entry)
+        if no_mask == True:
+            cmd = [module.get_bin_path('setfacl', True)]
+            cmd.append('-n -m "%s"' % entry)
+        else:
+            cmd = [module.get_bin_path('setfacl', True)]
+            cmd.append('-m "%s"' % entry)
     elif mode == 'rm':
         cmd = [module.get_bin_path('setfacl', True)]
         cmd.append('-x "%s"' % entry)
@@ -267,7 +253,7 @@ def run_acl(module, cmd, check_rc=True):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(required=True, aliases=['name'], type='path'),
+            name=dict(required=True, aliases=['path'], type='path'),
             entry=dict(required=False, type='str'),
             entity=dict(required=False, type='str', default=''),
             etype=dict(
@@ -285,7 +271,8 @@ def main():
             follow=dict(required=False, type='bool', default=True),
             default=dict(required=False, type='bool', default=False),
             recursive=dict(required=False, type='bool', default=False),
-            use_nfsv4_acls=dict(required=False, type='bool', default=False)
+            use_nfsv4_acls=dict(required=False, type='bool', default=False),
+            no_mask=dict(required=False, type='bool', default=True)
         ),
         supports_check_mode=True,
     )
@@ -293,7 +280,7 @@ def main():
     if get_platform().lower() not in ['linux', 'freebsd']:
         module.fail_json(msg="The acl module is not available on this system.")
 
-    path = module.params.get('path')
+    path = module.params.get('name')
     entry = module.params.get('entry')
     entity = module.params.get('entity')
     etype = module.params.get('etype')
@@ -303,6 +290,7 @@ def main():
     default = module.params.get('default')
     recursive = module.params.get('recursive')
     use_nfsv4_acls = module.params.get('use_nfsv4_acls')
+    no_mask = module.params.get('no_mask')
 
     if not os.path.exists(path):
         module.fail_json(msg="Path not found or not accessible.")
@@ -334,7 +322,7 @@ def main():
             module.fail_json(msg="'entry' MUST NOT be set when 'state=query'.")
 
         default_flag, etype, entity, permissions = split_entry(entry)
-        if default_flag is not None:
+        if default_flag != None:
             default = default_flag
 
     if get_platform().lower() == 'freebsd':
@@ -348,7 +336,7 @@ def main():
         entry = build_entry(etype, entity, permissions, use_nfsv4_acls)
         command = build_command(
             module, 'set', path, follow,
-            default, recursive, entry
+            default, recursive, no_mask, entry
         )
         changed = acl_changed(module, command)
 
@@ -360,7 +348,7 @@ def main():
         entry = build_entry(etype, entity, use_nfsv4_acls)
         command = build_command(
             module, 'rm', path, follow,
-            default, recursive, entry
+            default, recursive, no_mask, entry
         )
         changed = acl_changed(module, command)
 
@@ -373,10 +361,12 @@ def main():
 
     acl = run_acl(
         module,
-        build_command(module, 'get', path, follow, default, recursive)
+        build_command(module, 'get', path, follow, default, recursive, no_mask)
     )
 
     module.exit_json(changed=changed, msg=msg, acl=acl)
 
-if __name__ == '__main__':
-    main()
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
