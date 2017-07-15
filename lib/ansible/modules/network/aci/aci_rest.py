@@ -157,11 +157,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-data:
-  description: The payload send to the APIC REST API (xml or json)
-  returned: always
-  type: string
-  sample: '<foo bar="boo"/>'
 error_code:
   description: The REST ACI return code, useful for troubleshooting on failure
   returned: always
@@ -177,9 +172,14 @@ imdata:
   returned: always
   type: string
   sample: [{"error": {"attributes": {"code": "122", "text": "unknown managed object class foo"}}}]
-output:
-  description: The raw output returned by the APIC REST API (xml or json)
+payload:
+  description: The (templated) payload send to the APIC REST API (xml or json)
   returned: always
+  type: string
+  sample: '<foo bar="boo"/>'
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
   type: string
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 response:
@@ -187,7 +187,7 @@ response:
   returned: always
   type: string
   sample: 'HTTP Error 400: Bad Request'
-status:
+status_code:
   description: HTTP status code
   returned: always
   type: int
@@ -195,8 +195,8 @@ status:
 totalCount:
   description: Number of items in the imdata array
   returned: always
-  type: int
-  sample: 0
+  type: string
+  sample: '0'
 '''
 
 import json
@@ -221,38 +221,47 @@ from ansible.module_utils.urls import fetch_url
 
 
 def aci_response(rawoutput, rest_type='xml'):
-    result = dict(
-        output=rawoutput,
-    )
-
-    output = dict(
-        imdata=dict(),
-    )
+    ''' Handle APIC response output '''
 
     if rest_type == 'json':
-        output = json.loads(rawoutput)
+        # Use APIC response as module output
+        try:
+            result = json.loads(rawoutput)
+        except:
+            # Expose RAW output for troubleshooting
+            result['error_code'] = -1
+            result['error_text'] = "Unable to parse output as JSON, see 'raw' output."
+            result['raw'] = rawoutput
     else:
         # NOTE: The XML-to-JSON conversion is using the "Cobra" convention
-        xml = lxml.etree.fromstring(rawoutput)
-        imdata = cobra.data(xml)
+        xmldata = None
+        result = dict()
+        try:
+            xml = lxml.etree.fromstring(rawoutput)
+            xmldata = cobra.data(xml)
+        except:
+            # Expose RAW output for troubleshooting
+            result['error_code'] = -1
+            result['error_text'] = "Unable to parse output as XML, see 'raw' output."
+            result['raw'] = rawoutput
 
         # Reformat as ACI does for JSON API output
-        if 'children' in imdata['imdata']:
-            output['imdata'] = imdata['imdata']['children']
-        output['totalCount'] = imdata['imdata']['attributes']['totalCount']
+        if xmldata and 'imdata' in xmldata:
+            if 'children' in xmldata['imdata']:
+                result['imdata'] = xmldata['imdata']['children']
+            result['totalCount'] = xmldata['imdata']['attributes']['totalCount']
 
-    if 'imdata' in output:
-        if int(output['totalCount']) > 0 and 'error' in output['imdata'][0]:
-            result['error_code'] = output['imdata'][0]['error']['attributes']['code']
-            result['error_text'] = output['imdata'][0]['error']['attributes']['text']
-        else:
+    # Handle possible APIC error information
+    try:
+        result['error_code'] = result['imdata'][0]['error']['attributes']['code']
+        result['error_text'] = result['imdata'][0]['error']['attributes']['text']
+    except KeyError:
+        if 'imdata' in result and 'totalCount' in result:
             result['error_code'] = 0
             result['error_text'] = 'Success'
-    else:
-        result['error_code'] = -1
-        result['error_text'] = 'This should not happen'
-
-    result.update(output)
+        else:
+            result['error_code'] = -2
+            result['error_text'] = 'This should not happen'
 
     return result
 
@@ -290,8 +299,7 @@ def main():
 
     result = dict(
         changed=False,
-        data='',
-        output='',
+        payload='',
     )
 
     # Report missing file
@@ -338,15 +346,17 @@ def main():
 
         # Return normal Ansible URL related module responses
         result['response'] = auth['msg']
-        result['status'] = auth['status'],
+        result['status_code'] = auth['status'],
         module.fail_json(**result)
 
     # Prepare request data
     if content:
-        result['data'] = content
+        # We include the payload as it may be templated
+        result['payload'] = content
     elif file_exists:
         with open(src, 'r') as config_object:
-            result['data'] = config_object.read()
+            # TODO: Would be nice to template this, requires action-plugin
+            result['payload'] = config_object.read()
 
     # Ensure changes are reported
     if method in ('delete', 'post'):
@@ -366,7 +376,7 @@ def main():
 
     resp, info = fetch_url(module, url, data=result['data'], method=method.upper(), timeout=timeout, headers=headers)
     result['response'] = info['msg']
-    result['status'] = info['status']
+    result['status_code'] = info['status']
 
     # Report failure
     if info['status'] != 200:
