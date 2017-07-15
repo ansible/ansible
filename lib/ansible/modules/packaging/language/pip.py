@@ -186,6 +186,11 @@ EXAMPLES = '''
     virtualenv: /my_app/venv
     virtualenv_command: virtualenv-2.7
 
+# Install (Bottle) within a user home directory.
+- pip:
+    name: bottle
+    extra_args: --user
+
 # Install specified python requirements.
 - pip:
     requirements: /my_app/requirements.txt
