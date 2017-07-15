@@ -80,16 +80,6 @@ def get_systemid(client, session, sysname):
 
 # ------------------------------------------------------- #
 
-# unused:
-#
-#def get_localsystemid():
-#    f = open("/etc/sysconfig/rhn/systemid", "r")
-#    content = f.read()
-#    loc_id = re.search(r'\b(ID-)(\d{10})' ,content)
-#    return loc_id.group(2)
-
-# ------------------------------------------------------- #
-
 def subscribe_channels(channelname, client, session, sysname, sys_id):
     channels = base_channels(client, session, sys_id)
     channels.append(channelname)
@@ -126,7 +116,6 @@ def main():
             user = dict(required=True),
             password = dict(required=True, aliases=['pwd'], no_log=True),
         )
-        #        supports_check_mode=True
     )
 
     state = module.params['state']
