@@ -225,7 +225,6 @@ state:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -248,7 +247,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
         }
 
     def get_rule(self, **kwargs):
-        rules = self.cs.listLoadBalancerRules(**kwargs)
+        rules = self.query_api('listLoadBalancerRules', **kwargs)
         if rules:
             return rules['loadbalancerrule'][0]
 
@@ -263,16 +262,12 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
         }
 
     def present_lb_rule(self):
-        missing_params = []
-        for required_params in [
+        required_params = [
             'algorithm',
             'private_port',
             'public_port',
-        ]:
-            if not self.module.params.get(required_params):
-                missing_params.append(required_params)
-        if missing_params:
-            self.module.fail_json(msg="missing required arguments: %s" % ','.join(missing_params))
+        ]
+        self.module.fail_on_missing_params(required_params=required_params)
 
         args = self._get_common_args()
         rule = self.get_rule(**args)
@@ -297,9 +292,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
                 'description': self.module.params.get('description'),
                 'protocol': self.module.params.get('protocol'),
             })
-            res = self.cs.createLoadBalancerRule(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createLoadBalancerRule', **args)
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -315,9 +308,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
         if self.has_changed(args, rule):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.updateLoadBalancerRule(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateLoadBalancerRule', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -330,12 +321,11 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
         if rule:
             self.result['changed'] = True
         if rule and not self.module.check_mode:
-            res = self.cs.deleteLoadBalancerRule(id=rule['id'])
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('deleteLoadBalancerRule', id=rule['id'])
+
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                res = self.poll_job(res, 'loadbalancer')
+                self.poll_job(res, 'loadbalancer')
         return rule
 
 
@@ -366,20 +356,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_lb_rule = AnsibleCloudStackLBRule(module)
+    acs_lb_rule = AnsibleCloudStackLBRule(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            rule = acs_lb_rule.absent_lb_rule()
-        else:
-            rule = acs_lb_rule.present_lb_rule()
+    state = module.params.get('state')
+    if state in ['absent']:
+        rule = acs_lb_rule.absent_lb_rule()
+    else:
+        rule = acs_lb_rule.present_lb_rule()
 
-        result = acs_lb_rule.get_result(rule)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_lb_rule.get_result(rule)
     module.exit_json(**result)
 
 

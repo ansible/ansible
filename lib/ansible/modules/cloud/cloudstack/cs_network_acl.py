@@ -123,7 +123,6 @@ zone:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -139,7 +138,7 @@ class AnsibleCloudStackNetworkAcl(AnsibleCloudStack):
             'name': self.module.params.get('name'),
             'vpcid': self.get_vpc(key='id'),
         }
-        network_acls = self.cs.listNetworkACLLists(**args)
+        network_acls = self.query_api('listNetworkACLLists', **args)
         if network_acls:
             return network_acls['networkacllist'][0]
         return None
@@ -154,9 +153,7 @@ class AnsibleCloudStackNetworkAcl(AnsibleCloudStack):
                 'vpcid': self.get_vpc(key='id')
             }
             if not self.module.check_mode:
-                res = self.cs.createNetworkACLList(**args)
-                if 'errortext' in res:
-                    self.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('createNetworkACLList', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -172,9 +169,7 @@ class AnsibleCloudStackNetworkAcl(AnsibleCloudStack):
                 'id': network_acl['id'],
             }
             if not self.module.check_mode:
-                res = self.cs.deleteNetworkACLList(**args)
-                if 'errortext' in res:
-                    self.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteNetworkACLList', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -203,19 +198,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_network_acl = AnsibleCloudStackNetworkAcl(module)
+    acs_network_acl = AnsibleCloudStackNetworkAcl(module)
 
-        state = module.params.get('state')
-        if state == 'absent':
-            network_acl = acs_network_acl.absent_network_acl()
-        else:
-            network_acl = acs_network_acl.present_network_acl()
+    state = module.params.get('state')
+    if state == 'absent':
+        network_acl = acs_network_acl.absent_network_acl()
+    else:
+        network_acl = acs_network_acl.present_network_acl()
 
-        result = acs_network_acl.get_result(network_acl)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_network_acl.get_result(network_acl)
 
     module.exit_json(**result)
 

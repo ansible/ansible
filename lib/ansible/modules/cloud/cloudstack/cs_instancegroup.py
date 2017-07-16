@@ -110,7 +110,6 @@ project:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -133,7 +132,7 @@ class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
             'domainid': self.get_domain('id'),
             'projectid': self.get_project('id'),
         }
-        instance_groups = self.cs.listInstanceGroups(**args)
+        instance_groups = self.query_api('listInstanceGroups', **args)
         if instance_groups:
             for g in instance_groups['instancegroup']:
                 if name in [g['name'], g['id']]:
@@ -153,9 +152,7 @@ class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
                 'projectid': self.get_project('id'),
             }
             if not self.module.check_mode:
-                res = self.cs.createInstanceGroup(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('createInstanceGroup', **args)
                 instance_group = res['instancegroup']
         return instance_group
 
@@ -164,9 +161,7 @@ class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
         if instance_group:
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.deleteInstanceGroup(id=instance_group['id'])
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('deleteInstanceGroup', id=instance_group['id'])
         return instance_group
 
 
@@ -186,19 +181,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_ig = AnsibleCloudStackInstanceGroup(module)
+    acs_ig = AnsibleCloudStackInstanceGroup(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            instance_group = acs_ig.absent_instance_group()
-        else:
-            instance_group = acs_ig.present_instance_group()
+    state = module.params.get('state')
+    if state in ['absent']:
+        instance_group = acs_ig.absent_instance_group()
+    else:
+        instance_group = acs_ig.present_instance_group()
 
-        result = acs_ig.get_result(instance_group)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_ig.get_result(instance_group)
 
     module.exit_json(**result)
 
