@@ -120,6 +120,13 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: junos_lldp
+        when: "limit_to in ['*', 'junos_lldp']"
+      rescue:
+        - set_fact: test_failed=true
+
 ###########
     - name: Has any previous test failed?
       fail:

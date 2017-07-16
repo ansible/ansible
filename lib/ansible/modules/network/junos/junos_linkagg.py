@@ -314,7 +314,7 @@ def main():
         module.params['disable'] = True
 
     if module.params.get('mode') == 'off':
-        module.params['mode'] = False
+        module.params['mode'] = ''
     elif module.params.get('mode') == 'on':
         module.params['mode'] = 'passive'
 
