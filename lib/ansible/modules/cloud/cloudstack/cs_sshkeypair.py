@@ -123,7 +123,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_required_together,
     cs_argument_spec
 )
@@ -150,7 +149,7 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
             args['publickey'] = public_key
             if not self.module.check_mode:
                 args['name'] = name
-                res = self.cs.registerSSHKeyPair(**args)
+                res = self.query_api('registerSSHKeyPair', **args)
         else:
             fingerprint = self._get_ssh_fingerprint(public_key)
             if ssh_key['fingerprint'] != fingerprint:
@@ -158,26 +157,26 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
                 if not self.module.check_mode:
                     # delete the ssh key with matching name but wrong fingerprint
                     args['name'] = name
-                    self.cs.deleteSSHKeyPair(**args)
+                    self.query_api('deleteSSHKeyPair', **args)
 
             elif ssh_key['name'].lower() != name.lower():
                 self.result['changed'] = True
                 if not self.module.check_mode:
                     # delete the ssh key with matching fingerprint but wrong name
                     args['name'] = ssh_key['name']
-                    self.cs.deleteSSHKeyPair(**args)
+                    self.query_api('deleteSSHKeyPair', **args)
                     # First match for key retrievment will be the fingerprint.
                     # We need to make another lookup if there is a key with identical name.
                     self.ssh_key = None
                     ssh_key = self.get_ssh_key()
                     if ssh_key['fingerprint'] != fingerprint:
                         args['name'] = name
-                        self.cs.deleteSSHKeyPair(**args)
+                        self.query_api('deleteSSHKeyPair', **args)
 
             if not self.module.check_mode and self.result['changed']:
                 args['publickey'] = public_key
                 args['name'] = name
-                res = self.cs.registerSSHKeyPair(**args)
+                res = self.query_api('registerSSHKeyPair', **args)
 
         if res and 'keypair' in res:
             ssh_key = res['keypair']
@@ -191,7 +190,7 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
             args = self._get_common_args()
             args['name'] = self.module.params.get('name')
             if not self.module.check_mode:
-                res = self.cs.createSSHKeyPair(**args)
+                res = self.query_api('createSSHKeyPair', **args)
                 ssh_key = res['keypair']
         return ssh_key
 
@@ -202,7 +201,7 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
             args = self._get_common_args()
             args['name'] = name or self.module.params.get('name')
             if not self.module.check_mode:
-                self.cs.deleteSSHKeyPair(**args)
+                self.query_api('deleteSSHKeyPair', **args)
         return ssh_key
 
     def _get_common_args(self):
@@ -219,14 +218,14 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
                 # Query by fingerprint of the public key
                 args_fingerprint = self._get_common_args()
                 args_fingerprint['fingerprint'] = self._get_ssh_fingerprint(public_key)
-                ssh_keys = self.cs.listSSHKeyPairs(**args_fingerprint)
+                ssh_keys = self.query_api('listSSHKeyPairs', **args_fingerprint)
                 if ssh_keys and 'sshkeypair' in ssh_keys:
                     self.ssh_key = ssh_keys['sshkeypair'][0]
             # When key has not been found by fingerprint, use the name
             if not self.ssh_key:
                 args_name = self._get_common_args()
                 args_name['name'] = self.module.params.get('name')
-                ssh_keys = self.cs.listSSHKeyPairs(**args_name)
+                ssh_keys = self.query_api('listSSHKeyPairs', **args_name)
                 if ssh_keys and 'sshkeypair' in ssh_keys:
                     self.ssh_key = ssh_keys['sshkeypair'][0]
         return self.ssh_key
@@ -258,23 +257,18 @@ def main():
     if not HAS_LIB_SSHPUBKEYS:
         module.fail_json(msg="python library sshpubkeys required: pip install sshpubkeys")
 
-    try:
-        acs_sshkey = AnsibleCloudStackSshKey(module)
-        state = module.params.get('state')
-        if state in ['absent']:
-            ssh_key = acs_sshkey.remove_ssh_key()
+    acs_sshkey = AnsibleCloudStackSshKey(module)
+    state = module.params.get('state')
+    if state in ['absent']:
+        ssh_key = acs_sshkey.remove_ssh_key()
+    else:
+        public_key = module.params.get('public_key')
+        if public_key:
+            ssh_key = acs_sshkey.register_ssh_key(public_key)
         else:
-            public_key = module.params.get('public_key')
-            if public_key:
-                ssh_key = acs_sshkey.register_ssh_key(public_key)
-            else:
-                ssh_key = acs_sshkey.create_ssh_key()
+            ssh_key = acs_sshkey.create_ssh_key()
 
-        result = acs_sshkey.get_result(ssh_key)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_sshkey.get_result(ssh_key)
     module.exit_json(**result)
 
 

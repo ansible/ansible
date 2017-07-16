@@ -275,7 +275,6 @@ tags:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -333,9 +332,7 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
 
         self.result['changed'] = True
         if not self.module.check_mode:
-            res = self.cs.registerIso(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('registerIso', **args)
             self.iso = res['iso'][0]
         return self.iso
 
@@ -367,9 +364,7 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 args['zoneid'] = -1
 
             if not self.module.check_mode:
-                res = self.cs.updateIso(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateIso', **args)
                 self.iso = res['iso']
         return self.iso
 
@@ -391,7 +386,7 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             if not checksum:
                 args['name'] = self.module.params.get('name')
 
-            isos = self.cs.listIsos(**args)
+            isos = self.query_api('listIsos', **args)
             if isos:
                 if not checksum:
                     self.iso = isos['iso'][0]
@@ -416,9 +411,7 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 args['zoneid'] = self.get_zone(key='id')
 
             if not self.module.check_mode:
-                res = self.cs.deleteIso(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteIso', **args)
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     self.poll_job(res, 'iso')
@@ -466,20 +459,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_iso = AnsibleCloudStackIso(module)
+    acs_iso = AnsibleCloudStackIso(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            iso = acs_iso.absent_iso()
-        else:
-            iso = acs_iso.present_iso()
+    state = module.params.get('state')
+    if state in ['absent']:
+        iso = acs_iso.absent_iso()
+    else:
+        iso = acs_iso.present_iso()
 
-        result = acs_iso.get_result(iso)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_iso.get_result(iso)
     module.exit_json(**result)
 
 

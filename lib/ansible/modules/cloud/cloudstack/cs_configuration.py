@@ -153,8 +153,13 @@ storage:
   sample: storage01
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together
+)
+
 
 class AnsibleCloudStackConfiguration(AnsibleCloudStack):
 
@@ -162,23 +167,22 @@ class AnsibleCloudStackConfiguration(AnsibleCloudStack):
         super(AnsibleCloudStackConfiguration, self).__init__(module)
         self.returns = {
             'category': 'category',
-            'scope':    'scope',
-            'value':    'value',
+            'scope': 'scope',
+            'value': 'value',
         }
         self.storage = None
         self.account = None
         self.cluster = None
 
-
     def _get_common_configuration_args(self):
-        args = {}
-        args['name'] = self.module.params.get('name')
-        args['accountid'] = self.get_account(key='id')
-        args['storageid'] = self.get_storage(key='id')
-        args['zoneid'] = self.get_zone(key='id')
-        args['clusterid'] = self.get_cluster(key='id')
+        args = {
+            'name': self.module.params.get('name'),
+            'accountid': self.get_account(key='id'),
+            'storageid': self.get_storage(key='id'),
+            'zoneid': self.get_zone(key='id'),
+            'clusterid': self.get_cluster(key='id'),
+        }
         return args
-
 
     def get_zone(self, key=None):
         # make sure we do net use the default zone
@@ -186,15 +190,15 @@ class AnsibleCloudStackConfiguration(AnsibleCloudStack):
         if zone:
             return super(AnsibleCloudStackConfiguration, self).get_zone(key=key)
 
-
     def get_cluster(self, key=None):
         if not self.cluster:
             cluster_name = self.module.params.get('cluster')
             if not cluster_name:
                 return None
-            args = {}
-            args['name'] = cluster_name
-            clusters = self.cs.listClusters(**args)
+            args = {
+                'name': cluster_name,
+            }
+            clusters = self.query_api('listClusters', **args)
             if clusters:
                 self.cluster = clusters['cluster'][0]
                 self.result['cluster'] = self.cluster['name']
@@ -202,15 +206,15 @@ class AnsibleCloudStackConfiguration(AnsibleCloudStack):
                 self.module.fail_json(msg="Cluster %s not found." % cluster_name)
         return self._get_by_key(key=key, my_dict=self.cluster)
 
-
     def get_storage(self, key=None):
         if not self.storage:
             storage_pool_name = self.module.params.get('storage')
             if not storage_pool_name:
                 return None
-            args = {}
-            args['name'] = storage_pool_name
-            storage_pools = self.cs.listStoragePools(**args)
+            args = {
+                'name': storage_pool_name,
+            }
+            storage_pools = self.query_api('listStoragePools', **args)
             if storage_pools:
                 self.storage = storage_pools['storagepool'][0]
                 self.result['storage'] = self.storage['name']
@@ -218,23 +222,20 @@ class AnsibleCloudStackConfiguration(AnsibleCloudStack):
                 self.module.fail_json(msg="Storage pool %s not found." % storage_pool_name)
         return self._get_by_key(key=key, my_dict=self.storage)
 
-
     def get_configuration(self):
         configuration = None
         args = self._get_common_configuration_args()
-        configurations = self.cs.listConfigurations(**args)
+        configurations = self.query_api('listConfigurations', **args)
         if not configurations:
             self.module.fail_json(msg="Configuration %s not found." % args['name'])
         configuration = configurations['configuration'][0]
         return configuration
-
 
     def get_value(self):
         value = str(self.module.params.get('value'))
         if value in ('True', 'False'):
             value = value.lower()
         return value
-
 
     def present_configuration(self):
         configuration = self.get_configuration()
@@ -243,12 +244,9 @@ class AnsibleCloudStackConfiguration(AnsibleCloudStack):
         if self.has_changed(args, configuration, ['value']):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.updateConfiguration(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateConfiguration', **args)
                 configuration = res['configuration']
         return configuration
-
 
     def get_result(self, configuration):
         self.result = super(AnsibleCloudStackConfiguration, self).get_result(configuration)
@@ -259,16 +257,17 @@ class AnsibleCloudStackConfiguration(AnsibleCloudStack):
             self.result['zone'] = self.zone['name']
         return self.result
 
+
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        value = dict(type='str', required=True),
-        zone = dict(default=None),
-        storage = dict(default=None),
-        cluster = dict(default=None),
-        account = dict(default=None),
-        domain = dict(default='ROOT')
+        name=dict(required=True),
+        value=dict(type='str', required=True),
+        zone=dict(),
+        storage=dict(),
+        cluster=dict(),
+        account=dict(),
+        domain=dict(default='ROOT')
     ))
 
     module = AnsibleModule(
@@ -277,17 +276,11 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_configuration = AnsibleCloudStackConfiguration(module)
-        configuration = acs_configuration.present_configuration()
-        result = acs_configuration.get_result(configuration)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    acs_configuration = AnsibleCloudStackConfiguration(module)
+    configuration = acs_configuration.present_configuration()
+    result = acs_configuration.get_result(configuration)
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
