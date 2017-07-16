@@ -25,3 +25,6 @@ deepdiff
 
 # requirement for modules using Netconf protocol
 ncclient
+
+# requirement for aci_rest module
+xmljson

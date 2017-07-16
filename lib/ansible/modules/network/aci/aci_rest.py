@@ -37,22 +37,9 @@ version_added: '2.4'
 requirements:
 - lxml (when using XML content)
 - xmljson >= 0.1.8 (when using XML content)
+- python 2.7+ (when using xmljson)
+extends_documentation_fragment: aci
 options:
-  hostname:
-    description:
-    - IP Address or hostname of APIC resolvable by Ansible control host.
-    required: true
-    aliases: [ host ]
-  username:
-    description:
-    - The username to use for authentication.
-    required: true
-    default: admin
-    aliases: [ user ]
-  password:
-    description:
-    - The password to use for authentication.
-    required: true
   method:
     description:
     - The HTTP method of the request.
@@ -78,21 +65,6 @@ options:
     - Name of the absolute path of the filname that includes the body
       of the http request being sent to the ACI fabric.
     aliases: [ config_file ]
-  timeout:
-    description:
-    - The socket level timeout in seconds.
-    default: 30
-  use_ssl:
-    description:
-    - If C(no), an HTTP connection will be used instead of the default HTTPS connection.
-    type: bool
-    default: 'yes'
-  validate_certs:
-    description:
-    - If C(no), SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    type: bool
-    default: 'yes'
 notes:
 - When using inline-JSON (using C(content)), YAML requires to start with a blank line.
   Otherwise the JSON statement will be parsed as a YAML mapping (dictionary) and translated into invalid JSON as a result.
@@ -220,16 +192,17 @@ try:
 except ImportError:
     HAS_XMLJSON_COBRA = False
 
-#from ansible.module_utils.aci import aci_login
-from ansible.module_utils.basic import AnsibleModule
+# from ansible.module_utils.aci import aci_login
+from ansible.module_utils.basic import AnsibleModule, get_exception
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_bytes
 
 
 aci_argument_spec = dict(
     hostname=dict(type='str', required=True, aliases=['host']),
     username=dict(type='str', default='admin', aliases=['user']),
     password=dict(type='str', required=True, no_log=True),
-    protocol=dict(type='str'), # Deprecated in v2.8
+    protocol=dict(type='str'),  # Deprecated in v2.8
     timeout=dict(type='int', default=30),
     use_ssl=dict(type='bool', default=True),
     validate_certs=dict(type='bool', default=True),
@@ -265,27 +238,32 @@ def aci_login(module, result=dict()):
 def aci_response(rawoutput, rest_type='xml'):
     ''' Handle APIC response output '''
 
+    result = dict()
+
     if rest_type == 'json':
         # Use APIC response as module output
         try:
             result = json.loads(rawoutput)
         except:
+            e = get_exception()
             # Expose RAW output for troubleshooting
             result['error_code'] = -1
-            result['error_text'] = "Unable to parse output as JSON, see 'raw' output."
+            result['error_text'] = "Unable to parse output as JSON, see 'raw' output. %s" % e
             result['raw'] = rawoutput
+            return result
     else:
         # NOTE: The XML-to-JSON conversion is using the "Cobra" convention
         xmldata = None
-        result = dict()
         try:
-            xml = lxml.etree.fromstring(rawoutput)
+            xml = lxml.etree.fromstring(to_bytes(rawoutput))
             xmldata = cobra.data(xml)
         except:
+            e = get_exception()
             # Expose RAW output for troubleshooting
             result['error_code'] = -1
-            result['error_text'] = "Unable to parse output as XML, see 'raw' output."
+            result['error_text'] = "Unable to parse output as XML, see 'raw' output. %s" % e
             result['raw'] = rawoutput
+            return result
 
         # Reformat as ACI does for JSON API output
         if xmldata and 'imdata' in xmldata:
