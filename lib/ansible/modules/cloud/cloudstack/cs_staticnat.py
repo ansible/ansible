@@ -160,7 +160,6 @@ domain:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -186,9 +185,7 @@ class AnsibleCloudStackStaticNat(AnsibleCloudStack):
             'networkid': self.get_network(key='id')
         }
         if not self.module.check_mode:
-            res = self.cs.enableStaticNat(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            self.query_api('enableStaticNat', **args)
 
             # reset ip address and query new values
             self.ip_address = None
@@ -207,13 +204,10 @@ class AnsibleCloudStackStaticNat(AnsibleCloudStack):
         if self.has_changed(args, ip_address, ['vmguestip', 'virtualmachineid']):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.disableStaticNat(ipaddressid=ip_address['id'])
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('disableStaticNat', ipaddressid=ip_address['id'])
                 self.poll_job(res, 'staticnat')
-                res = self.cs.enableStaticNat(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
+                self.query_api('enableStaticNat', **args)
 
                 # reset ip address and query new values
                 self.ip_address = None
@@ -233,9 +227,8 @@ class AnsibleCloudStackStaticNat(AnsibleCloudStack):
         if ip_address['isstaticnat']:
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.disableStaticNat(ipaddressid=ip_address['id'])
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('disableStaticNat', ipaddressid=ip_address['id'])
+
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     self.poll_job(res, 'staticnat')
@@ -264,19 +257,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_static_nat = AnsibleCloudStackStaticNat(module)
+    acs_static_nat = AnsibleCloudStackStaticNat(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            ip_address = acs_static_nat.absent_static_nat()
-        else:
-            ip_address = acs_static_nat.present_static_nat()
+    state = module.params.get('state')
+    if state in ['absent']:
+        ip_address = acs_static_nat.absent_static_nat()
+    else:
+        ip_address = acs_static_nat.present_static_nat()
 
-        result = acs_static_nat.get_result(ip_address)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_static_nat.get_result(ip_address)
 
     module.exit_json(**result)
 
