@@ -43,7 +43,7 @@ requirements:
 
 
 EXAMPLES = '''
-- name: "Create a Floating IP in region lon1"
+- name: "Gather facts about all Floating IPs"
   digital_ocean_floating_ip_facts:
     register: result
 '''
