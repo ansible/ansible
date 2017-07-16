@@ -1,0 +1,77 @@
+- block:
+
+    # ============================================================
+    - name: create a key
+      kms:
+        region: '{{aws_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+        alias: '{{ resource_prefix }}-kms'
+        state: present
+      register: create_kms
+
+    - name: check that result was changed
+      assert:
+        that:
+          - create_kms.changed
+
+    - name: check that the key exists
+      aws_kms_facts:
+        region: '{{aws_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+        filters:
+          alias: '{{ resource_prefix }}-kms'
+      register: new_key
+
+    - name: assert that state is enabled
+      assert:
+        that:
+          - new_key.key_state == Enabled
+
+    - name: delete the key
+      kms:
+        region: '{{aws_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+        alias: '{{ resource_prefix }}-kms'
+        state: absent
+      register: delete_kms
+
+    - name: assert that state is pending deletion
+      assert:
+        that:
+          - delete_kms.key_state == PendingDeletion
+          - delete_kms.changed
+
+    - name: undelete the key
+      kms:
+        region: '{{aws_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+        alias: '{{ resource_prefix }}-kms'
+        state: present
+      register: undelete_kms
+
+    - name: assert that state is enabled
+      assert:
+        that:
+          - undelete_kms.key_state == Enabled
+          - undelete_kms.changed
+
+  always:
+
+    # ============================================================
+    - name: delete key
+      kms:
+        state: absent
+        region: '{{aws_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+        alias: '{{ resource_prefix }}-kms'
+      register: destroy_result
