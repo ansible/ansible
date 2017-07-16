@@ -204,8 +204,6 @@ class AnsibleCloudStackInstanceNic(AnsibleCloudStack):
         }
         if not self.module.check_mode:
             res = self.query_api('addNicToVirtualMachine', **args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
             if self.module.params.get('poll_async'):
                 vm = self.poll_job(res, 'virtualmachine')
