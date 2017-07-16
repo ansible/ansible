@@ -106,7 +106,6 @@ portable_ip_service_enabled:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -124,7 +123,7 @@ class AnsibleCloudStackRegion(AnsibleCloudStack):
 
     def get_region(self):
         id = self.module.params.get('id')
-        regions = self.cs.listRegions(id=id)
+        regions = self.query_api('listRegions', id=id)
         if regions:
             return regions['region'][0]
         return None
@@ -145,9 +144,7 @@ class AnsibleCloudStackRegion(AnsibleCloudStack):
             'endpoint': self.module.params.get('endpoint')
         }
         if not self.module.check_mode:
-            res = self.cs.addRegion(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('addRegion', **args)
             region = res['region']
         return region
 
@@ -160,9 +157,7 @@ class AnsibleCloudStackRegion(AnsibleCloudStack):
         if self.has_changed(args, region):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.updateRegion(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateRegion', **args)
                 region = res['region']
         return region
 
@@ -171,9 +166,7 @@ class AnsibleCloudStackRegion(AnsibleCloudStack):
         if region:
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.removeRegion(id=region['id'])
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('removeRegion', id=region['id'])
         return region
 
 
@@ -195,20 +188,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_region = AnsibleCloudStackRegion(module)
+    acs_region = AnsibleCloudStackRegion(module)
 
-        state = module.params.get('state')
-        if state == 'absent':
-            region = acs_region.absent_region()
-        else:
-            region = acs_region.present_region()
+    state = module.params.get('state')
+    if state == 'absent':
+        region = acs_region.absent_region()
+    else:
+        region = acs_region.present_region()
 
-        result = acs_region.get_result(region)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_region.get_result(region)
     module.exit_json(**result)
 
 
