@@ -164,3 +164,14 @@
   assert:
     that:
       - "not q_check_mode.changed"
+
+- name: install package with complex version
+  pip:
+    name: docker
+    version: ">=2.2.0,!=2.4.0,!=2.4.1"
+  register: package_complex_version
+
+- name: make sure package with complex version reported changed
+  assert:
+    that:
+      - "package_complex_version.changed"
