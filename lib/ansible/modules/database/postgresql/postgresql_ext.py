@@ -132,7 +132,7 @@ def ext_create(cursor, ext, ver=None):
             if not ext_exists(cursor, ext, ver):
                 query = 'ALTER EXTENSION "%(ext)s" UPDATE TO "%(ver)s"'
                 cursor.execute(query, {'ext': ext, 'ver': ver})
-            return True
+                return True
         return False
 
 # ===========================================
