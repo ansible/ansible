@@ -426,13 +426,12 @@ def main():
     # find the group if present
     group = None
     groups = {}
-
     try:
-        security_groups = ec2.get_all_security_groups()
-    except BotoServerError as e:
-        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc())
-
-    for curGroup in security_groups:
+        allgroups = ec2.get_all_security_groups()
+    except boto.exception.EC2ResponseError as err:
+        module.fail_json(msg="AWS rejected listing security groups - " + str(err),
+                         exception=traceback.format_exc())
+    for curGroup in allgroups:
         groups[curGroup.id] = curGroup
         if curGroup.name in groups:
             # Prioritise groups from the current VPC
@@ -475,7 +474,11 @@ def main():
         else:
             # no match found, create it
             if not module.check_mode:
-                group = ec2.create_security_group(name, description, vpc_id=vpc_id)
+                try:
+                    group = ec2.create_security_group(name, description, vpc_id=vpc_id)
+                except boto.exception.EC2ResponseError as err:
+                    module.fail_json(msg="AWS rejected security group creation - " + str(err),
+                                     exception=traceback.format_exc())
 
                 # When a group is created, an egress_rule ALLOW ALL
                 # to 0.0.0.0/0 is added automatically but it's not
@@ -613,13 +616,17 @@ def main():
                 if grant.group_id:
                     grantGroup = groups[grant.group_id].id
                 if not module.check_mode:
-                    ec2.revoke_security_group_egress(
-                        group_id=group.id,
-                        ip_protocol=rule.ip_protocol,
-                        from_port=rule.from_port,
-                        to_port=rule.to_port,
-                        src_group_id=grantGroup,
-                        cidr_ip=grant.cidr_ip)
+                    try:
+                        ec2.revoke_security_group_egress(
+                            group_id=group.id,
+                            ip_protocol=rule.ip_protocol,
+                            from_port=rule.from_port,
+                            to_port=rule.to_port,
+                            src_group_id=grantGroup,
+                            cidr_ip=grant.cidr_ip)
+                    except boto.exception.EC2ResponseError as err:
+                        module.fail_json(msg="AWS rejected security group egress revocation - " + str(err),
+                                         exception=traceback.format_exc())
                 changed = True
 
     if group:
