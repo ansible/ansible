@@ -143,6 +143,7 @@ login_results:
 
 import base64
 
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.docker_common import *
 
 
@@ -276,8 +277,12 @@ class LoginManager(DockerBaseClass):
             self.log("Adding registry_url %s to auths." % (self.registry_url))
             config['auths'][self.registry_url] = dict()
 
+        auth = base64.b64encode(
+            to_bytes(self.username) + b':' + to_bytes(self.password)
+        )
+
         encoded_credentials = dict(
-            auth=base64.b64encode(self.username + b':' + self.password),
+            auth=to_text(auth),
             email=self.email
         )
 
