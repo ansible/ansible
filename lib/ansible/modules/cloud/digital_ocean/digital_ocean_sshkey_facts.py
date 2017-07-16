@@ -144,7 +144,7 @@ class Rest(object):
 def core(module):
     api_token = module.params['oauth_token']
 
-    rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
+    rest = Rest(module, {'Authorization': 'Bearer {0}'.format(api_token),
                          'Content-type': 'application/json'})
 
     response = rest.get("account/keys")
@@ -153,7 +153,7 @@ def core(module):
     if status_code == 200:
         module.exit_json(changed=False, ansible_facts=json)
     else:
-        module.fail_json(msg='Error fecthing facts [{}: {}]'.format(
+        module.fail_json(msg='Error fecthing facts [{0}: {1}]'.format(
             status_code, response.json['message']))
 
 
