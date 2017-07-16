@@ -63,7 +63,7 @@ requirements:
 
 
 EXAMPLES = '''
-- name: "Create a Floating IP in regigin lon1"
+- name: "Create a Floating IP in region lon1"
   digital_ocean_floating_ip:
     state: present
     region: lon1
