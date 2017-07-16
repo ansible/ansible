@@ -32,17 +32,28 @@ availability_vs_cost:
 availability_zones:
   description:
     - "_Information about one or more availability Zones for the group."
-  fields: "name,subnet_id,placement_group_name"
+  fields:
+    - name
+    - subnet_id
+    - placement_group_name
   required: true
 block_device_mappings:
   description:
     - "Array list of block devices that are exposed to the instance, You can specify virtual devices and EBS volumes"
-  fields: "device_name,no_device,ebs"
+  fields:
+    - device_name
+    - no_device
+    - ebs
   required: false
 chef:
   description:
     - "chef integration"
-  fields: "chef_server,organization,user,pem_key, chef_version"
+  fields:
+    - chef_server
+    - organization
+    - user
+    - pem_key
+    - chef_version
   required: false
 description:
   - "Can create, update, or delete Spotinst AWS Elastigroups"
@@ -58,14 +69,33 @@ description:
   -
     ? "Full documentation available here"
     : "https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-"
+
 down_scaling_policies:
   description:
     - "Down scaling policies for this elastigroup"
-  fields: "policy_name,namespace,metric_name,dimensions,statistic,evaluation_periods,period,threshold,cooldown,unit,operator,action_type,adjustment,min_target_capacity,max_target_capacity, target, maximum, minimum"
+  fields:
+    - policy_name
+    - namespace
+    - metric_name
+    - dimensions
+    - statistic
+    - evaluation_periods
+    - period
+    - threshold
+    - cooldown
+    - unit
+    - operator
+    - action_type
+    - adjustment
+    - min_target_capacity
+    - max_target_capacity
+    - target
+    - maximum
+    - minimum
   required: false
 draining_timeout:
   description:
-    - "The time in seconds to allow the instance be drained from incoming TCP connections and detached from ELB before terminating it, during a scale down operation"
+    - "seconds to allow the instance be drained from incoming TCP connections and detached from ELB before termination, in scale down operations."
   required: false
 ebs_optimized:
   description:
@@ -74,12 +104,15 @@ ebs_optimized:
 ebs_volume_pool:
   description:
     - "The EBS pool list for re-atatch when available."
-  fields: "volume_ids,device_name"
+  fields:
+    - volume_ids
+    - device_name
   required: false
 ecs:
   description:
     - "ECS Integration"
-  fields: cluster_name
+  fields:
+    - cluster_name
   required: false
 elastic_ips:
   description:
@@ -123,9 +156,7 @@ ignore_changes:
   required: false
 image_id:
   description:
-    -
-      ? "he ID of the image used to launch the instance. The following instance types are supported by HVM image"
-      : "M3, M4, C3, C4, D2, G2, R3, CC2, CC1, CG1, CR1. The following instance types are supported by PV image:M1, M2, M3, C1, C3. In case of conflict between Instance type to image type, an error message will be returned"
+    - "The image Id used to launch the instance. In case of conflict between Instance type and image type, an error will be returned"
   required: true
 key_pair:
   description:
@@ -134,7 +165,9 @@ key_pair:
 kubernetes:
   description:
     - "kubernetes integration"
-  fields: "api_server, token"
+  fields:
+    - api_server
+    - token
   required: false
 lifetime_period:
   description:
@@ -151,7 +184,8 @@ max_size:
 mesosphere:
   description:
     - "Mesosphere integration"
-  fields: api_server
+  fields:
+    - api_server
   required: false
 min_size:
   description:
@@ -169,11 +203,22 @@ name:
 network_interfaces:
   description:
     - "List of network interfaces in an EC2 instance for AWS CloudFormation."
-  fields: "description,device_index,secondary_private_ip_address_count,associate_public_ip_address,delete_on_termination,groups,network_interface_id,private_ip_address,subnet_id,associate_ipv6_address,private_ip_addresses"
+  fields:
+    - description
+    - device_index
+    - secondary_private_ip_address_count
+    - associate_public_ip_address
+    - delete_on_termination
+    - groups
+    - network_interface_id
+    - private_ip_address
+    - subnet_id
+    - associate_ipv6_address
+    - private_ip_addresses
   required: false
 on_demand_count:
   description:
-    - "Number of on demand instances to launch in the group. All other instances will be spot instances. When this parameter is set the \"risk\" parameter is being ignored."
+    - "Number of on demand instances to launch. All other instances will be spot instances. Either set this parameter or the risk parameter."
   required: "Required if risk is not set"
 on_demand_instance_type:
   description:
@@ -182,13 +227,17 @@ on_demand_instance_type:
 opsworks:
   description:
     - "opsworks integration"
-  fields: layer_id
+  fields:
+    - layer_id
   required: false
 options: ~
 persistence:
   description:
     - "You can register persistence (Stateful) recovery arguments"
-  fields: "should_persist_root_device,should_persist_block_devices,should_persist_private_ip"
+  fields:
+    - should_persist_root_device
+    - should_persist_block_devices
+    - should_persist_private_ip
   required: false
 product:
   choices:
@@ -204,12 +253,17 @@ product:
 rancher:
   description:
     - "Rancher integration"
-  fields: "access_key,secret_key,master_host"
+  fields:
+    - access_key
+    - secret_key
+    - master_host
   required: false
 rightscale:
   description:
     - "Rightscale Integration"
-  fields: "account_id, refresh_token"
+  fields:
+    - account_id
+    - refresh_token
   required: false
 risk:
   description:
@@ -220,7 +274,18 @@ risk:
 scheduled_tasks:
   description:
     - "All scheduled tasks for this group"
-  fields: "adjustment,scale_target_capacity,scale_min_capacity,scale_max_capacity,adjustment_percentage,batch_size_percentage,cron_expression,frequency,grace_period,task_type,is_enabled"
+  fields:
+    - adjustment
+    - scale_target_capacity
+    - scale_min_capacity
+    - scale_max_capacity
+    - adjustment_percentage
+    - batch_size_percentage
+    - cron_expression
+    - frequency
+    - grace_period
+    - task_type
+    - is_enabled
   required: false
 security_group_ids:
   description:
@@ -234,7 +299,9 @@ shut_down_script:
 signals:
   description:
     - "The signals defined for this group"
-  fields: "name, timeout"
+  fields:
+    - name
+    - timeout
   required: false
 spin_up_time:
   description:
@@ -254,7 +321,9 @@ state:
 tags:
   description:
     - "tags for the elastigroup"
-  fields: "key,value"
+  fields:
+    - key
+    - value
   required: false
 target:
   description:
@@ -285,7 +354,25 @@ unit:
 up_scaling_policies:
   description:
     - "Up scaling policies for this elastigroup"
-  fields: "policy_name,namespace,metric_name,dimensions,statistic,evaluation_periods,period,threshold,cooldown,unit,operator,action_type,adjustment,min_target_capacity,max_target_capacity, target, maximum, minimum"
+  fields:
+    - policy_name
+    - namespace
+    - metric_name
+    - dimensions
+    - statistic
+    - evaluation_periods
+    - period
+    - threshold
+    - cooldown
+    - unit
+    - operator
+    - action_type
+    - adjustment
+    - min_target_capacity
+    - max_target_capacity
+    - target
+    - maximum
+    - minimum
   required: false
 user_data:
   description:
