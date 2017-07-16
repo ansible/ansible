@@ -16,12 +16,12 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
-                    'supported_by': 'curated',
-                    'version_added': 2.4}
+                    'supported_by': 'curated'}
 
 DOCUMENTATION = """
 ---
 module: spotinst_aws_elastigroup
+version_added: 2.4
 short_description: Create, update or delete Spotinst AWS Elastigroups
 author: Spotinst
 description:
