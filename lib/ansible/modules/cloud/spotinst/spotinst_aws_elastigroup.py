@@ -338,10 +338,19 @@ RETURN = '''
 ---
 '''
 
+HAS_SPOTINST_SDK = False
+
 from os.path import expanduser
 
-import spotinst
 from ansible.module_utils.basic import AnsibleModule
+
+try:
+    import spotinst
+
+    HAS_SPOTINST_SDK = True
+
+except ImportError:
+    pass
 
 
 def handle_elastigroup(client, module):
@@ -1069,6 +1078,9 @@ def expand_scaling_policies(scaling_policies):
 
 
 def main():
+    if not HAS_SPOTINST_SDK:
+        raise Exception("the Spotinst SDK library is required. (pip install spotinst)")
+
     fields = dict(
         state=dict(default='present', choices=['present', 'absent']),
         do_not_update=dict(default=[], type='list'),
