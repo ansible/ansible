@@ -27,11 +27,11 @@ availability_vs_cost:
     - costOriented
     - balanced
   description:
-    - "The strategy orientation._"
+    - The strategy orientation._
   required: true
 availability_zones:
   description:
-    - "_Information about one or more availability Zones for the group."
+    - _Information about one or more availability Zones for the group.
   fields:
     - name
     - subnet_id
@@ -39,7 +39,7 @@ availability_zones:
   required: true
 block_device_mappings:
   description:
-    - "Array list of block devices that are exposed to the instance, You can specify virtual devices and EBS volumes"
+    - Array list of block devices that are exposed to the instance, You can specify virtual devices and EBS volumes
   fields:
     - device_name
     - no_device
@@ -47,7 +47,7 @@ block_device_mappings:
   required: false
 chef:
   description:
-    - "chef integration"
+    - chef integration
   fields:
     - chef_server
     - organization
@@ -56,23 +56,17 @@ chef:
     - chef_version
   required: false
 description:
-  - "Can create, update, or delete Spotinst AWS Elastigroups"
-  - "Launch configuration is part of the elastigroup configuration, so no additional modules are necessary for handling the launch configuration"
-  - "This module requires that you install the spotinst Python SDK (pip install spotinst)"
-  -
-    ? "You will have to have a credentials file in this location"
-    : ~/.spotinst/credentials
-  -
-    ? "The credentials file must contain a row that looks like this"
-    : ~
-  - "token = <YOUR TOKEN>"
-  -
-    ? "Full documentation available here"
-    : "https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-"
+  - Can create, update, or delete Spotinst AWS Elastigroups
+  - Launch configuration is part of the elastigroup configuration, so no additional modules are necessary for handling the launch configuration
+  - This module requires that you install the spotinst Python SDK (pip install spotinst)
+  - You will have to have a credentials file in this location : ~/.spotinst/credentials
+  - The credentials file must contain a row that looks like this
+  - token = <YOUR TOKEN>
+  - Full documentation available here : https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-
 
 down_scaling_policies:
   description:
-    - "Down scaling policies for this elastigroup"
+    - Down scaling policies for this elastigroup
   fields:
     - policy_name
     - namespace
@@ -95,37 +89,37 @@ down_scaling_policies:
   required: false
 draining_timeout:
   description:
-    - "seconds to allow the instance be drained from incoming TCP connections and detached from ELB before termination, in scale down operations."
+    - seconds to allow the instance be drained from incoming TCP connections and detached from ELB before termination, in scale down operations.
   required: false
 ebs_optimized:
   description:
-    - "Enable EBS optimization for supported instances which are not enabled by default. Note - additional charges will be applied."
+    - Enable EBS optimization for supported instances which are not enabled by default. Note - additional charges will be applied.
   required: false
 ebs_volume_pool:
   description:
-    - "The EBS pool list for re-atatch when available."
+    - he EBS pool list for re-attach when available.
   fields:
     - volume_ids
     - device_name
   required: false
 ecs:
   description:
-    - "ECS Integration"
+    - ECS Integration
   fields:
     - cluster_name
   required: false
 elastic_ips:
   description:
-    - "_List of ElasticIps Allocation Ids to associate to the group instances"
+    - _List of ElasticIps Allocation Ids to associate to the group instances
   required: false
 fallback_to_ondemand:
   description:
-    - "In case of no spots available, Elastigroup will launch an On-demand instance instead"
+    - In case of no spots available, Elastigroup will launch an On-demand instance instead
   required: false
 health_check_grace_period:
   default: 300
   description:
-    - "The amount of time, in seconds, after the instance has launched to starts and check its health."
+    - The amount of time, in seconds, after the instance has launched to starts and check its health.
   required: false
 health_check_type:
   choices:
@@ -135,36 +129,36 @@ health_check_type:
     - MLB
     - EC2
   description:
-    - "he service to use for the health check."
+    - he service to use for the health check.
   required: false
 iam_role_name:
   description:
-    - "The instance profile iamRole name"
-    - "Only use iam_role_arn, or iam_role_name"
+    - The instance profile iamRole name
+    - Only use iam_role_arn, or iam_role_name
   required: false
 iam_role_arn:
   description:
-    - "The instance profile iamRole arn"
-    - "Only use iam_role_arn, or iam_role_name"
+    - The instance profile iamRole arn
+    - Only use iam_role_arn, or iam_role_name
   required: false
 ignore_changes:
   choices:
     - image_id
     - target
   description:
-    - "list of fields on which changes should be ignored when updating"
+    - list of fields on which changes should be ignored when updating
   required: false
 image_id:
   description:
-    - "The image Id used to launch the instance. In case of conflict between Instance type and image type, an error will be returned"
+    - The image Id used to launch the instance. In case of conflict between Instance type and image type, an error will be returned
   required: true
 key_pair:
   description:
-    - "Specify a Key Pair to attach to the instances"
+    - Specify a Key Pair to attach to the instances
   required: true
 kubernetes:
   description:
-    - "kubernetes integration"
+    - kubernetes integration
   fields:
     - api_server
     - token
@@ -175,34 +169,34 @@ lifetime_period:
   required: false
 load_balancers:
   description:
-    - "List of elastic load balancer names"
+    - List of elastic load balancer names
   required: false
 max_size:
   description:
-    - "The upper limit number of instances that you can scale up to"
+    - The upper limit number of instances that you can scale up to
   required: true
 mesosphere:
   description:
-    - "Mesosphere integration"
+    - Mesosphere integration
   fields:
     - api_server
   required: false
 min_size:
   description:
-    - "The lower limit number of instances that you can scale down to"
+    - The lower limit number of instances that you can scale down to
   required: true
 module: spotinst_aws_elastigroup
 monitoring:
   description:
-    - "Describes whether instance Enhanced Monitoring is enabled"
+    - Describes whether instance Enhanced Monitoring is enabled
   required: true
 name:
   description:
-    - "Unique name for elastigroup to be created, updated or deleted"
+    - Unique name for elastigroup to be created, updated or deleted
   required: true
 network_interfaces:
   description:
-    - "List of network interfaces in an EC2 instance for AWS CloudFormation."
+    - List of network interfaces in an EC2 instance for AWS CloudFormation.
   fields:
     - description
     - device_index
@@ -218,22 +212,22 @@ network_interfaces:
   required: false
 on_demand_count:
   description:
-    - "Number of on demand instances to launch. All other instances will be spot instances. Either set this parameter or the risk parameter."
-  required: "Required if risk is not set"
+    - Number of on demand instances to launch. All other instances will be spot instances. Either set this parameter or the risk parameter
+  required: Required if risk is not set
 on_demand_instance_type:
   description:
-    - "On-demand instance type that will be provisioned"
+    - On-demand instance type that will be provisioned
   required: true
 opsworks:
   description:
-    - "opsworks integration"
+    - opsworks integration
   fields:
     - layer_id
   required: false
 options: ~
 persistence:
   description:
-    - "You can register persistence (Stateful) recovery arguments"
+    - You can register persistence (Stateful) recovery arguments
   fields:
     - should_persist_root_device
     - should_persist_block_devices
@@ -242,17 +236,17 @@ persistence:
 product:
   choices:
     - Linux/UNIX
-    - "SUSE Linux"
+    - SUSE Linux
     - Windows
-    - "Linux/UNIX (Amazon VPC)"
-    - "SUSE Linux (Amazon VPC)"
+    - Linux/UNIX (Amazon VPC)
+    - SUSE Linux (Amazon VPC)
     - Windows
   description:
-    - "Operation system type._"
+    - Operation system type._
   required: true
 rancher:
   description:
-    - "Rancher integration"
+    - Rancher integration
   fields:
     - access_key
     - secret_key
@@ -260,7 +254,7 @@ rancher:
   required: false
 rightscale:
   description:
-    - "Rightscale Integration"
+    - Rightscale Integration
   fields:
     - account_id
     - refresh_token
@@ -268,12 +262,12 @@ rightscale:
 risk:
   description:
     -
-      ? "The percentage of Spot instances to launch (range"
-      : "0 - 100)."
-  required: "Required if on_demand_count is not st"
+      ? The percentage of Spot instances to launch (range
+      : 0 - 100).
+  required: Required if on_demand_count is not st
 scheduled_tasks:
   description:
-    - "All scheduled tasks for this group"
+    - All scheduled tasks for this group
   fields:
     - adjustment
     - scale_target_capacity
@@ -289,16 +283,16 @@ scheduled_tasks:
   required: false
 security_group_ids:
   description:
-    - "One or more security group IDs. In case of update it will override the existing Security Group with the new given array"
+    - One or more security group IDs. In case of update it will override the existing Security Group with the new given array
   required: true
-short_description: "Create, update or delete Spotinst AWS Elastigroups"
+short_description: Create, update or delete Spotinst AWS Elastigroups
 shut_down_script:
   description:
-    - "The Base64-encoded shutdown script that executet prior to instnace termination"
+    - The Base64-encoded shutdown script that executet prior to instnace termination
   required: false
 signals:
   description:
-    - "The signals defined for this group"
+    - The signals defined for this group
   fields:
     - name
     - timeout
@@ -309,29 +303,29 @@ spin_up_time:
   required: false
 spot_instance_types:
   description:
-    - "Spot instance type that will be provisioned._"
+    - Spot instance type that will be provisioned._
   required: true
 state:
   choices:
     - present
     - absent
   description:
-    - "create or delete the elastigroup"
+    - create or delete the elastigroup
   required: false
 tags:
   description:
-    - "tags for the elastigroup"
+    - tags for the elastigroup
   fields:
     - key
     - value
   required: false
 target:
   description:
-    - "The number of instances to launch"
+    - The number of instances to launch
   required: true
 target_group_arns:
   description:
-    - "List of target group arns instances should be registered to"
+    - List of target group arns instances should be registered to
   required: false
 tenancy:
   choices:
@@ -349,11 +343,11 @@ unit:
     - instance
     - weight
   description:
-    - "The capacity unit to launch instances by."
+    - The capacity unit to launch instances by.
   required: true
 up_scaling_policies:
   description:
-    - "Up scaling policies for this elastigroup"
+    - Up scaling policies for this elastigroup
   fields:
     - policy_name
     - namespace
@@ -376,11 +370,11 @@ up_scaling_policies:
   required: false
 user_data:
   description:
-    - "he Base64-encoded MIME user data to make available to the instances"
+    - he Base64-encoded MIME user data to make available to the instances
   required: false
 utilize_reserved_instances:
   description:
-    - "In case of any available Reserved Instances, Elastigroup will utilize them before purchasing Spot instances"
+    - In case of any available Reserved Instances, Elastigroup will utilize them before purchasing Spot instances
   required: false
 """
 
