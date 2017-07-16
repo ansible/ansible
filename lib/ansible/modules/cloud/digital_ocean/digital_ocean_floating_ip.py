@@ -197,17 +197,17 @@ class Rest(object):
 def wait_action(module, rest, ip, action_id, timeout=10):
     end_time = time.time() + 10
     while time.time() < end_time:
-        response = rest.get('floating_ips/{}/actions/{}'.format(ip, action_id))
+        response = rest.get('floating_ips/{0}/actions/{1}'.format(ip, action_id))
         status_code = response.status_code
         status = response.json['action']['status']
         # TODO: check status_code == 200?
         if status == 'completed':
             return True
         elif status == 'errored':
-            module.fail_json(msg='Floating ip action error [ip: {}: action: {}]'.format(
+            module.fail_json(msg='Floating ip action error [ip: {0}: action: {1}]'.format(
                 ip, action_id), data=json)
 
-    module.fail_json(msg='Floating ip action timeout [ip: {}: action: {}]'.format(
+    module.fail_json(msg='Floating ip action timeout [ip: {0}: action: {1}]'.format(
         ip, action_id), data=json)
 
 
@@ -218,7 +218,7 @@ def core(module):
     droplet_id = module.params['droplet_id']
     region = module.params['region']
 
-    rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
+    rest = Rest(module, {'Authorization': 'Bearer {0}'.format(api_token),
                          'Content-type': 'application/json'})
 
     if state in ('present'):
@@ -229,7 +229,7 @@ def core(module):
             result = create_floating_ips(module, rest)
 
     elif state in ('absent'):
-        response = rest.delete("floating_ips/{}".format(ip))
+        response = rest.delete("floating_ips/{0}".format(ip))
         status_code = response.status_code
         json = response.json
         if status_code == 204:
@@ -243,13 +243,13 @@ def core(module):
 def get_floating_ip_details(module, rest):
     ip = module.params['ip']
 
-    response = rest.get("floating_ips/{}".format(ip))
+    response = rest.get("floating_ips/{0}".format(ip))
     status_code = response.status_code
     json = response.json
     if status_code == 200:
         return response.json['floating_ip']
     else:
-        module.fail_json(msg="Error assigning floating ip [{}: {}]".format(
+        module.fail_json(msg="Error assigning floating ip [{0}: {1}]".format(
             status_code, response.json["message"]), region=module.params['region'])
 
 
@@ -261,7 +261,7 @@ def assign_floating_id_to_droplet(module, rest):
         "droplet_id": module.params['droplet_id'],
     }
 
-    response = rest.post("floating_ips/{}/actions".format(ip), data=payload)
+    response = rest.post("floating_ips/{0}/actions".format(ip), data=payload)
     status_code = response.status_code
     json = response.json
     if status_code == 201:
@@ -269,7 +269,7 @@ def assign_floating_id_to_droplet(module, rest):
 
         module.exit_json(changed=True, data=response.json)
     else:
-        module.fail_json(msg="Error creating floating ip [{}: {}]".format(
+        module.fail_json(msg="Error creating floating ip [{0}: {1}]".format(
             status_code, response.json["message"]), region=module.params['region'])
 
 
@@ -299,7 +299,7 @@ def create_floating_ips(module, rest):
     if status_code == 202:
         module.exit_json(changed=True, data=response.json)
     else:
-        module.fail_json(msg="Error creating floating ip [{}: {}]".format(
+        module.fail_json(msg="Error creating floating ip [{0}: {1}]".format(
             status_code, response.json["message"]), region=module.params['region'])
 
 
