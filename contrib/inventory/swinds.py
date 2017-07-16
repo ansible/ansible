@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 NOTE:  This software is free to use for any reason or purpose. That said, the
 author request that improvements be submitted back to the repo or forked
-to something public.  
+to something public.
 
 '''
 import simplejson
@@ -38,28 +38,29 @@ except ImportError:
     import simplejson as json
 
 
-#Orion Server IP or DNS/hostname
+# Orion Server IP or DNS/hostname
 server = '10.10.10.10'
-#Orion Username
+# Orion Username
 user = 'ansible'
-#Orion Password
+# Orion Password
 password = 'password'
-#Field for groups
+# Field for groups
 groupField = 'Vendor'
-#Field for host
+# Field for host
 hostField = 'IPAddress'
 
 
 payload = "query=SELECT+" + hostField + "+," + groupField + "+FROM+Orion.Nodes"
-url = "https://" + server + ":17778/SolarWinds/InformationService/v3/Json/Query"
+url = "https://"+server+":17778/SolarWinds/InformationService/v3/Json/Query"
 req = requests.get(url, params=payload, verify=False, auth=(user, password))
 
 jsonget = req.json()
-#json_resp = json.loads(req)
+# json_resp = json.loads(req)
+
 
 class SwInventory(object):
-    
-    #CLI arguments
+
+    # CLI arguments
     def read_cli(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--host')
@@ -81,23 +82,23 @@ class SwInventory(object):
         else:
             self.inventory = self.empty_inventory()
 
-        print (json.dumps(self.inventory, indent=2));
+        print(json.dumps(self.inventory, indent=2))
 
     def get_list(self):
         hostsData = jsonget
         dumped = eval(simplejson.dumps(jsonget))
-        
-        #Inject data below to speed up script
-        final_dict= {'_meta': {'hostvars': {}}}
-        
-        #Loop hosts in groups and remove special chars from group names
+
+        # Inject data below to speed up script
+        final_dict = {'_meta': {'hostvars': {}}}
+
+        # Loop hosts in groups and remove special chars from group names
         for m in dumped['results']:
-            #Allow Upper/lower letters and numbers.  Remove everything else
+            # Allow Upper/lower letters and numbers.  Remove everything else
             m[groupField] = re.sub('[^A-Za-z0-9]+', '', m[groupField])
             if m[groupField] in final_dict:
-                final_dict[ m[groupField] ]['hosts'].append(m[hostField])
+                final_dict[m[groupField]]['hosts'].append(m[hostField])
             else:
-                final_dict[ m[groupField] ]={'hosts':[m[hostField]]}
+                final_dict[m[groupField]] = {'hosts': [m[hostField]]}
 
         return final_dict
 
@@ -108,8 +109,8 @@ class SwInventory(object):
     # Read the command line args passed to the script.
     def read_cli_args(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--list', action = 'store_true')
-        parser.add_argument('--host', action = 'store')
+        parser.add_argument('--list', action='store_true')
+        parser.add_argument('--host', action='store')
         self.args = parser.parse_args()
 
 # Get the inventory.
