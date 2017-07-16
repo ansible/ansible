@@ -199,6 +199,7 @@ Ansible Changes By Release
   * cs_vpn_gateway
 - crypto
   * openssl_csr
+- digital_ocean_floating_ip
 - f5
   * bigip_command
   * bigip_switchport
