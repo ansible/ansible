@@ -207,7 +207,8 @@ Notes
 {% endif %}
 
 {% if not deprecated %}
-{% set support = { 'core': 'This module is maintained by those with core commit privileges', 'curated': 'This module is supported mainly by the community and is curated by core committers.', 'community': 'This module is community maintained without core committer oversight.'} %}
+{% set support = { 'core': 'This module is maintained by those with core commit privileges.', 'curated': 'This module is supported mainly by the community and is curated by core committers.', 'community': 'This module is community maintained without core committer oversight.'} %}
+{% set shipped = { 'ansible': 'This module is is a built-in module and is shipped with Ansible.', 'other': 'This module is a third-party module and is not shipped with Ansible. See the module\'s `source repository`_ for details.'} %}
 {% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
 
 {% if metadata %}
@@ -220,7 +221,6 @@ Status
 This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
 {% endfor %}
 {% endif %}
-
 {% if metadata.supported_by %}
 
 Support
@@ -228,11 +228,33 @@ Support
 
 @{ support[metadata.supported_by] }@
 
-For more information on what this means please read :doc:`modules_support`
+{% if metadata.shipped_by and metadata.shipped_by == 'other' %}
+For more information on what this means please read `Module Support`_.
 
-{% endif %}
-{% endif %}
-{% endif %}
+For help in developing on modules, should you be so inclined, please read the contribution guidelines in the module's `source repository`_, `Testing Ansible`_ and `Developing Modules`_.
+
+.. _`Module Support`: http://docs.ansible.com/ansible/modules_support.html
+
+.. _`Testing Ansible`: http://docs.ansible.com/ansible/dev_guide/testing.html
+
+.. _`Developing Modules`: http://docs.ansible.com/ansible/dev_guide/developing_modules.html
+{% else %}
+For more information on what this means please read :doc:`modules_support`.
 
 For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`dev_guide/testing` and :doc:`dev_guide/developing_modules`.
+{% endif %}
 
+{% endif %}
+{% if metadata.shipped_by %}
+
+Shipment
+~~~~~~~~
+
+@{ shipped[metadata.shipped_by] }@
+
+.. _`source repository`: @{ metadata.other_repo_url }@
+
+{% endif %}
+
+{% endif %}
+{% endif %}

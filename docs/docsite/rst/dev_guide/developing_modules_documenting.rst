@@ -35,7 +35,7 @@ ANSIBLE_METADATA Block
 
 ``ANSIBLE_METADATA`` contains information about the module for use by other tools. At the moment, it informs other tools which type of maintainer the module has and to what degree users can rely on a module's behaviour remaining the same over time.
 
-For new modules, the following block can be simply added into your module
+For new built-in modules, the following block can be simply added into your module
 
 .. code-block:: python
 
@@ -47,6 +47,16 @@ For new modules, the following block can be simply added into your module
 
    * ``metadata_version`` is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
    * Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
+
+The following block indicates that the module is a third-party module and where its repository can be found:
+
+.. code-block:: python
+
+   ANSIBLE_METADATA = {'metadata_version': '1.1',
+                       'status': ['preview'],
+                       'supported_by': 'community',
+                       'shipped_by': 'other',
+                       'other_repo_url': 'http://github.com/great-ansible-modules/my-modules'}
 
 .. note:: Pre-released metdata version
 
@@ -79,6 +89,7 @@ Fields
    of the metadata. We’ll increment Y if we add fields or legal values
    to an existing field. We’ll increment X if we remove fields or values
    or change the type or meaning of a field.
+
 :supported_by: This field records who supports the module.
    Default value is ``community``. Values are:
 
@@ -105,6 +116,40 @@ Fields
    :removed: This module is not present in the release. A stub is
       kept so that documentation can be built. The documentation helps
       users port from the removed module to new modules.
+
+Version 1.1 of the metadata
++++++++++++++++++++++++++++
+
+Structure
+`````````
+
+.. code-block:: python
+
+  ANSIBLE_METADATA = {
+      'metadata_version': '1.1',
+      'supported_by': 'community',
+      'status': ['preview', 'deprecated'],
+      'shipped_by': 'other',
+      'other_repo_url': 'http://github.com/great-ansible-modules/my-modules'
+  }
+
+Fields
+``````
+
+The fields from version 1.0 of the metadata are also valid in version 1.1.
+The following fields have been added:
+
+:shipped_by: This string field records who ships the module.
+   It is optional, and its default value is ``ansible``.
+   The following strings are valid values and have the following meanings:
+
+   :ansible: The module is shipped with Ansible. These modules are termed
+     *built-in modules*.
+   :other: The module is not shipped with Ansible. These modules are termed
+     *third-party modules*.
+
+:other_repo_url: This field records the source code repository of a third-party
+   module. It is optional and has no default. It is ignored for built-in modules.
 
 DOCUMENTATION Block
 -------------------

@@ -45,7 +45,7 @@ Environment setup
 New module development
 ======================
 
-If you are creating a new module that doesn't exist, you would start
+If you are creating a new built-in module that doesn't exist, you would start
 working on a whole new file. Here is an example:
 
 -  Navigate to the directory that you want to develop your new module
