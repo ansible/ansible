@@ -46,7 +46,8 @@ options:
 
   availability_zones:
     description:
-      - (List of Objects) a list of hash/dictionaries of Availability Zones that are configured in the elastigroup; '[{"key":"value", "key":"value"}]';
+      - (List of Objects) a list of hash/dictionaries of Availability Zones that are configured in the elastigroup;
+        '[{"key":"value", "key":"value"}]';
         keys allowed are
         name (String),
         subnet_id (String),
@@ -55,7 +56,9 @@ options:
 
   block_device_mappings:
     description:
-      - (List of Objects) a list of hash/dictionaries of Block Device Mappings that are exposed to the instances in the elastigroup; You can specify virtual devices and EBS volumes.;'[{"key":"value", "key":"value"}]';
+      - (List of Objects) a list of hash/dictionaries of Block Device Mappings that are exposed to the instances in the elastigroup;
+        You can specify virtual devices and EBS volumes.;
+        '[{"key":"value", "key":"value"}]';
         keys allowed are
         device_name (List of Strings),
         virtual_name (String),
@@ -71,30 +74,39 @@ options:
 
   chef:
     description:
-      - (Object) The Chef integration configuration. Expects the following keys - chef_server (String), organization (String), user (String), pem_key (String), chef_version (String)
+      - (Object) The Chef integration configuration.;
+        Expects the following keys - chef_server (String),
+        organization (String),
+        user (String),
+        pem_key (String),
+        chef_version (String)
     required: false
 
   draining_timeout:
     description:
-      - (Integer) Seconds to allow the instance be drained from incoming TCP connections and detached from ELB before termination, in scale down operations.
+      - (Integer) Seconds to allow the instance be drained from incoming TCP connections and detached from ELB before termination.
     required: false
 
   ebs_optimized:
     description:
-      - (Boolean) Enable EBS optimization for supported instances which are not enabled by default. Note - additional charges will be applied.
+      - (Boolean) Enable EBS optimization for supported instances which are not enabled by default.;
+        Note - additional charges will be applied.
     required: false
 
   ebs_volume_pool:
     description:
-      - (List of Objects) a list of hash/dictionaries of EBS devices to reattach to the elastigroup when available; '[{"key":"value", "key":"value"}]';
-        keys allowed are
+      - (List of Objects) a list of hash/dictionaries of EBS devices to reattach to the elastigroup when available;
+        '[{"key":"value", "key":"value"}]';
+        keys allowed are -
         volume_ids (List of Strings),
         device_name (String)
     required: false
 
   ecs:
     description:
-      - (Object) The ECS integration configuration. Expects the following key - cluster_name (String)
+      - (Object) The ECS integration configuration.;
+        Expects the following key -
+        cluster_name (String)
     required: false
 
   elastic_ips:
@@ -146,7 +158,8 @@ options:
 
   image_id:
     description:
-      - (String) The image Id used to launch the instance. In case of conflict between Instance type and image type, an error will be returned
+      - (String) The image Id used to launch the instance.;
+        In case of conflict between Instance type and image type, an error will be returned
     required: true
 
   key_pair:
@@ -156,7 +169,10 @@ options:
 
   kubernetes:
     description:
-      - (Object) The Kubernetes integration configuration. Expects the following keys - api_server (String) and token (String)
+      - (Object) The Kubernetes integration configuration.
+        Expects the following keys -
+        api_server (String),
+        token (String)
     required: false
 
   lifetime_period:
@@ -176,7 +192,9 @@ options:
 
   mesosphere:
     description:
-      - (Object) The Mesosphere integration configuration. Expects the following key - api_server (String)
+      - (Object) The Mesosphere integration configuration.
+        Expects the following key -
+        api_server (String)
     required: false
 
   min_size:
@@ -196,8 +214,9 @@ options:
 
   network_interfaces:
     description:
-      - (List of Objects) a list of hash/dictionaries of network interfaces to add to the elastigroup; '[{"key":"value", "key":"value"}]';
-        keys allowed are
+      - (List of Objects) a list of hash/dictionaries of network interfaces to add to the elastigroup;
+        '[{"key":"value", "key":"value"}]';
+        keys allowed are -
         description (String),
         device_index (Integer),
         secondary_private_ip_address_count (Integer),
@@ -215,7 +234,8 @@ options:
   on_demand_count:
     description:
       - (Integer) Required if risk is not set
-      - Number of on demand instances to launch. All other instances will be spot instances. Either set this parameter or the risk parameter
+      - Number of on demand instances to launch. All other instances will be spot instances.;
+        Either set this parameter or the risk parameter
     required: false
 
   on_demand_instance_type:
@@ -225,12 +245,18 @@ options:
 
   opsworks:
     description:
-      - (Object) The elastigroup OpsWorks integration configration. Expects the following key - layer_id (String)
+      - (Object) The elastigroup OpsWorks integration configration.;
+        Expects the following key -
+        layer_id (String)
     required: false
 
   persistence:
     description:
-      - (Object) The Stateful elastigroup configration. Accepts the following keys - should_persist_root_device (Boolean), should_persist_block_devices (Boolean) and should_persist_private_ip (Boolean)
+      - (Object) The Stateful elastigroup configration.;
+        Accepts the following keys -
+        should_persist_root_device (Boolean),
+        should_persist_block_devices (Boolean),
+        should_persist_private_ip (Boolean)
     required: false
 
   product:
@@ -247,12 +273,19 @@ options:
 
   rancher:
     description:
-      - (Object) The Rancher integration configuration. Expects the following keys - access_key (String), secret_key (String) and master_host (String)
+      - (Object) The Rancher integration configuration.;
+        Expects the following keys -
+        access_key (String),
+        secret_key (String),
+        master_host (String)
     required: false
 
   right_scale:
     description:
-      - (Object) The Rightscale integration configuration. Expects the following keys - account_id (String) and refresh_token (String)
+      - (Object) The Rightscale integration configuration.;
+        Expects the following keys -
+        account_id (String),
+        refresh_token (String)
     required: false
 
   risk:
