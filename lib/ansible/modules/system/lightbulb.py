@@ -32,6 +32,15 @@ description:
     - Lightbulb.
 '''
 
+
+EXAMPLES = '''
+- name: lightbulb
+  lightbulb:
+'''
+
+
+RETURN = ''''''
+
 from ansible.module_utils.basic import AnsibleModule
 
 
