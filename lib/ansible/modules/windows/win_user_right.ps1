@@ -23,6 +23,7 @@ $ErrorActionPreference = 'Stop'
 
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $users = Get-AnsibleParam -obj $params -name "users" -type "list" -failifempty $true
@@ -34,18 +35,18 @@ $result = @{
     removed = @()
 }
 
+if ($diff_mode) {
+    $result.diff = @{}
+}
+
 Function Get-Username($sid) {
     # converts the SID (if it is one) to a username
     # this sid is in the form exported by the SecEdit ini file (*S-.-..)
-    if (-not $sid.StartsWith("*S-")) {
-        $sid = Get-SID -account_name $sid
-    } else {
-        $sid = $sid.substring(1)
-    }
 
+    $sid = $sid.substring(1)
     $object = New-Object System.Security.Principal.SecurityIdentifier($sid)
     $user = $object.Translate([System.Security.Principal.NTAccount])
-    $user.Value
+    return $user.Value
 }
 
 Function Get-SID($account_name) {
@@ -109,7 +110,7 @@ Function Get-SID($account_name) {
         Fail-Json $result "Account Name: $account_name is not a valid account, cannot get SID: $($_.Exception.Message)"
     }
     
-    $account_sid.Value
+    return $account_sid.Value
 }
 
 Function Run-SecEdit($arguments) {
@@ -134,76 +135,46 @@ Function Run-SecEdit($arguments) {
         rc = $LASTEXITCODE
     }
 
-    $return
+    return $return
 }
 
-Function Compare-List($existing_list, $new_list) {
-    $comparison = @{
-        mismatch = $false
-        added = @()
-        removed = @()
-    }
+Function Export-SecEdit() {
+    $secedit_ini_path = [IO.Path]::GetTempFileName()
+    # while this will technically make a change to the system in check mode by
+    # creating a new file, we need these values to be able to do anything
+    # substantial in check mode
+    $export_result = Run-SecEdit -arguments @("/export", "/cfg", $secedit_ini_path, "/quiet")
 
-    foreach ($entry in $existing_list) {
-        if ($new_list -notcontains $entry) {
-            $comparison.removed += Get-Username -sid $entry
-            $comparison.mismatch = $true
-        }
+    # check the return code and if the file has been populated, otherwise error out
+    if (($export_result.rc -ne 0) -or ((Get-Item -Path $secedit_ini_path).Length -eq 0)) {
+        Remove-Item -Path $secedit_ini_path -Force
+        $result.rc = $export_result.rc
+        $result.stdout = $export_result.stdout
+        $result.stderr = $export_result.stderr
+        Fail-Json $result "Failed to export secedit.ini file to $($secedit_ini_path)"
     }
-    foreach ($entry in $new_list) {
-        if ($existing_list -notcontains $entry) {
-            $comparison.added += Get-Username -sid $entry
-            $comparison.mismatch = $true
-        }
-    }
+    $secedit_ini = ConvertFrom-Ini -file_path $secedit_ini_path
 
-    $comparison
+    return $secedit_ini
 }
 
-Function Build-NewUserList($action, $users, $existing_users) {
-    $new_users = @()
-    if ($action -eq "remove") {
-        foreach ($existing_user in $existing_users) {
-            $user_match = $true
-            foreach ($user in $users) {
-                $user_sid = Get-SID -account_name $user
-                if ($existing_user -eq "*$user_sid") {
-                    $user_match = $false
-                }
-            }
+Function Import-SecEdit($ini) {
+    $secedit_ini_path = [IO.Path]::GetTempFileName()
+    $secedit_db_path = [IO.Path]::GetTempFileName()
+    Remove-Item -Path $secedit_db_path -Force # needs to be deleted for SecEdit.exe /import to work
 
-            if ($user_match) {
-                $new_users += $existing_user
-            }
-        }
-    } elseif ($action -eq "add") {
-        $new_users = $existing_users
-        foreach ($user in $users) {
-            $user_sid = Get-SID -account_name $user
-            $new_users += "*$user_sid"
-        }
-    } else {
-        foreach ($user in $users) {
-            $user_sid = Get-SID -account_name $user
-            $new_users += "*$user_sid"
-        }
+    $ini_contents = ConvertTo-Ini -ini $ini
+    Set-Content -Path $secedit_ini_path -Value $ini_contents
+
+    $import_result = Run-SecEdit -arguments @("/configure", "/db", $secedit_db_path, "/cfg", $secedit_ini_path, "/quiet")
+    $result.import_log = $import_result.log
+    Remove-Item -Path $secedit_ini_path -Force
+    if ($import_result.rc -ne 0) {
+        $result.rc = $import_result.rc
+        $result.stdout = $import_result.stdout
+        $result.stderr = $import_result.stderr
+        Fail-Json $result "Failed to import secedit.ini file from $($secedit_ini_path)"
     }
-
-    ,$new_users
-}
-
-Function Build-ExistingUserList($existing_users) {
-    $users = @()
-    foreach ($existing_user in ($existing_users -split ",")) {
-        if ($existing_user.StartsWith("*S")) {
-            $users += $existing_user
-        } else {
-            $user_sid = Get-SID -account_name $existing_user
-            $users += "*$user_sid"
-        }
-    }
-
-    ,$users
 }
 
 Function ConvertTo-Ini($ini) {
@@ -217,13 +188,11 @@ Function ConvertTo-Ini($ini) {
             $value_key = $value.Name
             $value_value = $value.Value
 
-            if ($value_value -ne $null) {
-                $content += "$value_key = $value_value"
-            }
+            $content += "$value_key = $value_value"
         }
     }
 
-    $content -join "`r`n"
+    return $content -join "`r`n"
 }
 
 Function ConvertFrom-Ini($file_path) {
@@ -243,109 +212,103 @@ Function ConvertFrom-Ini($file_path) {
         }
     }
 
-    $ini
+    return $ini
 }
 
-### Main code below ###
+Function Get-ExistingUsers($secedit_right_entry, $right) {
+    $existing_users = @()
+    if ($secedit_right_entry.ContainsKey($right)) {
+        foreach ($existing_user in ($secedit_right_entry.$right -split ",")) {
+            if ($existing_user.StartsWith("*S")) {
+                $existing_users += $existing_user
+            } else {
+                $user_sid = Get-SID -account_name $existing_user
+                $existing_users += "*$user_sid"
+            }
+        }
+    }
+    
+    return ,$existing_users
+}
+
+Function Compare-UserList($existing_users, $new_users) {  
+    $added_users = [String[]]@()
+    $removed_users = [String[]]@()
+    if ($action -eq "add") {
+        $added_users = [Linq.Enumerable]::Except($new_users, $existing_users)
+    } elseif ($action -eq "remove") {
+        $removed_users = [Linq.Enumerable]::Intersect($new_users, $existing_users)
+    } else {
+        $added_users = [Linq.Enumerable]::Except($new_users, $existing_users)
+        $removed_users = [Linq.Enumerable]::Except($existing_users, $new_users)
+    }
+
+    $change_result = @{
+        added = $added_users
+        removed = $removed_users
+    }
+
+    return $change_result
+}
 
 $ini_right_key = "Privilege Rights"
-$secedit_ini_path = [IO.Path]::GetTempFileName()
-# while this will technically make a change to the system in check mode by
-# creating a new file, we need these values to be able to do anything
-# substantial in check mode
-$export_result = Run-SecEdit -arguments @("/export", "/cfg", $secedit_ini_path, "/quiet")
 
-# check the return code and if the file has been populated, otherwise error out
-if (($export_result.rc -ne 0) -or ((Get-Item -Path $secedit_ini_path).Length -eq 0)) {
-    Remove-Item -Path $secedit_ini_path
-    Fail-Json $result "Failed to export secedit.ini file to $($secedit_ini_path).`nRC: $($export_result.rc)`nSTDOUT: $($export_result.stdout)`nSTDERR: $($export_result.stderr)`nLOG: $($export_result.log)"
+$new_users = [System.Collections.ArrayList]@()
+foreach ($user in $users) {
+    $new_users.Add("*$(Get-SID -account_name $user)")
 }
-$secedit_ini = ConvertFrom-Ini -file_path $secedit_ini_path
-Remove-Item -Path $secedit_ini_path
+$new_users = [String[]]$new_users.ToArray()
 
-$will_change = $false
-if ($secedit_ini.$ini_right_key.ContainsKey($name)) {
-    $existing_users = Build-ExistingUserList -existing_users $secedit_ini.$ini_right_key.$name
-    $new_users = Build-NewUserList -action $action -users $users -existing_users $existing_users
+$secedit_ini = Export-SecEdit
+$existing_users = [String[]](Get-ExistingUsers -secedit_right_entry $secedit_ini.$ini_right_key -right $name)
+$change_result = Compare-UserList -existing_users $existing_users -new_users $new_users
 
-    # sort the user objects for later comparison and remove duplicates
-    $new_users = $new_users | Sort-Object -Unique
-    $existing_users = $existing_users | Sort-Object -Unique
+if (($change_result.added.Length -gt 0) -or ($change_result.removed.Length -gt 0)) {
+    $diff_text = "[$name]`n"
 
-    # compare the list and make changes as necessary
-    if ($new_users.Length -eq 0) {
-        $will_change = $true
+    $new_user_list = [System.Collections.ArrayList]$existing_users
+    foreach ($user in $change_result.removed) {
+        $user_name = Get-Username -sid $user
+        $result.removed += $user_name
+        $diff_text += "-$user_name`n"
+        $new_user_list.Remove($user)
+    }
+    foreach ($user in $change_result.added) {
+        $user_name = Get-Username -sid $user
+        $result.added += $user_name
+        $diff_text += "+$user_name`n"
+        $new_user_list.Add($user)
+    }
+    
+    if ($new_user_list.Count -eq 0) {
+        $diff_text = "-$diff_text"
         $secedit_ini.$ini_right_key.$name = $null
+    } else {
+        if ($existing_users.Count -eq 0) {
+            $diff_text = "+$diff_text"
+        }
+        $secedit_ini.$ini_right_key.$name = $new_user_list -join ","
     }
 
-    $comparison = Compare-List -existing_list $existing_users -new_list $new_users
-    if ($comparison.mismatch -eq $true) {
-        foreach ($added in $comparison.added) {
-            $result.added += $added
-        }
-        foreach ($removed in $comparison.removed) {
-            $result.removed += $removed
-        }
-        $will_change = $true
-        $secedit_ini.$ini_right_key.$name = $new_users -join ","
-    }
-} else {
-    if ($users.Length -gt 0 -and (@("add", "set") -contains $action)) {
-        $will_change = $true
-        $new_users = @()
-        foreach ($user in $users) {
-            $username = Get-Username -sid $user
-            $result.added += $username
-            $new_users += "*$(Get-SID -account_name $user)"
-        }
-        $secedit_ini.$ini_right_key.$name = $new_users -join ","
-    }
-}
-
-if ($will_change) {
-    $ini_contents = ConvertTo-Ini -ini $secedit_ini
-    Set-Content -Path $secedit_ini_path -Value $ini_contents -Encoding Unicode -WhatIf:$check_mode
     $result.changed = $true
-
+    if ($diff_mode) {
+        $result.diff.prepared = $diff_text
+    }
     if (-not $check_mode) {
-        $secedit_db_path = [IO.Path]::GetTempFileName()
-        Remove-Item -Path $secedit_db_path -Force # needs to be deleted for SecEdit.exe /import to work
+        Import-SecEdit -ini $secedit_ini
 
-        $import_result = Run-SecEdit -arguments @("/configure", "/db", $secedit_db_path, "/cfg", $secedit_ini_path, "/quiet")
-        $result.changed = $true
-        $result.import_log = $import_result.log
-        Remove-Item -Path $secedit_ini_path -Force
-        if ($import_result.rc -ne 0) {
-            Fail-Json $result "Failed to import secedit.ini file from $($secedit_ini_path).`nRC: $($import_result.rc)`nSTDOUT: $($import_result.stdout)`nSTDERR: $($import_result.stderr)`nLOG: $($import_result.log)"
-        }
-
-        # secedit doesn't error out on improper entries, re-export and verify
-        # the changes occurred
-        $export_result = Run-SecEdit -arguments @("/export", "/cfg", $secedit_ini_path, "/quiet")
-
-        # check the return code and if the file has been populated, otherwise error out
-        if (($export_result.rc -ne 0) -or ((Get-Item -Path $secedit_ini_path).Length -eq 0)) {
-            Remove-Item -Path $secedit_ini_path # file is empty and we don't need it
-            Fail-Json $result "Failed to export secedit.ini file to $($secedit_ini_path).`nRC: $($export_result.rc)`nSTDOUT: $($export_result.stdout)`nSTDERR: $($export_result.stderr)`nLOG: $($export_result.log)"
-        }
-        $secedit_ini = ConvertFrom-Ini -file_path $secedit_ini_path
-        Remove-Item -Path $secedit_ini_path
-
+        # verify the changes were applied successfully
+        $secedit_ini = Export-SecEdit
         if ($secedit_ini.$ini_right_key.ContainsKey($name)) {
-            $existing_users = Build-ExistingUserList -existing_users $secedit_ini.$ini_right_key.$name
-            $new_users = Build-NewUserList -action $action -users $users -existing_users $existing_users
+            $existing_users = [String[]] (Get-ExistingUsers -secedit_right_entry $secedit_ini.$ini_right_key -right $name)
+            $change_result = Compare-UserList -existing_users $existing_users -new_users $new_users
 
-            # sort the user objects for later comparison and remove duplicates
-            $new_users = $new_users | Sort-Object -Unique
-            $existing_users = $existing_users | Sort-Object -Unique
-
-            $comparison = Compare-List -existing_list $existing_users -new_list $new_users
-            if ($comparison.mismatch -eq $true) {
+            if (($change_result.added.Length -gt 0) -or ($change_result.removed.Length -gt 0)) {
                 Fail-Json $result "Failed to modify right $name, right membership does not match expected membership"
             }
         } else {
-            if ($users.Length -gt 0 -and (@("add", "set") -contains $action)) {
-                Fail-Json $result "Failed to modify right $name, right entry did not exist after import"
+            if ($new_user_list.Count -gt 0) {
+                Fail-Json $result "Failed to modify right $name, invalid right name"
             }
         }
     }

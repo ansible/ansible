@@ -4,7 +4,7 @@
     name: FailRight
     users: Administrator
   register: fail_invalid_right
-  failed_when: fail_invalid_right.msg != 'Failed to modify right FailRight, right entry did not exist after import'
+  failed_when: fail_invalid_right.msg != 'Failed to modify right FailRight, invalid right name'
 
 - name: fail with invalid username
   win_user_right:
@@ -60,7 +60,7 @@
   assert:
     that:
     - set_administrator_check|changed
-    - set_administrator_check.added == ['{{ansible_hostname}}\Administrator']
+    - set_administrator_check.added == ["{{ansible_hostname}}\\Administrator"]
     - set_administrator_check.removed == []
     - set_administrator_actual_check.users == []
 
@@ -80,7 +80,7 @@
   assert:
     that:
     - set_administrator|changed
-    - set_administrator.added == ['{{ansible_hostname}}\Administrator']
+    - set_administrator.added == ["{{ansible_hostname}}\\Administrator"]
     - set_administrator.removed == []
     - set_administrator_actual.users == ['Administrator']
 
@@ -115,7 +115,7 @@
   assert:
     that:
     - remove_right_check|changed
-    - remove_right_check.removed == ['{{ansible_hostname}}\Administrator']
+    - remove_right_check.removed == ["{{ansible_hostname}}\\Administrator"]
     - remove_right_check.added == []
     - remove_right_actual_check.users == ['Administrator']
 
@@ -135,7 +135,7 @@
   assert:
     that:
     - remove_right|changed
-    - remove_right.removed == ['{{ansible_hostname}}\Administrator']
+    - remove_right.removed == ["{{ansible_hostname}}\\Administrator"]
     - remove_right.added == []
     - remove_right_actual.users == []
 
@@ -171,7 +171,7 @@
     that:
     - add_right_on_empty_check|changed
     - add_right_on_empty_check.removed == []
-    - add_right_on_empty_check.added == ['{{ansible_hostname}}\Administrator', 'BUILTIN\Administrators']
+    - add_right_on_empty_check.added == ["{{ansible_hostname}}\\Administrator", "BUILTIN\\Administrators"]
     - add_right_on_empty_actual_check.users == []
 
 - name: add to empty right
@@ -191,8 +191,8 @@
     that:
     - add_right_on_empty|changed
     - add_right_on_empty.removed == []
-    - add_right_on_empty.added == ['{{ansible_hostname}}\Administrator', 'BUILTIN\Administrators']
-    - add_right_on_empty_actual.users == ['Administrator', 'BUILTIN\Administrators']
+    - add_right_on_empty.added == ["{{ansible_hostname}}\\Administrator", "BUILTIN\\Administrators"]
+    - add_right_on_empty_actual.users == ["Administrator", "BUILTIN\\Administrators"]
 
 - name: add to empty right again
   win_user_right:
@@ -226,8 +226,8 @@
     that:
     - add_right_on_existing_check|changed
     - add_right_on_existing_check.removed == []
-    - add_right_on_existing_check.added == ["BUILTIN\\Users", "BUILTIN\\Guests"]
-    - add_right_on_existing_actual_check.users == ['Administrator', 'BUILTIN\Administrators']
+    - add_right_on_existing_check.added == ["BUILTIN\\Guests", "BUILTIN\\Users"]
+    - add_right_on_existing_actual_check.users == ["Administrator", "BUILTIN\\Administrators"]
 
 - name: add to existing right
   win_user_right:
@@ -246,8 +246,8 @@
     that:
     - add_right_on_existing|changed
     - add_right_on_existing.removed == []
-    - add_right_on_existing.added == ["BUILTIN\\Users", "BUILTIN\\Guests"]
-    - add_right_on_existing_actual.users == ['Administrator', 'BUILTIN\Administrators', "BUILTIN\\Users", "BUILTIN\\Guests"]
+    - add_right_on_existing.added == ["BUILTIN\\Guests", "BUILTIN\\Users"]
+    - add_right_on_existing_actual.users == ["Administrator", "BUILTIN\\Administrators", "BUILTIN\\Users", "BUILTIN\\Guests"]
 
 - name: add to existing right again
   win_user_right:
@@ -280,9 +280,9 @@
   assert:
     that:
     - remove_on_existing_check|changed
-    - remove_on_existing_check.removed == ['{{ansible_hostname}}\Administrator', "BUILTIN\\Guests"]
+    - remove_on_existing_check.removed == ["BUILTIN\\Guests", "{{ansible_hostname}}\\Administrator"]
     - remove_on_existing_check.added == []
-    - remove_on_existing_actual_check.users == ['Administrator', 'BUILTIN\Administrators', "BUILTIN\\Users", "BUILTIN\\Guests"]
+    - remove_on_existing_actual_check.users == ["Administrator", "BUILTIN\\Administrators", "BUILTIN\\Users", "BUILTIN\\Guests"]
 
 - name: remove from existing
   win_user_right:
@@ -300,9 +300,9 @@
   assert:
     that:
     - remove_on_existing|changed
-    - remove_on_existing.removed == ['{{ansible_hostname}}\Administrator', "BUILTIN\\Guests"]
+    - remove_on_existing.removed == ["BUILTIN\\Guests", "{{ansible_hostname}}\\Administrator"]
     - remove_on_existing.added == []
-    - remove_on_existing_actual.users == ['BUILTIN\Administrators', "BUILTIN\\Users"]
+    - remove_on_existing_actual.users == ["BUILTIN\\Administrators", "BUILTIN\\Users"]
 
 - name: remove from existing again
   win_user_right:
@@ -337,7 +337,7 @@
     - set_on_existing_check|changed
     - set_on_existing_check.removed == ["BUILTIN\\Users"]
     - set_on_existing_check.added == ["NT AUTHORITY\\SYSTEM", "BUILTIN\\Backup Operators"]
-    - set_on_existing_actual_check.users == ['BUILTIN\Administrators', "BUILTIN\\Users"]
+    - set_on_existing_actual_check.users == ["BUILTIN\\Administrators", "BUILTIN\\Users"]
 
 - name: set to existing
   win_user_right:
@@ -357,7 +357,7 @@
     - set_on_existing|changed
     - set_on_existing.removed == ["BUILTIN\\Users"]
     - set_on_existing.added == ["NT AUTHORITY\\SYSTEM", "BUILTIN\\Backup Operators"]
-    - set_on_existing_actual.users == ["NT AUTHORITY\\SYSTEM", 'BUILTIN\Administrators', "BUILTIN\\Backup Operators"]
+    - set_on_existing_actual.users == ["NT AUTHORITY\\SYSTEM", "BUILTIN\\Administrators", "BUILTIN\\Backup Operators"]
 
 - name: set to existing again
   win_user_right:
