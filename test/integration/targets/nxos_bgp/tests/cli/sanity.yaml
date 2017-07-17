@@ -74,7 +74,6 @@
       maxas_limit: 50
       neighbor_down_fib_accelerate: true
       reconnect_interval: 55
-      router_id: 192.168.0.66
       shutdown: true
       timer_bestpath_limit: 255
       timer_bgp_hold: 110
