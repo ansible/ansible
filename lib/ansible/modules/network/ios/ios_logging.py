@@ -109,8 +109,11 @@ from ansible.module_utils.ios import ios_argument_spec, check_args
 
 
 def validate_size(value, module):
-    if value and not int(4096) <= value <= int(4294967295):
-        module.fail_json(msg='size must be between 4096 and 4294967295')
+    if value:
+        if not int(4096) <= value <= int(4294967295):
+            module.fail_json(msg='size must be between 4096 and 4294967295')
+        else:
+            return value
 
 
 def map_obj_to_commands(updates, module):
@@ -171,6 +174,8 @@ def parse_facility(line):
 
 
 def parse_size(line, dest):
+    size = None
+
     if dest == 'buffered':
         match = re.search(r'logging buffered (\S+)', line, re.M)
         if match:
@@ -184,8 +189,6 @@ def parse_size(line, dest):
                     size = str(match.group(1))
                 else:
                     size = str(4096)
-    else:
-        size = None
 
     return size
 
@@ -260,16 +263,17 @@ def map_params_to_obj(module):
             if 'level' not in d:
                 d['level'] = module.params['level']
 
-            if d['dest'] != 'buffered':
-                d['size'] = None
-
-            elif d['dest'] is 'buffered':
+            if d['dest'] == 'buffered':
                 if 'size' in d:
-                    d['size'] = str(d['size'])
+                    d['size'] = str(validate_size(d['size'], module))
                 elif 'size' not in d:
                     d['size'] = str(4096)
                 else:
                     pass
+
+            if d['dest'] != 'buffered':
+                d['size'] = None
+
 
             obj.append(d)
 
@@ -297,7 +301,7 @@ def map_params_to_obj(module):
             obj.append({
                 'dest': module.params['dest'],
                 'name': module.params['name'],
-                'size': str(module.params['size']),
+                'size': str(validate_size(module.params['size'], module)),
                 'facility': module.params['facility'],
                 'level': module.params['level'],
                 'state': module.params['state']
