@@ -229,7 +229,7 @@ class VariableManager:
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
-            def _get_plugin_vars(plugin, loader, path, entities):
+            def _get_plugin_vars(plugin, path, entities):
                 data = {}
                 try:
                     data = plugin.get_vars(self._loader, path, entities)
@@ -258,14 +258,14 @@ class VariableManager:
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
-                        data = combine_vars(data, _get_plugin_vars(plugin, self._loader, inventory_dir, entities))
+                        data = combine_vars(data, _get_plugin_vars(plugin, inventory_dir, entities))
                 return data
 
             def _plugins_play(entities):
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
-                    data = combine_vars(data, _get_plugin_vars(plugin, self._loader, basedir, entities))
+                    data = combine_vars(data, _get_plugin_vars(plugin, basedir, entities))
                 return data
 
             # configurable functions that are sortable via config
