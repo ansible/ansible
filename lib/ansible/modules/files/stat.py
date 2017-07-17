@@ -292,10 +292,16 @@ stat:
             type: boolean
             sample: False
         lnk_source:
-            description: Original path
+            description: Target of the symlink normalized for the remote filesystem
             returned: success, path exists and user can read stats and the path is a symbolic link
             type: string
             sample: /home/foobar/21102015-1445431274-908472971
+        lnk_target:
+            description: Target of the symlink.  Note that relative paths remain relative
+            returned: success, path exists and user can read stats and the path is a symbolic link
+            type: string
+            sample: ../foobar/21102015-1445431274-908472971
+            version_added: 2.4
         md5:
             description: md5 hash of the path
             returned: success, path exists and user can read stats and path
@@ -481,6 +487,7 @@ def main():
     # symlink info
     if output.get('islnk'):
         output['lnk_source'] = os.path.realpath(b_path)
+        output['lnk_target'] = os.readlink(b_path)
 
     try:  # user data
         pw = pwd.getpwuid(st.st_uid)
