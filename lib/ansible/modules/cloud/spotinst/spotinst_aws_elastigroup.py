@@ -16,7 +16,8 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'curated',
+                    'version_added': 2.4}
 
 DOCUMENTATION = """
 ---
@@ -33,6 +34,7 @@ description:
     token = <YOUR TOKEN>
     Full documentation available at https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-
 options:
+
   availability_vs_cost:
     choices:
       - availabilityOriented
@@ -41,51 +43,76 @@ options:
     description:
       - The strategy orientation.
     required: true
+
   availability_zones:
     description:
-      - _Information about one or more availability Zones for the group.
+      - a list of hash/dictionaries of Availability Zones that are configured in the elastigroup; '[{"key":"value", "key":"value"}]';
+        keys allowed are
+        name (String),
+        subnet_id (String),
+        placement_group_name (String),
     required: true
+
   block_device_mappings:
     description:
-      - Array list of block devices that are exposed to the instance, You can specify virtual devices and EBS volumes
+      - a list of hash/dictionaries of Block Device Mappings that are exposed to the instances in the elastigroup; You can specify virtual devices and EBS volumes.;'[{"key":"value", "key":"value"}]';
+        keys allowed are
+        device_name (List of Strings),
+        virtual_name (String),
+        no_device (String),
+        ebs (Object, expects the following keys-
+        delete_on_termination(Boolean),
+        encrypted(Boolean),
+        iops (Integer),
+        snapshot_id(Integer),
+        volume_type(String),
+        volume_size(Integer))
     required: false
+
   chef:
     description:
-      - chef integration
+      - The Chef integration configuration. Expects the following keys - chef_server (String), organization (String), user (String), pem_key (String), chef_version (String)
     required: false
-  down_scaling_policies:
-    description:
-      - Down scaling policies for this elastigroup
-    required: false
+
   draining_timeout:
     description:
       - seconds to allow the instance be drained from incoming TCP connections and detached from ELB before termination, in scale down operations.
     required: false
+
   ebs_optimized:
     description:
       - Enable EBS optimization for supported instances which are not enabled by default. Note - additional charges will be applied.
     required: false
+
   ebs_volume_pool:
     description:
-      - he EBS pool list for re-attach when available.
+      - a list of hash/dictionaries of EBS devices to reattach to the elastigroup when available; '[{"key":"value", "key":"value"}]';
+        keys allowed are
+        volume_ids (List of Strings),
+        device_name (String)
     required: false
+
   ecs:
     description:
-      - ECS Integration
+      - The ECS integration configuration. Expects the following key - cluster_name (String)
     required: false
+
   elastic_ips:
     description:
-      - _List of ElasticIps Allocation Ids to associate to the group instances
+      - (List of Strings) List of ElasticIps Allocation Ids to associate to the group instances
     required: false
+
   fallback_to_ondemand:
     description:
-      - In case of no spots available, Elastigroup will launch an On-demand instance instead
+      - (Boolean) In case of no spots available, Elastigroup will launch an On-demand instance instead
     required: false
+
   health_check_grace_period:
     description:
       - The amount of time, in seconds, after the instance has launched to starts and check its health.
     default: 300
     required: false
+
   health_check_type:
     choices:
       - ELB
@@ -96,16 +123,19 @@ options:
     description:
       - he service to use for the health check.
     required: false
+
   iam_role_name:
     description:
       - The instance profile iamRole name
       - Only use iam_role_arn, or iam_role_name
     required: false
+
   iam_role_arn:
     description:
       - The instance profile iamRole arn
       - Only use iam_role_arn, or iam_role_name
     required: false
+
   ignore_changes:
     choices:
       - image_id
@@ -113,67 +143,96 @@ options:
     description:
       - list of fields on which changes should be ignored when updating
     required: false
+
   image_id:
     description:
       - The image Id used to launch the instance. In case of conflict between Instance type and image type, an error will be returned
     required: true
+
   key_pair:
     description:
       - Specify a Key Pair to attach to the instances
     required: true
+
   kubernetes:
     description:
-      - kubernetes integration
+      - The Kubernetes integration configuration. Expects the following keys - api_server (String) and token (String)
     required: false
+
   lifetime_period:
     description:
       - lifetime period
     required: false
+
   load_balancers:
     description:
       - List of elastic load balancer names
     required: false
+
   max_size:
     description:
       - The upper limit number of instances that you can scale up to
     required: true
+
   mesosphere:
     description:
-      - Mesosphere integration
+      - The Mesosphere integration configuration. Expects the following key - api_server (String)
     required: false
+
   min_size:
     description:
       - The lower limit number of instances that you can scale down to
     required: true
+
   monitoring:
     description:
       - Describes whether instance Enhanced Monitoring is enabled
     required: true
+
   name:
     description:
       - Unique name for elastigroup to be created, updated or deleted
     required: true
+
   network_interfaces:
     description:
-      - List of network interfaces in an EC2 instance for AWS CloudFormation.
+      - a list of hash/dictionaries of network interfaces to add to the elastigroup; '[{"key":"value", "key":"value"}]';
+        keys allowed are
+        description (String),
+        device_index (Integer),
+        secondary_private_ip_address_count (Integer),
+        associate_public_ip_address (Boolean),
+        delete_on_termination (Boolean),
+        groups (List of Strings),
+        network_interface_id (String),
+        private_ip_address (String),
+        subnet_id (String),
+        associate_ipv6_address (Boolean),
+        private_ip_addresses (List of Objects, Keys allowed are privateIpAddress (String, required) and primary (Boolean))
+
     required: false
+
   on_demand_count:
     description:
       - Required if risk is not set
       - Number of on demand instances to launch. All other instances will be spot instances. Either set this parameter or the risk parameter
     required: false
+
   on_demand_instance_type:
     description:
       - On-demand instance type that will be provisioned
     required: true
+
   opsworks:
     description:
-      - opsworks integration
+      - The elastigroup OpsWorks integration configration. Expects the following key - layer_id (String)
     required: false
+
   persistence:
     description:
-      - You can register persistence (Stateful) recovery arguments
+      - The Stateful elastigroup configration. Accepts the following keys - should_persist_root_device (Boolean), should_persist_block_devices (Boolean) and should_persist_private_ip (Boolean)
     required: false
+
   product:
     choices:
       - Linux/UNIX
@@ -185,42 +244,64 @@ options:
     description:
       - Operation system type._
     required: true
+
   rancher:
     description:
-      - Rancher integration
+      - The Rancher integration configuration. Expects the following keys - access_key (String), secret_key (String) and master_host (String)
     required: false
-  rightscale:
+
+  right_scale:
     description:
-      - Rightscale Integration
+      - The Rightscale integration configuration. Expects the following keys - account_id (String) and refresh_token (String)
     required: false
+
   risk:
     description:
       - required if on demand is not set. The percentage of Spot instances to launch (0 - 100).
     required: false
+
   scheduled_tasks:
     description:
-      - All scheduled tasks for this group
+      - a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]';
+        keys allowed are
+        adjustment (Integer),
+        scale_target_capacity (Integer),
+        scale_min_capacity (Integer),
+        scale_max_capacity (Integer),
+        adjustment_percentage (Integer),
+        batch_size_percentage (Integer),
+        cron_expression (String),
+        frequency (String),
+        grace_period (Integer),
+        task_type (String, required),
+        is_enabled (Boolean)
     required: false
+
   security_group_ids:
     description:
       - One or more security group IDs. In case of update it will override the existing Security Group with the new given array
     required: true
+
   shut_down_script:
     description:
       - The Base64-encoded shutdown script that executet prior to instnace termination
     required: false
+
   signals:
     description:
-      - The signals defined for this group
+      - a list of hash/dictionaries of signals to configure in the elastigroup; keys allowed are name (String, required) and timeout (Integer)
     required: false
+
   spin_up_time:
     description:
       - spin up time for the instance
     required: false
+
   spot_instance_types:
     description:
       - Spot instance type that will be provisioned.
     required: true
+
   state:
     choices:
       - present
@@ -228,18 +309,22 @@ options:
     description:
       - create or delete the elastigroup
     required: false
+
   tags:
     description:
-      - tags for the elastigroup
+      - a list of hash/dictionaries of tags to configure in the elastigroup; keys allowed are key (String, required) and value (String, required)
     required: false
+
   target:
     description:
       - The number of instances to launch
     required: true
+
   target_group_arns:
     description:
       - List of target group arns instances should be registered to
     required: false
+
   tenancy:
     choices:
       - default
@@ -247,28 +332,82 @@ options:
     description:
       - dedicated vs shared tenancy
     required: false
+
   terminate_at_end_of_billing_hour:
     description:
       - terminate at the end of billing hour
     required: false
+
   unit:
     choices:
       - instance
       - weight
     description:
-      - The capacity unit to launch instances by.
+      - (String) The capacity unit to launch instances by.
     required: true
+
   up_scaling_policies:
     description:
-      - Up scaling policies for this elastigroup
+      - a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]'; keys allowed
+        are policy_name (String, required),
+        namespace (String, required),
+        metric_name (String, required),
+        dimensions (List of Objects, Keys allowed are name (String, required) and value (String)),
+        statistic (String, required)
+        evaluation_periods (String, required),
+        period (String, required),
+        threshold (String, required),
+        cooldown (String, required),
+        unit (String, required),
+        operator (String, required),
+        action_type (String, required),
+        adjustment (String),
+        min_target_capacity (String),
+        target (String),
+        maximum (String),
+        minimum (String)
     required: false
+
+  down_scaling_policies:
+    description:
+      - a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]'; keys allowed
+        are policy_name (String, required),
+        namespace (String, required),
+        metric_name (String, required),
+        dimensions (list of objects, Keys allowed are name (String, required) and value (String)),
+        statistic (String, required),
+        evaluation_periods (String, required),
+        period (String, required),
+        threshold (String, required),
+        cooldown (String, required),
+        unit (String, required),
+        operator (String, required),
+        action_type (String, required),
+        adjustment (String),
+        max_target_capacity (String),
+        target (String),
+        maximum (String),
+        minimum (String)
+    required: false
+
   user_data:
     description:
-      - he Base64-encoded MIME user data to make available to the instances
+      - (String) Base64-encoded MIME user data. Encode before setting the value.
     required: false
+
   utilize_reserved_instances:
     description:
-      - In case of any available Reserved Instances, Elastigroup will utilize them before purchasing Spot instances
+      - (Boolean) In case of any available Reserved Instances, Elastigroup will utilize them before purchasing Spot instances
+    required: false
+
+  wait_for_instances:
+    description:
+      - (Boolean) Whether or not the elastigroup creation / update actions should wait for the instances to spin
+    required: false
+
+  wait_timeout:
+    description:
+      - (Integer) How long the module should wait for instances before failing the action. Only works if wait_for_instances is True.
     required: false
 """
 
@@ -307,14 +446,56 @@ EXAMPLES = '''
             - target
       register: result
     - debug: var=result
+
+# In this example, we create an elastigroup and wait 600 seconds to retrieve the instances, and use their private ips
+
+- hosts: localhost
+  tasks:
+    - name: create elastigroup
+      spotinst_aws_elastigroup:
+          state: present
+          risk: 100
+          availability_vs_cost: balanced
+          availability_zones:
+            - name: us-west-2a
+              subnetId: subnet-2b68a15c
+          image_id: ami-f173cc91
+          key_pair: spotinst-oregon
+          max_size: 5
+          min_size: 0
+          target: 0
+          unit: instance
+          monitoring: True
+          name: ansible-group-tal
+          on_demand_instance_type: c3.large
+          product: Linux/UNIX
+          security_group_ids:
+            - sg-8f4b8fe9
+          spot_instance_types:
+            - c3.large
+          do_not_update:
+            - image_id
+          wait_for_instances: True
+          wait_timeout: 600
+      register: result
+
+    - name: Store private ips to file
+      shell: echo {{ item.private_ip }}\\n >> list-of-private-ips
+      with_items: "{{ result.instances }}"
+    - debug: var=result
 '''
 
 RETURN = '''
 ---
+changed
+message
+group_id
+instances
 '''
 
 HAS_SPOTINST_SDK = False
 
+import time
 from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule
@@ -366,6 +547,38 @@ def handle_elastigroup(client, module):
             pass
 
     return group_id, message, has_changed
+
+
+def retrieve_group_instances(client, module, group_id):
+    wait_timeout = module.params.get('wait_timeout')
+    wait_for_instances = module.params.get('wait_for_instances')
+
+    if wait_timeout is None:
+        wait_timeout = 300
+
+    wait_timeout = time.time() + wait_timeout
+    target = module.params.get('target')
+    state = module.params.get('state')
+    instances = list()
+
+    if state == 'present' and group_id is not None and wait_for_instances is True:
+
+        is_amount_fulfilled = False
+        while is_amount_fulfilled is False and wait_timeout > time.time():
+            amount_of_fulfilled_instances = 0
+            active_instances = client.get_elastigroup_active_instances(group_id=group_id)
+
+            for active_instance in active_instances:
+                if active_instance.get('private_ip') is not None:
+                    amount_of_fulfilled_instances += 1
+                    instances.append(active_instance)
+
+            if amount_of_fulfilled_instances >= target:
+                is_amount_fulfilled = True
+
+            time.sleep(10)
+
+    return instances
 
 
 def find_group_with_same_name(groups, name):
@@ -583,7 +796,7 @@ def expand_integrations(eg, module):
     elastic_beanstalk = module.params.get('elastic_beanstalk')
     ecs = module.params.get('ecs')
     kubernetes = module.params.get('kubernetes')
-    rightscale = module.params.get('rightscale')
+    right_scale = module.params.get('right_scale')
     opsworks = module.params.get('opsworks')
     chef = module.params.get('chef')
     eg_integrations = spotinst.aws_elastigroup.ThirdPartyIntegrations()
@@ -614,17 +827,18 @@ def expand_integrations(eg, module):
                                                                    token=kubernetes.get('token'))
         eg_integrations.kubernetes = eg_kube
 
-    if rightscale:
-        eg_rightscale = spotinst.aws_elastigroup.RightScaleConfiguration(account_id=rightscale.get('account_id'),
-                                                                         refresh_token=rightscale.get('refresh_token'))
-        eg_integrations.right_scale = eg_rightscale
+    if right_scale:
+        eg_right_scale = spotinst.aws_elastigroup.RightScaleConfiguration(account_id=right_scale.get('account_id'),
+                                                                          refresh_token=right_scale.get(
+                                                                              'refresh_token'))
+        eg_integrations.right_scale = eg_right_scale
 
     if opsworks:
         eg_opsworks = spotinst.aws_elastigroup.OpsWorksConfiguration(layer_id=opsworks.get('layer_id'))
         eg_integrations.ops_works = eg_opsworks
 
     if eg_integrations.rancher is not None \
-            or eg_integrations.rightScale is not None \
+            or eg_integrations.right_scale is not None \
             or eg_integrations.ops_works is not None \
             or eg_integrations.chef is not None \
             or eg_integrations.ecs is not None \
@@ -797,7 +1011,7 @@ def expand_multai_load_balancers(eg_multai, multai_load_balancers):
             if multai_load_balancer.get('auto_weight') is not None:
                 eg_multai_load_balancer.auto_weight = multai_load_balancer.get('auto_weight')
 
-            if eg_multai_load_balancer.balancerId is not None:
+            if eg_multai_load_balancer.balancer_id is not None:
                 eg_multai_load_balancers.append(eg_multai_load_balancer)
 
         if eg_multai_load_balancers.__sizeof__() > 0:
@@ -1089,10 +1303,12 @@ def main():
         elastic_beanstalk=dict(required=False, default=None),
         ecs=dict(required=False, default=None),
         kubernetes=dict(required=False, default=None),
-        rightscale=dict(required=False, default=None),
+        right_scale=dict(required=False, default=None),
         opsworks=dict(required=False, default=None),
         chef=dict(required=False, default=None),
         max_size=dict(type='int'),
+        wait_for_instances=dict(required=False, type='bool', default=False),
+        wait_timeout=dict(type='int', required=False),
         min_size=dict(type='int'),
         target=dict(type='int'),
         unit=dict(type='str'),
@@ -1128,7 +1344,9 @@ def main():
 
     group_id, message, has_changed = handle_elastigroup(client=client, module=module)
 
-    module.exit_json(changed=has_changed, group_id=group_id, message=message)
+    instances = retrieve_group_instances(client=client, module=module, group_id=group_id)
+
+    module.exit_json(changed=has_changed, group_id=group_id, message=message, instances=instances)
 
 
 def retrieve_creds():
