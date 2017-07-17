@@ -142,7 +142,7 @@ def create_or_update_bucket_cors(connection, module):
 
     try:
         current_camel_rules = connection.get_bucket_cors(Bucket=name)['CORSRules']
-    except ClientError as e:
+    except Exception:
         current_camel_rules = []
 
     new_camel_rules = snake_dict_to_camel_dict(rules, capitalize_first=True)
