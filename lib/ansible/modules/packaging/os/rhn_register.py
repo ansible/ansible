@@ -132,8 +132,6 @@ RETURN = '''
 
 import os
 import sys
-import urlparse
-import xmlrpclib
 
 # Attempt to import rhn client tools
 sys.path.insert(0, '/usr/share/rhn')
@@ -147,6 +145,7 @@ except ImportError:
 # INSERT REDHAT SNIPPETS
 from ansible.module_utils import redhat
 from ansible.module_utils.basic import AnsibleModule, get_exception
+from ansible.module_utils.six.moves import urllib, xmlrpc_client
 
 
 class Rhn(redhat.RegistrationBase):
@@ -184,7 +183,7 @@ class Rhn(redhat.RegistrationBase):
 
             Returns: str
         '''
-        url = urlparse.urlparse(self.server_url)
+        url = urllib.parse.urlparse(self.server_url)
         return url[1].replace('xmlrpc.', '')
 
     @property
@@ -283,7 +282,7 @@ class Rhn(redhat.RegistrationBase):
                 url = "https://%s/rpc/api" % self.hostname
             else:
                 url = "https://xmlrpc.%s/rpc/api" % self.hostname
-            self.server = xmlrpclib.Server(url, verbose=0)
+            self.server = xmlrpc_client(url)
             self.session = self.server.auth.login(self.username, self.password)
 
         func = getattr(self.server, method)
