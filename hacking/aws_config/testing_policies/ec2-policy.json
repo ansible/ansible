@@ -35,6 +35,7 @@
             "Effect": "Allow",
             "Action": [
                 "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:AuthorizeSecurityGroupEgress",
                 "ec2:CreateTags",
                 "ec2:DeleteRouteTable",
                 "ec2:DeleteSecurityGroup",
