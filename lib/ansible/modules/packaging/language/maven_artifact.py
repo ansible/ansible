@@ -31,7 +31,7 @@ short_description: Downloads an Artifact from a Maven Repository
 version_added: "2.0"
 description:
     - Downloads an artifact from a maven repository given the maven coordinates provided to the module.
-      Can retrieve snapshots or release versions of the artifact and will resolve the latest available 
+    - Can retrieve snapshots or release versions of the artifact and will resolve the latest available 
       version if one is not available.
 author: "Chris Schmidt (@chrisisbeef)"
 requirements:
