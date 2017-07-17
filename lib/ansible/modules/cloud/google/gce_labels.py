@@ -113,11 +113,6 @@ labels:
     returned: Always.
     type: dict
     sample: [ { 'webserver-frontend': 'homepage', 'environment': 'test', 'environment-name': 'kennedy' } ]
-label_fingerprint:
-    description: The updated fingerprint of the resource.
-    returned: Always.
-    type: str
-    sample: abcdef0123
 resource_url:
     description: The 'self_link' of the GCE resource.
     returned: Always.
@@ -165,10 +160,12 @@ GCE_API_VERSION = 'v1'
 KNOWN_RESOURCES = ['instances', 'disks', 'snapshots', 'images']
 
 
-def _fetch_resource(client, params):
+def _fetch_resource(client, module):
+    params = module.params
     if params['resource_url']:
         if not params['resource_url'].startswith('https://www.googleapis.com/compute'):
-            raise ValueError('Invalid self_link url: %s' % params['resource_url'])
+            module.fail_json(
+                msg='Invalid self_link url: %s' % params['resource_url'])
         else:
             parts = params['resource_url'].split('/')[8:]
             if len(parts) == 2:
@@ -179,13 +176,13 @@ def _fetch_resource(client, params):
     else:
         if not params['resource_type'] or not params['resource_location'] \
                 or not params['resource_name']:
-            raise ValueError('Missing required resource params.')
+            module.fail_json(msg='Missing required resource params.')
         resource_type = params['resource_type'].lower()
         resource_name = params['resource_name'].lower()
         resource_location = params['resource_location'].lower()
 
     if resource_type not in KNOWN_RESOURCES:
-        raise ValueError('Unsupported resource_type: %s' % resource_type)
+        module.fail_json(msg='Unsupported resource_type: %s' % resource_type)
 
     # TODO(all): See the comment above for KNOWN_RESOURCES. As labels are
     # added to the v1 GCE API for more resources, some minor code work will
@@ -205,23 +202,23 @@ def _fetch_resource(client, params):
         resource = client.images().get(project=params['project_id'],
                                        image=resource_name).execute()
     else:
-        raise ValueError('Unsupported resource type: %s' % resource_type)
+        module.fail_json(msg='Unsupported resource type: %s' % resource_type)
 
-    return {
+    return resource.get('labelFingerprint', ''), {
         'resource_name': resource.get('name'),
         'resource_url': resource.get('selfLink'),
         'resource_type': resource_type,
         'resource_location': resource_location,
-        'label_fingerprint': resource.get('labelFingerprint'),
         'labels': resource.get('labels', {})
     }
 
 
-def _set_labels(client, new_labels, params, ri):
+def _set_labels(client, new_labels, module, ri, fingerprint):
+    params = module.params
     result = err = None
     labels = {
         'labels': new_labels,
-        'labelFingerprint': ri['label_fingerprint']
+        'labelFingerprint': fingerprint
     }
 
     # TODO(all): See the comment above for KNOWN_RESOURCES. As labels are
@@ -246,7 +243,7 @@ def _set_labels(client, new_labels, params, ri):
                                         resource=ri['resource_name'],
                                         body=labels)
     else:
-        raise ValueError('Unsupported resource type: %s' % ri['resource_type'])
+        module.fail_json(msg='Unsupported resource type: %s' % ri['resource_type'])
 
     # TODO(erjohnso): Once Labels goes GA, we'll be able to use the GCPUtils
     # method to poll for the async request/operation to complete before
@@ -269,7 +266,7 @@ def main():
             service_account_permissions=dict(type='list'),
             pem_file=dict(),
             credentials_file=dict(),
-            labels=dict(required=False, type='dict'),
+            labels=dict(required=False, type='dict', default={}),
             resource_url=dict(required=False, type='str'),
             resource_name=dict(required=False, type='str'),
             resource_location=dict(required=False, type='str'),
@@ -295,32 +292,30 @@ def main():
                                             user_agent_version=UA_VERSION,
                                             api_version=GCE_API_VERSION)
 
-    params = {}
-    params['labels'] = module.params.get('labels', {})
-    params['resource_url'] = module.params.get('resource_url')
-    params['resource_type'] = module.params.get('resource_type')
-    params['resource_location'] = module.params.get('resource_location')
-    params['resource_name'] = module.params.get('resource_name')
-    params['project_id'] = module.params.get('project_id')
-    params['state'] = module.params.get('state')
-
     # Get current resource info including labelFingerprint
-    resource_info = _fetch_resource(client, params)
+    fingerprint, resource_info = _fetch_resource(client, module)
     new_labels = resource_info['labels'].copy()
 
-    if params['state'] == 'absent':
-        for k, v in params['labels'].items():
-            if k in new_labels and new_labels[k] == v:
-                new_labels.pop(k, None)
-            else:
-                raise ValueError("Unmatched label pair '%s':'%s'" % (k, v))
+    update_needed = False
+    if module.params['state'] == 'absent':
+        for k, v in module.params['labels'].items():
+            if k in new_labels:
+                if new_labels[k] == v:
+                    update_needed = True
+                    new_labels.pop(k, None)
+                else:
+                    module.fail_json(msg="Could not remove unmatched label pair '%s':'%s'" % (k, v))
     else:
-        for k, v in params['labels'].items():
-            new_labels[k] = v
+        for k, v in module.params['labels'].items():
+            if k not in new_labels:
+                update_needed = True
+                new_labels[k] = v
 
     changed = False
-    json_output = {'state': params['state']}
-    changed, err = _set_labels(client, new_labels, params, resource_info)
+    json_output = {'state': module.params['state']}
+    if update_needed:
+        changed, err = _set_labels(client, new_labels, module, resource_info,
+                                   fingerprint)
     json_output['changed'] = changed
 
     # TODO(erjohnso): probably want to re-fetch the resource to return the
@@ -330,7 +325,7 @@ def main():
     # we'll just update the output with what we have from the original
     # state of the resource.
     json_output.update(resource_info)
-    json_output.update(params)
+    json_output.update(module.params)
 
     module.exit_json(**json_output)
 
