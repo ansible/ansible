@@ -139,7 +139,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     is_static = True
                 elif t.static is not None:
                     display.deprecated("The use of 'static' has been deprecated. "
-                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
+                                       "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion")
                     is_static = t.static
                 else:
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
