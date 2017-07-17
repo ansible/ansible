@@ -163,6 +163,12 @@ class Rhn(redhat.RegistrationBase):
     def __init__(self, module=None, username=None, password=None):
         redhat.RegistrationBase.__init__(self, module, username, password)
         self.config = self.load_config()
+        self.server = None
+        self.session = None
+
+    def logout(self):
+        if self.session is not None:
+            self.server.auth.logout(self.session)
 
     def load_config(self):
         '''
@@ -281,7 +287,7 @@ class Rhn(redhat.RegistrationBase):
         '''
             Convenience RPC wrapper
         '''
-        if not hasattr(self, 'server') or self.server is None:
+        if self.server is None:
             if self.hostname != 'rhn.redhat.com':
                 url = "https://%s/rpc/api" % self.hostname
             else:
@@ -405,6 +411,8 @@ def main():
         except Exception:
             e = get_exception()
             module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, e))
+        finally:
+            rhn.logout()
 
         module.exit_json(changed=True, msg="System successfully registered to '%s'." % rhn.hostname)
 
@@ -418,6 +426,8 @@ def main():
         except Exception:
             e = get_exception()
             module.fail_json(msg="Failed to unregister: %s" % e)
+        finally:
+            rhn.logout()
 
         module.exit_json(changed=True, msg="System successfully unregistered from %s." % rhn.hostname)
 
