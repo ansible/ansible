@@ -103,18 +103,31 @@ rules:
 
 import traceback
 
-try:
-    import boto3
-    from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info,
-                                      snake_dict_to_camel_dict, camel_dict_to_snake_dict)
+from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec,
+                                      get_aws_connection_info, camel_dict_to_snake_dict)
 
+def snake_dict_to_camel_dict(snake_dict):
 
+    def camelize(complex_type):
+        if complex_type is None:
+            return
+        new_type = type(complex_type)()
+        if isinstance(complex_type, dict):
+            for key in complex_type:
+                new_type[camel(key)] = camelize(complex_type[key])
+        elif isinstance(complex_type, list):
+            for i in range(len(complex_type)):
+                new_type.append(camelize(complex_type[i]))
+        else:
+            return complex_type
+        return new_type
+
+    def camel(words):
+        return ''.join(x.capitalize() or '_' for x in words.split('_'))
+
+    return camelize(snake_dict)
+  
 def create_or_update_bucket_cors(connection, module):
 
     name = module.params.get("name")
