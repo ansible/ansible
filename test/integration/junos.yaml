@@ -127,6 +127,13 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: junos_lldp_interface
+        when: "limit_to in ['*', 'junos_lldp_interface']"
+      rescue:
+        - set_fact: test_failed=true
+
 ###########
     - name: Has any previous test failed?
       fail:
