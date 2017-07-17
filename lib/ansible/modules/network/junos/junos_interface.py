@@ -216,7 +216,6 @@ def main():
 
     if state in ('present', 'up', 'down'):
         module.params['state'] = 'present'
-
     else:
         module.params['disable'] = True
 

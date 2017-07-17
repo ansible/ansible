@@ -303,10 +303,6 @@ def map_obj_to_ele(module, want, top, value_map=None):
             if state == 'absent' and not (is_key or leaf_only):
                 continue
 
-            # for tag only node if value is false continue to next attr
-            if tag_only and not value:
-                continue
-
             # convert param value to device specific value
             if value_map and fxpath in value_map:
                 value = value_map[fxpath].get(value)
@@ -335,12 +331,13 @@ def map_obj_to_ele(module, want, top, value_map=None):
                     else:
                         ele = ele_list[0]
 
-                tags = fxpath.split('/')
-                if value is not None:
+                if value is not None and not isinstance(value, bool):
                     value = to_text(value, errors='surrogate_then_replace')
 
-                for item in tags:
-                    ele = SubElement(ele, item)
+                if fxpath:
+                    tags = fxpath.split('/')
+                    for item in tags:
+                        ele = SubElement(ele, item)
 
                 if tag_only:
                     if state == 'present':

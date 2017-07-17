@@ -145,7 +145,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'<disable/>' not in config.xml"
+      - "'[edit interfaces ge-0/0/1]\n-   disable;' in result.diff.prepared"
       - "'<name>ge-0/0/1</name>' in config.xml"
 
 - name: Delete interface
