@@ -196,7 +196,7 @@ def get_load_balancer_attributes(connection, module, load_balancer_arn):
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Replace '.' with '_' in attribute key names to make it more Ansibley
-    for k, v in load_balancer_attributes.items():
+    for k, v in list(load_balancer_attributes.items()):
         load_balancer_attributes[k.replace('.', '_')] = v
         del load_balancer_attributes[k]
 
