@@ -25,3 +25,4 @@
 - name: disable eapi
   eos_eapi:
     state: stopped
+    provider: "{{ cli }}"
