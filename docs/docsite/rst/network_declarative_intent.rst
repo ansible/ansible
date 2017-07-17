@@ -40,7 +40,9 @@ The issue here is that we are only asserting *configuration* changes, there is n
 With declaritive intent
 =======================
 
-INTERNAL NOTE: TBD - Simplist case that shows the solution. We can build on this later
+INTERNAL NOTE: TBD - Simplist case that shows the solution. We can build out the example in the later use-cases.
+
+**Simple example**
 
 .. code-block:: yaml
 
@@ -54,6 +56,25 @@ INTERNAL NOTE: TBD - Simplist case that shows the solution. We can build on this
        # Intended state
        state: connected
 
+**Complex example**
+
+.. code-block:: yaml
+
+   - name: configure interface
+     net_interface:
+       # Declared configuration
+       description: public interface configuration
+       enabled: yes
+       aggregate:
+         - GigabitEthernet0/2
+         - GigabitEthernet0/3
+         - GigabitEthernet0/4
+
+       # Intended state
+       state: connected
+       txrate: 10gb
+
+FIXME: Check syntax
 
 
 
@@ -109,16 +130,25 @@ Replacing ``wait_for``
 .. code-block:: yaml
 
    - name: configure interface
+     net_interface:
+       # Declared configuration
+       name: GigabitEthernet0/2
+       description: public interface configuration
+       enabled: yes
+
+       # Intended state
+       state: connected
 
 
 **Advantages**
 
-* Cleaner playbooks
-* Easier to write
+* As you can tell from the above example using the declaritive intent format results in a much cleaner task. Checking no longer required the clunky (find better term) ``wait_for``.
+* TBD: Add details of why it's better to use the module from an internal code point of view
+* Can be combined with ``aggregate:`` to easily ensure state across multiple items.
 * Q: Why else
 
 Q: Any disadvantages?
-* not all modules support declaritive_intent - raise an issue
+* not all modules support declaritive_intent - raise an feature request LINK
 
 
 Physical then configuration
@@ -181,6 +211,8 @@ Q: What would this look like
 *
 
 Configuration, cabling, check
+---------------------------
+
 Q: What would this look like
 
 **Overview**
@@ -198,6 +230,27 @@ Q: What would this look like
 
 *
 
+Aggreate declaritive intent
+---------------------------
+
+Q: What would this look like
+
+**Overview**
+
+
+.. code-block:: yaml
+
+   - name: FIXME
+
+**When would this be useful**
+
+*
+
+**When would this not be useful**
+
+*
+
+Link to network_aggregate_resources for more info
 
 Rolling back: dealing with failure
 ----------------------------------
@@ -227,12 +280,12 @@ Q: What would this look like
 Implementation details
 ======================
 
-``delay:`` option
------------------
+The ``delay:`` option
+----------------------
 
- ``delay:``
+All declaritive intent modules support a ``delay:`` option. This represents the amount of time, in seconds, that Ansible will wait after setting declaritive configuration before checking the indended state. This pause is needed to allow the network device being configured to stablise, such as to allow handshake after bring up an interface.
 
-* Why this option exists
+
 * is a wait, not a poll
 * When you might need to change the value - How might you tell
 * Only used when a change is made, therefore second runs are quicker
@@ -248,7 +301,6 @@ FIXME
 =====
 
 * Think about layout and readability
-
 
 Content
 -------

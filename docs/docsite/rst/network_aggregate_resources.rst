@@ -92,4 +92,4 @@ The following need discussing further
 
   * Do we want to add ``required_if = [('purge', 'true', ['aggregate'])]``
 * Does the order matter
-  *  what
+* Link to `Aggreate declaritive intent`
