@@ -109,7 +109,8 @@ from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, 
 
 from ansible.module_utils.pycompat24 import get_exception
 
-def snake_dict_to_camel_dict(snake_dict):
+
+def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
 
     def camelize(complex_type):
         if complex_type is None:
@@ -126,7 +127,9 @@ def snake_dict_to_camel_dict(snake_dict):
         return new_type
 
     def camel(words):
-        return ''.join(x.capitalize() or '_' for x in words.split('_'))
+        words_split = words.split('_')
+        first_word = capitalize_first and words_split[0].capitalize() or words_split[0] 
+        return first_word + ''.join(x.capitalize() or '_' for x in words_split[1:])
 
     return camelize(snake_dict)
 
@@ -142,7 +145,7 @@ def create_or_update_bucket_cors(connection, module):
     except ClientError as e:
         current_camel_rules = []
 
-    new_camel_rules = snake_dict_to_camel_dict(rules)
+    new_camel_rules = snake_dict_to_camel_dict(rules, capitalize_first=True)
 
     if not (len(new_camel_rules) == len(current_camel_rules)):
         changed = True
