@@ -121,11 +121,11 @@ Finally
 
 Now that your modules are integrated there are a few bits of housekeeping to be done
 
-**Maintainers**
+**Bot Meta**
 Update `Ansibullbot` so it knows who to notify if/when bugs or PRs are raised against your modules
-`MAINTAINERS.txt <https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS.txt>`_.
+`BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_.
 
-If there are multiple people that can be notified, please list them. That avoids waiting on a single person who may be unavailable for any reason. Note that in `MAINTAINERS.txt` you can take ownership of an entire directory.
+If there are multiple people that can be notified, please list them. That avoids waiting on a single person who may be unavailable for any reason. Note that in `BOTMETA.yml` you can take ownership of an entire directory.
 
 
 **Review Module web docs**
