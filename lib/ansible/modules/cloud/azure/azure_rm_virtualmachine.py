@@ -502,6 +502,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
             network_interface_names=dict(type='list', aliases=['network_interfaces']),
+            network_interface_primary=dict(type='str'),
             remove_on_absent=dict(type='list', default=['all']),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             subnet_name=dict(type='str', aliases=['subnet']),
@@ -533,6 +534,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.public_ip_allocation_method = None
         self.open_ports = None
         self.virtual_network_name = None
+        self.network_interface_primary = None
         self.subnet_name = None
         self.allocated = None
         self.restarted = None
@@ -582,7 +584,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if self.network_interface_names:
                 for name in self.network_interface_names:
                     nic = self.get_network_interface(name)
-                    network_interfaces.append(nic.id)
+                    if nic.id == self.get_network_interface(self.network_interface_primary).id:
+                        network_interfaces.append((nic.id, True))
+                    else:
+                        network_interfaces.append((nic.id, False))
 
             if self.ssh_public_keys:
                 msg = "Parameter error: expecting ssh_public_keys to be a list of type dict where " \
@@ -630,10 +635,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     for nic in vm_dict['properties']['networkProfile']['networkInterfaces']:
                         current_nics.append(nic['id'])
 
-                    if set(current_nics) != set(network_interfaces):
+                    if set(current_nics) != set(map(lambda x: x[0], network_interfaces)):
                         self.log('CHANGED: virtual machine {0} - network interfaces are different.'.format(self.name))
                         differences.append('Network Interfaces')
-                        updated_nics = [dict(id=id) for id in network_interfaces]
+                        updated_nics = [dict(id=id, properties=dict(primary=primary)) for id , primary in network_interfaces]
                         vm_dict['properties']['networkProfile']['networkInterfaces'] = updated_nics
                         changed = True
 
@@ -717,7 +722,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         default_nic = self.create_default_nic()
                         self.log("network interface:")
                         self.log(self.serialize_obj(default_nic, 'NetworkInterface'), pretty_print=True)
-                        network_interfaces = [default_nic.id]
+                        network_interfaces = [(default_nic.id, True)]
 
                     if not self.storage_account_name:
                         storage_account = self.create_default_storage_account()
@@ -731,7 +736,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not self.short_hostname:
                         self.short_hostname = self.name
 
-                    nics = [NetworkInterfaceReference(id=id) for id in network_interfaces]
+                    nics = [NetworkInterfaceReference(id=id, primary=primary) for id, primary in network_interfaces]
                     vhd = VirtualHardDisk(uri=requested_vhd_uri)
                     vm_resource = VirtualMachine(
                         self.location,
@@ -784,7 +789,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.log("Update virtual machine {0}".format(self.name))
                     self.results['actions'].append('Updated VM {0}'.format(self.name))
 
-                    nics = [NetworkInterfaceReference(id=interface['id'])
+                    nics = [NetworkInterfaceReference(id=interface['id'], primary=interface['properties']['primary'])
                             for interface in vm_dict['properties']['networkProfile']['networkInterfaces']]
                     vhd = VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
                     vm_resource = VirtualMachine(
