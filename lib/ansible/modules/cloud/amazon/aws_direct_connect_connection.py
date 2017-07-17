@@ -206,7 +206,7 @@ def changed_properties(current_status, location, bandwidth):
     current_bandwidth = current_status['bandwidth']
     current_location = current_status['location']
 
-    return (current_bandwidth != bandwidth or current_location != location)
+    return current_bandwidth != bandwidth or current_location != location
 
 
 @AWSRetry.backoff(**retry_params)
@@ -222,29 +222,26 @@ def update_associations(client, latest_state, connection_id, lag_id):
 
 
 def ensure_present(client, connection_id, connection_name, location, bandwidth, lag_id, forced_update):
-    changed = False
-
     # the connection is found; get the latest state and see if it needs to be updated
     if connection_id:
         latest_state = connection_status(client, connection_id=connection_id)['connection']
         if changed_properties(latest_state, location, bandwidth) and forced_update:
             ensure_absent(client, connection_id)
-            changed, connection_id = ensure_present(client=client,
-                                                    connection_id=None,
-                                                    connection_name=connection_name,
-                                                    location=location,
-                                                    bandwidth=bandwidth,
-                                                    lag_id=lag_id,
-                                                    forced_update=forced_update)
+            return ensure_present(client=client,
+                                  connection_id=None,
+                                  connection_name=connection_name,
+                                  location=location,
+                                  bandwidth=bandwidth,
+                                  lag_id=lag_id,
+                                  forced_update=forced_update)
         elif update_associations(client, latest_state, connection_id, lag_id):
             return True, connection_id
 
     # no connection found; create a new one
     else:
-        connection_id = create_connection(client, location, bandwidth, connection_name, lag_id)
-        changed = True
+        return True, create_connection(client, location, bandwidth, connection_name, lag_id)
 
-    return changed, connection_id
+    return False, connection_id
 
 
 @AWSRetry.backoff(**retry_params)
