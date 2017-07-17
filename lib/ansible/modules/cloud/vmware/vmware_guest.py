@@ -1219,7 +1219,6 @@ class PyVmomiHelper(object):
         if datacenter is None:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
 
-
         # Prepend / if it was missing from the folder path, also strip trailing slashes
         if not self.params['folder'].startswith('/'):
             self.params['folder'] = '/%(folder)s' % self.params

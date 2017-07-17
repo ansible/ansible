@@ -229,8 +229,8 @@ def compile_folder_path_for_object(vobj):
     if paths[0] == 'Datacenters':
         paths.remove('Datacenters')
     return '/' + '/'.join(paths)
-		
-		
+
+
 def _get_vm_prop(vm, attributes):
     """Safely get a property or return None"""
     result = vm
