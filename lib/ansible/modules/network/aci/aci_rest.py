@@ -163,7 +163,7 @@ response:
   returned: always
   type: string
   sample: 'HTTP Error 400: Bad Request'
-status_code:
+status:
   description: HTTP status code
   returned: always
   type: int
@@ -217,7 +217,7 @@ def aci_login(module, result=dict()):
         module.params['protocol'] = 'https' if module.params.get('use_ssl', True) else 'http'
 
     # Perform login request
-    url = '%(protocol)s://%(host)s/api/aaaLogin.json' % module.params
+    url = '%(protocol)s://%(hostname)s/api/aaaLogin.json' % module.params
     data = {'aaaUser': {'attributes': {'name': module.params['username'], 'pwd': module.params['password']}}}
     resp, auth = fetch_url(module, url, data=json.dumps(data), method="POST", timeout=module.params['timeout'])
 
@@ -229,7 +229,7 @@ def aci_login(module, result=dict()):
         except KeyError:
             result['msg'] = '%(msg)s for %(url)s' % auth
         result['response'] = auth['msg']
-        result['status_code'] = auth['status']
+        result['status'] = auth['status']
         module.fail_json(**result)
 
     return resp
@@ -237,7 +237,6 @@ def aci_login(module, result=dict()):
 
 def aci_response(rawoutput, rest_type='xml'):
     ''' Handle APIC response output '''
-
     result = dict()
 
     if rest_type == 'json':
@@ -269,6 +268,8 @@ def aci_response(rawoutput, rest_type='xml'):
         if xmldata and 'imdata' in xmldata:
             if 'children' in xmldata['imdata']:
                 result['imdata'] = xmldata['imdata']['children']
+            else:
+                result['imdata'] = dict()
             result['totalCount'] = xmldata['imdata']['attributes']['totalCount']
 
     # Handle possible APIC error information
@@ -276,12 +277,8 @@ def aci_response(rawoutput, rest_type='xml'):
         result['error_code'] = result['imdata'][0]['error']['attributes']['code']
         result['error_text'] = result['imdata'][0]['error']['attributes']['text']
     except KeyError:
-        if 'imdata' in result and 'totalCount' in result:
-            result['error_code'] = 0
-            result['error_text'] = 'Success'
-        else:
-            result['error_code'] = -2
-            result['error_text'] = 'This should not happen'
+        result['error_code'] = 0
+        result['error_text'] = 'Success'
 
     return result
 
@@ -376,7 +373,7 @@ def main():
 
     resp, info = fetch_url(module, url, data=result['payload'], method=method.upper(), timeout=timeout, headers=headers)
     result['response'] = info['msg']
-    result['status_code'] = info['status']
+    result['status'] = info['status']
 
     # Report failure
     if info['status'] != 200:
