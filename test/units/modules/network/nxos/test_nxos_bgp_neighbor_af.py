@@ -64,3 +64,19 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
             changed=True, sort=False,
             commands=['router bgp 65535', 'neighbor 3.3.3.5', 'no address-family ipv4 unicast']
         )
+
+    def test_nxos_bgp_neighbor_af_advertise_map(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4', safi='unicast',
+                             advertise_map_exist=['my_advertise_map', 'my_exist_map']))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'advertise-map my_advertise_map exist my_exist_map']
+        )
+
+    def test_nxos_bgp_neighbor_af_advertise_map_non_exist(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4', safi='unicast',
+                             advertise_map_non_exist=['my_advertise_map', 'my_exist_map']))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'advertise-map my_advertise_map non-exist my_exist_map']
+        )
