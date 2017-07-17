@@ -6,6 +6,7 @@ Developer Labs
 Ansible has a lot of documentation and is increasingly building out development docs, but not everyone learns the same way. This page provides self-guided labs which are intended to teach new Ansible developers the ins and outs of writing code and working with the github PR process and shippable CI system. It is expected that the developer does a commit+push and waits for tests to run after each step in the process to learn how the behavior of shippable tests and ansibot. You are expected to see a lot of errors and failures through this process. Please use the docs, the sourcecode, the community and the Ansible core team (in that order) if you find yourself stuck at any point.
 
 .. _level_1:
+
 Level 1
 -------
 
