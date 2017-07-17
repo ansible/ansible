@@ -41,19 +41,20 @@ msg:
 '''
 
 ANSIBLE_METADATA = {
-        'metadata_version': '1.0',
-        'supported_by': 'community',
-        'status': ['preview']
+    'metadata_version': '1.0',
+    'supported_by': 'community',
+    'status': ['preview']
 }
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            echo_message = dict(required=True, type='str')
+        argument_spec=dict(
+            echo_message=dict(required=True, type='str')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     echo_message = module.argument_spec['echo_message']
@@ -62,6 +63,7 @@ def main():
         module.exit_json(changed=True, msg='This is check mode')
 
     module.exit_json(change=True, msg=echo_message)
+
 
 if __name__ == '__main__':
     main()
