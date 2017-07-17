@@ -107,6 +107,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info,
                                       camel_dict_to_snake_dict, _botocore_exception_maybe)
 
+ClientError = _botocore_exception_maybe()
+
+
 def snake_dict_to_camel_dict(snake_dict):
 
     def camelize(complex_type):
@@ -127,7 +130,8 @@ def snake_dict_to_camel_dict(snake_dict):
         return ''.join(x.capitalize() or '_' for x in words.split('_'))
 
     return camelize(snake_dict)
-  
+
+
 def create_or_update_bucket_cors(connection, module):
 
     name = module.params.get("name")
@@ -165,7 +169,7 @@ def create_or_update_bucket_cors(connection, module):
     if changed:
         try:
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
-        except _botocore_exception_maybe() as e:
+        except ClientError as e:
             module.fail_json(
                 msg=e.message,
                 exception=traceback.format_exc(),
@@ -183,7 +187,7 @@ def destroy_bucket_cors(connection, module):
     try:
         cors = connection.delete_bucket_cors(Bucket=name)
         changed = True
-    except _botocore_exception_maybe() as e:
+    except ClientError as e:
         module.fail_json(
             msg=e.message,
             exception=traceback.format_exc(),
@@ -220,7 +224,7 @@ def main():
                 region=region, endpoint=ec2_url, **aws_connect_kwargs
             )
         )
-    except _botocore_exception_maybe() as e:
+    except ClientError as e:
         module.fail_json(
             msg=e.message,
             exception=traceback.format_exc(),
