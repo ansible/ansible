@@ -104,8 +104,8 @@ rules:
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec,
-                                      get_aws_connection_info, camel_dict_to_snake_dict)
+from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info,
+                                      camel_dict_to_snake_dict, _botocore_exception_maybe)
 
 def snake_dict_to_camel_dict(snake_dict):
 
@@ -165,7 +165,7 @@ def create_or_update_bucket_cors(connection, module):
     if changed:
         try:
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
-        except ClientError as e:
+        except _botocore_exception_maybe() as e:
             module.fail_json(
                 msg=e.message,
                 exception=traceback.format_exc(),
@@ -183,7 +183,7 @@ def destroy_bucket_cors(connection, module):
     try:
         cors = connection.delete_bucket_cors(Bucket=name)
         changed = True
-    except ClientError as e:
+    except _botocore_exception_maybe() as e:
         module.fail_json(
             msg=e.message,
             exception=traceback.format_exc(),
@@ -220,7 +220,7 @@ def main():
                 region=region, endpoint=ec2_url, **aws_connect_kwargs
             )
         )
-    except ClientError as e:
+    except _botocore_exception_maybe() as e:
         module.fail_json(
             msg=e.message,
             exception=traceback.format_exc(),
