@@ -25,7 +25,7 @@ module: ec2_vpc_vpn
 short_description: Create, modify, and delete EC2 VPN connections.
 description:
   - This module creates, modifies, and deletes VPN connections. Idempotence is achieved by using the filters
-    options or specifying the VPN connection identifier.
+    option or specifying the VPN connection identifier.
 version_added: "2.4"
 requirements: ['boto3', 'botocore']
 author: "Sloane Hertel (@s-hertel)"
@@ -258,10 +258,7 @@ vpn_connection_id:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec,
-                                      snake_dict_to_camel_dict, camel_dict_to_snake_dict,
-                                      boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list,
-                                      compare_aws_tags, HAS_BOTO3)
+from ansible.module_utils import ec2 as ec2_utils
 import traceback
 
 try:
@@ -311,35 +308,35 @@ def find_connection(connection, module_params, vpn_connection_id=None):
     except botocore.exceptions.ClientError as e:
         raise VPNConnectionException(msg="Failed while describing VPN connection.",
                                      exception=traceback.format_exc(),
-                                     **camel_dict_to_snake_dict(e.response))
+                                     **ec2_utils.camel_dict_to_snake_dict(e.response))
 
     return find_connection_response(connections=existing_conn)
 
 
 def add_routes(connection, vpn_connection_id, routes_to_add):
-    try:
-        for route in routes_to_add:
-            response = connection.create_vpn_connection_route(VpnConnectionId=vpn_connection_id,
-                                                              DestinationCidrBlock=route)
-    except botocore.exceptions.ClientError as e:
-        raise VPNConnectionException(msg="Failed while adding routes to the VPN connection.",
-                                     exception=traceback.format_exc(),
-                                     response=e.response)
+    for route in routes_to_add:
+        try:
+            connection.create_vpn_connection_route(VpnConnectionId=vpn_connection_id,
+                                                   DestinationCidrBlock=route)
+        except botocore.exceptions.ClientError as e:
+            raise VPNConnectionException(msg="Failed while adding route {0} to the VPN connection {1}.".format(route, vpn_connection_id),
+                                         exception=traceback.format_exc(),
+                                         response=e.response)
 
 
 def remove_routes(connection, vpn_connection_id, routes_to_remove):
-    try:
-        for route in routes_to_remove:
-            response = connection.delete_vpn_connection_route(VpnConnectionId=vpn_connection_id,
-                                                              DestinationCidrBlock=route)
-    except botocore.exceptions.ClientError as e:
-        raise VPNConnectionException(msg="Failed while adding routes to VPN connection.",
-                                     exception=traceback.format_exc(),
-                                     response=e.response)
+    for route in routes_to_remove:
+        try:
+            connection.delete_vpn_connection_route(VpnConnectionId=vpn_connection_id,
+                                                   DestinationCidrBlock=route)
+        except botocore.exceptions.ClientError as e:
+            raise VPNConnectionException(msg="Failed to remove route {0} from the VPN connection {1}.".format(route, vpn_connection_id),
+                                         exception=traceback.format_exc(),
+                                         response=e.response)
 
 
 def create_filter(module_params, provided_filters):
-    ''' Creates a filter using the user-specified parameters and unmodifiable options that may have been specified in the task '''
+    """ Creates a filter using the user-specified parameters and unmodifiable options that may have been specified in the task """
     boto3ify_filter = {'cgw-config': 'customer-gateway-configuration',
                        'static-routes-only': 'option.static-routes-only',
                        'cidr': 'route.destination-cidr-block',
@@ -364,8 +361,7 @@ def create_filter(module_params, provided_filters):
         # fix filter names to be recognized by boto3
         if raw_param in boto3ify_filter:
             param = boto3ify_filter[raw_param]
-            provided_filters[param] = provided_filters[raw_param]
-            del provided_filters[raw_param]
+            provided_filters[param] = provided_filters.pop(raw_param)
         elif raw_param in list(boto3ify_filter.items()):
             param = raw_param
         else:
@@ -393,14 +389,14 @@ def create_filter(module_params, provided_filters):
             flat_filter_dict[param_to_filter[param]] = [module_params.get(param)]
 
     # change the flat dict into something boto3 will understand
-    formatted_filter = [{'Name': key, 'Values': flat_filter_dict[key]} for key in flat_filter_dict]
+    formatted_filter = [{'Name': key, 'Values': value} for key, value in flat_filter_dict.items()]
 
     return formatted_filter
 
 
 def find_connection_response(connections=None):
-    ''' Determine if there is a viable unique match in the connections described. Returns the unique VPN connection if one is found,
-        returns None if the connection does not exist, raise an error if multiple matches are found. '''
+    """ Determine if there is a viable unique match in the connections described. Returns the unique VPN connection if one is found,
+        returns None if the connection does not exist, raise an error if multiple matches are found. """
 
     # Found no connections
     if not connections or 'VpnConnections' not in connections:
@@ -428,17 +424,10 @@ def find_connection_response(connections=None):
         # deleted connections are not modifiable
         if connections['VpnConnections'][0]['State'] not in ("deleted", "deleting"):
             return connections['VpnConnections'][0]
-        # Found the result but it was deleted already; since there was only one result create a new one
-        else:
-            return None
-
-    # Matches were an empty list
-    else:
-        return None
 
 
 def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type):
-    ''' Creates a VPN connection '''
+    """ Creates a VPN connection """
     if not (customer_gateway_id and vpn_gateway_id):
         raise VPNConnectionException(msg="No matching connection was found. To create a new connection you must provide "
                                      "both vpn_gateway_id and customer_gateway_id.")
@@ -457,7 +446,7 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
 
 
 def delete_connection(connection, vpn_connection_id):
-    ''' Deletes a VPN connection '''
+    """ Deletes a VPN connection """
     try:
         connection.delete_vpn_connection(DryRun=False,
                                          VpnConnectionId=vpn_connection_id)
@@ -492,14 +481,14 @@ def remove_tags(connection, vpn_connection_id, remove):
 
 
 def check_for_update(connection, module_params, vpn_connection_id):
-    ''' Determines if there are any tags or routes that need to be updated. Ensures non-modifiable attributes aren't expected to change. '''
+    """ Determines if there are any tags or routes that need to be updated. Ensures non-modifiable attributes aren't expected to change. """
     tags = module_params.get('tags')
     routes = module_params.get('routes')
     purge_tags = module_params.get('purge_tags')
     purge_routes = module_params.get('purge_routes')
 
     vpn_connection = find_connection(connection, module_params, vpn_connection_id=vpn_connection_id)
-    current_attrs = camel_dict_to_snake_dict(vpn_connection)
+    current_attrs = ec2_utils.camel_dict_to_snake_dict(vpn_connection)
 
     # Initialize changes dict
     changes = {'tags_to_add': [],
@@ -509,13 +498,13 @@ def check_for_update(connection, module_params, vpn_connection_id):
 
     # Get changes to tags
     if 'tags' in current_attrs:
-        current_tags = boto3_tag_list_to_ansible_dict(current_attrs['tags'], u'key', u'value')
-        tags_to_add, changes['tags_to_remove'] = compare_aws_tags(current_tags, tags, purge_tags)
-        changes['tags_to_add'] = ansible_dict_to_boto3_tag_list(tags_to_add)
+        current_tags = ec2_utils.boto3_tag_list_to_ansible_dict(current_attrs['tags'], u'key', u'value')
+        tags_to_add, changes['tags_to_remove'] = ec2_utils.compare_aws_tags(current_tags, tags, purge_tags)
+        changes['tags_to_add'] = ec2_utils.ansible_dict_to_boto3_tag_list(tags_to_add)
     elif tags:
         current_tags = {}
-        tags_to_add, changes['tags_to_remove'] = compare_aws_tags(current_tags, tags, purge_tags)
-        changes['tags_to_add'] = ansible_dict_to_boto3_tag_list(tags_to_add)
+        tags_to_add, changes['tags_to_remove'] = ec2_utils.compare_aws_tags(current_tags, tags, purge_tags)
+        changes['tags_to_add'] = ec2_utils.ansible_dict_to_boto3_tag_list(tags_to_add)
     # Get changes to routes
     if 'Routes' in vpn_connection:
         current_routes = [route['DestinationCidrBlock'] for route in vpn_connection['Routes']]
@@ -547,10 +536,9 @@ def check_for_update(connection, module_params, vpn_connection_id):
 
 
 def make_changes(connection, vpn_connection_id, changes):
-    '''
-    changes is a dict with the keys 'tags_to_add', 'tags_to_remove', 'routes_to_add', 'routes_to_remove',
-    the values of which are lists (generated by check_for_update()).
-    '''
+    """ changes is a dict with the keys 'tags_to_add', 'tags_to_remove', 'routes_to_add', 'routes_to_remove',
+        the values of which are lists (generated by check_for_update()).
+    """
     changed = False
 
     if changes['tags_to_add']:
@@ -573,7 +561,7 @@ def make_changes(connection, vpn_connection_id, changes):
 
 
 def get_check_mode_results(connection, module_params, vpn_connection_id=None, current_state=None):
-    ''' Returns the changes that would be made to a VPN Connection '''
+    """ Returns the changes that would be made to a VPN Connection """
     state = module_params.get('state')
     if state == 'absent':
         if vpn_connection_id:
@@ -591,7 +579,7 @@ def get_check_mode_results(connection, module_params, vpn_connection_id=None, cu
     # get combined current tags and tags to set
     present_tags = module_params.get('tags')
     if current_state and 'Tags' in current_state:
-        current_tags = boto3_tag_list_to_ansible_dict(current_state['Tags'])
+        current_tags = ec2_utils.boto3_tag_list_to_ansible_dict(current_state['Tags'])
         if module_params.get('purge_tags'):
             if current_tags != present_tags:
                 changed = True
@@ -633,7 +621,7 @@ def get_check_mode_results(connection, module_params, vpn_connection_id=None, cu
 
 
 def ensure_present(connection, module_params, check_mode=False):
-    ''' Creates and adds tags to a VPN connection. If the connection already exists update tags. '''
+    """ Creates and adds tags to a VPN connection. If the connection already exists update tags. """
     vpn_connection = find_connection(connection, module_params)
     changed = False
 
@@ -667,13 +655,13 @@ def ensure_present(connection, module_params, check_mode=False):
     if vpn_connection:
         vpn_connection = find_connection(connection, module_params, vpn_connection['VpnConnectionId'])
         if 'Tags' in vpn_connection:
-            vpn_connection['Tags'] = boto3_tag_list_to_ansible_dict(vpn_connection['Tags'])
+            vpn_connection['Tags'] = ec2_utils.boto3_tag_list_to_ansible_dict(vpn_connection['Tags'])
 
     return changed, vpn_connection
 
 
 def ensure_absent(connection, module_params, check_mode=False):
-    ''' Deletes a VPN connection if it exists. '''
+    """ Deletes a VPN connection if it exists. """
     vpn_connection = find_connection(connection, module_params)
 
     if check_mode:
@@ -689,7 +677,7 @@ def ensure_absent(connection, module_params, check_mode=False):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
+    argument_spec = ec2_utils.ec2_argument_spec()
     argument_spec.update(
         dict(
             state=dict(type='str', default='present', choices=['present', 'absent']),
@@ -708,18 +696,18 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    if not HAS_BOTO3:
+    if not ec2_utils.HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
     # Retrieve any AWS settings from the environment.
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    region, ec2_url, aws_connect_kwargs = ec2_utils.get_aws_connection_info(module, boto3=True)
 
     if not region:
         module.fail_json(msg="Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set.")
 
-    connection = boto3_conn(module, conn_type='client',
-                            resource='ec2', region=region,
-                            endpoint=ec2_url, **aws_connect_kwargs)
+    connection = ec2_utils.boto3_conn(module, conn_type='client',
+                                      resource='ec2', region=region,
+                                      endpoint=ec2_url, **aws_connect_kwargs)
 
     state = module.params.get('state')
     parameters = dict(module.params)
@@ -731,13 +719,13 @@ def main():
             changed, response = ensure_absent(connection, parameters, module.check_mode)
     except VPNConnectionException as e:
         if e.response and e.error_traceback:
-            module.fail_json(msg=e.msg, exception=e.error_traceback, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=e.msg, exception=e.error_traceback, **ec2_utils.camel_dict_to_snake_dict(e.response))
         elif e.error_traceback:
             module.fail_json(msg=e.msg, exception=e.error_traceback)
         else:
             module.fail_json(msg=e.msg)
 
-    facts_result = dict(changed=changed, **camel_dict_to_snake_dict(response))
+    facts_result = dict(changed=changed, **ec2_utils.camel_dict_to_snake_dict(response))
 
     module.exit_json(**facts_result)
 
