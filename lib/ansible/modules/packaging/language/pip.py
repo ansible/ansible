@@ -186,6 +186,11 @@ EXAMPLES = '''
     virtualenv: /my_app/venv
     virtualenv_command: virtualenv-2.7
 
+# Install (Bottle) within a user home directory.
+- pip:
+    name: bottle
+    extra_args: --user
+
 # Install specified python requirements.
 - pip:
     requirements: /my_app/requirements.txt
@@ -393,17 +398,17 @@ def main():
             state=dict(default='present', choices=state_map.keys()),
             name=dict(type='list'),
             version=dict(type='str'),
-            requirements=dict(),
+            requirements=dict(type='str'),
             virtualenv=dict(type='path'),
             virtualenv_site_packages=dict(default=False, type='bool'),
             virtualenv_command=dict(default='virtualenv', type='path'),
             virtualenv_python=dict(type='str'),
             use_mirrors=dict(default=True, type='bool'),
-            extra_args=dict(),
+            extra_args=dict(type='str'),
             editable=dict(default=False, type='bool'),
             chdir=dict(type='path'),
             executable=dict(type='path'),
-            umask=dict(),
+            umask=dict(type='str'),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
