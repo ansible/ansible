@@ -114,6 +114,7 @@ def run_commands(module, commands, check_rc=True):
 
     return responses
 
+
 def get_config(module, flags=[]):
     cmd = 'show running-config '
     cmd += ' '.join(flags)
@@ -127,6 +128,7 @@ def get_config(module, flags=[]):
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
+
 
 def load_config(module, config):
     conn = get_connection(module)
@@ -146,4 +148,3 @@ def get_defaults_flag(module):
         return 'all'
     else:
         return 'full'
-

@@ -55,4 +55,3 @@ class TerminalModule(TerminalBase):
             self._exec_cli_command(u'no terminal pager')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
-
