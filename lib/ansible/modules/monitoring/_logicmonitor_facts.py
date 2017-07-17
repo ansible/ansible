@@ -18,7 +18,7 @@
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -30,6 +30,7 @@ description:
     - LogicMonitor is a hosted, full-stack, infrastructure monitoring platform.
     - This module collects facts about hosts and host groups within your LogicMonitor account.
 version_added: "2.2"
+deprecated: Deprecated in 2.4. Use M(logicmonitor_device) instead.
 author: [Ethan Culler-Mayeno (@ethanculler), Jeff Wozniak (@woz5999)]
 notes:
   - You must have an existing LogicMonitor account for this module to function.
