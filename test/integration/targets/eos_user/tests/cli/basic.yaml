@@ -31,13 +31,9 @@
       - 'result.commands == ["username test1 role network-operator", "username test2 role network-operator"]'
 
 - name: tearDown
-  eos_user:
-    purge: yes
-    authorize: yes
+  eos_config:
+    lines:
+      - no username netend
+      - no username test1
+      - no username test2
     provider: "{{ cli }}"
-  register: result
-
-- assert:
-    that:
-      - 'result.changed == true'
-      - 'result.commands == ["no username netend", "no username test1", "no username test2"]'
