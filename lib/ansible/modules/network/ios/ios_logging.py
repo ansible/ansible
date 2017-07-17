@@ -274,7 +274,6 @@ def map_params_to_obj(module):
             if d['dest'] != 'buffered':
                 d['size'] = None
 
-
             obj.append(d)
 
     else:
@@ -287,7 +286,7 @@ def map_params_to_obj(module):
         else:
             module.params['size'] = None
 
-        if module.params['size'] == None:
+        if module.params['size'] is None:
             obj.append({
                 'dest': module.params['dest'],
                 'name': module.params['name'],
