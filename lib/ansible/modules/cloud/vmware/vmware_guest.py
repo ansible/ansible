@@ -1228,8 +1228,6 @@ class PyVmomiHelper(object):
         dcpath = compile_folder_path_for_object(datacenter)
 
         # Check for full path first in case it was already supplied
-        if (self.params['folder']  == dcpath + self.params['datacenter'] + self.params['folder']):
-            fullpath = self.params['folder']
         if (self.params['folder'].startswith(dcpath + self.params['datacenter'] + '/vm')):
             fullpath = self.params['folder']
         elif (self.params['folder'].startswith('/vm/') or self.params['folder'] == '/vm'):
