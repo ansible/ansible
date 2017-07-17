@@ -38,7 +38,7 @@ options:
             - Name of the service to manage.
     state:
         required: false
-        choices: [ started, stopped, restarted, reloaded, once ]
+        choices: [ started, stopped, restarted, reloaded, once, killed ]
         description:
             - C(Started)/C(stopped) are idempotent actions that will not run
               commands unless necessary.  C(restarted) will always bounce the
