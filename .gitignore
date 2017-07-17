@@ -91,6 +91,7 @@ packaging/release/ansible_release
 /test/integration/inventory.networking
 /test/integration/inventory.winrm
 /test/integration/cloud-config-aws.yml
+/test/integration/cloud-config-cs.ini
 # python 'rope' stuff
 .ropeproject
 # local 'ack' config files
