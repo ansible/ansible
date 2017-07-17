@@ -27,7 +27,8 @@ short_description: Create, update or delete Spotinst AWS Elastigroups
 author: Spotinst
 description:
   - Can create, update, or delete Spotinst AWS Elastigroups
-    Launch configuration is part of the elastigroup configuration, so no additional modules are necessary for handling the launch configuration
+    Launch configuration is part of the elastigroup configuration,
+    so no additional modules are necessary for handling the launch configuration.
     This module requires that you install the spotinst Python SDK (pip install spotinst)
     You will have to have a credentials file in this location - <home>/.spotinst/credentials
     The credentials file must contain a row that looks like this
@@ -56,7 +57,7 @@ options:
 
   block_device_mappings:
     description:
-      - (List of Objects) a list of hash/dictionaries of Block Device Mappings that are exposed to the instances in the elastigroup;
+      - (List of Objects) a list of hash/dictionaries of Block Device Mappings for elastigroup instances;
         You can specify virtual devices and EBS volumes.;
         '[{"key":"value", "key":"value"}]';
         keys allowed are
@@ -84,7 +85,7 @@ options:
 
   draining_timeout:
     description:
-      - (Integer) Seconds to allow the instance be drained from incoming TCP connections and detached from ELB before termination.
+      - (Integer) Time for instance to be drained from incoming requests and deregistered from ELB before termination.
     required: false
 
   ebs_optimized:
@@ -227,7 +228,7 @@ options:
         private_ip_address (String),
         subnet_id (String),
         associate_ipv6_address (Boolean),
-        private_ip_addresses (List of Objects, Keys allowed are privateIpAddress (String, required) and primary (Boolean))
+        private_ip_addresses (List of Objects, Keys are privateIpAddress (String, required) and primary (Boolean))
 
     required: false
 
@@ -295,8 +296,9 @@ options:
 
   scheduled_tasks:
     description:
-      - (List of Objects) a list of hash/dictionaries of scheduled tasks to configure in the elastigroup; '[{"key":"value", "key":"value"}]';
-        keys allowed are
+      - (List of Objects) a list of hash/dictionaries of scheduled tasks to configure in the elastigroup;
+        '[{"key":"value", "key":"value"}]';
+        keys allowed are -
         adjustment (Integer),
         scale_target_capacity (Integer),
         scale_min_capacity (Integer),
@@ -312,17 +314,22 @@ options:
 
   security_group_ids:
     description:
-      - (List of Strings) One or more security group IDs. In case of update it will override the existing Security Group with the new given array
+      - (List of Strings) One or more security group IDs. ;
+        In case of update it will override the existing Security Group with the new given array
     required: true
 
   shut_down_script:
     description:
-      - (String) The Base64-encoded shutdown script that executes prior to instance termination. Encode before setting.
+      - (String) The Base64-encoded shutdown script that executes prior to instance termination.
+        Encode before setting.
     required: false
 
   signals:
     description:
-      - (List of Objects) a list of hash/dictionaries of signals to configure in the elastigroup; keys allowed are name (String, required) and timeout (Integer)
+      - (List of Objects) a list of hash/dictionaries of signals to configure in the elastigroup;
+        keys allowed are -
+        name (String, required),
+        timeout (Integer)
     required: false
 
   spin_up_time:
@@ -345,7 +352,10 @@ options:
 
   tags:
     description:
-      - (List of Objects) a list of hash/dictionaries of tags to configure in the elastigroup; keys allowed are key (String, required) and value (String, required)
+      - (List of Objects) a list of hash/dictionaries of tags to configure in the elastigroup;
+        keys allowed are -
+        key (String, required),
+        value (String, required)
     required: false
 
   target:
@@ -381,7 +391,9 @@ options:
 
   up_scaling_policies:
     description:
-      - (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]'; keys allowed
+      - (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup;
+        '[{"key":"value", "key":"value"}]';
+        keys allowed are -
         are policy_name (String, required),
         namespace (String, required),
         metric_name (String, required),
@@ -403,7 +415,9 @@ options:
 
   down_scaling_policies:
     description:
-      - (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]'; keys allowed
+      - (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup;
+        '[{"key":"value", "key":"value"}]';
+        keys allowed are -
         are policy_name (String, required),
         namespace (String, required),
         metric_name (String, required),
@@ -430,7 +444,8 @@ options:
 
   utilize_reserved_instances:
     description:
-      - (Boolean) In case of any available Reserved Instances, Elastigroup will utilize them before purchasing Spot instances
+      - (Boolean) In case of any available Reserved Instances,
+         Elastigroup will utilize your reservations before purchasing Spot instances.
     required: false
 
   wait_for_instances:
@@ -440,7 +455,8 @@ options:
 
   wait_timeout:
     description:
-      - (Integer) How long the module should wait for instances before failing the action. Only works if wait_for_instances is True.
+      - (Integer) How long the module should wait for instances before failing the action.;
+        Only works if wait_for_instances is True.
     required: false
 """
 
