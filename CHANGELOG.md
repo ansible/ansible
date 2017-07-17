@@ -99,6 +99,11 @@ Ansible Changes By Release
 - The docker_container module has gained a new option, working_dir which allows
   specifying the working directory for the command being run in the image.
 - The ec2_win_password module now requires the cryptography python module be installed to run
+- The stat module added a field, lnk_target.  When the file being stated is
+  a symlink, lnk_target will contain the target of the link.  This differs from
+  lnk_source when the target is specified relative to the symlink.  In this
+  case, lnk_target will remain relative while lnk_source will be expanded to an
+  absolute path.
 
 ### New Modules
 
