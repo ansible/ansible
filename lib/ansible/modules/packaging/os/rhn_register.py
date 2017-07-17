@@ -341,10 +341,7 @@ class Rhn(redhat.RegistrationBase):
             Return True if we are running against Hosted (rhn.redhat.com) or
             False otherwise (when running against Satellite or Spacewalk)
         '''
-        if 'rhn.redhat.com' in self.hostname:
-            return True
-        else:
-            return False
+        return 'rhn.redhat.com' in self.hostname
 
 
 def main():
@@ -402,7 +399,7 @@ def main():
 
         # Register system
         if rhn.is_registered:
-            return module.exit_json(changed=False, msg="System already registered.")
+            module.exit_json(changed=False, msg="System already registered.")
 
         try:
             rhn.enable()
@@ -419,7 +416,7 @@ def main():
     # Ensure system is *not* registered
     if state == 'absent':
         if not rhn.is_registered:
-            return module.exit_json(changed=False, msg="System already unregistered.")
+            module.exit_json(changed=False, msg="System already unregistered.")
 
         try:
             rhn.unregister()
