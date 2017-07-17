@@ -287,6 +287,12 @@ class Ec2Inventory(object):
             self.destination_format = None
             self.destination_format_tags = None
 
+        # ansbile_ssh_host
+        if config.has_option('ec2', 'ansible_ssh_host'):
+            self.ansible_ssh_host = config.get('ec2', 'ansible_ssh_host')
+        else:
+            self.ansible_ssh_host = None
+
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
         if config.has_option('ec2', 'route53_hostnames'):
@@ -999,7 +1005,12 @@ class Ec2Inventory(object):
         self.push(self.inventory, 'ec2', hostname)
 
         self.inventory["_meta"]["hostvars"][hostname] = self.get_host_info_dict_from_instance(instance)
-        self.inventory["_meta"]["hostvars"][hostname]['ansible_ssh_host'] = dest
+
+        if self.ansible_ssh_host:
+            ansible_ssh_host = dest = getattr(instance, self.ansible_ssh_host, None)
+        else:
+            ansible_ssh_host = dest
+        self.inventory["_meta"]["hostvars"][hostname]['ansible_ssh_host'] = ansible_ssh_host
 
     def add_rds_instance(self, instance, region):
         ''' Adds an RDS instance to the inventory and index, as long as it is
