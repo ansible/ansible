@@ -34,10 +34,9 @@ description:
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
-    module = AnsibleModule(
-            argument_spec=dict()
-    )
+    module = AnsibleModule(argument_spec=dict())
     module.exit_json(changed=True, msg="hello world")
 
 
