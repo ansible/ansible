@@ -97,5 +97,5 @@ def verify_create_works(placeboify, maybe_sleep, client):
 
 
 def verify_delete_works(placeboify, maybe_sleep, client, conn_id):
-    changed, result = aws_direct_connect_connection.ensure_absent(client, conn_id)
+    changed = aws_direct_connect_connection.ensure_absent(client, conn_id)
     assert changed is True
