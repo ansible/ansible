@@ -41,12 +41,12 @@ options:
       - costOriented
       - balanced
     description:
-      - The strategy orientation.
+      - (String) The strategy orientation.
     required: true
 
   availability_zones:
     description:
-      - a list of hash/dictionaries of Availability Zones that are configured in the elastigroup; '[{"key":"value", "key":"value"}]';
+      - (List of Objects) a list of hash/dictionaries of Availability Zones that are configured in the elastigroup; '[{"key":"value", "key":"value"}]';
         keys allowed are
         name (String),
         subnet_id (String),
@@ -55,7 +55,7 @@ options:
 
   block_device_mappings:
     description:
-      - a list of hash/dictionaries of Block Device Mappings that are exposed to the instances in the elastigroup; You can specify virtual devices and EBS volumes.;'[{"key":"value", "key":"value"}]';
+      - (List of Objects) a list of hash/dictionaries of Block Device Mappings that are exposed to the instances in the elastigroup; You can specify virtual devices and EBS volumes.;'[{"key":"value", "key":"value"}]';
         keys allowed are
         device_name (List of Strings),
         virtual_name (String),
@@ -71,22 +71,22 @@ options:
 
   chef:
     description:
-      - The Chef integration configuration. Expects the following keys - chef_server (String), organization (String), user (String), pem_key (String), chef_version (String)
+      - (Object) The Chef integration configuration. Expects the following keys - chef_server (String), organization (String), user (String), pem_key (String), chef_version (String)
     required: false
 
   draining_timeout:
     description:
-      - seconds to allow the instance be drained from incoming TCP connections and detached from ELB before termination, in scale down operations.
+      - (Integer) Seconds to allow the instance be drained from incoming TCP connections and detached from ELB before termination, in scale down operations.
     required: false
 
   ebs_optimized:
     description:
-      - Enable EBS optimization for supported instances which are not enabled by default. Note - additional charges will be applied.
+      - (Boolean) Enable EBS optimization for supported instances which are not enabled by default. Note - additional charges will be applied.
     required: false
 
   ebs_volume_pool:
     description:
-      - a list of hash/dictionaries of EBS devices to reattach to the elastigroup when available; '[{"key":"value", "key":"value"}]';
+      - (List of Objects) a list of hash/dictionaries of EBS devices to reattach to the elastigroup when available; '[{"key":"value", "key":"value"}]';
         keys allowed are
         volume_ids (List of Strings),
         device_name (String)
@@ -94,7 +94,7 @@ options:
 
   ecs:
     description:
-      - The ECS integration configuration. Expects the following key - cluster_name (String)
+      - (Object) The ECS integration configuration. Expects the following key - cluster_name (String)
     required: false
 
   elastic_ips:
@@ -109,7 +109,7 @@ options:
 
   health_check_grace_period:
     description:
-      - The amount of time, in seconds, after the instance has launched to starts and check its health.
+      - (Integer) The amount of time, in seconds, after the instance has launched to start and check its health.
     default: 300
     required: false
 
@@ -121,18 +121,18 @@ options:
       - MLB
       - EC2
     description:
-      - he service to use for the health check.
+      - (String) The service to use for the health check.
     required: false
 
   iam_role_name:
     description:
-      - The instance profile iamRole name
+      - (String) The instance profile iamRole name
       - Only use iam_role_arn, or iam_role_name
     required: false
 
   iam_role_arn:
     description:
-      - The instance profile iamRole arn
+      - (String) The instance profile iamRole arn
       - Only use iam_role_arn, or iam_role_name
     required: false
 
@@ -141,62 +141,62 @@ options:
       - image_id
       - target
     description:
-      - list of fields on which changes should be ignored when updating
+      - (List of Strings) list of fields on which changes should be ignored when updating
     required: false
 
   image_id:
     description:
-      - The image Id used to launch the instance. In case of conflict between Instance type and image type, an error will be returned
+      - (String) The image Id used to launch the instance. In case of conflict between Instance type and image type, an error will be returned
     required: true
 
   key_pair:
     description:
-      - Specify a Key Pair to attach to the instances
+      - (String) Specify a Key Pair to attach to the instances
     required: true
 
   kubernetes:
     description:
-      - The Kubernetes integration configuration. Expects the following keys - api_server (String) and token (String)
+      - (Object) The Kubernetes integration configuration. Expects the following keys - api_server (String) and token (String)
     required: false
 
   lifetime_period:
     description:
-      - lifetime period
+      - (String) lifetime period
     required: false
 
   load_balancers:
     description:
-      - List of elastic load balancer names
+      - (List of Strings) List of classic ELB names
     required: false
 
   max_size:
     description:
-      - The upper limit number of instances that you can scale up to
+      - (Integer) The upper limit number of instances that you can scale up to
     required: true
 
   mesosphere:
     description:
-      - The Mesosphere integration configuration. Expects the following key - api_server (String)
+      - (Object) The Mesosphere integration configuration. Expects the following key - api_server (String)
     required: false
 
   min_size:
     description:
-      - The lower limit number of instances that you can scale down to
+      - (Integer) The lower limit number of instances that you can scale down to
     required: true
 
   monitoring:
     description:
-      - Describes whether instance Enhanced Monitoring is enabled
+      - (Boolean) Describes whether instance Enhanced Monitoring is enabled
     required: true
 
   name:
     description:
-      - Unique name for elastigroup to be created, updated or deleted
+      - (String) Unique name for elastigroup to be created, updated or deleted
     required: true
 
   network_interfaces:
     description:
-      - a list of hash/dictionaries of network interfaces to add to the elastigroup; '[{"key":"value", "key":"value"}]';
+      - (List of Objects) a list of hash/dictionaries of network interfaces to add to the elastigroup; '[{"key":"value", "key":"value"}]';
         keys allowed are
         description (String),
         device_index (Integer),
@@ -214,23 +214,23 @@ options:
 
   on_demand_count:
     description:
-      - Required if risk is not set
+      - (Integer) Required if risk is not set
       - Number of on demand instances to launch. All other instances will be spot instances. Either set this parameter or the risk parameter
     required: false
 
   on_demand_instance_type:
     description:
-      - On-demand instance type that will be provisioned
+      - (String) On-demand instance type that will be provisioned
     required: true
 
   opsworks:
     description:
-      - The elastigroup OpsWorks integration configration. Expects the following key - layer_id (String)
+      - (Object) The elastigroup OpsWorks integration configration. Expects the following key - layer_id (String)
     required: false
 
   persistence:
     description:
-      - The Stateful elastigroup configration. Accepts the following keys - should_persist_root_device (Boolean), should_persist_block_devices (Boolean) and should_persist_private_ip (Boolean)
+      - (Object) The Stateful elastigroup configration. Accepts the following keys - should_persist_root_device (Boolean), should_persist_block_devices (Boolean) and should_persist_private_ip (Boolean)
     required: false
 
   product:
@@ -242,27 +242,27 @@ options:
       - SUSE Linux (Amazon VPC)
       - Windows
     description:
-      - Operation system type._
+      - (String) Operation system type._
     required: true
 
   rancher:
     description:
-      - The Rancher integration configuration. Expects the following keys - access_key (String), secret_key (String) and master_host (String)
+      - (Object) The Rancher integration configuration. Expects the following keys - access_key (String), secret_key (String) and master_host (String)
     required: false
 
   right_scale:
     description:
-      - The Rightscale integration configuration. Expects the following keys - account_id (String) and refresh_token (String)
+      - (Object) The Rightscale integration configuration. Expects the following keys - account_id (String) and refresh_token (String)
     required: false
 
   risk:
     description:
-      - required if on demand is not set. The percentage of Spot instances to launch (0 - 100).
+      - (Integer) required if on demand is not set. The percentage of Spot instances to launch (0 - 100).
     required: false
 
   scheduled_tasks:
     description:
-      - a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]';
+      - (List of Objects) a list of hash/dictionaries of scheduled tasks to configure in the elastigroup; '[{"key":"value", "key":"value"}]';
         keys allowed are
         adjustment (Integer),
         scale_target_capacity (Integer),
@@ -279,27 +279,27 @@ options:
 
   security_group_ids:
     description:
-      - One or more security group IDs. In case of update it will override the existing Security Group with the new given array
+      - (List of Strings) One or more security group IDs. In case of update it will override the existing Security Group with the new given array
     required: true
 
   shut_down_script:
     description:
-      - The Base64-encoded shutdown script that executet prior to instnace termination
+      - (String) The Base64-encoded shutdown script that executes prior to instance termination. Encode before setting.
     required: false
 
   signals:
     description:
-      - a list of hash/dictionaries of signals to configure in the elastigroup; keys allowed are name (String, required) and timeout (Integer)
+      - (List of Objects) a list of hash/dictionaries of signals to configure in the elastigroup; keys allowed are name (String, required) and timeout (Integer)
     required: false
 
   spin_up_time:
     description:
-      - spin up time for the instance
+      - (Integer) spin up time, in seconds, for the instance
     required: false
 
   spot_instance_types:
     description:
-      - Spot instance type that will be provisioned.
+      - (List of Strings) Spot instance type that will be provisioned.
     required: true
 
   state:
@@ -307,22 +307,22 @@ options:
       - present
       - absent
     description:
-      - create or delete the elastigroup
+      - (String) create or delete the elastigroup
     required: false
 
   tags:
     description:
-      - a list of hash/dictionaries of tags to configure in the elastigroup; keys allowed are key (String, required) and value (String, required)
+      - (List of Objects) a list of hash/dictionaries of tags to configure in the elastigroup; keys allowed are key (String, required) and value (String, required)
     required: false
 
   target:
     description:
-      - The number of instances to launch
+      - (Integer) The number of instances to launch
     required: true
 
   target_group_arns:
     description:
-      - List of target group arns instances should be registered to
+      - (List of Strings) List of target group arns instances should be registered to
     required: false
 
   tenancy:
@@ -330,12 +330,12 @@ options:
       - default
       - dedicated
     description:
-      - dedicated vs shared tenancy
+      - (String) dedicated vs shared tenancy
     required: false
 
   terminate_at_end_of_billing_hour:
     description:
-      - terminate at the end of billing hour
+      - (Boolean) terminate at the end of billing hour
     required: false
 
   unit:
@@ -348,7 +348,7 @@ options:
 
   up_scaling_policies:
     description:
-      - a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]'; keys allowed
+      - (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]'; keys allowed
         are policy_name (String, required),
         namespace (String, required),
         metric_name (String, required),
@@ -370,11 +370,11 @@ options:
 
   down_scaling_policies:
     description:
-      - a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]'; keys allowed
+      - (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value", "key":"value"}]'; keys allowed
         are policy_name (String, required),
         namespace (String, required),
         metric_name (String, required),
-        dimensions (list of objects, Keys allowed are name (String, required) and value (String)),
+        dimensions ((List of Objects), Keys allowed are name (String, required) and value (String)),
         statistic (String, required),
         evaluation_periods (String, required),
         period (String, required),
