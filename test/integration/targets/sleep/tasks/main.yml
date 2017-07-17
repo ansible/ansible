@@ -1,0 +1,43 @@
+- name: Sleep with no parameters
+  sleep:
+  register: sleep_empty
+
+- name: Test sleep_empty
+  assert:
+    that:
+    - not sleep_empty|failed
+    - sleep_empty.elapsed == 1
+
+- name: Sleep with negative time
+  sleep:
+    minutes: -1
+  register: sleep_negative
+
+- name: Test sleep_negative
+  assert:
+    that:
+    - not sleep_negative|failed
+    - sleep_negative.elapsed == 1
+
+- name: Sleep for 5 seconds
+  sleep:
+    seconds: 5
+  register: sleep_five
+
+- name: Test sleep_five
+  assert:
+    that:
+    - not sleep_five|failed
+    - sleep_five.elapsed == 5
+
+- name: Sleep with invalid time
+  sleep:
+    seconds: foobar
+  ignore_errors: yes
+  register: sleep_invalid
+
+- name: Test sleep_invalid
+  assert:
+    that:
+    - sleep_invalid|failed
+    - sleep_invalid.elapsed == 0
