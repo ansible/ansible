@@ -452,36 +452,7 @@ files:
   $modules/network/eos/eos_user.py: privateip trishnaguha
   $modules/network/eos/eos_vlan.py: privateip rcarrillocruz trishnaguha
   $modules/network/eos/eos_vrf.py: privateip rcarrillocruz trishnaguha
-  $modules/network/f5/bigip_command.py: caphrim007
-  $modules/network/f5/bigip_config.py: caphrim007
-  $modules/network/f5/bigip_device_dns.py: caphrim007
-  $modules/network/f5/bigip_device_ntp.py: caphrim007
-  $modules/network/f5/bigip_device_sshd.py: caphrim007
-  $modules/network/f5/bigip_facts.py: caphrim007
-  $modules/network/f5/bigip_gtm_datacenter.py: caphrim007
-  $modules/network/f5/bigip_gtm_facts.py: caphrim007
-  $modules/network/f5/bigip_gtm_pool.py: caphrim007
-  $modules/network/f5/bigip_gtm_virtual_server.py: caphrim007 perzizzle
-  $modules/network/f5/bigip_gtm_wide_ip.py: caphrim007
-  $modules/network/f5/bigip_iapp_service.py: caphrim007
-  $modules/network/f5/bigip_iapp_template.py: caphrim007
-  $modules/network/f5/bigip_irule.py: caphrim007
-  $modules/network/f5/bigip_monitor_http.py: caphrim007 srvg
-  $modules/network/f5/bigip_monitor_tcp.py: caphrim007 srvg
-  $modules/network/f5/bigip_node.py: caphrim007
-  $modules/network/f5/bigip_pool_member.py: caphrim007
-  $modules/network/f5/bigip_provision.py: caphrim007
-  $modules/network/f5/bigip_qkview.py: caphrim007
-  $modules/network/f5/bigip_routedomain.py: caphrim007
-  $modules/network/f5/bigip_selfip.py: caphrim007
-  $modules/network/f5/bigip_snat_pool.py: caphrim007
-  $modules/network/f5/bigip_snmp.py: caphrim007
-  $modules/network/f5/bigip_snmp_trap.py: caphrim007
-  $modules/network/f5/bigip_ssl_certificate.py: caphrim007
-  $modules/network/f5/bigip_sys_db.py: caphrim007
-  $modules/network/f5/bigip_sys_global.py: caphrim007
-  $modules/network/f5/bigip_virtual_address.py: caphrim007
-  $modules/network/f5/bigip_vlan.py: caphrim007
+  $modules/network/f5/: caphrim007
   $modules/network/fortios/: bjolivot
   $modules/network/illumos/: xen0l
   $modules/network/interface/: $team_networking
