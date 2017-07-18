@@ -26,40 +26,29 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: junos_lldp
+module: junos_lldp_interface
 version_added: "2.4"
 author: "Ganesh Nalawade (@ganeshrn)"
-short_description: Manage LLDP configuration on Juniper JUNOS network devices
+short_description: Manage LLDP interfaces configuration on Juniper JUNOS network devices
 description:
-  - This module provides declarative management of LLDP service
-    on Juniper JUNOS network devices.
+  - This module provides declarative management of LLDP interfaces
+    configuration on Juniper JUNOS network devices.
 options:
-  interval:
+  name:
     description:
-      - Frequency at which LLDP advertisements are sent (in seconds).
-  transmit_delay:
+      - Name of the interface LLDP should be configured on.
+  aggregate:
+    description: List of interfaces LLDP should be configured on.
+  purge:
     description:
-      - Specify the number of seconds the device waits before sending
-        advertisements to neighbors after a change is made in local system.
-  hold_multiplier:
-    description:
-      - Specify the number of seconds that LLDP information is held before it is
-        discarded. The multiplier value is used in combination with the
-        C(interval) value.
-  enable:
-    description:
-      - If value is C(True) it enable LLDP protocol on remote device, if value
-        is C(False) it disables LLDP protocol.
-    default: present
-    choices: [True, False]
+      - Purge interfaces not defined in the aggregate parameter.
+    default: no
   state:
     description:
-      - Value of C(present) ensures given LLDP configuration
-        is present on device and LLDP is enabled, for value of C(absent)
-        LLDP configuration is deleted and LLDP is in disabled state.
-        Value C(enabled) ensures LLDP protocol is enabled and LLDP configuration
-        if any is configured on remote device, for value of C(disabled) it ensures
-        LLDP protocol is disabled any LLDP configuration if any is still present.
+      - Value of C(present) ensures given LLDP configured on given I(interfaces)
+        and is enabled, for value of C(absent) LLDP configuration on given I(interfaces) deleted.
+        Value C(enabled) ensures LLDP protocol is enabled on given I(interfaces) and
+         for value of C(disabled) it ensures LLDP is disabled on given I(interfaces).
     default: present
     choices: ['present', 'absent', 'enabled', 'disabled']
   active:
@@ -75,27 +64,37 @@ notes:
 """
 
 EXAMPLES = """
-- name: Enable LLDP service
-  junos_lldp:
-    state: enabled
-
-- name: Disable LLDP service
-  junos_lldp:
-    state: disabled
-
-- name: Set LLDP parameters
-  junos_lldp:
-    interval: 10
-    hold_multiplier: 5
-    transmit_delay: 30
+- name: Configure LLDP on specific interfaces
+  junos_lldp_interface:
+    name: ge-0/0/5
     state: present
 
-- name: Delete LLDP parameters
-  junos_lldp:
-    interval: 10
-    hold_multiplier: 5
-    transmit_delay: 30
-    state: absent
+- name: Disable LLDP on specific interfaces
+  junos_lldp_interface:
+    name: ge-0/0/5
+    state: disabled
+
+- name: Enable LLDP on specific interfaces
+  junos_lldp_interface:
+    name: ge-0/0/5
+    state: enabled
+
+- name: Delete LLDP configuration on specific interfaces
+  junos_lldp_interface:
+    name: ge-0/0/5
+    state: present
+
+- name: Deactivate LLDP on specific interfaces
+  junos_lldp_interface:
+    name: ge-0/0/5
+    state: present
+    active: False
+
+- name: Activate LLDP on specific interfaces
+  junos_lldp_interface:
+    name: ge-0/0/5
+    state: present
+    active: True
 """
 
 RETURN = """
@@ -104,12 +103,8 @@ diff.prepared:
   returned: when configuration is changed and diff option is enabled.
   type: string
   sample: >
-        [edit]
-        +  protocols {
-        +      lldp {
-        +          disable;
-        +      }
-        +  }
+        [edit protocols lldp]
+        +    interface ge-0/0/5;
 """
 import collections
 
@@ -126,36 +121,12 @@ except ImportError:
 USE_PERSISTENT_CONNECTION = True
 
 
-def validate_interval(value, module):
-    if not 5 <= value <= 32768:
-        module.fail_json(msg='interval must be between 5 and 32768')
-
-
-def validate_hold_multiplier(value, module):
-    if not 5 <= value <= 32768:
-        module.fail_json(msg='hold_multiplier must be between 2 and 10')
-
-
-def validate_transmit_delay(value, module):
-    if not 1 <= value <= 8192:
-        module.fail_json(msg='transmit_delay must be between 2 and 10')
-
-
-def validate_param_values(module, obj):
-    for key in obj:
-        # validate the param value (if validator func exists)
-        validator = globals().get('validate_%s' % key)
-        if callable(validator):
-            validator(module.params.get(key), module)
-
-
 def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        interval=dict(type='int'),
-        transmit_delay=dict(type='int'),
-        hold_multiplier=dict(type='int'),
+        name=dict(),
+        aggregate=dict(type='list'),
         purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
         active=dict(default=True, type='bool')
@@ -174,14 +145,12 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    top = 'protocols/lldp'
+    top = 'protocols/lldp/interface'
 
     param_to_xpath_map = collections.OrderedDict()
     param_to_xpath_map.update([
-        ('interval', {'xpath': 'advertisement-interval', 'leaf_only': True}),
-        ('transmit_delay', {'xpath': 'transmit-delay', 'leaf_only': True}),
-        ('hold_multiplier', {'xpath': 'hold-multiplier', 'leaf_only': True}),
-        ('disable', {'xpath': 'disable', 'tag_only': True, 'is_key': True})
+        ('name', {'xpath': 'name', 'is_key': True}),
+        ('disable', {'xpath': 'disable', 'tag_only': True})
     ])
 
     state = module.params.get('state')
@@ -208,7 +177,6 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
-
 
 if __name__ == "__main__":
     main()
