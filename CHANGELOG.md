@@ -48,6 +48,7 @@ Ansible Changes By Release
 * fix for wait_for on non-Linux systems with newer versions of psutil
 * fix eos_banner code and test issues
 * run tearup and teardown of EAPI service only on EAPI tests
+* fix eos_config tests so only Eth1 and Eth2 are used
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
