@@ -267,7 +267,7 @@ def create_launch_config(connection, module):
                                                                 ec2_connect(module),
                                                                 vpc_id=vpc_id, boto3=True)
     except ValueError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg="Failed to get Security Group IDs", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     user_data = module.params.get('user_data')
     user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']
@@ -295,7 +295,7 @@ def create_launch_config(connection, module):
             with open(user_data_path, 'r') as user_data_file:
                 user_data = user_data_file.read()
         except IOError as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+            module.fail_json(msg="Failed to open file for reading", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if volumes:
         for volume in volumes:
@@ -349,7 +349,7 @@ def create_launch_config(connection, module):
             else:
                 module.fail_json(msg="Failed to create launch configuration", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg="Failed to create launch configuration", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     result = (dict((k, v) for k, v in launch_config.items()
               if k not in ['connection', 'created_time', 'instance_monitoring',
@@ -403,7 +403,7 @@ def delete_launch_config(connection, module):
         else:
             module.exit_json(changed=False)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg="Failed to delete launch configuration", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
 def main():
