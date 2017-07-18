@@ -172,6 +172,7 @@
 - name: create test user
   win_user:
     name: test win owner
+    password: TtPp!@#$%^ + {{ lookup('password', '/dev/null length=15') }}
 
 - name: set owner with space recurse
   win_owner:
