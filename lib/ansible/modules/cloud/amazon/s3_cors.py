@@ -128,7 +128,7 @@ def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
 
     def camel(words):
         words_split = words.split('_')
-        first_word = capitalize_first and words_split[0].capitalize() or words_split[0] 
+        first_word = capitalize_first and words_split[0].capitalize() or words_split[0]
         return first_word + ''.join(x.capitalize() or '_' for x in words_split[1:])
 
     return camelize(snake_dict)
