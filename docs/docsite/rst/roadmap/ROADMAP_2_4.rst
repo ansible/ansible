@@ -57,8 +57,7 @@ Facts
 PluginLoader
 ------------
 **(pushed out to future release)**
-- Over the past couple releases we've had some thoughts about how
-  PluginLoader might be better structured
+- Over the past couple releases we've had some thoughts about how PluginLoader might be better structured
 
   - Load the loaders via an initialization function(), not when importing
     the module. (stretch goal, doesn't impact the CLI)
