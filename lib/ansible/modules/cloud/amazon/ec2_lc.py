@@ -265,7 +265,7 @@ def create_launch_config(connection, module):
     try:
         security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'),
                                                                 ec2_connect(module),
-                                                                vpc_id=vpc_id, boto3=False)
+                                                                vpc_id=vpc_id, boto3=True)
     except ValueError as e:
         module.fail_json(msg=str(e))
     user_data = module.params.get('user_data')
