@@ -64,5 +64,10 @@ def main():
     logging.debug(module.params['foo'])
     module.exit_json(changed=True, foo=module.params['foo'])
 
+def add_things(add1, add2)
+    if type(add1) != type(add2)
+        return 'one of these things is not like the other'
+    return add1 + add2
+
 if __name__ == '__main__':
     main()

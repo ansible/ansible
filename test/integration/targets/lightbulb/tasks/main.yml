@@ -1,0 +1,27 @@
+---
+- name: test lightbulb with no inputs
+  lightbulb:
+  register: foo
+
+- name: debug stuff
+  debug:
+    msg: "{{ foo }}"
+
+- name: test foo
+  assert: 
+    that:
+      - "foo.foo == 'bar'"
+
+- name: test lightbulb
+  lightbulb:
+    foo: test
+  register: foo
+
+- name: debug stuff
+  debug:
+    msg: "{{ foo }}"
+
+- name: test foo
+  assert: 
+    that:
+      - "foo.foo == 'test'"
