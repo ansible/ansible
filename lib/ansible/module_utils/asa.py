@@ -84,17 +84,17 @@ class Cli(CliBase):
 
     # Config methods
 
-    def configure(self, commands):
+    def configure(self, commands, module=None):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
         if cmds[-1] == 'exit':
             cmds[-1] = 'end'
         elif cmds[-1] != 'end':
             cmds.append('end')
-        responses = self.execute(cmds)
+        responses = self.execute(cmds, module=module)
         return responses[1:]
 
-    def get_config(self, include=None):
+    def get_config(self, include=None, module=None):
         if include not in [None, 'defaults', 'passwords']:
             raise ValueError('include must be one of None, defaults, passwords')
         cmd = 'show running-config'
@@ -104,10 +104,10 @@ class Cli(CliBase):
             cmd = 'show running-config all'
         else:
             cmd = 'show running-config'
-        return self.run_commands(cmd)[0]
+        return self.run_commands(cmd, module=module)[0]
 
-    def load_config(self, commands):
-        return self.configure(commands)
+    def load_config(self, commands, module=None):
+        return self.configure(commands, module=module)
 
     def save_config(self):
         self.execute(['write memory'])

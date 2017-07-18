@@ -247,7 +247,7 @@ class CliBase(object):
         self.shell.close()
         self._connected = False
 
-    def to_command(self, obj):
+    def to_command(self, obj, module=None):
         if isinstance(obj, Command):
             cmdobj = dict()
             cmdobj['command'] = obj.command
@@ -256,22 +256,31 @@ class CliBase(object):
             return cmdobj
 
         elif not isinstance(obj, dict):
-            transform = ComplexDict(dict(
-                command=dict(key=True),
-                prompt=dict(),
-                answer=dict(),
-                sendonly=dict(default=False)
-            ))
+            if module:
+                transform = ComplexDict(dict(
+                    command=dict(key=True),
+                    prompt=dict(),
+                    answer=dict(),
+                    sendonly=dict(default=False)
+                ), module)
+            else:
+                transform = ComplexDict(dict(
+                    command=dict(key=True),
+                    prompt=dict(),
+                    answer=dict(),
+                    sendonly=dict(default=False)
+                ))
+
             return transform(obj)
 
         else:
             return obj
 
-    def execute(self, commands):
+    def execute(self, commands, module=None):
         try:
             responses = list()
             for item in to_list(commands):
-                item = self.to_command(item)
+                item = self.to_command(item, module=module)
                 rc, out, err = self.shell.send(item)
                 if rc != 0:
                     raise ShellError(err)
@@ -281,8 +290,8 @@ class CliBase(object):
             exc = get_exception()
             raise NetworkError(to_native(exc))
 
-    def run_commands(self, x):
-        return self.execute(to_list(x))
+    def run_commands(self, x, module=None):
+        return self.execute(to_list(x), module=module)
 
     def exec_command(self, x):
         return self.shell.send(self.to_command(x))

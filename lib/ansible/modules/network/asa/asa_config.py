@@ -240,6 +240,7 @@ from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 
 def get_config(module):
+
     contents = module.params['config']
     if not contents:
         if module.params['defaults']:
@@ -248,7 +249,7 @@ def get_config(module):
             include = 'passwords'
         else:
             include = None
-        contents = module.config.get_config(include=include)
+        contents = module.config.get_config(include=include, module=module)
     return NetworkConfig(indent=1, contents=contents)
 
 def get_candidate(module):
@@ -289,7 +290,7 @@ def run(module, result):
         # send the configuration commands to the device and merge
         # them with the current running config
         if not module.check_mode:
-            module.config.load_config(commands)
+            module.config.load_config(commands, module=module)
         result['changed'] = True
 
     if module.params['save']:
