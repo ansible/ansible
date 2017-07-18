@@ -45,9 +45,10 @@ EXAMPLES = '''
     name: led
 '''
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             name=dict(required=True)
         )
     )
