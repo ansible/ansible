@@ -26,9 +26,10 @@ EXAMPLES = '''
 import pdb
 import q
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict()
+        argument_spec=dict()
     )
     foo = "hello world"
     q(foo)
