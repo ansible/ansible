@@ -277,8 +277,6 @@ def _get_packages(module, pip, chdir):
 def _is_present(name, version, installed_pkgs, pkg_command):
     '''Return whether or not package is installed.'''
     for pkg in installed_pkgs:
-        # Package listing will be different depending on which pip
-        # command was used ('pip list' vs. 'pip freeze').
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
         else:
