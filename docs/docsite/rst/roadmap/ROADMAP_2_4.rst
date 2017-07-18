@@ -155,12 +155,12 @@ AWS
 - Triage existing merges for modules
 - Module work
 
-  - elb-target-groups
-  - alb*
-  - ecs
-  - Data Pipelines
-  - VPN
-  - DirectConnect
+  - elb-target-groups `#19492 https://github.com/ansible/ansible/pull/19492`_, `#24583 https://github.com/ansible/ansible/pull/24583`_. **(done)**
+  - alb* `#19491 https://github.com/ansible/ansible/pull/19491`_, `#24584 https://github.com/ansible/ansible/pull/24584`_. **(done)**
+  - ecs `#20618 https://github.com/ansible/ansible/pull/20618>`_. **(in review process)**
+  - Data Pipelines `#22878 https://github.com/ansible/ansible/pull/22878`_. **(in review process)**
+  - VPN `#24385 https://github.com/ansible/ansible/pull/24385`_. **(in review process)**
+  - DirectConnect `https://github.com/ansible/ansible/pull/26152`_. **(connection module in review process, several more to come)**
 
 Azure
 -----
