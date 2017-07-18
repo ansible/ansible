@@ -22,22 +22,22 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: ciscowlc_command
+module: aire_command
 version_added: "2.4"
 author: "James Mighion (@jmighion)"
 short_description: Run commands on remote devices running Cisco WLC
 description:
-  - Sends arbitrary commands to an ciscowlc node and returns the results
+  - Sends arbitrary commands to an aire node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
-    Please use M(ciscowlc_config) to configure WLC devices.
-extends_documentation_fragment: ciscowlc
+    Please use M(aire_config) to configure WLC devices.
+extends_documentation_fragment: aire
 options:
   commands:
     description:
-      - List of commands to send to the remote ciscowlc device over the
+      - List of commands to send to the remote aire device over the
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
@@ -85,22 +85,22 @@ options:
 EXAMPLES = """
 tasks:
   - name: run show version on remote devices
-    ciscowlc_command:
+    aire_command:
       commands: show version
 
   - name: run show sysinfo and check to see if output contains Cisco Controller
-    ciscowlc_command:
+    aire_command:
       commands: show sysinfo
       wait_for: result[0] contains 'Cisco Controller'
 
   - name: run multiple commands on remote nodes
-    ciscowlc_command:
+    aire_command:
       commands:
         - show version
         - show interfaces
 
   - name: run multiple commands and evaluate the output
-    ciscowlc_command:
+    aire_command:
       commands:
         - show sysinfo
         - show interfaces
@@ -128,8 +128,8 @@ failed_conditions:
 """
 import time
 
-from ansible.module_utils.ciscowlc import run_commands
-from ansible.module_utils.ciscowlc import ciscowlc_argument_spec, check_args
+from ansible.module_utils.aire import run_commands
+from ansible.module_utils.aire import aire_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
@@ -158,8 +158,8 @@ def parse_commands(module, warnings):
             )
         elif item['command'].startswith('conf'):
             module.fail_json(
-                msg='ciscowlc_command does not support running config mode '
-                    'commands.  Please use ciscowlc_config instead'
+                msg='aire_command does not support running config mode '
+                    'commands.  Please use aire_config instead'
             )
     return commands
 
@@ -177,7 +177,7 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    argument_spec.update(ciscowlc_argument_spec)
+    argument_spec.update(aire_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

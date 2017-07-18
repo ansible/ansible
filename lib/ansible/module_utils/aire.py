@@ -32,7 +32,7 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-ciscowlc_argument_spec = {
+aire_argument_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -49,12 +49,12 @@ ARGS_DEFAULT_VALUE = {
 
 
 def get_argspec():
-    return ciscowlc_argument_spec
+    return aire_argument_spec
 
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
-    for key in ciscowlc_argument_spec:
+    for key in aire_argument_spec:
         if key not in ['provider', 'authorize'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 

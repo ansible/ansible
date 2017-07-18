@@ -34,7 +34,7 @@ class Cliconf(CliconfBase):
     def get_device_info(self):
         device_info = {}
 
-        device_info['network_os'] = 'ciscowlc'
+        device_info['network_os'] = 'aire'
         reply = self.get(b'show sysinfo')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 

@@ -24,7 +24,7 @@ import copy
 
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils.ciscowlc import ciscowlc_argument_spec
+from ansible.module_utils.aire import aire_argument_spec
 from ansible.module_utils.six import iteritems
 
 try:
@@ -49,7 +49,7 @@ class ActionModule(_ActionModule):
 
         pc = copy.deepcopy(self._play_context)
         pc.connection = 'network_cli'
-        pc.network_os = 'ciscowlc'
+        pc.network_os = 'aire'
         pc.remote_addr = provider['host'] or self._play_context.remote_addr
         pc.port = provider['port'] or self._play_context.port or 22
         pc.remote_user = provider['username'] or self._play_context.connection_user
@@ -84,7 +84,7 @@ class ActionModule(_ActionModule):
 
     def load_provider(self):
         provider = self._task.args.get('provider', {})
-        for key, value in iteritems(ciscowlc_argument_spec):
+        for key, value in iteritems(aire_argument_spec):
             if key != 'provider' and key not in provider:
                 if key in self._task.args:
                     provider[key] = self._task.args[key]
