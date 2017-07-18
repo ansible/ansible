@@ -34,21 +34,22 @@ All modules must have the following sections defined in this order:
 Copyright
 ----------------------
 
-The first 3 lines of every module should look the same. The first line is the
-shebang, but the next 2 lines are the important bit: copyright statement and
-license.
+The beginning of every module should look about the same. After the shebang,
+there should be at least two lines covering copyright and licensing of the
+code.
 
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright © 2017 [REPLACE THIS]
+    # Copyright (c) 2017 Ansible Project
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Every file with a copyright header must include the original author. Major
-additions to the module are allowed to add an additional copyright line. This
-is especially true of rewrites, but original authorship copyright messages
-should be preserved. If applicable, contributors may have their rights assigned
-to their employer for example: "Copyright © 2017 Red Hat, Inc."
+Every file with a copyright line with the original copyright holder. Major
+additions to the module (for instance, rewrites)  may add additional copyright
+lines. Code from the Ansible community should typically be assigned as
+"Copyright (c) 2017 Ansible Project" which covers all contributors. Any legal
+questions need to review the source control history, so an exhaustive copyright
+header is not necessary.
 
 The license declaration should be ONLY one line, not the full GPL prefix. If
 you notice a module with the full prefix, feel free to switch it to the
@@ -60,8 +61,8 @@ add the newer line above the older one, like so:
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright © 2017 [New Contributor(s)]
-    # Copyright © 2015 [Original Contributor(s)]
+    # Copyright (c) 2017 [New Contributor(s)]
+    # Copyright (c) 2015 [Original Contributor(s)]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
