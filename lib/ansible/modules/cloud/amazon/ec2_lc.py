@@ -446,10 +446,8 @@ def main():
         module.fail_json(msg='boto3 required for this module')
 
     try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
-            module, boto3=True)
-        connection = boto3_conn(module, conn_type='client',
-                                resource='autoscaling', region=region,
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        connection = boto3_conn(module, conn_type='client', resource='autoscaling', region=region,
                                 endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoRegionError:
         module.fail_json(
