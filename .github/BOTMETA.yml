@@ -293,6 +293,7 @@ files:
   $modules/cloud/vmware/vca_fw.py: privateip
   $modules/cloud/vmware/vca_nat.py: privateip
   $modules/cloud/vmware/vca_vapp.py: privateip
+  $modules/cloud/vmware/vcenter_folder: dav1x dagwieers
   $modules/cloud/vmware/vmware_cluster.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_datacenter.py: $team_ansible jcpowermac kamsz
   $modules/cloud/vmware/vmware_dns_config.py: $team_ansible jcpowermac
