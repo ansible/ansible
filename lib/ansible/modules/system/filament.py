@@ -59,8 +59,6 @@ filament:
     sample: hello world
 '''
 
-import epdb
-
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -73,12 +71,11 @@ def main():
         ),
         supports_check_mode=True
     )
-    epdb.st()
 
     if module.params['state'] == 'absent':
-        module.exit_json(changed=False)
+        module.fail_json(msg="state set to absent")
 
-    module.exit_json(changed=True, filament="hello world")
+    module.exit_json(changed=False, filament="hello world")
 
 
 if __name__ == '__main__':
