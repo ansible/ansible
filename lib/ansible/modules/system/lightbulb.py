@@ -11,7 +11,7 @@ module: lightbulb
 author: "Derek Foster (@fostimus)"
 version_added: "2.3.1.0"
 short_description: "Hello World"
-requirements: 
+requirements: []
 description:
     - Prints "hello world to msg"
 notes:
@@ -23,18 +23,17 @@ EXAMPLES = '''
 - lightbulb:
 '''
 
-import q
 import pdb
-import Cmd
+import q
 
 def main():
-	module = AnsibleModule(
-		argument_spec = dict()
-	)
-	foo = "hello world"
-	q(foo)
-	pdb.set_trace()
-	module.exit_json(changed=True, msg=foo)
+    module = AnsibleModule(
+        argument_spec = dict()
+    )
+    foo = "hello world"
+    q(foo)
+    pdb.set_trace()
+    module.exit_json(changed=True, msg=foo)
 
 from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
