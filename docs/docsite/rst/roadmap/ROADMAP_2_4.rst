@@ -28,21 +28,22 @@ Python 3
 
 Ansible-Config
 --------------
-- New yaml format for config
+- Proposal found in ansible/proposals issue `#35 <https://github.com/ansible/proposals/issues/35>`_.
+- Initial PR of code found in ansible/ansible PR `#12797 <https://github.com/ansible/ansible/pull/12797>`_. **(done)**
+- Per plugin configuration (depends on plugin docs below). **(WIP)**
+- New yaml format for config **(possibly pushed to future roadmap)**
 - Extend the ability of the current config system by adding an ``ansible-config`` command and add the following:
 
-  - Dump existing config settings
-  - Update / write a config entry
-  - Show available options (ini entry, yaml, env var, etc)
+  - Dump existing config settings **(working, fine tuning)**
+  - Update / write a config entry **(pushed to future roadmap)**
+  - Show available options (ini entry, yaml, env var, etc) **(working, fine tuning)**
 
-- Proposal found in ansible/proposals issue `#35 <https://github.com/ansible/proposals/issues/35>`_.
-- Initial PR of code found in ansible/ansible PR `#12797 <https://github.com/ansible/ansible/pull/12797>`_.
 
 Inventory
 ---------
-- Current inventory is overly complex, non modular and mostly still a legacy from inception.
-- We also want to add a common set of features to most inventory sources but are hampered by the current code base.
+**(done, needs docs)**
 - Proposal found in ansible/proposals issue `#41 <https://github.com/ansible/proposals/issues/41>`_.
+- Current inventory is overly complex, non modular and mostly still a legacy from inception.
 
 Facts
 -----
@@ -55,6 +56,7 @@ Facts
 
 PluginLoader
 ------------
+**(pushed out to future release)**
 - Over the past couple releases we've had some thoughts about how
   PluginLoader might be better structured
 
@@ -91,23 +93,26 @@ Vault
 
 Globalize Callbacks
 -------------------
+**(pushed out to future release)**
 - Make send_callback available to other code that cannot use it.
 - Would allow for ‘full formatting’ of output (see JSON callback)
 - Fixes static ‘include’ display problem
 
 Plugins
 -------
-- Allow plugins to have embedded docs (like modules)
-- Update ansible-doc and website to generate docs from these ansible/ansible PR `#22796 <https://github.com/ansible/ansible/pull/22796>`_.
+- Allow plugins to have embedded docs (like modules) **(done)**
+- Update ansible-doc and website to generate docs from these ansible/ansible PR `#22796 <https://github.com/ansible/ansible/pull/22796>`_. **(ansible-doc working, todo:website)**
 
 Group Priorities
 ----------------
+**(done)**
 - Start using existing group priority variable to sort/merge group vars
 - Implementation for this in ansible/ansible PR `#22580 <https://github.com/ansible/ansible/pull/22580>`_.
 - Documentation of group priority variable
 
 Runtime Check on Modules for Blacklisting
 -----------------------------------------
+**(pushed out to future release)**
 - Filter on things like "supported_by" in module metadata
 - Provide users with an option of "warning, error or allow/ignore"
 - Configurable via ansible.cfg and environment variable
