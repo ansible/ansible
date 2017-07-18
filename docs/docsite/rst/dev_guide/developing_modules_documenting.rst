@@ -152,7 +152,7 @@ Include it in your module file like this:
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright © 2017 [REPLACE THIS]
+    # Copyright (c) 2017 [REPLACE THIS]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
     DOCUMENTATION = '''
