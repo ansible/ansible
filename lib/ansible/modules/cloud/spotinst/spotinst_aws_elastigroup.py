@@ -124,6 +124,11 @@ options:
     default: 300
     required: false
 
+  health_check_unhealthy_duration_before_replacement:
+    description:
+      - (Integer) Minimal mount of time instance should be unhealthy for us to consider it unhealthy.
+    required: false
+
   health_check_type:
     choices:
       - ELB
@@ -1356,6 +1361,7 @@ def main():
         image_id=dict(type='str'),
         health_check_type=dict(type='str'),
         health_check_grace_period=dict(type='int'),
+        health_check_unhealthy_duration_before_replacement=dict(type='int'),
         security_group_ids=dict(type='list'),
         tags=dict(type='list'),
         load_balancers=dict(type='list'),
