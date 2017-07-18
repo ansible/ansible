@@ -4,7 +4,7 @@
 - name: Run vyos lsmod command
   vyos_command:
     commands:
-      - lsmod
+      - lsmod | grep virtio
   register: lsmod_out
 
 - name: Set up - delete interface
@@ -20,7 +20,7 @@
     speed: 100
     duplex: half
     mtu: 256
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
   register: result
 
@@ -31,7 +31,7 @@
       - '"set interfaces ethernet eth1 speed 100" in result.commands'
       - '"set interfaces ethernet eth1 duplex half" in result.commands'
       - '"set interfaces ethernet eth1 mtu 256" in result.commands'
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
 - name: Configure interface params (idempotent)
   vyos_interface:
@@ -42,12 +42,12 @@
     duplex: half
     mtu: 256
   register: result
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
 - assert:
     that:
       - 'result.changed == false'
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
 - name: Change interface params
   vyos_interface:
@@ -58,7 +58,7 @@
     duplex: full
     mtu: 512
   register: result
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
 - assert:
     that:
@@ -67,7 +67,7 @@
       - '"set interfaces ethernet eth1 speed 1000" in result.commands'
       - '"set interfaces ethernet eth1 duplex full" in result.commands'
       - '"set interfaces ethernet eth1 mtu 512" in result.commands'
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
 - name: Disable interface
   vyos_interface:
@@ -124,7 +124,7 @@
       - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512}
       - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256}
   register: result
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
 - assert:
     that:
@@ -137,7 +137,7 @@
       - '"set interfaces ethernet eth2 speed 1000" in result.commands'
       - '"set interfaces ethernet eth2 duplex full" in result.commands'
       - '"set interfaces ethernet eth2 mtu 256" in result.commands'
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
 - name: Set interface on aggregate (idempotent)
   vyos_interface:
@@ -145,12 +145,12 @@
       - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512}
       - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256}
   register: result
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
 - assert:
     that:
       - 'result.changed == false'
-  when: "'virtio_net' not in lsmod_out.stdout"
+  when: "'virtio' not in lsmod_out.stdout"
 
 - name: Disable interface on aggregate
   vyos_interface:
