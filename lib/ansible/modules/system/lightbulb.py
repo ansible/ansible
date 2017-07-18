@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 module: lightbulb
 description: This module does nothing then exits with msg="HELLO WORLD"
 short_description: Says Hello World
-version_added: "1.0"
+version_added: "2.4"
 author: "David Igou (@digou)"
 
 '''
