@@ -674,14 +674,12 @@ def state_present(module, existing, proposed, candidate):
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
 
-        if len(commands) == 1:
-            candidate.add(commands, parents=parents)
-        elif len(commands) > 1:
-            parents.append('address-family {0} {1}'.format(module.params['afi'],
-                                                           module.params['safi']))
-            if addr_family_command in commands:
-                commands.remove(addr_family_command)
-            candidate.add(commands, parents=parents)
+        addr_family_command = "address-family {0} {1}".format(module.params['afi'],
+                                                              module.params['safi'])
+        parents.append(addr_family_command)
+        if addr_family_command in commands:
+            commands.remove(addr_family_command)
+        candidate.add(commands, parents=parents)
 
 
 def state_absent(module, candidate):
