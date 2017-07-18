@@ -56,7 +56,7 @@ options:
     default: null
     description:
       - Replica count for volume
-  arbiter:
+  arbiters:
     required: false
     default: null
     description:
