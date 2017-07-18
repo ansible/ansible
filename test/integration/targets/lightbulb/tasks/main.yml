@@ -1,0 +1,10 @@
+---
+- name: Test lightbulb module
+  lightbulb:
+  register: result
+    
+- assert:
+    that:
+      - '"foo" in result.msg'
+      - '"bar" in result.msg.foo'
+     

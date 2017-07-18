@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python1
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Derek Foster <derekfoster94@gmail.com>
@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 ---
 module: lightbulb
 author: "Derek Foster (@fostimus)"
-version_added: "2.3.1"
+version_added: "2.4"
 short_description: "Hello World"
 requirements: []
 description:
@@ -48,18 +48,18 @@ msg:
     type: string
     sample: "hello world"
 '''
-
 import epdb
 import q
+
 
 def main():
     module = AnsibleModule(
         argument_spec=dict()
     )
-    foo = "hello world"
-    q(foo)
-    epdb.set_trace()
-    module.exit_json(changed=True, msg=foo)
+    res = {'foo': 'bar'}
+    q(res)
+    #epdb.set_trace()
+    module.exit_json(changed=True, msg=res)
 
 from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
