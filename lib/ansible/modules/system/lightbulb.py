@@ -3,7 +3,7 @@
 from ansible.module_utils.basic import *
 
 def main():
-    print "hello roflcopter"
+    print("hello roflcopter")
     module = roflcopter(argument_spec={})
     response = {"hello": "world"}
     module.exit_json(changed=False, meta=response)
