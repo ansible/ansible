@@ -14,6 +14,7 @@ options:
         description:
             - Name of the bulb type
 '''
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
