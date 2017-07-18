@@ -157,3 +157,70 @@ Speeding Up Vault Operations
 By default, Ansible uses PyCrypto to encrypt and decrypt vault files. If you have many encrypted files, decrypting them at startup may cause a perceptible delay. To speed this up, install the cryptography package::
 
     pip install cryptography
+
+
+.. _vault_format:
+
+Vault Format
+````````````
+
+Vault File Format
+-----------------
+
+A vault encrypted file is a UTF-8 encoded txt file.
+
+The file format includes a new line terminated header.
+
+For examplei::
+
+    $ANSIBLE_VAULT;1.1;AES256
+
+
+The header contains the vault format id, the vault format version, and a cipher id, seperated by semi-colons ';'
+
+The first field ```$ANSIBLE_VAULT``` is the format id. Currently ```$ANSIBLE_VAULT``` is the only valid file format id. This is used to
+identify files that are vault encrypted (via vault.is_encrypted_file()).
+
+The second field (```1.1```) is the vault format version. All supported versions of ansible will currently default to '1.1'.
+The '1.0' format is supported for reading only (and will be converted automatically to the '1.1' format on write). The format
+version is currently used as an exact string compare only (version numbers are not currently 'compared').
+
+The third field (```AES256```) identifies the cipher algorithmn used to encrypt the data. Currently, the only supported cipher
+is 'AES256'. [vault format 1.0 used 'AES', but current code always uses 'AES256']
+
+Note: In the future, the header could change. Anything after the vault id and version can be considered to depend on the
+vault format version. This includes the cipher id, and any additional fields that could be after that.
+
+The rest of the content of the file is the 'vaulttext'. The vaulttext is a text armored version of the
+encrypted ciphertext. Each line will be 80 characters wide, except for the last line which may be shorter.
+
+.. _vault_format_1_1:
+
+Vault Payload Format 1.1
+````````````````````````
+
+The vaulttext is a concatination of the ciphertext, a SHA256 dig'hexlifyied'. 'hexlify' refers to the hexlify() method of pythons binascii module.
+
+hexlify()'ied result of:
+  - hexlify()'ed string of the salt, followed by a newline ('\n')
+  - hexlify()'ed string of the crypted HMAC, followed by a newline. The HMAC is:
+    - a https://www.ietf.org/rfc/rfc2104.txt style HMAC
+    - inputs are:
+        - the AES256 encrypted ciphertext
+        - A PBKDF2 key. This key, the cipher key, and the cipher iv are generated from:
+            - the salt, in bytes
+            - 10000 iterations
+            - SHA256() algorithmn
+            - the first 32 bytes are the cipher key (b_key1)
+            - the second 32 bytes are the HMAC key (b_key2)
+            - remaining 16 bytes are the cipher iv
+  -  hexlify()'ed string of the ciphertext. The ciphertext is:
+    - AES256 encrypted data. The data is encrypted using:
+        - AES-CTR stream cipher
+        - b_pkey1
+        - iv
+        - a 128 bit counter block seeded from integer iv
+        - the plaintext
+            - the original plaintext
+            - padding up to the AES256 blocksize
+              (The data used for padding is based on https://tools.ietf.org/html/rfc5652#section-6.3)
