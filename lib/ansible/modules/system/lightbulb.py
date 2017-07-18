@@ -1,8 +1,20 @@
-#!/usr/bin/env python
-from ansible.module_utils.basic import AnsibleModule
-import logging
-logging.basicConfig(filename='example.log',level=logging.DEBUG)
 #!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
 ANSIBLE_METADATA = {
             'metadata_version': '1.0',
                 'supported_by': 'community',
@@ -11,11 +23,11 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: modulename
+module: lightbulb
 short_description: This is a sentence describing the module
 short_description: short descriptio
 description: description
-version_added: 3.4
+version_added: 2.4
 author: nlove
 options:
     foo:
@@ -23,6 +35,28 @@ options:
         required: false
         default: bar
 '''
+EXAMPLES = '''
+- name: Ensure foo is installed
+  lightbulb:
+    foo: bar
+'''
+RETURN = '''
+changed:
+    description: changed
+    returned: when changed
+    type: boolean
+    sample: True
+foo:
+    description: foo
+    returned: always
+    type: string
+    sample: bar
+'''
+
+from ansible.module_utils.basic import AnsibleModule
+import logging
+logging.basicConfig(filename='example.log',level=logging.DEBUG)
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -30,7 +64,7 @@ def main():
         )
     )
     logging.debug(module.params['foo'])
-    module.exit_json(changed=True, inputs=module.params)
+    module.exit_json(changed=True, foo=module.params['foo'])
 
 if __name__ == '__main__':
     main()
