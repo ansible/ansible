@@ -33,7 +33,7 @@ options:
         default: bar
 '''
 EXAMPLES = '''
-- name: Ensure foo is installed
+- name: light the world
   lightbulb:
     foo: bar
 '''
