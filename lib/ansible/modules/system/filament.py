@@ -75,7 +75,7 @@ def main():
     if module.params['state'] == 'absent':
         module.fail_json(msg="state set to absent")
 
-    module.exit_json(changed=False, filament="hello world")
+    module.exit_json(changed=False, filament="hello world", foo="bar")
 
 
 if __name__ == '__main__':
