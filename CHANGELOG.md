@@ -47,6 +47,7 @@ Ansible Changes By Release
 * fix for win_regedit always changing a reg key if the dword values set is a hex
 * fix for wait_for on non-Linux systems with newer versions of psutil
 * fix eos_banner code and test issues
+* run tearup and teardown of EAPI service only on EAPI tests
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
