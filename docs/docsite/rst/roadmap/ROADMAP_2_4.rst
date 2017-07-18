@@ -49,7 +49,7 @@ Facts
 - Configurable list of ‘fact modules’ for ``gather_facts``
 - Fact gathering policy finer grained
 - Make ``setup.py``/``facts`` more pluggable
-- Improve testing of ``setup.py``/``facts.py
+- Improve testing of ``setup.py``/``facts.py``
 - Namespacing fact variables (via a config option) implemented in ansible/ansible PR `#18445 <https://github.com/ansible/ansible/pull/18445>`_.
   Proposal found in ansible/proposals issue `#17 <https://github.com/ansible/proposals/issues/17>`_.
 
