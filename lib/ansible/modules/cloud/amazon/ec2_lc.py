@@ -272,14 +272,12 @@ def create_launch_config(connection, module):
     user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']
     instance_monitoring = module.params.get('instance_monitoring')
-    advanced_instance_monitoring = module.params.get(
-        'advanced_instance_monitoring')
+    advanced_instance_monitoring = module.params.get('advanced_instance_monitoring')
     assign_public_ip = module.params.get('assign_public_ip')
     instance_profile_name = module.params.get('instance_profile_name')
     ebs_optimized = module.params.get('ebs_optimized')
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
-    classic_link_vpc_security_groups = module.params.get(
-        'classic_link_vpc_security_groups')
+    classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
     security_groups = module.params.get('security_groups')
 
     bdm = {}
@@ -308,8 +306,7 @@ def create_launch_config(connection, module):
             if 'volume_size' not in volume or int(volume['volume_size']) > 0:
                 bdm.update(create_block_device_meta(module, volume))
 
-    launch_configs = connection.describe_launch_configurations(
-        LaunchConfigurationNames=[name]).get('LaunchConfigurations')
+    launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
     changed = False
     result = {}
 
@@ -322,12 +319,10 @@ def create_launch_config(connection, module):
         launch_config['ClassicLinkVPCId'] = classic_link_vpc_id
 
     if instance_monitoring:
-        launch_config['InstanceMonitoring'] = {
-            'Enabled': advanced_instance_monitoring}
+        launch_config['InstanceMonitoring'] = {'Enabled': advanced_instance_monitoring}
 
     if classic_link_vpc_security_groups is not None:
-        launch_config['ClassicLinkVPCSecurityGroups'] = (
-            classic_link_vpc_security_groups)
+        launch_config['ClassicLinkVPCSecurityGroups'] = (classic_link_vpc_security_groups)
 
     if bdm is not None:
         launch_config['BlockDeviceMappings'] = [bdm]
@@ -347,8 +342,7 @@ def create_launch_config(connection, module):
     if len(launch_configs) == 0:
         try:
             connection.create_launch_configuration(**launch_config)
-            launch_configs = connection.describe_launch_configurations(
-                LaunchConfigurationNames=[name]).get('LaunchConfigurations')
+            launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
             changed = True
             if len(launch_configs) > 0:
                 launch_config = launch_configs[0]
@@ -441,8 +435,7 @@ def main():
             classic_link_vpc_security_groups=dict(type='list'),
             classic_link_vpc_id=dict(),
             vpc_id=dict(),
-            placement_tenancy=dict(default='default',
-                                   choices=['default', 'dedicated'])
+            placement_tenancy=dict(default='default', choices=['default', 'dedicated'])
         )
     )
 
@@ -461,14 +454,10 @@ def main():
                                 endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoRegionError:
         module.fail_json(
-            msg=("region must be specified as a parameter in "
-                 "AWS_DEFAULT_REGION environment variable or in "
-                 "boto configuration file"))
+            msg=("region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file"))
     except botocore.exceptions.ClientError as e:
         module.fail_json(
-            msg="unable to establish connection - " + str(e),
-            exception=traceback.format_exc(),
-            **camel_dict_to_snake_dict(e.response))
+            msg="unable to establish connection - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     state = module.params.get('state')
 
