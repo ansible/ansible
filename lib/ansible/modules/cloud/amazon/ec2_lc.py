@@ -445,8 +445,6 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
-    result = {}
-
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
             module, boto3=True)
