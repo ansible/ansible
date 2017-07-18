@@ -31,7 +31,7 @@ msg:
     sample: "hello world"
 '''
 
-import pdb
+import epdb
 import q
 
 def main():
@@ -40,7 +40,7 @@ def main():
     )
     foo = "hello world"
     q(foo)
-    pdb.set_trace()
+    epdb.set_trace()
     module.exit_json(changed=True, msg=foo)
 
 from ansible.module_utils.basic import AnsibleModule
