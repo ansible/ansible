@@ -55,7 +55,7 @@ options:
       - Whether to install C(present), remove C(absent), or purge C(purged) a package.
     required: false
     choices: ['absent', 'purged', 'present']
-    default: "installed"
+    default: "present"
   chart:
     description: |
       A map describing the chart to install. For example:
@@ -91,7 +91,7 @@ EXAMPLES = '''
       source:
         type: repo
         location: https://kubernetes-charts.storage.googleapis.com
-    state: installed
+    state: present
     name: my-memcached
     namespace: default
 
