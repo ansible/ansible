@@ -15,11 +15,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {
-            'metadata_version': '1.0',
-                'supported_by': 'community',
-                    'status': ['preview', 'deprecated']
-                    }
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'supported_by': 'community',
+                    'status': ['preview', 'deprecated']}
 
 DOCUMENTATION = '''
 ---
@@ -54,12 +52,13 @@ foo:
 
 from ansible.module_utils.basic import AnsibleModule
 import logging
-logging.basicConfig(filename='example.log',level=logging.DEBUG)
+logging.basicConfig(filename='example.log', level=logging.DEBUG)
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            foo = dict(required=False, default='bar')
+        argument_spec=dict(
+            foo=dict(required=False, default='bar')
         )
     )
     logging.debug(module.params['foo'])
