@@ -12,11 +12,24 @@
     name: eth1
     state: absent
 
-- name: Configure interface params
+- name: Set up - Create interface
   vyos_interface:
     name: eth1
     state: present
     description: test-interface
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces ethernet eth1" in result.commands'
+      - '"set interfaces ethernet eth1 description test-interface" in result.commands'
+
+- name: Configure interface params
+  vyos_interface:
+    name: eth1
+    state: present
+    description: test-interface-1
     speed: 100
     duplex: half
     mtu: 256
@@ -26,7 +39,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set interfaces ethernet eth1 description test-interface" in result.commands'
+      - '"set interfaces ethernet eth1 description test-interface-1" in result.commands'
       - '"set interfaces ethernet eth1 speed 100" in result.commands'
       - '"set interfaces ethernet eth1 duplex half" in result.commands'
       - '"set interfaces ethernet eth1 mtu 256" in result.commands'
