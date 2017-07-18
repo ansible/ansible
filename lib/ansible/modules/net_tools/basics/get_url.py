@@ -165,7 +165,8 @@ extends_documentation_fragment:
     - files
 notes:
      - For Windows targets, use the M(win_get_url) module instead.
-author: Jan-Piet Mens (@jpmens)
+author:
+- Jan-Piet Mens (@jpmens)
 '''
 
 EXAMPLES = r'''
@@ -203,6 +204,94 @@ EXAMPLES = r'''
   get_url:
     url: file:///tmp/afile.txt
     dest: /tmp/afilecopy.txt
+'''
+
+RETURN = r'''
+backup_file:
+    description: name of backup file created after download
+    returned: changed and if backup=yes
+    type: string
+    sample: /path/to/file.txt.2015-02-12@22:09~
+checksum_dest:
+    description: sha1 checksum of the file after copy
+    returned: success
+    type: string
+    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+checksum_src:
+    description: sha1 checksum of the file
+    returned: success
+    type: string
+    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+dest:
+    description: destination file/path
+    returned: success
+    type: string
+    sample: /path/to/file.txt
+gid:
+    description: group id of the file
+    returned: success
+    type: int
+    sample: 100
+group:
+    description: group of the file
+    returned: success
+    type: string
+    sample: "httpd"
+md5sum:
+    description: md5 checksum of the file after download
+    returned: when supported
+    type: string
+    sample: "2a5aeecc61dc98c4d780b14b330e3282"
+mode:
+    description: permissions of the target
+    returned: success
+    type: string
+    sample: "0644"
+msg:
+    description: the HTTP message from the request
+    returned: always
+    type: string
+    sample: OK (unknown bytes)
+owner:
+    description: owner of the file
+    returned: success
+    type: string
+    sample: httpd
+secontext:
+    description: the SELinux security context of the file
+    returned: success
+    type: string
+    sample: unconfined_u:object_r:user_tmp_t:s0
+size:
+    description: size of the target
+    returned: success
+    type: int
+    sample: 1220
+src:
+    description: source file used after download
+    returned: changed
+    type: string
+    sample: /tmp/tmpAdFLdV
+state:
+    description: state of the target
+    returned: success
+    type: string
+    sample: file
+status:
+    description: the HTTP status code from the request
+    returned: always
+    type: int
+    sample: 200
+uid:
+    description: owner id of the file, after execution
+    returned: success
+    type: int
+    sample: 100
+url:
+    description: the actual URL used for the request
+    returned: always
+    type: string
+    sample: https://www.ansible.com/
 '''
 
 import datetime
