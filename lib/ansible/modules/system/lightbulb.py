@@ -9,7 +9,7 @@ DOCUMENTATION = '''
 ---
 module: lightbulb
 author: "Derek Foster (@fostimus)"
-version_added: "2.3.1.0"
+version_added: "2.3.1"
 short_description: "Hello World"
 requirements: []
 description:
@@ -21,6 +21,14 @@ notes:
 EXAMPLES = '''
 # Example group command from Ansible Playbooks
 - lightbulb:
+'''
+
+RETURN = '''
+msg:
+    description: Output of foo
+    returned: hello world
+    type: string
+    sample: "hello world"
 '''
 
 import pdb
