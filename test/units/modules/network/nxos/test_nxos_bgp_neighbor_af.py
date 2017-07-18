@@ -42,7 +42,7 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
         self.mock_get_config.stop()
 
     def load_fixtures(self, commands=None, device=''):
-        self.get_config.return_value = load_fixture('', 'nxos_bgp_config.cfg')
+        self.get_config.return_value = load_fixture('nxos_bgp', 'config.cfg')
         self.load_config.return_value = []
 
     def test_nxos_bgp_neighbor_af(self):
@@ -86,5 +86,14 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
                              safi='unicast', max_prefix_limit='default'))
         self.execute_module(
             changed=True, sort=False,
-            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'maximum-prefix default']
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'no maximum-prefix']
+        )
+
+    def test_nxos_bgp_neighbor_af_max_prefix(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4',
+                             safi='unicast', max_prefix_threshold=20,
+                             max_prefix_limit=20))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'maximum-prefix 20 20']
         )
