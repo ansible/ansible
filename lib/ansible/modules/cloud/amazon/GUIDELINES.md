@@ -120,7 +120,7 @@ region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 if region:
     try:
         connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 else:
     module.fail_json(msg="region must be specified")
@@ -161,7 +161,7 @@ except ImportError:
 # Make a call to AWS
 try:
     result = connection.aws_call()
-except BotoServerError, e:
+except BotoServerError as e:
     module.fail_json(msg="helpful message here", exception=traceback.format_exc(),
                      **camel_dict_to_snake_dict(e.message))
 ```
@@ -186,7 +186,7 @@ except ImportError:
 # Make a call to AWS
 try:
     result = connection.aws_call()
-except ClientError, e:
+except ClientError as e:
     module.fail_json(msg=e.message, exception=traceback.format_exc(),
                      **camel_dict_to_snake_dict(e.response))
 ```
@@ -197,7 +197,7 @@ If you need to perform an action based on the error boto3 returned, use the erro
 # Make a call to AWS
 try:
     result = connection.aws_call()
-except ClientError, e:
+except ClientError as e:
     if e.response['Error']['Code'] == 'NoSuchEntity':
         return None
     else:
