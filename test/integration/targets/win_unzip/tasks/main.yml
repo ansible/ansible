@@ -1,0 +1,16 @@
+- name: Clean slate
+  include: clean.yml
+
+- name: Test in normal mode
+  include: tests.yml
+  vars:
+    in_check_mode: no
+
+- name: Clean slate
+  include: clean.yml
+
+- name: Test in check-mode
+  include: tests.yml
+  vars:
+    in_check_mode: yes
+  check_mode: yes
