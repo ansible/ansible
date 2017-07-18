@@ -1,7 +1,7 @@
 #!/usr/bin/python  
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Roy Williams <roywilliams@redhat.com>
+ (c) 2017, Roy Williams <roywilliams@redhat.com>
 #
 # This file is part of Ansible
 #
@@ -27,13 +27,36 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: filament
+version_added: "2.4"
 short_description: This is a hello world module.
+description: 
+    - This is a hello world module.
+options:
+    state:
+      description:
+        - Determines if hello world is present of not.
+      default: present
+author: Roy Williams (@chopskxw)
 '''
 
 EXAMPLES = '''
+# Test we can logon to 'webservers' and print hello world.
+# ansible webserver -m filament
+
+# Example of an Ansible Playbook
+- filament:
+
+# Run avoiding change:
+- filament:
+    state: absent
 '''
 
 RETURN = '''
+filament:
+    description: prints hello world
+    returned: success
+    type: string
+    sample: hello world
 '''
 
 import epdb
