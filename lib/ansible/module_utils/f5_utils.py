@@ -200,7 +200,7 @@ F5_COMMON_ARGS = dict(
 class AnsibleF5Client(object):
     def __init__(self, argument_spec=None, supports_check_mode=False,
                  mutually_exclusive=None, required_together=None,
-                 required_if=None, required_one_of=None,
+                 required_if=None, required_one_of=None, add_file_common_args=False,
                  f5_product_name='bigip'):
 
         self.f5_product_name = f5_product_name
@@ -225,7 +225,8 @@ class AnsibleF5Client(object):
             mutually_exclusive=mutually_exclusive_params,
             required_together=required_together_params,
             required_if=required_if,
-            required_one_of=required_one_of
+            required_one_of=required_one_of,
+            add_file_common_args=add_file_common_args
         )
 
         self.check_mode = self.module.check_mode
