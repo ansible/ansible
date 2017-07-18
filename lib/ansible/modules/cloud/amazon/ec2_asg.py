@@ -423,7 +423,7 @@ def get_properties(autoscaling_group, module):
         for i in autoscaling_group_instances:
             instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
                                                'lifecycle_state': i['LifecycleState'],
-                                               'launch_config_name': i['LaunchConfigurationName']}
+                                               'launch_config_name': i.get('LaunchConfigurationName')}
             if i['HealthStatus'] == 'Healthy' and i['LifecycleState'] == 'InService':
                 properties['viable_instances'] += 1
             if i['HealthStatus'] == 'Healthy':
