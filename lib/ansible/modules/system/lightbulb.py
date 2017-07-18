@@ -28,6 +28,10 @@ DOCUMENTATION = '''
 ---
 module: filament
 short_description: Print Hello World
+version_added: "2.4"
+author: Sean S <blank@stuff.com>
+description:
+  - This modules outputs Hello World
 '''
 
 EXAMPLES = '''
