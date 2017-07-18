@@ -121,8 +121,6 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
-        except (StopIteration, GeneratorExit, KeyboardInterrupt, SystemExit):
-            raise
         except (boto.exception.NoAuthHandlerFound, Exception) as e:
             module.fail_json(msg=str(e))
     else:
