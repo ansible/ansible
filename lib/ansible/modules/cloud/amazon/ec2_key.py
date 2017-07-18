@@ -196,7 +196,7 @@ def main():
                     test = ec2.get_key_pair(tmpkeyname)
 
                 # create tmp key
-                tmpkey = ec2.import_key_pair(tmpkeyname, key_material)
+                tmpkey = ec2.import_key_pair(tmpkeyname, to_bytes(key_material))
                 # get tmp key fingerprint
                 tmpfingerprint = tmpkey.fingerprint
                 # delete tmp key
@@ -205,7 +205,7 @@ def main():
                 if key.fingerprint != tmpfingerprint:
                     if not module.check_mode:
                         key.delete()
-                        key = ec2.import_key_pair(name, key_material)
+                        key = ec2.import_key_pair(name, to_bytes(key_material))
 
                         if wait:
                             start = time.time()
