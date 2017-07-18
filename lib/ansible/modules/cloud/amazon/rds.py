@@ -696,8 +696,6 @@ def await_resource(conn, resource, status, module):
                 module.fail_json(msg="There was a problem waiting for RDS instance %s" % resource.instance)
             # Back off if we're getting throttled, since we're just waiting anyway
             resource = AWSRetry.backoff(tries=5, delay=20, backoff=1.5)(conn.get_db_instance)(resource.name)
-            if resource is None:
-                break
         # Some RDS resources take much longer than others to be ready. Check
         # less aggressively for slow ones to avoid throttling.
         if time.time() > start_time + 90:
@@ -739,7 +737,10 @@ def create_db_instance(module, conn):
     else:
         resource = conn.get_db_instance(instance_name)
 
-    module.exit_json(changed=changed, instance=resource.get_data())
+    if resource:
+        module.exit_json(changed=changed, instance=resource.get_data())
+    else:
+        module.fail_json(msg="Failed to create or await the resource successfully.")
 
 
 def replicate_db_instance(module, conn):
