@@ -628,16 +628,12 @@ def state_present(module, existing, proposed, candidate):
 
         parents.append('neighbor {0}'.format(module.params['neighbor']))
 
-        if len(commands) == 1:
-            candidate.add(commands, parents=parents)
-        elif len(commands) > 1:
-            af_command = 'address-family {0} {1}'.format(
-                module.params['afi'], module.params['safi'])
-            if af_command in commands:
-                commands.remove(af_command)
-                parents.append('address-family {0} {1}'.format(
-                    module.params['afi'], module.params['safi']))
-                candidate.add(commands, parents=parents)
+        af_command = 'address-family {0} {1}'.format(
+            module.params['afi'], module.params['safi'])
+        parents.append(af_command)
+        if af_command in commands:
+            commands.remove(af_command)
+        candidate.add(commands, parents=parents)
 
 
 def state_absent(module, existing, candidate):
