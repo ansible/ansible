@@ -86,6 +86,11 @@ options:
     required: false
     default: 'true'
     aliases: []
+  tags:
+    description:
+      - Dictionary of tags to look for and apply when creating/updating a group.
+    required: false
+    version_added: "2.4"
 
 extends_documentation_fragment:
     - aws
@@ -206,6 +211,39 @@ try:
     import botocore
 except ImportError:
     pass  # caught by imported HAS_BOTO3
+
+
+def load_tags(module):
+    tags = module.params.get('tags') or {}
+
+    if 'Name' not in tags:
+        tags['Name'] = module.params.get('name')
+
+    return [{'Key': k, 'Value': v} for k, v in tags.items()]
+
+
+def create_tags(module, client, group):
+    delete_tags(module, client, group)
+    client.create_tags(Resources=[group.id], Tags=load_tags(module), DryRun=module.check_mode)
+
+
+def delete_tags(module, client, group):
+    client.delete_tags(Resources=[group.id], Tags=[], DryRun=module.check_mode)
+
+
+def tags_changed(module, client, group):
+    tags = load_tags(module)
+    ec2_tags = client.describe_tags(Filters=[{'Name': 'resource-id', 'Values': [group.id]}])
+    group_tags = [{'Key': t['Key'], 'Value': t['Value']} for t in ec2_tags['Tags']]
+
+    def compare(x):
+        return x['Key']
+
+    if sorted(group_tags, key=compare) == sorted(tags, key=compare):
+        return False
+    else:
+        create_tags(module, client, group)
+        return True
 
 
 def deduplicate_rules_args(rules):
@@ -527,8 +565,10 @@ def setup_group(module, client, ec2):
         if group.description != description:
             module.fail_json(
                 msg="Group description does not match existing group. ec2_group does not support this case.")
+        changed |= tags_changed(module, client, group)
     else:
         group = create_group(module, client, ec2)
+        create_tags(module, client, group)
         changed = True
 
     changed |= update_ingress(module, client, ec2, group, groups)
@@ -747,7 +787,8 @@ def main():
         rules_egress=dict(type='list'),
         state=dict(default='present', type='str', choices=['present', 'absent']),
         purge_rules=dict(default=True, required=False, type='bool'),
-        purge_rules_egress=dict(default=True, required=False, type='bool')
+        purge_rules_egress=dict(default=True, required=False, type='bool'),
+        tags=dict(required=False, type='dict'),
     )
     )
     module = AnsibleModule(
