@@ -442,6 +442,9 @@ def main():
         mutually_exclusive=[['user_data', 'user_data_path']]
     )
 
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
+
     result = {}
 
     try:
