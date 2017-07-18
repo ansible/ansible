@@ -2,94 +2,83 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Davis Phillips davis.phillips@gmail.com
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-DOCUMENTATION = '''
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
 ---
-module: vmware_folder
+module: vcenter_folder
 short_description: Add/remove folders to/from vCenter
 description:
-    - This module can be used to add/remove a folder to/from vCenter
-version_added: 2.3
-author: "Davis Phillips (@dav1x)"
+- This module can be used to add/remove a folder to/from vCenter.
+version_added: '2.4'
+author:
+- Davis Phillips (@dav1x)
+- Dag Wieers (@dagwieers)
 notes:
-    - Tested on vSphere 6.5
+- Tested on vSphere 6.5
 requirements:
-    - "python >= 2.6"
-    - PyVmomi
+- PyVmomi
 options:
-    datacenter:
-        description:
-            - Name of the datacenter to add the host
-        required: True
-    cluster:
-        description:
-            - Name of the cluster to add the host
-        required: True
-    folder:
-        description:
-            - Folder name to manage
-        required: True
-    hostname:
-        description:
-            - ESXi hostname to manage
-        required: True
-    username:
-        description:
-            - ESXi username
-        required: True
-    password:
-        description:
-            - ESXi password
-        required: True
-    state:
-        description:
-            - Add or remove the folder
-        default: 'present'
-        choices:
-            - 'present'
-            - 'absent'
+  datacenter:
+    description:
+    - Name of the datacenter to add the host.
+    required: yes
+  cluster:
+    description:
+    - Name of the cluster to add the host.
+    required: yes
+  folder:
+    description:
+    - Folder name to manage.
+    required: yes
+  hostname:
+    description:
+    - ESXi hostname to manage.
+    required: yes
+  username:
+    description:
+    - ESXi username.
+    required: yes
+  password:
+    description:
+    - ESXi password.
+    required: yes
+  state:
+    description:
+    - Add or remove the folder.
+    default: present
+    choices: [ absent, present ]
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
-# Create a folder 
-  - name: Add a folder to vCenter
-    vmware_folder:
-      hostname: vcsa_host
-      username: vcsa_user
-      password: vcsa_pass
-      datacenter: datacenter
-      cluster: cluster
-      folder: folder
-      state: present
+EXAMPLES = r'''
+# Create a folder
+- name: Add a folder to vCenter
+  vmware_folder:
+    hostname: vcsa_host
+    username: vcsa_user
+    password: vcsa_pass
+    datacenter: datacenter
+    cluster: cluster
+    folder: folder
+    state: present
+  delegate_to: localhost
 '''
 
-RETURN = """
+RETURN = r'''
 instance:
-    descripton: metadata about the new folder
-    returned: always
-    type: dict
-    sample: None
-"""
+  description: metadata about the new folder
+  returned: always
+  type: dict
+  sample: None
+'''
 
 try:
     from pyVmomi import vim, vmodl
@@ -101,6 +90,7 @@ from ansible.module_utils.vmware import get_all_objs, connect_to_api, vmware_arg
     find_cluster_by_name_datacenter, wait_for_task
 from ansible.module_utils.basic import AnsibleModule
 
+
 class VMwareFolder(object):
     def __init__(self, module):
         self.module = module
@@ -108,8 +98,6 @@ class VMwareFolder(object):
         self.cluster = module.params['cluster']
         self.folder = module.params['folder']
         self.hostname = module.params['hostname']
-        self.username = module.params['username']
-        self.password = module.params['password']
         self.state = module.params['state']
         self.dc_obj = None
         self.cluster_obj = None
@@ -134,14 +122,13 @@ class VMwareFolder(object):
         fold_obj = None
         self.folder_expanded = self.folder.split("/")
         last_e = self.folder_expanded.pop()
-        fold_obj = self.get_obj([vim.Folder],last_e)
+        fold_obj = self.get_obj([vim.Folder], last_e)
         if fold_obj:
             return fold_obj
 
-    def get_obj(self, vimtype, name, return_all = False):
+    def get_obj(self, vimtype, name, return_all=False):
         obj = list()
-        container = self.content.viewManager.CreateContainerView(
-            self.content.rootFolder, vimtype, True)
+        container = self.content.viewManager.CreateContainerView(self.content.rootFolder, vimtype, True)
 
         for c in container.view:
             if name in [c.name, c._GetMoId()]:
@@ -159,43 +146,43 @@ class VMwareFolder(object):
 
     def process_state(self):
         try:
-            folder_states = {
-                'absent': {
-                    'present': self.state_remove_folder,
-                    'absent': self.state_exit_unchanged,
-                },
-                'present': {
-                    'present': self.state_exit_unchanged,
-                    'absent': self.state_add_folder,
-                }
-            }
+            folder_states = dict(
+                absent=dict(
+                    present=self.state_remove_folder,
+                    absent=self.state_exit_unchanged,
+                ),
+                present=dict(
+                    present=self.state_exit_unchanged,
+                    absent=self.state_add_folder,
+                )
+            )
 
             folder_states[self.state][self.check_folder_state()]()
 
         except vmodl.RuntimeFault as runtime_fault:
-            self.module.fail_json(msg = runtime_fault.msg)
+            self.module.fail_json(msg=runtime_fault.msg)
         except vmodl.MethodFault as method_fault:
-            self.module.fail_json(msg = method_fault.msg)
+            self.module.fail_json(msg=method_fault.msg)
         except Exception as e:
-            self.module.fail_json(msg = str(e))
+            self.module.fail_json(msg=str(e))
 
     def state_exit_unchanged(self):
-        self.module.exit_json(changed = False)
+        self.module.exit_json(changed=False)
 
     def state_remove_folder(self):
         changed = True
         result = None
         self.folder_expanded = self.folder.split("/")
         f = self.folder_expanded.pop()
-        task = self.get_obj([vim.Folder],f).Destroy()
+        task = self.get_obj([vim.Folder], f).Destroy()
 
         try:
             success, result = wait_for_task(task)
 
         except:
-            self.module.fail_json(msg = "Failed to remove folder '%s' '%s'" % (self.folder,folder))
+            self.module.fail_json(msg="Failed to remove folder '%s'" % self.folder)
 
-        self.module.exit_json(changed = changed, result = str(result))
+        self.module.exit_json(changed=changed, result=str(result))
 
     def state_add_folder(self):
         changed = True
@@ -206,19 +193,18 @@ class VMwareFolder(object):
         self.folder_expanded = self.folder.split("/")
         index = 0
         for f in self.folder_expanded:
-            if not self.get_obj([vim.Folder],f):
+            if not self.get_obj([vim.Folder], f):
                 if index == 0:
-                #First object gets created on the datacenter
+                    # First object gets created on the datacenter
                     task = self.dc_obj.vmFolder.CreateFolder(name=f)
                 else:
-                    parent_f = self.get_obj([vim.Folder],self.folder_expanded[index - 1])
+                    parent_f = self.get_obj([vim.Folder], self.folder_expanded[index - 1])
                     task = parent_f.CreateFolder(name=f)
             index = index + 1
 
-        self.module.exit_json(changed = changed)
+        self.module.exit_json(changed=changed)
 
     def check_folder_state(self):
-
         self.host_obj, self.cluster_obj = self.find_host_by_cluster_datacenter()
         self.folder_obj = self.select_folder(self.host_obj)
 
@@ -230,18 +216,23 @@ class VMwareFolder(object):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(datacenter = dict(required = True, type = 'str'),
-                              cluster = dict(required = True, type = 'str'),
-                              folder = dict(required=True, type='str'),
-                              hostname = dict(required = True, type = 'str'),
-                              username = dict(required = True, type = 'str'),
-                              password = dict(required = True, type = 'str', no_log = True),
-                              state = dict(default = 'present', choices = ['present', 'absent'], type = 'str')))
+    argument_spec.update(dict(
+        datacenter=dict(type='str', required=True),
+        cluster=dict(type='str', required=True),
+        folder=dict(type='str', required=True),
+        hostname=dict(type='str', required=True),
+        username=dict(type='str', required=True),
+        password=dict(type='str', required=True, no_log=True),
+        state=dict(type='str', default='present', choices=['absent', 'present'])
+    ))
 
-    module = AnsibleModule(argument_spec = argument_spec, supports_check_mode = True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True
+    )
 
     if not HAS_PYVMOMI:
-        module.fail_json(msg = 'pyvmomi is required for this module')
+        module.fail_json(msg='pyvmomi is required for this module')
 
     vmware_folder = VMwareFolder(module)
     vmware_folder.process_state()
