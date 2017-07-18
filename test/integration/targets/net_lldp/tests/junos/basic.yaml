@@ -16,7 +16,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'[edit]\n-  protocols {\n-      lldp {\n-          disable;\n-      }\n-  }' in result.diff.prepared"
+      - "'-   disable;' in result.diff.prepared"
 
 - name: configure lldp (idempotent)
   net_lldp:
@@ -37,7 +37,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'[edit]\n+  protocols {\n+      lldp {\n+          disable;\n+      }\n+  }' in result.diff.prepared"
+      - "'+   disable;' in result.diff.prepared"
 
 - name: Disable lldp (idempotent)
   net_lldp:
