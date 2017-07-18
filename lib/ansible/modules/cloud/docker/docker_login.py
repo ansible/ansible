@@ -277,7 +277,7 @@ class LoginManager(DockerBaseClass):
             config['auths'][self.registry_url] = dict()
 
         encoded_credentials = dict(
-            auth=base64.b64encode(self.username + b':' + self.password),
+            auth=base64.b64encode(self.username.encode() + b':' + self.password.encode()).decode(),
             email=self.email
         )
 
