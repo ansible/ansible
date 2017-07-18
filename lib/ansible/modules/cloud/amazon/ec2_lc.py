@@ -214,11 +214,9 @@ def create_block_device_meta(module, volume):
     MAX_IOPS_TO_SIZE_RATIO = 30
     if 'snapshot' not in volume and 'ephemeral' not in volume:
         if 'volume_size' not in volume:
-            module.fail_json(msg='Size must be specified when creating a new ' +
-                             'volume or modifying the root volume')
+            module.fail_json(msg='Size must be specified when creating a new volume or modifying the root volume')
     if 'snapshot' in volume:
-        if 'device_type' in volume and volume.get(
-                'device_type') == 'io1' and 'iops' not in volume:
+        if 'device_type' in volume and volume.get('device_type') == 'io1' and 'iops' not in volume:
             module.fail_json(msg='io1 volumes must have an iops value set')
     if 'ephemeral' in volume:
         if 'snapshot' in volume:
@@ -265,9 +263,9 @@ def create_launch_config(connection, module):
     name = module.params.get('name')
     vpc_id = module.params.get('vpc_id')
     try:
-        security_groups = get_ec2_security_group_ids_from_names(
-            module.params.get('security_groups'), ec2_connect(module),
-            vpc_id=vpc_id, boto3=False)
+        security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'),
+                                                                ec2_connect(module),
+                                                                vpc_id=vpc_id, boto3=False)
     except ValueError as e:
         module.fail_json(msg=str(e))
     user_data = module.params.get('user_data')
