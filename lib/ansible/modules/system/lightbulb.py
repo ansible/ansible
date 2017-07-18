@@ -24,7 +24,6 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: lightbulb
-short_description: This is a sentence describing the module
 short_description: short descriptio
 description: description
 version_added: 2.4
