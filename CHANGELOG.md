@@ -77,6 +77,8 @@ Ansible Changes By Release
 * Add an encoding parameter for the replace module so that it can operate on non-utf-8 files
 * By default, Ansible now uses the cryptography module to implement vault instead of the older pycrypto module.
 * Changed task state resulting from both `rc` and `failed` fields returned, 'rc' no longer overrides 'failed'. Test plugins have also been updated accordingly.
+* The win_unzip module no longer includes dictionary 'win_unzip' in its results,
+  the content is now directly in the resulting output, like pretty much every other module.
 
 #### New Callbacks:
 - profile_roles
