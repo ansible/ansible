@@ -39,7 +39,9 @@ EXAMPLES = '''
 '''
 
 
-RETURN = ''''''
+RETURN = '''
+DUMMY RETURN
+'''
 
 from ansible.module_utils.basic import AnsibleModule
 
