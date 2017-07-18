@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2017, Ted Trask <ttrask01@yahoo.com>
+# (c) 2017, Sean Sullivan <blank@test.com>
 #
 # This file is part of Ansible
 #
