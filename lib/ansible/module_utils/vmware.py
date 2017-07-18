@@ -182,7 +182,8 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
         if isinstance(vm, vim.VirtualMachine):
             vm = None
     elif vm_id_type == 'uuid':
-        vm = si.FindByUuid(datacenter=datacenter, instanceUuid=vm_id, vmSearch=True)
+        # Search By BIOS UUID rather than instance UUID
+        vm = si.FindByUuid(datacenter=datacenter, instanceUuid=False, uuid=vm_id, vmSearch=True)
     elif vm_id_type == 'ip':
         vm = si.FindByIp(datacenter=datacenter, ip=vm_id, vmSearch=True)
     elif vm_id_type == 'vm_name':
