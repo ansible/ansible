@@ -158,7 +158,7 @@ options:
   max_prefix_interval:
     description:
       - Optional restart interval. Valid values are an integer.
-        Requires max_prefix_limit.
+        Requires max_prefix_limit. May not be combined with max_prefix_warning.
     required: false
     default: null
   max_prefix_threshold:
@@ -170,7 +170,8 @@ options:
     default: null
   max_prefix_warning:
     description:
-      - Optional warning-only keyword. Requires max_prefix_limit.
+      - Optional warning-only keyword. Requires max_prefix_limit. May not be
+        combined with max_prefix_interval.
     required: false
     choices: ['true','false']
     default: null
@@ -315,9 +316,9 @@ PARAM_TO_COMMAND_KEYMAP = {
     'filter_list_in': 'filter-list',
     'filter_list_out': 'filter-list',
     'max_prefix_limit': 'maximum-prefix',
-    'max_prefix_interval': 'maximum-prefix options',
-    'max_prefix_threshold': 'maximum-prefix options',
-    'max_prefix_warning': 'maximum-prefix options',
+    'max_prefix_interval': 'maximum-prefix interval',
+    'max_prefix_threshold': 'maximum-prefix threshold',
+    'max_prefix_warning': 'maximum-prefix warning',
     'next_hop_self': 'next-hop-self',
     'next_hop_third_party': 'next-hop-third-party',
     'prefix_list_in': 'prefix-list',
@@ -528,8 +529,7 @@ def get_default_command(key, value, existing_commands):
             elif key == 'route-map out':
                 command = 'no route-map {0} out'.format(existing_value)
             elif key.startswith('maximum-prefix'):
-                command = 'no maximum-prefix {0}'.format(
-                    existing_commands.get('maximum-prefix'))
+                command = 'no maximum-prefix'
             elif key == 'allowas-in max':
                 command = ['no allowas-in {0}'.format(existing_value)]
                 command.append('allowas-in')
@@ -689,7 +689,8 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[['advertise_map_exist', 'advertise_map_non_exist']],
+        mutually_exclusive=[['advertise_map_exist', 'advertise_map_non_exist'],
+                            ['max_prefix_interval', 'max_prefix_warning']],
         supports_check_mode=True,
     )
 
