@@ -154,7 +154,6 @@ extends_documentation_fragment:
 
 requirements:
     - boto >= 3.0.0
-    - python >= 2.6
 
 '''
 
