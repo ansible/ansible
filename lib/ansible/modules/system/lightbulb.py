@@ -18,12 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
-
-
 ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
+    'metadata_version': '2.4',
     'supported_by': 'community',
     'status': ['preview', 'deprecated']
 }
@@ -38,7 +34,6 @@ author: "David Igou (@digou)"
 
 '''
 
-
 EXAMPLES = '''
 - name: lightbulb module
   lightbulb:
@@ -50,7 +45,8 @@ msg:
    type: string
    returned: success
 '''
-from ansible.module_utils.basic import *
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
