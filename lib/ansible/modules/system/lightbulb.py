@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: python
+module: lightbulb
 author:
     - "Multiverse Overlord (@quantumstring)"
 version_added: "2.4"
@@ -45,6 +45,16 @@ EXAMPLES = '''
     name: led
 '''
 
+RETURNS = '''
+name:
+    description: the name
+    returned: always
+    type: string
+    sample: led
+'''
+
+
+from ansible.module_utils.basic import *
 
 def main():
     module = AnsibleModule(
