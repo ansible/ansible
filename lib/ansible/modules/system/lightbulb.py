@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: filament
+module: lightbulb
 short_description: Print Hello World
 version_added: "2.4"
 author: Sean S <blank@stuff.com>
@@ -57,7 +57,7 @@ def main():
     if module.params['state'] == 'absent':
         module.exit_json(changed=False)
 
-    module.exit_json(changed=True, filament="hello world")
+    module.exit_json(changed=True, lightbulb="hello world")
 
 
 if __name__ == '__main__':
