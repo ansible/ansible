@@ -1,7 +1,7 @@
 #!/usr/bin/python  
 # -*- coding: utf-8 -*-
 
- (c) 2017, Roy Williams <roywilliams@redhat.com>
+# (c) 2017, Roy Williams <roywilliams@redhat.com>
 #
 # This file is part of Ansible
 #
@@ -32,10 +32,10 @@ short_description: This is a hello world module.
 description: 
     - This is a hello world module.
 options:
-    state:
-      description:
-        - Determines if hello world is present of not.
-      default: present
+  state:
+    description:
+      - Determines if hello world is present of not.
+    default: present
 author: Roy Williams (@chopskxw)
 '''
 
