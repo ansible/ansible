@@ -65,6 +65,7 @@ lib/ansible/modules/network/cloudengine/ce_file_copy.py
 lib/ansible/modules/network/cumulus/_cl_img_install.py
 lib/ansible/modules/network/f5/bigip_command.py
 lib/ansible/modules/network/f5/bigip_config.py
+lib/ansible/modules/network/f5/bigip_configsync_actions.py
 lib/ansible/modules/network/f5/bigip_gtm_pool.py
 lib/ansible/modules/network/f5/bigip_gtm_wide_ip.py
 lib/ansible/modules/network/f5/bigip_hostname.py
@@ -77,6 +78,7 @@ lib/ansible/modules/network/f5/bigip_qkview.py
 lib/ansible/modules/network/f5/bigip_snmp.py
 lib/ansible/modules/network/f5/bigip_snmp_trap.py
 lib/ansible/modules/network/f5/bigip_ssl_certificate.py
+lib/ansible/modules/network/f5/bigip_ucs.py
 lib/ansible/modules/network/f5/bigip_user.py
 lib/ansible/modules/network/f5/bigip_virtual_address.py
 lib/ansible/modules/network/ios/ios_static_route.py
