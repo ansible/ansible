@@ -87,7 +87,7 @@ options:
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
     - '   folder: vm/folder2'
-    - '   fodler: folder2'
+    - '   folder: folder2'
     default: /vm
   hardware:
     description:
@@ -316,7 +316,7 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs
+from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs, compile_folder_path_for_object
 from ansible.module_utils.vmware import serialize_spec
 
 try:
@@ -1211,7 +1211,6 @@ class PyVmomiHelper(object):
         # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
 
         # FIXME:
-        #   - multiple datacenters
         #   - multiple templates by the same name
         #   - static IPs
 
@@ -1220,15 +1219,24 @@ class PyVmomiHelper(object):
         if datacenter is None:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
 
-        destfolder = None
+        # Prepend / if it was missing from the folder path, also strip trailing slashes
+        if not self.params['folder'].startswith('/'):
+            self.params['folder'] = '/%(folder)s' % self.params
+        self.params['folder'] = self.params['folder'].rstrip('/')
 
-        # make an attempt with findinventorybypath, although this works poorly
-        # when datacenters are nested under folders
-        f_obj = self.content.searchIndex.FindByInventoryPath('%(folder)s' % self.params)
+        dcpath = compile_folder_path_for_object(datacenter)
 
-        # retry by walking down the object tree
-        if f_obj is None:
-            f_obj = self.find_folder(self.params['folder'])
+        # Check for full path first in case it was already supplied
+        if (self.params['folder'].startswith(dcpath + self.params['datacenter'] + '/vm')):
+            fullpath = self.params['folder']
+        elif (self.params['folder'].startswith('/vm/') or self.params['folder'] == '/vm'):
+            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+        elif (self.params['folder'].startswith('/')):
+            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+        else:
+            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+
+        f_obj = self.content.searchIndex.FindByInventoryPath(fullpath)
 
         # abort if no strategy was successful
         if f_obj is None:
