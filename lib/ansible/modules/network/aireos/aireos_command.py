@@ -22,22 +22,22 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: aire_command
+module: aireos_command
 version_added: "2.4"
 author: "James Mighion (@jmighion)"
 short_description: Run commands on remote devices running Cisco WLC
 description:
-  - Sends arbitrary commands to an aire node and returns the results
+  - Sends arbitrary commands to an aireos node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
-    Please use M(aire_config) to configure WLC devices.
-extends_documentation_fragment: aire
+    Please use M(aireos_config) to configure WLC devices.
+extends_documentation_fragment: aireos
 options:
   commands:
     description:
-      - List of commands to send to the remote aire device over the
+      - List of commands to send to the remote aireos device over the
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
@@ -84,26 +84,26 @@ options:
 
 EXAMPLES = """
 tasks:
-  - name: run show version on remote devices
-    aire_command:
-      commands: show version
+  - name: run show sysinfo on remote devices
+    aireos_command:
+      commands: show sysinfo
 
   - name: run show sysinfo and check to see if output contains Cisco Controller
-    aire_command:
+    aireos_command:
       commands: show sysinfo
       wait_for: result[0] contains 'Cisco Controller'
 
   - name: run multiple commands on remote nodes
-    aire_command:
-      commands:
-        - show version
-        - show interfaces
-
-  - name: run multiple commands and evaluate the output
-    aire_command:
+    aireos_command:
       commands:
         - show sysinfo
-        - show interfaces
+        - show interface summary
+
+  - name: run multiple commands and evaluate the output
+    aireos_command:
+      commands:
+        - show sysinfo
+        - show interface summary
       wait_for:
         - result[0] contains Cisco Controller
         - result[1] contains Loopback0
@@ -128,8 +128,8 @@ failed_conditions:
 """
 import time
 
-from ansible.module_utils.aire import run_commands
-from ansible.module_utils.aire import aire_argument_spec, check_args
+from ansible.module_utils.aireos import run_commands
+from ansible.module_utils.aireos import aireos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
@@ -158,8 +158,8 @@ def parse_commands(module, warnings):
             )
         elif item['command'].startswith('conf'):
             module.fail_json(
-                msg='aire_command does not support running config mode '
-                    'commands.  Please use aire_config instead'
+                msg='aireos_command does not support running config mode '
+                    'commands.  Please use aireos_config instead'
             )
     return commands
 
@@ -177,7 +177,7 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    argument_spec.update(aire_argument_spec)
+    argument_spec.update(aireos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

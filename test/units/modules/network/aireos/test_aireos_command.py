@@ -22,16 +22,16 @@ __metaclass__ = type
 import json
 
 from ansible.compat.tests.mock import patch
-from ansible.modules.network.aire import aire_command
-from .aire_module import TestCiscoWlcModule, load_fixture, set_module_args
+from ansible.modules.network.aireos import aireos_command
+from .aireos_module import TestCiscoWlcModule, load_fixture, set_module_args
 
 
 class TestCiscoWlcCommandModule(TestCiscoWlcModule):
 
-    module = aire_command
+    module = aireos_command
 
     def setUp(self):
-        self.mock_run_commands = patch('ansible.modules.network.aire.aire_command.run_commands')
+        self.mock_run_commands = patch('ansible.modules.network.aireos.aireos_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
@@ -55,48 +55,48 @@ class TestCiscoWlcCommandModule(TestCiscoWlcModule):
 
         self.run_commands.side_effect = load_from_file
 
-    def test_aire_command_simple(self):
+    def test_aireos_command_simple(self):
         set_module_args(dict(commands=['show sysinfo']))
         result = self.execute_module()
         self.assertEqual(len(result['stdout']), 1)
         self.assertTrue(result['stdout'][0].startswith('Manufacturer\'s Name'))
 
-    def test_aire_command_multiple(self):
+    def test_aireos_command_multiple(self):
         set_module_args(dict(commands=['show sysinfo', 'show sysinfo']))
         result = self.execute_module()
         self.assertEqual(len(result['stdout']), 2)
         self.assertTrue(result['stdout'][0].startswith('Manufacturer\'s Name'))
 
-    def test_aire_command_wait_for(self):
+    def test_aireos_command_wait_for(self):
         wait_for = 'result[0] contains "Cisco Systems Inc"'
         set_module_args(dict(commands=['show sysinfo'], wait_for=wait_for))
         self.execute_module()
 
-    def test_aire_command_wait_for_fails(self):
+    def test_aireos_command_wait_for_fails(self):
         wait_for = 'result[0] contains "test string"'
         set_module_args(dict(commands=['show sysinfo'], wait_for=wait_for))
         self.execute_module(failed=True)
         self.assertEqual(self.run_commands.call_count, 10)
 
-    def test_aire_command_retries(self):
+    def test_aireos_command_retries(self):
         wait_for = 'result[0] contains "test string"'
         set_module_args(dict(commands=['show sysinfo'], wait_for=wait_for, retries=2))
         self.execute_module(failed=True)
         self.assertEqual(self.run_commands.call_count, 2)
 
-    def test_aire_command_match_any(self):
+    def test_aireos_command_match_any(self):
         wait_for = ['result[0] contains "Cisco Systems Inc"',
                     'result[0] contains "test string"']
         set_module_args(dict(commands=['show sysinfo'], wait_for=wait_for, match='any'))
         self.execute_module()
 
-    def test_aire_command_match_all(self):
+    def test_aireos_command_match_all(self):
         wait_for = ['result[0] contains "Cisco Systems Inc"',
                     'result[0] contains "Cisco Controller"']
         set_module_args(dict(commands=['show sysinfo'], wait_for=wait_for, match='all'))
         self.execute_module()
 
-    def test_aire_command_match_all_failure(self):
+    def test_aireos_command_match_all_failure(self):
         wait_for = ['result[0] contains "Cisco Systems Inc"',
                     'result[0] contains "test string"']
         commands = ['show sysinfo', 'show sysinfo']
