@@ -61,18 +61,15 @@ options:
   image_id:
     description:
       - The AMI unique identifier to be used for the group
-    required: false
   key_name:
     description:
       - The SSH key name to be used for access to managed instances
-    required: false
   security_groups:
     description:
       - A list of security groups to apply to the instances. Since version 2.4
         you can specify either security group names or IDs or a mix.  Previous
         to 2.4, for VPC instances, specify security group IDs and for
         EC2-Classic, specify either security group names or IDs.
-    required: false
   volumes:
     description:
       - A list of volume dicts, each containing device name and optionally
@@ -80,90 +77,74 @@ options:
         device type) must be specified for a new volume or a root volume, and
         may be passed for a snapshot volume. For any volume, a volume size less
         than 1 will be interpreted as a request not to create the volume.
-    required: false
   user_data:
     description:
       - Opaque blob of data which is made available to the ec2 instance.
         Mutually exclusive with I(user_data_path).
-    required: false
   user_data_path:
     description:
       - Path to the file that contains userdata for the ec2 instances. Mutually
         exclusive with I(user_data).
-    required: false
     version_added: "2.3"
   kernel_id:
     description:
       - Kernel id for the EC2 instance
-    required: false
   spot_price:
     description:
       - The spot price you are bidding. Only applies for an autoscaling group
         with spot instances.
-    required: false
   instance_monitoring:
     description:
       - Whether instances in group are launched with detailed monitoring.
     default: false
-    required: false
   assign_public_ip:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon
         Virtual Private Cloud. Specifies whether to assign a public IP address
         to each instance launched in a Amazon VPC.
-    required: false
     version_added: "1.8"
   ramdisk_id:
     description:
       - A RAM disk id for the instances.
-    required: false
     version_added: "1.8"
   instance_profile_name:
     description:
       - The name or the Amazon Resource Name (ARN) of the instance profile
         associated with the IAM role for the instances.
-    required: false
     version_added: "1.8"
   ebs_optimized:
     description:
       - Specifies whether the instance is optimized for EBS I/O (true) or not
         (false).
-    required: false
     default: false
     version_added: "1.8"
   classic_link_vpc_id:
     description:
       - Id of ClassicLink enabled VPC
-    required: false
     version_added: "2.0"
   classic_link_vpc_security_groups:
     description:
       - A list of security group id's with which to associate the ClassicLink
         VPC instances.
-    required: false
     version_added: "2.0"
   vpc_id:
     description:
       - VPC ID, used when resolving security group names to IDs.
-    required: false
     version_added: "2.4"
   instance_id:
     description:
       - The Id of a running instance to use as a basis for a launch
         configuration. Can be used in place of image_id and instance_type.
-    required: false
     version_added: "2.4"
   advanced_instance_monitoring:
     description:
       - A boolean representing whether advanced instance monitoring is to be
         used or not. Must be used in conjunction with instance_monitoring.
-    required: false
     default: false
     version_added: "2.4"
   placement_tenancy:
     description:
       - Determines whether the instance runs on single-tenant harware or not.
-    required: false
     default: 'default'
     version_added: "2.4"
 
