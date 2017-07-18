@@ -347,9 +347,7 @@ def create_launch_config(connection, module):
             if len(launch_configs) > 0:
                 launch_config = launch_configs[0]
             else:
-                module.fail_json(msg="error creating launch configuration. " +
-                                 "no launch configuration returned from boto3" +
-                                 " after create.")
+                module.fail_json(msg="Failed to create launch configuration", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
 
