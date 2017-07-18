@@ -280,6 +280,7 @@ files:
   $modules/cloud/smartos/vmadm.py: jasperla
   $modules/cloud/softlayer/sl_vm.py: mcltn
   $modules/cloud/univention/: 2-B
+  $modules/cloud/vmware/: $team_vmware
   $modules/cloud/vmware/vca_fw.py: privateip
   $modules/cloud/vmware/vca_nat.py: privateip
   $modules/cloud/vmware/vca_vapp.py: privateip
@@ -922,5 +923,5 @@ macros:
   team_rabbitmq: chrishoffman manuel-sousa romanek-adam
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3
-  team_vmware: dagwieers dav1x jctanner nerzhul
+  team_vmware: dagwieers dav1x jctanner nerzhul akasurde
   team_windows: dagwieers jborean93 jhawkesworth
