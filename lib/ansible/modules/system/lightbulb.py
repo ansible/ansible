@@ -40,7 +40,11 @@ EXAMPLES = '''
 
 
 RETURN = '''
-DUMMY RETURN
+lightbulb:
+    description: lightbulb
+    returned: success
+    type: string
+    sample: hello world
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -48,7 +52,11 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(argument_spec=dict())
-    module.exit_json(changed=True, msg="hello world")
+    result = dict(
+        lightbulb="hello world",
+    )
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
