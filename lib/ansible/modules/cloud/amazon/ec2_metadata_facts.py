@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ec2_facts
+module: ec2_metadata_facts
 short_description: Gathers facts (instance metadata) about remote hosts within ec2
 version_added: "1.0"
 author:
@@ -34,12 +34,12 @@ description:
       http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html.
       The module must be called from within the EC2 instance itself.
 notes:
-    - Parameters to filter on ec2_facts may be added later.
+    - Parameters to filter on ec2_metadata_facts may be added later.
 '''
 
 EXAMPLES = '''
-# Gather EC2 facts
-- ec2_facts:
+# Gather EC2 metadata facts
+- ec2_metadata_facts:
 
 - debug:
     msg: "This instance is a t1.micro"
@@ -539,10 +539,13 @@ def main():
         supports_check_mode=True,
     )
 
-    ec2_facts = Ec2Metadata(module).run()
-    ec2_facts_result = dict(changed=False, ansible_facts=ec2_facts)
+    if module._name == 'ec2_facts':
+        module.deprecate("The 'ec2_facts' module is being renamed 'ec2_metadata_facts'", version=2.7)
 
-    module.exit_json(**ec2_facts_result)
+    ec2_metadata_facts = Ec2Metadata(module).run()
+    ec2_metadata_facts_result = dict(changed=False, ansible_facts=ec2_metadata_facts)
+
+    module.exit_json(**ec2_metadata_facts_result)
 
 
 if __name__ == '__main__':
