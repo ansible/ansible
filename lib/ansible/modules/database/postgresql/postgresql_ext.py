@@ -194,7 +194,7 @@ def main():
             if state == "present":
                 changed = not ext_exists(cursor, ext, version)
             elif state == "absent":
-                changed = ext_exists(cursor, ext, version)
+                changed = ext_exists(cursor, ext)
         else:
             if state == "absent":
                 changed = ext_delete(cursor, ext)
