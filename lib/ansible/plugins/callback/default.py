@@ -81,7 +81,6 @@ class CallbackModule(CallbackBase):
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-
         if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
