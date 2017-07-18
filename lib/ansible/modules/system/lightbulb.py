@@ -67,7 +67,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     print("hello roflcopter")
-    module = roflcopter(argument_spec={})
+    module = AnsibleModule(argument_spec={})
     response = {"hello": "world"}
     module.exit_json(changed=False, meta=response)
 
