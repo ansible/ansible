@@ -101,13 +101,17 @@ rules:
     ]
 '''
 
+try:
+    from botocore.exceptions import ClientError
+except:
+    # handled by HAS_BOTO3 check in main
+    pass
+
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info,
-                                      camel_dict_to_snake_dict, _botocore_exception_maybe)
-
-from ansible.module_utils.pycompat24 import get_exception
+                                      camel_dict_to_snake_dict)
 
 
 def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
@@ -142,7 +146,7 @@ def create_or_update_bucket_cors(connection, module):
 
     try:
         current_camel_rules = connection.get_bucket_cors(Bucket=name)['CORSRules']
-    except Exception:
+    except ClientError:
         current_camel_rules = []
 
     new_camel_rules = snake_dict_to_camel_dict(rules, capitalize_first=True)
@@ -171,8 +175,7 @@ def create_or_update_bucket_cors(connection, module):
     if changed:
         try:
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
-        except Exception:
-            e = get_exception()
+        except ClientError as e:
             module.fail_json(
                 msg=e.message,
                 exception=traceback.format_exc(),
@@ -190,8 +193,7 @@ def destroy_bucket_cors(connection, module):
     try:
         cors = connection.delete_bucket_cors(Bucket=name)
         changed = True
-    except Exception:
-        e = get_exception()
+    except ClientError as e:
         module.fail_json(
             msg=e.message,
             exception=traceback.format_exc(),
@@ -217,7 +219,6 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
-    check_mode = module.check_mode
     try:
         region, ec2_url, aws_connect_kwargs = (
             get_aws_connection_info(module, boto3=True)
@@ -229,8 +230,7 @@ def main():
             )
         )
 
-    except Exception:
-        e = get_exception()
+    except ClientError as e:
         module.fail_json(
             msg=e.message,
             exception=traceback.format_exc(),
