@@ -13,6 +13,7 @@ Ansible Changes By Release
   * pause module
   * hacking/env-setup script
   * Fix traceback when checking for passwords in logged strings when logging executed commands.
+  * docker_login module
 
 ## 2.3.2 "Ramble On" - TBD
 
