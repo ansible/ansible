@@ -409,6 +409,10 @@ class TestUtils(unittest.TestCase):
 
     def test_sanitize_output(self):
         self.assertEqual(ansible.utils.sanitize_output('password=foo'), 'password=VALUE_HIDDEN')
+        self.assertEqual(ansible.utils.sanitize_output('password="foo"'), 'password=VALUE_HIDDEN')
+        self.assertEqual(ansible.utils.sanitize_output('--password=foo'), '--password=VALUE_HIDDEN')
+        self.assertEqual(ansible.utils.sanitize_output('password foo'), 'password VALUE_HIDDEN')
+        self.assertEqual(ansible.utils.sanitize_output(' -p foo'), ' -p VALUE_HIDDEN')
         self.assertEqual(ansible.utils.sanitize_output('foo=user:pass@foo/whatever'),
                          'foo=user:********@foo/whatever')
         self.assertEqual(ansible.utils.sanitize_output('foo=http://username:pass@wherever/foo'),

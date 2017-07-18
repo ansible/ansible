@@ -951,26 +951,7 @@ def getch():
 def sanitize_output(arg_string):
     ''' strips private info out of a string '''
 
-    private_keys = ('password', 'login_password')
-
-    output = []
-    for part in arg_string.split():
-        try:
-            (k, v) = part.split('=', 1)
-        except ValueError:
-            v = heuristic_log_sanitize(part)
-            output.append(v)
-            continue
-
-        if k in private_keys:
-            v = 'VALUE_HIDDEN'
-        else:
-            v = heuristic_log_sanitize(v)
-        output.append('%s=%s' % (k, v))
-
-    output = ' '.join(output)
-    return output
-
+    return heuristic_log_sanitize(arg_string)
 
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook

@@ -282,6 +282,7 @@ def heuristic_log_sanitize(data):
     ''' Remove strings that look like passwords from log messages '''
     # Currently filters:
     # user:pass@foo/whatever and http://username:pass@wherever/foo
+    # and strings like -p foo and password=foo
     # This code has false positives and consumes parts of logs that are
     # not passwds
 
@@ -292,6 +293,8 @@ def heuristic_log_sanitize(data):
     #   a passwd
     # sep_search_end: where in the string to end a search for the sep
     output = []
+    PASSWORD_RE = re.compile(r"""((password| -p)[= ]?)['"]?([^ ]*)""")
+    data = PASSWORD_RE.sub(r'\1VALUE_HIDDEN', data)
     begin = len(data)
     prev_begin = begin
     sep = 1
