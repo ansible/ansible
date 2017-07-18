@@ -361,8 +361,7 @@ def create_launch_config(connection, module):
         result['InstanceMonitoring'] = True
     else:
         try:
-            result['InstanceMonitoring'] = module.boolean(launch_config.get(
-                'InstanceMonitoring').get('Enabled'))
+            result['InstanceMonitoring'] = module.boolean(launch_config.get('InstanceMonitoring').get('Enabled'))
         except AttributeError:
             result['InstanceMonitoring'] = False
     if launch_config.get('BlockDeviceMappings') is not None:
