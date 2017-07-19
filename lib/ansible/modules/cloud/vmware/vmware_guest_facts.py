@@ -173,7 +173,6 @@ def main():
             folder=dict(required=False, type='str', default='/vm'),
             datacenter=dict(required=True, type='str'),
         ),
-        required_together=[('name', 'folder')],
         required_one_of=[['name', 'uuid']],
     )
 
