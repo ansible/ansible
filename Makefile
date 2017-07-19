@@ -303,3 +303,7 @@ webdocs:
 docs: $(MANPAGES)
 
 alldocs: docs webdocs
+
+version:
+	@echo $(VERSION)
+
