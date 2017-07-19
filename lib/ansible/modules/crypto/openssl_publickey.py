@@ -62,6 +62,11 @@ options:
         required: true
         description:
             - Path to the TLS/SSL private key from which to generate the public key.
+    privatekey_passphrase:
+        required: false
+        description:
+            - The passphrase for the privatekey.
+        version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -75,6 +80,13 @@ EXAMPLES = '''
     path: /etc/ssl/public/ansible.com.pem
     privatekey_path: /etc/ssl/private/ansible.com.pem
     format: OpenSSH
+
+# Generate an OpenSSL public key with a passphrase protected
+# private key
+- openssl_publickey:
+    path: /etc/ssl/public/ansible.com.pem
+    privatekey_path: /etc/ssl/private/ansible.com.pem
+    privatekey_passphrase: ansible
 
 # Force regenerate an OpenSSL public key if it already exists
 - openssl_publickey:
@@ -150,6 +162,7 @@ class PublicKey(object):
         self.name = os.path.basename(module.params['path'])
         self.path = module.params['path']
         self.privatekey_path = module.params['privatekey_path']
+        self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.privatekey = None
         self.changed = True
         self.fingerprint = {}
@@ -164,7 +177,7 @@ class PublicKey(object):
 
                 if self.format == 'OpenSSH':
                     key = crypto_serialization.load_pem_private_key(privatekey_content,
-                                                                    password=None,
+                                                                    password=self.privatekey_passphrase,
                                                                     backend=default_backend())
                     publickey_content = key.public_key().public_bytes(
                         crypto_serialization.Encoding.OpenSSH,
@@ -190,7 +203,7 @@ class PublicKey(object):
             self.changed = False
 
         file_args = module.load_file_common_arguments(module.params)
-        self.fingerprint = get_fingerprint(self.privatekey_path)
+        self.fingerprint = get_fingerprint(self.privatekey_path, self.privatekey_passphrase)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
@@ -228,6 +241,7 @@ def main():
             path=dict(required=True, type='path'),
             privatekey_path=dict(type='path'),
             format=dict(type='str', choices=['PEM', 'OpenSSH'], default='PEM'),
+            privatekey_passphrase=dict(type='path', no_log=True),
         ),
         supports_check_mode = True,
         add_file_common_args = True,

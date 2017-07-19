@@ -26,12 +26,14 @@ except ImportError:
 import hashlib
 
 
-def get_fingerprint(path):
+def get_fingerprint(path, passphrase):
     """Generate the fingerprint of the public key. """
 
     fingerprint = {}
 
-    privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, open(path, 'r').read())
+    privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                        open(path, 'rb').read(),
+                                        passphrase)
 
     try:
         publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
