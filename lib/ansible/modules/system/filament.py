@@ -1,4 +1,4 @@
-#!/usr/bin/python  
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Roy Williams <roywilliams@redhat.com>
@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 module: filament
 version_added: "2.4"
 short_description: This is a hello world module.
-description: 
+description:
     - This is a hello world module.
 options:
   state:
@@ -60,7 +60,6 @@ filament:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 
 
 def main():
