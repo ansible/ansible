@@ -40,7 +40,6 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-import pdb
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -52,12 +51,15 @@ def main():
         ),
         supports_check_mode=True
     )
-    epdb.st()
 
-    if module.params['state'] == 'absent':
-        module.exit_json(changed=False)
+    if module.params['data'] == 'crash':
+        raise Exception("boom")
 
-    module.exit_json(changed=True, lightbulb="hello world")
+    result = dict(
+        ping=module.params['data'],
+    )
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
