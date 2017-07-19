@@ -315,7 +315,9 @@ class StrategyModule(StrategyBase):
                             if loop_var and loop_var in include_result:
                                 new_ir.vars[loop_var] = include_result[loop_var]
 
-                            all_role_blocks.extend(new_ir.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader))
+                            blocks, handler_blocks = new_ir.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader)
+                            all_role_blocks.extend(blocks)
+                            self._tqm.update_handler_list([handler for handler_block in handler_blocks for handler in handler_block.block])
 
                 if len(all_role_blocks) > 0:
                     for host in hosts_left:
