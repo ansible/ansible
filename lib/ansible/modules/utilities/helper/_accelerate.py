@@ -518,7 +518,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             fd.close()
             tb = traceback.format_exc()
             log("failed to fetch the file: %s" % tb)
-            return dict(failed=True, stderr="Could not fetch the file: %s" % str(e))
+            return dict(failed=True, stderr="Could not fetch the file: %s" % e)
 
         fd.close()
         return dict()
