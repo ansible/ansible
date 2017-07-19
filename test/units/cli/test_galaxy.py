@@ -89,6 +89,7 @@ class TestGalaxy(unittest.TestCase):
         if os.path.isdir(cls.role_path):
             shutil.rmtree(cls.role_path)
 
+
     def setUp(self):
         self.default_args = []
 
@@ -124,31 +125,20 @@ class TestGalaxy(unittest.TestCase):
                 self.assertTrue(isinstance(gc.api, ansible.galaxy.api.GalaxyAPI))
                 self.assertEqual(mock_ex.call_count, 1)
 
-    def test_execute_install(self):
+    def test_execute_install_without_role(self):
         # testing installing with insufficient information
-        gc = GalaxyCLI(args=["install"])
-        with patch('sys.argv', ["-c"]):
-            galaxy_parser = gc.parse()
+        gc = GalaxyCLI(args=["install", "--offline", "-p", self.role_path])
+        gc.parse()
         self.assertRaises(AnsibleError, gc.run)
 
+    def test_execute_install_with_role(self):
         # installing role
-        gc = GalaxyCLI(args=["install"])
-        with patch('sys.argv', ["--offline", "-p", self.role_path, "-r", self.role_req]):
-            galaxy_parser = gc.parse()
-        super(GalaxyCLI, gc).run()
-        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
-        completed_task = gc.execute_install()
+        gc = GalaxyCLI(args=["install", "--offline", "-p", self.role_path, "-r", self.role_req])
+        gc.parse()
+        gc.run()
 
         # testing correct installation
-        role_file = os.path.join(self.role_path, self.role_name)
-        self.assertTrue(os.path.exists(role_file))
-        self.assertTrue(completed_task == 0)
-
-        # cleaning up
-        gc.args = ["remove"]
-        with patch('sys.argv', ["-c", "-p", self.role_path, self.role_name]):
-            galaxy_parser = gc.parse()
-        gc.run()
+        self.assertTrue(os.path.exists(os.path.join(self.role_path, self.role_name)))
 
     def test_execute_remove(self):
         # installing role
