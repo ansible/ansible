@@ -590,15 +590,17 @@ def get_branches(git_path, module, dest):
     return branches
 
 
-def get_tags(git_path, module, dest):
+def get_annotated_tags(git_path, module, dest):
     tags = []
-    cmd = '%s tag' % (git_path,)
+    cmd = [git_path, 'for-each-ref', 'refs/tags/', '--format', '%(objecttype):%(refname:short)']
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
     for line in to_native(out).split('\n'):
         if line.strip():
-            tags.append(line.strip())
+            tagtype, tagname = line.strip().split(':')
+            if tagtype == 'tag':
+                tags.append(tagname)
     return tags
 
 
@@ -887,7 +889,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
 
 
 def verify_commit_sign(git_path, module, dest, version):
-    if version in get_tags(git_path, module, dest):
+    if version in get_annotated_tags(git_path, module, dest):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"

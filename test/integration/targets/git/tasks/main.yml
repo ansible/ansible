@@ -27,7 +27,11 @@
 - include: change-repo-url.yml
 - include: depth.yml
 - include: checkout-new-tag.yml
-- include: tag-verification.yml
+- include: gpg-verification.yml
+  when: >
+    not gpg_version.stderr and
+    gpg_version.stdout and
+    git_version.stdout | version_compare("2.1.0", '>=')
 - include: localmods.yml
 - include: reset-origin.yml
 - include: ambiguous-ref.yml
