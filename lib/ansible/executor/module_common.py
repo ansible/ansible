@@ -36,7 +36,7 @@ from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.plugins import module_utils_loader
+from ansible.plugins import module_utils_loader, ps_module_utils_loader
 from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -623,7 +623,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     elif b'from ansible.module_utils.' in b_module_data:
         module_style = 'new'
         module_substyle = 'python'
-    elif REPLACER_WINDOWS in b_module_data or b'#Requires -Module' in b_module_data:
+    elif REPLACER_WINDOWS in b_module_data or re.search(b'#Requires \-Module', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:
@@ -786,20 +786,25 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         lines = b_module_data.split(b'\n')
         module_names = set()
 
-        requires_module_list = re.compile(r'(?i)^#requires \-module(?:s?) (.+)')
+        requires_module_list = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
 
         for line in lines:
             # legacy, equivalent to #Requires -Modules powershell
             if REPLACER_WINDOWS in line:
-                module_names.add(b'powershell')
-                # TODO: add #Requires checks for Ansible.ModuleUtils.X
+                module_names.add(b'Ansible.ModuleUtils.PowerShellLegacy')
+            line_match = requires_module_list.match(line)
+            if line_match:
+                module_names.add(line_match.group(1))
 
-        for m in module_names:
+        for m in set(module_names):
             m = to_text(m)
+            mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
+            if not mu_path:
+                raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)
             exec_manifest["powershell_modules"][m] = to_text(
                 base64.b64encode(
                     to_bytes(
-                        _slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))
+                        _slurp(mu_path)
                     )
                 )
             )

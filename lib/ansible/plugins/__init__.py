@@ -500,6 +500,15 @@ module_utils_loader = PluginLoader(
     'module_utils',
 )
 
+# NB: dedicated loader is currently necessary because PS module_utils expects "with subdir" lookup where
+# regular module_utils doesn't. This can be revisited once we have more granular loaders.
+ps_module_utils_loader = PluginLoader(
+    '',
+    'ansible.module_utils',
+    C.DEFAULT_MODULE_UTILS_PATH,
+    'module_utils',
+)
+
 lookup_loader = PluginLoader(
     'LookupModule',
     'ansible.plugins.lookup',

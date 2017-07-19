@@ -1,0 +1,3 @@
+Function CustomFunction {
+    return "ValueFromCustomFunction"
+}

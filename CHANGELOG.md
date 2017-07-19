@@ -32,6 +32,7 @@ Ansible Changes By Release
 * Configuration has been changed from a hardcoded into the constants module to dynamically loaded from yaml definitions
   - Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
+* Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
 
 ### Deprecations
 * The behaviour when specifying `--tags` (or `--skip-tags`) multiple times on the command line
