@@ -2,7 +2,7 @@
 - name: Set up console logging
   net_logging:
     dest: console
-    level: 0
+    dest_level: 0
     state: present
     provider: "{{ cli }}"
   register: result
@@ -15,7 +15,7 @@
 - name: Set up console logging again (idempotent)
   net_logging:
     dest: console
-    level: 0
+    dest_level: 0
     state: present
     provider: "{{ cli }}"
   register: result
@@ -27,6 +27,7 @@
 - name: Delete/disable console logging
   net_logging:
     dest: console
+    dest_level: 0
     state: absent
     provider: "{{ cli }}"
   register: result
@@ -39,6 +40,7 @@
 - name: Delete/disable console logging (idempotent)
   net_logging:
     dest: console
+    dest_level: 0
     state: absent
     provider: "{{ cli }}"
   register: result
@@ -51,7 +53,7 @@
   net_logging:
     dest: logfile
     name: test
-    level: 0
+    dest_level: 0
     state: present
     provider: "{{ cli }}"
   register: result
@@ -76,7 +78,7 @@
 - name: remove logging as collection tearDown
   net_logging:
     aggregate:
-      - { dest: logfile, name: test, level: 0, state: absent }
+      - { dest: logfile, name: test, dest_level: 0, state: absent }
       - { feature: daemon, feature_level: 0, state: absent }
     provider: "{{ cli }}"
   register: result

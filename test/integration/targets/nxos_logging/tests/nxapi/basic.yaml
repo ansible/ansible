@@ -2,7 +2,7 @@
 - name: Set up console logging
   nxos_logging:
     dest: console
-    level: 0
+    dest_level: 0
     state: present
     provider: "{{ nxapi }}"
   register: result
@@ -15,7 +15,7 @@
 - name: Set up console logging again (idempotent)
   nxos_logging:
     dest: console
-    level: 0
+    dest_level: 0
     state: present
     provider: "{{ nxapi }}"
   register: result
@@ -27,6 +27,7 @@
 - name: Delete/disable console logging
   nxos_logging:
     dest: console
+    dest_level: 0
     state: absent
     provider: "{{ nxapi }}"
   register: result
@@ -39,6 +40,7 @@
 - name: Delete/disable console logging (idempotent)
   nxos_logging:
     dest: console
+    dest_level: 0
     state: absent
     provider: "{{ nxapi }}"
   register: result
@@ -51,7 +53,7 @@
   nxos_logging:
     dest: logfile
     name: test
-    level: 0
+    dest_level: 0
     state: present
     provider: "{{ nxapi }}"
   register: result
@@ -61,7 +63,7 @@
       - 'result.changed == true'
       - '"logging logfile test 0" in result.commands'
 
-- name: Configure daemon with level
+- name: Configure feature with level
   nxos_logging:
     feature: daemon
     feature_level: 0
@@ -76,7 +78,7 @@
 - name: remove logging as collection tearDown
   nxos_logging:
     aggregate:
-      - { dest: logfile, name: test, level: 0, state: absent }
+      - { dest: logfile, name: test, dest_level: 0, state: absent }
       - { feature: daemon, feature_level: 0, state: absent }
     provider: "{{ nxapi }}"
   register: result
