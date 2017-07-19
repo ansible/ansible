@@ -339,7 +339,6 @@ PARAM_TO_COMMAND_KEYMAP = {
 
 def get_value(arg, config, module):
     custom = [
-        'allowas_in_max',
         'additional_paths_send',
         'additional_paths_receive',
         'advertise_map_exist',
@@ -351,7 +350,7 @@ def get_value(arg, config, module):
         'soft_reconfiguration_in'
     ]
     command = PARAM_TO_COMMAND_KEYMAP[arg]
-    has_command = re.search(r'^\s+{0}\s*$'.format(command), config, re.M)
+    has_command = re.search(r'^\s+{0}\s*'.format(command), config, re.M)
     has_command_val = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
     value = ''
 
@@ -422,11 +421,6 @@ def get_custom_value(arg, config, module):
             ):
                 splitted_line = line.split()
                 value = [splitted_line[1], splitted_line[3]]
-    elif arg == 'allowas_in_max':
-        if has_command_val:
-            split_line = has_command_val.group('value').split()
-            if len(split_line) == 2:
-                value = splitted_line[-1]
     elif arg.startswith('max_prefix'):
         for line in splitted_config:
             if 'maximum-prefix' in line:
@@ -545,7 +539,7 @@ def fix_proposed(module, proposed):
     allowas_in = proposed.get('allowas_in')
     allowas_in_max = proposed.get('allowas_in_max')
 
-    if allowas_in is False and allowas_in_max:
+    if allowas_in_max and not allowas_in:
         proposed.pop('allowas_in_max')
     elif allowas_in and allowas_in_max:
         proposed.pop('allowas_in')
