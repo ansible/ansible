@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: hello_world
+module: helloworld
 version_added: 2.4
 short_description: print hello world
 description:
