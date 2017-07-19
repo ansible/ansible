@@ -89,11 +89,11 @@ options:
         aliases: [ 'O' ]
         description:
             - organizationName field of the certificate signing request subject
-    organizationUnitName:
+    organizationalUnitName:
         required: false
         aliases: [ 'OU' ]
         description:
-            - organizationUnitName field of the certificate signing request subject
+            - organizationalUnitName field of the certificate signing request subject
     commonName:
         required: false
         aliases: [ 'CN' ]
