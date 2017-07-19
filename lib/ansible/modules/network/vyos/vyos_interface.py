@@ -123,6 +123,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vyos import load_config, get_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
+DEFAULT_DESCRIPTION = "'configured by vyos_interface'"
+
 
 def search_obj_in_list(name, lst):
     for o in lst:
@@ -232,6 +234,7 @@ def map_params_to_obj(module):
                 if item not in d:
                     d[item] = None
 
+            d['description'] = DEFAULT_DESCRIPTION
             if not d.get('state'):
                 d['state'] = module.params['state']
 
@@ -269,7 +272,7 @@ def main():
     """
     argument_spec = dict(
         name=dict(),
-        description=dict(),
+        description=dict(default=DEFAULT_DESCRIPTION),
         speed=dict(),
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),
