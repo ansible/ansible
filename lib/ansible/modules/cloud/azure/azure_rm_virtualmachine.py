@@ -789,7 +789,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     vhd = VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
                     vm_resource = VirtualMachine(
                         vm_dict['location'],
-                        vm_id=vm_dict['properties']['vmId'],
                         os_profile=OSProfile(
                             admin_username=vm_dict['properties']['osProfile']['adminUsername'],
                             computer_name=vm_dict['properties']['osProfile']['computerName']
