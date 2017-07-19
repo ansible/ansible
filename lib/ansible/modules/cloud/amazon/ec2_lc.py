@@ -212,7 +212,7 @@ image_id:
     returned: Always
     type: str
 instance_type:
-    description: The type of instance to be launched for the asg.
+    description: The type of instance to be launched by the asg.
     returned: Always
     type: str
 invocation:
