@@ -123,6 +123,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vyos import load_config, get_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
+DEFAULT_DESCRIPTION = 'configured by vyos_interface'
+
 
 def search_obj_in_list(name, lst):
     for o in lst:
@@ -269,7 +271,7 @@ def main():
     """
     argument_spec = dict(
         name=dict(),
-        description=dict(),
+        description=dict(default=DEFAULT_DESCRIPTION),
         speed=dict(),
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),
