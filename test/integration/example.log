@@ -4,3 +4,5 @@ DEBUG:root:test
 DEBUG:root:test
 DEBUG:root:bar
 DEBUG:root:test
+DEBUG:root:bar
+DEBUG:root:test

@@ -51,6 +51,8 @@ foo:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.lightbulb import foobar
+
 import logging
 logging.basicConfig(filename='example.log', level=logging.DEBUG)
 
