@@ -356,13 +356,10 @@ def create_launch_config(connection, module):
 
     result['CreatedTime'] = str(launch_config.get('CreatedTime'))
 
-    if launch_config.get('InstanceMonitoring') is True:
-        result['InstanceMonitoring'] = True
-    else:
-        try:
-            result['InstanceMonitoring'] = module.boolean(launch_config.get('InstanceMonitoring').get('Enabled'))
-        except AttributeError:
-            result['InstanceMonitoring'] = False
+    try:
+        result['InstanceMonitoring'] = module.boolean(launch_config.get('InstanceMonitoring').get('Enabled'))
+    except AttributeError:
+        result['InstanceMonitoring'] = False
 
     result['BlockDeviceMappings'] = []
 
