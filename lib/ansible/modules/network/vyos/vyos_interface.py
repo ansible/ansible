@@ -123,7 +123,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vyos import load_config, get_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
-DEFAULT_DESCRIPTION = 'configured by vyos_interface'
+DEFAULT_DESCRIPTION = "'configured by vyos_interface'"
 
 
 def search_obj_in_list(name, lst):
