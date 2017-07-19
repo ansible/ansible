@@ -343,6 +343,58 @@
            - 'result.changed'
            - 'not result.group_id'
 
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "10.232.232.128/26"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: vpc_result
+
+    - name: create security group in the VPC
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.vpc_id == vpc_result.vpc.id'
+          - 'result.group_id.startswith("sg-")'
+
+    - name: test state=absent (expected changed=true)
+      ec2_group:
+        name='{{ec2_group_name}}'
+        state=absent
+      environment:
+        EC2_REGION: '{{ec2_region}}'
+        EC2_ACCESS_KEY: '{{ec2_access_key}}'
+        EC2_SECRET_KEY: '{{ec2_secret_key}}'
+        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+      register: result
+
+    - name: assert state=absent (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'not result.group_id'
+
   always:
 
     # ============================================================
@@ -357,8 +409,12 @@
         EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
       register: result
 
-    - name: assert state=absent (expected changed=false)
-      assert:
-        that:
-           - 'not result.changed'
-           - 'not result.group_id'
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.232.232.128/26"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
