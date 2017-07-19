@@ -66,12 +66,13 @@ def add(num1, num2):
 
 def main():
     module = AnsibleModule(
-        argument_spec=dict()
+        argument_spec=dict(
+            foo=dict(required=False, default='bar')
+        )
     )
-    res = {'foo': 'bar'}
     # q(res)
     # epdb.set_trace()
-    module.exit_json(changed=True, msg=res)
+    module.exit_json(changed=True, foo=module.params['foo'])
 
 
 if __name__ == '__main__':
