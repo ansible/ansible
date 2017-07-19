@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: helloworld
+module: filament
 version_added: 2.4
 short_description: print hello world
 description:
@@ -44,8 +44,7 @@ options:
       - If this parameter is set to C(crash), the module will cause an exception.
     default: pong
 author:
-    - Ansible Core Team
-    - Michael DeHaan
+    - Mike Harris
 '''
 
 EXAMPLES = '''
@@ -65,7 +64,7 @@ ping:
     description: value provided with the data parameter
     returned: success
     type: string
-    sample: pong
+    sample: hello world
 '''
 
 from ansible.module_utils.basic import AnsibleModule
