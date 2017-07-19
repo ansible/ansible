@@ -47,6 +47,13 @@ options:
         choices: [ True, False ]
         description:
             - Should the key be regenerated even it it already exists
+    format:
+        required: false
+        default: PEM
+        choices: [ PEM, OpenSSH ]
+        description:
+            - The format of the public key.
+        version_added: "2.4"
     path:
         required: true
         description:
@@ -58,10 +65,16 @@ options:
 '''
 
 EXAMPLES = '''
-# Generate an OpenSSL public key.
+# Generate an OpenSSL public key in PEM format.
 - openssl_publickey:
     path: /etc/ssl/public/ansible.com.pem
     privatekey_path: /etc/ssl/private/ansible.com.pem
+
+# Generate an OpenSSL public key in OpenSSH v2 format.
+- openssl_publickey:
+    path: /etc/ssl/public/ansible.com.pem
+    privatekey_path: /etc/ssl/private/ansible.com.pem
+    format: OpenSSH
 
 # Force regenerate an OpenSSL public key if it already exists
 - openssl_publickey:
@@ -82,6 +95,11 @@ privatekey:
     returned: changed or success
     type: string
     sample: /etc/ssl/private/ansible.com.pem
+format:
+    description: The format of the public key (PEM, OpenSSH, ...)
+    returned: changed or success
+    type: string
+    sample: PEM
 filename:
     description: Path to the generated TLS/SSL public key file
     returned: changed or success
@@ -108,6 +126,8 @@ from ansible.module_utils.pycompat24 import get_exception
 
 try:
     from OpenSSL import crypto
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import serialization as crypto_serialization
 except ImportError:
     pyopenssl_found = False
 else:
@@ -126,6 +146,7 @@ class PublicKey(object):
     def __init__(self, module):
         self.state = module.params['state']
         self.force = module.params['force']
+        self.format = module.params['format']
         self.name = os.path.basename(module.params['path'])
         self.path = module.params['path']
         self.privatekey_path = module.params['privatekey_path']
@@ -134,15 +155,25 @@ class PublicKey(object):
         self.fingerprint = {}
         self.check_mode = module.check_mode
 
-
     def generate(self, module):
         """Generate the public key."""
 
         if not os.path.exists(self.path) or self.force:
             try:
                 privatekey_content = open(self.privatekey_path, 'r').read()
-                self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
-                publickey_content = crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
+
+                if self.format == 'OpenSSH':
+                    key = crypto_serialization.load_pem_private_key(privatekey_content,
+                                                                    password=None,
+                                                                    backend=default_backend())
+                    publickey_content = key.public_key().public_bytes(
+                        crypto_serialization.Encoding.OpenSSH,
+                        crypto_serialization.PublicFormat.OpenSSH
+                    )
+                else:
+                    self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
+                    publickey_content = crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
+
                 publickey_file = open(self.path, 'w')
                 publickey_file.write(publickey_content)
                 publickey_file.close()
@@ -180,6 +211,7 @@ class PublicKey(object):
         result = {
             'privatekey': self.privatekey_path,
             'filename': self.path,
+            'format': self.format,
             'changed': self.changed,
             'fingerprint': self.fingerprint,
         }
@@ -195,6 +227,7 @@ def main():
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
             privatekey_path=dict(type='path'),
+            format=dict(type='str', choices=['PEM', 'OpenSSH'], default='PEM'),
         ),
         supports_check_mode = True,
         add_file_common_args = True,
