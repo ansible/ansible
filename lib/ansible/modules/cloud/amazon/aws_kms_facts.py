@@ -33,6 +33,9 @@ options:
         The filters aren't natively supported by boto3, but are supported to provide similar
         functionality to other modules. Standard tag filters (C(tag-key), C(tag-value) and
         C(tag:tagName)) are available, as are C(key-id) and C(alias)
+  pending_deletion:
+    description: Whether to get full details (tags, grants etc.) of keys pending deletion
+    default: False
 extends_documentation_fragment:
     - aws
     - ec2
@@ -295,20 +298,23 @@ def get_key_details(connection, module, key_id, tokens=[]):
     result['KeyArn'] = result.pop('Arn')
 
     try:
-        result['grants'] = get_kms_grants_with_backoff(connection, key_id, tokens=tokens)['Grants']
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to obtain key grants",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
-    tags = get_kms_tags(connection, module, key_id)
-
-    try:
         aliases = get_kms_aliases_lookup(connection)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to obtain aliases",
                          exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
     result['aliases'] = aliases.get(result['KeyId'], [])
+
+    if not module.params.get('pending_deletion'):
+        return camel_dict_to_snake_dict(result)
+
+    try:
+        result['grants'] = get_kms_grants_with_backoff(connection, key_id, tokens=tokens)['Grants']
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Failed to obtain key grants",
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+    tags = get_kms_tags(connection, module, key_id)
 
     result = camel_dict_to_snake_dict(result)
     result['tags'] = boto3_tag_list_to_ansible_dict(tags, 'TagKey', 'TagValue')
@@ -330,7 +336,8 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters=dict(type='dict')
+            filters=dict(type='dict'),
+            pending_deletion=dict(type='bool', default=False)
         )
     )
 
