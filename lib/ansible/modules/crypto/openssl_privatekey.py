@@ -62,13 +62,29 @@ options:
         required: true
         description:
             - Name of the file in which the generated TLS/SSL private key will be written. It will have 0600 mode.
+    passphrase:
+        required: false
+        description:
+            - The passphrase for the private key.
+        version_added: "2.4"
+    cipher:
+        required: false
+        description:
+            - The cipher to encrypt the private key. (cipher can be found by running `openssl list-cipher-algorithms`)
+        version_added: "2.4"
 '''
 
 EXAMPLES = '''
 # Generate an OpenSSL private key with the default values (4096 bits, RSA)
-# and no public key
 - openssl_privatekey:
     path: /etc/ssl/private/ansible.com.pem
+
+# Generate an OpenSSL private key with the default values (4096 bits, RSA)
+# and a passphrase
+- openssl_privatekey:
+    path: /etc/ssl/private/ansible.com.pem
+    passphrase: ansible
+    cipher: aes256
 
 # Generate an OpenSSL private key with a different size (2048 bits)
 - openssl_privatekey:
@@ -145,12 +161,13 @@ class PrivateKey(object):
         self.type = module.params['type']
         self.force = module.params['force']
         self.path = module.params['path']
+        self.passphrase = module.params['passphrase']
+        self.cipher = module.params['cipher']
         self.mode = module.params['mode']
         self.changed = True
         self.privatekey = None
         self.fingerprint = {}
         self.check_mode = module.check_mode
-
 
     def generate(self, module):
         """Generate a keypair."""
@@ -173,7 +190,11 @@ class PrivateKey(object):
                                           os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
                                           self.mode)
 
-                os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey))
+                extras = {}
+                if self.cipher and self.passphrase:
+                    extras = {'cipher': self.cipher, 'passphrase': self.passphrase}
+
+                os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey, **extras))
                 os.close(privatekey_file)
             except IOError as exc:
                 self.remove()
@@ -181,11 +202,10 @@ class PrivateKey(object):
         else:
             self.changed = False
 
-        self.fingerprint = get_fingerprint(self.path)
+        self.fingerprint = get_fingerprint(self.path, self.passphrase)
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
-
 
     def remove(self):
         """Remove the private key from the filesystem."""
@@ -197,7 +217,6 @@ class PrivateKey(object):
                 raise PrivateKeyError(exc)
             else:
                 self.changed = False
-
 
     def dump(self):
         """Serialize the object into a dictionary."""
@@ -222,9 +241,12 @@ def main():
             type=dict(default='RSA', choices=['RSA', 'DSA'], type='str'),
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
+            passphrase=dict(type='str', no_log=True),
+            cipher=dict(type='str'),
         ),
         supports_check_mode = True,
         add_file_common_args = True,
+        required_together=[['cipher', 'passphrase']],
     )
 
     if not pyopenssl_found:

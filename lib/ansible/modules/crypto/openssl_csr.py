@@ -50,6 +50,11 @@ options:
         required: true
         description:
             - Path to the privatekey to use when signing the certificate signing request
+    privatekey_passphrase:
+        required: false
+        description:
+            - The passphrase for the privatekey.
+        version_added: "2.4"
     version:
         required: false
         default: 3
@@ -112,6 +117,14 @@ EXAMPLES = '''
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
+    commonName: www.ansible.com
+
+# Generate an OpenSSL Certificate Signing Request with a
+# passphrase protected private key
+- openssl_csr:
+    path: /etc/ssl/csr/www.ansible.com.csr
+    privatekey_path: /etc/ssl/private/ansible.com.pem
+    privatekey_passphrase: ansible
     commonName: www.ansible.com
 
 # Generate an OpenSSL Certificate Signing Request with Subject information
@@ -183,6 +196,7 @@ class CertificateSigningRequest(object):
         self.subjectAltName = module.params['subjectAltName']
         self.path = module.params['path']
         self.privatekey_path = module.params['privatekey_path']
+        self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.version = module.params['version']
         self.changed = True
         self.request = None
@@ -218,8 +232,9 @@ class CertificateSigningRequest(object):
                 req.add_extensions([crypto.X509Extension(b"subjectAltName", False, self.subjectAltName.encode('ascii'))])
 
             privatekey_content = open(self.privatekey_path).read()
-            self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
-
+            self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                                     privatekey_content,
+                                                     self.privatekey_passphrase)
             req.set_pubkey(self.privatekey)
             req.sign(self.privatekey, self.digest)
             self.request = req
@@ -267,6 +282,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             digest=dict(default='sha256', type='str'),
             privatekey_path=dict(require=True, type='path'),
+            privatekey_passphrase=dict(type='str', no_log=True),
             version=dict(default='3', type='int'),
             force=dict(default=False, type='bool'),
             subjectAltName=dict(aliases=['subjectAltName'], type='str'),
