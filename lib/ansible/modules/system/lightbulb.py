@@ -48,19 +48,21 @@ msg:
     type: string
     sample: "hello world"
 '''
+from ansible.module_utils.basic import AnsibleModule
+''' debugger and logging modules not on repo
 import epdb
 import q
-
+'''
 
 def main():
     module = AnsibleModule(
         argument_spec=dict()
     )
     res = {'foo': 'bar'}
-    q(res)
+    #q(res)
     #epdb.set_trace()
     module.exit_json(changed=True, msg=res)
 
-from ansible.module_utils.basic import AnsibleModule
+
 if __name__ == '__main__':
     main()
