@@ -56,6 +56,10 @@ options:
     cluster:
         description:
             - "Name of the cluster, where Virtual Machine should be created. Required if creating VM."
+    allow_partial_import:
+        description:
+            - "Boolean indication whether to allow partial registration of Virtual Machine when C(state) is registered."
+        version_added: "2.4"
     template:
         description:
             - "Name of the template, which should be used to create Virtual Machine. Required if creating VM."
@@ -369,6 +373,14 @@ ovirt_vms:
 ovirt_vms:
     state: registered
     storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+
+# Register VM, allowing partial import
+ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    allow_partial_import: "True"
     cluster: mycluster
     id: 1111-1111-1111-1111
 
@@ -1080,6 +1092,7 @@ def main():
         name=dict(default=None),
         id=dict(default=None),
         cluster=dict(default=None),
+        allow_partial_import=dict(default=None, type='bool'),
         template=dict(default=None),
         template_version=dict(default=None, type='int'),
         use_latest_template_version=dict(default=None, type='bool'),
@@ -1287,6 +1300,7 @@ def main():
                 changed = True
                 vm_service = vms_service.vm_service(vm.id)
                 vm_service.register(
+                    allow_partial_import=module.params['allow_partial_import'],
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
                     ) if module.params['cluster'] else None
