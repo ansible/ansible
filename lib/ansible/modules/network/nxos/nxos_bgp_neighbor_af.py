@@ -313,18 +313,18 @@ PARAM_TO_COMMAND_KEYMAP = {
     'as_override': 'as-override',
     'default_originate': 'default-originate',
     'default_originate_route_map': 'default-originate route-map',
-    'filter_list_in': 'filter-list',
-    'filter_list_out': 'filter-list',
+    'filter_list_in': 'filter-list in',
+    'filter_list_out': 'filter-list out',
     'max_prefix_limit': 'maximum-prefix',
     'max_prefix_interval': 'maximum-prefix interval',
     'max_prefix_threshold': 'maximum-prefix threshold',
     'max_prefix_warning': 'maximum-prefix warning',
     'next_hop_self': 'next-hop-self',
     'next_hop_third_party': 'next-hop-third-party',
-    'prefix_list_in': 'prefix-list',
-    'prefix_list_out': 'prefix-list',
-    'route_map_in': 'route-map',
-    'route_map_out': 'route-map',
+    'prefix_list_in': 'prefix-list in',
+    'prefix_list_out': 'prefix-list out',
+    'route_map_in': 'route-map in',
+    'route_map_out': 'route-map out',
     'route_reflector_client': 'route-reflector-client',
     'safi': 'address-family',
     'send_community': 'send-community',
@@ -369,11 +369,9 @@ def get_value(arg, config, module):
             value = True
 
     elif command.split()[0] in ['filter-list', 'prefix-list', 'route-map']:
-        direction = arg.rsplit('_', 1)[1]
-        if has_command_val:
-            params = has_command_val.group('value').split()
-            if params[-1] == direction:
-                value = params[0]
+        has_cmd_direction_val = re.search(r'{0}\s(?P<value>.*)\s{1}$'.format(*command.split()), config, re.M)
+        if has_cmd_direction_val:
+            value = has_cmd_direction_val.group('value')
 
     elif arg == 'send_community':
         if has_command:
@@ -544,12 +542,6 @@ def fix_proposed(module, proposed):
     elif allowas_in and allowas_in_max:
         proposed.pop('allowas_in')
 
-    for key, value in proposed.items():
-        if key in ['filter_list_in', 'prefix_list_in', 'route_map_in']:
-            proposed[key] = [value, 'in']
-        elif key in ['filter_list_out', 'prefix_list_out', 'route_map_out']:
-            proposed[key] = [value, 'out']
-
     return proposed
 
 
@@ -574,7 +566,7 @@ def state_present(module, existing, proposed, candidate):
             commands.append(key)
         elif value is False:
             commands.append('no {0}'.format(key))
-        elif value == 'default' or value == 'inherit':
+        elif value in ['inherit', 'default']:
             command = get_default_command(key, value, existing_commands)
 
             if isinstance(command, str):
@@ -595,8 +587,8 @@ def state_present(module, existing, proposed, candidate):
         elif key.startswith('advertise-map'):
             direction = key.split()[1]
             commands.append('advertise-map {1} {0} {2}'.format(direction, *value))
-        elif key in ['filter-list', 'prefix-list', 'route-map']:
-            commands.append('{0} {1} {2}'.format(key, *value))
+        elif key.split()[0] in ['filter-list', 'prefix-list', 'route-map']:
+            commands.append('{1} {0} {2}'.format(value, *key.split()))
 
         elif key == 'soft-reconfiguration inbound':
             command = ''
