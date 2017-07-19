@@ -89,7 +89,6 @@ class TestGalaxy(unittest.TestCase):
         if os.path.isdir(cls.role_path):
             shutil.rmtree(cls.role_path)
 
-
     def setUp(self):
         self.default_args = []
 
