@@ -38,6 +38,7 @@ The top level of the directory would contain files and directories like so::
        hostname2              # ""
 
     library/                  # if any custom modules, put them here (optional)
+    module_utils/             # if any custom module_utils to support modules, put them here (optional)
     filter_plugins/           # if any custom filter plugins, put them here (optional)
 
     site.yml                  # master playbook
@@ -62,6 +63,7 @@ The top level of the directory would contain files and directories like so::
             meta/             #
                 main.yml      #  <-- role dependencies
             library/          # roles can also include custom modules
+            module_utils/     # roles can also include custom module_utils
             lookup_plugins/   # or other types of plugins, like lookup in this case
 
         webtier/              # same kind of structure as "common" was above, done for the webtier role
@@ -97,6 +99,7 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
              stagehost2       # ""
 
     library/
+    module_utils/
     filter_plugins/
 
     site.yml
@@ -422,7 +425,7 @@ This will pull in variables based on the OS name.
 Bundling Ansible Modules With Playbooks
 +++++++++++++++++++++++++++++++++++++++
 
-If a playbook has a "./library" directory relative to its YAML file, this directory can be used to add ansible modules that will
+If a playbook has a :file:`./library` directory relative to its YAML file, this directory can be used to add ansible modules that will
 automatically be in the ansible module path.  This is a great way to keep modules that go with a playbook together.  This is shown
 in the directory structure example at the start of this section.
 
