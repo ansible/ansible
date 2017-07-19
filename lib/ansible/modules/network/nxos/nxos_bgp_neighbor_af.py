@@ -347,16 +347,21 @@ def get_value(arg, config, module):
         'max_prefix_interval',
         'max_prefix_threshold',
         'max_prefix_warning',
-        'next_hop_third_party',
         'soft_reconfiguration_in'
     ]
     command = PARAM_TO_COMMAND_KEYMAP[arg]
-    has_command = re.search(r'\s+{0}\s*'.format(command), config, re.M)
+    has_command = re.search(r'^\s+{0}\s*$'.format(command), config, re.M)
     has_command_val = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
     value = ''
 
     if arg in custom:
         value = get_custom_value(arg, config, module)
+
+    elif arg == 'next_hop_third_party':
+        has_no_command = re.search(r'^\s+no\s+{0}\s*$'.format(command), config, re.M)
+        value = False
+        if not has_no_command:
+            value = True
 
     elif arg in BOOL_PARAMS:
         value = False
@@ -445,11 +450,6 @@ def get_custom_value(arg, config, module):
                     value = 'always'
                 else:
                     value = 'enable'
-    elif arg == 'next_hop_third_party':
-        no_command_re = re.compile(r'\s+no\s+{0}\s*'.format(command), re.M)
-        value = False
-        if not no_command_re.search(config) and command_re.search(config):
-            value = True
 
     return value
 
