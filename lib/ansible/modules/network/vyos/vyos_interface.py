@@ -234,6 +234,7 @@ def map_params_to_obj(module):
                 if item not in d:
                     d[item] = None
 
+            d['description'] = DEFAULT_DESCRIPTION
             if not d.get('state'):
                 d['state'] = module.params['state']
 
