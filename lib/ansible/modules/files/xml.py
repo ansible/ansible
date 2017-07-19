@@ -1,17 +1,25 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# xml - Manage bits and pieces of XML files
-#
+
 # Copyright 2014, Red Hat, Inc.
 # Tim Bielawa <tbielawa@redhat.com>
 # Magnus Hedemark <mhedemar@redhat.com>
 #
-# This software may be freely redistributed under the terms of the GNU
-# general public license version 2.
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
