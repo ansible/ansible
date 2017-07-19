@@ -258,16 +258,16 @@ def main():
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            src = dict(required=False, type='path'),
-            original_basename = dict(required=False),  # used to handle 'dest is a directory' via template, a slight hack
-            content = dict(required=False, no_log=True),
-            dest = dict(required=True, type='path'),
-            backup = dict(default=False, type='bool'),
-            force = dict(default=True, aliases=['thirsty'], type='bool'),
-            validate = dict(required=False, type='str'),
-            directory_mode = dict(required=False, type='raw'),
-            remote_src = dict(required=False, type='bool'),
+        argument_spec=dict(
+            src=dict(required=False, type='path'),
+            original_basename=dict(required=False),  # used to handle 'dest is a directory' via template, a slight hack
+            content=dict(required=False, no_log=True),
+            dest=dict(required=True, type='path'),
+            backup=dict(default=False, type='bool'),
+            force=dict(default=True, aliases=['thirsty'], type='bool'),
+            validate=dict(required=False, type='str'),
+            directory_mode=dict(required=False, type='raw'),
+            remote_src=dict(required=False, type='bool'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -316,7 +316,7 @@ def main():
             if directory_mode is not None:
                 directory_args['mode'] = directory_mode
             else:
-                directory_args['mode']=None
+                directory_args['mode'] = None
             adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
 
     if os.path.isdir(b_dest):
