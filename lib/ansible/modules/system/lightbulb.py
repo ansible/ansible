@@ -45,6 +45,7 @@ msg:
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
         global module
         module = AnsibleModule(
