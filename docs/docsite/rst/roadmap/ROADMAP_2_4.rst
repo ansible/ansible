@@ -49,7 +49,7 @@ Inventory
 
 Facts
 -----
-- Configurable list of ‘fact modules’ for ``gather_facts``
+- Configurable list of ‘fact modules’ for ``gather_facts`` **(done)**
 - Fact gathering policy finer grained **(done)**
 - Make ``setup.py``/``facts`` more pluggable **(done)**
 - Improve testing of ``setup.py``/``facts.py`` **(done)**
