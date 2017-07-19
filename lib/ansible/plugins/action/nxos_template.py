@@ -22,9 +22,9 @@ __metaclass__ = type
 import os
 import time
 import glob
-import urlparse
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.plugins.action.nxos import ActionModule as _ActionModule
 
 
@@ -35,7 +35,7 @@ class ActionModule(_ActionModule):
         try:
             self._handle_template()
         except (ValueError, AttributeError) as exc:
-            return dict(failed=True, msg=exc.message)
+            return dict(failed=True, msg=str(exc))
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
@@ -72,7 +72,7 @@ class ActionModule(_ActionModule):
 
         working_path = self._get_working_path()
 
-        if os.path.isabs(src) or urlparse.urlsplit(src).scheme:
+        if os.path.isabs(src) or urlsplit(src).scheme:
             source = src
         else:
             source = self._loader.path_dwim_relative(working_path, 'templates', src)

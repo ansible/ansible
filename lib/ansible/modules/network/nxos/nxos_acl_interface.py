@@ -88,7 +88,10 @@ from ansible.module_utils.basic import AnsibleModule
 def check_for_acl_int_present(module, name, intf, direction):
     # Need to Captitalize the interface name as the nxos
     # output has capitalization
-    command = ['show running-config aclmgr | section {0}'.format(intf.title())]
+    command = [{
+        'command': 'show running-config aclmgr | section {0}'.format(intf.title()),
+        'output': 'text',
+    }]
     body = run_commands(module, command)
 
     if direction == 'ingress':
