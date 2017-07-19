@@ -30,7 +30,8 @@ short_description: Generate OpenSSL private keys.
 description:
     - "This module allows one to (re)generate OpenSSL private keys. It uses
        the pyOpenSSL python library to interact with openssl. One can generate
-       either RSA or DSA private keys. Keys are generated in PEM format."
+       either RSA or DSA private keys. Keys are generated in PEM format.
+       This module uses file common arguments to specify generated file permissions."
 requirements:
     - "python-pyOpenSSL"
 options:
