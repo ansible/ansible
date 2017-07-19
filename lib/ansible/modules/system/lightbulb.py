@@ -66,8 +66,6 @@ def main():
 
 
 def add_things(add1, add2):
-    if isinstance(add1) != isinstance(add2):
-        return 'one of these things is not like the other'
     return add1 + add2
 
 if __name__ == '__main__':
