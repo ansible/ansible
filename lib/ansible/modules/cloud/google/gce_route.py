@@ -362,9 +362,16 @@ def main():
                     node = next_hop_node
 
                 # network is a global, the object of the params['network'], set in check_network_exists()
-                gce_route = gce.ex_create_route(name=params['name'], dest_range=params['destination'],
-                    priority=params['priority'], network=network, tags=params['instance_tags'],
-                    next_hop=node, description=params['description'])
+                try:
+                    gce_route = gce.ex_create_route(name=params['name'], dest_range=params['destination'],
+                        priority=params['priority'], network=network, tags=params['instance_tags'],
+                        next_hop=node, description=params['description'])
+
+                except Exception as e:
+                    module.fail_json(
+                        msg     = str(e),
+                        changed = False
+                    )
         # Existing rule, check if anything has changed
         else:
             # check: description
@@ -456,10 +463,16 @@ def main():
 
             if changed and not module.check_mode:
                 # GCE does not allow modifying routes. We delete and create a new one
-                gce.ex_destroy_route(gce_route)
-                gce_route = gce.ex_create_route(name=gce_route.name, dest_range=gce_route.dest_range,
-                    priority=gce_route.priority, network=gce_route.network,tags=gce_route.tags,
-                    next_hop=gce_route.next_hop, description=gce_route.description)
+                try:
+                    gce.ex_destroy_route(gce_route)
+                    gce_route = gce.ex_create_route(name=gce_route.name, dest_range=gce_route.dest_range,
+                        priority=gce_route.priority, network=gce_route.network,tags=gce_route.tags,
+                        next_hop=gce_route.next_hop, description=gce_route.description)
+                except Exception as e:
+                    module.fail_json(
+                        msg     = str(e),
+                        changed = False
+                    )
 
     elif params['state'] == 'absent':
         try:
