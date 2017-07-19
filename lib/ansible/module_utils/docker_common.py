@@ -90,9 +90,6 @@ if not HAS_DOCKER_PY:
         def __init__(self, **kwargs):
             pass
 
-    class APIError:
-        def __init__(self, **kwargs):
-            pass
 
 class DockerBaseClass(object):
 
