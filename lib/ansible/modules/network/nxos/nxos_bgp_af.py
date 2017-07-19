@@ -279,7 +279,6 @@ BOOL_PARAMS = [
     'additional_paths_receive',
     'additional_paths_send',
     'advertise_l2vpn_evpn',
-    'client_to_client',
     'dampening_state',
     'default_information_originate',
     'suppress_inactive',
@@ -420,8 +419,15 @@ def get_value(arg, config, module):
         if has_tablemap:
             value = has_tablemap.group('value')
 
+    elif arg == 'client_to_client':
+        no_command_re = re.compile(r'^\s+no\s{0}\s*$'.format(command), re.M)
+        value = True
+
+        if no_command_re.search(config):
+            value = False
+
     elif arg in BOOL_PARAMS:
-        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
+        command_re = re.compile(r'^\s+{0}\s*$'.format(command), re.M)
         value = False
 
         if command_re.search(config):
