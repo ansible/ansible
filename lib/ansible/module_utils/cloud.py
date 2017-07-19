@@ -59,7 +59,7 @@ class CloudRetry(object):
         pass
 
     @staticmethod
-    def found(response_code):
+    def found(response_code, added_exceptions):
         """ Return True if the Response Code to retry on was found.
         Args:
             response_code (str): This is the Response Code that is being matched against.
@@ -67,7 +67,7 @@ class CloudRetry(object):
         pass
 
     @classmethod
-    def backoff(cls, tries=10, delay=3, backoff=1.1):
+    def backoff(cls, tries=10, delay=3, backoff=1.1, added_exceptions=[]):
         """ Retry calling the Cloud decorated function using an exponential backoff.
         Kwargs:
             tries (int): Number of times to try (not retry) before giving up
@@ -76,6 +76,7 @@ class CloudRetry(object):
                 default=3
             backoff (int): backoff multiplier e.g. value of 2 will double the delay each retry
                 default=2
+            added_exceptions: A list of Exceptions codes (strings) to add to retry_on
 
         """
         def deco(f):
@@ -89,7 +90,7 @@ class CloudRetry(object):
                         e = get_exception()
                         if isinstance(e, cls.base_class):
                             response_code = cls.status_code_from_exception(e)
-                            if cls.found(response_code):
+                            if cls.found(response_code, added_exceptions):
                                 msg = "{0}: Retrying in {1} seconds...".format(str(e), max_delay)
                                 syslog.syslog(syslog.LOG_INFO, msg)
                                 time.sleep(max_delay)
