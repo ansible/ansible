@@ -29,6 +29,7 @@ description:
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
+version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 options:
