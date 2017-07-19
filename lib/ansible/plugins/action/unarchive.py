@@ -66,6 +66,7 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
+            creates = self._remote_expand_user(creates)
             if self._remote_file_exists(creates):
                 result['skipped'] = True
                 result['msg'] = "skipped, since %s exists" % creates
