@@ -21,13 +21,12 @@
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: filament
-version_added: historical
 short_description: Try to connect to host, verify a usable python and return C(hello world) on success
 description:
    - A trivial test module, this module always returns C(pong) on successful
