@@ -44,9 +44,8 @@ options:
 
   driver_options:
     description:
-      - >
-        Dictionary of volume settings. Consult docker docs for valid options and values:
-        U(https://docs.docker.com/engine/reference/commandline/volume_create/#driver-specific-options)
+      - "Dictionary of volume settings. Consult docker docs for valid options and values:
+        U(https://docs.docker.com/engine/reference/commandline/volume_create/#driver-specific-options)"
 
   labels:
     description:
@@ -55,8 +54,8 @@ options:
   force:
     description:
       - With state C(present) causes the volume to be deleted and recreated if the volume already
-        exist and the driver, driver options or labels differ.
-        This will cause any data in the existing volume to be lost.
+        exist and the driver, driver options or labels differ. This will cause any data in the existing
+        volume to be lost.
     type: bool
     default: 'no'
 
@@ -108,7 +107,13 @@ facts:
 '''
 
 from ansible.module_utils.six import iteritems, text_type
-from ansible.module_utils.docker_common import DockerBaseClass, AnsibleDockerClient, APIError
+from ansible.module_utils.docker_common import DockerBaseClass, AnsibleDockerClient
+
+try:
+    from docker.errors import APIError
+except:
+    # missing docker-py handled in ansible.module_utils.docker
+    pass
 
 
 class TaskParameters(DockerBaseClass):
