@@ -46,8 +46,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent']),
-            foo=dict(default='bar'),
+            data=dict(type='str', default='hello world'),
         ),
         supports_check_mode=True
     )
