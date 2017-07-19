@@ -49,6 +49,7 @@ msg:
     sample: "hello world"
 '''
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.lightbulb_utils import foobar
 ''' debugger and logging modules not on repo
 import epdb
 import q
