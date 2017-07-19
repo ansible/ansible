@@ -40,15 +40,15 @@ options:
   name:
     description:
       - If value of C(dest) is I(logfile) it indicates file-name.
-  feature:
+  facility:
     description:
-      - Feature name for logging.
+      - Facility name for logging.
   dest_level:
     description:
       - Set logging severity levels. C(alias level).
-  feature_level:
+  facility_level:
     description:
-      - Set logging serverity levels for feature based log messages.
+      - Set logging serverity levels for facility based log messages.
   collection:
     description: List of logging definitions.
   purge:
@@ -79,15 +79,15 @@ EXAMPLES = """
     name: testfile
     dest_level: 3
     state: present
-- name: configure feature level logging
+- name: configure facility level logging
   nxos_logging:
-    feature: daemon
-    feature_level: 0
+    facility: daemon
+    facility_level: 0
     state: present
-- name: remove feature level logging
+- name: remove facility level logging
   nxos_logging:
-    feature: daemon
-    feature_level: 0
+    facility: daemon
+    facility_level: 0
     state: absent
 """
 
@@ -116,15 +116,15 @@ def map_obj_to_commands(updates, module):
     for w in want:
         dest = w['dest']
         name = w['name']
-        feature = w['feature']
+        facility = w['facility']
         dest_level = w['dest_level']
-        feature_level = w['feature_level']
+        facility_level = w['facility_level']
         state = w['state']
         del w['state']
 
         if state == 'absent' and w in have:
-            if w['feature'] is not None:
-                commands.append('no logging level {}'.format(w['feature']))
+            if w['facility'] is not None:
+                commands.append('no logging level {}'.format(w['facility']))
 
             if w['name'] is not None:
                 commands.append('no logging logfile')
@@ -133,7 +133,7 @@ def map_obj_to_commands(updates, module):
                 commands.append('no logging {}'.format(w['dest']))
 
         if state == 'present' and w not in have:
-            if w['feature'] is None:
+            if w['facility'] is None:
                 if w['dest'] is not None:
                     if w['dest'] != 'logfile':
                         commands.append('logging {} {}'.format(w['dest'], w['dest_level']))
@@ -142,8 +142,8 @@ def map_obj_to_commands(updates, module):
                     else:
                         pass
 
-            if w['feature'] is not None:
-                    commands.append('logging level {} {}'.format(w['feature'], w['feature_level']))
+            if w['facility'] is not None:
+                    commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
 
     return commands
 
@@ -187,15 +187,15 @@ def parse_dest_level(line, dest, name):
     return dest_level
 
 
-def parse_feature_level(line, feature):
-    feature_level = None
+def parse_facility_level(line, facility):
+    facility_level = None
 
-    if feature is not None:
-        match = re.search(r'logging level {} (\S+)'.format(feature), line, re.M)
+    if facility is not None:
+        match = re.search(r'logging level {} (\S+)'.format(facility), line, re.M)
         if match:
-            feature_level = match.group(1)
+            facility_level = match.group(1)
 
-    return feature_level
+    return facility_level
 
 
 def map_config_to_obj(module):
@@ -209,22 +209,22 @@ def map_config_to_obj(module):
 
         if match.group(1) in dest_group:
             dest = match.group(1)
-            feature = None
+            facility = None
 
         elif match.group(1) == 'level':
-            match_feature = re.search(r'logging level (\S+)', line, re.M)
-            feature = match_feature.group(1)
+            match_facility = re.search(r'logging level (\S+)', line, re.M)
+            facility = match_facility.group(1)
             dest = None
 
         else:
             dest = None
-            feature = None
+            facility = None
 
         obj.append({'dest': dest,
                     'name': parse_name(line, dest),
-                    'feature': feature,
+                    'facility': facility,
                     'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
-                    'feature_level': parse_feature_level(line, feature)})
+                    'facility_level': parse_facility_level(line, facility)})
 
     return obj
 
@@ -235,9 +235,9 @@ def map_params_to_obj(module):
     if 'aggregate' in module.params and module.params['aggregate']:
         args = {'dest': '',
                 'name': '',
-                'feature': '',
+                'facility': '',
                 'dest_level': '',
-                'feature_level': ''
+                'facility_level': ''
                 }
 
         for c in module.params['aggregate']:
@@ -250,8 +250,8 @@ def map_params_to_obj(module):
             if d['dest_level'] is not None:
                 d['dest_level'] = str(d['dest_level'])
 
-            if d['feature_level'] is not None:
-                d['feature_level'] = str(d['feature_level'])
+            if d['facility_level'] is not None:
+                d['facility_level'] = str(d['facility_level'])
 
             if 'state' not in d:
                 d['state'] = module.params['state']
@@ -260,20 +260,20 @@ def map_params_to_obj(module):
 
     else:
         dest_level = None
-        feature_level = None
+        facility_level = None
 
         if module.params['dest_level'] is not None:
             dest_level = str(module.params['dest_level'])
 
-        if module.params['feature_level'] is not None:
-            feature_level = str(module.params['feature_level'])
+        if module.params['facility_level'] is not None:
+            facility_level = str(module.params['facility_level'])
 
         obj.append({
             'dest': module.params['dest'],
             'name': module.params['name'],
-            'feature': module.params['feature'],
+            'facility': module.params['facility'],
             'dest_level': dest_level,
-            'feature_level': feature_level,
+            'facility_level': facility_level,
             'state': module.params['state']
         })
 
@@ -286,9 +286,9 @@ def main():
     argument_spec = dict(
         dest=dict(type='str', choices=['console', 'logfile', 'module', 'monitor']),
         name=dict(type='str'),
-        feature=dict(type='str'),
+        facility=dict(type='str'),
         dest_level=dict(type='int', aliases=['level']),
-        feature_level=dict(type='int'),
+        facility_level=dict(type='int'),
         state=dict(default='present', choices=['present', 'absent']),
         aggregate=dict(type='list'),
         purge=dict(default=False, type='bool')
@@ -300,7 +300,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
-                           required_together=[['feature', 'feature_level']],
+                           required_together=[['facility', 'facility_level']],
                            supports_check_mode=True)
 
     warnings = list()
