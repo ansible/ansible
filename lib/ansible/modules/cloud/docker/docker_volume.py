@@ -106,14 +106,14 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.six import iteritems, text_type
-from ansible.module_utils.docker_common import DockerBaseClass, AnsibleDockerClient
-
 try:
     from docker.errors import APIError
-except:
+except ImportError:
     # missing docker-py handled in ansible.module_utils.docker
     pass
+
+from ansible.module_utils.six import iteritems, text_type
+from ansible.module_utils.docker_common import DockerBaseClass, AnsibleDockerClient
 
 
 class TaskParameters(DockerBaseClass):
