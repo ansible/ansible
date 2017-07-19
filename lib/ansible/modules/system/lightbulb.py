@@ -70,11 +70,11 @@ def main():
     )
     foo = module.params['foo'] or 'hello world'
 
-    #import q
-    #q(foo)
+    # import q
+    # q(foo)
 
-    #import pdb
-    #pdb.set_trace()
+    # import pdb
+    # pdb.set_trace()
 
     result = dict(
         foo=foo,
