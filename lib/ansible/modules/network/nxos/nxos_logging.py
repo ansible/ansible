@@ -71,6 +71,7 @@ EXAMPLES = """
 - name: remove console logging configuration
   nxos_logging:
     dest: console
+    level: 2
     state: absent
 - name: configure file logging with level
   nxos_logging:
@@ -86,6 +87,7 @@ EXAMPLES = """
 - name: remove feature level logging
   nxos_logging:
     feature: daemon
+    feature_level: 0
     state: absent
 """
 

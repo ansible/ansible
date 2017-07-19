@@ -9,7 +9,7 @@
 
 - assert:
     that:
-      - 'result.chaned == true'
+      - 'result.changed == true'
       - '"logging console 0" in result.commands'
 
 - name: Set up console logging again (idempotent)
