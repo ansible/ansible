@@ -14,6 +14,7 @@ Ansible Changes By Release
   * hacking/env-setup script
   * Fix traceback when checking for passwords in logged strings when logging executed commands.
   * docker_login module
+* ios_config: Fix traceback when the efaults parameter is not set
 
 ## 2.3.2 "Ramble On" - TBD
 
