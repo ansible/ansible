@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  vars:
+    foo: bar
+  tasks:
+  - name: test lightbulb module
+    lightbulb:
+      data: "crash"
+    register: result
+    changed_when: false
