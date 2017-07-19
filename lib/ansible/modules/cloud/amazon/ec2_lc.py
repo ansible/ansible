@@ -363,15 +363,13 @@ def create_launch_config(connection, module):
             result['InstanceMonitoring'] = module.boolean(launch_config.get('InstanceMonitoring').get('Enabled'))
         except AttributeError:
             result['InstanceMonitoring'] = False
-    if launch_config.get('BlockDeviceMappings') is not None:
-        result['BlockDeviceMappings'] = []
-        for bdm in launch_config.get('BlockDeviceMappings'):
-            result['BlockDeviceMappings'].append(dict(device_name=bdm.get(
-                'DeviceName'), virtual_name=bdm.get('VirtualName')))
-            if bdm.get('Ebs') is not None:
-                result['BlockDeviceMappings'][-1]['ebs'] = dict(
-                    snapshot_id=bdm.get('Ebs').get('SnapshotId'),
-                    volume_size=bdm.get('Ebs').get('VolumeSize'))
+
+    result['BlockDeviceMappings'] = []
+
+    for bdm in launch_config.get('BlockDeviceMappings', []):
+        result['BlockDeviceMappings'].append(dict(device_name=bdm.get('DeviceName'), virtual_name=bdm.get('VirtualName')))
+        if bdm.get('Ebs') is not None:
+            result['BlockDeviceMappings'][-1]['ebs'] = dict(snapshot_id=bdm.get('Ebs').get('SnapshotId'), volume_size=bdm.get('Ebs').get('VolumeSize'))
 
     if user_data_path:
         result['UserData'] = "hidden"
