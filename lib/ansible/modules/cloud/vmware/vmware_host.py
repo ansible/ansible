@@ -33,36 +33,36 @@ author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)
 notes:
-    - Tested on vSphere 5.5
+- Tested on vSphere 5.5
 requirements:
-    - "python >= 2.6"
-    - PyVmomi
+- python >= 2.6
+- PyVmomi
 options:
-    datacenter_name:
-        description:
-            - Name of the datacenter to add the host.
-        required: yes
-    cluster_name:
-        description:
-            - Name of the cluster to add the host.
-        required: yes
-    esxi_hostname:
-        description:
-            - ESXi hostname to manage.
-        required: yes
-    esxi_username:
-        description:
-            - ESXi username.
-        required: yes
-    esxi_password:
-        description:
-            - ESXi password.
-        required: yes
-    state:
-        description:
-            - Add or remove the host.
-        choices: [absent, present]
-        default: present
+  datacenter_name:
+    description:
+    - Name of the datacenter to add the host.
+    required: yes
+  cluster_name:
+    description:
+    - Name of the cluster to add the host.
+    required: yes
+  esxi_hostname:
+    description:
+    - ESXi hostname to manage.
+    required: yes
+  esxi_username:
+    description:
+    - ESXi username.
+    required: yes
+  esxi_password:
+    description:
+    - ESXi password.
+    required: yes
+  state:
+    description:
+    - Add or remove the host.
+    choices: [absent, present]
+    default: present
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -73,7 +73,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     datacenter_name: datacenter_name
-    cluster_name: cluster-name
+    cluster_name: cluster_name
     esxi_hostname: '{{ esxi_hostname }}'
     esxi_username: '{{ esxi_username }}'
     esxi_password: '{{ esxi_password }}'
@@ -104,19 +104,20 @@ from ansible.module_utils.vmware import (
 class VMwareHost(object):
     def __init__(self, module):
         self.module = module
-        self.cluster_name = module.params['cluster_name']
         self.datacenter_name = module.params['datacenter_name']
+        self.cluster_name = module.params['cluster_name']
         self.esxi_hostname = module.params['esxi_hostname']
-        self.esxi_password = module.params['esxi_password']
         self.esxi_username = module.params['esxi_username']
+        self.esxi_password = module.params['esxi_password']
         self.state = module.params['state']
-        self.cluster = None
         self.dc = None
+        self.cluster = None
         self.host = None
         self.content = connect_to_api(module)
 
     def process_state(self):
         try:
+            # Currently state_update_dvs is not implemented.
             host_states = {
                 'absent': {
                     'present': self.state_remove_host,
@@ -140,6 +141,9 @@ class VMwareHost(object):
     def find_host_by_cluster_datacenter(self):
         self.dc = find_datacenter_by_name(self.content, self.datacenter_name)
         self.cluster = find_cluster_by_name(self.content, self.cluster_name, self.dc)
+
+        if self.cluster is None:
+            self.module.fail_json(msg="Unable to find cluster %(cluster_name)s" % self.module.params)
 
         for host in self.cluster.host:
             if host.name == self.esxi_hostname:
@@ -216,13 +220,14 @@ class VMwareHost(object):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(
+    argument_spec.update(
         datacenter_name=dict(type='str', required=True),
+        cluster_name=dict(type='str'),
         esxi_hostname=dict(type='str', required=True),
-        esxi_password=dict(type='str', required=True, no_log=True),
         esxi_username=dict(type='str', required=True),
+        esxi_password=dict(type='str', required=True, no_log=True),
         state=dict(type='str', default='present', choices=['absent', 'present'])
-    ))
+    )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
