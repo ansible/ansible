@@ -31,7 +31,7 @@ description:
     - "This module allows one to (re)generates OpenSSL certificate signing requests.
        It uses the pyOpenSSL python library to interact with openssl. This module support
        the subjectAltName extension. Note: At least one of commonName or subjectAltName must
-       be specified."
+       be specified. This module uses file common arguments to specify generated file permissions."
 requirements:
     - "python-pyOpenSSL"
 options:
