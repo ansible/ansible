@@ -29,7 +29,7 @@ import re
 import hashlib
 
 from ansible.module_utils.six.moves import zip
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.network_common import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
@@ -205,6 +205,7 @@ class NetworkConfig(object):
     def parse(self, lines, comment_tokens=None):
         toplevel = re.compile(r'\S')
         childline = re.compile(r'^\s*(.+)$')
+        entry_reg = re.compile(r'([{};])')
 
         ancestors = list()
         config = list()
@@ -212,8 +213,8 @@ class NetworkConfig(object):
         curlevel = 0
         prevlevel = 0
 
-        for linenum, line in enumerate(str(lines).split('\n')):
-            text = str(re.sub(r'([{};])', '', line)).strip()
+        for linenum, line in enumerate(to_native(lines, errors='surrogate_or_strict').split('\n')):
+            text = entry_reg.sub('', line).strip()
 
             cfg = ConfigLine(line)
 
