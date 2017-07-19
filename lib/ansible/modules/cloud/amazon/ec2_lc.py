@@ -194,6 +194,42 @@ EXAMPLES = '''
 
 '''
 
+RETURN = '''
+arn:
+    description: The aws resource name of the launch configuration.
+    returned: Only when launch config is created.
+    type: str
+changed:
+    description: Specifies whether the launch configuration was changed as a result of running this module.
+    returned: Always
+    type: bool
+created_time:
+    description: A string describing the date and time that the launch configuration was created.
+    returned: Only when launch config is created.
+    type: str
+image_id:
+    description: the id of the image used for the launch configuration.
+    returned: Always
+    type: str
+instance_type:
+    description: The type of instance to be launched for the asg.
+    returned: Always
+    type: str
+invocation:
+    description: A json object describing the arguments passed to this module.
+    returned: Always
+    type: str
+name:
+    description: The name of the launch configuration.
+    returned: Always
+    type: str
+result:
+    description: Yhe resultant object describing the launch config returned from boto3.
+    returned: Always
+    type: str
+
+'''
+
 import traceback
 from ansible.module_utils.ec2 import (get_aws_connection_info,
                                       ec2_argument_spec,
