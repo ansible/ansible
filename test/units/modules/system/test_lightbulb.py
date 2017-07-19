@@ -31,4 +31,3 @@ class LightbulbAddTestCase(unittest.TestCase):
     def test_nonetype(self):
         result = add(None, None)
         self.assertEqual(result, "NoneTypeNoneType")
-
