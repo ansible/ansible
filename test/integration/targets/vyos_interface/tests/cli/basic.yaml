@@ -49,7 +49,7 @@
   vyos_interface:
     name: eth1
     state: present
-    description: test-interface
+    description: test-interface-1
     speed: 100
     duplex: half
     mtu: 256
@@ -65,7 +65,7 @@
   vyos_interface:
     name: eth1
     state: present
-    description: test-interface-1
+    description: test-interface-2
     speed: 1000
     duplex: full
     mtu: 512
@@ -75,7 +75,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set interfaces ethernet eth1 description test-interface-1" in result.commands'
+      - '"set interfaces ethernet eth1 description test-interface-2" in result.commands'
       - '"set interfaces ethernet eth1 speed 1000" in result.commands'
       - '"set interfaces ethernet eth1 duplex full" in result.commands'
       - '"set interfaces ethernet eth1 mtu 512" in result.commands'
