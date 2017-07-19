@@ -80,7 +80,6 @@ def get_defaults_flag(module):
         return ['full']
 
 
-
 def get_config(module, flags=[]):
     cmd = 'show running-config '
     cmd += ' '.join(flags)
