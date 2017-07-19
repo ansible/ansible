@@ -121,10 +121,10 @@ def map_obj_to_commands(updates, module):
         del w['state']
 
         if state == 'absent' and w in have:
-            if w['feature'] != None:
+            if w['feature'] is not None:
                 commands.append('no logging level {}'.format(w['feature']))
 
-            if w['name'] != None:
+            if w['name'] is not None:
                 commands.append('no logging logfile')
 
             if w['dest'] in ('console', 'module', 'monitor'):
@@ -132,15 +132,15 @@ def map_obj_to_commands(updates, module):
 
         if state == 'present' and w not in have:
             if w['feature'] is None:
-                if w['dest'] != None:
-                    if w['dest'] != 'logfile':
+                if w['dest'] is not None:
+                    if w['dest'] is not 'logfile':
                         commands.append('logging {} {}'.format(w['dest'], w['dest_level']))
                     elif w['dest'] is 'logfile':
                         commands.append('logging logfile {} {}'.format(w['name'], w['dest_level']))
                     else:
                         pass
 
-            if w['feature'] != None :
+            if w['feature'] is not None:
                     commands.append('logging level {} {}'.format(w['feature'], w['feature_level']))
 
     return commands
@@ -149,7 +149,7 @@ def map_obj_to_commands(updates, module):
 def parse_name(line, dest):
     name = None
 
-    if dest != None:
+    if dest is not None:
         if dest is 'logfile':
             match = re.search(r'logging logfile (\S+)', line, re.M)
             if match:
@@ -163,7 +163,7 @@ def parse_name(line, dest):
 def parse_dest_level(line, dest):
     dest_level = None
 
-    if dest !=  None:
+    if dest is not None:
         match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
         if match:
             if int(match.group(1)) in range(0, 8):
@@ -175,7 +175,7 @@ def parse_dest_level(line, dest):
 def parse_feature_level(line, feature):
     feature_level = None
 
-    if feature != None:
+    if feature is not None:
         match = re.search(r'logging level {} (\S+)'.format(feature), line, re.M)
         if match:
             feature_level = match.group(1)
@@ -221,10 +221,10 @@ def map_params_to_obj(module):
         for c in module.params['aggregate']:
             d = c.copy()
 
-            if module.params['dest_level'] != None:
+            if module.params['dest_level'] is not None:
                 d['dest_level'] = str(module.params['dest_level'])
 
-            if module.params['feature_level'] != None:
+            if module.params['feature_level'] is not None:
                 d['feature_level'] = str(module.params['feature_level'])
 
             if 'state' not in d:
@@ -236,10 +236,10 @@ def map_params_to_obj(module):
         dest_level = None
         feature_level = None
 
-        if module.params['dest_level'] != None:
+        if module.params['dest_level'] is not None:
             dest_level = str(module.params['dest_level'])
 
-        if module.params['feature_level'] != None:
+        if module.params['feature_level'] is not None:
             feature_level = str(module.params['feature_level'])
 
         obj.append({
