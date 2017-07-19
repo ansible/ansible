@@ -352,6 +352,9 @@
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
       register: vpc_result
 
     - name: create security group in the VPC

@@ -639,7 +639,10 @@ def main():
         else:
             # no match found, create it
             if not module.check_mode:
-                group = client.create_security_group(GroupName=name, Description=description)
+                params = dict(GroupName=name, Description=description)
+                if vpc_id:
+                    params['VpcId'] = vpc_id
+                group = client.create_security_group(**params)
                 groupId = group.get('GroupId')
                 # When a group is created, an egress_rule ALLOW ALL
                 # to 0.0.0.0/0 is added automatically but it's not
