@@ -25,9 +25,12 @@ from ansible.modules.network.aci.aci_rest import aci_response
 
 from nose.plugins.skip import SkipTest
 
-from lxml import etree
-if sys.version_info >= (2, 7):
-    from xmljson import cobra
+try:
+    from lxml import etree
+    if sys.version_info >= (2, 7):
+        from xmljson import cobra
+except ImportError:
+    raise SkipTest("aci Ansible modules require the lxml and xmljson Python libraries")
 
 
 class AciRest(unittest.TestCase):
