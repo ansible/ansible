@@ -54,13 +54,18 @@ import epdb
 import q
 '''
 
+
+def add(num1, num2):
+    return num1 + num2
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict()
     )
     res = {'foo': 'bar'}
-    #q(res)
-    #epdb.set_trace()
+    # q(res)
+    # epdb.set_trace()
     module.exit_json(changed=True, msg=res)
 
 
