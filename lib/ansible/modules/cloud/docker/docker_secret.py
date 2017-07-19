@@ -145,8 +145,15 @@ secret_id:
 '''
 
 import hashlib
+
+try:
+    from docker.errors import APIError
+except ImportError:
+    # missing docker-py handled in ansible.module_utils.docker
+    pass
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, APIError
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
 from ansible.module_utils._text import to_native, to_bytes
 
 
