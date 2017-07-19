@@ -45,10 +45,14 @@ msg:
 
 from ansible.module_utils.basic import AnsibleModule
 
-
 def main():
-        module = AnsibleModule(argument_spec=dict())
-        module.exit_json(changed=False, msg="HELLO WORLD")
+        global module
+        module = AnsibleModule(
+            argument_spec=dict(
+                foo=dict(type='str', default='bar')
+            )
+        )
+        module.exit_json(changed=False, msg="HELLO WORLD", foo=module.params['foo'])
 
 if __name__ == '__main__':
         main()
