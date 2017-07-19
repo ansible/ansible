@@ -30,17 +30,24 @@ version_added: "2.4"
 short_description:  Lightbulb.
 description:
     - Lightbulb.
+options:
+  foo:
+    description:
+     - A foo string.
+    required: false
+    default: "hello world"
 '''
 
 
 EXAMPLES = '''
 - name: lightbulb
   lightbulb:
+      foo: hello world
 '''
 
 
 RETURN = '''
-lightbulb:
+foo:
     description: lightbulb
     returned: success
     type: string
@@ -51,9 +58,21 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    module = AnsibleModule(argument_spec=dict())
+    module = AnsibleModule(
+        argument_spec=dict(
+            foo=dict(required=False, type='str'),
+        ),
+    )
+    foo = module.params['foo'] or 'hello world'
+
+    #import q
+    #q(foo)
+
+    #import pdb
+    #pdb.set_trace()
+
     result = dict(
-        lightbulb="hello world",
+        foo=foo,
     )
 
     module.exit_json(**result)
