@@ -136,10 +136,13 @@ class TaskQueueManager:
         handler_list = []
         for handler_block in play.handlers:
             handler_list.extend(_process_block(handler_block))
-
         # then initialize it with the given handler list
+        self.update_handler_list(handler_list)
+
+    def update_handler_list(self, handler_list):
         for handler in handler_list:
             if handler._uuid not in self._notified_handlers:
+                display.debug("Adding handler %s to notified list" % handler.name)
                 self._notified_handlers[handler._uuid] = []
             if handler.listen:
                 listeners = handler.listen
@@ -148,6 +151,7 @@ class TaskQueueManager:
                 for listener in listeners:
                     if listener not in self._listening_handlers:
                         self._listening_handlers[listener] = []
+                    display.debug("Adding handler %s to listening list" % handler.name)
                     self._listening_handlers[listener].append(handler._uuid)
 
     def load_callbacks(self):

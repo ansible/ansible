@@ -82,7 +82,7 @@ class TaskExecutor:
         returned as a dict.
         '''
 
-        display.debug("in run()")
+        display.debug("in run() - task %s" % self._task._uuid)
 
         try:
             try:

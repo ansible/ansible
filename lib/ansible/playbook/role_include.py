@@ -89,9 +89,9 @@ class IncludeRole(Task):
             b._parent = self
 
         # updated available handlers in play
-        myplay.handlers = myplay.handlers + actual_role.get_handler_blocks(play=myplay)
-
-        return blocks
+        handlers = actual_role.get_handler_blocks(play=myplay)
+        myplay.handlers = myplay.handlers + handlers
+        return blocks, handlers
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
