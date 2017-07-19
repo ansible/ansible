@@ -988,6 +988,14 @@ files:
   lib/ansible/plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/inventory/openstack.py:
+    maintainers: $team_openstack
+    keywords:
+    - openstack
+    - inventory
+    labels:
+    - cloud
+    - openstack
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
