@@ -191,6 +191,65 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''
+group_name:
+  description: Security group name
+  sample: My Security Group
+  type: string
+  returned: on create/update
+group_id:
+  description: Security group id
+  sample: sg-abcd1234
+  type: string
+  returned: on create/update
+description:
+  description: Description of security group
+  sample: My Security Group
+  type: string
+  returned: on create/update
+tags:
+  description: Tags associated with the security group
+  sample:
+    Name: My Security Group
+    Purpose: protecting stuff
+  type: dict
+  returned: on create/update
+vpc_id:
+  description: ID of VPC to which the security group belongs
+  sample: vpc-abcd1234
+  type: string
+  returned: on create/update
+ip_permissions:
+  description: Inbound rules associated with the security group.
+  sample:
+    - from_port: 8182
+      ip_protocol: tcp
+      ip_ranges:
+        - cidr_ip: "1.1.1.1/32"
+      ipv6_ranges: []
+      prefix_list_ids: []
+      to_port: 8182
+      user_id_group_pairs: []
+  type: list
+  returned: on create/update
+ip_permissions_egress:
+  description: Outbound rules associated with the security group.
+  sample:
+    - ip_protocol: -1
+      ip_ranges:
+        - cidr_ip: "0.0.0.0/0"
+          ipv6_ranges: []
+          prefix_list_ids: []
+          user_id_group_pairs: []
+  type: list
+  returned: on create/update
+owner_id:
+  description: AWS Account ID of the security group
+  sample: 123456789012
+  type: int
+  returned: on create/update
+'''
+
 import json
 import re
 import time
@@ -200,6 +259,7 @@ from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
 import traceback
 
 try:
@@ -755,7 +815,11 @@ def main():
                     changed = True
 
     if group:
-        module.exit_json(changed=changed, group_id=group.id)
+        security_group = client.describe_security_groups(GroupIds=[group.id])['SecurityGroups'][0]
+        security_group = camel_dict_to_snake_dict(security_group)
+        security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group.get('tags', {}),
+                                                                tag_name_key_name='key', tag_value_key_name='value')
+        module.exit_json(changed=changed, **security_group)
     else:
         module.exit_json(changed=changed, group_id=None)
 
