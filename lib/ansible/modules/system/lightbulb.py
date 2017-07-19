@@ -57,6 +57,10 @@ foo:
 from ansible.module_utils.basic import AnsibleModule
 
 
+def add(a, b):
+    return a + b
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
