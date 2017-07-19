@@ -26,8 +26,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: filament
-short_description: Try to connect to host, verify a usable python and return C(hello world) on success
+module: hello_world
+version_added: 2.4
+short_description: print hello world
 description:
    - A trivial test module, this module always returns C(pong) on successful
      contact. It does not make sense in playbooks, but it is useful from
