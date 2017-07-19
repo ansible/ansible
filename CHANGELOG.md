@@ -15,6 +15,7 @@ Ansible Changes By Release
   * Fix traceback when checking for passwords in logged strings when logging executed commands.
   * docker_login module
 * ios_config: Fix traceback when the efaults parameter is not set
+* iosxr_config: Fixed unicode error when UTF-8 characters are in configs
 
 ## 2.3.2 "Ramble On" - TBD
 
