@@ -55,6 +55,7 @@ foo:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.lightbulb_utils import foobar
 
 
 def add(a, b):
