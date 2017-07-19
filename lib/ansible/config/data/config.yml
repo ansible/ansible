@@ -1243,7 +1243,7 @@ MERGE_MULTIPLE_CLI_TAGS:
   vars: []
   yaml: {key: defaults.merge_multiple_cli_tags}
 NETWORK_GROUP_MODULES:
-  default: [eos, nxos, ios, iosxr, junos, ce, vyos, sros, dellos9, dellos10, dellos6, asa]
+  default: [eos, nxos, ios, iosxr, junos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba]
   desc: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:
