@@ -17,9 +17,6 @@ description:
 requirements:
 - "python >= 2.6"
 - "apache-libcloud >= 0.17.0"
-notes:
-- GCE does not support updating routes. This module "emulates" updating by deleting an existing route and then creating a new one.
-- This module's underlying library does not support VPNs as next hops.
 author:
 - "Nikolaos Kakouros (@tterranigma) <tterranigma@gmail.com>"
 options:
@@ -63,6 +60,12 @@ options:
             - Whether the given resource record should or should not be present.
         choices: ["present", "absent"]
         default: "present"
+notes:
+- GCE does not support updating routes. This module "emulates" updating by deleting an existing route and then creating a new one.
+- This module's underlying library does not support VPNs as next hops.
+- Although this module supports check mode, there is one case when check_mode will report inconsistent results.
+  This is when you try to create a route that hides the address space of an existing network/subnet in GCE.
+  Check mode will report the tasks as successful while in reality it would have failed.
 '''
 
 EXAMPLES = '''
@@ -368,6 +371,9 @@ def main():
                         next_hop=node, description=params['description'])
 
                 except Exception as e:
+                    # This will probably only handle the case when the route masks the address space of
+                    # a network/subnet.
+                    # TODO perform the check before reaching here to better support check_mode.
                     module.fail_json(
                         msg     = str(e),
                         changed = False
