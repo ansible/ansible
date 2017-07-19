@@ -265,7 +265,7 @@ def create_launch_config(connection, module):
     try:
         security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'),
                                                                 ec2_connect(module),
-                                                                vpc_id=vpc_id, boto3=True)
+                                                                vpc_id=vpc_id, boto3=False)
     except ValueError as e:
         module.fail_json(msg="Failed to get Security Group IDs", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     user_data = module.params.get('user_data')
