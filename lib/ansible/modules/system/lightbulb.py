@@ -41,7 +41,6 @@ RETURN = '''
 '''
 
 import pdb
-import q
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -58,16 +57,8 @@ def main():
     if module.params['state'] == 'absent':
         module.exit_json(changed=False)
 
-    module.exit_json(changed=True, lightbulb="hello world", json.dumps({
-                "time": date,
-                "changed": True
-            }))
+    module.exit_json(changed=True, lightbulb="hello world")
 
 
 if __name__ == '__main__':
     main()
-
-date = str(datetime.datetime.now())
-print(json.dumps({
-    "time": date
-}))
