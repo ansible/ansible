@@ -20,7 +20,7 @@
     foo: bar
   register: result
 
-- name: assert that foo=bar
+- name: assert that foo=!bar
   assert:
     that:
-    - result.foo == 'bar'
+    - result.foo == '!bar'
