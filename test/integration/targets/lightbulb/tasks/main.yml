@@ -25,3 +25,13 @@
   assert: 
     that:
       - "foo.foo == 'test'"
+
+- name: turn up volume
+  command: osascript -e "set Volume 10" 
+  ignore_errors: yes
+
+- name: say stuff
+  osx_say: 
+    msg: The cake is a lie
+  ignore_errors: yes
+
