@@ -412,6 +412,8 @@ class Rhsm(RegistrationBase):
         '''
         args = [SUBMAN_CMD, 'unregister']
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+        self.update_plugin_conf('rhnplugin', False)
+        self.update_plugin_conf('subscription-manager', False)
 
     def subscribe(self, regexp):
         '''
