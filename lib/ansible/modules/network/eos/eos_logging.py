@@ -31,7 +31,7 @@ author: "Trishna Guha (@trishnag)"
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
-    on Cisco Eos devices.
+    on Arista Eos devices.
 options:
   dest:
     description:
@@ -242,8 +242,20 @@ def map_params_to_obj(module):
     obj = []
 
     if 'aggregate' in module.params and module.params['aggregate']:
+        args = {'dest': '',
+                'name': '',
+                'size': '',
+                'facility': '',
+                'level': '',
+                }
+
         for c in module.params['aggregate']:
             d = c.copy()
+
+            for key in args:
+                if key not in d:
+                    d[key] = None
+
             if d['dest'] != 'host':
                 d['name'] = None
 
