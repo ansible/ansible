@@ -349,7 +349,16 @@ def main():
     if params['state'] == 'present':
         try:
             # below the gce_ prefix in variables means stuff on Google Cloud
-            gce_route = gce.ex_get_route(params['name'])
+            try:
+                # We are wrapping every gce. method in try-except as there are exceptions
+                # that can happen such as timeouts that are not under our contorl.
+                gce_route = gce.ex_get_route(params['name'])
+            except Exception as e:
+                module.fail_json(
+                    msg     = str(e),
+                    changed = False
+                )
+
         # this is a new rule
         except ResourceNotFoundError:
             if not module.check_mode:
@@ -371,8 +380,8 @@ def main():
                         next_hop=node, description=params['description'])
 
                 except Exception as e:
-                    # This will probably only handle the case when the route masks the address space of
-                    # a network/subnet.
+                    # This exception is important in order to handle the case when the route
+                    # masks the address space of a network/subnet.
                     # TODO perform the check before reaching here to better support check_mode.
                     module.fail_json(
                         msg     = str(e),
@@ -485,10 +494,21 @@ def main():
             gce_route = gce.ex_get_route(params['name'])
         except ResourceNotFoundError:
             pass
+        except Exception as e:
+            module.fail_json(
+                msg     = str(e),
+                changed = False
+            )
         else:
             if not module.check_mode:
-                gce.ex_destroy_route(gce_route)
-                changed = True
+                try:
+                    gce.ex_destroy_route(gce_route)
+                    changed = True
+                except Exception as e:
+                    module.fail_json(
+                        msg     = str(e),
+                        changed = False
+                    )
     else:
         module.fail_json(
             msg     = "Invalid value for state parameter",
