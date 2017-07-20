@@ -121,6 +121,12 @@ options:
       - yes
       - no
     version_added: 2.1
+  priority_group:
+    description:
+      - Sets priority group for a pool member.
+    required: false
+    default: '0'
+    version_added: 2.4
 extends_documentation_fragment: f5
 '''
 
