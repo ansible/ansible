@@ -180,12 +180,13 @@ Google Cloud Platform
 Network Roadmap
 ---------------
 - Removal of ``*_template`` modules
-- Session Tracing
-- Refactor ansible-connection to cli
+- Distributed Continuous Integration Infrastructure
+- RPC Connection Plugin
 - Module Work
 
   - Declarative intent modules
   - OpenVSwitch
+  - Minimal Viable Platform Agnostic Modules
 
 Contributor Quality of Life
 ---------------------------
