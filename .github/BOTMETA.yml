@@ -715,10 +715,16 @@ files:
   $modules/windows/async_wrapper.ps1: $team_windows
   $modules/windows/setup.ps1: $team_ansible
   $modules/windows/slurp.ps1: $team_ansible
-  $modules/windows/win_acl.ps1: h0nIg schwartzmx trondhindenes
-  $modules/windows/win_acl.py: h0nIg schwartzmx trondhindenes
-  $modules/windows/win_acl_inheritance.ps1: h0nIg
-  $modules/windows/win_acl_inheritance.py: h0nIg
+  $modules/windows/win_acl.ps1:
+    maintainers: schwartzmx trondhindenes
+    ignored: h0nIg
+  $modules/windows/win_acl.py:
+    maintainers: schwartzmx trondhindenes
+    ignored: h0nIg
+  $modules/windows/win_acl_inheritance.ps1:
+    ignored: h0nIg
+  $modules/windows/win_acl_inheritance.py:
+    ignored: h0nIg
   $modules/windows/win_chocolatey.ps1: elventear nitzmahone petemounce smadam813 trondhindenes
   $modules/windows/win_chocolatey.py: elventear nitzmahone petemounce smadam813 trondhindenes
   $modules/windows/win_command.ps1: $team_windows
@@ -781,8 +787,12 @@ files:
   $modules/windows/win_nssm.py:
     maintainers: smadam813
     ignored: georgefrank h0nIg
-  $modules/windows/win_owner.ps1: h0nIg jborean93
-  $modules/windows/win_owner.py: h0nIg jborean93
+  $modules/windows/win_owner.ps1:
+    maintainers: jborean93
+    ignored: h0nIg
+  $modules/windows/win_owner.py:
+    maintainers: jborean93
+    ignored: h0nIg
   $modules/windows/win_package.ps1: trondhindenes
   $modules/windows/win_package.py: trondhindenes
   $modules/windows/win_path.ps1: nitzmahone
@@ -814,8 +824,12 @@ files:
   $modules/windows/win_security_policy.py: jborean93 rndmh3ro defionscode
   $modules/windows/win_service.ps1: chrishoffman
   $modules/windows/win_service.py: chrishoffman
-  $modules/windows/win_share.ps1: daBONDi h0nIg jborean93
-  $modules/windows/win_share.py: daBONDi h0nIg jborean93
+  $modules/windows/win_share.ps1:
+    maintainers: jborean93 daBONDi
+    ignored: h0nIg
+  $modules/windows/win_share.py:
+    maintainers: jborean93 daBONDi
+    ignored: h0nIg
   $modules/windows/win_shell.ps1: nitzmahone
   $modules/windows/win_shell.py: nitzmahone
   $modules/windows/win_shortcut.ps1: dagwieers
