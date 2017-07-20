@@ -356,9 +356,9 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
     elif 'group_id' in rule and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
-        group_instance = ec2.SecurityGroup(owner_id=owner_id, group_name=group_name, id=group_id)
-        groups[group_id] = group_instance
-        groups[group_name] = group_instance
+        group_instance = ec2.SecurityGroup(owner_id)
+        groups[group_id] = group_instance.group_id
+        groups[group_name] = group_instance.group_name
     elif 'group_id' in rule:
         group_id = rule['group_id']
     elif 'group_name' in rule:
@@ -374,7 +374,10 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
                 module.fail_json(msg="group %s will be automatically created by rule %s and "
                                      "no description was provided" % (group_name, rule))
             if not module.check_mode:
-                auto_group = ec2.create_security_group(group_name, rule['group_desc'], vpc_id=vpc_id)
+                params = dict(GroupName=group_name, Description=rule['group_desc'])
+                if vpc_id:
+                    params['VpcId'] = vpc_id
+                auto_group = ec2.create_security_group(**params)
                 group_id = auto_group.id
                 groups[group_id] = auto_group
                 groups[group_name] = auto_group
