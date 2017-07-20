@@ -17,7 +17,7 @@
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.0',
-    'status': ['preview'],
+    'status': ['curated'],
     'supported_by': 'community'
 }
 
