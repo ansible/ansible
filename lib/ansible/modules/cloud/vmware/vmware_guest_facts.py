@@ -41,7 +41,6 @@ options:
    name:
         description:
             - Name of the VM to work with
-        required: True
    name_match:
         description:
             - If multiple VMs matching the name, use the first or last found
@@ -53,8 +52,22 @@ options:
             - This is required if name is not supplied.
    folder:
         description:
-            - Destination folder, absolute path to find an existing guest.
+            - Destination folder, absolute or relative path to find an existing guest.
             - This is required if name is supplied.
+            - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+            - 'Examples:'
+            - '   folder: /ha-datacenter/vm'
+            - '   folder: ha-datacenter/vm'
+            - '   folder: /datacenter1/vm'
+            - '   folder: datacenter1/vm'
+            - '   folder: /datacenter1/vm/folder1'
+            - '   folder: datacenter1/vm/folder1'
+            - '   folder: /folder1/datacenter1/vm'
+            - '   folder: folder1/datacenter1/vm'
+            - '   folder: /folder1/datacenter1/vm/folder2'
+            - '   folder: vm/folder2'
+            - '   fodler: folder2'
+        default: /vm
    datacenter:
         description:
             - Destination datacenter for the deploy operation
@@ -83,27 +96,23 @@ instance:
 """
 
 import os
-import time
-
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, gather_vm_facts
+from ansible.module_utils._text import to_text
 
 try:
     import json
 except ImportError:
     import simplejson as json
 
-HAS_PYVMOMI = False
+
 try:
     import pyVmomi
     from pyVmomi import vim
 
     HAS_PYVMOMI = True
 except ImportError:
-    pass
+    HAS_PYVMOMI = False
 
 
 class PyVmomiHelper(object):
@@ -121,10 +130,7 @@ class PyVmomiHelper(object):
         if uuid:
             vm = find_vm_by_id(self.content, vm_id=uuid, vm_id_type="uuid")
         elif folder:
-            # Build the absolute folder path to pass into the search method
-            if not self.params['folder'].startswith('/'):
-                self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
-            searchpath = '%(datacenter)s%(folder)s' % self.params
+            searchpath = self.params['folder']
 
             # get all objects for this path ...
             f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
@@ -145,27 +151,6 @@ class PyVmomiHelper(object):
         return gather_vm_facts(self.content, vm)
 
 
-def get_obj(content, vimtype, name):
-    """
-    Return an object by name, if name is None the
-    first found object is returned
-    """
-    obj = None
-    container = content.viewManager.CreateContainerView(
-        content.rootFolder, vimtype, True)
-    for c in container.view:
-        if name:
-            if c.name == name:
-                obj = c
-                break
-        else:
-            obj = c
-            break
-
-    container.Destroy()
-    return obj
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -182,17 +167,17 @@ def main():
                 default=os.environ.get('VMWARE_PASSWORD')
             ),
             validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=True, type='str'),
+            name=dict(required=False, type='str'),
             name_match=dict(required=False, type='str', default='first'),
             uuid=dict(required=False, type='str'),
             folder=dict(required=False, type='str', default='/vm'),
             datacenter=dict(required=True, type='str'),
         ),
+        required_one_of=[['name', 'uuid']],
     )
 
-    # Prepend /vm if it was missing from the folder path, also strip trailing slashes
-    if not module.params['folder'].startswith('/vm') and module.params['folder'].startswith('/'):
-        module.params['folder'] = '/vm%(folder)s' % module.params
+    # FindByInventoryPath() does not require an absolute path
+    # so we should leave the input folder path unmodified
     module.params['folder'] = module.params['folder'].rstrip('/')
 
     pyv = PyVmomiHelper(module)
@@ -205,11 +190,15 @@ def main():
     if vm:
         try:
             module.exit_json(instance=pyv.gather_facts(vm))
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Fact gather failed with exception %s" % e)
+        except Exception as exc:
+            module.fail_json(msg="Fact gather failed with exception %s" % to_text(exc))
     else:
-        module.fail_json(msg="Unable to gather facts for non-existing VM %(name)s" % module.params)
+        msg = "Unable to gather facts for non-existing VM "
+        if module.params['name']:
+            msg += "%(name)s" % module.params
+        elif module.params['uuid']:
+            msg += "%(uuid)s" % module.params
+        module.fail_json(msg=msg)
 
 if __name__ == '__main__':
     main()

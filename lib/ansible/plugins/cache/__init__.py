@@ -86,13 +86,13 @@ class BaseFileCacheModule(BaseCacheModule):
             self._cache_dir = os.path.expanduser(os.path.expandvars(C.CACHE_PLUGIN_CONNECTION))
 
         if not self._cache_dir:
-            raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option"
-                    " to be set (to a writeable directory path)" % self.plugin_name)
+            raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option "
+                               "to be set (to a writeable directory path)" % self.plugin_name)
 
         if not os.path.exists(self._cache_dir):
             try:
                 os.makedirs(self._cache_dir)
-            except (OSError,IOError) as e:
+            except (OSError, IOError) as e:
                 raise AnsibleError("error in '%s' cache plugin while trying to create cache dir %s : %s" % (self.plugin_name, self._cache_dir, to_bytes(e)))
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
@@ -118,12 +118,12 @@ class BaseFileCacheModule(BaseCacheModule):
                 self._cache[key] = value
                 return value
             except ValueError as e:
-                display.warning("error in '%s' cache plugin while trying to read %s : %s."
-                        " Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
+                display.warning("error in '%s' cache plugin while trying to read %s : %s. "
+                                "Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
                 self.delete(key)
-                raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data."
-                        " It has been removed, so you can re-run your command now." % cachefile)
-        except (OSError,IOError) as e:
+                raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
+                                   "It has been removed, so you can re-run your command now." % cachefile)
+        except (OSError, IOError) as e:
             display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
             raise KeyError
         except Exception as e:
@@ -136,7 +136,7 @@ class BaseFileCacheModule(BaseCacheModule):
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
             self._dump(value, cachefile)
-        except (OSError,IOError) as e:
+        except (OSError, IOError) as e:
             display.warning("error in '%s' cache plugin while trying to write to %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
 
     def has_expired(self, key):
@@ -147,7 +147,7 @@ class BaseFileCacheModule(BaseCacheModule):
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
             st = os.stat(cachefile)
-        except (OSError,IOError) as e:
+        except (OSError, IOError) as e:
             if e.errno == errno.ENOENT:
                 return False
             else:
@@ -179,7 +179,7 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             os.stat(cachefile)
             return True
-        except (OSError,IOError) as e:
+        except (OSError, IOError) as e:
             if e.errno == errno.ENOENT:
                 return False
             else:
@@ -194,7 +194,7 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             os.remove("%s/%s" % (self._cache_dir, key))
         except (OSError, IOError):
-            pass #TODO: only pass on non existing?
+            pass  # TODO: only pass on non existing?
 
     def flush(self):
         self._cache = {}
@@ -236,6 +236,7 @@ class BaseFileCacheModule(BaseCacheModule):
         """
         pass
 
+
 class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
@@ -246,7 +247,6 @@ class FactCache(MutableMapping):
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
-
 
     def __getitem__(self, key):
         if not self._plugin.contains(key):

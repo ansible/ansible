@@ -285,6 +285,8 @@ def main():
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
         if module.check_mode or not update:
+            if svn.has_local_mods() and not force:
+                module.fail_json(msg="ERROR: modified files exist in the repository.")
             check, before, after = svn.needs_update()
             module.exit_json(changed=check, before=before, after=after)
         before = svn.get_revision()

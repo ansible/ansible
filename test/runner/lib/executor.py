@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+import json
 import os
 import re
 import tempfile
@@ -11,9 +12,9 @@ import functools
 import shutil
 import stat
 import random
-import pipes
 import string
 import atexit
+import hashlib
 
 import lib.pytar
 import lib.thread
@@ -28,12 +29,17 @@ from lib.manage_ci import (
     ManageNetworkCI,
 )
 
+from lib.cloud import (
+    cloud_filter,
+    cloud_init,
+    get_cloud_environment,
+    get_cloud_platforms,
+)
+
 from lib.util import (
-    EnvironmentConfig,
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
-    MissingEnvironmentVariable,
     display,
     run_command,
     common_environment,
@@ -41,10 +47,8 @@ from lib.util import (
     make_dirs,
     is_shippable,
     is_binary_file,
-)
-
-from lib.test import (
-    TestConfig,
+    find_executable,
+    raw_command,
 )
 
 from lib.ansible_util import (
@@ -73,6 +77,18 @@ from lib.git import (
 
 from lib.classification import (
     categorize_changes,
+)
+
+from lib.config import (
+    TestConfig,
+    EnvironmentConfig,
+    CompileConfig,
+    IntegrationConfig,
+    NetworkIntegrationConfig,
+    PosixIntegrationConfig,
+    ShellConfig,
+    UnitsConfig,
+    WindowsIntegrationConfig,
 )
 
 from lib.test import (
@@ -144,7 +160,12 @@ def install_command_requirements(args):
         if args.junit:
             packages.append('junit-xml')
 
-    cmd = generate_pip_install(args.command, packages)
+    extras = []
+
+    if isinstance(args, IntegrationConfig):
+        extras += ['cloud.%s' % cp for cp in get_cloud_platforms(args)]
+
+    cmd = generate_pip_install(args.command, packages, extras)
 
     if not cmd:
         return
@@ -175,10 +196,11 @@ def generate_egg_info(args):
     run_command(args, ['python', 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
-def generate_pip_install(command, packages=None):
+def generate_pip_install(command, packages=None, extras=None):
     """
     :type command: str
     :type packages: list[str] | None
+    :type extras: list[str] | None
     :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
@@ -186,8 +208,15 @@ def generate_pip_install(command, packages=None):
 
     options = []
 
-    if os.path.exists(requirements) and os.path.getsize(requirements):
-        options += ['-r', requirements]
+    requirements_list = [requirements]
+
+    if extras:
+        for extra in extras:
+            requirements_list.append('test/runner/requirements/%s.%s.txt' % (command, extra))
+
+    for requirements in requirements_list:
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
 
     if packages:
         options += packages
@@ -223,6 +252,24 @@ def command_network_integration(args):
     """
     :type args: NetworkIntegrationConfig
     """
+    default_filename = 'test/integration/inventory.networking'
+
+    if args.inventory:
+        filename = os.path.join('test/integration', args.inventory)
+    else:
+        filename = default_filename
+
+    if not args.explain and not args.platform and not os.path.exists(filename):
+        if args.inventory:
+            filename = os.path.abspath(filename)
+
+        raise ApplicationError(
+            'Inventory not found: %s\n'
+            'Use --inventory to specify the inventory path.\n'
+            'Use --platform to provision resources and generate an inventory file.\n'
+            'See also inventory template: %s.template' % (filename, default_filename)
+        )
+
     internal_targets = command_integration_filter(args, walk_network_integration_targets())
     platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
 
@@ -253,8 +300,6 @@ def command_network_integration(args):
 
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = network_inventory(remotes)
-
-        filename = 'test/integration/inventory.networking'
 
         display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
 
@@ -298,11 +343,12 @@ def network_inventory(remotes):
             ansible_user=remote.connection.username,
             ansible_ssh_private_key_file=remote.ssh_key.key,
             ansible_network_os=remote.platform,
+            ansible_connection='local'
         )
 
         groups[remote.platform].append(
             '%s %s' % (
-                remote.name.replace('.', '_'),
+                remote.name.replace('.', '-'),
                 ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
             )
         )
@@ -326,6 +372,11 @@ def command_windows_integration(args):
     """
     :type args: WindowsIntegrationConfig
     """
+    filename = 'test/integration/inventory.winrm'
+
+    if not args.explain and not args.windows and not os.path.isfile(filename):
+        raise ApplicationError('Use the --windows option or provide an inventory file (see %s.template).' % filename)
+
     internal_targets = command_integration_filter(args, walk_windows_integration_targets())
 
     if args.windows:
@@ -344,8 +395,6 @@ def command_windows_integration(args):
 
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = windows_inventory(remotes)
-
-        filename = 'test/integration/inventory.winrm'
 
         display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
 
@@ -436,6 +485,8 @@ def command_integration_filter(args, targets):
     internal_targets = walk_internal_targets(targets, args.include, exclude, require)
     environment_exclude = get_integration_filter(args, internal_targets)
 
+    environment_exclude += cloud_filter(args, internal_targets)
+
     if environment_exclude:
         exclude += environment_exclude
         internal_targets = walk_internal_targets(targets, args.include, exclude, require)
@@ -445,6 +496,8 @@ def command_integration_filter(args, targets):
 
     if args.start_at and not any(t.name == args.start_at for t in internal_targets):
         raise ApplicationError('Start at target matches nothing: %s' % args.start_at)
+
+    cloud_init(args, internal_targets)
 
     if args.delegate:
         raise Delegate(require=changes, exclude=exclude)
@@ -460,12 +513,14 @@ def command_integration_filtered(args, targets):
     :type targets: tuple[IntegrationTarget]
     """
     found = False
+    passed = []
+    failed = []
 
     targets_iter = iter(targets)
 
     test_dir = os.path.expanduser('~/ansible_testing')
 
-    if any('needs/ssh/' in target.aliases for target in targets):
+    if not args.explain and any('needs/ssh/' in target.aliases for target in targets):
         max_tries = 20
         display.info('SSH service required for tests. Checking to make sure we can connect.')
         for i in range(1, max_tries + 1):
@@ -489,8 +544,18 @@ def command_integration_filtered(args, targets):
             if not found:
                 continue
 
+        if args.list_targets:
+            print(target.name)
+            continue
+
         tries = 2 if args.retry_on_error else 1
         verbosity = args.verbosity
+
+        cloud_environment = get_cloud_environment(args, target)
+
+        original_environment = EnvironmentDescription(args)
+
+        display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
 
         try:
             while tries:
@@ -509,12 +574,27 @@ def command_integration_filtered(args, targets):
                         start_at_task = None
                     break
                 except SubprocessError:
+                    if cloud_environment:
+                        cloud_environment.on_failure(target, tries)
+
+                    if not original_environment.validate(target.name, throw=False):
+                        raise
+
                     if not tries:
                         raise
 
                     display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
                     display.verbosity = args.verbosity = 6
-        except:
+
+            original_environment.validate(target.name, throw=True)
+            passed.append(target)
+        except Exception as ex:
+            failed.append(target)
+
+            if args.continue_on_error:
+                display.error(ex)
+                continue
+
             display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
 
             next_target = next(targets_iter, None)
@@ -526,10 +606,16 @@ def command_integration_filtered(args, targets):
         finally:
             display.verbosity = args.verbosity = verbosity
 
+    if failed:
+        raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
+            len(failed), len(passed) + len(failed), '\n'.join(target.name for target in failed)))
 
-def integration_environment(args):
+
+def integration_environment(args, target, cmd):
     """
     :type args: IntegrationConfig
+    :type target: IntegrationTarget
+    :type cmd: list[str]
     :rtype: dict[str, str]
     """
     env = ansible_environment(args)
@@ -537,9 +623,18 @@ def integration_environment(args):
     integration = dict(
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
         ANSIBLE_CALLBACK_WHITELIST='junit',
+        ANSIBLE_TEST_CI=args.metadata.ci_provider,
     )
 
+    if args.debug_strategy:
+        env.update(dict(ANSIBLE_STRATEGY='debug'))
+
     env.update(integration)
+
+    cloud_environment = get_cloud_environment(args, target)
+
+    if cloud_environment:
+        cloud_environment.configure_environment(env, cmd)
 
     return env
 
@@ -556,10 +651,10 @@ def command_integration_script(args, target):
     if args.verbosity:
         cmd.append('-' + ('v' * args.verbosity))
 
-    env = integration_environment(args)
+    env = integration_environment(args, target, cmd)
     cwd = target.path
 
-    intercept_command(args, cmd, env=env, cwd=cwd)
+    intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
 def command_integration_role(args, target, start_at_task):
@@ -577,7 +672,7 @@ def command_integration_role(args, target, start_at_task):
         hosts = 'windows'
         gather_facts = False
     elif isinstance(args, NetworkIntegrationConfig):
-        inventory = 'inventory.networking'
+        inventory = args.inventory or 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
         if hosts == 'net':
@@ -586,6 +681,11 @@ def command_integration_role(args, target, start_at_task):
         inventory = 'inventory'
         hosts = 'testhost'
         gather_facts = True
+
+        cloud_environment = get_cloud_environment(args, target)
+
+        if cloud_environment:
+            hosts = cloud_environment.inventory_hosts or hosts
 
     playbook = '''
 - hosts: %s
@@ -607,15 +707,24 @@ def command_integration_role(args, target, start_at_task):
         if start_at_task:
             cmd += ['--start-at-task', start_at_task]
 
+        if args.tags:
+            cmd += ['--tags', args.tags]
+
+        if args.skip_tags:
+            cmd += ['--skip-tags', args.skip_tags]
+
+        if args.diff:
+            cmd += ['--diff']
+
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args)
+        env = integration_environment(args, target, cmd)
         cwd = 'test/integration'
 
         env['ANSIBLE_ROLES_PATH'] = os.path.abspath('test/integration/targets')
 
-        intercept_command(args, cmd, env=env, cwd=cwd)
+        intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
 def command_units(args):
@@ -670,7 +779,7 @@ def command_units(args):
         display.info('Unit test with Python %s' % version)
 
         try:
-            intercept_command(args, command, env=env, python_version=version)
+            intercept_command(args, command, target_name='units', env=env, python_version=version)
         except SubprocessError as ex:
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:
@@ -785,28 +894,42 @@ def compile_version(args, python_version, include, exclude):
     return TestSuccess(command, test, python_version=python_version)
 
 
-def intercept_command(args, cmd, capture=False, env=None, data=None, cwd=None, python_version=None):
+def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
+    :type target_name: str
     :type capture: bool
     :type env: dict[str, str] | None
     :type data: str | None
     :type cwd: str | None
     :type python_version: str | None
+    :type path: str | None
     :rtype: str | None, str | None
     """
     if not env:
         env = common_environment()
 
     cmd = list(cmd)
-    escaped_cmd = ' '.join(pipes.quote(c) for c in cmd)
     inject_path = get_coverage_path(args)
+    config_path = os.path.join(inject_path, 'injector.json')
+    version = python_version or args.python_version
+    interpreter = find_executable('python%s' % version, path=path)
+    coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
+        args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 
     env['PATH'] = inject_path + os.pathsep + env['PATH']
-    env['ANSIBLE_TEST_COVERAGE'] = 'coverage' if args.coverage else 'version'
-    env['ANSIBLE_TEST_PYTHON_VERSION'] = python_version or args.python_version
-    env['ANSIBLE_TEST_CMD'] = escaped_cmd
+    env['ANSIBLE_TEST_PYTHON_VERSION'] = version
+    env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
+
+    config = dict(
+        python_interpreter=interpreter,
+        coverage_file=coverage_file if args.coverage else None,
+    )
+
+    if not args.explain:
+        with open(config_path, 'w') as config_fd:
+            json.dump(config, config_fd, indent=4, sort_keys=True)
 
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
 
@@ -834,6 +957,10 @@ def get_coverage_path(args):
 
     shutil.copytree(src, os.path.join(coverage_path, 'coverage'))
     shutil.copy('.coveragerc', os.path.join(coverage_path, 'coverage', '.coveragerc'))
+
+    for root, dir_names, file_names in os.walk(coverage_path):
+        for name in dir_names + file_names:
+            os.chmod(os.path.join(root, name), stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
 
     for directory in 'output', 'logs':
         os.mkdir(os.path.join(coverage_path, directory))
@@ -878,7 +1005,7 @@ def get_changes_filter(args):
     if not paths:
         raise NoChangesDetected()
 
-    commands = categorize_changes(paths, args.command)
+    commands = categorize_changes(args, paths, args.command)
 
     targets = commands.get(args.command)
 
@@ -896,7 +1023,7 @@ def detect_changes(args):
     :type args: TestConfig
     :rtype: list[str] | None
     """
-    if is_shippable():
+    if args.changed and is_shippable():
         display.info('Shippable detected, collecting parameters from environment.')
         paths = detect_changes_shippable(args)
     elif args.changed_from or args.changed_path:
@@ -1042,6 +1169,14 @@ def get_integration_local_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --allow-destructive to run locally: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    if args.python_version.startswith('3'):
+        skip = 'skip/python3/'
+        skipped = [target.name for target in targets if skip in target.aliases]
+        if skipped:
+            exclude.append(skip)
+            display.warning('Excluding tests marked "%s" which are not yet supported on python 3: %s'
+                            % (skip.rstrip('/'), ', '.join(skipped)))
+
     return exclude
 
 
@@ -1094,6 +1229,112 @@ def get_integration_remote_filter(args, targets):
     return exclude
 
 
+class EnvironmentDescription(object):
+    """Description of current running environment."""
+    def __init__(self, args):
+        """Initialize snapshot of environment configuration.
+        :type args: IntegrationConfig
+        """
+        self.args = args
+
+        if self.args.explain:
+            self.data = {}
+            return
+
+        versions = ['']
+        versions += SUPPORTED_PYTHON_VERSIONS
+        versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
+
+        python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
+        python_versions = dict((v, self.get_version([python_paths[v], '-V'])) for v in sorted(python_paths) if python_paths[v])
+
+        pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
+        pip_versions = dict((v, self.get_version([pip_paths[v], '--version'])) for v in sorted(pip_paths) if pip_paths[v])
+        pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
+        known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
+
+        self.data = dict(
+            python_paths=python_paths,
+            python_versions=python_versions,
+            pip_paths=pip_paths,
+            pip_versions=pip_versions,
+            pip_interpreters=pip_interpreters,
+            known_hosts_hash=known_hosts_hash,
+        )
+
+    def __str__(self):
+        """
+        :rtype: str
+        """
+        return json.dumps(self.data, sort_keys=True, indent=4)
+
+    def validate(self, target_name, throw):
+        """
+        :type target_name: str
+        :type throw: bool
+        :rtype: bool
+        """
+        current = EnvironmentDescription(self.args)
+
+        original_json = str(self)
+        current_json = str(current)
+
+        if original_json == current_json:
+            return True
+
+        message = ('Test target "%s" has changed the test environment!\n'
+                   'If these changes are necessary, they must be reverted before the test finishes.\n'
+                   '>>> Original Environment\n'
+                   '%s\n'
+                   '>>> Current Environment\n'
+                   '%s' % (target_name, original_json, current_json))
+
+        if throw:
+            raise ApplicationError(message)
+
+        display.error(message)
+
+        return False
+
+    @staticmethod
+    def get_version(command):
+        """
+        :type command: list[str]
+        :rtype: str
+        """
+        try:
+            stdout, stderr = raw_command(command, capture=True, cmd_verbosity=2)
+        except SubprocessError:
+            return None  # all failures are equal, we don't care why it failed, only that it did
+
+        return (stdout or '').strip() + (stderr or '').strip()
+
+    @staticmethod
+    def get_shebang(path):
+        """
+        :type path: str
+        :rtype: str
+        """
+        with open(path) as script_fd:
+            return script_fd.readline()
+
+    @staticmethod
+    def get_hash(path):
+        """
+        :type path: str
+        :rtype: str | None
+        """
+        if not os.path.exists(path):
+            return None
+
+        file_hash = hashlib.md5()
+
+        with open(path, 'rb') as file_fd:
+            file_hash.update(file_fd.read())
+
+        return file_hash.hexdigest()
+
+
 class NoChangesDetected(ApplicationWarning):
     """Exception when change detection was performed, but no changes were found."""
     def __init__(self):
@@ -1104,113 +1345,6 @@ class NoTestsForChanges(ApplicationWarning):
     """Exception when changes detected, but no tests trigger as a result."""
     def __init__(self):
         super(NoTestsForChanges, self).__init__('No tests found for detected changes.')
-
-
-class ShellConfig(EnvironmentConfig):
-    """Configuration for the shell command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(ShellConfig, self).__init__(args, 'shell')
-
-
-class SanityConfig(TestConfig):
-    """Configuration for the sanity command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(SanityConfig, self).__init__(args, 'sanity')
-
-        self.test = args.test  # type: list [str]
-        self.skip_test = args.skip_test  # type: list [str]
-        self.list_tests = args.list_tests  # type: bool
-
-        if args.base_branch:
-            self.base_branch = args.base_branch  # str
-        elif is_shippable():
-            try:
-                self.base_branch = os.environ['BASE_BRANCH']  # str
-            except KeyError as ex:
-                raise MissingEnvironmentVariable(name=ex.args[0])
-
-            if self.base_branch:
-                self.base_branch = 'origin/%s' % self.base_branch
-        else:
-            self.base_branch = ''
-
-
-class IntegrationConfig(TestConfig):
-    """Configuration for the integration command."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        super(IntegrationConfig, self).__init__(args, command)
-
-        self.start_at = args.start_at  # type: str
-        self.start_at_task = args.start_at_task  # type: str
-        self.allow_destructive = args.allow_destructive if 'allow_destructive' in args else False  # type: bool
-        self.retry_on_error = args.retry_on_error  # type: bool
-
-
-class PosixIntegrationConfig(IntegrationConfig):
-    """Configuration for the posix integration command."""
-
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(PosixIntegrationConfig, self).__init__(args, 'integration')
-
-
-class WindowsIntegrationConfig(IntegrationConfig):
-    """Configuration for the windows integration command."""
-
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(WindowsIntegrationConfig, self).__init__(args, 'windows-integration')
-
-        self.windows = args.windows  # type: list [str]
-
-        if self.windows:
-            self.allow_destructive = True
-
-
-class NetworkIntegrationConfig(IntegrationConfig):
-    """Configuration for the network integration command."""
-
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(NetworkIntegrationConfig, self).__init__(args, 'network-integration')
-
-        self.platform = args.platform  # type list [str]
-
-
-class UnitsConfig(TestConfig):
-    """Configuration for the units command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(UnitsConfig, self).__init__(args, 'units')
-
-        self.collect_only = args.collect_only  # type: bool
-
-
-class CompileConfig(TestConfig):
-    """Configuration for the compile command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CompileConfig, self).__init__(args, 'compile')
 
 
 class Delegate(Exception):

@@ -1,0 +1,50 @@
+- name: "Admin user is allowed to access pg_authid relation: password comparison will succeed, password won't be updated"
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    encrypted: 'yes'
+    password: "md5{{ (db_password ~ db_user1) | hash('md5')}}"
+    db: "{{ db_name }}"
+    priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
+    login_user: "{{ pg_user }}"
+  register: redo_as_admin
+
+- name: "Check that task succeeded without any change"
+  assert:
+    that:
+      - 'not redo_as_admin|failed'
+      - 'not redo_as_admin|changed'
+      - 'redo_as_admin|success'
+
+- name: "Check that normal user isn't allowed to access pg_authid"
+  shell: 'psql -c "select * from pg_authid;" {{ db_name }} {{ db_user1 }}'
+  environment:
+    PGPASSWORD: '{{ db_password }}'
+  ignore_errors: True
+  register: pg_authid
+
+- assert:
+    that:
+      - 'pg_authid|failed'
+      - '"permission denied for relation pg_authid" in pg_authid.stderr'
+
+- name: "Normal user isn't allowed to access pg_authid relation: password comparison will fail, password will be updated"
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    encrypted: 'yes'
+    password: "md5{{ (db_password ~ db_user1) | hash('md5')}}"
+    db: "{{ db_name }}"
+    priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
+    login_user: "{{ db_user1 }}"
+    login_password: "{{ db_password }}"
+  register: redo_as_normal_user
+
+- name: "Check that task succeeded and that result is changed"
+  assert:
+    that:
+      - 'not redo_as_normal_user|failed'
+      - 'redo_as_normal_user|changed'
+      - 'redo_as_normal_user|success'

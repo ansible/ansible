@@ -14,6 +14,7 @@ import pprint
 
 realimport = builtins.__import__
 
+
 class TestPostgres(unittest.TestCase):
     def clear_modules(self, mods):
         for mod in mods:
@@ -72,4 +73,3 @@ class TestPostgres(unittest.TestCase):
         with self.assertRaises(mod.module_utils.postgres.LibraryError) as context:
             mod.module_utils.postgres.ensure_libs(sslrootcert='yes')
         self.assertIn('psycopg2 must be at least 2.4.3 in order to use', to_native(context.exception))
-

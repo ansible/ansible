@@ -28,7 +28,7 @@ from copy import deepcopy
 from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
-from ansible.vars import strip_internal_keys
+from ansible.vars.manager import strip_internal_keys
 
 try:
     from __main__ import display as global_display
@@ -209,10 +209,9 @@ class CallbackBase:
 
     def _clean_results(self, result, task_name):
         if task_name in ['debug']:
-            for remove_key in ('changed', 'invocation'):
+            for remove_key in ('changed', 'invocation', 'failed', 'skipped'):
                 if remove_key in result:
                     del result[remove_key]
-
 
     def set_play_context(self, play_context):
         pass
@@ -280,7 +279,7 @@ class CallbackBase:
     def on_file_diff(self, host, diff):
         pass
 
-    ####### V2 METHODS, by default they call v1 counterparts if possible ######
+    # V2 METHODS, by default they call v1 counterparts if possible
     def v2_on_any(self, *args, **kwargs):
         self.on_any(args, kwargs)
 
@@ -295,7 +294,7 @@ class CallbackBase:
     def v2_runner_on_skipped(self, result):
         if C.DISPLAY_SKIPPED_HOSTS:
             host = result._host.get_name()
-            self.runner_on_skipped(host, self._get_item(getattr(result._result,'results',{})))
+            self.runner_on_skipped(host, self._get_item(getattr(result._result, 'results', {})))
 
     def v2_runner_on_unreachable(self, result):
         host = result._host.get_name()
@@ -307,7 +306,7 @@ class CallbackBase:
     def v2_runner_on_async_poll(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
-        #FIXME, get real clock
+        # FIXME, get real clock
         clock = 0
         self.runner_on_async_poll(host, result._result, jid, clock)
 
@@ -322,7 +321,7 @@ class CallbackBase:
         self.runner_on_async_failed(host, result._result, jid)
 
     def v2_runner_on_file_diff(self, result, diff):
-        pass #no v1 correspondance
+        pass  # no v1 correspondence
 
     def v2_playbook_on_start(self, playbook):
         self.playbook_on_start()
@@ -341,10 +340,10 @@ class CallbackBase:
         self.playbook_on_task_start(task.name, is_conditional)
 
     def v2_playbook_on_cleanup_task_start(self, task):
-        pass #no v1 correspondance
+        pass  # no v1 correspondence
 
     def v2_playbook_on_handler_task_start(self, task):
-        pass #no v1 correspondance
+        pass  # no v1 correspondence
 
     def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
         self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default)
@@ -372,7 +371,7 @@ class CallbackBase:
             self.on_file_diff(host, result._result['diff'])
 
     def v2_playbook_on_include(self, included_file):
-        pass #no v1 correspondance
+        pass  # no v1 correspondence
 
     def v2_runner_item_on_ok(self, result):
         pass

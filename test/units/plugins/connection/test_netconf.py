@@ -28,7 +28,6 @@ from io import StringIO
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
 
@@ -37,6 +36,7 @@ PY3 = sys.version_info[0] == 3
 builtin_import = __import__
 
 mock_ncclient = MagicMock(name='ncclient')
+
 
 def import_mock(name, *args):
     if name.startswith('ncclient'):
@@ -49,6 +49,7 @@ if PY3:
 else:
     with patch('__builtin__.__import__', side_effect=import_mock):
         from ansible.plugins.connection import netconf
+
 
 class TestNetconfConnectionClass(unittest.TestCase):
 
@@ -71,12 +72,13 @@ class TestNetconfConnectionClass(unittest.TestCase):
         mock_manager = MagicMock(name='self._manager.connect')
         type(mock_manager).session_id = PropertyMock(return_value='123456789')
         netconf.manager.connect.return_value = mock_manager
+        conn._play_context.network_os = 'default'
 
         rc, out, err = conn._connect()
 
         self.assertEqual(0, rc)
-        self.assertEqual('123456789', out)
-        self.assertEqual('', err)
+        self.assertEqual(b'123456789', out)
+        self.assertEqual(b'', err)
         self.assertTrue(conn._connected)
 
     def test_netconf_exec_command(self):
@@ -100,8 +102,8 @@ class TestNetconfConnectionClass(unittest.TestCase):
         netconf.to_ele.assert_called_with('<test/>')
 
         self.assertEqual(0, rc)
-        self.assertEqual('<test/>', out)
-        self.assertEqual('', err)
+        self.assertEqual(b'<test/>', out)
+        self.assertEqual(b'', err)
 
     def test_netconf_exec_command_invalid_request(self):
         pc = PlayContext()
@@ -115,7 +117,5 @@ class TestNetconfConnectionClass(unittest.TestCase):
         rc, out, err = conn.exec_command('test string')
 
         self.assertEqual(1, rc)
-        self.assertEqual('', out)
-        self.assertEqual('unable to parse request', err)
-
-
+        self.assertEqual(b'', out)
+        self.assertEqual(b'unable to parse request', err)

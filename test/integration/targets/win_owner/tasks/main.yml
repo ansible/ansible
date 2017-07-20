@@ -1,0 +1,234 @@
+---
+# Setup tests
+- name: gather facts on host for use with later tests
+  setup:
+
+- name: remove test path to ensure baseline
+  win_file:
+    path: "{{test_win_owner_path}}"
+    state: absent
+
+- name: create test paths
+  win_file:
+    path: "{{test_win_owner_path}}\\{{item}}"
+    state: directory
+  with_items:
+  - folder
+  - folder\folder1
+  - folder\folder2
+  - folder with space
+  - folder with space\folder1
+  - folder with space\folder2
+
+- name: create system test files
+  win_copy:
+    dest: "{{test_win_owner_path}}\\{{item}}"
+    content: content
+  with_items:
+  - folder\file.txt
+  - folder\folder1\file.txt
+  - folder\folder2\file.txt
+  - folder with space\file.txt
+  - folder with space\folder1\file.txt
+  - folder with space\folder2\file.txt
+
+# Run win_owner tests
+- name: set owner for invalid path
+  win_owner:
+    path: C:\invalid
+    user: SYSTEM
+  register: invalid_path
+  failed_when: invalid_path.msg != 'C:\invalid file or directory does not exist on the host'
+
+- name: set owner for invalid user
+  win_owner:
+    path: "{{test_win_owner_path}}"
+    user: invalid-user
+  register: invalid_user
+  failed_when: invalid_user.msg != 'invalid-user is not a valid user or group on the host machine or domain'
+
+- name: set owner defaults check
+  win_owner:
+    path: "{{test_win_owner_path}}\\folder"
+    user: SYSTEM
+  register: defaults_check
+  check_mode: True
+
+- name: get owner of folder of set owner defaults check
+  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\folder').Owner"
+  register: actual_defaults_check
+
+- name: assert set owner defaults check
+  assert:
+    that:
+    - defaults_check|changed
+    - actual_defaults_check.stdout_lines[0] == 'BUILTIN\Administrators'
+
+- name: set owner defaults
+  win_owner:
+    path: "{{test_win_owner_path}}\\folder"
+    user: SYSTEM
+  register: defaults
+
+- name: get owner of folder of set owner defaults
+  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\folder').Owner"
+  register: actual_defaults
+
+- name: assert set owner defaults
+  assert:
+    that:
+    - defaults|changed
+    - actual_defaults.stdout_lines[0] == 'NT AUTHORITY\SYSTEM'
+
+- name: set owner defaults again
+  win_owner:
+    path: "{{test_win_owner_path}}\\folder"
+    user: SYSTEM
+  register: defaults_again
+
+- name: get owner of folder of set owner defaults again
+  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\folder').Owner"
+  register: actual_defaults_again
+
+- name: assert set owner defaults again
+  assert:
+    that:
+    - not defaults_again|changed
+    - actual_defaults_again.stdout_lines[0] == 'NT AUTHORITY\SYSTEM'
+
+- name: set owner recurse check
+  win_owner:
+    path: "{{test_win_owner_path}}\\folder"
+    user: SYSTEM
+    recurse: True
+  register: recurse_check
+  check_mode: True
+
+- name: get owner of folder of set owner recurse check
+  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item.path}}').Owner"
+  register: actual_recurse_check
+  failed_when: actual_recurse_check.stdout_lines[0] != item.owner
+  with_items:
+  - { path: 'folder', owner: 'NT AUTHORITY\SYSTEM' }
+  - { path: 'folder\file.txt', owner: 'BUILTIN\Administrators' }
+  - { path: 'folder\folder1', owner: 'BUILTIN\Administrators' }
+  - { path: 'folder\folder1\file.txt', owner: 'BUILTIN\Administrators' }
+  - { path: 'folder\folder2', owner: 'BUILTIN\Administrators' }
+  - { path: 'folder\folder2\file.txt', owner: 'BUILTIN\Administrators' }
+
+- name: assert set owner recurse check
+  assert:
+    that:
+    - recurse_check|changed
+
+- name: set owner recurse
+  win_owner:
+    path: "{{test_win_owner_path}}\\folder"
+    user: SYSTEM
+    recurse: True
+  register: recurse
+
+- name: get owner of folder of set owner recurse
+  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
+  register: actual_recurse
+  failed_when: actual_recurse.stdout_lines[0] != 'NT AUTHORITY\SYSTEM'
+  with_items:
+  - folder
+  - folder\file.txt
+  - folder\folder1
+  - folder\folder1\file.txt
+  - folder\folder2
+  - folder\folder2\file.txt
+
+- name: assert set owner recurse
+  assert:
+    that:
+    - recurse|changed
+
+- name: set owner recurse again
+  win_owner:
+    path: "{{test_win_owner_path}}\\folder"
+    user: SYSTEM
+    recurse: True
+  register: recurse_again
+
+- name: get owner of folder of set owner recurse again
+  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
+  register: actual_recurse_again
+  failed_when: actual_recurse_again.stdout_lines[0] != 'NT AUTHORITY\SYSTEM'
+  with_items:
+  - folder
+  - folder\file.txt
+  - folder\folder1
+  - folder\folder1\file.txt
+  - folder\folder2
+  - folder\folder2\file.txt
+
+- name: assert set owner recurse again
+  assert:
+    that:
+    - not recurse_again|changed
+
+- name: create test user
+  win_user:
+    name: test win owner
+    password: TtPp!@#$%^ + {{ lookup('password', '/dev/null length=15') }}
+
+- name: set owner with space recurse
+  win_owner:
+    path: "{{test_win_owner_path}}\\folder with space"
+    user: test win owner
+    recurse: True
+  register: recurse_space
+
+- name: get owner of folder of set owner with space recurse
+  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
+  register: actual_recurse_space
+  failed_when: actual_recurse_space.stdout_lines[0]|upper != ansible_hostname + '\\TEST WIN OWNER'
+  with_items:
+  - folder with space
+  - folder with space\file.txt
+  - folder with space\folder1
+  - folder with space\folder1\file.txt
+  - folder with space\folder2
+  - folder with space\folder2\file.txt
+
+- name: assert set owner with space recurse
+  assert:
+    that:
+    - recurse_space|changed
+
+- name: set owner with space recurse again
+  win_owner:
+    path: "{{test_win_owner_path}}\\folder with space"
+    user: test win owner
+    recurse: True
+  register: recurse_space_again
+
+- name: get owner of folder of set owner with space recurse again
+  win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
+  register: actual_recurse_space_again
+  failed_when: actual_recurse_space_again.stdout_lines[0]|upper != ansible_hostname + '\\TEST WIN OWNER'
+  with_items:
+  - folder with space
+  - folder with space\file.txt
+  - folder with space\folder1
+  - folder with space\folder1\file.txt
+  - folder with space\folder2
+  - folder with space\folder2\file.txt
+
+- name: assert set owner with space recurse again
+  assert:
+    that:
+    - not recurse_space_again|changed
+
+# Run cleanup after tests
+- name: delete test path
+  win_file:
+    path: "{{test_win_owner_path}}"
+    state: absent
+
+- name: remove test user
+  win_user:
+    name: test win owner
+    state: absent

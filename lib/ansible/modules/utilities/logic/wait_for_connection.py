@@ -32,6 +32,7 @@ description:
 - Retries the transport connection after a timeout of C(connect_timeout).
 - Tests the transport connection every C(sleep) seconds.
 - This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
+- This module is also supported for Windows targets.
 version_added: "2.3"
 options:
   connect_timeout:
@@ -50,6 +51,8 @@ options:
     description:
       - Maximum number of seconds to wait for.
     default: 600
+notes:
+- This module is also supported for Windows targets.
 author: "Dag Wieers (@dagwieers)"
 '''
 

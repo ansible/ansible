@@ -22,6 +22,7 @@ __metaclass__ = type
 import copy
 import os
 import json
+import re
 import tempfile
 from yaml import YAMLError
 
@@ -41,6 +42,10 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+# Tries to determine if a path is inside a role, last dir must be 'tasks'
+# this is not perfect but people should really avoid 'tasks' dirs outside roles when using Ansible.
+RE_TASKS = re.compile(u'(?:^|%s)+tasks%s?$' % (os.path.sep, os.path.sep))
 
 
 class DataLoader:
@@ -80,6 +85,17 @@ class DataLoader:
         a JSON or YAML string.
         '''
         new_data = None
+
+        # YAML parser will take JSON as it is a subset.
+        if isinstance(data, AnsibleUnicode):
+            # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
+            # they are unable to cope with our subclass.
+            # Unwrap and re-wrap the unicode so we can keep track of line
+            # numbers
+            in_data = text_type(data)
+        else:
+            in_data = data
+
         try:
             # we first try to load this data as JSON
             new_data = json.loads(data)
@@ -104,14 +120,15 @@ class DataLoader:
 
         return new_data
 
-    def load_from_file(self, file_name):
+    def load_from_file(self, file_name, cache=True, unsafe=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
 
         file_name = self.path_dwim(file_name)
+        display.debug("Loading data from %s" % file_name)
 
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
-        if file_name in self._FILE_CACHE:
+        if cache and file_name in self._FILE_CACHE:
             parsed_data = self._FILE_CACHE[file_name]
         else:
             # read the file contents and load the data structure from them
@@ -123,8 +140,11 @@ class DataLoader:
             # cache the file contents for next time
             self._FILE_CACHE[file_name] = parsed_data
 
-        # return a deep copy here, so the cache is not affected
-        return copy.deepcopy(parsed_data)
+        if unsafe:
+            return parsed_data
+        else:
+            # return a deep copy here, so the cache is not affected
+            return copy.deepcopy(parsed_data)
 
     def path_exists(self, path):
         path = self.path_dwim(path)
@@ -169,7 +189,7 @@ class DataLoader:
 
         b_file_name = to_bytes(file_name)
         if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
-            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_name)
+            raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
         show_content = True
         try:
@@ -182,7 +202,7 @@ class DataLoader:
             return (data, show_content)
 
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)))
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)), orig_exc=e)
 
     def _handle_error(self, yaml_exc, file_name, show_content):
         '''
@@ -198,7 +218,7 @@ class DataLoader:
             err_obj = AnsibleBaseYAMLObject()
             err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 
-        raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content)
+        raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
 
     def get_basedir(self):
         ''' returns the current basedir '''
@@ -218,33 +238,33 @@ class DataLoader:
         given = unquote(given)
         given = to_text(given, errors='surrogate_or_strict')
 
-        if given.startswith(u"/"):
-            return os.path.abspath(given)
-        elif given.startswith(u"~"):
-            return os.path.abspath(os.path.expanduser(given))
+        if given.startswith(to_text(os.path.sep)) or given.startswith(u'~'):
+            path = given
         else:
             basedir = to_text(self._basedir, errors='surrogate_or_strict')
-            return os.path.abspath(os.path.join(basedir, given))
+            path = os.path.join(basedir, given)
+
+        return unfrackpath(path, follow=False)
 
     def _is_role(self, path):
-        ''' imperfect role detection, roles are still valid w/o main.yml/yaml/etc '''
+        ''' imperfect role detection, roles are still valid w/o tasks|meta/main.yml|yaml|etc '''
 
-        isit = False
         b_path = to_bytes(path, errors='surrogate_or_strict')
-        b_upath = to_bytes(unfrackpath(path), errors='surrogate_or_strict')
+        b_upath = to_bytes(unfrackpath(path, follow=False), errors='surrogate_or_strict')
 
-        for suffix in (b'.yml', b'.yaml', b''):
-            b_main = b'main%s' % (suffix)
-            b_tasked = b'tasks/%s' % (b_main)
+        for finddir in (b'meta', b'tasks'):
+            for suffix in (b'.yml', b'.yaml', b''):
+                b_main = b'main%s' % (suffix)
+                b_tasked = b'%s/%s' % (finddir, b_main)
 
-            if b_path.endswith(b'tasks') and os.path.exists(os.path.join(b_path, b_main)) \
-              or os.path.exists(os.path.join(b_upath, b_tasked)) \
-              or os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked)):
-                isit = True
-                break
-
-        return isit
-
+                if (
+                    RE_TASKS.search(path) and
+                    os.path.exists(os.path.join(b_path, b_main)) or
+                    os.path.exists(os.path.join(b_upath, b_tasked)) or
+                    os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked))
+                ):
+                    return True
+        return False
 
     def path_dwim_relative(self, path, dirname, source, is_role=False):
         '''
@@ -256,35 +276,36 @@ class DataLoader:
         '''
 
         search = []
+        source = to_text(source, errors='surrogate_or_strict')
 
         # I have full path, nothing else needs to be looked at
-        if source.startswith('~') or source.startswith(os.path.sep):
-            search.append(self.path_dwim(source))
+        if source.startswith(to_text(os.path.sep)) or source.startswith(u'~'):
+            search.append(unfrackpath(source, follow=False))
         else:
             # base role/play path + templates/files/vars + relative filename
             search.append(os.path.join(path, dirname, source))
-            basedir = unfrackpath(path)
+            basedir = unfrackpath(path, follow=False)
 
             # not told if role, but detect if it is a role and if so make sure you get correct base path
             if not is_role:
                 is_role = self._is_role(path)
 
-            if is_role and path.endswith('tasks'):
-                basedir = unfrackpath(os.path.dirname(path))
+            if is_role and RE_TASKS.search(path):
+                basedir = unfrackpath(os.path.dirname(path), follow=False)
 
             cur_basedir = self._basedir
             self.set_basedir(basedir)
             # resolved base role/play path + templates/files/vars + relative filename
-            search.append(self.path_dwim(os.path.join(basedir, dirname, source)))
+            search.append(unfrackpath(os.path.join(basedir, dirname, source), follow=False))
             self.set_basedir(cur_basedir)
 
             if is_role and not source.endswith(dirname):
                 # look in role's tasks dir w/o dirname
-                search.append(self.path_dwim(os.path.join(basedir, 'tasks', source)))
+                search.append(unfrackpath(os.path.join(basedir, 'tasks', source), follow=False))
 
             # try to create absolute path for loader basedir + templates/files/vars + filename
-            search.append(self.path_dwim(os.path.join(dirname,source)))
-            search.append(self.path_dwim(os.path.join(basedir, source)))
+            search.append(unfrackpath(os.path.join(dirname, source), follow=False))
+            search.append(self.path_dwim(os.path.join(dirname, source)))
 
             # try to create absolute path for loader basedir + filename
             search.append(self.path_dwim(source))
@@ -304,24 +325,25 @@ class DataLoader:
             is prepended to the source to form the path to search for.
         :arg source: A text string which is the filename to search for
         :rtype: A text string
-        :returns: An absolute path to the filename ``source``
+        :returns: An absolute path to the filename ``source`` if found
+        :raises: An AnsibleFileNotFound Exception if the file is found to exist in the search paths
         '''
         b_dirname = to_bytes(dirname)
         b_source = to_bytes(source)
 
         result = None
+        search = []
         if source is None:
             display.warning('Invalid request to find a file that matches a "null" value')
         elif source and (source.startswith('~') or source.startswith(os.path.sep)):
             # path is absolute, no relative needed, check existence and return source
-            test_path = unfrackpath(b_source)
+            test_path = unfrackpath(b_source, follow=False)
             if os.path.exists(to_bytes(test_path, errors='surrogate_or_strict')):
                 result = test_path
         else:
-            search = []
             display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
             for path in paths:
-                upath = unfrackpath(path)
+                upath = unfrackpath(path, follow=False)
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
                 b_mydir = os.path.dirname(b_upath)
 
@@ -356,6 +378,9 @@ class DataLoader:
                     result = to_text(b_candidate)
                     break
 
+        if result is None:
+            raise AnsibleFileNotFound(file_name=source, paths=search)
+
         return result
 
     def _create_content_tempfile(self, content):
@@ -384,7 +409,7 @@ class DataLoader:
 
         b_file_path = to_bytes(file_path, errors='surrogate_or_strict')
         if not self.path_exists(b_file_path) or not self.is_file(b_file_path):
-            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % to_native(file_path))
+            raise AnsibleFileNotFound(file_name=file_path)
 
         if not self._vault:
             self._vault = VaultLib(b_password="")
@@ -403,7 +428,7 @@ class DataLoader:
                         # since the decrypt function doesn't know the file name
                         data = f.read()
                         if not self._b_vault_password:
-                            raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
+                            raise AnsibleParserError("A vault password must be specified to decrypt %s" % to_native(file_path))
 
                         data = self._vault.decrypt(data, filename=real_path)
                         # Make a temp file
@@ -413,7 +438,7 @@ class DataLoader:
             return real_path
 
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (to_native(real_path), to_native(e)))
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (to_native(real_path), to_native(e)), orig_exc=e)
 
     def cleanup_tmp_file(self, file_path):
         """
@@ -429,5 +454,5 @@ class DataLoader:
         for f in self._tempfiles:
             try:
                 self.cleanup_tmp_file(f)
-            except:
-                pass  # TODO: this should at least warn
+            except Exception as e:
+                display.warning("Unable to cleanup temp files: %s" % to_native(e))

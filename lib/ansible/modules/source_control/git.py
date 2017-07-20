@@ -60,9 +60,8 @@ options:
         choices: [ "yes", "no" ]
         version_added: "1.5"
         description:
-            - if C(yes), adds the hostkey for the repo url if not already
-              added. If ssh_opts contains "-o StrictHostKeyChecking=no",
-              this parameter is ignored.
+            - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
+              present as an ssh options.
     ssh_opts:
         required: false
         default: None
@@ -184,7 +183,16 @@ options:
             - if C(yes), when cloning or checking out a C(version) verify the
               signature of a GPG signed commit. This requires C(git) version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
-              be trusted in the GPG trustdb.
+              be present in the GPG keyring.
+
+    archive:
+        required: false
+        version_added: "2.4"
+        description:
+            - Specify archive file path with extension. If specified, creates an
+              archive file of the specified format containing the tree structure
+              for the source tree.
+              Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
 
 requirements:
     - git>=1.7.1 (the command line tool)
@@ -228,11 +236,18 @@ EXAMPLES = '''
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     refspec: '+refs/pull/*:refs/heads/*'
+
+# Example Create git archive from repo
+- git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
+    archive: /tmp/ansible-examples.zip
+
 '''
 
 RETURN = '''
 after:
-    description: last commit revision of the repository retrived during the update
+    description: last commit revision of the repository retrieved during the update
     returned: success
     type: string
     sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
@@ -253,16 +268,18 @@ warnings:
     sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
 '''
 
+import filecmp
 import os
 import re
 import shlex
 import stat
 import sys
+import shutil
 import tempfile
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
-from ansible.module_utils.known_hosts import add_git_host_key
+from ansible.module_utils.basic import get_exception
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
 
@@ -348,6 +365,9 @@ if [ -z "$GIT_SSH_OPTS" ]; then
 else
     BASEOPTS=$GIT_SSH_OPTS
 fi
+
+# Let ssh fail rather than prompt
+BASEOPTS="$BASEOPTS -o BatchMode=yes"
 
 if [ -z "$GIT_KEY" ]; then
     ssh $BASEOPTS "$@"
@@ -570,15 +590,17 @@ def get_branches(git_path, module, dest):
     return branches
 
 
-def get_tags(git_path, module, dest):
+def get_annotated_tags(git_path, module, dest):
     tags = []
-    cmd = '%s tag' % (git_path,)
+    cmd = [git_path, 'for-each-ref', 'refs/tags/', '--format', '%(objecttype):%(refname:short)']
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
     for line in to_native(out).split('\n'):
         if line.strip():
-            tags.append(line.strip())
+            tagtype, tagname = line.strip().split(':')
+            if tagtype == 'tag':
+                tags.append(tagname)
     return tags
 
 
@@ -758,15 +780,6 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
             if not os.path.exists(os.path.join(dest, path, '.git')):
                 changed = True
 
-        # add the submodule repo's hostkey
-        if line.strip().startswith('url'):
-            repo = line.split('=', 1)[1].strip()
-            if module.params['ssh_opts'] is not None:
-                if "-o StrictHostKeyChecking=no" not in module.params['ssh_opts']:
-                    add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-            else:
-                add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-
     # Check for updates to existing modules
     if not changed:
         # Fetch updates
@@ -876,7 +889,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
 
 
 def verify_commit_sign(git_path, module, dest, version):
-    if version in get_tags(git_path, module, dest):
+    if version in get_annotated_tags(git_path, module, dest):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"
@@ -899,6 +912,68 @@ def git_version(git_path, module):
     if not rematch:
         return None
     return LooseVersion(rematch.groups()[0])
+
+
+def git_archive(git_path, module, dest, archive, archive_fmt, version):
+    """ Create git archive in given source directory """
+    cmd = "%s archive --format=%s --output=%s %s" \
+          % (git_path, archive_fmt, archive, version)
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Failed to perform archive operation",
+                         details="Git archive command failed to create "
+                                 "archive %s using %s directory."
+                                 "Error: %s" % (archive, dest, err))
+    return rc, out, err
+
+
+def create_archive(git_path, module, dest, archive, version, repo, result):
+    """ Helper function for creating archive using git_archive """
+    all_archive_fmt = {'.zip': 'zip', '.gz': 'tar.gz', '.tar': 'tar',
+                       '.tgz': 'tgz'}
+    _, archive_ext = os.path.splitext(archive)
+    archive_fmt = all_archive_fmt.get(archive_ext, None)
+    if archive_fmt is None:
+        module.fail_json(msg="Unable to get file extension from "
+                             "archive file name : %s" % archive,
+                         details="Please specify archive as filename with "
+                                 "extension. File extension can be one "
+                                 "of ['tar', 'tar.gz', 'zip', 'tgz']")
+
+    repo_name = repo.split("/")[-1].replace(".git", "")
+
+    if os.path.exists(archive):
+        # If git archive file exists, then compare it with new git archive file.
+        # if match, do nothing
+        # if does not match, then replace existing with temp archive file.
+        tempdir = tempfile.mkdtemp()
+        new_archive_dest = os.path.join(tempdir, repo_name)
+        new_archive = new_archive_dest + '.' + archive_fmt
+        git_archive(git_path, module, dest, new_archive, archive_fmt, version)
+
+        # filecmp is supposed to be efficient than md5sum checksum
+        if filecmp.cmp(new_archive, archive):
+            result.update(changed=False)
+            # Cleanup before exiting
+            try:
+                shutil.remove(tempdir)
+            except OSError:
+                pass
+        else:
+            try:
+                shutil.move(new_archive, archive)
+                shutil.remove(tempdir)
+                result.update(changed=True)
+            except OSError:
+                exception = get_exception()
+                module.fail_json(msg="Failed to move %s to %s" %
+                                     (new_archive, archive),
+                                 details="Error occured while moving : %s"
+                                         % exception)
+    else:
+        # Perform archive from local directory
+        git_archive(git_path, module, dest, archive, archive_fmt, version)
+        result.update(changed=True)
 
 
 # ===========================================
@@ -925,6 +1000,7 @@ def main():
             recursive=dict(default='yes', type='bool'),
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
+            archive=dict(type='path'),
         ),
         supports_check_mode=True
     )
@@ -945,8 +1021,16 @@ def main():
     key_file = module.params['key_file']
     ssh_opts = module.params['ssh_opts']
     umask = module.params['umask']
+    archive = module.params['archive']
 
     result = dict(changed=False, warnings=list())
+
+    if module.params['accept_hostkey']:
+        if ssh_opts is not None:
+            if "-o StrictHostKeyChecking=no" not in ssh_opts:
+                ssh_opts += " -o StrictHostKeyChecking=no"
+        else:
+            ssh_opts = "-o StrictHostKeyChecking=no"
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
@@ -981,18 +1065,10 @@ def main():
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
     # for git to use the wrapper script
-    ssh_wrapper = None
-    if key_file or ssh_opts:
-        ssh_wrapper = write_ssh_wrapper()
-        set_git_ssh(ssh_wrapper, key_file, ssh_opts)
-        module.add_cleanup_file(path=ssh_wrapper)
+    ssh_wrapper = write_ssh_wrapper()
+    set_git_ssh(ssh_wrapper, key_file, ssh_opts)
+    module.add_cleanup_file(path=ssh_wrapper)
 
-    # add the git repo's hostkey
-    if module.params['ssh_opts'] is not None:
-        if "-o StrictHostKeyChecking=no" not in module.params['ssh_opts']:
-            add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-    else:
-        add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
     git_version_used = git_version(git_path, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
@@ -1003,6 +1079,7 @@ def main():
     track_submodules = module.params['track_submodules']
 
     result.update(before=None)
+
     local_mods = False
     need_fetch = True
     if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
@@ -1091,6 +1168,15 @@ def main():
             diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
             if diff:
                 result['diff'] = diff
+
+    if archive:
+        # Git archive is not supported by all git servers, so
+        # we will first clone and perform git archive from local directory
+        if module.check_mode:
+            result.update(changed=True)
+            module.exit_json(**result)
+
+        create_archive(git_path, module, dest, archive, version, repo, result)
 
     # cleanup the wrapper script
     if ssh_wrapper:

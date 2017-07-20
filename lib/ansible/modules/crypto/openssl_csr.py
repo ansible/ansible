@@ -31,7 +31,7 @@ description:
     - "This module allows one to (re)generates OpenSSL certificate signing requests.
        It uses the pyOpenSSL python library to interact with openssl. This module support
        the subjectAltName extension. Note: At least one of commonName or subjectAltName must
-       be specified."
+       be specified. This module uses file common arguments to specify generated file permissions."
 requirements:
     - "python-pyOpenSSL"
 options:
@@ -50,6 +50,11 @@ options:
         required: true
         description:
             - Path to the privatekey to use when signing the certificate signing request
+    privatekey_passphrase:
+        required: false
+        description:
+            - The passphrase for the privatekey.
+        version_added: "2.4"
     version:
         required: false
         default: 3
@@ -68,7 +73,7 @@ options:
     subjectAltName:
         required: false
         description:
-            - SAN extention to attach to the certificate signing request
+            - SAN extension to attach to the certificate signing request
     countryName:
         required: false
         aliases: [ 'C' ]
@@ -89,11 +94,11 @@ options:
         aliases: [ 'O' ]
         description:
             - organizationName field of the certificate signing request subject
-    organizationUnitName:
+    organizationalUnitName:
         required: false
         aliases: [ 'OU' ]
         description:
-            - organizationUnitName field of the certificate signing request subject
+            - organizationalUnitName field of the certificate signing request subject
     commonName:
         required: false
         aliases: [ 'CN' ]
@@ -114,7 +119,15 @@ EXAMPLES = '''
     privatekey_path: /etc/ssl/private/ansible.com.pem
     commonName: www.ansible.com
 
-# Generate an OpenSSL Certificate Signing Request with Subject informations
+# Generate an OpenSSL Certificate Signing Request with a
+# passphrase protected private key
+- openssl_csr:
+    path: /etc/ssl/csr/www.ansible.com.csr
+    privatekey_path: /etc/ssl/private/ansible.com.pem
+    privatekey_passphrase: ansible
+    commonName: www.ansible.com
+
+# Generate an OpenSSL Certificate Signing Request with Subject information
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
@@ -167,7 +180,7 @@ else:
     pyopenssl_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class CertificateSigningRequestError(Exception):
@@ -183,6 +196,7 @@ class CertificateSigningRequest(object):
         self.subjectAltName = module.params['subjectAltName']
         self.path = module.params['path']
         self.privatekey_path = module.params['privatekey_path']
+        self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.version = module.params['version']
         self.changed = True
         self.request = None
@@ -201,9 +215,7 @@ class CertificateSigningRequest(object):
         if self.subjectAltName is None:
             self.subjectAltName = 'DNS:%s' % self.subject['CN']
 
-        for (key, value) in self.subject.items():
-            if value is None:
-                del self.subject[key]
+        self.subject = dict((k, v) for k, v in self.subject.items() if v)
 
     def generate(self, module):
         '''Generate the certificate signing request.'''
@@ -217,22 +229,22 @@ class CertificateSigningRequest(object):
                     setattr(subject, key, value)
 
             if self.subjectAltName is not None:
-                req.add_extensions([crypto.X509Extension("subjectAltName", False, self.subjectAltName)])
+                req.add_extensions([crypto.X509Extension(b"subjectAltName", False, self.subjectAltName.encode('ascii'))])
 
             privatekey_content = open(self.privatekey_path).read()
-            self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
-
+            self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                                     privatekey_content,
+                                                     self.privatekey_passphrase)
             req.set_pubkey(self.privatekey)
             req.sign(self.privatekey, self.digest)
             self.request = req
 
             try:
-                csr_file = open(self.path, 'w')
+                csr_file = open(self.path, 'wb')
                 csr_file.write(crypto.dump_certificate_request(crypto.FILETYPE_PEM, self.request))
                 csr_file.close()
-            except (IOError, OSError):
-                e = get_exception()
-                raise CertificateSigningRequestError(e)
+            except (IOError, OSError) as exc:
+                raise CertificateSigningRequestError(exc)
         else:
             self.changed = False
 
@@ -245,15 +257,14 @@ class CertificateSigningRequest(object):
 
         try:
             os.remove(self.path)
-        except OSError:
-            e = get_exception()
-            if e.errno != errno.ENOENT:
-                raise CertificateSigningRequestError(e)
+        except OSError as exc:
+            if exc.errno != errno.ENOENT:
+                raise CertificateSigningRequestError(exc)
             else:
                 self.changed = False
 
     def dump(self):
-        '''Serialize the object into a dictionnary.'''
+        '''Serialize the object into a dictionary.'''
 
         result = {
             'csr': self.path,
@@ -271,6 +282,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             digest=dict(default='sha256', type='str'),
             privatekey_path=dict(require=True, type='path'),
+            privatekey_passphrase=dict(type='str', no_log=True),
             version=dict(default='3', type='int'),
             force=dict(default=False, type='bool'),
             subjectAltName=dict(aliases=['subjectAltName'], type='str'),
@@ -287,6 +299,9 @@ def main():
         supports_check_mode=True,
         required_one_of=[['commonName', 'subjectAltName']],
     )
+
+    if not pyopenssl_found:
+        module.fail_json(msg='the python pyOpenSSL module is required')
 
     path = module.params['path']
     base_dir = os.path.dirname(module.params['path'])
@@ -305,9 +320,8 @@ def main():
 
         try:
             csr.generate(module)
-        except CertificateSigningRequestError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except CertificateSigningRequestError as exc:
+            module.fail_json(msg=to_native(exc))
 
     else:
 
@@ -318,9 +332,8 @@ def main():
 
         try:
             csr.remove()
-        except CertificateSigningRequestError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except CertificateSigningRequestError as exc:
+            module.fail_json(msg=to_native(exc))
 
     result = csr.dump()
 

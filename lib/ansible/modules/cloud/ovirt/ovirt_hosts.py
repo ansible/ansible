@@ -174,11 +174,12 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 host:
     description: "Dictionary of all the host attributes. Host attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/host."
     returned: On success if host is found.
     type: dict
 '''
 
+import time
 import traceback
 
 try:
@@ -309,6 +310,8 @@ def control_state(host_module):
             fail_condition=failed_state,
         )
 
+    return host
+
 
 def main():
     argument_spec = ovirt_full_argument_spec(
@@ -351,7 +354,7 @@ def main():
         )
 
         state = module.params['state']
-        control_state(hosts_module)
+        host = control_state(hosts_module)
         if state == 'present':
             hosts_module.create(
                 deploy_hosted_engine=(
@@ -375,10 +378,12 @@ def main():
             )
             ret = hosts_module.create()
         elif state == 'upgraded':
+            result_state = hoststate.MAINTENANCE if host.status == hoststate.MAINTENANCE else hoststate.UP
             ret = hosts_module.action(
                 action='upgrade',
                 action_condition=lambda h: h.update_available,
-                wait_condition=lambda h: h.status == hoststate.UP,
+                wait_condition=lambda h: h.status == result_state,
+                post_action=lambda h: time.sleep(module.params['poll_interval']),
                 fail_condition=failed_state,
             )
         elif state == 'started':

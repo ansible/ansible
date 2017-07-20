@@ -69,6 +69,7 @@ description:
        executed directly by C(/usr/bin/ansible) to check what variables are
        available to a host. Ansible provides many I(facts) about the system,
        automatically.
+     - This module is also supported for Windows targets.
 notes:
     - More ansible facts will be added with successive releases. If I(facter) or
       I(ohai) are installed, variables from these programs will also be snapshotted
@@ -85,6 +86,7 @@ notes:
       their output must be formattable in JSON (Ansible will take care of this). Test the
       output of your scripts.
       This option was added in Ansible 2.1.
+    - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
@@ -117,23 +119,57 @@ EXAMPLES = """
 # ansible windows -m setup -a "fact_path='c:\\custom_facts'"
 """
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
+from ansible.module_utils.facts.namespace import PrefixFactNamespace
+from ansible.module_utils.facts import ansible_collector
+
+from ansible.module_utils.facts import default_collectors
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             gather_subset=dict(default=["all"], required=False, type='list'),
             gather_timeout=dict(default=10, required=False, type='int'),
             filter=dict(default="*", required=False),
             fact_path=dict(default='/etc/ansible/facts.d', required=False, type='path'),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
-    data = get_all_facts(module)
-    module.exit_json(**data)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.facts import *
+    gather_subset = module.params['gather_subset']
+    gather_timeout = module.params['gather_timeout']
+    filter_spec = module.params['filter']
+
+    # TODO: this mimics existing behavior where gather_subset=["!all"] actually means
+    #       to collect nothing except for the below list
+    # TODO: decide what '!all' means, I lean towards making it mean none, but likely needs
+    #       some tweaking on how gather_subset operations are performed
+    minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
+                                       'distribution', 'dns', 'env', 'fips', 'local', 'lsb',
+                                       'pkg_mgr', 'platform', 'python', 'selinux',
+                                       'service_mgr', 'ssh_pub_keys', 'user'])
+
+    all_collector_classes = default_collectors.collectors
+
+    # rename namespace_name to root_key?
+    namespace = PrefixFactNamespace(namespace_name='ansible',
+                                    prefix='ansible_')
+
+    fact_collector = \
+        ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,
+                                                namespace=namespace,
+                                                filter_spec=filter_spec,
+                                                gather_subset=gather_subset,
+                                                gather_timeout=gather_timeout,
+                                                minimal_gather_subset=minimal_gather_subset)
+
+    facts_dict = fact_collector.collect(module=module)
+
+    module.exit_json(ansible_facts=facts_dict)
+
 
 if __name__ == '__main__':
     main()

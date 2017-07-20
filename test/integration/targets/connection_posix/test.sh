@@ -11,7 +11,7 @@ group=$(python -c \
 cd ../connection
 
 INVENTORY="../connection_${group}/test_connection.inventory" ./test.sh \
-    -e hosts="${group}" \
+    -e target_hosts="${group}" \
     -e action_prefix= \
     -e local_tmp=/tmp/ansible-local \
     -e remote_tmp=/tmp/ansible-remote \

@@ -26,15 +26,15 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$src = Get-AnsibleParam -obj $params -name "src" -type "path"
+$src = Get-AnsibleParam -obj $params -name "src"
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "present","absent"
+$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "absent","present"
 $orig_args = Get-AnsibleParam -obj $params -name "args" -type "string"
 $directory = Get-AnsibleParam -obj $params -name "directory" -type "path"
 $hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "string"
 $icon = Get-AnsibleParam -obj $params -name "icon" -type "path"
 $orig_description = Get-AnsibleParam -obj $params -name "description" -type "string"
-$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "normal","maximized","minimized"
+$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "maximized","minimized","normal"
 
 # Expand environment variables on non-path types
 $args = Expand-Environment($orig_args)
@@ -63,7 +63,7 @@ If ($state -eq "absent") {
             Remove-Item -Path $dest -WhatIf:$check_mode
         } Catch {
             # Report removal failure
-            Fail-Json $result "Failed to remove shortcut $dest. (" + $_.Exception.Message + ")"
+            Fail-Json -obj $result -message "Failed to remove shortcut '$dest'. ($($_.Exception.Message))"
         }
         # Report removal success
         $result.changed = $true
@@ -81,6 +81,9 @@ If ($state -eq "absent") {
         # Windows translates executables to absolute path, so do we
         If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
             $src = (Get-Command -Name $src -Type Application).Definition
+        }
+        If (-not (Split-Path -Path $src -IsAbsolute)) {
+            Fail-Json -obj $result -message "Source '$src' is not found in PATH and not an absolute path."
         }
     }
 
@@ -138,7 +141,7 @@ If ($state -eq "absent") {
         Try {
             $ShortCut.Save()
         } Catch {
-            Fail-Json $result "Failed to create shortcut $dest. (" + $_.Exception.Message + ")"
+            Fail-Json -obj $result -message "Failed to create shortcut '$dest'. ($($_.Exception.Message))"
         }
     }
 }

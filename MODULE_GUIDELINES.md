@@ -49,7 +49,7 @@ A detailed explanation of the PR workflow can be seen here: https://github.com/a
 
 # Extras maintainers list
 
-The full list of maintainers for modules is located here: https://github.com/ansible/ansibullbot
+The full list of maintainers for modules is located here: https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS.txt
 
 ## Changing Maintainership
 

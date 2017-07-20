@@ -364,9 +364,9 @@ def main():
                 subnet_net_id_changed = sorted(vpc_subnet_ids) != sorted(current_vpc_subnet_ids)
                 vpc_security_group_ids_changed = sorted(vpc_security_group_ids) != sorted(current_vpc_security_group_ids)
 
-                if any((subnet_net_id_changed, vpc_security_group_ids_changed)):
-                    func_kwargs.update({'VpcConfig':
-                                        {'SubnetIds': vpc_subnet_ids,'SecurityGroupIds': vpc_security_group_ids}})
+            if 'VpcConfig' not in current_config or subnet_net_id_changed or vpc_security_group_ids_changed:
+                func_kwargs.update({'VpcConfig':
+                                    {'SubnetIds': vpc_subnet_ids,'SecurityGroupIds': vpc_security_group_ids}})
         else:
             # No VPC configuration is desired, assure VPC config is empty when present in current config
             if ('VpcConfig' in current_config and

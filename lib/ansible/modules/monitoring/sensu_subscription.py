@@ -112,7 +112,7 @@ def sensu_subscription(module, path, name, state='present', backup=False):
     if 'subscriptions' not in config['client']:
         if state == 'absent':
             reasons.append('`client.subscriptions\' did not exist and state is `absent\'')
-            return changed
+            return changed, reasons
         config['client']['subscriptions'] = []
         changed = True
         reasons.append('`client.subscriptions\' did not exist')
@@ -120,7 +120,7 @@ def sensu_subscription(module, path, name, state='present', backup=False):
     if name not in config['client']['subscriptions']:
         if state == 'absent':
             reasons.append('channel subscription was absent')
-            return changed
+            return changed, reasons
         config['client']['subscriptions'].append(name)
         changed = True
         reasons.append('channel subscription was absent and state is `present\'')

@@ -22,7 +22,10 @@ __metaclass__ = type
 import os
 import json
 
-import xml.etree.ElementTree as ET
+try:
+    from lxml.etree import parse
+except ImportError:
+    from xml.etree.ElementTree import parse
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
@@ -52,7 +55,7 @@ def load_fixture(name, content='xml'):
             pass
     else:
         try:
-            data = ET.parse(path).getroot()
+            data = parse(path).getroot()
         except:
             pass
 

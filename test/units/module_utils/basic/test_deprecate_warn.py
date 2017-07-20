@@ -34,7 +34,7 @@ class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
 
                 ansible.module_utils.basic._ANSIBLE_ARGS = None
                 am = ansible.module_utils.basic.AnsibleModule(
-                    argument_spec = dict(),
+                    argument_spec=dict(),
                 )
                 am._name = 'unittest'
 
@@ -51,7 +51,7 @@ class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
 
                 ansible.module_utils.basic._ANSIBLE_ARGS = None
                 am = ansible.module_utils.basic.AnsibleModule(
-                    argument_spec = dict(),
+                    argument_spec=dict(),
                 )
                 am._name = 'unittest'
 
@@ -69,3 +69,21 @@ class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
                     {u'msg': u'deprecation4', u'version': '2.4'},
                 ])
 
+    def test_deprecate_without_list(self):
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
+        with swap_stdin_and_argv(stdin_data=args):
+            with swap_stdout():
+
+                ansible.module_utils.basic._ANSIBLE_ARGS = None
+                am = ansible.module_utils.basic.AnsibleModule(
+                    argument_spec=dict(),
+                )
+                am._name = 'unittest'
+
+                with self.assertRaises(SystemExit):
+                    am.exit_json(deprecations='Simple deprecation warning')
+                output = json.loads(sys.stdout.getvalue())
+                self.assertTrue('warnings' not in output or output['warnings'] == [])
+                self.assertEquals(output['deprecations'], [
+                    {u'msg': u'Simple deprecation warning', u'version': None},
+                ])

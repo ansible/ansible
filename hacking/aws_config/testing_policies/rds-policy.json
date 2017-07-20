@@ -1,0 +1,51 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowRDSModuleTests",
+            "Effect": "Allow",
+            "Action": [
+                "rds:DescribeDBInstances",
+                "rds:CreateDBInstance",
+                "rds:ModifyDBInstance",
+                "rds:ListTagsForResource",
+                "rds:DeleteDBInstance"
+            ],
+            "Resource": [
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:ansible-testing*"
+            ]
+        },
+        {
+            "Sid": "AllowRDSInstanceManageOwnInstance",
+            "Effect": "Allow",
+            "Action": [
+                "rds:CreateDBInstance",
+                "rds:ModifyDBInstance",
+                "rds:ListTagsForResource",
+                "rds:DescribeDBInstances"
+            ],
+            "Resource": [
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:rds-*"
+            ]
+        },
+        {
+            "Sid": "AllowRDSSnapshotManageSnapshots",
+            "Effect": "Allow",
+            "Action": [
+                "rds:DescribeDBSnapshots",
+                "rds:DescribeDBInstances",
+                "rds:DescribeDBSnapshots",
+                "rds:DeleteDBInstance",
+                "rds:CreateDBSnapshot",
+                "rds:DeleteDBSnapshot",
+                "rds:RestoreDBInstanceFromDBSnapshot",
+                "rds:CreateDBInstanceReadReplica"
+            ],
+            "Resource": [
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:snapshot-*",
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:rds-*",
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:rds-*"
+            ]
+        }
+    ]
+}

@@ -134,6 +134,38 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
+Installing multiple roles from multiple files
+=============================================
+
+At a basic level, including requirements files allows you to break up bits of roles into smaller files. Role includes pull in roles from other files.
+
+Use the following command to install roles includes in *requirements.yml*  + *webserver,yml*
+
+::
+
+    ansible-galaxy install -r requirements.yml
+
+Content of the *requirements.yml* file:
+
+::
+
+    # from galaxy
+    - src: yatesr.timezone
+
+    - include: <path_to_requirements>/webserver.yml
+
+
+Content of the *webserver.yml* file:
+
+::
+
+    # from github
+    - src: https://github.com/bennojoy/nginx
+
+    # from Bitbucket
+    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+      version: v1.4
+
 Dependencies
 ============
 
@@ -162,7 +194,7 @@ The complex form can also be used as follows:
         name: composer
 
 When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the *roles_path*. To understand how dependencies 
-are handled during play execution, see :doc:`playbooks_roles`.
+are handled during play execution, see :doc:`playbooks_reuse_roles`.
 
 .. note::
 
@@ -471,7 +503,7 @@ Provide the ID of the integration to be disabled. You can find the ID by using t
 
 .. seealso::
 
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        All about ansible roles
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

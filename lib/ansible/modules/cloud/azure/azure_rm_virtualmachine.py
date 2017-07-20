@@ -90,8 +90,7 @@ options:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
               subscription and location. Check your subscription for available choices.
-        default: Standard_D1
-        required: false
+        required: true
     admin_username:
         description:
             - Admin username used to access the host after it is created. Required when creating a VM.
@@ -487,7 +486,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             location=dict(type='str'),
             short_hostname=dict(type='str'),
-            vm_size=dict(type='str', choices=[], default='Standard_D1'),
+            vm_size=dict(type='str', required=True),
             admin_username=dict(type='str'),
             admin_password=dict(type='str', no_log=True),
             ssh_password_enabled=dict(type='bool', default=True),
@@ -510,9 +509,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
         )
-
-        for key in VirtualMachineSizeTypes:
-            self.module_arg_spec['vm_size']['choices'].append(getattr(key, 'value'))
 
         self.resource_group = None
         self.name = None
@@ -555,7 +551,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         # make sure options are lower case
@@ -793,7 +789,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     vhd = VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
                     vm_resource = VirtualMachine(
                         vm_dict['location'],
-                        vm_id=vm_dict['properties']['vmId'],
                         os_profile=OSProfile(
                             admin_username=vm_dict['properties']['osProfile']['adminUsername'],
                             computer_name=vm_dict['properties']['osProfile']['computerName']
@@ -1090,7 +1085,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                        self.image['offer'],
                                                                        self.image['sku'])
         except Exception as exc:
-            self.fail("Error fetching image {0} {1} {2} - {4}".format(self.image['publisher'],
+            self.fail("Error fetching image {0} {1} {2} - {3}".format(self.image['publisher'],
                                                                       self.image['offer'],
                                                                       self.image['sku'],
                                                                       str(exc)))

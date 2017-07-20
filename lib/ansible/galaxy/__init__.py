@@ -43,7 +43,7 @@ class Galaxy(object):
         # cli option handling is responsible for making roles_path a list
         self.roles_paths = roles_path
 
-        self.roles =  {}
+        self.roles = {}
 
         # load data path for resource usage
         this_dir, this_filename = os.path.split(__file__)

@@ -120,7 +120,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 permission:
     description: "Dictionary of all the permission attributes. Permission attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/permission."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/permission."
     returned: On success if permission is found.
     type: dict
 '''

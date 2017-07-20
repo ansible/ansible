@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-
 DOCUMENTATION = r'''
 ---
 module: win_iis_webapppool
@@ -151,4 +150,3 @@ info:
       type: string
       sample: "Started"
 '''
-

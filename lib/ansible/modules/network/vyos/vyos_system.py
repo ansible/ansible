@@ -175,7 +175,7 @@ def main():
         host_name=dict(type='str'),
         domain_name=dict(type='str'),
         domain_search=dict(type='list'),
-        name_server=dict(type='list'),
+        name_server=dict(type='list', aliases=['name_servers']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 

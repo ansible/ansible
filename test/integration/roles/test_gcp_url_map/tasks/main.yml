@@ -1,0 +1,178 @@
+# GCP UrlMap Integration Tests.
+# Only parameter tests are currently done in this file as this module requires
+# a significant amount of infrastructure.
+######
+# ============================================================
+- name: "Create UrlMap with no default service (changed == False)"
+# ============================================================
+  gcp_url_map:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    url_map_name: "{{ urlmap }}"
+    host_rules:
+      - hosts:
+          - '*.'
+        path_matcher: 'path-matcher-one'
+    state: "present"
+  register: result
+  ignore_errors: True
+  tags:
+    - param-check
+- name: "assert urlmap no default service (msg error ignored, changed==False)"
+  assert:
+    that:
+      - 'not result.changed'
+      - 'result.msg == "missing required arguments: default_service"'
+
+# ============================================================
+- name: "Create UrlMap with no pathmatcher (changed == False)"
+# ============================================================
+  gcp_url_map:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    url_map_name: "{{ urlmap }}"
+    default_service: "gfr2-bes"
+    host_rules:
+      - hosts:
+          - '*.'
+        path_matcher: 'path-matcher-one'
+    state: "present"
+  register: result
+  ignore_errors: True
+  tags:
+    - param-check
+- name: "assert urlmap no path_matcher (msg error ignored, changed==False)"
+  assert:
+    that:
+      - 'not result.changed'
+      - 'result.msg == "parameters are required together: [''path_matchers'', ''host_rules'']"'
+
+# ============================================================
+- name: "Create UrlMap with no hostrules (changed == False)"
+# ============================================================
+  gcp_url_map:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    url_map_name: "{{ urlmap }}"
+    default_service: "gfr2-bes"
+    path_matchers:
+      - name: 'path-matcher-one'
+        description: 'path matcher one'
+        default_service: 'gfr-bes'
+        path_rules:
+          - service: 'gfr2-bes'
+            paths:
+              - '/data'
+              - '/aboutus'
+    state: "present"
+  tags:
+    - param-check
+  register: result
+  ignore_errors: True
+- name: "assert no host_rules (msg error ignored, changed==False)"
+  assert:
+    that:
+      - 'not result.changed'
+      - 'result.msg == "parameters are required together: [''path_matchers'', ''host_rules'']"'
+
+# ============================================================
+- name: "Update UrlMap with non-absolute paths (changed==False)"
+# ============================================================
+  gcp_url_map:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    url_map_name: "{{ urlmap }}"
+    default_service: "gfr2-bes"
+    path_matchers:
+      - name: 'path-matcher-one'
+        description: 'path matcher one'
+        default_service: 'gfr-bes'
+        path_rules:
+          - service: 'gfr2-bes'
+            paths:
+              - 'data'
+              - 'aboutus'
+    host_rules:
+      - hosts:
+          - '*.'
+        path_matcher: 'path-matcher-one'
+    state: "present"
+  tags:
+    - param-check
+  ignore_errors: True
+  register: result
+- name: "assert path error updated (changed==False)"
+  assert:
+    that:
+      - 'not result.changed'
+      - 'result.msg == "path for path-matcher-one must start with /"'
+
+# ============================================================
+- name: "Update UrlMap with invalid wildcard host (changed==False)"
+# ============================================================
+  gcp_url_map:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    url_map_name: "{{ urlmap }}"
+    default_service: "gfr2-bes"
+    path_matchers:
+      - name: 'path-matcher-one'
+        description: 'path matcher one'
+        default_service: 'gfr-bes'
+        path_rules:
+          - service: 'gfr2-bes'
+            paths:
+              - '/data'
+              - '/aboutus'
+    host_rules:
+      - hosts:
+          - 'foobar*'
+        path_matcher: 'path-matcher-one'
+    state: "present"
+  tags:
+    - param-check
+  ignore_errors: True
+  register: result
+- name: "assert host wildcard error (error msg ignored, changed==False)"
+  assert:
+    that:
+      - 'not result.changed'
+      - 'result.msg == "wildcard must be first char in host, foobar*"'
+
+# ============================================================
+- name: "Update UrlMap with invalid wildcard host second char (changed==False)"
+# ============================================================
+  gcp_url_map:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    url_map_name: "{{ urlmap }}"
+    default_service: "gfr2-bes"
+    path_matchers:
+      - name: 'path-matcher-one'
+        description: 'path matcher one'
+        default_service: 'gfr-bes'
+        path_rules:
+          - service: 'gfr2-bes'
+            paths:
+              - '/data'
+              - '/aboutus'
+    host_rules:
+      - hosts:
+          - '*='
+        path_matcher: 'path-matcher-one'
+    state: "present"
+  tags:
+    - param-check
+  ignore_errors: True
+  register: result
+- name: "assert wildcard error second char (error msg ignored, changed==False)"
+  assert:
+    that:
+      - 'not result.changed'
+      - 'result.msg == "wildcard be followed by a ''.'' or ''-'', *="'

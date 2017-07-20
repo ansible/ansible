@@ -1,0 +1,27 @@
+- name: Warn user
+  win_msg:
+    display_seconds: 10
+    msg: Keep calm and carry on.
+  register: msg_result
+
+- name: Test msg_result
+  assert:
+    that:
+    - not msg_result|failed
+    - msg_result|changed
+    - msg_result.runtime_seconds < 10
+
+- name: Warn user and wait for it
+  win_msg:
+    display_seconds: 5
+    msg: Keep calm and carry on.
+    #to: '{{ ansible_user }}'
+    wait: yes
+  register: msg_wait_result
+
+- name: Test msg_wait_result
+  assert:
+    that:
+    - not msg_wait_result|failed
+    - msg_wait_result|changed
+    - msg_wait_result.runtime_seconds > 5

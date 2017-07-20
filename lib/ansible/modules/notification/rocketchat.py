@@ -60,7 +60,7 @@ options:
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token)
-        specifed during the creation of webhook.
+        specified during the creation of webhook.
     required: false
     default: None
   username:

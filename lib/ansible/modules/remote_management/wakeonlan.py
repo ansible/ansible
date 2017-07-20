@@ -22,8 +22,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: wakeonlan
 version_added: '2.2'
@@ -43,7 +42,8 @@ options:
     description:
     - UDP port to use for magic Wake-on-LAN packet.
     default: 7
-author: "Dag Wieers (@dagwieers)"
+author:
+- Dag Wieers (@dagwieers)
 todo:
   - Add arping support to check whether the system is up (before and after)
   - Enable check-mode support (when we have arping support)
@@ -51,10 +51,10 @@ todo:
 notes:
   - This module sends a magic packet, without knowing whether it worked
   - Only works if the target system was properly configured for Wake-on-LAN (in the BIOS and/or the OS)
-  - Some BIOSes have a different (configurable) Wake-on-LAN boot order (i.e. PXE first) when turned off
+  - Some BIOSes have a different (configurable) Wake-on-LAN boot order (i.e. PXE first).
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Send a magic Wake-on-LAN packet to 00:00:5E:00:53:66
   wakeonlan:
     mac: '00:00:5E:00:53:66'
@@ -67,7 +67,7 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-RETURN='''
+RETURN = r'''
 # Default return values
 '''
 
@@ -97,39 +97,42 @@ def wakeonlan(module, mac, broadcast, port):
         module.fail_json(msg="Incorrect MAC address format: %s" % mac_orig)
 
     # Create payload for magic packet
-    data = ''
+    data = b''
     padding = ''.join(['FFFFFFFFFFFF', mac * 20])
     for i in range(0, len(padding), 2):
-        data = ''.join([data, struct.pack('B', int(padding[i: i + 2], 16))])
+        data = b''.join([data, struct.pack('B', int(padding[i: i + 2], 16))])
 
     # Broadcast payload to network
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    try:
-        sock.sendto(data, (broadcast, port))
-    except socket.error:
-        e = get_exception()
-        sock.close()
-        module.fail_json(msg=str(e))
+
+    if not module.check_mode:
+
+        try:
+            sock.sendto(data, (broadcast, port))
+        except socket.error:
+            e = get_exception()
+            sock.close()
+            module.fail_json(msg=str(e))
+
     sock.close()
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            mac = dict(type='str', required=True),
-            broadcast = dict(type='str', default='255.255.255.255'),
-            port = dict(type='int', default=7),
+        argument_spec=dict(
+            mac=dict(type='str', required=True),
+            broadcast=dict(type='str', default='255.255.255.255'),
+            port=dict(type='int', default=7),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
 
     mac = module.params['mac']
     broadcast = module.params['broadcast']
     port = module.params['port']
 
-    if not module.check_mode:
-        wakeonlan(module, mac, broadcast, port)
+    wakeonlan(module, mac, broadcast, port)
 
     module.exit_json(changed=True)
 

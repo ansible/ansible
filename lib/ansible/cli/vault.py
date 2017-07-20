@@ -22,11 +22,11 @@ __metaclass__ = type
 import os
 import sys
 
+from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor
-from ansible.cli import CLI
-from ansible.module_utils._text import to_text, to_bytes
 
 try:
     from __main__ import display
@@ -95,9 +95,9 @@ class VaultCLI(CLI):
 
         self.parser = CLI.base_parser(
             vault_opts=True,
-            usage = "usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
-            desc = "encryption/decryption utility for Ansbile data files",
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+            usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
+            desc="encryption/decryption utility for Ansible data files",
+            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
         self.set_action()
@@ -148,7 +148,7 @@ class VaultCLI(CLI):
             self.b_new_vault_pass = CLI.read_vault_password_file(self.options.new_vault_password_file, loader)
 
         if not self.b_vault_pass or self.options.ask_vault_pass:
-            # the 'read' options dont need to ask for password confirmation.
+            # the 'read' options don't need to ask for password confirmation.
             # 'edit' is read/write, but the decrypt will confirm.
             if self.action in ['decrypt', 'edit', 'view', 'rekey']:
                 self.b_vault_pass = self.ask_vault_passwords()
@@ -213,7 +213,7 @@ class VaultCLI(CLI):
         b_plaintext_list = []
 
         # remove the non-option '-' arg (used to indicate 'read from stdin') from the candidate args so
-        # we dont add it to the plaintext list
+        # we don't add it to the plaintext list
         args = [x for x in self.args if x != '-']
 
         # We can prompt and read input, or read from stdin, but not both.
@@ -298,7 +298,7 @@ class VaultCLI(CLI):
         # TODO: offer block or string ala eyaml
 
     def _format_output_vault_strings(self, b_plaintext_list):
-        # If we are only showing one item in the output, we dont need to included commented
+        # If we are only showing one item in the output, we don't need to included commented
         # delimiters in the text
         show_delimiter = False
         if len(b_plaintext_list) > 1:

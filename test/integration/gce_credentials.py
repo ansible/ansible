@@ -8,8 +8,7 @@ try:
     from libcloud.compute.providers import get_driver
     _ = Provider.GCE
 except ImportError:
-    print("failed=True " + \
-        "msg='libcloud with GCE support (0.13.3+) required for this module'")
+    print("failed=True msg='libcloud with GCE support (0.13.3+) required for this module'")
     sys.exit(1)
 
 

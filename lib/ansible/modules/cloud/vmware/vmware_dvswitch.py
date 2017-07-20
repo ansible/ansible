@@ -110,7 +110,6 @@ class VMwareDVSwitch(object):
         self.uplink_quantity = self.module.params['uplink_quantity']
         self.discovery_proto = self.module.params['discovery_proto']
         self.discovery_operation = self.module.params['discovery_operation']
-        self.switch_name = self.module.params['switch_name']
         self.state = self.module.params['state']
         self.content = connect_to_api(module)
 

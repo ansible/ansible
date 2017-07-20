@@ -65,7 +65,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_snapshots:
     description: "List of dictionaries describing the snapshot. Snapshot attribtues are mapped to dictionary keys,
-                  all snapshot attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/snapshot."
+                  all snapshot attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/snapshot."
     returned: On success.
     type: list
 '''

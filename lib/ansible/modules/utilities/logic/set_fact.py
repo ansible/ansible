@@ -34,6 +34,7 @@ description:
       a fact cache.
     - Per the standard Ansible variable precedence rules, many other types of variables have a higher priority, so this value may be overridden.
       See U(http://docs.ansible.com/ansible/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable) for more information.
+    - This module is also supported for Windows targets.
 options:
   key_value:
     description:
@@ -46,6 +47,7 @@ version_added: "1.2"
 notes:
     - "The `var=value` notation can only create strings or booleans.
       If you want to create lists/arrays or dictionary/hashes use `var: [val1, val2]`"
+    - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = '''

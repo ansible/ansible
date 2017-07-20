@@ -194,6 +194,12 @@ EXAMPLES = '''
     name: '*'
     state: latest
 
+- name: upgrade all packages, excluding kernel & foo related packages
+  yum:
+    name: '*'
+    state: latest
+    exclude: kernel*,foo*
+
 - name: install the nginx rpm from a remote repo
   yum:
     name: http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm
@@ -885,7 +891,7 @@ def parse_check_update(check_update_output):
     # ceph.x86_64                               1:11.2.0-0.el7                    ceph
 
     # preprocess string and filter out empty lines so the regex below works
-    out = re.sub('\n[^\w]\W+(.*)', ' \1',
+    out = re.sub(r'\n[^\w]\W+(.*)', r' \1',
                  check_update_output)
 
     available_updates = out.split('\n')

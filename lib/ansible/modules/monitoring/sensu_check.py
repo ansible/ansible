@@ -85,6 +85,12 @@ options:
       - Timeout for the check
     required: false
     default: 10
+  ttl:
+    description:
+      - Time to live in seconds until the check is considered stale
+    required: false
+    default: null
+    version_added: 2.4
   handle:
     description:
       - Whether the check should be handled or not
@@ -146,12 +152,12 @@ options:
     default: no
   low_flap_threshold:
     description:
-      - The low threshhold for flap detection
+      - The low threshold for flap detection
     required: false
     default: null
   high_flap_threshold:
     description:
-      - The high threshhold for flap detection
+      - The high threshold for flap detection
     required: false
     default: null
   custom:
@@ -263,6 +269,7 @@ def sensu_check(module, path, name, state='present', backup=False):
                        'subscribers',
                        'interval',
                        'timeout',
+                       'ttl',
                        'handle',
                        'dependencies',
                        'standalone',
@@ -363,6 +370,7 @@ def main():
                 'subscribers':  {'type': 'list'},
                 'interval':     {'type': 'int'},
                 'timeout':      {'type': 'int'},
+                'ttl':          {'type': 'int'},
                 'handle':       {'type': 'bool'},
                 'subdue_begin': {'type': 'str'},
                 'subdue_end':   {'type': 'str'},

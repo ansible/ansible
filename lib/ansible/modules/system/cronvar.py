@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Cronvar Plugin: The goal of this plugin is to provide an indempotent
+# Cronvar Plugin: The goal of this plugin is to provide an idempotent
 # method for set cron variable values.  It should play well with the
 # existing cron module as well as allow for manually added variables.
 # Each variable entered will be preceded with a comment describing the
@@ -315,7 +315,7 @@ class CronVar(object):
                 return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
             elif platform.system() == 'HP-UX':
                 return "%s %s %s" % (CRONCMD , '-l', pipes.quote(self.user))
-            else:
+            elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
         return "%s %s %s" % (CRONCMD , user, '-l')
 
@@ -327,7 +327,7 @@ class CronVar(object):
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
                 return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
-            else:
+            elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
         return "%s %s %s" % (CRONCMD , user, pipes.quote(path))
 

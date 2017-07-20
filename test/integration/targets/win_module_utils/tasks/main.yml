@@ -1,0 +1,41 @@
+- name: call old WANTS_JSON module
+  legacy_only_old_way:
+  register: old_way
+
+- assert:
+    that:
+    - old_way.data == 'success'
+
+- name: call module with only legacy requires
+  legacy_only_new_way:
+  register: new_way
+
+- assert:
+    that:
+    - new_way.data == 'success'
+
+- name: call module with local module_utils
+  uses_local_utils:
+  register: local_utils
+
+- assert:
+    that:
+    - local_utils.data == "ValueFromCustomFunction"
+
+- name: call module that imports bogus Ansible-named module_utils
+  uses_bogus_utils:
+  ignore_errors: true
+  register: bogus_utils
+
+- assert:
+    that:
+    - bogus_utils | failed
+    - bogus_utils.msg | search("Could not find")
+
+- name: call module with camel conversion tests
+  camel_conversion_test:
+  register: camel_conversion
+
+- assert:
+    that:
+    - camel_conversion.data == 'success'

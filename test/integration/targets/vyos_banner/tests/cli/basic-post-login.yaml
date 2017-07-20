@@ -1,0 +1,47 @@
+---
+- name: setup - remove post-login
+  vyos_banner:
+    banner: post-login
+    state: absent
+    provider: "{{ cli }}"
+
+- name: Set post-login
+  vyos_banner:
+    banner: post-login
+    text: |
+      this is my post-login banner
+      that has a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'this is my post-login banner' in result.commands[0]"
+      - "'that has a multiline' in result.commands[0]"
+
+- name: Set post-login again (idempotent)
+  vyos_banner:
+    banner: post-login
+    text: |
+      this is my post-login banner
+      that has a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"

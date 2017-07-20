@@ -21,17 +21,17 @@ __metaclass__ = type
 
 import datetime
 import os
-import traceback
 import textwrap
+import traceback
 import yaml
 
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import iteritems, string_types
-from ansible.plugins import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader
+from ansible.module_utils.six import string_types
+from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.plugins import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader, PluginLoader
 from ansible.utils import plugin_docs
-
 try:
     from __main__ import display
 except ImportError:
@@ -56,17 +56,17 @@ class DocCLI(CLI):
             usage='usage: %prog [options] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
-            epilog="See man pages for Ansbile CLI options or website for tutorials https://docs.ansible.com"
+            epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
 
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
-                help='List available plugins')
+                               help='List available plugins')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
-                help='Show playbook snippet for specified plugin(s)')
+                               help='Show playbook snippet for specified plugin(s)')
         self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
-                help='Show documentation for all plugins')
+                               help='Show documentation for all plugins')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
-                help='Choose which plugin type', choices=['module','cache', 'connection', 'callback', 'lookup', 'strategy'])
+                               help='Choose which plugin type', choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy'])
 
         super(DocCLI, self).parse()
 
@@ -89,6 +89,8 @@ class DocCLI(CLI):
             loader = lookup_loader
         elif plugin_type == 'strategy':
             loader = strategy_loader
+        elif plugin_type == 'inventory':
+            loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
         else:
             loader = module_loader
 
@@ -139,9 +141,9 @@ class DocCLI(CLI):
                 if doc is not None:
 
                     # assign from other sections
-                    doc['plainexamples']    = plainexamples
-                    doc['returndocs']       = returndocs
-                    doc['metadata']         = metadata
+                    doc['plainexamples'] = plainexamples
+                    doc['returndocs'] = returndocs
+                    doc['metadata'] = metadata
 
                     # generate extra data
                     if plugin_type == 'module':
@@ -150,9 +152,9 @@ class DocCLI(CLI):
                             doc['action'] = True
                         else:
                             doc['action'] = False
-                    doc['filename']         = filename
-                    doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
-                    doc['docuri']           = doc[plugin_type].replace('_', '-')
+                    doc['filename'] = filename
+                    doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
+                    doc['docuri'] = doc[plugin_type].replace('_', '-')
 
                     if self.options.show_snippet and plugin_type == 'module':
                         text += self.get_snippet_text(doc)
@@ -222,6 +224,7 @@ class DocCLI(CLI):
             if os.path.isdir(filename):
                 continue
 
+            doc = None
             try:
                 doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename)
             except:
@@ -236,7 +239,7 @@ class DocCLI(CLI):
             if len(desc) > linelimit:
                 desc = desc[:linelimit] + '...'
 
-            if plugin.startswith('_'): # Handle deprecated
+            if plugin.startswith('_'):  # Handle deprecated
                 deprecated.append("%-*s %-*.*s" % (displace, plugin[1:], linelimit, len(desc), desc))
             else:
                 text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
@@ -262,23 +265,25 @@ class DocCLI(CLI):
         text = []
         desc = CLI.tty_ify(doc['short_description'])
         text.append("- name: %s" % (desc))
-        text.append("  action: %s" % (doc['module']))
+        text.append("  %s:" % (doc['module']))
         pad = 31
         subdent = " " * pad
         limit = display.columns - pad
 
         for o in sorted(doc['options'].keys()):
             opt = doc['options'][o]
-            desc = CLI.tty_ify(" ".join(opt['description']))
+            if isinstance(opt['description'], string_types):
+                desc = CLI.tty_ify(opt['description'])
+            else:
+                desc = CLI.tty_ify(" ".join(opt['description']))
 
             required = opt.get('required', False)
             if not isinstance(required, bool):
                 raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
             if required:
-                s = o + "="
-            else:
-                s = o
-            text.append("      %-20s   # %s" % (s, textwrap.fill(desc, limit, subsequent_indent=subdent)))
+                desc = "(required) %s" % desc
+            o = '%s:' % o
+            text.append("      %-20s   # %s" % (o, textwrap.fill(desc, limit, subsequent_indent=subdent)))
         text.append('')
 
         return "\n".join(text)
@@ -288,9 +293,9 @@ class DocCLI(CLI):
         for o in sorted(fields):
             opt = fields[o]
 
-            required = opt.get('required', False)
+            required = opt.pop('required', False)
             if not isinstance(required, bool):
-                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+                raise AnsibleError("Incorrect value for 'Required', a boolean is needed.: %s" % required)
             if required:
                 opt_leadin = "="
             else:
@@ -303,14 +308,32 @@ class DocCLI(CLI):
                     text.append(textwrap.fill(CLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
                 text.append(textwrap.fill(CLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+            del opt['description']
 
+            aliases = ''
+            if 'aliases' in opt:
+                choices = "(Aliases: " + ", ".join(str(i) for i in opt['aliases']) + ")"
+                del opt['aliases']
             choices = ''
             if 'choices' in opt:
                 choices = "(Choices: " + ", ".join(str(i) for i in opt['choices']) + ")"
+                del opt['choices']
             default = ''
             if 'default' in opt or not required:
-                default = "[Default: " +  str(opt.get('default', '(null)')) + "]"
-            text.append(textwrap.fill(CLI.tty_ify(choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                default = "[Default: " + str(opt.pop('default', '(null)')) + "]"
+            text.append(textwrap.fill(CLI.tty_ify(aliases + choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+
+            if 'options' in opt:
+                text.append(opt_indent + "options:\n")
+                self.add_fields(text, opt['options'], limit, opt_indent + opt_indent)
+                text.append('')
+                del opt['options']
+
+            if 'spec' in opt:
+                text.append(opt_indent + "spec:\n")
+                self.add_fields(text, opt['spec'], limit, opt_indent + opt_indent)
+                text.append('')
+                del opt['spec']
 
             for conf in ('config', 'env_vars', 'host_vars'):
                 if conf in opt:
@@ -324,10 +347,22 @@ class DocCLI(CLI):
                                 pre = "   "
                         else:
                             text.append(textwrap.fill(CLI.tty_ify("  - %s" % entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    del opt[conf]
+
+            # unspecified keys
+            for k in opt:
+                if k.startswith('_'):
+                    continue
+                if isinstance(opt[k], string_types):
+                    text.append(textwrap.fill(CLI.tty_ify("%s: %s" % (k, opt[k])), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                elif isinstance(opt[k], (list, dict)):
+                    text.append(textwrap.fill(CLI.tty_ify("%s: %s" % (k, yaml.dump(opt[k], Dumper=AnsibleDumper, default_flow_style=False))),
+                                              limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                else:
+                    display.vv("Skipping %s key cuase we don't know how to handle eet" % k)
 
     def get_man_text(self, doc):
-
-        opt_indent="        "
+        opt_indent = "        "
         text = []
         text.append("> %s    (%s)\n" % (doc[self.options.type].upper(), doc['filename']))
         pad = display.columns * 0.20
@@ -354,11 +389,11 @@ class DocCLI(CLI):
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
             text.append("Notes:")
             for note in doc['notes']:
-                text.append(textwrap.fill(CLI.tty_ify(note), limit-6, initial_indent="  * ", subsequent_indent=opt_indent))
+                text.append(textwrap.fill(CLI.tty_ify(note), limit - 6, initial_indent="  * ", subsequent_indent=opt_indent))
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc['requirements'])
-            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), limit-16, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
 
         if 'examples' in doc and len(doc['examples']) > 0:
             text.append("Example%s:\n" % ('' if len(doc['examples']) < 2 else 's'))

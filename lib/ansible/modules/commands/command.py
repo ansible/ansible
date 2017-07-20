@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 ---
 module: command
@@ -35,47 +34,37 @@ description:
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), C(";") and C("&") will not work (use the M(shell)
        module if you need these features).
+     - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
     description:
-      - the command module takes a free form command to run.  There is no parameter actually named 'free form'.
+      - The command module takes a free form command to run.  There is no parameter actually named 'free form'.
         See the examples!
-    required: true
-    default: null
+    required: yes
   creates:
     description:
-      - a filename or (since 2.0) glob pattern, when it already exists, this step will B(not) be run.
-    required: no
-    default: null
+      - A filename or (since 2.0) glob pattern, when it already exists, this step will B(not) be run.
   removes:
     description:
-      - a filename or (since 2.0) glob pattern, when it does not exist, this step will B(not) be run.
+      - A filename or (since 2.0) glob pattern, when it does not exist, this step will B(not) be run.
     version_added: "0.8"
-    required: no
-    default: null
   chdir:
     description:
-      - cd into this directory before running the command
+      - Change into this directory before running the command.
     version_added: "0.6"
-    required: false
-    default: null
-  executable:
-    description:
-      - change the shell used to execute the command. Should be an absolute path to the executable.
-    required: false
-    default: null
-    version_added: "0.9"
   warn:
-    version_added: "1.8"
-    default: yes
     description:
-      - if command warnings are on in ansible.cfg, do not warn about this particular line if set to no/false.
-    required: false
+      - If command_warnings are on in ansible.cfg, do not warn about this particular line if set to C(no).
+    type: bool
+    default: 'yes'
+    version_added: "1.8"
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
        The C(command) module is much more secure as it's not affected by the user's environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
+    -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
+    -  For Windows targets, use the M(win_command) module instead.
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -110,7 +99,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b
 
 
-def check_command(commandline):
+def check_command(module, commandline):
     arguments = { 'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
                   'ln': 'state=link', 'mkdir': 'state=directory',
                   'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch' }
@@ -119,16 +108,14 @@ def check_command(commandline):
                   'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                   'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
                   'dnf': 'dnf', 'zypper': 'zypper' }
-    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas' ]
-    warnings = list()
+    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun' ]
     command = os.path.basename(commandline.split()[0])
     if command in arguments:
-        warnings.append("Consider using file module with %s rather than running %s" % (arguments[command], command))
+        module.warn("Consider using file module with %s rather than running %s" % (arguments[command], command))
     if command in commands:
-        warnings.append("Consider using %s module rather than running %s" % (commands[command], command))
+        module.warn("Consider using %s module rather than running %s" % (commands[command], command))
     if command in become:
-        warnings.append("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
-    return warnings
+        module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
 
 
 def main():
@@ -154,6 +141,10 @@ def main():
     creates = module.params['creates']
     removes = module.params['removes']
     warn = module.params['warn']
+
+    if not shell and executable:
+        module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
+        executable = None
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -186,9 +177,8 @@ def main():
                 rc=0
             )
 
-    warnings = list()
     if warn:
-        warnings = check_command(args)
+        check_command(module, args)
 
     if not shell:
         args = shlex.split(args)
@@ -204,7 +194,7 @@ def main():
     if err is None:
         err = b('')
 
-    module.exit_json(
+    result = dict(
         cmd      = args,
         stdout   = out.rstrip(b("\r\n")),
         stderr   = err.rstrip(b("\r\n")),
@@ -213,8 +203,13 @@ def main():
         end      = str(endd),
         delta    = str(delta),
         changed  = True,
-        warnings = warnings
     )
+
+    if rc != 0:
+        module.fail_json(msg='non-zero return code', **result)
+
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

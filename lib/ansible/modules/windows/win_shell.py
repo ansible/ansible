@@ -33,10 +33,11 @@ description:
      - The C(win_shell) module takes the command name followed by a list of space-delimited arguments.
        It is similar to the M(win_command) module, but runs
        the command via a shell (defaults to PowerShell) on the target host.
+     - For non-Windows targets, use the M(shell) module instead.
 options:
   free_form:
     description:
-      - the win_shell module takes a free form command to run.  There is no parameter actually named 'free form'.
+      - The C(win_shell) module takes a free form command to run.  There is no parameter actually named 'free form'.
         See the examples!
     required: true
   creates:
@@ -57,10 +58,13 @@ notes:
       better to use the M(win_command) module instead. Best practices when writing
       playbooks will follow the trend of using M(win_command) unless C(win_shell) is
       explicitly required. When running ad-hoc commands, use your best judgement.
-   -  WinRM will not return from a command execution until all child processes created have exited. Thus, it is not possible to use win_shell to spawn
-      long-running child or background processes. Consider creating a Windows service for managing background processes.
+   -  WinRM will not return from a command execution until all child processes created have exited.
+      Thus, it is not possible to use C(win_shell) to spawn long-running child or background processes.
+      Consider creating a Windows service for managing background processes.
+   - For non-Windows targets, use the M(shell) module instead.
+   - See also M(win_command), M(raw)
 author:
-    - Matt Davis
+    - Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = r'''

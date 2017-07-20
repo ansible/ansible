@@ -19,231 +19,594 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
 module: cloudtrail
-short_description: manage CloudTrail creation and deletion
+short_description: manage CloudTrail create, delete, update
 description:
-  - Creates or deletes CloudTrail configuration. Ensures logging is also enabled.
+  - Creates, deletes, or updates CloudTrail configuration. Ensures logging is also enabled.
 version_added: "2.0"
 author:
     - "Ansible Core Team"
     - "Ted Timmons"
+    - "Daniel Shepherd (@shepdelacreme)"
 requirements:
-  - "boto >= 2.21"
+  - boto3
+  - botocore
 options:
   state:
     description:
-      - add or remove CloudTrail configuration.
+      - Add or remove CloudTrail configuration.
+      - The following states have been preserved for backwards compatibility. C(state=enabled) and C(state=disabled).
+      - enabled=present and disabled=absent.
     required: true
-    choices: ['enabled', 'disabled']
+    choices: ['present', 'absent', 'enabled', 'disabled']
   name:
     description:
-      - name for given CloudTrail configuration.
-      - This is a primary key and is used to identify the configuration.
-  s3_bucket_prefix:
+      - Name for the CloudTrail.
+      - Names are unique per-region unless the CloudTrail is a mulit-region trail, in which case it is unique per-account.
+    required: true
+  enable_logging:
     description:
-      - bucket to place CloudTrail in.
-      - this bucket should exist and have the proper policy.
-        See U(http://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html)
-      - required when state=enabled.
-    required: false
+      - Start or stop the CloudTrail logging. If stopped the trail will be paused and will not record events or deliver log files.
+    default: true
+    version_added: "2.4"
+  s3_bucket_name:
+    description:
+      - An existing S3 bucket where CloudTrail will deliver log files.
+      - This bucket should exist and have the proper policy.
+      - See U(http://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html)
+      - Required when C(state=present)
+    version_added: "2.4"
   s3_key_prefix:
     description:
-      - prefix to keys in bucket. A trailing slash is not necessary and will be removed.
-    required: false
+      - S3 Key prefix for delivered log files. A trailing slash is not necessary and will be removed.
+  is_multi_region_trail:
+    description:
+      - Specify whether the trail belongs only to one region or exists in all regions.
+    default: false
+    version_added: "2.4"
+  enable_log_file_validation:
+    description:
+      - Specifies whether log file integrity validation is enabled.
+      - CloudTrail will create a hash for every log file delivered and produce a signed digest file that can be used to ensure log files have not been tampered.
+    default: false
+    version_added: "2.4"
   include_global_events:
     description:
-      - record API calls from global services such as IAM and STS?
-    required: false
-    default: false
-    choices: ["true", "false"]
-
-  aws_secret_key:
+      - Record API calls from global services such as IAM and STS.
+    default: true
+  sns_topic_name:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-    version_added: "1.5"
-  aws_access_key:
+      - SNS Topic name to send notifications to when a log file is delivered
+    version_added: "2.4"
+  cloudwatch_logs_role_arn:
     description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_access_key', 'access_key' ]
-    version_added: "1.5"
-  region:
+      - Specifies a full ARN for an IAM role that assigns the proper permissions for CloudTrail to create and write to the log group listed below.
+      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html)
+      - "Example arn:aws:iam::123456789012:role/CloudTrail_CloudWatchLogs_Role"
+      - Required when C(cloudwatch_logs_log_group_arn)
+    version_added: "2.4"
+  cloudwatch_logs_log_group_arn:
     description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    aliases: ['aws_region', 'ec2_region']
-    version_added: "1.5"
+      - A full ARN specifying a valid CloudWatch log group to which CloudTrail logs will be delivered. The log group should already exist.
+      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html)
+      - "Example arn:aws:logs:us-east-1:123456789012:log-group:CloudTrail/DefaultLogGroup:*"
+      - Required when C(cloudwatch_logs_role_arn)
+    version_added: "2.4"
+  kms_key_id:
+    description:
+      - Specifies the KMS key ID to use to encrypt the logs delivered by CloudTrail. This also has the effect of enabling log file encryption.
+      - The value can be an alias name prefixed by "alias/", a fully specified ARN to an alias, a fully specified ARN to a key, or a globally unique identifier.
+      - Examples
+      - alias/MyAliasName
+      - "arn:aws:kms:us-east-1:123456789012:alias/MyAliasName"
+      - "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
+      - 12345678-1234-1234-1234-123456789012
+      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html)
+    version_added: "2.4"
+  tags:
+    description:
+      - A hash/dictionary of tags to be applied to the CloudTrail resource.
+      - Remove completely or specify an empty dictionary to remove all tags.
+    default: {}
+    version_added: "2.4"
 
-extends_documentation_fragment: aws
-"""
+extends_documentation_fragment:
+- aws
+- ec2
+'''
 
-EXAMPLES = """
-  - name: enable cloudtrail
-    local_action:
-      module: cloudtrail
-      state: enabled
-      name: main
-      s3_bucket_name: ourbucket
-      s3_key_prefix: cloudtrail
-      region: us-east-1
+EXAMPLES = '''
+- name: create single region cloudtrail
+  cloudtrail:
+    state: present
+    name: default
+    s3_bucket_name: mylogbucket
+    s3_key_prefix: cloudtrail
+    region: us-east-1
 
-  - name: enable cloudtrail with different configuration
-    local_action:
-      module: cloudtrail
-      state: enabled
-      name: main
-      s3_bucket_name: ourbucket2
-      s3_key_prefix: ''
-      region: us-east-1
+- name: create multi-region trail with validation and tags
+  cloudtrail:
+    state: present
+    name: default
+    s3_bucket_name: mylogbucket
+    region: us-east-1
+    is_multi_region_trail: true
+    enable_log_file_validation: true
+    tags:
+      environment: dev
+      Name: default
 
-  - name: remove cloudtrail
-    local_action:
-      module: cloudtrail
-      state: disabled
-      name: main
-      region: us-east-1
-"""
+- name: pause logging the trail we just created
+  cloudtrail:
+    state: present
+    name: default
+    enable_logging: false
+    s3_bucket_name: mylogbucket
+    region: us-east-1
+    is_multi_region_trail: true
+    enable_log_file_validation: true
+    tags:
+      environment: dev
+      Name: default
 
-HAS_BOTO = False
-try:
-    import boto
-    import boto.cloudtrail
-    from boto.regioninfo import RegionInfo
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
+- name: delete a trail
+  cloudtrail:
+    state: absent
+    name: default
+'''
 
+RETURN = '''
+exists:
+    description: whether the resource exists
+    returned: always
+    type: bool
+    sample: true
+trail:
+    description: CloudTrail resource details
+    returned: always
+    type: complex
+    sample: hash/dictionary of values
+    contains:
+        trail_arn:
+            description: Full ARN of the CloudTrail resource
+            returned: success
+            type: string
+            sample: arn:aws:cloudtrail:us-east-1:123456789012:trail/default
+        name:
+            description: Name of the CloudTrail resource
+            returned: success
+            type: string
+            sample: default
+        is_logging:
+            description: Whether logging is turned on or paused for the Trail
+            returned: success
+            type: bool
+            sample: True
+        s3_bucket_name:
+            description: S3 bucket name where log files are delivered
+            returned: success
+            type: string
+            sample: myBucket
+        s3_key_prefix:
+            description: Key prefix in bucket where log files are delivered (if any)
+            returned: success when present
+            type: string
+            sample: myKeyPrefix
+        log_file_validation_enabled:
+            description: Whether log file validation is enabled on the trail
+            returned: success
+            type: bool
+            sample: true
+        include_global_service_events:
+            description: Whether global services (IAM, STS) are logged with this trail
+            returned: success
+            type: bool
+            sample: true
+        is_multi_region_trail:
+            description: Whether the trail applies to all regions or just one
+            returned: success
+            type: bool
+            sample: true
+        has_custom_event_selectors:
+            description: Whether any custom event selectors are used for this trail.
+            returned: success
+            type: bool
+            sample: False
+        home_region:
+            description: The home region where the trail was originally created and must be edited.
+            returned: success
+            type: string
+            sample: us-east-1
+        sns_topic_name:
+            description: The SNS topic name where log delivery notifications are sent.
+            returned: success when present
+            type: string
+            sample: myTopic
+        sns_topic_arn:
+            description: Full ARN of the SNS topic where log delivery notifications are sent.
+            returned: success when present
+            type: string
+            sample: arn:aws:sns:us-east-1:123456789012:topic/myTopic
+        cloud_watch_logs_log_group_arn:
+            description: Full ARN of the CloudWatch Logs log group where events are delivered.
+            returned: success when present
+            type: string
+            sample: arn:aws:logs:us-east-1:123456789012:log-group:CloudTrail/DefaultLogGroup:*
+        cloud_watch_logs_role_arn:
+            description: Full ARN of the IAM role that CloudTrail assumes to deliver events.
+            returned: success when present
+            type: string
+            sample: arn:aws:iam::123456789012:role/CloudTrail_CloudWatchLogs_Role
+        kms_key_id:
+            description: Full ARN of the KMS Key used to encrypt log files.
+            returned: success when present
+            type: string
+            sample: arn:aws:kms::123456789012:key/12345678-1234-1234-1234-123456789012
+        tags:
+            description: hash/dictionary of tags applied to this resource
+            returned: success
+            type: dict
+            sample: {'environment': 'dev', 'Name': 'default'}
+'''
+
+import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_ec2_creds
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec
+from ansible.module_utils.ec2 import get_aws_connection_info, HAS_BOTO3
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from botocore.exceptions import ClientError
 
 
-class CloudTrailManager:
-    """Handles cloudtrail configuration"""
+def create_trail(module, client, ct_params):
+    """
+    Creates a CloudTrail
 
-    def __init__(self, module, region=None, **aws_connect_params):
-        self.module = module
-        self.region = region
-        self.aws_connect_params = aws_connect_params
-        self.changed = False
+    module : AnisbleModule object
+    client : boto3 client connection object
+    ct_params : The parameters for the Trail to create
+    """
+    resp = {}
+    try:
+        resp = client.create_trail(**ct_params)
+    except ClientError as err:
+        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
 
+    return resp
+
+
+def tag_trail(module, client, tags, trail_arn, curr_tags=None, dry_run=False):
+    """
+    Creates, updates, removes tags on a CloudTrail resource
+
+    module : AnisbleModule object
+    client : boto3 client connection object
+    tags : Dict of tags converted from ansible_dict to boto3 list of dicts
+    trail_arn : The ARN of the CloudTrail to operate on
+    curr_tags : Dict of the current tags on resource, if any
+    dry_run : true/false to determine if changes will be made if needed
+    """
+    adds = []
+    removes = []
+    updates = []
+    changed = False
+
+    if curr_tags is None:
+        # No current tags so just convert all to a tag list
+        adds = ansible_dict_to_boto3_tag_list(tags)
+    else:
+        curr_keys = set(curr_tags.keys())
+        new_keys = set(tags.keys())
+        add_keys = new_keys - curr_keys
+        remove_keys = curr_keys - new_keys
+        update_keys = dict()
+        for k in curr_keys.intersection(new_keys):
+            if curr_tags[k] != tags[k]:
+                update_keys.update({k: tags[k]})
+
+        adds = get_tag_list(add_keys, tags)
+        removes = get_tag_list(remove_keys, curr_tags)
+        updates = get_tag_list(update_keys, tags)
+
+    if removes or updates:
+        changed = True
+        if not dry_run:
+            try:
+                client.remove_tags(ResourceId=trail_arn, TagsList=removes + updates)
+            except ClientError as err:
+                module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+
+    if updates or adds:
+        changed = True
+        if not dry_run:
+            try:
+                client.add_tags(ResourceId=trail_arn, TagsList=updates + adds)
+            except ClientError as err:
+                module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+
+    return changed
+
+
+def get_tag_list(keys, tags):
+    """
+    Returns a list of dicts with tags to act on
+    keys : set of keys to get the values for
+    tags : the dict of tags to turn into a list
+    """
+    tag_list = []
+    for k in keys:
+        tag_list.append({'Key': k, 'Value': tags[k]})
+
+    return tag_list
+
+
+def set_logging(module, client, name, action):
+    """
+    Starts or stops logging based on given state
+
+    module : AnsibleModule object
+    client : boto3 client connection object
+    name : The name or ARN of the CloudTrail to operate on
+    action : start or stop
+    """
+    if action == 'start':
         try:
-            self.conn = connect_to_aws(boto.cloudtrail, self.region, **self.aws_connect_params)
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg=str(e))
+            client.start_logging(Name=name)
+            return client.get_trail_status(Name=name)
+        except ClientError as err:
+            module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    elif action == 'stop':
+        try:
+            client.stop_logging(Name=name)
+            return client.get_trail_status(Name=name)
+        except ClientError as err:
+            module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    else:
+        module.fail_json(msg="Unsupported logging action")
 
-    def view_status(self, name):
-        return self.conn.get_trail_status(name)
 
-    def view(self, name):
-        ret = self.conn.describe_trails(trail_name_list=[name])
-        trailList = ret.get('trailList', [])
-        if len(trailList) == 1:
-            return trailList[0]
+def get_trail_facts(module, client, name):
+    """
+    Describes existing trail in an account
+
+    module : AnsibleModule object
+    client : boto3 client connection object
+    name : Name of the trail
+    """
+    # get Trail info
+    try:
+        trail_resp = client.describe_trails(trailNameList=[name])
+    except ClientError as err:
+        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+
+    # Now check to see if our trail exists and get status and tags
+    if len(trail_resp['trailList']):
+        trail = trail_resp['trailList'][0]
+        try:
+            status_resp = client.get_trail_status(Name=trail['Name'])
+            tags_list = client.list_tags(ResourceIdList=[trail['TrailARN']])
+        except ClientError as err:
+            module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+
+        trail['IsLogging'] = status_resp['IsLogging']
+        trail['tags'] = boto3_tag_list_to_ansible_dict(tags_list['ResourceTagList'][0]['TagsList'])
+        # Check for non-existent values and populate with None
+        optional_vals = set(['S3KeyPrefix', 'SnsTopicName', 'SnsTopicARN', 'CloudWatchLogsLogGroupArn', 'CloudWatchLogsRoleArn', 'KmsKeyId'])
+        for v in optional_vals - set(trail.keys()):
+            trail[v] = None
+        return trail
+
+    else:
+        # trail doesn't exist return None
         return None
 
-    def exists(self, name=None):
-        ret = self.view(name)
-        if ret:
-            return True
-        return False
 
-    def enable_logging(self, name):
-        '''Turn on logging for a cloudtrail that already exists. Throws Exception on error.'''
-        self.conn.start_logging(name)
+def delete_trail(module, client, trail_arn):
+    """
+    Delete a CloudTrail
+
+    module : AnisbleModule object
+    client : boto3 client connection object
+    trail_arn : Full CloudTrail ARN
+    """
+    try:
+        client.delete_trail(Name=trail_arn)
+    except ClientError as err:
+        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
 
 
-    def enable(self, **create_args):
-        return self.conn.create_trail(**create_args)
+def update_trail(module, client, ct_params):
+    """
+    Delete a CloudTrail
 
-    def update(self, **create_args):
-        return self.conn.update_trail(**create_args)
-
-    def delete(self, name):
-        '''Delete a given cloudtrial configuration. Throws Exception on error.'''
-        self.conn.delete_trail(name)
-
+    module : AnisbleModule object
+    client : boto3 client connection object
+    ct_params : The parameters for the Trail to update
+    """
+    try:
+        client.update_trail(**ct_params)
+    except ClientError as err:
+        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
 
 
 def main():
-
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state={'required': True, 'choices': ['enabled', 'disabled']},
-        name={'required': True, 'type': 'str'},
-        s3_bucket_name={'required': False, 'type': 'str'},
-        s3_key_prefix={'default': '', 'required': False, 'type': 'str'},
-        include_global_events={'default': True, 'required': False, 'type': 'bool'},
+        state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+        name=dict(default='default'),
+        enable_logging=dict(default=True, type='bool'),
+        s3_bucket_name=dict(),
+        s3_key_prefix=dict(),
+        sns_topic_name=dict(),
+        is_multi_region_trail=dict(default=False, type='bool'),
+        enable_log_file_validation=dict(default=False, type='bool'),
+        include_global_events=dict(default=True, type='bool'),
+        cloudwatch_logs_role_arn=dict(),
+        cloudwatch_logs_log_group_arn=dict(),
+        kms_key_id=dict(),
+        tags=dict(default={}, type='dict'),
     ))
-    required_together = (['state', 's3_bucket_name'])
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
+    required_if = [('state', 'present', ['s3_bucket_name']), ('state', 'enabled', ['s3_bucket_name'])]
+    required_together = [('cloudwatch_logs_role_arn', 'cloudwatch_logs_log_group_arn')]
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together, required_if=required_if)
 
-    ec2_url, access_key, secret_key, region = get_ec2_creds(module)
-    aws_connect_params = dict(aws_access_key_id=access_key,
-                              aws_secret_access_key=secret_key)
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 is required for this module')
 
-    if not region:
-        module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
+    # collect parameters
+    if module.params['state'] in ('present', 'enabled'):
+        state = 'present'
+    elif module.params['state'] in ('absent', 'disabled'):
+        state = 'absent'
+    tags = module.params['tags']
+    enable_logging = module.params['enable_logging']
+    ct_params = dict(
+        Name=module.params['name'],
+        S3BucketName=module.params['s3_bucket_name'],
+        IncludeGlobalServiceEvents=module.params['include_global_events'],
+        IsMultiRegionTrail=module.params['is_multi_region_trail'],
+        EnableLogFileValidation=module.params['enable_log_file_validation'],
+        S3KeyPrefix='',
+        SnsTopicName='',
+        CloudWatchLogsRoleArn='',
+        CloudWatchLogsLogGroupArn='',
+        KmsKeyId=''
+    )
 
-    ct_name = module.params['name']
-    s3_bucket_name = module.params['s3_bucket_name']
-    # remove trailing slash from the key prefix, really messes up the key structure.
-    s3_key_prefix = module.params['s3_key_prefix'].rstrip('/')
+    if module.params['s3_key_prefix']:
+        ct_params['S3KeyPrefix'] = module.params['s3_key_prefix'].rstrip('/')
 
-    include_global_events = module.params['include_global_events']
+    if module.params['sns_topic_name']:
+        ct_params['SnsTopicName'] = module.params['sns_topic_name']
 
-    #if module.params['state'] == 'present' and 'ec2_elbs' not in module.params:
-    #    module.fail_json(msg="ELBs are required for registration or viewing")
+    if module.params['cloudwatch_logs_role_arn']:
+        ct_params['CloudWatchLogsRoleArn'] = module.params['cloudwatch_logs_role_arn']
 
-    cf_man = CloudTrailManager(module, region=region, **aws_connect_params)
+    if module.params['cloudwatch_logs_log_group_arn']:
+        ct_params['CloudWatchLogsLogGroupArn'] = module.params['cloudwatch_logs_log_group_arn']
 
-    results = { 'changed': False }
-    if module.params['state'] == 'enabled':
-        results['exists'] = cf_man.exists(name=ct_name)
-        if results['exists']:
-            results['view'] = cf_man.view(ct_name)
-            # only update if the values have changed.
-            if results['view']['S3BucketName']              != s3_bucket_name or \
-              results['view'].get('S3KeyPrefix', '')      != s3_key_prefix or \
-              results['view']['IncludeGlobalServiceEvents'] != include_global_events:
-                if not module.check_mode:
-                    results['update'] = cf_man.update(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix,
-                                                      include_global_service_events=include_global_events)
+    if module.params['kms_key_id']:
+        ct_params['KmsKeyId'] = module.params['kms_key_id']
+
+    try:
+        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+        client = boto3_conn(module, conn_type='client', resource='cloudtrail', region=region, endpoint=ec2_url, **aws_connect_params)
+    except ClientError as err:
+        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+
+    results = dict(
+        changed=False,
+        exists=False
+    )
+
+    # Get existing trail facts
+    trail = get_trail_facts(module, client, ct_params['Name'])
+
+    # If the trail exists set the result exists variable
+    if trail is not None:
+        results['exists'] = True
+
+    if state == 'absent' and results['exists']:
+        # If Trail exists go ahead and delete
+        results['changed'] = True
+        results['exists'] = False
+        results['trail'] = dict()
+        if not module.check_mode:
+            delete_trail(module, client, trail['TrailARN'])
+
+    elif state == 'present' and results['exists']:
+        # If Trail exists see if we need to update it
+        do_update = False
+        for key in ct_params:
+            tkey = str(key)
+            # boto3 has inconsistent parameter naming so we handle it here
+            if key == 'EnableLogFileValidation':
+                tkey = 'LogFileValidationEnabled'
+            # We need to make an empty string equal None
+            if ct_params.get(key) == '':
+                val = None
+            else:
+                val = ct_params.get(key)
+            if val != trail.get(tkey):
+                do_update = True
                 results['changed'] = True
-        else:
-            if not module.check_mode:
-                # doesn't exist. create it.
-                results['enable'] = cf_man.enable(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix,
-                                                  include_global_service_events=include_global_events)
-            results['changed'] = True
+                # If we are in check mode copy the changed values to the trail facts in result output to show what would change.
+                if module.check_mode:
+                    trail.update({tkey: ct_params.get(key)})
 
-        # given cloudtrail should exist now. Enable the logging.
-        results['view_status'] = cf_man.view_status(ct_name)
-        results['was_logging_enabled'] = results['view_status'].get('IsLogging', False)
-        if not results['was_logging_enabled']:
-            if not module.check_mode:
-                cf_man.enable_logging(ct_name)
-                results['logging_enabled'] = True
-            results['changed'] = True
+        if not module.check_mode and do_update:
+            update_trail(module, client, ct_params)
+            trail = get_trail_facts(module, client, ct_params['Name'])
 
-    # delete the cloudtrai
-    elif module.params['state'] == 'disabled':
-        # check to see if it exists before deleting.
-        results['exists'] = cf_man.exists(name=ct_name)
-        if results['exists']:
-            # it exists, so we should delete it and mark changed.
-            if not module.check_mode:
-                cf_man.delete(ct_name)
+        # Check if we need to start/stop logging
+        if enable_logging and not trail['IsLogging']:
             results['changed'] = True
+            trail['IsLogging'] = True
+            if not module.check_mode:
+                set_logging(module, client, name=ct_params['Name'], action='start')
+        if not enable_logging and trail['IsLogging']:
+            results['changed'] = True
+            trail['IsLogging'] = False
+            if not module.check_mode:
+                set_logging(module, client, name=ct_params['Name'], action='stop')
+
+        # Check if we need to update tags on resource
+        tag_dry_run = False
+        if module.check_mode:
+            tag_dry_run = True
+        tags_changed = tag_trail(module, client, tags=tags, trail_arn=trail['TrailARN'], curr_tags=trail['tags'], dry_run=tag_dry_run)
+        if tags_changed:
+            results['changed'] = True
+            trail['tags'] = tags
+        # Populate trail facts in output
+        results['trail'] = camel_dict_to_snake_dict(trail)
+
+    elif state == 'present' and not results['exists']:
+        # Trail doesn't exist just go create it
+        results['changed'] = True
+        if not module.check_mode:
+            # If we aren't in check_mode then actually create it
+            created_trail = create_trail(module, client, ct_params)
+            # Apply tags
+            tag_trail(module, client, tags=tags, trail_arn=created_trail['TrailARN'])
+            # Get the trail status
+            try:
+                status_resp = client.get_trail_status(Name=created_trail['Name'])
+            except ClientError as err:
+                module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+            # Set the logging state for the trail to desired value
+            if enable_logging and not status_resp['IsLogging']:
+                set_logging(module, client, name=ct_params['Name'], action='start')
+            if not enable_logging and status_resp['IsLogging']:
+                set_logging(module, client, name=ct_params['Name'], action='stop')
+            # Get facts for newly created Trail
+            trail = get_trail_facts(module, client, ct_params['Name'])
+
+        # If we are in check mode create a fake return structure for the newly minted trail
+        if module.check_mode:
+            acct_id = '123456789012'
+            try:
+                sts_client = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_params)
+                acct_id = sts_client.get_caller_identity()['Account']
+            except ClientError:
+                pass
+            trail = dict()
+            trail.update(ct_params)
+            trail['LogFileValidationEnabled'] = ct_params['EnableLogFileValidation']
+            trail.pop('EnableLogFileValidation')
+            fake_arn = 'arn:aws:cloudtrail:' + region + ':' + acct_id + ':trail/' + ct_params['Name']
+            trail['HasCustomEventSelectors'] = False
+            trail['HomeRegion'] = region
+            trail['TrailARN'] = fake_arn
+            trail['IsLogging'] = enable_logging
+            trail['tags'] = tags
+        # Populate trail facts in output
+        results['trail'] = camel_dict_to_snake_dict(trail)
 
     module.exit_json(**results)
 

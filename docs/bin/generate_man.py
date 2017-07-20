@@ -94,7 +94,7 @@ if __name__ == '__main__':
             myclass = "%sCLI" % libname.capitalize()
             output[libname] = 'ansible-%s.1.asciidoc.in' % libname
 
-        # instanciate each cli and ask its options
+        # instantiate each cli and ask its options
         mycli = getattr(__import__("ansible.cli.%s" % libname, fromlist=[myclass]), myclass)
         cli_object = mycli([])
         try:

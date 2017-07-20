@@ -7,6 +7,118 @@
     limit_to: "*"
     debug: false
 
-  roles:
-    - { role: vyos_command, when: "limit_to in ['*', 'vyos_command']" }
-    - { role: vyos_config, when: "limit_to in ['*', 'vyos_config']" }
+# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
+
+
+  tasks:
+    - set_fact:
+        test_failed: false
+        failed_modules: []
+    - block:
+      - include_role:
+          name: vyos_command
+        when: "limit_to in ['*', 'vyos_command']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_command' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_config
+        when: "limit_to in ['*', 'vyos_config']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_config' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_user
+        when: "limit_to in ['*', 'vyos_user']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_user' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_banner
+        when: "limit_to in ['*', 'vyos_banner']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_banner' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_linkagg
+        when: "limit_to in ['*', 'vyos_linkagg']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_linkagg' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_static_route
+        when: "limit_to in ['*', 'vyos_static_route']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_static_route' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_l3_interface
+        when: "limit_to in ['*', 'vyos_l3_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_l3_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_logging
+        when: "limit_to in ['*', 'vyos_logging']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_logging' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_lldp
+        when: "limit_to in ['*', 'vyos_lldp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_lldp' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_lldp_interface
+        when: "limit_to in ['*', 'vyos_lldp_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_lldp_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: vyos_interface
+        when: "limit_to in ['*', 'vyos_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_interface' ]"
+            test_failed: true
+
+###########
+    - debug: var=failed_modules
+      when: test_failed
+
+    - name: Has any previous test failed?
+      fail:
+        msg: "One or more tests failed, check log for details"
+      when: test_failed

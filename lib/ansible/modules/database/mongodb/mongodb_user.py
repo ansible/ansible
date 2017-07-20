@@ -120,7 +120,9 @@ notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
       can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
 requirements: [ "pymongo" ]
-author: "Elliott Foster (@elliotttf)"
+author:
+    - "Elliott Foster (@elliotttf)"
+    - "Julien Thebault (@lujeni)"
 '''
 
 EXAMPLES = '''
@@ -434,11 +436,12 @@ def main():
             module.fail_json(msg='password parameter required when adding a user unless update_password is set to on_create')
 
         try:
-            uinfo = user_find(client, user, db_name)
-            if update_password != 'always' and uinfo:
-                password = None
-                if not check_if_roles_changed(uinfo, roles, db_name):
-                    module.exit_json(changed=False, user=user)
+            if update_password != 'always':
+                uinfo = user_find(client, user, db_name)
+                if uinfo:
+                    password = None
+                    if not check_if_roles_changed(uinfo, roles, db_name):
+                        module.exit_json(changed=False, user=user)
 
             if module.check_mode:
                 module.exit_json(changed=True, user=user)

@@ -97,7 +97,16 @@ options:
     version_added: "2.3"
     default: "/"
 
-notes: []
+  autoremove:
+    description:
+      - If C(yes), removes all "leaf" packages from the system that were originally
+        installed as dependencies of user-installed packages but which are no longer
+        required by any such package. Should be used alone or when state is I(absent)
+    required: false
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
+
+notes: ["autoremove requires dnf >= 2.0.1"]
 # informational: requirements for nodes
 requirements:
   - "python >= 2.6"
@@ -144,11 +153,20 @@ EXAMPLES = '''
   dnf:
     name: '@Development tools'
     state: present
+
+- name: Autoremove unneeded packages installed as dependencies
+  dnf:
+    autoremove: yes
+
+- name: Uninstall httpd but keep its dependencies
+  dnf:
+    name: httpd
+    state: absent
+    autoremove: no
 '''
 import os
 
 try:
-    import dnf
     import dnf
     import dnf.cli
     import dnf.const
@@ -161,6 +179,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import PY2
+from distutils.version import LooseVersion
 
 
 def _ensure_dnf(module):
@@ -314,11 +333,18 @@ def _install_remote_rpms(base, filenames):
         base.package_install(pkg)
 
 
-def ensure(module, base, state, names):
+def ensure(module, base, state, names, autoremove):
     # Accumulate failures.  Package management modules install what they can
     # and fail with a message about what they can't.
     failures = []
     allow_erasing = False
+
+    # Autoremove is called alone
+    # Jump to remove path where base.autoremove() is run
+    if not names and autoremove is not None:
+        names = []
+        state = 'absent'
+
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
@@ -398,6 +424,9 @@ def ensure(module, base, state, names):
 
         else:
             # state == absent
+            if autoremove is not None:
+                base.conf.clean_requirements_on_remove = autoremove
+
             if filenames:
                 module.fail_json(
                     msg="Cannot remove paths -- please specify package name.")
@@ -424,6 +453,9 @@ def ensure(module, base, state, names):
             # Like the dnf CLI we want to allow recursive removal of dependent
             # packages
             allow_erasing = True
+
+            if autoremove:
+                base.autoremove()
 
     if not base.resolve(allow_erasing=allow_erasing):
         if failures:
@@ -460,7 +492,6 @@ def main():
         argument_spec=dict(
             name=dict(aliases=['pkg'], type='list'),
             state=dict(
-                default='installed',
                 choices=[
                     'absent', 'present', 'installed', 'removed', 'latest']),
             enablerepo=dict(type='list', default=[]),
@@ -469,13 +500,27 @@ def main():
             conf_file=dict(default=None, type='path'),
             disable_gpg_check=dict(default=False, type='bool'),
             installroot=dict(default='/', type='path'),
+            autoremove=dict(type='bool'),
         ),
-        required_one_of=[['name', 'list']],
-        mutually_exclusive=[['name', 'list']],
+        required_one_of=[['name', 'list', 'autoremove']],
+        mutually_exclusive=[['name', 'list'], ['autoremove', 'list']],
         supports_check_mode=True)
     params = module.params
 
     _ensure_dnf(module)
+
+    # Check if autoremove is called correctly
+    if params['autoremove'] is not None:
+        if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
+            module.fail_json(msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__)
+        if params['state'] not in ["absent", None]:
+            module.fail_json(msg="Autoremove should be used alone or with state=absent")
+
+    # Set state as installed by default
+    # This is not set in AnsibleModule() because the following shouldn't happend
+    # - dnf: autoremove=yes state=installed
+    if params['state'] is None:
+        params['state'] = 'installed'
 
     if params['list']:
         base = _base(
@@ -491,7 +536,7 @@ def main():
             module, params['conf_file'], params['disable_gpg_check'],
             params['disablerepo'], params['enablerepo'], params['installroot'])
 
-        ensure(module, base, params['state'], params['name'])
+        ensure(module, base, params['state'], params['name'], params['autoremove'])
 
 
 if __name__ == '__main__':

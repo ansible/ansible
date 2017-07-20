@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017 Dag Wieers <dag@wieers.com>
 #
@@ -31,6 +31,7 @@ author: Dag Wieers (@dagwieers)
 short_description: Creates temporary files and directories.
 description:
   - Creates temporary files and directories.
+  - For non-Windows targets, please use the M(tempfile) module instead.
 options:
   state:
     description:
@@ -50,6 +51,8 @@ options:
     description:
       - Suffix of file/directory name created by module.
     default: ''
+notes:
+  - For non-Windows targets, please use the M(tempfile) module instead.
 '''
 
 EXAMPLES = r"""
@@ -71,4 +74,3 @@ path:
   type: string
   sample: C:\Users\Administrator\AppData\Local\Temp\ansible.bMlvdk
 '''
-

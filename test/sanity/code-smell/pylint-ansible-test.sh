@@ -2,7 +2,7 @@
 
 cd test/runner/
 
-pylint --max-line-length=160 --reports=n ./*.py ./*/*.py \
+pylint --max-line-length=160 --reports=n ./*.py ./*/*.py ./*/*/*.py \
     --jobs 2 \
     --rcfile /dev/null \
     --function-rgx '[a-z_][a-z0-9_]{2,40}$' \

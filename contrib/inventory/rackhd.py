@@ -1,12 +1,27 @@
 #!/usr/bin/env python
 
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 import json
-import requests
 import os
+import requests
 import argparse
-import types
 
 RACKHD_URL = 'http://localhost:8080'
+
 
 class RackhdInventory(object):
     def __init__(self, nodeids):
@@ -14,18 +29,18 @@ class RackhdInventory(object):
         for nodeid in nodeids:
             self._load_inventory_data(nodeid)
         inventory = {}
-        for nodeid,info in self._inventory.items():
-            inventory[nodeid]= (self._format_output(nodeid, info))
+        for (nodeid, info) in self._inventory.items():
+            inventory[nodeid] = (self._format_output(nodeid, info))
         print(json.dumps(inventory))
 
     def _load_inventory_data(self, nodeid):
         info = {}
-        info['ohai'] = RACKHD_URL + '/api/common/nodes/{0}/catalogs/ohai'.format(nodeid )
+        info['ohai'] = RACKHD_URL + '/api/common/nodes/{0}/catalogs/ohai'.format(nodeid)
         info['lookup'] = RACKHD_URL + '/api/common/lookups/?q={0}'.format(nodeid)
 
         results = {}
-        for key,url in info.items():
-            r = requests.get( url, verify=False)
+        for (key, url) in info.items():
+            r = requests.get(url, verify=False)
             results[key] = r.text
         self._inventory[nodeid] = results
 
@@ -35,8 +50,8 @@ class RackhdInventory(object):
             ipaddress = ''
             if len(node_info) > 0:
                 ipaddress = node_info[0]['ipAddress']
-            output = { 'hosts':[ipaddress],'vars':{}}
-            for key,result in info.items():
+            output = {'hosts': [ipaddress], 'vars': {}}
+            for (key, result) in info.items():
                 output['vars'][key] = json.loads(result)
             output['vars']['ansible_ssh_user'] = 'monorail'
         except KeyError:
@@ -50,11 +65,12 @@ def parse_args():
     parser.add_argument('--list', action='store_true')
     return parser.parse_args()
 
+
 try:
-    #check if rackhd url(ie:10.1.1.45:8080) is specified in the environment
+    # check if rackhd url(ie:10.1.1.45:8080) is specified in the environment
     RACKHD_URL = 'http://' + str(os.environ['RACKHD_URL'])
 except:
-    #use default values
+    # use default values
     pass
 
 # Use the nodeid specified in the environment to limit the data returned
@@ -70,7 +86,7 @@ if (parse_args().host):
 if (parse_args().list):
     try:
         url = RACKHD_URL + '/api/common/nodes'
-        r = requests.get( url, verify=False)
+        r = requests.get(url, verify=False)
         data = json.loads(r.text)
         for entry in data:
             if entry['type'] == 'compute':

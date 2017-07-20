@@ -104,10 +104,7 @@ RETURN = '''
 ...
 '''
 
-from subprocess import Popen, PIPE
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
-from ansible.module_utils.pycompat24 import get_exception
-
+from ansible.module_utils.basic import AnsibleModule
 
 
 class GConf2Preference(object):
@@ -158,11 +155,7 @@ class GConf2Preference(object):
                 cmd += "--unset {0}".format(self.key)
 
             # Start external command
-            process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
-
-            # In either case, we will capture the output
-            out = process.stdout.read()
-            err = process.stderr.read()
+            rc, out, err = self.ansible.run_command(cmd, use_unsafe_shell=True)
 
             if len(err) > 0:
                 if fail_onerr:
@@ -171,8 +164,7 @@ class GConf2Preference(object):
             else:
                 changed = True
 
-        except OSError:
-            exception = get_exception()
+        except OSError as exception:
             self.ansible.fail_json(msg='gconftool-2 failed with exception: '
                                        '%s' % exception)
         return changed, out.rstrip()
@@ -199,7 +191,6 @@ def main():
 
     state_values = {"present": "set", "absent": "unset", "get": "get"}
 
-    direct = False
     # Assign module values to dictionary values
     key = module.params['key']
     value_type = module.params['value_type']
@@ -211,8 +202,7 @@ def main():
         value = module.params['value']
 
     state = state_values[module.params['state']]
-    if module.params['direct'] in BOOLEANS_TRUE:
-        direct = True
+    direct = module.params['direct']
     config_source = module.params['config_source']
 
     # Initialize some variables for later
@@ -243,7 +233,7 @@ def main():
     # Check if the current value equals the value we want to set.  If not, make
     # a change
     if current_value != value:
-        # If check mode, we know a change would have occured.
+        # If check mode, we know a change would have occurred.
         if module.check_mode:
             # So we will set the change to True
             change = True

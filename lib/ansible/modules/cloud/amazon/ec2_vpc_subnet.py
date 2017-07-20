@@ -25,7 +25,8 @@ short_description: Manage subnets in AWS virtual private clouds
 description:
     - Manage subnets in AWS virtual private clouds
 version_added: "2.0"
-author: Robert Estelle (@erydo)
+author: Robert Estelle (@erydo), Brad Davidson (@brandond)
+requirements: [ boto3 ]
 options:
   az:
     description:
@@ -54,6 +55,12 @@ options:
       - "VPC ID of the VPC in which to create the subnet."
     required: false
     default: null
+  map_public:
+    description:
+     - "Specify true to indicate that instances launched into the subnet should be assigned public IP address by default."
+    required: false
+    default: false
+    version_added: "2.4"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -80,121 +87,113 @@ EXAMPLES = '''
 '''
 
 import time
-
-try:
-    import boto.ec2
-    import boto.vpc
-    from boto.exception import EC2ResponseError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-    if __name__ != '__main__':
-        raise
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, ansible_dict_to_boto3_tag_list, ec2_argument_spec
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, boto3_tag_list_to_ansible_dict, HAS_BOTO3
 
-
-class AnsibleVPCSubnetException(Exception):
-    pass
-
-
-class AnsibleVPCSubnetCreationException(AnsibleVPCSubnetException):
-    pass
-
-
-class AnsibleVPCSubnetDeletionException(AnsibleVPCSubnetException):
-    pass
-
-
-class AnsibleTagCreationException(AnsibleVPCSubnetException):
-    pass
+try:
+    import botocore
+except ImportError:
+    pass  # caught by imported boto3
 
 
 def get_subnet_info(subnet):
+    if 'Subnets' in subnet:
+        return [get_subnet_info(s) for s in subnet['Subnets']]
+    elif 'Subnet' in subnet:
+        subnet = camel_dict_to_snake_dict(subnet['Subnet'])
+    else:
+        subnet = camel_dict_to_snake_dict(subnet)
 
-    subnet_info = {'id': subnet.id,
-                   'availability_zone': subnet.availability_zone,
-                   'available_ip_address_count': subnet.available_ip_address_count,
-                   'cidr_block': subnet.cidr_block,
-                   'default_for_az': subnet.defaultForAz,
-                   'map_public_ip_on_launch': subnet.mapPublicIpOnLaunch,
-                   'state': subnet.state,
-                   'tags': subnet.tags,
-                   'vpc_id': subnet.vpc_id
-                   }
+    if 'tags' in subnet:
+        subnet['tags'] = boto3_tag_list_to_ansible_dict(subnet['tags'])
+    else:
+        subnet['tags'] = dict()
 
-    return subnet_info
+    if 'subnet_id' in subnet:
+        subnet['id'] = subnet['subnet_id']
+        del subnet['subnet_id']
+
+    return subnet
 
 
-def subnet_exists(vpc_conn, subnet_id):
-    filters = {'subnet-id': subnet_id}
-    subnet = vpc_conn.get_all_subnets(filters=filters)
-    if subnet and subnet[0].state == "available":
-        return subnet[0]
+def subnet_exists(conn, subnet_id):
+    filters = ansible_dict_to_boto3_filter_list({'subnet-id': subnet_id})
+    subnets = get_subnet_info(conn.describe_subnets(Filters=filters))
+    if len(subnets) > 0 and 'state' in subnets[0] and subnets[0]['state'] == "available":
+        return subnets[0]
     else:
         return False
 
 
-def create_subnet(vpc_conn, vpc_id, cidr, az, check_mode):
+def create_subnet(conn, module, vpc_id, cidr, az, check_mode):
     try:
-        new_subnet = vpc_conn.create_subnet(vpc_id, cidr, az, dry_run=check_mode)
+        new_subnet = get_subnet_info(conn.create_subnet(VpcId=vpc_id, CidrBlock=cidr, AvailabilityZone=az))
         # Sometimes AWS takes its time to create a subnet and so using
         # new subnets's id to do things like create tags results in
         # exception.  boto doesn't seem to refresh 'state' of the newly
         # created subnet, i.e.: it's always 'pending'.
         subnet = False
         while subnet is False:
-            subnet = subnet_exists(vpc_conn, new_subnet.id)
+            subnet = subnet_exists(conn, new_subnet['id'])
             time.sleep(0.1)
-    except EC2ResponseError as e:
-        if e.error_code == "DryRunOperation":
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == "DryRunOperation":
             subnet = None
-        elif e.error_code == "InvalidSubnet.Conflict":
-            raise AnsibleVPCSubnetCreationException("%s: the CIDR %s conflicts with another subnet with the VPC ID %s." % (e.error_code, cidr, vpc_id))
         else:
-            raise AnsibleVPCSubnetCreationException(
-                'Unable to create subnet {0}, error: {1}'.format(cidr, e))
+            module.fail_json(msg=e.message, exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
 
     return subnet
 
 
-def get_resource_tags(vpc_conn, resource_id):
-    return dict((t.name, t.value) for t in
-                vpc_conn.get_all_tags(filters={'resource-id': resource_id}))
-
-
-def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
+def ensure_tags(conn, module, subnet, tags, add_only, check_mode):
     try:
-        cur_tags = get_resource_tags(vpc_conn, resource_id)
-        if cur_tags == tags:
-            return {'changed': False, 'tags': cur_tags}
+        cur_tags = subnet['tags']
 
         to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
-        if to_delete and not add_only:
-            vpc_conn.delete_tags(resource_id, to_delete, dry_run=check_mode)
+        if to_delete and not add_only and not check_mode:
+            conn.delete_tags(Resources=[subnet['id']], Tags=ansible_dict_to_boto3_tag_list(to_delete))
 
         to_add = dict((k, tags[k]) for k in tags if k not in cur_tags or cur_tags[k] != tags[k])
-        if to_add:
-            vpc_conn.create_tags(resource_id, to_add, dry_run=check_mode)
+        if to_add and not check_mode:
+            conn.create_tags(Resources=[subnet['id']], Tags=ansible_dict_to_boto3_tag_list(to_add))
 
-        latest_tags = get_resource_tags(vpc_conn, resource_id)
-        return {'changed': True, 'tags': latest_tags}
-    except EC2ResponseError as e:
-        raise AnsibleTagCreationException(
-            'Unable to update tags for {0}, error: {1}'.format(resource_id, e))
-
-
-def get_matching_subnet(vpc_conn, vpc_id, cidr):
-    subnets = vpc_conn.get_all_subnets(filters={'vpc_id': vpc_id})
-    return next((s for s in subnets if s.cidr_block == cidr), None)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] != "DryRunOperation":
+            module.fail_json(msg=e.message, exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
 
 
-def ensure_subnet_present(vpc_conn, vpc_id, cidr, az, tags, check_mode):
-    subnet = get_matching_subnet(vpc_conn, vpc_id, cidr)
+def ensure_map_public(conn, module, subnet, map_public, check_mode):
+    if check_mode:
+        return
+
+    try:
+        conn.modify_subnet_attribute(SubnetId=subnet['id'], MapPublicIpOnLaunch={'Value': map_public})
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+
+
+def get_matching_subnet(conn, vpc_id, cidr):
+    filters = ansible_dict_to_boto3_filter_list({'vpc-id': vpc_id, 'cidr-block': cidr})
+    subnets = get_subnet_info(conn.describe_subnets(Filters=filters))
+    if len(subnets) > 0:
+        return subnets[0]
+    else:
+        return None
+
+
+def ensure_subnet_present(conn, module, vpc_id, cidr, az, tags, map_public, check_mode):
+    subnet = get_matching_subnet(conn, vpc_id, cidr)
     changed = False
     if subnet is None:
-        subnet = create_subnet(vpc_conn, vpc_id, cidr, az, check_mode)
+        if not check_mode:
+            subnet = create_subnet(conn, module, vpc_id, cidr, az, check_mode)
         changed = True
         # Subnet will be None when check_mode is true
         if subnet is None:
@@ -202,32 +201,34 @@ def ensure_subnet_present(vpc_conn, vpc_id, cidr, az, tags, check_mode):
                 'changed': changed,
                 'subnet': {}
             }
-
-    if tags != subnet.tags:
-        ensure_tags(vpc_conn, subnet.id, tags, False, check_mode)
-        subnet.tags = tags
+    if map_public != subnet['map_public_ip_on_launch']:
+        ensure_map_public(conn, module, subnet, map_public, check_mode)
+        subnet['map_public_ip_on_launch'] = map_public
         changed = True
 
-    subnet_info = get_subnet_info(subnet)
+    if tags != subnet['tags']:
+        ensure_tags(conn, module, subnet, tags, False, check_mode)
+        subnet['tags'] = tags
+        changed = True
 
     return {
         'changed': changed,
-        'subnet': subnet_info
+        'subnet': subnet
     }
 
 
-def ensure_subnet_absent(vpc_conn, vpc_id, cidr, check_mode):
-    subnet = get_matching_subnet(vpc_conn, vpc_id, cidr)
+def ensure_subnet_absent(conn, module, vpc_id, cidr, check_mode):
+    subnet = get_matching_subnet(conn, vpc_id, cidr)
     if subnet is None:
         return {'changed': False}
 
     try:
-        vpc_conn.delete_subnet(subnet.id, dry_run=check_mode)
+        if not check_mode:
+            conn.delete_subnet(SubnetId=subnet['id'], DryRun=check_mode)
         return {'changed': True}
-    except EC2ResponseError as e:
-        raise AnsibleVPCSubnetDeletionException(
-            'Unable to delete subnet {0}, error: {1}'
-            .format(subnet.cidr_block, e))
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
 
 
 def main():
@@ -238,22 +239,20 @@ def main():
             cidr=dict(default=None, required=True),
             state=dict(default='present', choices=['present', 'absent']),
             tags=dict(default={}, required=False, type='dict', aliases=['resource_tags']),
-            vpc_id=dict(default=None, required=True)
+            vpc_id=dict(default=None, required=True),
+            map_public=dict(default=False, required=False, type='bool')
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 and botocore are required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
     if region:
-        try:
-            connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
-            module.fail_json(msg=str(e))
+        connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
     else:
         module.fail_json(msg="region must be specified")
 
@@ -262,16 +261,18 @@ def main():
     cidr = module.params.get('cidr')
     az = module.params.get('az')
     state = module.params.get('state')
+    map_public = module.params.get('map_public')
 
     try:
         if state == 'present':
-            result = ensure_subnet_present(connection, vpc_id, cidr, az, tags,
+            result = ensure_subnet_present(connection, module, vpc_id, cidr, az, tags, map_public,
                                            check_mode=module.check_mode)
         elif state == 'absent':
-            result = ensure_subnet_absent(connection, vpc_id, cidr,
+            result = ensure_subnet_absent(connection, module, vpc_id, cidr,
                                           check_mode=module.check_mode)
-    except AnsibleVPCSubnetException as e:
-        module.fail_json(msg=str(e))
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
 
     module.exit_json(**result)
 

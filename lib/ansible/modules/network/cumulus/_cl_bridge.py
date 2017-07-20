@@ -164,6 +164,12 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
+import os
+import re
+import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 # handy helper for calling system calls.
 # calls AnsibleModule.run_command and prints a more appropriate message
@@ -195,7 +201,7 @@ def current_iface_config(module):
 
 
 def build_address(module):
-    # if addr_method == 'dhcp', dont add IP address
+    # if addr_method == 'dhcp', don't add IP address
     if module.params.get('addr_method') == 'dhcp':
         return
     _ipv4 = module.params.get('ipv4')
@@ -373,8 +379,8 @@ def main():
             vids=dict(type='list'),
             pvid=dict(type='str'),
             mstpctl_treeprio=dict(type='str'),
-            vlan_aware=dict(type='bool', choices=BOOLEANS),
-            stp=dict(type='bool', default='yes', choices=BOOLEANS),
+            vlan_aware=dict(type='bool'),
+            stp=dict(type='bool', default='yes'),
             location=dict(type='str',
                           default='/etc/network/interfaces.d')
         ),
@@ -410,11 +416,6 @@ def main():
 
     module.exit_json(changed=_changed, msg=_msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
-import tempfile
-import os
-import re
 
 if __name__ == '__main__':
     main()

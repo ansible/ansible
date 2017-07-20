@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -54,7 +54,7 @@ options:
       default: null
     extra_vars:
       description:
-        - Extra_vars to use for the job_template. Use '@' for a file.
+        - Extra_vars to use for the job_template. Prepend '@' if a file.
       default: null
     limit:
       description:
@@ -75,7 +75,7 @@ EXAMPLES = '''
 - name: Launch a job
   tower_job_launch:
     job_template: "My Job Template"
-    register: job
+  register: job
 - name: Wait for job max 120s
   tower_job_wait:
     job_id: job.id
@@ -117,13 +117,13 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
-        job_template = dict(required=True),
-        job_type = dict(choices=['run', 'check', 'scan']),
-        inventory = dict(),
-        credential = dict(),
-        limit = dict(),
-        tags = dict(type='list'),
-        extra_vars = dict(type='list'),
+        job_template=dict(required=True),
+        job_type=dict(choices=['run', 'check', 'scan']),
+        inventory=dict(),
+        credential=dict(),
+        limit=dict(),
+        tags=dict(type='list'),
+        extra_vars=dict(type='list'),
     ))
 
     module = AnsibleModule(

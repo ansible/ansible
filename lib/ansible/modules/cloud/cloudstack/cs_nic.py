@@ -186,7 +186,7 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
             return self.nic
         args = {
             'virtualmachineid': self.get_vm(key='id'),
-            'networkdid': self.get_network(key='id'),
+            'networkid': self.get_network(key='id'),
         }
         nics = self.cs.listNics(**args)
         if nics:

@@ -42,6 +42,7 @@ except ImportError:
     print("Error: SQLAlchemy is needed. Try something like: pip install sqlalchemy")
     exit(1)
 
+
 class NagiosNDOInventory(object):
 
     def read_settings(self):

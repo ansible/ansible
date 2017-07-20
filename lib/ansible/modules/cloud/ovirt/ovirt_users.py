@@ -80,7 +80,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 user:
     description: "Dictionary of all the user attributes. User attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/user."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/user."
     returned: On success if user is found.
     type: dict
 '''

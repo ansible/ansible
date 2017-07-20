@@ -91,6 +91,17 @@ options:
     required: false
     default: present
     choices: ['present', 'absent']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
+    version_added: "2.4"
+requirements:
+  - ncclient (>=v0.5.2)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
@@ -113,15 +124,29 @@ EXAMPLES = """
 """
 
 RETURN = """
+diff.prepared:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
+  type: string
+  sample: >
+          [edit system login]
+          +    user test-user {
+          +        uid 2005;
+          +        class read-only;
+          +    }
 """
 from functools import partial
 
-from xml.etree.ElementTree import Element, SubElement, tostring
-
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import load_config
+from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import commit_configuration, discard_changes
+from ansible.module_utils.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
+
+try:
+    from lxml.etree import Element, SubElement, tostring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring
 
 ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
 USE_PERSISTENT_CONNECTION = True
@@ -142,6 +167,11 @@ def map_obj_to_ele(want):
         SubElement(user, 'name').text = item['name']
 
         if operation == 'replace':
+            if item['active']:
+                user.set('active', 'active')
+            else:
+                user.set('inactive', 'inactive')
+
             SubElement(user, 'class').text = item['role']
 
             if item.get('full_name'):
@@ -202,7 +232,8 @@ def map_params_to_obj(module):
             'full_name': get_value('full_name'),
             'role': get_value('role'),
             'sshkey': get_value('sshkey'),
-            'state': get_value('state')
+            'state': get_value('state'),
+            'active': get_value('active')
         })
 
         for key, value in iteritems(item):
@@ -220,7 +251,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list'),
+        users=dict(type='list', aliases=['collection']),
         name=dict(),
 
         full_name=dict(),
@@ -229,7 +260,8 @@ def main():
 
         purge=dict(type='bool'),
 
-        state=dict(choices=['present', 'absent'], default='present')
+        state=dict(choices=['present', 'absent'], default='present'),
+        active=dict(default=True, type='bool')
     )
 
     mutually_exclusive = [('users', 'name')]
@@ -248,17 +280,23 @@ def main():
     want = map_params_to_obj(module)
     ele = map_obj_to_ele(want)
 
-    kwargs = {'commit': not module.check_mode}
+    kwargs = {}
     if module.params['purge']:
         kwargs['action'] = 'replace'
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+    with locked_config(module):
+        diff = load_config(module, tostring(ele), warnings, **kwargs)
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': {'prepared': diff}
-        })
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
+
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

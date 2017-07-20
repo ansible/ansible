@@ -141,8 +141,8 @@ cert_days:
 challenge_data:
   description: per domain / challenge type challenge data
   returned: changed
-  type: dictionary
-  sample:
+  type: complex
+  contains:
     resource:
       description: the challenge resource that must be created for validation
       returned: changed
@@ -156,8 +156,8 @@ challenge_data:
 authorizations:
   description: ACME authorization data.
   returned: changed
-  type: list
-  sample:
+  type: complex
+  contains:
       authorization:
         description: ACME authorization object. See https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.1.2
         returned: success
@@ -464,7 +464,7 @@ class ACMEAccount(object):
             # ...and check if update is necessary
             do_update = False
             if 'contact' in result:
-                if cmp(contact, result['contact']) != 0:
+                if contact != result['contact']:
                     do_update = True
             elif len(contact) > 0:
                 do_update = True
@@ -536,7 +536,7 @@ class ACMEClient(object):
         _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
         domains = set([])
-        common_name = re.search(r"Subject:.*? CN=([^\s,;/]+)", out.decode('utf8'))
+        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", out.decode('utf8'))
         if common_name is not None:
             domains.add(common_name.group(1))
         subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", out.decode('utf8'), re.MULTILINE | re.DOTALL)
@@ -568,7 +568,7 @@ class ACMEClient(object):
         for index, cur_auth in enumerate(self.authorizations):
             if (cur_auth['uri'] == auth['uri']):
                 # does the auth parameter contain updated data?
-                if cmp(cur_auth, auth) != 0:
+                if cur_auth != auth:
                     # yes, update our current authorization list
                     self.authorizations[index] = auth
                     return True

@@ -137,8 +137,16 @@ options:
     default: merge
     choices: ['merge', 'override', 'replace']
     version_added: "2.3"
+  confirm_commit:
+    description:
+      - This argument will execute commit operation on remote device.
+        It can be used to confirm a previous commit.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.4"
 requirements:
-  - junos-eznc
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
@@ -173,6 +181,7 @@ EXAMPLES = """
 
 - name: confirm a previous commit
   junos_config:
+    confirm_commit: yes
     provider: "{{ netconf }}"
 """
 
@@ -185,26 +194,34 @@ backup_path:
 """
 import re
 import json
-import sys
-
-from xml.etree import ElementTree
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import get_diff, load_config, get_configuration
+from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_native
 
-if sys.version_info < (2, 7):
-    from xml.parsers.expat import ExpatError
-    ParseError = ExpatError
-else:
-    ParseError = ElementTree.ParseError
+try:
+    from lxml.etree import Element, fromstring
+except ImportError:
+    from xml.etree.ElementTree import Element, fromstring
+
+try:
+    from lxml.etree import ParseError
+except ImportError:
+    try:
+        from xml.etree.ElementTree import ParseError
+    except ImportError:
+        # for Python < 2.7
+        from xml.parsers.expat import ExpatError
+        ParseError = ExpatError
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
+
 
 def check_args(module, warnings):
     junos_check_args(module, warnings)
@@ -212,8 +229,14 @@ def check_args(module, warnings):
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
 
-zeroize = lambda x: send_request(x, ElementTree.Element('request-system-zeroize'))
-rollback = lambda x: get_diff(x)
+
+def zeroize(ele):
+    return send_request(ele, Element('request-system-zeroize'))
+
+
+def rollback(ele):
+    return get_diff(ele)
+
 
 def guess_format(config):
     try:
@@ -223,7 +246,7 @@ def guess_format(config):
         pass
 
     try:
-        ElementTree.fromstring(config)
+        fromstring(config)
         return 'xml'
     except ParseError:
         pass
@@ -232,6 +255,7 @@ def guess_format(config):
         return 'set'
 
     return 'text'
+
 
 def filter_delete_statements(module, candidate):
     reply = get_configuration(module, format='set')
@@ -242,7 +266,7 @@ def filter_delete_statements(module, candidate):
     config = to_native(match.text, encoding='latin1')
 
     modified_candidate = candidate[:]
-    for index, line in enumerate(candidate):
+    for index, line in reversed(list(enumerate(candidate))):
         if line.startswith('delete'):
             newline = re.sub('^delete', 'set', line)
             if newline not in config:
@@ -250,20 +274,10 @@ def filter_delete_statements(module, candidate):
 
     return modified_candidate
 
-def configure_device(module, warnings):
-    candidate = module.params['lines'] or module.params['src']
 
-    kwargs = {
-        'comment': module.params['comment'],
-        'commit': not module.check_mode
-    }
+def configure_device(module, warnings, candidate):
 
-    if module.params['confirm'] > 0:
-        kwargs.update({
-            'confirm': True,
-            'confirm_timeout': module.params['confirm']
-        })
-
+    kwargs = {}
     config_format = None
 
     if module.params['src']:
@@ -285,6 +299,7 @@ def configure_device(module, warnings):
 
     return load_config(module, candidate, warnings, **kwargs)
 
+
 def main():
     """ main entry point for module execution
     """
@@ -302,6 +317,7 @@ def main():
 
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
+        confirm_commit=dict(type='bool', default=False),
 
         # config operations
         backup=dict(type='bool', default=False),
@@ -321,6 +337,9 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
+    candidate = module.params['lines'] or module.params['src']
+    commit = not module.check_mode
+
     result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
@@ -335,22 +354,45 @@ def main():
         result['__backup__'] = match.text.strip()
 
     if module.params['rollback']:
-        if not module.check_mode:
+        if commit:
             diff = rollback(module)
             if module._diff:
                 result['diff'] = {'prepared': diff}
         result['changed'] = True
 
     elif module.params['zeroize']:
-        if not module.check_mode:
+        if commit:
             zeroize(module)
         result['changed'] = True
 
     else:
-        diff = configure_device(module, warnings)
-        if diff is not None:
-            if module._diff:
-                result['diff'] = {'prepared': diff}
+        if candidate:
+            with locked_config(module):
+                diff = configure_device(module, warnings, candidate)
+                if diff:
+                    if commit:
+                        kwargs = {
+                            'comment': module.params['comment']
+                        }
+
+                        if module.params['confirm'] > 0:
+                            kwargs.update({
+                                'confirm': True,
+                                'confirm_timeout': module.params['confirm']
+                            })
+                        commit_configuration(module, **kwargs)
+                    else:
+                        discard_changes(module)
+                    result['changed'] = True
+
+                    if module._diff:
+                        result['diff'] = {'prepared': diff}
+
+        elif module.params['confirm_commit']:
+            with locked_config(module):
+                # confirm a previous commit
+                commit_configuration(module)
+
             result['changed'] = True
 
     module.exit_json(**result)

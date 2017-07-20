@@ -55,7 +55,7 @@ At the prompt you can quickly start using the Ansible devel branch by running th
     git clone https://github.com/ansible/ansible.git
     source ansible/hacking/env-setup
 
-After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targetting systems using the plethora of available Windows modules.
+After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targeting systems using the plethora of available Windows modules.
 
 .. Note:: Ansible is also reported to work on Cygwin, but this is more cumbersome and doesn't scale as well as WSL.
 
@@ -178,6 +178,15 @@ To see what tickets if any you have acquired, use the command klist
 
    klist
 
+Automatic kerberos ticket management
+------------------------------------
+
+Ansible defaults to automatically managing kerberos tickets (as of Ansible 2.3) when both username and password are specified for a host that's configured for kerberos. A new ticket is created in a temporary credential cache for each host, before each task executes (to minimize the chance of ticket expiration). The temporary credential caches are deleted after each task, and will not interfere with the default credential cache.
+
+To disable automatic ticket management (e.g., to use an existing SSO ticket or call ``kinit`` manually to populate the default credential cache), set ``ansible_winrm_kinit_mode=manual`` via inventory.
+
+Automatic ticket management requires a standard ``kinit`` binary on the control host system path. To specify a different location or binary name, set the ``ansible_winrm_kinit_cmd`` inventory var to the fully-qualified path to an MIT krbv5 ``kinit``-compatible binary.
+
 Troubleshooting kerberos connections
 ------------------------------------
 
@@ -281,8 +290,10 @@ Since 2.0, the following custom inventory variables are also supported for addit
 * ``ansible_winrm_path``: Specify an alternate path to the WinRM endpoint.  Ansible uses ``/wsman`` by default.
 * ``ansible_winrm_realm``: Specify the realm to use for Kerberos authentication.  If the username contains ``@``, Ansible will use the part of the username after ``@`` by default.
 * ``ansible_winrm_transport``: Specify one or more transports as a comma-separated list.  By default, Ansible will use ``kerberos,plaintext`` if the ``kerberos`` module is installed and a realm is defined, otherwise ``plaintext``.
-* ``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``
+* ``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``.
 * ``ansible_winrm_kerberos_delegation``: Set to ``true`` to enable delegation of commands on the remote host when using kerberos.
+* ``ansible_winrm_operation_timeout_sec``: Increase the default timeout for WinRM operations (default: ``20``).
+* ``ansible_winrm_read_timeout_sec``: Increase the WinRM read timeout if you experience read timeout errors (default: ``30``), e.g. intermittent network issues.
 * ``ansible_winrm_*``: Any additional keyword arguments supported by ``winrm.Protocol`` may be provided.
 
 .. _windows_system_prep:
@@ -346,20 +357,24 @@ In addition, the following core modules/action-plugins work with Windows:
 
 * add_host
 * assert
-* async
+* async_status
 * debug
 * fail
 * fetch
 * group_by
+* include
+* include_role
 * include_vars
 * meta
 * pause
 * raw
 * script
 * set_fact
+* set_stats
 * setup
 * slurp
 * template (also: win_template)
+* wait_for_connection
 
 Some modules can be utilised in playbooks that target windows by delegating to localhost, depending on what you are
 attempting to achieve.  For example, ``assemble`` can be used to create a file on your ansible controller that is then 
@@ -454,7 +469,7 @@ You may wind up with a more readable playbook by using the PowerShell equivalent
          - name: Move file on remote Windows Server from one location to another
            win_command: Powershell.exe "Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf"
 
-Bear in mind that using ``win_command`` or ``win_shell`` will always report ``changed``, and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+Bear in mind that using ``win_command`` or ``win_shell`` will always report ``changed``, and it is your responsibility to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
 
 Here's an example of how to use the ``win_stat`` module to test for file existence. Note that the data returned by the ``win_stat`` module is slightly different than what is provided by the Linux equivalent::
 

@@ -51,7 +51,7 @@ options:
             - "Default value is set by oVirt/RHV engine to I(false)."
     ranges:
         description:
-            - "List of MAC ranges. The from and to should be splitted by comma."
+            - "List of MAC ranges. The from and to should be split by comma."
             - "For example: 00:1a:4a:16:01:51,00:1a:4a:16:01:61"
 extends_documentation_fragment: ovirt
 '''
@@ -82,7 +82,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 template:
     description: "Dictionary of all the MAC pool attributes. MAC pool attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/mac_pool."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/mac_pool."
     returned: On success if MAC pool is found.
     type: dict
 '''

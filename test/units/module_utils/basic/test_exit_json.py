@@ -25,12 +25,12 @@ import json
 import sys
 
 from ansible.compat.tests import unittest
-from units.mock.procenv import swap_stdin_and_argv, swap_stdout
-
 from ansible.module_utils import basic
+from units.mock.procenv import swap_stdin_and_argv, swap_stdout
 
 
 empty_invocation = {u'module_args': {}}
+
 
 class TestAnsibleModuleExitJson(unittest.TestCase):
     def setUp(self):
@@ -59,7 +59,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(changed=False, invocation=empty_invocation))
+        self.assertEquals(return_val, dict(invocation=empty_invocation))
 
     def test_exit_json_args_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -70,7 +70,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(msg="message", changed=False, invocation=empty_invocation))
+        self.assertEquals(return_val, dict(msg="message", invocation=empty_invocation))
 
     def test_fail_json_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -89,31 +89,35 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         return_val = json.loads(self.fake_stream.getvalue())
         self.assertEquals(return_val, dict(changed=True, msg='success', invocation=empty_invocation))
 
+
 class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
     OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
     dataset = (
-        (dict(username='person', password='$ecret k3y'),
-                dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
-                    not_secret='following the leader', msg='here'),
-                dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
-                    not_secret='following the leader', changed=False, msg='here',
-                    invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
-                ),
-        (dict(username='person', password='password12345'),
-                dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
-                    not_secret='following the leader', msg='here'),
-                dict(one=1, pwd='$ecret k3y', url='https://username:********@foo.com/login/',
-                    not_secret='following the leader', changed=False, msg='here',
-                    invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
-                ),
-        (dict(username='person', password='$ecret k3y'),
-                dict(one=1, pwd='$ecret k3y', url='https://username:$ecret k3y@foo.com/login/',
-                    not_secret='following the leader', msg='here'),
-                dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
-                    not_secret='following the leader', changed=False, msg='here',
-                    invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
-                ),
-        )
+        (
+            dict(username='person', password='$ecret k3y'),
+            dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
+                 not_secret='following the leader', msg='here'),
+            dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
+                 not_secret='following the leader', msg='here',
+                 invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
+        ),
+        (
+            dict(username='person', password='password12345'),
+            dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
+                 not_secret='following the leader', msg='here'),
+            dict(one=1, pwd='$ecret k3y', url='https://username:********@foo.com/login/',
+                 not_secret='following the leader', msg='here',
+                 invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
+        ),
+        (
+            dict(username='person', password='$ecret k3y'),
+            dict(one=1, pwd='$ecret k3y', url='https://username:$ecret k3y@foo.com/login/',
+                 not_secret='following the leader', msg='here'),
+            dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
+                 not_secret='following the leader', msg='here',
+                 invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
+        ),
+    )
 
     def test_exit_json_removes_values(self):
         self.maxDiff = None
@@ -125,12 +129,12 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
                 with swap_stdout():
                     basic._ANSIBLE_ARGS = None
                     module = basic.AnsibleModule(
-                        argument_spec = dict(
+                        argument_spec=dict(
                             username=dict(),
                             password=dict(no_log=True),
                             token=dict(no_log=True),
-                            ),
-                        )
+                        ),
+                    )
                     with self.assertRaises(SystemExit) as ctx:
                         self.assertEquals(module.exit_json(**return_val), expected)
                     self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
@@ -139,7 +143,6 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
         self.maxDiff = None
         for args, return_val, expected in self.dataset:
             expected = copy.deepcopy(expected)
-            del expected['changed']
             expected['failed'] = True
             params = dict(ANSIBLE_MODULE_ARGS=args)
             params = json.dumps(params)
@@ -147,12 +150,12 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
                 with swap_stdout():
                     basic._ANSIBLE_ARGS = None
                     module = basic.AnsibleModule(
-                        argument_spec = dict(
+                        argument_spec=dict(
                             username=dict(),
                             password=dict(no_log=True),
                             token=dict(no_log=True),
-                            ),
-                        )
+                        ),
+                    )
                     with self.assertRaises(SystemExit) as ctx:
                         self.assertEquals(module.fail_json(**return_val), expected)
                     self.assertEquals(json.loads(sys.stdout.getvalue()), expected)

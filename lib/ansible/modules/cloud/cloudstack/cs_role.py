@@ -108,7 +108,11 @@ role_type:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import AnsibleCloudStack, CloudStackException, cs_argument_spec, cs_required_together
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together,
+)
 
 
 class AnsibleCloudStackRole(AnsibleCloudStack):
@@ -125,14 +129,14 @@ class AnsibleCloudStackRole(AnsibleCloudStack):
             args = {
                 'id': uuid,
             }
-            roles = self.cs.listRoles(**args)
+            roles = self.query_api('listRoles', **args)
             if roles:
                 return roles['role'][0]
         else:
             args = {
                 'name': self.module.params.get('name'),
             }
-            roles = self.cs.listRoles(**args)
+            roles = self.query_api('listRoles', **args)
             if roles:
                 return roles['role'][0]
         return None
@@ -153,9 +157,7 @@ class AnsibleCloudStackRole(AnsibleCloudStack):
             'description': self.module.params.get('description'),
         }
         if not self.module.check_mode:
-            res = self.cs.createRole(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createRole', **args)
             role = res['role']
         return role
 
@@ -168,14 +170,13 @@ class AnsibleCloudStackRole(AnsibleCloudStack):
         if self.has_changed(args, role):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.updateRole(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-            # The API as in 4.9 does not return an updated role yet
-            if 'role' not in res:
-                role = self.get_role()
-            else:
-                role = res['role']
+                res = self.query_api('updateRole', **args)
+
+                # The API as in 4.9 does not return an updated role yet
+                if 'role' not in res:
+                    role = self.get_role()
+                else:
+                    role = res['role']
         return role
 
     def absent_role(self):
@@ -186,18 +187,16 @@ class AnsibleCloudStackRole(AnsibleCloudStack):
                 'id': role['id'],
             }
             if not self.module.check_mode:
-                res = self.cs.deleteRole(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('deleteRole', **args)
         return role
 
 
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        uuid=dict(default=None, aliases=['id']),
+        uuid=dict(aliases=['id']),
         name=dict(required=True),
-        description=dict(default=None),
+        description=dict(),
         role_type=dict(choices=['User', 'DomainAdmin', 'ResourceAdmin', 'Admin'], default='User'),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
@@ -208,18 +207,14 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_role = AnsibleCloudStackRole(module)
-        state = module.params.get('state')
-        if state == 'absent':
-            role = acs_role.absent_role()
-        else:
-            role = acs_role.present_role()
+    acs_role = AnsibleCloudStackRole(module)
+    state = module.params.get('state')
+    if state == 'absent':
+        role = acs_role.absent_role()
+    else:
+        role = acs_role.present_role()
 
-        result = acs_role.get_result(role)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_role.get_result(role)
 
     module.exit_json(**result)
 

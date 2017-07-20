@@ -530,7 +530,11 @@ import platform
 import socket
 import sys
 import types
-import urllib
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import open_url
+
 
 HAS_LIB_JSON = True
 try:
@@ -575,8 +579,8 @@ class LogicMonitor(object):
         and return the response"""
         self.module.debug("Running LogicMonitor.rpc")
 
-        param_str = urllib.urlencode(params)
-        creds = urllib.urlencode(
+        param_str = urlencode(params)
+        creds = urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password})
@@ -603,8 +607,7 @@ class LogicMonitor(object):
                 self.fail(msg="Error: " + resp["errmsg"])
             else:
                 return raw
-        except IOError:
-            ioe = get_exception()
+        except IOError as ioe:
             self.fail(msg="Error: Exception making RPC call to " +
                           "https://" + self.company + "." + self.lm_url +
                           "/rpc/" + action + "\nException" + str(ioe))
@@ -614,8 +617,8 @@ class LogicMonitor(object):
          server \"do\" function"""
         self.module.debug("Running LogicMonitor.do...")
 
-        param_str = urllib.urlencode(params)
-        creds = (urllib.urlencode(
+        param_str = urlencode(params)
+        creds = (urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password}))
@@ -632,8 +635,7 @@ class LogicMonitor(object):
                 "https://" + self.company + "." + self.lm_url +
                 "/do/" + action + "?" + param_str)
             return f.read()
-        except IOError:
-            ioe = get_exception()
+        except IOError as ioe:
             self.fail(msg="Error: Exception making RPC call to " +
                           "https://" + self.company + "." + self.lm_url +
                           "/do/" + action + "\nException" + str(ioe))
@@ -908,15 +910,13 @@ class Collector(LogicMonitor):
                 self.module.run_command("mkdir " + self.installdir)
 
                 try:
-                    f = open(installfilepath, "w")
                     installer = (self.do("logicmonitorsetup",
                                          {"id": self.id,
                                           "arch": arch}))
-                    f.write(installer)
-                    f.closed
+                    with open(installfilepath, "w") as write_file:
+                        write_file.write(installer)
                 except:
                     self.fail(msg="Unable to open installer file for writing")
-                    f.closed
             else:
                 self.module.debug("Collector installer already exists")
                 return installfilepath
@@ -946,7 +946,7 @@ class Collector(LogicMonitor):
             installer = self.get_installer_binary()
 
             if self.info is None:
-                self.module.debug("Retriving collector information")
+                self.module.debug("Retrieving collector information")
                 self.info = self._get()
 
             if not os.path.exists(self.installdir + "/agent"):
@@ -2172,7 +2172,7 @@ def main():
             duration=dict(required=False, default=30),
             properties=dict(required=False, default={}, type="dict"),
             groups=dict(required=False, default=[], type="list"),
-            alertenable=dict(required=False, default="true", choices=BOOLEANS)
+            alertenable=dict(required=False, default="true", type="bool")
         ),
         supports_check_mode=True
     )
@@ -2181,11 +2181,6 @@ def main():
         module.fail_json(msg="Unable to load JSON library")
 
     selector(module)
-
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.urls import open_url
 
 
 if __name__ == "__main__":

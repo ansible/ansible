@@ -45,17 +45,9 @@ class TestHost(unittest.TestCase):
         host_vars = self.hostA.get_vars()
         self.assertIsInstance(host_vars, dict)
 
-    def test_get_group_vars(self):
-        group_vars = self.hostA.get_group_vars()
-        self.assertIsInstance(group_vars, dict)
-
     def test_repr(self):
         host_repr = repr(self.hostA)
         self.assertIsInstance(host_repr, string_types)
-
-    def test_gathered_facts_empty(self):
-        gathered_facts = self.hostA.gathered_facts
-        self.assertFalse(gathered_facts)
 
     def test_add_group(self):
         group = Group('some_group')
@@ -70,24 +62,6 @@ class TestHost(unittest.TestCase):
         self.assertEqual(len(groups), 1)
         for _group in groups:
             self.assertIsInstance(_group, Group)
-
-    def test_get_group_vars_with_groups(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-        group_vars = self.hostA.get_group_vars()
-        self.assertIsInstance(group_vars, dict)
-
-    def test_get_group_vars_with_nested_groups(self):
-        parent_group = Group('some_parent_group')
-        parent_group.set_variable('parent_some_key', 'parent_some_value')
-        child_group = Group('some_child_group')
-        child_group.set_variable('child_some_key', 'child_some_value')
-        parent_group.add_child_group(child_group)
-        self.hostA.add_group(child_group)
-        group_vars = self.hostA.get_group_vars()
-        self.assertIsInstance(group_vars, dict)
-        self.assertIn('parent_some_key', group_vars)
-        self.assertIn('child_some_key', group_vars)
 
     def test_equals_none(self):
         other = None
@@ -120,10 +94,6 @@ class TestHost(unittest.TestCase):
 
         hostA_clone = pickle.loads(pickled_hostA)
         self.assertEquals(self.hostA, hostA_clone)
-
-    def test_set_gathered_facts(self):
-        self.hostA.set_gathered_facts(True)
-        self.assertTrue(self.hostA.gathered_facts)
 
 
 class TestHostWithPort(TestHost):

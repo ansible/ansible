@@ -1,0 +1,51 @@
+#- name: make sure pyvmomi is installed
+#  pip:
+#    name: pyvmomi
+#    state: latest
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+- name: start vcsim with folders
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1' }}"
+  register: vcsim_instance
+
+- name: get a list of VMS from vcsim   
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
+  register: vmlist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+# https://github.com/ansible/ansible/issues/25011
+# Sending "-folders 1" to vcsim nests the datacenter under 
+# the folder so that the path prefix is no longer /vm
+#
+# /F0/DC0/vm/F0/DC0_H0_VM0
+
+- name: set state to poweredoff on all VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: poweroff_d1_c1_f1
+
+- debug: var=poweroff_d1_c1_f1
+
+- name: make sure no changes were made
+  assert:
+    that:
+        - "poweroff_d1_c1_f1.results|map(attribute='changed')|unique|list == [False]"

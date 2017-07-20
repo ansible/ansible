@@ -286,7 +286,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         self.assertTrue('some string' != vault_string)
         self.assertNotEquals('some string', vault_string)
 
-        # Note this is a compare of the str/unicode of these, they are diferent types
+        # Note this is a compare of the str/unicode of these, they are different types
         # so we want to test self == other, and other == self etc
         self.assertEquals(plaintext_var, vault_string)
         self.assertEquals(vault_string, plaintext_var)
@@ -341,16 +341,17 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
         self.assertEqual(self.data[0][u'vars'][u'number'], 1)
         self.assertEqual(self.data[0][u'vars'][u'string'], u'Ansible')
         self.assertEqual(self.data[0][u'vars'][u'utf8_string'], u'Cafè Eñyei')
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'],
-                {u'webster': u'daniel',
-                    u'oed': u'oxford'})
+        self.assertEqual(self.data[0][u'vars'][u'dictionary'], {
+            u'webster': u'daniel',
+            u'oed': u'oxford'
+        })
         self.assertEqual(self.data[0][u'vars'][u'list'], [u'a', u'b', 1, 2])
 
-        self.assertEqual(self.data[0][u'tasks'],
-                [{u'name': u'Test case', u'ping': {u'data': u'{{ utf8_string }}'}},
-                 {u'name': u'Test 2', u'ping': {u'data': u'Cafè Eñyei'}},
-                 {u'name': u'Test 3', u'command': u'printf \'Cafè Eñyei\n\''},
-                 ])
+        self.assertEqual(self.data[0][u'tasks'], [
+            {u'name': u'Test case', u'ping': {u'data': u'{{ utf8_string }}'}},
+            {u'name': u'Test 2', u'ping': {u'data': u'Cafè Eñyei'}},
+            {u'name': u'Test 3', u'command': u'printf \'Cafè Eñyei\n\''},
+        ])
 
     def walk(self, data):
         # Make sure there's no str in the data

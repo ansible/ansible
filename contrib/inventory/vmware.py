@@ -47,9 +47,11 @@ try:
     from logging import NullHandler
 except ImportError:
     from logging import Handler
+
     class NullHandler(Handler):
         def emit(self, record):
             pass
+
 logging.getLogger('psphere').addHandler(NullHandler())
 logging.getLogger('suds').addHandler(NullHandler())
 
@@ -66,7 +68,7 @@ class VMwareInventory(object):
         if os.environ.get('VMWARE_INI', ''):
             config_files = [os.environ['VMWARE_INI']]
         else:
-            config_files =  [os.path.abspath(sys.argv[0]).rstrip('.py') + '.ini', 'vmware.ini']
+            config_files = [os.path.abspath(sys.argv[0]).rstrip('.py') + '.ini', 'vmware.ini']
         for config_file in config_files:
             if os.path.exists(config_file):
                 self.config.read(config_file)
@@ -362,7 +364,7 @@ class VMwareInventory(object):
             # Loop through all VMs on physical host.
             for vm in host.vm:
                 if prefix_filter:
-                    if vm.name.startswith( prefix_filter ):
+                    if vm.name.startswith(prefix_filter):
                         continue
                 self._add_host(inv, 'all', vm.name)
                 self._add_host(inv, vm_group, vm.name)

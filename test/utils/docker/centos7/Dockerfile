@@ -17,18 +17,24 @@ RUN yum clean all && \
     bzip2 \
     dbus-python \
     file \
+    gcc \
     git \
     iproute \
+    libffi \
+    libffi-devel \
     make \
     mariadb-server \
     mercurial \
     MySQL-python \
     openssh-clients \
     openssh-server \
-    python-coverage \
+    openssl-devel \
+    python-cryptography \
+    python-devel \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \
+    python-lxml \
     python-mock \
     python-nose \
     python-paramiko \
@@ -39,6 +45,7 @@ RUN yum clean all && \
     PyYAML \
     rpm-build \
     rubygems \
+    sshpass \
     subversion \
     sudo \
     unzip \
@@ -57,6 +64,6 @@ RUN ssh-keygen -q -t rsa1 -N '' -f /etc/ssh/ssh_host_key && \
     ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
     cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys && \
     for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
-RUN pip install junit-xml
+RUN pip install coverage junit-xml
 ENV container=docker
 CMD ["/usr/sbin/init"]

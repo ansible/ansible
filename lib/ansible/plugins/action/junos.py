@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import sys
 import copy
 
@@ -28,7 +27,6 @@ from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.six import iteritems
 from ansible.plugins import connection_loader, module_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -75,25 +73,14 @@ class ActionModule(_ActionModule):
         display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
-        socket_path = self._get_socket_path(pc)
+        socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+        if not socket_path:
+            return {'failed': True,
+                    'msg': 'unable to open shell. Please see: ' +
+                           'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
-        if not os.path.exists(socket_path):
-            # start the connection if it isn't started
-            if pc.connection == 'netconf':
-                rc, out, err = connection.exec_command('open_session()')
-                display.vvvv('open_session() returned %s %s %s' % (rc, out, err))
-            else:
-                rc, out, err = connection.exec_command('open_shell()')
-                display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
-
-            if rc != 0:
-                return {'failed': True,
-                        'msg': 'unable to open shell. Please see: ' +
-                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
-                        'rc': rc}
-
-        elif pc.connection == 'network_cli':
+        if pc.connection == 'network_cli':
             # make sure we are in the right cli context which should be
             # enable mode and not config module
             rc, out, err = connection.exec_command('prompt()')
@@ -106,15 +93,6 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
-
-    def _get_socket_path(self, play_context):
-        ssh = connection_loader.get('ssh', class_only=True)
-        path = unfrackpath("$HOME/.ansible/pc")
-        # use play_context.connection instea of play_context.port to avoid
-        # collision if netconf is listening on port 22
-        #cp = ssh._create_control_path(play_context.remote_addr, play_context.connection, play_context.remote_user)
-        cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user)
-        return cp % dict(directory=path)
 
     def load_provider(self):
         provider = self._task.args.get('provider', {})

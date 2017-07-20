@@ -90,7 +90,8 @@ def main():
                 default=False,
                 aliases=['accept_licences', 'accept'],
             ),
-        )
+        ),
+        supports_check_mode=True,
     )
 
     params = module.params
@@ -127,7 +128,9 @@ def ensure(module, state, packages, params):
             'subcommand': 'install',
         },
         'latest': {
-            'filter': lambda p: not is_latest(module, p),
+            'filter': lambda p: (
+                not is_installed(module, p) or not is_latest(module, p)
+            ),
             'subcommand': 'install',
         },
         'absent': {
@@ -135,6 +138,11 @@ def ensure(module, state, packages, params):
             'subcommand': 'uninstall',
         },
     }
+
+    if module.check_mode:
+        dry_run = ['-n']
+    else:
+        dry_run = []
 
     if params['accept_licenses']:
         accept_licenses = ['--accept']
@@ -147,6 +155,7 @@ def ensure(module, state, packages, params):
             [
                 'pkg', behaviour[state]['subcommand']
             ]
+            + dry_run
             + accept_licenses
             + [
                 '-q', '--'

@@ -7,14 +7,14 @@
       - no description
       - no shutdown
     parents:
-      - interface Ethernet5
+      - interface Ethernet2
     match: none
     provider: "{{ cli }}"
 
 
-- name: save config
+- name: save config always
   eos_config:
-    save: true
+    save_when: always
     provider: "{{ cli }}"
   register: result
 
@@ -22,9 +22,9 @@
     that:
       - "result.changed == true"
 
-- name: save should always run
+- name: save always again (not idempotent)
   eos_config:
-    save: true
+    save_when: always
     provider: "{{ cli }}"
   register: result
 

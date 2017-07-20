@@ -29,6 +29,7 @@ module: assert
 short_description: Asserts given expressions are true
 description:
      - This module asserts that given expressions are true with an optional custom message.
+     - This module is also supported for Windows targets.
 version_added: "1.5"
 options:
   that:
@@ -39,7 +40,8 @@ options:
   msg:
     description:
       - "The customized message used for a failing assertion"
-    required: false
+notes:
+     - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"

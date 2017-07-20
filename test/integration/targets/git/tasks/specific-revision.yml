@@ -50,7 +50,7 @@
   git:
     repo: "{{ repo_dir }}/format1"
     dest: "{{ checkout_dir }}"
-    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    version: 5473e343e33255f2da0b160f53135c56921d875c
   ignore_errors: true
   register: git_result
 
@@ -64,7 +64,7 @@
   git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: '{{ checkout_dir }}'
-    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    version: 5473e343e33255f2da0b160f53135c56921d875c
     refspec: refs/pull/7/merge
 
 - name: check HEAD after update with refspec
@@ -75,7 +75,7 @@
 
 - assert:
     that:
-      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+      - 'git_result.stdout == "5473e343e33255f2da0b160f53135c56921d875c"'
 
 # try out combination of refspec and depth
 - name: clear checkout_dir
@@ -87,7 +87,7 @@
   git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: '{{ checkout_dir }}'
-    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    version: 5473e343e33255f2da0b160f53135c56921d875c
     refspec: refs/pull/7/merge
     depth: 1
 
@@ -99,7 +99,7 @@
 
 - assert:
     that:
-      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+      - 'git_result.stdout == "5473e343e33255f2da0b160f53135c56921d875c"'
 
 - name: try to access other commit
   shell: git checkout 0ce1096
@@ -108,11 +108,11 @@
   args:
     chdir: '{{ checkout_dir }}'
 
-- name: make sure the old commit was not fetched
+- name: "make sure the old commit was not fetched, task is 'forced success'"
   assert:
     that:
       - 'checkout_shallow.rc != 0'
-      - checkout_shallow|failed
+      - checkout_shallow|success
   when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 
 - name: clear checkout_dir
@@ -124,7 +124,7 @@
   git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: '{{ checkout_dir }}'
-    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    version: 5473e343e33255f2da0b160f53135c56921d875c
     refspec: refs/pull/7/merge
 
 - name: check HEAD after update with refspec
@@ -135,7 +135,7 @@
 
 - assert:
     that:
-      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+      - 'git_result.stdout == "5473e343e33255f2da0b160f53135c56921d875c"'
 
 # Test that a forced shallow checkout referincing branch only always fetches latest head
 

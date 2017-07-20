@@ -209,6 +209,13 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
+import os
+import platform
+import re
+import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 # handy helper for calling system calls.
 # calls AnsibleModule.run_command and prints a more appropriate message
@@ -240,7 +247,7 @@ def current_iface_config(module):
 
 
 def build_address(module):
-    # if addr_method == 'dhcp', dont add IP address
+    # if addr_method == 'dhcp', don't add IP address
     if module.params.get('addr_method') == 'dhcp':
         return
     _ipv4 = module.params.get('ipv4')
@@ -401,10 +408,10 @@ def main():
             virtual_mac=dict(type='str'),
             vids=dict(type='list'),
             pvid=dict(type='str'),
-            mstpctl_portnetwork=dict(type='bool', choices=BOOLEANS),
-            mstpctl_portadminedge=dict(type='bool', choices=BOOLEANS),
-            mstpctl_bpduguard=dict(type='bool', choices=BOOLEANS),
-            clagd_enable=dict(type='bool', choices=BOOLEANS),
+            mstpctl_portnetwork=dict(type='bool'),
+            mstpctl_portadminedge=dict(type='bool'),
+            mstpctl_bpduguard=dict(type='bool'),
+            clagd_enable=dict(type='bool'),
             clagd_priority=dict(type='str'),
             clagd_peer_ip=dict(type='str'),
             clagd_sys_mac=dict(type='str'),
@@ -446,10 +453,6 @@ def main():
 
     module.exit_json(changed=_changed, msg=_msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
-import tempfile
-import os
 
 if __name__ == '__main__':
     main()

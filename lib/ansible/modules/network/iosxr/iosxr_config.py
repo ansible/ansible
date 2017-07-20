@@ -146,6 +146,14 @@ options:
     required: false
     default: 'configured by iosxr_config'
     version_added: "2.2"
+  admin:
+    description:
+      - Enters into administration configuration mode for making config
+        changes to the device.
+    required: false
+    default: false
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
 """
 
 EXAMPLES = """
@@ -182,11 +190,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.iosxr import load_config,get_config
 from ansible.module_utils.iosxr import iosxr_argument_spec
+from ansible.module_utils.iosxr import check_args as iosxr_check_args
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
 
 def check_args(module, warnings):
+    iosxr_check_args(module, warnings)
     if module.params['comment']:
         if len(module.params['comment']) > 60:
             module.fail_json(msg='comment argument cannot be more than 60 characters')
@@ -216,6 +226,7 @@ def run(module, result):
     replace_config = replace == 'config'
     path = module.params['parents']
     comment = module.params['comment']
+    admin = module.params['admin']
     check_mode = module.check_mode
 
     candidate = get_candidate(module)
@@ -241,7 +252,7 @@ def run(module, result):
             result['commands'] = commands
 
         diff = load_config(module, commands, result['warnings'],
-                           not check_mode, replace_config, comment)
+                           not check_mode, replace_config, comment, admin)
         if diff:
             result['diff'] = dict(prepared=diff)
             result['changed'] = True
@@ -268,6 +279,7 @@ def main():
         config=dict(),
         backup=dict(type='bool', default=False),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
+        admin=dict(type='bool', default=False)
     )
 
     argument_spec.update(iosxr_argument_spec)

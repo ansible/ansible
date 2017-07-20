@@ -790,6 +790,7 @@ def update_disks(vsphere_client, vm, module, vm_disk, changes):
 
     for cnf_disk in vm_disk:
         disk_id = re.sub("disk", "", cnf_disk)
+        disk_type = vm_disk[cnf_disk]['type']
         found = False
         for dev_key in vm._devices:
             if vm._devices[dev_key]['type'] == 'VirtualDisk':
@@ -821,7 +822,10 @@ def update_disks(vsphere_client, vm, module, vm_disk, changes):
             backing.DiskMode = "persistent"
             backing.Split = False
             backing.WriteThrough = False
-            backing.ThinProvisioned = False
+            if disk_type == 'thin':
+                backing.ThinProvisioned = True
+            else:
+                backing.ThinProvisioned = False
             backing.EagerlyScrub = False
             hd.Backing = backing
 
@@ -863,6 +867,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
 
     changed, changes = update_disks(vsphere_client, vm,
                                     module, vm_disk, changes)
+    vm.properties._flush_cache()
     request = VI.ReconfigVM_TaskRequestMsg()
 
     # Change extra config
@@ -1355,6 +1360,8 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     if vm_disk:
         disk_num = 0
         disk_key = 0
+        bus_num = 0
+        disk_ctrl = 1
         for disk in sorted(vm_disk):
             try:
                 datastore = vm_disk[disk]['datastore']
@@ -1377,6 +1384,16 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
                 module.fail_json(
                     msg="Error on %s definition. type needs to be"
                     " specified." % disk)
+            if disk_num == 7:
+                disk_num = disk_num + 1
+                disk_key = disk_key + 1
+            elif disk_num > 15:
+                bus_num = bus_num + 1
+                disk_ctrl = disk_ctrl + 1
+                disk_ctrl_key = add_scsi_controller(
+                    module, vsphere_client, config, devices, type=vm_hardware['scsi'], bus_num=bus_num, disk_ctrl_key=disk_ctrl)
+                disk_num = 0
+                disk_key = 0
             # Add the disk  to the VM spec.
             add_disk(
                 module, vsphere_client, config_target, config,
@@ -1887,6 +1904,12 @@ def main():
                 "restarted, reconfigured] required an existing VM" % guest)
         elif state == 'absent':
             module.exit_json(changed=False, msg="vm %s not present" % guest)
+
+        # check if user is trying to perform state operation on a vm which doesn't exists
+        elif state in ['present', 'powered_off', 'powered_on'] and not all((vm_extra_config,
+                                                       vm_hardware, vm_disk, vm_nic, esxi)):
+            module.exit_json(changed=False, msg="vm %s not present" % guest)
+
 
         # Create the VM
         elif state in ['present', 'powered_off', 'powered_on']:

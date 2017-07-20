@@ -47,8 +47,8 @@ class AnsibleJ2Vars:
 
         self._templar = templar
         self._globals = globals
-        self._extras  = extras
-        self._locals  = dict()
+        self._extras = extras
+        self._locals = dict()
         if isinstance(locals, dict):
             for key, val in iteritems(locals):
                 if val is not missing:

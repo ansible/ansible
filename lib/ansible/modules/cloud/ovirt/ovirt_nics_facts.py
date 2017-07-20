@@ -61,7 +61,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_nics:
     description: "List of dictionaries describing the network interfaces. NIC attribues are mapped to dictionary keys,
-                  all NICs attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/nic."
+                  all NICs attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/nic."
     returned: On success.
     type: list
 '''

@@ -22,7 +22,8 @@ __metaclass__ = type
 
 import os
 import tempfile
-from nose.plugins.skip import SkipTest
+
+import pytest
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
@@ -31,27 +32,6 @@ from ansible import errors
 from ansible.parsing import vault
 from ansible.module_utils._text import to_bytes, to_text
 
-
-# Counter import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Util import Counter
-    HAS_COUNTER = True
-except ImportError:
-    HAS_COUNTER = False
-
-# KDF import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Protocol.KDF import PBKDF2
-    HAS_PBKDF2 = True
-except ImportError:
-    HAS_PBKDF2 = False
-
-# AES IMPORTS
-try:
-    from Crypto.Cipher import AES as AES
-    HAS_AES = True
-except ImportError:
-    HAS_AES = False
 
 v10_data = """$ANSIBLE_VAULT;1.0;AES
 53616c7465645f5fd0026926a2d415a28a2622116273fbc90e377225c12a347e1daf4456d36a77f9
@@ -66,6 +46,8 @@ v11_data = """$ANSIBLE_VAULT;1.1;AES256
 3739"""
 
 
+@pytest.mark.skipif(not vault.HAS_CRYPTOGRAPHY,
+                    reason="Skipping cryptography tests because cryptography is not installed")
 class TestVaultEditor(unittest.TestCase):
 
     def setUp(self):
@@ -74,7 +56,7 @@ class TestVaultEditor(unittest.TestCase):
     def tearDown(self):
         if self._test_dir:
             pass
-            #shutil.rmtree(self._test_dir)
+            # shutil.rmtree(self._test_dir)
         self._test_dir = None
 
     def test_methods_exist(self):
@@ -173,7 +155,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_contents = to_bytes("some info in a file\nyup.")
         src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
 
-        # editor invocation doesnt change anything
+        # editor invocation doesn't change anything
         def faux_editor(editor_args):
             self._faux_editor(editor_args, src_file_contents)
 
@@ -361,7 +343,7 @@ class TestVaultEditor(unittest.TestCase):
 
         self.assertEqual(src_file_plaintext, new_src_contents)
 
-        #self.assertEqual(src_file_plaintext, new_src_contents,
+        # self.assertEqual(src_file_plaintext, new_src_contents,
         #                 'The decrypted plaintext of the editted file is not the expected contents.')
 
     @patch('ansible.parsing.vault.call')
@@ -423,9 +405,6 @@ class TestVaultEditor(unittest.TestCase):
 
     def test_decrypt_1_0(self):
         # Skip testing decrypting 1.0 files if we don't have access to AES, KDF or Counter.
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-
         v10_file = tempfile.NamedTemporaryFile(delete=False)
         with v10_file as f:
             f.write(to_bytes(v10_data))
@@ -451,9 +430,6 @@ class TestVaultEditor(unittest.TestCase):
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
     def test_decrypt_1_1(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-
         v11_file = tempfile.NamedTemporaryFile(delete=False)
         with v11_file as f:
             f.write(to_bytes(v11_data))
@@ -478,10 +454,6 @@ class TestVaultEditor(unittest.TestCase):
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
     def test_rekey_migration(self):
-        # Skip testing rekeying files if we don't have access to AES, KDF or Counter.
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-
         v10_file = tempfile.NamedTemporaryFile(delete=False)
         with v10_file as f:
             f.write(to_bytes(v10_data))
@@ -542,3 +514,16 @@ class TestVaultEditor(unittest.TestCase):
 
         res = ve._real_path(file_link_path)
         self.assertEqual(res, file_path)
+
+
+@pytest.mark.skipif(not vault.HAS_PYCRYPTO,
+                    reason="Skipping pycrypto tests because pycrypto is not installed")
+class TestVaultEditorPyCrypto(unittest.TestCase):
+    def setUp(self):
+        self.has_cryptography = vault.HAS_CRYPTOGRAPHY
+        vault.HAS_CRYPTOGRAPHY = False
+        super(TestVaultEditorPyCrypto, self).setUp()
+
+    def tearDown(self):
+        vault.HAS_CRYPTOGRAPHY = self.has_cryptography
+        super(TestVaultEditorPyCrypto, self).tearDown()

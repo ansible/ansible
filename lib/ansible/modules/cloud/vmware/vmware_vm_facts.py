@@ -68,12 +68,17 @@ def get_all_virtual_machines(content):
             _ip_address = summary.guest.ipAddress
             if _ip_address is None:
                 _ip_address = ""
+        _mac_address = []
+        for dev in vm.config.hardware.device:
+            if isinstance(dev, vim.vm.device.VirtualEthernetCard):
+                _mac_address.append(dev.macAddress)
 
         virtual_machine = {
             summary.config.name: {
                 "guest_fullname": summary.config.guestFullName,
                 "power_state": summary.runtime.powerState,
                 "ip_address": _ip_address,
+                "mac_address": _mac_address,
                 "uuid": summary.config.uuid
             }
         }

@@ -1,0 +1,116 @@
+---
+
+- name: setup - remove vrf
+  eos_vrf:
+    name: test
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
+- name: Create vrf
+  eos_vrf:
+    name: test
+    rd: 1:200
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vrf definition test' in result.commands"
+      - "'rd 1:200' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Create vrf again (idempotent)
+  eos_vrf:
+    name: test
+    rd: 1:200
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name is not defined"
+
+- name: Modify rd
+  eos_vrf:
+    name: test
+    rd: 1:201
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vrf definition test' in result.commands"
+      - "'rd 1:201' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Modify rd again (idempotent)
+  eos_vrf:
+    name: test
+    rd: 1:201
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name is not defined"
+
+- name: Add Ethernet2 to vrf
+  eos_vrf:
+    name: test
+    rd: 1:201
+    state: present
+    authorize: yes
+    interfaces:
+      - Ethernet2
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'interface Ethernet2' in result.commands"
+      - "'vrf forwarding test' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Add Ethernet2 to vrf again (idempotent)
+  eos_vrf:
+    name: test
+    rd: 1:201
+    state: present
+    authorize: yes
+    interfaces:
+      - Ethernet2
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'session_name' not in result.commands"
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"

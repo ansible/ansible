@@ -26,6 +26,7 @@ import yaml
 from collections import MutableMapping, MutableSet, MutableSequence
 
 from ansible.module_utils.six import string_types
+from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import fragment_loader
 
@@ -102,6 +103,17 @@ def get_docstring(filename, verbose=False):
     directory.
     """
 
+    # FIXME: Should refactor this so that we have a docstring parsing
+    # function and a separate variable parsing function
+    # Can have a function one higher that invokes whichever is needed
+    #
+    # Should look roughly like this:
+    # get_plugin_doc(filename, verbose=False)
+    #   documentation = extract_docstring(plugin_ast, identifier, verbose=False)
+    #   if not documentation and not (filter or test):
+    #       documentation = extract_variables(plugin_ast)
+    #   documentation['metadata'] = extract_metadata(plugin_ast)
+
     data = {
         'doc': None,
         'plainexamples': None,
@@ -113,11 +125,11 @@ def get_docstring(filename, verbose=False):
         'DOCUMENTATION': 'doc',
         'EXAMPLES': 'plainexamples',
         'RETURN': 'returndocs',
-        'ANSIBLE_METADATA': 'metadata'
     }
 
     try:
-        M = ast.parse(''.join(open(filename)))
+        b_module_data = open(filename, 'rb').read()
+        M = ast.parse(b_module_data)
         try:
             display.debug('Attempt first docstring is yaml docs')
             docstring = yaml.load(M.body[0].value.s)
@@ -145,13 +157,16 @@ def get_docstring(filename, verbose=False):
                             if isinstance(child.value, ast.Dict):
                                 data[varkey] = ast.literal_eval(child.value)
                             else:
-                                if theid in ['DOCUMENTATION', 'ANSIBLE_METADATA']:
+                                if theid == 'DOCUMENTATION':
                                     # string should be yaml
                                     data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                                 else:
                                     # not yaml, should be a simple string
                                     data[varkey] = child.value.s
                             display.debug('assigned :%s' % varkey)
+
+        # Metadata is per-file rather than per-plugin/function
+        data['metadata'] = extract_metadata(module_ast=M)[0]
 
         # add fragments to documentation
         if data['doc']:
@@ -162,7 +177,7 @@ def get_docstring(filename, verbose=False):
             for x in ('version', 'metadata_version'):
                 if x in data['metadata']:
                     del data['metadata'][x]
-    except:
+    except Exception as e:
         display.error("unable to parse %s" % filename)
         if verbose is True:
             display.display("unable to parse %s" % filename)

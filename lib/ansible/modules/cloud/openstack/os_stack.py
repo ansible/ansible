@@ -69,7 +69,7 @@ options:
       default: 3600
     availability_zone:
       description:
-        - Ignored. Present for backwards compatability
+        - Ignored. Present for backwards compatibility
       required: false
 requirements:
     - "python >= 2.6"
@@ -182,7 +182,6 @@ def _create_stack(module, stack, cloud):
         if stack.stack_status == 'CREATE_COMPLETE':
             return stack
         else:
-            return False
             module.fail_json(msg="Failure in creating stack: {0}".format(stack))
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))

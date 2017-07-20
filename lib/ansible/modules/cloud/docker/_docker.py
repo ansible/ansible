@@ -1441,7 +1441,10 @@ class DockerManager(object):
             for link, alias in (self.links or {}).items():
                 expected_links.add("/{0}:{1}/{2}".format(link, container["Name"], alias))
 
-            actual_links = set(container['HostConfig']['Links'] or [])
+            actual_links = set()
+            for link in (container['HostConfig']['Links'] or []):
+                actual_links.add(link)
+
             if actual_links != expected_links:
                 self.reload_reasons.append('links ({0} => {1})'.format(actual_links, expected_links))
                 differing.append(container)
@@ -1755,7 +1758,8 @@ def present(manager, containers, count, name):
     if delta < 0:
         # If both running and stopped containers exist, remove
         # stopped containers first.
-        containers.deployed.sort(lambda cx, cy: cmp(is_running(cx), is_running(cy)))
+        # Use key param for python 2/3 compatibility.
+        containers.deployed.sort(key=is_running)
 
         to_stop = []
         to_remove = []

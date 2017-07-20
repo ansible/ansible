@@ -35,10 +35,11 @@ description:
        processed through the shell, so variables like C($env:HOME) and operations
        like C("<"), C(">"), C("|"), and C(";") will not work (use the M(win_shell)
        module if you need these features).
+     - For non-Windows targets, use the M(command) module instead.
 options:
   free_form:
     description:
-      - the win_command module takes a free form command to run.  There is no parameter actually named 'free form'.
+      - the C(win_command) module takes a free form command to run.  There is no parameter actually named 'free form'.
         See the examples!
     required: true
   creates:
@@ -57,6 +58,7 @@ notes:
       environment.
     - C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not
       exist, use this.
+    - For non-Windows targets, use the M(command) module instead.
 author:
     - Matt Davis
 '''

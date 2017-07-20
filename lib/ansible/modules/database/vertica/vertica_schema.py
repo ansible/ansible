@@ -124,6 +124,7 @@ else:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
@@ -193,9 +194,9 @@ def check(schema_facts, schema, usage_roles, create_roles, owner):
         return False
     if owner and owner.lower() == schema_facts[schema_key]['owner'].lower():
         return False
-    if cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0:
+    if sorted(usage_roles) != sorted(schema_facts[schema_key]['usage_roles']):
         return False
-    if cmp(sorted(create_roles), sorted(schema_facts[schema_key]['create_roles'])) != 0:
+    if sorted(create_roles) != sorted(schema_facts[schema_key]['create_roles']):
         return False
     return True
 
@@ -216,8 +217,9 @@ def present(schema_facts, cursor, schema, usage_roles, create_roles, owner):
                 "Changing schema owner is not supported. "
                 "Current owner: {0}."
                 ).format(schema_facts[schema_key]['owner']))
-        if (cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0 or
-                cmp(sorted(create_roles), sorted(schema_facts[schema_key]['create_roles'])) != 0):
+        if sorted(usage_roles) != sorted(schema_facts[schema_key]['usage_roles']) or \
+           sorted(create_roles) != sorted(schema_facts[schema_key]['create_roles']):
+
             update_roles(schema_facts, cursor, schema,
                 schema_facts[schema_key]['usage_roles'], usage_roles,
                 schema_facts[schema_key]['create_roles'], create_roles)
@@ -322,7 +324,7 @@ def main():
         raise
     except Exception:
         e = get_exception()
-        module.fail_json(msg=e)
+        module.fail_json(msg=to_native(e))
 
     module.exit_json(changed=changed, schema=schema, ansible_facts={'vertica_schemas': schema_facts})
 

@@ -25,6 +25,7 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.vyos import vyos_command
 from .vyos_module import TestVyosModule, load_fixture, set_module_args
 
+
 class TestVyosCommandModule(TestVyosModule):
 
     module = vyos_command

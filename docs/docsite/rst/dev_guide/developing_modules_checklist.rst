@@ -33,7 +33,7 @@ The following  checklist items are important guidelines for people who want to c
                         'supported_by': 'community',
                         'metadata_version': '1.0'}
 
-The complete module metadata specification is here: https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html#ansible-metadata-block
+The complete module metadata specification is here: `Ansible metadata block <https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html#ansible-metadata-block>`_
 
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
@@ -76,7 +76,7 @@ The complete module metadata specification is here: https://docs.ansible.com/ans
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 * Module-dependent guidelines: Additional module guidelines may exist for certain families of modules.
     * Be sure to check out the modules themselves for additional information.
-        * Amazon: https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md
+        * `Amazon <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
     * Modules should make use of the "extends_documentation_fragment" to ensure documentation available. For example, the AWS module should include::
 
         extends_documentation_fragment:
@@ -108,7 +108,7 @@ The complete module metadata specification is here: https://docs.ansible.com/ans
         main()
 
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
-* Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
+* Being `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant is a requirement. See :doc:`testing_pep8` for more information.
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
 * Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
 * If you are asking 'how can I have a module execute other modules' ... you want to write a role

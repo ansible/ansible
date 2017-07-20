@@ -71,6 +71,31 @@ options:
    description:
         description:
         - Define an arbitrary description to attach to snapshot.
+   quiesce:
+        description:
+            - If set to C(true) and virtual machine is powered on, it will quiesce the
+              file system in virtual machine.
+            - Note that VMWare Tools are required for this flag.
+            - If virtual machine is powered off or VMware Tools are not available, then
+              this flag is set to C(false).
+            - If virtual machine does not provide capability to take quiesce snapshot, then
+              this flag is set to C(false).
+        required: False
+        version_added: "2.4"
+   memory_dump:
+        description:
+            - If set to C(true), memory dump of virtual machine is also included in snapshot.
+            - Note that memory snapshots take time and resources, this will take longer time to create.
+            - If virtual machine does not provide capability to take memory snapshot, then
+              this flag is set to C(false).
+        required: False
+        version_added: "2.4"
+   remove_children:
+        description:
+            - If set to C(true) and state is set to C(absent), then entire snapshot subtree is set
+              for removal.
+        required: False
+        version_added: "2.4"
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -114,6 +139,29 @@ EXAMPLES = '''
       name: dummy_vm
       state: remove_all
     delegate_to: localhost
+
+  - name: Take snapshot of a VM using quiesce and memory flag on
+    vmware_guest_snapshot:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      name: dummy_vm
+      state: present
+      snapshot_name: dummy_vm_snap_0001
+      quiesce: True
+      memory_dump: True
+    delegate_to: localhost
+
+  - name: Remove a snapshot and snapshot subtree
+    vmware_guest_snapshot:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      name: dummy_vm
+      state: remove
+      remove_children: True
+      snapshot_name: snap1
+    delegate_to: localhost
 '''
 
 RETURN = """
@@ -129,9 +177,8 @@ import time
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.vmware import connect_to_api
+from ansible.module_utils._text import to_native
 
 try:
     import json
@@ -207,12 +254,27 @@ class PyVmomiHelper(object):
         return snap_obj
 
     def snapshot_vm(self, vm):
-        dump_memory = False
+        memory_dump = False
         quiesce = False
-        return vm.CreateSnapshot(self.module.params["snapshot_name"],
-                                 self.module.params["description"],
-                                 dump_memory,
-                                 quiesce)
+        # Check if Virtual Machine provides capabilities for Quiesce and Memory
+        # Snapshots
+        if vm.capability.quiescedSnapshotsSupported:
+            quiesce = self.module.params['quiesce']
+        if vm.capability.memorySnapshotsSupported:
+            memory_dump = self.module.params['memory_dump']
+
+        task = None
+        try:
+            task = vm.CreateSnapshot(self.module.params["snapshot_name"],
+                                     self.module.params["description"],
+                                     memory_dump,
+                                     quiesce)
+        except vim.fault.RestrictedVersion as exc:
+            self.module.fail_json(msg="Failed to take snapshot due to VMware Licence: %s" % to_native(exc.msg))
+        except Exception as exc:
+            self.module.fail_json(msg="Failed to create snapshot of VM %s due to %s" % (self.module.params['name'], to_native(exc.msg)))
+
+        return task
 
     def remove_or_revert_snapshot(self, vm):
         if vm.snapshot is None:
@@ -224,7 +286,9 @@ class PyVmomiHelper(object):
         if len(snap_obj) == 1:
             snap_obj = snap_obj[0].snapshot
             if self.module.params["state"] == "absent":
-                task = snap_obj.RemoveSnapshot_Task(True)
+                # Remove subtree depending upon the user input
+                remove_children = self.module.params.get('remove_children', False)
+                task = snap_obj.RemoveSnapshot_Task(remove_children)
             elif self.module.params["state"] == "revert":
                 task = snap_obj.RevertToSnapshot_Task()
         else:
@@ -283,6 +347,9 @@ def main():
             datacenter=dict(required=True, type='str'),
             snapshot_name=dict(required=False, type='str'),
             description=dict(required=False, type='str', default=''),
+            quiesce=dict(type='bool', default=False),
+            memory_dump=dict(type='bool', default=False),
+            remove_children=dict(type='bool', default=False),
         ),
     )
 

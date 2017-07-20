@@ -99,7 +99,37 @@
   register: win_get_url_result_dir_path
   ignore_errors: true
 
-- name: check that the download failed if dest is a directory
+- name: check that the download did NOT fail, even though dest was directory
   assert:
     that:
-      - "win_get_url_result_dir_path|failed"
+      - "win_get_url_result_dir_path|changed"
+
+- name: test win_get_url with a valid url path and a dest that is a directory (from 2.4 should use url path as filename)
+  win_get_url:
+    url: "{{test_win_get_url_link}}"
+    dest: "{{test_win_get_url_dir_path}}"
+  register: win_get_url_result_dir_path_urlpath
+  ignore_errors: true
+
+- name: set expected destination path fact
+  set_fact:
+    expected_dest_path: '{{test_win_get_url_dir_path}}\{{test_win_get_url_host}}'
+
+- name: check that the download succeeded (changed) and dest is as expected
+  assert:
+    that:
+      - "win_get_url_result_dir_path_urlpath|changed"
+      - "win_get_url_result_dir_path_urlpath.win_get_url.actual_dest==expected_dest_path"
+
+#- name: since 2.4 check you get a helpful message if the parent folder of the dest doesnt exist
+#  win_get_url:
+#    url: "{{test_win_get_url_link}}"
+#    dest: "{{test_win_get_url_invalid_path_dir}}"
+#  register: win_get_url_result_invalid_dest
+#  ignore_errors: true
+#
+#- name: check if dest parent dir does not exist, module fails and you get a specific error message
+#  assert:
+#    that:
+#      - "win_get_url_result_invalid_dest|failed"
+#      - "win_get_url_result_invalid_dest.msg is search('does not exist')"
