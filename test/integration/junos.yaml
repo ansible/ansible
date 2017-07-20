@@ -165,6 +165,16 @@
         - set_fact:
             failed_modules: "{{ failed_modules }} + [ 'junos_lldp_interface' ]"
             test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_vrf
+        when: "limit_to in ['*', 'junos_vrf']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_vrf' ]"
+            test_failed: true
+
 ###########
     - debug: var=failed_modules
       when: test_failed
