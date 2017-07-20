@@ -790,7 +790,12 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
+        self.bypass_checks = bypass_checks
         self.no_log = no_log
+        self.mutually_exclusive = mutually_exclusive
+        self.required_together = required_together
+        self.required_one_of = required_one_of
+        self.required_if = required_if
         self.cleanup_files = []
         self._debug = False
         self._diff = False
@@ -826,19 +831,7 @@ class AnsibleModule(object):
 
         # Save parameter values that should never be logged
         self.no_log_values = set()
-        # Use the argspec to determine which args are no_log
-        for arg_name, arg_opts in self.argument_spec.items():
-            if arg_opts.get('no_log', False):
-                # Find the value for the no_log'd param
-                no_log_object = self.params.get(arg_name, None)
-                if no_log_object:
-                    self.no_log_values.update(return_values(no_log_object))
-
-            if arg_opts.get('removed_in_version') is not None and arg_name in self.params:
-                self._deprecations.append({
-                    'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
-                    'version': arg_opts.get('removed_in_version')
-                })
+        self._handle_no_log_values()
 
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
@@ -1530,9 +1523,12 @@ class AnsibleModule(object):
             e = get_exception()
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
-    def _handle_aliases(self, spec=None):
+    def _handle_aliases(self, spec=None, param=None):
         # this uses exceptions as it happens before we can safely call fail_json
         aliases_results = {}  # alias:canon
+        if param is None:
+            param = self.params
+
         if spec is None:
             spec = self.argument_spec
         for (k, v) in spec.items():
@@ -1550,10 +1546,28 @@ class AnsibleModule(object):
             for alias in aliases:
                 self._legal_inputs.append(alias)
                 aliases_results[alias] = k
-                if alias in self.params:
-                    self.params[k] = self.params[alias]
+                if alias in param:
+                    param[k] = param[alias]
 
         return aliases_results
+
+    def _handle_no_log_values(self, param=None):
+        if param is None:
+            param = self.params
+
+        # Use the argspec to determine which args are no_log
+        for arg_name, arg_opts in self.argument_spec.items():
+            if arg_opts.get('no_log', False):
+                # Find the value for the no_log'd param
+                no_log_object = param.get(arg_name, None)
+                if no_log_object:
+                    self.no_log_values.update(return_values(no_log_object))
+
+            if arg_opts.get('removed_in_version') is not None and arg_name in param:
+                self._deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
+                    'version': arg_opts.get('removed_in_version')
+                })
 
     def _check_arguments(self, check_invalid_arguments):
         self._syslog_facility = 'LOG_USER'
@@ -1604,34 +1618,36 @@ class AnsibleModule(object):
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
-    def _count_terms(self, check):
+    def _count_terms(self, check, param=None):
         count = 0
+        if param is None:
+            param = self.params
         for term in check:
-            if term in self.params:
+            if term in param:
                 count += 1
         return count
 
-    def _check_mutually_exclusive(self, spec):
+    def _check_mutually_exclusive(self, spec, param=None):
         if spec is None:
             return
         for check in spec:
-            count = self._count_terms(check)
+            count = self._count_terms(check, param)
             if count > 1:
                 self.fail_json(msg="parameters are mutually exclusive: %s" % (check,))
 
-    def _check_required_one_of(self, spec):
+    def _check_required_one_of(self, spec, param=None):
         if spec is None:
             return
         for check in spec:
-            count = self._count_terms(check)
+            count = self._count_terms(check, param)
             if count == 0:
                 self.fail_json(msg="one of the following is required: %s" % ','.join(check))
 
-    def _check_required_together(self, spec):
+    def _check_required_together(self, spec, param=None):
         if spec is None:
             return
         for check in spec:
-            counts = [self._count_terms([field]) for field in check]
+            counts = [self._count_terms([field], param) for field in check]
             non_zero = [c for c in counts if c > 0]
             if len(non_zero) > 0:
                 if 0 in counts:
@@ -1651,10 +1667,12 @@ class AnsibleModule(object):
         if len(missing) > 0:
             self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
 
-    def _check_required_if(self, spec):
+    def _check_required_if(self, spec, param=None):
         ''' ensure that parameters which conditionally required are present '''
         if spec is None:
             return
+        if param is None:
+            param = self.params
         for sp in spec:
             missing = []
             max_missing_count = 0
@@ -1669,9 +1687,9 @@ class AnsibleModule(object):
             if is_one_of:
                 max_missing_count = len(requirements)
 
-            if key in self.params and self.params[key] == val:
+            if key in param and param[key] == val:
                 for check in requirements:
-                    count = self._count_terms((check,))
+                    count = self._count_terms(check, param)
                     if count == 0:
                         missing.append(check)
             if len(missing) and len(missing) >= max_missing_count:
@@ -1911,32 +1929,36 @@ class AnsibleModule(object):
                     self._check_argument_types(spec, param[k])
                     self._check_argument_values(spec, param[k])
 
-    def _set_defaults(self, pre=True):
+    def _set_defaults(self, pre=True, param=None):
+        if param is None:
+            param = self.params
         for (k, v) in self.argument_spec.items():
             default = v.get('default', None)
             if pre is True:
                 # this prevents setting defaults on required items
-                if default is not None and k not in self.params:
-                    self.params[k] = default
+                if default is not None and k not in param:
+                    param[k] = default
             else:
                 # make sure things without a default still get set None
-                if k not in self.params:
-                    self.params[k] = default
+                if k not in param:
+                    param[k] = default
 
-    def _set_fallbacks(self):
+    def _set_fallbacks(self, param=None):
+        if param is None:
+            param = self.params
         for (k, v) in self.argument_spec.items():
             fallback = v.get('fallback', (None,))
             fallback_strategy = fallback[0]
             fallback_args = []
             fallback_kwargs = {}
-            if k not in self.params and fallback_strategy is not None:
+            if k not in param and fallback_strategy is not None:
                 for item in fallback[1:]:
                     if isinstance(item, dict):
                         fallback_kwargs = item
                     else:
                         fallback_args = item
                 try:
-                    self.params[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
+                    param = fallback_strategy(*fallback_args, **fallback_kwargs)
                 except AnsibleFallbackNotFound:
                     continue
 

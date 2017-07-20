@@ -190,6 +190,61 @@ class ComplexList(EntityCollection):
         super(ComplexList, self).__init__(module, attrs, *args, **kwargs)
 
 
+class Aggregate(object):
+
+    def __init__(self, module):
+        self._attributes = module.argument_spec
+        self._module = module
+        self.attr_names = frozenset(self._attributes.keys())
+
+    def __call__(self, value, strict=True):
+        if not isinstance(value, dict):
+            self._module.fail_json(msg='value must be a dict: %s' % value)
+
+        if strict:
+            unknown = set(value).difference(self.attr_names)
+            if unknown:
+                self._module.fail_json(msg='invalid keys: %s' % ','.join(unknown))
+
+        kwargs = {'param': value}
+        module = self._module
+
+        module._set_fallbacks(**kwargs)
+        module._handle_aliases(**kwargs)
+        module._handle_no_log_values(**kwargs)
+
+        # check exclusive early
+        if not module.bypass_checks:
+            module._check_mutually_exclusive(module.mutually_exclusive, **kwargs)
+
+            module._set_defaults(pre=True, **kwargs)
+
+        if not module.bypass_checks:
+            module._check_required_arguments(**kwargs)
+            module._check_argument_types(**kwargs)
+            module._check_argument_values(**kwargs)
+            module._check_required_together(module.required_together, **kwargs)
+            module._check_required_one_of(module.required_one_of, **kwargs)
+            module._check_required_if(module.required_if, **kwargs)
+
+            module._set_defaults(pre=False, **kwargs)
+
+        return value
+
+
+class AggregateCollection(Aggregate):
+    """Extends ```Entity``` to handle a list of dicts """
+
+    def __call__(self, iterable, strict=True):
+        if iterable is None:
+            iterable = [super(AggregateCollection, self).__call__(self._module.params, strict)]
+
+        if not isinstance(iterable, (list, tuple)):
+            self._module.fail_json(msg='value must be an iterable')
+
+        return [(super(AggregateCollection, self).__call__(i, strict)) for i in iterable]
+
+
 def dict_diff(base, comparable):
     """ Generate a dict object of differences
 
