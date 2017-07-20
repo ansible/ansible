@@ -51,8 +51,7 @@ class ActionModule(ActionBase):
         if module == 'auto':
             facts = self._execute_module(module_name='setup', module_args=dict(gather_subset='!all', filter='ansible_service_mgr'), task_vars=task_vars)
             self._display.debug("Facts %s" % facts)
-            if 'ansible_facts' in facts and 'ansible_service_mgr' in facts['ansible_facts']:
-                module = facts['ansible_facts']['ansible_service_mgr']
+            module = facts.get('ansible_facts', {}).get('ansible_service_mgr', 'auto')
 
         if not module or module == 'auto' or module not in self._shared_loader_obj.module_loader:
             module = 'service'
