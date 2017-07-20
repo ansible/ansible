@@ -133,7 +133,11 @@ import os
 import re
 import argparse
 import sys
-import ConfigParser
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 
 def get_log_filename():
@@ -421,7 +425,7 @@ class ConsulConfig(dict):
 
     def read_settings(self):
         ''' Reads the settings from the consul_io.ini file (or consul.ini for backwards compatibility)'''
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.SafeConfigParser()
         if os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/consul_io.ini'):
             config.read(os.path.dirname(os.path.realpath(__file__)) + '/consul_io.ini')
         else:
@@ -469,7 +473,10 @@ class ConsulConfig(dict):
         scheme = 'http'
 
         if hasattr(self, 'url'):
-            from urlparse import urlparse
+            try:
+                from urlparse import urlparse
+            except ImportError:
+                from urllib.parse import urlparse
             o = urlparse(self.url)
             if o.hostname:
                 host = o.hostname
