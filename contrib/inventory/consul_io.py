@@ -132,13 +132,8 @@ be used to access the machine.
 import os
 import re
 import argparse
+import configparser
 import sys
-
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
-
 
 def get_log_filename():
     tty_filename = '/dev/tty'
