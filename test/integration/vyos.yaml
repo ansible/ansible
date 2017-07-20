@@ -119,7 +119,9 @@
           { name: vyos_facts, vyos_lldp_node: 172.26.4.35 }
         when: "limit_to in ['*', 'vyos_facts']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'vyos_facts' ]"
+            test_failed: true
 
 ###########
     - debug: var=failed_modules
