@@ -139,6 +139,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
+
 def get_log_filename():
     tty_filename = '/dev/tty'
     stdout_filename = '/dev/stdout'
