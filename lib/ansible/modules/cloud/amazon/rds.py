@@ -586,10 +586,8 @@ class RDSDBInstance:
             d["endpoint"] = None
             d["port"] = None
             d["vpc_security_groups"] = None
-        
         if self.instance.DBName is not None:
             d['DBName'] = self.instance.DBName
-        
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
