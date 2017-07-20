@@ -159,18 +159,18 @@ def recursive_set_attributes(module, b_path, follow, file_args):
             if not os.path.islink(b_fsname):
                 tmp_file_args = file_args.copy()
                 tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
             else:
                 tmp_file_args = file_args.copy()
                 tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
                 if follow:
                     b_fsname = os.path.join(b_root, os.readlink(b_fsname))
                     if os.path.isdir(b_fsname):
                         changed |= recursive_set_attributes(module, b_fsname, follow, file_args)
                     tmp_file_args = file_args.copy()
                     tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
     return changed
 
 
@@ -299,7 +299,7 @@ def main():
             # file is not absent and any other state is a conflict
             module.fail_json(path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
 
-        changed = module.set_fs_attributes_if_different(file_args, changed, diff)
+        changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
         module.exit_json(path=path, changed=changed, diff=diff)
 
     elif state == 'directory':
@@ -335,7 +335,7 @@ def main():
                                 raise
                         tmp_file_args = file_args.copy()
                         tmp_file_args['path'] = curpath
-                        changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff)
+                        changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
             except Exception as e:
                 module.fail_json(path=path, msg='There was an issue creating %s as requested: %s' % (curpath, to_native(e)))
 
@@ -343,7 +343,7 @@ def main():
         elif prev_state != 'directory':
             module.fail_json(path=path, msg='%s already exists as a %s' % (path, prev_state))
 
-        changed = module.set_fs_attributes_if_different(file_args, changed, diff)
+        changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
 
         if recurse:
             changed |= recursive_set_attributes(module, to_bytes(file_args['path'], errors='surrogate_or_strict'), follow, file_args)
@@ -435,7 +435,7 @@ def main():
         if module.check_mode and not os.path.exists(b_path):
             module.exit_json(dest=path, src=src, changed=changed, diff=diff)
 
-        changed = module.set_fs_attributes_if_different(file_args, changed, diff)
+        changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
         module.exit_json(dest=path, src=src, changed=changed, diff=diff)
 
     elif state == 'touch':
@@ -454,7 +454,7 @@ def main():
             else:
                 module.fail_json(msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
             try:
-                module.set_fs_attributes_if_different(file_args, True, diff)
+                module.set_fs_attributes_if_different(file_args, True, diff, expand=False)
             except SystemExit as e:
                 if e.code:
                     # We take this to mean that fail_json() was called from
