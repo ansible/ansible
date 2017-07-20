@@ -114,6 +114,7 @@ LEVEL_GROUP = ['emergencies', 'alerts', 'critical', 'errors',
                'warnings', 'notifications', 'informational',
                'debugging']
 
+
 def validate_size(value, module):
     if value:
         if not int(10) <= value <= int(2147483647):
