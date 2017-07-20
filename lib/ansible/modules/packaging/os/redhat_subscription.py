@@ -198,6 +198,16 @@ EXAMPLES = '''
     autosubscribe: yes
 '''
 
+RETURN = '''
+subscribed_pool_ids:
+    description: List of pool IDs to which system is now subscribed
+    returned: success
+    type: complex
+    contains: {
+        "8a85f9815ab905d3015ab928c7005de4": "1"
+    }
+'''
+
 import os
 import re
 import types

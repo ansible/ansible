@@ -135,6 +135,10 @@ EXAMPLES = '''
     channels: rhel-x86_64-server-6-foo-1,rhel-x86_64-server-6-bar-1
 '''
 
+RETURN = '''
+# Default return values
+'''
+
 import os
 import sys
 import xmlrpclib
