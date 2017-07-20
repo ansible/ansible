@@ -188,6 +188,7 @@ class TaskParameters(DockerBaseClass):
         self.appends = None
         self.force = None
         self.debug = None
+        self.network_create = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -272,6 +273,13 @@ class DockerNetworkManager(object):
                         # key has different value
                         different = True
                         differences.append('ipam_options.%s' % key)
+        if self.parameters.network_create:
+            if net.get('Internal',False) != self.parameters.network_create.get('internal',False):
+                different = True
+                differences.append('internal')
+            if net.get('EnableIPv6',False) != self.parameters.network_create.get('enable_ipv6',False):
+                different = True
+                differences.append('enable_ipv6')
         return different, differences
 
     def create_network(self):
@@ -294,7 +302,8 @@ class DockerNetworkManager(object):
                 resp = self.client.create_network(self.parameters.network_name,
                                                   driver=self.parameters.driver,
                                                   options=self.parameters.driver_options,
-                                                  ipam=ipam_config)
+                                                  ipam=ipam_config,
+                                                  **self.parameters.network_create)
 
                 self.existing_network = self.client.inspect_network(resp['Id'])
             self.results['actions'].append("Created network %s with driver %s" % (self.parameters.network_name, self.parameters.driver))
@@ -379,6 +388,7 @@ def main():
         appends            = dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver        = dict(type='str', default=None),
         ipam_options       = dict(type='dict', default={}),
+        network_create     = dict(type='dict', default={}),
         debug              = dict(type='bool', default=False)
     )
 
