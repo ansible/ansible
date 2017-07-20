@@ -168,8 +168,7 @@ def main():
 
         changed = False
         if module.params['checksum']:
-            #image = cloud.get_image(name_or_id=None,filters={'checksum': module.params['checksum']})
-            image = cloud.get_image(name_or_id=module.params['name'])
+            image = cloud.get_image(name_or_id=None,filters={'checksum': module.params['checksum']})
         else:
             image = cloud.get_image(name_or_id=module.params['name'])
 
