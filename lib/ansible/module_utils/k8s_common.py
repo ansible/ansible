@@ -129,7 +129,9 @@ class KubernetesAnsibleModule(AnsibleModule):
         namespace = self.params.get('namespace', None)
         existing = None
 
-        return_attributes = dict(changed=False, api_version=self.api_version)
+        return_attributes = dict(changed=False,
+                                 api_version=self.api_version,
+                                 request=self.helper.request_body_from_params(self.params))
         return_attributes[self.helper.base_model_name_snake] = {}
 
         try:
