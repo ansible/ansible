@@ -16,8 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from ansible.module_utils.basic import *
-
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -27,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: cisco_ucs_dns
 short_description: Configures dns on a cisco ucs server.
-version_added: "0.9.0.0"
+version_added: "0.9"
 description:
    -  Configures dns on a cisco ucs server.
 options:
@@ -68,11 +66,12 @@ EXAMPLES = '''
     ucs_password: "password"
 '''
 
+RETURN = ''' # '''
 
 def _argument_mo():
     return dict(
-                name=dict(required=True, type='str'),
-                descr=dict(type='str'),
+        name=dict(required=True, type='str'),
+        descr=dict(type='str'),
     )
 
 
@@ -85,7 +84,7 @@ def _argument_custom():
 
 
 def _argument_connection():
-    return  dict(
+    return dict(
         # UcsHandle
         ucs_server=dict(type='dict'),
 
@@ -100,6 +99,8 @@ def _argument_connection():
 
 
 def _ansible_module_create():
+    from ansible.module_utils.basic import *
+
     argument_spec = dict()
     argument_spec.update(_argument_mo())
     argument_spec.update(_argument_custom())
@@ -125,7 +126,7 @@ def setup_dns(server, module):
     from ucsm_apis.admin.dns import dns_server_exists
 
     ansible = module.params
-    args_mo  =  _get_mo_params(ansible)
+    args_mo = _get_mo_params(ansible)
     exists, mo = dns_server_exists(handle=server, **args_mo)
 
     if ansible["state"] == "present":
@@ -168,4 +169,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
