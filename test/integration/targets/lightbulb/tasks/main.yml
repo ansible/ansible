@@ -1,6 +1,7 @@
 ---
 - name: Test lightbulb module
   lightbulb:
+    foo: bar
   register: result
     
 - assert:
