@@ -49,11 +49,11 @@ options:
   facility_level:
     description:
       - Set logging serverity levels for facility based log messages.
-  collection:
+  aggregate:
     description: List of logging definitions.
   purge:
     description:
-      - Purge logging not defined in the collections parameter.
+      - Purge logging not defined in the aggregate parameter.
     default: no
   state:
     description:
@@ -107,6 +107,9 @@ import re
 from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+
+
+DEST_GROUP = ['console', 'logfile', 'module', 'monitor']
 
 
 def map_obj_to_commands(updates, module):
@@ -200,14 +203,13 @@ def parse_facility_level(line, facility):
 
 def map_config_to_obj(module):
     obj = []
-    dest_group = ('console', 'logfile', 'module', 'monitor')
 
     data = get_config(module, flags=['| section logging'])
 
     for line in data.split('\n'):
         match = re.search(r'logging (\S+)', line, re.M)
 
-        if match.group(1) in dest_group:
+        if match.group(1) in DEST_GROUP:
             dest = match.group(1)
             facility = None
 
@@ -284,7 +286,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        dest=dict(type='str', choices=['console', 'logfile', 'module', 'monitor']),
+        dest=dict(type='str', choices=DEST_GROUP),
         name=dict(type='str'),
         facility=dict(type='str'),
         dest_level=dict(type='int', aliases=['level']),
