@@ -212,7 +212,11 @@ class LookupModule(LookupBase):
                         ret.append(str(e))
 
         except dns.resolver.NXDOMAIN:
-            ret.append('NXDOMAIN')
+            try:
+                dns.reversename.from_address(domain)
+                ret.append(domain)
+            except:
+                ret.append('NXDOMAIN')
         except dns.resolver.NoAnswer:
             ret.append("")
         except dns.resolver.Timeout:
