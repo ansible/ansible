@@ -360,7 +360,8 @@ def main():
                 if "permission denied" in to_native(e).lower():
                     module.fail_json(msg="Destination directory %s is not accessible" % (os.path.dirname(dest)))
             module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
-    if not os.access(os.path.dirname(b_dest), os.W_OK):
+
+    if not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes']:
         module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     backup_file = None
