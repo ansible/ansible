@@ -304,6 +304,7 @@ class DataLoader:
                 search.append(unfrackpath(os.path.join(basedir, 'tasks', source), follow=False))
 
             # try to create absolute path for loader basedir + templates/files/vars + filename
+            search.append(unfrackpath(os.path.join(basedir, source), follow=False))
             search.append(unfrackpath(os.path.join(dirname, source), follow=False))
             search.append(self.path_dwim(os.path.join(dirname, source)))
 
