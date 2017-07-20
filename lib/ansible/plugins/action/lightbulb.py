@@ -41,5 +41,5 @@ class ActionModule(ActionBase):
         result['foo'] = "!" + foo
 
         self._execute_module(task_vars=task_vars)
-        
+
         return result

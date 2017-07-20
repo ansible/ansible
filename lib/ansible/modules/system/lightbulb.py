@@ -67,7 +67,7 @@ def add(num1, num2):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            foo=dict(required=False, default='bar')
+            foo=dict(required=False, default="bar")
         )
     )
     # q(res)

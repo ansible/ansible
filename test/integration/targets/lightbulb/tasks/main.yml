@@ -5,6 +5,6 @@
     
 - assert:
     that:
-      - '"foo" in result.msg'
-      - '"bar" in result.msg.foo'
+      - '"foo" in result'
+      - '"bar" in result.foo'
      
