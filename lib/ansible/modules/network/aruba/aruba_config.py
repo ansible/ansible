@@ -151,7 +151,6 @@ options:
         return the before and after diff of the running-config with respect
         to any changes made to the device configuration.
     required: false
-    default: startup
     choices: ['startup', 'intended', 'running']
   diff_ignore_lines:
     description:
