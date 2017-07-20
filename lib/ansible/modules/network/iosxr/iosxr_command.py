@@ -137,11 +137,12 @@ from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.six import string_types
 from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils._text import to_native
 
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
-            item = str(item).split('\n')
+            item = to_native(item, errors='surrogate_or_strict').split('\n')
         yield item
 
 def parse_commands(module, warnings):
