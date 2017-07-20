@@ -403,9 +403,9 @@ def ports_expand(ports):
         if not isinstance(port, str):
             ports_expanded.append((port,) * 2)
         elif '-' in port:
-            ports_expanded.append(tuple(p.strip() for p in port.split('-', 1)))
+            ports_expanded.append(tuple(int(p.strip()) for p in port.split('-', 1)))
         else:
-            ports_expanded.append((port.strip(),) * 2)
+            ports_expanded.append((int(port.strip()),) * 2)
 
     return ports_expanded
 
