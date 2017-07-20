@@ -26,6 +26,7 @@ try:
 except:
     HAS_UCSMAPI = False
 
+
 class UcsConnection():
 
     @staticmethod

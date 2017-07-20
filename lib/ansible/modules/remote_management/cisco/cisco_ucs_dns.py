@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: cisco_ucs_dns
 short_description: Configures dns on a cisco ucs server.
-version_added: "0.9"
+version_added: "2.4"
 description:
    -  Configures dns on a cisco ucs server.
 options:
@@ -68,6 +68,10 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
+
+from ansible.module_utils.basic import AnsibleModule
+
+
 def _argument_mo():
     return dict(
         name=dict(required=True, type='str'),
@@ -99,8 +103,6 @@ def _argument_connection():
 
 
 def _ansible_module_create():
-    from ansible.module_utils.basic import *
-
     argument_spec = dict()
     argument_spec.update(_argument_mo())
     argument_spec.update(_argument_custom())
