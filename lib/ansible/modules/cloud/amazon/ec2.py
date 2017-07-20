@@ -631,6 +631,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
 from distutils.version import LooseVersion
 from ansible.module_utils.six import string_types
+import math
 
 try:
     import boto.ec2
@@ -889,7 +890,7 @@ def await_spot_requests(module, ec2, spot_requests, count):
     wait_complete = time.time() + spot_wait_timeout
 
     min_success_percentage = int(module.params.get('min_success_percentage'))
-    min_count = int(math.floor(count*(min_success_percentage/100.0)))
+    min_count = int(math.floor(count * (min_success_percentage / 100.0)))
 
     spot_req_inst_ids = dict()
     while time.time() < wait_complete:
