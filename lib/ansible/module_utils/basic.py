@@ -2273,58 +2273,67 @@ class AnsibleModule(object):
                 native_dest_dir = b_dest_dir
                 native_suffix = os.path.basename(b_dest)
                 native_prefix = b('.ansible_tmp')
+                error_msg = None
+                tmp_dest_name = None
                 try:
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
                 except (OSError, IOError):
                     e = get_exception()
-                    self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e))
+                    error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e)
                 except TypeError:
                     # We expect that this is happening because python3.4.x and
                     # below can't handle byte strings in mkstemp().  Traceback
                     # would end in something like:
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
-                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
-                                       'Please use Python2.x or Python3.5 or greater.', exception=traceback.format_exc())
+                    error_msg = ('Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
+                                 'Please use Python2.x or Python3.5 or greater.')
+                finally:
+                    if error_msg:
+                        if unsafe_writes:
+                            self._unsafe_writes(b_src, b_dest)
+                        else:
+                            self.fail_json(msg=error_msg, exception=traceback.format_exc())
 
-                b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
+                if tmp_dest_name:
+                    b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
 
-                try:
                     try:
-                        # close tmp file handle before file operations to prevent text file busy errors on vboxfs synced folders (windows host)
-                        os.close(tmp_dest_fd)
-                        # leaves tmp file behind when sudo and not root
                         try:
-                            shutil.move(b_src, b_tmp_dest_name)
-                        except OSError:
-                            # cleanup will happen by 'rm' of tempdir
-                            # copy2 will preserve some metadata
-                            shutil.copy2(b_src, b_tmp_dest_name)
+                            # close tmp file handle before file operations to prevent text file busy errors on vboxfs synced folders (windows host)
+                            os.close(tmp_dest_fd)
+                            # leaves tmp file behind when sudo and not root
+                            try:
+                                shutil.move(b_src, b_tmp_dest_name)
+                            except OSError:
+                                # cleanup will happen by 'rm' of tempdir
+                                # copy2 will preserve some metadata
+                                shutil.copy2(b_src, b_tmp_dest_name)
 
-                        if self.selinux_enabled():
-                            self.set_context_if_different(
-                                b_tmp_dest_name, context, False)
-                        try:
-                            tmp_stat = os.stat(b_tmp_dest_name)
-                            if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                                os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
-                        except OSError:
-                            e = get_exception()
-                            if e.errno != errno.EPERM:
-                                raise
-                        try:
-                            os.rename(b_tmp_dest_name, b_dest)
+                            if self.selinux_enabled():
+                                self.set_context_if_different(
+                                    b_tmp_dest_name, context, False)
+                            try:
+                                tmp_stat = os.stat(b_tmp_dest_name)
+                                if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                                    os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                            except OSError:
+                                e = get_exception()
+                                if e.errno != errno.EPERM:
+                                    raise
+                            try:
+                                os.rename(b_tmp_dest_name, b_dest)
+                            except (shutil.Error, OSError, IOError):
+                                e = get_exception()
+                                if unsafe_writes and e.errno == errno.EBUSY:
+                                    self._unsafe_writes(b_tmp_dest_name, b_dest)
+                                else:
+                                    self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
                         except (shutil.Error, OSError, IOError):
                             e = get_exception()
-                            if unsafe_writes and e.errno == errno.EBUSY:
-                                self._unsafe_writes(b_tmp_dest_name, b_dest)
-                            else:
-                                self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
-                    except (shutil.Error, OSError, IOError):
-                        e = get_exception()
-                        self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
-                finally:
-                    self.cleanup(b_tmp_dest_name)
+                            self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
+                    finally:
+                        self.cleanup(b_tmp_dest_name)
 
         if creating:
             # make sure the file has the correct permissions
