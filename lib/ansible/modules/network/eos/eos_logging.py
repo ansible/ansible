@@ -51,11 +51,13 @@ options:
   level:
     description:
       - Set logging severity levels.
-  collection:
+    choices: ['emergencies', 'alerts', 'critical', 'errors',
+              'warnings', 'notifications', 'informational', 'debugging']
+  aggregate:
     description: List of logging definitions.
   purge:
     description:
-      - Purge logging not defined in the collections parameter.
+      - Purge logging not defined in the aggregate parameter.
     default: no
   state:
     description:
@@ -106,6 +108,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import get_config, load_config
 from ansible.module_utils.eos import eos_argument_spec, check_args
 
+
+DEST_GROUP = ['on', 'host', 'console', 'monitor', 'buffered']
+LEVEL_GROUP = ['emergencies', 'alerts', 'critical', 'errors',
+               'warnings', 'notifications', 'informational',
+               'debugging']
 
 def validate_size(value, module):
     if value:
@@ -201,15 +208,13 @@ def parse_name(line, dest):
     return name
 
 
-def parse_level(line, dest):
+def parse_level(line, dest, module):
     level = None
-    level_group = ('emergencies', 'alerts', 'critical', 'errors', 'warnings',
-                   'notifications', 'informational', 'debugging')
 
     if dest is not 'host':
         match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
         if match:
-            if match.group(1) in level_group:
+            if match.group(1) in LEVEL_GROUP:
                 level = match.group(1)
 
     return level
@@ -217,14 +222,13 @@ def parse_level(line, dest):
 
 def map_config_to_obj(module):
     obj = []
-    dest_group = ('console', 'host', 'monitor', 'buffered', 'on')
 
     data = get_config(module, flags=['section logging'])
 
     for line in data.split('\n'):
         match = re.search(r'logging (\S+)', line, re.M)
 
-        if match.group(1) in dest_group:
+        if match.group(1) in DEST_GROUP:
             dest = match.group(1)
         else:
             pass
@@ -233,7 +237,7 @@ def map_config_to_obj(module):
                     'name': parse_name(line, dest),
                     'size': parse_size(line, dest),
                     'facility': parse_facility(line),
-                    'level': parse_level(line, dest)})
+                    'level': parse_level(line, dest, module)})
 
     return obj
 
@@ -312,11 +316,11 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
+        dest=dict(type='str', choices=DEST_GROUP),
         name=dict(type='str'),
         size=dict(type='int'),
         facility=dict(type='str'),
-        level=dict(type='str'),
+        level=dict(type='str', choices=LEVEL_GROUP),
         state=dict(default='present', choices=['present', 'absent']),
         aggregate=dict(type='list'),
         purge=dict(default=False, type='bool')
