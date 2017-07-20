@@ -141,6 +141,7 @@ To configure the PPA on your machine and install ansible run these commands:
     $ sudo apt-get update
     $ sudo apt-get install software-properties-common
     $ sudo apt-add-repository ppa:ansible/ansible
+    $ sudo apt-get update
     $ sudo apt-get install ansible
 
 .. note:: For the older version 1.9 we use this ppa:ansible/ansible-1.9
