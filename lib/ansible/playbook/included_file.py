@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.playbook.task_include import TaskInclude
+from ansible.playbook.role_include import IncludeRole
 from ansible.template import Templar
 
 try:
@@ -101,7 +102,10 @@ class IncludedFile:
                                 if not isinstance(parent_include, TaskInclude):
                                     parent_include = parent_include._parent
                                     continue
-                                parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
+                                if isinstance(parent_include, IncludeRole):
+                                    parent_include_dir = os.path.dirname(parent_include._role_path)
+                                else:
+                                    parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
                                 if cumulative_path is None:
                                     cumulative_path = parent_include_dir
                                 elif not os.path.isabs(cumulative_path):
