@@ -34,7 +34,7 @@ version_added: "1.5"
 options:
   pkg:
     description:
-      - name of package to install, upgrade or remove.
+      - Name of package to install, upgrade or remove.
     required: true
     default: null
   state:
@@ -45,7 +45,7 @@ options:
     choices: [ "absent", "present" ]
   update_cache:
     description:
-      - update the package database first C(apt-get update).
+      - Update the package database first C(apt-get update).
     required: false
     default: no
     choices: [ "yes", "no" ]
