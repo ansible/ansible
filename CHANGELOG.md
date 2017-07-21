@@ -14,6 +14,7 @@ Ansible Changes By Release
   * hacking/env-setup script
   * Fix traceback when checking for passwords in logged strings when logging executed commands.
   * docker_login module
+  * Workaround python-libselinux API change in the seboolean module
 * ios_config: Fix traceback when the efaults parameter is not set
 * iosxr_config: Fixed unicode error when UTF-8 characters are in configs
 
