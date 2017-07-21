@@ -27,7 +27,8 @@ class ActionModule(ActionBase):
         self._supports_async = True
 
         results = super(ActionModule, self).run(tmp, task_vars)
-        self._task.args['foo'] = '!' + self._task.args['foo']
+        if 'foo' in self._task.args:
+            self._task.args['foo'] = '!' + self._task.args['foo']
 
         if not results.get('skipped'):
 

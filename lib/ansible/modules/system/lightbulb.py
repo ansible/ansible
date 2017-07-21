@@ -68,13 +68,17 @@ def main():
             foo=dict(required=False, type='str'),
         ),
     )
-    foo = module.params['foo'] or 'hello world'
+
+    foo = module.params['foo']
 
     # import q
     # q(foo)
 
     # import pdb
     # pdb.set_trace()
+
+    # import epdb
+    # epdb.serve()
 
     result = dict(
         foo=foo,
