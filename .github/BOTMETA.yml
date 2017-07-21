@@ -741,6 +741,8 @@ files:
   $modules/windows/win_domain.py: nitzmahone
   $modules/windows/win_domain_controller.ps1: nitzmahone
   $modules/windows/win_domain_controller.py: nitzmahone
+  $modules/windows/win_domain_group.ps1: jborean93
+  $modules/windows/win_domain_group.py: jborean93
   $modules/windows/win_domain_membership.ps1: nitzmahone
   $modules/windows/win_domain_membership.py: nitzmahone
   $modules/windows/win_dotnet_ngen.ps1: petemounce
