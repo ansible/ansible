@@ -24,9 +24,14 @@ Python 2.4 and 2.5 support discontinuation
 
 Python 3
 --------
-- Ansible Core Engine and Core modules will be tested on Python 3 **(working, additional coverage required)**
+- Ansible Core Engine and Core modules will be tested on Python 3
+
+  - All Core modules now have at least a smoketest integration test.
+    Additional coverage is welcomed to find more bugs and prevent regressions.
+
 - Communicate with Linux distros to provide Ansible running on Python 3
-- Check for Python 3 tests on core modules and create any missing **(tests added, additional tests required)**
+
+  - Python3 based Ansible packages are now available to run on Fedora Linux
 
 Ansible-Config
 --------------
