@@ -8,13 +8,26 @@
     vcsim: "{{ lookup('env', 'vcenter_host') }}"
 - debug: var=vcsim
 
+- name: wait for flask server
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
 - name: kill vcsim
   uri:
     url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+
 - name: start vcsim
   uri:
     url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
   register: vcsim_instance
+
+- name: wait for vcsim server
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
 
 - name: get a list of VMS from vcsim   
   uri:

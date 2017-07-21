@@ -76,11 +76,9 @@ RETURN = """
 """
 
 import os
-
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import connect_to_api, gather_vm_facts, get_all_objs, compile_folder_path_for_object
+from ansible.module_utils.vmware import connect_to_api, gather_vm_facts, get_all_objs, compile_folder_path_for_object, vmware_argument_spec
 
 
 HAS_PYVMOMI = False
@@ -230,27 +228,15 @@ def get_obj(content, vimtype, name):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            hostname=dict(
-                type='str',
-                default=os.environ.get('VMWARE_HOST')
-            ),
-            username=dict(
-                type='str',
-                default=os.environ.get('VMWARE_USER')
-            ),
-            password=dict(
-                type='str', no_log=True,
-                default=os.environ.get('VMWARE_PASSWORD')
-            ),
-            validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=False, type='str'),
-            uuid=dict(required=False, type='str'),
-            datacenter=dict(required=True, type='str'),
-        ),
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(
+        name=dict(type='str'),
+        uuid=dict(type='str'),
+        datacenter=dict(type='str', required=True)
     )
 
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=[['name', 'uuid']])
     pyv = PyVmomiHelper(module)
     # Check if the VM exists before continuing
     folders = pyv.getvm_folder_paths(
