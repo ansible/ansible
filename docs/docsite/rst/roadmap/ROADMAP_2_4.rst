@@ -24,9 +24,9 @@ Python 2.4 and 2.5 support discontinuation
 
 Python 3
 --------
-- Ansible Core Engine and Core modules will be tested on Python 3
+- Ansible Core Engine and Core modules will be tested on Python 3 **(working, additional coverage required)**
 - Communicate with Linux distros to provide Ansible running on Python 3
-- Check for Python 3 tests on core modules and create any missing
+- Check for Python 3 tests on core modules and create any missing **(tests added, additional tests required)**
 
 Ansible-Config
 --------------
@@ -190,14 +190,17 @@ Network Roadmap
 
 Contributor Quality of Life
 ---------------------------
-- All Core and Curated modules will work towards having unit testing.
+- All Core and Curated modules will work towards having unit testing. **(edit: integration and/or unit tests)**
 - More bot improvements!
+
+  - Bot comments on PRs with details of test failures. **(done)**
+
 - Test Infrastructure changes
 
   - Shippable + Bot Integration
 
-    - Provide verified test results to the bot from Shippable so the bot can comment on PRs with CI failures.
-    - Enable the bot to mark PRs with ``ci_verified`` if all CI failures are verified.
+    - Provide verified test results to the bot from Shippable so the bot can comment on PRs with CI failures. **(done, compile and sanity tests only)**
+    - Enable the bot to mark PRs with ``ci_verified`` if all CI failures are verified. **(done)**
 
   - Windows Server 2016 Integration Tests
 
@@ -214,20 +217,25 @@ Contributor Quality of Life
 
   - Windows + Python 3 Tests
 
-    - Run basic Windows tests using Python 3 as the controller.
+    - Run basic Windows tests using Python 3 as the controller. **(partially done, not all planned tests running yet)**
     - Depends on resolution of WinRM Python 3 issues.
 
   - Cloud Integration Tests
 
-    - Run existing cloud integration tests for AWS, Azure and GCP as part of CI.
-    - Tests to be run only on cloud module (and module_utils) PRs and merges for the relevant cloud provider.
+    - Run existing cloud integration tests as part of CI for:
+
+      - AWS **(done, some tests excluded due to test duration)**
+      - Azure **(in progress)**
+      - GCP as part of CI. **(possibly pushed to future roadmap)**
+
+    - Tests to be run only on cloud module (and module_utils) PRs and merges for the relevant cloud provider. **(done)**
 
   - Test Reliability
 
-    - Further improve test reliability to reduce false positives on Shippable.
+    - Further improve test reliability to reduce false positives on Shippable. **(ongoing)**
     - This continues work from the 2.3 release cycle.
 
   - Static Code Analysis
 
-    - Further expand the scope and coverage of static analysis.
+    - Further expand the scope and coverage of static analysis. **(ongoing)**
     - This continues work from the 2.3 release cycle.
