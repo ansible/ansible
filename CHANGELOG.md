@@ -54,6 +54,8 @@ Ansible Changes By Release
 * ios_template
 * iosxr_template
 * junos_template
+* nxos_template
+* ops_template
 
 ### Minor Changes
 * removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
