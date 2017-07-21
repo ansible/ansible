@@ -30,9 +30,9 @@ options:
   state:
     description:
       - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
-        are installed.
+        are installed. C(fixed) attempt to correct a system with broken dependencies in place.
     default: present
-    choices: [ absent, build-dep, latest, present ]
+    choices: [ absent, build-dep, latest, present, fixed ]
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
@@ -514,7 +514,7 @@ def mark_installed_manually(m, packages):
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
-            build_dep=False, autoremove=False, only_upgrade=False,
+            build_dep=False, fixed=False, autoremove=False, only_upgrade=False,
             allow_unauthenticated=False):
     pkg_list = []
     packages = ""
@@ -562,10 +562,15 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             only_upgrade = ''
 
-        if build_dep:
-            cmd = "%s -y %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, force_yes, check_arg, packages)
+        if fixed:
+            fixed = '--fix-broken'
         else:
-            cmd = "%s -y %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, force_yes, autoremove, check_arg, packages)
+            fixed = ''
+
+        if build_dep:
+            cmd = "%s -y %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, check_arg, packages)
+        else:
+            cmd = "%s -y %s %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -928,7 +933,7 @@ def get_cache(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'installed', 'latest', 'present', 'removed', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'installed', 'latest', 'present', 'removed', 'present', 'fixed']),
             update_cache=dict(type='bool', aliases=['update-cache']),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
@@ -1082,13 +1087,16 @@ def main():
             if autoremove:
                 cleanup(module, p['purge'], force=force_yes, operation='autoremove', dpkg_options=dpkg_options)
 
-        if p['state'] in ('latest', 'present', 'build-dep'):
+        if p['state'] in ('latest', 'present', 'build-dep', 'fixed'):
             state_upgrade = False
             state_builddep = False
+            state_fixed = False
             if p['state'] == 'latest':
                 state_upgrade = True
             if p['state'] == 'build-dep':
                 state_builddep = True
+            if p['state'] == 'fixed':
+                state_fixed = True
 
             success, retvals = install(
                 module,
@@ -1100,6 +1108,7 @@ def main():
                 force=force_yes,
                 dpkg_options=dpkg_options,
                 build_dep=state_builddep,
+                fixed=state_fixed,
                 autoremove=autoremove,
                 only_upgrade=p['only_upgrade'],
                 allow_unauthenticated=allow_unauthenticated
