@@ -28,6 +28,7 @@
 import re
 
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils._text import to_native
 from ansible.module_utils.network_common import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
