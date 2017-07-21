@@ -239,6 +239,7 @@ Ansible Changes By Release
   * vmware_guest_find
 - windows
   * win_defrag
+  * win_domain_group
   * win_dsc
   * win_firewall
   * win_psmodule
