@@ -116,7 +116,7 @@
 
     - block:
       - include_role:
-          { name: vyos_facts, vyos_lldp_node: 172.26.4.35 }
+          name: vyos_facts
         when: "limit_to in ['*', 'vyos_facts']"
       rescue:
         - set_fact:

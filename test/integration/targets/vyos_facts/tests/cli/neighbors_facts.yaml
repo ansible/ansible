@@ -1,4 +1,14 @@
+- name: get eth0 ip address
+  vyos_command:
+    commands:
+      - show interfaces ethernet eth0
+  register: eth0_ip
+
+# if there is no ip assigned to eth0, skip this
 - block:
+    - set_fact:
+        vyos_lldp_node: "{{ eth0_ip.stdout_lines[0][2] | regex_replace('.*inet ', '') | regex_replace('/.*', '') }}"
+
     - name: start LLDP
       vyos_config:
         lines:
@@ -38,5 +48,4 @@
         lines:
           - delete service lldp
           - delete service lldp management-address {{ vyos_lldp_node }}
-
-  when: vyos_lldp_node is defined
+  when: "'inet' in eth0_ip.stdout[0]"
