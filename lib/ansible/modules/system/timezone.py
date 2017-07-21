@@ -521,7 +521,8 @@ class BSDTimezone(Timezone):
                 tz = os.readlink('/etc/localtime')
                 return tz.replace('/usr/share/zoneinfo/', '')
             except:
-                self.module.fail_json(msg='Could not read /etc/localtime')
+                self.module.warn('Could not read /etc/localtime. Assuming UTC')
+                return 'UTC'
         else:
             self.module.fail_json(msg='{0} is not a supported option on target platform'.
                                   format(key))
