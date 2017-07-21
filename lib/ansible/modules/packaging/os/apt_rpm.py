@@ -107,6 +107,15 @@ def query_package_provides(module, name):
     return rc == 0
 
 
+def update_only(module):
+    cmd = "%s update" % (APT_PATH)
+    rc, out, err = module.run_command(cmd)
+    if rc:
+        module.fail_json(msg="'%s' failed: %s" % (cmd, err))
+    else:
+        module.exit_json(changed=True, msg="Package db updated")
+
+
 def update_package_db(module):
     rc, out, err = module.run_command("%s update" % APT_PATH)
 
@@ -164,24 +173,28 @@ def main():
         argument_spec    = dict(
             state        = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
-            package      = dict(aliases=['pkg', 'name'], required=True)))
-
+            package      = dict(aliases=['pkg', 'name']),
+        ))
 
     if not os.path.exists(APT_PATH) or not os.path.exists(RPM_PATH):
         module.fail_json(msg="cannot find /usr/bin/apt-get and/or /usr/bin/rpm")
 
     p = module.params
 
-    if p['update_cache']:
-        update_package_db(module)
+    if p['package']:
+        if p['update_cache']:
+            update_package_db(module)
 
-    packages = p['package'].split(',')
+        packages = p['package'].split(',')
 
-    if p['state'] in [ 'installed', 'present' ]:
-        install_packages(module, packages)
+        if p['state'] in [ 'installed', 'present' ]:
+            install_packages(module, packages)
 
-    elif p['state'] in [ 'removed', 'absent' ]:
-        remove_packages(module, packages)
+        elif p['state'] in [ 'removed', 'absent' ]:
+            remove_packages(module, packages)
+    elif p['update_cache']:
+            update_only(module)
+
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
