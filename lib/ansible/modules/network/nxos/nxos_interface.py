@@ -149,8 +149,6 @@ from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-
-
 def is_default_interface(interface, module):
     """Checks to see if interface exists and if it is a default config
     Args:
@@ -386,7 +384,7 @@ def get_interfaces_dict(module):
         'portchannel': [],
         'nve': [],
         'unknown': []
-        }
+    }
 
     interface_list = body.get('TABLE_interface')['ROW_interface']
     for index in interface_list:
@@ -559,8 +557,8 @@ def execute_show_command(command, module):
         else:
             output = 'text'
         cmds = [{
-          'command': command,
-          'output': output,
+            'command': command,
+            'output': output,
         }]
 
     body = run_commands(module, cmds)
@@ -700,7 +698,7 @@ def main():
             load_config(module, cmds)
             results['changed'] = True
             if module.params['interface']:
-                if delta.get('mode'): # or delta.get('admin_state'):
+                if delta.get('mode'):  # or delta.get('admin_state'):
                     # if the mode changes from L2 to L3, the admin state
                     # seems to change after the API call, so adding a second API
                     # call to ensure it's in the desired state.
