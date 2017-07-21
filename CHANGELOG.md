@@ -49,6 +49,12 @@ Ansible Changes By Release
 #### Deprecated Modules:
 * ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
 
+#### Removed Deprecated Modules:
+* eos_template
+* ios_template
+* iosxr_template
+* junos_template
+
 ### Minor Changes
 * removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
 * removed unused and deprecated config option `pattern`

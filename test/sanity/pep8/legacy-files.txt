@@ -300,7 +300,6 @@ lib/ansible/modules/network/cumulus/_cl_ports.py
 lib/ansible/modules/network/cumulus/nclu.py
 lib/ansible/modules/net_tools/dnsimple.py
 lib/ansible/modules/net_tools/dnsmadeeasy.py
-lib/ansible/modules/network/eos/_eos_template.py
 lib/ansible/modules/network/eos/eos_banner.py
 lib/ansible/modules/network/eos/eos_command.py
 lib/ansible/modules/network/eos/eos_config.py
@@ -314,13 +313,11 @@ lib/ansible/modules/network/fortios/fortios_config.py
 lib/ansible/modules/network/fortios/fortios_ipv4_policy.py
 lib/ansible/modules/network/illumos/dladm_iptun.py
 lib/ansible/modules/network/illumos/dladm_linkprop.py
-lib/ansible/modules/network/ios/_ios_template.py
 lib/ansible/modules/network/ios/ios_banner.py
 lib/ansible/modules/network/ios/ios_command.py
 lib/ansible/modules/network/ios/ios_facts.py
 lib/ansible/modules/network/ios/ios_system.py
 lib/ansible/modules/network/ios/ios_vrf.py
-lib/ansible/modules/network/iosxr/_iosxr_template.py
 lib/ansible/modules/network/iosxr/iosxr_command.py
 lib/ansible/modules/network/iosxr/iosxr_config.py
 lib/ansible/modules/network/iosxr/iosxr_facts.py
@@ -340,7 +337,6 @@ lib/ansible/modules/network/netvisor/pn_vrouterif.py
 lib/ansible/modules/network/netvisor/pn_vrouterlbif.py
 lib/ansible/modules/net_tools/nmcli.py
 lib/ansible/modules/network/nxos/_nxos_mtu.py
-lib/ansible/modules/network/nxos/_nxos_template.py
 lib/ansible/modules/network/nxos/nxos_aaa_server.py
 lib/ansible/modules/network/nxos/nxos_aaa_server_host.py
 lib/ansible/modules/network/nxos/nxos_command.py
@@ -378,7 +374,6 @@ lib/ansible/modules/network/nxos/nxos_vtp_domain.py
 lib/ansible/modules/network/nxos/nxos_vtp_password.py
 lib/ansible/modules/network/nxos/nxos_vtp_version.py
 lib/ansible/modules/net_tools/omapi_host.py
-lib/ansible/modules/network/openswitch/_ops_template.py
 lib/ansible/modules/network/openswitch/ops_command.py
 lib/ansible/modules/network/openswitch/ops_config.py
 lib/ansible/modules/network/openswitch/ops_facts.py

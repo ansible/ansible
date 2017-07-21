@@ -44,15 +44,6 @@
 
     - block:
       - include_role:
-          name: iosxr_template
-        when: "limit_to in ['*', 'iosxr_template']"
-      rescue:
-        - set_fact:
-            failed_modules: "{{ failed_modules }} + [ 'iosxr_template' ]"
-            test_failed: true
-
-    - block:
-      - include_role:
           name: iosxr_system
         when: "limit_to in ['*', 'iosxr_system']"
       rescue:

@@ -42,15 +42,6 @@
 
     - block:
       - include_role:
-          name: eos_template
-        when: "limit_to in ['*', 'eos_template']"
-      rescue:
-        - set_fact:
-            failed_modules: "{{ failed_modules }} + [ 'eos_template' ]"
-            test_failed: true
-
-    - block:
-      - include_role:
           name: eos_facts
         when: "limit_to in ['*', 'eos_facts']"
       rescue:
