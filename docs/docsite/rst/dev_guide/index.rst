@@ -25,5 +25,5 @@ To get started, select one of the following topics.
    developing_test_pr
    developing_rebasing
    repomerge
-   developing_releases
+   ../release_and_maintenance
    ../committer_guidelines
