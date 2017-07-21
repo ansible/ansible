@@ -192,23 +192,22 @@ try:
 except ImportError:
     HAS_XMLJSON_COBRA = False
 
-from ansible.module_utils.aci import aci_argument_spec, aci_login, aci_response_json, aci_response_xml
+from ansible.module_utils.aci import ACIModule, aci_argument_spec, aci_response_json, aci_response_xml
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
 
-def aci_response(rawoutput, rest_type='xml'):
+def aci_response(result, rawoutput, rest_type='xml'):
     ''' Handle APIC response output '''
 
     if rest_type == 'json':
-        return aci_response_json(rawoutput)
+        aci_response_json(result, rawoutput)
 
-    return aci_response_xml(rawoutput)
+    aci_response_xml(result, rawoutput)
 
 
 def main():
     argument_spec = aci_argument_spec
-
     argument_spec.update(
         path=dict(type='str', required=True, aliases=['uri']),
         method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
@@ -228,11 +227,6 @@ def main():
 
     method = module.params['method']
     timeout = module.params['timeout']
-
-    result = dict(
-        changed=False,
-        payload='',
-    )
 
     # Report missing file
     file_exists = False
@@ -254,49 +248,45 @@ def main():
     else:
         module.fail_json(msg='Failed to find REST API content type (neither .xml nor .json).')
 
+    aci = ACIModule(module)
+
+    if method == 'get':
+        aci.request()
+        module.exit_json(**aci.result)
+    elif module.check_mode:
+        # In check_mode we assume it works, but we don't actually perform the requested change
+        # TODO: Could we turn this request in a GET instead ?
+        aci.result['changed'] = True
+        module.exit_json(response='OK (Check mode)', status=200, **aci.result)
+
     # Prepare request data
     if content:
         # We include the payload as it may be templated
-        result['payload'] = content
+        payload = content
     elif file_exists:
         with open(src, 'r') as config_object:
             # TODO: Would be nice to template this, requires action-plugin
-            result['payload'] = config_object.read()
-
-    # Perform login first
-    auth = aci_login(module)
-
-    # Ensure changes are reported
-    if method in ('delete', 'post'):
-        # FIXME: Hardcoding changed is not idempotent
-        result['changed'] = True
-
-        # In check_mode we assume it works, but we don't actually perform the requested change
-        # TODO: Could we turn this request in a GET instead ?
-        if module.check_mode:
-            module.exit_json(response='OK (Check mode)', status=200, **result)
-    else:
-        result['changed'] = False
+            payload = config_object.read()
 
     # Perform actual request using auth cookie (Same as aci_request,but also supports XML)
-    url = '%(protocol)s://%(hostname)s/' % module.params + path.lstrip('/')
-    headers = dict(Cookie=auth.headers['Set-Cookie'])
+    url = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
 
-    resp, info = fetch_url(module, url, data=result['payload'], method=method.upper(), timeout=timeout, headers=headers)
-    result['response'] = info['msg']
-    result['status'] = info['status']
+    resp, info = fetch_url(module, url, data=payload, method=method.upper(), timeout=timeout, headers=aci.headers)
+    aci.result['response'] = info['msg']
+    aci.result['status'] = info['status']
 
     # Report failure
     if info['status'] != 200:
         try:
-            result.update(aci_response(info['body'], rest_type))
-            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % result, **result)
+            aci_response(aci.result, info['body'], rest_type)
+            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
         except KeyError:
-            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, **result)
+            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, **aci.result)
+
+    aci_response(aci.result, resp.read(), rest_type)
 
     # Report success
-    result.update(aci_response(resp.read(), rest_type))
-    module.exit_json(**result)
+    module.exit_json(**aci.result)
 
 if __name__ == '__main__':
     main()

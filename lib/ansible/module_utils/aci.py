@@ -43,7 +43,7 @@ aci_argument_spec = dict(
     hostname=dict(type='str', required=True, aliases=['host']),
     username=dict(type='str', default='admin', aliases=['user']),
     password=dict(type='str', required=True, no_log=True),
-    protocol=dict(type='str'),  # Deprecated in v2.8
+    protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     timeout=dict(type='int', default=30),
     use_ssl=dict(type='bool', default=True),
     validate_certs=dict(type='bool', default=True),
@@ -51,32 +51,33 @@ aci_argument_spec = dict(
 
 
 def aci_response_error(result):
-
+    ''' Set error information when found '''
+    result['error_code'] = 0
+    result['error_text'] = 'Success'
     # Handle possible APIC error information
-    try:
-        result['error_code'] = result['imdata'][0]['error']['attributes']['code']
-        result['error_text'] = result['imdata'][0]['error']['attributes']['text']
-    except KeyError:
-        result['error_code'] = 0
-        result['error_text'] = 'Success'
-
-    return result
+    if result['totalCount'] != '0':
+        try:
+            result['error_code'] = result['imdata'][0]['error']['attributes']['code']
+            result['error_text'] = result['imdata'][0]['error']['attributes']['text']
+        except (KeyError, IndexError):
+            pass
 
 
-def aci_response_json(rawoutput):
+def aci_response_json(result, rawoutput):
     ''' Handle APIC JSON response output '''
     try:
-        result = json.loads(rawoutput)
+        result.update(json.loads(rawoutput))
     except:
         e = get_exception()
         # Expose RAW output for troubleshooting
-        return dict(raw=rawoutput, error_code=-1, error_text="Unable to parse output as JSON, see 'raw' output. %s" % e)
+        result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as JSON, see 'raw' output. %s" % e)
+        return
 
     # Handle possible APIC error information
-    return aci_response_error(result)
+    aci_response_error(result)
 
 
-def aci_response_xml(rawoutput):
+def aci_response_xml(result, rawoutput):
     ''' Handle APIC XML response output '''
 
     # NOTE: The XML-to-JSON conversion is using the "Cobra" convention
@@ -86,81 +87,138 @@ def aci_response_xml(rawoutput):
     except:
         e = get_exception()
         # Expose RAW output for troubleshooting
-        return dict(raw=rawoutput, error_code=-1, error_text="Unable to parse output as XML, see 'raw' output. %s" % e)
+        result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as XML, see 'raw' output. %s" % e)
+        return
 
     # Reformat as ACI does for JSON API output
     try:
-        result = dict(imdata=xmldata['imdata']['children'])
+        result.update(imdata=xmldata['imdata']['children'])
     except KeyError:
-        result = dict(imdata=dict())
+        result['imdata'] = dict()
     result['totalCount'] = xmldata['imdata']['attributes']['totalCount']
 
     # Handle possible APIC error information
-    return aci_response_error(result)
+    aci_response_error(result)
 
 
-def define_protocol(module):
-    ''' Set protocol based on use_ssl parameter '''
+class ACIModule(object):
 
-    # Set protocol for further use
-    if module.params['protocol'] in ('http', 'https'):
-        module.deprecate("Parameter 'protocol' is deprecated, please use 'use_ssl' instead.", 2.8)
-    elif module.params['protocol'] is None:
-        module.params['protocol'] = 'https' if module.params.get('use_ssl', True) else 'http'
-    else:
-        module.fail_json(msg="Parameter 'protocol' needs to be one of ( http, https )")
+    def __init__(self, module):
+        self.module = module
+        self.params = module.params
+        self.result = dict(changed=False)
+        self.headers = None
 
+        self.login()
 
-def aci_login(module):
-    ''' Log in to APIC '''
+    def define_protocol(self):
+        ''' Set protocol based on use_ssl parameter '''
 
-    # Ensure protocol is set (only do this once)
-    define_protocol(module)
+        # Set protocol for further use
+        if self.params['protocol'] in ('http', 'https'):
+            self.module.deprecate("Parameter 'protocol' is deprecated, please use 'use_ssl' instead.", '2.6')
+        elif self.params['protocol'] is None:
+            self.params['protocol'] = 'https' if self.params.get('use_ssl', True) else 'http'
+        else:
+            self.module.fail_json(msg="Parameter 'protocol' needs to be one of ( http, https )")
 
-    # Perform login request
-    url = '%(protocol)s://%(hostname)s/api/aaaLogin.json' % module.params
-    payload = {'aaaUser': {'attributes': {'name': module.params['username'], 'pwd': module.params['password']}}}
-    resp, auth = fetch_url(module, url, data=json.dumps(payload), method='POST', timeout=module.params['timeout'])
+    def define_method(self):
+        ''' Set method based on state parameter '''
 
-    # Handle APIC response
-    if auth['status'] != 200:
-        try:
-            # APIC error
-            result = aci_response_json(auth['body'])
-            module.fail_json(response=auth['msg'], status=auth['status'], msg='Authentication failed: %(error_code)s %(error_text)s' % result, **result)
-        except KeyError:
-            # Connection error
-            module.fail_json(msg='Authentication failed for %(url)s. %(msg)s' % auth)
+        # Handle deprecated method/action parameter
+        if self.params['method']:
+            self.module.deprecate("Parameter 'method' or 'action' is deprecated, please use 'state' instead", '2.6')
+            method_map = dict(delete='absent', get='query', post='present')
+            self.params['state'] = method_map[self.params['method']]
+        else:
+            state_map = dict(absent='delete', present='post', query='get')
+            self.params['method'] = state_map[self.params['state']]
 
-    return resp
+    def login(self):
+        ''' Log in to APIC '''
 
+        # Ensure protocol is set (only do this once)
+        self.define_protocol()
 
-def aci_request(module, path, payload, method, headers):
-    ''' Perform a REST request '''
+        # Perform login request
+        url = '%(protocol)s://%(hostname)s/api/aaaLogin.json' % self.params
+        payload = {'aaaUser': {'attributes': {'name': self.params['username'], 'pwd': self.params['password']}}}
+        resp, auth = fetch_url(self.module, url, data=json.dumps(payload), method='POST', timeout=self.params['timeout'])
 
-    # Perform request
-    url = '%(protocol)s://%(hostname)s/' % module.params + path.lstrip('/')
-    resp, info = fetch_url(module, url, data=json.dumps(payload), method=method.upper(), timeout=module.params['timeout'], headers=headers)
-    result['response'] = info['msg']
-    result['status'] = info['status']
+        # Handle APIC response
+        if auth['status'] != 200:
+            self.result['response'] = auth['msg']
+            self.result['status'] = auth['status']
+            try:
+                # APIC error
+                aci_response_json(self.result, auth['body'])
+                self.module.fail_json(msg='Authentication failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+            except KeyError:
+                # Connection error
+                self.module.fail_json(msg='Authentication failed for %(url)s. %(msg)s' % auth)
 
-    # Handle APIC response
-    if info['status'] != 200:
-        try:
-            # APIC error
-            result = aci_response_json(info['body'])
-            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % result, **result)
-        except KeyError:
-            # Connection error
-            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+        # Retain cookie for later use
+        self.headers = dict(Cookie=resp.headers['Set-Cookie'])
 
-    # Report success
-    return aci_response_json(resp.read())
+    def request(self, path, payload=None):
+        ''' Perform a REST request '''
 
+        # Ensure method is set (only do this once)
+        self.define_method()
 
-def aci_query(module, path, payload, headers, filters):
+        # Perform request
+        self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
+        resp, info = fetch_url(self.module,
+                               url=self.result['url'],
+                               data=payload,
+                               method=self.params['method'].upper(),
+                               timeout=self.params['timeout'],
+                               headers=self.headers)
+        self.result['response'] = info['msg']
+        self.result['status'] = info['status']
 
-    # Do request
-    # Filter JSON
-    # Return filtered JSON
-    return filtered_json
+        # Handle APIC response
+        if info['status'] != 200:
+            try:
+                # APIC error
+                aci_response_json(self.result, info['body'])
+                self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+            except KeyError:
+                # Connection error
+                self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+
+        aci_response_json(self.result, resp.read())
+
+    def request_diff(self, path, payload=None):
+        ''' Perform a request, including a proper diff output '''
+        self.result['diff'] = dict()
+        self.result['diff']['before'] = self.query()
+        self.request(path, payload=payload)
+        # TODO: Check if we can use the request output for the 'after' diff
+        self.result['diff']['after'] = self.query()
+
+        if self.result['diff']['before'] != self.result['diff']['after']:
+            self.result['changed'] = True
+
+    def query(self, path):
+        ''' Perform a query with no payload '''
+        url = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
+        resp, query = fetch_url(self.module, url=url, data=None, method='GET',
+                                timeout=self.params['timeout'],
+                                headers=self.headers)
+
+        # Handle APIC response
+        if query['status'] != 200:
+            result['response'] = query['msg']
+            result['status'] = query['status']
+            try:
+                # APIC error
+                aci_response_json(self.result, query['body'])
+                module.fail_json(msg='Query failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+            except KeyError:
+                # Connection error
+                module.fail_json(msg='Query failed for %(url)s. %(msg)s' % query)
+
+        query = json.loads(resp.read())
+
+        return json.dumps(query['imdata'], sort_keys=True, indent=2) + '\n'
