@@ -311,12 +311,11 @@ instance:
     sample: None
 '''
 
-import os
-import time
 
+import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs, compile_folder_path_for_object
+from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs, compile_folder_path_for_object, vmware_argument_spec
 from ansible.module_utils.vmware import serialize_spec
 
 try:
@@ -1461,41 +1460,39 @@ class PyVmomiHelper(object):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            hostname=dict(type='str', default=os.environ.get('VMWARE_HOST')),
-            username=dict(type='str', default=os.environ.get('VMWARE_USER')),
-            password=dict(type='str', default=os.environ.get('VMWARE_PASSWORD'), no_log=True),
-            state=dict(type='str', default='present',
-                       choices=['absent', 'poweredoff', 'poweredon', 'present', 'rebootguest', 'restarted', 'shutdownguest', 'suspended']),
-            validate_certs=dict(type='bool', default=True),
-            template=dict(type='str', aliases=['template_src']),
-            is_template=dict(type='bool', default=False),
-            annotation=dict(type='str', aliases=['notes']),
-            customvalues=dict(type='list', default=[]),
-            name=dict(type='str', required=True),
-            name_match=dict(type='str', default='first'),
-            uuid=dict(type='str'),
-            folder=dict(type='str', default='/vm'),
-            guest_id=dict(type='str'),
-            disk=dict(type='list', default=[]),
-            hardware=dict(type='dict', default={}),
-            force=dict(type='bool', default=False),
-            datacenter=dict(type='str', default='ha-datacenter'),
-            esxi_hostname=dict(type='str'),
-            cluster=dict(type='str'),
-            wait_for_ip_address=dict(type='bool', default=False),
-            snapshot_src=dict(type='str'),
-            linked_clone=dict(type='bool', default=False),
-            networks=dict(type='list', default=[]),
-            resource_pool=dict(type='str'),
-            customization=dict(type='dict', default={}, no_log=True),
-        ),
-        supports_check_mode=True,
-        mutually_exclusive=[
-            ['cluster', 'esxi_hostname'],
-        ],
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(
+        state=dict(type='str', default='present',
+                   choices=['absent', 'poweredoff', 'poweredon', 'present', 'rebootguest', 'restarted', 'shutdownguest', 'suspended']),
+        template=dict(type='str', aliases=['template_src']),
+        is_template=dict(type='bool', default=False),
+        annotation=dict(type='str', aliases=['notes']),
+        customvalues=dict(type='list', default=[]),
+        name=dict(type='str', required=True),
+        name_match=dict(type='str', default='first'),
+        uuid=dict(type='str'),
+        folder=dict(type='str', default='/vm'),
+        guest_id=dict(type='str'),
+        disk=dict(type='list', default=[]),
+        hardware=dict(type='dict', default={}),
+        force=dict(type='bool', default=False),
+        datacenter=dict(type='str', default='ha-datacenter'),
+        esxi_hostname=dict(type='str'),
+        cluster=dict(type='str'),
+        wait_for_ip_address=dict(type='bool', default=False),
+        snapshot_src=dict(type='str'),
+        linked_clone=dict(type='bool', default=False),
+        networks=dict(type='list', default=[]),
+        resource_pool=dict(type='str'),
+        customization=dict(type='dict', default={}, no_log=True),
     )
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True,
+                           mutually_exclusive=[
+                               ['cluster', 'esxi_hostname'],
+                           ],
+                           )
 
     result = {'failed': False, 'changed': False}
 

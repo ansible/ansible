@@ -41,6 +41,7 @@ options:
    name:
         description:
             - Name of the VM to work with
+            - This is required if UUID is not supplied.
    name_match:
         description:
             - If multiple VMs matching the name, use the first or last found
@@ -95,10 +96,9 @@ instance:
     sample: None
 """
 
-import os
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, gather_vm_facts
 from ansible.module_utils._text import to_text
+from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, gather_vm_facts, vmware_argument_spec
 
 try:
     import json
@@ -152,29 +152,16 @@ class PyVmomiHelper(object):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            hostname=dict(
-                type='str',
-                default=os.environ.get('VMWARE_HOST')
-            ),
-            username=dict(
-                type='str',
-                default=os.environ.get('VMWARE_USER')
-            ),
-            password=dict(
-                type='str', no_log=True,
-                default=os.environ.get('VMWARE_PASSWORD')
-            ),
-            validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=False, type='str'),
-            name_match=dict(required=False, type='str', default='first'),
-            uuid=dict(required=False, type='str'),
-            folder=dict(required=False, type='str', default='/vm'),
-            datacenter=dict(required=True, type='str'),
-        ),
-        required_one_of=[['name', 'uuid']],
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(
+        name=dict(type='str'),
+        name_match=dict(type='str', default='first'),
+        uuid=dict(type='str'),
+        folder=dict(type='str', default='/vm'),
+        datacenter=dict(type='str', required=True),
     )
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=[['name', 'uuid']])
 
     # FindByInventoryPath() does not require an absolute path
     # so we should leave the input folder path unmodified
