@@ -48,29 +48,29 @@ def getRuleString(deviceType, variableId):
             retVal = retVal + g8332_cnos[variableId]
         else:
             retVal = "The variable " + variableId + " is not supported"
-    elif(deviceType == 'NE1072T_cnos'):
-        if variableId in NE1072T_cnos:
-            retVal = retVal + NE1072T_cnos[variableId]
+    elif(deviceType == 'NE1072T'):
+        if variableId in NE1072T:
+            retVal = retVal + NE1072T[variableId]
         else:
             retVal = "The variable " + variableId + " is not supported"
-    elif(deviceType == 'NE1032_cnos'):
-        if variableId in NE1032_cnos:
-            retVal = retVal + NE1032_cnos[variableId]
+    elif(deviceType == 'NE1032'):
+        if variableId in NE1032:
+            retVal = retVal + NE1032[variableId]
         else:
             retVal = "The variable " + variableId + " is not supported"
-    elif(deviceType == 'NE1032T_cnos'):
-        if variableId in NE1032T_cnos:
-            retVal = retVal + NE1032T_cnos[variableId]
+    elif(deviceType == 'NE1032T'):
+        if variableId in NE1032T:
+            retVal = retVal + NE1032T[variableId]
         else:
             retVal = "The variable " + variableId + " is not supported"
-    elif(deviceType == 'NE10032_cnos'):
-        if variableId in NE10032_cnos:
-            retVal = retVal + NE10032_cnos[variableId]
+    elif(deviceType == 'NE10032'):
+        if variableId in NE10032:
+            retVal = retVal + NE10032[variableId]
         else:
             retVal = "The variable " + variableId + " is not supported"
-    elif(deviceType == 'NE2572_cnos'):
-        if variableId in NE2572_cnos:
-            retVal = retVal + NE2572_cnos[variableId]
+    elif(deviceType == 'NE2572'):
+        if variableId in NE2572:
+            retVal = retVal + NE2572[variableId]
         else:
             retVal = "The variable " + variableId + " is not supported"
     else:
@@ -267,7 +267,7 @@ default_cnos = {
                 egress-only',
     'vrrp_id': 'INTEGER_VALUE:1-255',
 }
-NE2572_cnos = {
+NE2572 = {
     'vlan_id': 'INTEGER_VALUE:1-3999',
     'vlan_id_range': 'INTEGER_VALUE_RANGE:1-3999',
     'vlan_name': 'TEXT:',
@@ -450,7 +450,7 @@ NE2572_cnos = {
               egress-only',
     'vrrp_id': 'INTEGER_VALUE:1-255',
 }
-NE1032T_cnos = {
+NE1032T = {
     'vlan_id': 'INTEGER_VALUE:1-3999',
     'vlan_id_range': 'INTEGER_VALUE_RANGE:1-3999',
     'vlan_name': 'TEXT:',
@@ -633,7 +633,7 @@ NE1032T_cnos = {
               egress-only',
     'vrrp_id': 'INTEGER_VALUE:1-255',
 }
-NE1032_cnos = {
+NE1032 = {
     'vlan_id': 'INTEGER_VALUE:1-3999',
     'vlan_id_range': 'INTEGER_VALUE_RANGE:1-3999',
     'vlan_name': 'TEXT:',
@@ -816,7 +816,7 @@ NE1032_cnos = {
               egress-only',
     'vrrp_id': 'INTEGER_VALUE:1-255',
 }
-NE1072T_cnos = {
+NE1072T = {
     'vlan_id': 'INTEGER_VALUE:1-3999',
     'vlan_id_range': 'INTEGER_VALUE_RANGE:1-3999',
     'vlan_name': 'TEXT:',
@@ -999,7 +999,7 @@ NE1072T_cnos = {
               egress-only',
     'vrrp_id': 'INTEGER_VALUE:1-255',
 }
-NE10032_cnos = {
+NE10032 = {
     'vlan_id': 'INTEGER_VALUE:1-3999',
     'vlan_id_range': 'INTEGER_VALUE_RANGE:1-3999',
     'vlan_name': 'TEXT:',
