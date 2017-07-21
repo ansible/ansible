@@ -903,7 +903,7 @@ class AnsibleModule(object):
         return context
 
     def user_and_group(self, path, expand=True):
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
         st = os.lstat(b_path)
@@ -989,10 +989,10 @@ class AnsibleModule(object):
         return changed
 
     def set_owner_if_different(self, path, owner, changed, diff=None, expand=True):
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
+        path = to_text(b_path, errors='surrogate_or_strict')
         if owner is None:
             return changed
         orig_uid, orig_gid = self.user_and_group(path, expand)
@@ -1023,10 +1023,10 @@ class AnsibleModule(object):
         return changed
 
     def set_group_if_different(self, path, group, changed, diff=None, expand=True):
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
+        path = to_text(b_path, errors='surrogate_or_strict')
         if group is None:
             return changed
         orig_uid, orig_gid = self.user_and_group(b_path, expand)
@@ -1057,10 +1057,10 @@ class AnsibleModule(object):
         return changed
 
     def set_mode_if_different(self, path, mode, changed, diff=None, expand=True):
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
+        path = to_text(b_path, errors='surrogate_or_strict')
         path_stat = os.lstat(b_path)
 
         if mode is None:
@@ -1137,10 +1137,10 @@ class AnsibleModule(object):
         if attributes is None:
             return changed
 
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
+        path = to_text(b_path, errors='surrogate_or_strict')
 
         existing = self.get_file_attributes(b_path)
 
