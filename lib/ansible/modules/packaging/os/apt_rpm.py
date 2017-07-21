@@ -156,7 +156,7 @@ def install_packages(module, pkgspec):
         else:
             module.exit_json(changed=True, msg="%s present(s)" % packages)
     else:
-        module.exit_json(changed=False)
+        module.exit_json(changed=False, msg="package(s) already present")
 
 
 def main():
