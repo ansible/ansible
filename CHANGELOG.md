@@ -33,6 +33,7 @@ Ansible Changes By Release
   - Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
+* Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
 
 ### Deprecations
 * The behaviour when specifying `--tags` (or `--skip-tags`) multiple times on the command line

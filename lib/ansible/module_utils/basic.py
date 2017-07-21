@@ -1835,22 +1835,28 @@ class AnsibleModule(object):
             wanted = v.get('type', None)
             if k not in param:
                 continue
-            if wanted is None:
-                # Mostly we want to default to str.
-                # For values set to None explicitly, return None instead as
-                # that allows a user to unset a parameter
-                if param[k] is None:
-                    continue
-                wanted = 'str'
 
             value = param[k]
             if value is None:
                 continue
 
-            try:
-                type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
-            except KeyError:
-                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+            if not callable(wanted):
+                if wanted is None:
+                    # Mostly we want to default to str.
+                    # For values set to None explicitly, return None instead as
+                    # that allows a user to unset a parameter
+                    if param[k] is None:
+                        continue
+                    wanted = 'str'
+                try:
+                    type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
+                except KeyError:
+                    self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+            else:
+                # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
+                type_checker = wanted
+                wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+
             try:
                 param[k] = type_checker(value)
             except (TypeError, ValueError):
