@@ -23,24 +23,25 @@ DOCUMENTATION = '''
 module: kms
 short_description: Manage an AWS KMS key
 description:
-    - Manage an AWS KMS key.
+  - Manage an AWS KMS key.
 version_added: "2.4"
 author: "Will Thames (@willthames)"
 options:
   state:
-    description:
-      Whether a key should be present or absent. Note that making an existing key absent only schedules a key for deletion.
-      Passing a key that is scheduled for deletion with state present will cancel key deletion.
+    description: Whether a key should be present or absent. Note that making an
+      existing key absent only schedules a key for deletion.  Passing a key that
+      is scheduled for deletion with state present will cancel key deletion.
     required: True
     choices:
       - present
       - absent
+  enabled:
+    description: Whether or not a key is enabled
+    default: True
   key_id:
-    description:
-      An ID of an existing key to manage.
+    description: An ID of an existing key to manage.
   alias:
-    description:
-      An alias for a key. For safety, even though KMS does not require keys
+    description: An alias for a key. For safety, even though KMS does not require keys
       to have an alias, this module expects all new keys to be given an alias
       to make them easier to manage. Existing keys without an alias may be
       referred to by I(key_id). Use M(aws_kms_facts) to find key ids. Required
@@ -63,25 +64,21 @@ options:
   grants:
     description:
       - A list of grants to apply to the key. Each item must contain I(grantee_principal).
-        Each item can optionally contain: I(retiring_principal), I(operations), I(constraints),
+        Each item can optionally contain I(retiring_principal), I(operations), I(constraints),
         I(name).
-      - Valid operations are: C(Decrypt), C(Encrypt), C(GenerateDataKey), C(GenerateDataKeyWithoutPlaintext),
+      - Valid operations are C(Decrypt), C(Encrypt), C(GenerateDataKey), C(GenerateDataKeyWithoutPlaintext),
         C(ReEncryptFrom), C(ReEncryptTo), C(CreateGrant), C(RetireGrant), C(DescribeKey),
       - Constraints is a dict containing C(encryption_context_subset) or C(encryption_context_equals),
         either or both being a dict specifying an encryption context match.
         See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html)
 
 extends_documentation_fragment:
-    - aws
-    - ec2
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
-
-# Create a new KMS key with no specifics. There is no way to make this operation idempotent
-# other than by checking for existence first. Not recommended
-- kms:
 
 # Create a new KMS key with tags
 - aws_kms:
@@ -104,16 +101,16 @@ EXAMPLES = '''
 - aws_kms:
     key_id: abcd1234-abcd-1234-5678-ef1234567890
     grants:
-       name: billing_prod
-       grantee_principal: arn:aws:sts::0123456789012:assumed-role/billing-prod
-       retiring_principal: arn:aws:sts::0123456789012:assumed-role/billing-prod
-       constraints:
-         encryption_context_equals:
-           environment: production
-           application: billing
-       operations:
-         - Decrypt
-         - RetireGrant
+      - name: billing_prod
+        grantee_principal: arn:aws:sts::0123456789012:assumed-role/billing-prod
+        retiring_principal: arn:aws:sts::0123456789012:assumed-role/billing-prod
+        constraints:
+          encryption_context_equals:
+            environment: production
+            application: billing
+        operations:
+          - Decrypt
+          - RetireGrant
 '''
 
 RETURN = '''
@@ -138,8 +135,7 @@ key_usage:
   returned: always
   sample: ENCRYPT_DECRYPT
 origin:
-  description:
-    The source of the key's key material. When this value is C(AWS_KMS),
+  description: The source of the key's key material. When this value is C(AWS_KMS),
     AWS KMS created the key material. When this value is C(EXTERNAL), the
     key material was imported or the CMK lacks key material.
   type: str
@@ -192,8 +188,8 @@ grants:
       sample:
         encryption_context_equals:
            "aws:lambda:_function_arn": "arn:aws:lambda:ap-southeast-2:012345678912:function:xyz"
-    creation_date: Date of creation of the grant
-      description:
+    creation_date:
+      description: Date of creation of the grant
       type: str
       returned: always
       sample: 2017-04-18T15:12:08+10:00
@@ -251,6 +247,12 @@ except ImportError:
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def get_iam_roles_with_backoff(connection):
+    paginator = connection.get_paginator('list_roles')
+    return paginator.paginate().build_full_result()
+
+
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_kms_keys_with_backoff(connection):
     paginator = connection.get_paginator('list_keys')
     return paginator.paginate().build_full_result()
@@ -259,12 +261,12 @@ def get_kms_keys_with_backoff(connection):
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_kms_aliases_with_backoff(connection):
     paginator = connection.get_paginator('list_aliases')
-    return paginator.paginate().build_full_result()['Aliases']
+    return paginator.paginate().build_full_result()
 
 
 def get_kms_aliases_lookup(connection):
     _aliases = dict()
-    for alias in get_kms_aliases_with_backoff(connection):
+    for alias in get_kms_aliases_with_backoff(connection)['Aliases']:
         # Not all aliases are actually associated with a key
         if 'TargetKeyId' in alias:
             # strip off leading 'alias/' and add it to key's aliases
@@ -281,10 +283,8 @@ def get_kms_tags_with_backoff(connection, key_id, **kwargs):
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
-def get_kms_grants_with_backoff(connection, key_id, **kwargs):
+def get_kms_grants_with_backoff(connection, key_id):
     params = dict(KeyId=key_id)
-    if kwargs.get('tokens'):
-        params['GrantTokens'] = kwargs['tokens']
     paginator = connection.get_paginator('list_grants')
     return paginator.paginate(**params).build_full_result()
 
@@ -305,23 +305,28 @@ def get_kms_tags(connection, module, key_id):
             tag_response = get_kms_tags_with_backoff(connection, key_id, **kwargs)
             tags.extend(tag_response['Tags'])
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to obtain key tags",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            if e.response['Error']['Code'] != 'AccessDeniedException':
+                module.fail_json(msg="Failed to obtain key tags",
+                                 exception=traceback.format_exc(),
+                                 **camel_dict_to_snake_dict(e.response))
+            else:
+                tag_response = {}
         if tag_response.get('NextMarker'):
             kwargs['Marker'] = tag_response['NextMarker']
         else:
             more = False
-    return boto3_tag_list_to_ansible_dict(tags)
+    return tags
 
 
 def key_matches_filter(key, filtr):
     if filtr[0] == 'key-id':
-        return filtr[1] == key['KeyId']
+        return filtr[1] == key['key_id']
     if filtr[0] == 'tag-key':
-        return filtr[1] in key['Tags']
+        return filtr[1] in key['tags']
     if filtr[0] == 'tag-value':
-        return filtr[1] in key['Tags'].values()
+        return filtr[1] in key['tags'].values()
+    if filtr[0] == 'alias':
+        return filtr[1] in key['aliases']
     if filtr[0].startswith('tag:'):
         return key['Tags'][filtr[0][4:]] == filtr[1]
 
@@ -333,7 +338,18 @@ def key_matches_filters(key, filters):
         return all([key_matches_filter(key, filtr) for filtr in filters.items()])
 
 
-def get_key_details(connection, module, key_id, tokens=[]):
+def camel_to_snake_grant(grant):
+    ''' camel_to_snake_grant snakifies everything except the encryption context '''
+    constraints = grant.get('Constraints', {})
+    result = camel_dict_to_snake_dict(grant)
+    if 'EncryptionContextEquals' in constraints:
+        result['constraints']['encryption_context_equals'] = constraints['EncryptionContextEquals']
+    if 'EncryptionContextSubset' in constraints:
+        result['constraints']['encryption_context_subset'] = constraints['EncryptionContextSubset']
+    return result
+
+
+def get_key_details(connection, module, key_id):
     try:
         result = get_kms_metadata_with_backoff(connection, key_id)['KeyMetadata']
     except botocore.exceptions.ClientError as e:
@@ -343,23 +359,27 @@ def get_key_details(connection, module, key_id, tokens=[]):
     result['KeyArn'] = result.pop('Arn')
 
     try:
-        result['grants'] = get_kms_grants_with_backoff(connection, key_id, tokens=tokens)['Grants']
+        aliases = get_kms_aliases_lookup(connection)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Failed to obtain aliases",
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+
+    result['aliases'] = aliases.get(result['KeyId'], [])
+
+    result = camel_dict_to_snake_dict(result)
+
+    # grants and tags get snakified differently
+    try:
+        result['grants'] = [camel_to_snake_grant(grant) for grant in
+                            get_kms_grants_with_backoff(connection, key_id)['Grants']]
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to obtain key grants",
                          exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
     tags = get_kms_tags(connection, module, key_id)
-
-    try:
-        aliases = get_kms_aliases_with_backoff(connection)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to obtain aliases",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
-    result['aliases'] = aliases.get(result['KeyId'], [])
-
-    result = camel_dict_to_snake_dict(result)
     result['tags'] = boto3_tag_list_to_ansible_dict(tags, 'TagKey', 'TagValue')
+
     return result
 
 
@@ -375,7 +395,7 @@ def get_kms_facts(connection, module):
 
 
 def convert_grant_params(grant, key):
-    grant_params = dict(KeyId=key['KeyId'],
+    grant_params = dict(KeyId=key['key_id'],
                         GranteePrincipal=grant['grantee_principal'])
     if grant.get('operations'):
         grant_params['Operations'] = grant['operations']
@@ -392,14 +412,14 @@ def convert_grant_params(grant, key):
     return grant_params
 
 
-def different_grant(grant_left, grant_right):
-    if grant_left.get('grantee_principal') != grant_right.get('grantee_principal'):
+def different_grant(existing_grant, desired_grant):
+    if existing_grant.get('grantee_principal') != desired_grant.get('grantee_principal'):
         return True
-    if grant_left.get('retiring_principal') != grant_right.get('retiring_principal'):
+    if existing_grant.get('retiring_principal') != desired_grant.get('retiring_principal'):
         return True
-    if set(grant_left.get('operations', [])) != set(grant_right.get('operations')):
+    if set(existing_grant.get('operations', [])) != set(desired_grant.get('operations')):
         return True
-    if grant_left.get('constraints') != grant_right.get('constraints'):
+    if existing_grant.get('constraints') != desired_grant.get('constraints'):
         return True
     return False
 
@@ -415,10 +435,11 @@ def compare_grants(existing_grants, desired_grants, purge_grants=False):
     to_change_candidates = set(existing_dict.keys()) & set(desired_dict.keys())
     for candidate in to_change_candidates:
         if different_grant(existing_dict[candidate], desired_dict[candidate]):
-            to_add_keys.append(candidate)
-            to_remove_keys.append(candidate)
+            to_add_keys.add(candidate)
+            to_remove_keys.add(candidate)
 
-    to_add = to_remove = []
+    to_add = []
+    to_remove = []
     for key in to_add_keys:
         grant = desired_dict[key]
         to_add.append(grant)
@@ -428,36 +449,67 @@ def compare_grants(existing_grants, desired_grants, purge_grants=False):
     return to_add, to_remove
 
 
-def update_key(connection, module, key):
-    alias = module.params['alias']
-    if not alias.startswith('alias/'):
-        alias = 'alias/' + alias
-    aliases = get_kms_aliases_with_backoff(connection)
-    key_id = module.params.get('key_id')
-    if key_id:
-        # We will only add new aliases, not rename existing ones
-        if alias not in [_alias['AliasName'] for _alias in aliases]:
-            connection.create_alias(KeyId=key_id, AliasName=alias)
-
-    if key['state'] == 'PendingDeletion':
+def ensure_enabled_disabled(connection, module, key):
+    changed = False
+    if key['key_state'] == 'Disabled' and module.params['enabled']:
         try:
-            connection.cancel_key_deletion(Key=key['key_id'])
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to cancel key deletion",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-    if key['state'] == 'Disabled':
-        try:
-            connection.enable_key(Key=key['key_id'])
+            connection.enable_key(KeyId=key['key_id'])
+            changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to enable key",
                              exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
 
-    description = module.params.get('description')
-    if key['description'] != description:
+    if key['key_state'] == 'Enabled' and not module.params['enabled']:
         try:
-            connection.update_key_description(KeyId=key_id, Description=description)
+            connection.disable_key(KeyId=key['key_id'])
+            changed = True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Failed to disable key",
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+    return changed
+
+
+def update_key(connection, module, key):
+    changed = False
+    alias = module.params['alias']
+    if not alias.startswith('alias/'):
+        alias = 'alias/' + alias
+    aliases = get_kms_aliases_with_backoff(connection)['Aliases']
+    key_id = module.params.get('key_id')
+    if key_id:
+        # We will only add new aliases, not rename existing ones
+        if alias not in [_alias['AliasName'] for _alias in aliases]:
+            try:
+                connection.create_alias(KeyId=key_id, AliasName=alias)
+                changed = True
+            except botocore.exceptions.ClientError as e:
+                module.fail_json(msg="Failed create key alias",
+                                 exception=traceback.format_exc(),
+                                 **camel_dict_to_snake_dict(e.response))
+
+    if key['key_state'] == 'PendingDeletion':
+        try:
+            connection.cancel_key_deletion(KeyId=key['key_id'])
+            # key is disabled after deletion cancellation
+            # set this so that ensure_enabled_disabled works correctly
+            key['key_state'] = 'Disabled'
+            changed = True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Failed to cancel key deletion",
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+
+    changed = ensure_enabled_disabled(connection, module, key) or changed
+
+    description = module.params.get('description')
+    # don't update description if description is not set
+    # (means you can't remove a description completely)
+    if description and key['description'] != description:
+        try:
+            connection.update_key_description(KeyId=key['key_id'], Description=description)
+            changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to update key description",
                              exception=traceback.format_exc(),
@@ -469,6 +521,7 @@ def update_key(connection, module, key):
     if to_remove:
         try:
             connection.untag_resource(KeyId=key['key_id'], TagKeys=to_remove)
+            changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Unable to remove or update tag",
                              exception=traceback.format_exc(),
@@ -478,6 +531,7 @@ def update_key(connection, module, key):
             connection.tag_resource(KeyId=key['key_id'],
                                     Tags=[{'TagKey': tag_key, 'TagValue': desired_tags[tag_key]}
                                           for tag_key in to_add])
+            changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Unable to add tag to key",
                              exception=traceback.format_exc(),
@@ -485,13 +539,14 @@ def update_key(connection, module, key):
 
     desired_grants = module.params.get('grants')
     existing_grants = key['grants']
-    grant_tokens = []
+
     to_add, to_remove = compare_grants(existing_grants, desired_grants,
                                        module.params.get('purge_grants'))
     if to_remove:
         for grant in to_remove:
             try:
-                connection.retire_grant(KeyId=key['key_id'], GrantId=grant['grant_id'])
+                connection.retire_grant(KeyId=key['key_arn'], GrantId=grant['grant_id'])
+                changed = True
             except botocore.exceptions.ClientError as e:
                 module.fail_json(msg="Unable to retire grant",
                                  exception=traceback.format_exc(),
@@ -501,81 +556,75 @@ def update_key(connection, module, key):
         for grant in to_add:
             grant_params = convert_grant_params(grant, key)
             try:
-                response = connection.create_grant(**grant_params)
-                grant_tokens.append(response['GrantToken'])
+                connection.create_grant(**grant_params)
+                changed = True
             except botocore.exceptions.ClientError as e:
                 module.fail_json(msg="Unable to create grant",
                                  exception=traceback.format_exc(),
                                  **camel_dict_to_snake_dict(e.response))
 
     # make results consistent with kms_facts
-    result = dict(KeyId=key['KeyId'], KeyArn=key['Arn'])
-    result = get_key_details(connection, module, key['KeyId'], tokens=grant_tokens)
-    module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
+    result = get_key_details(connection, module, key['key_id'])
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(result))
 
 
-def create_key(connection, module, aliased_key=None):
-    alias = module.params['alias']
-    if not alias.startswith('alias/'):
-        alias = 'alias/' + alias
-    if aliased_key:
-        if aliased_key['state'] not in ['Disabled', 'PendingDeletion']:
-            module.fail_json(msg="Alias %s is already in use by an active key" % alias[6:])
+def create_key(connection, module):
     params = dict(BypassPolicyLockoutSafetyCheck=False,
                   Tags=ansible_dict_to_boto3_tag_list(module.params['tags']),
                   KeyUsage='ENCRYPT_DECRYPT',
                   Origin='AWS_KMS')
-    if module.params.get['description']:
-        params['Description'] = module.params.get['description']
-    if module.params.get['policy']:
-        params['Policy'] = module.params.get['policy']
+    if module.params.get('description'):
+        params['Description'] = module.params['description']
+    if module.params.get('policy'):
+        params['Policy'] = module.params['policy']
 
     try:
-        key = connection.create_key(**params)['KeyMetaData']
+        result = connection.create_key(**params)['KeyMetadata']
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to create initial key",
                          exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
-    if aliased_key:
-        try:
-            connection.update_alias(AliasName=alias, TargetKeyId=key['KeyId'])
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to update alias",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-    else:
-        try:
-            connection.create_alias(AliasName=alias, TargetKeyId=key['KeyId'])
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to create alias",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+    key = get_key_details(connection, module, result['KeyId'])
 
-    grant_tokens = []
+    alias = module.params['alias']
+    if not alias.startswith('alias/'):
+        alias = 'alias/' + alias
+    try:
+        connection.create_alias(AliasName=alias, TargetKeyId=key['key_id'])
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Failed to create alias",
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+
+    ensure_enabled_disabled(connection, module, key)
     for grant in module.params.get('grants'):
         grant_params = convert_grant_params(grant, key)
         try:
-            response = connection.create_grant(**grant_params)
-            grant_tokens.append(response['GrantToken'])
+            connection.create_grant(**grant_params)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to add grant to key",
                              exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
 
     # make results consistent with kms_facts
-    result = get_key_details(connection, module, key['KeyId'], tokens=grant_tokens)
+    result = get_key_details(connection, module, key['key_id'])
     module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
 
 def delete_key(connection, module, key):
-    try:
-        connection.schedule_key_deletion(Key=key['KeyId'])
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to schedule key for deletion",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
-    result = get_key_details(connection, module, key['KeyId'])
-    module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
+    changed = False
+
+    if key['key_state'] != 'PendingDeletion':
+        try:
+            connection.schedule_key_deletion(KeyId=key['key_id'])
+            changed = True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Failed to schedule key for deletion",
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+
+    result = get_key_details(connection, module, key['key_id'])
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(result))
 
 
 def main():
@@ -584,18 +633,20 @@ def main():
         dict(
             key_id=dict(),
             description=dict(),
+            alias=dict(),
+            enabled=dict(type='bool', default=True),
             tags=dict(type='dict', default={}),
             purge_tags=dict(type='bool', default=False),
             grants=dict(type='list', default=[]),
             purge_grants=dict(type='bool', default=False),
-            state=dict(required=True, choices=['present', 'absent']),
+            state=dict(default='present', choices=['present', 'absent']),
             policy=dict(),
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           require_one_of=[['key_id', 'alias']])
+                           supports_check_mode=False,  # FIXME: currently so false
+                           required_one_of=[['key_id', 'alias']])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore are required for this module')
@@ -612,9 +663,9 @@ def main():
     key_id = module.params.get('key_id')
     alias = module.params.get('alias')
     if key_id:
-        filtr = {'key-id': key_id}
+        filtr = ('key-id', key_id)
     elif module.params.get('alias'):
-        filtr = {'alias': alias}
+        filtr = ('alias', alias)
 
     candidate_keys = [key for key in all_keys if key_matches_filter(key, filtr)]
 
@@ -622,15 +673,10 @@ def main():
         if candidate_keys:
             update_key(connection, module, candidate_keys[0])
         else:
-            if not alias:
-                module.fail_json(msg="Could not find key with id %s. Refusing "
-                                 "to create key with empty alias" % key_id)
+            if module.params.get('key-id'):
+                module.fail_json(msg="Could not find key with id %s to update")
             else:
-                aliased_keys = [key for key in all_keys if key_matches_filter(key, {'alias': alias})]
-                if aliased_keys:
-                    create_key(connection, module, aliased_keys[0])
-                else:
-                    create_key(connection, module)
+                create_key(connection, module)
     else:
         if candidate_keys:
             delete_key(connection, module, candidate_keys[0])
