@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_disks
+module: ovirt_disk
 short_description: "Module to manage Virtual Machine and floating disks in oVirt/RHV"
 version_added: "2.2"
 author: "Ondra Machacek (@machacekondra)"
@@ -147,7 +147,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Create and attach new disk to VM
-- ovirt_disks:
+- ovirt_disk:
     name: myvm_disk
     vm_name: rhel7
     size: 10GiB
@@ -155,7 +155,7 @@ EXAMPLES = '''
     interface: virtio
 
 # Attach logical unit to VM rhel7
-- ovirt_disks:
+- ovirt_disk:
     vm_name: rhel7
     logical_unit:
       target: iqn.2016-08-09.brq.str-01:omachace
@@ -164,7 +164,7 @@ EXAMPLES = '''
     interface: virtio
 
 # Detach disk from VM
-- ovirt_disks:
+- ovirt_disk:
     state: detached
     name: myvm_disk
     vm_name: rhel7
@@ -174,7 +174,7 @@ EXAMPLES = '''
 
 # Upload local image to disk and attach it to vm:
 # Since Ansible 2.3
-- ovirt_disks:
+- ovirt_disk:
     name: mydisk
     vm_name: myvm
     interface: virtio
@@ -185,7 +185,7 @@ EXAMPLES = '''
 
 # Download disk to local file system:
 # Since Ansible 2.3
-- ovirt_disks:
+- ovirt_disk:
     id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
     download_image_path: /home/user/mydisk.qcow2
 '''

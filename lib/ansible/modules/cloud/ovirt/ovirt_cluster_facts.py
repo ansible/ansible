@@ -26,20 +26,21 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_groups_facts
-short_description: Retrieve facts about one or more oVirt/RHV groups
+module: ovirt_cluster_facts
+short_description: Retrieve facts about one or more oVirt/RHV clusters
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt/RHV groups."
+    - "Retrieve facts about one or more oVirt/RHV clusters."
 notes:
-    - "This module creates a new top-level C(ovirt_groups) fact, which
-       contains a list of groups."
+    - "This module creates a new top-level C(ovirt_clusters) fact, which
+       contains a list of clusters."
 options:
     pattern:
       description:
         - "Search term which is accepted by oVirt/RHV search backend."
-        - "For example to search group X use following pattern: name=X"
+        - "For example to search cluster X from datacenter Y use following pattern:
+           name=X and datacenter=Y"
 extends_documentation_fragment: ovirt_facts
 '''
 
@@ -47,17 +48,18 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-# Gather facts about all groups which names start with C(admin):
-- ovirt_groups_facts:
-    pattern: name=admin*
+# Gather facts about all clusters which names start with C<production>:
+- ovirt_cluster_facts:
+    pattern:
+      name: 'production*'
 - debug:
-    var: ovirt_groups
+    var: ovirt_clusters
 '''
 
 RETURN = '''
-ovirt_groups:
-    description: "List of dictionaries describing the groups. Group attribues are mapped to dictionary keys,
-                  all groups attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/group."
+ovirt_clusters:
+    description: "List of dictionaries describing the clusters. Cluster attribues are mapped to dictionary keys,
+                  all clusters attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/cluster."
     returned: On success.
     type: list
 '''
@@ -83,18 +85,18 @@ def main():
     try:
         auth = module.params.pop('auth')
         connection = create_connection(auth)
-        groups_service = connection.system_service().groups_service()
-        groups = groups_service.list(search=module.params['pattern'])
+        clusters_service = connection.system_service().clusters_service()
+        clusters = clusters_service.list(search=module.params['pattern'])
         module.exit_json(
             changed=False,
             ansible_facts=dict(
-                ovirt_groups=[
+                ovirt_clusters=[
                     get_dict_of_struct(
                         struct=c,
                         connection=connection,
                         fetch_nested=module.params.get('fetch_nested'),
                         attributes=module.params.get('nested_attributes'),
-                    ) for c in groups
+                    ) for c in clusters
                 ],
             ),
         )

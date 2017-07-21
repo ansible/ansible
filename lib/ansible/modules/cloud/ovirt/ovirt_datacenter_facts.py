@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_datacenters_facts
+module: ovirt_datacenter_facts
 short_description: Retrieve facts about one or more oVirt/RHV datacenters
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
@@ -48,7 +48,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Gather facts about all data centers which names start with C(production):
-- ovirt_datacenters_facts:
+- ovirt_datacenter_facts:
     pattern: name=production*
 - debug:
     var: ovirt_datacenters

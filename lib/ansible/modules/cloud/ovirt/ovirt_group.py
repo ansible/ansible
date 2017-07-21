@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_groups
+module: ovirt_group
 short_description: Module to manage groups in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
@@ -59,20 +59,20 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Add group group1 from authorization provider example.com-authz
-ovirt_groups:
+ovirt_group:
     name: group1
     domain: example.com-authz
 
 # Add group group1 from authorization provider example.com-authz
 # In case of multi-domain Active Directory setup, you should pass
 # also namespace, so it adds correct group:
-ovirt_groups:
+ovirt_group:
     name: group1
     namespace: dc=ad2,dc=example,dc=com
     domain: example.com-authz
 
 # Remove group group1 with authorization provider example.com-authz
-ovirt_groups:
+ovirt_group:
     state: absent
     name: group1
     domain: example.com-authz
