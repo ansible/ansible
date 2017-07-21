@@ -46,7 +46,8 @@ options:
       - the desired hostname for the Windows host
   domain_ou_path:
     description:
-      - the desired OU path for adding the computer object
+      - The desired OU path for adding the computer object.
+      - This is only used when adding the target host to a domain, if it is already a member then it is ignored.
     version_added: "2.4"
   state:
     description:
