@@ -45,6 +45,11 @@ options:
   hostname:
     description:
       - the desired hostname for the Windows host
+  domain_ou_path:
+    description:
+      - The desired OU path for adding the computer object.
+      - This is only used when adding the target host to a domain, if it is already a member then it is ignored.
+    version_added: "2.4"
   state:
     description:
       - whether the target host should be a member of a domain or workgroup
@@ -80,6 +85,7 @@ EXAMPLES = '''
       hostname: mydomainclient
       domain_admin_user: testguy@ansible.vagrant
       domain_admin_password: password123!
+      domain_ou_path: "OU=Windows,OU=Servers,DC=ansible,DC=vagrant"
       state: domain
     register: domain_state
 
