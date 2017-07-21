@@ -26,9 +26,10 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
+        default_v = kwargs.get('default', '')
         ret = []
         for term in terms:
             var = term.split()[0]
-            ret.append(os.getenv(var, ''))
+            ret.append(os.getenv(var, default_v))
 
         return ret
