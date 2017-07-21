@@ -124,7 +124,7 @@ EXAMPLES = r'''
   win_domain_group:
     name: Cow
     state: absent
-    force: yes
+    ignore_protection: yes
 
 - name: create group with delete protection enabled and custom attributes
   win_domain_group:
@@ -141,7 +141,7 @@ EXAMPLES = r'''
     name: S-1-5-21-2171456218-3732823212-122182344-1189
     scope: global
     organizational_unit: OU=groups,DC=ansible,DC=local
-    force: True
+    ignore_protection: True
 
 - name: add managed_by user
   win_domain_group:
