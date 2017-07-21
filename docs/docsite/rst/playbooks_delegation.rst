@@ -54,7 +54,7 @@ As of Ansible 2.2, the batch sizes can be specified as a list, as follows::
 In the above example, the first batch would contain a single host, the next would contain 5 hosts, and (if there are any hosts left),
 every following batch would contain 10 hosts until all available hosts are used.
 
-It is also possible to list multiple batche sizes as percentages::
+It is also possible to list multiple batch sizes as percentages::
 
     - name: test play
       hosts: webservers

@@ -13,7 +13,7 @@ Ansible contains a number of extra modules for interacting with CloudStack based
 
 Prerequisites
 `````````````
-Prerequisites for using the CloudStack modules are minimal. In addition to ansible itself, all of the modules require the python library ``cs`` https://pypi.python.org/pypi/cs.
+Prerequisites for using the CloudStack modules are minimal. In addition to Ansible itself, all of the modules require the python library ``cs`` https://pypi.python.org/pypi/cs.
 
 You'll need this Python module installed on the execution host, usually your workstation.
 
@@ -21,11 +21,17 @@ You'll need this Python module installed on the execution host, usually your wor
 
     $ pip install cs
 
+Or alternatively starting with Debian 9 and Ubuntu 16.04:
+
+.. code-block:: bash
+
+    $ sudo apt install python-cs
+
 .. note:: cs also includes a command line interface for ad-hoc interaction with the CloudStack API e.g. ``$ cs listVirtualMachines state=Running``.
 
 Limitations and Known Issues
 ````````````````````````````
-VPC support is not yet fully implemented and tested. The community is working on the VPC integration.
+VPC support has been improved since Ansible 2.3 but is still not yet fully implemented. The community is working on the VPC integration.
 
 Credentials File
 ````````````````

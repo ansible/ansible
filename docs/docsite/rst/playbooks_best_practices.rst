@@ -16,9 +16,8 @@ The following section shows one of many possible ways to organize playbook conte
 
 Your usage of Ansible should fit your needs, however, not ours, so feel free to modify this approach and organize as you see fit.
 
-One thing you will definitely want to do though, is use the "roles" organization feature, which is documented as part
-of the main playbooks page.  See :doc:`playbooks_roles`.  You absolutely should be using roles.  Roles are great.  Use roles.  Roles!
-Did we say that enough?  Roles are great.
+One crucial way to organize your playbook content is Ansible's "roles" organization feature, which is documented as part
+of the main playbooks page.  You should take the time to read and understand the roles documentation which is available here: :doc:`playbooks_reuse_roles`.  
 
 .. _directory_layout:
 
@@ -38,6 +37,7 @@ The top level of the directory would contain files and directories like so::
        hostname2              # ""
 
     library/                  # if any custom modules, put them here (optional)
+    module_utils/             # if any custom module_utils to support modules, put them here (optional)
     filter_plugins/           # if any custom filter plugins, put them here (optional)
 
     site.yml                  # master playbook
@@ -62,6 +62,7 @@ The top level of the directory would contain files and directories like so::
             meta/             #
                 main.yml      #  <-- role dependencies
             library/          # roles can also include custom modules
+            module_utils/     # roles can also include custom module_utils
             lookup_plugins/   # or other types of plugins, like lookup in this case
 
         webtier/              # same kind of structure as "common" was above, done for the webtier role
@@ -97,6 +98,7 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
              stagehost2       # ""
 
     library/
+    module_utils/
     filter_plugins/
 
     site.yml
@@ -297,8 +299,8 @@ What about just my webservers in Boston?::
 
 What about just the first 10, and then the next 10?::
    
-    ansible-playbook -i production webservers.yml --limit boston[1-10]
-    ansible-playbook -i production webservers.yml --limit boston[11-20]
+    ansible-playbook -i production webservers.yml --limit boston[1:10]
+    ansible-playbook -i production webservers.yml --limit boston[11:20]
 
 And of course just basic ad-hoc stuff is also possible.::
 
