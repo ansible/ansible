@@ -1689,7 +1689,7 @@ class AnsibleModule(object):
 
             if key in param and param[key] == val:
                 for check in requirements:
-                    count = self._count_terms(check, param)
+                    count = self._count_terms((check,), param)
                     if count == 0:
                         missing.append(check)
             if len(missing) and len(missing) >= max_missing_count:
