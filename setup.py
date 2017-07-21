@@ -46,10 +46,36 @@ def _find_symlinks(topdir, extension=''):
     return symlinks
 
 
+def _cache_symlinks(symlink_data):
+    with open(SYMLINK_CACHE, 'w') as f:
+        f.write(json.dumps(symlink_data))
+
+
 def _maintain_symlinks(symlink_type, base_path):
     """Switch a real file into a symlink"""
-    with open(SYMLINK_CACHE, 'r') as f:
-        symlink_data = json.loads(f.read())
+    try:
+        # Try the cache first because going from git checkout to sdist is the
+        # only time we know that we're going to cache correctly
+        with open(SYMLINK_CACHE, 'r') as f:
+            symlink_data = json.loads(f.read())
+    except IOError as e:
+        if e.errno == 2:
+            # SYMLINKS_CACHE doesn't exist.  Fallback to trying to create the
+            # cache now.  Will work if we're running directly from a git
+            # checkout or from an sdist created earlier.
+            symlink_data = {'script': _find_symlinks('bin'),
+                            'library': _find_symlinks('lib', '.py'),
+                            }
+
+            # Sanity check that something we know should be a symlink was
+            # found.  We'll take that to mean that the current directory
+            # structure properly reflects symlinks in the git repo
+            if 'ansible-playbook' in symlink_data['script']['ansible']:
+                _cache_symlinks(symlink_data)
+            else:
+                raise
+        else:
+            raise
     symlinks = symlink_data[symlink_type]
 
     for source in symlinks:
@@ -96,9 +122,7 @@ class SDistCommand(SDist):
         symlinks = {'script': _find_symlinks('bin'),
                     'library': _find_symlinks('lib', '.py'),
                     }
-
-        with open(SYMLINK_CACHE, 'w') as f:
-            f.write(json.dumps(symlinks))
+        _cache_symlinks(symlinks)
 
         SDist.run(self)
 
