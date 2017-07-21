@@ -141,8 +141,8 @@ RETURN = '''
 
 import os
 import sys
-import xmlrpclib
 import urlparse
+import xmlrpclib
 
 # Attempt to import rhn client tools
 sys.path.insert(0, '/usr/share/rhn')

@@ -210,9 +210,9 @@ subscribed_pool_ids:
 
 import os
 import re
-import types
 import shutil
 import tempfile
+import types
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
