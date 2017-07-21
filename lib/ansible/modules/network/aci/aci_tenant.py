@@ -1,5 +1,8 @@
 #!/usr/bin/python
-#
+
+# Copyright 2017 Dag Wieers <dag@wieers.com>
+# Copyright 2017 Swetha Chunduri (@schunduri)
+
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -14,7 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -33,16 +35,6 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 options:
-  method:
-    description:
-    - The HTTP method of the request.
-    - Using C(delete) is typically used for deleting objects.
-    - Using C(get) is typically used for querying objects.
-    - Using C(post) is typically used for modifying objects.
-    required: true
-    default: get
-    choices: [ delete, get, post ]
-    aliases: [ action ]
   tenant_name:
     description:
     - The name of the tenant.
@@ -50,6 +42,11 @@ options:
   descr:
     description:
     - Description for the AEP.
+  state:
+    description:
+    - present, absent, query
+    default: present
+    choices: [ absent, present, query ]
 extends_documentation_fragment: aci
 '''
 
@@ -60,8 +57,31 @@ EXAMPLES = '''
     username: admin
     password: SomeSecretPassword
     tenant_name: production
-    descr: Name of the production tenant
+    descriptions: Name of the production tenant
     state: present
+
+- name: Remove a tenant
+  aci_tenant:
+    hostname: acme-apic-1
+    username: admin
+    password: SomeSecretPassword
+    tenant_name: production
+    state: absent
+
+- name: Query a tenant
+  aci_tenant:
+    hostname: acme-apic-1
+    username: admin
+    password: SomeSecretPassword
+    tenant_name: production
+    state: query
+
+- name: Query all tenants
+  aci_tenant:
+    hostname: acme-apic-1
+    username: admin
+    password: SomeSecretPassword
+    state: query
 '''
 
 RETURN = r'''
@@ -79,158 +99,48 @@ response:
 
 import json
 
-# from ansible.module_utils.aci import aci_argument_spec, aci_login, aci_response
-from ansible.module_utils.basic import AnsibleModule, get_exception
-from ansible.module_utils.urls import fetch_url
-
-aci_argument_spec = dict(
-    hostname=dict(type='str', required=True, aliases=['host']),
-    username=dict(type='str', default='admin', aliases=['user']),
-    password=dict(type='str', required=True, no_log=True),
-    protocol=dict(type='str'),  # Deprecated in v2.8
-    timeout=dict(type='int', default=30),
-    use_ssl=dict(type='bool', default=True),
-    validate_certs=dict(type='bool', default=True),
-)
-
-
-def aci_login(module, result=dict()):
-    ''' Log in to APIC '''
-
-    # Set protocol based on use_ssl parameter
-    if module.params['protocol'] is None:
-        module.params['protocol'] = 'https' if module.params.get('use_ssl', True) else 'http'
-
-    # Perform login request
-    url = '%(protocol)s://%(hostname)s/api/aaaLogin.json' % module.params
-    data = {'aaaUser': {'attributes': {'name': module.params['username'], 'pwd': module.params['password']}}}
-    resp, auth = fetch_url(module, url, data=json.dumps(data), method="POST", timeout=module.params['timeout'])
-
-    # Handle APIC response
-    if auth['status'] != 200:
-        try:
-            result.update(aci_response(auth['body'], 'json'))
-            result['msg'] = 'Authentication failed: %(error_code)s %(error_text)s' % result
-        except KeyError:
-            result['msg'] = '%(msg)s for %(url)s' % auth
-        result['response'] = auth['msg']
-        result['status'] = auth['status']
-        module.fail_json(**result)
-
-    return resp
-
-
-def aci_response(rawoutput):
-    ''' Handle APIC response output '''
-    result = dict()
-
-    # Use APIC response as module output
-    try:
-        result = json.loads(rawoutput)
-    except:
-        e = get_exception()
-        # Expose RAW output for troubleshooting
-        result['error_code'] = -1
-        result['error_text'] = "Unable to parse output as JSON, see 'raw' output. %s" % e
-        result['raw'] = rawoutput
-        return result
-
-    # Handle possible APIC error information
-    try:
-        result['error_code'] = result['imdata'][0]['error']['attributes']['code']
-        result['error_text'] = result['imdata'][0]['error']['attributes']['text']
-    except KeyError:
-        result['error_code'] = 0
-        result['error_text'] = 'Success'
-
-    return result
-
+from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.basic import AnsibleModule
 
 def main():
-    argument_spec = dict(
-        # TODO: We should use 'state: absent' or 'state: present', not low-level HTTP requests
-        method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
+    argument_spec = aci_argument_spec
+    argument_spec.update(
         tenant_name=dict(type='str', aliases=['name']),
         description=dict(type='str', aliases=['descr']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action']),  # Deprecated starting from v2.8
     )
-
-    argument_spec.update(aci_argument_spec)
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
-    hostname = module.params['hostname']
-    username = module.params['username']
-    password = module.params['password']
-
-    # FIXME: This should not be needed
-    action = module.params['action']
-    name = module.params['tenant_name']
+    tenant_name = module.params['tenant_name']
     description = module.params['description']
+    state = module.params['state']
 
-    protocol = module.params['protocol']
-    use_ssl = module.params['use_ssl']
-    method = module.params['method']
-    timeout = module.params['timeout']
+    aci = ACIModule(module)
 
-    result = dict(
-        changed=False,
-    )
-
-    paths = dict(
-        delete='api/mo/uni/tn-%(tenant_name)s.json' % module.params,
-        get='api/node/class/fvTenant.json',
-        post='api/mo/uni/tn-%(tenant_name)s.json' % module.params,
-    )
-
-    # Config payload to enable the physical interface
-    config_data = {'fvTenant': {'attributes': {'name': tenant_name, 'descr': description}}}
-    result['payload'] = json.dumps(config_data)
-
-    # Set protocol for further use
-    if protocol is None:
-        protocol = 'https' if use_ssl else 'http'
+    if tenant_name is not None:
+        # Work with a specific tenant
+        path = 'api/mo/uni/tn-%(tenant_name)s.json' % module.params
+    elif state == 'query':
+        # Query all tenants
+        path = 'api/node/class/fvTenant.json'
     else:
-        module.deprecate("Parameter 'protocol' is deprecated, please use 'use_ssl' instead.", 2.8)
+        module.fail_json("Parameter 'tenant_name' is required for state 'absent' or 'present'")
 
-    # Perform login first
-    auth = aci_login(module, result)
-
-    # TODO: To test for idempotency we should do a get-request before and after and compare output
-    # Ensure changes are reported
-    if method in ('delete', 'post'):
-        # FIXME: Hardcoding changed is not idempotent
-        result['changed'] = True
-
-        # In check_mode we assume it works, but we don't actually perform the requested change
-        # TODO: Could we turn this request in a GET instead ?
-        if module.check_mode:
-            module.exit_json(response='OK (Check mode)', status=200, **result)
+    if state == 'query':
+        aci.request(path)
+    elif module.check_mode:
+        # TODO: Implement proper check-mode (presence check)
+        aci.result(changed=True, response='OK (Check mode)', status=200)
     else:
-        result['changed'] = False
+        payload = {'fvTenant': {'attributes': {'name': tenant_name, 'descr': description}}}
+        aci.request_diff(path, payload=json.dumps(payload))
 
-    # Perform actual request using auth cookie
-    url = '%s://%s/%s' % (protocol, hostname, paths[method].lstrip('/'))
-    headers = dict(Cookie=auth.headers['Set-Cookie'])
-
-    resp, info = fetch_url(module, url, data=result['payload'], method=method.upper(), timeout=timeout, headers=headers)
-    result['response'] = info['msg']
-    result['status'] = info['status']
-
-    # Report failure
-    if info['status'] != 200:
-        try:
-            result.update(aci_response(info['body']))
-            result['msg'] = 'Task failed: %(error_code)s %(error_text)s' % result
-        except KeyError:
-            result['msg'] = '%(msg)s for %(url)s' % info
-        module.fail_json(**result)
-
-    # Report success
-    result.update(aci_response(resp.read(), rest_type))
-    module.exit_json(**result)
+    module.exit_json(**aci.result)
 
 if __name__ == "__main__":
     main()
