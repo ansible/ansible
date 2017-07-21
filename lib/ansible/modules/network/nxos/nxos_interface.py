@@ -548,8 +548,21 @@ def smart_existing(module, intf_type, normalized_interface):
 
 def execute_show_command(command, module):
     if module.params['transport'] == 'cli':
-        command += ' | json'
-    cmds = [command]
+        if 'show run' not in command:
+            command += ' | json'
+        cmds = [command]
+        body = run_commands(module, cmds)
+
+    elif module.params['transport'] == 'nxapi':
+        if 'show run' not in command:
+            output = 'json'
+        else:
+            output = 'text'
+        cmds = [{
+          'command': command,
+          'output': output,
+        }]
+
     body = run_commands(module, cmds)
     return body
 
