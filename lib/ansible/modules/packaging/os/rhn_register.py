@@ -17,9 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -133,10 +135,14 @@ EXAMPLES = '''
     channels: rhel-x86_64-server-6-foo-1,rhel-x86_64-server-6-bar-1
 '''
 
+RETURN = '''
+# Default return values
+'''
+
 import os
 import sys
-import xmlrpclib
 import urlparse
+import xmlrpclib
 
 # Attempt to import rhn client tools
 sys.path.insert(0, '/usr/share/rhn')
