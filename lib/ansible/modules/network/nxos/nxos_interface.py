@@ -386,12 +386,13 @@ def get_interfaces_dict(module):
         'unknown': []
     }
 
-    interface_list = body.get('TABLE_interface')['ROW_interface']
-    for index in interface_list:
-        intf = index['interface']
-        intf_type = get_interface_type(intf)
+    if body:
+        interface_list = body['TABLE_interface']['ROW_interface']
+        for index in interface_list:
+            intf = index['interface']
+            intf_type = get_interface_type(intf)
 
-        interfaces[intf_type].append(intf)
+            interfaces[intf_type].append(intf)
 
     return interfaces
 
