@@ -186,8 +186,7 @@ def is_default_interface(interface, module):
     command = 'show run interface ' + interface
 
     try:
-        body = execute_show_command(command, module,
-                                    command_type='cli_show_ascii')[0]
+        body = run_commands(module, [command])[0]
     except IndexError:
         body = ''
 
