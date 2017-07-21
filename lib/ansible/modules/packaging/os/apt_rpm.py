@@ -89,6 +89,7 @@ import sys
 APT_PATH="/usr/bin/apt-get"
 RPM_PATH="/usr/bin/rpm"
 
+
 def query_package(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
@@ -98,11 +99,13 @@ def query_package(module, name):
     else:
         return False
 
+
 def query_package_provides(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
     rc, out, err = module.run_command("%s -q --provides %s" % (RPM_PATH,name))
     return rc == 0
+
 
 def update_package_db(module):
     rc, out, err = module.run_command("%s update" % APT_PATH)
@@ -110,8 +113,8 @@ def update_package_db(module):
     if rc != 0:
         module.fail_json(msg="could not update package db: %s" % err)
 
-def remove_packages(module, packages):
 
+def remove_packages(module, packages):
     remove_c = 0
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
@@ -133,7 +136,6 @@ def remove_packages(module, packages):
 
 
 def install_packages(module, pkgspec):
-
     packages = ""
     for package in pkgspec:
         if not query_package_provides(module, package):
