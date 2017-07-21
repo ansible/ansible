@@ -79,7 +79,12 @@ def has_boolean_value(module, name):
         rc, bools = selinux.security_get_boolean_names()
     except OSError:
         module.fail_json(msg="Failed to get list of boolean names")
-    if to_bytes(name) in bools:
+    # work around for selinux who changed its API, see
+    # https://github.com/ansible/ansible/issues/25651
+    if len(bools) > 0:
+        if isinstance(bools[0], binary_type):
+            name = to_bytes(name)
+    if name in bools:
         return True
     else:
         return False
@@ -224,6 +229,7 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.six import binary_type
 
 if __name__ == '__main__':
     main()
