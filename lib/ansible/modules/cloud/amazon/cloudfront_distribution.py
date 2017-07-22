@@ -1411,6 +1411,9 @@ def main():
         wait_timeout=dict(default=1800, type='int')
     ))
 
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 is required.')
+
     result = {}
     changed = True
 
