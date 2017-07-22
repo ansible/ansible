@@ -276,7 +276,7 @@ def config_portchannel(proposed, mode, group):
     return commands
 
 
-def get_commands_to_add_members(proposed, existing, module):
+def get_commands_to_add_members(proposed, existing, force, module):
     try:
         proposed_members = proposed['members']
     except KeyError:
@@ -290,11 +290,12 @@ def get_commands_to_add_members(proposed, existing, module):
     members_to_add = list(set(proposed_members).difference(existing_members))
 
     commands = []
+    force = 'force' if force else ''
     if members_to_add:
         for member in members_to_add:
             commands.append('interface {0}'.format(member))
-            commands.append('channel-group {0} mode {1}'.format(
-                existing['group'], proposed['mode']))
+            commands.append('channel-group {0} {1} mode {2}'.format(
+                existing['group'],force, proposed['mode']))
 
     return commands
 
@@ -400,7 +401,7 @@ def state_present(module, existing, proposed, interface_exist, force, warnings):
             command = get_commands_to_remove_members(proposed, existing, module)
             commands.append(command)
 
-        command = get_commands_to_add_members(proposed, existing, module)
+        command = get_commands_to_add_members(proposed, existing, force, module)
         commands.append(command)
 
         mode_command = get_commands_if_mode_change(proposed, existing, group, mode, module)
