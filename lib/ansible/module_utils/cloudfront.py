@@ -98,7 +98,7 @@ def merge_validation_into_config(config, validated_node, node_name):
         if isinstance(validated_node, dict):
             config_node = config.get(node_name)
             if config_node is not None:
-                config_node_items = config_node.items()
+                config_node_items = list(config_node.items())
             else:
                 config_node_items = []
             config[node_name] = dict(config_node_items + validated_node.items())
