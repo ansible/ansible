@@ -976,7 +976,6 @@ class CloudFrontValidationManager(object):
         except Exception as e:
             self.module.fail_json(msg="error validating distribution cache behavior first level keys - " + str(e) + "\n" + traceback.format_exc())
 
-
     def validate_forwarded_values(self, forwarded_values, cache_behavior):
         try:
             if forwarded_values is None:
