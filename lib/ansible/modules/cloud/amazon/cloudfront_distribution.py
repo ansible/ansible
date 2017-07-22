@@ -471,12 +471,15 @@ options:
           Valid for both distributions and streaming distributions.
       choices: ['yes', 'no']
       default: 'no'
-    wait_until_processed:
+    wait:
       description:
         - Specifies whether the module waits until the distribution has
           completed processing the creation or update.
       choices: ['yes', 'no']
-      default: 'yes'
+      default: 'no'
+    wait_timeout:
+      description:
+        - Specifies the duration in seconds to wait for a timeout of a cloudfront create or update. Defaults to 1800 seconds (30 minutes).
 
 '''
 
@@ -643,6 +646,7 @@ import time
 from functools import partial
 import json
 import traceback
+import timeit
 
 
 try:
@@ -1769,9 +1773,10 @@ class CloudFrontValidationManager(object):
         else:
             return streaming_distribution_id in distribution_ids
 
-    def wait_until_processed(self, streaming_distribution, distribution_id,
+    def wait_until_processed(self, wait_timeout, streaming_distribution, distribution_id,
                              streaming_distribution_id, caller_reference):
         try:
+            start_time = timeit.default_timer()
             generic_id = (streaming_distribution_id if streaming_distribution
                           else distribution_id)
 
@@ -1785,7 +1790,10 @@ class CloudFrontValidationManager(object):
                     generic_id)
                 if distribution.get('Distribution').get('Status') == "Deployed":
                     return
-                time.sleep(15)
+                elapsed = timeit.default_timer() - start_time
+                if elapsed >= wait_timeout:
+                    self.module.fail_json(msg="Timeout waiting for cloudfront action. Waited for " + str(wait_timeout) + " seconds before timeout.")
+                time.sleep(5)
         except Exception as e:
             return
 
@@ -1837,7 +1845,8 @@ def main():
         default_streaming_s3_origin_access_identity=dict(required=False,
                                                          default=None,
                                                          type='str'),
-        wait_until_processed=dict(required=False, default=True, type='bool')
+        wait=dict(required=False, default=False, type='bool'),
+        wait_timeout=dict(required=False, default=1800, type='int')
     ))
 
     result = {}
@@ -1923,7 +1932,8 @@ def main():
         'default_s3_origin_domain_name')
     default_streaming_s3_origin_access_identity = module.params.get(
         'default_streaming_s3_origin_access_identity')
-    wait_until_processed = module.params.get('wait_until_processed')
+    wait = module.params.get('wait')
+    wait_timeout = module.params.get('wait_timeout')
 
     (distribution_id, streaming_distribution_id) = (
         validation_mgr.validate_id_from_alias_aliases_caller_reference(
@@ -2093,8 +2103,8 @@ def main():
             valid_tags, purge_tags, arn, alias, distribution_id,
             streaming_distribution_id)
 
-    if state is not None and wait_until_processed and (create or update):
-        validation_mgr.wait_until_processed(streaming_distribution,
+    if state is not None and wait and (create or update):
+        validation_mgr.wait_until_processed(wait_timeout, streaming_distribution,
                                             distribution_id,
                                             streaming_distribution_id,
                                             config.get('CallerReference'))
