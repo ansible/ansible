@@ -46,7 +46,6 @@ options:
             distribution.
           absent - deletes an existing distribution.
       choices: ['present', 'absent']
-      required: false
 
     distribution_id:
       description:
@@ -54,7 +53,6 @@ options:
           This parameter can be exchanged with C(alias) or C(caller_reference)
           and is used in conjunction with C(e_tag).
           Used with C(streaming_distribution=no)
-      required: false
 
     streaming_distribution_id:
       description:
@@ -62,7 +60,6 @@ options:
           This parameter can be exchanged with C(alias) and is used in
           conjunction with C(e_tag).
           Used with C(streaming_distribution=yes).
-      required: false
 
     e_tag:
       description:
@@ -70,7 +67,6 @@ options:
           Used in conjunction with C(distribution_id) or
           C(streaming_distribution_id).
           Is determined automatically if not specified.
-      required: false
 
     generate_presigned_url:
       description:
@@ -78,7 +74,6 @@ options:
           I(.pem) file key.
       default: 'no'
       choices: ['yes', 'no']
-      required: false
 
     caller_reference:
       description:
@@ -90,28 +85,23 @@ options:
           C(streaming_distribution_id) to reference an existing distribution.
           If not specified, this defaults to a datetime stamp of the format
             'YYYY-MM-DDTHH:MM:SS.ffffff'
-      required: false
 
     pem_key_path:
       description:
         - The path on the host to the I(.pem) private key file.
           This key is used to sign the url.
-      required: false
 
     pem_key_password:
       description:
         - The optional password for the pem private key file.
-      required: false
 
     cloudfront_url_to_sign:
       description:
         - The cloudfront url to sign with the pem private key.
-      required: false
 
     presigned_url_expire_date:
       description:
         - The expiry date of the presigned url. Date format is I(YYYY-MM-DD)
-      required: false
 
     config:
       description:
@@ -162,13 +152,11 @@ options:
           When element parameters are specified as well as the C(config)
           parameter, the elements specified will have precendence and overwrite
           any relevant data for that element in the C(config) variable.
-      required: false
 
     tags:
       description:
         - Used for distributions and streaming distributions.
           Should be input as a I(list[]) of I(Key) I(Value) pairs.
-      required: false
 
     purge_tags:
       description:
@@ -179,7 +167,6 @@ options:
           existing tags for the distribution.
           When C(purge_tags=no), existing tags are kept and C(tags) are added,
           if specified.
-      required: false
       default: 'no'
       choices: ['yes', 'no']
 
@@ -193,7 +180,6 @@ options:
           C(caller_reference) of an existing distribution.
           This variable is used for both distributions and streaming
           distributions.
-      required: false
 
     aliases:
       description:
@@ -201,7 +187,6 @@ options:
           the distribution. Each alias must be unique across all distributions
           for the AWS account. Applies to both distributions and streaming
           distributions.
-      required: false
 
     default_root_object:
       description:
@@ -212,7 +197,6 @@ options:
           This prevents the entire distribution origin from being exposed
           at the root.
           Used with C(streaming_distribution=no)
-      required: false
 
     default_origin_domain_name:
       description:
@@ -222,14 +206,12 @@ options:
           conjunction with C(distribution_id), C(caller_reference) or
           C(alias).
           Used with C(streaming_distribution=no)
-      required: false
 
     default_origin_path:
       description:
         - The default origin path to specify for an origin if no C(origins)
           have been specified. Defaults to empty if not specified.
           Used with C(streaming_distribution=no).
-      required: false
 
     default_s3_origin_access_identity:
       description:
@@ -239,7 +221,6 @@ options:
           If the s3 bucket is public, can be omitted.
           This parameter is only valid for distributions.
           Used with C(streaming_distribution=no)
-      required: false
 
     default_streaming_s3_origin_access_identity:
       description:
@@ -247,7 +228,6 @@ options:
           a streaming distribution. If the s3 bucket is public, can be omitted.
           This parameter is only valid for streaming distributions.
           Used with C(streaming_distribution=yes)
-      required: false
 
     default_s3_origin_domain_name:
       description:
@@ -259,7 +239,6 @@ options:
           conjunction with C(distribution_id), C(caller_reference) or
           C(alias).
           Used with C(streaming_distribution=yes)
-      required: false
 
     origins:
       description:
@@ -283,7 +262,6 @@ options:
               C(origin_ssl_protocols[])
               C(origin_read_timeout)
               C(origin_keepalive_timeout)
-      required: false
 
     default_cache_behavior:
       description:
@@ -316,7 +294,6 @@ options:
                 C(lambda_function_arn)
                 C(event_type)
           Only valid for C(streaming_distribution=no).
-      required: false
 
     cache_behaviors:
       description:
@@ -346,7 +323,6 @@ options:
             C(compress)
             C(lambda_function_associations[])
           Only valid for C(streaming_distribution=no).
-      required: false
 
     custom_error_responses:
       description:
@@ -358,7 +334,6 @@ options:
             C(reponse_page_path)
             C(response_code error_caching_min_ttl)
           Only valid for C(streaming_distribution=no).
-      required: false
 
     comment:
       description:
@@ -366,7 +341,6 @@ options:
           Applies to both distributions and streaming distributions.
           If not specified, it defaults to a generic message that it has been
           created with Ansible, and a datetime stamp.
-      required: false
 
     logging:
       description:
@@ -378,7 +352,6 @@ options:
             C(include_cookies)
             C(bucket)
             C(prefix)
-      required: false
 
     price_class:
       description:
@@ -406,7 +379,6 @@ options:
               South America
               Australia
       choices: ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
-      required: false
       default: aws defaults this to 'PriceClass_All'
 
     enabled:
@@ -428,7 +400,6 @@ options:
             C(ssl_support_method)
             C(minimum_protocol_version)
             C(certificate certificate_source)
-      required: false
 
     restrictions:
       description:
@@ -439,7 +410,6 @@ options:
             C(geo_restriction)
               C(restriction_type)
               C(items[])
-      required: false
 
     s3_origin:
       description:
@@ -449,20 +419,17 @@ options:
               specified)
             C(origin_access_identity) (defaults to
               C(default_streaming_s3_origin_access_identity) if not specified)
-      required: false
 
     web_acl_id:
       description:
         - The id of a Web Application Firewall (WAF) Access Control List (ACL).
           Only valid for C(streaming_distribution=no).
-      required: false
 
     http_version:
       description:
         - The version of the http protocol to use for the distribution.
           Valid for both distributions and streaming distributions.
       choices: [ 'http1.1', 'http2' ]
-      required: false
       default: aws defaults this to 'http2'
 
     ipv6_enabled:
@@ -480,6 +447,7 @@ options:
     wait_timeout:
       description:
         - Specifies the duration in seconds to wait for a timeout of a cloudfront create or update. Defaults to 1800 seconds (30 minutes).
+      default: 1800
 
 '''
 
