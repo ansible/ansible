@@ -244,8 +244,10 @@ def create_launch_config(connection, module):
     vpc_id = module.params.get('vpc_id')
     try:
         security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), ec2_connect(module), vpc_id=vpc_id, boto3=False)
-    except ValueError as e:
+    except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to get Security Group IDs", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except ValueError as e:
+        module.fail_json(msg="Failed to get Security Group IDs", exception=traceback.format_exc())
     user_data = module.params.get('user_data')
     user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']
@@ -270,7 +272,7 @@ def create_launch_config(connection, module):
             with open(user_data_path, 'r') as user_data_file:
                 user_data = user_data_file.read()
         except IOError as e:
-            module.fail_json(msg="Failed to open file for reading", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg="Failed to open file for reading", exception=traceback.format_exc())
 
     if volumes:
         for volume in volumes:
