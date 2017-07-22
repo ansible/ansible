@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: os_server_actions
+module: os_server_action
 short_description: Perform actions on Compute Instances from OpenStack
 extends_documentation_fragment: openstack
 version_added: "2.0"
@@ -71,15 +71,15 @@ requirements:
 
 EXAMPLES = '''
 # Pauses a compute instance
-- os_server_actions:
-       action: pause
-       auth:
-         auth_url: https://mycloud.openstack.blueboxgrid.com:5001/v2.0
-         username: admin
-         password: admin
-         project_name: admin
-       server: vm1
-       timeout: 200
+- os_server_action:
+      action: pause
+      auth:
+        auth_url: https://mycloud.openstack.blueboxgrid.com:5001/v2.0
+        username: admin
+        password: admin
+        project_name: admin
+      server: vm1
+      timeout: 200
 '''
 
 try:
@@ -141,6 +141,9 @@ def main():
     module = AnsibleModule(argument_spec, supports_check_mode=True,
                            required_if=[('action', 'rebuild', ['image'])],
                            **module_kwargs)
+
+    if module._name == 'os_server_actions':
+        module.deprecate("The 'os_server_actions' module is being renamed 'os_server_action'", version=2.8)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')

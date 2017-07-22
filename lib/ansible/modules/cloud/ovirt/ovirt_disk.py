@@ -541,6 +541,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if module._name == 'ovirt_disks':
+        module.deprecate("The 'ovirt_disks' module is being renamed 'ovirt_disk'", version=2.8)
+
     check_sdk(module)
     check_params(module)
 
@@ -579,8 +583,7 @@ def main():
                 ret['changed'] = ret['changed'] or uploaded
             # Download disk image in case it's file don't exist or force parameter is passed:
             if (
-                module.params['download_image_path']
-                and (not os.path.isfile(module.params['download_image_path']) or module.params['force'])
+                module.params['download_image_path'] and (not os.path.isfile(module.params['download_image_path']) or module.params['force'])
             ):
                 downloaded = download_disk_image(connection, module)
                 ret['changed'] = ret['changed'] or downloaded
@@ -623,7 +626,7 @@ def main():
                 if lun is None:
                     wait(
                         service=disk_attachments_service.service(ret['id']),
-                        condition=lambda d:follow_link(connection, d.disk).status == otypes.DiskStatus.OK,
+                        condition=lambda d: follow_link(connection, d.disk).status == otypes.DiskStatus.OK,
                         wait=module.params['wait'],
                         timeout=module.params['timeout'],
                     )

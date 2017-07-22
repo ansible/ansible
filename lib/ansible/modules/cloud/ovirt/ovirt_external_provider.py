@@ -244,6 +244,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if module._name == 'ovirt_external_providers':
+        module.deprecate("The 'ovirt_external_providers' module is being renamed 'ovirt_external_provider'", version=2.8)
+
     check_sdk(module)
     check_params(module)
 

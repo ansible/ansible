@@ -78,6 +78,10 @@ def main():
         pattern=dict(default='', required=False),
     )
     module = AnsibleModule(argument_spec)
+
+    if module._name == 'ovirt_datacenters_facts':
+        module.deprecate("The 'ovirt_datacenters_facts' module is being renamed 'ovirt_datacenter_facts'", version=2.8)
+
     check_sdk(module)
 
     try:
