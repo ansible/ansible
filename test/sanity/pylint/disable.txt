@@ -17,7 +17,6 @@ R
 raising-bad-type
 raising-non-exception
 too-many-function-args
-undefined-variable
 unexpected-keyword-arg
 unsubscriptable-object
 unsupported-membership-test
