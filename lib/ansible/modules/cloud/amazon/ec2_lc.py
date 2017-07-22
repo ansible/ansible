@@ -362,7 +362,7 @@ def delete_launch_config(connection, module):
     try:
         name = module.params.get('name')
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
-        if launch_configs and len(launch_configs) > 0:
+        if launch_configs:
             connection.delete_launch_configuration(LaunchConfigurationName=launch_configs[0].get('LaunchConfigurationName'))
             module.exit_json(changed=True)
         else:
