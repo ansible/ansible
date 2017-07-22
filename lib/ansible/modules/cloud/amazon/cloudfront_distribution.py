@@ -97,7 +97,7 @@ options:
           When used for creating a streaming distribution, it must contain either I(s3_origin) or I(default_s3_origin_domain_name) as a minimum.
           Components of I(config) can be specified entirely in I(config) or as separate elements outside of the config.
           This parameter applies to both distributions and streaming distributions.
-          Elements of a distribution are:
+          Elements of a distribution are
             I(caller_reference)
             I(aliases[])
             I(default_root_object)
@@ -134,7 +134,7 @@ options:
     tags:
       description:
         - Used for distributions and streaming distributions. Should be input as a dict() of key-value pairs.
-          Note that numeric keys or values must be wrapped in quotes. e.g. Priority: '1'
+          Note that numeric keys or values must be wrapped in quotes. e.g. "Priority:" '1'
 
     purge_tags:
       description:
@@ -191,7 +191,7 @@ options:
       description:
         - A config element that is a I(list[]) of complex origin objects to be specified for the distribution. Used for creating and updating distributions.
           Only valid for I(streaming_distribution=no).
-          Each origin item comprises the attributes:
+          Each origin item comprises the attributes
             I(id)
             I(domain_name) (defaults to default_origin_domain_name if not
               specified)
@@ -213,7 +213,7 @@ options:
       description:
         - A config element that is a complex object specifying the default cache behavior of the distribution. If not specified, the I(target_origin_id) is
           defined as the I(target_origin_id) of the first valid I(cache_behavior) in I(cache_behaviors) with defaults.
-          The default cache behavior comprises the attributes:
+          The default cache behavior comprises the attributes
             I(target_origin_id)
             I(forwarded_values)
               I(query_string)
@@ -242,7 +242,7 @@ options:
     cache_behaviors:
       description:
         - A config element that is a I(list[]) of complex cache behavior objects to be specified for the distribution.
-          Each cache behavior comprises the attributes:
+          Each cache behavior comprises the attributes
             I(path_pattern)
             I(target_origin_id)
             I(forwarded_values)
@@ -271,7 +271,7 @@ options:
       description:
         - A config element that is a I(list[]) of complex custom error responses to be specified for the distribution. This attribute configures custom http
           error messages returned to the user.
-          Each custom error response object comprises the attributes:
+          Each custom error response object comprises the attributes
             I(error_code)
             I(reponse_page_path)
             I(response_code error_caching_min_ttl)
@@ -285,7 +285,7 @@ options:
     logging:
       description:
         - A config element that is a complex object that defines logging for the distribution. Applies to both distributions and streaming distributions.
-          The logging object comprises the attributes:
+          The logging object comprises the attributes
             I(enabled)
             I(include_cookies)
             I(bucket)
@@ -294,7 +294,7 @@ options:
     price_class:
       description:
         - A string that specifies the pricing class of the distribution. Applies to both distributions and streaming distributions. As per
-          U(https://aws.amazon.com/cloudfront/pricing/):
+          U(https://aws.amazon.com/cloudfront/pricing/)
             I(price_class=PriceClass_100) consists of the areas
               United States
               Canada
@@ -327,7 +327,7 @@ options:
     viewer_certificate:
       description:
         - A config element that is a complex object that specifies the encryption details of the distribution. Only valid for I(streaming_distribution=no).
-          Comprises the following attributes:
+          Comprises the following attributes
             I(cloudfront_default_certificate)
             I(iam_certificate_id)
             I(acm_certificate_arn)
@@ -339,7 +339,7 @@ options:
       description:
         - A config element that is a complex object that describes how a distribution should restrict it's content. Only valid for
           I(streaming_distribution=no).
-          The restriction object comprises the following attributes:
+          The restriction object comprises the following attributes
             I(geo_restriction)
               I(restriction_type)
               I(items[])
@@ -366,11 +366,13 @@ options:
         - Determines whether IPv6 support is enabled or not. Valid for both distributions and streaming distributions.
       choices: ['yes', 'no']
       default: 'no'
+
     wait:
       description:
         - Specifies whether the module waits until the distribution has completed processing the creation or update.
       choices: ['yes', 'no']
       default: 'no'
+
     wait_timeout:
       description:
         - Specifies the duration in seconds to wait for a timeout of a cloudfront create or update. Defaults to 1800 seconds (30 minutes).
