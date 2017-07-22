@@ -100,7 +100,7 @@ options:
 
     presigned_url_expire_date:
       description:
-        - The expiry date of the presigned url. Date format is I(YYYY-MM-DD)
+        - The expiry date of the presigned url. Date format is YYYY-MM-DD
 
     config:
       description:
