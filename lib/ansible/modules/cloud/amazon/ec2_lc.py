@@ -343,7 +343,7 @@ def create_launch_config(connection, module):
             result['BlockDeviceMappings'][-1]['ebs'] = dict(snapshot_id=bdm.get('Ebs').get('SnapshotId'), volume_size=bdm.get('Ebs').get('VolumeSize'))
 
     if user_data_path:
-        result['UserData'] = "hidden"
+        result['UserData'] = "hidden"  # Otherwise, we dump binary to the user's terminal
 
     return_object = {
         'Name': result.get('LaunchConfigurationName'),
