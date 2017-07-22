@@ -243,7 +243,7 @@ def create_launch_config(connection, module):
     name = module.params.get('name')
     vpc_id = module.params.get('vpc_id')
     try:
-        security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), ec2_connect(module), vpc_id=vpc_id, boto3=False)
+        security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), ec2_connect(module), vpc_id=vpc_id, boto3=True)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to get Security Group IDs", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     except ValueError as e:
