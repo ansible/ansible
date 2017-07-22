@@ -134,7 +134,7 @@ options:
     tags:
       description:
         - Used for distributions and streaming distributions.
-          Should be input as a I(list[]) of I(Key) I(Value) pairs.
+          Should be input as a dict() of key-value pairs.
 
     purge_tags:
       description:
@@ -386,9 +386,9 @@ EXAMPLES = '''
     state: present
     default_origin_domain_name: www.my-cloudfront-origin.com
     tags:
-      - Name: example distribution
-      - Project: example project
-      - Priority: 1
+      Name: example distribution
+      Project: example project
+      Priority: '1'
 
 # update a distribution comment by distribution_id
 
@@ -397,8 +397,7 @@ EXAMPLES = '''
     distribution_id: E1RP5A2MJ8073O
     comment: modified by ansible cloudfront.py
 
-# update a distribution's aliases and comment
-# using the distribution_id as a reference
+# update a distribution's aliases and comment using the distribution_id as a reference
 
 - cloudfront_distribution:
     state: present
@@ -425,7 +424,7 @@ EXAMPLES = '''
     aliases:
       - tested.com
     tags:
-      - Project: distribution 1.2
+      Project: distribution 1.2
     purge_tags: yes
 
 # create a distribution with an origin, logging and default cache behavior
@@ -497,9 +496,9 @@ EXAMPLES = '''
      caller_reference: test streaming
      comment: example streaming distribution
      tags:
-       - Name: example distribution
-       - Project: example project
-       - Priority: 1
+       Name: example distribution
+       Project: example project
+       Priority: '1'
 
 # update a streaming distribution
 
@@ -523,7 +522,7 @@ location:
 
 from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, HAS_BOTO3
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
 import ansible.module_utils.cloudfront as helpers
@@ -675,10 +674,8 @@ class CloudFrontServiceManager(object):
             response = self.paginated_response(func)
             return response.get('Tags').get('Items')
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(
-                msg="error removing all tags from resource - " + str(e),
-                exception=traceback.format_exc(),
-                **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json(msg="error removing all tags from resource - " + str(e), exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def update_tags(self, valid_tags, purge_tags, arn, alias, distribution_id, streaming_distribution_id):
         try:
@@ -1177,22 +1174,6 @@ class CloudFrontValidationManager(object):
         except Exception as e:
             self.module.fail_json(msg="error validating tagging parameters - " + str(e) + "\n" + traceback.format_exc())
 
-    def validate_tags(self, tags):
-        try:
-            if tags is None:
-                return None
-            list_items = []
-            for tag in tags:
-                key = tag.keys()[0]
-                value = str(tag[key])
-                list_items.append({
-                    'Key': key,
-                    'Value': value
-                })
-            return list_items
-        except Exception as e:
-            self.module.fail_json(msg="error validating tags - " + str(e) + "\n" + traceback.format_exc())
-
     def validate_distribution_config_parameters(self, config, default_root_object, ipv6_enabled, http_version, web_acl_id):
         try:
             config['default_root_object'] = default_root_object or ''
@@ -1379,11 +1360,11 @@ def main():
         streaming_distribution_id=dict(),
         e_tag=dict(),
         pem_key_path=dict(),
-        pem_key_password=dict(, no_log=True),
+        pem_key_password=dict(no_log=True),
         cloudfront_url_to_sign=dict(),
         presigned_url_expire_date=dict(),
         config=dict(type='json'),
-        tags=dict(type='list'),
+        tags=dict(type='dict'),
         purge_tags=dict(type='bool'),
         alias=dict(),
         aliases=dict(type='list'),
@@ -1540,7 +1521,7 @@ def main():
         streaming_distribution_id, config, e_tag = validation_mgr.validate_streaming_distribution_id_etag(alias, streaming_distribution_id, config, e_tag)
 
     if create or update:
-        valid_tags = validation_mgr.validate_tags(tags)
+        valid_tags = ansible_dict_to_boto3_tag_list(tags)
 
     if create or update or delete and config is not None:
         config = helpers.pascal_dict_to_snake_dict(config, True)
