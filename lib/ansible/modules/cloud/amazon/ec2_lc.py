@@ -281,7 +281,11 @@ def create_launch_config(connection, module):
             if 'volume_size' not in volume or int(volume['volume_size']) > 0:
                 bdm.update(create_block_device_meta(module, volume))
 
-    launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
+    try:
+        launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Failed to describe launch configuration by name", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
     changed = False
     result = {}
 
