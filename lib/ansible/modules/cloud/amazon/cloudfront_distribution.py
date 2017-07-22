@@ -935,11 +935,19 @@ class CloudFrontValidationManager(object):
             self.module.fail_json(msg="error validating distribution cache behaviors - " + str(e) + "\n" + traceback.format_exc())
 
     def validate_cache_behavior(self, cache_behavior, valid_origins, is_default_cache=False):
+        if is_default_cache and cache_behavior is None:
+            cache_behavior = {}
+        if cache_behavior is None and valid_origins is not None:
+            return None
+        cache_behavior = self.validate_cache_behavior_first_level_keys(cache_behavior, valid_origins, is_default_cache)
+        cache_behavior = self.validate_forwarded_values(cache_behavior.get('forwarded_values'), cache_behavior)
+        cache_behavior = self.validate_allowed_methods(cache_behavior.get('allowed_methods'), cache_behavior)
+        cache_behavior = self.validate_lambda_function_associations(cache_behavior.get('lambda_function_associations'), cache_behavior)
+        cache_behavior = self.validate_trusted_signers(cache_behavior.get('trusted_signers'), cache_behavior)
+        return cache_behavior
+
+    def validate_cache_behavior_first_level_keys(self, cache_behavior, valid_origins, is_default_cache):
         try:
-            if is_default_cache and cache_behavior is None:
-                cache_behavior = {}
-            if cache_behavior is None and valid_origins is not None:
-                return None
             if 'min_ttl' not in cache_behavior:
                 cache_behavior['min_t_t_l'] = self.__default_cache_behavior_min_ttl
             else:
@@ -957,9 +965,6 @@ class CloudFrontValidationManager(object):
             if is_default_cache:
                 if 'target_origin_id' not in cache_behavior:
                     cache_behavior['target_origin_id'] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
-            cache_behavior = self.validate_forwarded_values(cache_behavior.get('forwarded_values'), cache_behavior)
-            cache_behavior = self.validate_allowed_methods(cache_behavior.get('allowed_methods'), cache_behavior)
-            cache_behavior = self.validate_lambda_function_associations(cache_behavior.get('lambda_function_associations'), cache_behavior)
             if 'viewer_protocol_policy' not in cache_behavior:
                 cache_behavior['viewer_protocol_policy'] = self.__default_cache_behavior_viewer_protocol_policy
             else:
@@ -967,10 +972,10 @@ class CloudFrontValidationManager(object):
                                                             self.__valid_viewer_protocol_policies)
             if 'smooth_streaming' not in cache_behavior:
                 cache_behavior['smooth_streaming'] = self.__default_cache_behavior_smooth_streaming
-            cache_behavior['trusted_signers'] = self.validate_trusted_signers(cache_behavior.get('trusted_signers'))
             return cache_behavior
         except Exception as e:
-            self.module.fail_json(msg="error validating distribution cache behavior - " + str(e) + "\n" + traceback.format_exc())
+            self.module.fail_json(msg="error validating distribution cache behavior first level keys - " + str(e) + "\n" + traceback.format_exc())
+
 
     def validate_forwarded_values(self, forwarded_values, cache_behavior):
         try:
@@ -1028,7 +1033,7 @@ class CloudFrontValidationManager(object):
         except Exception as e:
             self.module.fail_json(msg="error validating allowed methods - " + str(e) + "\n" + traceback.format_exc())
 
-    def validate_trusted_signers(self, trusted_signers):
+    def validate_trusted_signers(self, trusted_signers, cache_behavior):
         try:
             if trusted_signers is None:
                 trusted_signers = {}
@@ -1038,7 +1043,8 @@ class CloudFrontValidationManager(object):
                 trusted_signers['items'] = []
             valid_trusted_signers = helpers.python_list_to_aws_list(trusted_signers.get('items'))
             valid_trusted_signers['enabled'] = trusted_signers.get('enabled')
-            return valid_trusted_signers
+            cache_behavior['trusted_signers'] = valid_trusted_signers
+            return cache_behavior
         except Exception as e:
             self.module.fail_json(msg="error validating trusted signers - " + str(e) + "\n" + traceback.format_exc())
 
