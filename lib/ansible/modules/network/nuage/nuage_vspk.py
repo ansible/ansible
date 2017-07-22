@@ -131,10 +131,10 @@ notes:
     - Check mode is supported, but with some caveats. It will not do any changes, and if possible try to determine if it is able do what is requested.
     - In case a parent id is provided from a previous task, it might be empty and if a search is possible on root, it will do so, which can impact performance.
 requirements:
-    - Supports Nuage VSP 4.0Rx
+    - Python 2.7
+    - Supports Nuage VSP 4.0Rx & 5.x.y
     - Proper VSPK-Python installed for your Nuage version
-    - Tested with VSP 4.0R7 and VSPK-Python 4.0.7
-    - Tested with NuageX U(https://nuagex.io), with VSP 4.0R5 and VSPK-Python 4.0.5
+    - Tested with NuageX U(https://nuagex.io)
 '''
 
 EXAMPLES = '''
@@ -145,7 +145,7 @@ EXAMPLES = '''
 #     api_password: csproot
 #     api_enterprise: csp
 #     api_url: https://10.0.0.10:8443
-#     api_version: v4_0
+#     api_version: v5_0
 #   enterprise_name: Ansible-Enterprise
 #   enterprise_new_name: Ansible-Updated-Enterprise
 #
@@ -157,7 +157,7 @@ EXAMPLES = '''
 #     api_key: /path/to/user-Key.pem
 #     api_enterprise: csp
 #     api_url: https://10.0.0.10:8443
-#     api_version: v4_0
+#     api_version: v5_0
 #   enterprise_name: Ansible-Enterprise
 #   enterprise_new_name: Ansible-Updated-Enterprise
 
@@ -373,14 +373,19 @@ entities:
 '''
 
 import time
-import importlib
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from bambou.exceptions import BambouHTTPError
-    HASBAMBOU = True
+    import importlib
+    HAS_IMPORTLIB = True
 except ImportError:
-    HASBAMBOU = False
+    HAS_IMPORTLIB = False
+
+try:
+    from bambou.exceptions import BambouHTTPError
+    HAS_BAMBOU = True
+except ImportError:
+    HAS_BAMBOU = False
 
 SUPPORTED_COMMANDS = ['find', 'change_password', 'wait_for_job', 'get_csp_enterprise']
 VSPK = None
@@ -1027,8 +1032,11 @@ def main():
         supports_check_mode=True
     )
 
-    if not HASBAMBOU:
+    if not HAS_BAMBOU:
         module.fail_json(msg='bambou is required for this module')
+
+    if not HAS_IMPORTLIB:
+        module.fail_json(msg='importlib (python 2.7) is required for this module')
 
     entity_manager = NuageEntityManager(module)
     entity_manager.handle_main_entity()
