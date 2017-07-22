@@ -1856,7 +1856,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=False,
         mutually_exclusive=[
-            ['state', 'generate_presigned_url'],
             ['state', 'cloudfront_url_to_sign'],
             ['state', 'pem_key_path'],
             ['state', 'pem_key_password'],
