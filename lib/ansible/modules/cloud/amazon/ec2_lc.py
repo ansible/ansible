@@ -208,7 +208,7 @@ created_time:
     returned: Only when launch config is created.
     type: str
 image_id:
-    description: the id of the image used for the launch configuration.
+    description: The id of the image used for the launch configuration.
     returned: Always
     type: str
 instance_type:
@@ -224,7 +224,7 @@ name:
     returned: Always
     type: str
 result:
-    description: Yhe resultant object describing the launch config returned from boto3.
+    description: The resultant object describing the launch config returned from boto3.
     returned: Always
     type: str
 
