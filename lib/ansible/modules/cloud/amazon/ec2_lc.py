@@ -30,10 +30,8 @@ description:
   - Works with the ec2_asg module to manage Autoscaling Groups
 
 notes:
-  - Amazon ASG Autoscaling Launch Configurations are immutable once created,
-    so modifying the configuration after it is changed will not modify the
-    launch configuration on AWS. You must create a new config and assign it to
-    the ASG instead.
+  - Amazon ASG Autoscaling Launch Configurations are immutable once created, so modifying the configuration after it is changed will not modify the
+    launch configuration on AWS. You must create a new config and assign it to the ASG instead.
   - encrypted volumes are supported on versions >= 2.4
 
 version_added: "1.6"
@@ -66,41 +64,33 @@ options:
       - The SSH key name to be used for access to managed instances
   security_groups:
     description:
-      - A list of security groups to apply to the instances. Since version 2.4
-        you can specify either security group names or IDs or a mix.  Previous
-        to 2.4, for VPC instances, specify security group IDs and for
-        EC2-Classic, specify either security group names or IDs.
+      - A list of security groups to apply to the instances. Since version 2.4 you can specify either security group names or IDs or a mix.  Previous
+        to 2.4, for VPC instances, specify security group IDs and for EC2-Classic, specify either security group names or IDs.
   volumes:
     description:
-      - A list of volume dicts, each containing device name and optionally
-        ephemeral id or snapshot id. Size and type (and number of iops for io
-        device type) must be specified for a new volume or a root volume, and
-        may be passed for a snapshot volume. For any volume, a volume size less
+      - A list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io
+        device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less
         than 1 will be interpreted as a request not to create the volume.
   user_data:
     description:
-      - Opaque blob of data which is made available to the ec2 instance.
-        Mutually exclusive with I(user_data_path).
+      - Opaque blob of data which is made available to the ec2 instance. Mutually exclusive with I(user_data_path).
   user_data_path:
     description:
-      - Path to the file that contains userdata for the ec2 instances. Mutually
-        exclusive with I(user_data).
+      - Path to the file that contains userdata for the ec2 instances. Mutually exclusive with I(user_data).
     version_added: "2.3"
   kernel_id:
     description:
       - Kernel id for the EC2 instance
   spot_price:
     description:
-      - The spot price you are bidding. Only applies for an autoscaling group
-        with spot instances.
+      - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
   instance_monitoring:
     description:
       - Whether instances in group are launched with detailed monitoring.
     default: false
   assign_public_ip:
     description:
-      - Used for Auto Scaling groups that launch instances into an Amazon
-        Virtual Private Cloud. Specifies whether to assign a public IP address
+      - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address
         to each instance launched in a Amazon VPC.
     version_added: "1.8"
   ramdisk_id:
@@ -109,13 +99,11 @@ options:
     version_added: "1.8"
   instance_profile_name:
     description:
-      - The name or the Amazon Resource Name (ARN) of the instance profile
-        associated with the IAM role for the instances.
+      - The name or the Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instances.
     version_added: "1.8"
   ebs_optimized:
     description:
-      - Specifies whether the instance is optimized for EBS I/O (true) or not
-        (false).
+      - Specifies whether the instance is optimized for EBS I/O (true) or not (false).
     default: false
     version_added: "1.8"
   classic_link_vpc_id:
@@ -124,8 +112,7 @@ options:
     version_added: "2.0"
   classic_link_vpc_security_groups:
     description:
-      - A list of security group IDs with which to associate the ClassicLink
-        VPC instances.
+      - A list of security group IDs with which to associate the ClassicLink VPC instances.
     version_added: "2.0"
   vpc_id:
     description:
@@ -133,13 +120,11 @@ options:
     version_added: "2.4"
   instance_id:
     description:
-      - The Id of a running instance to use as a basis for a launch
-        configuration. Can be used in place of image_id and instance_type.
+      - The Id of a running instance to use as a basis for a launch configuration. Can be used in place of image_id and instance_type.
     version_added: "2.4"
   advanced_instance_monitoring:
     description:
-      - A boolean representing whether advanced instance monitoring is to be
-        used or not. Must be used in conjunction with instance_monitoring.
+      - A boolean representing whether advanced instance monitoring is to be used or not. Must be used in conjunction with instance_monitoring.
     default: false
     version_added: "2.4"
   placement_tenancy:
@@ -195,13 +180,8 @@ EXAMPLES = '''
 '''
 
 import traceback
-from ansible.module_utils.ec2 import (get_aws_connection_info,
-                                      ec2_argument_spec,
-                                      ec2_connect,
-                                      camel_dict_to_snake_dict,
-                                      get_ec2_security_group_ids_from_names,
-                                      boto3_conn, snake_dict_to_camel_dict,
-                                      HAS_BOTO3)
+from ansible.module_utils.ec2 import (get_aws_connection_info, ec2_argument_spec, ec2_connect, camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names,
+                                      boto3_conn, snake_dict_to_camel_dict, HAS_BOTO3)
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -233,8 +213,7 @@ def create_block_device_meta(module, volume):
     if 'no_device' is volume:
         return_object['NoDevice'] = volume.get('no_device')
 
-    if any(key in volume for key in ['snapshot', 'volume_size',
-           'volume_type', 'delete_on_termination', 'ips', 'encrypted']):
+    if any(key in volume for key in ['snapshot', 'volume_size', 'volume_type', 'delete_on_termination', 'ips', 'encrypted']):
         return_object['Ebs'] = {}
 
     if 'snapshot' in volume:
@@ -263,9 +242,7 @@ def create_launch_config(connection, module):
     name = module.params.get('name')
     vpc_id = module.params.get('vpc_id')
     try:
-        security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'),
-                                                                ec2_connect(module),
-                                                                vpc_id=vpc_id, boto3=False)
+        security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), ec2_connect(module), vpc_id=vpc_id, boto3=False)
     except ValueError as e:
         module.fail_json(msg="Failed to get Security Group IDs", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     user_data = module.params.get('user_data')
@@ -282,13 +259,10 @@ def create_launch_config(connection, module):
 
     bdm = {}
 
-    convert_list = ['image_id', 'instance_type', 'instance_type', 'instance_id',
-                    'placement_tenancy', 'key_name', 'kernel_id', 'ramdisk_id',
+    convert_list = ['image_id', 'instance_type', 'instance_type', 'instance_id', 'placement_tenancy', 'key_name', 'kernel_id', 'ramdisk_id',
                     'instance_profile_name', 'spot_price']
 
-    launch_config = (snake_dict_to_camel_dict(dict((k.capitalize(), str(v))
-                     for k, v in module.params.items() if v is not None and k in
-                     convert_list)))
+    launch_config = (snake_dict_to_camel_dict(dict((k.capitalize(), str(v)) for k, v in module.params.items() if v is not None and k in convert_list)))
 
     if user_data_path:
         try:
@@ -387,12 +361,9 @@ def create_launch_config(connection, module):
 def delete_launch_config(connection, module):
     try:
         name = module.params.get('name')
-        launch_configs = connection.describe_launch_configurations(
-            LaunchConfigurationNames=[name]).get('LaunchConfigurations')
+        launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
         if launch_configs and len(launch_configs) > 0:
-            connection.delete_launch_configuration(
-                LaunchConfigurationName=launch_configs[0].get(
-                    'LaunchConfigurationName'))
+            connection.delete_launch_configuration(LaunchConfigurationName=launch_configs[0].get('LaunchConfigurationName'))
             module.exit_json(changed=True)
         else:
             module.exit_json(changed=False)
@@ -440,14 +411,11 @@ def main():
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        connection = boto3_conn(module, conn_type='client', resource='autoscaling', region=region,
-                                endpoint=ec2_url, **aws_connect_kwargs)
+        connection = boto3_conn(module, conn_type='client', resource='autoscaling', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoRegionError:
-        module.fail_json(
-            msg=("region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file"))
+        module.fail_json(msg=("region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file"))
     except botocore.exceptions.ClientError as e:
-        module.fail_json(
-            msg="unable to establish connection - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="unable to establish connection - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     state = module.params.get('state')
 
