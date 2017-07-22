@@ -71,7 +71,7 @@ options:
     generate_presigned_url:
       description:
         - Generates a presigned url for a distribution from a private
-          I(.pem) file key.
+          C(.pem) file key.
       default: 'no'
       choices: ['yes', 'no']
 
@@ -88,7 +88,7 @@ options:
 
     pem_key_path:
       description:
-        - The path on the host to the I(.pem) private key file.
+        - The path on the host to the C(.pem) private key file.
           This key is used to sign the url.
 
     pem_key_password:
