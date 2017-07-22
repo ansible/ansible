@@ -144,7 +144,7 @@ options:
             C(restrictions)
             C(web_acl_id)
             C(http_version)
-            C(is_ipv6_enabled)
+            C(ipv6_enabled)
           Elements of a streaming distribution are
             C(caller_reference)
             C(s3_origin)
@@ -153,7 +153,7 @@ options:
             C(logging)
             C(trusted_signers)
             C(http_version)
-            C(is_ipv6_enabled)
+            C(ipv6_enabled)
           Most of these elements have sub-elements that can be seen in their
           entirety in the boto3 documentation at
             U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution)
@@ -465,7 +465,7 @@ options:
       required: false
       default: aws defaults this to 'http2'
 
-    is_ipv6_enabled:
+    ipv6_enabled:
       description:
         - Determines whether IPv6 support is enabled or not.
           Valid for both distributions and streaming distributions.
@@ -890,7 +890,7 @@ class CloudFrontValidationManager(object):
         self.__default_distribution_enabled = True
         self.__default_http_port = 80
         self.__default_https_port = 443
-        self.__default_is_ipv6_enabled = False
+        self.__default_ipv6_enabled = False
         self.__default_origin_ssl_protocols = [
             'TLSv1',
             'TLSv1.1',
@@ -1537,12 +1537,12 @@ class CloudFrontValidationManager(object):
                 "\n" + traceback.format_exc())
 
     def validate_distribution_config_parameters(
-            self, config, default_root_object, is_ipv6_enabled, http_version,
+            self, config, default_root_object, ipv6_enabled, http_version,
             web_acl_id):
         try:
             config['default_root_object'] = (default_root_object or '')
-            config['is_i_p_v_6_enabled'] = (is_ipv6_enabled or
-                                            self.__default_is_ipv6_enabled)
+            config['is_i_p_v_6_enabled'] = (ipv6_enabled or
+                                            self.__default_ipv6_enabled)
             if http_version is not None:
                 self.validate_attribute_with_allowed_values(
                     http_version, 'http_version', self.__valid_http_versions)
@@ -1824,7 +1824,7 @@ def main():
         restrictions=dict(required=False, default=None, type='json'),
         web_acl_id=dict(required=False, default=None, type='str'),
         http_version=dict(required=False, default=None, type='str'),
-        is_ipv6_enabled=dict(required=False, default=None, type='bool'),
+        ipv6_enabled=dict(required=False, default=None, type='bool'),
         s3_origin=dict(required=False, default=None, type='json'),
         trusted_signers=dict(required=False, default=None, type='list'),
         default_origin_domain_name=dict(required=False, default=None,
@@ -1912,7 +1912,7 @@ def main():
     restrictions = module.params.get('restrictions')
     web_acl_id = module.params.get('web_acl_id')
     http_version = module.params.get('http_version')
-    is_ipv6_enabled = module.params.get('is_ipv6_enabled')
+    ipv6_enabled = module.params.get('ipv6_enabled')
     s3_origin = module.params.get('s3_origin')
     trusted_signers = module.params.get('trusted_signers')
     default_origin_domain_name = module.params.get('default_origin_domain_name')
@@ -2024,7 +2024,7 @@ def main():
         config = helpers.merge_validation_into_config(
             config, valid_restrictions, 'restrictions')
         config = validation_mgr.validate_distribution_config_parameters(
-            config, default_root_object, is_ipv6_enabled, http_version,
+            config, default_root_object, ipv6_enabled, http_version,
             web_acl_id)
         valid_viewer_certificate = validation_mgr.validate_viewer_certificate(
             viewer_certificate)
