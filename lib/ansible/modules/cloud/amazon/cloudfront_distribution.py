@@ -79,7 +79,7 @@ options:
       description:
         - A unique identifier for creating and updating cloudfront
           distributions. Each caller reference must be unique across all
-          distributions. eg. a caller reference used in a web distribution
+          distributions. e.g. a caller reference used in a web distribution
           cannot be reused in a streaming distribution.
           This parameter can be used instead of C(distribution_id) or
           C(streaming_distribution_id) to reference an existing distribution.
@@ -191,7 +191,7 @@ options:
       description:
         - A config element that specifies the path to request when the user
           requests the origin.
-          eg. if specified as 'index.html', this maps to
+          e.g. if specified as 'index.html', this maps to
           www.example.com/index.html when www.example.com is called by the user.
           This prevents the entire distribution origin from being exposed
           at the root.
