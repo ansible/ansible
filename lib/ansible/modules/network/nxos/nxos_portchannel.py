@@ -255,16 +255,17 @@ def get_existing(module, args):
     return existing, interface_exist
 
 
-def config_portchannel(proposed, mode, group):
+def config_portchannel(proposed, mode, group, force):
     commands = []
+    force = 'force' if force else ''
     config_args = {
-        'mode': 'channel-group {group} mode {mode}',
+        'mode': 'channel-group {group} {force} mode {mode}',
         'min_links': 'lacp min-links {min_links}',
     }
 
     for member in proposed.get('members', []):
         commands.append('interface {0}'.format(member))
-        commands.append(config_args.get('mode').format(group=group, mode=mode))
+        commands.append(config_args.get('mode').format(group=group, force=force, mode=mode))
 
     min_links = proposed.get('min_links', None)
     if min_links:
@@ -321,7 +322,7 @@ def get_commands_to_remove_members(proposed, existing, module):
     return commands
 
 
-def get_commands_if_mode_change(proposed, existing, group, mode, module):
+def get_commands_if_mode_change(proposed, existing, group, mode, force, module):
     try:
         proposed_members = proposed['members']
     except KeyError:
@@ -347,6 +348,7 @@ def get_commands_if_mode_change(proposed, existing, group, mode, module):
                     members_with_mode_change.append(interface)
 
     commands = []
+    force = 'force' if force else ''
     if members_with_mode_change:
         for member in members_with_mode_change:
             commands.append('interface {0}'.format(member))
@@ -354,7 +356,7 @@ def get_commands_if_mode_change(proposed, existing, group, mode, module):
 
         for member in members_with_mode_change:
             commands.append('interface {0}'.format(member))
-            commands.append('channel-group {0} mode {1}'.format(group, mode))
+            commands.append('channel-group {0} {1} mode {2}'.format(group, force, mode))
 
     return commands
 
@@ -389,7 +391,7 @@ def state_present(module, existing, proposed, interface_exist, force, warnings):
     min_links = module.params['min_links']
 
     if not interface_exist:
-        command = config_portchannel(proposed, mode, group)
+        command = config_portchannel(proposed, mode, group, force)
         commands.append(command)
         commands.insert(0, 'interface port-channel{0}'.format(group))
         warnings.append("The proposed port-channel interface did not "
@@ -404,7 +406,7 @@ def state_present(module, existing, proposed, interface_exist, force, warnings):
         command = get_commands_to_add_members(proposed, existing, force, module)
         commands.append(command)
 
-        mode_command = get_commands_if_mode_change(proposed, existing, group, mode, module)
+        mode_command = get_commands_if_mode_change(proposed, existing, group, mode, force, module)
         commands.insert(0, mode_command)
 
         if min_links:

@@ -35,7 +35,7 @@
     provider: "{{ cli }}"
 
 - block:
-  - name: Configure port-channel
+  - name: Configure port-channel mode active
     nxos_portchannel: &configpc
       group: 99
       members: ["{{ testint1 }}","{{ testint2 }}"]
@@ -57,6 +57,25 @@
   - assert: &false
       that:
         - "result.changed == false"
+
+  - name: Configure port-channel mode passive
+    nxos_portchannel: &configpcpassive
+      group: 99
+      members: ["{{ testint1 }}","{{ testint2 }}"]
+      mode: passive
+      force: 'true'
+      state: present
+      timeout: 60
+      provider: "{{ cli }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence
+    nxos_portchannel: *configpcpassive
+    register: result
+
+  - assert: *false
 
   - name: Configure port-channel
     nxos_portchannel: *delpc
