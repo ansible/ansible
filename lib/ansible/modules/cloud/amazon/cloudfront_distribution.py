@@ -984,7 +984,7 @@ class CloudFrontValidationManager(object):
             forwarded_values['headers'] = helpers.python_list_to_aws_list(forwarded_values.get('headers'))
             if 'cookies' not in forwarded_values:
                 forwarded_values['cookies'] = {}
-                forwarded_values['cookies']['forward'] = (self.__default_cache_behavior_forwarded_values_forward_cookies)
+                forwarded_values['cookies']['forward'] = self.__default_cache_behavior_forwarded_values_forward_cookies
             else:
                 forwarded_values['cookies']['whitelisted_names'] = helpers.python_list_to_aws_list(forwarded_values['cookies'].get('whitelisted_names'))
                 cookie_forwarding = forwarded_values['cookies'].get('forward')
@@ -1532,10 +1532,10 @@ def main():
         module.fail_json(msg="no matching distribution exists")
 
     if update_delete_distribution and distribution_exists:
-        (distribution_id, config, e_tag) = validation_mgr.validate_distribution_id_etag(alias, distribution_id, config, e_tag)
+        distribution_id, config, e_tag = validation_mgr.validate_distribution_id_etag(alias, distribution_id, config, e_tag)
 
     if update_delete_streaming_distribution and distribution_exists:
-        (streaming_distribution_id, config, e_tag) = validation_mgr.validate_streaming_distribution_id_etag(alias, streaming_distribution_id, config, e_tag)
+        streaming_distribution_id, config, e_tag = validation_mgr.validate_streaming_distribution_id_etag(alias, streaming_distribution_id, config, e_tag)
 
     if create or update:
         valid_tags = validation_mgr.validate_tags(tags)
