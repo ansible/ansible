@@ -83,8 +83,7 @@ options:
           cannot be reused in a streaming distribution.
           This parameter can be used instead of C(distribution_id) or
           C(streaming_distribution_id) to reference an existing distribution.
-          If not specified, this defaults to a datetime stamp of the format
-            'YYYY-MM-DDTHH:MM:SS.ffffff'
+          If not specified, this defaults to a datetime stamp of the format 'YYYY-MM-DDTHH:MM:SS.ffffff'
 
     pem_key_path:
       description:
