@@ -133,8 +133,8 @@ options:
 
     tags:
       description:
-        - Used for distributions and streaming distributions.
-          Should be input as a dict() of key-value pairs.
+        - Used for distributions and streaming distributions. Should be input as a dict() of key-value pairs.
+          Note that numeric keys or values must be wrapped in quotes. e.g. Priority: '1'
 
     purge_tags:
       description:
