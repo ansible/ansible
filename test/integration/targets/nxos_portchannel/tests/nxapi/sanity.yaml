@@ -28,7 +28,7 @@
 - name: Remove possibly configured port-channel 99
   nxos_portchannel: &delpc
     group: 99
-    members: ["{{ testint1 }}","{{ testint2 }}"]
+    members: ["{{ testint1 }}", "{{ testint2 }}"]
     force: 'true'
     state: absent
     timeout: 60
@@ -38,7 +38,7 @@
   - name: Configure port-channel mode active
     nxos_portchannel: &configpc
       group: 99
-      members: ["{{ testint1 }}","{{ testint2 }}"]
+      members: ["{{ testint1 }}", "{{ testint2 }}"]
       mode: active
       force: 'true'
       state: present
@@ -61,7 +61,7 @@
   - name: Configure port-channel mode passive
     nxos_portchannel: &configpcpassive
       group: 99
-      members: ["{{ testint1 }}","{{ testint2 }}"]
+      members: ["{{ testint1 }}", "{{ testint2 }}"]
       mode: passive
       force: 'true'
       state: present

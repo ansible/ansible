@@ -296,7 +296,7 @@ def get_commands_to_add_members(proposed, existing, force, module):
         for member in members_to_add:
             commands.append('interface {0}'.format(member))
             commands.append('channel-group {0} {1} mode {2}'.format(
-                existing['group'],force, proposed['mode']))
+                existing['group'], force, proposed['mode']))
 
     return commands
 
