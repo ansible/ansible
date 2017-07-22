@@ -319,10 +319,8 @@ def create_launch_config(connection, module):
             connection.create_launch_configuration(**launch_config)
             launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
             changed = True
-            if len(launch_configs) > 0:
+            if launch_configs:
                 launch_config = launch_configs[0]
-            else:
-                module.fail_json(msg="Failed to create launch configuration", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to create launch configuration", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
