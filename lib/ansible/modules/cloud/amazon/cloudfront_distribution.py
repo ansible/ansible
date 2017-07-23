@@ -830,11 +830,11 @@ class CloudFrontValidationManager(object):
                 return None
             valid_logging = {}
             if not streaming:
-                if(logging and ('enabled' not in logging or 'include_cookies' not in logging or 'bucket' not in logging or 'prefix' not in logging)):
+                if logging and ('enabled' not in logging or 'include_cookies' not in logging or 'bucket' not in logging or 'prefix' not in logging):
                     self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and prefix must be specified")
                 valid_logging['include_cookies'] = logging.get('include_cookies')
             else:
-                if(logging and ('enabled' not in logging or 'bucket' not in logging or 'prefix' not in logging)):
+                if logging and ('enabled' not in logging or 'bucket' not in logging or 'prefix' not in logging):
                     self.module.fail_json(msg="the logging parameters enabled, bucket and prefix must be specified")
             valid_logging['enabled'] = logging.get('enabled')
             valid_logging['bucket'] = logging.get('bucket')
@@ -856,14 +856,13 @@ class CloudFrontValidationManager(object):
                 if default_origin_domain_name is not None:
                     origins = [{
                         'domain_name': default_origin_domain_name,
-                        'origin_path': (default_origin_path or '')
+                        'origin_path': default_origin_path or ''
                     }]
                 else:
                     origins = []
             self.validate_is_list(origins, 'origins')
             quantity = len(origins)
-            if(quantity == 0 and default_origin_domain_name is None and
-               create_distribution):
+            if quantity == 0 and default_origin_domain_name is None and create_distribution:
                 self.module.fail_json(msg="both origins[] and default_origin_domain_name have not been specified. please specify at least one.")
             for origin in origins:
                 origin = self.validate_origin(origin, default_origin_path, default_s3_origin_access_identity, streaming)
@@ -874,24 +873,24 @@ class CloudFrontValidationManager(object):
     def validate_origin(self, origin, default_origin_path, default_s3_origin_access_identity, streaming):
         try:
             if 'origin_path' not in origin:
-                origin['origin_path'] = (default_origin_path or '')
+                origin['origin_path'] = default_origin_path or ''
             if 'domain_name' not in origin:
                 self.module.fail_json(msg="origins[].domain_name must be specified for an origin")
             if 'id' not in origin:
                 origin['id'] = self.__default_datetime_string
             if 'custom_headers' in origin and streaming:
                 self.module.fail_json(msg="custom_headers has been specified for a streaming distribution. custom headers are for web distributions only")
-            if ('custom_headers' in origin and len(origin.get('custom_headers')) > 0):
+            if 'custom_headers' in origin and len(origin.get('custom_headers')) > 0:
                 for custom_header in origin.get('custom_headers'):
-                    if('header_name' not in custom_header or 'header_value' not in custom_header):
+                    if 'header_name' not in custom_header or 'header_value' not in custom_header:
                         self.module.fail_json(msg="both origins[].custom_headers.header_name and origins[].custom_headers.header_value must be specified")
                 origin['custom_headers'] = helpers.python_list_to_aws_list(origin.get('custom_headers'))
             else:
                 origin['custom_headers'] = helpers.python_list_to_aws_list()
             if self.__s3_bucket_domain_identifier in origin.get('domain_name'):
-                if('s3_origin_config' not in origin or 'origin_access_identity' not in origin.get('s3_origin_config')):
+                if 's3_origin_config' not in origin or 'origin_access_identity' not in origin.get('s3_origin_config'):
                     origin["s3_origin_config"] = {}
-                    origin['s3_origin_config']['origin_access_identity'] = (default_s3_origin_access_identity or '')
+                    origin['s3_origin_config']['origin_access_identity'] = default_s3_origin_access_identity or ''
             else:
                 if 'custom_origin_config' not in origin:
                     origin['custom_origin_config'] = {}
@@ -1068,8 +1067,7 @@ class CloudFrontValidationManager(object):
         try:
             if viewer_certificate is None:
                 return None
-            if(viewer_certificate.get('cloudfront_default_certificate') and
-                    viewer_certificate.get('ssl_support_method') is not None):
+            if viewer_certificate.get('cloudfront_default_certificate') and viewer_certificate.get('ssl_support_method') is not None:
                 self.module.fail_json(msg="viewer_certificate.ssl_support_method should not be specified with viewer_certificate_cloudfront_default" +
                                       "_certificate set to true")
             if 'ssl_support_method' in viewer_certificate:
@@ -1153,11 +1151,9 @@ class CloudFrontValidationManager(object):
         try:
             distribution_response = None
             streaming_distribution_response = None
-            if(alias is not None and (distribution_id is not None or
-               streaming_distribution_id is not None)):
+            if alias is not None and (distribution_id is not None or streaming_distribution_id is not None):
                 self.module.fail_json(msg="both alias and a distribution id have been specified for tagging a resource. please only specify one.")
-            if(distribution_id is not None and
-               streaming_distribution_id is not None):
+            if distribution_id is not None and streaming_distribution_id is not None:
                 self.module.fail_json(msg="both distribution_id and streaming_distribution_id have been specified. please only specify one.")
             if alias is not None:
                 distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
@@ -1208,11 +1204,11 @@ class CloudFrontValidationManager(object):
                 config['aliases'] = helpers.python_list_to_aws_list(aliases)
             if logging is not None:
                 config['logging'] = self.validate_logging(logging, is_streaming_distribution)
-            config['enabled'] = (enabled or self.__default_distribution_enabled)
+            config['enabled'] = enabled or self.__default_distribution_enabled
             if price_class is not None:
                 self.validate_attribute_with_allowed_values(price_class, 'price_class', self.__valid_price_classes)
                 config['price_class'] = price_class
-            config['comment'] = (comment or "distribution created by ansible with datetime " + self.__default_datetime_string)
+            config['comment'] = comment or "distribution created by ansible with datetime " + self.__default_datetime_string
             return config
         except Exception as e:
             self.module.fail_json(msg="error validating common distribution parameters - " + str(e) + "\n" + traceback.format_exc())
@@ -1228,7 +1224,7 @@ class CloudFrontValidationManager(object):
         try:
             if valid_origins is not None:
                 valid_origins_list = valid_origins.get('items')
-                if(valid_origins_list is not None and isinstance(valid_origins_list, list) and len(valid_origins_list) > 0):
+                if valid_origins_list is not None and isinstance(valid_origins_list, list) and len(valid_origins_list) > 0:
                     return str(valid_origins_list[0].get('id'))
             self.module.fail_json(msg="there are no valid origins from which to specify a target_origin_id for the default_cache_behavior configuration")
         except Exception as e:
@@ -1240,7 +1236,7 @@ class CloudFrontValidationManager(object):
                 self.module.fail_json(msg="expected a list. got a " + type(attribute_list).__name__)
             matched_one = False
             for allowed_sub_list in allowed_list:
-                matched_one |= (set(attribute_list) == set(allowed_sub_list))
+                matched_one |= set(attribute_list) == set(allowed_sub_list)
             if not matched_one:
                 self.module.fail_json(msg='the attribute list {0} must be one of [{1}]'.format(attribute_list_name, ' '.join(str(a) for a in allowed_list)))
         except Exception as e:
@@ -1248,7 +1244,7 @@ class CloudFrontValidationManager(object):
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         try:
-            if (attribute is not None and attribute not in allowed_list):
+            if attribute is not None and attribute not in allowed_list:
                 self.module.fail_json(msg='the attribute {0} must be one of [{1}]'.format(attribute_name, ' '.join(str(a) for a in allowed_list)))
         except Exception as e:
             self.module.fail_json(msg="error validating attribute with allowed values - " + str(e) + "\n" + traceback.format_exc())
@@ -1285,8 +1281,7 @@ class CloudFrontValidationManager(object):
         except Exception as e:
             self.module.fail_json(msg="error validating (streaming)distribution_id from caller reference - " + str(e) + "\n" + traceback.format_exc())
 
-    def validate_distribution_requires_update(
-            self, proposed_config, distribution_id, streaming=False):
+    def validate_distribution_requires_update(self, proposed_config, distribution_id, streaming=False):
         try:
             if not streaming:
                 config_name = "DistributionConfig"
@@ -1479,16 +1474,15 @@ def main():
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
-    (distribution_id, streaming_distribution_id) = validation_mgr.validate_id_from_alias_aliases_caller_reference(distribution_id, streaming_distribution_id,
-                                                                                                                  alias, aliases, caller_reference,
-                                                                                                                  streaming_distribution)
+    distribution_id, streaming_distribution_id = validation_mgr.validate_id_from_alias_aliases_caller_reference(
+        distribution_id, streaming_distribution_id, alias, aliases, caller_reference, streaming_distribution)
 
-    create_distribution = (state == 'present' and not streaming_distribution and distribution_id is None)
-    update_distribution = (state == 'present' and not streaming_distribution and distribution_id is not None)
-    delete_distribution = (state == 'absent' and not streaming_distribution)
-    create_streaming_distribution = (state == 'present' and streaming_distribution and streaming_distribution_id is None)
-    update_streaming_distribution = (state == 'present' and streaming_distribution and streaming_distribution_id is not None)
-    delete_streaming_distribution = (state == 'absent' and streaming_distribution)
+    create_distribution = state == 'present' and not streaming_distribution and distribution_id is None
+    update_distribution = state == 'present' and not streaming_distribution and distribution_id is not None
+    delete_distribution = state == 'absent' and not streaming_distribution
+    create_streaming_distribution = state == 'present' and streaming_distribution and streaming_distribution_id is None
+    update_streaming_distribution = state == 'present' and streaming_distribution and streaming_distribution_id is not None
+    delete_streaming_distribution = state == 'absent' and streaming_distribution
 
     create_update_distribution = create_distribution or update_distribution
     create_update_streaming_distribution = create_streaming_distribution or update_streaming_distribution
@@ -1541,7 +1535,7 @@ def main():
         config = helpers.merge_validation_into_config(config, valid_cache_behaviors, 'cache_behaviors')
         valid_default_cache_behavior = validation_mgr.validate_cache_behavior(default_cache_behavior, config_origins, True)
         config = helpers.merge_validation_into_config(config, valid_default_cache_behavior, 'default_cache_behavior')
-        valid_custom_error_responses = (validation_mgr.validate_custom_error_responses(custom_error_responses))
+        valid_custom_error_responses = validation_mgr.validate_custom_error_responses(custom_error_responses)
         config = helpers.merge_validation_into_config(config, valid_custom_error_responses, 'custom_error_responses')
         valid_restrictions = validation_mgr.validate_restrictions(restrictions)
         config = helpers.merge_validation_into_config(config, valid_restrictions, 'restrictions')
@@ -1550,8 +1544,8 @@ def main():
         config = helpers.merge_validation_into_config(config, valid_viewer_certificate, 'viewer_certificate')
 
     if create_update_streaming_distribution:
-        config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment, trusted_signers, s3_origin, default_s3_origin_domain_name,
-                                                                                  default_streaming_s3_origin_access_identity)
+        config = validation_mgr.validate_streaming_distribution_config_parameters(
+            config, comment, trusted_signers, s3_origin, default_s3_origin_domain_name, default_streaming_s3_origin_access_identity)
 
     if create:
         config = validation_mgr.validate_caller_reference_for_distribution(config, caller_reference)
