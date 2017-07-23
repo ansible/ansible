@@ -1,4 +1,8 @@
 """Utilities for writing code that runs on Python 2 and 3"""
+# This code is strewn with things that are not defined on Python3 (unicode,
+# long, etc) but they are all shielded by version checks.  This is also an
+# upstrem vendored file that we're not going to modify on our own
+# pylint: disable=undefined-variable
 
 # Copyright (c) 2010-2015 Benjamin Peterson
 #
