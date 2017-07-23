@@ -49,6 +49,13 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
+  upgrade:
+    description:
+      - Performs dist upgrade like C(apt-get dist-upgrade -y).
+    version_added: "2.4"
+    required: false
+    default: "no"
+    choices: [ "no", "yes" ]
 author: "Evgenii Terechkov (@evgkrsk)"
 notes:  []
 '''
@@ -105,6 +112,17 @@ def query_package_provides(module, name):
     # 1 if it is not installed
     rc, out, err = module.run_command("%s -q --provides %s" % (RPM_PATH,name))
     return rc == 0
+
+
+def need_upgrade(module):
+    # querry if upgrade is needed
+    cmd = "%s --print-uris -qq dist-upgrade" % APT_PATH
+    rc, out, err = module.run_command(cmd)
+
+    if rc:
+        module.fail_json(msg="'%s' failed: %s" % (cmd, err))
+
+    return bool(out)
 
 
 def update_only(module):
@@ -168,12 +186,42 @@ def install_packages(module, pkgspec):
         module.exit_json(changed=False, msg="package(s) already present")
 
 
+def parse_upgrade_out(out, start_string):
+    # Out contains lines with fields, separated by colons. Last field is list
+    # of space separated packages. This function return that list of packages
+    # on line starts with start_string.
+
+    raws = out.split('\n')
+    result = [s.split(':')[-1] for s in raws if s.startswith(start_string)]
+
+    # It is empty list or list with one string which contains space separated
+    # package names.
+    return result and result[0].split()
+
+
+def upgrade(module):
+    if need_upgrade(module):
+        cmd = "%s dist-upgrade -y -qq -o simple-output=true" % (APT_PATH)
+        rc, out, err = module.run_command(cmd)
+        if rc:
+            module.fail_json(msg="'%s' failed: %s" % (cmd, err))
+        else:
+            upgraded = parse_upgrade_out(out, 'apt-get:upgrade-list')
+            installed = parse_upgrade_out(out, 'apt-get:install-list')
+            msg="All packages upgraded"
+            module.exit_json(changed=True, msg=msg, upgraded=upgraded, installed = installed)
+    else:
+        msg = "All packages have already been up to date"
+        module.exit_json(changed=False, msg=msg)
+
+
 def main():
     module = AnsibleModule(
         argument_spec    = dict(
             state        = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
             package      = dict(aliases=['pkg', 'name']),
+            upgrade      = dict(default=False, type='bool'),
         ))
 
     if not os.path.exists(APT_PATH) or not os.path.exists(RPM_PATH):
@@ -181,17 +229,20 @@ def main():
 
     p = module.params
 
-    if p['package']:
+    if p['package'] or p['upgrade']:
         if p['update_cache']:
             update_package_db(module)
 
-        packages = p['package'].split(',')
+        if p['package']:
+            packages = p['package'].split(',')
 
-        if p['state'] in [ 'installed', 'present' ]:
-            install_packages(module, packages)
+            if p['state'] in [ 'installed', 'present' ]:
+                install_packages(module, packages)
 
-        elif p['state'] in [ 'removed', 'absent' ]:
-            remove_packages(module, packages)
+            elif p['state'] in [ 'removed', 'absent' ]:
+                remove_packages(module, packages)
+        elif p['upgrade']:
+            upgrade(module)
     elif p['update_cache']:
             update_only(module)
 
