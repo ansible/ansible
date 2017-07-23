@@ -227,7 +227,7 @@ class Connection(ConnectionBase):
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
-        fd = file(in_path, 'rb')
+        fd = open(in_path, 'rb')
         fstat = os.stat(in_path)
         try:
             display.vvv("PUT file is %d bytes" % fstat.st_size, host=self._play_context.remote_addr)

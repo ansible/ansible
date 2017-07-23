@@ -101,12 +101,14 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 """
-import re
 import itertools
+import re
+import traceback
 
 from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils._text import to_native
 
 
 class FactsBase(object):
@@ -283,9 +285,8 @@ def main():
             inst.populate()
             failed_commands.extend(inst.failed_commands)
             facts.update(inst.facts)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    except Exception as exc:
+        module.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
     ansible_facts = dict()
     for key, value in iteritems(facts):

@@ -88,16 +88,8 @@ EXAMPLES='''
 '''
 
 import base64
+import json
 import os
-
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -205,6 +197,7 @@ def delete_meter(module, name, apiid, apikey):
     if meter_id is None:
         return 1, "Meter does not exist, so can't delete it"
     else:
+        action = "delete"
         response, info = http_request(module, name, apiid, apikey, action, meter_id)
         if info['status'] != 200:
             module.fail_json(msg="Failed to delete meter")
@@ -230,7 +223,7 @@ def download_request(module, name, apiid, apikey, cert_type):
         if info['status'] != 200:
             module.fail_json(msg="Failed to connect to api host to download certificate")
 
-        if result:
+        if response:
             try:
                 cert_file_path = '%s/%s.pem' % (config_directory,cert_type)
                 body = response.read()
@@ -276,4 +269,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

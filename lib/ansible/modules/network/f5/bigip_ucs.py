@@ -398,7 +398,7 @@ class BaseManager(object):
 
     def wait_for_rest_api_restart(self):
         time.sleep(5)
-        for x in xrange(0, 60):
+        for x in range(0, 60):
             try:
                 self.client.reconnect()
                 break
