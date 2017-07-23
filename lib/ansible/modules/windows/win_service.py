@@ -104,15 +104,20 @@ options:
       - delayed
   state:
     description:
-      - C(started)/C(stopped)/C(absent) are idempotent actions that will not run
+      - C(started)/C(stopped)/C(absent)/C(pause) are idempotent actions that will not run
         commands unless necessary.
       - C(restarted) will always bounce the service.
       - C(absent) added in Ansible 2.3
+      - C(pause) was added in Ansible 2.4
+      - Only services that support the paused state can be paused, you can
+        check the return value C(can_pause_and_continue).
+      - You can only pause a service that is already started.
     choices:
       - started
       - stopped
       - restarted
       - absent
+      - paused
   username:
     description:
       - The username to set the service to start as.
@@ -134,6 +139,11 @@ EXAMPLES = r'''
     name: spooler
     start_mode: auto
     state: started
+
+- name: pause a service
+  win_service:
+    name: Netlogon
+    state: paused
 
 # a new service will also default to the following values:
 # - username: LocalSystem
@@ -253,6 +263,11 @@ path:
     returned: success and service exists
     type: string
     sample: C:\Windows\system32\svchost.exe -k LocalServiceNoNetwork
+can_pause_and_continue:
+    description: Whether the service can be paused and unpaused.
+    returned: success and service exists
+    type: bool
+    sample: True
 description:
     description: The description of the service.
     returned: success and service exists
