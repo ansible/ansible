@@ -230,7 +230,6 @@ lib/ansible/modules/files/acl.py
 lib/ansible/modules/files/archive.py
 lib/ansible/modules/files/assemble.py
 lib/ansible/modules/files/blockinfile.py
-lib/ansible/modules/files/copy.py
 lib/ansible/modules/files/ini_file.py
 lib/ansible/modules/files/iso_extract.py
 lib/ansible/modules/files/replace.py
