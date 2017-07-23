@@ -19,12 +19,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: template
 version_added: historical
-short_description: Templates a file out to a remote server.
+short_description: Templates a file out to a remote server
 description:
      - Templates are processed by the Jinja2 templating language
        (U(http://jinja.pocoo.org/docs/)) - documentation on the template
@@ -51,8 +50,8 @@ options:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
   newline_sequence:
     description:
       - Specify the newline sequence to use for templating files.
@@ -82,15 +81,16 @@ options:
   trim_blocks:
     description:
       - If this is set to True the first newline after a block is removed (block, not variable tag!).
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: '2.4'
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
         are different than the source.  If C(no), the file will only be transferred
         if the destination does not exist.
-    choices: [ "yes", "no" ]
-    default: "yes"
+    type: bool
+    default: 'yes'
 notes:
   - For Windows you can use M(win_template) which uses '\r\n' as C(newline_sequence).
   - Including a string that uses a date in the template will result in the template being marked 'changed' each time
@@ -100,6 +100,8 @@ notes:
     which changes the variable interpolation markers to  [% var %] instead of  {{ var }}.
     This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
     raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated."
+  - You can use the C(copy) module with the C(content:) option if you prefer the template inline,
+    as part of the playbook.
 author:
     - Ansible Core Team
     - Michael DeHaan
