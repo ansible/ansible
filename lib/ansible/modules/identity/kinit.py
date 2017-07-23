@@ -27,27 +27,33 @@ DOCUMENTATION = '''
 module: kinit
 version_added: "2.4"
 author: "Ali (@bincyber)"
-short_description: Obtain a Kerberos ticket-granting ticket
+short_description: Obtain a Kerberos ticket-granting ticket.
 description:
-  - "This module is a wrapper around kinit to obtain a short-lived Kerberos ticket-granting ticket (TGT)."
+  - "This module is a wrapper around kinit to obtain a short-lived Kerberos ticket-granting ticket (TGT).
+  The M(expect) or M(shell) module could be used instead, however to ensure the principal's password is not logged,
+  the I(no_log: True) task attribute must be set resulting in hidden error messages and the loss of an audit trail.
+  By default, this module prevents the password for the authenticating principal from being shown or logged while
+  still displaying error messages and enabling the task to be logged for auditing purposes."
 options:
   principal:
     description:
-      - The principal to obtain a Kerberos ticket-granting ticket for. The principal can include the primary, instance, and realm. eg. primary/instance@REALM
+      - The principal to obtain a Kerberos ticket for. The principal can include the primary, instance, and realm. eg. primary/instance@REALM
     required: yes
     default: null
   password:
     description:
-      - The password used to authenticate to the KDC.
+      - The password used to authenticate to the Kerberos server.
     required: yes
     default: null
   lifetime:
     description:
-      - The lifetime of the Kerberos ticket-granting ticket.
+      - The lifetime of the Kerberos ticket.
     required: false
     default: 60
 requirements:
-   - kinit
+  - kinit
+notes:
+  - "This module requires I(kinit) which needs to be installed on all target systems."
 '''
 
 EXAMPLES = '''
