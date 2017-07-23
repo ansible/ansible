@@ -14,20 +14,56 @@ syntax highlighting before you include it in your Python file.
 
 All modules must have the following sections defined in this order:
 
-1. ANSIBLE_METADATA
-2. DOCUMENTATION
-3. EXAMPLES
-4. RETURNS
-5. Python imports
+1. Copyright
+2. ANSIBLE_METADATA
+3. DOCUMENTATION
+4. EXAMPLES
+5. RETURNS
+6. Python imports
 
 .. note:: Why don't the imports go first?
 
-  Keen Python programmers may notice that contrary to PEP8's advice we don't put ``imports`` at the top of the file. This is because the ``ANSIBLE_METADATA`` through ``RETURNS`` sections are not used by the module code itself; they are essentially extra docstrings for the file. The imports are placed after these special variables for the same reason as PEP8 puts the imports after the introductory comments and docstrings. This keeps the active parts of the code together and the pieces which are purely informational apart. The decision to exclude E402 is based on readability (which is what PEP8 is about). Documentation strings in a module are much more similar to module level docstrings, than code, and are never utilized by the module itself. Placing the imports below this documentation and closer to the code, consolidates and groups all related code in a congruent manner to improve readability, debugging and understanding.
+  Keen Python programmers may notice that contrary to PEP 8's advice we don't put ``imports`` at the top of the file. This is because the ``ANSIBLE_METADATA`` through ``RETURNS`` sections are not used by the module code itself; they are essentially extra docstrings for the file. The imports are placed after these special variables for the same reason as PEP 8 puts the imports after the introductory comments and docstrings. This keeps the active parts of the code together and the pieces which are purely informational apart. The decision to exclude E402 is based on readability (which is what PEP 8 is about). Documentation strings in a module are much more similar to module level docstrings, than code, and are never utilized by the module itself. Placing the imports below this documentation and closer to the code, consolidates and groups all related code in a congruent manner to improve readability, debugging and understanding.
 
 .. warning:: Why do some modules have imports at the bottom of the file?
 
   If you look at some existing older modules, you may find imports at the bottom of the file. Do not copy that idiom into new modules as it is a historical oddity due to how modules used to be combined with libraries. Over time we're moving the imports to be in their proper place.
 
+
+
+Copyright
+----------------------
+
+The beginning of every module should look about the same. After the shebang,
+there should be at least two lines covering copyright and licensing of the
+code.
+
+.. code-block:: python
+
+    #!/usr/bin/python
+    # Copyright (c) 2017 Ansible Project
+    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+Every file should have a copyright line with the original copyright holder.
+Major additions to the module (for instance, rewrites)  may add additional
+copyright lines. Code from the Ansible community should typically be assigned
+as "Copyright (c) 2017 Ansible Project" which covers all contributors. Any
+legal questions need to review the source control history, so an exhaustive
+copyright header is not necessary.
+
+The license declaration should be ONLY one line, not the full GPL prefix. If
+you notice a module with the full prefix, feel free to switch it to the
+one-line declaration instead.
+
+When adding a copyright line after completing a significant feature or rewrite,
+add the newer line above the older one, like so:
+
+.. code-block:: python
+
+    #!/usr/bin/python
+    # Copyright (c) 2017 [New Contributor(s)]
+    # Copyright (c) 2015 [Original Contributor(s)]
+    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 ANSIBLE_METADATA Block
@@ -87,7 +123,7 @@ Fields
    :community:
    
    For information on what the support level values entail, please see
-   :doc:`../modules_support.rst`
+   `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
 
 :status: This field records information about the module that is
    important to the end user. It’s a list of strings. The default value
@@ -116,7 +152,8 @@ Include it in your module file like this:
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright header....
+    # Copyright (c) 2017 [REPLACE THIS]
+    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
     DOCUMENTATION = '''
     ---

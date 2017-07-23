@@ -36,12 +36,12 @@ The following is a list of module_utils files and a general description. The mod
 - openstack.py - Utilities for modules that work with Openstack instances.
 - openswitch.py - Definitions and helper functions for modules that manage OpenSwitch devices
 - powershell.ps1 - Utilities for working with Microsoft Windows clients
-- pycompat24.py - Exception workaround for python 2.4
+- pycompat24.py - Exception workaround for Python 2.4
 - rax.py -  Definitions and helper functions for modules that work with Rackspace resources.
 - redhat.py - Functions for modules that manage Red Hat Network registration and subscriptions
 - service.py - Contains utilities to enable modules to work with Linux services (placeholder, not in use).
 - shell.py - Functions to allow modules to create shells and work with shell commands
-- six.py - Module utils for working with the Six python 2 and 3 compatibility library
+- six.py - Module utils for working with the Six Python 2 and 3 compatibility library
 - splitter.py - String splitting and manipulation utilities for working with Jinja2 templates
 - urls.py - Utilities for working with http and https requests
 - vca.py - Contains utilities for modules that work with VMware vCloud Air
