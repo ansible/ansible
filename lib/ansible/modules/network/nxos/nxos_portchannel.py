@@ -257,9 +257,10 @@ def get_existing(module, args):
 
 def config_portchannel(proposed, mode, group, force):
     commands = []
-    force = 'force' if force else ''
+    # NOTE: Leading whitespace for force option is important
+    force = ' force' if force else ''
     config_args = {
-        'mode': 'channel-group {group} {force} mode {mode}',
+        'mode': 'channel-group {group}{force} mode {mode}',
         'min_links': 'lacp min-links {min_links}',
     }
 
@@ -291,11 +292,12 @@ def get_commands_to_add_members(proposed, existing, force, module):
     members_to_add = list(set(proposed_members).difference(existing_members))
 
     commands = []
-    force = 'force' if force else ''
+    # NOTE: Leading whitespace for force option is important
+    force = ' force' if force else ''
     if members_to_add:
         for member in members_to_add:
             commands.append('interface {0}'.format(member))
-            commands.append('channel-group {0} {1} mode {2}'.format(
+            commands.append('channel-group {0}{1} mode {2}'.format(
                 existing['group'], force, proposed['mode']))
 
     return commands
@@ -348,7 +350,8 @@ def get_commands_if_mode_change(proposed, existing, group, mode, force, module):
                     members_with_mode_change.append(interface)
 
     commands = []
-    force = 'force' if force else ''
+    # NOTE: Leading whitespace for force option is important
+    force = ' force' if force else ''
     if members_with_mode_change:
         for member in members_with_mode_change:
             commands.append('interface {0}'.format(member))
@@ -356,7 +359,7 @@ def get_commands_if_mode_change(proposed, existing, group, mode, force, module):
 
         for member in members_with_mode_change:
             commands.append('interface {0}'.format(member))
-            commands.append('channel-group {0} {1} mode {2}'.format(group, force, mode))
+            commands.append('channel-group {0}{1} mode {2}'.format(group, force, mode))
 
     return commands
 
