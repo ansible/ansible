@@ -342,6 +342,171 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 supports_check_mode=True,
             )
 
+    def test_module_utils_basic_ansible_module_with_options_creation(self):
+        from ansible.module_utils import basic
+
+        options_spec = dict(
+            foo=dict(required=True, aliases=['dup']),
+            bar=dict(),
+            bam=dict(),
+            baz=dict(),
+            bam1=dict(default='test')
+        )
+        arg_spec = dict(foobar=dict(type='list', elements='dict', options=options_spec))
+        mut_ex = (('bar', 'bam'),)
+        req_to = (('bam', 'baz'),)
+
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello"}, {"foo": "test"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                options_mutually_exclusive=mut_ex,
+                options_required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should test ok, handles aliases
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"dup": "hello"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                options_mutually_exclusive=mut_ex,
+                options_required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail, because a required param was not specified
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                options_mutually_exclusive=mut_ex,
+                options_required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because of mutually exclusive parameters
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello", "bar": "bad", "bam": "bad"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                options_mutually_exclusive=mut_ex,
+                options_required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because a param required due to another param was not specified
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"bam": "bad"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                options_mutually_exclusive=mut_ex,
+                options_required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because one of param is required
+        req_one_of = (('bar', 'bam'),)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                options_required_one_of=req_one_of,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because value of one param mandates presence of other param required
+        req_if = (('foo', 'hello', ('bam')),)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                options_required_if=req_if,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should test ok, the required param is set by default from spec
+        req_if = [('foo', 'hello', ('bam1',))]
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                options_required_if=req_if,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should test ok, for options in dict format.
+        arg_spec = dict(foobar=dict(type='dict', options=options_spec))
+
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': {"foo": "hello"}}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should fail, check for invalid agrument
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': {"foo1": "hello"}}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=True,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
     def test_module_utils_basic_ansible_module_type_check(self):
         from ansible.module_utils import basic
 
@@ -374,6 +539,52 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         # fail, because bar does not accept floating point numbers
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bar": 123.0}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+    def test_module_utils_basic_ansible_module_options_type_check(self):
+        from ansible.module_utils import basic
+
+        options_spec = dict(
+            foo=dict(type='float'),
+            foo2=dict(type='float'),
+            foo3=dict(type='float'),
+            bar=dict(type='int'),
+            bar2=dict(type='int'),
+        )
+
+        arg_spec = dict(foobar=dict(type='list', elements='dict', options=options_spec))
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{
+            "foo": 123.0,  # float
+            "foo2": 123,  # int
+            "foo3": "123",  # string
+            "bar": 123,  # int
+            "bar2": "123",  # string
+        }]}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+        # fail, because bar does not accept floating point numbers
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"bar": 123.0}]}))
 
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None

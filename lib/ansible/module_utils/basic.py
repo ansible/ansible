@@ -778,7 +778,8 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None):
+                 required_if=None, bypass_options_checks=False, options_mutually_exclusive=None,
+                 options_required_together=None, options_required_one_of=None, options_required_if=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -790,11 +791,7 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
-        self.bypass_checks = bypass_checks
         self.no_log = no_log
-        self.mutually_exclusive = mutually_exclusive
-        self.required_together = required_together
-        self.required_one_of = required_one_of
         self.required_if = required_if
         self.cleanup_files = []
         self._debug = False
@@ -868,6 +865,10 @@ class AnsibleModule(object):
             self._check_required_if(required_if)
 
         self._set_defaults(pre=False)
+
+        # deal with options sub-spec
+        self._handle_options(check_invalid_arguments, bypass_options_checks, options_mutually_exclusive,
+                             options_required_together, options_required_one_of, options_required_if)
 
         if not self.no_log:
             self._log_invocation()
@@ -1551,12 +1552,14 @@ class AnsibleModule(object):
 
         return aliases_results
 
-    def _handle_no_log_values(self, param=None):
+    def _handle_no_log_values(self, spec=None, param=None):
+        if spec is None:
+            spec = self.argument_spec
         if param is None:
             param = self.params
 
         # Use the argspec to determine which args are no_log
-        for arg_name, arg_opts in self.argument_spec.items():
+        for arg_name, arg_opts in spec.items():
             if arg_opts.get('no_log', False):
                 # Find the value for the no_log'd param
                 no_log_object = param.get(arg_name, None)
@@ -1569,10 +1572,17 @@ class AnsibleModule(object):
                     'version': arg_opts.get('removed_in_version')
                 })
 
-    def _check_arguments(self, check_invalid_arguments):
+    def _check_arguments(self, check_invalid_arguments, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
         unsupported_parameters = set()
-        for (k, v) in list(self.params.items()):
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+        if legal_inputs is None:
+            legal_inputs = self._legal_inputs
+
+        for (k, v) in list(param.items()):
 
             if k == '_ansible_check_mode' and v:
                 self.check_mode = True
@@ -1604,7 +1614,7 @@ class AnsibleModule(object):
             elif k == '_ansible_socket':
                 self._socket_path = v
 
-            elif check_invalid_arguments and k not in self._legal_inputs:
+            elif check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
 
             # clean up internal params:
@@ -1614,7 +1624,7 @@ class AnsibleModule(object):
         if unsupported_parameters:
             self.fail_json(msg="Unsupported parameters for (%s) module: %s. Supported parameters include: %s" % (self._name,
                                                                                                                  ','.join(sorted(list(unsupported_parameters))),
-                                                                                                                 ','.join(sorted(self.argument_spec.keys()))))
+                                                                                                                 ','.join(sorted(spec.keys()))))
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
@@ -1880,6 +1890,52 @@ class AnsibleModule(object):
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
+    def _handle_options(self, check_invalid_arguments, bypass_options_checks, options_mutually_exclusive,
+                        options_required_together, options_required_one_of, options_required_if):
+        ''' deal with options to create sub spec '''
+
+        for (k, v) in self.argument_spec.items():
+            wanted = v.get('type', None)
+            if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
+                spec = v.get('options', None)
+                if spec is None or not self.params[k]:
+                    continue
+
+                if isinstance(self.params[k], dict):
+                    elements = [self.params[k]]
+                else:
+                    elements = self.params[k]
+
+                for param in elements:
+                    if not isinstance(param, dict):
+                        self.fail_json(msg="value of %s must be of type dict or list of dict" % k)
+
+                    self._set_fallbacks(spec, param)
+                    options_aliases = self._handle_aliases(spec, param)
+
+                    self._handle_no_log_values(spec, param)
+
+                    options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
+
+                    self._check_arguments(check_invalid_arguments, spec, param, options_legal_inputs)
+
+                    # check exclusive early
+                    if not bypass_options_checks:
+                        self._check_mutually_exclusive(options_mutually_exclusive, param)
+
+                    self._set_defaults(pre=True, spec=spec, param=param)
+
+                    if not bypass_options_checks:
+                        self._check_required_arguments(spec, param)
+                        self._check_argument_types(spec, param)
+                        self._check_argument_values(spec, param)
+
+                        self._check_required_together(options_required_together, param)
+                        self._check_required_one_of(options_required_one_of, param)
+                        self._check_required_if(options_required_if, param)
+
+                    self._set_defaults(pre=False, spec=spec, param=param)
+
     def _check_argument_types(self, spec=None, param=None):
         ''' ensure all arguments have the requested type '''
 
@@ -1920,19 +1976,12 @@ class AnsibleModule(object):
                 e = get_exception()
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
 
-            # deal with sub options to create sub spec
-            spec = None
-            if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
-                spec = v.get('options', None)
-                if spec:
-                    self._check_required_arguments(spec, param[k])
-                    self._check_argument_types(spec, param[k])
-                    self._check_argument_values(spec, param[k])
-
-    def _set_defaults(self, pre=True, param=None):
+    def _set_defaults(self, pre=True, spec=None, param=None):
+        if spec is None:
+            spec = self.argument_spec
         if param is None:
             param = self.params
-        for (k, v) in self.argument_spec.items():
+        for (k, v) in spec.items():
             default = v.get('default', None)
             if pre is True:
                 # this prevents setting defaults on required items
@@ -1943,10 +1992,13 @@ class AnsibleModule(object):
                 if k not in param:
                     param[k] = default
 
-    def _set_fallbacks(self, param=None):
+    def _set_fallbacks(self, spec=None, param=None):
+        if spec is None:
+            spec = self.argument_spec
         if param is None:
             param = self.params
-        for (k, v) in self.argument_spec.items():
+
+        for (k, v) in spec.items():
             fallback = v.get('fallback', (None,))
             fallback_strategy = fallback[0]
             fallback_args = []
