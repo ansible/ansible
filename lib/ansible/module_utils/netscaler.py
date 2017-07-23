@@ -32,6 +32,7 @@ import json
 import re
 
 from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.six import binary_type, text_type
 
 
 class ConfigProxy(object):
@@ -260,65 +261,43 @@ def monkey_patch_nitro_api():
     from nssrc.com.citrix.netscaler.nitro.resource.base.Json import Json
 
     def new_resource_to_string_convert(self, resrc):
-        try:
-            # Line below is the actual patch
-            dict_valid_values = dict((k.replace('_', '', 1), v) for k, v in resrc.__dict__.items() if v)
-            return json.dumps(dict_valid_values)
-        except Exception as e:
-            raise e
+        # Line below is the actual patch
+        dict_valid_values = dict((k.replace('_', '', 1), v) for k, v in resrc.__dict__.items() if v)
+        return json.dumps(dict_valid_values)
     Json.resource_to_string_convert = new_resource_to_string_convert
 
     from nssrc.com.citrix.netscaler.nitro.util.nitro_util import nitro_util
 
     @classmethod
     def object_to_string_new(cls, obj):
-        try:
-            str_ = ""
-            flds = obj.__dict__
-            # Line below is the actual patch
-            flds = dict((k.replace('_', '', 1), v) for k, v in flds.items() if v)
-            if (flds):
-                for k, v in flds.items():
-                    str_ = str_ + "\"" + k + "\":"
-                    if type(v) is unicode:
-                        v = v.encode('utf8')
-                    if type(v) is bool:
-                        str_ = str_ + v
-                    elif type(v) is str:
-                        str_ = str_ + "\"" + v + "\""
-                    elif type(v) is int:
-                        str_ = str_ + "\"" + str(v) + "\""
-                    if str_:
-                        str_ = str_ + ","
-            return str_
-        except Exception as e:
-            raise e
+        output = []
+        flds = obj.__dict__
+        for k, v in ((k.replace('_', '', 1), v) for k, v in flds.items() if v):
+            output.append('"%s":' % k)
+            if isinstance(v, bool):
+                output.append(str(v))
+            elif isinstance(v, (binary_type, text_type)):
+                v = to_native(v, errors='surrogate_or_strict')
+                output.append('"%s"' % v)
+            elif isinstance(v, int):
+                output.append('"%s"' % v)
+            output.append(",")
+        return ''.join(output)
 
     @classmethod
     def object_to_string_withoutquotes_new(cls, obj):
-        try:
-            str_ = ""
-            flds = obj.__dict__
-            # Line below is the actual patch
-            flds = dict((k.replace('_', '', 1), v) for k, v in flds.items() if v)
-            i = 0
-            if (flds):
-                for k, v in flds.items():
-                    str_ = str_ + k + ":"
-                    if type(v) is unicode:
-                        v = v.encode('utf8')
-                    if type(v) is bool:
-                        str_ = str_ + v
-                    elif type(v) is str:
-                        str_ = str_ + cls.encode(v)
-                    elif type(v) is int:
-                        str_ = str_ + str(v)
-                    i = i + 1
-                    if i != (len(flds.items())) and str_:
-                        str_ = str_ + ","
-            return str_
-        except Exception as e:
-            raise e
+        output = []
+        flds = obj.__dict__
+        for k, v in ((k.replace('_', '', 1), v) for k, v in flds.items() if v):
+            output.append('%s:' % k)
+            if isinstance(v, bool):
+                output.append(str(v))
+            elif isinstance(v, (binary_type, text_type)):
+                v = to_native(v, errors='surrogate_or_strict')
+                output.append(cls.encode(v))
+            elif isinstance(v, int):
+                output.append(str(v))
+        return ','.join(output)
 
     nitro_util.object_to_string = object_to_string_new
     nitro_util.object_to_string_withoutquotes = object_to_string_withoutquotes_new
