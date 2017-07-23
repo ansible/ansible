@@ -45,6 +45,7 @@
     win_service:
       name: '{{test_win_service_pause_name}}'
       state: stopped
+      force: True
     when: pause_service_details.state == 'stopped'
 
   - name: make sure all services are removed in the end

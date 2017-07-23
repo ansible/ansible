@@ -866,6 +866,7 @@
   win_service:
     name: '{{test_win_service_pause_name}}'
     state: stopped
+    force: True
   register: stop_paused_service_check
   check_mode: yes
 
@@ -879,6 +880,7 @@
   win_service:
     name: '{{test_win_service_pause_name}}'
     state: stopped
+    force: True
   register: stop_paused_service
 
 - name: assert stop a paused service
