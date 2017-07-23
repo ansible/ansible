@@ -792,7 +792,6 @@ class AnsibleModule(object):
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
         self.no_log = no_log
-        self.required_if = required_if
         self.cleanup_files = []
         self._debug = False
         self._diff = False
