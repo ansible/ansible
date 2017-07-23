@@ -248,8 +248,7 @@ class LibcloudInventory(object):
 
         node = self.get_node(node_id)
         instance_vars = {}
-        for key in vars(instance):
-            value = getattr(instance, key)
+        for key, value in vars(node).items():
             key = self.to_safe('ec2_' + key)
 
             # Handle complex types
