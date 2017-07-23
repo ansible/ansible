@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 import ast
-import yaml
 import os
 import sys
+
+import yaml
+
+from ansible import constants as C
 from ansible.parsing.yaml.dumper import AnsibleDumper
 
 things = {}
