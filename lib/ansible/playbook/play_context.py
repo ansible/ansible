@@ -414,7 +414,7 @@ class PlayContext(Base):
                     if sudo_pass_name in variables:
                         setattr(new_info, 'become_pass', variables[sudo_pass_name])
                         break
-            if new_info.become_method == 'sudo':
+            elif new_info.become_method == 'su':
                 for su_pass_name in MAGIC_VARIABLE_MAPPING.get('su_pass'):
                     if su_pass_name in variables:
                         setattr(new_info, 'become_pass', variables[su_pass_name])
