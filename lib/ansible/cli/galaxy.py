@@ -226,18 +226,18 @@ class GalaxyCLI(CLI):
             skeleton_ignore_expressions = ['^.*/.git_keep$']
 
         role_skeleton = os.path.expanduser(role_skeleton)
-        skeleton_ignore_re = list(map(lambda x: re.compile(x), skeleton_ignore_expressions))
+        skeleton_ignore_re = [re.compile(x) for x in skeleton_ignore_expressions]
 
         template_env = Environment(loader=FileSystemLoader(role_skeleton))
 
         for root, dirs, files in os.walk(role_skeleton, topdown=True):
             rel_root = os.path.relpath(root, role_skeleton)
             in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
-            dirs[:] = filter(lambda d: not any(map(lambda r: r.match(os.path.join(rel_root, d)), skeleton_ignore_re)), dirs)
+            dirs[:] = [d for d in dirs if not any(r.match(os.path.join(rel_root, d)) for r in skeleton_ignore_re)]
 
             for f in files:
                 filename, ext = os.path.splitext(f)
-                if any(map(lambda r: r.match(os.path.join(rel_root, f)), skeleton_ignore_re)):
+                if any(r.match(os.path.join(rel_root, f)) for r in skeleton_ignore_re):
                     continue
                 elif ext == ".j2" and not in_templates_dir:
                     src_template = os.path.join(rel_root, f)
@@ -343,8 +343,7 @@ class GalaxyCLI(CLI):
                                 try:
                                     roles_left += [
                                         GalaxyRole(self.galaxy, **r) for r in
-                                        map(RoleRequirement.role_yaml_parse,
-                                            yaml.safe_load(f_include))
+                                        (RoleRequirement.role_yaml_parse(i) for i in yaml.safe_load(f_include))
                                     ]
                                 except Exception as e:
                                     msg = "Unable to load data from the include requirements file: %s %s"
