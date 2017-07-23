@@ -26,14 +26,26 @@
   - TestServiceParent2
   - TestServiceDependency
 
+- name: get details of the {{test_win_service_pause_name}} service
+  win_service:
+    name: '{{test_win_service_pause_name}}'
+  register: pause_service_details
+
 - block:
   - include_tasks: tests.yml
 
   always:
-  - name: ensure the {{test_win_service_pause_name}} is started
+  - name: ensure the {{test_win_service_pause_name}} is set to started
     win_service:
       name: '{{test_win_service_pause_name}}'
       state: started
+    when: pause_service_details.state == 'running'
+
+  - name: ensure the {{test_win_service_pause_name}} is set to stopped
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: stopped
+    when: pause_service_details.state == 'stopped'
 
   - name: make sure all services are removed in the end
     win_service:

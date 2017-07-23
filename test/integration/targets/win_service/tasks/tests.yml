@@ -785,9 +785,10 @@
     - win_service_removed.state is not defined
     - win_service_removed.username is not defined
 
-- name: get details on a pausable service
+- name: start the pausable service
   win_service:
     name: '{{test_win_service_pause_name}}'
+    state: started
   register: stat_pausable_service
 
 - name: assert get details on a pausable service
