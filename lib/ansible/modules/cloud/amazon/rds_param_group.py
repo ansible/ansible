@@ -116,6 +116,20 @@ EXAMPLES = '''
       name: norwegian_blue
 '''
 
+try:
+    import boto.rds
+    from boto.exception import BotoServerError
+    HAS_BOTO = True
+except ImportError:
+    HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
+
+
 VALID_ENGINES = [
     'aurora5.6',
     'mariadb10.0',
@@ -147,12 +161,12 @@ VALID_ENGINES = [
     'sqlserver-web-12.0',
 ]
 
-try:
-    import boto.rds
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
+INT_MODIFIERS = {
+    'K': 1024,
+    'M': pow(1024, 2),
+    'G': pow(1024, 3),
+    'T': pow(1024, 4),
+}
 
 
 # returns a tuple: (whether or not a parameter was changed, the remaining parameters that weren't found in this parameter group)
@@ -168,14 +182,6 @@ class NotModifiableError(Exception):
     def __str__(self):
         return 'NotModifiableError: %s' % self.error_message
 
-INT_MODIFIERS = {
-    'K': 1024,
-    'M': pow(1024, 2),
-    'G': pow(1024, 3),
-    'T': pow(1024, 4),
-}
-
-TRUE_VALUES = ('on', 'true', 'yes', '1',)
 
 def set_parameter(param, value, immediate):
     """
@@ -187,7 +193,7 @@ def set_parameter(param, value, immediate):
         converted_value = str(value)
 
     elif param.type == 'integer':
-        if isinstance(value, basestring):
+        if isinstance(value, string_types):
             try:
                 for modifier in INT_MODIFIERS.keys():
                     if value.endswith(modifier):
@@ -203,8 +209,8 @@ def set_parameter(param, value, immediate):
             converted_value = int(value)
 
     elif param.type == 'boolean':
-        if isinstance(value, basestring):
-            converted_value = value in TRUE_VALUES
+        if isinstance(value, string_types):
+            converted_value = to_native(value) in BOOLEANS_TRUE
         else:
             converted_value = bool(value)
 
@@ -337,9 +343,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

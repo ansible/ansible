@@ -184,6 +184,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, ec2_argument_spec, HAS_BOTO3
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.six import string_types
 
 try:
     import botocore
@@ -309,7 +310,7 @@ def setup_removal(client, module):
     params = dict()
     changed = False
     params['DryRun'] = module.check_mode
-    if isinstance(module.params.get('vpc_endpoint_id'), basestring):
+    if isinstance(module.params.get('vpc_endpoint_id'), string_types):
         params['VpcEndpointIds'] = [module.params.get('vpc_endpoint_id')]
     else:
         params['VpcEndpointIds'] = module.params.get('vpc_endpoint_id')

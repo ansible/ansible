@@ -108,6 +108,10 @@ EXAMPLES = '''
     end_time: 1395954406
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
+
 def post_annotation(module):
     user = module.params['user']
     api_key = module.params['api_key']
@@ -139,7 +143,7 @@ def post_annotation(module):
     module.params['url_password'] = api_key
     response, info = fetch_url(module, url, data=json_body, headers=headers)
     if info['status'] != 200:
-        module.fail_json(msg="Request Failed", reason=e.reason)
+        module.fail_json(msg="Request Failed", reason=info.get('msg', ''), status_code=info['status'])
     response = response.read()
     module.exit_json(changed=True, annotation=response)
 
@@ -161,7 +165,6 @@ def main():
 
     post_annotation(module)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()

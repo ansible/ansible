@@ -65,14 +65,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-from ansible.module_utils.basic import AnsibleModule
 import sys
+import traceback
 
 try:
     import pan.xapi
     HAS_LIB = True
 except ImportError:
     HAS_LIB = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 def main():
     argument_spec = dict(
@@ -101,15 +105,14 @@ def main():
 
     try:
         xapi.op(cmd="<request><restart><system></system></restart></request>")
-    except Exception:
-        x = sys.exc_info()[1]
-        if 'succeeded' in str(x):
-            module.exit_json(changed=True, msg=str(msg))
+    except Exception as e:
+        if 'succeeded' in to_native(e):
+            module.exit_json(changed=True, msg=to_native(e))
         else:
-            module.fail_json(msg=x)
-            raise
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=True, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

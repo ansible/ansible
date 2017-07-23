@@ -207,9 +207,9 @@ def main():
         except IndexError:
             additions.append(rule)
 
-    eol = len(current_rules) > len(desired_rules)
+    eol = len(current_rules) - len(desired_rules)
     if eol > 0:
-        for rule in current_rules[eos:]:
+        for rule in current_rules[eol:]:
             deletions.append(rule)
 
     for rule in additions:

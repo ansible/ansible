@@ -11,6 +11,8 @@ try:
 except ImportError:
     HAS_PYRAX = False
 
+from ansible.module_utils.six.moves import input
+
 
 def rax_list_iterator(svc, *args, **kwargs):
     method = kwargs.pop('method', 'list')
@@ -53,7 +55,7 @@ def authenticate():
 
 def prompt_and_delete(item, prompt, assumeyes):
     if not assumeyes:
-        assumeyes = raw_input(prompt).lower() == 'y'
+        assumeyes = input(prompt).lower() == 'y'
     assert hasattr(item, 'delete') or hasattr(item, 'terminate'), \
         "Class <%s> has no delete or terminate attribute" % item.__class__
     if assumeyes:

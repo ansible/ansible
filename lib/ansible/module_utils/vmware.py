@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six import iteritems
 import atexit
 import os
 import ssl
@@ -32,6 +30,9 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six import integer_types, iteritems, string_types
 
 
 class TaskError(Exception):
@@ -595,17 +596,7 @@ def serialize_spec(clonespec):
             data[x] = []
             for xe in xo:
                 data[x].append(serialize_spec(xe))
-        elif issubclass(xt, str):
-            data[x] = xo
-        elif issubclass(xt, unicode):
-            data[x] = xo
-        elif issubclass(xt, int):
-            data[x] = xo
-        elif issubclass(xt, float):
-            data[x] = xo
-        elif issubclass(xt, long):
-            data[x] = xo
-        elif issubclass(xt, bool):
+        elif issubclass(xt, string_types + integer_types + (float, bool)):
             data[x] = xo
         elif issubclass(xt, dict):
             data[x] = {}
