@@ -823,9 +823,9 @@ class CloudFrontValidationManager(object):
         ]
         self.__s3_bucket_domain_identifier = '.s3.amazonaws.com'
 
-    def add_missing_key(self, dict_object, field_to_set, value_to_set):
-        if field_to_set not in dict_object:
-            dict_object[field_to_set] = value_to_set
+    def add_missing_key(self, dict_object, key_to_set, value_to_set):
+        if key_to_set not in dict_object:
+            dict_object[key_to_set] = value_to_set
         return dict_object
 
     def add_key_else_change_dict_key(self, dict_object, old_key, new_key, value_to_set):
