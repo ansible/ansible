@@ -170,7 +170,7 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
     backend = module.params.get('backend')
-    weight = long(module.params.get('weight'))
+    weight = module.params.get('weight')
     probe = module.params.get('probe')
     timeout = module.params.get('timeout')
 

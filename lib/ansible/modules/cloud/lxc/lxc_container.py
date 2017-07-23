@@ -449,6 +449,7 @@ else:
 # import module bits
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+from ansible.module_utils.six.moves import xrange
 
 
 # LXC_COMPRESSION_MAP is a map of available compression types when creating

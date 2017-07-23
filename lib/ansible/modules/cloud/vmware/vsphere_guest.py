@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 # -*- coding: utf-8 -*-
 # This file is part of Ansible
 #
@@ -308,10 +307,11 @@ EXAMPLES = '''
     force: yes
 '''
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
+import os
+import re
+import ssl
+import traceback
 
 HAS_PYSPHERE = False
 try:
@@ -323,7 +323,9 @@ try:
 except ImportError:
     pass
 
-import ssl
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
@@ -1041,11 +1043,10 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                 vm.power_off(sync_run=True)
                 vm.get_status()
 
-            except Exception:
-                e = get_exception()
-                module.fail_json(
-                    msg='Failed to shutdown vm %s: %s' % (guest, e)
-                )
+            except Exception as e:
+                module.fail_json(msg='Failed to shutdown vm %s: %s'
+                                 % (guest, to_native(e)),
+                                 exception=traceback.format_exc())
 
         if len(devices):
             spec.set_element_deviceChange(devices)
@@ -1065,10 +1066,10 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
         if vm.is_powered_off() and poweron:
             try:
                 vm.power_on(sync_run=True)
-            except Exception:
-                e = get_exception()
+            except Exception as e:
                 module.fail_json(
-                    msg='Failed to power on vm %s : %s' % (guest, e)
+                    msg='Failed to power on vm %s : %s' % (guest, to_native(e)),
+                    exception=traceback.format_exc()
                 )
 
     vsphere_client.disconnect()
@@ -1503,10 +1504,10 @@ def delete_vm(vsphere_client, module, guest, vm, force):
                     vm.power_off(sync_run=True)
                     vm.get_status()
 
-                except Exception:
-                    e = get_exception()
+                except Exception as e:
                     module.fail_json(
-                        msg='Failed to shutdown vm %s: %s' % (guest, e))
+                        msg='Failed to shutdown vm %s: %s' % (guest, to_native(e)),
+                        exception=traceback.format_exc())
             else:
                 module.fail_json(
                     msg='You must use either shut the vm down first or '
@@ -1528,10 +1529,10 @@ def delete_vm(vsphere_client, module, guest, vm, force):
             module.fail_json(msg="Error removing vm: %s %s" %
                              task.get_error_message())
         module.exit_json(changed=True, changes="VM %s deleted" % guest)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(
-            msg='Failed to delete vm %s : %s' % (guest, e))
+            msg='Failed to delete vm %s : %s' % (guest, to_native(e)),
+            exception=traceback.format_exc())
 
 
 def power_state(vm, state, force):
@@ -1571,8 +1572,8 @@ def power_state(vm, state, force):
                         % power_status
             return True
 
-        except Exception:
-            return get_exception()
+        except Exception as e:
+            return e
 
     return False
 
@@ -1650,8 +1651,9 @@ class DefaultVMConfig(object):
                                 try:
                                     if v == int:
                                         self.check_dict[key][k] = int(self.check_dict[key][k])
-                                    elif v == basestring:
-                                        self.check_dict[key][k] = str(self.check_dict[key][k])
+                                    elif v == string_types:
+                                        self.check_dict[key][k] = to_native(self.check_dict[key][k],
+                                                                            errors='surrogate_or_strict')
                                     else:
                                         raise ValueError
                                 except ValueError:
@@ -1689,29 +1691,29 @@ def main():
     proto_vm_hardware = {
         'memory_mb': int,
         'num_cpus': int,
-        'scsi': basestring,
-        'osid': basestring
+        'scsi': string_types,
+        'osid': string_types
     }
 
     proto_vm_disk = {
         'disk1': {
-            'datastore': basestring,
+            'datastore': string_types,
             'size_gb': int,
-            'type': basestring
+            'type': string_types
         }
     }
 
     proto_vm_nic = {
         'nic1': {
-            'type': basestring,
-            'network': basestring,
-            'network_type': basestring
+            'type': string_types,
+            'network': string_types,
+            'network_type': string_types
         }
     }
 
     proto_esxi = {
-        'datacenter': basestring,
-        'hostname': basestring
+        'datacenter': string_types,
+        'hostname': string_types
     }
 
     module = AnsibleModule(
@@ -1816,10 +1818,10 @@ def main():
                 module.fail_json(msg='Unable to validate the certificate of the vcenter host %s' % vcenter_hostname)
         else:
             raise
-    except VIApiException:
-        err = get_exception()
+    except VIApiException as err:
         module.fail_json(msg="Cannot connect to %s: %s" %
-                         (vcenter_hostname, err))
+                         (vcenter_hostname, to_native(err)),
+                         exception=traceback.format_exc())
 
     # Check if the VM exists before continuing
     try:
@@ -1832,16 +1834,15 @@ def main():
         if vmware_guest_facts:
             try:
                 module.exit_json(ansible_facts=gather_facts(vm))
-            except Exception:
-                e = get_exception()
-                module.fail_json(
-                    msg="Fact gather failed with exception %s" % e)
+            except Exception as e:
+                module.fail_json(msg="Fact gather failed with exception %s"
+                                 % to_native(e), exception=traceback.format_exc())
         # Power Changes
         elif state in ['powered_on', 'powered_off', 'restarted']:
             state_result = power_state(vm, state, force)
 
             # Failure
-            if isinstance(state_result, basestring):
+            if isinstance(state_result, string_types):
                 module.fail_json(msg=state_result)
             else:
                 module.exit_json(changed=state_result)
@@ -1941,7 +1942,5 @@ def main():
         vcenter=vcenter_hostname)
 
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

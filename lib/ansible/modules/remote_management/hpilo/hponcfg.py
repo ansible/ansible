@@ -93,7 +93,7 @@ def main():
 #    options += ' -v'
 
     if minfw:
-        option += ' -m %s' % minfw
+        options += ' -m %s' % minfw
 
     rc, stdout, stderr = module.run_command('hponcfg %s' % options)
 

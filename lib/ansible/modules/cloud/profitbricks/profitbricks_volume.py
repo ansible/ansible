@@ -141,6 +141,7 @@ EXAMPLES = '''
 
 import re
 import time
+import traceback
 
 HAS_PB_SDK = True
 
@@ -150,7 +151,8 @@ except ImportError:
     HAS_PB_SDK = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves import xrange
+from ansible.module_utils._text import to_native
 
 
 uuid_match = re.compile(
@@ -262,12 +264,11 @@ def create_volume(module, profitbricks):
 
         try:
             name % 0
-        except TypeError:
-            e = get_exception()
+        except TypeError as e:
             if e.message.startswith('not all'):
                 name = '%s%%d' % name
             else:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg=e.message, exception=traceback.format_exc())
 
         number_range = xrange(count_offset, count_offset + count + len(numbers))
         available_numbers = list(set(number_range).difference(numbers))
@@ -326,7 +327,7 @@ def delete_volume(module, profitbricks):
 
     for n in instance_ids:
         if(uuid_match.match(n)):
-            _delete_volume(module, profitbricks, datacenter, volume)
+            _delete_volume(module, profitbricks, datacenter, n)
             changed = True
         else:
             volumes = profitbricks.list_volumes(datacenter)
@@ -364,9 +365,8 @@ def _attach_volume(module, profitbricks, datacenter, volume):
 
         try:
             return profitbricks.attach_volume(datacenter, server, volume)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to attach volume: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to attach volume: %s' % to_native(e), exception=traceback.format_exc())
 
 
 def main():
@@ -414,9 +414,8 @@ def main():
         try:
             (changed) = delete_volume(module, profitbricks)
             module.exit_json(changed=changed)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set volume state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set volume state: %s' % to_native(e), exception=traceback.format_exc())
 
     elif state == 'present':
         if not module.params.get('datacenter'):
@@ -427,9 +426,8 @@ def main():
         try:
             (volume_dict_array) = create_volume(module, profitbricks)
             module.exit_json(**volume_dict_array)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set volume state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set volume state: %s' % to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

@@ -134,21 +134,21 @@ ansible_net_neighbors:
 
 import re
 
+try:
+    from lxml import etree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
+
 from ansible.module_utils.dellos10 import run_commands
 from ansible.module_utils.dellos10 import dellos10_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
-try:
-    from lxml import etree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
-
 
 class FactsBase(object):
 
-    COMMANDS = list()
+    COMMANDS = []
 
     def __init__(self, module):
         self.module = module
@@ -365,7 +365,7 @@ class Interfaces(FactsBase):
                 intf['mediatype'] = mediatype
             except:
                 # fanout
-                for subport in xrange(1, 5):
+                for subport in range(1, 5):
                     name = "ethernet" + sname + ":" + str(subport)
                     try:
                         intf = self.intf_facts[name]

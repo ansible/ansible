@@ -61,6 +61,8 @@ EXAMPLES = '''
     persistent: yes
 '''
 
+import os
+
 try:
     import selinux
     HAVE_SELINUX=True
@@ -72,6 +74,11 @@ try:
     HAVE_SEMANAGE=True
 except ImportError:
     HAVE_SEMANAGE=False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import binary_type
+from ansible.module_utils._text import to_bytes
+
 
 def has_boolean_value(module, name):
     bools = []
@@ -151,8 +158,7 @@ def semanage_boolean_value(module, name, state):
 
         semanage.semanage_disconnect(handle)
         semanage.semanage_handle_destroy(handle)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
     return True
 
@@ -219,17 +225,13 @@ def main():
 
     result['changed'] = r
     if not r:
-        module.fail_json(msg="Failed to set boolean %s to %s" % (name, value))
+        module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
     try:
         selinux.security_commit_booleans()
     except:
         module.fail_json(msg="Failed to commit pending boolean %s value" % name)
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six import binary_type
 
 if __name__ == '__main__':
     main()

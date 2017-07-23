@@ -23,33 +23,33 @@ $ jq '._meta.hostvars[].config' data.json | head
 
 from __future__ import print_function
 
-import argparse
 import atexit
 import datetime
 import getpass
+import json
 import os
 import re
-import six
 import ssl
 import sys
 import uuid
-
 from collections import defaultdict
-from six.moves import configparser
 from time import time
-from jinja2 import Environment
 
+import six
+from jinja2 import Environment
+from six import integer_types, string_types
+from six.moves import configparser
+
+try:
+    import argparse
+except ImportError:
+    sys.exit('Error: This inventory script required "argparse" python module.  Please install it or upgrade to python-2.7')
 
 try:
     from pyVmomi import vim, vmodl
     from pyVim.connect import SmartConnect, Disconnect
 except ImportError:
     sys.exit("ERROR: This inventory script required 'pyVmomi' Python module, it was not able to load it")
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 hasvcr = False
 try:
@@ -97,10 +97,7 @@ class VMWareInventory(object):
     skip_keys = []
     groupby_patterns = []
 
-    if sys.version_info > (3, 0):
-        safe_types = [int, bool, str, float, None]
-    else:
-        safe_types = [int, long, bool, str, float, None]
+    safe_types = [bool, str, float, None] + list(integer_types)
     iter_types = [dict, list]
 
     bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
@@ -489,7 +486,7 @@ class VMWareInventory(object):
             for k, v in inventory['_meta']['hostvars'].items():
                 if 'customvalue' in v:
                     for tv in v['customvalue']:
-                        if not isinstance(tv['value'], str) and not isinstance(tv['value'], unicode):
+                        if not isinstance(tv['value'], string_types):
                             continue
 
                         newkey = None
@@ -665,11 +662,9 @@ class VMWareInventory(object):
                 rdata = vobj.decode('ascii', 'ignore')
         elif issubclass(type(vobj), bool) or isinstance(vobj, bool):
             rdata = vobj
-        elif issubclass(type(vobj), int) or isinstance(vobj, int):
+        elif issubclass(type(vobj), integer_types) or isinstance(vobj, integer_types):
             rdata = vobj
         elif issubclass(type(vobj), float) or isinstance(vobj, float):
-            rdata = vobj
-        elif issubclass(type(vobj), long) or isinstance(vobj, long):
             rdata = vobj
         elif issubclass(type(vobj), list) or issubclass(type(vobj), tuple):
             rdata = []

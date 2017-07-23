@@ -353,8 +353,8 @@ class Ntp(object):
         if not addr_list:
             self.module.fail_json(msg='Error: Match ip-address fail.')
 
-        value = ((long(addr_list[0][0])) * 0x1000000) + (long(addr_list[0][1]) * 0x10000) + \
-            (long(addr_list[0][2]) * 0x100) + (long(addr_list[0][3]))
+        value = ((int(addr_list[0][0])) * 0x1000000) + (int(addr_list[0][1]) * 0x10000) + \
+            (int(addr_list[0][2]) * 0x100) + (int(addr_list[0][3]))
         if (value & (0xff000000) == 0x7f000000) or (value & (0xF0000000) == 0xF0000000) \
                 or (value & (0xF0000000) == 0xE0000000) or (value == 0):
             return False

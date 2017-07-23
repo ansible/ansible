@@ -204,6 +204,7 @@ EXAMPLES = '''
 import re
 import uuid
 import time
+import traceback
 
 HAS_PB_SDK = True
 
@@ -213,7 +214,8 @@ except ImportError:
     HAS_PB_SDK = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves import xrange
+from ansible.module_utils._text import to_native
 
 
 LOCATIONS = ['us/las',
@@ -401,12 +403,11 @@ def create_virtual_machine(module, profitbricks):
 
         try:
             name % 0
-        except TypeError:
-            e = get_exception()
+        except TypeError as e:
             if e.message.startswith('not all'):
                 name = '%s%%d' % name
             else:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg=e.message, exception=traceback.format_exc())
 
         number_range = xrange(count_offset, count_offset + count + len(numbers))
         available_numbers = list(set(number_range).difference(numbers))
@@ -487,9 +488,8 @@ def remove_virtual_machine(module, profitbricks):
             # Remove the server
             try:
                 server_response = profitbricks.delete_server(datacenter_id, server_id)
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="failed to terminate the virtual server: %s" % str(e))
+            except Exception as e:
+                module.fail_json(msg="failed to terminate the virtual server: %s" % to_native(e), exception=traceback.format_exc())
             else:
                 changed = True
 
@@ -504,9 +504,8 @@ def _remove_boot_volume(module, profitbricks, datacenter_id, server_id):
         server = profitbricks.get_server(datacenter_id, server_id)
         volume_id = server['properties']['bootVolume']['id']
         volume_response = profitbricks.delete_volume(datacenter_id, volume_id)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="failed to remove the server's boot volume: %s" % str(e))
+    except Exception as e:
+        module.fail_json(msg="failed to remove the server's boot volume: %s" % to_native(e), exception=traceback.format_exc())
 
 
 def startstop_machine(module, profitbricks, state):
@@ -638,9 +637,8 @@ def main():
         try:
             (changed) = remove_virtual_machine(module, profitbricks)
             module.exit_json(changed=changed)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set instance state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set instance state: %s' % to_native(e), exception=traceback.format_exc())
 
     elif state in ('running', 'stopped'):
         if not module.params.get('datacenter'):
@@ -649,9 +647,8 @@ def main():
         try:
             (changed) = startstop_machine(module, profitbricks, state)
             module.exit_json(changed=changed)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set instance state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set instance state: %s' % to_native(e), exception=traceback.format_exc())
 
     elif state == 'present':
         if not module.params.get('name'):
@@ -668,9 +665,8 @@ def main():
         try:
             (machine_dict_array) = create_virtual_machine(module, profitbricks)
             module.exit_json(**machine_dict_array)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set instance state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set instance state: %s' % to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

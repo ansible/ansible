@@ -147,9 +147,10 @@ commands:
 '''
 
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
 
 
 PARAM_TO_COMMAND_KEYMAP = {
@@ -251,8 +252,7 @@ def get_pim_interface(module, interface):
     try:
         get_data = body[0]['TABLE_iod']['ROW_iod']
 
-        if isinstance(get_data.get('dr-priority'), unicode) or \
-                isinstance(get_data.get('dr-priority'), str):
+        if isinstance(get_data.get('dr-priority'), string_types):
             pim_interface['dr_prio'] = get_data.get('dr-priority')
         else:
             pim_interface['dr_prio'] = get_data.get('dr-priority')[0]
@@ -283,8 +283,7 @@ def get_pim_interface(module, interface):
         if jp_in_policy == 'none configured':
             pim_interface['jp_policy_in'] = None
 
-        if isinstance(get_data.get('jp-out-policy-name'), unicode) or \
-                isinstance(get_data.get('jp-out-policy-name'), str):
+        if isinstance(get_data.get('jp-out-policy-name'), string_types):
             pim_interface['jp_policy_out'] = get_data.get('jp-out-policy-name')
         else:
             pim_interface['jp_policy_out'] = get_data.get(
