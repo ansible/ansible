@@ -147,15 +147,12 @@ url_map:
 '''
 
 
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
+from ast import literal_eval
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gcp import check_params, get_google_api_client, GCPUtils
+from ansible.module_utils.six import string_types
+
 
 USER_AGENT_PRODUCT = 'ansible-url_map'
 USER_AGENT_VERSION = '0.0.1'
@@ -258,7 +255,7 @@ def _validate_host_rules_params(host_rules):
         try:
             check_params(hr, fields)
             for host in hr['hosts']:
-                if not isinstance(host, basestring):
+                if not isinstance(host, string_types):
                     raise ValueError("host in hostrules must be a string")
                 elif '*' in host:
                     if host.index('*') != 0:
@@ -459,10 +456,6 @@ def main():
         project_id=dict(), ), required_together=[
             ['path_matchers', 'host_rules'], ])
 
-    if not HAS_PYTHON26:
-        module.fail_json(
-            msg="GCE module requires python's 'ast' module, python v2.6+")
-
     client, conn_params = get_google_api_client(module, 'compute', user_agent_product=USER_AGENT_PRODUCT,
                                                 user_agent_version=USER_AGENT_VERSION)
 
@@ -514,6 +507,7 @@ def main():
     json_output['changed'] = changed
     json_output.update(params)
     module.exit_json(**json_output)
+
 
 if __name__ == '__main__':
     main()

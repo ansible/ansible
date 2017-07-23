@@ -108,15 +108,17 @@ stdout_lines:
   sample: [['...', '...'], ['...'], ['...']]
 '''
 
+import json
 import os
 import re
 import tempfile
-import json
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import fetch_url, ConnectionError
 
 
-class StackiHost:
+class StackiHost(object):
 
     def __init__(self, module):
         self.module = module
@@ -199,7 +201,7 @@ class StackiHost:
                               headers=self.header, method="POST")
 
 
-    def stack_force_install(self):
+    def stack_force_install(self, result):
 
         data = dict()
         changed = False
@@ -214,15 +216,6 @@ class StackiHost:
 
         result['changed'] = changed
         result['stdout'] = "api call successful".rstrip("\r\n")
-
-
-    def stack_add_interface(self):
-
-        data['cmd'] = "add host interface {0} interface={1} ip={2} network={3} mac={4} default=true"\
-            .format(self.hostname, self.prim_intf, self.prim_intf_ip, self.network, self.prim_intf_mac)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
-                              headers=self.header, method="POST")
-
 
     def stack_add(self, result):
 
@@ -305,9 +298,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url, ConnectionError
 
 if __name__ == '__main__':
     main()

@@ -133,9 +133,12 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+import time
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.asa import asa_argument_spec, check_args
 from ansible.module_utils.asa import run_commands
+from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.six import string_types
 
 

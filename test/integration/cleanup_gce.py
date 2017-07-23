@@ -27,6 +27,8 @@ except ImportError:
 
 import gce_credentials
 
+from ansible.module_utils.six.moves import input
+
 
 def delete_gce_resources(get_func, attr, opts):
     for item in get_func():
@@ -37,7 +39,7 @@ def delete_gce_resources(get_func, attr, opts):
 
 def prompt_and_delete(item, prompt, assumeyes):
     if not assumeyes:
-        assumeyes = raw_input(prompt).lower() == 'y'
+        assumeyes = input(prompt).lower() == 'y'
     assert hasattr(item, 'destroy'), "Class <%s> has no delete attribute" % item.__class__
     if assumeyes:
         item.destroy()

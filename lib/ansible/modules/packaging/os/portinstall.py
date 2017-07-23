@@ -68,10 +68,13 @@ EXAMPLES = '''
     state: absent
 '''
 
-
-import shlex
 import os
+import re
 import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
+
 
 def query_package(module, name):
 
@@ -81,7 +84,7 @@ def query_package(module, name):
     if pkg_info_path:
         pkgng = False
         pkg_glob_path = module.get_bin_path('pkg_glob', True)
-        rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, shlex_quote(name)), use_unsafe_shell=True)
     else:
         pkgng = True
         pkg_info_path = module.get_bin_path('pkg', True)
@@ -137,11 +140,13 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(package)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, shlex_quote(package)), use_unsafe_shell=True)
 
         if query_package(module, package):
             name_without_digits = re.sub('[0-9]', '', package)
-            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(name_without_digits)),use_unsafe_shell=True)
+            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path,
+                                                              shlex_quote(name_without_digits)),
+                                                              use_unsafe_shell=True)
             if query_package(module, package):
                 module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
@@ -211,8 +216,6 @@ def main():
     elif p["state"] == "absent":
         remove_packages(module, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

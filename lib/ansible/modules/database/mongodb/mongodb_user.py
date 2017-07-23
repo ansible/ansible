@@ -203,6 +203,7 @@ user:
 
 import os
 import ssl as ssl_lib
+import traceback
 from distutils.version import LooseVersion
 
 try:
@@ -221,8 +222,9 @@ else:
     pymongo_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_native
 
 
 # =========================================
@@ -333,7 +335,7 @@ def check_if_roles_changed(uinfo, roles, db_name):
     def make_sure_roles_are_a_list_of_dict(roles, db_name):
         output = list()
         for role in roles:
-            if isinstance(role, basestring):
+            if isinstance(role, (binary_type, text_type)):
                 new_role = { "role": role, "db": db_name }
                 output.append(new_role)
             else:
@@ -427,9 +429,8 @@ def main():
                 module.fail_json(msg='The localhost login exception only allows the first admin account to be created')
             #else: this has to be the first admin user added
 
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg='unable to connect to database: %s' % str(e))
+    except Exception as e:
+        module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
 
     if state == 'present':
         if password is None and update_password == 'always':
@@ -447,9 +448,8 @@ def main():
                 module.exit_json(changed=True, user=user)
 
             user_add(module, client, db_name, user, password, roles)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='Unable to add or update user: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='Unable to add or update user: %s' % to_native(e), exception=traceback.format_exc())
 
             # Here we can  check password change if mongo provide a query for that : https://jira.mongodb.org/browse/SERVER-22848
             #newuinfo = user_find(client, user, db_name)
@@ -459,9 +459,8 @@ def main():
     elif state == 'absent':
         try:
             user_remove(module, client, db_name, user)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='Unable to remove user: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='Unable to remove user: %s' % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=True, user=user)
 

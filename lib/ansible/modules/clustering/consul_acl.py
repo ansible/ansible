@@ -140,6 +140,10 @@ except ImportError:
 
 from requests.exceptions import ConnectionError
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
+
+
 def execute(module):
 
     state = module.params.get('state')
@@ -216,22 +220,17 @@ def load_rules_for_token(module, consul_api, token):
         rules = Rules()
         info = consul_api.acl.info(token)
         if info and info['Rules']:
-            rule_set = hcl.loads(to_ascii(info['Rules']))
+            rule_set = hcl.loads(to_bytes(info['Rules'], errors='ignore', nonstring='passthru'))
             for rule_type in rule_set:
                 for pattern, policy in rule_set[rule_type].items():
                     rules.add_rule(rule_type, Rule(pattern, policy['policy']))
-        return rules
     except Exception as e:
         module.fail_json(
             msg="Could not load rule list from retrieved rule data %s, %s" % (
                 token, e))
 
-    return json_to_rules(module, loaded)
+    return rules
 
-def to_ascii(unicode_string):
-    if isinstance(unicode_string, unicode):
-        return unicode_string.encode('ascii', 'ignore')
-    return unicode_string
 
 def yml_to_rules(module, yml_rules):
     rules = Rules()
@@ -275,7 +274,7 @@ class Rules:
         for rule_type in RULE_TYPES:
             for pattern, rule in self.rules[rule_type].items():
                 rules += template % (rule_type, pattern, rule.policy)
-        return to_ascii(rules)
+        return to_bytes(rules, errors='ignore', nonstring='passthru')
 
     def __len__(self):
         count = 0
@@ -362,7 +361,6 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

@@ -1,4 +1,3 @@
-hacking/conf2yaml.py
 lib/ansible/cli/config.py
 lib/ansible/config/data.py
 lib/ansible/config/manager.py
@@ -172,7 +171,6 @@ lib/ansible/modules/cloud/rackspace/rax_dns_record.py
 lib/ansible/modules/cloud/rackspace/rax_facts.py
 lib/ansible/modules/cloud/rackspace/rax_files.py
 lib/ansible/modules/cloud/rackspace/rax_keypair.py
-lib/ansible/modules/cloud/rackspace/rax_meta.py
 lib/ansible/modules/cloud/rackspace/rax_mon_alarm.py
 lib/ansible/modules/cloud/rackspace/rax_mon_check.py
 lib/ansible/modules/cloud/rackspace/rax_mon_entity.py
@@ -396,7 +394,6 @@ lib/ansible/modules/network/panos/panos_interface.py
 lib/ansible/modules/network/panos/panos_loadcfg.py
 lib/ansible/modules/network/panos/panos_mgtconfig.py
 lib/ansible/modules/network/panos/panos_pg.py
-lib/ansible/modules/network/panos/panos_restart.py
 lib/ansible/modules/network/panos/panos_service.py
 lib/ansible/modules/net_tools/snmp_facts.py
 lib/ansible/modules/network/sros/sros_command.py

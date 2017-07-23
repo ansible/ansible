@@ -319,6 +319,10 @@ class PlayContext(Base):
         '''
         Sets attributes from the task if they are set, which will override
         those from the play.
+
+        :arg task: the task object with the parameters that were set on it
+        :arg variables: variables from inventory
+        :arg templar: templar instance if templating variables is needed
         '''
 
         new_info = self.copy()
@@ -403,9 +407,9 @@ class PlayContext(Base):
         # become legacy updates -- from commandline
         if not new_info.become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
-                setattr(new_info, 'become_pass', new_info.sudo_pass)
+                new_info.become_pass = new_info.sudo_pass
             elif new_info.become_method == 'su' and new_info.su_pass:
-                setattr(new_info, 'become_pass', new_info.su_pass)
+                new_info.become_pass = new_info.su_pass
 
         # become legacy updates -- from inventory file (inventory overrides
         # commandline)

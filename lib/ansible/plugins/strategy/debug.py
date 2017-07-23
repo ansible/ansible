@@ -177,6 +177,5 @@ class Debugger(cmd.Cmd):
     def default(self, line):
         try:
             self.execute(line)
-            display.display(pprint.pformat(result))
         except:
             pass

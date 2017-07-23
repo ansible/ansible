@@ -336,8 +336,8 @@ state:
     }
 '''  # NOQA
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.six import integer_types
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -366,7 +366,7 @@ def validate_rule(rule, rule_type=None):
     priority = rule.get('priority', None)
     if not priority:
         raise Exception("Rule priority is required.")
-    if not isinstance(priority, (int, long)):
+    if not isinstance(priority, integer_types):
         raise Exception("Rule priority attribute must be an integer.")
     if rule_type != 'default' and (priority < 100 or priority > 4096):
         raise Exception("Rule priority must be between 100 and 4096")
@@ -715,6 +715,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
 def main():
     AzureRMSecurityGroup()
+
 
 if __name__ == '__main__':
     main()

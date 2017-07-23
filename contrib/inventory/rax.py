@@ -170,9 +170,9 @@ from time import time
 
 from ansible.constants import get_config
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import text_type
 
-
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
+NON_CALLABLES = (text_type, str, bool, dict, int, list, type(None))
 
 
 def load_config_file():

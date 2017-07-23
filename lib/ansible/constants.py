@@ -34,12 +34,8 @@ for setting in _config.data.get_settings():
 
 def mk_boolean(value):
     ''' moved to module_utils'''
-    try:
-        from __main__ import display
-    except:
-        pass
-    else:
-        display.deprecated('ansible.constants.mk_boolean() is deprecated.  Use ansible.module_utils.parsing.convert_bool.boolean() instead', version='2.8')
+    # We don't have a display here so we can't call deprecated
+    # display.deprecated('ansible.constants.mk_boolean() is deprecated.  Use ansible.module_utils.parsing.convert_bool.boolean() instead', version='2.8')
     return boolean(value, strict=False)
 
 

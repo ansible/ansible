@@ -200,8 +200,9 @@ changed:
     sample: true
 '''
 
-import re
 import copy
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ce import ce_argument_spec, load_config, get_nc_config, set_nc_config
 
@@ -322,7 +323,7 @@ class NtpAuth(object):
             self.module.fail_json(
                 msg='Error: key_id is not digit.')
 
-        if (long(self.key_id) < 1) or (long(self.key_id) > 4294967295):
+        if (int(self.key_id) < 1) or (int(self.key_id) > 4294967295):
             self.module.fail_json(
                 msg='Error: The length of key_id is between 1 and 4294967295.')
 

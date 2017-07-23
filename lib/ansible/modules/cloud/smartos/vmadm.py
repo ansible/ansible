@@ -346,17 +346,18 @@ state:
   sample: 'running'
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils._text import to_native
 import os
 import re
 import tempfile
 import traceback
+
 try:
     import json
 except ImportError:
     import simplejson as json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 # While vmadm(1M) supports a -E option to return any errors in JSON, the
 # generated JSON does not play well with the JSON parsers of Python.
@@ -377,11 +378,10 @@ def get_vm_prop(module, uuid, prop):
 
     try:
         stdout_json = json.loads(stdout)
-    except:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(
-            msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(alias),
-            details=to_native(e))
+            msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(uuid),
+            details=to_native(e), exception=traceback.format_exc())
 
     if len(stdout_json) > 0 and prop in stdout_json[0]:
         return stdout_json[0][prop]
@@ -408,11 +408,10 @@ def get_vm_uuid(module, alias):
     else:
         try:
             stdout_json = json.loads(stdout)
-        except:
-            e = get_exception()
+        except Exception as e:
             module.fail_json(
                 msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(alias),
-                details=to_native(e))
+                details=to_native(e), exception=traceback.format_exc())
 
         if len(stdout_json) > 0 and 'uuid' in stdout_json[0]:
             return stdout_json[0]['uuid']
@@ -430,9 +429,9 @@ def get_all_vm_uuids(module):
     try:
         stdout_json = json.loads(stdout)
         return [v['uuid'] for v in stdout_json]
-    except:
-        e = get_exception()
-        module.fail_json(msg='Could not retrieve VM UUIDs', details=to_native(e))
+    except Exception as e:
+        module.fail_json(msg='Could not retrieve VM UUIDs', details=to_native(e),
+                         exception=traceback.format_exc())
 
 
 def new_vm(module, uuid, vm_state):

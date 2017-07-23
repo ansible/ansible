@@ -161,6 +161,7 @@ else:
     HAS_XML = True
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 ALL_COMMANDS = []
@@ -278,7 +279,7 @@ class LibvirtConnection(object):
                     if res == 0:
                         return True
             #  command, section, parentIndex, xml, flags=0
-            self.module.fail_json(msg='updating this is not supported yet '+unicode(xml))
+            self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
