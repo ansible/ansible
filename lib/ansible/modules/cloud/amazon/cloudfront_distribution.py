@@ -752,7 +752,7 @@ class CloudFrontValidationManager(object):
             'PriceClass_200',
             'PriceClass_All'
         ]
-        self.__valid_custom_origin_protocol_policies = [
+        self.__valid_origin_protocol_policies = [
             'http-only',
             'match-viewer',
             'https-only'
@@ -823,6 +823,28 @@ class CloudFrontValidationManager(object):
         ]
         self.__s3_bucket_domain_identifier = '.s3.amazonaws.com'
 
+    def add_missing_key(self, dict_object, field_to_set, value_to_set):
+        if field_to_set not in dict_object:
+            dict_object[field_to_set] = value_to_set
+        return dict_object
+
+    def add_key_else_change_dict_key(self, dict_object, old_key, new_key, value_to_set):
+        if old_key not in dict_object:
+            dict_object[new_key] = value_to_set
+        else:
+            dict_object = helpers.change_dict_key_name(dict_object, old_key, new_key)
+        return dict_object
+
+    def add_key_else_validate(self, dict_object, key_name, attribute_name, value_to_set, valid_values, to_aws_list=False):
+        if key_name in dict_object:
+            self.validate_attribute_with_allowed_values(attribute, attribute_name, valid_values)
+        else:
+            if to_aws_list:
+                dict_object[key_name] = helpers.python_list_to_aws_list(value_to_set)
+            else:
+                dict_object[key_name] = value_to_set
+        return dict_object
+
     def validate_logging(self, logging, streaming):
         try:
             if logging is None:
@@ -868,14 +890,16 @@ class CloudFrontValidationManager(object):
         except Exception as e:
             self.module.fail_json(msg="Error validating distribution origins - " + str(e) + "\n" + traceback.format_exc())
 
+    def validate_required_key(self, key_name, full_key_name, dict_object):
+        if key_name not in dict_object:
+            self.module.fail_json(full_key_name + " must be specified.")
+
     def validate_origin(self, origin, default_origin_path, default_s3_origin_access_identity, streaming):
         try:
-            if 'origin_path' not in origin:
-                origin['origin_path'] = default_origin_path or ''
+            origin = self.add_missing_key(origin, 'origin_path', (default_origin_path or ''))
             if 'domain_name' not in origin:
                 self.module.fail_json(msg="origins[].domain_name must be specified for an origin.")
-            if 'id' not in origin:
-                origin['id'] = self.__default_datetime_string
+            origin = self.add_missing_key(origin, 'id', self.__default_datetime_string)
             if 'custom_headers' in origin and streaming:
                 self.module.fail_json(msg="custom_headers has been specified for a streaming distribution. Custom headers are for web distributions only.")
             if 'custom_headers' in origin and len(origin.get('custom_headers')) > 0:
@@ -890,32 +914,17 @@ class CloudFrontValidationManager(object):
                     origin["s3_origin_config"] = {}
                     origin['s3_origin_config']['origin_access_identity'] = default_s3_origin_access_identity or ''
             else:
-                if 'custom_origin_config' not in origin:
-                    origin['custom_origin_config'] = {}
+                origin = self.add_missing_key(origin, 'custom_origin_config', {})
                 custom_origin_config = origin.get('custom_origin_config')
-                if 'origin_protocol_policy' not in custom_origin_config:
-                    custom_origin_config['origin_protocol_policy'] = self.__default_custom_origin_protocol_policy
-                else:
-                    self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_protocol_policy'),
-                                                                'origins[].custom_origin_config.origin_protocol_policy', self.__valid_origin_protocol_policies)
-                if 'origin_read_timeout' not in custom_origin_config:
-                    custom_origin_config['origin_read_timeout'] = self.__default_custom_origin_read_timeout
-                if 'origin_keepalive_timeout' not in custom_origin_config:
-                    custom_origin_config['origin_keepalive_timeout'] = self.__default_custom_origin_keepalive_timeout
-                if 'http_port' not in custom_origin_config:
-                    custom_origin_config['h_t_t_p_port'] = self.__default_http_port
-                else:
-                    custom_origin_config = helpers.change_dict_key_name(custom_origin_config, 'http_port', 'h_t_t_p_port')
-                if 'https_port' not in custom_origin_config:
-                    custom_origin_config['h_t_t_p_s_port'] = self.__default_https_port
-                else:
-                    custom_origin_config = helpers.change_dict_key_name(custom_origin_config, 'https_port', 'h_t_t_p_s_port')
-                if 'origin_ssl_protocols' not in custom_origin_config:
-                    temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
-                else:
-                    self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_ssl_protocols'), 'origins[].origin_ssl_protocols',
-                                                                self.__valid_origin_ssl_protocols)
-                custom_origin_config['origin_ssl_protocols'] = helpers.python_list_to_aws_list(temp_origin_ssl_protocols)
+                custom_origin_config = self.add_key_else_validate(custom_origin_config, 'origin_protocol_policy',
+                                                                  'origins[].custom_origin_config.origin_protocol_policy',
+                                                                  self.__default_custom_origin_protocol_policy, self.__valid_origin_protocol_policies)
+                custom_origin_config = self.add_missing_key(custom_origin_config, 'origin_read_timeout', self.__default_custom_origin_read_timeout)
+                custom_origin_config = self.add_missing_key(custom_origin_config, 'origin_keepalive_timeout', self.__default_custom_origin_keepalive_timeout)
+                custom_origin_config = self.add_key_else_change_dict_key(custom_origin_config, 'http_port', 'h_t_t_p_port', self.__default_http_port)
+                custom_origin_config = self.add_key_else_change_dict_key(custom_origin_config, 'https_port', 'h_t_t_p_s_port', self.__default_https_port)
+                custom_origin_config = self.add_key_else_validate(custom_origin_config, 'origin_ssl_protocols', 'origins[].origin_ssl_protocols',
+                                                                  self.__default_origin_ssl_protocols, self.__valid_origin_ssl_protocols, True)
             return origin
         except Exception as e:
             self.module.fail_json(msg="Error validating distribution origin - " + str(e) + "\n" + traceback.format_exc())
@@ -944,29 +953,14 @@ class CloudFrontValidationManager(object):
 
     def validate_cache_behavior_first_level_keys(self, cache_behavior, valid_origins, is_default_cache):
         try:
-            if 'min_ttl' not in cache_behavior:
-                cache_behavior['min_t_t_l'] = self.__default_cache_behavior_min_ttl
-            else:
-                cache_behavior = helpers.change_dict_key_name(cache_behavior, 'min_ttl', 'min_t_t_l')
-            if 'max_ttl' not in cache_behavior:
-                cache_behavior['max_t_t_l'] = self.__default_cache_behavior_max_ttl
-            else:
-                cache_behavior = helpers.change_dict_key_name(cache_behavior, 'max_ttl', 'max_t_t_l')
-            if 'default_ttl' not in cache_behavior:
-                cache_behavior['default_t_t_l'] = self.__default_cache_behavior_default_ttl
-            else:
-                cache_behavior = helpers.change_dict_key_name(cache_behavior, 'default_ttl', 'default_t_t_l')
-            if 'compress' not in cache_behavior:
-                cache_behavior['compress'] = self.__default_cache_behavior_compress
-            if is_default_cache and 'target_origin_id' not in cache_behavior:
-                cache_behavior['target_origin_id'] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
-            if 'viewer_protocol_policy' not in cache_behavior:
-                cache_behavior['viewer_protocol_policy'] = self.__default_cache_behavior_viewer_protocol_policy
-            else:
-                self.validate_attribute_with_allowed_values(cache_behavior.get('viewer_protocol_policy'), 'cache_behavior.viewer_protocol_policy',
-                                                            self.__valid_viewer_protocol_policies)
-            if 'smooth_streaming' not in cache_behavior:
-                cache_behavior['smooth_streaming'] = self.__default_cache_behavior_smooth_streaming
+            cache_behavior = self.add_key_else_change_dict_key(cache_behavior, 'min_ttl', 'min_t_t_l', self.__default_cache_behavior_min_ttl)
+            cache_behavior = self.add_key_else_change_dict_key(cache_behavior, 'max_ttl', 'max_t_t_l', self.__default_cache_behavior_max_ttl)
+            cache_behavior = self.add_key_else_change_dict_key(cache_behavior, 'default_ttl', 'default_t_t_l', self.__default_cache_behavior_default_ttl)
+            cache_behavior = self.add_missing_key(cache_behavior, 'compress', self.__default_cache_behavior_compress)
+            cache_behavior = self.add_missing_key(cache_behavior, 'target_origin_id', self.get_first_origin_id_for_default_cache_behavior(valid_origins))
+            cache_behavior = self.add_key_else_validate(cache_behavior, 'viewer_protocol_policy', 'cache_behavior.viewer_protocol_policy',
+                                                        self.__default_cache_behavior_viewer_protocol_policy, self.__valid_viewer_protocol_policies)
+            cache_behavior = self.add_missing_key(cache_behavior, 'smooth_streaming', self.__default_cache_behavior_smooth_streaming)
             return cache_behavior
         except Exception as e:
             self.module.fail_json(msg="Error validating distribution cache behavior first level keys - " + str(e) + "\n" + traceback.format_exc())
@@ -977,16 +971,14 @@ class CloudFrontValidationManager(object):
                 forwarded_values = {}
             forwarded_values['headers'] = helpers.python_list_to_aws_list(forwarded_values.get('headers'))
             if 'cookies' not in forwarded_values:
-                forwarded_values['cookies'] = {}
-                forwarded_values['cookies']['forward'] = self.__default_cache_behavior_forwarded_values_forward_cookies
+                forwarded_values['cookies'] = {'forward': self.__default_cache_behavior_forwarded_values_forward_cookies}
             else:
                 forwarded_values['cookies']['whitelisted_names'] = helpers.python_list_to_aws_list(forwarded_values.get('cookies').get('whitelisted_names'))
                 cookie_forwarding = forwarded_values.get('cookies').get('forward')
                 self.validate_attribute_with_allowed_values(cookie_forwarding, 'cache_behavior.forwarded_values.cookies.forward',
                                                             self.__valid_cookie_forwarding)
             forwarded_values['query_string_cache_keys'] = helpers.python_list_to_aws_list(forwarded_values.get('query_string_cache_keys'))
-            if 'query_string' not in forwarded_values:
-                forwarded_values['query_string'] = self.__default_cache_behavior_forwarded_values_query_string
+            forwarded_values = self.add_missing_key(forwarded_values, 'query_string', self.__default_cache_behavior_forwarded_values_query_string)
             cache_behavior['forwarded_values'] = forwarded_values
             return cache_behavior
         except Exception as e:
@@ -997,11 +989,9 @@ class CloudFrontValidationManager(object):
             if lambda_function_associations is not None:
                 self.validate_is_list(lambda_function_associations, 'lambda_function_associations')
                 for association in lambda_function_associations:
-                    if 'lambda_function_arn' in association:
-                        association = helpers.change_dict_key_name(association, 'lambda_function_arn', 'lambda_function_a_r_n')
-                    if 'event_type' in association:
-                        self.validate_attribute_with_allowed_values(association.get('event_type'), 'cache_behaviors[].lambda_function_associations.event_type',
-                                                                    self.__valid_lambda_function_association_event_types)
+                    association = helpers.change_dict_key_name(association, 'lambda_function_arn', 'lambda_function_a_r_n')
+                    self.validate_attribute_with_allowed_values(association.get('event_type'), 'cache_behaviors[].lambda_function_associations.event_type',
+                                                                self.__valid_lambda_function_association_event_types)
             cache_behavior['lambda_function_associations'] = helpers.python_list_to_aws_list(lambda_function_associations)
             return cache_behavior
         except Exception as e:
@@ -1010,8 +1000,7 @@ class CloudFrontValidationManager(object):
     def validate_allowed_methods(self, allowed_methods, cache_behavior):
         try:
             if allowed_methods is not None:
-                if 'items' not in allowed_methods:
-                    self.module.fail_json(msg="cache_behavior.allowed_methods.items[] must be specified.")
+                self.validate_required_key('items', 'cache_behavior.allowed_methods.items[]', allowed_methods)
                 temp_allowed_items = allowed_methods.get('items')
                 self.validate_is_list(temp_allowed_items, 'cache_behavior.allowed_methods.items')
                 self.validate_attribute_list_with_allowed_list(temp_allowed_items, 'cache_behavior.allowed_items.allowed_methods[]',
@@ -1031,10 +1020,8 @@ class CloudFrontValidationManager(object):
         try:
             if trusted_signers is None:
                 trusted_signers = {}
-            if 'enabled' not in trusted_signers:
-                trusted_signers['enabled'] = self.__default_trusted_signers_enabled
-            if 'items' not in trusted_signers:
-                trusted_signers['items'] = []
+            trusted_signers = self.add_missing_key(trusted_signers, 'enabled', self.__default_trusted_signers_enabled)
+            trusted_signers = self.add_missing_key(trusted_signers, 'items', [])
             valid_trusted_signers = helpers.python_list_to_aws_list(trusted_signers.get('items'))
             valid_trusted_signers['enabled'] = trusted_signers.get('enabled')
             cache_behavior['trusted_signers'] = valid_trusted_signers
@@ -1045,17 +1032,15 @@ class CloudFrontValidationManager(object):
     def validate_s3_origin(self, s3_origin, default_s3_origin_domain_name, default_streaming_s3_origin_access_identity):
         try:
             if s3_origin is not None:
-                if 'domain_name' not in s3_origin:
-                    self.module.fail_json("s3_origin.domain_name must be specified for s3_origin.")
-                if 'origin_access_identity' not in s3_origin:
-                    self.module.fail_json("s3_origin.origin_origin_access_identity must be specified for s3_origin.")
+                self.validate_required_key('domain_name', 's3_origin.domain_name', s3_origin)
+                self.validate_required_key('origin_access_identity', 's3_origin.origin_access_identity', s3_origin)
                 return s3_origin
             s3_origin = {}
             if default_s3_origin_domain_name is not None:
                 s3_origin['domain_name'] = default_s3_origin_domain_name
             else:
                 self.module.fail_json(msg="s3_origin and default_s3_origin_domain_name not specified. Please specify one.")
-            s3_origin['origin_access_identity'] = default_streaming_s3_origin_access_identity or ''
+            s3_origin = self.add_missing_key(s3_origin, 'origin_access_identity', (default_streaming_s3_origin_access_identity or ''))
             return s3_origin
         except Exception as e:
             self.module.fail_json(msg="Error validating s3 origin - " + str(e) + "\n" + traceback.format_exc())
@@ -1067,21 +1052,15 @@ class CloudFrontValidationManager(object):
             if viewer_certificate.get('cloudfront_default_certificate') and viewer_certificate.get('ssl_support_method') is not None:
                 self.module.fail_json(msg="viewer_certificate.ssl_support_method should not be specified with viewer_certificate_cloudfront_default" +
                                       "_certificate set to true.")
-            if 'ssl_support_method' in viewer_certificate:
-                self.validate_attribute_with_allowed_values(viewer_certificate.get('ssl_support_method'), 'viewer_certificate.ssl_support_method',
-                                                            self.__valid_viewer_certificate_ssl_support_methods)
-            if 'minimum_protocol_version' in viewer_certificate:
-                self.validate_attribute_with_allowed_values(viewer_certificate.get('minimum_protocol_version'), 'viewer_certificate.minimum_protocol_version',
-                                                            self.__valid_viewer_certificate_minimum_protocol_versions)
-            if 'certificate_source' in viewer_certificate:
-                self.validate_attribute_with_allowed_values(viewer_certificate.get('certificate_source'), 'viewer_certificate.certificate_source',
-                                                            self.__valid_viewer_certificate_certificate_sources)
-            if 'ssl_support_method' in viewer_certificate:
-                viewer_certificate = helpers.change_dict_key_name(viewer_certificate, 'ssl_support_method', 's_s_l_support_method')
-            if 'iam_certificate' in viewer_certificate:
-                viewer_certificate = helpers.change_dict_key_name(viewer_certificate, 'iam_certificate_id', 'i_a_m_certificate_id')
-            if 'acm_certificate' in viewer_certificate:
-                viewer_certificate = helpers.change_dict_key_name(viewer_certificate, 'acm_certificate_arn', 'a_c_m_certificate_arn')
+            self.validate_attribute_with_allowed_values(viewer_certificate.get('ssl_support_method'), 'viewer_certificate.ssl_support_method',
+                                                        self.__valid_viewer_certificate_ssl_support_methods)
+            self.validate_attribute_with_allowed_values(viewer_certificate.get('minimum_protocol_version'), 'viewer_certificate.minimum_protocol_version',
+                                                        self.__valid_viewer_certificate_minimum_protocol_versions)
+            self.validate_attribute_with_allowed_values(viewer_certificate.get('certificate_source'), 'viewer_certificate.certificate_source',
+                                                        self.__valid_viewer_certificate_certificate_sources)
+            viewer_certificate = helpers.change_dict_key_name(viewer_certificate, 'ssl_support_method', 's_s_l_support_method')
+            viewer_certificate = helpers.change_dict_key_name(viewer_certificate, 'iam_certificate_id', 'i_a_m_certificate_id')
+            viewer_certificate = helpers.change_dict_key_name(viewer_certificate, 'acm_certificate_arn', 'a_c_m_certificate_arn')
             return viewer_certificate
         except Exception as e:
             self.module.fail_json(msg="Error validating viewer certificate - " + str(e) + "\n" + traceback.format_exc())
@@ -1092,8 +1071,7 @@ class CloudFrontValidationManager(object):
                 return None
             self.validate_is_list(custom_error_responses, 'custom_error_responses')
             for custom_error_response in custom_error_responses:
-                if custom_error_response.get('error_code') is None:
-                    self.module.json_fail(msg="custom_error_responses[].error_code must be specified")
+                self.validate_required_key('error_code', 'custom_error_responses[].error_code', custom_error_response)
                 custom_error_response = helpers.change_dict_key_name(custom_error_responses, 'error_caching_min_ttl', 'error_caching_min_t_t_l')
             return helpers.python_list_to_aws_list(custom_error_responses)
         except Exception as e:
@@ -1103,12 +1081,10 @@ class CloudFrontValidationManager(object):
         try:
             if restrictions is None:
                 return None
+            self.validate_required_key('geo_restriction', 'restrictions.geo_restriction', restrictions)
             geo_restriction = restrictions.get('geo_restriction')
-            if geo_restriction is None:
-                self.module.fail_json(msg="restrictions.geo_restriction must be specified.")
+            self.validate_required_key('restriction_type', 'restrictions.geo_restriction.restriction_type', geo_restriction)
             restriction_type = geo_restriction.get('restriction_type')
-            if restriction_type is None:
-                self.module.fail_json(msg="restrictions.geo_restriction.restriction_type must be specified.")
             items = geo_restriction.get('items')
             valid_restrictions = python_list_to_aws_list(items)
             valid_restrictions['restriction_type'] = restriction_type
