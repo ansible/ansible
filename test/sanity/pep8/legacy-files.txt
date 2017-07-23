@@ -1,4 +1,3 @@
-hacking/conf2yaml.py
 lib/ansible/cli/config.py
 lib/ansible/config/data.py
 lib/ansible/config/manager.py
