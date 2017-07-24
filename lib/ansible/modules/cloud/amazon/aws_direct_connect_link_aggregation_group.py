@@ -292,7 +292,7 @@ def update_lag(client, lag_id, lag_name, min_links, num_connections, wait, wait_
                 continue
             msg = "Failed to update Direct Connect link aggregation group {0}.".format(lag_id)
             if "MinimumLinks cannot be set higher than the number of connections" in e.response['Error']['Message']:
-                msg += "Unable to set the min number of links to {0} while the LAG connections are being requested".format(min_links, num_connections)
+                msg += "Unable to set the min number of links to {0} while the LAG connections are being requested".format(min_links)
             raise DirectConnectError(msg=msg,
                                      last_traceback=traceback.format_exc(),
                                      response=e.response)
