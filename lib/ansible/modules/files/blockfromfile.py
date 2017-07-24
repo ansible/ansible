@@ -91,15 +91,17 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(required=True, aliases=['name', 'srcfile']),
+            src=dict(required=True, aliases=['name', 'srcfile', 'path'], type='path'),
             regexp=dict(required=True),
             fail_on_missing=dict(required=False, default=False, type='bool'),
+            encoding=dict(default='utf-8', type='str'),
         ),
         supports_check_mode=True
     )
 
     params = module.params
-    src = os.path.expanduser(params['src'])
+    params['regexp'] = to_text(params['regexp'], errors='surrogate_or_strict', nonstring='passthru')
+    src = params['src']
 
     if os.path.isdir(src):
         module.fail_json(rc=256, msg='Source %s is a directory !' % src)
@@ -112,7 +114,7 @@ def main():
     else:
         try:
             f = open(src, 'rb')
-            contents = to_text(f.read(), errors='surrogate_or_strict')
+            contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
             f.close()
         except IOError:
             e = get_exception()
