@@ -274,7 +274,7 @@ class PluginLoader:
                 # FIXME: I believe this is only correct for modules and
                 # module_utils.  For all other plugins we want .pyc and .pyo should
                 # bew valid
-                if full_path.endswith(('.pyc', '.pyo')):
+                if full_path.endswith(C.BLACKLIST_EXTS):
                     continue
 
                 splitname = os.path.splitext(full_name)
