@@ -565,8 +565,8 @@ group_id:
 
 HAS_SPOTINST_SDK = False
 
-import time
 import os
+import time
 from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule
@@ -1409,7 +1409,6 @@ def main():
     if not token:
         creds = retrieve_creds()
         token = creds["token"]
-
 
     client = spotinst.SpotinstClient(auth_token=token, print_output=False)
 
