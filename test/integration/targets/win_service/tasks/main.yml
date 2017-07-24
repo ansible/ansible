@@ -35,13 +35,7 @@
   - include_tasks: tests.yml
 
   always:
-  - name: ensure the {{test_win_service_pause_name}} is set to started
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: started
-    when: pause_service_details.state == 'running'
-
-  - name: ensure the {{test_win_service_pause_name}} is set to stopped
+  - name: ensure the {{test_win_service_pause_name}} is set to stopped if it was stopped
     win_service:
       name: '{{test_win_service_pause_name}}'
       state: stopped
