@@ -50,6 +50,7 @@ Ansible Changes By Release
 * run tearup and teardown of EAPI service only on EAPI tests
 * fix eos_config tests so only Eth1 and Eth2 are used
 * Fix for potential bug when using legacy inventory vars for configuring the su password.
+* Fix crash in file module when directories contain non-utf8 filenames
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
