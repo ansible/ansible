@@ -246,6 +246,8 @@ try:
 except ImportError:
     HAS_PYRAX = False
 
+from ansible.module_utils.six.moves import xrange
+
 
 def rax_find_server_image(module, server, image, boot_volume):
     if not image and boot_volume:
