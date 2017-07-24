@@ -43,6 +43,7 @@ from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 try:
     import passlib.hash
+    from passlib.utils.binary import bcrypt64
     HAS_PASSLIB = True
 except:
     HAS_PASSLIB = False
@@ -59,6 +60,16 @@ from ansible.vars.hostvars import HostVars
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
+# codes according to http://passlib.readthedocs.io/en/stable/modular_crypt_format.html#os-defined-hashes
+_CRYPT_METHODS = {
+    # hashtype: (code, salt_size)
+    'md5': ('1', 8),
+    'bcrypt': ('2b', 22),
+    'sha1': ('sha1', 16),
+    'sha256': ('5', 16),
+    'sha512': ('6', 16),
+}
 
 
 class AnsibleJSONEncoder(json.JSONEncoder):
@@ -256,52 +267,40 @@ def randomize_list(mylist, seed=None):
 
 
 def get_hash(data, hashtype='sha1'):
-
-    try:  # see if hash is supported
-        h = hashlib.new(hashtype)
-    except:
-        return None
-
+    h = hashlib.new(hashtype)
     h.update(to_bytes(data, errors='surrogate_then_strict'))
     return h.hexdigest()
 
 
 def get_encrypted_password(password, hashtype='sha512', salt=None):
+    if hashtype not in _CRYPT_METHODS:
+        raise errors.AnsibleFilterError('hash type "%s" unknown for |password_hash' % hashtype)
 
-    # TODO: find a way to construct dynamically from system
-    cryptmethod = {
-        'md5': '1',
-        'blowfish': '2a',
-        'sha256': '5',
-        'sha512': '6',
-    }
+    if salt is None:
+        r = SystemRandom()
+        salt_size = _CRYPT_METHODS[hashtype][1]
+        salt_charset = string.ascii_letters + string.digits + '/.'
+        salt = ''.join([r.choice(salt_charset) for _ in range(salt_size)])
 
-    if hashtype in cryptmethod:
-        if salt is None:
-            r = SystemRandom()
-            if hashtype in ['md5']:
-                saltsize = 8
-            else:
-                saltsize = 16
-            saltcharset = string.ascii_letters + string.digits + '/.'
-            salt = ''.join([r.choice(saltcharset) for _ in range(saltsize)])
-
-        if not HAS_PASSLIB:
-            if sys.platform.startswith('darwin'):
-                raise errors.AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
-            saltstring = "$%s$%s" % (cryptmethod[hashtype], salt)
-            encrypted = crypt.crypt(password, saltstring)
+    if HAS_PASSLIB:
+        if hashtype == 'bcrypt':
+            # see "Padding Bits" - http://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html#deviations
+            salt = bcrypt64.repair_unused(salt)
+            encrypted = passlib.hash.bcrypt.using(salt=salt).hash(password)
         else:
-            if hashtype == 'blowfish':
-                cls = passlib.hash.bcrypt
-            else:
-                cls = getattr(passlib.hash, '%s_crypt' % hashtype)
+            crypt_module = getattr(passlib.hash, '%s_crypt' % hashtype)
+            encrypted = crypt_module.using(salt=salt).hash(password)
 
-            encrypted = cls.encrypt(password, salt=salt)
+    else:
+        if sys.platform.startswith('darwin'):
+            raise errors.AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
+        salt_string = "$%s$%s" % (_CRYPT_METHODS[hashtype][0], salt)
+        encrypted = crypt.crypt(password, salt_string)
+        if not encrypted:
+            raise errors.AnsibleFilterError('your OS probably doesn\'t have support for "%s" hash type, ' % hashtype +
+                                            'try installing passlib python module for |password_hash to work')
 
-        return encrypted
-
-    return None
+    return encrypted
 
 
 def to_uuid(string):
@@ -397,9 +396,9 @@ def comment(text, style='plain', **kw):
         # Prepend each line of the text with the decorator
         text.replace(
             p['newline'], "%s%s" % (p['newline'], p['decoration'])))).replace(
-                # Remove trailing spaces when only decorator is on the line
-                "%s%s" % (p['decoration'], p['newline']),
-                "%s%s" % (p['decoration'].rstrip(), p['newline']))
+        # Remove trailing spaces when only decorator is on the line
+        "%s%s" % (p['decoration'], p['newline']),
+        "%s%s" % (p['decoration'].rstrip(), p['newline']))
     str_postfix = p['newline'].join(
         [''] + [p['postfix'] for x in range(p['postfix_count'])])
     str_end = ''

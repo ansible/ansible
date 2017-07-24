@@ -340,7 +340,7 @@ Get a string checksum::
 
 Other hashes (platform dependent)::
 
-    {{ 'test2'|hash('blowfish') }}
+    {{ 'test2'|hash('bcrypt') }}
 
 To get a sha512 password hash (random salt)::
 
@@ -348,11 +348,13 @@ To get a sha512 password hash (random salt)::
 
 To get a sha256 password hash with a specific salt::
 
-    {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt') }}
+    {{ 'secretpassword'|password_hash('sha256', '16charsLongSaltX') }}
 
 
-Hash types available depend on the master system running ansible,
-'hash' depends on hashlib password_hash depends on crypt.
+There is a support for `md5`, `sha1`, `sha256`, `sha512` and `bcrypt`,
+but concrete hash types available depends on the master system running
+Ansible – `hash` depends on hashlib, while `password_hash` depends on
+crypt (or passlib + bcrypt) python modules.
 
 .. _combine_filter:
 
