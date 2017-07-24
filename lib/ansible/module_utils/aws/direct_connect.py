@@ -60,3 +60,12 @@ def disassociate_connection_and_lag(client, connection_id, lag_id):
                                  " from link aggregation group {1}.".format(connection_id, lag_id),
                                  last_traceback=traceback.format_exc(),
                                  response=e.response)
+
+
+def delete_virtual_interface(client, virtual_interface):
+    try:
+        client.delete_virtual_interface(virtualInterfaceId=virtual_interface)
+    except botocore.exceptions.ClientError as e:
+        raise DirectConnectError(msg="Could not delete virtual interface {0}".format(virtual_interface),
+                                 last_traceback=traceback.format_exc(),
+                                 response=e.response)
