@@ -111,6 +111,7 @@ except ImportError:
     # Python 3
     import http.client as httplib
 
+import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 from ansible.module_utils.basic import get_distribution, get_exception
@@ -813,7 +814,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
-             client_cert=None, client_key=None):
+             client_cert=None, client_key=None, cookies=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -906,6 +907,10 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         handlers.append(CustomHTTPSHandler)
 
     handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
+
+    # add some nicer cookie handling
+    if cookies is not None:
+        handlers.append(urllib_request.HTTPCookieProcessor(cookies))
 
     opener = urllib_request.build_opener(*handlers)
     urllib_request.install_opener(opener)
@@ -1028,6 +1033,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     client_cert = module.params.get('client_cert')
     client_key = module.params.get('client_key')
 
+    cookies = cookiejar.LWPCookieJar()
+
     r = None
     info = dict(url=url)
     try:
@@ -1036,8 +1043,14 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
-                     client_key=client_key)
+                     client_key=client_key, cookies=cookies)
         info.update(r.info())
+        # parse the cookies into a nice dictionary
+        cookie_dict = dict()
+        for cookie in cookies:
+            cookie_dict[cookie.name] = cookie.value
+        info['cookies'] = cookie_dict
+        # finally update the result with a message about the fetch
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
     except NoSSLError:
         e = get_exception()
