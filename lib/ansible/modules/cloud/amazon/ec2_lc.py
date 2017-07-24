@@ -187,7 +187,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     import botocore
-except Exception:
+except ImportError:
     pass
 
 
