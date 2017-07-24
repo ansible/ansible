@@ -60,6 +60,13 @@ options:
     required: false
     default: rabbit
     version_added: "1.2"
+  extra_ctl_paths:
+    description:
+      - List of alternative paths to look for rabbitmqctl in
+      - Only needed when running RabbitMQ as user other than root / rabbitmq
+    required: false
+    default: ()
+    version_added: "2.4"
   state:
     description:
       - Specify if user is to be added or removed
