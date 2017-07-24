@@ -466,6 +466,7 @@ def command_sanity_pylint(args, targets):
         '--reports', 'n',
         '--max-line-length', '160',
         '--rcfile', '/dev/null',
+        '--ignored-modules', '_MovedItems',
         '--output-format', 'json',
         '--disable', ','.join(sorted(disable)),
     ] + paths

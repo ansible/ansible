@@ -91,6 +91,13 @@ Ansible Changes By Release
 * Added better cookie parsing to fetch_url/open_url. Cookies are now in a dictionary named `cookies`
   in the fetch_url result. Anything using `open_url` directly can pass a cookie object as a named arg
   (`cookies`), and then parse/format the cookies in the result.
+* The bundled copy of six in lib/ansible/module_utils/six is now used
+  unconditionally.  The code to fallback on a system six interfered with static
+  analysis of the code so the cost of using the fallback code became too high.
+  Distributions which wish to unbundle may do so by replacing the bundled six
+  in ansible/module_utils/six/__init__.py.  Six is tricky to unbundle, however,
+  so they may want to base their efforts off the code we were using:
+    * https://github.com/ansible/ansible/blob/2fff690caab6a1c6a81973f704be3fbd0bde2c2f/lib/ansible/module_utils/six/__init__.py
 
 #### New Callbacks:
 - profile_roles
