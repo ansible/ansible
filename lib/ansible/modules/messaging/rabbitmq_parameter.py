@@ -27,6 +27,8 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_parameter
 short_description: Adds or removes parameters to RabbitMQ
+extends_documentation_fragment:
+    - rabbitmq.extra_ctl_paths
 description:
   - Manage dynamic, cluster-wide parameters for RabbitMQ
 version_added: "1.1"
@@ -58,6 +60,13 @@ options:
     required: false
     default: rabbit
     version_added: "1.2"
+  extra_ctl_paths:
+    description:
+      - List of alternative paths to look for rabbitmqctl in
+      - Only needed when running RabbitMQ as user other than root / rabbitmq
+    required: false
+    default: ()
+    version_added: "2.4"
   state:
     description:
       - Specify if user is to be added or removed
@@ -73,20 +82,34 @@ EXAMPLES = """
     name: local-username
     value: '"guest"'
     state: present
+
+# Set the federation parameter 'local_username' to a value of 'guest' (in quotes)
+# using a rabbitctl from /usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin/rabbitmqctl
+- rabbitmq_parameter:
+    component: federation
+    name: local-username
+    value: '"guest"'
+    extra_ctl_paths:
+      - '/usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin'
+    state: present
+
 """
 
 class RabbitMqParameter(object):
-    def __init__(self, module, component, name, value, vhost, node):
+    def __init__(self, module, component, name, value, vhost, node,
+            extra_ctl_paths):
         self.module = module
         self.component = component
         self.name = name
         self.value = value
         self.vhost = vhost
         self.node = node
+        self.extra_ctl_paths = extra_ctl_paths
 
         self._value = None
 
-        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True,
+                self.extra_ctl_paths)
 
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
@@ -127,7 +150,8 @@ def main():
         value=dict(default=None),
         vhost=dict(default='/'),
         state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default='rabbit')
+        node=dict(default='rabbit'),
+        extra_ctl_paths=dict(default=list(), type='list')
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
@@ -142,8 +166,10 @@ def main():
     vhost = module.params['vhost']
     state = module.params['state']
     node = module.params['node']
+    extra_ctl_paths = module.params['extra_ctl_paths']
 
-    rabbitmq_parameter = RabbitMqParameter(module, component, name, value, vhost, node)
+    rabbitmq_parameter = RabbitMqParameter(module, component, name, value, vhost, node,
+                                           extra_ctl_paths)
 
     changed = False
     if rabbitmq_parameter.get():
