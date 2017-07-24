@@ -101,23 +101,20 @@ changed:
 '''
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
 WARNINGS = []
 
+
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
-        if 'show run' not in command:
+        if type(command) is str and 'show run' not in command:
             command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
 
+    body = run_commands(module, command)
     return body
 
 
@@ -174,10 +171,10 @@ def get_interface_info(interface, module):
     if not interface.startswith('loopback'):
         interface = interface.capitalize()
 
-    interface_type = get_interface_type(interface)
-    intf_module = re.split('\d+', interface)[0]
-    intf_name = interface_type + interface.split(intf_module)[1]
-    command = 'show run | section interface.{0}'.format(interface)
+    command = [{
+        'command': 'show run | section interface.{0}'.format(interface),
+        'output': 'text',
+    }]
     vrf_regex = ".*vrf\s+member\s+(?P<vrf>\S+).*"
 
     try:
@@ -226,7 +223,6 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-
 
     vrf = module.params['vrf']
     interface = module.params['interface'].lower()
@@ -305,4 +301,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

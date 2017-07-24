@@ -145,13 +145,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
+        if type(command) is str and 'show run' not in command:
+            command += ' | json'
 
+    body = run_commands(module, command)
     return body
 
 
@@ -207,6 +204,8 @@ def get_interface_mode(interface, intf_type, module):
     interface = {}
     mode = 'unknown'
     body = execute_show_command(command, module)[0]
+    #import epdb
+    #epdb.serve()
     interface_table = body['TABLE_interface']['ROW_interface']
     name = interface_table.get('interface')
 
@@ -222,8 +221,11 @@ def get_interface_mode(interface, intf_type, module):
 
 
 def get_vrr_status(group, module, interface):
-    command = 'show run all | section interface.{0}$'.format(interface)
-    body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
+    command = [{
+        'command': 'show run all | section interface.{0}$'.format(interface),
+        'output': 'text',
+    }]
+    body = execute_show_command(command, module)[0]
     vrf_index = None
     admin_state = 'shutdown'
 

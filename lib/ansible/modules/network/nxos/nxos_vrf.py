@@ -106,11 +106,10 @@ from ansible.module_utils.basic import AnsibleModule
 def execute_show_command(command, module):
     transport = module.params['transport']
     if transport == 'cli':
-        if 'show run' not in command:
+        if type(command) is str and 'show run' not in command:
             command += ' | json'
 
-    cmds = [command]
-    body = run_commands(module, cmds)
+    body = run_commands(module, command)
     return body
 
 
@@ -146,7 +145,10 @@ def get_commands_to_config_vrf(delta, vrf):
 
 
 def get_vrf_description(vrf, module):
-    command = (r'show run section vrf | begin ^vrf\scontext\s{0} | end ^vrf.*'.format(vrf))
+    command = [{
+        'command': (r'show run section vrf | begin ^vrf\scontext\s{0} | end ^vrf.*'.format(vrf)),
+        'output': 'text',
+    }]
 
     description = ''
     descr_regex = r".*description\s(?P<descr>[\S+\s]+).*"
@@ -192,7 +194,10 @@ def get_vrf(vrf, module):
     parsed_vrf = apply_key_map(vrf_key, vrf_table)
     parsed_vrf['admin_state'] = parsed_vrf['admin_state'].lower()
 
-    command = 'show run all | section vrf.context.{0}'.format(vrf)
+    command = [{
+        'command': 'show run all | section vrf.context.{0}'.format(vrf),
+        'output': 'text',
+    }]
     body = execute_show_command(command, module)[0]
     extra_params = ['vni', 'rd', 'description']
     for param in extra_params:
@@ -221,7 +226,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
     results = dict(changed=False, warnings=warnings)
-
 
     vrf = module.params['vrf']
     admin_state = module.params['admin_state'].lower()
