@@ -10,8 +10,8 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"username" in result.commands'
-      - '"secret" in result.commands'
+      - '"username" in result.commands[0]'
+      - '"secret" in result.commands[0]'
 
 - name: Collection of users (SetUp)
   iosxr_user:
