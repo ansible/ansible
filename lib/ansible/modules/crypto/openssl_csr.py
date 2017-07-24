@@ -167,11 +167,14 @@ subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
     type: list
-    sample: 'DNS:www.ansible.com,DNS:m.ansible.com'
+    sample: [ 'DNS:www.ansible.com', 'DNS:m.ansible.com' ]
 '''
 
-import errno
 import os
+
+from ansible.module_utils import crypto as crypto_utils
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 try:
     from OpenSSL import crypto
@@ -180,23 +183,22 @@ except ImportError:
 else:
     pyopenssl_found = True
 
-from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 
-
-class CertificateSigningRequestError(Exception):
+class CertificateSigningRequestError(crypto_utils.OpenSSLObjectError):
     pass
 
 
-class CertificateSigningRequest(object):
+class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
     def __init__(self, module):
-        self.state = module.params['state']
+        super(CertificateSigningRequest, self).__init__(
+            module.params['path'],
+            module.params['state'],
+            module.params['force'],
+            module.check_mode
+        )
         self.digest = module.params['digest']
-        self.force = module.params['force']
         self.subjectAltName = module.params['subjectAltName']
-        self.path = module.params['path']
         self.privatekey_path = module.params['privatekey_path']
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.version = module.params['version']
@@ -222,7 +224,7 @@ class CertificateSigningRequest(object):
     def generate(self, module):
         '''Generate the certificate signing request.'''
 
-        if not os.path.exists(self.path) or self.force:
+        if not self.check(module, perms_required=False) or self.force:
             req = crypto.X509Req()
             req.set_version(self.version)
             subject = req.get_subject()
@@ -230,15 +232,10 @@ class CertificateSigningRequest(object):
                 if value is not None:
                     setattr(subject, key, value)
 
-            altnames = self.subjectAltName[0]
-            if len(self.subjectAltName) > 1:
-                altnames = ', '.join(self.subjectAltName)
+            altnames = ', '.join(self.subjectAltName)
             req.add_extensions([crypto.X509Extension(b"subjectAltName", False, altnames.encode('ascii'))])
 
-            self.privatekey = crypto_utils.load_privatekey(
-                self.privatekey_path,
-                self.privatekey_passphrase
-            )
+            self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
 
             req.set_pubkey(self.privatekey)
             req.sign(self.privatekey, self.digest)
@@ -257,16 +254,22 @@ class CertificateSigningRequest(object):
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
-    def remove(self):
-        '''Remove the Certificate Signing Request.'''
+    def check(self, module, perms_required=True):
+        """Ensure the resource is in its desired state."""
+        state_and_perms = super(CertificateSigningRequest, self).check(module, perms_required)
 
-        try:
-            os.remove(self.path)
-        except OSError as exc:
-            if exc.errno != errno.ENOENT:
-                raise CertificateSigningRequestError(exc)
-            else:
-                self.changed = False
+        def _check_subject(csr):
+            return True  # TODO: implement this!
+
+        def _check_extensions(csr):
+            return True  # TODO: implement this!
+
+        if not state_and_perms:
+            return False
+
+        csr = crypto_utils.load_certificate_request(self.path)
+
+        return _check_subject(csr) and _check_extensions(csr)
 
     def dump(self):
         '''Serialize the object into a dictionary.'''
@@ -308,11 +311,9 @@ def main():
     if not pyopenssl_found:
         module.fail_json(msg='the python pyOpenSSL module is required')
 
-    path = module.params['path']
     base_dir = os.path.dirname(module.params['path'])
-
     if not os.path.isdir(base_dir):
-        module.fail_json(name=path, msg='The directory %s does not exist' % path)
+        module.fail_json(name=base_dir, msg='The directory %s does not exist or the file is not a directory' % base_dir)
 
     csr = CertificateSigningRequest(module)
 
@@ -320,24 +321,24 @@ def main():
 
         if module.check_mode:
             result = csr.dump()
-            result['changed'] = module.params['force'] or not os.path.exists(path)
+            result['changed'] = module.params['force'] or not csr.check(module)
             module.exit_json(**result)
 
         try:
             csr.generate(module)
-        except CertificateSigningRequestError as exc:
+        except (CertificateSigningRequestError, crypto_utils.OpenSSLObjectError) as exc:
             module.fail_json(msg=to_native(exc))
 
     else:
 
         if module.check_mode:
             result = csr.dump()
-            result['changed'] = os.path.exists(path)
+            result['changed'] = os.path.exists(module.params['path'])
             module.exit_json(**result)
 
         try:
             csr.remove()
-        except CertificateSigningRequestError as exc:
+        except (CertificateSigningRequestError, crypto_utils.OpenSSLObjectError) as exc:
             module.fail_json(msg=to_native(exc))
 
     result = csr.dump()

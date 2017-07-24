@@ -84,6 +84,17 @@ def load_certificate(path):
         raise OpenSSLObjectError(exc)
 
 
+def load_certificate_request(path):
+    """Load the specified certificate signing request."""
+
+    try:
+        csr_content = open(path, 'rb').read()
+        csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr_content)
+        return csr
+    except (IOError, OSError) as exc:
+        raise OpenSSLObjectError(exc)
+
+
 @six.add_metaclass(abc.ABCMeta)
 class OpenSSLObject(object):
 
