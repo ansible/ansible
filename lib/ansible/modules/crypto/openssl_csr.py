@@ -259,10 +259,28 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         state_and_perms = super(CertificateSigningRequest, self).check(module, perms_required)
 
         def _check_subject(csr):
-            return True  # TODO: implement this!
+            subject = csr.get_subject()
+            for (key, value) in self.subject.items():
+                if getattr(subject, key, None) != value:
+                    return False
+
+            return True
 
         def _check_extensions(csr):
-            return True  # TODO: implement this!
+            extensions = csr.get_extensions()
+            if self.subjectAltName:
+                altnames_ext = next((ext.__str__() for ext in extensions if ext.get_short_name() == b'subjectAltName'), '')
+                altnames = [altname.strip() for altname in altnames_ext.split(',')]
+
+                # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
+                # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
+                altnames = [name if not name.startswith('IP Address:') else "IP:" + name.split(':', 1)[1] for name in altnames]
+
+                for name in self.subjectAltName:
+                    if name not in altnames:
+                        return False
+
+            return True
 
         if not state_and_perms:
             return False
