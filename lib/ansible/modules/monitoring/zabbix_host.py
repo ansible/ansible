@@ -648,7 +648,8 @@ def main():
             if len(exist_interfaces) > interfaces_len:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
                                              exist_interfaces, zabbix_host_obj, proxy_id, visible_name):
-                    host.link_or_clear_template(host_id, template_ids)
+                    host.link_or_clear_template(host_id, template_ids, tls_connect_int, tls_accept_int, tls_psk_identity,
+                                                tls_psk, tls_issuer, tls_subject)
                     host.update_host(host_name, group_ids, status, host_id,
                                      interfaces, exist_interfaces, proxy_id, visible_name, tls_connect_int, tls_accept_int,
                                      tls_psk_identity, tls_psk, tls_issuer, tls_subject)
