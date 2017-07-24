@@ -313,10 +313,11 @@ instance:
 
 
 import time
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs, compile_folder_path_for_object, vmware_argument_spec
-from ansible.module_utils.vmware import serialize_spec
+from ansible.module_utils.vmware import connect_to_api, find_obj, gather_vm_facts, get_all_objs, compile_folder_path_for_object
+from ansible.module_utils.vmware import serialize_spec, find_vm_by_id, vmware_argument_spec
+
 
 try:
     import json
@@ -524,36 +525,14 @@ class PyVmomiHelper(object):
         self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
 
     def getvm(self, name=None, uuid=None, folder=None):
-
-        # https://www.vmware.com/support/developer/vc-sdk/visdk2xpubs/ReferenceGuide/vim.SearchIndex.html
-        # self.si.content.searchIndex.FindByInventoryPath('DC1/vm/test_folder')
-
         vm = None
-        searchpath = None
-
+        match_first = False
         if uuid:
-            vm = self.content.searchIndex.FindByUuid(uuid=uuid, vmSearch=True)
-        elif folder:
-            # searchpaths do not need to be absolute
-            searchpath = self.params['folder']
-
-            # get all objects for this path ...
-            f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
-
-            if f_obj:
-                if isinstance(f_obj, vim.Datacenter):
-                    f_obj = f_obj.vmFolder
-
-                for c_obj in f_obj.childEntity:
-
-                    if not isinstance(c_obj, vim.VirtualMachine):
-                        continue
-
-                    if c_obj.name == name:
-                        vm = c_obj
-                        if self.params['name_match'] == 'first':
-                            break
-
+            vm = find_vm_by_id(self.content, vm_id=uuid, vm_id_type="uuid")
+        elif folder and name:
+            if self.params['name_match'] == 'first':
+                match_first = True
+            vm = find_vm_by_id(self.content, vm_id=name, vm_id_type="inventory_path", folder=folder, match_first=match_first)
         if vm:
             self.current_vm_obj = vm
 
@@ -612,10 +591,9 @@ class PyVmomiHelper(object):
                         result['failed'] = True
                         result['msg'] = "VM %s must be in poweredon state & tools should be installed for guest shutdown/reboot" % vm.name
 
-            except Exception:
-                e = get_exception()
+            except Exception as e:
                 result['failed'] = True
-                result['msg'] = str(e)
+                result['msg'] = to_text(e)
 
             if task:
                 self.wait_for_task(task)
@@ -801,10 +779,9 @@ class PyVmomiHelper(object):
                 try:
                     vm_obj.setCustomValue(key=kv['key'], value=kv['value'])
                     self.change_detected = True
-                except Exception:
-                    e = get_exception()
+                except Exception as e:
                     self.module.fail_json(msg="Failed to set custom value for key='%s' and value='%s'. Error was: %s"
-                                          % (kv['key'], kv['value'], e))
+                                          % (kv['key'], kv['value'], to_text(e)))
 
     def customize_vm(self, vm_obj):
         # Network settings
@@ -1329,9 +1306,8 @@ class PyVmomiHelper(object):
                 task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
                 self.change_detected = True
             self.wait_for_task(task)
-        except TypeError:
-            e = get_exception()
-            self.module.fail_json(msg="TypeError was returned, please ensure to give correct inputs. %s" % e)
+        except TypeError as e:
+            self.module.fail_json(msg="TypeError was returned, please ensure to give correct inputs. %s" % to_text(e))
 
         if task.info.state == 'error':
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2021361
@@ -1469,7 +1445,7 @@ def main():
         annotation=dict(type='str', aliases=['notes']),
         customvalues=dict(type='list', default=[]),
         name=dict(type='str', required=True),
-        name_match=dict(type='str', default='first'),
+        name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
         folder=dict(type='str', default='/vm'),
         guest_id=dict(type='str'),
