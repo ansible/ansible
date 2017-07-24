@@ -126,7 +126,7 @@ options:
 
 notes:
     - "If the certificate signing request already exists it will be checked whether subjectAltName,
-       keyUsage and extendedKeyUsage only contains the requested values"
+       keyUsage and extendedKeyUsage only contain the requested values"
 '''
 
 
@@ -285,8 +285,6 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
             req.add_extensions(extensions)
 
-            self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
-
             req.set_pubkey(self.privatekey)
             req.sign(self.privatekey, self.digest)
             self.request = req
@@ -307,6 +305,8 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
     def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
         state_and_perms = super(CertificateSigningRequest, self).check(module, perms_required)
+
+        self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
 
         def _check_subject(csr):
             subject = csr.get_subject()
@@ -363,12 +363,18 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             extensions = csr.get_extensions()
             return _check_subjectAltName(extensions) and _check_keyUsage(extensions) and _check_extenededKeyUsage(extensions)
 
+        def _check_signature(csr, privatekey):
+            try:
+                return csr.verify(privatekey)
+            except crypto.Error:
+                return False
+
         if not state_and_perms:
             return False
 
         csr = crypto_utils.load_certificate_request(self.path)
 
-        return _check_subject(csr) and _check_extensions(csr)
+        return _check_subject(csr) and _check_extensions(csr) and _check_signature(csr, self.privatekey)
 
     def dump(self):
         '''Serialize the object into a dictionary.'''
