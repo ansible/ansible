@@ -37,11 +37,9 @@ options:
         choices: ['present', 'absent']
         default: "present"
     name:
-        version_added: "1.0(1e)"
         description: ip address of dns server
         required: true
     descr:
-        version_added: "1.0(1e)"
         description: description of server
         required: false
 
