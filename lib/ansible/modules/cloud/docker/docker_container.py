@@ -681,9 +681,13 @@ docker_container:
     }'
 '''
 
+import os
 import re
+import shlex
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils.basic import human_to_bytes
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, AnsibleDockerClient, DockerBaseClass, LogConfig
+from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
@@ -704,6 +708,7 @@ REQUIRES_CONVERSION_TO_BYTES = [
 ]
 
 VOLUME_PERMISSIONS = ('rw', 'ro', 'z', 'Z')
+
 
 class TaskParameters(DockerBaseClass):
     '''
@@ -1087,14 +1092,14 @@ class TaskParameters(DockerBaseClass):
             # Any published port should also be exposed
             for publish_port in published_ports:
                 match = False
-                if isinstance(publish_port, basestring) and '/' in publish_port:
+                if isinstance(publish_port, string_types) and '/' in publish_port:
                     port, protocol = publish_port.split('/')
                     port = int(port)
                 else:
                     protocol = 'tcp'
                     port = int(publish_port)
                 for exposed_port in exposed:
-                    if isinstance(exposed_port[0], basestring) and '-' in exposed_port[0]:
+                    if isinstance(exposed_port[0], string_types) and '-' in exposed_port[0]:
                         start_port, end_port = exposed_port[0].split('-')
                         if int(start_port) <= port <= int(end_port):
                             match = True
@@ -2125,8 +2130,6 @@ def main():
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

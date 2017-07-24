@@ -250,8 +250,12 @@ image:
     type: dict
     sample: {}
 '''
+import re
+import os
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2 \
+        AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils._text import to_native
 
 try:
     if HAS_DOCKER_PY_2:
@@ -519,8 +523,7 @@ class ImageManager(DockerBaseClass):
             params['container_limits'] = self.container_limits
         if self.buildargs:
             for key, value in self.buildargs.items():
-                if not isinstance(value, basestring):
-                    self.buildargs[key] = str(value)
+                self.buildargs[key] = to_native(value)
             params['buildargs'] = self.buildargs
 
         for line in self.client.build(**params):
@@ -603,9 +606,6 @@ def main():
     ImageManager(client, results)
     client.module.exit_json(**results)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
