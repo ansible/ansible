@@ -261,7 +261,7 @@ class CloudFormsInventory(object):
 
         while not last_page:
             offset = page * limit
-            ret = self._get_json("%s/api/vms?offset=%s&limit=%s&expand=resources,tags,hosts,&attributes=ipaddresses" % (self.cloudforms_url, offset, limit))
+            ret = self._get_json("%s/api/vms?offset=%s&limit=%s&expand=resources,tags,hosts,&attributes=custom_attributes,ipaddresses" % (self.cloudforms_url, offset, limit))
             results += ret['resources']
             if ret['subcount'] < limit:
                 last_page = True
@@ -348,6 +348,27 @@ class CloudFormsInventory(object):
 
                         # Add the host to the last tag
                         self.push(self.inventory[safe_parent_tag_name], 'hosts', host['name'])
+            # Create ansible groups for custom_attributes
+            if 'custom_attributes' in host:
+
+                # Create top-level group
+                if 'custom_attributes' not in self.inventory:
+                    self.inventory['custom_attributes'] = dict(children=[], vars={}, hosts=[])
+
+                for group in host['custom_attributes']:
+                    # Add sub-group, as a child of top-level
+                    safe_key = self.to_safe(group['value'])
+                    if safe_key:
+                        if self.args.debug:
+                            print("Adding sub-group '%s' to parent 'custom_attributes'" % safe_key)
+
+                        if safe_key not in self.inventory['custom_attributes']['children']:
+                            self.push(self.inventory['custom_attributes'], 'children', safe_key)
+
+                        self.push(self.inventory, safe_key, host['name'])
+
+                        if self.args.debug:
+                            print("Found custom_attributes [%s] for host which will be mapped to [%s]" % (group['value'], safe_key))
 
             # Set ansible_ssh_host to the first available ip address
             if 'ipaddresses' in host and host['ipaddresses'] and isinstance(host['ipaddresses'], list):
