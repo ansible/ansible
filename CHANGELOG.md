@@ -88,6 +88,9 @@ Ansible Changes By Release
   parameters to deal with multiple operators.  For instance, mode='u=rw+x-X' to
   set the execute bit on directories, remove it from filea, and set read-write
   on both is now supported
+* Added better cookie parsing to fetch_url/open_url. Cookies are now in a dictionary named `cookies`
+  in the fetch_url result. Anything using `open_url` directly can pass a cookie object as a named arg
+  (`cookies`), and then parse/format the cookies in the result.
 
 #### New Callbacks:
 - profile_roles
