@@ -135,22 +135,22 @@ Disambiguate Includes
 
 Windows
 -------
-- New PS/.NET module API
+- New PS/.NET module API **(in progress)**
 - Windows Nano Server support
-- Windows module_utils pluginloader
-- Refactor duplicated module code into new module_utils files
+- Windows module_utils pluginloader **(done)**
+- Refactor duplicated module code into new module_utils files **(in progress)**
 - Evaluate #Requires directives (existing and new: PS version, OS version, etc)
-- Improve module debug support/persistence
-- Explore official DSC support
+- Improve module debug support/persistence **(done)**
+- Explore official DSC support **(done)**
 - Explore module intermediate output
-- Explore Powershell module unit testing
+- Explore Powershell module unit testing **(in progress)**
 - Explore JEA support (stretch)
 - Extended become support with network/service/batch logon types
 - Module updates
 
   - Split "Windows" category into multiple subs
-  - Domain user/group management modules
-  - win_mapped_drive module
+  - Domain user/group management modules **(in progress)**
+  - win_mapped_drive module **(in progress)**
   - win_hotfix
   - win_updates rewrite to require become
   - win_package changes required to deprecate win_msi
@@ -171,10 +171,10 @@ AWS
 
 Azure
 -----
-- Expose endpoint overrides
+- Expose endpoint overrides **(in progress)**
 - Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks)
-- Add load balancer module
-- Add Azure Functions module
+- Add load balancer module **(in progress)**
+- Add Azure Functions module **(in progress)**
 
 Google Cloud Platform
 ---------------------
