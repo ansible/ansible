@@ -60,6 +60,10 @@ options:
     cluster:
         description:
             - "Name of the cluster, where template should be created/imported."
+    allow_partial_import:
+        description:
+            - "Boolean indication whether to allow partial registration of a template when C(state) is registered."
+        version_added: "2.4"
     exclusive:
         description:
             - "When C(state) is I(exported) this parameter indicates if the existing templates with the
@@ -131,6 +135,14 @@ EXAMPLES = '''
 - ovirt_templates:
   state: registered
   storage_domain: mystorage
+  cluster: mycluster
+  id: 1111-1111-1111-1111
+
+# Register template, allowing partial import
+- ovirt_templates:
+  state: registered
+  storage_domain: mystorage
+  allow_partial_import: "True"
   cluster: mycluster
   id: 1111-1111-1111-1111
 
@@ -237,6 +249,7 @@ def main():
         vm=dict(default=None),
         description=dict(default=None),
         cluster=dict(default=None),
+        allow_partial_import=dict(default=None, type='bool'),
         cpu_profile=dict(default=None),
         disks=dict(default=[], type='list'),
         clone_permissions=dict(type='bool'),
@@ -359,6 +372,7 @@ def main():
                 changed = True
                 template_service = templates_service.template_service(template.id)
                 template_service.register(
+                    allow_partial_import=module.params['allow_partial_import'],
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
                     ) if module.params['cluster'] else None
