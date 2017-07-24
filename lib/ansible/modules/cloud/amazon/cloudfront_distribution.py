@@ -897,8 +897,7 @@ class CloudFrontValidationManager(object):
     def validate_origin(self, origin, default_origin_path, default_s3_origin_access_identity, streaming):
         try:
             origin = self.add_missing_key(origin, 'origin_path', (default_origin_path or ''))
-            if 'domain_name' not in origin:
-                self.module.fail_json(msg="origins[].domain_name must be specified for an origin.")
+            self.validate_required_key('origin_path', 'origins[].domain_name', origin)
             origin = self.add_missing_key(origin, 'id', self.__default_datetime_string)
             if 'custom_headers' in origin and streaming:
                 self.module.fail_json(msg="custom_headers has been specified for a streaming distribution. Custom headers are for web distributions only.")
@@ -909,10 +908,9 @@ class CloudFrontValidationManager(object):
                 origin['custom_headers'] = helpers.python_list_to_aws_list(origin.get('custom_headers'))
             else:
                 origin['custom_headers'] = helpers.python_list_to_aws_list()
-            if self.__s3_bucket_domain_identifier in origin.get('domain_name'):
+            if self.__s3_bucket_domain_identifier in origin.get('domain_name').lower():
                 if 's3_origin_config' not in origin or 'origin_access_identity' not in origin.get('s3_origin_config'):
-                    origin["s3_origin_config"] = {}
-                    origin['s3_origin_config']['origin_access_identity'] = default_s3_origin_access_identity or ''
+                    origin["s3_origin_config"] = {'origin_access_identity': default_s3_origin_access_identity or ''}
             else:
                 origin = self.add_missing_key(origin, 'custom_origin_config', {})
                 custom_origin_config = origin.get('custom_origin_config')
@@ -1563,7 +1561,7 @@ def main():
         arn = validation_mgr.validate_tagging_arn(alias, distribution_id, streaming_distribution_id)
         changed |= service_mgr.update_tags(valid_tags, purge_tags, arn, alias, distribution_id, streaming_distribution_id)
 
-    if state is not None and wait and (create or update):
+    if wait and (create or update):
         validation_mgr.wait_until_processed(wait_timeout, streaming_distribution, distribution_id, streaming_distribution_id, config.get('CallerReference'))
 
     module.exit_json(changed=changed, **helpers.pascal_dict_to_snake_dict(result))
