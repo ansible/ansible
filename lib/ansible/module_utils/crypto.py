@@ -94,11 +94,20 @@ class OpenSSLObject(object):
         self.changed = False
         self.check_mode = check_mode
 
-    @abc.abstractmethod
-    def check(self):
+    def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
 
-        pass
+        def _check_state():
+            return os.path.exists(self.path)
+
+        def _check_perms(module):
+            file_args = module.load_file_common_arguments(module.params)
+            return not module.set_fs_attributes_if_different(file_args, False)
+
+        if not perms_required:
+            return _check_state()
+
+        return _check_state() and _check_perms(module)
 
     @abc.abstractmethod
     def dump(self):
