@@ -318,7 +318,7 @@ class EcsServiceManager:
             c = self.find_in_array(response['services'], service_name)
             if c:
                 return c
-        raise StandardError("Unknown problem describing service %s." % service_name)
+        raise Exception("Unknown problem describing service %s." % service_name)
 
     def is_matching_service(self, expected, existing):
         if expected['task_definition'] != existing['taskDefinition']:

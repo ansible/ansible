@@ -8,8 +8,7 @@ BASESTRING_USERS=$(grep -r basestring . \
     -e test/results/ \
     -e docs/docsite/_build/ \
     -e docs/docsite/rst/dev_guide/testing/sanity/ \
-    -e lib/ansible/module_utils/six/_six.py \
-    -e lib/ansible/modules/ \
+    -e lib/ansible/module_utils/six/__init__.py \
     -e '^[^:]*:#'
     )
 
