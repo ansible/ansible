@@ -1,4 +1,12 @@
 ---
+- name: Remove users prior to tests
+  iosxr_config:
+    lines:
+      - no username ansibletest1
+      - no username ansibletest2
+      - no username ansibletest3
+    provider: "{{ cli }}"
+
 - name: Create user (SetUp)
   iosxr_user:
     name: ansibletest1
