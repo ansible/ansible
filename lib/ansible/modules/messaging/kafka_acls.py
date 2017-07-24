@@ -122,17 +122,17 @@ class KafkaAcls(object):
         mod_auth_join = ''.join(" %s %r" % (k, v) for k,v in auth_args.iteritems() if v)
 
         if self.producer:
-            cmd = '%s %s --%s --producer %s' % (self.executable, self.mod_auth_join,
+            cmd = '%s %s --%s --producer %s' % (self.executable, mod_auth_join,
                                                 self.action, mod_args_join)
         elif self.consumer:
-            cmd = '%s %s --%s --consumer %s' % (self.executable, self.mod_auth_join,
+            cmd = '%s %s --%s --consumer %s' % (self.executable, mod_auth_join,
                                                 self.action, mod_args_join)
         elif self.action == 'remove':
-            cmd = '%s %s --force --%s %s' % (self.executable, self.mod_auth_join,
+            cmd = '%s %s --force --%s %s' % (self.executable, mod_auth_join,
                                                 self.action, mod_args_join)
         else:
-            cmd = '%s %s --%s %s' % (self.executable, self.mod_auth_join,
-                                        self.action, args_join)
+            cmd = '%s %s --%s %s' % (self.executable, mod_auth_join,
+                                        self.action, mod_args_join)
 
         try:
             env = { 'KAFKA_OPTS': self.kafka_env_opts }
