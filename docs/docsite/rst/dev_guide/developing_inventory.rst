@@ -19,22 +19,22 @@ Script Conventions
 When the external node script is called with the single argument ``--list``, the script must output a JSON encoded hash/dictionary of all the groups to be managed to stdout. Each group's value should be either a hash/dictionary containing a list of each host/IP, potential child groups, and potential group variables, or simply a list of host/IP addresses, like so::
 
     {
-        "databases"   : {
-            "hosts"   : [ "host1.example.com", "host2.example.com" ],
-            "vars"    : {
-                "a"   : true
+        "databases": {
+            "hosts": ["host1.example.com", "host2.example.com"],
+            "vars": {
+                "a": true
             }
         },
-        "webservers"  : [ "host2.example.com", "host3.example.com" ],
-        "atlanta"     : {
-            "hosts"   : [ "host1.example.com", "host4.example.com", "host5.example.com" ],
-            "vars"    : {
-                "b"   : false
+        "webservers": ["host2.example.com", "host3.example.com"],
+        "atlanta": {
+            "hosts": ["host1.example.com", "host4.example.com", "host5.example.com"],
+            "vars": {
+                "b": false
             },
-            "children": [ "marietta", "5points" ]
+            "children": ["marietta", "5points"]
         },
-        "marietta"    : [ "host6.example.com" ],
-        "5points"     : [ "host7.example.com" ]
+        "marietta": ["host6.example.com"],
+        "5points": ["host7.example.com"]
     }
 
 .. versionadded:: 1.0
@@ -46,9 +46,9 @@ hash/dictionary, or a hash/dictionary of variables to make available to template
 if the script does not wish to do this, printing an empty hash/dictionary is the way to go::
 
     {
-        "favcolor"   : "red",
-        "ntpserver"  : "wolf.example.com",
-        "monitoring" : "pack.example.com"
+        "favcolor": "red",
+        "ntpserver": "wolf.example.com",
+        "monitoring": "pack.example.com"
     }
 
 .. _inventory_script_tuning:
@@ -74,13 +74,28 @@ The data to be added to the top level JSON dictionary looks like this::
         # results of inventory script as above go here
         # ...
 
-        "_meta" : {
-           "hostvars" : {
-              "moocow.example.com"     : { "asdf" : 1234 },
-              "llama.example.com"      : { "asdf" : 5678 }
-           }
+        "_meta": {
+            "hostvars": {
+                "moocow.example.com": {
+                    "asdf" : 1234
+                },
+                "llama.example.com": {
+                    "asdf": 5678
+                }
+            }
         }
+    }
 
+To satisfy the requirements of using ``_meta``, to prevent ansible from calling your inventory with ``--host`` you must at least populate ``_meta`` with an empty ``hostvars`` dictionary, such as::
+
+    {
+
+        # results of inventory script as above go here
+        # ...
+
+        "_meta": {
+            "hostvars": {}
+        }
     }
 
 .. seealso::
