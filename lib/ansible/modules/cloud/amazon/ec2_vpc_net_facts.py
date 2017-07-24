@@ -56,6 +56,7 @@ EXAMPLES = '''
       "tag:Name": Example
 
 '''
+import traceback
 
 try:
     import boto.vpc
@@ -66,6 +67,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def get_vpc_info(vpc):
@@ -121,8 +123,8 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError) as e:
-            module.fail_json(msg=str(e))
+        except (boto.exception.NoAuthHandlerFound, Exception) as e:
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     else:
         module.fail_json(msg="region must be specified")
 
