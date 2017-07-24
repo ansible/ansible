@@ -120,7 +120,7 @@ import datetime
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import binary_type, text_type
 
 # exceptions --------------------------------------------------------------- {{{
 class OSXDefaultsException(Exception):
@@ -169,7 +169,7 @@ class OSXDefaults(object):
         if type == "string":
             return str(value)
         elif type in ["bool", "boolean"]:
-            if isinstance(value, basestring):
+            if isinstance(value, (binary_type, text_type)):
                 value = value.lower()
             if value in [True, 1, "true", "1", "yes"]:
                 return True
@@ -414,8 +414,7 @@ def main():
                                array_add=array_add, value=value, state=state, path=path)
         changed = defaults.run()
         module.exit_json(changed=changed)
-    except OSXDefaultsException:
-        e = get_exception()
+    except OSXDefaultsException as e:
         module.fail_json(msg=e.message)
 
 # /main ------------------------------------------------------------------- }}}
