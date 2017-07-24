@@ -1,16 +1,131 @@
+
+import json
 import os
 import os.path
 import sys
+from collections import defaultdict
+from distutils.command.build_scripts import build_scripts as BuildScripts
+from distutils.command.sdist import sdist as SDist
 
-sys.path.insert(0, os.path.abspath('lib'))
-from ansible.release import __version__, __author__
 try:
     from setuptools import setup, find_packages
+    from setuptools.command.build_py import build_py as BuildPy
+    from setuptools.command.install_lib import install_lib as InstallLib
+    from setuptools.command.install_scripts import install_scripts as InstallScripts
 except ImportError:
     print("Ansible now needs setuptools in order to build. Install it using"
           " your package manager (usually python-setuptools) or via pip (pip"
           " install setuptools).")
     sys.exit(1)
+
+sys.path.insert(0, os.path.abspath('lib'))
+from ansible.release import __version__, __author__
+
+
+SYMLINK_CACHE = 'SYMLINK_CACHE.json'
+
+
+def _find_symlinks(topdir, extension=''):
+    """Find symlinks that should be maintained
+
+    Maintained symlinks exist in the bin dir or are modules which have
+    aliases.  Our heuristic is that they are a link in a certain path which
+    point to a file in the same directory.
+    """
+    symlinks = defaultdict(list)
+    for base_path, dirs, files in os.walk(topdir):
+        for filename in files:
+            filepath = os.path.join(base_path, filename)
+            if os.path.islink(filepath) and filename.endswith(extension):
+                target = os.readlink(filepath)
+                if os.path.dirname(target) == '':
+                    link = filepath[len(topdir):]
+                    if link.startswith('/'):
+                        link = link[1:]
+                    symlinks[os.path.basename(target)].append(link)
+    return symlinks
+
+
+def _cache_symlinks(symlink_data):
+    with open(SYMLINK_CACHE, 'w') as f:
+        f.write(json.dumps(symlink_data))
+
+
+def _maintain_symlinks(symlink_type, base_path):
+    """Switch a real file into a symlink"""
+    try:
+        # Try the cache first because going from git checkout to sdist is the
+        # only time we know that we're going to cache correctly
+        with open(SYMLINK_CACHE, 'r') as f:
+            symlink_data = json.loads(f.read())
+    except IOError as e:
+        if e.errno == 2:
+            # SYMLINKS_CACHE doesn't exist.  Fallback to trying to create the
+            # cache now.  Will work if we're running directly from a git
+            # checkout or from an sdist created earlier.
+            symlink_data = {'script': _find_symlinks('bin'),
+                            'library': _find_symlinks('lib', '.py'),
+                            }
+
+            # Sanity check that something we know should be a symlink was
+            # found.  We'll take that to mean that the current directory
+            # structure properly reflects symlinks in the git repo
+            if 'ansible-playbook' in symlink_data['script']['ansible']:
+                _cache_symlinks(symlink_data)
+            else:
+                raise
+        else:
+            raise
+    symlinks = symlink_data[symlink_type]
+
+    for source in symlinks:
+        for dest in symlinks[source]:
+            dest_path = os.path.join(base_path, dest)
+            if not os.path.islink(dest_path):
+                try:
+                    os.unlink(dest_path)
+                except OSError as e:
+                    if e.errno == 2:
+                        # File does not exist which is all we wanted
+                        pass
+                os.symlink(source, dest_path)
+
+
+class BuildPyCommand(BuildPy):
+    def run(self):
+        BuildPy.run(self)
+        _maintain_symlinks('library', self.build_lib)
+
+
+class BuildScriptsCommand(BuildScripts):
+    def run(self):
+        BuildScripts.run(self)
+        _maintain_symlinks('script', self.build_dir)
+
+
+class InstallLibCommand(InstallLib):
+    def run(self):
+        InstallLib.run(self)
+        _maintain_symlinks('library', self.install_dir)
+
+
+class InstallScriptsCommand(InstallScripts):
+    def run(self):
+        InstallScripts.run(self)
+        _maintain_symlinks('script', self.install_dir)
+
+
+class SDistCommand(SDist):
+    def run(self):
+        # have to generate the cache of symlinks for release as sdist is the
+        # only command that has access to symlinks from the git repo
+        symlinks = {'script': _find_symlinks('bin'),
+                    'library': _find_symlinks('lib', '.py'),
+                    }
+        _cache_symlinks(symlinks)
+
+        SDist.run(self)
+
 
 with open('requirements.txt') as requirements_file:
     install_requirements = requirements_file.read().splitlines()
@@ -33,26 +148,16 @@ if crypto_backend:
     install_requirements.append(crypto_backend)
 
 
-SYMLINKS = {'ansible': frozenset(('ansible-console',
-                                  'ansible-doc',
-                                  'ansible-galaxy',
-                                  'ansible-playbook',
-                                  'ansible-pull',
-                                  'ansible-vault'))}
-
-for source in SYMLINKS:
-    for dest in SYMLINKS[source]:
-        dest_path = os.path.join('bin', dest)
-        if not os.path.islink(dest_path):
-            try:
-                os.unlink(dest_path)
-            except OSError as e:
-                if e.errno == 2:
-                    # File does not exist which is all we wanted
-                    pass
-            os.symlink(source, dest_path)
-
 setup(
+    # Use the distutils SDist so that symlinks are not expanded
+    # Use a custom Build for the same reason
+    cmdclass={
+        'build_py': BuildPyCommand,
+        'build_scripts': BuildScriptsCommand,
+        'install_lib': InstallLibCommand,
+        'install_scripts': InstallScriptsCommand,
+        'sdist': SDistCommand,
+    },
     name='ansible',
     version=__version__,
     description='Radically simple IT automation',
