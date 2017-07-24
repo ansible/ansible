@@ -1,0 +1,13 @@
+---
+# used when you wish to manually run the test on a newly installed Server 2012 R2 box
+test_win_hotfix_manual_run: False
+test_win_hotfix_good_url: http://download.windowsupdate.com/d/msdownload/update/software/secu/2016/07/windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
+test_win_hotfix_reboot_url: http://download.windowsupdate.com/d/msdownload/update/software/updt/2016/08/windows8.1-kb3179574-x64_f0a5e2ff991aec5e6978aa808f287f1b21195d6e.msu
+test_win_hotfix_bad_url: http://download.windowsupdate.com/d/msdownload/update/software/secu/2016/07/windows8-rt-kb3172729-x64_69cab4c7785b1faa3fc450f32bed4873d53bb96f.msu
+test_win_hotfix_path: C:\ansible\win_hotfix
+
+test_win_hotfix_kb: KB3172729
+test_win_hotfix_identifier: Package_for_KB3172729~31bf3856ad364e35~amd64~~6.3.1.0
+
+test_win_hotfix_reboot_kb: KB3179574
+test_win_hotfix_reboot_identifier: Package_for_KB3179574~31bf3856ad364e35~amd64~~6.3.1.3
