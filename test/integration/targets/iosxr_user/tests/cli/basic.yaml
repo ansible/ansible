@@ -64,7 +64,7 @@
       - 'result.changed == false'
       - 'result.commands | length == 0'
 
-- name: tearDown
+- name: Delete collection of users
   iosxr_user:
     users:
       - name: ansibletest1
@@ -78,3 +78,18 @@
     that:
       - 'result.changed == true'
       - 'result.commands == ["no username ansibletest1", "no username ansibletest2", "no username ansibletest3"]'
+
+- name: Delete collection of users again (idempotent)
+  iosxr_user:
+    users:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
