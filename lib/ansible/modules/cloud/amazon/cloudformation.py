@@ -242,9 +242,8 @@ stack_outputs:
 
 import json
 import time
-import sys
 import traceback
-
+from hashlib import sha1
 
 try:
     import boto3
@@ -253,11 +252,12 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+import ansible.module_utils.ec2
 # import a class, otherwise we'll use a fully qualified path
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.basic import AnsibleModule
-from ansible.utils.hashing import secure_hash_s
-import ansible.module_utils.ec2
+from ansible.module_utils._text import to_bytes
+
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -329,7 +329,9 @@ def create_changeset(module, stack_params, cfn):
     try:
         if not 'ChangeSetName' in stack_params:
             # Determine ChangeSetName using hash of parameters.
-            changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + secure_hash_s(json.dumps(stack_params, sort_keys=True))
+            json_params = json.dumps(stack_params, sort_keys=True)
+
+            changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + sha1(to_bytes(json_params, errors='surrogate_or_strict')).hexdigest()
             stack_params['ChangeSetName'] = changeset_name
         # Determine if this changeset already exists
         pending_changesets = list_changesets(cfn, stack_params['StackName'])
