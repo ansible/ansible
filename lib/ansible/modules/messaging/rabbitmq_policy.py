@@ -28,6 +28,8 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_policy
 short_description: Manage the state of policies in RabbitMQ.
+extends_documentation_fragment:
+    - rabbitmq.extra_ctl_paths
 description:
   - Manage the state of a virtual host in RabbitMQ.
 version_added: "1.5"
@@ -70,13 +72,6 @@ options:
       - Erlang node name of the rabbit we wish to configure.
     required: false
     default: rabbit
-  extra_ctl_paths:
-    description:
-      - List of alternative paths to look for rabbitmqctl in
-      - Only needed when running RabbitMQ as user other than root / rabbitmq
-    required: false
-    default: ()
-    version_added: "2.4"
   state:
     description:
       - The state of the policy.

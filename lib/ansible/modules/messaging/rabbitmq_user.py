@@ -27,6 +27,8 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_user
 short_description: Adds or removes users to RabbitMQ
+extends_documentation_fragment:
+    - rabbitmq.extra_ctl_paths
 description:
   - Add or remove users to RabbitMQ and assign permissions
 version_added: "1.1"

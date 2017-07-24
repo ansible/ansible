@@ -27,6 +27,8 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_parameter
 short_description: Adds or removes parameters to RabbitMQ
+extends_documentation_fragment:
+    - rabbitmq.extra_ctl_paths
 description:
   - Manage dynamic, cluster-wide parameters for RabbitMQ
 version_added: "1.1"
@@ -58,13 +60,6 @@ options:
     required: false
     default: rabbit
     version_added: "1.2"
-  extra_ctl_paths:
-    description:
-      - List of alternative paths to look for rabbitmqctl in
-      - Only needed when running RabbitMQ as user other than root / rabbitmq
-    required: false
-    default: ()
-    version_added: "2.4"
   state:
     description:
       - Specify if user is to be added or removed
