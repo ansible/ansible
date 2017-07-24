@@ -36,8 +36,19 @@ class TerminalModule(TerminalBase):
 
     terminal_stderr_re = [
         re.compile(r"error:", re.I),
-        re.compile(r"^Removing.* not allowed")
+        re.compile(br"Removing.* not allowed, it is being used")
     ]
+
+    def on_open_shell(self):
+        if self._get_prompt().endswith(b'#'):
+            self.disable_pager()
+
+    def disable_pager(self):
+        cmd = {u'command': u'no terminal pager'}
+        try:
+            self._exec_cli_command(u'no terminal pager')
+        except AnsibleConnectionFailure:
+            raise AnsibleConnectionFailure('unable to disable terminal pager')
 
     def on_authorize(self, passwd=None):
         if self._get_prompt().endswith(b'#'):
@@ -52,6 +63,7 @@ class TerminalModule(TerminalBase):
 
         try:
             self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
-            self._exec_cli_command(u'no terminal pager')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
+
+        self.disable_pager()
