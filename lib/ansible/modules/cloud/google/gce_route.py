@@ -1,4 +1,19 @@
 #!/usr/bin/python
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -46,7 +61,7 @@ options:
         description:
             - The route will apply only to traffic stemming from instances that have these tags.
             - If empty, the route will apply to all traffic.
-            - Example: [tag1, tag2]
+            - Example [tag1, tag2]
         aliases: ['value']
     next_hop:
         description:
@@ -119,7 +134,7 @@ destination:
 priority:
     description: priority of the route
     returned: success
-    type: integer
+    type: int
     sample: 700
 
 instance_tags:
@@ -153,10 +168,11 @@ creation_time:
     description: route creation/update timestamp
     returned: success
     type: string
-    sample: 2017-06-28T10:59:59.698-07:00
+    sample: '2017-06-28T10:59:59.698-07:00'
 
 next_hop_resource:
     description: a resource uri or the IP address of the next hop
+    returned: success
     type: string
     sample:
         - https://www.googleapis.com/compute/v1/projects/myproject/zones/europe-west1-b/instances/my-instance
@@ -176,24 +192,18 @@ try:
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
         ResourceExistsError, ResourceInUseError, ResourceNotFoundError
 
-    _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
 
-try:
-    # module specific imports
-    import socket, re
-    from distutils.version import LooseVersion
+# module specific imports
+import socket
+import re
+from distutils.version import LooseVersion
 
-    # import module snippets
-    from ansible.module_utils.basic import AnsibleModule
-    from ansible.module_utils.gce import gce_connect
-except ImportError:
-    module.fail_json(
-        msg     = "An unexpected error has occured during import.",
-        changed = False
-    )
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
 
 
 ################################################################################
@@ -203,7 +213,12 @@ except ImportError:
 # ex_create_route was introduced in libcloud 0.17.0
 MINIMUM_LIBCLOUD_VERSION = '0.17.0'
 
-PROVIDER = Provider.GCE
+try:
+    PROVIDER = Provider.GCE
+except NameError:
+    # libcloud may not have been successfully imported. In that case, execution
+    # will stop after check_libs() has been called.
+    pass
 
 
 ################################################################################
@@ -214,23 +229,26 @@ def check_libcloud():
     # Apache libcloud needs to be installed and at least the minimum version.
     if not HAS_LIBCLOUD:
         module.fail_json(
-            msg     = 'This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
-            changed = False
+            msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
+            changed=False
         )
     elif LooseVersion(LIBCLOUD_VERSION) < MINIMUM_LIBCLOUD_VERSION:
         module.fail_json(
-            msg     = 'This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
-            changed = False
+            msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
+            changed=False
         )
+
 
 # global (declared as global to avoid calling ex_get_node() both here and in main())
 next_hop_node = None
+
+
 def check_parameter_format(module, gce_connection):
     # All the below checks are performed to allow check_mode to give reliable results.
     # Otherwise, we could handle the exceptions raised by libcloud and skip doing
     # duplicate work here.
 
-    msg =''
+    msg = ''
 
     # Starts with lowercase letter, contains only lowercase letters, nubmers, hyphens,
     # cannot be empty, cannot end with hyphen. Taken directly for GCE error responses.
@@ -243,7 +261,7 @@ def check_parameter_format(module, gce_connection):
     cidr_regexp = r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$"
 
     # check the route rule name.
-    matches = re.match(name_regexp, module.params['name']);
+    matches = re.match(name_regexp, module.params['name'])
     if not matches:
         msg = "Route names must start with a lowercase letter, can contain only lowercase letters, " \
             + "numbers and hyphens, cannot end with a hyphen and cannot be empty."
@@ -291,18 +309,21 @@ def check_parameter_format(module, gce_connection):
 
     # exit
     if msg:
-        module.fail_json(msg = msg, changed = False)
+        module.fail_json(msg=msg, changed=False)
+
 
 # global network (declared as global to avoid calling ex_get_network() both here and in main())
 network = None
+
+
 def check_network_exists(gce_connection, module):
     try:
         global network
         network = gce_connection.ex_get_network(module.params['network'])
     except ResourceNotFoundError:
         module.fail_json(
-            msg     = "No network '%s' found." % module.params['network'],
-            changed = False
+            msg="No network '%s' found." % module.params['network'],
+            changed=False
         )
 
 
@@ -316,15 +337,15 @@ def main():
     check_libcloud()
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name          = dict(required=True),
-            description   = dict(default=''),
-            network       = dict(default='default'),
-            destination   = dict(required=True),
-            priority      = dict(default=500, type='int'),
-            instance_tags = dict(default=[], type='list', aliases=['tags']),
-            next_hop      = dict(default='default'),
-            state         = dict(choices=['absent', 'present'], default='present'),
+        argument_spec=dict(
+            name=dict(required=True),
+            description=dict(default=''),
+            network=dict(default='default'),
+            destination=dict(required=True),
+            priority=dict(default=500, type='int'),
+            instance_tags=dict(default=[], type='list', aliases=['tags']),
+            next_hop=dict(default='default'),
+            state=dict(choices=['absent', 'present'], default='present'),
         ),
         supports_check_mode=True
     )
@@ -336,33 +357,27 @@ def main():
     check_network_exists(gce, module)
 
     params = {
-        'name'          : module.params['name'],
-        'description'   : module.params['description'],
-        'network'       : module.params['network'],
-        'destination'   : module.params['destination'],
-        'priority'      : module.params['priority'],
-        'instance_tags' : module.params['instance_tags'],
-        'next_hop'      : module.params['next_hop'],
-        'state'         : module.params['state'],
+        'name': module.params['name'],
+        'description': module.params['description'],
+        'network': module.params['network'],
+        'destination': module.params['destination'],
+        'priority': module.params['priority'],
+        'instance_tags': module.params['instance_tags'],
+        'next_hop': module.params['next_hop'],
+        'state': module.params['state'],
     }
 
     if params['state'] == 'present':
         try:
             # below the gce_ prefix in variables means stuff on Google Cloud
-            try:
-                # We are wrapping every gce. method in try-except as there are exceptions
-                # that can happen such as timeouts that are not under our contorl.
-                gce_route = gce.ex_get_route(params['name'])
-            except Exception as e:
-                module.fail_json(
-                    msg     = str(e),
-                    changed = False
-                )
+            # We are wrapping every gce. method in try-except as there are exceptions
+            # that can happen such as timeouts that are not under our contorl.
+            gce_route = gce.ex_get_route(params['name'])
 
         # this is a new rule
         except ResourceNotFoundError:
             if not module.check_mode:
-                if params['next_hop'] == None or re.match(r"^[1-9](.*)$", params['next_hop']):
+                if params['next_hop'] is None or re.match(r"^[1-9](.*)$", params['next_hop']):
                     # in re.match() we checked for the first character to see if it is a number. If it is,
                     # it is not a valid instance name. Since we have already checked for garbage values
                     # in check_parameter_format(), it cannot be but an IP address.
@@ -376,17 +391,24 @@ def main():
                 # network is a global, the object of the params['network'], set in check_network_exists()
                 try:
                     gce_route = gce.ex_create_route(name=params['name'], dest_range=params['destination'],
-                        priority=params['priority'], network=network, tags=params['instance_tags'],
-                        next_hop=node, description=params['description'])
+                                                    priority=params['priority'], network=network, tags=params['instance_tags'],
+                                                    next_hop=node, description=params['description'])
 
                 except Exception as e:
                     # This exception is important in order to handle the case when the route
                     # masks the address space of a network/subnet.
                     # TODO perform the check before reaching here to better support check_mode.
                     module.fail_json(
-                        msg     = str(e),
-                        changed = False
+                        msg=str(e),
+                        changed=False
                     )
+        # We are wrapping every gce. method in try-except as there are exceptions
+        # that can happen such as timeouts that are not under our contorl.
+        except Exception as e:
+            module.fail_json(
+                msg=str(e),
+                changed=False
+            )
         # Existing rule, check if anything has changed
         else:
             # check: description
@@ -404,7 +426,7 @@ def main():
                 gce_route.network = network
                 changed = True
             else:
-                gce_route.network = network # replace the network resource uri with the object
+                gce_route.network = network  # replace the network resource uri with the object
 
             # check: destination
             if gce_route.dest_range != params['destination']:
@@ -430,7 +452,7 @@ def main():
 
             # check: next_hop
             # next_hop can be either None, ip address or instaance name
-            if params['next_hop'] == None: # If next_hop is None, ie the default
+            if params['next_hop'] is None:  # If next_hop is None, ie the default
                 try:
                     # if the gce_route is also the default, the 'nextHopGateway' key will be set.
                     # if not, other keys will exist and the below will raise an exception.
@@ -448,8 +470,8 @@ def main():
                     # nothing change. We could avoid doing the same thing twice, but
                     # leaving here it as it is for clarity. Below, we remove redundancy.
                     gce_route.next_hop = None
-            elif re.match(r"^[1-9](.*)$", params['next_hop']): # next_hop is an IP address
-                #Wwe checked for the first character to see if it is a number. If it,
+            elif re.match(r"^[1-9](.*)$", params['next_hop']):  # next_hop is an IP address
+                # We checked for the first character to see if it is a number. If it,
                 # it is not a valid instance name. Since we have already checked for grabage values
                 # in check_parameter_format(), it cannot be but an IP address.
                 try:
@@ -461,7 +483,7 @@ def main():
                     if gce_route.extra['nextHopIp'] != params['next_hop']:
                         changed = True
                 gce_route.next_hop = params['next_hop']
-            else: # next_hop is an instance name (last case of the three possible for next_hop)
+            else:  # next_hop is an instance name (last case of the three possible for next_hop)
                 try:
                     # We extract the instance name from the instance resource uri
                     # (eg projects/myproject/zones/europe-west1-b/instances/my-instance).
@@ -481,12 +503,12 @@ def main():
                 try:
                     gce.ex_destroy_route(gce_route)
                     gce_route = gce.ex_create_route(name=gce_route.name, dest_range=gce_route.dest_range,
-                        priority=gce_route.priority, network=gce_route.network,tags=gce_route.tags,
-                        next_hop=gce_route.next_hop, description=gce_route.description)
+                                                    priority=gce_route.priority, network=gce_route.network, tags=gce_route.tags,
+                                                    next_hop=gce_route.next_hop, description=gce_route.description)
                 except Exception as e:
                     module.fail_json(
-                        msg     = str(e),
-                        changed = False
+                        msg=str(e),
+                        changed=False
                     )
 
     elif params['state'] == 'absent':
@@ -496,8 +518,8 @@ def main():
             pass
         except Exception as e:
             module.fail_json(
-                msg     = str(e),
-                changed = False
+                msg=str(e),
+                changed=False
             )
         else:
             if not module.check_mode:
@@ -506,14 +528,9 @@ def main():
                     changed = True
                 except Exception as e:
                     module.fail_json(
-                        msg     = str(e),
-                        changed = False
+                        msg=str(e),
+                        changed=False
                     )
-    else:
-        module.fail_json(
-            msg     = "Invalid value for state parameter",
-            changed = False
-        )
 
     # revert original value of next_hop because, maybe, we have replaced it with an object
     params['next_hop'] = module.params.get('next_hop')
