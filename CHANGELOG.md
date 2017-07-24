@@ -49,6 +49,7 @@ Ansible Changes By Release
 * fix eos_banner code and test issues
 * run tearup and teardown of EAPI service only on EAPI tests
 * fix eos_config tests so only Eth1 and Eth2 are used
+* Fix for potential bug when using legacy inventory vars for configuring the su password.
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
