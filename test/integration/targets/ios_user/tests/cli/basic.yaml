@@ -16,7 +16,7 @@
 
 - name: Collection of users (SetUp)
   ios_user:
-    users:
+    aggregate:
       - name: ansibletest2
       - name: ansibletest3
     authorize: yes
@@ -47,7 +47,7 @@
 
 - name: Add collection of users again (Idempotent)
   ios_user:
-    users:
+    aggregate:
       - name: anisbletest2
       - name: ansibletest3
     authorize: yes
@@ -63,7 +63,7 @@
 
 - name: tearDown
   ios_user:
-    users:
+    aggregate:
       - name: ansibletest1
       - name: ansibletest2
       - name: ansibletest3
