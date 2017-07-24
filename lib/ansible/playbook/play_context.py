@@ -455,9 +455,6 @@ class PlayContext(Base):
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
 
-        # set become defaults if not previouslly set
-        task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
-
         if task.always_run:
             display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)
             new_info.check_mode = False
