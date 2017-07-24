@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: ec2_elb_lb
+module: elb_classic_lb
 description:
   - Returns information about the load balancer.
   - Will be marked changed when called only if state is changed.

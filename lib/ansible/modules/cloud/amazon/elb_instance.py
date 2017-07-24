@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: ec2_elb
+module: elb_instance
 short_description: De-registers or registers instances from EC2 ELBs
 description:
   - This module de-registers or registers an AWS EC2 instance from the ELBs
