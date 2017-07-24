@@ -1108,7 +1108,6 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_then_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
         if owner is None:
             return changed
         orig_uid, orig_gid = self.user_and_group(path, expand)
@@ -1142,7 +1141,6 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_then_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
         if group is None:
             return changed
         orig_uid, orig_gid = self.user_and_group(b_path, expand)
@@ -1176,7 +1174,6 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_then_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
         path_stat = os.lstat(b_path)
 
         if mode is None:
@@ -1256,7 +1253,6 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_then_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
 
         existing = self.get_file_attributes(b_path)
 
