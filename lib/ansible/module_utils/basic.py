@@ -1303,22 +1303,45 @@ class AnsibleModule(object):
     def _symbolic_mode_to_octal(self, path_stat, symbolic_mode):
         new_mode = stat.S_IMODE(path_stat.st_mode)
 
-        mode_re = re.compile(r'^(?P<users>[ugoa]+)(?P<operator>[-+=])(?P<perms>[rwxXst-]*|[ugo])$')
-        for mode in symbolic_mode.split(','):
-            match = mode_re.match(mode)
-            if match:
-                users = match.group('users')
-                operator = match.group('operator')
-                perms = match.group('perms')
+        # Fix for issue #14634
+        # This enables symbolic chmod string parsing as stated in the chmod
+        # man-page. This includes things like: "u=rw-x+X,g=r-x+X,o=r-x+X"
 
-                if users == 'a':
-                    users = 'ugo'
+        # Now parse all symbolic modes
+        for mode in symbolic_mode.split(','):
+            # Per single mode. This always contains a '+', '-' or '='
+            # Split it on that
+            permlist = re.split(r'[+=-]', mode)
+
+            # And find all the operators
+            opers = re.findall(r'[+=-]', mode)
+
+            # The user(s) where it's all about is the first element in the
+            # 'permlist' list. Take that and remove it from the list.
+            # An empty user or 'a' means 'all'.
+            users = permlist.pop(0)
+            use_umask = (users == '')
+            if users == 'a' or users == '':
+                users = 'ugo'
+
+            # Check if there are illegal characters in the user list
+            # They can end up in 'users' because they are not split
+            if re.match(r'[^ugo]', users):
+                return 'invalid'
+                #raise ValueError("bad symbolic permission for mode: %s" % mode)
+
+            # Now we have two list of equal length, one contains the requested
+            # permissions and one with the corresponding operators.
+            for idx, perms in enumerate(permlist):
+                # Check if there are illegal characters in the permissions
+                if re.match(r'[^rwxXstugo]', perms):
+                    return 'invalid'
+                    #raise ValueError("bad symbolic permission for mode: %s" % mode)
 
                 for user in users:
-                    mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms)
-                    new_mode = self._apply_operation_to_mode(user, operator, mode_to_apply, new_mode)
-            else:
-                raise ValueError("bad symbolic permission for mode: %s" % mode)
+                    mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms, use_umask)
+                    new_mode = _apply_operation_to_mode(user, opers[idx], mode_to_apply, new_mode)
+
         return new_mode
 
     def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
@@ -1339,12 +1362,26 @@ class AnsibleModule(object):
             new_mode = current_mode - (current_mode & mode_to_apply)
         return new_mode
 
-    def _get_octal_mode_from_symbolic_perms(self, path_stat, user, perms):
+    def _get_octal_mode_from_symbolic_perms(self, path_stat, user, perms, use_umask):
+        def _apply_umask(perm, use_umask, rev_umask):
+            """Simple function to 'fake' ternary if statement"""
+            if use_umask:
+                return perm & rev_umask
+            else:
+                return perm
+
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         is_directory = stat.S_ISDIR(path_stat.st_mode)
         has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
         apply_X_permission = is_directory or has_x_permissions
+
+        # Get the umask, if the 'user' part is empty, the effect is as if (a) were
+        # given, but bits that are set in the umask are not affected.
+        # We also need the "reversed umask" for masking
+        umask = os.umask(0)
+        os.umask(umask)
+        rev_umask = PERM_BITS - umask
 
         # Permission bits constants documented at:
         # http://docs.python.org/2/library/stat.html#stat.S_ISUID
@@ -1363,35 +1400,32 @@ class AnsibleModule(object):
 
         user_perms_to_modes = {
             'u': {
-                'r': stat.S_IRUSR,
-                'w': stat.S_IWUSR,
-                'x': stat.S_IXUSR,
+                'r': _apply_umask(stat.S_IRUSR, use_umask, rev_umask),
+                'w': _apply_umask(stat.S_IWUSR, use_umask, rev_umask),
+                'x': _apply_umask(stat.S_IXUSR, use_umask, rev_umask),
                 's': stat.S_ISUID,
                 't': 0,
                 'u': prev_mode & stat.S_IRWXU,
                 'g': (prev_mode & stat.S_IRWXG) << 3,
-                'o': (prev_mode & stat.S_IRWXO) << 6,
-            },
+                'o': (prev_mode & stat.S_IRWXO) << 6},
             'g': {
-                'r': stat.S_IRGRP,
-                'w': stat.S_IWGRP,
-                'x': stat.S_IXGRP,
+                'r': _apply_umask(stat.S_IRGRP, use_umask, rev_umask),
+                'w': _apply_umask(stat.S_IWGRP, use_umask, rev_umask),
+                'x': _apply_umask(stat.S_IXGRP, use_umask, rev_umask),
                 's': stat.S_ISGID,
                 't': 0,
                 'u': (prev_mode & stat.S_IRWXU) >> 3,
                 'g': prev_mode & stat.S_IRWXG,
-                'o': (prev_mode & stat.S_IRWXO) << 3,
-            },
+                'o': (prev_mode & stat.S_IRWXO) << 3},
             'o': {
-                'r': stat.S_IROTH,
-                'w': stat.S_IWOTH,
-                'x': stat.S_IXOTH,
+                'r': _apply_umask(stat.S_IROTH, use_umask, rev_umask),
+                'w': _apply_umask(stat.S_IWOTH, use_umask, rev_umask),
+                'x': _apply_umask(stat.S_IXOTH, use_umask, rev_umask),
                 's': 0,
                 't': stat.S_ISVTX,
                 'u': (prev_mode & stat.S_IRWXU) >> 6,
                 'g': (prev_mode & stat.S_IRWXG) >> 3,
-                'o': prev_mode & stat.S_IRWXO,
-            }
+                'o': prev_mode & stat.S_IRWXO},
         }
 
         # Insert X_perms into user_perms_to_modes
