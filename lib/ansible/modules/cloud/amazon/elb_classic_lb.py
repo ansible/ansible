@@ -413,6 +413,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, AnsibleAWSError
 from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
 
 def _throttleable_operation(max_retries):
@@ -654,7 +655,7 @@ class ElbManager(object):
         for x in range(0, max_retries):
             try:
                 self.elb_conn.get_all_lb_attributes(self.name)
-            except (boto.exception.BotoServerError, StandardError) as e:
+            except (boto.exception.BotoServerError, Exception) as e:
                 if "LoadBalancerNotFound" in e.code:
                     status_achieved = True
                     break
@@ -682,12 +683,12 @@ class ElbManager(object):
                         break
                     else:
                         time.sleep(polling_increment_secs)
-                except (boto.exception.BotoServerError, StandardError) as e:
+                except (boto.exception.BotoServerError, Exception) as e:
                     if 'InvalidNetworkInterfaceID' in e.code:
                         status_achieved = True
                         break
                     else:
-                        self.module.fail_json(msg=str(e))
+                        self.module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         return status_achieved
 
@@ -710,8 +711,8 @@ class ElbManager(object):
         try:
             return connect_to_aws(boto.ec2, self.region,
                                   **self.aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError) as e:
-            self.module.fail_json(msg=str(e))
+        except (boto.exception.NoAuthHandlerFound, Exception) as e:
+            self.module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     @_throttleable_operation(_THROTTLING_RETRIES)
     def _delete_elb(self):

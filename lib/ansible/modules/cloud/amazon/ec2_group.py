@@ -296,7 +296,7 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
     elif 'group_id' in rule and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
-        group_instance = SecurityGroup(owner_id=owner_id, group_name=group_name, id=group_id)
+        group_instance = ec2.SecurityGroup(owner_id=owner_id, group_name=group_name, id=group_id)
         groups[group_id] = group_instance
         groups[group_name] = group_instance
     elif 'group_id' in rule:

@@ -6,7 +6,7 @@ ITERITEMS_USERS=$(grep -rI '\.iteritems' . \
     --exclude-dir docsite \
     | grep -v \
     -e 'six\.iteritems' \
-    -e lib/ansible/module_utils/six/_six.py \
+    -e lib/ansible/module_utils/six/__init__.py \
     -e test/sanity/code-smell/no-dict-iteritems.sh \
     )
 

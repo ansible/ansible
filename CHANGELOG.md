@@ -88,6 +88,13 @@ Ansible Changes By Release
   parameters to deal with multiple operators.  For instance, mode='u=rw+x-X' to
   set the execute bit on directories, remove it from filea, and set read-write
   on both is now supported
+* The bundled copy of six in lib/ansible/module_utils/six is now used
+  unconditionally.  The code to fallback on a system six interfered with static
+  analysis of the code so the cost of using the fallback code became too high.
+  Distributions which wish to unbundle may do so by replacing the bundled six
+  in ansible/module_utils/six/__init__.py.  Six is tricky to unbundle, however,
+  so they may want to base their efforts off the code we were using:
+    * https://github.com/ansible/ansible/blob/2fff690caab6a1c6a81973f704be3fbd0bde2c2f/lib/ansible/module_utils/six/__init__.py
 
 #### New Callbacks:
 - profile_roles

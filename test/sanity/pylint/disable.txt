@@ -7,7 +7,6 @@ locally-disabled
 locally-enabled
 method-hidden
 no-member
-no-name-in-module
 no-value-for-parameter
 non-iterator-returned
 not-a-mapping
