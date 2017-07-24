@@ -80,6 +80,14 @@ Ansible Changes By Release
 * Changed task state resulting from both `rc` and `failed` fields returned, 'rc' no longer overrides 'failed'. Test plugins have also been updated accordingly.
 * The win_unzip module no longer includes dictionary 'win_unzip' in its results,
   the content is now directly in the resulting output, like pretty much every other module.
+* Rewrite of the copy module so that it handles cornercases with symbolic links
+  and empty directories.  The copy module has a new parameter, local_follow
+  which controls how links on the source system are treated. (The older
+  parameter, follow is for links on the remote system.)
+* Update the handling of symbolic file permissions in file-related mode
+  parameters to deal with multiple operators.  For instance, mode='u=rw+x-X' to
+  set the execute bit on directories, remove it from filea, and set read-write
+  on both is now supported
 
 #### New Callbacks:
 - profile_roles
