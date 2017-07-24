@@ -21,10 +21,26 @@
       - '"username" in result.commands[0]'
       - '"secret" in result.commands[0]'
 
-- name: Add user again (Idempotent)
+- name: Create user with update_password always (not idempotent)
   iosxr_user:
     name: ansibletest1
     password: test
+    update_password: always
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"secret" in result.commands[0]'
+
+- name: Create user again with update_password on_create (idempotent)
+  iosxr_user:
+    name: ansibletest1
+    password: test
+    update_password: on_create
     state: present
     provider: "{{ cli }}"
   register: result
@@ -49,11 +65,27 @@
       - 'result.changed == true'
       - 'result.commands == ["username ansibletest2 group sysadmin", "username ansibletest3 group sysadmin"]'
 
-- name: Add collection of users again (Idempotent)
+- name: Add collection of users again with update_password always (not idempotent)
   iosxr_user:
     users:
       - name: ansibletest2
       - name: ansibletest3
+    state: present
+    group: sysadmin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username ansibletest2 group sysadmin", "username ansibletest3 group sysadmin"]'
+
+- name: Add collection of users again with update_password on_create (idempotent)
+  iosxr_user:
+    users:
+      - name: ansibletest2
+      - name: ansibletest3
+    update_password: on_create
     state: present
     group: sysadmin
     provider: "{{ cli }}"
