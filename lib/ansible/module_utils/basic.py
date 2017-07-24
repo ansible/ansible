@@ -1604,7 +1604,9 @@ class AnsibleModule(object):
         count = 0
         for term in check:
             if term in self.params:
-                count += 1
+                v = self.argument_spec[term]
+                if self.params[term] != v.get('default'):
+                    count += 1
         return count
 
     def _check_mutually_exclusive(self, spec):
