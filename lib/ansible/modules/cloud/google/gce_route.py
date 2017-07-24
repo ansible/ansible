@@ -200,6 +200,7 @@ except ImportError:
 import socket
 import re
 from distutils.version import LooseVersion
+from sys import version_info
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -268,7 +269,13 @@ def check_parameter_format(module, gce_connection):
 
     # check length of description (must be less than 2048 characters)
     if len(unicode(module.params['description'], "utf-8")) > 2048:
-        msg = "Description must be less thatn 2048 characters in length."
+        if version_info < (3,):
+            description_length = len(unicode(module.params['description'], "utf-8"))
+        else:
+            description_length = len(module.params['description'])
+
+        if description_length > 2048:
+            msg = "Description must be less thatn 2048 characters in length."
 
     # check instance tags for valid tags
     if module.params['instance_tags']:
@@ -402,14 +409,16 @@ def main():
                         msg=str(e),
                         changed=False
                     )
-        # We are wrapping every gce. method in try-except as there are exceptions
+
+        # We are wrapping every gce method in try-except as there are exceptions
         # that can happen such as timeouts that are not under our contorl.
         except Exception as e:
             module.fail_json(
                 msg=str(e),
                 changed=False
             )
-        # Existing rule, check if anything has changed
+
+        # Existing route, check if anything has changed
         else:
             # check: description
             if gce_route.extra['description'] != params['description']:
