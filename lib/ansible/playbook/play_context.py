@@ -331,6 +331,16 @@ class PlayContext(Base):
                 if attr_val is not None:
                     setattr(new_info, attr, attr_val)
 
+        # Checking if ansible_module_args exist in current context
+        if 'ansible_module_args' in variables:
+            # If current action have default value
+            if task.action in variables['ansible_module_args']:
+                # Put default value of ansible_module_args into current task
+                # if not already set
+                for key, value in variables['ansible_module_args'][task.action].iteritems():
+                    if key not in task._attributes['args']:
+                        task._attributes['args'][key] = value
+
         # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
         # connection info object with 'magic' variables from the variable list.
         # If the value 'ansible_delegated_vars' is in the variables, it means
