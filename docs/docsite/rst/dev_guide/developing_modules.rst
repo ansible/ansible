@@ -31,11 +31,11 @@ develop a module. Ask the following questions:
 
 1. Does a similar module already exist?
 
-There are a lot of existing modules available, you should check out the list of existing modules at :doc:`../modules`
+There are a lot of existing modules available. You should check out the list of existing modules at :doc:`../modules`
 
-2. Has someone already worked on a similar Pull Request?
+2. Has someone already worked on a similar pull request?
 
-It's possible that someone has already started developing a similar PR. There are a few ways to find open module Pull Requests:
+It's possible that someone has already started developing a similar PR. There are a few ways to find open module pull requests:
 
 * `GitHub new module PRs <https://github.com/ansible/ansible/labels/new_module>`_
 * `All updates to modules <https://github.com/ansible/ansible/labels/module>`_
