@@ -416,7 +416,7 @@ def main():
 
     validate_params(module, aws)
 
-    this_module_function = getattr(this_module, 'lambda_event_{}'.format(module.params['event_source'].lower()))
+    this_module_function = getattr(this_module, 'lambda_event_{0}'.format(module.params['event_source'].lower()))
 
     results = this_module_function(module, aws)
 
