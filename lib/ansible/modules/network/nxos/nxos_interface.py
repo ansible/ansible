@@ -546,21 +546,14 @@ def smart_existing(module, intf_type, normalized_interface):
 
 
 def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    elif module.params['transport'] == 'nxapi':
-        if 'show run' not in command:
-            output = 'json'
-        else:
-            output = 'text'
-        cmds = [{
-            'command': command,
-            'output': output,
-        }]
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
 
     body = run_commands(module, cmds)
     return body
@@ -699,7 +692,7 @@ def main():
             load_config(module, cmds)
             results['changed'] = True
             if module.params['interface']:
-                if delta.get('mode'):  # or delta.get('admin_state'):
+                if delta.get('mode'):
                     # if the mode changes from L2 to L3, the admin state
                     # seems to change after the API call, so adding a second API
                     # call to ensure it's in the desired state.
