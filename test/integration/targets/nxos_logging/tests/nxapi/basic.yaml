@@ -1,0 +1,90 @@
+---
+- name: Set up console logging
+  nxos_logging:
+    dest: console
+    dest_level: 0
+    state: present
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging console 0" in result.commands'
+
+- name: Set up console logging again (idempotent)
+  nxos_logging:
+    dest: console
+    dest_level: 0
+    state: present
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Delete/disable console logging
+  nxos_logging:
+    dest: console
+    dest_level: 0
+    state: absent
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no logging console" in result.commands'
+
+- name: Delete/disable console logging (idempotent)
+  nxos_logging:
+    dest: console
+    dest_level: 0
+    state: absent
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Logfile logging with level
+  nxos_logging:
+    dest: logfile
+    name: test
+    dest_level: 0
+    state: present
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging logfile test 0" in result.commands'
+
+- name: Configure facility with level
+  nxos_logging:
+    facility: daemon
+    facility_level: 0
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging level daemon 0" in result.commands'
+
+- name: remove logging as collection tearDown
+  nxos_logging:
+    aggregate:
+      - { dest: logfile, name: test, dest_level: 0, state: absent }
+      - { facility: daemon, facility_level: 0, state: absent }
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no logging logfile" in result.commands'
+      - '"no logging level daemon" in result.commands'
