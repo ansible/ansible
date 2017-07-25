@@ -336,6 +336,21 @@
     that:
     - "result.skipped == true"
 
+- name: test vars using invalid key does not run with conditional is defined
+  vars:
+    mydict:
+      a: foo
+      b: bar
+    var_needed_to_run: "{{ mydict['c'] }}"
+  debug: var=var_needed_to_run
+  when: var_needed_to_run is defined
+  register: result
+
+- name: assert the task was skipped
+  assert:
+    that:
+    - "result.skipped == true"
+
 - name: test list with invalid element does not run with conditional is defined
   vars:
     mylist: []

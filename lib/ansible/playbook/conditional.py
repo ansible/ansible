@@ -213,7 +213,12 @@ class Conditional:
             # to be looking for an undefined variable, return True, otherwise fail
             try:
                 # first we extract the variable name from the error message
-                var_name = re.compile(r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(str(e)).groups()[0]
+                found = re.compile(r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(str(e))
+                if not found:
+                    var_name = None
+                else:
+                    var_name = var_name.groups()[0]
+
                 # next we extract all defined/undefined tests from the conditional string
                 def_undef = self.extract_defined_undefined(conditional)
                 # then we loop through these, comparing the error variable name against
@@ -221,6 +226,12 @@ class Conditional:
                 # whether the logic/state mean the variable should exist or not and return
                 # the corresponding True/False
                 for (du_var, logic, state) in def_undef:
+                    if not var_name:
+                        should_exist = ('not' in logic) != (state == 'defined')
+                        if should_exist:
+                            return False
+                        else:
+                            return True
                     # when we compare the var names, normalize quotes because something
                     # like hostvars['foo'] may be tested against hostvars["foo"]
                     if var_name.replace("'", '"') == du_var.replace("'", '"'):
