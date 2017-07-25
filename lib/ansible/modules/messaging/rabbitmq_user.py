@@ -17,6 +17,8 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_user
 short_description: Adds or removes users to RabbitMQ
+extends_documentation_fragment:
+    - rabbitmq.extra_ctl_paths
 description:
   - Add or remove users to RabbitMQ and assign permissions
 version_added: "1.1"
@@ -122,18 +124,37 @@ EXAMPLES = '''
         read_priv: .*
         write_priv: .*
     state: present
+
+# Add user to server and assign full access control on / vhost.
+# The user doesn't have permission rules for other vhosts
+# RabbitMQ is running as user other than root or rabbitmq
+# rabbitmqctl is at /usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin/rabbitmqctl
+- rabbitmq_user:
+    user: joe
+    password: changeme
+    permissions:
+      - vhost: /
+        configure_priv: .*
+        read_priv: .*
+        write_priv: .*
+    extra_ctl_paths:
+      - '/usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin'
+    state: present
+
 '''
+from ansible.module_utils.rabbitmq import rabbitmq_argument_spec_extra_ctl_paths
 
 from ansible.module_utils.basic import AnsibleModule
 
 
 class RabbitMqUser(object):
     def __init__(self, module, username, password, tags, permissions,
-                 node, bulk_permissions=False):
+                 node, extra_ctl_paths, bulk_permissions=False):
         self.module = module
         self.username = username
         self.password = password
         self.node = node
+        self.extra_ctl_paths = extra_ctl_paths
         if not tags:
             self.tags = list()
         else:
@@ -144,7 +165,8 @@ class RabbitMqUser(object):
 
         self._tags = None
         self._permissions = []
-        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True,
+                                                self.extra_ctl_paths)
 
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or run_in_check_mode:
@@ -244,6 +266,9 @@ def main():
         state=dict(default='present', choices=['present', 'absent']),
         node=dict(default=None)
     )
+
+    arg_spec.update(rabbitmq_argument_spec_extra_ctl_paths)
+
     module = AnsibleModule(
         argument_spec=arg_spec,
         supports_check_mode=True
@@ -260,6 +285,7 @@ def main():
     force = module.params['force']
     state = module.params['state']
     node = module.params['node']
+    extra_ctl_paths = module.params['extra_ctl_paths']
 
     bulk_permissions = True
     if not permissions:
@@ -273,7 +299,8 @@ def main():
         bulk_permissions = False
 
     rabbitmq_user = RabbitMqUser(module, username, password, tags, permissions,
-                                 node, bulk_permissions=bulk_permissions)
+                                 node, extra_ctl_paths,
+                                 bulk_permissions=bulk_permissions)
 
     result = dict(changed=False, user=username, state=state)
 

@@ -17,6 +17,8 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_policy
 short_description: Manage the state of policies in RabbitMQ.
+extends_documentation_fragment:
+    - rabbitmq.extra_ctl_paths
 description:
   - Manage the state of a virtual host in RabbitMQ.
 version_added: "1.5"
@@ -75,6 +77,16 @@ EXAMPLES = '''
     tags:
       ha-mode: all
 
+- name: ensure the default vhost contains the HA policy via a dict with alternative rabbitmqctl path
+  rabbitmq_policy:
+    name: HA
+    pattern: .*
+  args:
+    tags:
+      ha-mode: all
+  extra_ctl_paths:
+    - '/usr/lib/rabbitmq/lib/rabbitmq_server-3.6.2/sbin'
+
 - name: ensure the default vhost contains the HA policy
   rabbitmq_policy:
     name: HA
@@ -85,6 +97,7 @@ EXAMPLES = '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.rabbitmq import rabbitmq_argument_spec_extra_ctl_paths
 
 
 class RabbitMqPolicy(object):
@@ -98,7 +111,9 @@ class RabbitMqPolicy(object):
         self._tags = module.params['tags']
         self._priority = module.params['priority']
         self._node = module.params['node']
-        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+        self._extra_ctl_paths = module.params['extra_ctl_paths']
+        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True,
+                                                self._extra_ctl_paths)
 
     def _exec(self, args, run_in_check_mode=False):
         if not self._module.check_mode or (self._module.check_mode and run_in_check_mode):
@@ -145,6 +160,8 @@ def main():
         node=dict(default='rabbit'),
         state=dict(default='present', choices=['present', 'absent']),
     )
+
+    arg_spec.update(rabbitmq_argument_spec_extra_ctl_paths)
 
     module = AnsibleModule(
         argument_spec=arg_spec,
