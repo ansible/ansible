@@ -335,8 +335,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         cluster = None
         if not self.module.check_mode:
             res = self.query_api('addCluster', **args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
             # API returns a list as result CLOUDSTACK-9205
             if isinstance(res['cluster'], list):
                 cluster = res['cluster'][0]
