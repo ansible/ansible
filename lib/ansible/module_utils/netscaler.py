@@ -275,7 +275,7 @@ def monkey_patch_nitro_api():
         flds = obj.__dict__
         for k, v in ((k.replace('_', '', 1), v) for k, v in flds.items() if v):
             if isinstance(v, bool):
-                output.append('"%s": %s' % (k, str(v)))
+                output.append('"%s": %s' % (k, v))
             elif isinstance(v, (binary_type, text_type)):
                 v = to_native(v, errors='surrogate_or_strict')
                 output.append('"%s": "%s"' % (k, v))
@@ -288,13 +288,11 @@ def monkey_patch_nitro_api():
         output = []
         flds = obj.__dict__
         for k, v in ((k.replace('_', '', 1), v) for k, v in flds.items() if v):
-            if isinstance(v, bool):
-                output.append('%s: %s' % (k, str(v))
+            if isinstance(v, (int, bool)):
+                output.append('%s: %s' % (k, v)
             elif isinstance(v, (binary_type, text_type)):
                 v = to_native(v, errors='surrogate_or_strict')
                 output.append('%s: %s' % (k, cls.encode(v)))
-            elif isinstance(v, int):
-            output.append('%s: %s' % (k, str(v)))
         return ','.join(output)
 
     nitro_util.object_to_string = object_to_string_new
