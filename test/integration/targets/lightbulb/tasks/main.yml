@@ -1,0 +1,37 @@
+---
+- name: test lightbulb with no inputs
+  lightbulb:
+  register: foo
+
+- name: debug stuff
+  debug:
+    msg: "{{ foo }}"
+
+- name: test foo
+  assert: 
+    that:
+      - "foo.foo == 'bar'"
+
+- name: test lightbulb
+  lightbulb:
+    foo: test
+  register: foo
+
+- name: debug stuff
+  debug:
+    msg: "{{ foo }}"
+
+- name: test foo
+  assert: 
+    that:
+      - "foo.foo == 'test'"
+
+- name: turn up volume
+  command: osascript -e "set Volume 10" 
+  ignore_errors: yes
+
+- name: say stuff
+  osx_say: 
+    msg: The cake is a lie
+  ignore_errors: yes
+
