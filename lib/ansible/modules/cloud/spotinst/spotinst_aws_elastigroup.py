@@ -113,7 +113,7 @@ options:
       - (List of Strings) List of ElasticIps Allocation Ids to associate to the group instances
     required: false
 
-  fallback_to_ondemand:
+  fallback_to_od:
     description:
       - (Boolean) In case of no spots available, Elastigroup will launch an On-demand instance instead
     required: false
@@ -355,10 +355,9 @@ options:
 
   tags:
     description:
-      - (List of Objects) a list of hash/dictionaries of tags to configure in the elastigroup;
-        keys allowed are -
-        key (String, required),
-        value (String, required)
+      - (Dictionary) a dictionary of tags to configure in the elastigroup;
+    type: list
+    sample: "key: value"
     required: false
 
   target:
@@ -510,7 +509,7 @@ EXAMPLES = '''
           availability_vs_cost: balanced
           availability_zones:
             - name: us-west-2a
-              subnetId: subnet-2b68a15c
+              subnet_id: subnet-2b68a15c
           image_id: ami-f173cc91
           key_pair: spotinst-oregon
           max_size: 5
@@ -850,8 +849,6 @@ def expand_launch_spec(eg_compute, module, is_update, do_not_update):
 
     expand_tags(eg_launch_spec, tags)
 
-    expand_tags(eg_launch_spec, tags)
-
     expand_load_balancers(eg_launch_spec, load_balancers, target_group_arns)
 
     expand_block_device_mappings(eg_launch_spec, block_device_mappings)
@@ -951,7 +948,7 @@ def expand_capacity(eg, module, is_update, do_not_update):
 def expand_strategy(eg, module):
     risk = module.params.get('risk')
     utilize_reserved_instances = module.params.get('utilize_reserved_instances')
-    fallback_to_ondemand = module.params.get('fallback_to_ondemand')
+    fallback_to_od = module.params.get('fallback_to_od')
     on_demand_count = module.params.get('on_demand_count')
     availability_vs_cost = module.params.get('availability_vs_cost')
     draining_timeout = module.params.get('draining_timeout')
@@ -967,8 +964,8 @@ def expand_strategy(eg, module):
         eg_strategy.risk = risk
     if utilize_reserved_instances is not None:
         eg_strategy.utilize_reserved_instances = utilize_reserved_instances
-    if fallback_to_ondemand is not None:
-        eg_strategy.fallback_to_ondemand = fallback_to_ondemand
+    if fallback_to_od is not None:
+        eg_strategy.fallback_to_od = fallback_to_od
     if on_demand_count is not None:
         eg_strategy.on_demand_count = on_demand_count
     if availability_vs_cost is not None:
@@ -1114,17 +1111,16 @@ def expand_load_balancers(eg_launchspec, load_balancers, target_group_arns):
             eg_load_balancers_config.load_balancers = eg_total_lbs
             eg_launchspec.load_balancers_config = eg_load_balancers_config
 
-
 def expand_tags(eg_launchspec, tags):
     if tags is not None:
         eg_tags = []
 
         for tag in tags:
             eg_tag = spotinst.aws_elastigroup.Tag()
-            if tag.get('key') is not None:
-                eg_tag.tag_key = tag.get('key')
-            if tag.get('value') is not None:
-                eg_tag.tag_value = tag.get('value')
+            if tag.keys():
+                eg_tag.tag_key = tag.keys()[0]
+            if tag.values():
+                eg_tag.tag_value = tag.values()[0]
 
             eg_tags.append(eg_tag)
 
@@ -1175,7 +1171,7 @@ def expand_block_device_mappings(eg_launchspec, bdms):
             eg_bdms.append(eg_bdm)
 
         if eg_bdms.__sizeof__() > 0:
-            eg_launchspec.bl = eg_bdms
+            eg_launchspec.block_device_mappings = eg_bdms
 
 
 def expand_network_interfaces(eg_launchspec, enis):
@@ -1385,7 +1381,7 @@ def main():
         target=dict(type='int'),
         unit=dict(type='str'),
         utilize_reserved_instances=dict(type='bool'),
-        fallback_to_ondemand=dict(type='bool'),
+        fallback_to_od=dict(type='bool'),
         risk=dict(type='int'),
         on_demand_count=dict(type='int'),
         availability_vs_cost=dict(type='str'),
