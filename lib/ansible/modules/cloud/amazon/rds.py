@@ -973,9 +973,10 @@ def create_db_instance(module, conn):
         changed = False
     else:
         try:
-            result = conn.create_db_instance(instance_name, module.params.get('size'),
-                                             module.params.get('instance_type'), module.params.get('db_engine'),
-                                             module.params.get('username'), module.params.get('password'), **params)
+            if not module.check_mode:
+                result = conn.create_db_instance(instance_name, module.params.get('size'),
+                                               module.params.get('instance_type'), module.params.get('db_engine'),
+                                               module.params.get('username'), module.params.get('password'), **params)
             changed = True
         except RDSException as e:
             module.fail_json(msg="Failed to create instance: %s" % e.message)
@@ -1002,7 +1003,8 @@ def replicate_db_instance(module, conn):
         changed = False
     else:
         try:
-            result = conn.create_db_instance_read_replica(instance_name, source_instance, **params)
+            if not module.check_mode:
+                result = conn.create_db_instance_read_replica(instance_name, source_instance, **params)
             changed = True
         except RDSException as e:
             module.fail_json(msg="Failed to create replica instance: %s " % e.message)
@@ -1030,21 +1032,22 @@ def delete_db_instance_or_snapshot(module, conn):
         module.exit_json(changed=False)
     if result.status == 'deleting':
         module.exit_json(changed=False)
-    try:
-        if instance_name:
-            if snapshot:
-                params["skip_final_snapshot"] = False
-                if has_rds2:
-                    params["final_db_snapshot_identifier"] = snapshot
+    if not module.check_mode:
+        try:
+            if instance_name:
+                if snapshot:
+                    params["skip_final_snapshot"] = False
+                    if has_rds2:
+                        params["final_db_snapshot_identifier"] = snapshot
+                    else:
+                        params["final_snapshot_id"] = snapshot
                 else:
-                    params["final_snapshot_id"] = snapshot
+                    params["skip_final_snapshot"] = True
+                result = conn.delete_db_instance(instance_name, **params)
             else:
-                params["skip_final_snapshot"] = True
-            result = conn.delete_db_instance(instance_name, **params)
-        else:
-            result = conn.delete_db_snapshot(snapshot)
-    except RDSException as e:
-        module.fail_json(msg="Failed to delete instance: %s" % e.message)
+                result = conn.delete_db_snapshot(snapshot)
+        except RDSException as e:
+            module.fail_json(msg="Failed to delete instance: %s" % e.message)
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
@@ -1094,22 +1097,23 @@ def modify_db_instance(module, conn):
     instance_name = module.params.get('instance_name')
     new_instance_name = module.params.get('new_instance_name')
 
-    try:
-        result = conn.modify_db_instance(instance_name, **params)
-    except RDSException as e:
-        module.fail_json(msg=e.message)
-    if params.get('apply_immediately'):
-        if new_instance_name:
-            # Wait until the new instance name is valid
-            new_instance = None
-            while not new_instance:
-                new_instance = conn.get_db_instance(new_instance_name)
-                time.sleep(5)
+    if not module.check_mode:
+        try:
+            result = conn.modify_db_instance(instance_name, **params)
+        except RDSException as e:
+            module.fail_json(msg=e.message)
+        if params.get('apply_immediately'):
+            if new_instance_name:
+                # Wait until the new instance name is valid
+                new_instance = None
+                while not new_instance:
+                    new_instance = conn.get_db_instance(new_instance_name)
+                    time.sleep(5)
 
-            # Found instance but it briefly flicks to available
-            # before rebooting so let's wait until we see it rebooting
-            # before we check whether to 'wait'
-            result = await_resource(conn, new_instance, 'rebooting', module)
+                # Found instance but it briefly flicks to available
+                # before rebooting so let's wait until we see it rebooting
+                # before we check whether to 'wait'
+                result = await_resource(conn, new_instance, 'rebooting', module)
 
     if module.params.get('wait'):
         resource = await_resource(conn, result, 'available', module)
@@ -1132,7 +1136,8 @@ def promote_db_instance(module, conn):
 
     if result.get_data().get('replication_source'):
         try:
-            result = conn.promote_read_replica(instance_name, **params)
+            if not module.check_mode:
+                result = conn.promote_read_replica(instance_name, **params)
             changed = True
         except RDSException as e:
             module.fail_json(msg=e.message)
@@ -1157,7 +1162,8 @@ def snapshot_db_instance(module, conn):
     result = conn.get_db_snapshot(snapshot)
     if not result:
         try:
-            result = conn.create_db_snapshot(snapshot, instance_name, **params)
+            if not module.check_mode:
+                result = conn.create_db_snapshot(snapshot, instance_name, **params)
             changed = True
         except RDSException as e:
             module.fail_json(msg=e.message)
@@ -1182,7 +1188,8 @@ def reboot_db_instance(module, conn):
     result = conn.get_db_instance(instance_name)
     changed = False
     try:
-        result = conn.reboot_db_instance(instance_name, **params)
+        if not module.check_mode:
+            result = conn.reboot_db_instance(instance_name, **params)
         changed = True
     except RDSException as e:
         module.fail_json(msg=e.message)
@@ -1213,7 +1220,8 @@ def restore_db_instance(module, conn):
     result = conn.get_db_instance(instance_name)
     if not result:
         try:
-            result = conn.restore_db_instance_from_db_snapshot(instance_name, snapshot, instance_type, **params)
+            if not module.check_mode:
+                result = conn.restore_db_instance_from_db_snapshot(instance_name, snapshot, instance_type, **params)
             changed = True
         except RDSException as e:
             module.fail_json(msg=e.message)
@@ -1352,6 +1360,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     if not HAS_BOTO:
