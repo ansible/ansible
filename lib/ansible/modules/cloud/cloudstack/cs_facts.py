@@ -106,7 +106,7 @@ cloudstack_user_data:
 import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.facts import ansible_facts, module
+from ansible.module_utils.facts import ansible_collector, default_collectors
 
 try:
     import yaml
@@ -121,7 +121,12 @@ CS_USERDATA_BASE_URL = "http://%s/latest/user-data"
 class CloudStackFacts(object):
 
     def __init__(self):
-        self.facts = ansible_facts(module)
+        collector = ansible_collector.get_ansible_collector(all_collector_classes=default_collectors.collectors,
+                                                            filter_spec='default_ipv4',
+                                                            gather_subset=['!all', 'network'],
+                                                            gather_timeout=10)
+        self.facts = collector.collect(module)
+
         self.api_ip = None
         self.fact_paths = {
             'cloudstack_service_offering': 'service-offering',
