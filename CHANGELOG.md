@@ -51,6 +51,8 @@ Ansible Changes By Release
 * fix eos_config tests so only Eth1 and Eth2 are used
 * Fix for potential bug when using legacy inventory vars for configuring the su password.
 * Fix crash in file module when directories contain non-utf8 filenames
+* Fix for dnf groupinstall with dnf-2.x
+* Fix seboolean module for incompatibility in newer Python3 selinux bindings
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
