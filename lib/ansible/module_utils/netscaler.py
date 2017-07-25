@@ -289,7 +289,7 @@ def monkey_patch_nitro_api():
         flds = obj.__dict__
         for k, v in ((k.replace('_', '', 1), v) for k, v in flds.items() if v):
             if isinstance(v, (int, bool)):
-                output.append('%s:%s' % (k, v)
+                output.append('%s:%s' % (k, v))
             elif isinstance(v, (binary_type, text_type)):
                 v = to_native(v, errors='surrogate_or_strict')
                 output.append('%s:%s' % (k, cls.encode(v)))
