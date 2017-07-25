@@ -228,7 +228,7 @@ IRC Meetings
 ------------
 
 The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to 
-participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
+participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
 Release Numbering
 -----------------
@@ -258,7 +258,7 @@ Ansible has several IRC channels on Freenode (irc.freenode.net):
 
 - #ansible - For general use questions and support.
 - #ansible-devel - For discussions on developer topics and code related to features/bugs.
-- #ansible-meeting - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_
+- #ansible-meeting - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 - #ansible-notices - Mostly bot output from things like Github, etc.
 
 Notes on Priority Flags
