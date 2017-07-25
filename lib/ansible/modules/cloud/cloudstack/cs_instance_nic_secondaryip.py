@@ -152,7 +152,6 @@ project:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -177,7 +176,7 @@ class AnsibleCloudStackInstanceIpaddress(AnsibleCloudStack):
             'virtualmachineid': self.get_vm(key='id'),
             'networkid': self.get_network(key='id'),
         }
-        nics = self.cs.listNics(**args)
+        nics = self.query_api('listNics', **args)
         if nics:
             self.nic = nics['nic'][0]
             return self.nic
@@ -202,10 +201,7 @@ class AnsibleCloudStackInstanceIpaddress(AnsibleCloudStack):
             }
 
             if not self.module.check_mode:
-                res = self.cs.addIpToNic(**args)
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('addIpToNic', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -220,9 +216,7 @@ class AnsibleCloudStackInstanceIpaddress(AnsibleCloudStack):
         if secondary_ip:
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.removeIpFromNic(id=secondary_ip['id'])
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % nic['errortext'])
+                res = self.query_api('removeIpFromNic', id=secondary_ip['id'])
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -263,21 +257,15 @@ def main():
         ])
     )
 
-    try:
-        acs_instance_ipaddress = AnsibleCloudStackInstanceIpaddress(module)
+    acs_instance_ipaddress = AnsibleCloudStackInstanceIpaddress(module)
+    state = module.params.get('state')
 
-        state = module.params.get('state')
+    if state == 'absent':
+        nic = acs_instance_ipaddress.absent_nic_ip()
+    else:
+        nic = acs_instance_ipaddress.present_nic_ip()
 
-        if state == 'absent':
-            nic = acs_instance_ipaddress.absent_nic_ip()
-        else:
-            nic = acs_instance_ipaddress.present_nic_ip()
-
-        result = acs_instance_ipaddress.get_result(nic)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_instance_ipaddress.get_result(nic)
     module.exit_json(**result)
 
 
