@@ -355,7 +355,7 @@ options:
 
   tags:
     description:
-      - (Dictionary) a dictionary of tags to configure in the elastigroup; Please specify 'key: value'
+      - (Dictionary) a dictionary of tags to configure in the elastigroup. Please specify list of keys and values (key comma value);
     required: false
 
   target:
