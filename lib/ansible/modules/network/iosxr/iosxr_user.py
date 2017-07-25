@@ -139,6 +139,7 @@ def search_obj_in_list(name, lst):
 
     return None
 
+
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
