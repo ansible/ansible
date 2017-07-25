@@ -52,6 +52,7 @@ options:
       - The type of routing.
     choices: ['static', 'dynamic']
     default: dynamic
+    version_added: '2.4'
   state:
     description:
       - Create or terminate the Customer Gateway.
