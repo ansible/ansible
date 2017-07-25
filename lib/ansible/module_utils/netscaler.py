@@ -33,6 +33,7 @@ import re
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils._text import to_native
 
 
 class ConfigProxy(object):
@@ -273,30 +274,27 @@ def monkey_patch_nitro_api():
         output = []
         flds = obj.__dict__
         for k, v in ((k.replace('_', '', 1), v) for k, v in flds.items() if v):
-            output.append('"%s":' % k)
             if isinstance(v, bool):
-                output.append(str(v))
+                output.append('"%s": %s' % (k, str(v)))
             elif isinstance(v, (binary_type, text_type)):
                 v = to_native(v, errors='surrogate_or_strict')
-                output.append('"%s"' % v)
+                output.append('"%s": "%s"' % (k, v))
             elif isinstance(v, int):
-                output.append('"%s"' % v)
-            output.append(",")
-        return ''.join(output)
+                output.append('"%s": "%s"' % (k, v))
+        return ','.join(output)
 
     @classmethod
     def object_to_string_withoutquotes_new(cls, obj):
         output = []
         flds = obj.__dict__
         for k, v in ((k.replace('_', '', 1), v) for k, v in flds.items() if v):
-            output.append('%s:' % k)
             if isinstance(v, bool):
-                output.append(str(v))
+                output.append('%s: %s' % (k, str(v))
             elif isinstance(v, (binary_type, text_type)):
                 v = to_native(v, errors='surrogate_or_strict')
-                output.append(cls.encode(v))
+                output.append('%s: %s' % (k, cls.encode(v)))
             elif isinstance(v, int):
-                output.append(str(v))
+            output.append('%s: %s' % (k, str(v)))
         return ','.join(output)
 
     nitro_util.object_to_string = object_to_string_new
