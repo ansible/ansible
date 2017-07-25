@@ -209,24 +209,25 @@ def map_config_to_obj(module):
     for line in data.split('\n'):
         match = re.search(r'logging (\S+)', line, re.M)
 
-        if match.group(1) in DEST_GROUP:
-            dest = match.group(1)
-            facility = None
+        if match:
+            if match.group(1) in DEST_GROUP:
+                dest = match.group(1)
+                facility = None
 
-        elif match.group(1) == 'level':
-            match_facility = re.search(r'logging level (\S+)', line, re.M)
-            facility = match_facility.group(1)
-            dest = None
+            elif match.group(1) == 'level':
+                match_facility = re.search(r'logging level (\S+)', line, re.M)
+                facility = match_facility.group(1)
+                dest = None
 
-        else:
-            dest = None
-            facility = None
+            else:
+                dest = None
+                facility = None
 
-        obj.append({'dest': dest,
-                    'name': parse_name(line, dest),
-                    'facility': facility,
-                    'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
-                    'facility_level': parse_facility_level(line, facility)})
+            obj.append({'dest': dest,
+                        'name': parse_name(line, dest),
+                        'facility': facility,
+                        'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
+                        'facility_level': parse_facility_level(line, facility)})
 
     return obj
 
@@ -286,9 +287,9 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        dest=dict(type='str', choices=DEST_GROUP),
-        name=dict(type='str'),
-        facility=dict(type='str'),
+        dest=dict(choices=DEST_GROUP),
+        name=dict(),
+        facility=dict(),
         dest_level=dict(type='int', aliases=['level']),
         facility_level=dict(type='int'),
         state=dict(default='present', choices=['present', 'absent']),
