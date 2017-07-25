@@ -1,0 +1,17 @@
+- name: Validate CSR (test - privatekey modulus)
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem | openssl md5'
+  register: privatekey_modulus
+
+- name: Validate CSR (test - Common Name)
+  shell: "openssl req -noout -subject -in {{ output_dir }}/csr.csr -nameopt oneline,-space_eq"
+  register: csr_cn
+
+- name: Validate CSR (test - csr modulus)
+  shell: 'openssl req -noout -modulus -in {{ output_dir }}/csr.csr | openssl md5'
+  register: csr_modulus
+
+- name: Validate CSR (assert)
+  assert:
+    that:
+      - csr_cn.stdout.split('=')[-1] == 'www.ansible.com'
+      - csr_modulus.stdout == privatekey_modulus.stdout

@@ -1,0 +1,13 @@
+- block:
+    - name: Generate privatekey
+      openssl_privatekey:
+        path: '{{ output_dir }}/privatekey.pem'
+
+    - name: Generate publickey
+      openssl_publickey:
+        path: '{{ output_dir }}/publickey.pub'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+
+    - import_tasks: ../tests/validate.yml
+
+  when: pyopenssl_version.stdout|version_compare('16.0.0', '>=')

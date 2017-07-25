@@ -1,0 +1,28 @@
+- name: Validate privatekey1 (test)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey1.pem  | grep Private | sed 's/Private-Key: (\\(.*\\) bit)/\\1/'"
+  register: privatekey1
+
+- name: Validate privatekey1 (assert)
+  assert:
+    that:
+      - privatekey1.stdout == '4096'
+
+
+- name: Validate privatekey2 (test)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey2.pem  | grep Private | sed 's/Private-Key: (\\(.*\\) bit)/\\1/'"
+  register: privatekey2
+
+- name: Validate privatekey2 (assert)
+  assert:
+    that:
+      - privatekey2.stdout == '2048'
+
+
+- name: Validate privatekey3 (test)
+  shell: "openssl dsa -noout -text -in {{ output_dir }}/privatekey3.pem  | grep Private | sed 's/Private-Key: (\\(.*\\) bit)/\\1/'"
+  register: privatekey3
+
+- name: Validate privatekey3 (assert)
+  assert:
+    that:
+      - privatekey1.stdout == '4096'

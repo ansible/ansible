@@ -187,7 +187,7 @@ class PublicKey(object):
                     self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
                     publickey_content = crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
 
-                publickey_file = open(self.path, 'w')
+                publickey_file = open(self.path, 'wb')
                 publickey_file.write(publickey_content)
                 publickey_file.close()
 
