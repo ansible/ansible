@@ -1113,19 +1113,19 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_or_strict')
         if owner is None:
             return changed
-        orig_uid, orig_gid = self.user_and_group(path, expand)
+        orig_uid, orig_gid = self.user_and_group(b_path, expand)
         try:
             uid = int(owner)
         except ValueError:
             try:
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
-        if orig_uid != uid:
 
+        if orig_uid != uid:
             if diff is not None:
                 if 'before' not in diff:
                     diff['before'] = {}
@@ -1139,6 +1139,7 @@ class AnsibleModule(object):
             try:
                 os.lchown(b_path, uid, -1)
             except OSError:
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chown failed')
             changed = True
         return changed
@@ -1147,7 +1148,6 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_or_strict')
         if group is None:
             return changed
         orig_uid, orig_gid = self.user_and_group(b_path, expand)
@@ -1157,9 +1157,10 @@ class AnsibleModule(object):
             try:
                 gid = grp.getgrnam(group).gr_gid
             except KeyError:
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
-        if orig_gid != gid:
 
+        if orig_gid != gid:
             if diff is not None:
                 if 'before' not in diff:
                     diff['before'] = {}
@@ -1173,6 +1174,7 @@ class AnsibleModule(object):
             try:
                 os.lchown(b_path, -1, gid)
             except OSError:
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chgrp failed')
             changed = True
         return changed
@@ -1181,7 +1183,6 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_or_strict')
         path_stat = os.lstat(b_path)
 
         if mode is None:
@@ -1195,12 +1196,14 @@ class AnsibleModule(object):
                     mode = self._symbolic_mode_to_octal(path_stat, mode)
                 except Exception:
                     e = get_exception()
+                    path = to_text(b_path)
                     self.fail_json(path=path,
                                    msg="mode must be in octal or symbolic form",
                                    details=str(e))
 
                 if mode != stat.S_IMODE(mode):
                     # prevent mode from having extra info orbeing invalid long number
+                    path = to_text(b_path)
                     self.fail_json(path=path, msg="Invalid mode supplied, only permission info is allowed", details=mode)
 
         prev_mode = stat.S_IMODE(path_stat.st_mode)
@@ -1244,6 +1247,7 @@ class AnsibleModule(object):
                     raise e
             except Exception:
                 e = get_exception()
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chmod failed', details=str(e))
 
             path_stat = os.lstat(b_path)
@@ -1261,7 +1265,6 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_or_strict')
 
         existing = self.get_file_attributes(b_path)
 
@@ -1286,6 +1289,7 @@ class AnsibleModule(object):
                             raise Exception("Error while setting attributes: %s" % (out + err))
                     except:
                         e = get_exception()
+                        path = to_text(b_path)
                         self.fail_json(path=path, msg='chattr failed', details=str(e))
         return changed
 
