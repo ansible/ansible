@@ -150,6 +150,60 @@
 
     - block:
       - include_role:
+          name: nxos_vrf
+        when: "limit_to in ['*', 'nxos_vrf']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrf' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vrf_interface
+        when: "limit_to in ['*', 'nxos_vrf_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrf_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vrrp
+        when: "limit_to in ['*', 'nxos_vrrp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrrp' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vtp_domain
+        when: "limit_to in ['*', 'nxos_vtp_domain']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vtp_domain' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vtp_password
+        when: "limit_to in ['*', 'nxos_vtp_password']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vtp_password' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vtp_version
+        when: "limit_to in ['*', 'nxos_vtp_version']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vtp_version' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_logging
         when: "limit_to in ['*', 'nxos_logging']"
       rescue:
