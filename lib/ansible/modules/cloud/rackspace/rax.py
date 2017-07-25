@@ -240,13 +240,22 @@ EXAMPLES = '''
       register: rax
 '''
 
+import os
+import json
+import re
+import time
+
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.rax import (FINAL_STATUSES, rax_argument_spec, rax_find_bootable_volume, rax_find_image,
+        rax_find_network, rax_find_volume, rax_required_together, rax_to_dict, setup_rax_module)
 from ansible.module_utils.six.moves import xrange
+from ansible.module_utils.six import string_types
 
 
 def rax_find_server_image(module, server, image, boot_volume):
@@ -517,7 +526,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
             meta[k] = ','.join(['%s' % i for i in v])
         elif isinstance(v, dict):
             meta[k] = json.dumps(v)
-        elif not isinstance(v, basestring):
+        elif not isinstance(v, string_types):
             meta[k] = '%s' % v
 
     # When using state=absent with group, the absent block won't match the
@@ -891,12 +900,6 @@ def main():
                  boot_volume=boot_volume, boot_volume_size=boot_volume_size,
                  boot_volume_terminate=boot_volume_terminate)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
-
-# invoke the module
 
 if __name__ == '__main__':
     main()

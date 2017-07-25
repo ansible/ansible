@@ -149,12 +149,21 @@ EXAMPLES = '''
 '''
 
 import base64
+import json
+import os
+import time
 
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.rax import (rax_argument_spec, rax_find_image,
+        rax_find_network, rax_required_together, rax_to_dict,
+        setup_rax_module)
+from ansible.module_utils.six import string_types
 
 
 def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
@@ -189,7 +198,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
                     meta[k] = ','.join(['%s' % i for i in v])
                 elif isinstance(v, dict):
                     meta[k] = json.dumps(v)
-                elif not isinstance(v, basestring):
+                elif not isinstance(v, string_types):
                     meta[k] = '%s' % v
 
         if image:
@@ -425,12 +434,6 @@ def main():
             name=name, networks=networks, server_name=server_name,
             state=state, config_drive=config_drive, user_data=user_data)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
-
-# invoke the module
 
 if __name__ == '__main__':
     main()

@@ -122,6 +122,7 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type, text_type
 
+
 # exceptions --------------------------------------------------------------- {{{
 class OSXDefaultsException(Exception):
     pass
