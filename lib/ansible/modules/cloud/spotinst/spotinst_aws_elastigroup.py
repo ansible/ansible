@@ -355,9 +355,7 @@ options:
 
   tags:
     description:
-      - (Dictionary) a dictionary of tags to configure in the elastigroup;
-    type: list
-    sample: "key: value"
+      - (Dictionary) a dictionary of tags to configure in the elastigroup; Please specify 'key: value'
     required: false
 
   target:
@@ -1110,6 +1108,7 @@ def expand_load_balancers(eg_launchspec, load_balancers, target_group_arns):
         if eg_total_lbs.__sizeof__() > 0:
             eg_load_balancers_config.load_balancers = eg_total_lbs
             eg_launchspec.load_balancers_config = eg_load_balancers_config
+
 
 def expand_tags(eg_launchspec, tags):
     if tags is not None:
