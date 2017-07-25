@@ -69,4 +69,4 @@ Ansible
 Extending httptester
 ====================
 
-If you have sometime to improve ``httptester`` please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/MEETINGS.md>`_ to avoid duplicated effort.
+If you have sometime to improve ``httptester`` please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/meetings/README.md>`_ to avoid duplicated effort.
