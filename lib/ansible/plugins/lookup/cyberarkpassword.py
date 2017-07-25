@@ -120,9 +120,12 @@ class LookupModule(LookupBase):
     for extra_parms values please check parameters for clipasswordsdk in CyberArk's "Credential Provider and ASCP Implementation Guide"
 
     For Ansible on windows, please change the -parameters (-p, -d, and -o) to /parameters (/p, /d, and /o) and change the location of CLIPasswordSDK.exe
+
+    cyberarkpassword lookup can not be used as a source for loop
+    
     """
 
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         cyberark_conn = CyberarkPassword(**kwargs)
         result = cyberark_conn.get()
