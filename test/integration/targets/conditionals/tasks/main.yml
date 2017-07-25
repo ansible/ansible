@@ -351,6 +351,26 @@
     that:
     - "result.skipped == true"
 
+- name: test conditional (is defined) with an undefined dict with an undefined key
+  debug: msg=foo
+  when: foo['bar'] is defined
+  register: result
+
+- name: assert the task was skipped
+  assert:
+    that:
+    - "result.skipped == true"
+
+- name: test conditional (is not undefined) with an undefined dict with an undefined key
+  debug: msg=foo
+  when: foo['bar'] is not undefined
+  register: result
+
+- name: assert the task was skipped
+  assert:
+    that:
+    - "result.skipped == true"
+
 - name: test list with invalid element does not run with conditional is defined
   vars:
     mylist: []

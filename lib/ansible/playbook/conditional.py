@@ -217,10 +217,13 @@ class Conditional:
                 if not found:
                     var_name = None
                 else:
-                    var_name = var_name.groups()[0]
+                    var_name = found.groups()[0]
 
                 # next we extract all defined/undefined tests from the conditional string
                 def_undef = self.extract_defined_undefined(conditional)
+                # undefined var_name found, but conditional had no matches; likely a complex var
+                if not def_undef and var_name and ('is defined' in conditional or 'is not undefined' in conditional):
+                    return False
                 # then we loop through these, comparing the error variable name against
                 # each def/undef test we found above. If there is a match, we determine
                 # whether the logic/state mean the variable should exist or not and return
