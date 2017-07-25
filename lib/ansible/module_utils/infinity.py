@@ -606,7 +606,7 @@ def main():
         "network_location": {
             "required": False,
             "type": "int",
-            "default":-1},
+            "default": -1},
         "network_family": {
             "required": False,
             "type": "str",
