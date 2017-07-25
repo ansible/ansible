@@ -38,14 +38,12 @@ aruba_argument_spec = {
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'timeout': dict(type='int', default=10),
+    'timeout': dict(type='int'),
     'provider': dict(type='dict')
 }
 
 # Add argument's default value here
-ARGS_DEFAULT_VALUE = {
-    'timeout': 10
-}
+ARGS_DEFAULT_VALUE = {}
 
 
 def get_argspec():
