@@ -1,6 +1,6 @@
 ---
 - name: Set up host logging
-  net_logging:
+  eos_logging:
     dest: host
     name: 172.16.0.1
     state: present
@@ -14,7 +14,7 @@
       - '"logging host 172.16.0.1" in result.commands'
 
 - name: Set up host logging again (idempotent)
-  net_logging:
+  eos_logging:
     dest: host
     name: 172.16.0.1
     state: present
@@ -27,7 +27,7 @@
       - 'result.changed == false'
 
 - name: Delete/disable host logging
-  net_logging:
+  eos_logging:
     dest: host
     name: 172.16.0.1
     state: absent
@@ -41,7 +41,7 @@
       - '"no logging host 172.16.0.1" in result.commands'
 
 - name: Delete/disable host logging (idempotent)
-  net_logging:
+  eos_logging:
     dest: host
     name: 172.16.0.1
     state: absent
@@ -54,7 +54,7 @@
       - 'result.changed == false'
 
 - name: Console logging with level warnings
-  net_logging:
+  eos_logging:
     dest: console
     level: warnings
     state: present
@@ -67,10 +67,10 @@
       - 'result.changed == true'
       - '"logging console warnings" in result.commands'
 
-- name: Configure monitor logging
-  net_logging:
-    dest: monitor
-    level: debugging
+- name: Configure buffer size
+  eos_logging:
+    dest: buffered
+    size: 480000
     authorize: yes
     provider: "{{ cli }}"
   register: result
@@ -78,13 +78,13 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging monitor debugging" in result.commands'
+      - '"logging buffered 480000" in result.commands'
 
 - name: remove logging as collection tearDown
-  net_logging:
+  eos_logging:
     aggregate:
       - { dest: console, level: warnings, state: absent }
-      - { dest: monitor, level: debuggning, state: absent }
+      - { dest: buffered, size: 480000, state: absent }
     authorize: yes
     provider: "{{ cli }}"
   register: result
@@ -93,4 +93,4 @@
     that:
       - 'result.changed == true'
       - '"no logging console" in result.commands'
-      - '"no logging monitor" in result.commands'
+      - '"no logging buffered" in result.commands'

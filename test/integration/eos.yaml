@@ -103,6 +103,16 @@
             failed_modules: "{{ failed_modules }} + [ 'eos_vrf' ]"
             test_failed: true
 
+    - block:
+      - include_role:
+          name: eos_logging
+        when: "limit_to in ['*', 'eos_logging']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_logging' ]"
+            test_failed: true
+
+
 
 ###########
     - debug: var=failed_modules
