@@ -778,8 +778,7 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None, bypass_options_checks=False, options_mutually_exclusive=None,
-                 options_required_together=None, options_required_one_of=None, options_required_if=None):
+                 required_if=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -791,7 +790,13 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
+        self.bypass_checks = bypass_checks
         self.no_log = no_log
+        self.check_invalid_arguments = check_invalid_arguments
+        self.mutually_exclusive = mutually_exclusive
+        self.required_together = required_together
+        self.required_one_of = required_one_of
+        self.required_if = required_if
         self.cleanup_files = []
         self._debug = False
         self._diff = False
@@ -866,8 +871,7 @@ class AnsibleModule(object):
         self._set_defaults(pre=False)
 
         # deal with options sub-spec
-        self._handle_options(check_invalid_arguments, bypass_options_checks, options_mutually_exclusive,
-                             options_required_together, options_required_one_of, options_required_if)
+        self._handle_options()
 
         if not self.no_log:
             self._log_invocation()
@@ -1889,21 +1893,24 @@ class AnsibleModule(object):
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
-    def _handle_options(self, check_invalid_arguments, bypass_options_checks, options_mutually_exclusive,
-                        options_required_together, options_required_one_of, options_required_if):
+    def _handle_options(self, argument_spec=None, params=None):
         ''' deal with options to create sub spec '''
+        if argument_spec is None:
+            argument_spec = self.argument_spec
+        if params is None:
+            params = self.params
 
-        for (k, v) in self.argument_spec.items():
+        for (k, v) in argument_spec.items():
             wanted = v.get('type', None)
             if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
                 spec = v.get('options', None)
-                if spec is None or not self.params[k]:
+                if spec is None or not params[k]:
                     continue
 
-                if isinstance(self.params[k], dict):
-                    elements = [self.params[k]]
+                if isinstance(params[k], dict):
+                    elements = [params[k]]
                 else:
-                    elements = self.params[k]
+                    elements = params[k]
 
                 for param in elements:
                     if not isinstance(param, dict):
@@ -1913,27 +1920,29 @@ class AnsibleModule(object):
                     options_aliases = self._handle_aliases(spec, param)
 
                     self._handle_no_log_values(spec, param)
-
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
-                    self._check_arguments(check_invalid_arguments, spec, param, options_legal_inputs)
+                    self._check_arguments(self.check_invalid_arguments, spec, param, options_legal_inputs)
 
                     # check exclusive early
-                    if not bypass_options_checks:
-                        self._check_mutually_exclusive(options_mutually_exclusive, param)
+                    if not self.bypass_checks:
+                        self._check_mutually_exclusive(self.mutually_exclusive, param)
 
                     self._set_defaults(pre=True, spec=spec, param=param)
 
-                    if not bypass_options_checks:
+                    if not self.bypass_checks:
                         self._check_required_arguments(spec, param)
                         self._check_argument_types(spec, param)
                         self._check_argument_values(spec, param)
 
-                        self._check_required_together(options_required_together, param)
-                        self._check_required_one_of(options_required_one_of, param)
-                        self._check_required_if(options_required_if, param)
+                        self._check_required_together(self.required_together, param)
+                        self._check_required_one_of(self.required_one_of, param)
+                        self._check_required_if(self.required_if, param)
 
                     self._set_defaults(pre=False, spec=spec, param=param)
+
+                    # handle multi level options (sub argspec)
+                    self._handle_options(spec, param)
 
     def _check_argument_types(self, spec=None, param=None):
         ''' ensure all arguments have the requested type '''
