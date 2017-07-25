@@ -26,7 +26,7 @@ if (Get-Module -Name DISM -ListAvailable) {
     Import-Module -Name DISM
 } else {
     # Server 2008 R2 doesn't have the DISM module installed on the path, check the Windows ADK path
-    $adk_root = "C:\Program Files (x86)\Windows Kits\*\Assessment and Deployment Kit\Deployment Tools\amd64\DISM"
+    $adk_root = [System.Environment]::ExpandEnvironmentVariables("%PROGRAMFILES(X86)%\Windows Kits\*\Assessment and Deployment Kit\Deployment Tools\amd64\DISM")
     if (Test-Path -Path $adk_root) {
         Import-Module -Name (Get-Item -Path $adk_root).FullName
     } else {
@@ -59,7 +59,7 @@ Function Get-HotfixMetadataFromName($name) {
     try {
         $dism_package_info = Get-WindowsPackage -Online -PackageName $name
     } catch {
-        # build a basic of a missing result
+        # build a basic stub for a missing result
         $dism_package_info = @{
             PackageState = "NotPresent"
             Description = ""
@@ -142,7 +142,7 @@ Function Get-HotfixMetadataFromKB($kb) {
             }
         }
 
-        # if we still haven't found the package then we need to through an error
+        # if we still haven't found the package then we need to throw an error
         if ($metadata -eq $null) {
             Fail-Json $result "failed to get DISM package from KB, to continue specify hotfix_identifier instead"
         }
