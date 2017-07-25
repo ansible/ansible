@@ -86,7 +86,7 @@ changed:
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 import re
@@ -94,14 +94,10 @@ import re
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
-        if 'status' not in command:
+        if type(command) is str and 'status' not in command:
             command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
 
+    body = run_commands(module, command)
     return body
 
 
@@ -116,10 +112,12 @@ def flatten_list(command_lists):
 
 
 def get_vtp_config(module):
-    command = 'show vtp status'
-
+    command = [{
+        'command': ('show vtp status'),
+        'output': 'text',
+    }]
     body = execute_show_command(
-        command, module, command_type='cli_show_ascii')[0]
+        command, module)[0]
     vtp_parsed = {}
 
     if body:
@@ -169,7 +167,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-
     domain = module.params['domain']
 
     existing = get_vtp_config(module)
@@ -209,4 +206,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

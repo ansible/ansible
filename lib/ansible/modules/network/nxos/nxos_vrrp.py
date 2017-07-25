@@ -137,11 +137,11 @@ changed:
     type: boolean
     sample: true
 '''
-import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
@@ -204,8 +204,6 @@ def get_interface_mode(interface, intf_type, module):
     interface = {}
     mode = 'unknown'
     body = execute_show_command(command, module)[0]
-    #import epdb
-    #epdb.serve()
     interface_table = body['TABLE_interface']['ROW_interface']
     name = interface_table.get('interface')
 
@@ -375,7 +373,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-
     state = module.params['state']
     interface = module.params['interface'].lower()
     group = module.params['group']
@@ -453,4 +450,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
