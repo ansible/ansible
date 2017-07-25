@@ -204,6 +204,15 @@
 
     - block:
       - include_role:
+          name: nxos_rollback
+        when: "limit_to in ['*', 'nxos_rollback']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_rollback' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_logging
         when: "limit_to in ['*', 'nxos_logging']"
       rescue:
