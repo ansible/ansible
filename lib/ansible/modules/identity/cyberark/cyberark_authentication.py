@@ -24,19 +24,19 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cyberark_authentication
-short_description: "Module for CyberArk Vault Authentication using Privileged Account Security Web Services SDK"
-author: "Edward Nunez (@enunez-cyberark)"
-version_added: "2.4"
+short_description: Module for CyberArk Vault Authentication using PAS Web Services SDK
+author: Edward Nunez @ CyberArk BizDev (@enunez-cyberark, @cyberark-bizdev, @erasmix)
+version_added: 2.4
 description:
-    - "Authenticates to CyberArk Vault using Privileged Account Security Web Services SDK and
-       creates a session fact that can be used by other modules. It returns an Ansible fact
-       called I(cyberark_session). Every module can use this fact as C(cyberark_session) parameter."
+    - Authenticates to CyberArk Vault using Privileged Account Security Web Services SDK and
+      creates a session fact that can be used by other modules. It returns an Ansible fact
+      called I(cyberark_session). Every module can use this fact as C(cyberark_session) parameter.
 
 
 options:
     state:
         default: present
-        choices: ['present', 'absent']
+        choices: [present, absent]
         description:
             - Specifies if an authentication logon/logoff and a cyberark_session should be added/removed.
     username:
@@ -52,17 +52,20 @@ options:
         description:
             - A string containing the base URL of the server hosting CyberArk's Privileged Account Security Web Services SDK.
     validate_certs:
-        default: true
+        type: bool
+        default: 'yes'
         description:
             - If C(false), SSL certificates will not be validated.  This should only
               set to C(false) used on personally controlled sites using self-signed
               certificates.
     use_shared_logon_authentication:
-        default: false
+        type: bool
+        default: 'no'
         description:
             - Whether or not Shared Logon Authentication will be used.
     use_radius_authentication:
-        default: false
+        type: bool
+        default: 'no'
         description:
             - Whether or not users will be authenticated via a RADIUS server. Valid values are true/false.
     cyberark_session:
@@ -74,14 +77,14 @@ EXAMPLES = '''
 - name: Logon to CyberArk Vault using PAS Web Services SDK - use_shared_logon_authentication
   cyberark_authentication:
     api_base_url: "{{ web_services_base_url }}"
-    use_shared_logon_authentication: true
+    use_shared_logon_authentication: yes
 
 - name: Logon to CyberArk Vault using PAS Web Services SDK - Not use_shared_logon_authentication
   cyberark_authentication:
     api_base_url: "{{ web_services_base_url }}"
     username: "{{ password_object.password }}"
     password: "{{ password_object.passprops.username }}"
-    use_shared_logon_authentication: false
+    use_shared_logon_authentication: no
 
 - name: Logoff from CyberArk Vault
   cyberark_authentication:
@@ -203,7 +206,6 @@ def processAuthentication(module):
                  "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
             payload=payload,
             headers=headers,
-            exception=to_text(http_exception),
             status_code=http_exception.code)
 
     except Exception as unknown_exception:
@@ -213,7 +215,6 @@ def processAuthentication(module):
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             payload=payload,
             headers=headers,
-            exception=to_text(unknown_exception),
             status_code=-1)
 
     if response.getcode() == 200:  # Success
@@ -230,10 +231,9 @@ def processAuthentication(module):
                     token = json.loads(response.read())["CyberArkLogonResult"]
             except Exception as e:
                 module.fail_json(
-                    msg="Error obtaining token",
+                    msg="Error obtaining token\n%s" % (to_text(e)),
                     payload=payload,
                     headers=headers,
-                    exception=to_text(e),
                     status_code=-1)
 
             # Preparing result of the module
