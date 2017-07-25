@@ -179,6 +179,7 @@ except ImportError:
 else:
     pyopenssl_found = True
 
+from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
@@ -231,10 +232,11 @@ class CertificateSigningRequest(object):
             if self.subjectAltName is not None:
                 req.add_extensions([crypto.X509Extension(b"subjectAltName", False, self.subjectAltName.encode('ascii'))])
 
-            privatekey_content = open(self.privatekey_path).read()
-            self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                                     privatekey_content,
-                                                     self.privatekey_passphrase)
+            self.privatekey = crypto_utils.load_privatekey(
+                self.privatekey_path,
+                self.privatekey_passphrase
+            )
+
             req.set_pubkey(self.privatekey)
             req.sign(self.privatekey, self.digest)
             self.request = req

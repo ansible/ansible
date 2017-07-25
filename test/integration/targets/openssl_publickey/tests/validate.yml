@@ -1,0 +1,12 @@
+- name: Validate public key (test - privatekey modulus)
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem | openssl md5'
+  register: privatekey_modulus
+
+- name: Validate public key (test - publickey modulus)
+  shell: 'openssl rsa -pubin -noout -modulus < {{ output_dir }}/publickey.pub  | openssl md5'
+  register: publickey_modulus
+
+- name: Validate public key (assert)
+  assert:
+    that:
+      - publickey_modulus.stdout == privatekey_modulus.stdout

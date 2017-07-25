@@ -1,0 +1,15 @@
+- name: Generate privatekey1 - standard
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey1.pem'
+
+- name: Generate privatekey2 - size 2048
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey2.pem'
+    size: 2048
+
+- name: Generate privatekey3 - type DSA
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey3.pem'
+    type: DSA
+
+- import_tasks: ../tests/validate.yml
