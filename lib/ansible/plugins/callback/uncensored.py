@@ -20,7 +20,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import textwrap
 
+from ansible import constants as C
 from ansible.plugins.callback.default import CallbackModule as DefaultCallbackModule
 
 
@@ -39,6 +41,19 @@ class CallbackModule(DefaultCallbackModule):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'uncensored'
+
+    def v2_playbook_on_start(self, play):
+        super(CallbackModule, self).v2_playbook_on_start(play)
+        self._display.banner("UNCENSORED CONTENT WARNING", color=C.COLOR_WARN)
+        msg = ['The following content may contain elements that are not suitable for some audiences.',
+               '',
+               'Output may include no_log items, internal task results keys, diff content, exception info, passwords, private keys, etc.',
+               '',
+               'This callback is intended for debugging purposes and should  not be used in production systems.']
+
+        self._display.warning('\n'.join([textwrap.fill(x, width=self._display.columns) for x in msg]),
+                              formatted=True)
+        self._display.banner("UNCENSORED CONTENT WARNING", color=C.COLOR_WARN)
 
     def _clean_results(self, result, task_name):
         pass
