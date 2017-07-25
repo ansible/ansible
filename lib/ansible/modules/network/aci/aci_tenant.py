@@ -108,7 +108,7 @@ def main():
         tenant_name=dict(type='str', aliases=['name']),
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action']),  # Deprecated starting from v2.8
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action']),  # Deprecated starting from v2.6
     )
 
     module = AnsibleModule(
