@@ -25,10 +25,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: cs_instance_ipaddress
-short_description: Manages IPs of an instance on Apache CloudStack based clouds.
+module: cs_instance_nic_secondaryip
+short_description: Manages secondary IPs of an instance on Apache CloudStack based clouds.
 description:
-    - Add and remove IPs to and from a NIC of an instance.
+    - Add and remove secondary IPs to and from a NIC of an instance.
 version_added: "2.4"
 author: "René Moser (@resmo)"
 options:
@@ -77,19 +77,19 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = '''
 # Assign a specific IP to the default NIC of the VM
 - local_action:
-    module: cs_instance_ipaddress
+    module: cs_instance_nic_secondaryip
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
 
 # Assign an IP to the default NIC of the VM
 # Note: If vm_guest_ip is not set, you will get a new IP address on every run.
 - local_action:
-    module: cs_instance_ipaddress
+    module: cs_instance_nic_secondaryip
     vm: customer_xy
 
 # Remove a specific IP from the default NIC
 - local_action:
-    module: cs_instance_ipaddress
+    module: cs_instance_nic_secondaryip
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
     state: absent
@@ -157,10 +157,10 @@ from ansible.module_utils.cloudstack import (
 )
 
 
-class AnsibleCloudStackInstanceIpaddress(AnsibleCloudStack):
+class AnsibleCloudStackInstanceNicSecondaryIp(AnsibleCloudStack):
 
     def __init__(self, module):
-        super(AnsibleCloudStackInstanceIpaddress, self).__init__(module)
+        super(AnsibleCloudStackInstanceNicSecondaryIp, self).__init__(module)
         self.vm_guest_ip = self.module.params.get('vm_guest_ip')
         self.nic = None
         self.returns = {
@@ -224,7 +224,7 @@ class AnsibleCloudStackInstanceIpaddress(AnsibleCloudStack):
         return nic
 
     def get_result(self, nic):
-        super(AnsibleCloudStackInstanceIpaddress, self).get_result(nic)
+        super(AnsibleCloudStackInstanceNicSecondaryIp, self).get_result(nic)
         if nic and not self.module.params.get('network'):
             self.module.params['network'] = nic.get('networkid')
         self.result['network'] = self.get_network(key='name')
@@ -257,15 +257,15 @@ def main():
         ])
     )
 
-    acs_instance_ipaddress = AnsibleCloudStackInstanceIpaddress(module)
+    acs_instance_nic_secondaryip = AnsibleCloudStackInstanceNicSecondaryIp(module)
     state = module.params.get('state')
 
     if state == 'absent':
-        nic = acs_instance_ipaddress.absent_nic_ip()
+        nic = acs_instance_nic_secondaryip.absent_nic_ip()
     else:
-        nic = acs_instance_ipaddress.present_nic_ip()
+        nic = acs_instance_nic_secondaryip.present_nic_ip()
 
-    result = acs_instance_ipaddress.get_result(nic)
+    result = acs_instance_nic_secondaryip.get_result(nic)
     module.exit_json(**result)
 
 
