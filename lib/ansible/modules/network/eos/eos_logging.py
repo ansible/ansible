@@ -229,16 +229,41 @@ def map_config_to_obj(module):
     for line in data.split('\n'):
         match = re.search(r'logging (\S+)', line, re.M)
 
-        if match.group(1) in DEST_GROUP:
-            dest = match.group(1)
-        else:
-            pass
+        if match:
+            if match.group(1) in DEST_GROUP:
+                dest = match.group(1)
+            else:
+                pass
 
-        obj.append({'dest': dest,
-                    'name': parse_name(line, dest),
-                    'size': parse_size(line, dest),
-                    'facility': parse_facility(line),
-                    'level': parse_level(line, dest, module)})
+            obj.append({'dest': dest,
+                        'name': parse_name(line, dest),
+                        'size': parse_size(line, dest),
+                        'facility': parse_facility(line),
+                        'level': parse_level(line, dest, module)})
+
+    return obj
+
+
+def parse_obj(obj, module):
+    if module.params['size'] is None:
+        obj.append({
+            'dest': module.params['dest'],
+            'name': module.params['name'],
+            'size': module.params['size'],
+            'facility': module.params['facility'],
+            'level': module.params['level'],
+            'state': module.params['state']
+        })
+
+    else:
+        obj.append({
+            'dest': module.params['dest'],
+            'name': module.params['name'],
+            'size': str(validate_size(module.params['size'], module)),
+            'facility': module.params['facility'],
+            'level': module.params['level'],
+            'state': module.params['state']
+        })
 
     return obj
 
@@ -290,25 +315,7 @@ def map_params_to_obj(module):
         else:
             module.params['size'] = None
 
-        if module.params['size'] is None:
-            obj.append({
-                'dest': module.params['dest'],
-                'name': module.params['name'],
-                'size': module.params['size'],
-                'facility': module.params['facility'],
-                'level': module.params['level'],
-                'state': module.params['state']
-            })
-
-        else:
-            obj.append({
-                'dest': module.params['dest'],
-                'name': module.params['name'],
-                'size': str(validate_size(module.params['size'], module)),
-                'facility': module.params['facility'],
-                'level': module.params['level'],
-                'state': module.params['state']
-            })
+        parse_obj(obj, module)
 
     return obj
 
@@ -317,11 +324,11 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        dest=dict(type='str', choices=DEST_GROUP),
-        name=dict(type='str'),
+        dest=dict(choices=DEST_GROUP),
+        name=dict(),
         size=dict(type='int'),
-        facility=dict(type='str'),
-        level=dict(type='str', choices=LEVEL_GROUP),
+        facility=dict(),
+        level=dict(choices=LEVEL_GROUP),
         state=dict(default='present', choices=['present', 'absent']),
         aggregate=dict(type='list'),
         purge=dict(default=False, type='bool')
