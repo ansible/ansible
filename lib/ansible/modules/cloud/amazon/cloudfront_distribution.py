@@ -193,8 +193,7 @@ options:
           Only valid for I(streaming_distribution=no).
           Each origin item comprises the attributes
             I(id)
-            I(domain_name) (defaults to default_origin_domain_name if not
-              specified)
+            I(domain_name) (defaults to default_origin_domain_name if not specified)
             I(origin_path) (defaults to default_origin_path if not specified)
             I(custom_headers[])
               I(header_name)
@@ -399,6 +398,13 @@ EXAMPLES = '''
     distribution_id: E1RP5A2MJ8073O
     comment: modified by ansible cloudfront.py
 
+# update a distribution comment by caller_reference
+
+- cloudfront_distribution:
+    state: present
+    caller_reference: my cloudfront distribution 001
+    comment: modified by ansible cloudfront.py
+
 # update a distribution's aliases and comment using the distribution_id as a reference
 
 - cloudfront_distribution:
@@ -411,7 +417,7 @@ EXAMPLES = '''
 
 - cloudfront_distribution:
     state: present
-    distribution_id: E15BU8SDCGSG57
+    caller_reference: my test distribution
     comment: modified by cloudfront.py again
     aliases:
       - www.my-distribution-source.com
@@ -471,7 +477,7 @@ EXAMPLES = '''
 
 - cloudfront_distribution:
     state: absent
-    distribution_id: E1ZNUV0U7KWO4P
+    caller_reference: replaceable distribution
 
 # create a presigned url for a distribution based on a distribution_id and from a local pem file
 
@@ -516,8 +522,12 @@ RETURN = '''
 
 location:
     description: describes a url specifying the output of the action just run.
-    returned: applies to I(streaming_distribution=no) with I(state=present)
-      or when specifying I(generate_presigned_url=yes)
+    returned: applies to I(streaming_distribution=no) with I(state=present).
+    type: str
+
+presigned_url:
+    description: specifies a url that has been presigned for the cloudfront distribution.
+    returned: applies to when specifying I(generate_presigned_url=yes).
     type: str
 
 '''
@@ -734,8 +744,7 @@ class CloudFrontValidationManager(object):
         self.__default_custom_origin_protocol_policy = 'match-viewer'
         self.__default_custom_origin_read_timeout = 30
         self.__default_custom_origin_keepalive_timeout = 5
-        self.__default_datetime_string = datetime.datetime.now().strftime(
-            '%Y-%m-%dT%H:%M:%S.%f')
+        self.__default_datetime_string = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
         self.__default_cache_behavior_min_ttl = 0
         self.__default_cache_behavior_max_ttl = 31536000
         self.__default_cache_behavior_default_ttl = 86400
@@ -868,6 +877,10 @@ class CloudFrontValidationManager(object):
         if not isinstance(list_to_validate, list):
             self.module.fail_json(msg='{0} must be a list'.format(list_name))
 
+    def validate_required_key(self, key_name, full_key_name, dict_object):
+        if key_name not in dict_object:
+            self.module.fail_json(full_key_name + " must be specified.")
+
     def validate_origins(self, origins, default_origin_domain_name, default_s3_origin_access_identity, default_origin_path, streaming, create_distribution):
         try:
             valid_origins = {}
@@ -889,10 +902,6 @@ class CloudFrontValidationManager(object):
             return helpers.python_list_to_aws_list(origins)
         except Exception as e:
             self.module.fail_json(msg="Error validating distribution origins - " + str(e) + "\n" + traceback.format_exc())
-
-    def validate_required_key(self, key_name, full_key_name, dict_object):
-        if key_name not in dict_object:
-            self.module.fail_json(full_key_name + " must be specified.")
 
     def validate_origin(self, origin, default_origin_path, default_s3_origin_access_identity, streaming):
         try:
@@ -1083,8 +1092,7 @@ class CloudFrontValidationManager(object):
             geo_restriction = restrictions.get('geo_restriction')
             self.validate_required_key('restriction_type', 'restrictions.geo_restriction.restriction_type', geo_restriction)
             restriction_type = geo_restriction.get('restriction_type')
-            items = geo_restriction.get('items')
-            valid_restrictions = python_list_to_aws_list(items)
+            valid_restrictions = python_list_to_aws_list(geo_restriction.get('items'))
             valid_restrictions['restriction_type'] = restriction_type
             return valid_restrictions
         except Exception as e:
@@ -1307,7 +1315,7 @@ class CloudFrontValidationManager(object):
                 elapsed = timeit.default_timer() - start_time
                 if elapsed >= wait_timeout:
                     self.module.fail_json(msg="Timeout waiting for cloudfront action. Waited for " + str(wait_timeout) + " seconds before timeout.")
-                time.sleep(5)
+                time.sleep(10)
         except Exception as e:
             return
 
@@ -1362,6 +1370,7 @@ def main():
 
     result = {}
     changed = True
+    valid_tags = None
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -1486,8 +1495,6 @@ def main():
 
     if (create or update) and tags is not None:
         valid_tags = ansible_dict_to_boto3_tag_list(tags)
-    else:
-        valid_tags = None
 
     if create or update or delete and config is not None:
         config = helpers.pascal_dict_to_snake_dict(config, True)
