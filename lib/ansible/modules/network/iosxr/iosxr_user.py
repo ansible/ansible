@@ -174,7 +174,7 @@ def map_obj_to_commands(updates, module):
 
 def map_config_to_obj(module):
     data = get_config(module, flags=['username'])
-    users = data.rstrip('!').split('!')
+    users = data.strip().rstrip('!').split('!')
 
     if not users:
         return list()
