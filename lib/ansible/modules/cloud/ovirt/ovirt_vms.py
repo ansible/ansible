@@ -323,7 +323,10 @@ options:
                Default value is I(true)."
             - "C(storage_domain) - Specifies the target storage domain for
                converted disks. This is required parameter."
-        version_added: "2.3"
+    lease:
+        description:
+            - "Name of the storage domain this virtual machine lease reside on."
+        version_added: "2.4"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -535,8 +538,10 @@ from ansible.module_utils.ovirt import (
     BaseModule,
     check_params,
     check_sdk,
+    check_support,
     convert_to_bytes,
     create_connection,
+    engine_supported,
     equal,
     get_entity,
     get_link_name,
@@ -601,10 +606,8 @@ class VmsModule(BaseModule):
 
     def build_entity(self):
         template = self.__get_template_with_version()
-
         disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
-
-        return otypes.Vm(
+        vm = otypes.Vm(
             name=self.param('name'),
             cluster=otypes.Cluster(
                 name=self.param('cluster')
@@ -667,8 +670,23 @@ class VmsModule(BaseModule):
             ) else None,
         )
 
+        # Those attributes are Supported since 4.1:
+        if not engine_supported(self._connection, '4.1'):
+            return vm
+
+        vm.lease = otypes.StorageDomainLease(
+            storage_domain=otypes.StorageDomain(
+                id=get_id_by_name(
+                    self._connection.system_service().storage_domains_service(),
+                    self.param('lease'),
+                ),
+            ),
+        ) if self.param('lease') else None
+
+        return vm
+
     def update_check(self, entity):
-        return (
+        do_update = (
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster))
             and equal(convert_to_bytes(self.param('memory')), entity.memory)
             and equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed)
@@ -688,6 +706,14 @@ class VmsModule(BaseModule):
             and equal(self.param('timezone'), getattr(entity.time_zone, 'name', None))
             and equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None)))
             and equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
+        )
+
+        # Following attributes are supported since 4.1:
+        if not engine_supported(self._connection, '4.1'):
+            return do_update
+
+        return do_update and (
+            equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None)))
         )
 
     def pre_create(self, entity):
@@ -1115,6 +1141,7 @@ def main():
         vmware=dict(default=None, type='dict'),
         xen=dict(default=None, type='dict'),
         kvm=dict(default=None, type='dict'),
+        lease=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -1127,6 +1154,14 @@ def main():
         state = module.params['state']
         auth = module.params.pop('auth')
         connection = create_connection(auth)
+        # Check if unsupported parameters were passed:
+        check_support(
+            version='4.1',
+            connection=connection,
+            module=module,
+            params=('lease',),
+        )
+
         vms_service = connection.system_service().vms_service()
         vms_module = VmsModule(
             connection=connection,
