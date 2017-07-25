@@ -14,7 +14,7 @@ All `PEP 8`_ tests are executed, except those listed in the `current ignore list
 
 .. warning: Updating the Rule Set
 
-   Changes to the Rule Set need approval from the Core Team, and must be done via the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
+   Changes to the Rule Set need approval from the Core Team, and must be done via the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
 Legacy Rule Set
 ===============

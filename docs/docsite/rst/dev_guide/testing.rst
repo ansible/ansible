@@ -191,5 +191,5 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
 Want to know more about testing?
 ================================
 
-If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
+If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
