@@ -132,58 +132,71 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
 
 
+def search_obj_in_list(name, lst):
+    for o in lst:
+        if o['name'] == name:
+            return o
+
+    return None
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state']
-    update_password = module.params['update_password']
+    want, have = updates
 
-    def needs_update(want, have, x):
-        return want.get(x) and (want.get(x) != have.get(x))
+    for w in want:
+        name = w['name']
+        state = w['state']
 
-    def add(command, want, x):
-        command.append('username %s %s' % (want['name'], x))
+        obj_in_have = search_obj_in_list(name, have)
 
-    for update in updates:
-        want, have = update
+        if state == 'absent' and obj_in_have:
+            commands.append('no username ' + name)
+        elif state == 'present' and not obj_in_have:
+            user_cmd = 'username ' + name
+            commands.append(user_cmd)
 
-        if want['state'] == 'absent':
-            commands.append('no username %s' % want['name'])
-            continue
+            if w['password']:
+                commands.append(user_cmd + ' secret ' + w['password'])
+            if w['group']:
+                commands.append(user_cmd + ' group ' + w['group'])
 
-        if needs_update(want, have, 'group'):
-            add(commands, want, 'group %s' % want['group'])
+        elif state == 'present' and obj_in_have:
+            user_cmd = 'username ' + name
 
-        if needs_update(want, have, 'password'):
-            if update_password == 'always' or not have:
-                add(commands, want, 'secret %s' % want['password'])
+            if module.params['update_password'] == 'always' and w['password']:
+                commands.append(user_cmd + ' secret ' + w['password'])
+            if w['group'] and w['group'] != obj_in_have['group']:
+                commands.append(user_cmd + ' group ' + w['group'])
 
     return commands
 
 
-def parse_group(data):
-    match = re.search(r'\n group (\S+)', data, re.M)
-    if match:
-        return match.group(1)
-
-
 def map_config_to_obj(module):
     data = get_config(module, flags=['username'])
+    users = data.strip().rstrip('!').split('!')
 
-    match = re.findall(r'^username (\S+)', data, re.M)
-    if not match:
+    if not users:
         return list()
 
     instances = list()
 
-    for user in set(match):
-        regex = r'username %s .+$' % user
-        cfg = re.findall(regex, data, re.M)
-        cfg = '\n'.join(cfg)
+    for user in users:
+        user_config = user.strip().splitlines()
+
+        name = user_config[0].strip().split()[1]
+        group = None
+
+        if len(user_config) > 1:
+            group_or_secret = user_config[1].strip().split()
+            if group_or_secret[0] == 'group':
+                group = group_or_secret[1]
+
         obj = {
-            'name': user,
+            'name': name,
             'state': 'present',
             'password': None,
-            'group': parse_group(cfg)
+            'group': group
         }
         instances.append(obj)
 
@@ -241,19 +254,6 @@ def map_params_to_obj(module):
     return objects
 
 
-def update_objects(want, have):
-    updates = list()
-    for entry in want:
-        item = next((i for i in have if i['name'] == entry['name']), None)
-        if all((item is None, entry['state'] == 'present')):
-            updates.append((entry, {}))
-        elif item:
-            for key, value in iteritems(entry):
-                if value and value != item[key]:
-                    updates.append((entry, item))
-    return updates
-
-
 def main():
     """ main entry point for module execution
     """
@@ -285,7 +285,7 @@ def main():
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands(update_objects(want, have), module)
+    commands = map_obj_to_commands((want, have), module)
 
     if module.params['purge']:
         want_users = [x['name'] for x in want]

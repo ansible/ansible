@@ -68,7 +68,8 @@ class TestIosxrUserModule(TestIosxrModule):
     def test_iosxr_user_update_password_changed(self):
         set_module_args(dict(name='test', password='test', update_password='on_create'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['username test secret test'])
+        self.assertEqual(result['commands'],
+                         ['username test', 'username test secret test'])
 
     def test_iosxr_user_update_password_on_create_ok(self):
         set_module_args(dict(name='ansible', password='test', update_password='on_create'))
