@@ -16,8 +16,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible import constants as C
-
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
 from ansible.module_utils.facts import default_collectors
 from ansible.module_utils.facts import ansible_collector
@@ -49,10 +47,8 @@ def ansible_facts(module, gather_subset=None):
     the fact value.
     '''
 
-    # TODO: split/kv DEFAULT_GATHER_SUBSET
-    # TODO: does DEFAULT_GATHER_* exist on 2.0? may need to try/except and fallback to a hard coded value
-    gather_subset = gather_subset or module.params.get('gather_subset', [C.DEFAULT_GATHER_SUBSET])
-    gather_timeout = module.params.get('gather_timeout', C.DEFAULT_GATHER_TIMEOUT)
+    gather_subset = gather_subset or module.params.get('gather_subset', ['all'])
+    gather_timeout = module.params.get('gather_timeout', 10)
     filter_spec = module.params.get('filter', '*')
 
     minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
