@@ -477,6 +477,7 @@ files:
   $modules/network/netconf/netconf_config.py: ganeshrn lpenz userlerueda
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
+  $modules/network/nuage/: pdellaert
   $modules/network/nxos/: $team_nxos
   $modules/network/openswitch/: $team_openswitch
   $modules/network/ordnance/: alexanderturner djh00t
