@@ -1,0 +1,15 @@
+---
+- debug: msg="START TRANSPORT:NXAPI nxos_vrf sanity test"
+
+- name: Ensure ntc VRF exists on switch
+  nxos_vrf:
+    vrf: ntc
+    provider: "{{ nxapi }}"
+
+- name: Ensure ntc VRF does not exist on switch
+  nxos_vrf:
+    vrf: ntc
+    state: absent
+    provider: "{{ nxapi }}"
+
+- debug: msg="END TRANSPORT:NXAPI nxos_vrf sanity test"
