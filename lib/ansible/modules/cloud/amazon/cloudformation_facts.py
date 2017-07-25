@@ -151,11 +151,12 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
+from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, camel_dict_to_snake_dict
 from ansible.module_utils.basic import AnsibleModule
 from functools import partial
 import json
 import traceback
+
 
 class CloudFormationServiceManager:
     """Handles CloudFormation Services"""
@@ -286,9 +287,6 @@ def main():
     result['changed'] = False
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
