@@ -179,6 +179,7 @@ files:
   $modules/cloud/google/gce_eip.py: erjohnso supertom
   $modules/cloud/google/gce_img.py: supertom
   $modules/cloud/google/gce_instance_template.py: GwenaelPellenArkeup erjohnso
+  $modules/cloud/google/gce_labels.py: erjohnso
   $modules/cloud/google/gce_lb.py: erjohnso
   $modules/cloud/google/gce_mig.py: erjohnso supertom
   $modules/cloud/google/gce_pd.py: erjohnso
