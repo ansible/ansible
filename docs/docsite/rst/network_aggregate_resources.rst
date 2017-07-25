@@ -11,7 +11,7 @@ This document is part of a collection on Networking. The complete list of guides
 Overview
 ========
 
-Consider the case if you wanted to ensure a set of vlans are present on a switch. Although at a high level thia sounds like a simple request, there in a slight nuance:
+Consider the case if you wanted to ensure a set of vlans are present on a switch. Although at a high level this sounds like a simple request, there in a slight nuance:
 
 * Should these vlans be in *addition* to the existing configuration?  - *additive*
 * Should these vlans be the *only* ones present? - *aggregate*
@@ -63,7 +63,7 @@ This task is very similar to the `additive resource` example above, though with 
 
 .. note:: Why does ``purge`` default to ``no``?
 
-   To prevent from accidental deletion ``purge`` is always set to ``no``. This requires playbook writers to add ``purge: yes`` to enable this 
+   To prevent from accidental deletion ``purge`` is always set to ``no``. This requires playbook writers to add ``purge: yes`` to enable this.
 
 
 
