@@ -975,8 +975,8 @@ def create_db_instance(module, conn):
         try:
             if not module.check_mode:
                 result = conn.create_db_instance(instance_name, module.params.get('size'),
-                                               module.params.get('instance_type'), module.params.get('db_engine'),
-                                               module.params.get('username'), module.params.get('password'), **params)
+                                                 module.params.get('instance_type'), module.params.get('db_engine'),
+                                                 module.params.get('username'), module.params.get('password'), **params)
             changed = True
         except RDSException as e:
             module.fail_json(msg="Failed to create instance: %s" % e.message)
