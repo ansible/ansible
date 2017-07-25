@@ -284,7 +284,7 @@ def _is_present(name, version, installed_pkgs, pkg_command):
             if ',' in pkg:
                 pkg_name, pkg_version, _ = pkg.replace(',', '').split(' ')
             else:
-                pkg_name, pkg_version = pkg.split()
+                pkg_name, pkg_version = pkg.split(' ')
         elif 'freeze' in pkg_command:
             if '==' in pkg:
                 pkg_name, pkg_version = pkg.split('==')
