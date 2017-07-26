@@ -84,7 +84,7 @@ Declarative intent - the details
 INTERNAL NOTE: Only now that we've explained the problem and given an example should we go into details.
 
 
-Declarative intent modules are designed to provide playbook designers a set of network modules that perform declarative configuration tasks on network devices.  This includes the ability to declaratively describe a configuration set.  In addition, declarative intent modules will also provide a means for declaratively expressing the intended ephemeral state of configuration resources.
+Previous network modules allowed users to update a device by listing out the steps that need to be taking in order to achieve a desired state. Declarative intent modules are designed to provide playbook designers a set of network modules that perform declarative configuration tasks on network devices.  This includes the ability to declaratively describe a configuration set.  In addition, declarative intent modules will also provide a means for declaratively expressing the intended ephemeral state of configuration resources.
 
 
 Declarative intent modules provide playbook designers with the ability to manage individual network device configuration resources in a more intuitive way.  These modules are fundamentally no different that any other module in Ansible core.
@@ -115,7 +115,7 @@ Use cases
 ==========
 
 Replacing ``wait_for``
----------------------
+----------------------
 
 **Before:**
 
@@ -123,6 +123,8 @@ Replacing ``wait_for``
 .. code-block:: yaml
 
    - name: configure interface
+
+FIXME: Example
 
 **After:**
 
@@ -162,6 +164,8 @@ Physical then configuration
 .. code-block:: yaml
 
    - name: FIXME
+
+FIXME: Example
 
 **When would this be useful**
 
