@@ -53,6 +53,8 @@ Ansible Changes By Release
 * Fix crash in file module when directories contain non-utf8 filenames
 * Fix for dnf groupinstall with dnf-2.x
 * Fix seboolean module for incompatibility in newer Python3 selinux bindings
+* Optimization for inventory, no need to dedup at every stage, its redundant and slow
+* Fix fact gathering for package and service action plugins
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
