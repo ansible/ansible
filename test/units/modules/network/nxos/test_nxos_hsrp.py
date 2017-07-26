@@ -46,15 +46,16 @@ class TestNxosHsrpModule(TestNxosModule):
 
     def test_nxos_hsrp(self):
         set_module_args(dict(group='10',
-                             vip='192.0.2.2',
+                             vip='192.0.2.2/8',
                              priority='150',
                              interface='Ethernet1/2',
                              preempt='enabled',
                              host='192.0.2.1'))
         result = self.execute_module(changed=True)
-        self.assertEqual(sorted(result['commands']), sorted(['interface ethernet1/2',
+        self.assertEqual(sorted(result['commands']), sorted(['config t',
+                                                             'interface ethernet1/2',
                                                              'hsrp version 2',
                                                              'hsrp 10',
                                                              'priority 150',
-                                                             'ip 192.0.2.2',
+                                                             'ip 192.0.2.2/8',
                                                              'preempt']))
