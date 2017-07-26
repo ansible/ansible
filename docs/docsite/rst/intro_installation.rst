@@ -270,7 +270,7 @@ Then install Ansible with [1]_::
 
 Or if you are looking for the latest development version::
 
-    pip install git+git://github.com/ansible/ansible.git@devel
+    pip install git+https://github.com/ansible/ansible.git@devel
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
@@ -284,8 +284,6 @@ Tarballs of Tagged Releases
 +++++++++++++++++++++++++++
 
 Packaging Ansible or wanting to build a local package yourself, but don't want to do a git checkout?  Tarballs of releases are available on the `Ansible downloads <http://releases.ansible.com/ansible>`_ page.
-
-These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version.
 
 .. _from_source:
 
