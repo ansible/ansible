@@ -41,7 +41,7 @@ options:
       - The set of username objects to be configured on the remote
         VyOS device. The list entries can either be the username or
         a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument.
+        exclusive with the C(name) argument. alias C(aggregate).
   name:
     description:
       - The username to be configured on the VyOS device.
