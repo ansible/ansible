@@ -25,11 +25,30 @@ options:
   miq:
     required: true
     description:
-      - url            ManageIQ environment url. C(MIQ_URL) env var if set. otherwise, it is required to pass it.
-      - username       ManageIQ username. C(MIQ_USERNAME) env var if set. otherwise, it is required to pass it.
-      - password       ManageIQ password. C(MIQ_PASSWORD) env var if set. otherwise, it is required to pass it.
-      - verify_ssl     Whether SSL certificates should be verified for HTTPS requests. defaults to True.
-      - ca_bundle_path The path to a CA bundle file or directory with certificates. defaults to None.
+      - ManageIQ connection configuration
+    options:
+      url:
+        required: true
+        description:
+          - ManageIQ environment url. C(MIQ_URL) env var if set. otherwise, it is required to pass it.
+      username:
+        required: true
+        description:
+          - ManageIQ username. C(MIQ_USERNAME) env var if set. otherwise, it is required to pass it.
+      password:
+        required: true
+        description:
+          - ManageIQ password. C(MIQ_PASSWORD) env var if set. otherwise, it is required to pass it.
+      verify_ssl:
+        required: false
+        default: true
+        description:
+          - Whether SSL certificates should be verified for HTTPS requests. defaults to True.
+      ca_bundle_path:
+        required: false
+        default: null
+        description:
+          - The path to a CA bundle file or directory with certificates. defaults to None.
 
 requirements:
   - 'manageiq-client U(https://github.com/ManageIQ/manageiq-api-client-python/)'
