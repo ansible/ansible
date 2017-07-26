@@ -407,8 +407,8 @@ class EFSConnection(object):
             changed = filter(
                 lambda sid: not targets_equal(['SubnetId', 'IpAddress', 'NetworkInterfaceId'],
                                               current_targets[sid], targets[sid]), intersection)
-            targets_to_delete = list(targets_to_delete) + changed
-            targets_to_create = list(targets_to_create) + changed
+            targets_to_delete = list(targets_to_delete) + list(changed)
+            targets_to_create = list(targets_to_create) + list(changed)
 
             if targets_to_delete:
                 for sid in targets_to_delete:
