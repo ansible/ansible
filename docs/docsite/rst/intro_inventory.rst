@@ -276,9 +276,9 @@ ansible_become_user
 ansible_become_pass
     Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_become_exe
-    Equivalent to ``ansible_sudo_exe`` or ``ansible_su_exe``, allows to set the executable for the escalation method selected
+    Equivalent to ``ansible_sudo_exe`` or ``ansible_su_exe``, allows you to set the executable for the escalation method selected
 ansible_become_flags
-    Equivalent to ``ansible_sudo_flags`` or ``ansible_su_flags``, allows to set the flags passed to the selected escalation method. This can be also set globally in :file:`ansible.cfg` in the ``sudo_flags`` option
+    Equivalent to ``ansible_sudo_flags`` or ``ansible_su_flags``, allows you to set the flags passed to the selected escalation method. This can be also set globally in :file:`ansible.cfg` in the ``sudo_flags`` option
 
 Remote host environment parameters:
 
