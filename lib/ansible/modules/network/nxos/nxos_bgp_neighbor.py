@@ -389,10 +389,10 @@ def state_present(module, existing, proposed, candidate):
                 else:
                     command = '{0} {1}'.format(key, value)
                     commands.append(command)
-            elif key.startswith('timers'):
+            elif key == 'timers':
                 command = 'timers {0} {1}'.format(
-                    proposed_commands['timers-keepalive'],
-                    proposed_commands['timers-holdtime'])
+                    proposed['timers_keepalive'],
+                    proposed['timers_holdtime'])
                 if command not in commands:
                     commands.append(command)
             else:
