@@ -18,6 +18,7 @@ try:
 except ImportError as e:
     # python2
     has_url_parse = False
+    # print(" using python2 librarary")
     import urllib2 as urllib2_request
     import urllib
     import base64
@@ -425,69 +426,11 @@ class Infinity(object):
         if reserved_network_address:
             payload_data.update({'network_address': reserved_network_address})
 
-        status_code, response = self.post_data(
-            method='post', resource_url=resource_url, stat_codes=[
+        response = self._get_api_call_ansible_handler(
+            method, resource_url, stat_codes=[
                 200, 201], payload_data=payload_data)
-        if status_code == 0:
-            if int(response) and int(response) in [400, 403, 404, 422]:
-                error_msg_dict = {
-                    '400': 'Network  is not a supernet, cannot reserve network',
-                    '404': 'SuperNetwork not found',
-                    '403': 'Unauthorized',
-                    '422': 'Validation error(s) for network parameters'}
-                self.module.exit_json(
-                    msg="when reserve network from a supernet, get error message %r" %
-                    (error_msg_dict.get(
-                        str(response))))
 
         return response
-
-    def post_data(self, method='post',
-                  resource_url='',
-                  stat_codes=[200],
-                  params=None,
-                  payload_data=None):
-        """
-        payload data needs to be dict
-        """
-        resource_url = str(self.base_url) + str(resource_url)
-        data = None
-        if has_url_parse:
-            # if python3
-            if payload_data and isinstance(payload_data, dict):
-                data = urllib_parse.urlencode(payload_data)
-                data = data.encode('utf-8')  # data must be bytes
-            passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
-            passman.add_password(
-                None, resource_url, str(
-                    self.auth_user), str(
-                    self.auth_pass))
-            authhandler = urllib_request.HTTPBasicAuthHandler(passman)
-            opener = urllib_request.build_opener(authhandler)
-            urllib_request.install_opener(opener)
-            req = urllib_request.Request(resource_url, data)
-            req.add_header(
-                "Content-Type",
-                "application/x-www-form-urlencoded;charset=utf-8")
-            post_result = None
-            with urllib_request.urlopen(req) as response:
-                post_result = response.read()
-                post_result = post_result.decode('utf-8')
-            return post_result
-        else:
-            request = urllib2_request.Request(url=resource_url)
-            base64string = base64.b64encode(
-                '%s:%s' %
-                (self.auth_user, self.auth_pass))
-            request.add_header("Authorization", "Basic %s" % base64string)
-            request.add_data(urllib.urlencode(payload_data))
-            result = urllib2_request.urlopen(request)
-            resp_status_code = result.getcode()
-            if int(resp_status_code) not in stat_codes:
-                return 0, resp_status_code
-            else:
-                final_result = result.read()
-                return 1, final_result
 
     # ---------------------------------------------------------------------------
     # release_network()
@@ -567,19 +510,11 @@ class Infinity(object):
             'network_family': network_family,
             'network_type': network_type,
             'network_location': network_location}
-        status_code, response = self.post_data(
-            method='post', resource_url=resource_url, stat_codes=[200], payload_data=payload_data)
-        if status_code == 0:
-            if int(response) and int(response) in [403, 404, 422]:
-                error_msg_dict = {
-                    '404': 'SuperNetwork not found',
-                    '403': 'Unauthorized',
-                    '422': 'Validation error(s) for network parameters'}
-                self.module.exit_json(
-                    msg="when reserve network from a supernet, get error message %r" %
-                    (error_msg_dict.get(
-                        str(response))))
-
+        response = self._get_api_call_ansible_handler(
+            method='post',
+            resource_url=resource_url,
+            stat_codes=[200],
+            payload_data=payload_data)
         return response
 
 
