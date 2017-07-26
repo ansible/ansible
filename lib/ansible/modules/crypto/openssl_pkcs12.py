@@ -217,7 +217,7 @@ def main():
 
     required_together = [
         ['path', 'privatekey_path', 'friendly_name'],
-    ],
+    ]
 
     module = AnsibleModule(
         argument_spec = argument_spec,
