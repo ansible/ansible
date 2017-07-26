@@ -87,9 +87,9 @@ Showing Differences with ``--diff``
 .. versionadded:: 1.1
 
 The ``--diff`` option to ansible-playbook works great with ``--check`` (detailed above) but can also be used by itself.
-When this flag is supplied and the modules supports this, Ansible will report back the changes made or, if used with ``--check``, the changes that would have been made.
+When this flag is supplied and the module supports this, Ansible will report back the changes made or, if used with ``--check``, the changes that would have been made.
 This is mostly used in modules that manipulate files (i.e. template) but other modules might also show 'before and after' information (i.e. user).
-Since the diff feature produces a large amount of output, it is best used when checking a single host at a time, like so::
+Since the diff feature produces a large amount of output, it is best used when checking a single host at a time. For example::
 
     ansible-playbook foo.yml --check --diff --limit foo.example.com
 
