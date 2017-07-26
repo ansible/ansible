@@ -1,0 +1,42 @@
+# https://github.com/ansible/ansible/issues/24408
+
+- name: get a random username
+  shell: 'cat /etc/passwd | cut -d\: -f1 | fgrep -v root | sort -R | head -n1'
+  register: t_username
+
+- name: get a random username
+  shell: 'cat /etc/group | cut -d\: -f1 | fgrep -v root | sort -R | head -n1'
+  register: t_groupname
+
+- name: set the dest file
+  set_fact:
+      t_dest: "{{ output_dir + '/tfile_dest.txt' }}"
+
+- name: create the old file
+  file:
+    path: "{{ t_dest }}"
+    state: touch
+    mode: 0777
+    owner: "{{ t_username.stdout }}"
+    group: "{{ t_groupname.stdout }}"
+
+- name: run the template
+  template:
+    src: foo.j2
+    dest: "{{ t_dest }}"
+    backup: True
+  register: t_backup_res
+
+- name: check the data for the backup
+  stat:
+    path: "{{ t_backup_res.backup_file }}"
+  register: t_backup_stats
+
+- name: validate result of preserved backup
+  assert:
+      that:
+          - 't_backup_stats.stat.mode == "0777"'
+          - 't_backup_stats.stat.pw_name == t_username.stdout'
+          - 't_backup_stats.stat.gr_name == t_groupname.stdout'
+
+- debug: var=hostvars
