@@ -123,10 +123,9 @@ EXAMPLES = '''
     - svi
     - nve
 
-- name: Admin up all ethernet interfaces
+- name: Admin up all loopback interfaces
   nxos_interface:
-    interface: ethernet
-    host: 68.170.147.165
+    interface: loopback
     admin_state: up
 
 - name: Admin down ALL interfaces (physical and logical)
