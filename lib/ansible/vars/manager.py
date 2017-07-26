@@ -344,6 +344,18 @@ class VariableManager:
                 if not isinstance(vars_file_list, list):
                     vars_file_list = [vars_file_list]
 
+                # if 'vars_files' is directory, all files in dir are appended to vars_file_list.
+                tmp_vars_file_list = []
+                for vars_file in vars_file_list:
+                    tmp_vars_file_path = self._loader.path_dwim(templar.template(vars_file))
+                    if self._loader.is_directory(tmp_vars_file_path):
+                        tmp_var_files = [(vars_file + "/" + x) for x in os.listdir(tmp_vars_file_path)]
+                        # marge vars_file_list
+                        tmp_vars_file_list.extend(tmp_var_files)
+                    else:
+                        tmp_vars_file_list.append(vars_file)
+                vars_file_list = tmp_vars_file_list
+
                 # now we iterate through the (potential) files, and break out
                 # as soon as we read one from the list. If none are found, we
                 # raise an error, which is silently ignored at this point.
