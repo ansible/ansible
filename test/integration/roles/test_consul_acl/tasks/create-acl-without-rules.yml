@@ -1,6 +1,6 @@
 ---
 
-- name: create a new ACL token without rules
+- name: create a new ACL without rules
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"
@@ -15,7 +15,7 @@
       - created_ruleless_acl.token | length == 36
       - created_ruleless_acl.rules == {}
 
-- name: create same rule-less ACL token
+- name: create same rule-less ACL
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"

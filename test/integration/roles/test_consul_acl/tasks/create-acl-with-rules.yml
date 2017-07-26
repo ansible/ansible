@@ -40,19 +40,31 @@
       - (created_acl.rules | json_query("service.consul.policy")) == "write"
       - (created_acl.rules | json_query("session.standup.policy")) == "write"
 
-- name: create same rule-less ACL
+- name: create same ACL
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"
     name: "{{ test_consul_acl_token_name }}"
     rules:
+      - event: "bbq"
+        policy: write
       - key: "foo"
         policy: read
-      - key: "private/bar"
+      - key: "private"
         policy: deny
+      - keyring: write
+      - node: "hgs4"
+        policy: write
+      - operator: read
+      - query: ""
+        policy: write
+      - service: "consul"
+        policy: write
+      - session: "standup"
+        policy: write
   register: doubly_created_acl
 
-- name: verify idempotence when creating ruleless ACL
+- name: verify idempotence when creating ACL
   assert:
     that:
       - not doubly_created_acl.changed
