@@ -198,7 +198,6 @@ EXAMPLES = '''
     remote_as: 30
     description: "just a description"
     update_source: Ethernet1/3
-    shutdown: default
     state: present
 '''
 
@@ -442,7 +441,7 @@ def main():
         pwd_type=dict(required=False, type='str', choices=['cleartext', '3des', 'cisco_type_7', 'default']),
         remote_as=dict(required=False, type='str'),
         remove_private_as=dict(required=False, type='str', choices=['enable', 'disable', 'all', 'replace-as']),
-        shutdown=dict(required=False, type='str'),
+        shutdown=dict(required=False, type='bool'),
         suppress_4_byte_as=dict(required=False, type='bool'),
         timers_keepalive=dict(required=False, type='str'),
         timers_holdtime=dict(required=False, type='str'),
