@@ -112,7 +112,7 @@ options:
         description:
             - Optimize autoloader during autoloader dump (see --optimize-autoloader).
             - Convert PSR-0/4 autoloading to classmap to get a faster autoloader.
-            - Recommended especially for production, but can take a bit of time to run so it is currently not done by default.
+            - Recommended especially for production, but can take a bit of time to run.
         required: false
         default: true
         choices: [ true, false]
