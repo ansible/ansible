@@ -400,7 +400,8 @@ def main():
                     gce_route = gce.ex_create_route(name=params['name'], dest_range=params['destination'],
                                                     priority=params['priority'], network=network, tags=params['instance_tags'],
                                                     next_hop=node, description=params['description'])
-
+                    changed = True
+                    
                 except Exception as e:
                     # This exception is important in order to handle the case when the route
                     # masks the address space of a network/subnet.
