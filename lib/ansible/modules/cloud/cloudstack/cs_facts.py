@@ -227,7 +227,7 @@ def main():
             ]),
             meta_data_host=dict(),
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     if not HAS_LIB_YAML:

@@ -289,7 +289,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     cs_instance_facts = AnsibleCloudStackInstanceFacts(module=module).run()

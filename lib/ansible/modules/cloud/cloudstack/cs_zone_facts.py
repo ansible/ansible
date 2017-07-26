@@ -193,7 +193,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     cs_zone_facts = AnsibleCloudStackZoneFacts(module=module).run()
