@@ -28,9 +28,145 @@ description:
 requirements:
     - 'kafka-acls.sh'
 options:
+    action:
+        required: True
+        type: str
+        choices: ['add', 'list', 'remove']
+        description:
+            - Add, list or remove ACLs.
+              For list, use topic, or group or cluster to specify a resource.
+    allow_host:
+        required: False
+        type: list
+        description:
+            - Host from which principals listed in allow-principal will have access.
+    allow_principal:
+        required: False
+        type: list
+        description:
+            - Principal is in principalType:name format.
+              Note that principalType must be supported by the Authorizer being used.
+    authorizer:
+        required: False
+        type: str
+        description:
+            - Fully qualified class name of the authorizer.
+              Defaults to kafka.security.auth.SimpleAclAuthorizer.
+    authorizer_properties:
+        required: True
+        type: str
+        description:
+            - Properties required to configure an instance of Authorizer.
+              These are key=val pairs.
+    cluster:
+        required: False
+        type: str
+        description:
+            - Add/Remove cluster ACLs.
+    consumer:
+        required: False
+        default: False
+        type: bool
+        choices: [True, False]
+        description:
+            - Convenience option to add/remove ACLs for consumer role.
+    deny_host:
+        required: False
+        type: list
+        description:
+            - Host from which principals listed in deny-principal will be denied access.
+    deny_principal:
+        required: False
+        type: list
+        description:
+            - By default anyone not added through allow-principal is denied access.
+              You only need to use this option as negation to already allowed set.
+    group:
+        required: False
+        type: list
+        description:
+            - Consumer Group to which the ACLs should be added or removed.
+    operation:
+        required: False
+        type: list
+        description:
+            - Operation that is being allowed or denied.
+    producer:
+        required: False
+        default: False
+        type: bool
+        choices: [True, False]
+        description:
+            - Convenience option to add/remove ACLs for producer role.
+    topic:
+        required: False
+        type: str
+        description:
+            - Topic to which ACLs should be added or removed.
+    jaas_auth_file:
+        required: False
+        type: str
+        description:
+            - JAAS authentification file.
+    kafka_path:
+        required: False
+        type: path
+        default: '/opt/kafka'
+        description:
+            - Kafka path.
 '''
 
 EXAMPLES = '''
+name: 'add ACLs'
+kafka_acls:
+  action: 'add'
+  kafka_path: '/home/foobar/kafka/'
+  authorizer_properties: 'zookeeper.connect=localhost:2181'
+  jaas_auth_file: 'jaas-kafka.conf'
+  topic: 'croziflette'
+  allow_principal:
+    - 'User:bar'
+  operation:
+    - read
+    - write
+  allow_host:
+    - '127.0.0.1'
+
+name: 'modify ACLs'
+kafka_acls:
+  action: 'add'
+  jaas_auth_file: 'jaas-kafka.conf'
+  authorizer_properties: 'zookeeper.connect=localhost:2181'
+  topic: 'croziflette'
+  deny_principal:
+    - 'User:baz'
+    - 'User:ANONYMOUS'
+  operation:
+    - describe
+  deny_host:
+    - '10.0.0.4'
+
+name: 'list ACLs'
+kafka_acls:
+  action: 'list'
+  jaas_auth_file: 'jaas-kafka.conf'
+  authorizer_properties: 'zookeeper.connect=localhost:2181'
+  topic: 'croziflette'
+
+name: 'list all ACLs'
+kafka_acls:
+  action: 'list'
+  jaas_auth_file: 'jaas-kafka.conf'
+  authorizer_properties: 'zookeeper.connect=localhost:2181'
+
+name: 'remove ACLs'
+kafka_acls:
+  action: 'remove'
+  jaas_auth_file: 'jaas-kafka.conf'
+  authorizer_properties: 'zookeeper.connect=localhost:2181'
+  topic: 'croziflette'
+  operation:
+    - 'describe'
 '''
 
 RETURN = '''
@@ -69,7 +205,6 @@ class KafkaAcls(object):
                                 self.authentification
 
         self.module = module
-        self.changed = False
 
     def get(self):
         ''' List kafka ACLs. '''
@@ -167,9 +302,6 @@ def main():
                                 type='path'),
     )
 
-    required_if = [
-    ]
-
     required_one_of = [
             ['topic', 'cluster', 'group']
     ]
@@ -180,7 +312,6 @@ def main():
 
     module = AnsibleModule(
         argument_spec = argument_spec,
-        required_if = required_if,
         required_one_of = required_one_of,
         mutually_exclusive = mutually_exclusive,
         supports_check_mode = True,
@@ -210,6 +341,8 @@ def main():
             result = {
                     'stdout': out,
                     'stdout_lines': out.splitlines(),
+                    'stderr': err,
+                    'stderr_lines': err.splitlines(),
                     'rc': rc,
             }
 
