@@ -56,7 +56,7 @@ def ansible_facts(module, gather_subset=None):
                                        'pkg_mgr', 'platform', 'python', 'selinux',
                                        'service_mgr', 'ssh_pub_keys', 'user'])
 
-    all_collector_classes = default_collectors.collectors + default_collectors.external_collectors
+    all_collector_classes = default_collectors.collectors
 
     # don't add a prefix
     namespace = PrefixFactNamespace(namespace_name='ansible',
