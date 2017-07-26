@@ -108,7 +108,9 @@ files:
   $modules/cloud/amazon/elb_target_group.py: wimnat
   $modules/cloud/amazon/elb_target_group_facts.py: willthames wimnat
   $modules/cloud/amazon/execute_lambda.py: ryansb
-  $modules/cloud/amazon/iam.py: $team_ansible defionscode seiffert
+  $modules/cloud/amazon/iam.py:
+    ignored: seiffert
+    maintainers: $team_ansible defionscode
   $modules/cloud/amazon/iam_cert.py: $team_ansible
   $modules/cloud/amazon/iam_cert_facts.py: Lujeni willthames
   $modules/cloud/amazon/iam_group.py: willthames
