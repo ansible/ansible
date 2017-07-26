@@ -25,7 +25,7 @@ options:
   manageiq_connection:
     required: true
     description:
-      - ManageIQ connection configuration
+      - ManageIQ connection configuration information.
     options:
       url:
         required: true

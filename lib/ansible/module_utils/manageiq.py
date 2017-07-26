@@ -38,9 +38,7 @@ except ImportError:
 
 def check_client(module):
     if not HAS_CLIENT:
-        module.fail_json(
-            msg='manageiq_client.api is required for this module'
-        )
+        module.fail_json(msg='manageiq_client.api is required for this module')
 
 
 class ManageIQ(object):
@@ -62,6 +60,7 @@ class ManageIQ(object):
         )
         params.update(module.params['manageiq_connection'])
 
+        # check for required arguments
         for arg in ['url', 'username', 'password']:
             if params[arg] in (None, ''):
                 module.fail_json(msg="missing required argument: manageiq_connection[{}]".format(arg))
@@ -87,5 +86,5 @@ class ManageIQ(object):
         except ValueError:
             return None
         except Exception as e:
-            self.module.fail_json(msg="Failed to find resource {error}".format(error=e))
+            self.module.fail_json(msg="failed to find resource {error}".format(error=e))
         return vars(entity)
