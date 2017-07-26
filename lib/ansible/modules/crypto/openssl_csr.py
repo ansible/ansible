@@ -126,7 +126,8 @@ options:
 
 notes:
     - "If the certificate signing request already exists it will be checked whether subjectAltName,
-       keyUsage and extendedKeyUsage only contain the requested values"
+       keyUsage and extendedKeyUsage only contain the requested values and if the request was signed
+       by the given private key"
 '''
 
 
@@ -242,7 +243,6 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         self.subjectAltName = module.params['subjectAltName']
         self.keyUsage = module.params['keyUsage']
         self.extendedKeyUsage = module.params['extendedKeyUsage']
-        self.changed = True
         self.request = None
         self.privatekey = None
 
@@ -295,8 +295,8 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
                 csr_file.close()
             except (IOError, OSError) as exc:
                 raise CertificateSigningRequestError(exc)
-        else:
-            self.changed = False
+
+            self.changed = True
 
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
@@ -380,7 +380,8 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         '''Serialize the object into a dictionary.'''
 
         result = {
-            'csr': self.path,
+            'privatekey': self.privatekey_path,
+            'filename': self.path,
             'subject': self.subject,
             'subjectAltName': self.subjectAltName,
             'keyUsage': self.keyUsage,
