@@ -242,6 +242,8 @@ Ansible Changes By Release
   * gcp_target_proxy
   * gcp_url_map
 - gunicorn
+- nuage
+  * nuage_vpsk
 - purestorage
   * purefa_hg
   * purefa_host
