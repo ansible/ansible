@@ -34,12 +34,12 @@ description:
   - The manageiq_user module supports adding, updating and deleting users in ManageIQ.
 
 options:
-  action:
+  state:
     description:
-      - Specifies the action to take.
+      - absent - user should not exist, present - user should not exist.
     required: False
-    choices: ['create', 'delete', 'edit']
-    default: 'create'
+    choices: ['absent', 'present']
+    default: 'present'
   userid:
     description:
       - The unique userid in manageiq, often mentioned as username.
@@ -69,7 +69,6 @@ options:
 EXAMPLES = '''
 - name: Create a new user in ManageIQ
   manageiq_user:
-    action: 'create'
     userid: 'jdoe'
     name: 'Jane Doe'
     password: 'VerySecret'
@@ -120,12 +119,22 @@ class ManageIQUser(object):
         Returns:
             the user, or send a module Fail signal if group not found
         """
-        user = self.manageiq.find_collection_resource_by('users', userid=userid)
-        if not user:  # user doesn't exist
-            self.manageiq.module.fail_json(
-                msg="User {userid} does not exist in manageiq".format(userid=userid))
+        return self.manageiq.find_collection_resource_by('users', userid=userid)
 
-        return user
+    def compare_user(self, user, name, group_id, password, email):
+        """ Compare user fields againse new values
+
+        Returns:
+            true if user fields need update, false o/w
+        """
+        compare = (
+            (name and user['name'] != name) or
+            (password is not None) or
+            (email and user['email'] != email) or
+            (group_id and user['group']['id'] != group_id)
+        )
+
+        return compare
 
     def delete_user(self, userid):
         """Deletes a user from manageiq.
@@ -143,16 +152,16 @@ class ManageIQUser(object):
 
         return dict(changed=True, msg=result['message'])
 
-    def edit_user(self, userid, name, group, password, email):
+    def edit_user(self, user, name, group, password, email):
         """Edit a user from manageiq.
 
         Returns:
             a short message describing the operation executed.
         """
-        user = self.user(userid)
-
+        group_id = None
         url = '{api_url}/users/{user_id}'.format(api_url=self.api_url, user_id=user['id'])
-        resource = dict(userid=userid)
+
+        resource = dict(userid=user['userid'])
         if group is not None:
             group_id = self.group_id(group)
             resource['group'] = dict(id=group_id)
@@ -163,14 +172,21 @@ class ManageIQUser(object):
         if email is not None:
             resource['email'] = email
 
+        # check if we need to update
+        if not self.compare_user(user, name, group_id, password, email):
+            return dict(
+                changed=False,
+                msg="User {userid} is not changed.".format(userid=user['userid']))
+
+        # try to update user
         try:
             result = self.manageiq.client.post(url, action='edit', resource=resource)
         except Exception as e:
-            self.manageiq.module.fail_json(msg="Failed to update user {userid}: {error}".format(userid=userid, error=e))
+            self.manageiq.module.fail_json(msg="Failed to update user {userid}: {error}".format(userid=user['userid'], error=e))
 
         return dict(
             changed=True,
-            msg="Successfully updated the user {userid}: {user_details}".format(userid=userid, user_details=result))
+            msg="Successfully updated the user {userid}: {user_details}".format(userid=user['userid'], user_details=result))
 
     def create_user(self, userid, name, group, password, email):
         """Creates the user in manageiq.
@@ -179,8 +195,17 @@ class ManageIQUser(object):
             the created user id, name, created_on timestamp,
             updated_on timestamp, userid and current_group_id
         """
+        # check that we have all fields
+        if None in [name, group, password]:
+            return dict(
+                changed=False,
+                failed=True,
+                msg="state is present but one of the following is missing: group,password or name")
+
+        # get group id
         group_id = self.group_id(group)
 
+        # create new user
         url = '{api_url}/users'.format(api_url=self.api_url)
         resource = {'userid': userid, 'name': name, 'password': password, 'group': {'id': group_id}}
         if email is not None:
@@ -202,14 +227,11 @@ def main():
             miq=dict(required=True, type='dict'),
             userid=dict(required=True, type='str'),
             name=dict(),
-            password=dict(required=False, type='str', no_log=True),
+            password=dict(no_log=True),
             group=dict(),
             email=dict(),
-            action=dict(choices=['create', 'delete', 'edit'], defualt='create'),
+            state=dict(choices=['absent', 'present'], default='present')
         ),
-        required_if=[
-            ('action', 'create', ['name', 'password', 'group'])
-        ],
     )
 
     userid = module.params['userid']
@@ -217,19 +239,35 @@ def main():
     password = module.params['password']
     group = module.params['group']
     email = module.params['email']
-    action = module.params['action']
+    state = module.params['state']
 
     manageiq = ManageIQ(module)
     manageiq_user = ManageIQUser(manageiq)
 
-    if action == "delete":
-        res_args = manageiq_user.delete_user(userid)
+    user = manageiq_user.user(userid)
 
-    if action == "edit":
-        res_args = manageiq_user.edit_user(userid, name, group, password, email)
+    # user should not exist
+    if state == "absent":
+        # if we do not have a user, nothing to do
+        if not user:
+            res_args = dict(
+                changed=False,
+                msg="User {userid}: does not exist in manageiq".format(userid=userid),
+            )
 
-    if action == "create":
-        res_args = manageiq_user.create_user(userid, name, group, password, email)
+        # if we have a user, delete it
+        else:
+            res_args = manageiq_user.delete_user(userid)
+
+    # user shoult exist
+    if state == "present":
+        # if we do not have a user, create it
+        if not user:
+            res_args = manageiq_user.create_user(userid, name, group, password, email)
+
+        # if we have a user, edit it
+        else:
+            res_args = manageiq_user.edit_user(user, name, group, password, email)
 
     module.exit_json(**res_args)
 
