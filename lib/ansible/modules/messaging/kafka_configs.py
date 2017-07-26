@@ -28,9 +28,94 @@ description:
 requirements:
     - 'kafka-configs.sh'
 options:
+    add_configs:
+        required: False
+        type: dict
+        description:
+            - Key Value pairs of configs to add.
+    del_configs:
+        required: False
+        type: list
+        description:
+            - Configs key to remove.
+    describe:
+        required: False
+        type: bool
+        default: False
+        choices: [True, False]
+        description:
+            - List configs for the given entity.
+    entity_default:
+        required: False
+        type: str
+        description:
+            - Default entity name for clients/users.
+    entity_name:
+        required: False
+        type: str
+        description:
+            - Name of entity.
+    entity_type:
+        required: True
+        type: str
+        description:
+            - Type of entity.
+    jaas_auth_file:
+        required: False
+        type: str
+        description:
+            - JAAS authentification file.
+    kafka_path:
+        required: False
+        type: path
+        description:
+            - Kafka path.
+    pretty:
+        required:
+        type:
+        description:
+            - Print a dict of the output.
+    zookeeper:
+        required: True
+        type: list
+        description:
+            - The connection string for the zookeeper connection.
 '''
 
 EXAMPLES = '''
+name: 'list config'
+kafka_configs:
+  kafka_path: '/opt/foobar/kafka'
+  entity_type: 'topics'
+  describe: True
+  pretty: True
+  zookeeper:
+    - foo.baz.org:2181
+    - bar.baz.org:2181
+
+name: 'Add config'
+kafka_configs:
+  jaas_auth_file: 'jaas-kafka.conf'
+  entity_name: 'chocolatine'
+  entity_type: 'topics'
+  add_configs:
+    cleanup.policy: 'delete'
+    compression.type: 'gzip'
+  zookeeper:
+    - foo.baz.org:2181
+    - bar.baz.org:2181
+
+name: 'Remove config'
+kafka_configs:
+  jaas_auth_file: 'jaas-kafka.conf'
+  entity_name: 'chocolatine'
+  entity_type: 'topics'
+  del_configs:
+    - cleanup.policy
+    - compression.type
+  zookeeper:
+    - foo.baz.org:2181
+    - bar.baz.org:2181
 '''
 
 RETURN = '''
@@ -50,8 +135,8 @@ class KafkaConfigs(object):
     def __init__(self, module):
         self.add_configs = module.params['add_configs']
         self.del_configs = module.params['del_configs']
-        self.ent_name = module.params['entity_name']
         self.ent_def = module.params['entity_default']
+        self.ent_name = module.params['entity_name']
         self.ent_type = module.params['entity_type']
         self.pretty = module.params['pretty']
         self.zookeeper  = ','.join(module.params['zookeeper'])
@@ -59,25 +144,6 @@ class KafkaConfigs(object):
         self.executable = module.params['kafka_path'] + '/bin/kafka-configs.sh'
 
         self.module = module
-        self.changed = False
-
-    def to_str(self, md, sep='', args_sep=''):
-	args = ''
-	if not isinstance(md, dict):
-	    raise TypeError('not a dict')
-	if not sep:
-	    sep = " "
-	for k,v in md.iteritems():
-	    if v:
-		if isinstance(v, list):
-		    if args:
-			args += args_sep
-		    args += ''.join("%s%s%r" % (k, sep, ','.join(v)))     
-		else:
-		    if args:
-			args += args_sep
-		    args += ''.join("%s%s%r" % (k, sep, v))
-	return args
 
     def manage_configs(self):
         ''' Alter (add or remove configs) for the entity. '''
@@ -92,12 +158,21 @@ class KafkaConfigs(object):
                 '--entity-name': self.ent_name,
                 '--entity-type': self.ent_type,
         }
-
-
         entity_join = ''.join(" %s %r" % (k, v) for k,v in entity.iteritems() if v)
 
         if self.add_configs:
-            configs = self.to_str(self.add_configs, sep='=', args_sep=',')
+            configs = ''
+            for k,v in self.add_configs.iteritems():
+                if v:
+                    if isinstance(v, list):
+                        if configs:
+                            configs += ','
+                        configs += ''.join("%s=%r" % (k, ','.join(v)))
+                    else:
+                        if configs:
+                            configs += ','
+                        configs += ''.join("%s=%r" % (k, v))
+
             cmd = ('%s --alter --zookeeper %s %s '
                     '--add-config %s') % (self.executable,
                                             self.zookeeper,
@@ -120,6 +195,7 @@ class KafkaConfigs(object):
 
     def describe(self):
         ''' List configs for the given entity. '''
+
         entity = {
                 '--entity-default': self.ent_def,
                 '--entity-name': self.ent_name,
@@ -152,9 +228,6 @@ class KafkaConfigs(object):
         except:
             e = get_exception()
             raise KafkaError(e)
-
-    def dump(self):
-        pass
 
 def main():
     argument_spec = dict(
