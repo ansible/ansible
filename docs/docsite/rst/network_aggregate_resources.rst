@@ -26,7 +26,7 @@ Additive resources
 
 Continuing our vlan example, the following task ensure that vlans ``1``, ``2`` and ``3`` are in the states specified in the task, in `addition` to any existing vlans.
 
-This task *will not* change any vlans already configured on the switch, apart from the ones specified in the task.
+This task *will not* change any vlans already configured on the switch, apart from the ones specified in the task. Ansible will ensure that the vlans specified in the task exist with the `name` and `state` specified.
 
 .. code-block:: yaml
 
@@ -40,6 +40,7 @@ This task *will not* change any vlans already configured on the switch, apart fr
        - { vlan_id: 2, name: mgmt }
        - { vlan_id: 3, state: suspend }
 
+FIXME Should we even document ``with_items``, is that just confusing the matter. Should this be the same as `Aggregate resources` though without ``purge: yes``?
 
 Aggregate resources
 ===================
@@ -59,9 +60,9 @@ Consider the following example:
 
 This task is very similar to the `additive resource` example above, though with the following differences:
 
-* The ``purge:`` option (which defaults to `no`) ensure that **only** the specified entries are present. All other entries will be **deleted**.
+* The ``purge:`` option (which defaults to `no`) ensures that **only** the specified entries are present. All other entries will be **deleted**.
 
-.. note:: Why does ``purge`` default to ``no``?
+.. warning:: Why does ``purge`` default to ``no``?
 
    To prevent from accidental deletion ``purge`` is always set to ``no``. This requires playbook writers to add ``purge: yes`` to enable this.
 
@@ -80,6 +81,7 @@ When would you not use aggregate resources?
 
 
 The *additive* format can be useful in a number of cases:
+
 * When Ansible isn't your Single Source of truth; and therefore doesn't ...
 * FIXME
 
