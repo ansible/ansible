@@ -48,11 +48,11 @@ options:
   level:
     description:
       - Set logging severity levels.
-  collection:
+  aggregate:
     description: List of logging definitions.
   purge:
     description:
-      - Purge logging not defined in the collections parameter.
+      - Purge logging not defined in the aggregate parameter.
     default: no
   state:
     description:
@@ -163,8 +163,8 @@ def config_to_dict(module):
 def map_params_to_obj(module):
     obj = []
 
-    if 'collection' in module.params and module.params['collection']:
-        for c in module.params['collection']:
+    if 'aggregate' in module.params and module.params['aggregate']:
+        for c in module.params['aggregate']:
             d = c.copy()
             if d['dest'] not in ('host', 'file', 'user'):
                 d['name'] = None
@@ -200,7 +200,7 @@ def main():
         facility=dict(type='str'),
         level=dict(type='str'),
         state=dict(default='present', choices=['present', 'absent']),
-        collection=dict(type='list'),
+        aggregate=dict(type='list'),
         purge=dict(default=False, type='bool')
     )
 
