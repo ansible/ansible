@@ -99,14 +99,14 @@ options:
 '''
 
 EXAMPLES = '''
-- name: 'Generate PKCS #12 file'
-  openssl_pkcs12:
-    path: '/opt/certs/ansible.p12'
-    friendly_name: 'raclette'
-    privatekey_path: '/opt/certs/keys/key.pem'
-    cert_path: '/opt/certs/cert.pem'
-    ca_certificates: '/opt/certs/ca.pem'
-    state: present
+name: 'Generate PKCS #12 file'
+openssl_pkcs12:
+  path: '/opt/certs/ansible.p12'
+  friendly_name: 'raclette'
+  privatekey_path: '/opt/certs/keys/key.pem'
+  cert_path: '/opt/certs/cert.pem'
+  ca_certificates: '/opt/certs/ca.pem'
+  state: present
 '''
 
 RETURN = '''
