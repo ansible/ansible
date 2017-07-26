@@ -63,6 +63,8 @@ The following topics will discuss how to develop and work with modules:
 
 :doc:`developing_modules_general`
     A general overview of how to develop, debug, and test modules.
+:doc:`developing_modules_general_windows`
+    A general overview of how to develop, debug and test Windows modules.
 :doc:`developing_modules_documenting`
     How to include in-line documentation in your module.
 :doc:`developing_modules_best_practices`
