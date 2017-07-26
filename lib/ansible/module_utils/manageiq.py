@@ -49,6 +49,10 @@ class ManageIQ(object):
     """
 
     def __init__(self, module):
+        # handle import errors
+        check_client(module)
+
+        # set defaults
         params = dict(
             url=os.environ.get('MIQ_URL', None),
             username=os.environ.get('MIQ_USERNAME', None),

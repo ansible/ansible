@@ -36,7 +36,7 @@ description:
 options:
   state:
     description:
-      - absent - user should not exist, present - user should not exist.
+      - absent - user should not exist, present - user should be.
     required: False
     choices: ['absent', 'present']
     default: 'present'
@@ -98,6 +98,7 @@ class ManageIQUser(object):
 
     def __init__(self, manageiq):
         self.manageiq = manageiq
+        self.module = self.manageiq.module
         self.api_url = self.manageiq.api_url
 
     def group_id(self, group):
@@ -108,7 +109,7 @@ class ManageIQUser(object):
         """
         group_obj = self.manageiq.find_collection_resource_by('groups', description=group)
         if not group_obj:  # group doesn't exist
-            self.manageiq.module.fail_json(
+            self.module.fail_json(
                 msg="Group {group} does not exist in manageiq".format(group=group))
 
         return group_obj['id']
@@ -117,7 +118,7 @@ class ManageIQUser(object):
         """ Search for user object by userid
 
         Returns:
-            the user, or send a module Fail signal if group not found
+            the user, or None if group not found
         """
         return self.manageiq.find_collection_resource_by('users', userid=userid)
 
@@ -148,7 +149,7 @@ class ManageIQUser(object):
             url = '{api_url}/users/{user_id}'.format(api_url=self.api_url, user_id=user['id'])
             result = self.manageiq.client.post(url, action='delete')
         except Exception as e:
-            self.manageiq.module.fail_json(msg="Failed to delete user {userid}: {error}".format(userid=userid, error=e))
+            self.module.fail_json(msg="Failed to delete user {userid}: {error}".format(userid=userid, error=e))
 
         return dict(changed=True, msg=result['message'])
 
@@ -182,7 +183,7 @@ class ManageIQUser(object):
         try:
             result = self.manageiq.client.post(url, action='edit', resource=resource)
         except Exception as e:
-            self.manageiq.module.fail_json(msg="Failed to update user {userid}: {error}".format(userid=user['userid'], error=e))
+            self.module.fail_json(msg="Failed to update user {userid}: {error}".format(userid=user['userid'], error=e))
 
         return dict(
             changed=True,
@@ -196,11 +197,9 @@ class ManageIQUser(object):
             updated_on timestamp, userid and current_group_id
         """
         # check that we have all fields
-        if None in [name, group, password]:
-            return dict(
-                changed=False,
-                failed=True,
-                msg="state is present but one of the following is missing: group,password or name")
+        for key, value in dict(name=name, group=group, password=password).items():
+            if value in (None, ''):
+                self.module.fail_json(msg="missing required argument: {}".format(key))
 
         # get group id
         group_id = self.group_id(group)
@@ -214,7 +213,7 @@ class ManageIQUser(object):
         try:
             result = self.manageiq.client.post(url, action='create', resource=resource)
         except Exception as e:
-            self.manageiq.module.fail_json(msg="Failed to create user {userid}: {error}".format(userid=userid, error=e))
+            self.module.fail_json(msg="Failed to create user {userid}: {error}".format(userid=userid, error=e))
 
         return dict(
             changed=True,
@@ -254,7 +253,6 @@ def main():
                 changed=False,
                 msg="User {userid}: does not exist in manageiq".format(userid=userid),
             )
-
         # if we have a user, delete it
         else:
             res_args = manageiq_user.delete_user(userid)
@@ -264,7 +262,6 @@ def main():
         # if we do not have a user, create it
         if not user:
             res_args = manageiq_user.create_user(userid, name, group, password, email)
-
         # if we have a user, edit it
         else:
             res_args = manageiq_user.edit_user(user, name, group, password, email)
