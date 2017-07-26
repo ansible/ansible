@@ -303,17 +303,37 @@ class PromptVaultSecret(VaultSecret):
             raise AnsibleError("Passwords do not match")
 
 
-def get_file_vault_secret(filename=None, vault_id_name=None, encoding=None, loader=None):
+def script_is_agent(filename):
+    '''Determine if a vault secret script is an agent that can be given --vault-id args'''
+
+    # if password script is 'something-agent' or 'something-agent.[sh|py|rb|etc]'
+    # script_name can still have '.' or could be entire filename if there is no ext
+    script_name, ext = os.path.splitext(filename)
+
+    # TODO: for now, this is entirely based on filename
+    if script_name.endswith('-agent'):
+        return True
+
+    return False
+
+
+def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
     this_path = os.path.realpath(os.path.expanduser(filename))
 
     if not os.path.exists(this_path):
         raise AnsibleError("The vault password file %s was not found" % this_path)
 
     if loader.is_executable(this_path):
-        # TODO: pass vault_id_name to script via cli
-        return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
-
-    return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+        if script_is_agent(filename):
+            print('is agent')
+            # TODO: pass vault_id_name to script via cli
+            return AgentScriptVaultSecret(filename=this_path, vault_id=vault_id,
+                                          encoding=encoding, loader=loader)
+        else:
+            # just a plain vault password script. No args, returns a byte array
+            return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+    else:
+        return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
 
 
 # TODO: mv these classes to a seperate file so we don't pollute vault with 'subprocess' etc
@@ -370,9 +390,11 @@ class ScriptVaultSecret(FileVaultSecret):
         if not self.loader.is_executable(filename):
             raise AnsibleVaultError("The vault password script %s was not executable" % filename)
 
+        command = self._build_command()
+
         try:
             # STDERR not captured to make it easier for users to prompt for input in their scripts
-            p = subprocess.Popen(filename, stdout=subprocess.PIPE)
+            p = subprocess.Popen(command, stdout=subprocess.PIPE)
         except OSError as e:
             msg_format = "Problem running vault password script %s (%s)." \
                 " If this is not a script, remove the executable bit from the file."
@@ -389,6 +411,25 @@ class ScriptVaultSecret(FileVaultSecret):
         verify_secret_is_not_empty(vault_pass,
                                    msg='Invalid vault password was provided from script (%s)' % filename)
         return vault_pass
+
+    def _build_command(self):
+        return [self.filename]
+
+
+class AgentScriptVaultSecret(ScriptVaultSecret):
+    def __init__(self, filename=None, encoding=None, loader=None, vault_id=None):
+        super(ScriptVaultSecret, self).__init__(filename=filename,
+                                                encoding=encoding,
+                                                loader=loader)
+        self._vault_id = vault_id
+        print('agent script filename=%s vault-id=%s' % (filename, vault_id))
+
+    def _build_command(self):
+        command = [self.filename]
+        if self._vault_id:
+            command.extend(['--vault-id', self._vault_id])
+
+        return command
 
 
 def match_secrets(secrets, target_vault_ids):

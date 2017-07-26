@@ -293,7 +293,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             display.vvvvv('Reading vault password file: %s' % vault_id_value)
             # read vault_pass from a file
             file_vault_secret = get_file_vault_secret(filename=vault_id_value,
-                                                      vault_id_name=vault_id_name,
+                                                      vault_id=vault_id_name,
                                                       loader=loader)
 
             # an invalid password file will error globally
