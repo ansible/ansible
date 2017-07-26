@@ -234,12 +234,12 @@ class Dellos6NetworkConfig(NetworkConfig):
             if str(item) == "exit":
                 for diff_item in diff:
                     if diff_item._parents:
-                       if item._parents == diff_item._parents:
-                          diff.append(item)
-                          break
+                        if item._parents == diff_item._parents:
+                            diff.append(item)
+                            break
                     else:
-                       diff.append(item)
-                       break
+                        diff.append(item)
+                        break
             elif item not in other:
                 diff.append(item)
         return diff
