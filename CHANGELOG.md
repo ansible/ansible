@@ -17,6 +17,10 @@ Ansible Changes By Release
   * Workaround python-libselinux API change in the seboolean module
 * ios_config: Fix traceback when the efaults parameter is not set
 * iosxr_config: Fixed unicode error when UTF-8 characters are in configs
+* Fix check mode in archive module
+* Fix UnboundLocalError in check mode in cs_role module
+* Fix to always use lowercase hostnames for host keys in known_hosts module
+
 
 ## 2.3.2 "Ramble On" - TBD
 
