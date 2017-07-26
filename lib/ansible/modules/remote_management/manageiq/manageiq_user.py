@@ -74,7 +74,7 @@ EXAMPLES = '''
     password: 'VerySecret'
     group: 'EvmGroup-user'
     email: 'jdoe@example.com'
-    miq:
+    manageiq_connection:
       url: 'http://example.com:3000'
       username: 'admin'
       password: 'smartvm'
@@ -223,7 +223,7 @@ class ManageIQUser(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            miq=dict(required=True, type='dict'),
+            manageiq_connection=dict(required=True, type='dict'),
             userid=dict(required=True, type='str'),
             name=dict(),
             password=dict(no_log=True),

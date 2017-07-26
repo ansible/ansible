@@ -22,7 +22,7 @@ class ModuleDocFragment(object):
     # Standard ManageIQ documentation fragment
     DOCUMENTATION = """
 options:
-  miq:
+  manageiq_connection:
     required: true
     description:
       - ManageIQ connection configuration

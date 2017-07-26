@@ -60,11 +60,11 @@ class ManageIQ(object):
             verify_ssl=True,
             ca_bundle_path=None,
         )
-        params.update(module.params['miq'])
+        params.update(module.params['manageiq_connection'])
 
         for arg in ['url', 'username', 'password']:
             if params[arg] in (None, ''):
-                module.fail_json(msg="missing required argument: miq[{}]".format(arg))
+                module.fail_json(msg="missing required argument: manageiq_connection[{}]".format(arg))
 
         url = params['url']
         username = params['username']
