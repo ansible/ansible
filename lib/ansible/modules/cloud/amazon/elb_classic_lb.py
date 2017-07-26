@@ -1063,7 +1063,10 @@ class ElbManager(object):
                     if 'expiration' not in self.stickiness:
                         self.module.fail_json(msg='expiration must be set when type is loadbalancer')
 
-                    expiration = self.stickiness['expiration'] if self.stickiness['expiration'] is not 0 else None
+                    try:
+                        expiration = self.stickiness['expiration'] if int(self.stickiness['expiration']) else None
+                    except ValueError:
+                        self.module.fail_json(msg='expiration must be set to an integer')
 
                     policy_attrs = {
                         'type': policy_type,
