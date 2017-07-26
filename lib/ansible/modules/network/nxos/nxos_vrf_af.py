@@ -201,10 +201,7 @@ def main():
         afi=dict(required=True, type='str', choices=['ipv4', 'ipv6']),
         route_target_both_auto_evpn=dict(required=False, type='bool'),
         m_facts=dict(required=False, default=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -238,9 +235,10 @@ def main():
         state_absent(module, existing, proposed, candidate)
 
     if candidate:
+        candidate = candidate.items_text()
         load_config(module, candidate)
         result['changed'] = True
-        result['commands'] = candidate.items_text()
+        result['commands'] = candidate
 
     else:
         result['commands'] = []
