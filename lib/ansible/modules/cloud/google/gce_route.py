@@ -189,15 +189,13 @@ try:
     from libcloud import __version__ as LIBCLOUD_VERSION
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import Provider
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-        ResourceExistsError, ResourceInUseError, ResourceNotFoundError
+    from libcloud.common.google import ResourceNotFoundError
 
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
 
 # module specific imports
-import socket
 import re
 from distutils.version import LooseVersion
 from sys import version_info
@@ -269,7 +267,7 @@ def check_parameter_format(module, gce_connection):
 
     # check length of description (must be less than 2048 characters)
     if version_info < (3,):
-        description_length = len(unicode(module.params['description'], "utf-8"))
+        description_length = len(unicode(module.params['description'], "utf-8"))  # pylint: disable=E0602
     else:
         description_length = len(module.params['description'])
 
