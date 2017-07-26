@@ -215,7 +215,7 @@ def main():
                 'cloudstack_user_data',
             ]),
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     if not HAS_LIB_YAML:
