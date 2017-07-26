@@ -96,17 +96,17 @@ def _get_fs_size(fssize_cmd, dev, module):
                     break
         else:
             module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err )
-    elif 'xfs_info' == fssize_cmd:
+    elif 'xfs_growfs' == fssize_cmd:
         # Get Block count and Block size
-        rc, size, err = module.run_command("%s %s" % (cmd, dev))
+        rc, size, err = module.run_command([cmd, '-n', dev])
         if rc == 0:
             for line in size.splitlines():
                 col = line.split('=')
                 if col[0].strip() == 'data':
                     if col[1].strip() != 'bsize':
-                        module.fail_json(msg='Unexpected output format from xfs_info (could not locate "bsize")')
+                        module.fail_json(msg='Unexpected output format from xfs_growfs (could not locate "bsize")')
                     if col[2].split()[1] != 'blocks':
-                        module.fail_json(msg='Unexpected output format from xfs_info (could not locate "blocks")')
+                        module.fail_json(msg='Unexpected output format from xfs_growfs (could not locate "blocks")')
                     block_size = int(col[2].split()[0])
                     block_count = int(col[3].split(',')[0])
                     break
@@ -176,7 +176,7 @@ def main():
             'grow' : 'xfs_growfs',
             'grow_flag' : None,
             'force_flag' : '-f',
-            'fsinfo': 'xfs_info',
+            'fsinfo': 'xfs_growfs',
         },
         'btrfs' : {
             'mkfs' : 'mkfs.btrfs',
