@@ -1,6 +1,4 @@
-.. _module_dev_tutorial_sample
-
-Ansible Module Windows Development Walkthrough
+Windows Ansible Module Development Walkthrough
 ==============================================
 
 In this section, we will walk through developing, testing, and debugging an
@@ -11,38 +9,35 @@ Windows host, this guide differs from the usual development walkthrough guide.
 
 What's covered in this section:
 
--  `Environment setup <#environment-setup>`__
--  `New module development <#new-module-development>`__
--  `Playbook module testing <#playbook-module-testing>`__
--  `Debugging (remote) <#debugging-remote>`__
--  `Unit testing <#unit-testing>`__
--  `Integration testing <#integration-testing>`__
--  `Communication and development support
-   <#communication-and-development-support>`__
+.. contents:: Topics
 
 
-Environment setup
-=================
+Windows environment setup
+=========================
 
 TODO: Add in more information on how to use Vagrant to setup a Windows host.
 
 
-New module development
-======================
+Windows new module development
+==============================
 
-When creating a new module there are a few things to keep in mind of
+When creating a new module there are a few things to keep in mind
 
-- Documentation for the module is contained in a python file of the same name
+- Module code are in Powershell (.ps1) files while the documentation are in Python (.py) files of the same name
 - Avoid using ``Write-Host/Debug/Verbose/Error`` in the module and add what needs to be returned to the ``$result`` variable
 - When trying an exception use ``Fail-Json -obj $result -message "exception message here"`` instead
 - Most new modules require check mode and integration tests before they are merged into the main Ansible codebase
 - Avoid using try/catch statements over a bit code block, rather use then for individual calls so the error message can be more descriptive
 - Avoid using PSCustomObjects unless necessary
-- Look for common functions at ``./lib/ansible/module_utils/powershell/`` and use the code there instead of duplicating work, these can be imported by adding the line ``#Requires -Module *`` below ``#POWERHSELL_COMMON`` where * is the filename to import
+- Look for common functions at ``./lib/ansible/module_utils/powershell/`` and use the code there instead of duplicating work, these can be imported by adding the line ``#Requires -Module *`` below ``#POWERSHELL_COMMON`` where * is the filename to import
+- Ensure the code is complient with Powershell v3 and above, if it isn't then document the requirements
+- Ansible uses strictmode version 2.0, be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
+- Favour native Powershell cmdlets instead of executable calls if possible
+- If adding a object to ``$result`` ensure any trailing slashes are removed or exited out as ``ConvertTo-Json`` will fail to convert it
 
 A very basic powershell module template can be found found below
 
-::
+.. code-block:: powershell
 
     #!powershell
     # This file is part of Ansible
@@ -58,7 +53,10 @@ A very basic powershell module template can be found found below
     $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
     $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
-    # these are your module parameters
+    # these are your module parameters, there are various types which can be
+    # used to format your parameters. You can also set mandatory parameters
+    # with -failifempty, set defaults with -default and set choices with
+    # -validateset.
     $string = Get-AnsibleParam -obj $params -name "string" -type "str" -failifempty $true
     $bool = Get-AnsibleParam -obj $params -name "bool" -type "bool" -default $false
     $int = Get-AnsibleParam -obj $params -name "int" -type "int"
@@ -76,21 +74,33 @@ A very basic powershell module template can be found found below
 
     # code goes here
 
+    # you can add/set new result objects with
+    $result.changed = $true
+    $result.new_result = "Hi"
+
     Exit-Json -obj $result
 
-::
 
 When in doubt look at some of the core modules and see how things have been
 implemented there.
 
+Sometimes there are multiple ways that Windows offers to complete a task, this
+is the order to favour when writing modules
 
-Playbook module testing
-=======================
+- Native Powershell cmdlets like ``Remove-Item -Path C:\temp -Recurse``
+- .NET classes like ``[System.IO.Path]::GetRandomFileName()``
+- WMI objects through the ``New-CimInstance`` cmdlet
+- COM objects through ``New-Object -ComObject`` cmdlet
+- Calls to native executables like ``Secedit.exe``
+
+
+Windows playbook module testing
+===============================
 
 To test a module you can do so with an Ansible playbook.
 
-- Create a playbook in any directory ``$ touch testmodule.yml``
-- Create an inventory file in the same directory ``$ touch hosts``
+- Create a playbook in any directory ``touch testmodule.yml``
+- Create an inventory file in the same directory ``touch hosts``
 - Populate the inventory file with the variables required to connect to a Windows host(s).
 - Add the following to the new playbook file::
 
@@ -109,12 +119,12 @@ the new module end to end but there are better ways to test out the module as
 shown below.
 
 
-Debugging (remote)
-==================
+Windows debugging (remote)
+==========================
 
 Debugging a module currently can only be done on a remote Windows host. This is
-extemely useful when developing a new module or looking at bug fixes. These are
-some steps that need to be followed to set this up.
+extremely useful when developing a new module or looking at bug fixes. These
+are some steps that need to be followed to set this up.
 
 - Copy the module script to the Windows server
 - Copy ``./lib/ansible/module_utils/powershell/Ansible.ModuleUtils.PowerShellLegacy.psm1`` to the same directory as the script above
@@ -155,9 +165,9 @@ the most popular are
 To be able to view the arguments as passed by Ansible to the module follow
 these steps.
 
-- Before executing the Ansible command run ``$ export ANSIBLE_KEEP_REMOTE_FILES=1`` to get Ansible to keep the exec files on the server
+- Before executing the Ansible command run ``export ANSIBLE_KEEP_REMOTE_FILES=1`` to get Ansible to keep the exec files on the server
 - Run the Ansible command
-- Run ``$ export ANSIBLE_KEEP_REMOTE_FILES=0`` to stop Ansible from filling up the temp space on the server
+- Run ``export ANSIBLE_KEEP_REMOTE_FILES=0`` to stop Ansible from filling up the temp space on the server
 - Log onto the Windows server using the same user Ansible executed the module as
 - Navigate to ``%TEMP%\..``, there should be a folder starting with ``ansible-temp-``
 - Inside this folder open up the powershell script for the module
@@ -165,15 +175,15 @@ these steps.
 - These args can be assigned manually to the ``$complex_args`` variable that is defined on your debug script
 
 
-Unit testing
-============
+Windows unit testing
+====================
 
 Currently there is no mechanism to develop unit tests for Powershell modules.
 There is work in the pipeline to introduce this in the future, stay tuned.
 
 
-Integration testing
-===================
+Windows integration testing
+===========================
 
 Integration tests for modules will be appropriately located in
 ``./test/integration/targets``. You must first set up your testing environment
@@ -190,38 +200,36 @@ the verbosity level using the ``-v`` argument just as you would with
 ansible-playbook.
 
 When developing tests for a new module, it is recommended to test a scenario in
-check mode and 2 times not in check mode. This ensure we test that check mode
+check mode and 2 times not in check mode. This ensures we test that check mode
 does not make any changes but reports a change as well as the 2nd run stays
-idempotent. This is an example of one way that this can be done
+idempotent. This is an example of one way that this can be done.
 
-::
+.. code-block:: yaml
 
-    # check mode tests for scenario
-    - name: remove a file check
+    - name: remove a file (check mode)
       win_file:
         path: C:\temp
         state: absent
       register: remove_file_check
       check_mode: yes
     
-    - name: get actual of remove a file check
+    - name: get result of remove a file (check mode)
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"
       register: remove_file_actual_check
     
-    - name: assert remove a file check
+    - name: assert remove a file (check mode)
       assert:
         that:
         - remove_file_check|changed
         - remove_file_actual_check.stdout == 'true\r\n'
 
-    # actual tests for scenario
     - name: remove a file
       win_file:
         path: C:\temp
         state: absent
       register: remove_file
     
-    - name: get actual of remove a file
+    - name: get result of remove a file
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"
       register: remove_file_actual
     
@@ -231,23 +239,20 @@ idempotent. This is an example of one way that this can be done
         - remove_file|changed
         - remove_file_actual.stdout == 'false\r\n'
 
-    # idempotency checks for scenario
-    - name: remove a file again
+    - name: remove a file (idempotent)
       win_file:
         path: C:\temp
         state: absent
       register: remove_file_again
     
-    - name: assert remove a file again
+    - name: assert remove a file (idempotent)
       assert:
         that:
         - not remove_file_again|changed
 
-::
 
-
-Communication and development support
-=====================================
+Windows communication and development support
+=============================================
 
 Join the IRC channel ``#ansible-devel`` or ``#ansible-windows`` on freenode for
 discussions surrounding Ansible development for Windows.

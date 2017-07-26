@@ -136,78 +136,9 @@ The complete module metadata specification is here: `Ansible metadata block <htt
 
 Windows modules checklist
 =========================
-* Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of Windows
-* modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
-* look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
-* Ansible uses strictmode version 2.0 so be sure to test with that enabled
 
-All powershell modules must start:
+For a checklist and details on how to write Windows modules have a look at :doc:`developing_modules_general_windows`
 
-
-.. code-block:: powershell
-
-    #!powershell
-
-    <GPL header>
-
-    # WANT_JSON
-    # POWERSHELL_COMMON
-
-To parse all arguments into a variable modules generally use:
-
-.. code-block:: powershell
-
-    $params = Parse-Args $args
-
-Arguments
----------
-
-* Try and use state present and state absent like other modules
-* You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function.
-* Required arguments:
-
-.. code-block:: powershell
-
-        $package =  Get-AnsibleParam -obj $params -name name -failifempty $true
-
-Required arguments with name validation:
-
-.. code-block:: powershell
-
-        $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
-
-Optional arguments with name validation
----------------------------------------
-
-.. code-block:: powershell
-
-        $state = Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent"
-
-* If the "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message
-  using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
-* Look at existing modules for more examples of argument checking.
-
-Results
--------
-* The result object should always contain an attribute called changed set to either $true or $false
-* Create your result object like this
-
-.. code-block:: powershell
-
-        $result = New-Object psobject @{
-        changed = $false
-        other_result_attribute = $some_value
-        };
-
-        If all is well, exit with a
-        Exit-Json $result
-
-* Ensure anything you return, including errors can be converted to json.
-* Be aware that because exception messages could contain almost anything.
-* ConvertTo-Json will fail if it encounters a trailing \ in a string.
-* If all is not well use Fail-Json to exit.
-
-* Have you tested for powershell 3.0 and 4.0 compliance?
 
 Deprecating and making module aliases
 ======================================
