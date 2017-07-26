@@ -159,22 +159,25 @@ class TestCollectorClassesFromGatherSubset(unittest.TestCase):
         res = self._classes(all_collector_classes=default_collectors.collectors,
                             gather_subset=set(['env', 'facter']))
         self.assertIsInstance(res, list)
-        self.assertItemsEqual(res, [default_collectors.EnvFactCollector,
-                                    default_collectors.FacterFactCollector])
+        self.assertEqual(set(res),
+                         set([default_collectors.EnvFactCollector,
+                              default_collectors.FacterFactCollector]))
 
     def test_facter_ohai(self):
         res = self._classes(all_collector_classes=default_collectors.collectors,
                             gather_subset=set(['env', 'facter', 'ohai']))
         self.assertIsInstance(res, list)
-        self.assertItemsEqual(res, [default_collectors.EnvFactCollector,
-                                    default_collectors.FacterFactCollector,
-                                    default_collectors.OhaiFactCollector])
+        self.assertEqual(set(res),
+                         set([default_collectors.EnvFactCollector,
+                              default_collectors.FacterFactCollector,
+                              default_collectors.OhaiFactCollector]))
 
     def test_just_facter(self):
         res = self._classes(all_collector_classes=default_collectors.collectors,
                             gather_subset=set(['facter']))
         self.assertIsInstance(res, list)
-        self.assertItemsEqual(res, [default_collectors.FacterFactCollector])
+        self.assertEqual(set(res),
+                         set([default_collectors.FacterFactCollector]))
 
     def test_collector_specified_multiple_times(self):
         res = self._classes(all_collector_classes=default_collectors.collectors,
