@@ -86,7 +86,7 @@
 
 - name: Add logging collections
   net_logging:
-    collection:
+    aggregate:
       - { dest: file, name: test1, facility: all, level: info }
       - { dest: file, name: test2, facility: news, level: debug }
     state: present
@@ -101,7 +101,7 @@
 
 - name: Add and remove logging collections with overrides
   net_logging:
-    collection:
+    aggregate:
       - { dest: console, facility: all, level: info }
       - { dest: file, name: test1, facility: all, level: info, state: absent }
       - { dest: console, facility: daemon, level: warning }
@@ -117,7 +117,7 @@
 
 - name: Remove logging collections
   net_logging:
-    collection:
+    aggregate:
       - { dest: console, facility: all, level: info }
       - { dest: console, facility: daemon, level: warning }
       - { dest: file, name: test2, facility: news, level: debug }

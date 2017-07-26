@@ -36,7 +36,7 @@ options:
   name:
     description:
       - Name of the interface excluding any logical unit number.
-  collection:
+  aggregate:
     description:
       - List of Layer-2 interface definitions.
   mode:

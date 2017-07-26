@@ -46,7 +46,7 @@ options:
     description:
       - The username to be configured on the VyOS device.
         This argument accepts a string value and is mutually exclusive
-        with the C(collection) argument.
+        with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
   full_name:
     description:
@@ -238,20 +238,20 @@ def map_params_to_obj(module):
         elif not module.params['name']:
             module.fail_json(msg='username is required')
         else:
-            collection = [{'name': module.params['name']}]
+            aggregate = [{'name': module.params['name']}]
     else:
-        collection = list()
+        aggregate = list()
         for item in users:
             if not isinstance(item, dict):
-                collection.append({'name': item})
+                aggregate.append({'name': item})
             elif 'name' not in item:
                 module.fail_json(msg='name is required')
             else:
-                collection.append(item)
+                aggregate.append(item)
 
     objects = list()
 
-    for item in collection:
+    for item in aggregate:
         get_value = partial(get_param_value, item=item, module=module)
         item['password'] = get_value('password')
         item['full_name'] = get_value('full_name')
@@ -279,7 +279,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', aliases=['collection']),
+        users=dict(type='list', aliases=['aggregate']),
         name=dict(),
 
         full_name=dict(),
