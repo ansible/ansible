@@ -201,12 +201,11 @@ def main():
         argument_spec=dict(
             miq=dict(required=True, type='dict'),
             userid=dict(required=True, type='str'),
-            name=dict(required=False, type='str'),
+            name=dict(),
             password=dict(required=False, type='str', no_log=True),
-            group=dict(required=False, type='str'),
-            email=dict(required=False, type='str'),
-            action=dict(required=False, type='str',
-                        choices=['create', 'delete', 'edit'], defualt='create'),
+            group=dict(),
+            email=dict(),
+            action=dict(choices=['create', 'delete', 'edit'], defualt='create'),
         ),
         required_if=[
             ('action', 'create', ['name', 'password', 'group'])
