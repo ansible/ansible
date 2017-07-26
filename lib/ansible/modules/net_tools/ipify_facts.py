@@ -44,6 +44,12 @@ options:
     required: false
     default: 10
     version_added: "2.3"
+  validate_certs:
+    description:
+      - When set to C(NO), SSL certificates will not be validated.
+    required: false
+    default: "yes"
+    version_added: "2.4"
 notes:
   - "Visit https://www.ipify.org to get more information."
 '''
@@ -80,6 +86,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
 
 
 class IpifyFacts(object):
@@ -92,21 +99,23 @@ class IpifyFacts(object):
         result = {
             'ipify_public_ip': None
         }
-        (response, info) = fetch_url(module=module, url=self.api_url + "?format=json" , force=True, timeout=self.timeout)
+        (response, info) = fetch_url(module=module, url=self.api_url + "?format=json", force=True, timeout=self.timeout)
 
         if not response:
             module.fail_json(msg="No valid or no response from url %s within %s seconds (timeout)" % (self.api_url, self.timeout))
 
-        data = json.loads(response.read())
+        data = json.loads(to_text(response.read()))
         result['ipify_public_ip'] = data.get('ip')
         return result
+
 
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(
-            api_url=dict(default='https://api.ipify.org'),
+        argument_spec=dict(
+            api_url=dict(default='https://api.ipify.org/'),
             timeout=dict(type='int', default=10),
+            validate_certs=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
