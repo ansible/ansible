@@ -15,7 +15,7 @@
 
 - name: Collection of users
   nxos_user:
-    users:
+    aggregate:
       - name: test1
       - name: test2
     authorize: yes

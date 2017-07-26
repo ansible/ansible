@@ -49,11 +49,11 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
-  collection:
+  aggregate:
     description: List of static route definitions
   purge:
     description:
-      - Purge static routes not defined in the collections parameter.
+      - Purge static routes not defined in the aggregates parameter.
     default: no
   state:
     description:
@@ -76,9 +76,9 @@ EXAMPLES = """
     next_hop: 10.0.0.1
     state: absent
 
-- name: configure collections of static routes
+- name: configure aggregates of static routes
   net_static_route:
-    collection:
+    aggregate:
       - { prefix: 192.168.2.0, mask 255.255.255.0, next_hop: 10.0.0.1 }
       - { prefix: 192.168.3.0, mask 255.255.255.0, next_hop: 10.0.2.1 }
 """

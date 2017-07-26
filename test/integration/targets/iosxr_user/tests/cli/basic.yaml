@@ -83,7 +83,7 @@
 
 - name: Collection of users (SetUp)
   iosxr_user:
-    users:
+    aggregate:
       - name: ansibletest2
       - name: ansibletest3
     password: test
@@ -104,7 +104,7 @@
 
 - name: Add collection of users again with update_password always (not idempotent)
   iosxr_user:
-    users:
+    aggregate:
       - name: ansibletest2
       - name: ansibletest3
     password: test
@@ -123,7 +123,7 @@
 
 - name: Add collection of users again with update_password on_create (idempotent)
   iosxr_user:
-    users:
+    aggregate:
       - name: ansibletest2
       - name: ansibletest3
     password: test
@@ -140,7 +140,7 @@
 
 - name: Delete collection of users
   iosxr_user:
-    users:
+    aggregate:
       - name: ansibletest1
       - name: ansibletest2
       - name: ansibletest3
@@ -155,7 +155,7 @@
 
 - name: Delete collection of users again (idempotent)
   iosxr_user:
-    users:
+    aggregate:
       - name: ansibletest1
       - name: ansibletest2
       - name: ansibletest3

@@ -40,11 +40,11 @@ options:
   interfaces:
     description:
       - List of interfaces the VRF should be configured on.
-  collection:
+  aggregate:
     description: List of VRFs definitions
   purge:
     description:
-      - Purge VRFs not defined in the collections parameter.
+      - Purge VRFs not defined in the aggregates parameter.
     default: no
   state:
     description:

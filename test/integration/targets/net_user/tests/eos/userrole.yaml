@@ -1,7 +1,7 @@
 ---
 - name: Set multiple users role
   net_user:
-    collection:
+    aggregate:
       - name: netop
       - name: netend
     role: network-operator
