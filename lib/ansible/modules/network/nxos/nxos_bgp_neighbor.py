@@ -265,13 +265,15 @@ def get_value(arg, config):
     has_command = re.search(r'\s+{0}\s*$'.format(command), config, re.M)
     has_command_value = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
 
-    if arg in BOOL_PARAMS:
-        value = False
-        try:
-            if has_command:
-                value = True
-        except TypeError:
+    if arg == 'dynamic_capability':
+        has_no_command = re.search(r'\s+no\s{0}\s*$'.format(command), config, re.M)
+        value = True
+        if has_no_command:
             value = False
+    elif arg in BOOL_PARAMS:
+        value = False
+        if has_command:
+            value = True
     elif arg == 'log_neighbor_changes':
         value = ''
         if has_command:
