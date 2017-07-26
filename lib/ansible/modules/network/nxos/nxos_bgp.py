@@ -413,7 +413,11 @@ def get_value(arg, config):
     if command.split()[0] == 'event-history':
         command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
         has_size = re.search(r'^\s+{0} size\s(?P<value>.*)$'.format(command), config, re.M)
-        value = False
+
+        if command == 'event-history detail':
+            value = False
+        else:
+            value = 'size_small'
 
         if command_re.search(config):
             if has_size:
