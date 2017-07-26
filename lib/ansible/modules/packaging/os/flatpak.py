@@ -7,7 +7,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 DOCUMENTATION = '''
 ---
 module: flatpak
@@ -15,77 +14,78 @@ version_added: "2.4"
 requirements:
     - flatpak
 author:
-    - John Kwiatkoski (@jaykayy)
-short_description: Install and remove flatpaks.
+    - "John Kwiatkoski (@jaykayy)"
+short_description: "Install and remove flatpaks."
 description:
-    - The flatpak module allows users to manage installation and removal of flatpaks.
+    - "The flatpak module allows users to manage installation and removal of flatpaks."
 options:
   name:
     description:
-      - When I(state) is set to C(present), I(name) is best used as `http(s)` url format.
-        When set to C(absent) the same `http(s)` will try to remove it using the
+      - "When state is set to `present`, `name` is best used as `http(s)` url format.
+        When set to `absent` the same `http(s)` will try to remove it using the
         name of the flatpakref. However, there is no naming standard between
         names of flatpakrefs and what the reverse DNS name of the installed flatpak
-        will be. Given that, it is best to use the http(s) url for I(state=present)
-        and the reverse DNS I(state=absent). Alternatively reverse dns format can optimally
-        be used with I(state=absent), ex. I(name=org.gnome.gedit).
+        will be. Given that, it is best to use the http(s) url for state=`present`
+        and the reverse DNS state=`absent`. Alternatively reverse dns format can optimally
+        be used with `state=absent`
+        ex: name=org.gnome.gedit."
     required: false
     default: ''
   remote:
     description:
-      - The flatpak I(remote) repo to be used in the flatpak operation.
+      - "The flatpak remote repo to be used in the flatpak operation."
     required: false
     default: ''
   state:
     description:
-      - Set to C(present) will install the flatpak and/or I(remote).
-        Set to C(absent) will remove the flatpak and/or I(remote).
+      - "Set to `present` will install the flatpak and/or remote.
+        Set to `absent` will remove the flatpak and/or remote."
     required: false
     default: present
 '''
 EXAMPLES = '''
- - name: Install the spotify flatpak
-   flatpak:
+
+#install the spotify flatpak
+
+ - flatpak:
     name:  https://s3.amazonaws.com/alexlarsson/spotify-repo/spotify.flatpakref
     state: present
 
- - name: Add the gnome remote andd install gedit flatpak
-   flatpak:
+#add the gnome remote andd install gedit flatpak
+ - flatpak:
     name: https://git.gnome.org/browse/gnome-apps-nightly/plain/gedit.flatpakref
     remote: https://sdk.gnome.org/gnome-apps.flatpakrepo
     state: absent
 
- - name: Remove the gedit flatpak and remote
-   flatpak:
+#remove the gedit flatpak and remote
+ - flatpak:
     name: org.gnome.gedit
     remote: https://sdk.gnome.org/gnome-apps.flatpakrepo
     state: absent
 
- - name: Remove the gedit package
-   flatpak:
+#remove the gedit package
+ - flatpak:
     name: org.gnome.gedit
     state: absent
-'''
 
+'''
 RETURN = '''
 reason:
-    description: On failure, the output for the failure
+    description: on failure, the output for the failure
     returned: failed
     type: string
-    sample: error while installing...
+    sample: "error while installing..."
 name:
-    description: Name of flatpak given for the operation
+    description: "Name of flatpak given for the operation"
     returned: always
     type: string
-    sample: https://git.gnome.org/.../gnome-apps/gedit.flatpakref
+    sample: "https://git.gnome.org/.../gnome-apps/gedit.flatpakref"
 remote:
-    description: Remote of flatpak given for the operation
+    description: "remote of flatpak given for the operation"
     returned: always
     type: string
-    sample: https://sdk.gnome.org/gnome-apps.flatpakrepo
+    sample: "https://sdk.gnome.org/gnome-apps.flatpakrepo"
 '''
-
-
 import subprocess
 from ansible.module_utils.basic import AnsibleModule
 
@@ -95,7 +95,6 @@ def install_flat(binary, flat):
     output = flatpak_command(command)
     if 'error' in output and 'already installed' not in output:
         return 1, output
-
     return 0, output
 
 
@@ -115,7 +114,6 @@ def uninstall_flat(binary, flat):
     output = flatpak_command(command)
     if 'error' in output and 'not installed' not in output:
         return 1, output
-
     return 0, output
 
 
@@ -123,7 +121,6 @@ def parse_remote(remote):
     name = remote.split('/')[-1]
     if '.' not in name:
         return name
-
     return name.split('.')[0]
 
 
@@ -144,7 +141,6 @@ def add_remote(binary, remote):
     output = flatpak_command(command)
     if 'error' in output:
         return 1, output
-
     return 0, output
 
 
@@ -154,7 +150,6 @@ def remove_remote(binary, remote):
     output = flatpak_command(command)
     if 'error' in output and 'not found' not in output:
         return 1, output
-
     return 0, output
 
 
@@ -164,7 +159,6 @@ def is_present_remote(binary, remote):
     output = flatpak_command(command)
     if remote_name in output.lower():
         return True
-
     return False
 
 
@@ -174,7 +168,6 @@ def is_present_flat(binary, name):
     output = flatpak_command(command)
     if flat in output.lower():
         return True
-
     return False
 
 
@@ -182,7 +175,6 @@ def flatpak_command(command):
     process = subprocess.Popen(
         command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = process.communicate()[0]
-
     return output
 
 
@@ -192,8 +184,8 @@ def main():
         argument_spec=dict(
             name=dict(required=False, default=''),
             remote=dict(required=False, default=''),
-            state=dict(
-                required=False, default="present", choices=['present', 'absent'])
+            state=dict(required=False, default="present",
+                       choices=['present', 'absent'])
         ),
         supports_check_mode=True
     )
@@ -205,7 +197,7 @@ def main():
     location = module.get_bin_path('flatpak')
     if location is None:
         module.fail_json(
-            msg="cannot find 'flatpak' binary. Aborting.")
+            msg="cannot find \'flatpak\' binary. Aborting.")
 
     if state == 'present':
         if remote != '' and not is_present_remote(location, remote):
