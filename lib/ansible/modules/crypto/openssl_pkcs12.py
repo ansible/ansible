@@ -205,7 +205,7 @@ def main():
         friendly_name=dict(required=True, type='str'),
         iter_size=dict(default=2048, type='int'),
         maciter_size=dict(default=1, type='int'),
-        mode=dict(default=0600, type='int'),
+        mode=dict(default=0400, type='int'),
         passphrase=dict(type='str', no_log=True),
         path=dict(required=True, type='path'),
         privatekey_path=dict(required=True, type='path'),
