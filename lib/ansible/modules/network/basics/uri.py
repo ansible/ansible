@@ -80,7 +80,7 @@ options:
     default: "GET"
   return_content:
     description:
-      - Whether or not to return the body of the request as a "content" key in
+      - Whether or not to return the body of the response as a "content" key in
         the dictionary result. If the reported Content-type is
         "application/json", then the JSON is additionally loaded into a key
         called C(json) in the dictionary results.
