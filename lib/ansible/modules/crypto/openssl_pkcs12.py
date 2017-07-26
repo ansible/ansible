@@ -55,7 +55,6 @@ options:
         default: False
         choices: [ True, False ]
         description:
-            - Should the PKCS #12 be regenerated even if it already exists.
     friendly_name:
         required: True
         default: null
@@ -100,33 +99,14 @@ options:
 '''
 
 EXAMPLES = '''
-- name: 'Generate temporary PKCS12 keystore'
+- name: 'Generate PKCS #12 file'
   openssl_pkcs12:
-    path: '/tmp/ansible.p12'
+    path: '/opt/certs/ansible.p12'
     friendly_name: 'raclette'
-    privatekey_path: '/tmp/jambon.pem'
-    cert_path: '/tmp/fromage.pem'
-    ca_certificates: '/tmp/patates.cer'
+    privatekey_path: '/opt/certs/keys/key.pem'
+    cert_path: '/opt/certs/cert.pem'
+    ca_certificates: '/opt/certs/ca.pem'
     state: present
-
-- name: 'generate kafka keystore'
-  java_cert:
-    state: present
-    src_keystore_path: '/tmp/ansible.p12'
-    keystore_path: '/tmp/ansible.jks'
-    src_store_type: 'pkcs12'
-    src_store_pass: ''
-    keystore_pass: 'totototo'
-    alias: 'raclette'
-
-- name: 'Generate truststore'
-  java_cert:
-    state: present
-    keystore_create: True
-    keystore_path: '/tmp/truststore.jks'
-    keystore_pass: 'totototo'
-    cert_path: '/tmp/cert.pem'
-    cert_alias: 'raymond'
 '''
 
 RETURN = '''
@@ -146,8 +126,10 @@ from ansible.module_utils.crypto import OpenSSLModule, OpenSSLModuleError, load_
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_native
 
+
 class PkcsError(OpenSSLModuleError):
     pass
+
 
 class Pkcs(OpenSSLModule):
 
@@ -162,10 +144,9 @@ class Pkcs(OpenSSLModule):
         self.ca_certificates = module.params['ca_certificates']
         self.friendly_name = module.params['friendly_name']
         self.passphrase = module.params['passphrase']
-        self.mode = module.params['mode']
 
     def export(self):
-        ''' Generate PKCS #12 file. '''
+        ''' Generate pkcs#12 file archive. '''
 
         if os.path.exists(self.path) and not self.force:
             self.changed = False
@@ -190,7 +171,7 @@ class Pkcs(OpenSSLModule):
                                         )
 
         try:
-            with open(self.path, 'w', self.mode) as archive:
+            with open(self.path, 'w') as archive:
                 archive.write(
                     self.pkcs12.export(
                         self.passphrase,
@@ -200,10 +181,6 @@ class Pkcs(OpenSSLModule):
                 )
         except (IOError, OSError) as exc:
             raise PkcsError(exc)
-            
-    def parse(self):
-        ''' Parse PKCS #12 file. '''
-        pass
 
     def check(self):
         return True
@@ -213,29 +190,38 @@ class Pkcs(OpenSSLModule):
             'changed': self.changed,
             'path': self.path,
         }
+
         return result
 
 
 def main():
+    argument_spec = dict(
+        action=dict(default='export',
+                    choices=['parse', 'export'],
+                    type='str'),
+        ca_certificates=dict(type='list'),
+        cert_path=dict(type='path'),
+        force=dict(default=False, type='bool'),
+        friendly_name=dict(required=True, type='str'),
+        iter_size=dict(default=2048, type='int'),
+        maciter_size=dict(default=1, type='int'),
+        mode=dict(default=0600, type='int'),
+        passphrase=dict(type='str', no_log=True),
+        path=dict(required=True, type='path'),
+        privatekey_path=dict(required=True, type='path'),
+        privatekey_passphrase=dict(type='str', no_log=True),
+        state=dict(default='present',
+                   choices=['present', 'absent'],
+                   type='str'),
+    )
+
+    required_together = [
+        ['path', 'privatekey_path', 'friendly_name'],
+    ],
+
     module = AnsibleModule(
-        argument_spec = dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            path=dict(required=True, type='path'),
-            force=dict(default=False, type='bool'),
-            action=dict(default='export', choices=['parse', 'export'], type='str'),
-            ca_certificates=dict(type='list'),
-            cert_path=dict(type='path'),
-            friendly_name=dict(required=True, type='str'),
-            iter_size=dict(default=2048, type='int'),
-            maciter_size=dict(default=1, type='int'),
-            mode=dict(default=0400, type='int'),
-            passphrase=dict(type='str', no_log=True),
-            privatekey_path=dict(required=True, type='path'),
-            privatekey_passphrase=dict(type='str', no_log=True),
-        ),
-        required_together = [
-            ['path', 'privatekey_path', 'friendly_name'],
-        ],
+        argument_spec = argument_spec,
+        required_together = required_together,
         supports_check_mode = True,
         add_file_common_args = True,
     )
@@ -252,7 +238,7 @@ def main():
             module.exit_json(**result)
 
         try:
-            pkcs12.export()
+            pkcs12.generate()
         except PkcsError as exc:
             module.fail_json(msg=to_native(exc))
     else:
