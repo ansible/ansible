@@ -61,11 +61,11 @@ options:
   rx_rate:
     description:
       - Receiver rate.
-  collection:
+  aggregate:
     description: List of Interfaces definitions.
   purge:
     description:
-      - Purge Interfaces not defined in the collections parameter.
+      - Purge Interfaces not defined in the aggregates parameter.
         This applies only for logical interface.
     default: no
   state:
@@ -179,7 +179,7 @@ def main():
         duplex=dict(choices=['full', 'half', 'auto']),
         tx_rate=dict(),
         rx_rate=dict(),
-        collection=dict(),
+        aggregate=dict(),
         purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down']),

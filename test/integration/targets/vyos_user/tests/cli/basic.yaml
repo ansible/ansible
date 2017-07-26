@@ -15,7 +15,7 @@
 
 - name: Collection of users (SetUp)
   vyos_user:
-    users:
+    aggregate:
       - name: ansibletest2
       - name: ansibletest3
     level: operator
@@ -44,7 +44,7 @@
 
 - name: Add collection of users (Idempotent)
   vyos_user:
-    users:
+    aggregate:
       - name: ansibletest2
       - name: ansibletest3
     level: operator

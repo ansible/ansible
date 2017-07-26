@@ -47,11 +47,11 @@ options:
     description:
       - Admin distance of the static route.
     default: 1
-  collection:
+  aggregate:
     description: List of static route definitions
   purge:
     description:
-      - Purge static routes not defined in the collections parameter.
+      - Purge static routes not defined in the aggregates parameter.
     default: no
   state:
     description:
@@ -74,9 +74,9 @@ EXAMPLES = """
     next_hop: 10.0.0.1
     state: absent
 
-- name: configure collections of static routes
+- name: configure aggregates of static routes
   ios_static_route:
-    collection:
+    aggregate:
       - { prefix: 192.168.2.0, mask 255.255.255.0, next_hop: 10.0.0.1 }
       - { prefix: 192.168.3.0, mask 255.255.255.0, next_hop: 10.0.2.1 }
 """
@@ -146,8 +146,8 @@ def map_config_to_obj(module):
 def map_params_to_obj(module):
     obj = []
 
-    if 'collection' in module.params and module.params['collection']:
-        for c in module.params['collection']:
+    if 'aggregate' in module.params and module.params['aggregate']:
+        for c in module.params['aggregate']:
             d = c.copy()
 
             if 'state' not in d:
@@ -182,15 +182,15 @@ def main():
         mask=dict(type='str'),
         next_hop=dict(type='str'),
         admin_distance=dict(default=1, type='int'),
-        collection=dict(type='list'),
+        aggregate=dict(type='list'),
         purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
     argument_spec.update(ios_argument_spec)
-    required_one_of = [['collection', 'prefix']]
+    required_one_of = [['aggregate', 'prefix']]
     required_together = [['prefix', 'mask', 'next_hop']]
-    mutually_exclusive = [['collection', 'prefix']]
+    mutually_exclusive = [['aggregate', 'prefix']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,

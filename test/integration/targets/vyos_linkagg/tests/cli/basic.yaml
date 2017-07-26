@@ -127,7 +127,7 @@
 
 - name: Create collection of linkagg definitions
   vyos_linkagg:
-    collection:
+    aggregate:
         - { name: bond0, members: [eth1] }
         - { name: bond1, members: [eth2] }
     state: present
@@ -143,7 +143,7 @@
 
 - name: Create collection of linkagg definitions again (idempotent)
   vyos_linkagg:
-    collection:
+    aggregate:
         - { name: bond0, members: [eth1] }
         - { name: bond1, members: [eth2] }
     state: present
@@ -155,7 +155,7 @@
 
 - name: Remove collection of linkagg definitions
   vyos_linkagg:
-    collection:
+    aggregate:
       - { name: bond0 }
       - { name: bond1 }
     state: absent
@@ -171,7 +171,7 @@
 
 - name: Remove collection of linkagg definitions again (idempotent)
   vyos_linkagg:
-    collection:
+    aggregate:
       - { name: bond0 }
       - { name: bond1 }
     state: absent

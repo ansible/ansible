@@ -82,7 +82,7 @@
 
 - name: Add static route collections
   net_static_route:
-    collection:
+    aggregate:
       - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
       - { prefix: 172.24.2.0, mask: 24, next_hop: 192.168.42.64 }
     state: present
@@ -97,7 +97,7 @@
 
 - name: Add and remove static route collections with overrides
   net_static_route:
-    collection:
+    aggregate:
       - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
       - { prefix: 172.24.2.0/24, next_hop: 192.168.42.64, state: absent }
       - { prefix: 172.24.3.0/24, next_hop: 192.168.42.64 }
@@ -113,7 +113,7 @@
 
 - name: Remove static route collections
   net_static_route:
-    collection:
+    aggregate:
       - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
       - { prefix: 172.24.3.0/24, next_hop: 192.168.42.64 }
     state: absent

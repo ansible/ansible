@@ -48,11 +48,11 @@ options:
   level:
     description:
       - Set logging severity levels.
-  collection:
+  aggregate:
     description: List of logging definitions.
   purge:
     description:
-      - Purge logging not defined in the collections parameter.
+      - Purge logging not defined in the aggregates parameter.
     default: no
   state:
     description:

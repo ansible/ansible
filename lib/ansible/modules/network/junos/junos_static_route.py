@@ -54,11 +54,11 @@ options:
   qualified_preference:
     description:
       - Assign preference for qualified next hop.
-  collection:
+  aggregate:
     description: List of static route definitions
   purge:
     description:
-      - Purge static routes not defined in the collections parameter.
+      - Purge static routes not defined in the aggregates parameter.
     default: no
   state:
     description:
@@ -161,15 +161,15 @@ def main():
         preference=dict(type='int', aliases=['admin_distance']),
         qualified_next_hop=dict(type='str'),
         qualified_preference=dict(type='int'),
-        collection=dict(type='list'),
+        aggregate=dict(type='list'),
         purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
 
     argument_spec.update(junos_argument_spec)
-    required_one_of = [['collection', 'address']]
-    mutually_exclusive = [['collection', 'address']]
+    required_one_of = [['aggregate', 'address']]
+    mutually_exclusive = [['aggregate', 'address']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,

@@ -94,7 +94,7 @@
 
 - name: Add static route collections
   net_static_route:
-    collection:
+    aggregate:
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: present
@@ -109,7 +109,7 @@
 
 - name: Add and remove static route collections with overrides
   net_static_route:
-    collection:
+    aggregate:
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8, state: absent }
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
@@ -125,7 +125,7 @@
 
 - name: Remove static route collections
   net_static_route:
-    collection:
+    aggregate:
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }

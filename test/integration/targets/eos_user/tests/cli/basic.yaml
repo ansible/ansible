@@ -16,7 +16,7 @@
 
 - name: Collection of users
   eos_user:
-    users:
+    aggregate:
       - username: test1
       - username: test2
     authorize: yes

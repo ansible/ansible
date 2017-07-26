@@ -126,7 +126,7 @@
 
 - name: Create collection of linkagg definitions
   net_linkagg:
-    collection:
+    aggregate:
         - { name: bond0, members: [eth1, eth2] }
         - { name: bond1, members: [eth3, eth4] }
     state: present
@@ -144,7 +144,7 @@
 
 - name: Create collection of linkagg definitions again (idempotent)
   net_linkagg:
-    collection:
+    aggregate:
         - { name: bond0, members: [eth1, eth2] }
         - { name: bond1, members: [eth3, eth4] }
     state: present
@@ -156,7 +156,7 @@
 
 - name: Remove collection of linkagg definitions
   net_linkagg:
-    collection:
+    aggregate:
       - { name: bond0 }
       - { name: bond1 }
     state: absent
@@ -174,7 +174,7 @@
 
 - name: Remove collection of linkagg definitions again (idempotent)
   net_linkagg:
-    collection:
+    aggregate:
       - { name: bond0 }
       - { name: bond1 }
     state: absent
