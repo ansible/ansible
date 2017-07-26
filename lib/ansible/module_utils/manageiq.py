@@ -43,32 +43,30 @@ def check_client(module):
         )
 
 
-def manageiq_argument_spec():
-    return dict(
-        miq_url=dict(default=os.environ.get('MIQ_URL', None)),
-        miq_username=dict(default=os.environ.get('MIQ_USERNAME', None)),
-        miq_password=dict(default=os.environ.get('MIQ_PASSWORD', None), no_log=True),
-        validate_certs=dict(require=False, type='bool', default=True),
-        ca_bundle_path=dict(required=False, type='str', defualt=None)
-    )
-
-
 class ManageIQ(object):
     """
         class encapsulating ManageIQ API client
     """
 
     def __init__(self, module):
+        params = dict(
+            url=os.environ.get('MIQ_URL', None),
+            username=os.environ.get('MIQ_USERNAME', None),
+            password=os.environ.get('MIQ_PASSWORD', None),
+            verify_ssl=True,
+            ca_bundle_path=None,
+        )
+        params.update(module.params['miq'])
 
-        for arg in ['miq_url', 'miq_username', 'miq_password']:
-            if module.params[arg] in (None, ''):
-                module.fail_json(msg="missing required argument: {}".format(arg))
+        for arg in ['url', 'username', 'password']:
+            if params[arg] in (None, ''):
+                module.fail_json(msg="missing required argument: miq[{}]".format(arg))
 
-        url = module.params['miq_url']
-        username = module.params['miq_username']
-        password = module.params['miq_password']
-        verify_ssl = module.params['validate_certs']
-        ca_bundle_path = module.params['ca_bundle_path']
+        url = params['url']
+        username = params['username']
+        password = params['password']
+        verify_ssl = params['verify_ssl']
+        ca_bundle_path = params['ca_bundle_path']
 
         self.module = module
         self.api_url = url + '/api'
