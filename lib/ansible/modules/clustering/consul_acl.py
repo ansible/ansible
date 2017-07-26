@@ -81,23 +81,33 @@ requirements:
 """
 
 EXAMPLES = """
-- name: create an ACL token with rules
+- name: create an ACL with rules
   consul_acl:
-    host: 'consul1.example.com'
-    mgmt_token: 'some_management_acl'
-    name: 'Foo access'
+    host: consul1.example.com
+    mgmt_token: some_management_acl
+    name: Foo access
     rules:
-      - key: 'foo'
+      - key: "foo"
         policy: read
-      - key: 'private/foo'
+      - key: "private/foo"
         policy: deny
+
+- name: create an ACL with a specific token
+  consul_acl:
+    host: consul1.example.com
+    mgmt_token: some_management_acl
+    name: Foo access
+    token: my-token
+    rules:
+      - key: "foo"
+        policy: read
 
 - name: update the rules associated to an ACL token
   consul_acl:
-    host: 'consul1.example.com'
-    mgmt_token: 'some_management_acl'
-    name: 'Foo access'
-    token: 'some_client_token'
+    host: consul1.example.com
+    mgmt_token: some_management_acl
+    name: Foo access
+    token: some_client_token
     rules:
       - event: "bbq"
         policy: write
@@ -118,9 +128,9 @@ EXAMPLES = """
 
 - name: remove a token
   consul_acl:
-    host: 'consul1.example.com'
-    mgmt_token: 'some_management_acl'
-    token: '172bd5c8-9fe9-11e4-b1b0-3c15c2c9fd5e'
+    host: consul1.example.com
+    mgmt_token: some_management_acl
+    token: 172bd5c8-9fe9-11e4-b1b0-3c15c2c9fd5e
     state: absent
 """
 
@@ -207,45 +217,63 @@ _ARGUMENT_SPEC = {
 }
 
 
-def update_acl(consul, configuration):
+def set_acl(consul_client, configuration):
+    """
+    Sets an ACL based on the given configuration.
+    :param consul_client: the consul client
+    :param configuration: the run configuration
+    :return: the output of setting the ACL
+    """
+    acls_as_json = decode_acls_as_json(consul_client.acl.list())
+    existing_acls_mapped_by_name = dict((acl.name, acl) for acl in acls_as_json if acl.name is not None)
+    existing_acls_mapped_by_token = dict((acl.token, acl) for acl in acls_as_json)
+    assert None not in existing_acls_mapped_by_token, "expecting ACL list to be associated to a token: %s" \
+                                                      % existing_acls_mapped_by_token[None]
+
+    if configuration.token is None and configuration.name and configuration.name in existing_acls_mapped_by_name:
+        # No token but name given so can get token from name
+        configuration.token = existing_acls_mapped_by_name[configuration.name].token
+
+    if configuration.token and configuration.token in existing_acls_mapped_by_token:
+        return update_acl(consul_client, configuration)
+    else:
+        assert configuration.token not in existing_acls_mapped_by_token
+        assert configuration.name not in existing_acls_mapped_by_name
+        return create_acl(consul_client, configuration)
+
+
+def update_acl(consul_client, configuration):
     """
     Updates an ACL.
-    :param consul: the consul client
+    :param consul_client: the consul client
     :param configuration: the run configuration
     :return: the output of the update
     """
-    existing_acl = load_acl_with_token(consul, configuration.token)
+    existing_acl = load_acl_with_token(consul_client, configuration.token)
     changed = existing_acl.rules != configuration.rules
 
     if changed:
         name = configuration.name if configuration.name is not None else existing_acl.name
         rules_as_hcl = encode_rules_as_hcl_string(configuration.rules)
-        updated_token = consul.acl.update(
+        updated_token = consul_client.acl.update(
             configuration.token, name=name, type=configuration.token_type, rules=rules_as_hcl)
         assert updated_token == configuration.token
 
     return Output(changed=changed, token=configuration.token, rules=configuration.rules)
 
 
-def create_acl(consul, configuration):
+def create_acl(consul_client, configuration):
     """
     Creates an ACL.
-    :param consul: the consul client
+    :param consul_client: the consul client
     :param configuration: the run configuration
     :return: the output of the creation
     """
-    existing_acls_mapped_by_name = dict((acl.name, acl) for acl in decode_acls_as_json(consul.acl.list()))
-    if configuration.name not in existing_acls_mapped_by_name:
-        rules_as_hcl = encode_rules_as_hcl_string(configuration.rules) if len(configuration.rules) > 0 else None
-        token = consul.acl.create(name=configuration.name, type=configuration.token_type, rules=rules_as_hcl)
-        rules = configuration.rules
-        changed = True
-    else:
-        token = existing_acls_mapped_by_name[configuration.name].token
-        rules = existing_acls_mapped_by_name[configuration.name].rules
-        changed = False
-
-    return Output(changed=changed, token=token, rules=rules)
+    rules_as_hcl = encode_rules_as_hcl_string(configuration.rules) if len(configuration.rules) > 0 else None
+    token = consul_client.acl.create(
+        name=configuration.name, type=configuration.token_type, rules=rules_as_hcl, token=configuration.token)
+    rules = configuration.rules
+    return Output(changed=True, token=token, rules=rules)
 
 
 def remove_acl(consul, configuration):
@@ -585,10 +613,7 @@ def main():
 
     try:
         if configuration.state == PRESENT_STATE_VALUE:
-            if configuration.token:
-                output = update_acl(consul_client, configuration)
-            else:
-                output = create_acl(consul_client, configuration)
+            output = set_acl(consul_client, configuration)
         else:
             output = remove_acl(consul_client, configuration)
     except ConnectionError as e:
