@@ -11,6 +11,7 @@
   assert:
     that:
       - created_ruleless_acl.changed
+      - created_ruleless_acl.operation == "create"
       - created_ruleless_acl.token | length == 36
       - created_ruleless_acl.rules == {}
 

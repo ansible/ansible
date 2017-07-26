@@ -26,6 +26,7 @@
   assert:
     that:
       - updated_acl.changed
+      - updated_acl.operation == "update"
       - updated_acl.token | length == 36
       - (updated_acl.rules | json_query("key.foo.policy")) == "write"
       - (updated_acl.rules | json_query("key.moo.policy")) == "deny"
@@ -47,7 +48,7 @@
     that:
       - not doubly_updated_acl.changed
 
-- name: remove all ACL's rules
+- name: update to remove all ACL's rules
   consul_acl:
     host: "{{ acl_host }}"
     mgmt_token: "{{ mgmt_token }}"

@@ -28,6 +28,7 @@
   assert:
     that:
       - created_acl.changed
+      - created_acl.operation == "create"
       - created_acl.token | length == 36
       - (created_acl.rules | json_query("event.bbq.policy")) == "write"
       - (created_acl.rules | json_query("key.foo.policy")) == "read"

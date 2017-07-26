@@ -14,6 +14,7 @@
   assert:
     that:
       - updated_acl.changed
+      - updated_acl.operation == "create"
       - updated_acl.token == test_consul_acl_token_id
 
 - name: re-create ACL with the token (handled as an update)

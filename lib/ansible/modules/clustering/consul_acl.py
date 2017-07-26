@@ -143,7 +143,7 @@ token:
 rules:
     description: the HCL JSON representation of the rules associated to the ACL, in the format described in the
                  Consul documentation (https://www.consul.io/docs/guides/acl.html#rule-specification).
-    returned: I(statue) == "present"
+    returned: I(status) == "present"
     type: string
     sample: {
         "key": {
@@ -155,6 +155,11 @@ rules:
             }
         }
     }
+operation:
+    description: the operation performed on the ACL
+    returned: changed
+    type: string
+    sample: update
 """
 
 
@@ -193,6 +198,10 @@ ABSENT_STATE_VALUE = "absent"
 
 CLIENT_TOKEN_TYPE_VALUE = "client"
 MANAGEMENT_TOKEN_TYPE_VALUE = "management"
+
+REMOVE_OPERATION = "remove"
+UPDATE_OPERATION = "update"
+CREATE_OPERATION = "create"
 
 _POLICY_JSON_PROPERTY = "policy"
 _RULES_JSON_PROPERTY = "Rules"
@@ -259,7 +268,7 @@ def update_acl(consul_client, configuration):
             configuration.token, name=name, type=configuration.token_type, rules=rules_as_hcl)
         assert updated_token == configuration.token
 
-    return Output(changed=changed, token=configuration.token, rules=configuration.rules)
+    return Output(changed=changed, token=configuration.token, rules=configuration.rules, operation=UPDATE_OPERATION)
 
 
 def create_acl(consul_client, configuration):
@@ -273,7 +282,7 @@ def create_acl(consul_client, configuration):
     token = consul_client.acl.create(
         name=configuration.name, type=configuration.token_type, rules=rules_as_hcl, token=configuration.token)
     rules = configuration.rules
-    return Output(changed=True, token=token, rules=rules)
+    return Output(changed=True, token=token, rules=rules, operation=CREATE_OPERATION)
 
 
 def remove_acl(consul, configuration):
@@ -287,7 +296,7 @@ def remove_acl(consul, configuration):
     changed = consul.acl.info(token) is not None
     if changed:
         consul.acl.destroy(token)
-    return Output(changed=changed, token=token)
+    return Output(changed=changed, token=token, operation=REMOVE_OPERATION)
 
 
 def load_acl_with_token(consul, token):
@@ -459,10 +468,11 @@ class Output:
     """
     Output of an action of this module.
     """
-    def __init__(self, changed=None, token=None, rules=None):
+    def __init__(self, changed=None, token=None, rules=None, operation=None):
         self.changed = changed  # type: bool
         self.token = token  # type: str
         self.rules = rules  # type: RuleCollection
+        self.operation = operation  # type: str
 
 
 class ACL:
@@ -621,11 +631,11 @@ def main():
             configuration.host, configuration.port, str(e)))
         raise
 
-    return_values = dict(changed=output.changed, token=output.token)
+    return_values = dict(changed=output.changed, token=output.token, operation=output.operation)
     if output.rules is not None:
         return_values["rules"] = encode_rules_as_json(output.rules)
     module.exit_json(**return_values)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
