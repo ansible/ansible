@@ -367,7 +367,11 @@ def validate_rule(rule, rule_type=None):
     if not priority:
         raise Exception("Rule priority is required.")
     if not isinstance(priority, integer_types):
-        raise Exception("Rule priority attribute must be an integer.")
+        try:
+            priority = int(priority)
+            rule['priority'] = priority
+        except:
+            raise Exception("Rule priority attribute must be an integer.")
     if rule_type != 'default' and (priority < 100 or priority > 4096):
         raise Exception("Rule priority must be between 100 and 4096")
 
