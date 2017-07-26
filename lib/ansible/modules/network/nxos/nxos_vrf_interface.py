@@ -110,11 +110,15 @@ WARNINGS = []
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if type(command) is str and 'show run' not in command:
-            command += ' | json'
-
-    body = run_commands(module, command)
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+    body = run_commands(module, cmds)
     return body
 
 
@@ -171,10 +175,7 @@ def get_interface_info(interface, module):
     if not interface.startswith('loopback'):
         interface = interface.capitalize()
 
-    command = [{
-        'command': 'show run | section interface.{0}'.format(interface),
-        'output': 'text',
-    }]
+    command = 'show run | section interface.{0}'.format(interface)
     vrf_regex = ".*vrf\s+member\s+(?P<vrf>\S+).*"
 
     try:

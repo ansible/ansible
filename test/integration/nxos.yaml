@@ -65,7 +65,9 @@
           name: nxos_evpn_vni
         when: "limit_to in ['*', 'nxos_evpn_vni']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_evpn_vni' ]"
+            test_failed: true
 
     - block:
       - include_role:

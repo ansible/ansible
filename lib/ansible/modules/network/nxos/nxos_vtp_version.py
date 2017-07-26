@@ -91,11 +91,15 @@ import re
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if type(command) is str and 'status' not in command:
-            command += ' | json'
-
-    body = run_commands(module, command)
+    if 'status' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+    body = run_commands(module, cmds)
     return body
 
 
@@ -110,11 +114,7 @@ def flatten_list(command_lists):
 
 
 def get_vtp_config(module):
-    command = [{
-        'command': ('show vtp status'),
-        'output': 'text',
-    }]
-
+    command = 'show vtp status'
     body = execute_show_command(
         command, module)[0]
     vtp_parsed = {}

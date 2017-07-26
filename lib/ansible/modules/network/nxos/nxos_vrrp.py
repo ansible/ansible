@@ -143,12 +143,16 @@ from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if type(command) is str and 'show run' not in command:
-            command += ' | json'
-
-    body = run_commands(module, command)
+def execute_show_command(command, module):
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+    body = run_commands(module, cmds)
     return body
 
 
@@ -163,7 +167,6 @@ def apply_key_map(key_map, table):
             else:
                 new_dict[new_key] = value
     return new_dict
-
 
 def get_interface_type(interface):
     if interface.upper().startswith('ET'):
@@ -219,10 +222,7 @@ def get_interface_mode(interface, intf_type, module):
 
 
 def get_vrr_status(group, module, interface):
-    command = [{
-        'command': 'show run all | section interface.{0}$'.format(interface),
-        'output': 'text',
-    }]
+    command = 'show run all | section interface.{0}$'.format(interface)
     body = execute_show_command(command, module)[0]
     vrf_index = None
     admin_state = 'shutdown'
