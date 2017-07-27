@@ -125,13 +125,12 @@ EXAMPLES = '''
 
 - name: Admin up all loopback interfaces
   nxos_interface:
-    interface: loopback
+    interface: loopback 0-1023
     admin_state: up
 
-- name: Admin down ALL interfaces (physical and logical)
+- name: Admin down all loopback interfaces
   nxos_interface:
-    interface: all
-    host: 68.170.147.165
+    interface: looback 0-1023
     admin_state: down
 '''
 
@@ -588,10 +587,7 @@ def main():
         interface_type=dict(required=False, choices=['loopback', 'portchannel', 'svi', 'nve']),
         ip_forward=dict(required=False, choices=['enable', 'disable']),
         fabric_forwarding_anycast_gateway=dict(required=False, type='bool'),
-        state=dict(choices=['absent', 'present', 'default'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present', 'default'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)
