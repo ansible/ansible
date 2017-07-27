@@ -21,10 +21,14 @@ def ansible_environment(args, color=True):
     if not path.startswith(ansible_path + os.pathsep):
         path = ansible_path + os.pathsep + path
 
+    ansible_config = '/dev/null'
+    if os.path.isfile('test/integration/%s.cfg' % args.command):
+        ansible_config = os.path.abspath('test/integration/%s.cfg' % args.command)
+
     ansible = dict(
         ANSIBLE_FORCE_COLOR='%s' % 'true' if args.color and color else 'false',
         ANSIBLE_DEPRECATION_WARNINGS='false',
-        ANSIBLE_CONFIG='/dev/null',
+        ANSIBLE_CONFIG=ansible_config,
         ANSIBLE_HOST_KEY_CHECKING='false',
         PYTHONPATH=os.path.abspath('lib'),
         PAGER='/bin/cat',
