@@ -2,11 +2,8 @@
   win_firewall_rule:
     name: http
     state: absent
-    action: "{{ item }}"
+    action: allow
     direction: in
-  with_items:
-     - allow
-     - block
 
 - name: Add firewall rule
   win_firewall_rule:
@@ -82,7 +79,7 @@
     direction: in
     protocol: tcp
 
-- name: Add different firewall rule
+- name: Change firewall rule
   win_firewall_rule:
     name: http
     enabled: yes
@@ -91,31 +88,12 @@
     action: block
     direction: in
     protocol: tcp
-  ignore_errors: yes
-  register: add_different_firewall_rule_without_force
+  register: change_firewall_rule
 
-- name: Check that creating different firewall rule without enabling force setting fails
+- name: Check that changing firewall rule succeeds
   assert:
     that:
-    - add_different_firewall_rule_without_force.failed == true
-    - add_different_firewall_rule_without_force.changed == false
-
-- name: Add different firewall rule with force setting
-  win_firewall_rule:
-    name: http
-    enabled: yes
-    state: present
-    localport: 80
-    action: block
-    direction: in
-    protocol: tcp
-    force: yes
-  register: add_different_firewall_rule_with_force
-
-- name: Check that creating different firewall rule with enabling force setting succeeds
-  assert:
-    that:
-    - add_different_firewall_rule_with_force.changed == true
+    - change_firewall_rule.changed == true
 
 - name: Add firewall rule when remoteip is range
   win_firewall_rule:
@@ -127,7 +105,6 @@
     action: allow
     direction: in
     protocol: tcp
-    force: yes
 
 - name: Add same firewall rule when remoteip is range (again)
   win_firewall_rule:
@@ -156,7 +133,6 @@
     action: allow
     direction: in
     protocol: tcp
-    force: yes
 
 - name: Add same firewall rule when remoteip in CIDR notation (again)
   win_firewall_rule:
@@ -181,11 +157,10 @@
     enabled: yes
     state: present
     localport: 80
-    remoteip: 192.168.0.0/255.255.255.0
+    remoteip: 192.168.1.0/255.255.255.0
     action: allow
     direction: in
     protocol: tcp
-    force: yes
 
 - name: Add same firewall rule when remoteip contains a netmask (again)
   win_firewall_rule:
@@ -193,7 +168,7 @@
     enabled: yes
     state: present
     localport: 80
-    remoteip: 192.168.0.0/255.255.255.0
+    remoteip: 192.168.1.0/255.255.255.0
     action: allow
     direction: in
     protocol: tcp
@@ -214,7 +189,6 @@
     action: allow
     direction: in
     protocol: tcp
-    force: yes
 
 - name: Add same firewall rule when remoteip is IPv4 (again)
   win_firewall_rule:
