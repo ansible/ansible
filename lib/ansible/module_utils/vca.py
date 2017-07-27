@@ -151,7 +151,7 @@ class VcaAnsibleModule(AnsibleModule):
             self.fail('Login to VCA failed', response=self.vca.response)
 
         if login_token:
-          self.vca.token = login_token
+            self.vca.token = login_token
 
         try:
             method_name = 'login_%s' % service_type
