@@ -51,15 +51,6 @@
 
     - block:
       - include_role:
-          name: ios_template
-        when: "limit_to in ['*', 'ios_template']"
-      rescue:
-        - set_fact:
-            failed_modules: "{{ failed_modules }} + [ 'ios_template' ]"
-            test_failed: true
-
-    - block:
-      - include_role:
           name: ios_system
         when: "limit_to in ['*', 'ios_system']"
       rescue:
