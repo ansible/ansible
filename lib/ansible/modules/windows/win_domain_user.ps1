@@ -18,17 +18,11 @@
 # POWERSHELL_COMMON
 
 ########
+Import-Module ActiveDirectory
 
 $result = @{
-    changed = $false;
+    changed = $false
     password_updated = $false
-}
-
-try {
-    Import-Module ActiveDirectory
-}
-catch {
-    Fail-Json $result "Failed to import ActiveDirectory PowerShell module. This module should be run on a domain controller, and the ActiveDirectory module must be available."
 }
 
 $params = Parse-Args $args
@@ -46,7 +40,7 @@ $password_expired = Get-AnsibleParam -obj $params -name "password_expired" -type
 $password_never_expires = Get-AnsibleParam -obj $params -name "password_never_expires" -type "bool"
 $user_cannot_change_password = Get-AnsibleParam -obj $params -name "user_cannot_change_password" -type "bool"
 $account_locked = Get-AnsibleParam -obj $params -name "account_locked" -type "bool"
-$groups = Get-AnsibleParam -obj $params -name "groups"
+$groups = Get-AnsibleParam -obj $params -name "groups" -type "list"
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
 $path = Get-AnsibleParam -obj $params -name "path" -type "str"
 $upn = Get-AnsibleParam -obj $params -name "upn" -type "str"
@@ -161,13 +155,7 @@ If ($state -eq 'present') {
 
         # Configure group assignment
         If ($groups -ne $null) {
-            If ($groups -is [System.String]) {
-                [string[]]$groups = $groups.Split(",")
-            }
-            ElseIf ($groups -isnot [System.Collections.IList]) {
-                Fail-Json $result "groups must be a string or array"
-            }
-            $group_list = $groups | ForEach { ([string]$_).Trim() } | Where { $_ }
+            $group_list = $groups
 
             $groups = @()
             Foreach ($group in $group_list) {
