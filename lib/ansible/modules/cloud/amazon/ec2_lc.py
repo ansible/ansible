@@ -353,7 +353,7 @@ def create_launch_config(connection, module):
 
     return_object = {
         'Name': result.get('LaunchConfigurationName'),
-        'created_time': result.get('CreatedTime'),
+        'CreatedTime': result.get('CreatedTime'),
         'ImageId': result.get('ImageId'),
         'Arn': result.get('LaunchConfigurationARN'),
         'SecurityGroups': result.get('SecurityGroups'),
