@@ -463,7 +463,7 @@ def main():
             load_config(module, commands)
 
             # validate IP
-            if transport == 'cli':
+            if transport == 'cli' and state == 'present':
                 commands.insert(0, 'config t')
                 body = run_commands(module, commands)
                 validate_config(body, vip, module)
