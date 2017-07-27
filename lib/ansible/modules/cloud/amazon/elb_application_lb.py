@@ -718,8 +718,13 @@ def create_or_update_elb_listeners(connection, module, elb):
     # Add listeners
     for listener_to_add in listeners_to_add:
         try:
+            # remove Rules from listener_to_add because they have to be added after creation
+            add_rules = listener_to_add.pop('Rules')
             listener_to_add['LoadBalancerArn'] = elb['LoadBalancerArn']
-            connection.create_listener(**listener_to_add)
+            # add created listener to listeners with the Rules to be updated
+            created = connection.create_listener(**listener_to_add)['Listeners'][0]
+            created['Rules'] = add_rules
+            listeners.append(created)
             listener_changed = True
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -727,7 +732,9 @@ def create_or_update_elb_listeners(connection, module, elb):
     # Modify listeners
     for listener_to_modify in listeners_to_modify:
         try:
+            add_rules = listener_to_modify.pop('Rules')
             connection.modify_listener(**listener_to_modify)
+            listener_to_modify['Rules'] = add_rules
             listener_changed = True
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -739,6 +746,9 @@ def create_or_update_elb_listeners(connection, module, elb):
             listener_changed = True
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+    # update current listeners
+    current_listeners = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
 
     # For each listener, check rules
     for listener in listeners:
