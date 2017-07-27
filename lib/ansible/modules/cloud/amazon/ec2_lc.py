@@ -260,7 +260,6 @@ def create_launch_config(connection, module):
     ebs_optimized = module.params.get('ebs_optimized')
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
     classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
-    security_groups = module.params.get('security_groups')
 
     block_device_mapping = {}
 
