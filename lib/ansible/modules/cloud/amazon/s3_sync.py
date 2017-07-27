@@ -25,7 +25,7 @@ module: s3_sync
 short_description: Efficiently upload multiple files to S3
 description:
      - The S3 module is great, but it is very slow for a large volume of files- even a dozen will be noticeable. In addition to speed, it handles globbing,
-       inclusions/exclusions, mime types, expiration mapping, recursion, and smart directory mapping.
+       inclusions/exclusions, mime types, expiration mapping, recursion, cache control and smart directory mapping.
 version_added: "2.3"
 options:
   mode:
@@ -82,6 +82,13 @@ options:
     - For multiple patterns, comma-separate them.
     required: false
     default: ".*"
+  cache_control:
+    description:
+    - This is a string.
+    - Cache-Control header set on uploaded objects.
+    - Directives are separated by commmas.
+    required: false
+    version_added: "2.4"
 
 author: tedder
 extends_documentation_fragment:
@@ -105,6 +112,7 @@ EXAMPLES = '''
     key_prefix: config_files/web
     file_change_strategy: force
     permission: public-read
+    cache_control: "public, max-age=31536000"
     include: "*"
     exclude: "*.txt,.*"
 '''
@@ -444,6 +452,8 @@ def upload_files(s3, bucket, filelist, params):
         }
         if params.get('permission'):
             args['ACL'] = params['permission']
+        if params.get('cache_control'):
+            args['CacheControl'] = params['cache_control']
         # if this fails exception is caught in main()
         s3.upload_file(entry['fullpath'], bucket, entry['s3_path'], ExtraArgs=args, Callback=None, Config=None)
         ret.append(entry)
@@ -464,7 +474,8 @@ def main():
         mime_map=dict(required=False, type='dict'),
         exclude=dict(required=False, default=".*"),
         include=dict(required=False, default="*"),
-        # future options: cache_control (string or map, perhaps), encoding, metadata, storage_class, retries
+        cache_control=dict(required=False, default=''),
+        # future options: encoding, metadata, storage_class, retries
     )
     )
 
