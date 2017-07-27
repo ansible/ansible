@@ -38,5 +38,3 @@
           - 't_backup_stats.stat.mode == "0777"'
           - 't_backup_stats.stat.pw_name == t_username.stdout'
           - 't_backup_stats.stat.gr_name == t_groupname.stdout'
-
-- debug: var=hostvars
