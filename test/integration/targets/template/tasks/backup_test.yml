@@ -1,12 +1,18 @@
 # https://github.com/ansible/ansible/issues/24408
 
-- name: get a random username
-  script: getname.py /etc/passwd
-  register: t_username
+- set_fact:
+    t_username: templateuser1
+    t_groupname: templateuser1
 
-- name: get a random username
-  script: getname.py /etc/group
-  register: t_groupname
+- name: create the test group
+  group:
+    name: "{{ t_groupname }}"
+
+- name: create the test user
+  user:
+    name: "{{ t_username }}"
+    group: "{{ t_groupname }}"
+    createhome: no
 
 - name: set the dest file
   set_fact:
@@ -17,8 +23,8 @@
     path: "{{ t_dest }}"
     state: touch
     mode: 0777
-    owner: "{{ t_username.stdout }}"
-    group: "{{ t_groupname.stdout }}"
+    owner: "{{ t_username }}"
+    group: "{{ t_groupname }}"
 
 - name: run the template
   template:
@@ -36,5 +42,17 @@
   assert:
       that:
           - 't_backup_stats.stat.mode == "0777"'
-          - 't_backup_stats.stat.pw_name == t_username.stdout'
-          - 't_backup_stats.stat.gr_name == t_groupname.stdout'
+          - 't_backup_stats.stat.pw_name == t_username'
+          - 't_backup_stats.stat.gr_name == t_groupname'
+
+- name: cleanup the user
+  user:
+    name: "{{ t_username }}"
+    state: absent
+
+- name: cleanup the group
+  user:
+    name: "{{ t_groupname }}"
+    state: absent
+
+
