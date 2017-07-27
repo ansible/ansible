@@ -60,7 +60,7 @@ options:
   alert_bwin_enabled:
     description:
     - Set status of bandwidth in alerts.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_bwin_threshold:
@@ -71,7 +71,7 @@ options:
   alert_bwout_enabled:
     description:
     - Set status of bandwidth out alerts.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_bwout_threshold:
@@ -82,7 +82,7 @@ options:
   alert_bwquota_enabled:
     description:
     - Set status of bandwidth quota alerts as percentage of network transfer quota.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_bwquota_threshold:
@@ -93,7 +93,7 @@ options:
   alert_cpu_enabled:
     description:
     - Set status of receiving CPU usage alerts.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_cpu_threshold:
@@ -104,7 +104,7 @@ options:
   alert_diskio_enabled:
     description:
     - Set status of receiving disk IO alerts.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_diskio_threshold:
@@ -334,10 +334,10 @@ def getInstanceDetails(api, server):
                                         'ip_id': ip['IPADDRESSID']})
     return instance
 
-def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_threshold, alert_bwout_enabled, alert_bwout_threshold,
-                  alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled, alert_cpu_threshold, alert_diskio_enabled,
-                  alert_diskio_threshold,backupweeklyday, backupwindow, displaygroup, plan, additional_disks, distribution,
-                  datacenter, kernel_id, linode_id, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog):
+def linodeServers(module, api, state, name,
+                  displaygroup, plan, additional_disks, distribution,
+                  datacenter, kernel_id, linode_id, payment_term, password,
+                  private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog, **kwargs):
     instances = []
     changed = False
     new_server = False
@@ -385,13 +385,8 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                 # Update linode Label to match name
                 api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name))
                 # Update Linode with Ansible configuration options
-                api.linode_update(LinodeId=linode_id, ALERT_BWIN_ENABLED=alert_bwin_enabled,
-                        ALERT_BWIN_THRESHOLD=alert_bwin_threshold, ALERT_BWOUT_ENABLED=alert_bwout_enabled,
-                        ALERT_BWOUT_THRESHOLD=alert_bwout_threshold, ALERT_BWQUOTA_ENABLED=alert_bwquota_enabled,
-                        ALERT_BWQUOTA_THRESHOLD=alert_bwquota_threshold, ALERT_CPU_ENABLED=alert_cpu_enabled,
-                        ALERT_CPU_THRESHOLD=alert_cpu_threshold, ALERT_DISKIO_ENABLED=alert_diskio_enabled,
-                        ALERT_DISKIO_THRESHOLD=alert_diskio_threshold, BACKUPWEEKLYDAY=backupweeklyday,
-                        BACKUPWINDOW=backupwindow, LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog)
+                api.linode_update(LinodeId=linode_id,
+                        LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog, **kwargs)
                 # Save server
                 servers = api.linode_list(LinodeId=linode_id)
             except Exception as e:
@@ -599,18 +594,19 @@ def main():
                                                      'restarted']),
             api_key = dict(no_log=True),
             name = dict(type='str'),
-            alert_bwin_enabled = dict(type='bool', default=True),
-            alert_bwin_threshold = dict(type='int'),
-            alert_bwout_enabled = dict(type='bool', default=True),
-            alert_bwout_threshold = dict(type='int'),
-            alert_bwquota_enabled = dict(type='bool', default=True),
-            alert_bwquota_threshold = dict(type='int'),
-            alert_cpu_enabled = dict(type='bool', default=True),
-            alert_cpu_threshold = dict(type='int'),
-            alert_diskio_enabled = dict(type='bool', default=True),
-            alert_diskio_threshold = dict(type='int'),
-            backupweeklyday = dict(type='int'),
-            backupwindow = dict(type='int'),
+            alert_bwin_enabled = dict(type='bool', default=None),
+            alert_bwin_threshold = dict(type='int', default=None),
+            alert_bwout_enabled = dict(type='bool', default=None),
+            alert_bwout_threshold = dict(type='int', default=None),
+            alert_bwquota_enabled = dict(type='bool', default=None),
+            alert_bwquota_threshold = dict(type='int', default=None),
+            alert_cpu_enabled = dict(type='bool', default=None),
+            alert_cpu_threshold = dict(type='int', default=None),
+            alert_diskio_enabled = dict(type='bool', default=None),
+            alert_diskio_threshold = dict(type='int', default=None),
+            backupsenabled = dict(type='int', default=None),
+            backupweeklyday = dict(type='int', default=None),
+            backupwindow = dict(type='int', default=None),
             displaygroup = dict(type='str', default=''),
             plan = dict(type='int'),
             additional_disks= dict(type='list'),
@@ -637,15 +633,15 @@ def main():
     state = module.params.get('state')
     api_key = module.params.get('api_key')
     name = module.params.get('name')
-    alert_bwin_enabled = int(module.params.get('alert_bwin_enabled'))
+    alert_bwin_enabled = module.params.get('alert_bwin_enabled')
     alert_bwin_threshold = module.params.get('alert_bwin_threshold')
-    alert_bwout_enabled = int(module.params.get('alert_bwout_enabled'))
+    alert_bwout_enabled = module.params.get('alert_bwout_enabled')
     alert_bwout_threshold = module.params.get('alert_bwout_threshold')
-    alert_bwquota_enabled = int(module.params.get('alert_bwquota_enabled'))
+    alert_bwquota_enabled = module.params.get('alert_bwquota_enabled')
     alert_bwquota_threshold = module.params.get('alert_bwquota_threshold')
-    alert_cpu_enabled = int(module.params.get('alert_cpu_enabled'))
+    alert_cpu_enabled = module.params.get('alert_cpu_enabled')
     alert_cpu_threshold = module.params.get('alert_cpu_threshold')
-    alert_diskio_enabled = int(module.params.get('alert_diskio_enabled'))
+    alert_diskio_enabled = module.params.get('alert_diskio_enabled')
     alert_diskio_threshold = module.params.get('alert_diskio_threshold')
     backupsenabled = module.params.get('backupsenabled')
     backupweeklyday = module.params.get('backupweeklyday')
@@ -666,6 +662,18 @@ def main():
     wait_timeout = int(module.params.get('wait_timeout'))
     watchdog = int(module.params.get('watchdog'))
 
+    kwargs = {}
+    check_items = {'alert_bwin_enabled': alert_bwin_enabled, 'alert_bwin_threshold': alert_bwin_threshold,
+                    'alert_bwout_enabled': alert_bwout_enabled, 'alert_bwout_threshold': alert_bwout_threshold,
+                    'alert_bwquota_enabled': alert_bwquota_enabled, 'alert_bwquota_threshold': alert_bwquota_threshold,
+                    'alert_cpu_enabled': alert_cpu_enabled, 'alert_cpu_threshold': alert_cpu_threshold,
+                    'alert_diskio_enabled': alert_diskio_enabled, 'alert_diskio_threshold': alert_diskio_threshold,
+                    'backupweeklyday': backupweeklyday, 'backupwindow': backupwindow}
+
+    for key, value in check_items.items():
+        if value is not None:
+            kwargs[key] = value
+
     # Setup the api_key
     if not api_key:
         try:
@@ -680,14 +688,11 @@ def main():
     except Exception as e:
         module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
-    linodeServers(module, api, state, name, alert_bwin_enabled,
-            alert_bwin_threshold, alert_bwout_enabled, alert_bwout_threshold,
-            alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled,
-            alert_cpu_threshold, alert_diskio_enabled, alert_diskio_threshold,
-            backupweeklyday, backupwindow, displaygroup, plan,
+    linodeServers(module, api, state, name,
+            displaygroup, plan,
             additional_disks, distribution, datacenter, kernel_id, linode_id,
             payment_term, password, private_ip, ssh_pub_key, swap, wait,
-            wait_timeout, watchdog)
+            wait_timeout, watchdog, **kwargs)
 
 # import module snippets
 from ansible.module_utils.basic import *
