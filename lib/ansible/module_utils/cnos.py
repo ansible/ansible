@@ -960,6 +960,10 @@ def interfaceLevel2Config(
     elif (interfaceL2Arg1 == "shutdown"):
         # debugOutput("shutdown")
         command = interfaceL2Arg1
+    
+    elif (interfaceL2Arg1 == "no shutdown"):
+        # debugOutput("no shutdown")
+        command = interfaceL2Arg1
 
     elif (interfaceL2Arg1 == "snmp"):
         # debugOutput("snmp")
