@@ -114,7 +114,7 @@ def main():
     else:
         try:
             f = open(src, 'rb')
-            contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
+            contents = to_text(f.read(), errors='surrogate_or_strict', encoding=params['encoding'])
             f.close()
         except IOError:
             e = get_exception()
