@@ -11,6 +11,7 @@ def main():
     with open(fn, 'rb') as f:
         lines = f.readlines()
     lines = [x.strip() for x in lines if x.strip()]
+    lines = [x.decode('utf-8') for x in lines]
     lines = [x for x in lines if not x.startswith('#')]
     lines = [x for x in lines if not x.startswith('_')]
     names = [x.split(':')[0] for x in lines]
