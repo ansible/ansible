@@ -22,7 +22,9 @@ DOCUMENTATION = """
 module: ec2_asg_lifecycle_hook
 short_description: Create, delete or update AWS ASG Lifecycle Hooks.
 description:
-  - Can create, delete or update Lifecycle Hooks for AWS Autoscaling Groups.
+  - When no given Hook found, will create one.
+  - In case Hook found, but provided parameters are differes, will update existing Hook.
+  - In case state=absent and Hook exists, will delete it.
 version_added: "2.4"
 author: "Igor (Tsigankov) Eyrich (@tsiganenok) <tsiganenok@gmail.com>"
 options:
@@ -105,19 +107,21 @@ RETURN = '''
 
 '''
 
-# from ansible.module_utils.basic import *
-# from ansible.module_utils.ec2 import *
-
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info, HAS_BOTO3)
+
+try:
+    import botocore
+    HAS_BOTOCORE = True
+except ImportError:
+    HAS_BOTOCORE = False
 
 try:
     import boto3
-    import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    # will be caught by imported HAS_BOTO3
+    pass
 
 
 def create_lifecycle_hook(connection, module):
@@ -153,10 +157,13 @@ def create_lifecycle_hook(connection, module):
     if default_result:
         lch_params['DefaultResult'] = default_result
 
-    existing_hook = connection.describe_lifecycle_hooks(
-        AutoScalingGroupName=asg_name,
-        LifecycleHookNames=[lch_name]
-    )['LifecycleHooks']
+    try:
+        existing_hook = connection.describe_lifecycle_hooks(
+            AutoScalingGroupName=asg_name,
+            LifecycleHookNames=[lch_name]
+        )['LifecycleHooks']
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Failed to get Lifecycle Hook %s" % str(e), exception=traceback.format_exc(e))
 
     if not existing_hook:
         changed = True
@@ -172,7 +179,7 @@ def create_lifecycle_hook(connection, module):
     if changed:
         try:
             connection.put_lifecycle_hook(**lch_params)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to create LifecycleHook %s" % str(e), exception=traceback.format_exc(e))
 
     return(changed)
@@ -200,9 +207,12 @@ def delete_lifecycle_hook(connection, module):
     lch_name = module.params.get('lifecycle_hook_name')
     asg_name = module.params.get('autoscaling_group_name')
 
-    all_hooks = connection.describe_lifecycle_hooks(
-        AutoScalingGroupName=asg_name
-    )
+    try:
+        all_hooks = connection.describe_lifecycle_hooks(
+            AutoScalingGroupName=asg_name
+        )
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Failed to get Lifecycle Hooks %s" % str(e), exception=traceback.format_exc(e))
 
     for hook in all_hooks['LifecycleHooks']:
         if hook['LifecycleHookName'] == lch_name:
@@ -214,7 +224,7 @@ def delete_lifecycle_hook(connection, module):
             try:
                 connection.delete_lifecycle_hook(**lch_params)
                 changed = True
-            except Exception as e:
+            except botocore.exceptions.ClientError as e:
                 module.fail_json(msg="Failed to delete LifecycleHook %s" % str(e), exception=traceback.format_exc(e))
         else:
             pass
@@ -241,6 +251,9 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec)
     state = module.params.get('state')
 
+    if not HAS_BOTOCORE:
+        module.fail_json(msg='botocore is required for this module')
+
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module')
 
@@ -253,7 +266,7 @@ def main():
         connection = boto3_conn(module, conn_type='client', resource='autoscaling', region=region, endpoint=ec2_url, **aws_connect_params)
         if not connection:
             module.fail_json(msg="failed to connect to AWS for the given region: %s" % str(region))
-    except boto.exception.NoAuthHandlerFound as e:
+    except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=str(e))
 
     changed = create_changed = replace_changed = False
