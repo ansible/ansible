@@ -495,7 +495,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value
 
     tags_list = []
     for k, v in tags_dict.items():
-        tags_list.append({tag_name_key_name: k, tag_value_key_name: v})
+        tags_list.append({tag_name_key_name: k, tag_value_key_name: str(v)})
 
     return tags_list
 
