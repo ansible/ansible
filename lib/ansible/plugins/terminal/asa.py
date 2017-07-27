@@ -51,7 +51,7 @@ class TerminalModule(TerminalBase):
             raise AnsibleConnectionFailure('unable to disable terminal pager')
 
     def on_authorize(self, passwd=None):
-        if self._get_prompt().endswith(b'#'):
+        if self._get_prompt().strip().endswith(b'#'):
             return
 
         cmd = {u'command': u'enable'}
