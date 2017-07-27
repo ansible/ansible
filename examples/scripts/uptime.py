@@ -7,7 +7,7 @@ from ansible.inventory import Inventory
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play import Play
 from ansible.plugins.callback import CallbackBase
-from ansible.vars import VariableManager
+from ansible.vars.manager import VariableManager
 
 
 # Create a callback object so we can capture the output
