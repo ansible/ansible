@@ -257,6 +257,7 @@ def main():
     master_ssl_key = module.params["master_ssl_key"]
     master_ssl_cipher = module.params["master_ssl_cipher"]
     master_auto_position = module.params["master_auto_position"]
+    master_use_gtid = module.params["master_use_gtid"]
     ssl_cert = module.params["ssl_cert"]
     ssl_key = module.params["ssl_key"]
     ssl_ca = module.params["ssl_ca"]
