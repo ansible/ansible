@@ -304,7 +304,7 @@ def create_launch_config(connection, module):
         launch_config['InstanceMonitoring'] = {'Enabled': advanced_instance_monitoring}
 
     if classic_link_vpc_security_groups is not None:
-        launch_config['ClassicLinkVPCSecurityGroups'] = (classic_link_vpc_security_groups)
+        launch_config['ClassicLinkVPCSecurityGroups'] = classic_link_vpc_security_groups
 
     if block_device_mapping is not None:
         launch_config['BlockDeviceMappings'] = [block_device_mapping]
