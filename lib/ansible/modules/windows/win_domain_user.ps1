@@ -18,7 +18,12 @@
 # POWERSHELL_COMMON
 
 ########
-Import-Module ActiveDirectory
+try {
+    Import-Module ActiveDirectory
+ }
+ catch {
+     Fail-Json $result "Failed to import ActiveDirectory PowerShell module. This module should be run on a domain controller, and the ActiveDirectory module must be available."
+ }
 
 $result = @{
     changed = $false
