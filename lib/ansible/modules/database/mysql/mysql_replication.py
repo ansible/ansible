@@ -103,7 +103,7 @@ options:
         required: false
         default: null
         version_added: "2.0"
-    master_use_gtid
+    master_use_gtid:
         description:
             - which position to use use with GTID based replication (MariaDB)
         required: false
