@@ -104,6 +104,8 @@ Example: AWS EC2 External Inventory Script
 
 If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.github.com/ansible/ansible/devel/contrib/inventory/ec2.py>`_ script.
 
+**Warning:** Installing this script into the project's ``./library`` directory will create a conflict with the `native ec2 module <http://docs.ansible.com/ansible/latest/ec2_module.html>`_.  The error will look sommething like ``ec2: error: unrecognized arguments``.  Typically, best practice is to keep the ec2.py inventory script in the project's root directory.
+
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script after
 marking it executable::
 
