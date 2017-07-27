@@ -69,17 +69,12 @@ lib/ansible/modules/cloud/atomic/atomic_host.py
 lib/ansible/modules/cloud/atomic/atomic_image.py
 lib/ansible/modules/cloud/azure/azure_rm_deployment.py
 lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py
-lib/ansible/modules/cloud/azure/azure_rm_networkinterface_facts.py
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress.py
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress_facts.py
-lib/ansible/modules/cloud/azure/azure_rm_resourcegroup.py
-lib/ansible/modules/cloud/azure/azure_rm_resourcegroup_facts.py
-lib/ansible/modules/cloud/azure/azure_rm_securitygroup_facts.py
 lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py
 lib/ansible/modules/cloud/azure/azure_rm_storageblob.py
 lib/ansible/modules/cloud/azure/azure_rm_subnet.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py
-lib/ansible/modules/cloud/azure/azure_rm_virtualmachineimage_facts.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork_facts.py
 lib/ansible/modules/cloud/centurylink/clc_loadbalancer.py
