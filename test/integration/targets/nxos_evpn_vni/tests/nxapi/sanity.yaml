@@ -1,0 +1,74 @@
+---
+- debug: msg="START TRANSPORT:NXAPI nxos_evpn_vni sanity test"
+
+- name: "Setup"
+  nxos_config: &remove_evpn
+    lines: no nv overlay evpn
+    provider: "{{ nxapi }}"
+    match: none
+  ignore_errors: yes
+
+- block:
+  - name: "Enable feature BGP"
+    nxos_feature: 
+      feature: bgp
+      state: enabled
+      provider: "{{ nxapi }}"
+
+  - name: "Enable nv overlay evpn"
+    nxos_config: 
+      lines: nv overlay evpn
+      provider: "{{ nxapi }}"
+      match: none
+
+  - name: "Configure nxos_evpn_vni"
+    nxos_evpn_vni: &evpn_vni
+      vni: 6000
+      route_distinguisher: "60:10"
+      route_target_import:
+          - "5000:10"
+          - "4100:100"
+      route_target_export: auto
+      provider: "{{ nxapi }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_evpn_vni: *evpn_vni
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "remove nxos_evpn_vni"
+    nxos_evpn_vni: &rvni
+      vni: 6000
+      state: absent
+      provider: "{{ nxapi }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_evpn_vni: *rvni
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "Remove nv overlay evpn"
+    nxos_config: *remove_evpn
+    ignore_errors: yes
+
+  - name: "Disable feature bgp"
+    nxos_feature: 
+      feature: bgp
+      state: disabled
+      provider: "{{ nxapi }}"
+    ignore_errors: yes
+
+- debug: msg="END TRANSPORT:NXAPI nxos_evpn_vni sanity test"

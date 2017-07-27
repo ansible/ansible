@@ -1,0 +1,15 @@
+---
+- debug: msg="START TRANSPORT:CLI nxos_vrf sanity test"
+
+- name: Ensure ntc VRF exists on switch
+  nxos_vrf:
+    vrf: ntc
+    provider: "{{ cli }}"
+
+- name: Ensure ntc VRF does not exist on switch
+  nxos_vrf:
+    vrf: ntc
+    state: absent
+    provider: "{{ cli }}"
+
+- debug: msg="END TRANSPORT:CLI nxos_vrf sanity test"

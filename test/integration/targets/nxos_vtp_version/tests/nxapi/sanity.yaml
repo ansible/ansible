@@ -1,0 +1,23 @@
+---
+- debug: msg="START TRANSPORT:NXAPI nxos_vtp_version sanity test"
+
+- block:
+  - name: enable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: enabled
+      provider: "{{ nxapi }}"
+
+  - name: configure vtp version
+    nxos_vtp_version:
+      version: 2
+      provider: "{{ nxapi }}"
+
+  always:
+  - name: disable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: disabled
+      provider: "{{ nxapi }}"
+
+- debug: msg="END TRANSPORT:NXAPI nxos_vtp_version sanity test"

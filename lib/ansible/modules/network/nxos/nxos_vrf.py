@@ -104,12 +104,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module):
-    transport = module.params['transport']
-    if transport == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-
-    cmds = [command]
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
     body = run_commands(module, cmds)
     return body
 
@@ -221,7 +223,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
     results = dict(changed=False, warnings=warnings)
-
 
     vrf = module.params['vrf']
     admin_state = module.params['admin_state'].lower()

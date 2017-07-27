@@ -1,0 +1,39 @@
+---
+- debug: msg="START TRANSPORT:CLI nxos_vrf_interface sanity test"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- block:
+  - name: put interface in L3
+    nxos_config:
+      commands:
+        - no switchport
+      parents:
+        - "interface {{ intname }}"
+      match: none
+      provider: "{{ cli }}"
+
+  - name: Ensure vrf ntc exists on interface
+    nxos_vrf_interface:
+      vrf: ntc
+      interface: "{{ intname }}"
+      state: present
+      provider: "{{ cli }}"
+
+  - name: Ensure ntc VRF does not exist on interface
+    nxos_vrf_interface:
+      vrf: ntc
+      interface: "{{ intname }}"
+      state: absent
+      provider: "{{ cli }}"
+
+  always:
+  - name: put interface in default mode
+    nxos_config:
+      lines: "default interface {{ intname }}"
+      provider: "{{ cli }}"
+      match: none
+    ignore_errors: yes
+
+- debug: msg="END TRANSPORT:CLI nxos_vrf_interface sanity test"
